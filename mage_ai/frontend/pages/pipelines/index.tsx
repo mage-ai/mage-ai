@@ -83,8 +83,9 @@ import {
   capitalizeRemoveUnderscoreLower,
   isNumeric,
   randomNameGenerator,
+  removeUnderscore,
 } from '@utils/string';
-import { datetimeInLocalTimezone } from '@utils/date';
+import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { get, set } from '@storage/localStorage';
@@ -202,10 +203,19 @@ function PipelineListPage() {
   ]);
 
   const pipelines: PipelineType[] = useMemo(
-    () => filterPipelinesBySearchText(data?.pipelines || []),
+    () => {
+      let pipelinesFiltered = filterPipelinesBySearchText(data?.pipelines || []);
+      if (q?.[PipelineQueryEnum.TAG]) {
+        pipelinesFiltered = pipelinesFiltered
+          .filter(({ tags }) => tags.some(t => (q[PipelineQueryEnum.TAG]).includes(t)));
+      }
+
+      return pipelinesFiltered;
+    },
     [
       data,
       filterPipelinesBySearchText,
+      q,
     ]);
 
   const pipelinesFromHistory: PipelineType[] = useMemo(
@@ -696,6 +706,9 @@ function PipelineListPage() {
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={{
+        status: FILTERABLE_PIPELINE_STATUSES.reduce(
+          (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }), {},
+        ),
         tag: tags.reduce((acc, { uuid }) => ({
           ...acc,
           [uuid]: uuid,
@@ -1329,7 +1342,7 @@ function PipelineListPage() {
             key={`pipeline_updated_at_${idx}`}
             monospace
             small
-            title={updatedAt ? `UTC: ${updatedAt}` : null}
+            title={updatedAt ? utcStringToElapsedTime(updatedAt) : null}
           >
             {updatedAt
               ? datetimeInLocalTimezone(updatedAt, displayLocalTimezone)
@@ -1339,7 +1352,7 @@ function PipelineListPage() {
             key={`pipeline_created_at_${idx}`}
             monospace
             small
-            title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
+            title={createdAt ? utcStringToElapsedTime(createdAt) : null}
           >
             {createdAt
               ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)

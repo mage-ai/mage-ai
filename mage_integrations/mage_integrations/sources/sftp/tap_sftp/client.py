@@ -9,7 +9,8 @@ import paramiko
 import pytz
 import singer
 from paramiko.ssh_exception import AuthenticationException, SSHException
-from tap_sftp import decrypt
+
+from mage_integrations.sources.sftp.tap_sftp import decrypt
 
 LOGGER = singer.get_logger()
 

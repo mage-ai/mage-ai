@@ -18,6 +18,7 @@ import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { ColumnType } from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
@@ -42,7 +43,7 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone } from '@utils/date';
+import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
@@ -262,6 +263,7 @@ type PipelineRunsTableProps = {
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
   hideTriggerColumn?: boolean;
+  includePipelineTags?: boolean;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
@@ -278,6 +280,7 @@ function PipelineRunsTable({
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
   hideTriggerColumn,
+  includePipelineTags,
   onClickRow,
   pipelineRuns,
   selectedRun,
@@ -341,7 +344,14 @@ function PipelineRunsTable({
     });
   }
 
-  columnFlex.push(...[1, 1, null, null]);
+  if (includePipelineTags) {
+    columnFlex.push(null);
+    columns.push({
+      uuid: 'Pipeline tags',
+    });
+  }
+
+  columnFlex.push(...[1, 1, 1, null, null]);
   columns.push(...[
     {
       ...timezoneTooltipProps,
@@ -436,6 +446,7 @@ function PipelineRunsTable({
                 id,
                 pipeline_schedule_id: pipelineScheduleId,
                 pipeline_schedule_name: pipelineScheduleName,
+                pipeline_tags: pipelineTags,
                 pipeline_uuid: pipelineUUID,
                 started_at: startedAt,
                 status,
@@ -445,7 +456,14 @@ function PipelineRunsTable({
               const blockRunCountTooltipMessage =
                 `${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`;
 
-              const isRetry =
+              const tagsEl = (
+                <TagsContainer
+                  key={`row_pipeline_tags_${index}`}
+                  tags={pipelineTags?.map(tag => ({ uuid: tag }))}
+                />
+              );
+
+                const isRetry =
                 index > 0
                   && pipelineRuns[index - 1].execution_date === pipelineRun.execution_date
                   && pipelineRuns[index - 1].pipeline_schedule_id === pipelineRun.pipeline_schedule_id;
@@ -480,6 +498,10 @@ function PipelineRunsTable({
                   );
                 }
 
+                if (includePipelineTags) {
+                  arr.push(tagsEl);
+                }
+
                 arr.push(...[
                   <Text default key="row_date_retry" monospace muted>
                     -
@@ -488,7 +510,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_started_at"
                     muted
-                    title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
                       ? (displayLocalTimezone
@@ -503,7 +525,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_completed_at"
                     muted
-                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone
@@ -575,12 +597,16 @@ function PipelineRunsTable({
                   );
                 }
 
+                if (includePipelineTags) {
+                  arr.push(tagsEl);
+                }
+
                 arr.push(...[
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_date"
-                    title={executionDate ? `UTC: ${executionDate}` : null}
+                    title={executionDate ? utcStringToElapsedTime(executionDate) : null}
                   >
                     {executionDate
                       ? (displayLocalTimezone
@@ -595,7 +621,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_started_at"
-                    title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
                       ? (displayLocalTimezone
@@ -610,7 +636,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_completed_at"
-                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone

@@ -26,7 +26,7 @@ import {
   TIMEZONE_TOOLTIP_PROPS,
 } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
@@ -252,7 +252,7 @@ function BlockRunsTable({
             key={`${id}_created_at`}
             monospace
             small
-            title={createdAt ? `UTC: ${createdAt}` : null}
+            title={createdAt ? utcStringToElapsedTime(createdAt) : null}
           >
             {displayLocalTimezone
               ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
@@ -264,7 +264,7 @@ function BlockRunsTable({
             key={`${id}_started_at`}
             monospace
             small
-            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+            title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
             {startedAt
               ? (displayLocalTimezone
@@ -280,7 +280,7 @@ function BlockRunsTable({
             key={`${id}_completed_at`}
             monospace
             small
-            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+            title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
             {completedAt
               ? (displayLocalTimezone

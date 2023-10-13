@@ -1,13 +1,13 @@
 
 import singer
 from singer import metadata
-from tap_sftp import client
-from tap_sftp.discover import discover_streams
-from tap_sftp.stats import STATS
-from tap_sftp.sync import sync_stream
 from terminaltables import AsciiTable
 
 from mage_integrations.sources.base import write_schema, write_state
+from mage_integrations.sources.sftp.tap_sftp import client
+from mage_integrations.sources.sftp.tap_sftp.discover import discover_streams
+from mage_integrations.sources.sftp.tap_sftp.stats import STATS
+from mage_integrations.sources.sftp.tap_sftp.sync import sync_stream
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "host", "tables", "start_date"]
 REQUIRED_DECRYPT_CONFIG_KEYS = ['SSM_key_name', 'gnupghome', 'passphrase']

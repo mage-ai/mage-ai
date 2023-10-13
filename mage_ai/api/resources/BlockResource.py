@@ -632,8 +632,9 @@ class BlockResource(GenericResource):
 
             block.update_content(content)
 
-        cache = await BlockCache.initialize_cache()
-        cache.add_pipeline(block, pipeline)
+        if pipeline:
+            cache = await BlockCache.initialize_cache()
+            cache.add_pipeline(block, pipeline)
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
         cache_block_action_object.update_block(block)

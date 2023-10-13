@@ -5,6 +5,7 @@ import inflection
 
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
+from mage_ai.api.mixins.result_set import ResultSetMixIn
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
@@ -12,7 +13,7 @@ from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.hash import merge_dict
 
 
-class BaseResource(Resource):
+class BaseResource(Resource, ResultSetMixIn):
     collective_loader_attr = {}
     datetime_keys = []
 
@@ -26,10 +27,14 @@ class BaseResource(Resource):
     parent_resource_attr = {}
 
     @classmethod
+    def model_name(self) -> str:
+        return self.__name__.replace('Resource', '')
+
+    @classmethod
     def parser_class(self):
-        klass = self.__name__.replace('Resource', '')
-        module_name = f'mage_ai.api.parsers.{klass}Parser'
-        class_name = f'{klass}Parser'
+        model_name = self.model_name()
+        module_name = f'mage_ai.api.parsers.{model_name}Parser'
+        class_name = f'{model_name}Parser'
 
         try:
             return getattr(importlib.import_module(module_name), class_name)
@@ -38,7 +43,7 @@ class BaseResource(Resource):
 
     @classmethod
     def policy_class(self):
-        model_name = self.__name__.replace('Resource', '')
+        model_name = self.model_name()
         return getattr(
             importlib.import_module(
                 'mage_ai.api.policies.{}Policy'.format(model_name)),
@@ -47,7 +52,7 @@ class BaseResource(Resource):
 
     @classmethod
     def presenter_class(self):
-        model_name = self.__name__.replace('Resource', '')
+        model_name = self.model_name()
         return getattr(
             importlib.import_module(
                 'mage_ai.api.presenters.{}Presenter'.format(model_name)),
@@ -151,7 +156,12 @@ class BaseResource(Resource):
         pass
 
     @classmethod
-    async def process_create(self, payload, user, **kwargs):
+    async def process_create(
+        self,
+        payload,
+        user,
+        **kwargs,
+    ):
         self.on_create_callback = None
         self.on_create_failure_callback = None
         before_create = self.before_create(payload, user, **kwargs)
@@ -171,7 +181,7 @@ class BaseResource(Resource):
             return res
         except Exception as err:
             if self.on_create_failure_callback:
-                self.on_create_failure_callback(resource=res)
+                self.on_create_failure_callback()
 
             raise err
 
@@ -236,7 +246,7 @@ class BaseResource(Resource):
             return res
         except Exception as err:
             if self.on_delete_failure_callback:
-                self.on_delete_failure_callback(resource=res)
+                self.on_delete_failure_callback(resource=self)
 
             raise err
 
@@ -255,15 +265,20 @@ class BaseResource(Resource):
             return res
         except Exception as err:
             if self.on_update_failure_callback:
-                self.on_update_failure_callback(resource=res)
+                self.on_update_failure_callback(resource=self)
 
             raise err
 
-    def result_set(self):
+    def result_set(self) -> ResultSet:
         if self.__result_sets().get(self.__class__.__name__, None):
             return self.__result_sets()[self.__class__.__name__]
         elif not self.result_set_attr:
-            self.result_set_attr = ResultSet([self])
+            if self.result_set_from_external is not None:
+                self.result_set_attr = self.result_set_from_external
+                if self not in self.result_set_attr:
+                    self.result_set_attr.add_results([self])
+            else:
+                self.result_set_attr = ResultSet([self])
         return self.result_set_attr
 
     def update(self, payload, **kwargs):

@@ -551,6 +551,7 @@ class Block(DataIntegrationMixin):
         from mage_ai.data_preparation.models.block.sql.utils.shared import (
             extract_create_statement_table_name,
             extract_insert_statement_table_names,
+            extract_update_statement_table_names,
         )
 
         if not self.content:
@@ -561,6 +562,9 @@ class Block(DataIntegrationMixin):
             return table_name
 
         matches = extract_insert_statement_table_names(self.content)
+        if len(matches) == 0:
+            matches = extract_update_statement_table_names(self.content)
+
         if len(matches) == 0:
             return None
 
@@ -1036,7 +1040,7 @@ class Block(DataIntegrationMixin):
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=True,
-                        spark=(global_vars or dict()).get('spark'),
+                        spark=self.__get_spark_session_from_global_vars(global_vars=global_vars),
                         dynamic_block_uuid=dynamic_block_uuid,
                     )
                 except ValueError as e:
@@ -1567,6 +1571,7 @@ class Block(DataIntegrationMixin):
         variable_uuid: str,
         dynamic_block_index: int = None,
         partition: str = None,
+        raise_exception: bool = False,
         spark=None,
     ):
         variable_manager = self.pipeline.variable_manager
@@ -1582,6 +1587,7 @@ class Block(DataIntegrationMixin):
             block_uuid=block_uuid_use,
             clean_block_uuid=clean_block_uuid,
             partition=partition,
+            raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_uuid,
         )
@@ -1609,6 +1615,34 @@ class Block(DataIntegrationMixin):
             spark=self.__get_spark_session(),
             variable_uuid=variable_uuid,
         )
+
+    def get_raw_outputs(
+        self,
+        block_uuid: str,
+        execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+    ) -> List[Any]:
+        all_variables = self.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+
+        outputs = []
+
+        for variable_uuid in all_variables:
+            variable = self.pipeline.get_block_variable(
+                block_uuid,
+                variable_uuid,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                partition=execution_partition,
+                raise_exception=True,
+                spark=self.__get_spark_session_from_global_vars(global_vars),
+            )
+            outputs.append(variable)
+
+        return outputs
 
     def get_outputs(
         self,
@@ -2235,21 +2269,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if not test_functions or len(test_functions) == 0:
             return
 
-        variable_manager = self.pipeline.variable_manager
-        outputs = [
-            variable_manager.get_variable(
-                self.pipeline.uuid,
-                self.uuid,
-                variable,
-                partition=execution_partition,
-                spark=(global_vars or dict()).get('spark'),
-            )
-            for variable in self.output_variables(
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-            )
-        ]
+        outputs = self.get_raw_outputs(
+            dynamic_block_uuid or self.uuid,
+            execution_partition=execution_partition,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+        )
 
         if logger and 'logger' not in global_vars:
             global_vars['logger'] = logger
@@ -2465,6 +2490,23 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         self.spark_init = True
         return self.spark
+
+    def __get_spark_session_from_global_vars(self, global_vars: Dict = None):
+        if global_vars is None:
+            global_vars = dict()
+        spark = global_vars.get('spark')
+        if self.pipeline and self.pipeline.spark_config:
+            spark_config = self.pipeline.spark_config
+        else:
+            repo_config = RepoConfig(repo_path=self.repo_path)
+            spark_config = repo_config.spark_config
+        if not spark_config:
+            return spark
+        spark_config = SparkConfig.load(config=spark_config)
+        if spark_config.use_custom_session:
+            return global_vars.get('context', dict()).get(
+                spark_config.custom_session_var_name, spark)
+        return spark
 
     def __store_variables_prepare(
         self,

@@ -31,7 +31,7 @@ type InteractionLayoutContainerProps = {
 
 function InteractionLayoutContainer({
   containerRef: mainContainerRef,
-  containerWidth,
+  containerWidth: containerWidthProp,
   interaction,
   setVariables,
   showVariableUUID,
@@ -45,9 +45,11 @@ function InteractionLayoutContainer({
   useEffect(() => {
     if (mainContainerRef?.current) {
       setContainerRect(mainContainerRef?.current?.getBoundingClientRect());
+    } else if (containerWidthProp) {
+      setContainerRect({ width: containerWidthProp });
     }
   }, [
-    containerWidth,
+    containerWidthProp,
     mainContainerRef,
     windowSize,
   ]);

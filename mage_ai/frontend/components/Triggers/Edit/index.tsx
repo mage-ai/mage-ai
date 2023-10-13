@@ -88,6 +88,7 @@ import {
   getTriggerApiEndpoint,
   getTriggerTypes,
 } from '../utils';
+import { convertValueToVariableDataType } from '@utils/models/interaction';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
@@ -134,10 +135,14 @@ function Edit({
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
+  const [useHeaderUrl, setUseHeaderUrl] = useState<boolean>(false);
 
   const [settings, setSettings] = useState<PipelineScheduleSettingsType>(null);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(null);
+  const [variablesFromInteractions, setVariablesFromInteractions] = useState<{
+    [key: string]: any;
+  }>(null);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
 
@@ -533,7 +538,10 @@ function Edit({
 
     // @ts-ignore
     updateSchedule({
-      pipeline_schedule: data,
+      pipeline_schedule: {
+        ...data,
+        variables: variablesFromInteractions || data?.variables,
+      },
     });
   }, [
     cronExpressionInvalid,
@@ -551,6 +559,7 @@ function Edit({
     showLandingTime,
     time,
     updateSchedule,
+    variablesFromInteractions,
   ]);
 
   const runtimeAverage = useMemo(() => {
@@ -1318,7 +1327,7 @@ function Edit({
   ]);
 
   const apiMemo = useMemo(() => {
-    const url = getTriggerApiEndpoint(pipelineSchedule);
+    const url = getTriggerApiEndpoint(pipelineSchedule, useHeaderUrl);
 
     return (
       <>
@@ -1357,7 +1366,52 @@ function Edit({
               withCopyIcon
             />
           </Spacing>
+          
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Spacing mr={1}>
+                <ToggleSwitch
+                  checked={useHeaderUrl}
+                  onCheck={() => setUseHeaderUrl(!useHeaderUrl)}
+                />
+              </Spacing>
+              <Text muted>
+                Show alternative endpoint to pass token in headers
+              </Text>
+            </FlexContainer>
+          </Spacing>
         </Spacing>
+        
+        {useHeaderUrl && (
+          <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+            <Headline>
+              Headers
+            </Headline>
+
+            <Text muted>
+              You will need to include the following headers in your request to authenticate
+              with the server.
+            </Text>
+
+            <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+              <CopyToClipboard
+                copiedText={`Content-Type: application/json
+  Authorization: Bearer ${pipelineSchedule?.token}
+  `}
+                withCopyIcon
+              >
+                <CodeBlock
+                  language="json"
+                  small
+                  source={`
+      Content-Type: application/json
+      Authorization: Bearer ${pipelineSchedule?.token}
+  `}
+                />
+              </CopyToClipboard>
+            </Spacing>
+          </Spacing>
+        )}
 
         <Spacing mb={2} mt={5} px={PADDING_UNITS}>
           <Headline>
@@ -1409,7 +1463,20 @@ function Edit({
             <CodeBlock
               language="bash"
               small
-              source={`
+              source={useHeaderUrl ? `
+    curl -X POST ${url} \\
+      --header 'Content-Type: application/json' \\
+      --header 'Authorization: Bearer ${pipelineSchedule?.token}' \\
+      --data '
+    {
+      "pipeline_run": {
+        "variables": {
+          "key1": "value1",
+          "key2": "value2"
+        }
+      }
+    }'
+  ` : `
     curl -X POST ${url} \\
       --header 'Content-Type: application/json' \\
       --data '
@@ -1427,7 +1494,13 @@ function Edit({
         </Spacing>
       </>
     );
-  }, [pipelineSchedule, triggerDescriptionRowEl, triggerNameRowEl]);
+  }, [
+    pipelineSchedule,
+    setUseHeaderUrl,
+    triggerDescriptionRowEl,
+    triggerNameRowEl,
+    useHeaderUrl,
+  ]);
 
   const saveButtonDisabled = !scheduleType || (
     ScheduleTypeEnum.TIME === scheduleType
@@ -1693,24 +1766,54 @@ function Edit({
     isStreamingPipeline,
   ]);
 
-  const triggerInteractionsMemo = useMemo(() => (
-    <TriggerInteractions
-      containerRef={containerRef}
-      date={date}
-      interactions={interactions}
-      pipeline={pipeline}
-      pipelineInteraction={pipelineInteraction}
-      pipelineSchedule={schedule}
-      setVariables={(prev1) => setSchedule(prev2 => ({
-        ...prev2,
-        variables: prev1(prev2?.variables || {}),
-      }))}
-      showSummary={SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID}
-      time={time}
-      triggerTypes={triggerTypesForPipeline}
-      variables={schedule?.variables}
-    />
-  ), [
+  const triggerInteractionsMemo = useMemo(() => {
+    return (
+      <TriggerInteractions
+        containerRef={containerRef}
+        date={date}
+        interactions={interactions}
+        pipeline={pipeline}
+        pipelineInteraction={pipelineInteraction}
+        pipelineSchedule={schedule}
+        setVariables={(prev1) => {
+          setSchedule(prev2 => {
+            const variables = {
+              ...prev1(prev2?.variables || {}),
+            };
+
+            const variablesToUse = { ...variables };
+
+            interactions?.forEach((interaction) => {
+              Object.entries(interaction?.variables || {}).forEach(([
+                variableUUID,
+                {
+                  types
+                },
+              ]) => {
+                if (variablesToUse && variableUUID in variablesToUse) {
+                  variablesToUse[variableUUID] = convertValueToVariableDataType(
+                    variablesToUse[variableUUID],
+                    types,
+                  );
+                }
+              });
+            });
+
+            setVariablesFromInteractions(variablesToUse);
+
+            return {
+              ...prev2,
+              variables,
+            };
+          });
+        }}
+        showSummary={SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID}
+        time={time}
+        triggerTypes={triggerTypesForPipeline}
+        variables={schedule?.variables}
+      />
+    );
+  }, [
     containerRef,
     date,
     interactions,
@@ -1719,6 +1822,7 @@ function Edit({
     schedule,
     selectedSubheaderTabUUID,
     setSchedule,
+    setVariablesFromInteractions,
     time,
     triggerTypesForPipeline,
   ]);
@@ -1737,10 +1841,14 @@ function Edit({
     : [null, { isLoading: false }];
   const createSchedule = useCallback(() => {
     createScheduleBase?.({
-      pipeline_schedule: schedule,
+      pipeline_schedule: {
+        ...schedule,
+        variables: variablesFromInteractions || schedule?.variables,
+      },
     });
   }, [
     createScheduleBase,
+    variablesFromInteractions,
     schedule,
   ]);
 

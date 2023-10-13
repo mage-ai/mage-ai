@@ -494,7 +494,16 @@ def extract_insert_statement_table_names(text: str) -> List[str]:
 
 def extract_drop_statement_table_names(text: str) -> List[str]:
     matches = re.findall(
-        r'drop table(?: if exists)*',
+        r'\bdrop\s+table(?:\s+if\s+exists)?\s+([\w.]+)',
+        remove_comments(text),
+        re.IGNORECASE,
+    )
+    return matches
+
+
+def extract_update_statement_table_names(text: str) -> List[str]:
+    matches = re.findall(
+        r'\bupdate\b\s+([\w.]+)\s+(?:as\s+\w+\s+)?set\s+[\s\S]*?\bwhere\b',
         remove_comments(text),
         re.IGNORECASE,
     )
@@ -512,6 +521,11 @@ def has_create_or_insert_statement(text: str) -> bool:
 
 def has_drop_statement(text: str) -> bool:
     matches = extract_drop_statement_table_names(text)
+    return len(matches) >= 1
+
+
+def has_update_statement(text: str) -> bool:
+    matches = extract_update_statement_table_names(text)
     return len(matches) >= 1
 
 

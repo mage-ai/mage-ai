@@ -12,12 +12,16 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    and_,
+    asc,
+    func,
 )
 from sqlalchemy.orm import relationship, validates
 
 from mage_ai.authentication.permissions.constants import (
     BlockEntityType,
     EntityName,
+    PermissionAccess,
     PipelineEntityType,
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
@@ -27,7 +31,7 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import group_by, merge_dict
 
 
 class User(BaseModel):
@@ -79,6 +83,13 @@ class User(BaseModel):
 
         return value
 
+    @validates('avatar')
+    def shorten_avatar(self, key, value):
+        if value and len(value) >= 3:
+            return value[:2]
+
+        return value
+
     @property
     def project_access(self) -> int:
         return self.get_access(Entity.PROJECT, get_project_uuid())
@@ -97,8 +108,19 @@ class User(BaseModel):
         return the access of the user for that entity.
         '''
         access = 0
-        for role in self.roles_new:
-            access = access | role.get_access(entity, entity_id)
+
+        roles = self.fetch_roles([self.id])
+        permissions = Role.fetch_permissions([r.id for r in roles])
+        permissions_mapping = group_by(lambda x: x.role_id, permissions)
+
+        for role in roles:
+            permissions_for_role = permissions_mapping.get(role.id) or []
+
+            access = access | role.get_access(
+                entity,
+                entity_id,
+                permissions_for_role=permissions_for_role,
+            )
         return access
 
     @property
@@ -115,12 +137,12 @@ class User(BaseModel):
 
     @property
     def owner(self) -> bool:
-        access = self.project_access if self.roles_new else 0
+        access = self.project_access if self.fetch_roles([self.id]) else 0
         return self._owner or access & Permission.Access.OWNER != 0
 
     @property
     def is_admin(self) -> bool:
-        if self.roles_new:
+        if self.fetch_roles([self.id]):
             access = self.project_access
             return access & \
                 (Permission.Access.OWNER | Permission.Access.ADMIN) == Permission.Access.ADMIN
@@ -149,6 +171,113 @@ class User(BaseModel):
                 roles_new = [Role.get_role(Role.DefaultRole.VIEWER)]
             user.roles_new = roles_new
         db_connection.session.commit()
+
+    @classmethod
+    def fetch_roles(self, user_ids: List[str]) -> List:
+        query = (
+            Role.
+            select(
+                Role.created_at,
+                Role.id,
+                Role.name,
+                Role.updated_at,
+                UserRole.user_id,
+            ).
+            join(
+                UserRole,
+                and_(
+                    UserRole.role_id == Role.id,
+                    UserRole.user_id.in_(user_ids),
+                ),
+            )
+        )
+        query.cache = True
+
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            model = Role()
+            model.created_at = row.created_at
+            model.id = row.id
+            model.name = row.name
+            model.updated_at = row.updated_at
+            model.user_id = row.user_id
+            arr.append(model)
+
+        return arr
+
+    @classmethod
+    def fetch_permissions(self, user_ids: List[str]) -> List:
+        row_number_column = (
+                func.
+                row_number().
+                over(
+                    order_by=asc(UserRole.id),
+                    partition_by=Permission.id,
+                ).
+                label('row_number')
+        )
+
+        query = (
+            Permission.
+            select(
+                Permission.access,
+                Permission.created_at,
+                Permission.entity,
+                Permission.entity_id,
+                Permission.entity_name,
+                Permission.entity_type,
+                Permission.id,
+                Permission.options,
+                Permission.role_id,
+                Permission.updated_at,
+                UserRole.user_id,
+            ).
+            join(
+                RolePermission,
+                RolePermission.permission_id == Permission.id,
+            ).
+            join(
+                Role,
+                Role.id == RolePermission.role_id,
+            ).
+            join(
+                UserRole,
+                and_(
+                    UserRole.role_id == Role.id,
+                    UserRole.user_id.in_(user_ids),
+                ),
+            )
+        )
+
+        query = query.add_column(row_number_column)
+        query = query.from_self().filter(row_number_column == 1)
+        query.cache = True
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            model = Permission()
+            model.access = row.access
+            model.created_at = row.created_at
+            model.entity = row.entity
+            model.entity_id = row.entity_id
+            model.entity_name = row.entity_name
+            model.entity_type = row.entity_type
+            model.id = row.id
+            model.options = row.options
+            model.role_id = row.role_id
+            model.updated_at = row.updated_at
+            model.user_id = row.user_id
+            arr.append(model)
+
+        return arr
+
+    def permissions(self) -> List:
+        return self.__class__.fetch_permissions([self.id])
 
 
 class Role(BaseModel):
@@ -242,17 +371,20 @@ class Role(BaseModel):
         self,
         entity: Union[Entity, None],
         entity_id: Union[str, None] = None,
+        permissions_for_role: List['Permission'] = None,
     ) -> int:
+        arr = self.permissions if permissions_for_role is None else permissions_for_role
+
         permissions = []
         if entity is None:
             return 0
         elif entity == Entity.ANY:
-            permissions.extend(self.permissions)
+            permissions.extend(arr)
         else:
             entity_permissions = list(filter(
                 lambda perm: perm.entity == entity and
                 (entity_id is None or perm.entity_id == entity_id),
-                self.permissions,
+                arr,
             ))
             if entity_permissions:
                 permissions.extend(entity_permissions)
@@ -260,23 +392,141 @@ class Role(BaseModel):
         access = 0
         if permissions:
             for permission in permissions:
-                access = access | permission.access
+                if permission.access is not None:
+                    access = access | permission.access
             return access
         else:
             # TODO: Handle permissions with different entity types better.
-            return self.get_parent_access(entity)
+            return self.get_parent_access(
+                entity,
+                permissions_for_role=permissions_for_role,
+            )
 
-    def get_parent_access(self, entity) -> int:
+    def get_parent_access(
+        self,
+        entity,
+        permissions_for_role: List['Permission'] = None,
+    ) -> int:
         '''
         This method is used when a role does not have a permission for a specified entity. Then,
         we will go up the entity chain to see if there are permissions for parent entities.
         '''
         if entity == Entity.PIPELINE:
-            return self.get_access(Entity.PROJECT, get_project_uuid())
+            return self.get_access(
+                Entity.PROJECT, get_project_uuid(),
+                permissions_for_role=permissions_for_role,
+            )
         elif entity == Entity.PROJECT:
-            return self.get_access(Entity.GLOBAL)
+            return self.get_access(
+                Entity.GLOBAL,
+                permissions_for_role=permissions_for_role,
+            )
         else:
             return 0
+
+    @classmethod
+    def fetch_permissions(self, ids: List[str]) -> List:
+        query = (
+            Permission.
+            query.
+            filter(Permission.role_id.in_(ids))
+        )
+        query.cache = True
+
+        return query.all()
+
+    @classmethod
+    def fetch_role_permissions(self, ids: List[str]) -> List:
+        query = (
+            Permission.
+            select(
+                Permission.access,
+                Permission.created_at,
+                Permission.entity,
+                Permission.entity_id,
+                Permission.entity_name,
+                Permission.entity_type,
+                Permission.id,
+                Permission.options,
+                Permission.updated_at,
+                RolePermission.role_id,
+            ).
+            join(
+                RolePermission,
+                and_(
+                    RolePermission.permission_id == Permission.id,
+                    RolePermission.role_id.in_(ids),
+                )
+            )
+        )
+        query.cache = True
+
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            model = Permission()
+            model.access = row.access
+            model.created_at = row.created_at
+            model.entity = row.entity
+            model.entity_id = row.entity_id
+            model.entity_name = row.entity_name
+            model.entity_type = row.entity_type
+            model.id = row.id
+            model.options = row.options
+            model.role_id = row.role_id
+            model.updated_at = row.updated_at
+            arr.append(model)
+
+        return arr
+
+    @classmethod
+    def fetch_users(self, ids: List[str]) -> List:
+        query = (
+            User.
+            select(
+                User.avatar,
+                User.created_at,
+                User.email,
+                User.first_name,
+                User.id,
+                User.last_name,
+                User.preferences,
+                User.roles,
+                User.updated_at,
+                User.username,
+                UserRole.role_id,
+            ).
+            join(
+                UserRole,
+                and_(
+                    UserRole.user_id == User.id,
+                    UserRole.role_id.in_(ids),
+                ),
+            )
+        )
+        query.cache = True
+
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            user = User()
+            user.avatar = row.avatar
+            user.created_at = row.created_at
+            user.first_name = row.first_name
+            user.id = row.id
+            user.last_name = row.last_name
+            user.preferences = row.preferences
+            user.role_id = row.role_id
+            user.roles = row.roles
+            user.updated_at = row.updated_at
+            user.username = row.username
+            arr.append(user)
+
+        return arr
 
 
 class UserRole(BaseModel):
@@ -306,20 +556,36 @@ class UserRole(BaseModel):
 
 class Permission(BaseModel):
     class Access(int, enum.Enum):
-        OWNER = 1
-        ADMIN = 2
-        # Editor: list, detail, create, update, delete
-        EDITOR = 4
-        # Viewer: list, detail
-        VIEWER = 8
-        LIST = 16
-        DETAIL = 32
-        CREATE = 64
-        UPDATE = 128
-        DELETE = 512
-        QUERY = 1024
-        READ = 2048
-        WRITE = 4096
+        OWNER = PermissionAccess.OWNER.value
+        ADMIN = PermissionAccess.ADMIN.value
+        EDITOR = PermissionAccess.EDITOR.value
+        VIEWER = PermissionAccess.VIEWER.value
+        LIST = PermissionAccess.LIST.value
+        DETAIL = PermissionAccess.DETAIL.value
+        CREATE = PermissionAccess.CREATE.value
+        UPDATE = PermissionAccess.UPDATE.value
+        DELETE = PermissionAccess.DELETE.value
+        OPERATION_ALL = PermissionAccess.OPERATION_ALL.value
+        QUERY = PermissionAccess.QUERY.value
+        QUERY_ALL = PermissionAccess.QUERY_ALL.value
+        READ = PermissionAccess.READ.value
+        READ_ALL = PermissionAccess.READ_ALL.value
+        WRITE = PermissionAccess.WRITE.value
+        WRITE_ALL = PermissionAccess.WRITE_ALL.value
+        ALL = PermissionAccess.ALL.value
+        DISABLE_LIST = PermissionAccess.DISABLE_LIST.value
+        DISABLE_DETAIL = PermissionAccess.DISABLE_DETAIL.value
+        DISABLE_CREATE = PermissionAccess.DISABLE_CREATE.value
+        DISABLE_UPDATE = PermissionAccess.DISABLE_UPDATE.value
+        DISABLE_DELETE = PermissionAccess.DISABLE_DELETE.value
+        DISABLE_OPERATION_ALL = PermissionAccess.DISABLE_OPERATION_ALL.value
+        DISABLE_QUERY = PermissionAccess.DISABLE_QUERY.value
+        DISABLE_QUERY_ALL = PermissionAccess.DISABLE_QUERY_ALL.value
+        DISABLE_READ = PermissionAccess.DISABLE_READ.value
+        DISABLE_READ_ALL = PermissionAccess.DISABLE_READ_ALL.value
+        DISABLE_WRITE = PermissionAccess.DISABLE_WRITE.value
+        DISABLE_WRITE_ALL = PermissionAccess.DISABLE_WRITE_ALL.value
+        DISABLE_UNLESS_CONDITIONS = PermissionAccess.DISABLE_UNLESS_CONDITIONS.value
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
@@ -418,17 +684,39 @@ class Permission(BaseModel):
         ).all()
         new_permissions = []
         if len(permissions) == 0:
-            for access in [a.value for a in Permission.Access]:
+            for permission_access in [
+                Permission.Access.OWNER,
+                Permission.Access.ADMIN,
+                Permission.Access.EDITOR,
+                Permission.Access.VIEWER,
+            ]:
                 new_permissions.append(
                     self.create(
                         entity=entity,
                         entity_id=entity_id,
-                        access=access,
+                        access=permission_access.value,
                         commit=False,
                     )
                 )
             db_connection.session.commit()
         return new_permissions
+
+    @classmethod
+    def add_accesses(self, accesses: List[PermissionAccess]) -> int:
+        current = 0
+        for access in accesses:
+            access_current = bin(current)
+            access_new = bin(access)
+            current = int(access_current, 2) + int(access_new, 2)
+        return current
+
+    @property
+    def conditions(self) -> List[str]:
+        return self.__get_access_attributes('conditions')
+
+    @conditions.setter
+    def conditions(self, values: List[str]) -> None:
+        self.__set_access_attributes('conditions', values)
 
     @property
     def query_attributes(self) -> List[str]:
@@ -453,6 +741,63 @@ class Permission(BaseModel):
     @write_attributes.setter
     def write_attributes(self, values: List[str]) -> None:
         self.__set_access_attributes('write_attributes', values)
+
+    def users(self) -> List[User]:
+        row_number_column = (
+                func.
+                row_number().
+                over(
+                    order_by=asc(UserRole.id),
+                    partition_by=User.id,
+                ).
+                label('row_number')
+        )
+
+        query = (
+            User.
+            select(
+                User.avatar,
+                User.created_at,
+                User.email,
+                User.first_name,
+                User.id,
+                User.last_name,
+                User.preferences,
+                User.roles,
+                User.updated_at,
+                User.username,
+            ).
+            join(UserRole, UserRole.user_id == User.id).
+            join(Role, Role.id == UserRole.role_id).
+            join(
+                RolePermission,
+                and_(
+                    RolePermission.permission_id == self.id,
+                    RolePermission.role_id == Role.id,
+                ),
+            )
+        )
+
+        query = query.add_column(row_number_column)
+        query = query.from_self().filter(row_number_column == 1)
+        rows = query.all()
+
+        arr = []
+
+        for row in rows:
+            user = User()
+            user.avatar = row.avatar
+            user.created_at = row.created_at
+            user.first_name = row.first_name
+            user.id = row.id
+            user.last_name = row.last_name
+            user.preferences = row.preferences
+            user.roles = row.roles
+            user.updated_at = row.updated_at
+            user.username = row.username
+            arr.append(user)
+
+        return arr
 
     def __get_access_attributes(self, access_name: str) -> List[str]:
         return (self.options or {}).get(access_name)

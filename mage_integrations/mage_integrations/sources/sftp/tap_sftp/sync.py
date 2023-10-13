@@ -1,10 +1,10 @@
 import singer
 from singer import Transformer, metadata, utils
-from tap_sftp import stats
-from tap_sftp.aws_ssm import AWS_SSM
-from tap_sftp.singer_encodings import csv_handler
 
 from mage_integrations.sources.base import write_state
+from mage_integrations.sources.sftp.tap_sftp import stats
+from mage_integrations.sources.sftp.tap_sftp.aws_ssm import AWS_SSM
+from mage_integrations.sources.sftp.tap_sftp.singer_encodings import csv_handler
 
 LOGGER = singer.get_logger()
 

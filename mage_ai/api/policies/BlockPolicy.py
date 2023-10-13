@@ -160,13 +160,22 @@ BlockPolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DELETE,
-    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+BlockPolicy.allow_query([
+    'extension_uuid',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: (
+    policy.has_at_least_viewer_role() or
+    policy.has_at_least_editor_role_and_pipeline_edit_access()
+))
 
 BlockPolicy.allow_query([
     'block_language',
     'block_type',
-    'extension_uuid',
     'include_block_catalog',
     'update_state',
 ], scopes=[

@@ -26,6 +26,9 @@ import {
   REQUIRE_USER_AUTHENTICATION,
   REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
   REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+  REQUIRE_USER_PERMISSIONS,
+  REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+  REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
 } from '@utils/session';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -126,14 +129,28 @@ function MyApp(props: MyAppProps & AppProps) {
     windowIsDefined && window.location.hostname === 'demo.mage.ai',
     [windowIsDefined],
   );
+
   const val = Cookies.get(
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
     REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
   );
   const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
-  const { data } = api.statuses.list({}, {}, { pauseFetch: !noValue });
+
+  const valPermissions = Cookies.get(
+    REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+    REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
+  );
+  const noValuePermissions = typeof valPermissions === 'undefined'
+    || valPermissions === null
+    || !REQUIRE_USER_PERMISSIONS();
+
+  const { data } = api.statuses.list({}, {}, { pauseFetch: !noValue && !noValuePermissions });
+
   const requireUserAuthentication =
     useMemo(() => data?.statuses?.[0]?.require_user_authentication, [data]);
+  const requireUserPermissions =
+    useMemo(() => data?.statuses?.[0]?.require_user_permissions, [data]);
+
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 
   useEffect(() => {
@@ -145,6 +162,17 @@ function MyApp(props: MyAppProps & AppProps) {
         REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
         requireUserAuthentication,
         REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+      );
+    }
+
+    if (noValuePermissions &&
+      typeof requireUserPermissions !== 'undefined' &&
+      requireUserPermissions !== null
+    ) {
+      Cookies.set(
+        REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+        requireUserPermissions,
+        REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
       );
     }
 
@@ -162,7 +190,9 @@ function MyApp(props: MyAppProps & AppProps) {
   }, [
     dataProjects,
     noValue,
+    noValuePermissions,
     requireUserAuthentication,
+    requireUserPermissions,
     windowIsDefined,
   ]);
 

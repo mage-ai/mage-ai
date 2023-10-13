@@ -19,8 +19,11 @@ except ValueError:
     DISABLE_NOTEBOOK_EDIT_ACCESS = 1 if os.getenv('DISABLE_NOTEBOOK_EDIT_ACCESS') else 0
 
 
-def is_disable_pipeline_edit_access():
-    return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
+def is_disable_pipeline_edit_access(disable_notebook_edit_access_override: int = None):
+    value = DISABLE_NOTEBOOK_EDIT_ACCESS
+    if disable_notebook_edit_access_override is not None:
+        value = disable_notebook_edit_access_override
+    return value >= 1
 
 
 # ------------------------- DISABLE TERMINAL ----------------------
@@ -30,6 +33,8 @@ DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', '0').lower() in ('true', '1', '
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
+REQUIRE_USER_PERMISSIONS = REQUIRE_USER_AUTHENTICATION and \
+    os.getenv('REQUIRE_USER_PERMISSIONS', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
 try:
     MAGE_ACCESS_TOKEN_EXPIRY_TIME = int(os.getenv('MAGE_ACCESS_TOKEN_EXPIRY_TIME', '2592000'))

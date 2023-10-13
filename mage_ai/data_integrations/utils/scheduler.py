@@ -5,6 +5,7 @@ import shutil
 from typing import Dict, List, Union
 
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES
+from mage_ai.data_integrations.utils.config import build_config, get_batch_fetch_limit
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     MAX_QUERY_STRING_SIZE,
@@ -73,7 +74,7 @@ def initialize_state_and_runs(
     try:
         update_stream_states(pipeline_run, logger, variables)
 
-        block_runs = create_block_runs(pipeline_run, logger)
+        block_runs = create_block_runs(pipeline_run, logger, variables=variables)
 
         calculate_metrics(pipeline_run, logger=logger, logging_tags=tags)
 
@@ -90,8 +91,13 @@ def initialize_state_and_runs(
         raise err
 
 
-def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[BlockRun]:
-    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
+def create_block_runs(
+    pipeline_run: PipelineRun,
+    logger: DictLogger,
+    variables: Dict = None,
+) -> List[BlockRun]:
+    if variables is None:
+        variables = dict()
 
     integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
@@ -116,6 +122,10 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
         raise Exception("No Destination Block was found. \
                          Mage expects 1 Source and 1 Destination Block")
 
+    # Get batch fetch limit
+    source_config, _ = build_config(data_loader_block.file_path, variables)
+    batch_fetch_limit = get_batch_fetch_limit(source_config)
+
     transformer_blocks = [b for b in executable_blocks if b.uuid not in [
         data_loader_block.uuid,
         data_exporter_block.uuid,
@@ -139,7 +149,7 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
         record_counts = None
         if is_sql_source:
             record_counts = record_counts_by_stream[tap_stream_id]['count']
-        number_of_batches = math.ceil((record_counts or 1) / BATCH_FETCH_LIMIT)
+        number_of_batches = math.ceil((record_counts or 1) / batch_fetch_limit)
         tags2 = merge_dict(tags, dict(
             number_of_batches=number_of_batches,
             record_counts=record_counts,
@@ -372,12 +382,11 @@ def __build_block_run_metadata_for_source(
     logging_tags: Dict = None,
     selected_streams: List[str] = None,
 ) -> List[Dict]:
-    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-
     block_run_metadata = []
 
     catalog = data_integration_settings.get('catalog')
     config = data_integration_settings.get('config')
+    batch_fetch_limit = get_batch_fetch_limit(config)
 
     streams = selected_streams or \
         [s.get('tap_stream_id') for s in get_selected_streams(catalog)]
@@ -405,7 +414,7 @@ def __build_block_run_metadata_for_source(
         record_counts = None
         if is_sql_source:
             record_counts = record_counts_by_stream[tap_stream_id]['count']
-        number_of_batches = math.ceil((record_counts or 1) / BATCH_FETCH_LIMIT)
+        number_of_batches = math.ceil((record_counts or 1) / batch_fetch_limit)
         tags2 = merge_dict(tags, dict(
             number_of_batches=number_of_batches,
             record_counts=record_counts,

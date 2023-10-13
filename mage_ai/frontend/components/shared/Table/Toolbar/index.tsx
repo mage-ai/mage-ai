@@ -75,6 +75,7 @@ type ToolbarProps = {
   query?: {
     [keyof: string]: string[];
   };
+  resetPageOnFilterApply?: boolean;
   secondaryButtonProps?: {
     disabled?: boolean;
     isLoading?: boolean;
@@ -104,6 +105,7 @@ function Toolbar({
   onClickFilterDefaults,
   onFilterApply,
   query = {},
+  resetPageOnFilterApply,
   secondaryButtonProps,
   searchProps,
   selectedRowId,
@@ -243,6 +245,7 @@ function Toolbar({
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
       query={query}
+      resetPageOnApply={resetPageOnFilterApply}
       setOpen={setFilterButtonMenuOpen}
       toggleValueMapping={filterValueLabelMapping}
     >

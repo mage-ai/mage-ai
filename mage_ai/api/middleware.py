@@ -14,12 +14,12 @@ from mage_ai.server.api.constants import (
     URL_PARAMETER_API_KEY,
 )
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
-from mage_ai.shared.array import find
+from mage_ai.shared.requests import get_bearer_auth_token_from_headers
 
 
 class OAuthMiddleware(RequestHandler):
-    def initialize(self, bypass_oauth_check: bool = False) -> None:
-        self.bypass_oauth_check = bypass_oauth_check
+    def initialize(self, **kwargs) -> None:
+        self.bypass_oauth_check = kwargs.get('bypass_oauth_check', False)
 
     def prepare(self):
         self.request.__setattr__('current_user', None)
@@ -58,16 +58,7 @@ class OAuthMiddleware(RequestHandler):
         if not token_from_header:
             token_from_header = self.request.headers.get('Authorization')
             if token_from_header:
-                tokens = token_from_header.split(',')
-                token_from_header = find(lambda x: 'bearer' in x.lower(), tokens)
-                if token_from_header:
-                    token_from_header = (
-                        token_from_header.
-                        replace('Bearer ', '').
-                        replace('bearer ', '')
-                    )
-                else:
-                    token_from_header = None
+                token_from_header = get_bearer_auth_token_from_headers(self.request.headers)
             else:
                 token_from_header = self.request.query_arguments.get('HTTP_AUTHORIZATION', None)
 

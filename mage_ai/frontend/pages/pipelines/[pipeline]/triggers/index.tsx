@@ -1,10 +1,11 @@
 import NextLink from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import InteractionType from '@interfaces/InteractionType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
@@ -37,6 +38,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
+import { capitalize, randomNameGenerator } from '@utils/string';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { getFormattedVariables } from '@components/Sidekick/utils';
@@ -45,7 +47,6 @@ import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 
@@ -61,7 +62,8 @@ function PipelineSchedules({
   const router = useRouter();
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
-  const [errors, setErrors] = useState(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
+  const [triggerErrors, setTriggerErrors] = useState<ErrorsType>(null);
   const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(false);
 
   const { data: dataProjects } = api.projects.list();
@@ -73,7 +75,6 @@ function PipelineSchedules({
 
   const { data: dataClientPage } = api.client_pages.detail('pipeline_schedule:create', {
     'pipelines[]': [pipelineUUID],
-    'pipeline_schedules[]': [],
   }, {}, {
     key: `Triggers/Edit/${pipelineUUID}`,
   });
@@ -196,26 +197,43 @@ function PipelineSchedules({
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
     const variablesOverride = selectedSchedule?.variables;
-    const hasOverride = !isEmptyObject(variablesOverride);
-
-    const showVariables = hasOverride
-      ? selectedSchedule?.variables
-      : !isEmptyObject(variablesOrig) ? variablesOrig : null;
+    const hasVariables = !isEmptyObject(variablesOrig);
 
     return (props: DependencyGraphProps) => {
-      const dependencyGraphHeight = props.height - (showVariables ? 151 : 80);
+      /**
+       * Because it's required to specify the DependencyGraph height, we calculate
+       * the RuntimeVariables height here instead of within its component.
+       * We dynamically calculate the RuntimeVariables height based on the number
+       * of visible rows in the runtime variables table at any time.
+       */
+      let runtimeVariablesHeight = 80;
+      if (hasVariables) {
+        const maxVisibleRows = 5;
+        const headerRowHeight = 46; // Includes top + bottom border
+        const rowHeight = 43; // Includes bottom border
+        const numVariables = Object.keys(variablesOrig).length;
+        const numVisibleRows = Math.min(maxVisibleRows, numVariables);
+        runtimeVariablesHeight = headerRowHeight + (numVisibleRows * rowHeight) + 1;
+      }
+
+      const dependencyGraphHeight = props.height - runtimeVariablesHeight;
 
       return (
         <>
-          {showVariables && (
+          <DependencyGraph
+            {...props}
+            height={dependencyGraphHeight}
+            noStatus
+          />
+          {hasVariables && (
             <RuntimeVariables
-              hasOverride={hasOverride}
+              height={runtimeVariablesHeight}
               scheduleType={selectedSchedule?.schedule_type}
               variables={variablesOrig}
               variablesOverride={variablesOverride}
             />
           )}
-          {!showVariables && (
+          {!hasVariables && (
             <Spacing p={PADDING_UNITS}>
               <Text>
                 This pipeline has no runtime variables.
@@ -238,11 +256,6 @@ function PipelineSchedules({
               }
             </Spacing>
           )}
-          <DependencyGraph
-            {...props}
-            height={dependencyGraphHeight}
-            noStatus
-          />
         </>
       );
     };
@@ -266,6 +279,19 @@ function PipelineSchedules({
   } = useMemo(() => indexBy(dataPipelineTriggers?.pipeline_triggers || [], ({ name }) => name), [
     dataPipelineTriggers,
   ]);
+
+  useEffect(() => {
+    const triggers = dataPipelineTriggers?.pipeline_triggers || [];
+    const triggerWithInvalidCronExpression = triggers.find(({ settings }) => settings?.invalid_schedule_interval);
+    if (triggerWithInvalidCronExpression) {
+      setTriggerErrors({
+        displayMessage: `Schedule interval for Trigger (in code) "${triggerWithInvalidCronExpression?.name}"`
+          + ' is invalid. Please check your cron expression’s syntax in the pipeline’s triggers.yaml file.',
+      });
+    } else {
+      setTriggerErrors(null);
+    }
+  }, [dataPipelineTriggers?.pipeline_triggers]);
 
   const { data: dataTags } = api.tags.list();
   const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
@@ -346,6 +372,9 @@ function PipelineSchedules({
         type: Object.values(ScheduleTypeEnum),
       }}
       filterValueLabelMapping={{
+        status: Object.values(ScheduleStatusEnum).reduce(
+          (acc, cv) => ({ ...acc, [cv]: capitalize(cv) }), {},
+        ),
         tag: tags.reduce((acc, { uuid }) => ({
           ...acc,
           [uuid]: uuid,
@@ -359,6 +388,7 @@ function PipelineSchedules({
         );
       }}
       query={query}
+      resetPageOnFilterApply
       secondaryButtonProps={!isCreateDisabled && {
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
@@ -417,11 +447,25 @@ function PipelineSchedules({
     setIsCreatingTrigger,
   ]);
 
+  if (isCreatingTrigger) {
+    return (
+       <TriggerEdit
+        creatingWithLimitation
+        errors={errors}
+        onCancel={() => setIsCreatingTrigger(false)}
+        pipeline={dataPipeline?.pipeline}
+        project={project}
+        setErrors={setErrors}
+        useCreateScheduleMutation={useCreateScheduleMutation}
+      />
+    );
+  }
+
   return (
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
       buildSidekick={!isCreatingTrigger && buildSidekick}
-      errors={errors}
+      errors={errors || triggerErrors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       setErrors={setErrors}
@@ -429,18 +473,6 @@ function PipelineSchedules({
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
-      {isCreatingTrigger && (
-        <TriggerEdit
-          creatingWithLimitation
-          errors={errors}
-          onCancel={() => setIsCreatingTrigger(false)}
-          pipeline={dataPipeline?.pipeline}
-          project={project}
-          setErrors={setErrors}
-          useCreateScheduleMutation={useCreateScheduleMutation}
-        />
-      )}
-
       {!isCreatingTrigger && (
         <>
           <Divider light />
@@ -448,7 +480,7 @@ function PipelineSchedules({
           {!dataPipelineSchedules
             ?
               <Spacing m={2}>
-                <Spinner inverted />
+                <Spinner inverted large />
               </Spacing>
             :
               <>

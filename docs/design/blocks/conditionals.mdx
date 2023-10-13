@@ -6,14 +6,10 @@ description: "A conditional block is an 'Add-on Block,' associated with another 
 
 <Note>Requires version `0.8.93` or greater.</Note>
 
-Conditional blocks are part of your pipeline but don't run as individual steps in your pipeline
-like data loader blocks, transformer blocks, etc.
-However, conditional blocks are associated to other blocks within the pipeline
-(e.g. data loaders, transformers, data exporters, etc).
+Conditional blocks are part of your pipeline but don't run as individual steps in your pipeline like data loader blocks, transformer blocks, etc.
+However, conditional blocks are associated to other blocks within the pipeline (e.g. data loaders, transformers, data exporters, etc).
 
-Before those other blocks are executed,
-any associated conditional blocks will be executed. If any conditional block returns False, the
-parent block will not be executed, and its status will be set as `condition_failed`.
+Before those other blocks are executed, any associated conditional blocks will be executed. If any conditional block returns False, the parent block will not be executed, and its status will be set as `condition_failed`.
 
 ### An example condition
 
@@ -50,6 +46,7 @@ To add a condition to your block:
 4. In the conditional block's code, add a function that returns a boolean value. Be sure it's decorated with `@condition`.
 5. Select the magnifiying class icon at the bottom of the block to associate your conditional with a block.
 
+Looking for a video walkthrough? Check out our [tips and tricks](/guides/tips-and-tricks) page!
 
 ### Positional arguments
 

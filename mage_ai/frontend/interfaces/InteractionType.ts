@@ -15,6 +15,7 @@ export const INTERACTION_INPUT_TYPES = [
 ];
 
 export enum InteractionVariableTypeEnum {
+  BOOLEAN = 'boolean',
   DATE = 'date',
   DATETIME = 'datetime',
   DICTIONARY = 'dictionary',
@@ -25,6 +26,7 @@ export enum InteractionVariableTypeEnum {
 }
 
 export const INTERACTION_VARIABLE_VALUE_TYPES = [
+  InteractionVariableTypeEnum.BOOLEAN,
   InteractionVariableTypeEnum.DATE,
   InteractionVariableTypeEnum.DATETIME,
   InteractionVariableTypeEnum.DICTIONARY,

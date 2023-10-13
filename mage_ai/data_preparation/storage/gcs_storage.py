@@ -57,19 +57,32 @@ class GCSStorage(BaseStorage):
         for blob in blobs:
             blob.delete()
 
-    def read_json_file(self, file_path: str, default_value=None) -> Dict:
+    def read_json_file(
+        self,
+        file_path: str,
+        default_value=None,
+        raise_exception: bool = False,
+    ) -> Dict:
         if default_value is None:
             default_value = {}
         try:
             return json.loads(self.bucket.blob(gcs_url_path(file_path)).download_as_string())
         except Exception:
+            if raise_exception:
+                raise
             return default_value
 
-    async def read_json_file_async(self, file_path: str, default_value=None) -> Dict:
+    async def read_json_file_async(
+        self,
+        file_path: str,
+        default_value=None,
+        raise_exception: bool = False,
+    ) -> Dict:
         """
         TODO: Implement async http call.
         """
-        return self.read_json_file(file_path, default_value=default_value)
+        return self.read_json_file(
+            file_path, default_value=default_value, raise_exception=raise_exception)
 
     def write_json_file(self, file_path: str, data) -> None:
         blob = self.bucket.blob(gcs_url_path(file_path))

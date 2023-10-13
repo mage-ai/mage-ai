@@ -49,6 +49,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
@@ -100,6 +101,23 @@ class PipelineSchedule(BaseModel):
             )
         )
 
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value or len(value) == 0:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+    @classmethod
+    def fetch_pipeline_runs(self, ids: List[int]) -> List:
+        query = PipelineRun.query
+        query.cache = True
+        query = query.filter(PipelineRun.pipeline_schedule_id.in_(ids))
+        return query.all()
+
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
         return SettingsConfig.load(config=settings)
@@ -110,7 +128,7 @@ class PipelineSchedule(BaseModel):
 
     @property
     def pipeline_runs_count(self) -> int:
-        return len(self.pipeline_runs)
+        return len(self.fetch_pipeline_runs([self.id]))
 
     @property
     def timeout(self) -> int:
@@ -127,9 +145,9 @@ class PipelineSchedule(BaseModel):
 
     @property
     def last_pipeline_run_status(self) -> str:
-        if len(self.pipeline_runs) == 0:
+        if len(self.fetch_pipeline_runs([self.id])) == 0:
             return None
-        return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
 
     @property
     def tag_associations(self):
@@ -169,6 +187,70 @@ class PipelineSchedule(BaseModel):
             kwargs['token'] = uuid.uuid4().hex
         model = super().create(**kwargs)
         return model
+
+    @classmethod
+    @safe_db_query
+    def create_or_update_batch(self, trigger_configs: List[Trigger]):
+        trigger_names = []
+        trigger_pipeline_uuids = []
+        for trigger_config in trigger_configs:
+            trigger_names.append(trigger_config.name)
+            trigger_pipeline_uuids.append(trigger_config.pipeline_uuid)
+
+        existing_pipeline_schedules = PipelineSchedule.repo_query.filter(
+            PipelineSchedule.name.in_(trigger_names),
+            PipelineSchedule.pipeline_uuid.in_(trigger_pipeline_uuids),
+        ).all()
+
+        existing_pipeline_schedules_mapping = index_by(
+            lambda x: f'{x.pipeline_uuid}:{x.name}',
+            existing_pipeline_schedules,
+        )
+
+        triggers_to_create = []
+
+        for trigger_config in trigger_configs:
+            try:
+                existing_trigger = existing_pipeline_schedules_mapping.get(
+                    f'{trigger_config.pipeline_uuid}:{trigger_config.name}',
+                )
+            except Exception:
+                traceback.print_exc()
+                continue
+
+            kwargs = dict(
+                name=trigger_config.name,
+                pipeline_uuid=trigger_config.pipeline_uuid,
+                schedule_type=trigger_config.schedule_type,
+                start_time=trigger_config.start_time,
+                schedule_interval=trigger_config.schedule_interval,
+                status=trigger_config.status,
+                variables=trigger_config.variables,
+                sla=trigger_config.sla,
+                settings=trigger_config.settings,
+            )
+
+            if existing_trigger:
+                if any([
+                    existing_trigger.name != kwargs.get('name'),
+                    existing_trigger.pipeline_uuid != kwargs.get('pipeline_uuid'),
+                    existing_trigger.schedule_interval != kwargs.get('schedule_interval'),
+                    existing_trigger.schedule_type != kwargs.get('schedule_type'),
+                    existing_trigger.settings != kwargs.get('settings'),
+                    existing_trigger.sla != kwargs.get('sla'),
+                    existing_trigger.start_time != kwargs.get('start_time'),
+                    existing_trigger.status != kwargs.get('status'),
+                    existing_trigger.variables != kwargs.get('variables'),
+                ]):
+                    existing_trigger.update(**kwargs)
+            else:
+                triggers_to_create.append(kwargs)
+
+        db_connection.session.bulk_save_objects(
+            [PipelineSchedule(**data) for data in triggers_to_create],
+            return_defaults=True,
+        )
+        db_connection.session.commit()
 
     @classmethod
     @safe_db_query
@@ -332,7 +414,7 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
-            pipeline_run_count = len(self.pipeline_runs)
+            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
@@ -340,7 +422,7 @@ class PipelineSchedule(BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            if len(self.pipeline_runs) == 0:
+            if len(self.fetch_pipeline_runs([self.id])) == 0:
                 return True
             else:
                 return self.last_pipeline_run_status not in [
@@ -364,7 +446,7 @@ class PipelineSchedule(BaseModel):
                     x.execution_date.replace(tzinfo=pytz.UTC),
                     current_execution_date,
                 ) == 0,
-                self.pipeline_runs
+                self.fetch_pipeline_runs([self.id])
             ):
                 if self.landing_time_enabled():
                     if not previous_runtimes or len(previous_runtimes) == 0:
@@ -595,6 +677,12 @@ class PipelineRun(BaseModel):
     @property
     def pipeline_schedule_type(self):
         return self.pipeline_schedule.schedule_type
+
+    @property
+    def pipeline_tags(self):
+        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
+
+        return self.pipeline.tags if pipeline is not None else []
 
     def executable_block_runs(
         self,

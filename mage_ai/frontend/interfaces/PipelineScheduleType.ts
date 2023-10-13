@@ -60,6 +60,7 @@ export interface PipelineScheduleSettingsType {
   landing_time_enabled?: boolean;
   skip_if_previous_running?: boolean;
   timeout?: number;
+  invalid_schedule_interval?: boolean; // Used to detect triggers with invalid cron expressions
 }
 
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {

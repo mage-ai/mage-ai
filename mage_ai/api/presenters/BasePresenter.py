@@ -3,7 +3,7 @@ import inspect
 from collections import UserList
 from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, Callable, Union
+from typing import Any, Callable, Dict, Union
 
 from mage_ai.api.operations.constants import READ
 from mage_ai.api.resources.BaseResource import BaseResource
@@ -128,10 +128,15 @@ class BasePresenter():
     async def prepare_present(self, **kwargs) -> Union[Any, None]:
         return self
 
-    async def present(self, **kwargs):
+    async def present(self, present_options_by_key: Dict = None, **kwargs):
         object_to_present = await self.prepare_present(**kwargs)
 
-        async def _build(obj, key, object_to_present=object_to_present):
+        async def _build(
+            obj,
+            key,
+            object_to_present=object_to_present,
+            present_options_by_key=present_options_by_key,
+        ):
             if isinstance(object_to_present, dict):
                 value = object_to_present.get(key)
             else:
@@ -140,6 +145,9 @@ class BasePresenter():
             if callable(value):
                 value = value(**kwargs)
             self.__validate_attribute_type(key, value)
+
+            options_for_key = present_options_by_key.get(key) if present_options_by_key else {}
+
             if issubclass(
                     value.__class__,
                     list) or issubclass(
@@ -147,15 +155,21 @@ class BasePresenter():
                     UserList):
                 obj[key] = [
                     await self.__transform_value(
-                        key, v, **kwargs) for v in value]
+                        key,
+                        v,
+                        **merge_dict(kwargs, options_for_key or {}),
+                    ) for v in value]
             else:
-                obj[key] = await self.__transform_value(key, value, **kwargs)
+                obj[key] = await self.__transform_value(
+                    key,
+                    value,
+                    **merge_dict(kwargs, options_for_key or {}),
+                )
             return obj
 
         format_to_present = kwargs.get('format', None)
         if format_to_present and self.options.get('from_resource'):
-            from_resource_name = self.options['from_resource'].resource_name_singular(
-            )
+            from_resource_name = self.options['from_resource'].resource_name_singular()
             format_to_present = f'{from_resource_name}/{format_to_present}'
 
         mapping = {}

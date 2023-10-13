@@ -1,4 +1,4 @@
-from tap_pipedrive.stream import PipedriveStream
+from mage_integrations.sources.pipedrive.tap_pipedrive.stream import PipedriveStream
 
 
 class StagesStream(PipedriveStream):

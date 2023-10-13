@@ -1,13 +1,24 @@
-import urllib.parse
-import datetime
-from datetime import timedelta
 import copy
+import datetime
+import urllib.parse
+from datetime import timedelta
+
 import singer
-from singer import metrics, metadata, utils
-from singer import Transformer, should_sync_field, UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING
-from singer.utils import strptime_to_utc, strftime
-from tap_linkedin_ads.transform import transform_json, snake_case_to_camel_case
+from singer import (
+    UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING,
+    Transformer,
+    metadata,
+    metrics,
+    should_sync_field,
+    utils,
+)
+from singer.utils import strftime, strptime_to_utc
+
 from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.schema import STREAMS
+from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.transform import (
+    snake_case_to_camel_case,
+    transform_json,
+)
 from mage_integrations.sources.messages import write_schema as write_schema_orig
 
 LOGGER = singer.get_logger()

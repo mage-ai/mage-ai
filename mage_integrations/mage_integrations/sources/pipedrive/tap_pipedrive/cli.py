@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import singer
 import json
 import sys
-from tap_pipedrive.tap import PipedriveTap
 
+import singer
+
+from mage_integrations.sources.pipedrive.tap_pipedrive.tap import PipedriveTap
 
 logger = singer.get_logger()
 

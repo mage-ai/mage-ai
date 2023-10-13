@@ -1,24 +1,54 @@
-import time
-import sys
 import math
+import sys
+import time
+from json import JSONDecodeError
+
+import backoff
 import pendulum
 import requests
-import singer
 import simplejson
-import backoff
+import singer
 from requests.exceptions import ConnectionError, RequestException, Timeout
-from json import JSONDecodeError
-from singer import set_currently_syncing, metadata
+from singer import metadata, set_currently_syncing
 from singer.catalog import Catalog, CatalogEntry, Schema
-from .config import BASE_URL, CONFIG_DEFAULTS
-from .exceptions import (PipedriveError, PipedriveNotFoundError, PipedriveBadRequestError, PipedriveUnauthorizedError, PipedrivePaymentRequiredError, 
-                        PipedriveForbiddenError, PipedriveGoneError, PipedriveUnsupportedMediaError, PipedriveUnprocessableEntityError, PipedriveTooManyRequestsError, 
-                        PipedriveTooManyRequestsInSecondError,PipedriveInternalServiceError, PipedriveNotImplementedError, PipedriveServiceUnavailableError)
-from .streams import (CurrenciesStream, ActivityTypesStream, FiltersStream, StagesStream, PipelinesStream,
-                      RecentNotesStream, RecentUsersStream, RecentActivitiesStream, RecentDealsStream,
-                      RecentFilesStream, RecentOrganizationsStream, RecentPersonsStream, RecentProductsStream,
-                      DealStageChangeStream, DealsProductsStream)
 
+from mage_integrations.sources.pipedrive.tap_pipedrive.config import (
+    BASE_URL,
+    CONFIG_DEFAULTS,
+)
+from mage_integrations.sources.pipedrive.tap_pipedrive.exceptions import (
+    PipedriveBadRequestError,
+    PipedriveError,
+    PipedriveForbiddenError,
+    PipedriveGoneError,
+    PipedriveInternalServiceError,
+    PipedriveNotFoundError,
+    PipedriveNotImplementedError,
+    PipedrivePaymentRequiredError,
+    PipedriveServiceUnavailableError,
+    PipedriveTooManyRequestsError,
+    PipedriveTooManyRequestsInSecondError,
+    PipedriveUnauthorizedError,
+    PipedriveUnprocessableEntityError,
+    PipedriveUnsupportedMediaError,
+)
+from mage_integrations.sources.pipedrive.tap_pipedrive.streams import (
+    ActivityTypesStream,
+    CurrenciesStream,
+    DealsProductsStream,
+    DealStageChangeStream,
+    FiltersStream,
+    PipelinesStream,
+    RecentActivitiesStream,
+    RecentDealsStream,
+    RecentFilesStream,
+    RecentNotesStream,
+    RecentOrganizationsStream,
+    RecentPersonsStream,
+    RecentProductsStream,
+    RecentUsersStream,
+    StagesStream,
+)
 
 logger = singer.get_logger()
 
@@ -150,7 +180,7 @@ class PipedriveTap(object):
                 meta = metadata.to_map(meta)
                 meta[('properties', stream.state_field)]['inclusion'] = 'automatic'
                 meta = metadata.to_list(meta)
-         
+
             catalog.streams.append(CatalogEntry(
                 stream=stream.schema,
                 tap_stream_id=stream.schema,
@@ -360,7 +390,7 @@ class PipedriveTap(object):
             logger.debug('Required headers for rate throttling are not present in response header, '
                          'unable to throttle ..')
 
-def raise_for_error(response):   
+def raise_for_error(response):
     try:
         response.raise_for_status()
     except (requests.HTTPError, requests.ConnectionError) as error:

@@ -326,6 +326,21 @@ class PipelineInteractions:
 
         await self.save()
 
+    async def variables(self) -> Dict:
+        variables = {}
+
+        interaction = await self.interaction()
+        if not interaction:
+            return variables
+
+        for block_interactions in (interaction.blocks or {}).values():
+            for block_interaction in block_interactions:
+                interaction_base = InteractionBase(block_interaction.uuid)
+                interaction_variables = await interaction_base.variables()
+                variables.update(interaction_variables)
+
+        return variables
+
     async def to_dict(self) -> Dict:
         interaction = await self.interaction()
 

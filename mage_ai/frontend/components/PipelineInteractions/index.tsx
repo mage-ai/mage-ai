@@ -493,8 +493,6 @@ function PipelineInteractions({
     editingBlockInteractions,
   ]);
 
-  console.log(editingBlockInteractions)
-
   return (
     <Spacing
       p={PADDING_UNITS}

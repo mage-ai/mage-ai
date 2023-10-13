@@ -9,6 +9,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
+from mage_ai.orchestration.db.cache import CachingQuery, SessionWithCaching
 from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
 from mage_ai.shared.environments import is_dev, is_test
@@ -67,7 +68,12 @@ except SQLAlchemyError:
             **db_kwargs,
         )
 
-session_factory = sessionmaker(bind=engine)
+
+session_factory = sessionmaker(
+    class_=SessionWithCaching,
+    bind=engine,
+    query_cls=CachingQuery,
+)
 
 
 class DBConnection:
@@ -82,6 +88,16 @@ class DBConnection:
     def close_session(self):
         self.session.close()
         self.session = None
+
+    def start_cache(self):
+        if hasattr(self.session.registry.registry, 'value'):
+            if hasattr(self.session.registry.registry.value, 'start_cache'):
+                self.session.registry.registry.value.start_cache()
+
+    def stop_cache(self):
+        if hasattr(self.session.registry.registry, 'value'):
+            if hasattr(self.session.registry.registry.value, 'stop_cache'):
+                self.session.registry.registry.value.stop_cache()
 
 
 def get_postgresql_schema(url):

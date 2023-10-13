@@ -14,6 +14,7 @@ def access_tokens_for_client(
     client_id: str, user: User = None
 ) -> List[Oauth2AccessToken]:
     query = Oauth2Application.query.filter(Oauth2Application.client_id == client_id)
+    query.cache = True
     if user:
         query.filter(Oauth2Application.user_id == user.id)
 
@@ -21,7 +22,9 @@ def access_tokens_for_client(
 
     access_tokens = []
     if oauth_client:
-        access_tokens = Oauth2AccessToken.query.filter(
+        access_tokens = Oauth2AccessToken.query
+        access_tokens.cache = True
+        access_tokens = access_tokens.filter(
             Oauth2AccessToken.expires > datetime.utcnow(),
             Oauth2AccessToken.oauth2_application_id == oauth_client.id,
         )
