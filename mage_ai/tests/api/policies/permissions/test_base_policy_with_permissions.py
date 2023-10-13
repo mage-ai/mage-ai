@@ -346,6 +346,7 @@ for entity_name in [
             async def _test_action_with_disable_access_operation_all(
                 self,
                 access_disable=access_disable,
+                entity_name=entity_name,
                 operation=operation,
                 operation_access=operation_access,
             ):
@@ -722,6 +723,9 @@ for entity_name in [
                 return _test_attribute
 
             attribute_uuid = 'id'
+
+            attributes = [attribute_uuid]
+
             options = {}
             if AttributeOperationType.QUERY == attribute_operation:
                 options['query_attributes'] = [attribute_uuid]
@@ -739,7 +743,7 @@ for entity_name in [
                     access=operation_access,
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=options,
@@ -795,7 +799,7 @@ for entity_name in [
                             access=None,
                             access_attribute_operation=group_access,
                             attribute_operation_type=attribute_operation,
-                            attributes=[attribute_uuid],
+                            attributes=attributes,
                             entity_name=entity_name,
                             operation_type=operation,
                             permission_options=options,
@@ -846,7 +850,7 @@ for entity_name in [
                             access=None,
                             access_attribute_operation=group_access,
                             attribute_operation_type=attribute_operation,
-                            attributes=[attribute_uuid],
+                            attributes=attributes,
                             entity_name=entity_name,
                             operation_type=operation,
                             permission_options=options,
@@ -872,7 +876,7 @@ for entity_name in [
                         access=None,
                         access_attribute_operation=access_all,
                         attribute_operation_type=attribute_operation,
-                        attributes=[attribute_uuid],
+                        attributes=attributes,
                         entity_name=entity_name,
                         operation_type=operation,
                         permission_options=options,
@@ -905,7 +909,7 @@ for entity_name in [
                         disable_all_attribute_operation,
                     ]),
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=options,
@@ -925,7 +929,7 @@ for entity_name in [
                     access_attribute_operation=access_attribute_operation,
                     access_disable=access_disable,
                     attribute_operation=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation=operation,
                     operation_access=operation_access,
@@ -998,7 +1002,7 @@ for entity_name in [
                     ]),
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=merge_dict(
@@ -1025,7 +1029,7 @@ for entity_name in [
                     ]),
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=merge_dict(
@@ -1053,7 +1057,7 @@ for entity_name in [
                     ]),
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=merge_dict(
@@ -1080,7 +1084,7 @@ for entity_name in [
                     ]),
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=merge_dict(
@@ -1105,7 +1109,7 @@ for entity_name in [
                     ]),
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     operation_type=operation,
                     permission_options=merge_dict(
@@ -1129,7 +1133,7 @@ for entity_name in [
                     ]),
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation,
-                    attributes=[attribute_uuid],
+                    attributes=attributes,
                     entity_name=entity_name,
                     current_user=User(id=secrets.token_urlsafe()),
                     operation_type=operation,
