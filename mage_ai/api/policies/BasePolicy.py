@@ -381,7 +381,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         return self.__get_and_set_user_role_validation('has_at_least_viewer_role', _validate)
 
     async def authorize_action(self, action):
-        if self.is_owner():
+        if not REQUIRE_USER_AUTHENTICATION or self.is_owner():
             return True
 
         config = self.__class__.action_rule(action)
@@ -404,7 +404,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             raise ApiError(error)
 
     async def authorize_attribute(self, read_or_write, attrb, **kwargs):
-        if self.is_owner():
+        if not REQUIRE_USER_AUTHENTICATION or self.is_owner():
             return True
 
         api_operation_action = self.options.get(
@@ -474,6 +474,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
     async def authorize_query(self, query, **kwargs):
+        if not REQUIRE_USER_AUTHENTICATION:
+            return True
+
         query_filtered = ignore_keys(query or {}, [URL_PARAMETER_API_KEY])
 
         if not query_filtered:
