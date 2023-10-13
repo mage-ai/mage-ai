@@ -62,8 +62,8 @@ setuptools.setup(
         'dbt': [
             'dbt-bigquery==1.4.3',
             'dbt-core==1.4.8',
-            'dbt-duckdb==1.4.2',
             'dbt-dremio==1.5.0',
+            'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',
             'dbt-snowflake==1.4.1',
