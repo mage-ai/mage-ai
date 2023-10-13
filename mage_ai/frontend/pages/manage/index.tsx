@@ -134,6 +134,36 @@ function MoreActions({
         });
       }
     }
+
+    if (clusterType === 'k8s') {
+      if (status === 'STOPPED') {
+        items.unshift({
+          label: () => <Text>Resume instance</Text>,
+          // @ts-ignore
+          onClick: () => updateWorkspace({
+            workspace: {
+              action: 'resume',
+              cluster_type: clusterType,
+              name: instance.name,
+            },
+          }),
+          uuid: 'resume_instance',
+        });
+      } else if (status === 'RUNNING') {
+        items.unshift({
+          label: () => <Text>Stop instance</Text>,
+          // @ts-ignore
+          onClick: () => updateWorkspace({
+            workspace: {
+              action: 'stop',
+              cluster_type: clusterType,
+              name: instance.name,
+            },
+          }),
+          uuid: 'stop_instance',
+        });
+      }
+    }
     
     return items;
   }, [clusterType, instance, updateWorkspace]);
