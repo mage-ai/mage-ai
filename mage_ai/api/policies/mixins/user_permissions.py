@@ -212,7 +212,7 @@ async def validate_condition_with_permissions(
                         )
 
                 if conditions_evaluated and len(conditions_evaluated):
-                    valid_for_operation = all(conditions_evaluated)
+                    valid_for_operation = valid_for_operation and all(conditions_evaluated)
 
             if valid_for_operation:
                 permission_granted = True
