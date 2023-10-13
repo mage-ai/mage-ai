@@ -503,6 +503,7 @@ for entity_name in [
                     access=access,
                     access_attribute_operation=access_attribute_operation,
                     attribute_operation_type=attribute_operation_type,
+                    attributes=attributes,
                     current_user=current_user,
                     entity_name=entity_name,
                     operation_type=operation_type,
