@@ -43,7 +43,7 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone } from '@utils/date';
+import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
@@ -510,7 +510,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_started_at"
                     muted
-                    title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
                       ? (displayLocalTimezone
@@ -525,7 +525,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_completed_at"
                     muted
-                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone
@@ -606,7 +606,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_date"
-                    title={executionDate ? `UTC: ${executionDate}` : null}
+                    title={executionDate ? utcStringToElapsedTime(executionDate) : null}
                   >
                     {executionDate
                       ? (displayLocalTimezone
@@ -621,7 +621,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_started_at"
-                    title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
                       ? (displayLocalTimezone
@@ -636,7 +636,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_completed_at"
-                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone

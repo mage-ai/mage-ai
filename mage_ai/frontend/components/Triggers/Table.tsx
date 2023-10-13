@@ -42,7 +42,7 @@ import {
   checkIfCustomInterval,
   convertUtcCronExpressionToLocalTimezone,
 } from './utils';
-import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -495,7 +495,7 @@ function TriggersTable({
                     key={`created_at_${idx}`}
                     monospace
                     small
-                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
+                    title={createdAt ? utcStringToElapsedTime(createdAt) : null}
                   >
                     {datetimeInLocalTimezone(createdAt?.slice(0, 19), displayLocalTimezone)}
                   </Text>,

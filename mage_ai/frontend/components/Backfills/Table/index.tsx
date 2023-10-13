@@ -12,7 +12,7 @@ import { Edit } from '@oracle/icons';
 import { RunStatus } from '@interfaces/PipelineRunType';
 import { TIMEZONE_TOOLTIP_PROPS } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone } from '@utils/date';
+import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { isViewer } from '@utils/session';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
@@ -124,7 +124,7 @@ function BackfillsTable({
             key="started_at"
             monospace
             small
-            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+            title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
             {startedAt
               ? (displayLocalTimezone
@@ -140,7 +140,7 @@ function BackfillsTable({
             key="completed_at"
             monospace
             small
-            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+            title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
             {completedAt
               ? (displayLocalTimezone
