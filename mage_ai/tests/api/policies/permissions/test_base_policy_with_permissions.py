@@ -151,7 +151,7 @@ for entity_name in [
                     error = False
                     try:
                         await self.build_policy(entity_name=find(
-                            lambda x: x != entity_name,
+                            lambda x, entity_name=entity_name: x != entity_name,
                             entity_names,
                         )).authorize_action(operation_type)
                     except ApiError:
@@ -276,6 +276,7 @@ for entity_name in [
             async def _test_action_with_disable_access_operation_all(
                 self,
                 access_all=access_all,
+                access_disable=access_disable,
                 operation=operation,
             ):
                 self.bootstrap()
@@ -464,7 +465,7 @@ for entity_name in [
                         try:
                             if AttributeOperationType.QUERY == attribute_operation_type:
                                 await self.build_policy(entity_name=find(
-                                    lambda x: x != entity_name,
+                                    lambda x, entity_name=entity_name: x != entity_name,
                                     entity_names,
                                 )).authorize_query(
                                     index_by(lambda x: x, attributes),
@@ -473,7 +474,7 @@ for entity_name in [
                             else:
                                 for attribute in attributes:
                                     await self.build_policy(entity_name=find(
-                                        lambda x: x != entity_name,
+                                        lambda x, entity_name=entity_name: x != entity_name,
                                         entity_names,
                                     )).authorize_attribute(
                                         attribute_operation_type,
