@@ -111,12 +111,14 @@ for entity_name in [
             current_user=None,
             permission_options: Dict = None,
             test_suites: List[TestSuite] = None,
+            entity_name=entity_name,
         ):
             @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
             @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
             async def _test_action(
                 self,
                 access=access,
+                entity_name=entity_name,
                 current_user=current_user,
                 operation_type=operation_type,
                 permission_options=permission_options,
