@@ -89,6 +89,9 @@ class Snowflake(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
+        if self.disable_double_quotes:
+            schema_name = schema_name.upper()
+
         query = f"""
 SELECT
     column_name
