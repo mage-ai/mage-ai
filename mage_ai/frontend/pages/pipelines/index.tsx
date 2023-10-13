@@ -1352,7 +1352,7 @@ function PipelineListPage() {
             key={`pipeline_created_at_${idx}`}
             monospace
             small
-            title={createdAt ? utcStringToElapsedTime(createdAt.slice(0, 19)) : null}
+            title={createdAt ? utcStringToElapsedTime(createdAt) : null}
           >
             {createdAt
               ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)

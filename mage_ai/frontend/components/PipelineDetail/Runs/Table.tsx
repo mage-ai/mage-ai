@@ -510,7 +510,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_started_at"
                     muted
-                    title={startedAt ? utcStringToElapsedTime(startedAt.slice(0, 19)) : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
                       ? (displayLocalTimezone
@@ -525,7 +525,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     key="row_completed_at"
                     muted
-                    title={completedAt ? utcStringToElapsedTime(completedAt.slice(0, 19)) : null}
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone
@@ -621,7 +621,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_started_at"
-                    title={startedAt ? utcStringToElapsedTime(startedAt.slice(0, 19)) : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
                       ? (displayLocalTimezone
@@ -636,7 +636,7 @@ function PipelineRunsTable({
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_completed_at"
-                    title={completedAt ? utcStringToElapsedTime(completedAt.slice(0, 19)) : null}
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone

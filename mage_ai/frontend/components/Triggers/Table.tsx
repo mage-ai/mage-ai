@@ -495,7 +495,7 @@ function TriggersTable({
                     key={`created_at_${idx}`}
                     monospace
                     small
-                    title={createdAt ? utcStringToElapsedTime(createdAt.slice(0, 19)) : null}
+                    title={createdAt ? utcStringToElapsedTime(createdAt) : null}
                   >
                     {datetimeInLocalTimezone(createdAt?.slice(0, 19), displayLocalTimezone)}
                   </Text>,

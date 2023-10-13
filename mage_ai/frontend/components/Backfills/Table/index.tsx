@@ -124,7 +124,7 @@ function BackfillsTable({
             key="started_at"
             monospace
             small
-            title={startedAt ? utcStringToElapsedTime(startedAt.slice(0, 19)) : null}
+            title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
             {startedAt
               ? (displayLocalTimezone
@@ -140,7 +140,7 @@ function BackfillsTable({
             key="completed_at"
             monospace
             small
-            title={completedAt ? utcStringToElapsedTime(completedAt.slice(0, 19)) : null}
+            title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
             {completedAt
               ? (displayLocalTimezone
