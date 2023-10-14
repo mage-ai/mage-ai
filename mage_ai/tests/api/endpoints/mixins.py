@@ -1,5 +1,5 @@
 import importlib
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Union
 from unittest.mock import patch
 
 import inflection
@@ -48,6 +48,7 @@ def build_list_endpoint_tests(
     get_list_count: Callable[[AsyncDBTestCase], int] = None,
     resource_parent: str = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
+    result_keys_to_compare: List[str] = None,
 ):
     def _build_test_list_endpoint(
         authentication: int = None,
@@ -56,6 +57,7 @@ def build_list_endpoint_tests(
         get_list_count=get_list_count,
         resource=resource,
         resource_parent=resource_parent,
+        result_keys_to_compare=result_keys_to_compare,
         get_resource_parent_id=get_resource_parent_id,
     ):
         async def _test_list_endpoint(
@@ -66,6 +68,7 @@ def build_list_endpoint_tests(
             permissions=permissions,
             resource=resource,
             resource_parent=resource_parent,
+            result_keys_to_compare=result_keys_to_compare,
             get_resource_parent_id=get_resource_parent_id,
         ):
             await self.build_test_list_endpoint(
@@ -75,6 +78,7 @@ def build_list_endpoint_tests(
                 permissions=permissions,
                 resource=resource,
                 resource_parent=resource_parent,
+                result_keys_to_compare=result_keys_to_compare,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
             )
         return _test_list_endpoint
@@ -147,6 +151,7 @@ def build_detail_endpoint_tests(
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
     resource_parent: str = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
+    result_keys_to_compare: List[str] = None,
 ):
     def _build_test_detail_endpoint(
         authentication: int = None,
@@ -155,6 +160,7 @@ def build_detail_endpoint_tests(
         get_resource_parent_id=get_resource_parent_id,
         resource=resource,
         resource_parent=resource_parent,
+        result_keys_to_compare=result_keys_to_compare,
     ):
         async def _test_detail_endpoint(
             self,
@@ -164,6 +170,7 @@ def build_detail_endpoint_tests(
             permissions=permissions,
             resource=resource,
             resource_parent=resource_parent,
+            result_keys_to_compare=result_keys_to_compare,
         ):
             await self.build_test_detail_endpoint(
                 authentication=authentication,
@@ -171,6 +178,7 @@ def build_detail_endpoint_tests(
                 resource=resource,
                 resource_id=get_resource_id(self),
                 resource_parent=resource_parent,
+                result_keys_to_compare=result_keys_to_compare,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
             )
         return _test_detail_endpoint
@@ -321,6 +329,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         permissions: int = None,
         resource_parent: str = None,
         resource_parent_id: Union[int, str] = None,
+        result_keys_to_compare: List[str] = None,
     ):
         self.__create_authentications(
             resource,
@@ -350,11 +359,17 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
 
                 response = await base_operation.execute()
+                results = response[resource]
 
                 self.assertEqual(
-                    len(response[resource]),
+                    len(results),
                     get_list_count(self) if get_list_count else list_count,
                 )
+
+                if result_keys_to_compare:
+                    for result in results:
+                        validations = [k in result for k in result_keys_to_compare]
+                        self.assertTrue(all(validations))
 
     async def build_test_create_endpoint(
         self,
@@ -431,6 +446,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         permissions: int = None,
         resource_parent: str = None,
         resource_parent_id: Union[int, str] = None,
+        result_keys_to_compare: List[str] = None,
     ):
         self.__create_authentications(
             resource,
@@ -461,8 +477,13 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
 
                 response = await base_operation.execute()
+                result = response[singularize(resource)]
 
-                self.assertIsNotNone(response[singularize(resource)])
+                self.assertIsNotNone(result)
+
+                if result_keys_to_compare:
+                    validations = [k in result for k in result_keys_to_compare]
+                    self.assertTrue(all(validations))
 
     async def build_test_update_endpoint(
         self,

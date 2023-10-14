@@ -10,6 +10,10 @@ from mage_ai.tests.api.endpoints.mixins import (
 )
 
 
+def get_pipeline(self):
+    return Pipeline.get(self.pipeline.uuid)
+
+
 class BlockAPIEndpointTest(BaseAPIEndpointTest):
     pass
 
@@ -20,11 +24,23 @@ build_list_endpoint_tests(
     resource='block',
     resource_parent='pipelines',
     get_resource_parent_id=lambda self: self.pipeline.uuid,
+    result_keys_to_compare=[
+        'all_upstream_blocks_executed',
+        'color',
+        'configuration',
+        'downstream_blocks',
+        'executor_config',
+        'executor_type',
+        'has_callback',
+        'name',
+        'language',
+        'retry_config',
+        'status',
+        'timeout',
+        'type',
+        'upstream_blocks',
+    ],
 )
-
-
-def get_pipeline(self):
-    return Pipeline.get(self.pipeline.uuid)
 
 
 build_create_endpoint_tests(
@@ -46,6 +62,25 @@ build_detail_endpoint_tests(
     get_resource_id=lambda self: list(get_pipeline(self).blocks_by_uuid.values())[0].uuid,
     resource_parent='pipelines',
     get_resource_parent_id=lambda self: self.pipeline.uuid,
+    result_keys_to_compare=[
+        'all_upstream_blocks_executed',
+        'color',
+        'configuration',
+        'content',
+        'downstream_blocks',
+        'executor_config',
+        'executor_type',
+        'has_callback',
+        'language',
+        'name',
+        'outputs',
+        'retry_config',
+        'status',
+        'timeout',
+        'type',
+        'upstream_blocks',
+        'uuid',
+    ],
 )
 
 

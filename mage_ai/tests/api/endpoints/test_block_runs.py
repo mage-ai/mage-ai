@@ -30,4 +30,16 @@ build_list_endpoint_tests(
     get_list_count=lambda self: self.block_runs_count + 1,
     get_resource_parent_id=lambda self: self.pipeline_run.id,
     resource_parent='pipeline_runs',
+    result_keys_to_compare=[
+        'block_uuid',
+        'completed_at',
+        'created_at',
+        'id',
+        'pipeline_run_id',
+        'pipeline_schedule_id',
+        'pipeline_schedule_name',
+        'started_at',
+        'status',
+        'updated_at',
+    ],
 )
