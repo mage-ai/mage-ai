@@ -477,7 +477,6 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
 
                 response = await base_operation.execute()
-                print(response)
                 result = response[singularize(resource)]
 
                 self.assertIsNotNone(result)
@@ -542,11 +541,12 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                         model_before_update = get_model_before_update(self)
 
                 response = await base_operation.execute()
+                result = response[singularize(resource)]
 
-                self.assertIsNotNone(response[singularize(resource)])
+                self.assertIsNotNone(result)
 
                 if assert_after_update is not None:
-                    self.assertTrue(assert_after_update(self, payload, model_before_update))
+                    self.assertTrue(assert_after_update(self, result, model_before_update))
                 else:
                     model = get_resource(resource).model_class.get(resource_id)
                     if updated_at is not None:

@@ -42,7 +42,6 @@ class FileAPIEndpointTest(BaseAPIEndpointTest):
 build_list_endpoint_tests(
     FileAPIEndpointTest,
     list_count=1,
-    # get_list_count
     resource='files',
     result_keys_to_compare=[
         'children',
