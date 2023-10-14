@@ -1,19 +1,15 @@
+import json
 from datetime import datetime
 from functools import reduce
-from mage_ai.api.operations.base import BaseOperation
-from mage_ai.api.operations.constants import (
-    CREATE,
-    DELETE,
-    DETAIL,
-    LIST,
-    UPDATE,
-)
+from typing import Dict, List, Tuple, Union
+
+import simplejson
+
 from mage_ai.api.logging import debug, error, info
+from mage_ai.api.operations.base import BaseOperation
+from mage_ai.api.operations.constants import CREATE, DELETE, DETAIL, LIST, UPDATE
 from mage_ai.services.tracking.metrics import increment, timing
 from mage_ai.shared.parsers import encode_complex
-from typing import Dict, List, Tuple, Union
-import json
-import simplejson
 
 
 async def execute_operation(
@@ -67,9 +63,9 @@ async def execute_operation(
 
     end_time = datetime.utcnow()
 
-    error = response.get('error', None)
-    if error:
-        return __render_error(handler, error, **tags)
+    error_response = response.get('error', None)
+    if error_response:
+        return __render_error(handler, error_response, **tags)
 
     info('Action: {} {} {} {} {}'.format(
         action,

@@ -381,7 +381,13 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         return self.__get_and_set_user_role_validation('has_at_least_viewer_role', _validate)
 
     async def authorize_action(self, action):
-        if not REQUIRE_USER_AUTHENTICATION or self.is_owner():
+        if (
+            not REQUIRE_USER_AUTHENTICATION and
+            not DISABLE_NOTEBOOK_EDIT_ACCESS and
+            action in [OperationType.CREATE, OperationType.DELETE, OperationType.UPDATE]
+        ) or \
+                self.is_owner():
+
             return True
 
         config = self.__class__.action_rule(action)
