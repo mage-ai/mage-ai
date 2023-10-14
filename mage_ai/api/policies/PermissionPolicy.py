@@ -36,6 +36,7 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+    constants.DELETE,
     constants.DETAIL,
     constants.LIST,
     constants.UPDATE,
@@ -44,6 +45,7 @@ PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
 
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     'role',
+    'roles',
     'user',
     'user_id',
     'users',
