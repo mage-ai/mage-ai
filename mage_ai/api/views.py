@@ -37,7 +37,7 @@ async def execute_operation(
     action, options = __determine_action(
         request, child=child, child_pk=child_pk, pk=pk)
     try:
-        response = await BaseOperation(
+        base_operation = BaseOperation(
             action=action,
             files=request.files,
             headers=request.headers,
@@ -52,7 +52,8 @@ async def execute_operation(
             resource_parent=resource if child else None,
             resource_parent_id=pk if child else None,
             user=request.current_user,
-        ).execute()
+        )
+        response = await base_operation.execute()
     except Exception as err:
         __log_error(
             request,
