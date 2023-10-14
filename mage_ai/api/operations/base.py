@@ -48,7 +48,7 @@ class BaseOperation():
         self.oauth_client = kwargs.get('oauth_client')
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
-        self.payload = kwargs.get('payload', {})
+        self.payload = kwargs.get('payload') or {}
         self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
@@ -198,7 +198,7 @@ class BaseOperation():
         query = {}
         for key, values in self._query.items():
             query[key] = values
-            if type(values) is list:
+            if isinstance(values, list):
                 arr = []
                 for v in values:
                     try:

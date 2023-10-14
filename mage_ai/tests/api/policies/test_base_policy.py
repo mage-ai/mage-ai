@@ -84,6 +84,7 @@ CustomTestPolicy.allow_query(
 )
 
 
+@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
 class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
     def test_entity(self):
         self.assertEqual(CustomTestPolicy(None, None).entity, (Entity.PROJECT, get_project_uuid()))
@@ -602,23 +603,6 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
         self.cleanup()
 
     @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
-    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0)
-    def test_current_scope_with_disable_notebook_edit_access_and_not_require_user_authentication(
-        self,
-    ):
-        policy = CustomTestPolicy(None, None)
-        self.assertEqual(policy.current_scope(), OauthScopeType.CLIENT_PRIVATE)
-
-    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 0)
-    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0)
-    def test_current_scope_without_disable_notebook_edit_access_and_not_require_user_authentication(
-        self,
-    ):
-        policy = CustomTestPolicy(None, None)
-        self.assertEqual(policy.current_scope(), OauthScopeType.CLIENT_PUBLIC)
-
-    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
-    @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
     def test_current_scope_with_disable_notebook_edit_access_and_require_user_authentication(
         self,
     ):
@@ -727,3 +711,20 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
             )
 
         self.cleanup()
+
+
+@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0)
+class BasePolicyWithoutUserAuthenticationTest(BaseApiTestCase, BootstrapMixin):
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
+    def test_current_scope_with_disable_notebook_edit_access_and_not_require_user_authentication(
+        self,
+    ):
+        policy = CustomTestPolicy(None, None)
+        self.assertEqual(policy.current_scope(), OauthScopeType.CLIENT_PRIVATE)
+
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 0)
+    def test_current_scope_without_disable_notebook_edit_access_and_not_require_user_authentication(
+        self,
+    ):
+        policy = CustomTestPolicy(None, None)
+        self.assertEqual(policy.current_scope(), OauthScopeType.CLIENT_PUBLIC)

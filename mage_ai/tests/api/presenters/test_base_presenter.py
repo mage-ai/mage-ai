@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.policies.BasePolicy import BasePolicy
@@ -48,6 +50,7 @@ class TestGenericResource(GenericResource):
         return TestPresenter
 
 
+@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
 class BasePresenterTest(BaseApiTestCase, BootstrapMixin):
     async def test_present_resource_database_resource(self):
         self.bootstrap()

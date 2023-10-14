@@ -741,6 +741,12 @@
               "pages": [
                 "contributing/backend/streaming/sources-and-destinations"
               ]
+            },
+            {
+              "group": "Testing",
+              "pages": [
+                "contributing/backend/testing/overview"
+              ]
             }
           ]
         },
