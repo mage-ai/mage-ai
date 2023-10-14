@@ -43,8 +43,9 @@ def get_resource(resource: str):
 
 def build_list_endpoint_tests(
     test_class,
-    list_count: int,
     resource: str,
+    list_count: int = None,
+    get_list_count: Callable[[AsyncDBTestCase], int] = None,
     resource_parent: str = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
 ):
@@ -52,6 +53,7 @@ def build_list_endpoint_tests(
         authentication: int = None,
         permissions: int = None,
         list_count=list_count,
+        get_list_count=get_list_count,
         resource=resource,
         resource_parent=resource_parent,
         get_resource_parent_id=get_resource_parent_id,
@@ -60,6 +62,7 @@ def build_list_endpoint_tests(
             self,
             authentication=authentication,
             list_count=list_count,
+            get_list_count=get_list_count,
             permissions=permissions,
             resource=resource,
             resource_parent=resource_parent,
@@ -68,6 +71,7 @@ def build_list_endpoint_tests(
             await self.build_test_list_endpoint(
                 authentication=authentication,
                 list_count=list_count,
+                get_list_count=get_list_count,
                 permissions=permissions,
                 resource=resource,
                 resource_parent=resource_parent,
@@ -311,7 +315,8 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
     async def build_test_list_endpoint(
         self,
         resource: str,
-        list_count: int,
+        list_count: int = None,
+        get_list_count: Callable[[AsyncDBTestCase], int] = None,
         authentication: int = None,
         permissions: int = None,
         resource_parent: str = None,
@@ -346,7 +351,10 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
 
                 response = await base_operation.execute()
 
-                self.assertEqual(len(response[resource]), list_count)
+                self.assertEqual(
+                    len(response[resource]),
+                    get_list_count(self) if get_list_count else list_count,
+                )
 
     async def build_test_create_endpoint(
         self,
