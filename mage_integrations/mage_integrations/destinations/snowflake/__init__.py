@@ -259,7 +259,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
     def full_table_name(self, database_name: str, schema_name: str, table_name: str) -> str:
         if self.disable_double_quotes:
             # Use uppercase for the database, schema and table name if double quotes are disabled
-            return f'{database_name.upper()}.{schema_name.upper()}.{table_name.upper()}'
+            return f'{database_name}.{schema_name}.{table_name}'
 
         return f'"{database_name}"."{schema_name}"."{table_name}"'
 
@@ -337,9 +337,9 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         success, num_chunks, num_rows, output = write_pandas(
             connection,
             df,
-            table,
-            database=database,
-            schema=schema,
+            table.upper() if self.disable_double_quotes else table,
+            database=database.upper() if self.disable_double_quotes else database,
+            schema=schema.upper if self.disable_double_quotes else schema,
             auto_create_table=False,
         )
         snowflake_connection.close_connection(connection)
