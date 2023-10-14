@@ -3,8 +3,6 @@ from unittest.mock import patch
 from mage_ai.tests.api.operations.base.mixins import Base
 
 
-@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0)
-@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 0)
 class BaseOperationsTest(Base):
     def setUp(self):
         self.set_up()
@@ -12,14 +10,30 @@ class BaseOperationsTest(Base):
     def tearDown(self):
         self.tear_down()
 
-    def test_query_getter(self):
-        self.run_test_query_getter()
 
-    def test_query_setter(self):
-        self.run_test_query_setter()
+for method_name in dir(Base):
+    if not method_name.startswith('run_mixin_'):
+        continue
 
-    async def test_execute_list(self):
-        await self.run_test_execute_list()
+    async def _test(self, method=method_name):
+        with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0):
+            with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 0):
+                await getattr(self, method)()
 
-    async def test_execute_list_with_query(self):
-        await self.run_test_execute_list_with_query()
+    setattr(
+        BaseOperationsTest,
+        method_name.replace('run_mixin_', ''),
+        _test,
+    )
+
+    if method_name.startswith('run_mixin_test_execute_'):
+        async def _test_with_parent(self, method=method_name):
+            with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 0):
+                with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 0):
+                    await getattr(self, method)(**getattr(self, 'parent_resource_options')())
+
+        setattr(
+            BaseOperationsTest,
+            method_name.replace('run_mixin_', '') + '_with_parent',
+            _test_with_parent,
+        )
