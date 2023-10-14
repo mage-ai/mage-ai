@@ -40,5 +40,5 @@ build_update_endpoint_tests(
     get_resource_id=get_resource_id,
     build_payload=lambda self: dict(content=self.faker.unique.name()),
     get_model_before_update=get_model_before_update,
-    assert_after_update=lambda self, payload, model: model != payload['content'],
+    assert_after_update=lambda self, result, model: model != result['content'],
 )

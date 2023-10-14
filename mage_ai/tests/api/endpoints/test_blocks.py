@@ -90,7 +90,7 @@ build_update_endpoint_tests(
     get_resource_id=lambda self: list(get_pipeline(self).blocks_by_uuid.values())[0].uuid,
     build_payload=lambda self: dict(name=self.faker.unique.name()),
     get_model_before_update=lambda self: list(get_pipeline(self).blocks_by_uuid.values())[0],
-    assert_after_update=lambda self, payload, model: model.name != payload['name'],
+    assert_after_update=lambda self, result, model: model.name != result['name'],
     resource_parent='pipelines',
     get_resource_parent_id=lambda self: self.pipeline.uuid,
 )

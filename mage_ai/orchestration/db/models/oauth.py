@@ -31,6 +31,7 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import group_by, merge_dict
 
 
@@ -610,7 +611,7 @@ class Permission(BaseModel):
 
     @validates('entity')
     def validate_entity(self, key, value):
-        if value == Entity.ANY:
+        if not is_test() and value == Entity.ANY:
             raise ValidationError(
                 'Permission entity cannot be ANY. Please select a specific entity.',
                 metadata=dict(

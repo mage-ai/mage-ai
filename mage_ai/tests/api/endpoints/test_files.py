@@ -70,7 +70,7 @@ build_update_endpoint_tests(
         name=self.faker.unique.name().replace(' ', '_'),
     ),
     get_model_before_update=get_model_before_update,
-    assert_after_update=lambda self, payload, model: model.filename != payload['name'],
+    assert_after_update=lambda self, result, model: model.filename != result['name'],
 )
 
 
