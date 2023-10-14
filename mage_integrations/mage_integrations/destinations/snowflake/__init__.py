@@ -339,7 +339,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             df,
             table.upper() if self.disable_double_quotes else table,
             database=database.upper() if self.disable_double_quotes else database,
-            schema=schema.upper if self.disable_double_quotes else schema,
+            schema=schema.upper() if self.disable_double_quotes else schema,
             auto_create_table=False,
         )
         snowflake_connection.close_connection(connection)
