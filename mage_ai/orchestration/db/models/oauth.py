@@ -111,7 +111,11 @@ class User(BaseModel):
 
         roles = self.fetch_roles([self.id])
         permissions = Role.fetch_permissions([r.id for r in roles])
-        permissions_mapping = group_by(lambda x: x.role_id, permissions)
+        permissions_role = Role.fetch_role_permissions([r.id for r in roles])
+        permissions_mapping = merge_dict(
+            group_by(lambda x: x.role_id, permissions),
+            group_by(lambda x: x.role_id, permissions_role),
+        )
 
         for role in roles:
             permissions_for_role = permissions_mapping.get(role.id) or []
