@@ -6,6 +6,7 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import dark from '@oracle/styles/themes/dark';
 
+import { BREAKPOINT_MEDIUM } from '@styles/theme';
 import { 
   DropdownCellStyle, 
   DropdownContainerStyle, 
@@ -36,6 +37,7 @@ function ServerTimeDropdown() {
 
   const displayLocalServerTime = shouldDisplayLocalServerTime();
   const includeServerTimeSeconds = shouldIncludeServerTimeSeconds();
+  const isSmallBreakpoint = window.innerWidth < BREAKPOINT_MEDIUM;
 
   const defaultTimeZone = displayLocalServerTime
     ? TimeZoneEnum.LOCAL 
@@ -86,8 +88,9 @@ function ServerTimeDropdown() {
       <div style={{ position: 'relative' }}>
         <Button 
           backgroundColor={dark.background.dashboard}
-          borderLess 
+          borderLess
           compact 
+          disabled={isSmallBreakpoint}
           onClick={() => setShowDropdown(prevState => !prevState)}
           ref={buttonRef}
         >
@@ -96,7 +99,7 @@ function ServerTimeDropdown() {
           </Text>
         </Button>
 
-        {showDropdown && (
+        {!isSmallBreakpoint && showDropdown && (
           <DropdownContainerStyle top={top}>
             <DropdownHeaderStyle>
               <Text bold muted uppercase>Server Time</Text>
