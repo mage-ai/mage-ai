@@ -477,6 +477,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
 
                 response = await base_operation.execute()
+                print(response)
                 result = response[singularize(resource)]
 
                 self.assertIsNotNone(result)
