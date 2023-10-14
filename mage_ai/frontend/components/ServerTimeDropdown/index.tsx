@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import dark from '@oracle/styles/themes/dark';
 
 import { 
@@ -10,11 +11,18 @@ import {
   DropdownContainerStyle, 
   DropdownHeaderStyle, 
   TimeColumnStyle,
-  TimeListContainerStyle, 
+  TimeListContainerStyle,
+  ToggleDropdownCellStyle,
+  ToggleGroupStyle, 
 } from './index.style';
 import { PURPLE2 } from '@oracle/styles/colors/main';
 import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
-import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { 
+  shouldDisplayLocalServerTime, 
+  shouldIncludeServerTimeSeconds, 
+  storeDisplayLocalServerTime, 
+  storeIncludeServerTimeSeconds, 
+} from './utils';
 
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
@@ -26,9 +34,25 @@ function ServerTimeDropdown() {
   );
   const [top, setTop] = useState<number>(0);
 
-  const defaultTimeZone = shouldDisplayLocalTimezone 
+  const displayLocalServerTime = shouldDisplayLocalServerTime();
+  const includeServerTimeSeconds = shouldIncludeServerTimeSeconds();
+
+  const defaultTimeZone = displayLocalServerTime
     ? TimeZoneEnum.LOCAL 
     : TimeZoneEnum.UTC;
+
+  const toggleOptions = [
+    {
+      checked: displayLocalServerTime,
+      label: 'Show as local time',
+      onCheck: () => storeDisplayLocalServerTime(!displayLocalServerTime),
+    },
+    {
+      checked: includeServerTimeSeconds,
+      label: 'Include seconds',
+      onCheck: () => storeIncludeServerTimeSeconds(!includeServerTimeSeconds),
+    },
+  ];
 
   useEffect(() => {
     // Make sure the dropdown shows below the button
@@ -36,14 +60,24 @@ function ServerTimeDropdown() {
       setTop(buttonRef.current.offsetHeight);
     }
 
+    // Update the time immediately when "Include seconds" toggle switches
+    const updatedTimes = currentTimes({ 
+      includeSeconds: includeServerTimeSeconds, 
+      timeZones: DISPLAYED_TIME_ZONES, 
+    });
+    setTimes(updatedTimes);
+
     // Dynamically update the time every second
     const interval = setInterval(() => {
-      const updatedTimes = currentTimes({ includeSeconds: true, timeZones: DISPLAYED_TIME_ZONES });
+      const updatedTimes = currentTimes({ 
+        includeSeconds: includeServerTimeSeconds, 
+        timeZones: DISPLAYED_TIME_ZONES, 
+      });
       setTimes(updatedTimes);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [includeServerTimeSeconds]);
 
   if (!times) return null;
 
@@ -87,6 +121,19 @@ function ServerTimeDropdown() {
                 ))
               }
             </TimeListContainerStyle>
+            <ToggleGroupStyle>
+              {toggleOptions.map((option) => (
+                <ToggleDropdownCellStyle key={option.label}>
+                  <ToggleSwitch 
+                    checked={option.checked}
+                    compact 
+                    onCheck={option.onCheck} 
+                    purpleBackground
+                  />
+                  <Text>{option.label}</Text>
+                </ToggleDropdownCellStyle>
+              ))}
+            </ToggleGroupStyle>
           </DropdownContainerStyle>
         )}
       </div>

@@ -59,3 +59,13 @@ export const DropdownCellStyle = styled.div<{
   
   background-color: ${props => (props.theme.background || dark.background).dashboard};
 `;
+
+export const ToggleGroupStyle = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+export const ToggleDropdownCellStyle = styled(DropdownCellStyle)`
+  justify-content: flex-start;
+  gap: 12px;
+`;

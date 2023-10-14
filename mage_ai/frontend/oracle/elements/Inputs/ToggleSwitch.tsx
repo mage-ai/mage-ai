@@ -110,6 +110,7 @@ const ToggleSwitch = ({
       >
         <input
           checked={checked}
+          readOnly
           type="checkbox"
         />
         <span

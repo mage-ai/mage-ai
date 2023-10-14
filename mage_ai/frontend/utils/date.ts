@@ -40,7 +40,7 @@ export const TIME_ZONE_NAMES: {
   [key in TimeZoneEnum]: string
 } = {
   [TimeZoneEnum.LOCAL]: LOCAL_TIMEZONE,
-  [TimeZoneEnum.UTC]: 'Coordinated Universal Time',
+  [TimeZoneEnum.UTC]: 'Etc/Universal',
 };
 
 export function formatDateShort(momentObj) {
