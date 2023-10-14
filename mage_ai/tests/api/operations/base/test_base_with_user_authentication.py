@@ -30,7 +30,7 @@ for method_name in dir(Base):
         async def _test_with_parent(self, method=method_name):
             with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1):
                 with patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 0):
-                    await getattr(self, method)(self.parent_resource_options())
+                    await getattr(self, method)(**self.parent_resource_options())
 
         setattr(
             BaseOperationsWithUserAuthenticationTest,
