@@ -58,6 +58,7 @@ def build_list_endpoint_tests(
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
     result_keys_to_compare: List[str] = None,
     build_query: Callable[[AsyncDBTestCase], Dict] = None,
+    build_meta: Callable[[AsyncDBTestCase], Dict] = None,
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
@@ -71,6 +72,7 @@ def build_list_endpoint_tests(
         resource_parent=resource_parent,
         result_keys_to_compare=result_keys_to_compare,
         build_query=build_query,
+        build_meta=build_meta,
         get_resource_parent_id=get_resource_parent_id,
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
@@ -86,6 +88,7 @@ def build_list_endpoint_tests(
             resource_parent=resource_parent,
             result_keys_to_compare=result_keys_to_compare,
             build_query=build_query,
+            build_meta=build_meta,
             get_resource_parent_id=get_resource_parent_id,
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
@@ -100,6 +103,7 @@ def build_list_endpoint_tests(
                 resource_parent=resource_parent,
                 result_keys_to_compare=result_keys_to_compare,
                 build_query=build_query,
+                build_meta=build_meta,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
@@ -265,6 +269,7 @@ def build_detail_endpoint_tests(
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
     result_keys_to_compare: List[str] = None,
     build_query: Callable[[AsyncDBTestCase], Dict] = None,
+    build_meta: Callable[[AsyncDBTestCase], Dict] = None,
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
@@ -278,6 +283,7 @@ def build_detail_endpoint_tests(
         resource_parent=resource_parent,
         result_keys_to_compare=result_keys_to_compare,
         build_query=build_query,
+        build_meta=build_meta,
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
@@ -292,6 +298,7 @@ def build_detail_endpoint_tests(
             resource_parent=resource_parent,
             result_keys_to_compare=result_keys_to_compare,
             build_query=build_query,
+            build_meta=build_meta,
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
@@ -304,6 +311,7 @@ def build_detail_endpoint_tests(
                 resource_parent=resource_parent,
                 result_keys_to_compare=result_keys_to_compare,
                 build_query=build_query,
+                build_meta=build_meta,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
@@ -588,6 +596,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         resource_parent_id: Union[int, str] = None,
         result_keys_to_compare: List[str] = None,
         build_query: Callable[[AsyncDBTestCase], Dict] = None,
+        build_meta: Callable[[AsyncDBTestCase], Dict] = None,
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
@@ -617,9 +626,21 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
                 permissions or 0,
             ):
+                meta = None
+                if build_meta:
+                    meta = build_meta(self)
+                    if meta and inspect.isawaitable(meta):
+                        meta = await meta
+                query = None
+                if build_query:
+                    query = build_query(self)
+                    if query and inspect.isawaitable(query):
+                        query = await query
+
                 base_operation = BaseOperation(
                     action=OperationType.LIST,
-                    query=build_query(self) if build_query else None,
+                    meta=meta,
+                    query=query,
                     resource=resource,
                     resource_parent=resource_parent,
                     resource_parent_id=resource_parent_id,
@@ -724,6 +745,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         resource_parent_id: Union[int, str] = None,
         result_keys_to_compare: List[str] = None,
         build_query: Callable[[AsyncDBTestCase], Dict] = None,
+        build_meta: Callable[[AsyncDBTestCase], Dict] = None,
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
@@ -753,10 +775,22 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
                 permissions or 0,
             ):
+                meta = None
+                if build_meta:
+                    meta = build_meta(self)
+                    if meta and inspect.isawaitable(meta):
+                        meta = await meta
+                query = None
+                if build_query:
+                    query = build_query(self)
+                    if query and inspect.isawaitable(query):
+                        query = await query
+
                 base_operation = BaseOperation(
                     action=OperationType.DETAIL,
+                    meta=meta,
                     pk=resource_id,
-                    query=build_query(self) if build_query else None,
+                    query=query,
                     resource=resource,
                     resource_parent=resource_parent,
                     resource_parent_id=resource_parent_id,

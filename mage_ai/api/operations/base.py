@@ -536,7 +536,7 @@ class BaseOperation():
 
     def __presentation_format(self):
         if not self.__presentation_format_attr:
-            self.__presentation_format_attr = self.meta.get(
+            self.__presentation_format_attr = (self.meta or {}).get(
                 META_KEY_FORMAT, self.action)
         return self.__presentation_format_attr
 
