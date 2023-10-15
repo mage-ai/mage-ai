@@ -4,6 +4,7 @@ from mage_ai.data_preparation.variable_manager import (
     get_global_variables,
     set_global_variable,
 )
+from mage_ai.shared.utils import clean_name
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_create_endpoint_tests,
@@ -16,8 +17,8 @@ from mage_ai.tests.api.endpoints.mixins import (
 class VariableAPIEndpointTest(BaseAPIEndpointTest):
     def setUp(self):
         super().setUp()
-        self.variable_uuid = self.faker.unique.name().replace(' ', '_')
-        self.variable_value = self.faker.unique.name().replace(' ', '_')
+        self.variable_uuid = clean_name(self.faker.unique.name())
+        self.variable_value = clean_name(self.faker.unique.name())
         set_global_variable(
             self.pipeline.uuid,
             self.variable_uuid,
@@ -70,8 +71,8 @@ build_create_endpoint_tests(
     resource_parent='pipelines',
     get_resource_parent_id=lambda self: self.pipeline.uuid,
     build_payload=lambda self: dict(
-        name=self.faker.unique.name().replace(' ', '_'),
-        value=self.faker.unique.name().replace(' ', '_'),
+        name=clean_name(self.faker.unique.name()),
+        value=clean_name(self.faker.unique.name()),
     ),
     assert_before_create_count=lambda self: len(
         get_global_variables(self.pipeline.uuid).values(),
@@ -90,7 +91,7 @@ build_update_endpoint_tests(
     get_resource_parent_id=lambda self: self.pipeline.uuid,
     build_payload=lambda self: dict(
         name=self.variable_uuid,
-        value=self.faker.unique.name().replace(' ', '_'),
+        value=clean_name(self.faker.unique.name()),
     ),
     get_model_before_update=lambda self: get_global_variable(
         self.pipeline.uuid,
