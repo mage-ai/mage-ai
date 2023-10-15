@@ -24,7 +24,6 @@ build_create_endpoint_tests(
     build_payload=lambda self: dict(
         permission_id=0,
         role_id=0,
-        # permission_ids
     ),
     assert_before_create_count=lambda self: len(
         RolePermission.query.all(),
