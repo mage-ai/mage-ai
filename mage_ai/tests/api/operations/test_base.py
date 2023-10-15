@@ -5,7 +5,7 @@ from faker import Faker
 
 from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
-from mage_ai.orchestration.db.models.oauth import User, UserRole
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
 from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
 
@@ -16,25 +16,6 @@ class BaseApiTestCase(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.faker = Faker()
-
-    def setUp(self):
-        super().setUp()
-        self.options = dict(lightning=4, rock=5)
-
-        user1 = User.create(username=self.faker.unique.name())
-        user2 = User.create(username=self.faker.unique.name())
-        user3 = User.create(username=self.faker.unique.name())
-        self.users = [
-            user1,
-            user2,
-            user3,
-        ]
-        self.user = self.users[0]
-
-    def tearDown(self):
-        super().tearDown()
-        User.query.delete()
-        UserRole.query.delete()
 
     @property
     def model_class_name(self) -> str:
