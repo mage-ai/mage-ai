@@ -37,7 +37,7 @@ class TestSuite(str, Enum):
 class BasePolicyWithPermissionsTest(BaseApiTestCase, BootstrapMixin, PermissionsMixin):
     def setUp(self):
         super().setUp()
-        self.role = Role.create(name=self.faker.unique.name())
+        self.role = Role.create(name=secrets.token_urlsafe())
         UserRole.create(role_id=self.role.id, user_id=self.user.id)
 
 
