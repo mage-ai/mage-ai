@@ -151,10 +151,18 @@ class Task(BaseSparkModel):
 
     def __post_init__(self):
         if self.status:
-            self.status = TaskStatus(self.status)
+            try:
+                self.status = TaskStatus(self.status)
+            except ValueError as err:
+                print(f'[WARNING] Task: {err}')
+                self.status = self.status
 
         if self.task_locality:
-            self.task_locality = Locality(self.task_locality)
+            try:
+                self.task_locality = Locality(self.task_locality)
+            except ValueError as err:
+                print(f'[WARNING] Task: {err}')
+                self.task_locality = self.task_locality
 
         if self.task_metrics:
             self.task_metrics = TaskMetrics(self.task_metrics)
@@ -244,7 +252,11 @@ class Stage(BaseSparkModel):
             self.peak_executor_metrics = Metrics.load(**self.peak_executor_metrics)
 
         if self.status:
-            self.status = StageStatus(self.status)
+            try:
+                self.status = StageStatus(self.status)
+            except ValueError as err:
+                print(f'[WARNING] Stage: {err}')
+                self.status = self.status
 
     @property
     def id(self) -> int:

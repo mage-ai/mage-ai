@@ -12,6 +12,7 @@ from mage_ai.services.spark.models.stages import (
     StageAttemptTaskSummary,
     Task,
 )
+from mage_ai.services.spark.models.threads import Thread
 
 
 class BaseAPI(ABC):
@@ -77,6 +78,10 @@ class BaseAPI(ABC):
 
     @abstractmethod
     async def executors(self, application_id: str, **kwargs) -> List[Executor]:
+        pass
+
+    @abstractmethod
+    async def threads(self, application_id: str, executor_id: str, **kwargs) -> List[Thread]:
         pass
 
     async def get(self, path: str):

@@ -10,6 +10,7 @@ from mage_ai.services.spark.models.stages import (
     StageAttemptTaskSummary,
     Task,
 )
+from mage_ai.services.spark.models.threads import Thread
 
 API_VERSION = 'v1'
 SPARK_UI_HOST = 'localhost'
@@ -83,3 +84,9 @@ class LocalAPI(BaseAPI):
     async def executors(self, application_id: str, **kwargs) -> List[Executor]:
         models = await self.get(f'/applications/{application_id}/allexecutors')
         return [Executor.load(**model) for model in models]
+
+    async def threads(self, application_id: str, executor_id: str, **kwargs) -> List[Thread]:
+        models = await self.get(
+            f'/applications/{application_id}/executors/{executor_id}/threads',
+        )
+        return [Thread.load(**model) for model in models]

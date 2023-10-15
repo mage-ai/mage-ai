@@ -33,4 +33,8 @@ class Job(BaseSparkModel):
 
     def __post_init__(self):
         if self.status:
-            self.status = JobStatus(self.status)
+            try:
+                self.status = JobStatus(self.status)
+            except ValueError as err:
+                print(f'[WARNING] Job: {err}')
+                self.status = self.status
