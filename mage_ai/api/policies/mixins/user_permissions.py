@@ -11,6 +11,7 @@ from mage_ai.api.constants import (
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.authentication.permissions.constants import (
+    ENTITY_NAME_ENTITY_ID_ATTRIBUTE_NAME_MAPPING,
     PERMISSION_ACCESS_WITH_MULTIPLE_ACCESS,
     RESERVED_ENTITY_NAMES,
     EntityName,
@@ -91,6 +92,7 @@ async def validate_condition_with_permissions(
         access_for_attribute_operation=access_for_attribute_operation,
         disable_access_for_attribute_operation=disable_access_for_attribute_operation,
         attribute_operation_type=attribute_operation_type,
+        resource=policy.resource,
         resource_attribute=resource_attribute,
     ) -> Tuple[bool, bool]:
         if permission.access is None:
@@ -111,6 +113,18 @@ async def validate_condition_with_permissions(
 
         if not correct_entity_name:
             return (False, False)
+
+        # If the permission has an entity_id, check to see if it matches.
+        if permission.entity_id is not None and resource:
+            id_attribute_name = 'id'
+            if entity_name in ENTITY_NAME_ENTITY_ID_ATTRIBUTE_NAME_MAPPING:
+                # e.g. Pipeline’s ID is called uuid
+                id_attribute_name = ENTITY_NAME_ENTITY_ID_ATTRIBUTE_NAME_MAPPING[entity_name]
+
+            if not hasattr(resource, id_attribute_name) or \
+                    str(permission.entity_id) != str(getattr(resource, id_attribute_name)):
+
+                return (False, False)
 
         # 2a. Don’t grant access if permission disables access to this entity for this operation.
         if disable_access is not None and permission.access & disable_access:

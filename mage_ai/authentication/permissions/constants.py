@@ -193,3 +193,8 @@ ATTRIBUTE_OPERATION_TYPE_TO_PERMISSION_ACCESS_MAPPING = {
     'read': PermissionAccess.READ,
     'write': PermissionAccess.WRITE,
 }
+
+ENTITY_NAME_ENTITY_ID_ATTRIBUTE_NAME_MAPPING = {
+    EntityName.Block: 'uuid',
+    EntityName.Pipeline: 'uuid',
+}
