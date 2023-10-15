@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
 
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -22,10 +21,6 @@ from mage_ai.tests.api.endpoints.mixins import (
     build_update_endpoint_tests,
 )
 from mage_ai.tests.factory import create_pipeline_with_blocks
-
-
-def get_pipeline(self):
-    return Pipeline.get(self.pipeline.uuid)
 
 
 class PipelineScheduleAPIEndpointTest(BaseAPIEndpointTest):
