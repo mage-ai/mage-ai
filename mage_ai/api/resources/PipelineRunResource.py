@@ -198,7 +198,7 @@ class PipelineRunResource(DatabaseResource):
         query arg and set it to True (e.g. in order to make the number of pipeline runs
         returned consistent across pages).
         """
-        if meta.get(META_KEY_LIMIT, None) is not None and \
+        if (meta or {}).get(META_KEY_LIMIT, None) is not None and \
             total_results.count() >= 1 and \
             not disable_retries_grouping and \
                 (pipeline_uuid is not None or pipeline_schedule_id is not None):
