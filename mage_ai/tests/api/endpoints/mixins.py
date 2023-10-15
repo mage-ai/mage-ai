@@ -51,6 +51,7 @@ def get_resource(resource: str):
 def build_list_endpoint_tests(
     test_class,
     resource: str,
+    test_uuid: str = None,
     list_count: int = None,
     get_list_count: Callable[[AsyncDBTestCase], int] = None,
     resource_parent: str = None,
@@ -112,6 +113,7 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint',
+                test_uuid if test_uuid else '',
                 'with_query' if build_query else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
                 f'with_list_count_{list_count}' if list_count is not None else '',
@@ -125,6 +127,7 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint_with_authentication',
+                test_uuid if test_uuid else '',
                 'with_query' if build_query else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
                 f'with_list_count_{list_count}' if list_count is not None else '',
@@ -138,6 +141,7 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint_with_permissions',
+                test_uuid if test_uuid else '',
                 'with_query' if build_query else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
                 f'with_list_count_{list_count}' if list_count is not None else '',
@@ -151,6 +155,7 @@ def build_create_endpoint_tests(
     test_class,
     resource: str,
     build_payload: Callable[[AsyncDBTestCase], Dict],
+    test_uuid: str = None,
     after_create_count: int = None,
     assert_after_create_count: Callable[[AsyncDBTestCase], None] = None,
     assert_before_create_count: Callable[[AsyncDBTestCase], None] = None,
@@ -219,6 +224,7 @@ def build_create_endpoint_tests(
             lambda x: x,
             [
                 'test_create_endpoint',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -230,6 +236,7 @@ def build_create_endpoint_tests(
             lambda x: x,
             [
                 'test_create_endpoint_with_authentication',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -241,6 +248,7 @@ def build_create_endpoint_tests(
             lambda x: x,
             [
                 'test_create_endpoint_with_permissions',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -252,6 +260,7 @@ def build_detail_endpoint_tests(
     test_class,
     resource: str,
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
+    test_uuid: str = None,
     resource_parent: str = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
     result_keys_to_compare: List[str] = None,
@@ -308,6 +317,7 @@ def build_detail_endpoint_tests(
             lambda x: x,
             [
                 'test_detail_endpoint',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -319,6 +329,7 @@ def build_detail_endpoint_tests(
             lambda x: x,
             [
                 'test_detail_endpoint_with_authentication',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -330,6 +341,7 @@ def build_detail_endpoint_tests(
             lambda x: x,
             [
                 'test_detail_endpoint_with_permissions',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -342,6 +354,7 @@ def build_update_endpoint_tests(
     resource: str,
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
     build_payload: Callable[[AsyncDBTestCase], Dict],
+    test_uuid: str = None,
     get_model_before_update: Callable[[AsyncDBTestCase], Any] = None,
     assert_after_update: Callable[[AsyncDBTestCase, Dict, Any], None] = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
@@ -405,6 +418,7 @@ def build_update_endpoint_tests(
             lambda x: x,
             [
                 'test_update_endpoint',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -416,6 +430,7 @@ def build_update_endpoint_tests(
             lambda x: x,
             [
                 'test_update_endpoint_with_authentication',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -427,6 +442,7 @@ def build_update_endpoint_tests(
             lambda x: x,
             [
                 'test_update_endpoint_with_permissions',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -438,6 +454,7 @@ def build_delete_endpoint_tests(
     test_class,
     resource: str,
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
+    test_uuid: str = None,
     after_delete_count: int = None,
     assert_after_delete_count: Callable[[AsyncDBTestCase], None] = None,
     assert_before_delete_count: Callable[[AsyncDBTestCase], None] = None,
@@ -502,6 +519,7 @@ def build_delete_endpoint_tests(
             lambda x: x,
             [
                 'test_delete_endpoint',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -513,6 +531,7 @@ def build_delete_endpoint_tests(
             lambda x: x,
             [
                 'test_delete_endpoint_with_authentication',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
@@ -524,6 +543,7 @@ def build_delete_endpoint_tests(
             lambda x: x,
             [
                 'test_delete_endpoint_with_permissions',
+                test_uuid if test_uuid else '',
                 f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
