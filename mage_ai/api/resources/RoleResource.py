@@ -92,7 +92,7 @@ class RoleResource(DatabaseResource):
                 [RolePermission(
                     permission_id=permission_id,
                     role_id=self.model.id,
-                    user_id=self.current_user.id,
+                    user_id=self.current_user.id if self.current_user else None,
                 ) for permission_id in permission_ids_create],
                 return_defaults=True,
             )
@@ -169,7 +169,7 @@ def __load_users(resource):
 
     ids = [r.id for r in resource.result_set()]
 
-    return [UserResource(p, resource.current_user) for p in User.fetch_users(ids)]
+    return [UserResource(p, resource.current_user) for p in Role.fetch_users(ids)]
 
 
 def __select_users(resource, arr):

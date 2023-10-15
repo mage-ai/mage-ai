@@ -64,7 +64,7 @@ class StatusResource(GenericResource):
             'project_uuid': get_project_uuid(),
         }
 
-        display_format = meta.get('_format')
+        display_format = meta.get('_format') if meta else None
         if 'with_activity_details' == display_format:
             from mage_ai.server.server import latest_user_activity
 

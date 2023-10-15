@@ -1,4 +1,3 @@
-import importlib
 import uuid
 
 from sqlalchemy.orm import selectinload
@@ -292,6 +291,8 @@ class PipelineScheduleResource(DatabaseResource):
 
 
 def __load_tag_associations(resource):
+    from mage_ai.api.resources.TagResource import TagResource
+
     pipeline_schedule_ids = [r.id for r in resource.result_set()]
     result = (
         TagAssociation.
@@ -311,10 +312,6 @@ def __load_tag_associations(resource):
             TagAssociation.taggable_type == resource.model.__class__.__name__,
         ).
         all()
-    )
-    TagResource = getattr(
-        importlib.import_module('mage_ai.api.resources.TagResource'),
-        'TagResource',
     )
 
     return TagResource.build_result_set(result, resource.current_user)

@@ -1,4 +1,5 @@
 import importlib
+import inspect
 from typing import Any, Callable, Dict, List, Union
 from unittest.mock import patch
 
@@ -50,12 +51,14 @@ def get_resource(resource: str):
 def build_list_endpoint_tests(
     test_class,
     resource: str,
+    test_uuid: str = None,
     list_count: int = None,
     get_list_count: Callable[[AsyncDBTestCase], int] = None,
     resource_parent: str = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
     result_keys_to_compare: List[str] = None,
     build_query: Callable[[AsyncDBTestCase], Dict] = None,
+    build_meta: Callable[[AsyncDBTestCase], Dict] = None,
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
@@ -69,6 +72,7 @@ def build_list_endpoint_tests(
         resource_parent=resource_parent,
         result_keys_to_compare=result_keys_to_compare,
         build_query=build_query,
+        build_meta=build_meta,
         get_resource_parent_id=get_resource_parent_id,
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
@@ -84,6 +88,7 @@ def build_list_endpoint_tests(
             resource_parent=resource_parent,
             result_keys_to_compare=result_keys_to_compare,
             build_query=build_query,
+            build_meta=build_meta,
             get_resource_parent_id=get_resource_parent_id,
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
@@ -98,6 +103,7 @@ def build_list_endpoint_tests(
                 resource_parent=resource_parent,
                 result_keys_to_compare=result_keys_to_compare,
                 build_query=build_query,
+                build_meta=build_meta,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
@@ -111,8 +117,10 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint',
-                f'with_parent_{resource_parent}' or None,
-                f'with_list_count_{list_count}' if list_count is not None else None,
+                test_uuid if test_uuid else '',
+                'with_query' if build_query else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
+                f'with_list_count_{list_count}' if list_count is not None else '',
             ],
         ))),
         _build_test_list_endpoint(),
@@ -123,8 +131,10 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint_with_authentication',
-                f'with_parent_{resource_parent}' or None,
-                f'with_list_count_{list_count} if list_count is not None else None',
+                test_uuid if test_uuid else '',
+                'with_query' if build_query else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
+                f'with_list_count_{list_count}' if list_count is not None else '',
             ],
         ))),
         _build_test_list_endpoint(authentication=1),
@@ -135,8 +145,10 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint_with_permissions',
-                f'with_parent_{resource_parent}' or None,
-                f'with_list_count_{list_count} if list_count is not None else None',
+                test_uuid if test_uuid else '',
+                'with_query' if build_query else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
+                f'with_list_count_{list_count}' if list_count is not None else '',
             ],
         ))),
         _build_test_list_endpoint(permissions=1),
@@ -147,6 +159,7 @@ def build_create_endpoint_tests(
     test_class,
     resource: str,
     build_payload: Callable[[AsyncDBTestCase], Dict],
+    test_uuid: str = None,
     after_create_count: int = None,
     assert_after_create_count: Callable[[AsyncDBTestCase], None] = None,
     assert_before_create_count: Callable[[AsyncDBTestCase], None] = None,
@@ -188,13 +201,17 @@ def build_create_endpoint_tests(
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
         ):
+            payload = build_payload(self)
+            if payload and inspect.isawaitable(payload):
+                payload = await payload
+
             await self.build_test_create_endpoint(
                 after_create_count=after_create_count,
                 assert_after_create_count=assert_after_create_count,
                 assert_before_create_count=assert_before_create_count,
                 authentication=authentication,
                 before_create_count=before_create_count,
-                payload=build_payload(self),
+                payload=payload,
                 permissions=permissions,
                 resource=resource,
                 resource_parent=resource_parent,
@@ -211,7 +228,8 @@ def build_create_endpoint_tests(
             lambda x: x,
             [
                 'test_create_endpoint',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_create_endpoint(),
@@ -222,7 +240,8 @@ def build_create_endpoint_tests(
             lambda x: x,
             [
                 'test_create_endpoint_with_authentication',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_create_endpoint(authentication=1),
@@ -233,7 +252,8 @@ def build_create_endpoint_tests(
             lambda x: x,
             [
                 'test_create_endpoint_with_permissions',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_create_endpoint(permissions=1),
@@ -244,10 +264,12 @@ def build_detail_endpoint_tests(
     test_class,
     resource: str,
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
+    test_uuid: str = None,
     resource_parent: str = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
     result_keys_to_compare: List[str] = None,
     build_query: Callable[[AsyncDBTestCase], Dict] = None,
+    build_meta: Callable[[AsyncDBTestCase], Dict] = None,
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
@@ -261,6 +283,7 @@ def build_detail_endpoint_tests(
         resource_parent=resource_parent,
         result_keys_to_compare=result_keys_to_compare,
         build_query=build_query,
+        build_meta=build_meta,
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
@@ -275,6 +298,7 @@ def build_detail_endpoint_tests(
             resource_parent=resource_parent,
             result_keys_to_compare=result_keys_to_compare,
             build_query=build_query,
+            build_meta=build_meta,
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
@@ -287,6 +311,7 @@ def build_detail_endpoint_tests(
                 resource_parent=resource_parent,
                 result_keys_to_compare=result_keys_to_compare,
                 build_query=build_query,
+                build_meta=build_meta,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
@@ -300,7 +325,8 @@ def build_detail_endpoint_tests(
             lambda x: x,
             [
                 'test_detail_endpoint',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_detail_endpoint(),
@@ -311,7 +337,8 @@ def build_detail_endpoint_tests(
             lambda x: x,
             [
                 'test_detail_endpoint_with_authentication',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_detail_endpoint(authentication=1),
@@ -322,7 +349,8 @@ def build_detail_endpoint_tests(
             lambda x: x,
             [
                 'test_detail_endpoint_with_permissions',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_detail_endpoint(permissions=1),
@@ -334,6 +362,7 @@ def build_update_endpoint_tests(
     resource: str,
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
     build_payload: Callable[[AsyncDBTestCase], Dict],
+    test_uuid: str = None,
     get_model_before_update: Callable[[AsyncDBTestCase], Any] = None,
     assert_after_update: Callable[[AsyncDBTestCase, Dict, Any], None] = None,
     get_resource_parent_id: Callable[[AsyncDBTestCase], Union[int, str]] = None,
@@ -371,11 +400,15 @@ def build_update_endpoint_tests(
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
         ):
+            payload = build_payload(self)
+            if payload and inspect.isawaitable(payload):
+                payload = await payload
+
             await self.build_test_update_endpoint(
                 assert_after_update=assert_after_update,
                 get_model_before_update=get_model_before_update,
                 authentication=authentication,
-                payload=build_payload(self),
+                payload=payload,
                 permissions=permissions,
                 resource=resource,
                 resource_id=get_resource_id(self),
@@ -393,7 +426,8 @@ def build_update_endpoint_tests(
             lambda x: x,
             [
                 'test_update_endpoint',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_update_endpoint(),
@@ -404,7 +438,8 @@ def build_update_endpoint_tests(
             lambda x: x,
             [
                 'test_update_endpoint_with_authentication',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_update_endpoint(authentication=1),
@@ -415,7 +450,8 @@ def build_update_endpoint_tests(
             lambda x: x,
             [
                 'test_update_endpoint_with_permissions',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_update_endpoint(permissions=1),
@@ -426,6 +462,7 @@ def build_delete_endpoint_tests(
     test_class,
     resource: str,
     get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
+    test_uuid: str = None,
     after_delete_count: int = None,
     assert_after_delete_count: Callable[[AsyncDBTestCase], None] = None,
     assert_before_delete_count: Callable[[AsyncDBTestCase], None] = None,
@@ -490,7 +527,8 @@ def build_delete_endpoint_tests(
             lambda x: x,
             [
                 'test_delete_endpoint',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_delete_endpoint(),
@@ -501,7 +539,8 @@ def build_delete_endpoint_tests(
             lambda x: x,
             [
                 'test_delete_endpoint_with_authentication',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_delete_endpoint(authentication=1),
@@ -512,7 +551,8 @@ def build_delete_endpoint_tests(
             lambda x: x,
             [
                 'test_delete_endpoint_with_permissions',
-                f'with_parent_{resource_parent}' or None,
+                test_uuid if test_uuid else '',
+                f'with_parent_{resource_parent}' if resource_parent else '',
             ],
         ))),
         _build_test_delete_endpoint(permissions=1),
@@ -556,6 +596,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         resource_parent_id: Union[int, str] = None,
         result_keys_to_compare: List[str] = None,
         build_query: Callable[[AsyncDBTestCase], Dict] = None,
+        build_meta: Callable[[AsyncDBTestCase], Dict] = None,
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
@@ -585,9 +626,21 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
                 permissions or 0,
             ):
+                meta = None
+                if build_meta:
+                    meta = build_meta(self)
+                    if meta and inspect.isawaitable(meta):
+                        meta = await meta
+                query = None
+                if build_query:
+                    query = build_query(self)
+                    if query and inspect.isawaitable(query):
+                        query = await query
+
                 base_operation = BaseOperation(
                     action=OperationType.LIST,
-                    query=build_query(self) if build_query else None,
+                    meta=meta,
+                    query=query,
                     resource=resource,
                     resource_parent=resource_parent,
                     resource_parent_id=resource_parent_id,
@@ -692,6 +745,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         resource_parent_id: Union[int, str] = None,
         result_keys_to_compare: List[str] = None,
         build_query: Callable[[AsyncDBTestCase], Dict] = None,
+        build_meta: Callable[[AsyncDBTestCase], Dict] = None,
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
@@ -721,10 +775,22 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
                 permissions or 0,
             ):
+                meta = None
+                if build_meta:
+                    meta = build_meta(self)
+                    if meta and inspect.isawaitable(meta):
+                        meta = await meta
+                query = None
+                if build_query:
+                    query = build_query(self)
+                    if query and inspect.isawaitable(query):
+                        query = await query
+
                 base_operation = BaseOperation(
                     action=OperationType.DETAIL,
+                    meta=meta,
                     pk=resource_id,
-                    query=build_query(self) if build_query else None,
+                    query=query,
                     resource=resource,
                     resource_parent=resource_parent,
                     resource_parent_id=resource_parent_id,
@@ -732,7 +798,11 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
 
                 response = await base_operation.execute()
-                result = response[singularize(resource)]
+                key = singularize(resource)
+                if key not in response:
+                    raise Exception(response)
+
+                result = response[key]
 
                 self.assertIsNotNone(result)
 
@@ -802,6 +872,9 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 if assert_after_update is not None:
                     if get_model_before_update is not None:
                         model_before_update = get_model_before_update(self)
+                        if model_before_update and inspect.isawaitable(model_before_update):
+                            model_before_update = await model_before_update
+
                         if model_before_update and isinstance(model_before_update, BaseModel):
                             current_attributes = dict(model_before_update.__dict__)
                             current_attributes.pop('_sa_instance_state')
@@ -810,12 +883,19 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                             )
 
                 response = await base_operation.execute()
-                result = response[singularize(resource)]
+                key = singularize(resource)
+                if key not in response:
+                    raise Exception(response)
+
+                result = response[key]
 
                 self.assertIsNotNone(result)
 
                 if assert_after_update is not None:
-                    self.assertTrue(assert_after_update(self, result, model_before_update))
+                    validation = assert_after_update(self, result, model_before_update)
+                    if validation and inspect.isawaitable(validation):
+                        validation = await validation
+                    self.assertTrue(validation)
                 else:
                     model = get_resource(resource).model_class.get(resource_id)
                     if updated_at is not None:

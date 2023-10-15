@@ -63,7 +63,7 @@ class PermissionResource(DatabaseResource):
                 [RolePermission(
                     permission_id=self.model.id,
                     role_id=role_id,
-                    user_id=self.current_user.id,
+                    user_id=self.current_user.id if self.current_user else None,
                 ) for role_id in role_ids_create],
                 return_defaults=True,
             )

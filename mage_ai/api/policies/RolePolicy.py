@@ -55,7 +55,7 @@ RolePolicy.allow_read(RolePresenter.default_attributes + [
 
 
 RolePolicy.allow_write([
-    'name'
+    'name',
     'permission_ids',
     'user_ids',
 ], scopes=[
