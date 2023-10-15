@@ -5,7 +5,12 @@ import requests
 
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.jobs import Job
-from mage_ai.services.spark.models.stages import Stage, StageAttempt
+from mage_ai.services.spark.models.stages import (
+    Stage,
+    StageAttempt,
+    StageAttemptTaskSummary,
+    Task,
+)
 
 
 class BaseAPI(ABC):
@@ -47,6 +52,26 @@ class BaseAPI(ABC):
         attempt_id: int,
         **kwargs,
     ) -> StageAttempt:
+        pass
+
+    @abstractmethod
+    async def stage_attempt_task_summary(
+        self,
+        application_id: str,
+        stage_id: int,
+        attempt_id: int,
+        **kwargs,
+    ) -> StageAttemptTaskSummary:
+        pass
+
+    @abstractmethod
+    async def stage_attempt_tasks(
+        self,
+        application_id: str,
+        stage_id: int,
+        attempt_id: int,
+        **kwargs,
+    ) -> List[Task]:
         pass
 
     async def get(self, path: str):
