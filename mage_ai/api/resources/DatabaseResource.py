@@ -17,8 +17,8 @@ class DatabaseResource(BaseResource):
     @classmethod
     @safe_db_query
     async def process_collection(self, query, meta, user, **kwargs):
-        limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
-        offset = int(meta.get(META_KEY_OFFSET, 0))
+        limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
 
         total_results = self.collection(query, meta, user, **kwargs)
         if total_results and inspect.isawaitable(total_results):

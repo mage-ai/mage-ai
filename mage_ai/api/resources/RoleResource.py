@@ -169,7 +169,7 @@ def __load_users(resource):
 
     ids = [r.id for r in resource.result_set()]
 
-    return [UserResource(p, resource.current_user) for p in User.fetch_users(ids)]
+    return [UserResource(p, resource.current_user) for p in Role.fetch_users(ids)]
 
 
 def __select_users(resource, arr):
