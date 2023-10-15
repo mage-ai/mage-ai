@@ -9,7 +9,6 @@ class SchedulerAPIEndpointTest(BaseAPIEndpointTest):
     pass
 
 
-# No parent
 build_list_endpoint_tests(
     SchedulerAPIEndpointTest,
     list_count=1,
