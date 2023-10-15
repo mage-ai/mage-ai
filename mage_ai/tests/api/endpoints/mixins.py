@@ -17,6 +17,11 @@ from mage_ai.orchestration.db.models.oauth import (
     User,
     UserRole,
 )
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.shared.strings import classify, singularize
 from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
@@ -100,9 +105,42 @@ def build_list_endpoint_tests(
             )
         return _test_list_endpoint
 
-    test_class.test_list_endpoint = _build_test_list_endpoint()
-    test_class.test_list_endpoint_with_authentication = _build_test_list_endpoint(authentication=1)
-    test_class.test_list_endpoint_with_permissions = _build_test_list_endpoint(permissions=1)
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_list_endpoint',
+                f'with_parent_{resource_parent}' or None,
+                f'with_list_count_{list_count}' if list_count is not None else None,
+            ],
+        ))),
+        _build_test_list_endpoint(),
+    )
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_list_endpoint_with_authentication',
+                f'with_parent_{resource_parent}' or None,
+                f'with_list_count_{list_count} if list_count is not None else None',
+            ],
+        ))),
+        _build_test_list_endpoint(authentication=1),
+    )
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_list_endpoint_with_permissions',
+                f'with_parent_{resource_parent}' or None,
+                f'with_list_count_{list_count} if list_count is not None else None',
+            ],
+        ))),
+        _build_test_list_endpoint(permissions=1),
+    )
 
 
 def build_create_endpoint_tests(
@@ -167,11 +205,39 @@ def build_create_endpoint_tests(
             )
         return _test_create_endpoint
 
-    test_class.test_create_endpoint = _build_test_create_endpoint()
-    test_class.test_create_endpoint_with_authentication = _build_test_create_endpoint(
-        authentication=1,
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_create_endpoint',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_create_endpoint(),
     )
-    test_class.test_create_endpoint_with_permissions = _build_test_create_endpoint(permissions=1)
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_create_endpoint_with_authentication',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_create_endpoint(authentication=1),
+    )
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_create_endpoint_with_permissions',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_create_endpoint(permissions=1),
+    )
 
 
 def build_detail_endpoint_tests(
@@ -228,11 +294,39 @@ def build_detail_endpoint_tests(
             )
         return _test_detail_endpoint
 
-    test_class.test_detail_endpoint = _build_test_detail_endpoint()
-    test_class.test_detail_endpoint_with_authentication = _build_test_detail_endpoint(
-        authentication=1,
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_detail_endpoint',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_detail_endpoint(),
     )
-    test_class.test_detail_endpoint_with_permissions = _build_test_detail_endpoint(permissions=1)
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_detail_endpoint_with_authentication',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_detail_endpoint(authentication=1),
+    )
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_detail_endpoint_with_permissions',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_detail_endpoint(permissions=1),
+    )
 
 
 def build_update_endpoint_tests(
@@ -293,11 +387,39 @@ def build_update_endpoint_tests(
             )
         return _test_update_endpoint
 
-    test_class.test_update_endpoint = _build_test_update_endpoint()
-    test_class.test_update_endpoint_with_authentication = _build_test_update_endpoint(
-        authentication=1,
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_update_endpoint',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_update_endpoint(),
     )
-    test_class.test_update_endpoint_with_permissions = _build_test_update_endpoint(permissions=1)
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_update_endpoint_with_authentication',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_update_endpoint(authentication=1),
+    )
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_update_endpoint_with_permissions',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_update_endpoint(permissions=1),
+    )
 
 
 def build_delete_endpoint_tests(
@@ -362,11 +484,39 @@ def build_delete_endpoint_tests(
             )
         return _test_delete_endpoint
 
-    test_class.test_delete_endpoint = _build_test_delete_endpoint()
-    test_class.test_delete_endpoint_with_authentication = _build_test_delete_endpoint(
-        authentication=1,
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_delete_endpoint',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_delete_endpoint(),
     )
-    test_class.test_delete_endpoint_with_permissions = _build_test_delete_endpoint(permissions=1)
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_delete_endpoint_with_authentication',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_delete_endpoint(authentication=1),
+    )
+    setattr(
+        test_class,
+        '_'.join(list(filter(
+            lambda x: x,
+            [
+                'test_delete_endpoint_with_permissions',
+                f'with_parent_{resource_parent}' or None,
+            ],
+        ))),
+        _build_test_delete_endpoint(permissions=1),
+    )
 
 
 class BaseAPIEndpointTest(AsyncDBTestCase):
@@ -386,7 +536,10 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             if pipeline:
                 pipeline.delete()
 
+        BlockRun.query.delete()
         Permission.query.delete()
+        PipelineRun.query.delete()
+        PipelineSchedule.query.delete()
         Role.query.delete()
         RolePermission.query.delete()
         User.query.delete()
