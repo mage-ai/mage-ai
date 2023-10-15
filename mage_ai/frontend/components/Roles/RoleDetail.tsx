@@ -41,6 +41,7 @@ import { displayNames } from '@utils/models/permission';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 
 const ICON_SIZE = 2 * UNIT;
 
@@ -209,7 +210,9 @@ function RoleDetail({
     },
   );
 
-  const { data: dataPermissions } = api.permissions.list({}, {}, {
+  const { data: dataPermissions } = api.permissions.list({
+    _limit: 1000,
+  }, {}, {
     pauseFetch: !role,
   });
   const permissionsAll: PermissionType[] = useMemo(() => sortByKey(
@@ -287,9 +290,12 @@ function RoleDetail({
     hasUsers,
   ]);
 
-  const buildTable = useCallback((permissionsArray: PermissionType[]) => (
+  const buildTable = useCallback((
+    permissionsArray: PermissionType[],
+    enableClickRow?: boolean,
+  ) => (
     <Table
-      columnFlex={[null, 2, 1, 1, 6]}
+      columnFlex={[null, null, 2, 1, 1, 6]}
       columns={[
         {
           label: () => {
@@ -299,7 +305,9 @@ function RoleDetail({
               <Checkbox
                 checked={checked}
                 key="checkbox"
-                onClick={() => {
+                onClick={(e) => {
+                  pauseEvent(e);
+
                   if (checked) {
                     setObjectAttributes({
                       permissionsMapping: {},
@@ -316,6 +324,9 @@ function RoleDetail({
           uuid: 'actions',
         },
         {
+          uuid: 'ID',
+        },
+        {
           uuid: 'Entity',
         },
         {
@@ -329,6 +340,15 @@ function RoleDetail({
           uuid: 'Access',
         },
       ]}
+      onClickRow={enableClickRow
+        ? (rowIndex: number) => {
+          const object = permissionsArray[rowIndex];
+          if (object && typeof window !== 'undefined') {
+            window.open(`/settings/workspace/permissions/${object?.id}`, '_blank').focus();
+          }
+        }
+        : null
+      }
       rows={permissionsArray?.map((permission) => {
         const {
           access,
@@ -346,7 +366,9 @@ function RoleDetail({
           <Checkbox
             checked={checked}
             key="checkbox"
-            onClick={() => {
+            onClick={(e) => {
+              pauseEvent(e);
+
               const mapping = { ...permissionsMapping };
 
               if (checked) {
@@ -360,6 +382,9 @@ function RoleDetail({
               });
             }}
           />,
+          <Text default key="id" monospace>
+            {id}
+          </Text>,
           <Text key="entityName" monospace>
             {entityName || entity}
           </Text>,
@@ -398,7 +423,10 @@ function RoleDetail({
     setObjectAttributes,
   ]);
 
-  const buildTableUsers = useCallback((objectArray: UserType[]) => (
+  const buildTableUsers = useCallback((
+    objectArray: UserType[],
+    enableClickRow?: boolean,
+  ) => (
     <Table
       columnFlex={[null, 1, 1, 1]}
       columns={[
@@ -410,7 +438,9 @@ function RoleDetail({
               <Checkbox
                 checked={checked}
                 key="checkbox"
-                onClick={() => {
+                onClick={(e) => {
+                  pauseEvent(e);
+
                   if (checked) {
                     setObjectAttributes({
                       usersMapping: {},
@@ -436,6 +466,15 @@ function RoleDetail({
           uuid: 'Last name',
         },
       ]}
+      onClickRow={enableClickRow
+        ? (rowIndex: number) => {
+          const object = objectArray[rowIndex];
+          if (object && typeof window !== 'undefined') {
+            window.open(`/settings/workspace/users/${object?.id}`, '_blank').focus();
+          }
+        }
+        : null
+      }
       rows={objectArray?.map((object) => {
         const {
           first_name: firstName,
@@ -449,7 +488,9 @@ function RoleDetail({
           <Checkbox
             checked={checked}
             key="checkbox"
-            onClick={() => {
+            onClick={(e) => {
+              pauseEvent(e);
+
               const mapping = { ...usersMapping };
 
               if (checked) {
@@ -491,12 +532,12 @@ function RoleDetail({
     usersAll,
   ]);
 
-  const permissionsMemo = useMemo(() => buildTable(permissions), [
+  const permissionsMemo = useMemo(() => buildTable(permissions, true), [
     buildTable,
     permissions,
   ]);
 
-  const usersMemo = useMemo(() => buildTableUsers(users), [
+  const usersMemo = useMemo(() => buildTableUsers(users, true), [
     buildTableUsers,
     users,
   ]);
