@@ -111,6 +111,7 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint',
+                'with_query' if build_query else None,
                 f'with_parent_{resource_parent}' or None,
                 f'with_list_count_{list_count}' if list_count is not None else None,
             ],
@@ -123,6 +124,7 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint_with_authentication',
+                'with_query' if build_query else None,
                 f'with_parent_{resource_parent}' or None,
                 f'with_list_count_{list_count} if list_count is not None else None',
             ],
@@ -135,6 +137,7 @@ def build_list_endpoint_tests(
             lambda x: x,
             [
                 'test_list_endpoint_with_permissions',
+                'with_query' if build_query else None,
                 f'with_parent_{resource_parent}' or None,
                 f'with_list_count_{list_count} if list_count is not None else None',
             ],
