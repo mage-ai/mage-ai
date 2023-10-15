@@ -45,8 +45,12 @@ build_list_endpoint_tests(
 build_create_endpoint_tests(
     PermissionAPIEndpointTest,
     resource='permissions',
-    assert_after_create_count=lambda self: 3 if self.authentication or self.permissions else 2,
-    assert_before_create_count=lambda self: 3 if self.authentication or self.permissions else 2,
+    assert_before_create_count=lambda self: len(
+        Permission.query.all(),
+    ) == (4 if self.permissions else 2 if self.authentication else 1),
+    assert_after_create_count=lambda self: len(
+        Permission.query.all(),
+    ) == (4 + 1 if self.permissions else 2 + 1 if self.authentication else 1 + 1),
     build_payload=lambda self: dict(
         access=0,
     ),

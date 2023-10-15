@@ -798,7 +798,11 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                 )
 
                 response = await base_operation.execute()
-                result = response[singularize(resource)]
+                key = singularize(resource)
+                if key not in response:
+                    raise Exception(response)
+
+                result = response[key]
 
                 self.assertIsNotNone(result)
 
@@ -879,7 +883,11 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                             )
 
                 response = await base_operation.execute()
-                result = response[singularize(resource)]
+                key = singularize(resource)
+                if key not in response:
+                    raise Exception(response)
+
+                result = response[key]
 
                 self.assertIsNotNone(result)
 

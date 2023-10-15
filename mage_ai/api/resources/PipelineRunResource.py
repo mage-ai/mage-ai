@@ -143,8 +143,8 @@ class PipelineRunResource(DatabaseResource):
         total_results = await self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
 
-        limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
-        offset = int(meta.get(META_KEY_OFFSET, 0))
+        limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
 
         include_pipeline_uuids = query_arg.get('include_pipeline_uuids', [False])
         if include_pipeline_uuids:
