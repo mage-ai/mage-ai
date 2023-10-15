@@ -4,6 +4,7 @@ from typing import Dict, List
 import requests
 
 from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.spark.models.executors import Executor
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.stages import (
     Stage,
@@ -72,6 +73,10 @@ class BaseAPI(ABC):
         attempt_id: int,
         **kwargs,
     ) -> List[Task]:
+        pass
+
+    @abstractmethod
+    async def executors(self, application_id: str, **kwargs) -> List[Executor]:
         pass
 
     async def get(self, path: str):

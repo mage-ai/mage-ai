@@ -2,6 +2,7 @@ from typing import List
 
 from mage_ai.services.spark.api.base import BaseAPI
 from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.spark.models.executors import Executor
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.stages import (
     Stage,
@@ -78,3 +79,7 @@ class LocalAPI(BaseAPI):
             f'/applications/{application_id}/stages/{stage_id}/{attempt_id}/taskList',
         )
         return [Task.load(**model) for model in models]
+
+    async def executors(self, application_id: str, **kwargs) -> List[Executor]:
+        models = await self.get(f'/applications/{application_id}/allexecutors')
+        return [Executor.load(**model) for model in models]
