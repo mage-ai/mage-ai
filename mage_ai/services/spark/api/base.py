@@ -6,6 +6,7 @@ import requests
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.executors import Executor
 from mage_ai.services.spark.models.jobs import Job
+from mage_ai.services.spark.models.sqls import Sql
 from mage_ai.services.spark.models.stages import (
     Stage,
     StageAttempt,
@@ -82,6 +83,14 @@ class BaseAPI(ABC):
 
     @abstractmethod
     async def threads(self, application_id: str, executor_id: str, **kwargs) -> List[Thread]:
+        pass
+
+    @abstractmethod
+    async def sqls(self, application_id: str, **kwargs) -> List[Sql]:
+        pass
+
+    @abstractmethod
+    async def sql(self, application_id: str, sql_id: int, **kwargs) -> Sql:
         pass
 
     async def get(self, path: str):

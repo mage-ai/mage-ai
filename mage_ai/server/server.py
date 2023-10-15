@@ -253,7 +253,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         # TODO: This call is not easily removed from the frontend so will change this
         # in a future PR.
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\-\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
         ),
 
@@ -271,7 +271,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         # Download block output
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
-            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
+            r'(?P<block_uuid>[\w\-\%2f\.(/.*)?]+)/downloads',
             ApiDownloadHandler,
         ),
 
@@ -286,15 +286,16 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             },
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)' \
+            r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
             ApiChildDetailHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)/(?P<child>\w+)',
             ApiChildListHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)',
             ApiResourceDetailHandler,
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),

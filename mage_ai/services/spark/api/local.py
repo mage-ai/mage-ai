@@ -4,6 +4,7 @@ from mage_ai.services.spark.api.base import BaseAPI
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.executors import Executor
 from mage_ai.services.spark.models.jobs import Job
+from mage_ai.services.spark.models.sqls import Sql
 from mage_ai.services.spark.models.stages import (
     Stage,
     StageAttempt,
@@ -90,3 +91,11 @@ class LocalAPI(BaseAPI):
             f'/applications/{application_id}/executors/{executor_id}/threads',
         )
         return [Thread.load(**model) for model in models]
+
+    async def sqls(self, application_id: str, **kwargs) -> List[Sql]:
+        models = await self.get(f'/applications/{application_id}/sql')
+        return [Sql.load(**model) for model in models]
+
+    async def sql(self, application_id: str, sql_id: int, **kwargs) -> Sql:
+        model = await self.get(f'/applications/{application_id}/sql/{sql_id}')
+        return Sql.load(**model)

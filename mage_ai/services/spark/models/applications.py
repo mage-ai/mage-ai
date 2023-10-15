@@ -21,8 +21,8 @@ class ApplicationAttempt(BaseSparkModel):
 @dataclass
 class Application(BaseSparkModel):
     id: str  # local-1697360611228
-    name: str  # my spark app
-    attempts: List[ApplicationAttempt]
+    attempts: List[ApplicationAttempt] = None
+    name: str = None  # my spark app
 
     def __post_init__(self):
         if self.attempts and isinstance(self.attempts, list):
