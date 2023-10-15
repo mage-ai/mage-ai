@@ -4,6 +4,7 @@ from typing import Dict, List
 import requests
 
 from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.spark.models.environments import Environment
 from mage_ai.services.spark.models.executors import Executor
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.sqls import Sql
@@ -91,6 +92,10 @@ class BaseAPI(ABC):
 
     @abstractmethod
     async def sql(self, application_id: str, sql_id: int, **kwargs) -> Sql:
+        pass
+
+    @abstractmethod
+    async def environment(self, application_id: str, **kwargs) -> Environment:
         pass
 
     async def get(self, path: str):

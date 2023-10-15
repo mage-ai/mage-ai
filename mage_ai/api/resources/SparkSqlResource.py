@@ -8,8 +8,6 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
     async def collection(self, _query, _meta, user, **kwargs):
         application_id = await self.get_application_id(**kwargs)
 
-        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!', await LocalAPI().sqls(application_id=application_id))
-
         return self.build_result_set(
             await LocalAPI().sqls(application_id=application_id),
             user,

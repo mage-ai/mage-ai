@@ -2,6 +2,7 @@ from typing import List
 
 from mage_ai.services.spark.api.base import BaseAPI
 from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.spark.models.environments import Environment
 from mage_ai.services.spark.models.executors import Executor
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.sqls import Sql
@@ -99,3 +100,7 @@ class LocalAPI(BaseAPI):
     async def sql(self, application_id: str, sql_id: int, **kwargs) -> Sql:
         model = await self.get(f'/applications/{application_id}/sql/{sql_id}')
         return Sql.load(**model)
+
+    async def environment(self, application_id: str, **kwargs) -> Environment:
+        model = await self.get(f'/applications/{application_id}/environment')
+        return Environment.load(**model)
