@@ -3,7 +3,9 @@ from typing import Dict, List
 
 import requests
 
-from mage_ai.services.spark.models import Application, Job
+from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.spark.models.jobs import Job
+from mage_ai.services.spark.models.stages import Stage, StageAttempt
 
 
 class BaseAPI(ABC):
@@ -18,6 +20,33 @@ class BaseAPI(ABC):
 
     @abstractmethod
     async def jobs(self, application_id: str, **kwargs) -> List[Job]:
+        pass
+
+    @abstractmethod
+    async def job(self, application_id: str, job_id: int, **kwargs) -> Job:
+        pass
+
+    @abstractmethod
+    async def stages(self, application_id: str, **kwargs) -> List[Stage]:
+        pass
+
+    @abstractmethod
+    async def stage_attempts(
+        self,
+        application_id: str,
+        stage_id: int,
+        **kwargs,
+    ) -> List[StageAttempt]:
+        pass
+
+    @abstractmethod
+    async def stage_attempt(
+        self,
+        application_id: str,
+        stage_id: int,
+        attempt_id: int,
+        **kwargs,
+    ) -> StageAttempt:
         pass
 
     async def get(self, path: str):
