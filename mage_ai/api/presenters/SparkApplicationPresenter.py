@@ -7,3 +7,6 @@ class SparkApplicationPresenter(BasePresenter):
         'id',
         'name',
     ]
+
+    async def prepare_present(self, **kwargs):
+        return self.model.to_dict()
