@@ -33,7 +33,8 @@ else:
 
         @classmethod
         def tearDownClass(self):
-            shutil.rmtree(self.repo_path)
+            if os.path.exists(self.repo_path):
+                shutil.rmtree(self.repo_path)
             db_connection.close_session()
 
             if Path(TEST_DB).is_file():
