@@ -280,13 +280,16 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         # This method will fail if the schema didn’t exist prior to running this destination.
         # The create schema command will only commit if the entire transaction was successful.
         # Checking the existence of a table in a non-existent schema will fail.
-        full_schema_name = self.full_schema_name(database_name, schema_name)
+        schema_name = schema_name.upper() if self.disable_double_quotes else schema_name
         table_name = table_name.upper() if self.disable_double_quotes else table_name
-        data = self.build_connection().execute([
-            f'SHOW TABLES LIKE \'{table_name}\' '
-            f'IN SCHEMA {full_schema_name}',
-        ])
 
+        query = f"""
+SELECT
+    *
+FROM {self._wrap_with_quotes(database_name)}.INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
+"""
+        data = self.build_connection().execute([query])
         return len(data[0]) >= 1
 
     def calculate_records_inserted_and_updated(
