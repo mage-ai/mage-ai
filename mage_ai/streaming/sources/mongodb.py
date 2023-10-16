@@ -52,7 +52,6 @@ class MongoSource(BaseSource):
         self._print("Start getting message for MongoDB streaming.")
         try:
             db = self.client.get_database(self.config.database)
-            parsed_messages = []
             self._print(db)
 
             if self.config.collection:
@@ -61,11 +60,8 @@ class MongoSource(BaseSource):
 
                 with collection.watch(**watch_args) as stream:
                     for change in stream:
-                        parsed_messages.append(change)
-                        if parsed_messages:
-                            self._print(f'Received {len(parsed_messages)} message. '
-                                        f'Sample: {parsed_messages[0]}.')
-                            handler(parsed_messages)
+                        self._print(f'Received a new message: {change}.')
+                        handler([change])  # Pass only the new change
 
         except Exception as e:
             # Handle potential exceptions when working with external systems.
