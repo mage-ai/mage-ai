@@ -1,20 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import Button from '@oracle/elements/Button';
 import ConnectionSettings from './ConnectionSettings';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import { CardStyle } from './index.style';
 import {
   Monitor,
   PowerOnOffButton,
   WorkspacesUsersIcon,
 } from '@oracle/icons';
 import {
+  COMPUTE_SERVICES,
+  COMPUTE_SERVICE_DISPLAY_NAME,
+  COMPUTE_SERVICE_KICKER,
+  COMPUTE_SERVICE_RENDER_ICON_MAPPING,
+  ComputeServiceEnum,
   MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING,
   MainNavigationTabEnum,
   ObjectAttributesType,
@@ -27,7 +36,9 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
+import { getComputeServiceFromProject } from './utils';
 import { onSuccess } from '@api/utils/response';
+import { selectKeys } from '@utils/hash';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
@@ -69,10 +80,18 @@ function ComputeManagement({
 
   const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(Math.max(
+  const [beforeWidth, setBeforeWidthState] = useState(Math.max(
     get(localStorageKeyBefore),
-    UNIT * 40,
+    UNIT * 20,
   ));
+  const setBeforeWidth = useCallback((width: number) => {
+    setBeforeWidthState(width || UNIT * 20);
+    set(localStorageKeyBefore, width || UNIT * 20);
+  }, [
+    localStorageKeyBefore,
+    setBeforeWidthState,
+  ]);
+
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [afterHidden, setAfterHidden] = useState<boolean>(true);
 
@@ -81,6 +100,8 @@ function ComputeManagement({
   }>({
     main: MainNavigationTabEnum.CONNECTION,
   });
+
+  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
   const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
@@ -117,10 +138,12 @@ function ComputeManagement({
   useEffect(() => {
     if (project) {
       setObjectAttributesState(project);
+      setSelectedComputeService(getComputeServiceFromProject(project));
     }
   }, [
     project,
     setObjectAttributesState,
+    setSelectedComputeService,
   ]);
 
   const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
@@ -141,8 +164,15 @@ function ComputeManagement({
       ),
     },
   );
-  const updateProject = useCallback(() => updateProjectBase({
-    project: objectAttributes,
+  const updateProject = useCallback((data?: ObjectAttributesType) => updateProjectBase({
+    project: selectKeys({
+      ...objectAttributes,
+      ...data,
+    }, [
+      'emr_config',
+      'remote_variables_dir',
+      'spark_config',
+    ]),
   }), [
     objectAttributes,
     updateProjectBase,
@@ -197,8 +227,47 @@ function ComputeManagement({
       </NavigationStyle>
     ));
 
+    if (selectedComputeService) {
+      const displayName = COMPUTE_SERVICE_DISPLAY_NAME[selectedComputeService];
+      const kicker = COMPUTE_SERVICE_KICKER[selectedComputeService];
+      const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
+
+      if (displayName && kicker && renderIcon) {
+        arr.unshift(
+          <Spacing p={PADDING_UNITS}>
+            <CardStyle inline>
+              <FlexContainer alignItems="flex-start">
+                <Flex flex={1}>
+                  {renderIcon()}
+                </Flex>
+
+                <Button
+                  compact
+                  onClick={() => setSelectedComputeService(null)}
+                  secondary
+                  small
+                >
+                  Change
+                </Button>
+              </FlexContainer>
+
+              <Spacing mt={PADDING_UNITS}>
+                <Text default monospace>
+                  {kicker}
+                </Text>
+                <Headline level={5}>
+                  {displayName}
+                </Headline>
+              </Spacing>
+            </CardStyle>
+          </Spacing>
+        );
+      }
+    }
+
     return arr;
   }, [
+    selectedComputeService,
     selectedTab,
     setSelectedTab,
   ]);
@@ -207,17 +276,84 @@ function ComputeManagement({
 
   const connectionMemo = useMemo(() => (
     <ConnectionSettings
-      attributesTouched={attributesTouched?.spark_config || {}}
+      attributesTouched={attributesTouched || {}}
       isLoading={isLoadingUpdateProject}
       mutateObject={updateProject}
-      objectAttributes={objectAttributes?.spark_config}
-      setObjectAttributes={setObjectAttributesSparkConfig}
+      objectAttributes={objectAttributes}
+      selectedComputeService={selectedComputeService}
+      setObjectAttributes={setObjectAttributes}
     />
   ), [
     attributesTouched,
     isLoadingUpdateProject,
     objectAttributes,
-    setObjectAttributesSparkConfig,
+    selectedComputeService,
+    setObjectAttributes,
+    updateProject,
+  ]);
+
+  const computeServicesMemo = useMemo(() => (
+    <Spacing mx={1} py={PADDING_UNITS}>
+      <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
+        <Headline>
+          Select a compute service
+        </Headline>
+      </Spacing>
+
+      <FlexContainer alignItems="center" flexWrap="wrap">
+        {COMPUTE_SERVICES.map(({
+          buildPayload,
+          displayName,
+          documentationHref,
+          kicker,
+          renderIcon,
+          uuid,
+        }) => (
+          <CardStyle key={uuid}>
+            {renderIcon()}
+
+            <Spacing mt={PADDING_UNITS}>
+              <Text default monospace>
+                {kicker}
+              </Text>
+              <Headline level={4}>
+                {displayName}
+              </Headline>
+            </Spacing>
+
+            <Spacing mt={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Button
+                  loading={isLoadingUpdateProject && uuid === selectedComputeService}
+                  onClick={() => {
+                    setSelectedComputeService(uuid);
+                    updateProject(buildPayload(objectAttributes));
+                  }}
+                  primary
+                >
+                  Enable
+                </Button>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Link
+                  href={documentationHref}
+                  default
+                  openNewWindow
+                >
+                  View setup documentation
+                </Link>
+              </FlexContainer>
+            </Spacing>
+          </CardStyle>
+        ))}
+      </FlexContainer>
+    </Spacing>
+  ), [
+    isLoadingUpdateProject,
+    objectAttributes,
+    selectedComputeService,
+    setSelectedComputeService,
     updateProject,
   ]);
 
@@ -250,7 +386,8 @@ function ComputeManagement({
       setBeforeWidth={setBeforeWidth}
       uuid={componentUUID}
     >
-      {project && (
+      {!selectedComputeService && objectAttributes && computeServicesMemo}
+      {selectedComputeService && project && (
         <>
           {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
         </>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
@@ -6,6 +6,7 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -17,7 +18,9 @@ import {
   Save,
   Trash,
 } from '@oracle/icons';
+import { CardStyle } from './index.style';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
+import { ComputeServiceEnum, ObjectAttributesType } from './constants';
 import {
   PADDING_UNITS,
   UNIT,
@@ -34,10 +37,11 @@ type ConnectionSettingsProps = {
     [key: string]: any;
   }
   isLoading?: boolean;
-  mutateObject: () => void;
-  objectAttributes: SparkConfigType;
+  mutateObject: (data?: ObjectAttributesType) => void;
+  objectAttributes: ObjectAttributesType;
   onCancel?: () => void;
-  setObjectAttributes: (objectAttributes: SparkConfigType) => void;
+  selectedComputeService?: ComputeServiceEnum;
+  setObjectAttributes: (objectAttributes: ObjectAttributesType) => void;
 }
 
 function ConnectionSettings({
@@ -46,14 +50,31 @@ function ConnectionSettings({
   mutateObject,
   objectAttributes,
   onCancel,
+  selectedComputeService,
   setObjectAttributes,
 }: ConnectionSettingsProps) {
+  const setObjectAttributesSparkConfig =
+    useCallback((data: SparkConfigType) => setObjectAttributes({
+      spark_config: {
+        ...objectAttributes?.spark_config,
+        ...data,
+      },
+    }), [
+      objectAttributes,
+      setObjectAttributes,
+    ]);
+  const objectAttributesSparkConfig = useMemo(() => objectAttributes?.spark_config || {}, [
+    objectAttributes,
+  ]);
+
   const refNewJarFileUUID = useRef(null);
   const refNewEnvironmentVariableUUID = useRef(null);
 
   const [isAddingNewJarFile, setIsAddingNewJarFile] = useState(false);
   const [newJarFile, setNewJarFile] = useState<string>(null);
-  const jarFiles = useMemo(() => objectAttributes?.spark_jars, [objectAttributes]);
+  const jarFiles = useMemo(() => objectAttributesSparkConfig?.spark_jars || [], [
+    objectAttributesSparkConfig,
+  ]);
   const hasJarFiles = useMemo(() => jarFiles?.length >= 1, [jarFiles]);
   const jarFileExists = useMemo(() => (jarFiles || []).includes(newJarFile), [
     jarFiles,
@@ -62,7 +83,9 @@ function ConnectionSettings({
 
   const [isAddingNewEnvironmentVariable, setIsAddingNewEnvironmentVariable] = useState(false);
   const [newEnvironmentVariable, setNewEnvironmentVariable] = useState<string>(null);
-  const environmentVariables = useMemo(() => objectAttributes?.executor_env, [objectAttributes]);
+  const environmentVariables = useMemo(() => objectAttributesSparkConfig?.executor_env || {}, [
+    objectAttributesSparkConfig,
+  ]);
   const hasEnvironmentVariables =
     useMemo(() => Object.keys(environmentVariables || {})?.length >= 1, [environmentVariables]);
   const environmentVariableExists =
@@ -82,8 +105,7 @@ function ConnectionSettings({
             setIsAddingNewEnvironmentVariable(true);
             setTimeout(() => refNewEnvironmentVariableUUID?.current?.focus(), 1);
           }}
-          primary={!hasEnvironmentVariables}
-          secondary={hasEnvironmentVariables}
+          secondary={!hasEnvironmentVariables}
           small
         >
           Add environment variable
@@ -129,7 +151,7 @@ function ConnectionSettings({
               pauseEvent(e);
 
               if (!environmentVariableExists) {
-                setObjectAttributes({
+                setObjectAttributesSparkConfig({
                   executor_env: {
                     ...environmentVariables,
                     [newEnvironmentVariable]: '',
@@ -186,8 +208,7 @@ function ConnectionSettings({
             setIsAddingNewJarFile(true);
             setTimeout(() => refNewJarFileUUID?.current?.focus(), 1);
           }}
-          primary={!hasJarFiles}
-          secondary={hasJarFiles}
+          secondary={!hasJarFiles}
           small
         >
           Add JAR file
@@ -233,7 +254,7 @@ function ConnectionSettings({
               pauseEvent(e);
 
               if (!jarFileExists) {
-                setObjectAttributes({
+                setObjectAttributesSparkConfig({
                   spark_jars: jarFiles.concat(newJarFile),
                 });
 
@@ -293,7 +314,7 @@ function ConnectionSettings({
             onClick={() => {
               const updated = { ...environmentVariables };
               delete updated?.[key];
-              setObjectAttributes({ executor_env: updated });
+              setObjectAttributesSparkConfig({ executor_env: updated });
             }}
           >
             <Trash default size={ICON_SIZE} />
@@ -324,7 +345,7 @@ function ConnectionSettings({
               monospace
               noBackground
               noBorder
-              onChange={e => setObjectAttributes({
+              onChange={e => setObjectAttributesSparkConfig({
                 executor_env: {
                   ...environmentVariables,
                   [key]: e.target.value,
@@ -341,7 +362,7 @@ function ConnectionSettings({
     </div>
   )), [
     environmentVariables,
-    setObjectAttributes,
+    setObjectAttributesSparkConfig,
   ]);
 
   const jarFilesMemo = useMemo(() => jarFiles?.map((value: string, idx: number) => (
@@ -357,7 +378,7 @@ function ConnectionSettings({
             noPadding
             onClick={() => {
               const arr = [...jarFiles];
-              setObjectAttributes({
+              setObjectAttributesSparkConfig({
                 spark_jars: removeAtIndex(arr, idx),
               });
             }}
@@ -393,7 +414,7 @@ function ConnectionSettings({
               onChange={(e) => {
                 const arr = [...jarFiles];
                 arr[idx] = e.target.value;
-                setObjectAttributes({
+                setObjectAttributesSparkConfig({
                   spark_jars: arr,
                 });
               }}
@@ -408,7 +429,7 @@ function ConnectionSettings({
     </div>
   )), [
     jarFiles,
-    setObjectAttributes,
+    setObjectAttributesSparkConfig,
   ]);
 
   return (
@@ -425,11 +446,11 @@ function ConnectionSettings({
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center">
             <Text
-              danger={'app_name' in attributesTouched && !objectAttributes?.app_name}
+              danger={'app_name' in attributesTouched && !objectAttributesSparkConfig?.app_name}
               default
               large
             >
-              Application name {'app_name' in attributesTouched && !objectAttributes?.app_name && (
+              Application name {'app_name' in attributesTouched && !objectAttributesSparkConfig?.app_name && (
                 <Text danger inline large>
                   is required
                 </Text>
@@ -451,13 +472,13 @@ function ConnectionSettings({
                 noBackground
                 noBorder
                 fullWidth
-                onChange={e => setObjectAttributes({
+                onChange={e => setObjectAttributesSparkConfig({
                   app_name: e.target.value,
                 })}
                 paddingHorizontal={0}
                 paddingVertical={0}
                 placeholder="e.g. Sparkmage"
-                value={objectAttributes?.app_name || ''}
+                value={objectAttributesSparkConfig?.app_name || ''}
               />
             </Flex>
           </FlexContainer>
@@ -469,11 +490,11 @@ function ConnectionSettings({
           <FlexContainer alignItems="flex-start">
             <FlexContainer flexDirection="column">
               <Text
-                danger={'spark_master' in attributesTouched && !objectAttributes?.spark_master}
+                danger={'spark_master' in attributesTouched && !objectAttributesSparkConfig?.spark_master}
                 default
                 large
               >
-                Master URL {'spark_master' in attributesTouched && !objectAttributes?.spark_master && (
+                Master URL {'spark_master' in attributesTouched && !objectAttributesSparkConfig?.spark_master && (
                   <Text danger inline large>
                     is required
                   </Text>
@@ -499,13 +520,13 @@ function ConnectionSettings({
                 noBackground
                 noBorder
                 fullWidth
-                onChange={e => setObjectAttributes({
+                onChange={e => setObjectAttributesSparkConfig({
                   spark_master: e.target.value,
                 })}
                 paddingHorizontal={0}
                 paddingVertical={0}
                 placeholder="e.g. local, yarn, spark://host:port"
-                value={objectAttributes?.spark_master || ''}
+                value={objectAttributesSparkConfig?.spark_master || ''}
               />
             </Flex>
           </FlexContainer>
@@ -543,17 +564,65 @@ function ConnectionSettings({
                 noBackground
                 noBorder
                 fullWidth
-                onChange={e => setObjectAttributes({
+                onChange={e => setObjectAttributesSparkConfig({
                   spark_home: e.target.value,
                 })}
                 paddingHorizontal={0}
                 paddingVertical={0}
                 placeholder="e.g. /usr/lib/spark"
-                value={objectAttributes?.spark_home || ''}
+                value={objectAttributesSparkConfig?.spark_home || ''}
               />
             </Flex>
           </FlexContainer>
         </Spacing>
+
+        {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+          <>
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="flex-start">
+                <FlexContainer flexDirection="column">
+                  <Text
+                    default
+                    large
+                  >
+                    Remote variables directory
+                  </Text>
+
+                  <Text muted small>
+                    This S3 bucket will be used by Spark.
+                  </Text>
+                </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    large
+                    monospace
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributes({
+                      remote_variables_dir: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="e.g. s3://magically-powerful-bucket"
+                    value={objectAttributes?.remote_variables_dir || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          </>
+        )}
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -595,17 +664,17 @@ function ConnectionSettings({
 
             <Flex flex={1} justifyContent="flex-end">
               <ToggleSwitch
-                checked={objectAttributes?.use_custom_session}
+                checked={objectAttributesSparkConfig?.use_custom_session}
                 compact
-                onCheck={(valFunc: (val: boolean) => boolean) => setObjectAttributes({
-                  use_custom_session: valFunc(objectAttributes?.use_custom_session),
+                onCheck={(valFunc: (val: boolean) => boolean) => setObjectAttributesSparkConfig({
+                  use_custom_session: valFunc(objectAttributesSparkConfig?.use_custom_session),
                 })}
               />
             </Flex>
           </FlexContainer>
         </Spacing>
 
-        {objectAttributes?.use_custom_session && (
+        {objectAttributesSparkConfig?.use_custom_session && (
           <>
             <Divider light />
 
@@ -664,12 +733,13 @@ function ConnectionSettings({
                     noBackground
                     noBorder
                     fullWidth
-                    onChange={e => setObjectAttributes({
+                    onChange={e => setObjectAttributesSparkConfig({
                       custom_session_var_name: e.target.value,
                     })}
                     paddingHorizontal={0}
                     paddingVertical={0}
-                    value={objectAttributes?.custom_session_var_name || ''}
+                    placeholder="e.g. spark"
+                    value={objectAttributesSparkConfig?.custom_session_var_name || ''}
                   />
                 </Flex>
               </FlexContainer>

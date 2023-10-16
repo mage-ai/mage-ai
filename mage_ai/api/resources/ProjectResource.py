@@ -19,6 +19,7 @@ async def build_project(repo_config=None, **kwargs):
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
+        remote_variables_dir=project.remote_variables_dir,
         spark_config=project.spark_config,
         version=project.version,
     ))
@@ -87,6 +88,9 @@ class ProjectResource(GenericResource):
 
         if 'spark_config' in payload:
             data['spark_config'] = payload['spark_config']
+
+        if 'remote_variables_dir' in payload:
+            data['remote_variables_dir'] = payload['remote_variables_dir']
 
         if len(data.keys()) >= 1:
             repo_config.save(**data)

@@ -13,7 +13,7 @@ export enum ProjectTypeEnum {
   SUB = 'sub',
 }
 
-export interface EmrConfigType {
+export interface EMRConfigType {
 
 }
 
@@ -34,7 +34,7 @@ export interface SparkConfigType {
 }
 
 export default interface ProjectType {
-  emr_config?: EmrConfigType;
+  emr_config?: EMRConfigType;
   features?: {
     [key: string]: boolean;
   };
@@ -43,6 +43,7 @@ export default interface ProjectType {
   name?: string;
   openai_api_key?: string;
   project_uuid?: string;
+  remote_variables_dir?: string;
   spark_config?: SparkConfigType;
   version?: string;
 }
