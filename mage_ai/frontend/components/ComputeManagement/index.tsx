@@ -97,9 +97,7 @@ function ComputeManagement({
 
   const [selectedTab, setSelectedTab] = useState<{
     main?: MainNavigationTabEnum;
-  }>({
-    main: MainNavigationTabEnum.CONNECTION,
-  });
+  }>(null);
 
   const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
@@ -144,7 +142,22 @@ function ComputeManagement({
     project,
     setObjectAttributesState,
     setSelectedComputeService,
+    setSelectedTab,
   ]);
+
+  useEffect(() => {
+    if (!selectedTab && selectedComputeService) {
+      setSelectedTab({
+        main: MainNavigationTabEnum.CONNECTION,
+      });
+    }
+  }, [
+    selectedComputeService,
+    selectedTab,
+    setSelectedTab,
+  ]);
+
+  console.log(selectedTab, selectedComputeService)
 
   const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
     api.projects.useUpdate(projectName),
@@ -205,6 +218,7 @@ function ComputeManagement({
       >
         <Link
           block
+          disabled={!selectedComputeService}
           noHoverUnderline
           noOutline
           onClick={() => setSelectedTab(() => ({
@@ -243,7 +257,10 @@ function ComputeManagement({
 
                 <Button
                   compact
-                  onClick={() => setSelectedComputeService(null)}
+                  onClick={() => {
+                    setSelectedComputeService(null)
+                    setSelectedTab(null);
+                  }}
                   secondary
                   small
                 >
@@ -326,7 +343,7 @@ function ComputeManagement({
                 <Button
                   loading={isLoadingUpdateProject && uuid === selectedComputeService}
                   onClick={() => {
-                    setSelectedComputeService(uuid);
+                    setSelectedComputeService(uuid as ComputeServiceEnum);
                     updateProject(buildPayload(objectAttributes));
                   }}
                   primary
@@ -359,25 +376,20 @@ function ComputeManagement({
 
   return (
     <TripleLayout
-      // after={after}
-      // contained
+      after={after}
       afterHidden={afterHidden}
-      // afterInnerHeightMinus={
-      //   // After header is always 48
-      //   48 + (afterFooter ? (afterFooterBottomOffset || 0) : 0)
-      // }
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
       beforeHeightOffset={0}
+      beforeHidden={!selectedComputeService}
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
-      // headerOffset={headerOffset}
       height={containerHeight}
       hideAfterCompletely
+      hideBeforeCompletely={!selectedComputeService}
       inline
-      // mainContainerHeader={subheaderEl}
       mainContainerRef={mainContainerRef}
       setAfterHidden={setAfterHidden}
       setAfterMousedownActive={setAfterMousedownActive}

@@ -7,6 +7,7 @@ const ICON_SIZE = 8 * UNIT;
 
 export type ObjectAttributesType = {
   emr_config?: EMRConfigType
+  remote_variables_dir?: string;
   spark_config?: SparkConfigType;
 };
 
@@ -39,10 +40,10 @@ export const COMPUTE_SERVICE_KICKER = {
 
 export const COMPUTE_SERVICE_RENDER_ICON_MAPPING = {
   [ComputeServiceEnum.AWS_EMR]: (
-    size?: number = ICON_SIZE,
+    size: number = ICON_SIZE,
   ) => <AmazonWebServicesEMR height={size} />,
   [ComputeServiceEnum.STANDALONE_CLUSTER]: (
-    size?: number = ICON_SIZE,
+    size: number = ICON_SIZE,
   ) => <TripleBoxes size={size} warning />
 };
 
