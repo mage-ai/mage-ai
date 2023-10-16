@@ -7,10 +7,10 @@ from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
-from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 
 
-class BaseApiTestCase(TestCase):
+class BaseApiTestCase(AsyncDBTestCase):
     model_class = None
 
     def __init__(self, *args, **kwargs):

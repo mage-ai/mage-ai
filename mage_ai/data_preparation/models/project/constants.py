@@ -7,3 +7,4 @@ class FeatureUUID(str, Enum):
     INTERACTIONS = 'interactions'
     LOCAL_TIMEZONE = 'display_local_timezone'
     OPERATION_HISTORY = 'operation_history'
+    SPARK_EXPERIENCE_V2 = 'spark_experience_v2'

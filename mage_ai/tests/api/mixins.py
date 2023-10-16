@@ -1,5 +1,3 @@
-from time import sleep
-
 from mage_ai.orchestration.db.models.oauth import User, UserRole
 from mage_ai.tests.base_test import AsyncDBTestCase
 
@@ -21,18 +19,6 @@ class BootstrapMixin(AsyncDBTestCase):
             self.user = self.users[0]
         except AttributeError as err:
             print(f'[WARNING] {self}.setUp: {err}')
-            sleep(10)
-            print(f'[INFO] {self}.setUp: attempting to set up again...')
-
-            user1 = User.create(username=self.faker.unique.name())
-            user2 = User.create(username=self.faker.unique.name())
-            user3 = User.create(username=self.faker.unique.name())
-            self.users = [
-                user1,
-                user2,
-                user3,
-            ]
-            self.user = self.users[0]
 
     def tearDown(self):
         User.query.delete()
