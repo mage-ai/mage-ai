@@ -1,7 +1,7 @@
 ---
 title: "Conditional blocks"
 sidebarTitle: "Conditional"
-description: "A conditional block is an 'Add-on Block,' associated with another block. The condition will be evaluated before the parent block is executed, determining if the parent block gets executed."
+description: "A conditional block is an 'Add-on Block' associated with another block. The condition will be evaluated before the parent block is executed, determining if the parent block gets executed."
 ---
 
 <Note>Requires version `0.8.93` or greater.</Note>
@@ -28,7 +28,7 @@ Here's what the conditionals look like for each:
     <img src="https://github.com/mage-ai/assets/blob/main/blocks/conditional-blue-pill.png?raw=true" width="70%"/>
 </div>
 
-Because `pill=red`, the `red_pill` block will execute, and the `blue_pill` block will not. Additionally, anyblocks _downstream_ of the `blue_pill` block will not execute.
+Because `pill=red`, the `red_pill` block will execute, and the `blue_pill` block will not. Additionally, any _downstream_ blocks of the `blue_pill` block will not execute.
 
 ## Add conditionals to your pipeline
 
@@ -53,8 +53,6 @@ Looking for a video walkthrough? Check out our [tips and tricks](/guides/tips-an
 The positional arguments to the conditional block will be the same as the positional
 arguments to the parent block. You can use the positional arguments to get the output
 of the upstream blocks.
-
-You can also interpolate variables, both through `kwargs` and other variables— see our [docs](/development/variables/overview) for more info.
 
 ### Keyword arguments
 
