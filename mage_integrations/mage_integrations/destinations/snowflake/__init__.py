@@ -256,9 +256,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             f'USE DATABASE {database_name}',
         ] + super().build_create_schema_commands(database_name, schema_name)
 
-    def full_schema_name(self, database_name: str, schema_name: str) -> str:
-        return f'{self._wrap_with_quotes(database_name)}.{self._wrap_with_quotes(schema_name)}'
-
     def full_table_name(self, database_name: str, schema_name: str, table_name: str) -> str:
         if self.disable_double_quotes:
             return f'{database_name}.{schema_name}.{table_name}'
