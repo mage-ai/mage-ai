@@ -70,27 +70,27 @@ class DatabaseResourceTest(BaseApiTestCase):
 
         result_set = await UserResource.process_collection(
             {},
-            dict(_limit=2),
+            dict(_limit=1),
             self.user,
             **self.options,
         )
 
-        self.assertEqual([r.model for r in result_set], self.users[:2])
+        self.assertEqual([r.model for r in result_set], self.users[:1])
         self.assertEqual(result_set.metadata, dict(
-            count=3,
+            count=2,
             next=True,
         ))
 
         result_set = await UserResource.process_collection(
             {},
-            dict(_limit=2, _offset=1),
+            dict(_limit=1, _offset=1),
             self.user,
             **self.options,
         )
 
         self.assertEqual([r.model for r in result_set], self.users[1:])
         self.assertEqual(result_set.metadata, dict(
-            count=3,
+            count=2,
             next=False,
         ))
 
