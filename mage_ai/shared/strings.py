@@ -25,7 +25,7 @@ def is_number(s) -> bool:
     try:
         float(s)
         return True
-    except ValueError:
+    except (ValueError, TypeError):
         return False
 
 
