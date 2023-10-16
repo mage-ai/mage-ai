@@ -6,7 +6,7 @@ from typing import Dict, List
 import ruamel.yaml
 import yaml
 
-from mage_ai.cluster_manager.config import WorkspaceConfig
+from mage_ai.cluster_manager.config import LifecycleConfig
 from mage_ai.cluster_manager.constants import (
     ECS_CLUSTER_NAME,
     ECS_CONTAINER_NAME,
@@ -110,8 +110,8 @@ def check_auto_termination(cluster_type: ClusterType):
 
         workspaces = get_workspaces(cluster_type)
         for ws in workspaces:
-            workspace_config = WorkspaceConfig.load(ws.get('config', {}))
-            termination_policy = workspace_config.termination_policy
+            lifecycle_config = LifecycleConfig.load(ws.get('lifecycle_config', {}))
+            termination_policy = lifecycle_config.termination_policy
             if termination_policy and termination_policy.enable_auto_termination:
                 activity_details = workload_manager.get_workload_activity(
                     ws.get('name')
@@ -149,7 +149,7 @@ def check_auto_termination(cluster_type: ClusterType):
 def create_workspace(
     cluster_type: ClusterType,
     workspace_name: str,
-    workspace_config: WorkspaceConfig,
+    lifecycle_config: LifecycleConfig,
     payload: Dict,
 ):
     workspace_file = None
@@ -169,7 +169,7 @@ def create_workspace(
         yml.indent(mapping=2, sequence=2, offset=0)
 
         project_uuid = uuid.uuid4().hex
-        data = dict(project_uuid=project_uuid, config=workspace_config.to_dict())
+        data = dict(project_uuid=project_uuid, lifecycle_config=lifecycle_config.to_dict())
 
         with open(workspace_file, 'w') as f:
             yml.dump(data, f)
@@ -190,7 +190,7 @@ def create_workspace(
                 }
             k8s_workload_manager.create_workload(
                 workspace_name,
-                workspace_config,
+                lifecycle_config,
                 **payload,
                 **extra_args,
             )

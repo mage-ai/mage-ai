@@ -1,4 +1,5 @@
 import ast
+import json
 import os
 from typing import Dict, List
 
@@ -6,7 +7,7 @@ import yaml
 from kubernetes import client, config
 from kubernetes.stream import stream
 
-from mage_ai.cluster_manager.config import WorkspaceConfig
+from mage_ai.cluster_manager.config import LifecycleConfig
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
@@ -64,7 +65,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/testfiles/kubeconfig')
         except Exception:
             pass
 
@@ -139,7 +140,7 @@ class WorkloadManager:
     def create_workload(
         self,
         name: str,
-        workspace_config: WorkspaceConfig,
+        lifecycle_config: LifecycleConfig,
         project_type: str = ProjectType.STANDALONE,
         project_uuid: str = None,
         **kwargs,
@@ -163,6 +164,15 @@ class WorkloadManager:
 
         ingress_name = kwargs.get('ingress_name')
 
+        self.__create_persistent_volume(
+            name,
+            '/Users/david_yang/mage/mage-ai/testfiles',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
+
+        volumes = []
+
         # Create stateful set
         env_vars = self.__populate_env_vars(
             name,
@@ -173,27 +183,75 @@ class WorkloadManager:
         )
         container_config['env'] = env_vars
 
-        containers = [
-            {
-                'name': f'{name}-container',
-                'image': 'mageai/mageai:latest',
-                'ports': [
-                    {
-                        'containerPort': 6789,
-                        'name': 'web'
-                    }
-                ],
-                'volumeMounts': [
-                    {
-                        'name': 'mage-data',
-                        'mountPath': '/home/src'
-                    }
-                ],
-                **container_config,
-            }
-        ]
+        mage_container_config = {
+            'name': f'{name}-container',
+            'image': 'mageai/mageai:latest',
+            'ports': [
+                {
+                    'containerPort': 6789,
+                    'name': 'web'
+                }
+            ],
+            'volumeMounts': [
+                {
+                    'name': 'mage-data',
+                    'mountPath': '/home/src'
+                }
+            ],
+            **container_config,
+        }
 
-        volumes = []
+        containers = [mage_container_config]
+
+        init_containers = []
+        pre_start_script_path = lifecycle_config.pre_start_script_path
+        if pre_start_script_path:
+            self.configure_pre_start(name, pre_start_script_path)
+
+            volumes.append(
+                {
+                    'name': 'pre-start-script',
+                    'configMap': {
+                        'name': f'{name}-pre-start',
+                        'items': [
+                            {
+                                'key': 'pre-start.py',
+                                'path': 'pre-start.py',
+                            }
+                        ]
+                    }
+                }
+            )
+
+            init_containers.append(
+                {
+                    'name': f'{name}-pre-start',
+                    'image': 'davidmage/mage-pre-start:latest',
+                    'imagePullPolicy': 'Always',
+                    'volumeMounts': [
+                        {
+                            'name': 'pre-start-script',
+                            'mountPath': '/app/pre-start.py',
+                            'subPath': 'pre-start.py',
+                        }
+                    ],
+                    'env': [
+                        {
+                            'name': 'INITIAL_CONFIG',
+                            'value': json.dumps(mage_container_config),
+                        },
+                        {
+                            'name': 'WORKSPACE_NAME',
+                            'value': name,
+                        },
+                        {
+                            'name': KUBE_NAMESPACE,
+                            'value': os.getenv(KUBE_NAMESPACE, 'default'),
+                        }
+                    ],
+                }
+            )
+
         if os.getenv(SERVICE_ACCOUNT_SECRETS_NAME):
             credential_file_path = os.getenv(
                 SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
@@ -239,6 +297,7 @@ class WorkloadManager:
         pod_spec = self.pod_config.spec.to_dict() if self.pod_config else dict()
         stateful_set_template_spec = dict(
             imagePullSecrets=pod_spec.get('image_pull_secrets'),
+            initContainers=init_containers,
             terminationGracePeriodSeconds=10,
             containers=containers,
             volumes=volumes,
@@ -411,6 +470,23 @@ class WorkloadManager:
     def restart_workload(self, name: str) -> None:
         self.apps_client.patch_namespaced_stateful_set_scale(
             name, namespace=self.namespace, body={'spec': {'replicas': 1}},
+        )
+
+    def configure_pre_start(self, name: str, pre_start_script_path: str) -> None:
+        with open(pre_start_script_path, 'r', encoding='utf-8') as f:
+            pre_start_script = f.read()
+
+        config_map = {
+            'data': {
+                'pre-start.py': pre_start_script
+            },
+            'metadata': {
+                'name': f'{name}-pre-start',
+            }
+        }
+        self.core_client.create_namespaced_config_map(
+            namespace=self.namespace,
+            body=config_map
         )
 
     def __populate_env_vars(

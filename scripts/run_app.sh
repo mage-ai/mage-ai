@@ -38,8 +38,6 @@ if [[ ! -z "${CLUSTER_TYPE}" ]]; then
     mage_args+=( '--cluster-type' "$CLUSTER_TYPE" )
 fi
 
-python3 /app/kubernetes_pre_start.py --name mageai --namespace default --config-json "{\"name\":\"mageai\",\"env\":[{\"name\":\"KUBE_NAMESPACE\",\"valueFrom\":{\"fieldRef\":{\"fieldPath\":\"metadata.namespace\"}}},{\"name\":\"USER_CODE_PATH\",\"value\":\"/home/src/testfiles/another_repo\"},{\"name\":\"PROJECT_TYPE\",\"value\":\"standalone\"}]}"
-
 if [ "$#" -gt 0 ]; then
     echo "Execute command: ${@}"
     "$@"
