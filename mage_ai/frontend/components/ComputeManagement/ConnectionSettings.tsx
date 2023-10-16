@@ -31,7 +31,7 @@ import { removeAtIndex } from '@utils/array';
 
 type ConnectionSettingsProps = {
   attributesTouched: {
-    [key: string]: boolean;
+    [key: string]: any;
   }
   isLoading?: boolean;
   mutateObject: () => void;
@@ -595,17 +595,17 @@ function ConnectionSettings({
 
             <Flex flex={1} justifyContent="flex-end">
               <ToggleSwitch
-                checked={objectAttributes?.user_custom_session}
+                checked={objectAttributes?.use_custom_session}
                 compact
                 onCheck={(valFunc: (val: boolean) => boolean) => setObjectAttributes({
-                  user_custom_session: valFunc(objectAttributes?.user_custom_session),
+                  use_custom_session: valFunc(objectAttributes?.use_custom_session),
                 })}
               />
             </Flex>
           </FlexContainer>
         </Spacing>
 
-        {objectAttributes?.user_custom_session && (
+        {objectAttributes?.use_custom_session && (
           <>
             <Divider light />
 

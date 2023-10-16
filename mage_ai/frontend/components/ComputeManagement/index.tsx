@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import ConnectionSettings from './ConnectionSettings';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
@@ -25,7 +26,6 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { SparkConfigType } from '@interfaces/ProjectType';
 import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
@@ -34,18 +34,20 @@ import { useWindowSize } from '@utils/sizes';
 type ComputeManagementProps = {
   contained?: boolean;
   heightOffset?: number;
+  mainContainerRef: any;
 };
 
 function ComputeManagement({
   contained,
   heightOffset,
+  mainContainerRef,
 }: ComputeManagementProps) {
-  const componentUUID = useMemo(() => `ComputeManagement/${contained ? 'contained' : 'open'}`);
+  const componentUUID =
+    useMemo(() => `ComputeManagement/${contained ? 'contained' : 'open'}`, [contained]);
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
   });
 
-  const mainContainerRef = useRef(null);
   const refAfterHeader = useRef(null);
   const refAfterFooter = useRef(null);
   const refSubheader = useRef(null);
@@ -81,7 +83,7 @@ function ComputeManagement({
   });
 
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
-  const [attributesTouched, setAttributesTouched] = useState<UserAttributesType>({});
+  const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
   const setObjectAttributes = useCallback((data) => {
     setAttributesTouched(prev => ({
       ...prev,
@@ -209,14 +211,12 @@ function ComputeManagement({
       isLoading={isLoadingUpdateProject}
       mutateObject={updateProject}
       objectAttributes={objectAttributes?.spark_config}
-      setAttributesTouched={setAttributesTouched}
       setObjectAttributes={setObjectAttributesSparkConfig}
     />
   ), [
     attributesTouched,
     isLoadingUpdateProject,
     objectAttributes,
-    setAttributesTouched,
     setObjectAttributesSparkConfig,
     updateProject,
   ]);
@@ -242,7 +242,7 @@ function ComputeManagement({
       hideAfterCompletely
       inline
       // mainContainerHeader={subheaderEl}
-      // mainContainerRef={mainContainerRef}
+      mainContainerRef={mainContainerRef}
       setAfterHidden={setAfterHidden}
       setAfterMousedownActive={setAfterMousedownActive}
       setAfterWidth={setAfterWidth}

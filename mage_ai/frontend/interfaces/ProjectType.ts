@@ -39,10 +39,10 @@ export default interface ProjectType {
     [key: string]: boolean;
   };
   help_improve_mage?: boolean;
-  latest_version: string;
-  name: string;
+  latest_version?: string;
+  name?: string;
   openai_api_key?: string;
   project_uuid?: string;
-  spark_config: SparkConfigType;
-  version: string;
+  spark_config?: SparkConfigType;
+  version?: string;
 }
