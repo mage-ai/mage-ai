@@ -14,7 +14,19 @@ export enum ProjectTypeEnum {
 }
 
 export interface EMRConfigType {
-
+  bootstrap_script_path?: string;
+  ec2_key_name?: string;
+  master_instance_type?: string;
+  master_security_group?: string;
+  master_spark_properties?: {
+    [key: string]: boolean | number | string;
+  };
+  slave_instance_count?: number;
+  slave_instance_type?: string;
+  slave_security_group?: string;
+  slave_spark_properties?: {
+    [key: string]: boolean | number | string;
+  };
 }
 
 export interface SparkConfigType {
@@ -22,10 +34,10 @@ export interface SparkConfigType {
   custom_session_var_name?: string;
   executor_env?: {
     PYTHONPATH?: string;
-    [key: string]: string;
+    [key: string]: boolean | number | string;
   };
   others?: {
-    [key: string]: string;
+    [key: string]: boolean | number | string;
   }
   spark_home?: string;
   spark_jars?: string[];
