@@ -15,6 +15,9 @@ from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 
 
 class CustomTestPolicy(BasePolicy):
+    def fail_condition(self) -> bool:
+        return False
+
     def test_condition(self) -> bool:
         return True
 
@@ -37,7 +40,51 @@ CustomTestPolicy.allow_actions(
 )
 
 
+CustomTestPolicy.allow_actions(
+    [
+        OperationType.LIST,
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.fail_condition(),
+    override_permission_condition=lambda policy: policy.fail_condition(),
+)
+
+
 CustomTestPolicy.allow_read(
+    [
+        'first_name',
+        'username',
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.test_condition(),
+    override_permission_condition=lambda policy: policy.test_condition(),
+)
+
+
+CustomTestPolicy.allow_read(
+    [
+        'first_name',
+        'username',
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.fail_condition(),
+    override_permission_condition=lambda policy: policy.fail_condition(),
+)
+
+
+CustomTestPolicy.allow_write(
     [
         'first_name',
         'username',
@@ -64,8 +111,8 @@ CustomTestPolicy.allow_write(
     on_action=[
         OperationType.LIST,
     ],
-    condition=lambda policy: policy.test_condition(),
-    override_permission_condition=lambda policy: policy.test_condition(),
+    condition=lambda policy: policy.fail_condition(),
+    override_permission_condition=lambda policy: policy.fail_condition(),
 )
 
 
@@ -81,6 +128,21 @@ CustomTestPolicy.allow_query(
     ],
     condition=lambda policy: policy.test_condition(),
     override_permission_condition=lambda policy: policy.test_condition(),
+)
+
+
+CustomTestPolicy.allow_query(
+    [
+        'username',
+    ],
+    scopes=[
+        OauthScopeType.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.fail_condition(),
+    override_permission_condition=lambda policy: policy.fail_condition(),
 )
 
 
@@ -627,9 +689,11 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
         def _rule(action):
             return {
                 OperationType.LIST: {
-                    OauthScopeType.CLIENT_PRIVATE: dict(
-                        condition=lambda _policy: False,
-                    ),
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: False,
+                        ),
+                    ],
                 },
             }[action]
 
@@ -644,12 +708,14 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
     async def test_authorize_attribute_read_with_permissions_and_override_permissions(self):
         self.bootstrap()
 
-        def _rule(_attribute_operation_type, resource_attribute):
+        def _rule(_attribute_operation_type, _resource_attribute):
             return {
                 OauthScopeType.CLIENT_PRIVATE: {
-                    OperationType.LIST: dict(
-                        condition=lambda _policy: False,
-                    ),
+                    OperationType.LIST: [
+                        dict(
+                            condition=lambda _policy: False,
+                        ),
+                    ],
                 },
             }
 
@@ -668,12 +734,14 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
     async def test_authorize_attribute_write_with_permissions_and_override_permissions(self):
         self.bootstrap()
 
-        def _rule(_attribute_operation_type, resource_attribute):
+        def _rule(_attribute_operation_type, _resource_attribute):
             return {
                 OauthScopeType.CLIENT_PRIVATE: {
-                    OperationType.LIST: dict(
-                        condition=lambda _policy: False,
-                    ),
+                    OperationType.LIST: [
+                        dict(
+                            condition=lambda _policy: False,
+                        ),
+                    ],
                 },
             }
 
@@ -692,12 +760,14 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
     async def test_authorize_attribute_query_with_permissions_and_override_permissions(self):
         self.bootstrap()
 
-        def _rule(_attribute_operation_type, resource_attribute):
+        def _rule(_attribute_operation_type, _resource_attribute):
             return {
                 OauthScopeType.CLIENT_PRIVATE: {
-                    OperationType.LIST: dict(
-                        condition=lambda _policy: False,
-                    ),
+                    OperationType.LIST: [
+                        dict(
+                            condition=lambda _policy: False,
+                        ),
+                    ],
                 },
             }
 

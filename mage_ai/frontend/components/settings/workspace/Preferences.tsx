@@ -21,6 +21,7 @@ import { ContainerStyle } from './index.style';
 import { Edit } from '@oracle/icons';
 import { ICON_SIZE_MEDIUM, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
@@ -223,7 +224,7 @@ function Preferences({
 
                 <Flex>
                   <Text default={!v} monospace>
-                    {k}
+                    {capitalizeRemoveUnderscoreLower(k)}
                   </Text>
 
                   {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
