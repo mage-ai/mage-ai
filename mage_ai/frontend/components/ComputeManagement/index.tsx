@@ -8,6 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
+import ResourceManagement from './ResourceManagement';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
@@ -157,8 +158,6 @@ function ComputeManagement({
     setSelectedTab,
   ]);
 
-  console.log(selectedTab, selectedComputeService)
-
   const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
     api.projects.useUpdate(projectName),
     {
@@ -167,6 +166,7 @@ function ComputeManagement({
           callback: ({
             project: objectServer,
           }) => {
+            setAttributesTouched({});
             setObjectAttributesState(objectServer);
           },
           onErrorCallback: (response, errors) => showError({
@@ -309,6 +309,24 @@ function ComputeManagement({
     updateProject,
   ]);
 
+  const resourcesMemo = useMemo(() => (
+    <ResourceManagement
+      attributesTouched={attributesTouched || {}}
+      isLoading={isLoadingUpdateProject}
+      mutateObject={updateProject}
+      objectAttributes={objectAttributes}
+      selectedComputeService={selectedComputeService}
+      setObjectAttributes={setObjectAttributes}
+    />
+  ), [
+    attributesTouched,
+    isLoadingUpdateProject,
+    objectAttributes,
+    selectedComputeService,
+    setObjectAttributes,
+    updateProject,
+  ]);
+
   const computeServicesMemo = useMemo(() => (
     <Spacing mx={1} py={PADDING_UNITS}>
       <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
@@ -402,6 +420,7 @@ function ComputeManagement({
       {selectedComputeService && project && (
         <>
           {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
+          {MainNavigationTabEnum.RESOURCES === selectedTab?.main && resourcesMemo}
         </>
       )}
     </TripleLayout>

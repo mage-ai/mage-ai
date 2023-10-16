@@ -6,6 +6,7 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import KeyValueConfigurationSection from './shared/KeyValueConfigurationSection';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
@@ -21,13 +22,13 @@ import {
 import { CardStyle } from './index.style';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
 import { ComputeServiceEnum, ObjectAttributesType } from './constants';
+import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { SparkConfigType } from '@interfaces/ProjectType';
 import { pauseEvent } from '@utils/events';
 import { randomSimpleHashGenerator } from '@utils/string';
 import { removeAtIndex } from '@utils/array';
@@ -53,6 +54,16 @@ function ConnectionSettings({
   selectedComputeService,
   setObjectAttributes,
 }: ConnectionSettingsProps) {
+  const setObjectAttributesEMRConfig =
+    useCallback((data: EMRConfigType) => setObjectAttributes({
+      emr_config: {
+        ...objectAttributes?.emr_config,
+        ...data,
+      },
+    }), [
+      objectAttributes,
+      setObjectAttributes,
+    ]);
   const setObjectAttributesSparkConfig =
     useCallback((data: SparkConfigType) => setObjectAttributes({
       spark_config: {
@@ -63,6 +74,10 @@ function ConnectionSettings({
       objectAttributes,
       setObjectAttributes,
     ]);
+
+  const objectAttributesEMRConfig = useMemo(() => objectAttributes?.emr_config || {}, [
+    objectAttributes,
+  ]);
   const objectAttributesSparkConfig = useMemo(() => objectAttributes?.spark_config || {}, [
     objectAttributes,
   ]);
@@ -79,122 +94,6 @@ function ConnectionSettings({
   const jarFileExists = useMemo(() => (jarFiles || []).includes(newJarFile), [
     jarFiles,
     newJarFile,
-  ]);
-
-  const [isAddingNewEnvironmentVariable, setIsAddingNewEnvironmentVariable] = useState(false);
-  const [newEnvironmentVariable, setNewEnvironmentVariable] = useState<string>(null);
-  const environmentVariables = useMemo(() => objectAttributesSparkConfig?.executor_env || {}, [
-    objectAttributesSparkConfig,
-  ]);
-  const hasEnvironmentVariables =
-    useMemo(() => Object.keys(environmentVariables || {})?.length >= 1, [environmentVariables]);
-  const environmentVariableExists =
-    useMemo(() => newEnvironmentVariable in (environmentVariables || {}), [
-      environmentVariables,
-      newEnvironmentVariable,
-    ]);
-
-  const addEnvironmentVariableButton = useMemo(() => (
-    <FlexContainer alignItems="center">
-      {!isAddingNewEnvironmentVariable && (
-        <Button
-          beforeIcon={<Add />}
-          compact
-          onClick={(e) => {
-            pauseEvent(e);
-            setIsAddingNewEnvironmentVariable(true);
-            setTimeout(() => refNewEnvironmentVariableUUID?.current?.focus(), 1);
-          }}
-          secondary={!hasEnvironmentVariables}
-          small
-        >
-          Add environment variable
-        </Button>
-      )}
-
-      {isAddingNewEnvironmentVariable && (
-        <>
-          {environmentVariableExists && (
-            <>
-              <Text danger small>
-                Environment variable exists
-              </Text>
-
-              <Spacing mr={1} />
-            </>
-          )}
-
-          <TextInput
-            compact
-            meta={{
-              touched: !!environmentVariableExists,
-              error: '',
-            }}
-            monospace
-            onClick={e => pauseEvent(e)}
-            paddingVertical={(UNIT / 2) - 2}
-            onChange={(e) => {
-              pauseEvent(e);
-              setNewEnvironmentVariable(e.target.value);
-            }}
-            ref={refNewEnvironmentVariableUUID}
-            small
-            value={newEnvironmentVariable || ''}
-          />
-
-          <Spacing mr={1} />
-
-          <Button
-            disabled={environmentVariableExists}
-            compact
-            onClick={(e) => {
-              pauseEvent(e);
-
-              if (!environmentVariableExists) {
-                setObjectAttributesSparkConfig({
-                  executor_env: {
-                    ...environmentVariables,
-                    [newEnvironmentVariable]: '',
-                  },
-                });
-
-                setIsAddingNewEnvironmentVariable(false);
-                setNewEnvironmentVariable(null);
-              }
-            }}
-            primary
-            small
-          >
-            Create environment variable
-          </Button>
-
-          <Spacing mr={1} />
-
-          <Button
-            compact
-            onClick={(e) => {
-              pauseEvent(e);
-
-              setIsAddingNewEnvironmentVariable(false);
-              setNewEnvironmentVariable(null);
-            }}
-            secondary
-            small
-          >
-            Cancel
-          </Button>
-        </>
-      )}
-    </FlexContainer>
-  ), [
-    environmentVariableExists,
-    environmentVariables,
-    hasEnvironmentVariables,
-    isAddingNewEnvironmentVariable,
-    newEnvironmentVariable,
-    refNewEnvironmentVariableUUID,
-    setIsAddingNewEnvironmentVariable,
-    setNewEnvironmentVariable,
   ]);
 
   const addJarFileButton = useMemo(() => (
@@ -228,6 +127,7 @@ function ConnectionSettings({
           )}
 
           <TextInput
+            autoComplete="off"
             compact
             meta={{
               touched: !!jarFileExists,
@@ -295,74 +195,6 @@ function ConnectionSettings({
     refNewJarFileUUID,
     setIsAddingNewJarFile,
     setNewJarFile,
-  ]);
-
-  const environmentVariablesMemo = useMemo(() => Object.entries(environmentVariables || {}).map(([
-    key,
-    value,
-  ]) => (
-    <div key={key}>
-      <Divider light />
-
-      <Spacing p={PADDING_UNITS}>
-        <FlexContainer alignItems="center">
-          <Button
-            iconOnly
-            noBackground
-            noBorder
-            noPadding
-            onClick={() => {
-              const updated = { ...environmentVariables };
-              delete updated?.[key];
-              setObjectAttributesSparkConfig({ executor_env: updated });
-            }}
-          >
-            <Trash default size={ICON_SIZE} />
-          </Button>
-
-          <Spacing mr={PADDING_UNITS} />
-
-          <Text
-            default
-            large
-            monospace
-          >
-            {key}
-          </Text>
-
-          <Spacing mr={PADDING_UNITS} />
-
-          <Flex flex={1}>
-            <TextInput
-              afterIcon={<Edit />}
-              afterIconClick={(_, inputRef) => {
-                inputRef?.current?.focus();
-              }}
-              afterIconSize={ICON_SIZE}
-              alignRight
-              fullWidth
-              large
-              monospace
-              noBackground
-              noBorder
-              onChange={e => setObjectAttributesSparkConfig({
-                executor_env: {
-                  ...environmentVariables,
-                  [key]: e.target.value,
-                },
-              })}
-              paddingHorizontal={0}
-              paddingVertical={0}
-              placeholder="e.g. /home/path"
-              value={value || ''}
-            />
-          </Flex>
-        </FlexContainer>
-      </Spacing>
-    </div>
-  )), [
-    environmentVariables,
-    setObjectAttributesSparkConfig,
   ]);
 
   const jarFilesMemo = useMemo(() => jarFiles?.map((value: string, idx: number) => (
@@ -746,49 +578,75 @@ function ConnectionSettings({
             </Spacing>
           </>
         )}
+
+        {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="center">
+              <FlexContainer flexDirection="column">
+                <Text
+                  default
+                  large
+                >
+                  Bootstrap script path
+                </Text>
+
+                <Text muted small>
+                  Use a custom script to bootstrap the EMR cluster.
+                </Text>
+              </FlexContainer>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              <Flex flex={1}>
+                <TextInput
+                  afterIcon={<Edit />}
+                  afterIconClick={(_, inputRef) => {
+                    inputRef?.current?.focus();
+                  }}
+                  afterIconSize={ICON_SIZE}
+                  alignRight
+                  autoComplete="off"
+                  large
+                  noBackground
+                  noBorder
+                  fullWidth
+                  onChange={e => setObjectAttributesEMRConfig({
+                    bootstrap_script_path: e.target.value,
+                  })}
+                  paddingHorizontal={0}
+                  paddingVertical={0}
+                  placeholder="e.g. /path/to/emr_bootstrap.sh"
+                  value={objectAttributesEMRConfig?.bootstrap_script_path || ''}
+                />
+              </Flex>
+            </FlexContainer>
+          </Spacing>
+        )}
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
 
-      <Panel noPadding>
-        <Spacing p={PADDING_UNITS}>
-          <FlexContainer
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Headline level={4}>
-              Executor environment variables
-            </Headline>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            {hasEnvironmentVariables && (
-              <FlexContainer alignItems="center">
-                {addEnvironmentVariableButton}
-              </FlexContainer>
-            )}
-          </FlexContainer>
-        </Spacing>
-
-        {!hasEnvironmentVariables && (
-          <>
-            <Divider light />
-            <Spacing p={PADDING_UNITS}>
-              <Spacing mb={PADDING_UNITS}>
-                <Text default>
-                  There are currently no executor environment variables.
-                </Text>
-              </Spacing>
-
-              <FlexContainer alignItems="center">
-                {addEnvironmentVariableButton}
-              </FlexContainer>
-            </Spacing>
-          </>
+      <KeyValueConfigurationSection
+        addButtonText="Add environment variable"
+        addTextInputPlaceholder="e.g. PYTHONPATH"
+        alreadyExistsMessage="Environment variable exists"
+        configurationValuePlaceholder="e.g. /home/path"
+        configurations={objectAttributesSparkConfig?.executor_env}
+        createButtonText="Create environment variable"
+        description={(
+          <Text muted>
+            Environment variables for the executor.
+          </Text>
         )}
-
-        {hasEnvironmentVariables && environmentVariablesMemo}
-      </Panel>
+        emptyState="There are currently no executor environment variables."
+        setConfigurations={data => setObjectAttributesSparkConfig({
+          executor_env: {
+            ...objectAttributesSparkConfig?.executor_env,
+            ...data,
+          },
+        })}
+        title="Environment variables"
+      />
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
 
