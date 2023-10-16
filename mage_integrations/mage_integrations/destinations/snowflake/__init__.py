@@ -358,6 +358,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
             f'write_pandas to: {database}.{schema}.{table}')
         snowflake_connection = self.build_connection()
         connection = snowflake_connection.build_connection()
+        if self.disable_double_quotes:
+            df.columns = [col.upper() for col in df.columns]
         success, num_chunks, num_rows, output = write_pandas(
             connection,
             df,
