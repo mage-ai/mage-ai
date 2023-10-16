@@ -14,10 +14,13 @@ async def build_project(repo_config=None, **kwargs):
     project = Project(repo_config=repo_config)
 
     model = merge_dict(project.repo_config.to_dict(), dict(
+        emr_config=project.emr_config,
         features=project.features,
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
+        remote_variables_dir=project.remote_variables_dir,
+        spark_config=project.spark_config,
         version=project.version,
     ))
 
@@ -79,6 +82,15 @@ class ProjectResource(GenericResource):
             openai_api_key = payload.get('openai_api_key')
             if repo_config.openai_api_key != openai_api_key:
                 data['openai_api_key'] = payload.get('openai_api_key')
+
+        if 'emr_config' in payload:
+            data['emr_config'] = payload['emr_config']
+
+        if 'spark_config' in payload:
+            data['spark_config'] = payload['spark_config']
+
+        if 'remote_variables_dir' in payload:
+            data['remote_variables_dir'] = payload['remote_variables_dir']
 
         if len(data.keys()) >= 1:
             repo_config.save(**data)
