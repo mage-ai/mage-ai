@@ -13,7 +13,28 @@ export enum ProjectTypeEnum {
   SUB = 'sub',
 }
 
+export interface EmrConfigType {
+
+}
+
+export interface SparkConfigType {
+  app_name?: string;
+  custom_session_var_name?: string;
+  executor_env?: {
+    PYTHONPATH?: string;
+    [key: string]: string;
+  };
+  others?: {
+    [key: string]: string;
+  }
+  spark_home?: string;
+  spark_jars?: string[];
+  spark_master?: string;
+  use_custom_session?: boolean;
+}
+
 export default interface ProjectType {
+  emr_config?: EmrConfigType;
   features?: {
     [key: string]: boolean;
   };
@@ -22,5 +43,6 @@ export default interface ProjectType {
   name: string;
   openai_api_key?: string;
   project_uuid?: string;
+  spark_config: SparkConfigType;
   version: string;
 }

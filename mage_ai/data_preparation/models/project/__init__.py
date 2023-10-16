@@ -40,6 +40,14 @@ class Project():
 
         return data
 
+    @property
+    def emr_config(self) -> Dict:
+        return self.repo_config.emr_config
+
+    @property
+    def spark_config(self) -> Dict:
+        return self.repo_config.spark_config
+
     def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)
 

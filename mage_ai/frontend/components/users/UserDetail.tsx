@@ -1068,7 +1068,6 @@ function UserDetail({
             </Button>
           </>
         )}
-
       </FlexContainer>
     </ContainerStyle>
   );
