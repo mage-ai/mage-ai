@@ -11,4 +11,10 @@ You must enter the following credentials when configuring this source:
 | `path_to_credentials_json_file` | Google service account credential json file. If Mage is running on GCP, you can leave this value null and then Mage will use the instance service account to authenticate. | `/path/to/service_account_credentials.json` |
 | `dataset` | BigQuery dataset you want to read data from. | `example_dataset` |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `batch_fetch_limit` | The number of rows to fetch in each batch (default to 50k). You can specify a larger batch size if your instance has higher memory. | `50000`
+
 <br />

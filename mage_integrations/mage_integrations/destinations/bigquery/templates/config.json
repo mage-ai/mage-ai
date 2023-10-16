@@ -4,5 +4,5 @@
   "dataset": "",
   "location": "",
   "disable_update_column_types": false,
-  "use_batch_load": false
+  "use_batch_load": true
 }

@@ -147,7 +147,8 @@ class Destination():
             return self._config
         elif self.config_file_path:
             with open(self.config_file_path, 'r') as f:
-                return json.load(f)
+                self._config = json.load(f)
+            return self._config
         elif self.settings.get('config'):
             return self.settings['config']
         else:
@@ -167,8 +168,8 @@ class Destination():
             return self._settings
         elif self.settings_file_path:
             with open(self.settings_file_path) as f:
-                return yaml.safe_load(f.read())
-
+                self._settings = yaml.safe_load(f.read())
+            return self._settings
         return {}
 
     @property
