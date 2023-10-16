@@ -15,18 +15,35 @@ import { ICON_SIZE } from '@components/shared/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 
+type KeyValueConfigurationSectionProps = {
+  addButtonText?: string;
+  addTextInputPlaceholder?: string;
+  alreadyExistsMessage?: string;
+  configurationValuePlaceholder?: string;
+  configurations?: {
+    [key: string]: boolean | number | string;
+  };
+  createButtonText?: string;
+  description?: any | string;
+  emptyState?: string;
+  setConfigurations?: (configurations: {
+    [key: string]: boolean | number | string;
+  }) => void;
+  title?: string;
+};
+
 function KeyValueConfigurationSection({
   addButtonText,
+  addTextInputPlaceholder,
+  alreadyExistsMessage,
+  configurationValuePlaceholder,
   configurations,
+  createButtonText,
   description,
   emptyState,
-  alreadyExistsMessage,
-  createButtonText,
   setConfigurations,
   title,
-  addTextInputPlaceholder,
-  configurationValuePlaceholder,
-}) {
+}: KeyValueConfigurationSectionProps) {
   const refNewConfigurationUUID = useRef(null);
   const [isAddingNewConfigurations, setIsAddingNewConfigurations] = useState(false);
   const [newConfiguration, setNewConfiguration] = useState<string>(null);

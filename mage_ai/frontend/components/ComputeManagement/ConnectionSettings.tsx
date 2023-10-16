@@ -640,10 +640,7 @@ function ConnectionSettings({
         )}
         emptyState="There are currently no executor environment variables."
         setConfigurations={data => setObjectAttributesSparkConfig({
-          executor_env: {
-            ...objectAttributesSparkConfig?.executor_env,
-            ...data,
-          },
+          executor_env: data,
         })}
         title="Environment variables"
       />

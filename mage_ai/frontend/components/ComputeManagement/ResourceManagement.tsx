@@ -20,13 +20,13 @@ import {
 import { CardStyle } from './index.style';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
 import { ComputeServiceEnum, ObjectAttributesType } from './constants';
+import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { SparkConfigType } from '@interfaces/ProjectType';
 import { pauseEvent } from '@utils/events';
 import { randomSimpleHashGenerator } from '@utils/string';
 import { removeAtIndex } from '@utils/array';
@@ -314,10 +314,7 @@ function ResourceManagement({
             )}
             emptyState="There are currently no Spark configurations for the master instance."
             setConfigurations={data => setObjectAttributesEMRConfig({
-              master_spark_properties: {
-                ...objectAttributesEMRConfig?.master_spark_properties,
-                ...data,
-              },
+              master_spark_properties: data,
             })}
             title="Master Spark configurations"
           />
@@ -355,10 +352,7 @@ function ResourceManagement({
             )}
             emptyState="There are currently no Spark configurations for the slave instance."
             setConfigurations={data => setObjectAttributesEMRConfig({
-              slave_spark_properties: {
-                ...objectAttributesEMRConfig?.slave_spark_properties,
-                ...data,
-              },
+              slave_spark_properties: data,
             })}
             title="Slave Spark configurations"
           />
