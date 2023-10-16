@@ -257,9 +257,11 @@ class UserPermissionMixIn:
     @classmethod
     def action_rule_with_permissions(self, operation: OperationType) -> Dict:
         return {
-            OauthScope.CLIENT_PRIVATE: dict(
-                condition=self.build_validate_condition(operation),
-            ),
+            OauthScope.CLIENT_PRIVATE: [
+                dict(
+                    condition=self.build_validate_condition(operation),
+                ),
+            ]
         }
 
     @classmethod
@@ -270,13 +272,15 @@ class UserPermissionMixIn:
     ) -> Dict:
         conditions = {}
         for operation in OperationType:
-            conditions[operation.value] = dict(
-                condition=self.build_validate_attribute(
-                    operation,
-                    attribute_operation_type,
-                    resource_attribute,
+            conditions[operation.value] = [
+                dict(
+                    condition=self.build_validate_attribute(
+                        operation,
+                        attribute_operation_type,
+                        resource_attribute,
+                    ),
                 ),
-            )
+            ]
 
         return {
             OauthScope.CLIENT_PRIVATE: conditions,
