@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Dict, List
 
 from mage_ai.services.spark.models.base import BaseSparkModel
+from mage_ai.services.spark.models.metrics import Metrics
 
 
 class Locality(str, Enum):
@@ -16,31 +17,6 @@ class StageStatus(str, Enum):
 
 class TaskStatus(str, Enum):
     SUCCESS = 'SUCCESS'
-
-
-@dataclass
-class Metrics(BaseSparkModel):
-    direct_pool_memory: int = None  # 0
-    jvm_heap_memory: int = None  # 0
-    jvm_off_heap_memory: int = None  # 0
-    major_gc_count: int = None  # 0
-    major_gc_time: int = None  # 0
-    mapped_pool_memory: int = None  # 0
-    minor_gc_count: int = None  # 0
-    minor_gc_time: int = None  # 0
-    off_heap_execution_memory: int = None  # 0
-    off_heap_storage_memory: int = None  # 0
-    off_heap_unified_memory: int = None  # 0
-    on_heap_execution_memory: int = None  # 0
-    on_heap_storage_memory: int = None  # 0
-    on_heap_unified_memory: int = None  # 0
-    process_tree_jvmrss_memory: int = None  # 0
-    process_tree_jvmv_memory: int = None  # 0
-    process_tree_other_rss_memory: int = None  # 0
-    process_tree_other_v_memory: int = None  # 0
-    process_tree_python_rss_memory: int = None  # 0
-    process_tree_python_v_memory: int = None  # 0
-    total_gc_time: int = None  # 0
 
 
 @dataclass
@@ -91,15 +67,15 @@ class OutputMetrics(BaseSparkModel):
 
 @dataclass
 class PushReadMetrics(BaseSparkModel):
-    corruptMergedBlockChunks: int = None  # 0
-    localMergedBlocksFetched: int = None  # 0
-    localMergedBytesRead: int = None  # 0
-    localMergedChunksFetched: int = None  # 0
-    mergedFetchFallbackCount: int = None  # 0
-    remoteMergedBlocksFetched: int = None  # 0
-    remoteMergedBytesRead: int = None  # 0
-    remoteMergedChunksFetched: int = None  # 0
-    remoteMergedReqsDuration: int = None  # 0
+    corrupt_merged_block_chunks: int = None  # 0
+    local_merged_blocks_fetched: int = None  # 0
+    local_merged_bytes_read: int = None  # 0
+    local_merged_chunks_fetched: int = None  # 0
+    merged_fetch_fallback_count: int = None  # 0
+    remote_merged_blocks_fetched: int = None  # 0
+    remote_merged_bytes_read: int = None  # 0
+    remote_merged_chunks_fetched: int = None  # 0
+    remote_merged_reqs_duration: int = None  # 0
 
 
 @dataclass
@@ -175,13 +151,25 @@ class Task(BaseSparkModel):
 
     def __post_init__(self):
         if self.status:
-            self.status = TaskStatus(self.status)
+            try:
+                self.status = TaskStatus(self.status)
+            except ValueError as err:
+                print(f'[WARNING] Task: {err}')
+                self.status = self.status
 
         if self.task_locality:
-            self.task_locality = Locality(self.task_locality)
+            try:
+                self.task_locality = Locality(self.task_locality)
+            except ValueError as err:
+                print(f'[WARNING] Task: {err}')
+                self.task_locality = self.task_locality
 
         if self.task_metrics:
             self.task_metrics = TaskMetrics(self.task_metrics)
+
+    @property
+    def id(self) -> int:
+        return self.task_id
 
 
 @dataclass
@@ -264,7 +252,11 @@ class Stage(BaseSparkModel):
             self.peak_executor_metrics = Metrics.load(**self.peak_executor_metrics)
 
         if self.status:
-            self.status = StageStatus(self.status)
+            try:
+                self.status = StageStatus(self.status)
+            except ValueError as err:
+                print(f'[WARNING] Stage: {err}')
+                self.status = self.status
 
     @property
     def id(self) -> int:
@@ -363,3 +355,104 @@ class StageAttempt(Stage):
     @property
     def id(self) -> int:
         return self.attempt_id
+
+
+@dataclass
+class InputMetricsSummary(BaseSparkModel):
+    # [1871.0, 1871.0, 1871.0, 1871.0, 1871.0]
+    bytes_read: List[float] = field(default_factory=list)
+    records_read: List[float] = field(default_factory=list)  # [5.0, 5.0, 5.0, 5.0, 5.0]
+
+
+@dataclass
+class OutputMetricsSummary(BaseSparkModel):
+    # [1871.0, 1871.0, 1871.0, 1871.0, 1871.0]
+    bytes_written: List[float] = field(default_factory=list)
+    records_written: List[float] = field(default_factory=list)  # [5.0, 5.0, 5.0, 5.0, 5.0]
+
+
+@dataclass
+class PushReadMetricsDistSummary(BaseSparkModel):
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    corrupt_merged_block_chunks: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    local_merged_blocks_fetched: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    local_merged_bytes_read: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    local_merged_chunks_fetched: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    merged_fetch_fallback_count: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    remote_merged_blocks_fetched: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    remote_merged_bytes_read: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    remote_merged_chunks_fetched: List[float] = field(default_factory=list)
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0]
+    remote_merged_reqs_duration: List[float] = field(default_factory=list)
+
+
+@dataclass
+class ShuffleReadMetricsSummary(BaseSparkModel):
+    fetch_wait_time: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    local_blocks_fetched: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    read_bytes: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    read_records: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    remote_blocks_fetched: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    remote_bytes_read: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    remote_bytes_read_to_disk: List[float] = field(default_factory=list)
+    remote_reqs_duration: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    shuffle_push_read_metrics_dist: PushReadMetricsDistSummary = None
+    total_blocks_fetched: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+
+    def __post_init__(self):
+        if self.shuffle_push_read_metrics_dist:
+            self.shuffle_push_read_metrics_dist = PushReadMetricsDistSummary(
+                self.shuffle_push_read_metrics_dist,
+            )
+
+
+@dataclass
+class ShuffleWriteMetricsSummary(BaseSparkModel):
+    write_bytes: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    write_records: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    write_time: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+
+
+@dataclass
+class StageAttemptTaskSummary(BaseSparkModel):
+    disk_bytes_spilled: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    duration: List[float] = field(default_factory=list)  # [ 13.0, 13.0, 13.0, 13.0, 13.0 ]
+    # [ 5458623.0, 5458623.0, 5458623.0, 5458623.0, 5458623.0 ]
+    executor_cpu_time: List[float] = field(default_factory=list)
+    # [ 1843625.0, 1843625.0, 1843625.0, 1843625.0, 1843625.0 ]
+    executor_deserialize_cpu_time: List[float] = field(default_factory=list)
+    # [ 1.0, 1.0, 1.0, 1.0, 1.0 ]
+    executor_deserialize_time: List[float] = field(default_factory=list)
+    executor_run_time: List[float] = field(default_factory=list)  # [ 9.0, 9.0, 9.0, 9.0, 9.0 ]
+    getting_result_time: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    input_metrics: InputMetricsSummary = None
+    jvm_gc_time: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    memory_bytes_spilled: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    output_metrics: OutputMetricsSummary = None
+    peak_execution_memory: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    quantiles: List[float] = field(default_factory=list)  # [ 0.05, 0.25, 0.5, 0.75, 0.95 ]
+    # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    result_serialization_time: List[float] = field(default_factory=list)
+    # [ 1784.0, 1784.0, 1784.0, 1784.0, 1784.0 ]
+    result_size: List[float] = field(default_factory=list)
+    scheduler_delay: List[float] = field(default_factory=list)  # [ 3.0, 3.0, 3.0, 3.0, 3.0 ]
+    shuffle_read_metrics: ShuffleReadMetricsSummary = None
+    shuffle_write_metrics: ShuffleWriteMetricsSummary = None
+
+    def __post_init__(self):
+        if self.input_metrics:
+            self.input_metrics = InputMetricsSummary(self.input_metrics)
+        if self.output_metrics:
+            self.output_metrics = OutputMetricsSummary(self.output_metrics)
+        if self.shuffle_read_metrics:
+            self.shuffle_read_metrics = ShuffleReadMetricsSummary(self.shuffle_read_metrics)
+        if self.shuffle_write_metrics:
+            self.shuffle_write_metrics = ShuffleWriteMetricsSummary(self.shuffle_write_metrics)

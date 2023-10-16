@@ -1,14 +1,14 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.presenters.SparkStageAttemptPresenter import SparkStageAttemptPresenter
+from mage_ai.api.presenters.SparkSqlPresenter import SparkSqlPresenter
 
 
-class SparkStageAttemptPolicy(BasePolicy):
+class SparkSqlPolicy(BasePolicy):
     pass
 
 
-SparkStageAttemptPolicy.allow_actions(
+SparkSqlPolicy.allow_actions(
     [
         OperationType.DETAIL,
         OperationType.LIST,
@@ -20,8 +20,8 @@ SparkStageAttemptPolicy.allow_actions(
 )
 
 
-SparkStageAttemptPolicy.allow_read(
-    SparkStageAttemptPresenter.default_attributes,
+SparkSqlPolicy.allow_read(
+    SparkSqlPresenter.default_attributes,
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],

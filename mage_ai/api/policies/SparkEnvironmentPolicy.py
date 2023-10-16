@@ -1,17 +1,16 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.presenters.SparkStageAttemptPresenter import SparkStageAttemptPresenter
+from mage_ai.api.presenters.SparkEnvironmentPresenter import SparkEnvironmentPresenter
 
 
-class SparkStageAttemptPolicy(BasePolicy):
+class SparkEnvironmentPolicy(BasePolicy):
     pass
 
 
-SparkStageAttemptPolicy.allow_actions(
+SparkEnvironmentPolicy.allow_actions(
     [
         OperationType.DETAIL,
-        OperationType.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -20,14 +19,13 @@ SparkStageAttemptPolicy.allow_actions(
 )
 
 
-SparkStageAttemptPolicy.allow_read(
-    SparkStageAttemptPresenter.default_attributes,
+SparkEnvironmentPolicy.allow_read(
+    SparkEnvironmentPresenter.default_attributes,
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
         OperationType.DETAIL,
-        OperationType.LIST,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
