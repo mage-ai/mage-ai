@@ -29,11 +29,9 @@ class DatabaseResourceTest(BaseApiTestCase):
 
         user1 = User.create(username=self.faker.unique.name())
         user2 = User.create(username=self.faker.unique.name())
-        user3 = User.create(username=self.faker.unique.name())
         self.users = [
             user1,
             user2,
-            user3,
         ]
         self.user = self.users[0]
 
