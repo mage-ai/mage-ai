@@ -1,10 +1,10 @@
 export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
+  COMPUTE_MANAGEMENT = 'compute_management',
   DATA_INTEGRATION_IN_BATCH_PIPELINE = 'data_integration_in_batch_pipeline',
   INTERACTIONS = 'interactions',
   LOCAL_TIMEZONE = 'display_local_timezone',
   OPERATION_HISTORY = 'operation_history',
-  SPARK_EXPERIENCE_V2 = 'spark_experience_v2',
 }
 
 export enum ProjectTypeEnum {
