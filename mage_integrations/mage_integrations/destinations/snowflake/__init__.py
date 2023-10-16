@@ -257,7 +257,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         ] + super().build_create_schema_commands(database_name, schema_name)
 
     def full_schema_name(self, database_name: str, schema_name: str) -> str:
-        return f'{self._wrap_with_quotes(database_name)}.{self._wrap_with_quotes(schema_name)}"'
+        return f'{self._wrap_with_quotes(database_name)}.{self._wrap_with_quotes(schema_name)}'
 
     def full_table_name(self, database_name: str, schema_name: str, table_name: str) -> str:
         if self.disable_double_quotes:
@@ -335,6 +335,25 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         schema: str,
         table: str,
     ) -> List[List[tuple]]:
+        """
+        Write a Pandas DataFrame to a table in a Snowflake database.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to be written to the table.
+            database (str): The name of the Snowflake database where the table exists.
+            schema (str): The name of the schema within the database where the table is located.
+            table (str): The name of the target table.
+
+        Returns:
+            List[List[tuple]]: A list containing a single tuple, where the tuple contains
+            information about the number of rows written to the table.
+
+        Note:
+            The function relies on the `self.disable_double_quotes` attribute to determine
+            whether to use uppercase for table, database, and schema names when constructing
+            the SQL statement for writing. Make sure this attribute is appropriately set
+            before calling this function.
+        """
         self.logger.info(
             f'write_pandas to: {database}.{schema}.{table}')
         snowflake_connection = self.build_connection()
@@ -361,6 +380,25 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         tags: Dict = None,
         **kwargs,
     ) -> List[List[Tuple]]:
+        """
+        Process and load data into Snowflake using batch or default SQL insertion.
+
+        Args:
+            query_strings (List[str]): List of SQL query strings for pre-processing.
+            record_data (List[Dict]): List of dictionaries containing record data.
+            stream (str): The name of the data stream.
+            tags (Dict, optional): Dictionary of additional tags for the operation.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            List[List[Tuple]]: A list containing results of executed queries.
+
+        Note:
+            - The `use_batch_load` attribute determines whether to use batch load or
+              default SQL insertion.
+            - Make sure the `unique_constraints` and `unique_conflict_methods` are properly
+              configured for batch load.
+        """
         if not self.use_batch_load:
             self.logger.info('Using default SQL insertion load for Snowflake...')
             return super().process_queries(
