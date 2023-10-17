@@ -11,6 +11,7 @@ export enum InputTypeEnum {
 }
 
 export interface OptionType {
+  disabled?: boolean;
   label?: () => string;
   value: string | number;
 }
@@ -40,6 +41,7 @@ export type OpenDataIntegrationModalOptionsType = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setContent?: (content: string) => void;
 }
 
 export type OpenDataIntegrationModalType = {

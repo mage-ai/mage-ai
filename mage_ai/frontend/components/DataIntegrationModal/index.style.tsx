@@ -8,6 +8,12 @@ import { transition } from '@oracle/styles/mixins';
 
 export const MODAL_PADDING = 8 * UNIT;
 
+export const AfterContentStyle = styled.div`
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+  `}
+`;
+
 export const AfterFooterStyle = styled.div`
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};

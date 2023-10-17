@@ -444,7 +444,13 @@ function BlockSettings({
           </RowDataTable>
         </Spacing>
 
-        {isDataIntegration && (
+        {/*
+          TODO: we can’t allow this entry point for now because this requires passing in a property
+          called setContent which is a set state function in each code block. That function is
+          required so that when making code text changes in the data integration modal,
+          the new code text is reflected in the data integration modal after closing and opening it.
+        */}
+        {/*{isDataIntegration && (
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <RowDataTable
               noBackground
@@ -500,7 +506,7 @@ function BlockSettings({
               </RowStyle>
             </RowDataTable>
           </Spacing>
-        )}
+        )}*/}
 
         <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
           <Headline level={5}>

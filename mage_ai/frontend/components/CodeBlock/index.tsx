@@ -888,6 +888,26 @@ function CodeBlock({
       replicatedBlockUUID,
     ]);
 
+  const blockExtras = useMemo(() => !codeCollapsed && ![
+    BlockTypeEnum.CALLBACK,
+    BlockTypeEnum.CONDITIONAL,
+    BlockTypeEnum.EXTENSION,
+  ].includes(blockType) && (
+    <BlockExtras
+      block={block}
+      blocks={allBlocks}
+      openSidekickView={openSidekickView}
+      pipeline={pipeline}
+    />
+  ), [
+    allBlocks,
+    block,
+    blockType,
+    codeCollapsed,
+    openSidekickView,
+    pipeline,
+  ]);
+
   const codeEditorEl = useMemo(() => {
     if (replicatedBlockUUID && !isDataIntegration) {
       return null;
@@ -1029,11 +1049,13 @@ function CodeBlock({
           blockContent={content}
           callbackEl={callbackEl}
           codeEditor={editorEl}
+          hasElementsBelow={messages?.length >= 1 || !!blockExtras}
           onChangeBlock={(blockUpdated: BlockType) => updateBlock({
             block: blockUpdated,
           })}
           openSidekickView={openSidekickView}
           savePipelineContent={savePipelineContent}
+          setContent={setContent}
           showDataIntegrationModal={showDataIntegrationModal}
         />
       );
@@ -1048,6 +1070,7 @@ function CodeBlock({
   }, [
     autocompleteProviders,
     block,
+    blockExtras,
     blockLanguage,
     blockType,
     blocksMapping,
@@ -1060,6 +1083,7 @@ function CodeBlock({
     height,
     hideRunButton,
     isDataIntegration,
+    messages,
     onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
@@ -2482,7 +2506,7 @@ function CodeBlock({
                           </Text>
                         </Spacing>)
                         : (
-                          <Spacing py={PADDING_UNITS}>
+                          <Spacing py={isDataIntegration ? 0 : PADDING_UNITS}>
                             {codeEditorEl}
                           </Spacing>
                         )
@@ -2499,9 +2523,13 @@ function CodeBlock({
                 </>
               )}
 
-              {extraContent && React.cloneElement(extraContent, {
-                runBlockAndTrack,
-              })}
+              {extraContent && (
+                <Spacing mb={1}>
+                  {React.cloneElement(extraContent, {
+                    runBlockAndTrack,
+                  })}
+                </Spacing>
+              )}
 
               {blockError && (
                 <Spacing p={PADDING_UNITS}>
@@ -2522,18 +2550,7 @@ function CodeBlock({
                 </TimeTrackerStyle>
               )}
 
-              {!codeCollapsed && ![
-                BlockTypeEnum.CALLBACK,
-                BlockTypeEnum.CONDITIONAL,
-                BlockTypeEnum.EXTENSION,
-              ].includes(blockType) && (
-                <BlockExtras
-                  block={block}
-                  blocks={allBlocks}
-                  openSidekickView={openSidekickView}
-                  pipeline={pipeline}
-                />
-              )}
+              {blockExtras}
             </CodeContainerStyle>
 
             {codeOutputEl}

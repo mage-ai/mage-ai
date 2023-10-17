@@ -738,6 +738,7 @@ export function updateStreamInStreamMapping(
       mapping.parents = {
         ...mapping?.parents,
         [idParent]: {
+          ...mapping?.parents?.[idParent],
           [id]: stream,
         },
       };

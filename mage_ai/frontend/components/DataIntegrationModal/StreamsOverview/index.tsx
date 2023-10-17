@@ -303,7 +303,8 @@ function StreamsOverview({
             value={replicationMethod}
           >
             {Object.values(ReplicationMethodEnum).map(value => (
-              <option key={value} value={value}>
+              <option disabled={ReplicationMethodEnum.FULL_TABLE !== value} key={value} value={value}>
+                {ReplicationMethodEnum.FULL_TABLE !== value && '[COMING SOON] '}
                 {capitalizeRemoveUnderscoreLower(value)}
               </option>
             ))}

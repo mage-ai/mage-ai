@@ -88,6 +88,10 @@ function BlockExtras({
   const callb = useMemo(() => callbackBlocks?.length, [callbackBlocks]);
   const eb = useMemo(() => extensionBlocks?.length, [extensionBlocks]);
 
+  if (!cb && !callb && !eb) {
+    return null;
+  }
+
   return (
     <Spacing pb={(cb >= 1 || callb >= 1 || eb >= 1) ? 1 : 0}>
       {cb >= 1 && (

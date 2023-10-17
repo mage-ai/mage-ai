@@ -13,13 +13,18 @@ export const HeaderSectionStyle = styled.div`
   `}
 `;
 
-export const StreamSectionStyle = styled.div`
-  border-bottom-left-radius: ${BORDER_RADIUS}px;
-  border-bottom-right-radius: ${BORDER_RADIUS}px;
+export const StreamSectionStyle = styled.div<{
+  noBorderRadius?: boolean;
+}>`
   overflow: hidden;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).content};
+  `}
+
+  ${props => !props.noBorderRadius && `
+    border-bottom-left-radius: ${BORDER_RADIUS}px;
+    border-bottom-right-radius: ${BORDER_RADIUS}px;
   `}
 `;
 

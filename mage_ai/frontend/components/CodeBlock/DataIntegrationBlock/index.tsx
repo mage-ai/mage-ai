@@ -42,6 +42,7 @@ type DataIntegrationBlockProps = {
   };
   codeEditor?: any;
   callbackEl?: any;
+  hasElementsBelow?: boolean;
   onChangeBlock?: (block: BlockType) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     blockUUID: string;
@@ -50,6 +51,7 @@ type DataIntegrationBlockProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setContent?: (content: string) => void;
 } & OpenDataIntegrationModalType;
 
 function DataIntegrationBlock({
@@ -58,8 +60,10 @@ function DataIntegrationBlock({
   blocksMapping,
   codeEditor,
   callbackEl,
+  hasElementsBelow,
   onChangeBlock,
   openSidekickView,
+  setContent,
   showDataIntegrationModal,
 }: DataIntegrationBlockProps) {
   const {
@@ -155,6 +159,7 @@ function DataIntegrationBlock({
                 defaultMainNavigationTabSub: parentStream,
                 defaultSubTab: danger ? SubTabEnum.SETTINGS : SubTabEnum.OVERVIEW,
                 onChangeBlock,
+                setContent,
               })}
               preventDefault
               sameColorAsText={!danger}
@@ -202,6 +207,7 @@ function DataIntegrationBlock({
                 defaultMainNavigationTabSub: parentStream,
                 defaultSubTab: SubTabEnum.SETTINGS,
                 onChangeBlock,
+                setContent,
               })}
               preventDefault
               sameColorAsText={!danger}
@@ -233,8 +239,10 @@ function DataIntegrationBlock({
     );
   }, [
     block,
+    blockContent,
     language,
     isSource,
+    setContent,
     showDataIntegrationModal,
     streams,
   ]);
@@ -251,8 +259,6 @@ function DataIntegrationBlock({
     <>
       {BlockLanguageEnum.YAML === language && (
         <HeaderSectionStyle>
-          <Divider light />
-
           <Spacing p={PADDING_UNITS}>
             <FlexContainer alignItems="flex-start" justifyContent="space-between">
               <Flex flex={1} flexDirection="column">
@@ -274,6 +280,7 @@ function DataIntegrationBlock({
                   },
                   defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                   onChangeBlock,
+                  setContent,
                 })}
                 secondary
               >
@@ -283,13 +290,17 @@ function DataIntegrationBlock({
           </Spacing>
 
           <Divider light />
+
+          {inputsBlocks?.length >= 1 && (
+            <InputsTable
+              inputsBlocks={inputsBlocks}
+            />
+          )}
         </HeaderSectionStyle>
       )}
 
       {BlockLanguageEnum.PYTHON === language && (
         <HeaderSectionStyle>
-          <Divider light />
-
           <Spacing p={PADDING_UNITS}>
             <FlexContainer alignItems="flex-start" justifyContent="space-between">
               <Flex flex={1} flexDirection="column">
@@ -311,10 +322,11 @@ function DataIntegrationBlock({
                   },
                   defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                   onChangeBlock,
+                  setContent,
                 })}
                 secondary
               >
-                Configure {displayTypeText} documentation
+                Configure {displayTypeText}
               </Button>
             </FlexContainer>
           </Spacing>
@@ -363,6 +375,7 @@ function DataIntegrationBlock({
                       defaultMainNavigationTab: MainNavigationTabEnum.CONFIGURATION,
                       defaultSubTab: SubTabEnum.UPSTREAM_BLOCK_SETTINGS,
                       onChangeBlock,
+                      setContent,
                     })}
                     secondary
                   >
@@ -381,7 +394,9 @@ function DataIntegrationBlock({
         </HeaderSectionStyle>
       )}
 
-      <StreamSectionStyle>
+      <StreamSectionStyle
+        noBorderRadius={hasElementsBelow}
+      >
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center" justifyContent="space-between">
             {streamsCount >= 1 && (
@@ -418,6 +433,7 @@ function DataIntegrationBlock({
                 },
                 defaultMainNavigationTab: MainNavigationTabEnum.STREAMS,
                 onChangeBlock,
+                setContent,
               })}
               primary={!streamsCount}
               secondary={streamsCount >= 1}

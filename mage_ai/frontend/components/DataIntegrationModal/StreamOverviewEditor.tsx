@@ -39,9 +39,18 @@ function StreamOverviewEditor({
         {
           label: () => 'Replication method',
           inputType: InputTypeEnum.SELECT,
-          options: Object.values(ReplicationMethodEnum).map(v => ({
-            label: () => capitalizeRemoveUnderscoreLower(v),
-            value: v,
+          options: Object.values(ReplicationMethodEnum).map(value => ({
+            disabled: ReplicationMethodEnum.FULL_TABLE !== value,
+            label: () => {
+              const text = capitalizeRemoveUnderscoreLower(value);
+
+              if (ReplicationMethodEnum.FULL_TABLE !== value) {
+                return `[COMING SOON] ${text}`;
+              }
+
+              return text;
+            },
+            value: value,
           })),
           uuid: AttributeUUIDEnum.REPLICATION_METHOD,
         },
