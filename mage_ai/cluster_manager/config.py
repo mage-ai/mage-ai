@@ -11,4 +11,4 @@ class TerminationPolicy(BaseConfig):
 
 @dataclass
 class WorkspaceConfig(BaseConfig):
-    termination_policy: TerminationPolicy = TerminationPolicy()
+    termination_policy: TerminationPolicy = None
