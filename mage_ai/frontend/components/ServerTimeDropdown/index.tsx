@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ServerTimeButton from './ServerTimeButton';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import dark from '@oracle/styles/themes/dark';
 
+import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
 import { BREAKPOINT_MEDIUM } from '@styles/theme';
 import { 
   DropdownCellStyle, 
@@ -17,7 +17,6 @@ import {
   ToggleGroupStyle, 
 } from './index.style';
 import { PURPLE2 } from '@oracle/styles/colors/main';
-import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
 import { 
   shouldDisplayLocalServerTime, 
   shouldIncludeServerTimeSeconds, 
@@ -28,7 +27,6 @@ import {
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
 function ServerTimeDropdown() {
-  const buttonRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [times, setTimes] = useState<Map<TimeZoneEnum, string>>(
     currentTimes({ includeSeconds: true, timeZones: DISPLAYED_TIME_ZONES }),
@@ -56,12 +54,14 @@ function ServerTimeDropdown() {
     },
   ];
 
-  useEffect(() => {
-    // Make sure the dropdown shows below the button
-    if (buttonRef?.current) {
-      setTop(buttonRef.current.offsetHeight);
-    }
+  const setDropdownPosition = useCallback((top) => {
+    setTop(top);
+  }, []);
+  const handleButtonClick = useCallback(() => {
+    setShowDropdown(prevState => !prevState);
+  }, []);
 
+  useEffect(() => {
     // Update the time immediately when "Include seconds" toggle switches
     const updatedTimes = currentTimes({ 
       includeSeconds: includeServerTimeSeconds, 
@@ -86,18 +86,13 @@ function ServerTimeDropdown() {
   return (
     <ClickOutside onClickOutside={() => setShowDropdown(false)} open>
       <div style={{ position: 'relative' }}>
-        <Button 
-          backgroundColor={dark.background.dashboard}
-          borderLess
-          compact 
+        <ServerTimeButton 
           disabled={isSmallBreakpoint}
-          onClick={() => setShowDropdown(prevState => !prevState)}
-          ref={buttonRef}
-        >
-          <Text inline monospace>
-            {`${times.get(defaultTimeZone)} ${abbreviatedTimezone(defaultTimeZone)}`}
-          </Text>
-        </Button>
+          mountedCallback={setDropdownPosition}
+          onClick={handleButtonClick}
+          time={times.get(defaultTimeZone)}
+          timeZone={abbreviatedTimezone(defaultTimeZone)}
+        />
 
         {!isSmallBreakpoint && showDropdown && (
           <DropdownContainerStyle top={top}>
