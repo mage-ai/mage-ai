@@ -184,7 +184,14 @@ function Header({
       return <Mage8Bit />;
     }
 
-    const styleProps = {
+    const styleProps: {
+      color?: string;
+      fontFamily?: string;
+      fontSize?: number;
+      lineHeight?: string;
+      position?: string;
+      top?: number;
+    } = {
       color: themeContext?.content?.active,
       fontFamily: MONO_FONT_FAMILY_BOLD,
     };
@@ -199,6 +206,7 @@ function Header({
     }
 
     return (
+      // @ts-ignore
       <div style={styleProps}>
         {userFromLocalStorage?.avatar}
       </div>
