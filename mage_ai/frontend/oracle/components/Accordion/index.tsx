@@ -8,7 +8,9 @@ import { BORDER_WIDTH, BORDER_RADIUS, BORDER_STYLE } from '@oracle/styles/units/
 
 export type AccordionProps = {
   activeItemIndex?: number;
+  noBackground?: boolean;
   noBorder?: boolean;
+  noBoxShadow?: boolean;
   children: any;
   onClick?: (visibleMapping: {
     [key: number]: boolean;
@@ -31,9 +33,12 @@ type AccordionPanelContainerProps = {
 const AccordionStyle = styled.div<AccordionProps>`
   overflow: hidden;
 
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).content};
+  ${props => !props.noBoxShadow && `
     box-shadow: ${(props.theme || dark).shadow.frame};
+  `}
+
+  ${props => !props.noBackground && `
+    background-color: ${(props.theme.background || dark.background).content};
   `}
 
   ${props => !props.highlighted && `
