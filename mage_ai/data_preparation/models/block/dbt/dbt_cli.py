@@ -106,11 +106,14 @@ class DBTCli:
         EVENT_MANAGER.loggers = []
         EVENT_MANAGER.add_logger(dbt_logger)
 
-        with adapter_management():
-            task = self.__parsed_args.cls.from_args(args=self.__parsed_args)
-            self.__result = task.run()
-            self.__success = task.interpret_results(self.__result)
-        os.chdir(self.__cwd)
+        try:
+            with adapter_management():
+                task = self.__parsed_args.cls.from_args(args=self.__parsed_args)
+                self.__result = task.run()
+                self.__success = task.interpret_results(self.__result)
+        finally:
+            # Always change back the directory
+            os.chdir(self.__cwd)
         return self.__result, self.__success
 
     def to_pandas(self) -> Tuple[Optional[pd.DataFrame], Any, bool]:

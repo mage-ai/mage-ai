@@ -155,7 +155,13 @@ class DBTBlockSQLTest(TestCase):
         )
 
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli')
-    def test_upstream_dbt_blocks(self, DBTCli: MagicMock):
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
+    def test_upstream_dbt_blocks(
+        self,
+        Profiles: MagicMock,
+        DBTCli: MagicMock,
+    ):
+        Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
         DBTCli.return_value.invoke.return_value = (
             [
                 '{"unique_id":"test1", "original_file_path":"test1_file_path.sql", ' +
@@ -167,6 +173,17 @@ class DBTBlockSQLTest(TestCase):
         )
 
         blocks = [block.to_dict() for block in self.dbt_block.upstream_dbt_blocks()].__iter__()
+
+        DBTCli.assert_called_once_with([
+            'list',
+            '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
+            '--profiles-dir', 'test_profiles_dir',
+            '--select', '+model',
+            '--output', 'json',
+            '--output-keys', 'unique_id original_file_path depends_on',
+            '--resource-type', 'model',
+            '--resource-type', 'snapshot',
+        ])
 
         block = next(blocks)
         self.assertDictContainsSubset(

@@ -29,10 +29,12 @@ def get_secrets_dir(
     Returns:
         str: /path/to/secrets/directory
     """
-    secrets_dir = os.path.abspath(os.path.join(get_data_dir(), DEFAULT_MAGE_SECRETS_DIR))
+    secrets_dir = os.path.join(get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
     # Use expanduser path if the secrets dir hasn't been created yet
     if not os.path.exists(secrets_dir):
         secrets_dir = os.path.expanduser(secrets_dir)
+
+    secrets_dir = os.path.abspath(secrets_dir)
 
     if entity == Entity.GLOBAL:
         return secrets_dir
