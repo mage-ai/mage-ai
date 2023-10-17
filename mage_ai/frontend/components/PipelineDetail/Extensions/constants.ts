@@ -67,6 +67,7 @@ export type ExtensionProps = {
   showUpdateBlockModal?: (
     block: BlockType,
     name: string,
-  ) => void;
+    preventDuplicateBlockName?: boolean,
+  ) => Promise<any>;
   textareaFocused: boolean;
 };

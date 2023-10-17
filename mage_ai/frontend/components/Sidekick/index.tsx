@@ -149,11 +149,6 @@ export type SidekickProps = {
   setPermissions?: (prev: any) => void;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
-  showUpdateBlockModal?: (
-    block: BlockType,
-    name: string,
-    preventDuplicateBlockName?: boolean,
-  ) => void;
   updatePipelineInteraction?: (opts: {
     pipeline_interaction: PipelineInteractionType;
   }) => void;

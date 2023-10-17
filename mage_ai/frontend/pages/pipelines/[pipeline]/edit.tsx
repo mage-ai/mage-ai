@@ -2470,6 +2470,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       showBrowseTemplates={showBrowseTemplates}
       showDataIntegrationModal={showDataIntegrationModal}
+      // @ts-ignore
       showUpdateBlockModal={(
         block,
         name = randomNameGenerator(),

@@ -11,6 +11,7 @@ export enum InputTypeEnum {
 }
 
 export interface OptionType {
+  disabled?: boolean;
   label?: () => string;
   value: string | number;
 }

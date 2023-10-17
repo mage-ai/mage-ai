@@ -439,6 +439,7 @@ function DataIntegrationModal({
         } else if (MAIN_TABS_EXCEPT_STREAM_DETAIL[prev2] && !MAIN_TABS_EXCEPT_STREAM_DETAIL[val1]) {
           // If changing from a main tab to a stream detail tab and the subTabUse isn’t
           // a subtab that exists in the stream detail tab, set a default subtab.
+          // @ts-ignore
           if (subTabUse && !subTabsForStreamDetail?.includes(subTabUse)) {
             subTabUse = subTabsForStreamDetail?.[0]?.uuid;
           }
