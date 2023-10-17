@@ -5,13 +5,8 @@ import yaml
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cluster_manager.config import LifecycleConfig
-from mage_ai.cluster_manager.manage import (
-    create_workspace,
-    delete_workspace,
-    get_instances,
-    get_workspaces,
-    update_workspace,
-)
+from mage_ai.cluster_manager.manage import get_instances, get_workspaces
+from mage_ai.cluster_manager.workspace.base import Workspace
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
@@ -62,10 +57,11 @@ class WorkspaceResource(GenericResource):
             for instance in instances
         }
 
+        workspace = Workspace.get_workspace(cluster_type, pk)
+
         return self(dict(
-            name=pk,
-            cluster_type=cluster_type,
             instance=instance_map[pk],
+            workspace=workspace,
         ), user, **kwargs)
 
     @classmethod
@@ -88,7 +84,7 @@ class WorkspaceResource(GenericResource):
         lifecycle_config = LifecycleConfig(**config)
 
         try:
-            create_workspace(
+            Workspace.create(
                 cluster_type,
                 workspace_name,
                 lifecycle_config,
@@ -101,14 +97,11 @@ class WorkspaceResource(GenericResource):
         return self(dict(success=True), user, **kwargs)
 
     def update(self, payload, **kwargs):
-        cluster_type = self.model.get('cluster_type')
-        workspace_name = self.model.get('name')
+        workspace = self.model.get('workspace')
 
         error = ApiError.RESOURCE_ERROR.copy()
         try:
-            update_workspace(
-                cluster_type,
-                workspace_name,
+            workspace.update(
                 **ignore_keys(payload, ['name', 'cluster_type']),
             )
         except Exception as ex:
@@ -118,16 +111,13 @@ class WorkspaceResource(GenericResource):
         return self
 
     def delete(self, **kwargs):
-        cluster_type = self.model.get('cluster_type')
-        workspace_name = self.model.get('name')
+        workspace = self.model.get('workspace')
         instance = self.model.get('instance')
 
         error = ApiError.RESOURCE_ERROR.copy()
 
         try:
-            delete_workspace(
-                cluster_type,
-                workspace_name,
+            workspace.delete(
                 **ignore_keys(instance, ['name', 'cluster_type'])
             )
         except Exception as ex:
