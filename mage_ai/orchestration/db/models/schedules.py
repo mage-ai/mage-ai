@@ -748,22 +748,44 @@ class PipelineRun(BaseModel):
                             block_run.block_uuid,
                         )
 
-        executable_block_runs = list()
+        executable_block_runs = []
         for block_run in self.initial_block_runs:
             completed = False
             upstream_block_uuids_override = None
 
-            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
-                'dynamic_upstream_block_uuids',
-            )
+            dynamic_upstream_block_uuids = None
+            dynamic_block_index = None
 
-            if dynamic_upstream_block_uuids:
+            if block_run.metrics:
+                """
+                {
+                  "dynamic_upstream_block_uuids": [
+                    "snowy_flower",
+                    "white_dew"
+                  ],
+                  "dynamic_block_index": 0
+                }
+                """
+                metrics = block_run.metrics
+                if 'dynamic_upstream_block_uuids' in metrics and 'dynamic_block_index' in metrics:
+                    dynamic_upstream_block_uuids = metrics['dynamic_upstream_block_uuids']
+                    dynamic_block_index = metrics['dynamic_block_index']
+
+            if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
+                uuids_to_check = []
+                for upstream_block_uuid in dynamic_upstream_block_uuids:
+                    block = pipeline.get_block(upstream_block_uuid)
+                    if is_dynamic_block_child(block):
+                        uuids_to_check.append(f'{block.uuid}:{dynamic_block_index}')
+                    else:
+                        uuids_to_check.append(upstream_block_uuid)
+
                 if allow_blocks_to_fail:
                     completed = all(uuid in finished_block_uuids
-                                    for uuid in dynamic_upstream_block_uuids)
+                                    for uuid in uuids_to_check)
                 else:
                     completed = all(uuid in completed_block_uuids
-                                    for uuid in dynamic_upstream_block_uuids)
+                                    for uuid in uuids_to_check)
             else:
                 block = pipeline.get_block(block_run.block_uuid)
 

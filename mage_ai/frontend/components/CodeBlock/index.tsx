@@ -2359,7 +2359,7 @@ function CodeBlock({
                     </Text>
                   </Spacing>
 
-                  <Spacing mt={1}>
+                  <Spacing my={1}>
                     {(!isSQLBlock && !isRBlock) && (
                       <>
                         <Text monospace muted small>
