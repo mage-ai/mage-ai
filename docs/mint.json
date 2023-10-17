@@ -448,7 +448,17 @@
             "visualizations/dashboards"
           ]
         },
-        "development/ai/overview",
+        {
+          "group": "No-code interactions",
+          "icon": "universal-access",
+          "pages": [
+            "interactions/overview",
+            "interactions/variables",
+            "interactions/inputs",
+            "interactions/layout",
+            "interactions/permissions"
+          ]
+        },
         "development/updating-mage"
       ]
     },
