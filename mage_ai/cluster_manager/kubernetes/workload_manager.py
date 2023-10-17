@@ -65,7 +65,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -164,13 +164,6 @@ class WorkloadManager:
 
         ingress_name = kwargs.get('ingress_name')
 
-        self.__create_persistent_volume(
-            name,
-            '/Users/david_yang/mage/mage-ai/testfiles',
-            storage_request_size=storage_request_size,
-            access_mode=storage_access_mode,
-        )
-
         volumes = []
 
         # Create stateful set
@@ -206,7 +199,7 @@ class WorkloadManager:
         init_containers = []
         pre_start_script_path = lifecycle_config.pre_start_script_path
         if pre_start_script_path:
-            self.configure_pre_start(name, pre_start_script_path)
+            self.configure_pre_start(name, pre_start_script_path, mage_container_config)
 
             volumes.append(
                 {
@@ -217,6 +210,10 @@ class WorkloadManager:
                             {
                                 'key': 'pre-start.py',
                                 'path': 'pre-start.py',
+                            },
+                            {
+                                'key': 'initial-config.json',
+                                'path': 'initial-config.json',
                             }
                         ]
                     }
@@ -226,20 +223,21 @@ class WorkloadManager:
             init_containers.append(
                 {
                     'name': f'{name}-pre-start',
-                    'image': 'davidmage/mage-pre-start:latest',
+                    'image': 'mageai/pre-start:latest',
                     'imagePullPolicy': 'Always',
                     'volumeMounts': [
                         {
                             'name': 'pre-start-script',
                             'mountPath': '/app/pre-start.py',
                             'subPath': 'pre-start.py',
+                        },
+                        {
+                            'name': 'pre-start-script',
+                            'mountPath': '/app/initial-config.json',
+                            'subPath': 'initial-config.json',
                         }
                     ],
                     'env': [
-                        {
-                            'name': 'INITIAL_CONFIG',
-                            'value': json.dumps(mage_container_config),
-                        },
                         {
                             'name': 'WORKSPACE_NAME',
                             'value': name,
@@ -427,6 +425,7 @@ class WorkloadManager:
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
+        self.core_client.delete_namespaced_config_map(f'{name}-pre-start', self.namespace)
         # TODO: remove service from ingress paths
 
     def get_workload_activity(self, name: str) -> Dict:
@@ -472,13 +471,19 @@ class WorkloadManager:
             name, namespace=self.namespace, body={'spec': {'replicas': 1}},
         )
 
-    def configure_pre_start(self, name: str, pre_start_script_path: str) -> None:
+    def configure_pre_start(
+        self,
+        name: str,
+        pre_start_script_path: str,
+        mage_container_config: Dict,
+    ) -> None:
         with open(pre_start_script_path, 'r', encoding='utf-8') as f:
             pre_start_script = f.read()
 
         config_map = {
             'data': {
-                'pre-start.py': pre_start_script
+                'pre-start.py': pre_start_script,
+                'initial-config.json': json.dumps(mage_container_config),
             },
             'metadata': {
                 'name': f'{name}-pre-start',
