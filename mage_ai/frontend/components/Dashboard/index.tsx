@@ -45,6 +45,7 @@ type DashboardProps = {
   errors?: ErrorsType;
   headerMenuItems?: MenuItemType[];
   headerOffset?: number;
+  hideAfterCompletely?: boolean;
   mainContainerHeader?: any;
   setErrors?: (errors: ErrorsType) => void;
   subheaderChildren?: any;
@@ -66,6 +67,7 @@ function Dashboard({
   errors,
   headerMenuItems,
   headerOffset,
+  hideAfterCompletely,
   mainContainerHeader,
   navigationItems,
   setAfterHidden,
@@ -209,7 +211,7 @@ function Dashboard({
             beforeMousedownActive={beforeMousedownActive}
             beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
             headerOffset={headerOffset}
-            hideAfterCompletely={!setAfterHidden}
+            hideAfterCompletely={!setAfterHidden || hideAfterCompletely}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
             mainContainerHeader={mainContainerHeader}
             mainContainerRef={mainContainerRef}

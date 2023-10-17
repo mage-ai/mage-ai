@@ -1,5 +1,6 @@
 import NextLink from 'next/link';
-import { useMemo, useRef, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { useContext, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -29,8 +30,10 @@ import {
   LOGO_HEIGHT,
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
+import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { getUser } from '@utils/session';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 
@@ -56,6 +59,9 @@ function Header({
   project: projectProp,
   version: versionProp,
 }: HeaderProps) {
+  const themeContext = useContext(ThemeContext);
+  const userFromLocalStorage = getUser();
+
   const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState<number>(null);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
@@ -164,6 +170,43 @@ function Header({
 
     return branch;
   }, [branch]);
+
+  const hasAvatarAndNotEmoji = useMemo(() => {
+    if (!userFromLocalStorage || !userFromLocalStorage?.avatar) {
+      return false;
+    }
+
+    return !!/[A-Za-z0-9]+/.exec(userFromLocalStorage?.avatar || '');
+  }, [userFromLocalStorage]);
+
+  const avatarMemo = useMemo(() => {
+    if (!userFromLocalStorage || !userFromLocalStorage?.avatar) {
+      return <Mage8Bit />;
+    }
+
+    const styleProps = {
+      color: themeContext?.content?.active,
+      fontFamily: MONO_FONT_FAMILY_BOLD,
+    };
+
+    if (hasAvatarAndNotEmoji) {
+      styleProps.fontSize = 2 * UNIT;
+      styleProps.lineHeight = `${2 * UNIT}px`;
+      styleProps.position = 'relative';
+      styleProps.top = 1;
+    } else {
+      styleProps.fontSize = 3 * UNIT;
+    }
+
+    return (
+      <div style={styleProps}>
+        {userFromLocalStorage?.avatar}
+      </div>
+    );
+  }, [
+    hasAvatarAndNotEmoji,
+    userFromLocalStorage,
+  ]);
 
   return (
     <HeaderStyle>
@@ -346,7 +389,7 @@ function Header({
                         color={BLUE_TRANSPARENT}
                         size={4 * UNIT}
                       >
-                        <Mage8Bit />
+                        {avatarMemo}
                       </Circle>
                     </LinkStyle>
 

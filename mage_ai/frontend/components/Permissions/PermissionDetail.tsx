@@ -1202,7 +1202,10 @@ function PermissionDetail({
 
   return (
     <SettingsDashboard
-      after={afterRoles}
+      after={ObjectTypeEnum.ROLES === addingObjectType
+          ? afterRoles
+          : null
+      }
       afterHeader={
         <Spacing px={PADDING_UNITS}>
           <Text bold>
@@ -1225,6 +1228,7 @@ function PermissionDetail({
           label: () => `Permission ${permission?.id}`,
         },
       ]}
+      hideAfterCompletely
       setAfterHidden={setAfterHidden}
       title={permission?.id ? `Permission ${permission?.id}` : 'New permission'}
       uuidItemSelected={SectionItemEnum.PERMISSIONS}
