@@ -365,6 +365,7 @@ function Sidekick({
     setSelectedBlock,
     setTextareaFocused,
     showBrowseTemplates,
+    showUpdateBlockModal,
     textareaFocused,
   }), [
     addNewBlockAtIndex,
@@ -391,6 +392,7 @@ function Sidekick({
     setSelectedBlock,
     setTextareaFocused,
     showBrowseTemplates,
+    showUpdateBlockModal,
     textareaFocused,
   ]);
 

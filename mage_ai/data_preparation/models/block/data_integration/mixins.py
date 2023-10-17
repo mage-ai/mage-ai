@@ -348,10 +348,14 @@ class DataIntegrationMixin:
                 **get_template_vars(),
             )
 
-            settings = yaml.safe_load(text)
+            settings = yaml.full_load(text)
 
             catalog = catalog_from_file
             config = settings.get('config')
+            if config:
+                for k, v in config.items():
+                    if v and isinstance(v, str):
+                        config[k] = v.strip()
             data_integration_uuid = settings.get(key)
         elif BlockLanguage.PYTHON == self.language:
             results_from_block_code = self.__execute_data_integration_block_code(

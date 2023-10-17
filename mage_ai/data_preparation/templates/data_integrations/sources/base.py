@@ -14,7 +14,7 @@ def config(*args, **kwargs) -> Dict:
 {{ config }}
 
 
-# @data_integration_selected_streams(discover_streams=False)
+# @data_integration_selected_streams(discover_streams: bool = False)
 # def selected_streams(*args, **kwargs) -> List[str]:
 #     config: Dict = kwargs.get('config', None)
 #     discover_streams_func: Callable = kwargs.get('discover_streams_func', None)
@@ -23,7 +23,7 @@ def config(*args, **kwargs) -> Dict:
 #     return []
 
 
-# @data_integration_catalog(discover=False, select_all=True)
+# @data_integration_catalog(discover: bool = False, select_all: bool = True)
 # def catalog(*args, **kwargs) -> Dict:
 #     config: Dict = kwargs.get('config', None)
 #     selected_streams: List[str] = kwargs.get('selected_streams', None)

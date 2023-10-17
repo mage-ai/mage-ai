@@ -40,6 +40,7 @@ export type OpenDataIntegrationModalOptionsType = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setContent?: (content: string) => void;
 }
 
 export type OpenDataIntegrationModalType = {

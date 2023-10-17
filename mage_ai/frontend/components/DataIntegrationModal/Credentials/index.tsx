@@ -41,6 +41,7 @@ type CredentialsInternalProps = {
   }) => Promise<any>;
   setBlockConfigString?: (blockConfigString: string) => void;
   setBlockContent?: (blockContent: string) => void;
+  setContent?: (content: string) => void;
   setSelectedSubTab: (subTab: SubTabEnum) => void;
   showError: (opts: ErrorRunTimeProps) => void;
 } & CredentialsProps;
@@ -56,6 +57,7 @@ function Credentials({
   savePipelineContent,
   setBlockConfigString,
   setBlockContent,
+  setContent,
   setSelectedSubTab,
   showError,
 }: CredentialsInternalProps) {
@@ -157,6 +159,7 @@ function Credentials({
                   config: valParsed,
                 });
                 onChangeCodeBlock(blockType, blockUUID, content);
+                setContent(content);
                 setConfigIsInvalid(false);
               } catch {
                 setConfigIsInvalid(true);
@@ -194,6 +197,7 @@ function Credentials({
     blockType,
     blockUUID,
     setBlockContent,
+    setContent,
   ]);
 
   const inputsBlocks: InputBlockType[] = useMemo(() => buildInputsFromUpstreamBlocks(

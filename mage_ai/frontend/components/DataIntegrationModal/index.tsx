@@ -48,6 +48,7 @@ import {
   ConfigurationDataIntegrationType,
 } from '@interfaces/ChartBlockType';
 import {
+  AfterContentStyle,
   AfterFooterStyle,
   ContainerStyle,
   HeaderStyle,
@@ -108,6 +109,7 @@ type DataIntegrationModal = {
   onClose?: () => void;
   onSaveBlock?: () => void;
   pipeline: PipelineType;
+  setContent?: (content: string) => void;
 } & CredentialsProps;
 
 const MODAL_VERTICAL_PADDING_TOTAL = 3 * UNIT * 2;
@@ -123,6 +125,7 @@ function DataIntegrationModal({
   onSaveBlock,
   pipeline,
   savePipelineContent,
+  setContent,
 }) {
   const mainContainerRef = useRef(null);
   const refAfterHeader = useRef(null);
@@ -999,6 +1002,7 @@ function DataIntegrationModal({
       savePipelineContent={savePipelineContent}
       setBlockConfigString={setBlockConfigString}
       setBlockContent={setBlockContentState}
+      setContent={setContent}
       setSelectedSubTab={(subTab: SubTabEnum | string) => setSelectedMainNavigationTab(prev => ({
         ...prev,
         selectedSubTab: subTab,
@@ -1016,6 +1020,7 @@ function DataIntegrationModal({
     savePipelineContent,
     setBlockConfigString,
     setBlockContentState,
+    setContent,
     setSelectedMainNavigationTab,
     showError,
   ]);
@@ -1491,17 +1496,19 @@ function DataIntegrationModal({
   const after = useMemo(() => {
     if (isOnConfigurationCredentials) {
       return (
-        <Spacing p={PADDING_UNITS}>
-          {!dataBlock && (
-            <Spinner />
-          )}
+        <AfterContentStyle>
+          <Spacing p={PADDING_UNITS}>
+            {!dataBlock && (
+              <Spinner />
+            )}
 
-          {documentation && (
-            <Markdown>
-              {documentation.replace(/\<br \/\>/g, '\n\n')}
-            </Markdown>
-          )}
-        </Spacing>
+            {documentation && (
+              <Markdown>
+                {documentation.replace(/\<br \/\>/g, '\n\n')}
+              </Markdown>
+            )}
+          </Spacing>
+        </AfterContentStyle>
       );
     } else if (isOnStreamDetailSchemaProperties) {
       const stream = getStreamFromStreamMapping({

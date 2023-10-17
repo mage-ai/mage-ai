@@ -1,0 +1,550 @@
+---
+title: "Using data integrations in batch pipelines"
+sidebarTitle: "Batch pipelines"
+description: "Load data from data integration sources and export to data integration destinations as blocks inside batch pipelines."
+icon: "sun-dust"
+"og:image": "https://img.wattpad.com/5ea336f507cf05c821ffbba96cf6c7739fe8dc3e/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f4672554e706c504b46744b7469413d3d2d313038313931343836362e313638396434663466313232653937363936373434323438363033362e676966"
+---
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Data integrations combined with batch pipelines"
+        src="https://img.wattpad.com/5ea336f507cf05c821ffbba96cf6c7739fe8dc3e/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f4672554e706c504b46744b7469413d3d2d313038313931343836362e313638396434663466313232653937363936373434323438363033362e676966"
+    />
+    </p>
+</Frame>
+
+<br />
+
+<Warning>
+  Available in version <b>`0.9.35`</b> and greater.
+</Warning>
+
+## Overview
+
+You can use a [data integration source](/data-integrations/sources/overview) (e.g. Stripe)
+and/or a [data integration destination](/data-integrations/destinations/overview) (e.g. Trino)
+as a block in batch pipelines.
+
+### Why is this important?
+
+Combine the low-code aspect and capabilities of data integrations with the flexibility and
+dynamic capabilities of a batch pipeline.
+
+### Example
+
+1. Use a Python data loader block to write custom code for fetching Stripe credentials.
+1. Use a SQL data loader block to fetch data from a table in PostgreSQL.
+1. Add a data integration source block to fetch data from Stripe.
+1. Use the output from the Python data loader block and interpolate the Stripe credentials into the data integration source block.
+1. Add a Python transformer block to merge, clean, and aggregate data fetched from PostgreSQL and Stripe.
+1. Add a data integration destination block that writes the output data from the Python transformer block and export it to SalesForce.
+
+<Tip>
+  The image below doesn’t reflect the above example exactly.
+
+  The image shows a different set of blocks than the example above.
+</Tip>
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Example"
+        src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/block-runs.png?raw=true"
+    />
+    </p>
+</Frame>
+
+---
+
+## Features
+
+- Use any data integration source.
+- Use any data integration destination.
+- Sources and destinations have capabilities of a normal Python block in a batch pipeline.
+- Dynamically calculate the source and destination credentials at runtime.
+- Dynamically build the source and destination catalog schema at runtime.
+- Source blocks can output its fetched data to any downstream block.
+- Any block can output its data to a destination block and have it exported to that destination.
+- `[Coming soon]` *Support incremental sync*.
+- `[Coming soon]` *Support log based sync*.
+- `[Coming soon]` *Replicate source and destination blocks*.
+- `[Coming soon]` *Support source and destination blocks as dynamic blocks*.
+
+---
+
+## How to use
+
+1. Go to the [project preferences](http://localhost:6789/settings/workspace/preferences) and
+  enable the feature labeled <b>`Data integration in batch pipeline`</b>.
+1. Create a new batch pipeline.
+1. Add a new Data loader block by selecting:
+    1. <b>Templates</b> →
+    1. <b>Data loader</b> →
+    1. <b>Sources</b> →
+    1. Select the source to add to the pipeline.
+
+    <Frame>
+        <p align="center">
+            <img
+                alt="Add source block"
+                src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/add-source-block.png?raw=true"
+            />
+        </p>
+    </Frame>
+
+1. Configure the source:
+    1. Add credentials.
+    1. Select 1 or more streams to sync.
+    1. Setup stream settings.
+    1. Select 1 or more columns to sync from stream.
+
+    <Frame>
+        <p align="center">
+            <img
+                alt="Source block"
+                src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/source-block.png?raw=true"
+            />
+        </p>
+    </Frame>
+1. Add a new Data exporter block by selecting:
+    1. <b>Templates</b> →
+    1. <b>Data exporter</b> →
+    1. <b>Destinations</b> →
+    1. Select the source to add to the pipeline.
+
+    <Frame>
+        <p align="center">
+            <img
+                alt="Add destination block"
+                src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/add-destination-block.png?raw=true"
+            />
+        </p>
+    </Frame>
+1. Configure the destination:
+    1. Add credentials.
+    1. Select 1 or more stre.ams to export.
+    1. Setup stream settings.
+    1. Select 1 or more columns to include in the destination table when exporting stream.
+
+    <Frame>
+        <p align="center">
+            <img
+                alt="Destination block"
+                src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/destination-block.png?raw=true"
+            />
+        </p>
+    </Frame>
+
+---
+
+## Configure source and destination
+
+For more information on how to configure and setup a data integration source and destination,
+refer back to the original [data integration guide](/guides/data-integration-pipeline).
+
+### Credentials
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Configure credentials"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/configuration-credentials.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Upstream block settings
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Configure upstream block settings"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/configuration-upstream-block-settings.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Select streams
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Select streams"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/streams.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Streams overview with bulk editing
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Streams overview with bulk editing"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/overview.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Stream detail overview
+
+For more information on how to configure settings for a stream,
+refer back to the original [data integration guide](/guides/data-integration-pipeline).
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Stream detail overview"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/stream-detail-overview.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Stream detail schema properties with bulk editing
+
+For more information on how to configure schema properties for a stream,
+refer back to the original [data integration guide](/guides/data-integration-pipeline).
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Stream detail schema properties with bulk editing"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/stream-detail-schema-properties.png?raw=true"
+        />
+    </p>
+</Frame>
+
+### Stream detail sample data
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Stream detail sample data"
+            src="https://github.com/mage-ai/assets/blob/main/batch-pipelines/data-integrations/stream-detail-sample-data.png?raw=true"
+        />
+    </p>
+</Frame>
+
+---
+
+## Python blocks
+
+When adding a date integration source or destination block to a batch pipeline,
+you can choose the language to be YAML or Python (default option is YAML).
+
+If you choose Python as the language, you programmatically define the following settings of the
+data integration:
+
+| Configuration | Example | Decorator | Description |
+|---|---|---|---|
+| Source | `stripe` | `@data_integration_source` | The source to load data from. |
+| Destination | `salesforce` | `@data_integration_destination` | The destination to export data to. |
+| Config | `database='...'` | `@data_integration_config` | A dictionary containing the credentials and other settings specific to the source or destination. |
+| Selected streams | `['account']` | `@data_integration_selected_streams` | A list of stream names to be selected from the catalog. |
+| Catalog | `{...}` | `@data_integration_catalog` | A dictionary containing a list of streams and the stream’s settings, schema properties, and metadata. |
+
+
+### `@data_integration_source`
+
+<Check>
+    This decorated function is required.
+</Check>
+
+```python
+@data_integration_source
+def source(*args, **kwargs) -> str:
+    return 'postgresql'
+```
+
+### `@data_integration_destination`
+
+<Check>
+    This decorated function is required.
+</Check>
+
+```python
+@data_integration_destination
+def destination(*args, **kwargs) -> str:
+    return 'postgresql'
+```
+
+### `@data_integration_config`
+
+<Check>
+    This decorated function is required.
+</Check>
+
+```python
+@data_integration_config
+def config(*args, **kwargs) -> Dict:
+    destination: str = kwargs.get('destination', None)
+    return {
+        'database': '',
+        'host': '',
+        'password': '',
+        'port': 5432,
+        'schema': '',
+        'table': '',
+        'username': '',
+    }
+```
+
+#### Keyword arguments inside the decorated function
+
+The following keyword arguments are only available in the decorated function’s body for sources.
+
+|   |   |
+| --- | --- |
+| Keyword | `source` |
+| Sample code | `kwargs['source']` |
+| Return value type | `str` |
+| Sample return value | `'postgresql'` |
+| Description | The name of the source |
+| Available in | Sources only |
+
+|   |   |
+| --- | --- |
+| Keyword | `destination` |
+| Sample code | `kwargs['destination']` |
+| Return value type | `str` |
+| Sample return value | `'postgresql'` |
+| Description | The name of the destination |
+| Available in | Destinations only |
+
+### `@data_integration_selected_streams`
+
+<Info>
+    This decorated function is optional.
+</Info>
+
+```python
+@data_integration_selected_streams(discover_streams: bool = False)
+def selected_streams(*args, **kwargs) -> List[str]:
+    config: Dict = kwargs.get('config', None)
+    discover_streams_func: Callable = kwargs.get('discover_streams_func', None)
+    source: str = kwargs.get('source', None)
+
+    return []
+```
+
+#### Decorator arguments
+
+The following arguments are only available in the decorator `@data_integration_selected_streams`
+for sources.
+
+|   |   |
+| --- | --- |
+| Argument | `discover_streams` |
+| Argument values | `False`, `True` |
+| Description | If `True`, there will be a list of stream names available in the function’s body via the keyword argument `selected_streams`; e.g. `kwargs['selected_streams']`. This list of stream names are retrieved by the source’s underlying code in the [Mage Integrations library](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources). |
+| Available in | Sources only |
+
+#### Keyword arguments inside the decorated function
+
+The following keyword arguments are only available in the decorated function’s body.
+
+|   |   |
+| --- | --- |
+| Keyword | `source` |
+| Sample code | `kwargs['source']` |
+| Return value type | `str` |
+| Sample return value | `'postgresql'` |
+| Description | The name of the source |
+| Available in | Sources only |
+
+|   |   |
+| --- | --- |
+| Keyword | `destination` |
+| Sample code | `kwargs['destination']` |
+| Return value type | `str` |
+| Sample return value | `'postgresql'` |
+| Description | The name of the destination |
+| Available in | Destinations only |
+
+|   |   |
+| --- | --- |
+| Keyword | `config` |
+| Sample code | `kwargs['config']` |
+| Return value type | `dict` |
+| Sample return value | `{ 'database': '...' }` |
+| Description | The dictionary containing the credentials and other configurations. |
+| Available in | Sources and destinations |
+
+|   |   |
+| --- | --- |
+| Keyword | `selected_streams` |
+| Sample code | `kwargs['selected_streams']` |
+| Return value type | `List[str]` |
+| Sample return value | `['account', 'users']` |
+| Description | A list of strings containing all the available stream names for the source. This is only available if `discover_streams` is `True`. |
+| Available in | Sources only |
+
+|   |   |
+| --- | --- |
+| Keyword | `discover_streams_func` |
+| Sample code | `kwargs['discover_streams_func']` |
+| Return value type | `Callable` |
+| Sample return value | If function is invoked, the return value is the same as `selected_streams` above. |
+| Description | A list of stream names are retrieved by the source’s underlying code in the [Mage Integrations library](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources). |
+| Available in | Sources only |
+
+### `@data_integration_catalog`
+
+<Note>
+    The returned dictionary will override the catalog setup through the
+    user interface.
+</Note>
+
+```python
+@data_integration_catalog(discover: bool = False, select_all: bool = True)
+def catalog(*args, **kwargs) -> Dict:
+    config: Dict = kwargs.get('config', None)
+    selected_streams: List[str] = kwargs.get('selected_streams', None)
+    source: str = kwargs.get('source', None)
+
+    # catalog_from_discover is None unless discover=True
+    catalog_from_discover: Dict = kwargs.get('catalog', None)
+
+    # Executing this function will fetch and return the catalog
+    discover_func: Callable = kwargs.get('discover_func', None)
+
+    return {
+        'streams': [],
+    }
+```
+
+#### Decorator arguments
+
+The following arguments are only available in the decorator `@data_integration_catalog`
+for sources.
+
+|   |   |
+| --- | --- |
+| Argument | `discover` |
+| Argument values | `False`, `True` |
+| Description | If `True`, the source will fetch the catalog and all stream schema properties then pass the returned value to the decorated function’s keyword arguments. |
+| Available in | Sources only |
+
+|   |   |
+| --- | --- |
+| Argument | `select_all` |
+| Argument values | `True`, `False` |
+| Description | If `False`, the streams in the catalog won’t be selected by default and you’ll have to manually select the stream via the stream’s metadata. |
+| Available in | Sources only |
+
+#### Keyword arguments inside the decorated function
+
+The following keyword arguments are only available in the decorated function’s body.
+
+|   |   |
+| --- | --- |
+| Keyword | `source` |
+| Sample code | `kwargs['source']` |
+| Return value type | `str` |
+| Sample return value | `'postgresql'` |
+| Description | The name of the source |
+| Available in | Sources only |
+
+|   |   |
+| --- | --- |
+| Keyword | `destination` |
+| Sample code | `kwargs['destination']` |
+| Return value type | `str` |
+| Sample return value | `'postgresql'` |
+| Description | The name of the destination |
+| Available in | Destinations only |
+
+|   |   |
+| --- | --- |
+| Keyword | `config` |
+| Sample code | `kwargs['config']` |
+| Return value type | `dict` |
+| Sample return value | `{ 'database': '...' }` |
+| Description | The dictionary containing the credentials and other configurations. |
+| Available in | Sources and destinations |
+
+|   |   |
+| --- | --- |
+| Keyword | `selected_streams` |
+| Sample code | `kwargs['selected_streams']` |
+| Return value type | `List[str]` |
+| Sample return value | `['account', 'users']` |
+| Description | A list of strings containing the available stream names returned from the decorated function under `@data_integration_selected_streams`. |
+| Available in | Sources and destinations |
+
+|   |   |
+| --- | --- |
+| Keyword | `catalog` |
+| Sample code | `kwargs['catalog']` |
+| Return value type | `dict` |
+| Sample return value | `{ 'streams': [] }` |
+| Description | A dictionary with a key named `streams` that is a list of dictionaries containing the stream schema properties and metadata. This is only available if `discover` is `True`. |
+| Available in | Sources only |
+
+|   |   |
+| --- | --- |
+| Keyword | `discover_func` |
+| Sample code | `kwargs['discover_func']` |
+| Return value type | `Callable` |
+| Sample return value | If function is invoked, the return value is the same as `catalog` above. |
+| Description | If function is invoked, the source will fetch the catalog and all stream schema properties. |
+| Available in | Sources only |
+
+---
+
+## Customizations
+
+### Upstream block settings
+
+#### Interpolate upstream block output
+
+```yaml
+database: |
+  {{
+    block_output('postgresql_credentials', parse='lambda x: x["database"]')
+  }}
+host: |
+  {{
+    block_output('postgresql_credentials', parse='lambda x: x["host"]')
+  }}
+password: |
+  {{
+    block_output('postgresql_credentials', parse='lambda x: x["password"]')
+  }}
+port: |
+  {{
+    block_output('postgresql_credentials', parse='lambda x: x["port"]')
+  }}
+schema: |
+  {{
+    block_output('postgresql_credentials', parse='lambda x: x["schema"]')
+  }}
+username: |
+  {{
+    block_output('postgresql_credentials', parse='lambda x: x["username"]')
+  }}
+```
+
+### Shape of source block output data
+
+```
+[
+  {
+    'stream': '...'
+    'rows': '...'
+    'columns': '...'
+  }
+]
+```
+
+### Load/Export stream data in parallel
+
+For each stream in a data integration source block,
+you can enable that stream to have its data fetched in parallel
+while other streams for that source is being fetched.
+
+For each stream in a data integration destination block,
+you can enable that stream to have its data exported in parallel
+while other streams for that destination is being exported.
