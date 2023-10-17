@@ -27,59 +27,74 @@ import {
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
 function ServerTimeDropdown() {
+  const [displayLocalServerTime, setDisplayLocalServerTime] = useState<boolean>(shouldDisplayLocalServerTime());
+  const [includeServerTimeSeconds, setIncludeServerTimeSeconds] = useState<boolean>(shouldIncludeServerTimeSeconds());
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [times, setTimes] = useState<Map<TimeZoneEnum, string>>(
     currentTimes({ includeSeconds: true, timeZones: DISPLAYED_TIME_ZONES }),
   );
   const [top, setTop] = useState<number>(0);
 
-  const displayLocalServerTime = shouldDisplayLocalServerTime();
-  const includeServerTimeSeconds = shouldIncludeServerTimeSeconds();
-  const isSmallBreakpoint = window.innerWidth < BREAKPOINT_MEDIUM;
-
   const defaultTimeZone = displayLocalServerTime
     ? TimeZoneEnum.LOCAL 
     : TimeZoneEnum.UTC;
+
+  const isSmallBreakpoint = window.innerWidth < BREAKPOINT_MEDIUM;
+
+  const handleButtonClick = useCallback(() => {
+    setShowDropdown(prevState => !prevState);
+  }, []);
+  const setDropdownPosition = useCallback((top) => {
+    setTop(top);
+  }, []);
+  const updateTimes = useCallback(() => {
+    const updatedTimes = currentTimes({ 
+      includeSeconds: includeServerTimeSeconds, 
+      timeZones: DISPLAYED_TIME_ZONES, 
+    });
+    setTimes(prevState => {
+      if (prevState.size === updatedTimes.size 
+        && prevState.get(TimeZoneEnum.UTC) === updatedTimes.get(TimeZoneEnum.UTC)) {
+        return prevState;
+      }
+      
+      return updatedTimes;
+    });
+  }, [includeServerTimeSeconds]);
+
+  const toggleDisplayLocalServerTime = () => {
+    setDisplayLocalServerTime(storeDisplayLocalServerTime(!displayLocalServerTime));
+  };
+  const toggleIncludeServerTimeSeconds = () => {
+    setIncludeServerTimeSeconds(storeIncludeServerTimeSeconds(!includeServerTimeSeconds));
+  };
 
   const toggleOptions = [
     {
       checked: displayLocalServerTime,
       label: 'Show as local time',
-      onCheck: () => storeDisplayLocalServerTime(!displayLocalServerTime),
+      onCheck: toggleDisplayLocalServerTime,
     },
     {
       checked: includeServerTimeSeconds,
       label: 'Include seconds',
-      onCheck: () => storeIncludeServerTimeSeconds(!includeServerTimeSeconds),
+      onCheck: toggleIncludeServerTimeSeconds,
     },
   ];
 
-  const setDropdownPosition = useCallback((top) => {
-    setTop(top);
-  }, []);
-  const handleButtonClick = useCallback(() => {
-    setShowDropdown(prevState => !prevState);
-  }, []);
-
   useEffect(() => {
-    // Update the time immediately when "Include seconds" toggle switches
-    const updatedTimes = currentTimes({ 
-      includeSeconds: includeServerTimeSeconds, 
-      timeZones: DISPLAYED_TIME_ZONES, 
-    });
-    setTimes(updatedTimes);
-
-    // Dynamically update the time every second
+    // Dynamically check the time every second and update the time display if necessary
     const interval = setInterval(() => {
-      const updatedTimes = currentTimes({ 
-        includeSeconds: includeServerTimeSeconds, 
-        timeZones: DISPLAYED_TIME_ZONES, 
-      });
-      setTimes(updatedTimes);
+      updateTimes();
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [includeServerTimeSeconds]);
+  }, [updateTimes]);
+
+  useEffect(() => {
+    // Immediately update the time display when "Include seconds" is toggled
+    updateTimes();
+  }, [includeServerTimeSeconds, updateTimes]);
 
   if (!times) return null;
 
