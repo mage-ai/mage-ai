@@ -436,8 +436,14 @@ function DataIntegrationModal({
       if (MAIN_TABS_EXCEPT_STREAM_DETAIL[val1] || MAIN_TABS_EXCEPT_STREAM_DETAIL[prev2]) {
         if (!subTabUse) {
           subTabUse = tabs?.[0]?.uuid;
-        }
+        } else if (MAIN_TABS_EXCEPT_STREAM_DETAIL[prev2] && !MAIN_TABS_EXCEPT_STREAM_DETAIL[val1]) {
+          // If changing from a main tab to a stream detail tab and the subTabUse isn’t
+          // a subtab that exists in the stream detail tab, set a default subtab.
+          if (subTabUse && !subTabsForStreamDetail?.includes(subTabUse)) {
+            subTabUse = subTabsForStreamDetail?.[0]?.uuid;
+          }
 
+        }
         if (val1 !== prev2) {
           setHighlightedColumnsMapping({});
         }
