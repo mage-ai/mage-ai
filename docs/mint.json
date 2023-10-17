@@ -452,11 +452,7 @@
           "group": "No-code interactions",
           "icon": "universal-access",
           "pages": [
-            "interactions/overview",
-            "interactions/variables",
-            "interactions/inputs",
-            "interactions/layout",
-            "interactions/permissions"
+            "interactions/overview"
           ]
         },
         "development/updating-mage"
