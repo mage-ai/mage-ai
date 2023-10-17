@@ -881,6 +881,7 @@ function RoleDetail({
           label: () => role?.name,
         },
       ]}
+      hideAfterCompletely
       setAfterHidden={setAfterHidden}
       title={role?.name ? `${role?.name} role` : 'New role'}
       uuidItemSelected={SectionItemEnum.ROLES}

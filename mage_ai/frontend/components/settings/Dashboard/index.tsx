@@ -14,6 +14,7 @@ type SettingsDashboardProps = {
   appendBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children: any;
+  hideAfterCompletely?: boolean;
   setAfterHidden?: (value: boolean) => void;
   title?: string;
   uuidItemSelected: string;
@@ -28,6 +29,7 @@ function SettingsDashboard({
   appendBreadcrumbs,
   breadcrumbs,
   children,
+  hideAfterCompletely,
   setAfterHidden,
   title,
   uuidItemSelected,
@@ -59,6 +61,7 @@ function SettingsDashboard({
       )}
       beforeWidth={BEFORE_WIDTH}
       breadcrumbs={breadcrumbs}
+      hideAfterCompletely={hideAfterCompletely}
       setAfterHidden={setAfterHidden}
       title={title || 'Settings'}
       uuid={`${title || 'settings'}/index`}
