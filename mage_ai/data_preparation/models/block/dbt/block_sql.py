@@ -165,17 +165,18 @@ class DBTBlockSQL(DBTBlock):
             List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
         """
         # Get upstream nodes via dbt list
-        args = [
-            'list',
-            '--project-dir', self.project_path,
-            '--profiles-dir', self.project_path,
-            '--select', '+' + Path(self.configuration.get('file_path')).stem,
-            '--output', 'json',
-            '--output-keys', 'unique_id original_file_path depends_on',
-            '--resource-type', 'model',
-            '--resource-type', 'snapshot'
-        ]
-        res, _success = DBTCli(args).invoke()
+        with Profiles(self.project_path, self.pipeline.variables) as profiles:
+            args = [
+                'list',
+                '--project-dir', self.project_path,
+                '--profiles-dir', str(profiles.profiles_dir),
+                '--select', '+' + Path(self.configuration.get('file_path')).stem,
+                '--output', 'json',
+                '--output-keys', 'unique_id original_file_path depends_on',
+                '--resource-type', 'model',
+                '--resource-type', 'snapshot'
+            ]
+            res, _success = DBTCli(args).invoke()
         if res:
             nodes = [simplejson.loads(node) for node in res]
         else:
