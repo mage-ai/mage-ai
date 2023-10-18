@@ -38,3 +38,7 @@ class Job(BaseSparkModel):
             except ValueError as err:
                 print(f'[WARNING] Job: {err}')
                 self.status = self.status
+
+    @property
+    def id(self) -> int:
+        return self.job_id

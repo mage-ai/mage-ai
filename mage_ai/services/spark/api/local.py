@@ -24,6 +24,14 @@ class LocalAPI(BaseAPI):
     def endpoint(self) -> str:
         return f'http://{SPARK_UI_HOST}:{SPARK_UI_PORT}/api/{API_VERSION}'
 
+    def applications_sync(self, **kwargs) -> List[Application]:
+        models = self.get_sync('/applications')
+        return [Application.load(**model) for model in models]
+
+    def jobs_sync(self, application_id: str, **kwargs) -> List[Job]:
+        models = self.get_sync(f'/applications/{application_id}/jobs')
+        return [Job.load(**model) for model in models]
+
     async def applications(self, **kwargs) -> List[Application]:
         models = await self.get('/applications')
         return [Application.load(**model) for model in models]

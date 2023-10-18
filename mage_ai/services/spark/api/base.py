@@ -28,11 +28,15 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def jobs(self, application_id: str, **kwargs) -> List[Job]:
+    def applications_sync(self, **kwargs) -> List[Application]:
         pass
 
     @abstractmethod
     async def job(self, application_id: str, job_id: int, **kwargs) -> Job:
+        pass
+
+    @abstractmethod
+    def jobs_sync(self, application_id: str, **kwargs) -> List[Job]:
         pass
 
     @abstractmethod
@@ -102,7 +106,11 @@ class BaseAPI(ABC):
         response = await self.__build_request('get', f'{self.endpoint}{path}')
         return response.json()
 
-    async def __build_request(
+    def get_sync(self, path: str):
+        response = self.__build_request_sync('get', f'{self.endpoint}{path}')
+        return response.json()
+
+    def __build_request_sync(
         self,
         http_method: str,
         url: str,
@@ -122,3 +130,6 @@ class BaseAPI(ABC):
             timeout=12,
             verify=False,
         )
+
+    async def __build_request(self, *args, **kwargs):
+        return self.__build_request_sync(*args, **kwargs)

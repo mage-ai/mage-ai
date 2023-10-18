@@ -32,6 +32,7 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
+from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     fetch_input_variables,
@@ -258,7 +259,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(DataIntegrationMixin):
+class Block(DataIntegrationMixin, SparkBlock):
     def __init__(
         self,
         name: str,
@@ -334,6 +335,8 @@ class Block(DataIntegrationMixin):
         self._data_integration_loaded = False
         # Used when interpolating upstream block outputs in YAML files
         self.fetched_inputs_from_blocks = None
+
+        self.spark_jobs = []
 
     @property
     def uuid(self) -> str:
@@ -873,6 +876,9 @@ class Block(DataIntegrationMixin):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        if from_notebook and self.is_using_spark():
+            self.update_recent_spark_job()
+
         if logging_tags is None:
             logging_tags = dict()
 
@@ -933,6 +939,9 @@ class Block(DataIntegrationMixin):
                 parent_block=self,
                 from_notebook=from_notebook,
             )
+
+        if from_notebook and self.is_using_spark():
+            self.update_recent_spark_job()
 
         return output
 
