@@ -336,7 +336,8 @@ class Block(DataIntegrationMixin, SparkBlock):
         # Used when interpolating upstream block outputs in YAML files
         self.fetched_inputs_from_blocks = None
 
-        self.spark_jobs = []
+        self.spark_job_before_execution = None
+        self.spark_job_after_execution = None
 
     @property
     def uuid(self) -> str:
@@ -877,7 +878,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         run, use a BlockExecutor.
         """
         if from_notebook and self.is_using_spark():
-            self.update_recent_spark_job()
+            self.set_spark_job_before_execution()
 
         if logging_tags is None:
             logging_tags = dict()
@@ -941,7 +942,11 @@ class Block(DataIntegrationMixin, SparkBlock):
             )
 
         if from_notebook and self.is_using_spark():
-            self.update_recent_spark_job()
+            self.set_spark_job_after_execution()
+            if self.spark_job_before_execution:
+                print(f'[INFO] Job ID before execution: {self.spark_job_before_execution.id}')
+            if self.spark_job_after_execution:
+                print(f'[INFO] Job ID after execution : {self.spark_job_after_execution.id}')
 
         return output
 

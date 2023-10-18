@@ -6,15 +6,25 @@ from mage_ai.services.spark.utils import get_compute_service
 
 
 class SparkBlock:
-    def add_spark_job(self, job: Job) -> List[Job]:
-        self.spark_jobs.append(job)
-        return self.spark_jobs
-
     def is_using_spark(self) -> bool:
         return get_compute_service()
 
-    def get_jobs(self) -> List[Job]:
+    def set_spark_job_before_execution(self) -> None:
+        jobs = self.__get_jobs()
+        if jobs:
+            self.spark_job_before_execution = jobs[0]
+
+    def set_spark_job_after_execution(self) -> None:
+        jobs = self.__get_jobs()
+        if jobs:
+            self.spark_job_after_execution = jobs[0]
+
+    def __get_jobs(self) -> List[Job]:
         api = API.build()
+
+        if not api:
+            return
+
         applications = api.applications_sync()
 
         jobs = []
@@ -26,8 +36,3 @@ class SparkBlock:
             key=lambda job: job.id,
             reverse=True,
         )
-
-    def update_recent_spark_job(self) -> None:
-        jobs = self.get_jobs()
-        if jobs:
-            self.add_spark_job(jobs[0])
