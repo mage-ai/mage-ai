@@ -400,9 +400,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             not REQUIRE_USER_AUTHENTICATION and
             not DISABLE_NOTEBOOK_EDIT_ACCESS and
             action in [OperationType.CREATE, OperationType.DELETE, OperationType.UPDATE]
-        ) or \
-                (not DISABLE_NOTEBOOK_EDIT_ACCESS and self.is_owner()):
-
+        ):
             return True
 
         config = self.__class__.action_rule(action)
