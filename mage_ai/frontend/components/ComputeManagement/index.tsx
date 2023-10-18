@@ -7,6 +7,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
 import Spacing from '@oracle/elements/Spacing';
@@ -150,6 +151,7 @@ function ComputeManagement({
     if (!selectedTab && selectedComputeService) {
       setSelectedTab({
         main: MainNavigationTabEnum.CONNECTION,
+        main: MainNavigationTabEnum.MONITORING,
       });
     }
   }, [
@@ -327,6 +329,16 @@ function ComputeManagement({
     updateProject,
   ]);
 
+  const monitoringMemo = useMemo(() => (
+    <Monitoring
+      objectAttributes={objectAttributes}
+      selectedComputeService={selectedComputeService}
+    />
+  ), [
+    objectAttributes,
+    selectedComputeService,
+  ]);
+
   const computeServicesMemo = useMemo(() => (
     <Spacing mx={1} py={PADDING_UNITS}>
       <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
@@ -421,6 +433,7 @@ function ComputeManagement({
         <>
           {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
           {MainNavigationTabEnum.RESOURCES === selectedTab?.main && resourcesMemo}
+          {MainNavigationTabEnum.MONITORING === selectedTab?.main && monitoringMemo}
         </>
       )}
     </TripleLayout>

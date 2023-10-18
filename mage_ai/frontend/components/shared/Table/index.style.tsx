@@ -4,6 +4,16 @@ import dark from '@oracle/styles/themes/dark';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const TableWrapperStyle = styled.div<{
+  fixed?: boolean;
+}>`
+  position: relative;
+
+  ${props => props.fixed && `
+    table-layout: fixed;
+  `}
+`;
+
 export const TableContainerStyle = styled.div<{
   hide?: boolean;
   includePadding?: boolean;
@@ -39,12 +49,17 @@ export const TableContainerStyle = styled.div<{
 export const TableStyle = styled.table<{
   borderCollapseSeparate?: boolean;
   columnBorders?: boolean;
+  fixed?: boolean;
 }>`
   contain: size;
   width: 100%;
 
   ${props => (props.columnBorders || props.borderCollapseSeparate) && `
     border-collapse: separate;
+  `}
+
+  ${props => props.fixed && `
+    table-layout: fixed;
   `}
 `;
 
