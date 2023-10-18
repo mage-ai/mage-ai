@@ -18,7 +18,6 @@ import {
 } from '@utils/date';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SparkStageAttemptType, SparkTaskType } from '@interfaces/SparkType';
-import { TEST_TASKS } from './constants';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortByKey } from '@utils/array';
 
@@ -36,7 +35,7 @@ function TasksWaterfallChart({
   } = stageAttempt;
   const tasks: SparkTaskType[] =
     useMemo(() => sortByKey(
-      Object.values(stageAttempt?.tasks || {}).concat(TEST_TASKS),
+      Object.values(stageAttempt?.tasks || {}),
       ({ launchTime }) => launchTime,
       {
         ascending: true,

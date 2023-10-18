@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { ThemeContext } from 'styled-components';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -21,6 +21,7 @@ import {
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
@@ -36,6 +37,7 @@ import {
 import { formatNumberToDuration, pluralize } from '@utils/string';
 import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { useWindowSize } from '@utils/sizes';
 
 const TAB_APPLICATIONS = 'Applications';
 const TAB_JOBS = 'Jobs';
@@ -48,6 +50,22 @@ type MonitoringProps = {
 function Monitoring({
   objectAttributes,
 }: MonitoringProps) {
+  const refButtonTabs = useRef(null);
+  const treeRef = useRef(null);
+
+  const {
+    height: heightWindow,
+  } = useWindowSize();
+
+  const [buttonTabsRect, setButtonTabsRect] = useState(null);
+
+  useEffect(() => {
+    setButtonTabsRect(refButtonTabs?.current?.getBoundingClientRect());
+  }, [
+    heightWindow,
+    refButtonTabs,
+  ]);
+
   const themeContext = useContext(ThemeContext);
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_SQLS);
 
@@ -953,10 +971,15 @@ function Monitoring({
     stagesMapping,
   ]);
 
-const sqlsMemo = useMemo(() => (
-  <SparkJobSqls
-  />
-), []);
+  const sqlsMemo = useMemo(() => (
+    <SparkJobSqls
+      containerHeight={heightWindow - ((buttonTabsRect?.height || 0) + HEADER_HEIGHT + 1)}
+      treeRef={treeRef}
+    />
+  ), [
+    buttonTabsRect,
+    treeRef,
+  ]);
 
   return (
     <>
@@ -964,6 +987,7 @@ const sqlsMemo = useMemo(() => (
         <ButtonTabs
           noPadding
           onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
+          ref={refButtonTabs}
           regularSizeText
           selectedTabUUID={selectedSubheaderTabUUID}
           tabs={[
@@ -995,11 +1019,13 @@ const sqlsMemo = useMemo(() => (
 
       <Divider light />
 
-      {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
+      <div ref={treeRef}>
+        {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
 
-      {TAB_JOBS === selectedSubheaderTabUUID && jobsMemo}
+        {TAB_JOBS === selectedSubheaderTabUUID && jobsMemo}
 
-      {TAB_SQLS === selectedSubheaderTabUUID && sqlsMemo}
+        {TAB_SQLS === selectedSubheaderTabUUID && sqlsMemo}
+      </div>
     </>
   );
 }

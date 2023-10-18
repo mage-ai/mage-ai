@@ -54,7 +54,7 @@ import { getModelAttributes } from '@utils/models/dbt';
 import { isActivePort } from './utils';
 import { onSuccess } from '@api/utils/response';
 
-const Canvas = dynamic(
+export const Canvas = dynamic(
   async () => {
     const { Canvas } = await import('reaflow');
 
@@ -67,7 +67,7 @@ const Canvas = dynamic(
   },
 );
 
-const Node = dynamic(
+export const Node = dynamic(
   async () => {
     const reaflow = await import('reaflow');
     return reaflow.Node;
@@ -77,7 +77,7 @@ const Node = dynamic(
   },
 );
 
-const Edge = dynamic(
+export const Edge = dynamic(
   async () => {
     const reaflow = await import('reaflow');
     return reaflow.Edge;
@@ -87,7 +87,7 @@ const Edge = dynamic(
   },
 );
 
-const Port = dynamic(
+export const Port = dynamic(
   async () => {
     const reaflow = await import('reaflow');
     return reaflow.Port;

@@ -9,6 +9,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
+import SparkGraph from './SparkGraph';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -25,11 +26,19 @@ import { SparkSQLStatusEnum, SparkSQLType, } from '@interfaces/SparkType';
 import { formatNumberToDuration } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-function SparkJobSqls() {
+type SparkJobSqlsProps = {
+  containerHeight?: number;
+  treeRef?: any;
+}
+
+function SparkJobSqls({
+  containerHeight,
+  treeRef,
+}: SparkJobSqlsProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const { data: dataSqls } = api.spark_sqls.list();
-  const sqls: SparkSQLType[] = useMemo(() => [MOCK_SQL].concat(dataSqls?.spark_sqls || []), [dataSqls]);
+  const sqls: SparkSQLType[] = useMemo(() => [].concat(dataSqls?.spark_sqls || []), [dataSqls]);
 
   const tableMemo = useMemo(() => (
     <Table
@@ -162,7 +171,14 @@ function SparkJobSqls() {
 
   return (
     <>
-      {tableMemo}
+      {sqls?.length >= 1 && (
+        <SparkGraph
+          height={containerHeight}
+          model={sqls?.[0]}
+          treeRef={treeRef}
+        />
+      )}
+      {/*{tableMemo}*/}
     </>
   );
 }

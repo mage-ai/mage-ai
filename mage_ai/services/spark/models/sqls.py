@@ -3,6 +3,8 @@ from enum import Enum
 from typing import List
 
 from mage_ai.services.spark.models.base import BaseSparkModel
+from mage_ai.services.spark.models.jobs import Job
+from mage_ai.services.spark.models.stages import StageAttempt
 
 
 class SqlStatus(str, Enum):
@@ -44,6 +46,7 @@ class Sql(BaseSparkModel):
     edges: List[Edge] = field(default_factory=list)
     failed_job_ids: List[int] = field(default_factory=list)  # []
     id: int = None  # 0
+    jobs: List[Job] = field(default_factory=list)
     """
     == Physical Plan ==
     AdaptiveSparkPlan (27)
@@ -85,6 +88,7 @@ class Sql(BaseSparkModel):
     nodes: List[Node] = field(default_factory=list)
     plan_description: str = None
     running_job_ids: List[int] = field(default_factory=list)  # []
+    stages: List[StageAttempt] = field(default_factory=list)
     status: int = SqlStatus  # "COMPLETED"
     submission_time: str = None  # "2023-10-15T16:32:49.088GMT"
     success_job_ids: List[int] = field(default_factory=list)  # [3, 4, 5, 6]
@@ -93,8 +97,14 @@ class Sql(BaseSparkModel):
         if self.edges:
             self.edges = [Edge.load(**edge) for edge in self.edges]
 
+        if self.jobs:
+            self.jobs = [StageAttempt.load(**m) for m in self.jobs]
+
         if self.nodes:
             self.nodes = [Node.load(**node) for node in self.nodes]
+
+        if self.stages:
+            self.stages = [StageAttempt.load(**m) for m in self.stages]
 
         if self.status:
             try:

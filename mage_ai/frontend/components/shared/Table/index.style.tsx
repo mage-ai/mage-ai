@@ -4,6 +4,9 @@ import dark from '@oracle/styles/themes/dark';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const HORIZONTAL_PADDING = 2 * UNIT;
+export const VERTICAL_PADDING = 1 * UNIT;
+
 export const TableWrapperStyle = styled.div<{
   fixed?: boolean;
 }>`
@@ -118,13 +121,13 @@ const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
   `}
 
   ${props => !props.compact && `
-    padding-left: ${2 * UNIT}px;
-    padding-right: ${2 * UNIT}px;
+    padding-left: ${HORIZONTAL_PADDING}px;
+    padding-right: ${HORIZONTAL_PADDING}px;
   `}
 
   ${props => !props.compact && (typeof props.rowVerticalPadding === 'undefined' || props.rowVerticalPadding === null) && `
-    padding-bottom: ${UNIT}px;
-    padding-top: ${UNIT}px;
+    padding-bottom: ${VERTICAL_PADDING}px;
+    padding-top: ${VERTICAL_PADDING}px;
   `}
 
   ${props => props.maxWidth && `

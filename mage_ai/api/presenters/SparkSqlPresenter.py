@@ -18,3 +18,9 @@ class SparkSqlPresenter(BasePresenter):
 
     async def prepare_present(self, **kwargs):
         return self.model.to_dict()
+
+
+SparkSqlPresenter.register_format('with_jobs_and_stages', SparkSqlPresenter.default_attributes + [
+    'jobs',
+    'stages',
+])

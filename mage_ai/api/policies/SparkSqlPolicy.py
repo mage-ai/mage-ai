@@ -45,3 +45,17 @@ SparkSqlPolicy.allow_query(
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
+
+
+SparkSqlPolicy.allow_query(
+    [
+        'include_jobs_and_stages',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -43,7 +43,7 @@ function ButtonTabs({
   tabs,
   underlineColor,
   underlineStyle,
-}: ButtonTabsProps) {
+}: ButtonTabsProps, ref) {
   const tabEls = useMemo(() => {
     const tabCount: number = tabs.length;
     const arr = [];
@@ -183,10 +183,11 @@ function ButtonTabs({
     <TabsContainerStyle
       allowScroll={allowScroll}
       noPadding={noPadding}
+      ref={ref}
     >
       {el}
     </TabsContainerStyle>
   );
 }
 
-export default ButtonTabs;
+export default React.forwardRef(ButtonTabs);

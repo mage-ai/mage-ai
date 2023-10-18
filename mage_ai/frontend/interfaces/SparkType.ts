@@ -364,9 +364,11 @@ export interface SparkSQLType {
   edges: SparkSQLEdgeType[];
   failed_job_ids: number[];
   id: number;
+  jobs?: SparkJobType[];
   nodes: SparkSQLNodeType[];
   plan_description: string;
   running_job_ids: number[];
+  stages?: SparkStageAttemptType[];
   status: SparkSQLStatusEnum;
   submission_time: string;
   success_job_ids: number[];
