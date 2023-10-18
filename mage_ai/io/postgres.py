@@ -20,6 +20,7 @@ class Postgres(BaseSQL):
     """
     Handles data transfer between a PostgreSQL database and the Mage app.
     """
+
     def __init__(
         self,
         dbname: str,
@@ -331,10 +332,10 @@ class Postgres(BaseSQL):
             ]
 
             unique_constraints = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words, perform_lower_casing=False)}"'
                  for col in unique_constraints]
             columns_cleaned = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words, perform_lower_casing=False)}"'
                  for col in columns]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
