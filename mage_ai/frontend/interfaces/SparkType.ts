@@ -279,5 +279,60 @@ export interface SparkEnvironmentType {
 }
 
 export interface SparkExecutorType {
-
+  active_tasks: number;
+  add_time: string;
+  attributes: { [key: string]: string };
+  blacklisted_in_stages: number[];
+  completed_tasks: number;
+  disk_used: number;
+  excluded_in_stages: number[];
+  executor_logs: { [key: string]: string };
+  failed_tasks: number;
+  host_port: string;
+  id: string;
+  is_active: boolean;
+  is_blacklisted: boolean;
+  is_excluded: boolean;
+  max_memory: number;
+  max_tasks: number;
+  memory_metrics: {
+    total_off_heap_storage_memory: number;
+    total_on_heap_storage_memory: number;
+    used_off_heap_storage_memory: number;
+    used_on_heap_storage_memory: number;
+  };
+  memory_used: number;
+  peak_memory_metrics: {
+    direct_pool_memory: number;
+    jvm_heap_memory: number;
+    jvm_off_heap_memory: number;
+    major_gc_count: number;
+    major_gc_time: number;
+    mapped_pool_memory: number;
+    minor_gc_count: number;
+    minor_gc_time: number;
+    off_heap_execution_memory: number;
+    off_heap_storage_memory: number;
+    off_heap_unified_memory: number;
+    on_heap_execution_memory: number;
+    on_heap_storage_memory: number;
+    on_heap_unified_memory: number;
+    process_tree_jvmrss_memory: number;
+    process_tree_jvmv_memory: number;
+    process_tree_other_rss_memory: number;
+    process_tree_other_v_memory: number;
+    process_tree_python_rss_memory: number;
+    process_tree_python_v_memory: number;
+    total_gc_time: number;
+  };
+  rdd_blocks: number;
+  resource_profile_id: number;
+  resources: { [key: string]: string };
+  total_cores: number;
+  total_duration: number;
+  total_gc_time: number;
+  total_input_bytes: number;
+  total_shuffle_read: number;
+  total_shuffle_write: number;
+  total_tasks: number;
 }
