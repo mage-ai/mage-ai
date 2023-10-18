@@ -45,10 +45,6 @@ class OracleDB(Destination):
     def database(self) -> str:
         return self.config['database']
 
-    @property
-    def use_lowercase(self) -> bool:
-        return self.config.get('lower_case', True)
-
     def build_connection(self) -> OracleDBConnection:
         return OracleDBConnection(
             host=self.host, password=self.password,

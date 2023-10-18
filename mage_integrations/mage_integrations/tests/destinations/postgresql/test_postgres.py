@@ -2,9 +2,7 @@ import unittest
 
 from mage_integrations.destinations.postgresql import PostgreSQL
 
-SCHEMA = {'properties': {
-                        'ID': {'type': ['null', 'string']},
-                    },
+SCHEMA = {'properties': {'ID': {'type': ['null', 'string']}},
           'type': 'object',
           }
 SCHEMA_NAME = 'test'
@@ -20,12 +18,9 @@ def postgresql_config():
 
 
 class PostgreSQLDestinationTests(unittest.TestCase):
-
     def test_create_table_commands(self):
-
         destination = PostgreSQL(config=postgresql_config())
         destination.key_properties = {}
-
         table_commands = destination.build_create_table_commands(SCHEMA,
                                                                  SCHEMA_NAME,
                                                                  STREAM,

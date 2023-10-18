@@ -14,7 +14,6 @@ from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
-    clean_column_name,
 )
 from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
@@ -22,10 +21,6 @@ from mage_integrations.destinations.sql.utils import (
 
 
 class Redshift(Destination):
-    @property
-    def use_lowercase(self) -> bool:
-        return self.config.get('lower_case', True)
-
     def build_connection(self) -> RedshiftConnection:
         return RedshiftConnection(
             access_key_id=self.config.get('access_key_id'),
@@ -84,8 +79,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name
-                       (c, self.use_lowercase) not in current_columns]
+        new_columns = [c for c in schema_columns if self.clean_column_name(c)
+                       not in current_columns]
 
         if not new_columns:
             return []
@@ -137,7 +132,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
             unique_constraints_clean = [
-                f'{clean_column_name(col, self.use_lowercase)}'
+                f'{self.clean_column_name(col)}'
                 for col in unique_constraints
             ]
             commands = commands + [

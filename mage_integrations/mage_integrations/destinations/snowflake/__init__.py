@@ -19,7 +19,6 @@ from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_command,
-    clean_column_name,
     column_type_mapping,
 )
 from mage_integrations.utils.array import batch
@@ -35,10 +34,6 @@ class Snowflake(Destination):
         if self.disable_double_quotes:
             return ''
         return '"'
-
-    @property
-    def use_lowercase(self) -> bool:
-        return self.config.get('lower_case', True)
 
     @property
     def disable_double_quotes(self) -> bool:
@@ -106,7 +101,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         schema_columns = schema['properties'].keys()
 
         new_columns = [c for c in schema_columns
-                       if clean_column_name(c, self.use_lowercase)
+                       if self.clean_column_name(c)
                        not in current_columns]
 
         if not new_columns:
@@ -140,11 +135,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         unique_constraints: List[str] = None,
     ) -> str:
         unique_constraints_clean = [
-            self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
+            self._wrap_with_quotes(self.clean_column_name(col))
             for col in unique_constraints
         ]
         columns_cleaned = [
-            self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
+            self._wrap_with_quotes(self.clean_column_name(col))
             for col in columns
         ]
 

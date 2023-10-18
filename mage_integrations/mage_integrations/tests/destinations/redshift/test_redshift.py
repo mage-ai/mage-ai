@@ -2,9 +2,7 @@ import unittest
 
 from mage_integrations.destinations.redshift import Redshift
 
-SCHEMA = {'properties': {
-                        'ID': {'type': ['null', 'string']},
-                    },
+SCHEMA = {'properties': {'ID': {'type': ['null', 'string']}},
           'type': 'object',
           }
 SCHEMA_NAME = 'test'
@@ -20,12 +18,9 @@ def redshift_config():
 
 
 class RedshiftDestinationTests(unittest.TestCase):
-
     def test_create_table_commands(self):
-
         destination = Redshift(config=redshift_config())
         destination.key_properties = {}
-
         table_commands = destination.build_create_table_commands(SCHEMA,
                                                                  SCHEMA_NAME,
                                                                  STREAM,

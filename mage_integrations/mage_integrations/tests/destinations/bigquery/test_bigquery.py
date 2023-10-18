@@ -2,9 +2,7 @@ import unittest
 
 from mage_integrations.destinations.bigquery import BigQuery
 
-SCHEMA = {'properties': {
-                        'ID': {'type': ['null', 'string']},
-                    },
+SCHEMA = {'properties': {'ID': {'type': ['null', 'string']}},
           'type': 'object',
           }
 SCHEMA_NAME = 'test'
@@ -20,12 +18,9 @@ def bigquery_config():
 
 
 class BigQueryDestinationTests(unittest.TestCase):
-
     def test_create_table_commands(self):
-
         destination = BigQuery(config=bigquery_config())
         destination.partition_keys = {}
-
         table_commands = destination.build_create_table_commands(SCHEMA,
                                                                  SCHEMA_NAME,
                                                                  STREAM,

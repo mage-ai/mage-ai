@@ -19,9 +19,6 @@ from mage_integrations.destinations.sql.utils import (
 
 
 class MSSQL(Destination):
-    @property
-    def use_lowercase(self):
-        return self.config.get('lower_case', True)
 
     def build_connection(self) -> MSSQLConnection:
         return MSSQLConnection(

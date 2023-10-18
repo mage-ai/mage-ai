@@ -15,7 +15,6 @@ from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
-    clean_column_name,
 )
 from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
@@ -26,10 +25,6 @@ class PostgreSQL(Destination):
     @property
     def quote(self) -> str:
         return '"'
-
-    @property
-    def use_lowercase(self) -> bool:
-        return self.config.get('lower_case', True)
 
     def full_table_name(self, schema_name: str, table_name: str):
         return f'{self._wrap_with_quotes(schema_name)}.{self._wrap_with_quotes(table_name)}'
@@ -83,8 +78,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name
-                       (c, self.use_lowercase) not in current_columns]
+        new_columns = [c for c in schema_columns if self.clean_column_name(c)
+                       not in current_columns]
 
         if not new_columns:
             return []
@@ -130,11 +125,11 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         if unique_constraints and unique_conflict_method:
             unique_constraints = [
-                self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
+                self._wrap_with_quotes(self.clean_column_name(col))
                 for col in unique_constraints
             ]
             columns_cleaned = [
-                self._wrap_with_quotes(clean_column_name(col, self.use_lowercase))
+                self._wrap_with_quotes(self.clean_column_name(col))
                 for col in columns if col != INTERNAL_COLUMN_CREATED_AT
             ]
 

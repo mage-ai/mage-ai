@@ -41,7 +41,6 @@ from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_columns,
     build_insert_command,
-    clean_column_name,
     column_type_mapping,
 )
 from mage_integrations.utils.dictionary import merge_dict
@@ -63,10 +62,6 @@ class BigQuery(Destination):
     @property
     def quote(self) -> str:
         return '`'
-
-    @property
-    def use_lowercase(self) -> bool:
-        return self.config.get('lower_case', True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -119,7 +114,7 @@ class BigQuery(Destination):
             create_table_command = f'''
 {create_table_command}
 PARTITION BY
-  DATE(`{clean_column_name(partition_col, self.use_lowercase)}`)
+  DATE(`{self.clean_column_name(partition_col)}`)
             '''
 
         return [
@@ -147,7 +142,7 @@ WHERE TABLE_NAME = '{table_name}'
 
         current_mapping = reduce(
             lambda obj, tup: merge_dict(obj, {
-                clean_column_name(tup[0], self.use_lowercase): tup[1],
+                self.clean_column_name(tup[0]): tup[1],
             }),
             results,
             {},
@@ -163,9 +158,9 @@ WHERE TABLE_NAME = '{table_name}'
 
         new_mapping_column_types = {}
         for col, obj in new_mapping.items():
-            new_mapping_column_types[clean_column_name
-                                     (col, self.use_lowercase)
-                                     ] = obj['type_converted']
+            new_mapping_column_types[
+                self.clean_column_name(col)
+            ] = obj['type_converted']
 
         new_column_types = {}
         for col, col_type in current_mapping.items():
@@ -190,7 +185,7 @@ WHERE TABLE_NAME = '{table_name}'
             ]))
 
         new_columns = [c for c in schema_columns if
-                       clean_column_name(c, self.use_lowercase)
+                       self.clean_column_name(c)
                        not in current_columns]
         if new_columns:
             alter_table_commands.append(build_alter_table_command(
@@ -510,9 +505,9 @@ WHERE table_id = '{table_name}'
                 tags=tags,
             )
 
-            unique_constraints = [clean_column_name(col, self.use_lowercase)
+            unique_constraints = [self.clean_column_name(col)
                                   for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col, self.use_lowercase)
+            columns_cleaned = [self.clean_column_name(col)
                                for col in columns]
 
             on_conditions = []
