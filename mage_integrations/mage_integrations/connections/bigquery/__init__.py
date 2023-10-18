@@ -20,7 +20,12 @@ class BigQuery(Connection):
         self.path_to_credentials_json_file = path_to_credentials_json_file
         self.location = location
 
-        if self.credentials_info is None and self.path_to_credentials_json_file is not None:
+        if self.credentials_info is not None:
+            if isinstance(self.credentials_info, dict):
+                self.credentials_info = service_account.Credentials.from_service_account_info(
+                    self.credentials_info,
+                )
+        elif self.path_to_credentials_json_file is not None:
             self.credentials_info = service_account.Credentials.from_service_account_file(
                 self.path_to_credentials_json_file,
             )
