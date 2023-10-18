@@ -332,10 +332,16 @@ class Postgres(BaseSQL):
             ]
 
             unique_constraints = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words, perform_lower_casing=False)}"'
+                [f'"{
+                    self._clean_column_name(
+                        col, allow_reserved_words=allow_reserved_words, perform_lower_casing=False)
+                }"'
                  for col in unique_constraints]
             columns_cleaned = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words, perform_lower_casing=False)}"'
+                [f'"{
+                    self._clean_column_name(
+                        col, allow_reserved_words=allow_reserved_words, perform_lower_casing=False)
+                }"'
                  for col in columns]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")

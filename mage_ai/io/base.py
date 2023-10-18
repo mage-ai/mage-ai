@@ -286,7 +286,12 @@ class BaseSQLDatabase(BaseIO):
         """
         return query_string.strip(' \n\t')
 
-    def _clean_column_name(self, column_name: str, allow_reserved_words: bool = False, perform_lower_casing: bool = True) -> str:
+    def _clean_column_name(
+        self,
+        column_name: str,
+        allow_reserved_words: bool = False,
+        perform_lower_casing: bool = True
+    ) -> str:
         if perform_lower_casing:
             column_name = column_name.lower()
         col_new = re.sub(r'\W', '_', column_name)
