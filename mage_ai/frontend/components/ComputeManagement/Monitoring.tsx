@@ -9,6 +9,7 @@ import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { ComputeServiceEnum, ObjectAttributesType } from './constants';
 import {
@@ -27,7 +28,7 @@ import {
   SparkTaskStatusEnum,
   SparkTaskType,
 } from '@interfaces/SparkType';
-import { formatNumberToDuration } from '@utils/string';
+import { formatNumberToDuration, pluralize } from '@utils/string';
 import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
@@ -404,7 +405,7 @@ function Monitoring({
                     ]}
                     getObjectAtRowIndex={(rowIndex: number) => stages?.[rowIndex]}
                     buildApiOptionsFromObject={(object: any) => [object?.stage_id, {
-                      quantiles: '0.01,0.5,0.99',
+                      quantiles: '0.01,0.25,0.5,0.75,0.99',
                       withSummaries: true,
                     }]}
                     apiForFetchingAfterAction={api.spark_stages.detail}
@@ -474,12 +475,201 @@ function Monitoring({
                             </FlexContainer>
                           </Spacing>
 
-                          {stageAttempts?.map(({
-                            attemptId,
-                            tasks,
-                          }: SparkStageAttemptType) => {
+                          {stageAttempts?.map((stageAttempt: SparkStageAttemptType) => {
+                            const {
+                              attemptId,
+                              taskMetricsDistributions,
+                              tasks,
+                            } = stageAttempt;
+
+                            const {
+                              inputMetrics,
+                              outputMetrics,
+                              quantiles,
+                              shuffleReadMetrics,
+                              shuffleWriteMetrics,
+                            } = taskMetricsDistributions;
+
                             return (
                               <>
+                                <Divider light />
+
+                                <Spacing p={PADDING_UNITS}>
+                                  <FlexContainer>
+                                    <Flex flex={1} alignItems="stretch">
+                                      <Panel noPadding>
+                                        <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
+                                          <Text bold large>
+                                            Summary metrics for {pluralize(
+                                              'completed task',
+                                              stageAttempt?.numCompleteTasks,
+                                            )}
+                                          </Text>
+                                        </Spacing>
+
+                                        <Divider light short />
+
+                                        <Table
+                                          columnFlex={[null].concat(quantiles?.map(() => null))}
+                                          columns={[
+                                            {
+                                              uuid: 'Metric',
+                                            },
+                                          ].concat(quantiles.map((quantile: number, idx: number) => ({
+                                            center: true,
+                                            label: () => idx === 0
+                                              ? 'Min'
+                                              : idx === quantiles?.length - 1
+                                                ? 'Max'
+                                                : idx === Math.floor(quantiles?.length / 2)
+                                                  ? 'Median'
+                                                  : `${Number(quantile * 100)}th`,
+                                            uuid: quantile,
+                                          })))}
+                                          rows={[
+                                            {
+                                              uuid: 'Duration',
+                                              values: (taskMetricsDistributions?.duration || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'GC time is the total JVM garbage collection time.',
+                                              uuid: 'GC time',
+                                              values: (taskMetricsDistributions?.jvmGcTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'Bytes read from storage in this stage.',
+                                              uuid: 'Input read (bytes)',
+                                              values: inputMetrics?.bytesRead || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Records read from storage in this stage.',
+                                              uuid: 'Input records read',
+                                              values: inputMetrics?.recordsRead || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Total shuffle bytes read, includes both data read locally and data read from remote executors.',
+                                              uuid: 'Shuffle read (bytes)',
+                                              values: shuffleReadMetrics?.readBytes || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Total shuffle records read, includes both data read locally and data read from remote executors.',
+                                              uuid: 'Shuffle read records',
+                                              values: shuffleReadMetrics?.readRecords || [],
+                                            },
+                                            {
+                                              uuid: 'Shuffle read fetch time',
+                                              values: (shuffleReadMetrics?.fetchWaitTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'Bytes written to storage in this stage.',
+                                              uuid: 'Input write (bytes)',
+                                              values: outputMetrics?.bytesWritten || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Records written to storage in this stage.',
+                                              uuid: 'Input records write',
+                                              values: outputMetrics?.recordsWritten || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Bytes written to disk in order to be read by a shuffle in a future stage.',
+                                              uuid: 'Shuffle write (bytes)',
+                                              values: shuffleWriteMetrics?.writeBytes || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Records written to disk in order to be read by a shuffle in a future stage.',
+                                              uuid: 'Shuffle write records',
+                                              values: shuffleWriteMetrics?.writeRecords || [],
+                                            },
+                                            {
+                                              uuid: 'Shuffle write time',
+                                              values: (shuffleWriteMetrics?.writeTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'Scheduler delay is the time the task waits to be scheduled for execution.',
+                                              uuid: 'Scheduler delay',
+                                              values: taskMetricsDistributions?.schedulerDelay || [],
+                                            },
+                                            {
+                                              uuid: 'Task deserialization time',
+                                              values: (taskMetricsDistributions?.executorDeserializeTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              uuid: 'Task deserialization CPU time',
+                                              values: (taskMetricsDistributions?.executorDeserializeCpuTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              uuid: 'Result size',
+                                              values: taskMetricsDistributions?.resultSize || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Result serialization time is the time spent serializing the task result on an executor before sending it back to the driver.',
+                                              uuid: 'Result serialization time',
+                                              values: (taskMetricsDistributions?.resultSerializationTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'Getting result time is the time that the driver spends fetching task results from workers.',
+                                              uuid: 'Getting result time',
+                                              values: (taskMetricsDistributions?.gettingResultTime || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'Scheduler delay is the time the task waits to be scheduled for execution.',
+                                              uuid: 'Scheduler delay',
+                                              values: (taskMetricsDistributions?.schedulerDelay || []).map(v => formatNumberToDuration(v)),
+                                            },
+                                            {
+                                              tooltipMessage: 'Peak execution memory is the maximum memory used by the internal data structures created during shuffles, aggregations and joins.',
+                                              uuid: 'Peak execution memory',
+                                              values: taskMetricsDistributions?.peakExecutionMemory || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Shuffle spill (memory) is the size of the deserialized form of the shuffled data in memory.',
+                                              uuid: 'Memory spilled (bytes)',
+                                              values: taskMetricsDistributions?.memoryBytesSpilled || [],
+                                            },
+                                            {
+                                              tooltipMessage: 'Shuffle spill (disk) is the size of the serialized form of the data on disk.',
+                                              uuid: 'Disk spilled (bytes)',
+                                              values: taskMetricsDistributions?.diskBytesSpilled || [],
+                                            },
+                                          ].map(({
+                                            tooltipMessage,
+                                            uuid,
+                                            values,
+                                          }) => [
+                                            <FlexContainer alignItems="center" key={uuid}>
+                                              <Text {...sharedTextProps}>
+                                                {uuid}
+                                              </Text>
+
+                                              {tooltipMessage && (
+                                                <div style={{ marginLeft: 4 }}>
+                                                  <Tooltip
+                                                    appearAbove
+                                                    label={(
+                                                      <Text leftAligned>
+                                                        {tooltipMessage}
+                                                      </Text>
+                                                    )}
+                                                    lightBackground
+                                                    maxWidth={200}
+                                                    muted
+                                                  />
+                                                </div>
+                                              )}
+                                            </FlexContainer>,
+                                          ].concat(values?.map((value: number, idx: number) => (
+                                            <Text {...sharedTextProps} center key={`quantile-${quantiles[idx]}-${uuid}`}>
+                                              {value}
+                                            </Text>
+                                          ))))}
+                                        />
+
+                                        <Spacing p={1} />
+                                      </Panel>
+                                    </Flex>
+                                  </FlexContainer>
+                                </Spacing>
+
                                 <Spacing p={PADDING_UNITS}>
                                   <Text bold large>
                                     Tasks&nbsp;&nbsp;&nbsp;<Text
@@ -539,7 +729,6 @@ function Monitoring({
                                   }).map(({
                                     attempt,
                                     duration,
-                                    // gettingResultTime,
                                     launchTime,
                                     schedulerDelay,
                                     status,

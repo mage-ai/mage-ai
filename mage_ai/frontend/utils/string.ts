@@ -320,11 +320,11 @@ export function formatNumberToDuration(duration: number): string {
   let displayText = String(duration);
   if (duration) {
     if (duration >= 1000 * 60 * 60) {
-      displayText = `${duration / (1000 * 60 * 60)}h`;
+      displayText = `${roundNumber(duration / (1000 * 60 * 60), 2)}h`;
     } else if (duration >= 1000 * 60) {
-      displayText = `${duration / (1000 * 60)}m`;
+      displayText = `${roundNumber(duration / (1000 * 60), 2)}m`;
     } else if (duration >= 1000) {
-      displayText = `${duration / (1000)}s`;
+      displayText = `${roundNumber(duration / (1000), 2)}s`;
     } else {
       displayText = `${duration}ms`;
     }
