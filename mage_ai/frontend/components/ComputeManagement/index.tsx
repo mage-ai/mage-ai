@@ -11,6 +11,7 @@ import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
 import Spacing from '@oracle/elements/Spacing';
+import SparkGraph from './SparkGraph';
 import System from './System';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
@@ -32,7 +33,9 @@ import {
   MainNavigationTabEnum,
   ObjectAttributesType,
 } from './constants';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NavigationStyle } from '@components/DataIntegrationModal/index.style';
+import { SparkSQLType } from '@interfaces/SparkType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -57,6 +60,11 @@ function ComputeManagement({
   heightOffset,
   mainContainerRef,
 }: ComputeManagementProps) {
+  const {
+    height: heightWindow,
+    width: widthWindow,
+  } = useWindowSize();
+
   const componentUUID =
     useMemo(() => `ComputeManagement/${contained ? 'contained' : 'open'}`, [contained]);
   const [showError] = useError(null, {}, [], {
@@ -66,21 +74,26 @@ function ComputeManagement({
   const refAfterHeader = useRef(null);
   const refAfterFooter = useRef(null);
   const refSubheader = useRef(null);
-
-  const {
-    height: heightWindow,
-    width: widthWindow,
-  } = useWindowSize();
+  const refButtonTabs = useRef(null);
 
   const containerHeight = useMemo(() => heightWindow - (heightOffset || 0), [
     heightOffset,
     heightWindow,
   ]);
 
+  const [buttonTabsRect, setButtonTabsRect] = useState(null);
+
+  useEffect(() => {
+    setButtonTabsRect(refButtonTabs?.current?.getBoundingClientRect());
+  }, [
+    heightWindow,
+    refButtonTabs,
+  ]);
+
   const localStorageKeyAfter =
-    useMemo(() => `block_layout_after_width_${componentUUID}`, [componentUUID]);
+    useMemo(() => `compute_management_after_width_${componentUUID}`, [componentUUID]);
   const localStorageKeyBefore =
-    useMemo(() => `block_layout_before_width_${componentUUID}`, [componentUUID]);
+    useMemo(() => `compute_management_before_width_${componentUUID}`, [componentUUID]);
 
   const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
@@ -98,6 +111,19 @@ function ComputeManagement({
 
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [afterHidden, setAfterHidden] = useState<boolean>(true);
+
+  const [selectedSql, setSelectedSqlState] = useState<SparkSQLType>(null);
+  const setSelectedSql = useCallback((sql: SparkSQLType) => {
+    setSelectedSqlState(prev => {
+      const value = prev?.id === sql?.id ? null : sql;
+      setAfterHidden(value ? false : true);
+
+      return value;
+    });
+  }, [
+    setAfterHidden,
+    setSelectedSqlState,
+  ]);
 
   const [selectedTab, setSelectedTab] = useState<{
     main?: MainNavigationTabEnum;
@@ -297,7 +323,21 @@ function ComputeManagement({
     setSelectedTab,
   ]);
 
-  const after = useMemo(() => {}, []);
+  const after = useMemo(() => {
+    if (selectedSql) {
+      return (
+        <SparkGraph
+          height={containerHeight - ((buttonTabsRect?.height || 0) + HEADER_HEIGHT + 1)}
+          model={selectedSql}
+          refButtonTabs={refButtonTabs}
+        />
+      );
+    }
+  }, [
+    containerHeight,
+    refButtonTabs,
+    selectedSql,
+  ]);
 
   const connectionMemo = useMemo(() => (
     <ConnectionSettings
@@ -341,12 +381,14 @@ function ComputeManagement({
         <Monitoring
           objectAttributes={objectAttributes}
           selectedComputeService={selectedComputeService}
+          setSelectedSql={setSelectedSql}
         />
       );
     }
   }, [
     objectAttributes,
     selectedComputeService,
+    setSelectedSql,
   ]);
 
   const systemMemo = useMemo(() => {
@@ -430,6 +472,7 @@ function ComputeManagement({
   return (
     <TripleLayout
       after={after}
+      afterHeightOffset={HEADER_HEIGHT}
       afterHidden={afterHidden}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}

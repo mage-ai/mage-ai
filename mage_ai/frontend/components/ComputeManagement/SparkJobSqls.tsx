@@ -9,7 +9,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
-import SparkGraph from './SparkGraph';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -27,13 +26,11 @@ import { formatNumberToDuration } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type SparkJobSqlsProps = {
-  containerHeight?: number;
-  treeRef?: any;
+  setSelectedSql?: (sql: SparkSQLType) => void;
 }
 
 function SparkJobSqls({
-  containerHeight,
-  treeRef,
+  setSelectedSql,
 }: SparkJobSqlsProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
@@ -70,6 +67,7 @@ function SparkJobSqls({
           uuid: 'Failed jobs',
         },
       ]}
+      onClickRow={(rowIndex: number) => setSelectedSql?.(sqls?.[rowIndex])}
       renderExpandedRowWithObject={(rowIndex: number, object: any) => {
         const sql = sqls?.[rowIndex];
 
@@ -171,14 +169,7 @@ function SparkJobSqls({
 
   return (
     <>
-      {sqls?.length >= 1 && (
-        <SparkGraph
-          height={containerHeight}
-          model={sqls?.[0]}
-          treeRef={treeRef}
-        />
-      )}
-      {/*{tableMemo}*/}
+      {tableMemo}
     </>
   );
 }

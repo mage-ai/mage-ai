@@ -21,13 +21,13 @@ import {
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
-import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SparkApplicationType,
   SparkJobStatusEnum,
   SparkJobType,
+  SparkSQLType,
   SparkStageAttemptType,
   SparkStageStatusEnum,
   SparkStageType,
@@ -37,7 +37,6 @@ import {
 import { formatNumberToDuration, pluralize } from '@utils/string';
 import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
-import { useWindowSize } from '@utils/sizes';
 
 const TAB_APPLICATIONS = 'Applications';
 const TAB_JOBS = 'Jobs';
@@ -45,27 +44,15 @@ const TAB_SQLS = 'SQLs';
 
 type MonitoringProps = {
   objectAttributes: ObjectAttributesType;
+  refButtonTabs?: any;
+  setSelectedSql?: (sql: SparkSQLType) => void;
 };
 
 function Monitoring({
   objectAttributes,
+  refButtonTabs,
+  setSelectedSql,
 }: MonitoringProps) {
-  const refButtonTabs = useRef(null);
-  const treeRef = useRef(null);
-
-  const {
-    height: heightWindow,
-  } = useWindowSize();
-
-  const [buttonTabsRect, setButtonTabsRect] = useState(null);
-
-  useEffect(() => {
-    setButtonTabsRect(refButtonTabs?.current?.getBoundingClientRect());
-  }, [
-    heightWindow,
-    refButtonTabs,
-  ]);
-
   const themeContext = useContext(ThemeContext);
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_SQLS);
 
@@ -973,12 +960,10 @@ function Monitoring({
 
   const sqlsMemo = useMemo(() => (
     <SparkJobSqls
-      containerHeight={heightWindow - ((buttonTabsRect?.height || 0) + HEADER_HEIGHT + 1)}
-      treeRef={treeRef}
+      setSelectedSql={setSelectedSql}
     />
   ), [
-    buttonTabsRect,
-    treeRef,
+    setSelectedSql,
   ]);
 
   return (
@@ -1019,13 +1004,11 @@ function Monitoring({
 
       <Divider light />
 
-      <div ref={treeRef}>
-        {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
+      {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
 
-        {TAB_JOBS === selectedSubheaderTabUUID && jobsMemo}
+      {TAB_JOBS === selectedSubheaderTabUUID && jobsMemo}
 
-        {TAB_SQLS === selectedSubheaderTabUUID && sqlsMemo}
-      </div>
+      {TAB_SQLS === selectedSubheaderTabUUID && sqlsMemo}
     </>
   );
 }
