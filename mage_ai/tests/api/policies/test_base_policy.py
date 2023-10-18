@@ -798,3 +798,123 @@ class BasePolicyWithoutUserAuthenticationTest(BaseApiTestCase, BootstrapMixin):
     ):
         policy = CustomTestPolicy(None, None)
         self.assertEqual(policy.current_scope(), OauthScopeType.CLIENT_PUBLIC)
+
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 0)
+    @patch('mage_ai.api.utils.DISABLE_NOTEBOOK_EDIT_ACCESS', 0)
+    async def test_authorize_action_without_disable_notebook_edit_access(self):
+        self.bootstrap()
+
+        def _rule(action):
+            return {
+                OperationType.CREATE: {
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: (
+                                _policy.has_at_least_editor_role_and_pipeline_edit_access()
+                            ),
+                        ),
+                    ],
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'action_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, None)
+            await policy.authorize_action(OperationType.CREATE)
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
+    @patch('mage_ai.api.utils.DISABLE_NOTEBOOK_EDIT_ACCESS', 1)
+    async def test_authorize_action_with_disable_notebook_edit_access(self):
+        self.bootstrap()
+
+        def _rule(action):
+            return {
+                OperationType.CREATE: {
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: (
+                                _policy.has_at_least_editor_role_and_notebook_edit_access()
+                            ),
+                        ),
+                    ],
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'action_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, None)
+            with self.assertRaises(ApiError) as context:
+                await policy.authorize_action(OperationType.CREATE)
+                self.assertTrue(context.exception.code == 403)
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 2)
+    @patch('mage_ai.api.utils.is_disable_pipeline_edit_access')
+    async def test_authorize_action_with_disable_pipeline_edit_access(self, mock_access_method):
+        self.bootstrap()
+        mock_access_method.return_value = True
+
+        def _rule(action):
+            return {
+                OperationType.CREATE: {
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: (
+                                _policy.has_at_least_editor_role_and_pipeline_edit_access()
+                            ),
+                        ),
+                    ],
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'action_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, None)
+            with self.assertRaises(ApiError) as context:
+                await policy.authorize_action(OperationType.CREATE)
+                self.assertTrue(context.exception.code == 403)
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 2)
+    @patch('mage_ai.api.utils.DISABLE_NOTEBOOK_EDIT_ACCESS', 2)
+    @patch('mage_ai.api.utils.is_disable_pipeline_edit_access')
+    async def test_authorize_action_notebook_pipeline_edit_access(self, mock_access_method):
+        self.bootstrap()
+        mock_access_method.return_value = True
+
+        def _rule(action):
+            return {
+                OperationType.CREATE: {
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: (
+                                _policy.has_at_least_editor_role_and_notebook_edit_access()
+                            ),
+                        ),
+                    ],
+                },
+                OperationType.UPDATE: {
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: (
+                                _policy.has_at_least_editor_role_and_pipeline_edit_access()
+                            ),
+                        ),
+                    ],
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'action_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, None)
+            await policy.authorize_action(OperationType.CREATE)
+
+            with self.assertRaises(ApiError) as context:
+                await policy.authorize_action(OperationType.UPDATE)
+                self.assertTrue(context.exception.code == 403)
+
+        self.cleanup()
