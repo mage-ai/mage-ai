@@ -49,7 +49,7 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
 
     initial_container_config = dict()
-    with open('/app/initial-config.json') as f:
-        initial_container_config = json.loads(f.read())
+    with open('/app/initial-config.json', 'r', encoding='utf-8') as f:
+        initial_container_config = json.load(f)
 
     update_kubernetes_config(args.name, initial_container_config, args.namespace)
