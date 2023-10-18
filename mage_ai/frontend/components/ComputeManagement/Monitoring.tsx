@@ -21,9 +21,13 @@ import {
   SparkApplicationType,
   SparkJobStatusEnum,
   SparkJobType,
+  SparkStageAttemptType,
   SparkStageStatusEnum,
   SparkStageType,
+  SparkTaskStatusEnum,
+  SparkTaskType,
 } from '@interfaces/SparkType';
+import { formatNumberToDuration } from '@utils/string';
 import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
@@ -46,7 +50,10 @@ function Monitoring({
   const jobs: SparkJobType[] =
     useMemo(() => dataJobs?.spark_jobs || [], [dataJobs]);
 
-  const { data: dataStages } = api.spark_stages.list();
+  const { data: dataStages } = api.spark_stages.list({
+    details: true,
+    _format: 'with_details',
+  });
   const stagesMapping: {
     [stageId: number]: SparkStageType;
   } = useMemo(() => indexBy(dataStages?.spark_stages || [], ({ stage_id: stageId }) => stageId), [
@@ -153,9 +160,12 @@ function Monitoring({
 
   const jobsMemo = useMemo(() => (
     <Table
+      apiForFetchingAfterAction={api.spark_jobs.detail}
+      buildApiOptionsFromObject={(object: any) => [object?.job_id]}
       columnFlex={[
         null,
-        1,
+        null,
+        null,
         null,
         null,
         null,
@@ -168,20 +178,21 @@ function Monitoring({
           uuid: 'Name',
         },
         {
+          uuid: 'Submitted',
+        },
+        {
           uuid: 'Status',
+        },
+        {
+          center: true,
+          uuid: 'Stages',
         },
         {
           center: true,
           uuid: 'Tasks',
         },
-        {
-          rightAligned: true,
-          uuid: 'Submitted',
-        },
       ]}
       getObjectAtRowIndex={(rowIndex: number) => jobs?.[rowIndex]}
-      buildApiOptionsFromObject={(object: any) => [object?.job_id]}
-      apiForFetchingAfterAction={api.spark_jobs.detail}
       renderExpandedRowWithObject={(rowIndex: number, object: any) => {
         const job = object?.spark_job;
         if (job) {
@@ -251,11 +262,13 @@ function Monitoring({
                 <FlexContainer>
                   <Flex flex={1} alignItems="stretch">
                     <Panel noPadding>
-                      <Spacing px={PADDING_UNITS} mb={1} pt={PADDING_UNITS}>
+                      <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
                         <Text bold large>
-                          Stages
+                          Stage summary
                         </Text>
                       </Spacing>
+
+                      <Divider light short />
 
                       {buildTable([
                         ['IDs', stageIds?.join(', ')],
@@ -271,11 +284,13 @@ function Monitoring({
 
                   <Flex flex={1} alignItems="stretch">
                     <Panel noPadding>
-                      <Spacing px={PADDING_UNITS} mb={1} pt={PADDING_UNITS}>
+                      <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
                         <Text bold large>
-                          Tasks
+                          Task summary
                         </Text>
                       </Spacing>
+
+                      <Divider light short />
 
                       {buildTable([
                         ['Total', numTasks],
@@ -296,7 +311,14 @@ function Monitoring({
                 <Panel noPadding>
                   <Spacing p={PADDING_UNITS}>
                     <Text bold large>
-                      Stages
+                      Stages&nbsp;&nbsp;&nbsp;<Text
+                        default
+                        inline
+                        large
+                        monospace
+                      >
+                        {stages?.length}
+                      </Text>
                     </Text>
                   </Spacing>
 
@@ -304,6 +326,13 @@ function Monitoring({
 
                   <Table
                     columnFlex={[
+                      null,
+                      null,
+                      null,
+                      null,
+                      // null,
+                      // null,
+                      null,
                       null,
                       null,
                       null,
@@ -318,26 +347,59 @@ function Monitoring({
                         uuid: 'ID',
                       },
                       {
-                        uuid: 'Attempt ID',
+                        center: true,
+                        uuid: 'Attempt',
                       },
                       {
                         uuid: 'Name',
                       },
                       {
+                        uuid: 'Submitted',
+                      },
+                      // {
+                      //   uuid: 'Launched',
+                      // },
+                      // {
+                      //   uuid: 'Completed',
+                      // },
+                      {
+                        center: true,
+                        uuid: 'Duration',
+                      },
+                      {
                         uuid: 'Status',
                       },
                       {
-                        uuid: 'Submitted',
+                        center: true,
+                        uuid: 'Tasks',
                       },
                       {
-                        uuid: 'Launched',
+                        center: true,
+                        tooltipMessage: 'Bytes read from storage in this stage',
+                        uuid: 'In',
                       },
                       {
-                        uuid: 'Completed',
+                        center: true,
+                        uuid: 'In recs',
+                      },
+                      {
+                        center: true,
+                        tooltipMessage: 'Bytes written in storage in this stage',
+                        uuid: 'Out',
+                      },
+                      {
+                        center: true,
+                        uuid: 'Out recs',
+                      },
+                      {
+                        center: true,
+                        tooltipMessage: 'Total shuffle bytes and records read, includes both data read locally and data read from remote executors.',
+                        uuid: 'Sh read',
                       },
                       {
                         rightAligned: true,
-                        uuid: 'Duration',
+                        tooltipMessage: 'Bytes and records written to disk in order to be read by a shuffle in a future stage.',
+                        uuid: 'Sh write',
                       },
                     ]}
                     getObjectAtRowIndex={(rowIndex: number) => stages?.[rowIndex]}
@@ -346,8 +408,7 @@ function Monitoring({
                       withSummaries: true,
                     }]}
                     apiForFetchingAfterAction={api.spark_stages.detail}
-                    renderExpandedRowWithObject={(rowIndex: number, object: any) => {
-                      console.log('WTFFFFF', object)
+                    renderExpandedRowWithObject={(rowIndex: number, object: SparkStageType) => {
                       const stage = stages?.[rowIndex];
 
                       if (!stage) {
@@ -361,10 +422,9 @@ function Monitoring({
                         num_failed_tasks: numFailedTasks,
                         num_killed_tasks: numKilledTasks,
                         num_tasks: numTasks,
-
-                        peak_executor_metrics: peakExecutorMetrics,
-                        rdd_ids: rddIds,
                       } = stage;
+
+                      const stageAttempts: SparkStageAttemptType[] = object?.spark_stage?.stage_attempts;
 
                       return (
                         <>
@@ -372,11 +432,13 @@ function Monitoring({
                             <FlexContainer>
                               <Flex flex={1} alignItems="stretch">
                                 <Panel noPadding>
-                                  <Spacing px={PADDING_UNITS} mb={1} pt={PADDING_UNITS}>
-                                    <Text bold>
-                                      Tasks
+                                  <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
+                                    <Text bold large>
+                                      Task summary
                                     </Text>
                                   </Spacing>
+
+                                  <Divider light short />
 
                                   {buildTable([
                                     ['Total', numTasks],
@@ -392,11 +454,13 @@ function Monitoring({
 
                               <Flex flex={2} alignItems="stretch">
                                 <Panel noPadding>
-                                  <Spacing px={PADDING_UNITS} pt={PADDING_UNITS}>
-                                    <Text bold>
+                                  <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
+                                    <Text bold large>
                                       Details
                                     </Text>
                                   </Spacing>
+
+                                  <Divider light short />
 
                                   <Spacing p={PADDING_UNITS}>
                                     {details?.split('\n')?.map((line: string) => (
@@ -409,6 +473,128 @@ function Monitoring({
                               </Flex>
                             </FlexContainer>
                           </Spacing>
+
+                          {stageAttempts?.map(({
+                            attemptId,
+                            tasks,
+                          }: SparkStageAttemptType) => {
+                            return (
+                              <>
+                                <Spacing p={PADDING_UNITS}>
+                                  <Text bold large>
+                                    Tasks&nbsp;&nbsp;&nbsp;<Text
+                                    default
+                                    inline
+                                    large
+                                    monospace
+                                  >
+                                    {tasks ? Object.keys(tasks || {})?.length : ''}
+                                  </Text>
+                                  </Text>
+                                </Spacing>
+
+                                <Divider light />
+
+                                <Table
+                                  columnFlex={[null, null, null, null, null, null, null, null, null]}
+                                  columns={[
+                                    {
+                                      uuid: 'ID',
+                                    },
+                                    {
+                                      center: true,
+                                      uuid: 'Attempt',
+                                    },
+                                    {
+                                      uuid: 'Status',
+                                    },
+                                    {
+                                      uuid: 'Locality',
+                                    },
+                                    {
+                                      uuid: 'Launch',
+                                    },
+                                    {
+                                      center: true,
+                                      uuid: 'Duration',
+                                    },
+                                    {
+                                      center: true,
+                                      tooltipMessage: 'GC time is the total JVM garbage collection time.',
+                                      uuid: 'GC time',
+                                    },
+                                    {
+                                      center: true,
+                                      tooltipMessage: 'Scheduler delay is the time the task waits to be scheduled for execution.',
+                                      uuid: 'Delayed',
+                                    },
+                                    {
+                                      center: true,
+                                      tooltipMessage: 'Result serialization time is the time spent serializing the task result on an executor before sending it back to the driver.',
+                                      uuid: 'Result time',
+                                    },
+                                  ]}
+                                  rows={sortByKey(Object.values(tasks || {}), ({ taskId }) => taskId, {
+                                    ascending: false,
+                                  }).map(({
+                                    attempt,
+                                    duration,
+                                    // gettingResultTime,
+                                    launchTime,
+                                    schedulerDelay,
+                                    status,
+                                    taskId,
+                                    taskLocality,
+                                    taskMetrics,
+                                  }: SparkTaskType) => {
+                                    const arr = [
+                                      <Text {...sharedTextProps} key="taskId">
+                                        {taskId}
+                                      </Text>,
+                                      <Text {...sharedTextProps} center key="attempt">
+                                        {attempt}
+                                      </Text>,
+                                      <Text
+                                        {...sharedTextProps}
+                                        key="status"
+                                        success={SparkTaskStatusEnum.SUCCESS === status}
+                                      >
+                                        {status}
+                                      </Text>,
+                                      <Text {...sharedTextProps} key="taskLocality">
+                                        {taskLocality}
+                                      </Text>,
+                                      <Text {...sharedTextProps} key="launchTime">
+                                        {launchTime
+                                          ? datetimeInLocalTimezone(
+                                            moment(launchTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT').format(DATE_FORMAT_LONG),
+                                            displayLocalTimezone,
+                                          )
+                                          : '-'
+                                         }
+                                      </Text>,
+                                      <Text {...sharedTextProps} center key="duration">
+                                        {duration ? formatNumberToDuration(duration) : 0}
+                                      </Text>,
+                                      <Text {...sharedTextProps} center key="jvmGcTime">
+                                        {taskMetrics?.jvmGcTime ? formatNumberToDuration(taskMetrics?.jvmGcTime) : 0}
+                                      </Text>,
+                                      <Text {...sharedTextProps} center key="schedulerDelay">
+                                        {schedulerDelay ? formatNumberToDuration(schedulerDelay) : 0}
+                                      </Text>,
+                                      <Text {...sharedTextProps} center key="resultSerializationTime">
+                                        {taskMetrics?.resultSerializationTime ? formatNumberToDuration(taskMetrics?.resultSerializationTime) : 0}
+                                      </Text>,
+                                    ];
+
+                                    return arr;
+                                  })}
+                                />
+
+                                <Spacing p={1} />
+                              </>
+                            );
+                          })}
                         </>
                       );
                     }}
@@ -416,49 +602,37 @@ function Monitoring({
                       attempt_id: attemptID,
                       completion_time: completionTime,
                       first_task_launched_time: firstTaskLaunchedTime,
+                      input_bytes: inputBytes,
+                      input_records: inputRecords,
                       name,
+                      output_bytes: outputBytes,
+                      output_records: outputRecords,
+                      shuffle_read_bytes: shuffleReadBytes,
+                      shuffle_write_bytes: shuffleWriteBytes,
                       stage_id: stageID,
                       status: status,
                       submission_time: submissionTime,
+                      tasks,
                     }: SparkStageType) => {
                       const startTime = firstTaskLaunchedTime &&
                         moment(firstTaskLaunchedTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT');
                       const endTime = completionTime &&
                         moment(completionTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT')
                       let diffMs = endTime && endTime.diff(startTime);
-                      let diffDisplayText;
-                      if (diffMs) {
-                        if (diffMs >= 1000 * 60 * 60) {
-                          diffDisplayText = `${diffMs / (1000 * 60 * 60)}h`;
-                        } else if (diffMs >= 1000 * 60) {
-                          diffDisplayText = `${diffMs / (1000 * 60)}m`;
-                        } else if (diffMs >= 1000) {
-                          diffDisplayText = `${diffMs / (1000)}s`;
-                        } else {
-                          diffDisplayText = `${diffMs}ms`;
-                        }
-                      }
 
-                      const displayName = name?.length >= 40
-                        ? `${name?.slice(0, 40 - 3)}...`
+                      const displayName = name?.length >= 12
+                        ? `${name?.slice(0, 12 - 3)}...`
                         : name;
 
                       const arr = [
                         <Text {...sharedTextProps} key="stageID">
                           {stageID}
                         </Text>,
-                        <Text {...sharedTextProps} key="attemptID">
+                        <Text {...sharedTextProps} center key="attemptID">
                           {attemptID}
                         </Text>,
                         <Text {...sharedTextProps} key="displayName" title={name}>
                           {displayName}
-                        </Text>,
-                        <Text
-                          {...sharedTextProps}
-                          key="status"
-                          success={SparkStageStatusEnum.COMPLETE === status}
-                        >
-                          {status}
                         </Text>,
                         <Text {...sharedTextProps} key="submissionTime">
                           {submissionTime
@@ -469,26 +643,54 @@ function Monitoring({
                             : '-'
                            }
                         </Text>,
-                        <Text {...sharedTextProps} key="firstTaskLaunchedTime">
-                          {firstTaskLaunchedTime
-                            ? datetimeInLocalTimezone(
-                              startTime.format(DATE_FORMAT_LONG),
-                              displayLocalTimezone,
-                            )
-                            : '-'
-                           }
+                        // <Text {...sharedTextProps} key="firstTaskLaunchedTime">
+                        //   {firstTaskLaunchedTime
+                        //     ? datetimeInLocalTimezone(
+                        //       startTime.format(DATE_FORMAT_LONG),
+                        //       displayLocalTimezone,
+                        //     )
+                        //     : '-'
+                        //    }
+                        // </Text>,
+                        // <Text {...sharedTextProps} key="completionTime">
+                        //   {completionTime
+                        //     ? datetimeInLocalTimezone(
+                        //       endTime.format(DATE_FORMAT_LONG),
+                        //       displayLocalTimezone,
+                        //     )
+                        //     : '-'
+                        //    }
+                        // </Text>,
+                        <Text {...sharedTextProps} key="diffDisplayText" center>
+                          {diffMs ? formatNumberToDuration(diffMs) : 0}
                         </Text>,
-                        <Text {...sharedTextProps} key="completionTime">
-                          {completionTime
-                            ? datetimeInLocalTimezone(
-                              endTime.format(DATE_FORMAT_LONG),
-                              displayLocalTimezone,
-                            )
-                            : '-'
-                           }
+                        <Text
+                          {...sharedTextProps}
+                          key="status"
+                          success={SparkStageStatusEnum.COMPLETE === status}
+                        >
+                          {status}
                         </Text>,
-                        <Text {...sharedTextProps} key="diffDisplayText" rightAligned>
-                          {diffDisplayText || '-'}
+                        <Text {...sharedTextProps} key="tasks" center>
+                          {Object.keys(tasks || {}).length || 0}
+                        </Text>,
+                        <Text {...sharedTextProps} center key="inputBytes">
+                          {inputBytes}
+                        </Text>,
+                        <Text {...sharedTextProps} center key="inputRecords">
+                          {inputRecords}
+                        </Text>,
+                        <Text {...sharedTextProps} center key="outputBytes">
+                          {outputBytes}
+                        </Text>,
+                        <Text {...sharedTextProps} center key="outputRecords">
+                          {outputRecords}
+                        </Text>,
+                        <Text {...sharedTextProps} center key="shuffleReadBytes">
+                          {shuffleReadBytes}
+                        </Text>,
+                        <Text {...sharedTextProps} key="shuffleWriteBytes" rightAligned>
+                          {shuffleWriteBytes}
                         </Text>,
                       ];
 
@@ -512,6 +714,7 @@ function Monitoring({
         job_id: id,
         name,
         num_tasks: tasks,
+        stage_ids: stageIds,
         status,
         submission_time: submittedAt,
       }) => {
@@ -526,13 +729,7 @@ function Monitoring({
           <Text {...sharedTextProps} key="name" preWrap title={name}>
             {displayName}
           </Text>,
-          <Text {...sharedTextProps} key="status" success={SparkJobStatusEnum.SUCCEEDED === status}>
-            {status}
-          </Text>,
-          <Text {...sharedTextProps} center key="tasks">
-            {tasks}
-          </Text>,
-          <Text {...sharedTextProps} key="submittedAt" rightAligned>
+          <Text {...sharedTextProps} key="submittedAt">
             {submittedAt
               ? datetimeInLocalTimezone(
                 moment(submittedAt, 'YYYY-MM-DDTHH:mm:ss.SSSGMT').format(DATE_FORMAT_LONG),
@@ -540,6 +737,15 @@ function Monitoring({
               )
               : '-'
              }
+          </Text>,
+          <Text {...sharedTextProps} key="status" success={SparkJobStatusEnum.SUCCEEDED === status}>
+            {status}
+          </Text>,
+          <Text {...sharedTextProps} center key="stageIds">
+            {stageIds?.length || '-'}
+          </Text>,
+          <Text {...sharedTextProps} center key="tasks">
+            {tasks}
           </Text>,
         ];
       })}
@@ -555,16 +761,16 @@ function Monitoring({
   return (
     <>
       <Spacing p={PADDING_UNITS}>
-        <Headline level={5}>
-          Applications&nbsp;&nbsp;<Text inline monospace muted>
-            /
-          </Text>&nbsp;<Text
+        <Headline level={4}>
+          Applications&nbsp;&nbsp;&nbsp;<Headline
+            default
             inline
             large
+            level={4}
             monospace
           >
             {applications?.length}
-          </Text>
+          </Headline>
         </Headline>
       </Spacing>
 
@@ -573,16 +779,16 @@ function Monitoring({
       {applicationsMemo}
 
       <Spacing p={PADDING_UNITS}>
-        <Headline level={5}>
-          Jobs&nbsp;&nbsp;<Text inline monospace muted>
-            /
-          </Text>&nbsp;<Text
+        <Headline level={4}>
+          Jobs&nbsp;&nbsp;&nbsp;<Headline
+            default
             inline
             large
+            level={4}
             monospace
           >
             {jobs?.length}
-          </Text>
+          </Headline>
         </Headline>
       </Spacing>
 

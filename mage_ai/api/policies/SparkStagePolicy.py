@@ -49,6 +49,20 @@ SparkStagePolicy.allow_read(
 
 SparkStagePolicy.allow_query(
     [
+        'details',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+
+SparkStagePolicy.allow_query(
+    [
         'quantiles',
         'withSummaries',
     ],

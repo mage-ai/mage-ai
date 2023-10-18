@@ -44,9 +44,10 @@ class LocalAPI(BaseAPI):
         model = await self.get(f'/applications/{application_id}/jobs/{job_id}')
         return Job.load(**model)
 
-    async def stages(self, application_id: str, **kwargs) -> List[Stage]:
-        models = await self.get(f'/applications/{application_id}/stages')
-        return [Stage.load(**model) for model in models]
+    async def stages(self, application_id: str, query: Dict = None, **kwargs) -> List[Stage]:
+        models = await self.get(f'/applications/{application_id}/stages', query=query)
+        model_class = StageAttempt if query and query.get('details') else Stage
+        return [model_class.load(**model) for model in models]
 
     async def stage(
         self,

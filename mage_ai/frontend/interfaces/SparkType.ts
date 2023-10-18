@@ -6,6 +6,15 @@ export enum SparkStageStatusEnum {
   COMPLETE = 'COMPLETE',
 }
 
+export enum SparkTaskLocalityEnum {
+  NODE_LOCAL = 'NODE_LOCAL',
+  PROCESS_LOCAL = 'PROCESS_LOCAL',
+}
+
+export enum SparkTaskStatusEnum {
+  SUCCESS = 'SUCCESS',
+}
+
 export interface SparkApplicationType {
   attempts: {
     app_spark_version: string;
@@ -71,7 +80,154 @@ export interface PeakExecutorMetricsType {
   total_gc_time: number;
 }
 
-export interface SparkStageType {
+export interface InputMetricsType {
+  bytesRead: number[];
+  recordsRead: number[];
+}
+
+export interface OutputMetricsType {
+  bytesWritten: number[];
+  recordsWritten: number[];
+}
+
+export interface ShuffleReadMetricsType {
+  fetchWaitTime: number[];
+  localBlocksFetched: number[];
+  localBytesRead?: number;
+  readBytes: number[];
+  readRecords: number[];
+  remoteBlocksFetched: number[];
+  remoteBytesRead: number[];
+  remoteBytesReadToDisk: number[];
+  remoteReqsDuration: number[];
+  shufflePushReadMetricsDist: {
+    corruptMergedBlockChunks: number[];
+    localMergedBlocksFetched: number[];
+    localMergedBytesRead: number[];
+    localMergedChunksFetched: number[];
+    mergedFetchFallbackCount: number[];
+    remoteMergedBlocksFetched: number[];
+    remoteMergedBytesRead: number[];
+    remoteMergedChunksFetched: number[];
+    remoteMergedReqsDuration: number[];
+  };
+  totalBlocksFetched: number[];
+}
+
+export interface TaskMetricsDistributionsType {
+  diskBytesSpilled: number[];
+  duration: number[];
+  executorCpuTime: number[];
+  executorDeserializeCpuTime: number[];
+  executorDeserializeTime: number[];
+  executorRunTime: number[];
+  gettingResultTime: number[];
+  inputMetrics: InputMetricsType;
+  jvmGcTime: number[];
+  memoryBytesSpilled: number[];
+  outputMetrics: OutputMetricsType;
+  peakExecutionMemory: number[];
+  quantiles: number[];
+  resultSerializationTime: number[];
+  resultSize: number[];
+  schedulerDelay: number[];
+  shuffleReadMetrics: ShuffleReadMetricsType;
+  shuffleWriteMetrics: {
+    writeBytes: number[];
+    writeRecords: number[];
+    writeTime: number[];
+  };
+}
+
+export interface SparkTaskType {
+  accumulatorUpdates: string[];
+  attempt: number;
+  duration: number;
+  executorId: string;
+  executorLogs: {
+    [key: string]: any;
+  };
+  gettingResultTime: number;
+  host: string;
+  index: number;
+  inputMetrics: InputMetricsType;
+  launchTime: string;
+  outputMetrics: OutputMetricsType;
+  partitionId: number;
+  schedulerDelay: number
+  shuffleReadMetrics: ShuffleReadMetricsType;
+  shuffleWriteMetrics: {
+    bytesWritten: number;
+    recordsWritten: number;
+    writeTime: number;
+  };
+  speculative: boolean;
+  status: SparkTaskStatusEnum;
+  taskId: number;
+  taskLocality: SparkTaskLocalityEnum;
+  taskMetrics: {
+    diskBytesSpilled: number;
+    executorCpuTime: number;
+    executorDeserializeCpuTime: number;
+    executorDeserializeTime: number;
+    executorRunTime: number;
+    jvmGcTime: number;
+    memoryBytesSpilled: number;
+    peakExecutionMemory: number;
+    resultSerializationTime: number;
+    resultSize: number;
+  };
+}
+
+export interface SparkStageAttemptType {
+  attemptId: number;
+  executorMetricsDistributions: {
+    diskBytesSpilled: number[];
+    failedTasks: number[];
+    inputBytes: number[];
+    inputRecords: number[];
+    killedTasks: number[];
+    memoryBytesSpilled: number[];
+    outputBytes: number[];
+    outputRecords: number[];
+    quantiles: number[];
+    peakMemoryMetrics: {
+      DirectPoolMemory: number[];
+      JVMHeapMemory: number[];
+      JVMOffHeapMemory: number[];
+      MajorGCCount: number[];
+      MajorGCTime: number[];
+      MappedPoolMemory: number[];
+      MinorGCCount: number[];
+      MinorGCTime: number[];
+      OffHeapExecutionMemory: number[];
+      OffHeapStorageMemory: number[];
+      OffHeapUnifiedMemory: number[];
+      OnHeapExecutionMemory: number[];
+      OnHeapStorageMemory: number[];
+      OnHeapUnifiedMemory: number[];
+      ProcessTreeJVMRSSMemory: number[];
+      ProcessTreeJVMVMemory: number[];
+      ProcessTreeOtherRSSMemory: number[];
+      ProcessTreeOtherVMemory: number[];
+      ProcessTreePythonRSSMemory: number[];
+      ProcessTreePythonVMemory: number[];
+      TotalGCTime: number[];
+    },
+    shuffleRead: number[];
+    shuffleReadRecords: number[];
+    shuffleWrite: number[];
+    shuffleWriteRecords: number[];
+    succeededTasks: number[];
+    taskTime: number[];
+  };
+  taskMetricsDistributions: TaskMetricsDistributionsType;
+  tasks: {
+    [task_id: string]: SparkTaskType;
+  };
+}
+
+export interface SparkStageType extends SparkStageAttemptType, {
   attempt_id: number;
   completion_time: string;
   details: string;
@@ -85,6 +241,7 @@ export interface SparkStageType {
   num_tasks: number;
   peak_executor_metrics: PeakExecutorMetricsType;
   rdd_ids: number[];
+  stage_attempts?: SparkStageAttemptType[];
   stage_id: number;
   status: SparkStageStatusEnum;
   submission_time: string;

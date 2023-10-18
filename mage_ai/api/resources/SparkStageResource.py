@@ -6,11 +6,19 @@ from mage_ai.services.spark.models.stages import Stage
 
 class SparkStageResource(GenericResource, SparkApplicationChild):
     @classmethod
-    async def collection(self, _query, _meta, user, **kwargs):
+    async def collection(self, query_arg, _meta, user, **kwargs):
+        query = {}
+
+        details = query_arg.get('details', [False])
+        if details:
+            details = details[0]
+            if details:
+                query['details'] = details
+
         application_id = await self.get_application_id(**kwargs)
 
         return self.build_result_set(
-            await LocalAPI().stages(application_id=application_id),
+            await LocalAPI().stages(application_id=application_id, query=query),
             user,
             **kwargs,
         )

@@ -1,5 +1,6 @@
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.presenters.BasePresenter import BasePresenter
+from mage_ai.api.presenters.SparkStageAttemptPresenter import SparkStageAttemptPresenter
 
 
 class SparkStagePresenter(BasePresenter):
@@ -71,3 +72,11 @@ SparkStagePresenter.register_format(OperationType.DETAIL, [
     'stage_attempts',
     'stage_id',
 ])
+
+
+SparkStagePresenter.register_format(
+    'with_details',
+    list(set(
+        SparkStagePresenter.default_attributes + SparkStageAttemptPresenter.default_attributes,
+    )),
+)

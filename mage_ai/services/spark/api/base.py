@@ -41,7 +41,7 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def stages(self, application_id: str, **kwargs) -> List[Stage]:
+    async def stages(self, application_id: str, query: Dict = None, **kwargs) -> List[Stage]:
         pass
 
     @abstractmethod
