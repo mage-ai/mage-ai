@@ -1,5 +1,9 @@
 import os
 
+# If you add a new environment variable, make sure to check if it should be added to
+# the `MAGE_SETTINGS_ENVIRONMENT_VARIABLES` list at the bottom of this file. Also, update
+# the environment variable documentation at docs/development/variables/environment-variables.mdx
+
 DEBUG = os.getenv('DEBUG', False)
 HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 QUERY_API_KEY = 'api_key'
@@ -116,5 +120,6 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'SENTRY_TRACES_SAMPLE_RATE',
     'MAGE_PUBLIC_HOST',
     'ACTIVE_DIRECTORY_DIRECTORY_ID',
-    'SCHEDULER_TRIGGER_INTERVAL'
+    'SCHEDULER_TRIGGER_INTERVAL',
+    'REQUIRE_USER_PERMISSIONS',
 ]
