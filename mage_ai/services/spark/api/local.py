@@ -115,9 +115,13 @@ class LocalAPI(BaseAPI):
         )
         return [Thread.load(**model) for model in models]
 
-    async def sqls(self, application_id: str, **kwargs) -> List[Sql]:
-        models = await self.get(f'/applications/{application_id}/sql')
-        return [Sql.load(**model) for model in models]
+    async def sqls(self, application_id: str, query: Dict = None, **kwargs) -> List[Sql]:
+        models = await self.get(f'/applications/{application_id}/sql', query=query)
+        return sorted(
+            [Sql.load(**model) for model in models],
+            key=lambda s: s.submission_time,
+            reverse=True,
+        )
 
     async def sql(self, application_id: str, sql_id: int, **kwargs) -> Sql:
         model = await self.get(f'/applications/{application_id}/sql/{sql_id}')

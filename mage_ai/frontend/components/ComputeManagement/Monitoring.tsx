@@ -9,6 +9,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
+import SparkJobSqls from './SparkJobSqls';
 import Table from '@components/shared/Table';
 import TasksWaterfallChart from './TasksWaterfallChart';
 import Text from '@oracle/elements/Text';
@@ -20,7 +21,7 @@ import {
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
-import { ObjectAttributesType } from './constants';
+import { ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SparkApplicationType,
@@ -40,18 +41,6 @@ const TAB_APPLICATIONS = 'Applications';
 const TAB_JOBS = 'Jobs';
 const TAB_SQLS = 'SQLs';
 
-const SHARED_TEXT_PROPS: {
-  default: boolean;
-  monospace: boolean;
-  preWrap: boolean;
-  small: boolean;
-} = {
-  default: true,
-  monospace: true,
-  preWrap: true,
-  small: true,
-};
-
 type MonitoringProps = {
   objectAttributes: ObjectAttributesType;
 };
@@ -60,7 +49,7 @@ function Monitoring({
   objectAttributes,
 }: MonitoringProps) {
   const themeContext = useContext(ThemeContext);
-  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_APPLICATIONS);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_SQLS);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
@@ -964,6 +953,11 @@ function Monitoring({
     stagesMapping,
   ]);
 
+const sqlsMemo = useMemo(() => (
+  <SparkJobSqls
+  />
+), []);
+
   return (
     <>
       <Spacing px={PADDING_UNITS}>
@@ -1004,6 +998,8 @@ function Monitoring({
       {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
 
       {TAB_JOBS === selectedSubheaderTabUUID && jobsMemo}
+
+      {TAB_SQLS === selectedSubheaderTabUUID && sqlsMemo}
     </>
   );
 }

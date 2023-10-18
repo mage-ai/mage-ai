@@ -96,7 +96,7 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def sqls(self, application_id: str, **kwargs) -> List[Sql]:
+    async def sqls(self, application_id: str, query: Dict = None, **kwargs) -> List[Sql]:
         pass
 
     @abstractmethod

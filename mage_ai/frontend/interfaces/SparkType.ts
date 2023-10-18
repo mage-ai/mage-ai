@@ -15,6 +15,10 @@ export enum SparkTaskStatusEnum {
   SUCCESS = 'SUCCESS',
 }
 
+export enum SparkSQLStatusEnum {
+  COMPLETED = 'COMPLETED',
+}
+
 export interface SparkApplicationType {
   attempts: {
     app_spark_version: string;
@@ -335,4 +339,35 @@ export interface SparkExecutorType {
   total_shuffle_read: number;
   total_shuffle_write: number;
   total_tasks: number;
+}
+
+export interface SparkSQLEdgeType {
+  from_id: number;
+  to_id: number;
+}
+
+export interface SparkSQLNodeMetricType {
+  name: string;
+  value: string;
+}
+
+export interface SparkSQLNodeType {
+  metrics: SparkSQLNodeMetricType[];
+  node_id: number;
+  node_name: string;
+  whole_stage_codegen_id: number;
+}
+
+export interface SparkSQLType {
+  description: string;
+  duration: number;
+  edges: SparkSQLEdgeType[];
+  failed_job_ids: number[];
+  id: number;
+  nodes: SparkSQLNodeType[];
+  plan_description: string;
+  running_job_ids: number[];
+  status: SparkSQLStatusEnum;
+  submission_time: string;
+  success_job_ids: number[];
 }

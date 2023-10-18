@@ -10,25 +10,13 @@ import Headline from '@oracle/elements/Headline';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { ObjectAttributesType } from './constants';
+import { ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
 import { SparkEnvironmentType, SparkExecutorType } from '@interfaces/SparkType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 const TAB_ENVIRONMENT = 'Environment';
 const TAB_EXECUTORS = 'Executors';
-
-const SHARED_TEXT_PROPS: {
-  default: boolean;
-  monospace: boolean;
-  preWrap: boolean;
-  small: boolean;
-} = {
-  default: true,
-  monospace: true,
-  preWrap: true,
-  small: true,
-};
 
 type SystemProps = {
   objectAttributes: ObjectAttributesType;

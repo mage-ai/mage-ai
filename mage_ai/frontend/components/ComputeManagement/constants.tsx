@@ -90,3 +90,15 @@ export const COMPUTE_SERVICES: {
     uuid: ComputeServiceEnum.AWS_EMR,
   },
 ];
+
+export const SHARED_TEXT_PROPS: {
+  default: boolean;
+  monospace: boolean;
+  preWrap: boolean;
+  small: boolean;
+} = {
+  default: true,
+  monospace: true,
+  preWrap: true,
+  small: true,
+};
