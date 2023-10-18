@@ -14,10 +14,10 @@ You must enter the following credentials when configuring this destination:
 | `location` | (Optional) BigQuery location of dataset, the BigQuery client will infer a location by default. | us-west1
 | `disable_update_column_types` | If `false` and an existing column has a different column type than the schema, the existing column type will be altered to match the column type in the schema. | `false` (default value) |
 | `use_batch_load` | (In beta) Instruct the BigQuery destination to use BigQuery load jobs instead of the query API. If you encounter any issues with batch loading, let us know in the [community slack](https://www.mage.ai/chat). | `true` (default value) |
-| `credential_info` | An alternative to specify the Google service account credentials. | Structure is shown below |
+| `credentials_info` | An alternative to specify the Google service account credentials. | Structure is shown below |
 
 
-`credential_info` structure:
+`credentials_info` structure:
 ```yaml
 auth_provider_x509_cert_url: str
 auth_uri: str
