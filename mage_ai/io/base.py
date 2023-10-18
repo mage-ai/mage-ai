@@ -290,9 +290,9 @@ class BaseSQLDatabase(BaseIO):
         self,
         column_name: str,
         allow_reserved_words: bool = False,
-        perform_lower_casing: bool = True
+        lower_casing: bool = True
     ) -> str:
-        if perform_lower_casing:
+        if lower_casing:
             column_name = column_name.lower()
         col_new = re.sub(r'\W', '_', column_name)
         if not allow_reserved_words and col_new.upper() in SQL_RESERVED_WORDS:
