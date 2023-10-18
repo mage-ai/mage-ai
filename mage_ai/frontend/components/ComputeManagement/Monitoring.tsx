@@ -8,12 +8,14 @@ import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
+import TasksWaterfallChart from './TasksWaterfallChart';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { ComputeServiceEnum, ObjectAttributesType } from './constants';
 import {
   DATE_FORMAT_LONG,
+  DATE_FORMAT_SPARK,
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
@@ -45,11 +47,11 @@ function Monitoring({
 
   const { data: dataApplications } = api.spark_applications.list();
   const applications: SparkApplicationType[] =
-    useMemo(() => dataApplications?.spark_applications || [], [dataApplications]);
+    useMemo(() => dataApplications?.spark_applications, [dataApplications]);
 
   const { data: dataJobs } = api.spark_jobs.list();
   const jobs: SparkJobType[] =
-    useMemo(() => dataJobs?.spark_jobs || [], [dataJobs]);
+    useMemo(() => dataJobs?.spark_jobs, [dataJobs]);
 
   const { data: dataStages } = api.spark_stages.list({
     details: true,
@@ -495,6 +497,14 @@ function Monitoring({
                                 <Divider light />
 
                                 <Spacing p={PADDING_UNITS}>
+                                  <TasksWaterfallChart
+                                    stageAttempt={stageAttempt}
+                                  />
+                                </Spacing>
+
+                                <Divider light />
+
+                                <Spacing p={PADDING_UNITS}>
                                   <FlexContainer>
                                     <Flex flex={1} alignItems="stretch">
                                       <Panel noPadding>
@@ -756,7 +766,7 @@ function Monitoring({
                                       <Text {...sharedTextProps} key="launchTime">
                                         {launchTime
                                           ? datetimeInLocalTimezone(
-                                            moment(launchTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT').format(DATE_FORMAT_LONG),
+                                            moment(launchTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
                                             displayLocalTimezone,
                                           )
                                           : '-'
@@ -804,9 +814,9 @@ function Monitoring({
                       tasks,
                     }: SparkStageType) => {
                       const startTime = firstTaskLaunchedTime &&
-                        moment(firstTaskLaunchedTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT');
+                        moment(firstTaskLaunchedTime, DATE_FORMAT_SPARK);
                       const endTime = completionTime &&
-                        moment(completionTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT')
+                        moment(completionTime, DATE_FORMAT_SPARK)
                       let diffMs = endTime && endTime.diff(startTime);
 
                       const displayName = name?.length >= 12
@@ -826,7 +836,7 @@ function Monitoring({
                         <Text {...sharedTextProps} key="submissionTime">
                           {submissionTime
                             ? datetimeInLocalTimezone(
-                              moment(submissionTime, 'YYYY-MM-DDTHH:mm:ss.SSSGMT').format(DATE_FORMAT_LONG),
+                              moment(submissionTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
                               displayLocalTimezone,
                             )
                             : '-'
@@ -921,7 +931,7 @@ function Monitoring({
           <Text {...sharedTextProps} key="submittedAt">
             {submittedAt
               ? datetimeInLocalTimezone(
-                moment(submittedAt, 'YYYY-MM-DDTHH:mm:ss.SSSGMT').format(DATE_FORMAT_LONG),
+                moment(submittedAt, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
                 displayLocalTimezone,
               )
               : '-'
