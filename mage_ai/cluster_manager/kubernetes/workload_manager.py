@@ -9,7 +9,11 @@ from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 from kubernetes.stream import stream
 
-from mage_ai.cluster_manager.config import KubernetesWorkspaceConfig, LifecycleConfig
+from mage_ai.cluster_manager.config import (
+    KubernetesWorkspaceConfig,
+    LifecycleConfig,
+    PostStart,
+)
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
@@ -167,6 +171,14 @@ class WorkloadManager:
 
         volumes = []
 
+        volumes = []
+        volume_mounts = [
+            {
+                'name': 'mage-data',
+                'mountPath': '/home/src'
+            }
+        ]
+
         # Create stateful set
         env_vars = self.__populate_env_vars(
             name,
@@ -251,6 +263,54 @@ class WorkloadManager:
                     ],
                 }
             )
+        
+        if lifecycle_config.post_start:
+            file_name = self.configure_post_start(name, lifecycle_config.post_start)
+            if file_name:
+                volumes.append(
+                    {
+                        'name': 'post-start-script',
+                        'configMap': {
+                            'name': f'{name}-post-start',
+                            'items': [
+                                {
+                                    'key': file_name,
+                                    'path': file_name,
+                                }
+                            ]
+                        }
+                    }
+                )
+                volume_mounts.append(
+                    {
+                        'name': 'post-start-script',
+                        'mountPath': f'/app/{file_name}',
+                        'subPath': file_name,
+                    },
+                )
+
+            if lifecycle_config.post_start.command:
+                container_config['lifecycle'] = {
+                    **container_config.get('lifecycle', {}),
+                    'post_start': {
+                        '_exec': lifecycle_config.post_start.command,
+                    }
+                }
+
+        containers = [
+            {
+                'name': f'{name}-container',
+                'image': 'mageai/mageai:latest',
+                'ports': [
+                    {
+                        'containerPort': 6789,
+                        'name': 'web'
+                    }
+                ],
+                'volumeMounts': volume_mounts,
+                **container_config,
+            }
+        ]
 
         if os.getenv(SERVICE_ACCOUNT_SECRETS_NAME):
             credential_file_path = os.getenv(
@@ -530,6 +590,28 @@ class WorkloadManager:
             )
         except Exception as ex:
             raise Exception(f'Pre-start script validation failed with error: {str(ex)}')
+
+    def configure_post_start(self, name: str, post_start_config: PostStart) -> str:
+        if post_start_config.hook is not None:
+            with open(post_start_config.hook, 'r', encoding='utf-8') as f:
+                post_start_script = f.read()
+
+            file_name = os.path.basename(post_start_config.hook)
+
+            config_map = {
+                'data': {
+                    file_name: post_start_script,
+                },
+                'metadata': {
+                    'name': f'{name}-post-start',
+                }
+            }
+            self.core_client.create_namespaced_config_map(
+                namespace=self.namespace,
+                body=config_map
+            )
+
+            return file_name
 
     def __populate_env_vars(
         self,
