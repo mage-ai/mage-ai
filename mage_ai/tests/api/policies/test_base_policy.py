@@ -265,9 +265,21 @@ class BasePolicyTest(BaseApiTestCase, BootstrapMixin):
             )
 
     async def test_authorize_action_is_owner(self):
-        policy = CustomTestPolicy(None, secrets.token_urlsafe())
-        with patch.object(policy, 'is_owner', lambda: True):
-            self.assertTrue(await policy.authorize_action(OperationType.DETAIL))
+        def _rule(action):
+            return {
+                OperationType.DETAIL: {
+                    OauthScopeType.CLIENT_PRIVATE: [
+                        dict(
+                            condition=lambda _policy: _policy.is_owner(),
+                        ),
+                    ],
+                },
+            }[action]
+        with patch.object(CustomTestPolicy, 'action_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, secrets.token_urlsafe())
+            with patch.object(policy, 'is_owner', lambda: True):
+                await policy.authorize_action(OperationType.DETAIL)
 
     async def test_authorize_action(self):
         self.bootstrap()
