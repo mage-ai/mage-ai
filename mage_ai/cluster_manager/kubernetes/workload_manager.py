@@ -1,4 +1,5 @@
 import ast
+import importlib.util
 import json
 import os
 from typing import Dict, List
@@ -483,6 +484,8 @@ class WorkloadManager:
         pre_start_script_path: str,
         mage_container_config: Dict,
     ) -> None:
+        self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
+
         with open(pre_start_script_path, 'r', encoding='utf-8') as f:
             pre_start_script = f.read()
 
@@ -499,6 +502,34 @@ class WorkloadManager:
             namespace=self.namespace,
             body=config_map
         )
+
+    def __validate_pre_start_script(
+        self,
+        pre_start_script_path: str,
+        mage_container_config: Dict,
+    ) -> None:
+        with open(pre_start_script_path, 'r', encoding='utf-8') as f:
+            pre_start_script = f.read()
+        try:
+            compile(pre_start_script, pre_start_script_path, 'exec')
+        except Exception as ex:
+            raise Exception(f'Pre-start script is invalid: {str(ex)}')
+
+        spec = importlib.util.spec_from_file_location('pre_start', pre_start_script_path)
+        module = importlib.util.module_from_spec(spec)
+
+        try:
+            spec.loader.exec_module(module)
+            get_custom_configs = module.get_custom_configs
+
+            get_custom_configs(mage_container_config)
+        except AttributeError as ex:
+            raise Exception(
+                'Could not find get_custom_configs function in pre-start script'
+                f', error: {str(ex)}'
+            )
+        except Exception as ex:
+            raise Exception(f'Pre-start script validation failed with error: {str(ex)}')
 
     def __populate_env_vars(
         self,
