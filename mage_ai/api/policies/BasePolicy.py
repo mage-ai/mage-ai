@@ -400,9 +400,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             not REQUIRE_USER_AUTHENTICATION and
             not DISABLE_NOTEBOOK_EDIT_ACCESS and
             action in [OperationType.CREATE, OperationType.DELETE, OperationType.UPDATE]
-        ) or \
-                self.is_owner():
-
+        ):
             return True
 
         config = self.__class__.action_rule(action)
@@ -498,7 +496,7 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             )
 
     async def authorize_attributes(self, read_or_write, attrbs, **kwargs):
-        if self.is_owner():
+        if not REQUIRE_USER_AUTHENTICATION or self.is_owner():
             return True
 
         for attrb in attrbs:
