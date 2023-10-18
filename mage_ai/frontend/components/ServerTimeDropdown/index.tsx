@@ -22,7 +22,7 @@ import {
   shouldIncludeServerTimeSeconds, 
   storeDisplayLocalServerTime, 
   storeIncludeServerTimeSeconds, 
-} from './utils';
+} from '../../storage/serverTime';
 
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
