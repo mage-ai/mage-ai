@@ -87,6 +87,7 @@ type SHARED_TABLE_PROPS = {
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
+  rowVerticalPadding?: number;
   selected?: boolean;
 };
 
@@ -107,15 +108,32 @@ const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
   `}
 
   ${props => props.compact && `
-    padding: ${UNIT / 2}px ${UNIT}px;
+    padding-left: ${UNIT}px;
+    padding-right: ${UNIT}px;
+  `}
+
+  ${props => props.compact && (typeof props.rowVerticalPadding === 'undefined' || props.rowVerticalPadding === null) && `
+    padding-bottom: ${UNIT / 2}px;
+    padding-top: ${UNIT / 2}px;
   `}
 
   ${props => !props.compact && `
-    padding: ${UNIT}px ${2 * UNIT}px;
+    padding-left: ${2 * UNIT}px;
+    padding-right: ${2 * UNIT}px;
+  `}
+
+  ${props => !props.compact && (typeof props.rowVerticalPadding === 'undefined' || props.rowVerticalPadding === null) && `
+    padding-bottom: ${UNIT}px;
+    padding-top: ${UNIT}px;
   `}
 
   ${props => props.maxWidth && `
     max-width: ${props.maxWidth};
+  `}
+
+  ${props => typeof props.rowVerticalPadding !== 'undefined' && props.rowVerticalPadding !== null && `
+    padding-top: ${props.rowVerticalPadding}px;
+    padding-bottom: ${props.rowVerticalPadding}px;
   `}
 `;
 
@@ -162,17 +180,12 @@ export const SortIconContainerStyle = styled.div<{
 `;
 
 export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
+  last?: boolean;
   rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
-  last?: boolean;
   wrapColumns?: boolean;
 }>`
   ${SHARED_STYLES}
-
-  ${props => props.rowVerticalPadding && `
-    padding-top: ${props.rowVerticalPadding}px;
-    padding-bottom: ${props.rowVerticalPadding}px;
-  `}
 
   ${props => props.columnBorders && `
     border-left: 1px solid ${(props.theme.borders || dark.borders).light};

@@ -2,7 +2,10 @@ import moment from 'moment';
 import { useMemo, useState } from 'react';
 
 import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -144,12 +147,7 @@ function Monitoring({
     <Table
       columnFlex={[
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
+        1,
         null,
         null,
         null,
@@ -169,26 +167,6 @@ function Monitoring({
           uuid: 'Tasks',
         },
         {
-          center: true,
-          uuid: 'Active',
-        },
-        {
-          center: true,
-          uuid: 'Completed',
-        },
-        {
-          center: true,
-          uuid: 'Skipped',
-        },
-        {
-          center: true,
-          uuid: 'Killed',
-        },
-        {
-          center: true,
-          uuid: 'Failed',
-        },
-        {
           rightAligned: true,
           uuid: 'Submitted',
         },
@@ -199,10 +177,100 @@ function Monitoring({
       renderExpandedRowWithObject={(rowIndex: number, object: any) => {
         const job = object?.spark_job;
         if (job) {
+          const {
+            stage_ids: stageIds,
+            num_completed_stages: numCompletedStages,
+            num_active_stages: numActiveStages,
+            num_skipped_stages: numSkippedStages,
+            num_failed_stages: numFailedStages,
+
+            num_active_tasks: numActiveTasks,
+            num_completed_tasks: numCompletedTasks,
+            num_failed_tasks: numFailedTasks,
+            num_killed_tasks: numKilledTasks,
+            num_skipped_tasks: numSkippedTasks,
+            num_tasks: numTasks,
+
+          } = job;
+
+          const buildTable = (rows) => (
+            <Table
+              columnFlex={[
+                null,
+                1,
+              ]}
+              columns={[
+                {
+                  uuid: 'Attribute',
+                },
+                {
+                  uuid: 'Value',
+                },
+              ]}
+              rows={rows.map((arr) => [
+                <Text
+                  key="attribute"
+                  monospace
+                  muted
+                  small
+                >
+                  {arr[0]}
+                </Text>,
+                <Text
+                  key="value"
+                  monospace
+                  muted
+                  small
+                >
+                  {arr[1]}
+                </Text>,
+              ])}
+            />
+          );
+
           return (
-            <Headline>
-              {job?.name}
-            </Headline>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer>
+                <Flex flex={1} alignItems="stretch">
+                  <Panel noPadding>
+                    <Spacing px={PADDING_UNITS} py={1}>
+                      <Text bold>
+                        Stages
+                      </Text>
+                    </Spacing>
+
+                    {buildTable([
+                      ['IDs', stageIds?.join(', ')],
+                      ['Completed', numCompletedStages],
+                      ['Active', numActiveStages],
+                      ['Skipped', numSkippedStages],
+                      ['Failed', numFailedStages],
+                    ])}
+                  </Panel>
+                </Flex>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1} alignItems="stretch">
+                  <Panel noPadding>
+                    <Spacing px={PADDING_UNITS} py={1}>
+                      <Text bold>
+                        Tasks
+                      </Text>
+                    </Spacing>
+
+                    {buildTable([
+                      ['Total', numTasks],
+                      ['Completed', numCompletedTasks],
+                      ['Active', numActiveTasks],
+                      ['Skipped', numSkippedTasks],
+                      ['Failed', numFailedTasks],
+                      ['Killed', numKilledTasks],
+                    ])}
+                  </Panel>
+                </Flex>
+              </FlexContainer>
+            </Spacing>
           );
         }
 
@@ -214,29 +282,19 @@ function Monitoring({
       rows={jobs?.map(({
         job_id: id,
         name,
-        num_active_stages: activeStages,
-        num_active_tasks: activeTasks,
-        num_completed_indices: completedIndices,
-        num_completed_stages: completedStages,
-        num_completed_tasks: completedTasks,
-        num_failed_stages: failedStages,
-        num_failed_tasks: failedTasks,
-        num_killed_tasks: killedTasks,
-        num_skipped_stages: skippedStages,
-        num_skipped_tasks: skippedTasks,
         num_tasks: tasks,
         status,
         submission_time: submittedAt,
       }) => {
-        const displayName = name?.length >= 34
-          ? `${name?.slice(0, 31)}...`
+        const displayName = name?.length >= 100
+          ? `${name?.slice(0, 100 - 3)}...`
           : name;
 
         return [
           <Text {...sharedTextProps} key="id">
             {id}
           </Text>,
-          <Text {...sharedTextProps} key="name" title={name}>
+          <Text {...sharedTextProps} key="name" preWrap title={name}>
             {displayName}
           </Text>,
           <Text {...sharedTextProps} key="status" success={SparkJobStatusEnum.SUCCEEDED === status}>
@@ -244,21 +302,6 @@ function Monitoring({
           </Text>,
           <Text {...sharedTextProps} center key="tasks">
             {tasks}
-          </Text>,
-          <Text {...sharedTextProps} center key="activeTasks">
-            {activeTasks}
-          </Text>,
-          <Text {...sharedTextProps} center key="completedTasks">
-            {completedTasks}
-          </Text>,
-          <Text {...sharedTextProps} center key="skippedTasks">
-            {skippedTasks}
-          </Text>,
-          <Text {...sharedTextProps} center key="killedTasks">
-            {killedTasks}
-          </Text>,
-          <Text {...sharedTextProps} center key="failedTasks">
-            {failedTasks}
           </Text>,
           <Text {...sharedTextProps} key="submittedAt" rightAligned>
             {submittedAt

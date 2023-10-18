@@ -425,7 +425,7 @@ function Table({
         <TableRowStyle
           highlightOnHover={highlightRowOnHover}
           key={`${uuid}-row-${rowIndex}`}
-          noHover={!(linkProps || onClickRow)}
+          noHover={!(linkProps || onClickRow || renderExpandedRowWithObject)}
           // @ts-ignore
           onClick={(e) => {
             if (onClickRow) {
@@ -507,6 +507,7 @@ function Table({
     onClickRowInternal,
     onDoubleClickRow,
     onRightClickRow,
+    renderExpandedRowWithObject,
     rowVerticalPadding,
     rowsSorted,
     setFocusedRowIndex,
@@ -601,6 +602,7 @@ function Table({
             noBorder={noBorder}
             onMouseEnter={isSortable ? () => setHoveredColumnIdx(idx) : null}
             onMouseLeave={isSortable ? () => setHoveredColumnIdx(null) : null}
+            rowVerticalPadding={showEmptyHeaderCells ? 0 : null}
             sticky={stickyHeader}
           >
             <FlexContainer
