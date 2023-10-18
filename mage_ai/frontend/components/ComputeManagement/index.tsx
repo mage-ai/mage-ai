@@ -153,7 +153,7 @@ function ComputeManagement({
     if (!selectedTab && selectedComputeService) {
       setSelectedTab({
         main: MainNavigationTabEnum.CONNECTION,
-        main: MainNavigationTabEnum.SYSTEM,
+        main: MainNavigationTabEnum.MONITORING,
       });
     }
   }, [

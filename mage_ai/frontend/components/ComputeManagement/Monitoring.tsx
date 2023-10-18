@@ -1,6 +1,8 @@
 import moment from 'moment';
-import { useMemo, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { useContext, useMemo, useState } from 'react';
 
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -34,6 +36,22 @@ import { formatNumberToDuration, pluralize } from '@utils/string';
 import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
+const TAB_APPLICATIONS = 'Applications';
+const TAB_JOBS = 'Jobs';
+const TAB_SQLS = 'SQLs';
+
+const SHARED_TEXT_PROPS: {
+  default: boolean;
+  monospace: boolean;
+  preWrap: boolean;
+  small: boolean;
+} = {
+  default: true,
+  monospace: true,
+  preWrap: true,
+  small: true,
+};
+
 type MonitoringProps = {
   objectAttributes: ObjectAttributesType;
 };
@@ -41,6 +59,9 @@ type MonitoringProps = {
 function Monitoring({
   objectAttributes,
 }: MonitoringProps) {
+  const themeContext = useContext(ThemeContext);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_APPLICATIONS);
+
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const { data: dataApplications } = api.spark_applications.list();
@@ -60,16 +81,6 @@ function Monitoring({
   } = useMemo(() => indexBy(dataStages?.spark_stages || [], ({ stage_id: stageId }) => stageId), [
       dataStages,
     ]);
-
-  const sharedTextProps: {
-    default: boolean;
-    monospace: boolean;
-    small: boolean;
-  } = useMemo(() => ({
-    default: true,
-    monospace: true,
-    small: true,
-  }), []);
 
   const applicationsMemo = useMemo(() => (
     <Table
@@ -123,22 +134,22 @@ function Monitoring({
         );
 
         return [
-          <Text {...sharedTextProps} key="id">
+          <Text {...SHARED_TEXT_PROPS} key="id">
             {id}
           </Text>,
-          <Text {...sharedTextProps} key="name">
+          <Text {...SHARED_TEXT_PROPS} key="name">
             {name}
           </Text>,
-          <Text {...sharedTextProps} key="version">
+          <Text {...SHARED_TEXT_PROPS} key="version">
             {version}
           </Text>,
-          <Text {...sharedTextProps} key="sparkUser">
+          <Text {...SHARED_TEXT_PROPS} key="sparkUser">
             {sparkUser}
           </Text>,
-          <Text {...sharedTextProps} key="startTime">
+          <Text {...SHARED_TEXT_PROPS} key="startTime">
             {startTimeString || '-'}
           </Text>,
-          <Text {...sharedTextProps} key="lastUpdated" rightAligned>
+          <Text {...SHARED_TEXT_PROPS} key="lastUpdated" rightAligned>
             {lastUpdated
               ? datetimeInLocalTimezone(
                 dateFormatLongFromUnixTimestamp(lastUpdated / 1000, {
@@ -156,7 +167,6 @@ function Monitoring({
   ), [
     applications,
     displayLocalTimezone,
-    sharedTextProps,
   ]);
 
   const jobsMemo = useMemo(() => (
@@ -645,7 +655,7 @@ function Monitoring({
                                             values,
                                           }) => [
                                             <FlexContainer alignItems="center" key={uuid}>
-                                              <Text {...sharedTextProps}>
+                                              <Text {...SHARED_TEXT_PROPS}>
                                                 {uuid}
                                               </Text>
 
@@ -666,7 +676,7 @@ function Monitoring({
                                               )}
                                             </FlexContainer>,
                                           ].concat(values?.map((value: number, idx: number) => (
-                                            <Text {...sharedTextProps} center key={`quantile-${quantiles[idx]}-${uuid}`}>
+                                            <Text {...SHARED_TEXT_PROPS} center key={`quantile-${quantiles[idx]}-${uuid}`}>
                                               {value}
                                             </Text>
                                           ))))}
@@ -745,23 +755,23 @@ function Monitoring({
                                     taskMetrics,
                                   }: SparkTaskType) => {
                                     const arr = [
-                                      <Text {...sharedTextProps} key="taskId">
+                                      <Text {...SHARED_TEXT_PROPS} key="taskId">
                                         {taskId}
                                       </Text>,
-                                      <Text {...sharedTextProps} center key="attempt">
+                                      <Text {...SHARED_TEXT_PROPS} center key="attempt">
                                         {attempt}
                                       </Text>,
                                       <Text
-                                        {...sharedTextProps}
+                                        {...SHARED_TEXT_PROPS}
                                         key="status"
                                         success={SparkTaskStatusEnum.SUCCESS === status}
                                       >
                                         {status}
                                       </Text>,
-                                      <Text {...sharedTextProps} key="taskLocality">
+                                      <Text {...SHARED_TEXT_PROPS} key="taskLocality">
                                         {taskLocality}
                                       </Text>,
-                                      <Text {...sharedTextProps} key="launchTime">
+                                      <Text {...SHARED_TEXT_PROPS} key="launchTime">
                                         {launchTime
                                           ? datetimeInLocalTimezone(
                                             moment(launchTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
@@ -770,16 +780,16 @@ function Monitoring({
                                           : '-'
                                          }
                                       </Text>,
-                                      <Text {...sharedTextProps} center key="duration">
+                                      <Text {...SHARED_TEXT_PROPS} center key="duration">
                                         {duration ? formatNumberToDuration(duration) : 0}
                                       </Text>,
-                                      <Text {...sharedTextProps} center key="jvmGcTime">
+                                      <Text {...SHARED_TEXT_PROPS} center key="jvmGcTime">
                                         {taskMetrics?.jvmGcTime ? formatNumberToDuration(taskMetrics?.jvmGcTime) : 0}
                                       </Text>,
-                                      <Text {...sharedTextProps} center key="schedulerDelay">
+                                      <Text {...SHARED_TEXT_PROPS} center key="schedulerDelay">
                                         {schedulerDelay ? formatNumberToDuration(schedulerDelay) : 0}
                                       </Text>,
-                                      <Text {...sharedTextProps} center key="resultSerializationTime">
+                                      <Text {...SHARED_TEXT_PROPS} center key="resultSerializationTime">
                                         {taskMetrics?.resultSerializationTime ? formatNumberToDuration(taskMetrics?.resultSerializationTime) : 0}
                                       </Text>,
                                     ];
@@ -822,16 +832,16 @@ function Monitoring({
                         : name;
 
                       const arr = [
-                        <Text {...sharedTextProps} key="stageID">
+                        <Text {...SHARED_TEXT_PROPS} key="stageID">
                           {stageID}
                         </Text>,
-                        <Text {...sharedTextProps} center key="attemptID">
+                        <Text {...SHARED_TEXT_PROPS} center key="attemptID">
                           {attemptID}
                         </Text>,
-                        <Text {...sharedTextProps} key="displayName" title={name}>
+                        <Text {...SHARED_TEXT_PROPS} key="displayName" title={name}>
                           {displayName}
                         </Text>,
-                        <Text {...sharedTextProps} key="submissionTime">
+                        <Text {...SHARED_TEXT_PROPS} key="submissionTime">
                           {submissionTime
                             ? datetimeInLocalTimezone(
                               moment(submissionTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
@@ -840,7 +850,7 @@ function Monitoring({
                             : '-'
                            }
                         </Text>,
-                        // <Text {...sharedTextProps} key="firstTaskLaunchedTime">
+                        // <Text {...SHARED_TEXT_PROPS} key="firstTaskLaunchedTime">
                         //   {firstTaskLaunchedTime
                         //     ? datetimeInLocalTimezone(
                         //       startTime.format(DATE_FORMAT_LONG),
@@ -849,7 +859,7 @@ function Monitoring({
                         //     : '-'
                         //    }
                         // </Text>,
-                        // <Text {...sharedTextProps} key="completionTime">
+                        // <Text {...SHARED_TEXT_PROPS} key="completionTime">
                         //   {completionTime
                         //     ? datetimeInLocalTimezone(
                         //       endTime.format(DATE_FORMAT_LONG),
@@ -858,35 +868,35 @@ function Monitoring({
                         //     : '-'
                         //    }
                         // </Text>,
-                        <Text {...sharedTextProps} key="diffDisplayText" center>
+                        <Text {...SHARED_TEXT_PROPS} key="diffDisplayText" center>
                           {diffMs ? formatNumberToDuration(diffMs) : 0}
                         </Text>,
                         <Text
-                          {...sharedTextProps}
+                          {...SHARED_TEXT_PROPS}
                           key="status"
                           success={SparkStageStatusEnum.COMPLETE === status}
                         >
                           {status}
                         </Text>,
-                        <Text {...sharedTextProps} key="tasks" center>
+                        <Text {...SHARED_TEXT_PROPS} key="tasks" center>
                           {Object.keys(tasks || {}).length || 0}
                         </Text>,
-                        <Text {...sharedTextProps} center key="inputBytes">
+                        <Text {...SHARED_TEXT_PROPS} center key="inputBytes">
                           {inputBytes}
                         </Text>,
-                        <Text {...sharedTextProps} center key="inputRecords">
+                        <Text {...SHARED_TEXT_PROPS} center key="inputRecords">
                           {inputRecords}
                         </Text>,
-                        <Text {...sharedTextProps} center key="outputBytes">
+                        <Text {...SHARED_TEXT_PROPS} center key="outputBytes">
                           {outputBytes}
                         </Text>,
-                        <Text {...sharedTextProps} center key="outputRecords">
+                        <Text {...SHARED_TEXT_PROPS} center key="outputRecords">
                           {outputRecords}
                         </Text>,
-                        <Text {...sharedTextProps} center key="shuffleReadBytes">
+                        <Text {...SHARED_TEXT_PROPS} center key="shuffleReadBytes">
                           {shuffleReadBytes}
                         </Text>,
-                        <Text {...sharedTextProps} key="shuffleWriteBytes" rightAligned>
+                        <Text {...SHARED_TEXT_PROPS} key="shuffleWriteBytes" rightAligned>
                           {shuffleWriteBytes}
                         </Text>,
                       ];
@@ -920,13 +930,13 @@ function Monitoring({
           : name;
 
         return [
-          <Text {...sharedTextProps} key="id">
+          <Text {...SHARED_TEXT_PROPS} key="id">
             {id}
           </Text>,
-          <Text {...sharedTextProps} key="name" preWrap title={name}>
+          <Text {...SHARED_TEXT_PROPS} key="name" preWrap title={name}>
             {displayName}
           </Text>,
-          <Text {...sharedTextProps} key="submittedAt">
+          <Text {...SHARED_TEXT_PROPS} key="submittedAt">
             {submittedAt
               ? datetimeInLocalTimezone(
                 moment(submittedAt, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
@@ -935,13 +945,13 @@ function Monitoring({
               : '-'
              }
           </Text>,
-          <Text {...sharedTextProps} key="status" success={SparkJobStatusEnum.SUCCEEDED === status}>
+          <Text {...SHARED_TEXT_PROPS} key="status" success={SparkJobStatusEnum.SUCCEEDED === status}>
             {status}
           </Text>,
-          <Text {...sharedTextProps} center key="stageIds">
+          <Text {...SHARED_TEXT_PROPS} center key="stageIds">
             {stageIds?.length || '-'}
           </Text>,
-          <Text {...sharedTextProps} center key="tasks">
+          <Text {...SHARED_TEXT_PROPS} center key="tasks">
             {tasks}
           </Text>,
         ];
@@ -951,47 +961,49 @@ function Monitoring({
   ), [
     displayLocalTimezone,
     jobs,
-    sharedTextProps,
     stagesMapping,
   ]);
 
   return (
     <>
-      <Spacing p={PADDING_UNITS}>
-        <Headline level={4}>
-          Applications&nbsp;&nbsp;&nbsp;<Headline
-            default
-            inline
-            large
-            level={4}
-            monospace
-          >
-            {applications?.length}
-          </Headline>
-        </Headline>
+      <Spacing px={PADDING_UNITS}>
+        <ButtonTabs
+          noPadding
+          onClickTab={({ uuid }) => setSelectedSubheaderTabUUID(uuid)}
+          regularSizeText
+          selectedTabUUID={selectedSubheaderTabUUID}
+          tabs={[
+            {
+              label: () => (
+                <>
+                  {TAB_APPLICATIONS}&nbsp;&nbsp;&nbsp;{dataApplications ? applications?.length || 0 : ''}
+                </>
+              ),
+              uuid: TAB_APPLICATIONS,
+            },
+            {
+              label: () => (
+                <>
+                  {TAB_JOBS}&nbsp;&nbsp;&nbsp;{dataJobs ? jobs?.length || 0 : ''}
+                </>
+              ),
+              uuid: TAB_JOBS,
+            },
+            {
+              label: () => TAB_SQLS,
+              uuid: TAB_SQLS,
+            },
+          ]}
+          underlineColor={themeContext?.accent?.blue}
+          underlineStyle
+        />
       </Spacing>
 
       <Divider light />
 
-      {applicationsMemo}
+      {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
 
-      <Spacing p={PADDING_UNITS}>
-        <Headline level={4}>
-          Jobs&nbsp;&nbsp;&nbsp;<Headline
-            default
-            inline
-            large
-            level={4}
-            monospace
-          >
-            {jobs?.length}
-          </Headline>
-        </Headline>
-      </Spacing>
-
-      <Divider light />
-
-      {jobsMemo}
+      {TAB_JOBS === selectedSubheaderTabUUID && jobsMemo}
     </>
   );
 }

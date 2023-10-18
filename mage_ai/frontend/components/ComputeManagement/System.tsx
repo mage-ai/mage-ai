@@ -38,7 +38,7 @@ function System({
   objectAttributes,
 }: SystemProps) {
   const themeContext = useContext(ThemeContext);
-  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_EXECUTORS);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_ENVIRONMENT);
 
   const { data: dataExecutors } = api.spark_executors.list();
   const executors: SparkExecutorType[] =
