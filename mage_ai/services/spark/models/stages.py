@@ -173,7 +173,7 @@ class Task(BaseSparkModel):
 
 
 @dataclass
-class Stage(BaseSparkModel):
+class StageBase(BaseSparkModel):
     accumulator_updates: List[str] = field(default_factory=list)  # []
     attempt_id: int = None  # 0
     completion_time: str = None  # "2023-10-15T10:17:00.772GMT"
@@ -264,7 +264,7 @@ class Stage(BaseSparkModel):
 
 
 @dataclass
-class StageAttempt(Stage):
+class StageAttempt(StageBase):
     accumulator_updates: List[str] = field(default_factory=list)  # []
     attempt_id: int = None  # 0
     completion_time: str = None  # "2023-10-15T10:17:00.772GMT"
@@ -355,6 +355,14 @@ class StageAttempt(Stage):
     @property
     def id(self) -> int:
         return self.attempt_id
+
+
+@dataclass
+class Stage(StageBase):
+    stage_attempts: List[Dict] = field(default_factory=list)
+
+    def __post_init__(self):
+        super().__post_init__()
 
 
 @dataclass

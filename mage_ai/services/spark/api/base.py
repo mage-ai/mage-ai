@@ -1,3 +1,4 @@
+import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
@@ -41,6 +42,10 @@ class BaseAPI(ABC):
 
     @abstractmethod
     async def stages(self, application_id: str, **kwargs) -> List[Stage]:
+        pass
+
+    @abstractmethod
+    async def stage(self, application_id: str, stage_id: int, **kwargs) -> Stage:
         pass
 
     @abstractmethod
@@ -102,12 +107,12 @@ class BaseAPI(ABC):
     async def environment(self, application_id: str, **kwargs) -> Environment:
         pass
 
-    async def get(self, path: str):
-        response = await self.__build_request('get', f'{self.endpoint}{path}')
+    async def get(self, path: str, query: Dict = None):
+        response = await self.__build_request('get', f'{self.endpoint}{path}', query=query)
         return response.json()
 
-    def get_sync(self, path: str):
-        response = self.__build_request_sync('get', f'{self.endpoint}{path}')
+    def get_sync(self, path: str, query: Dict = None):
+        response = self.__build_request_sync('get', f'{self.endpoint}{path}', query=query)
         return response.json()
 
     def __build_request_sync(
@@ -115,6 +120,7 @@ class BaseAPI(ABC):
         http_method: str,
         url: str,
         headers: Dict = None,
+        query: Dict = None,
         payload: Dict = None,
     ):
         session = requests.Session()
@@ -122,6 +128,9 @@ class BaseAPI(ABC):
         adapter_https = requests.adapters.HTTPAdapter(max_retries=100)
         session.mount('http://', adapter_http)
         session.mount('https://', adapter_https)
+
+        if query:
+            url = f'{url}?{urllib.parse.urlencode(query)}'
 
         return getattr(session, http_method)(
             url,

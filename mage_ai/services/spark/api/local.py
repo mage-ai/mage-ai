@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from mage_ai.services.spark.api.base import BaseAPI
 from mage_ai.services.spark.models.applications import Application
@@ -47,6 +47,19 @@ class LocalAPI(BaseAPI):
     async def stages(self, application_id: str, **kwargs) -> List[Stage]:
         models = await self.get(f'/applications/{application_id}/stages')
         return [Stage.load(**model) for model in models]
+
+    async def stage(
+        self,
+        application_id: str,
+        stage_id: int,
+        query: Dict = None,
+        **kwargs,
+    ) -> Stage:
+        stage_attempts = await self.get(
+            f'/applications/{application_id}/stages/{stage_id}',
+            query=query,
+        )
+        return Stage.load(stage_attempts=stage_attempts, stage_id=stage_id)
 
     async def stage_attempts(
         self,
