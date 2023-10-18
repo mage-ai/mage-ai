@@ -5,6 +5,7 @@ from typing import Dict, List
 
 import yaml
 from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
 from kubernetes.stream import stream
 
 from mage_ai.cluster_manager.config import LifecycleConfig
@@ -425,8 +426,13 @@ class WorkloadManager:
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
-        self.core_client.delete_namespaced_config_map(f'{name}-pre-start', self.namespace)
         # TODO: remove service from ingress paths
+        try:
+            self.core_client.delete_namespaced_config_map(f'{name}-pre-start', self.namespace)
+        except ApiException as ex:
+            # The delete operation will return a 404 response if the config map does not exist
+            if ex.status != 404:
+                raise
 
     def get_workload_activity(self, name: str) -> Dict:
         pods = self.core_client.list_namespaced_pod(self.namespace).items
