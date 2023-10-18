@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 const SHARED_CELL_PADDING = '12px 20px';
 const SHARED_GAP = '1px';
@@ -11,7 +13,7 @@ export const DropdownContainerStyle = styled.div<{
   position: absolute;
   top: ${props => props.top || 0};
   right: 0;
-  width: 360px;
+  width: ${UNIT * 45}px;
 
   display: flex;
   flex-direction: column;
@@ -19,7 +21,7 @@ export const DropdownContainerStyle = styled.div<{
 
   overflow: hidden;
   background-color: ${props => (props.theme.borders || dark.borders).darkLight};
-  border-radius: 8px;
+  border-radius: ${BORDER_RADIUS}px;
   border: 1px solid ${props => (props.theme.borders || dark.borders).darkLight};
 `;
 
@@ -30,7 +32,7 @@ export const DropdownHeaderStyle = styled.div`
 `;
 
 export const TimeListContainerStyle = styled.div`
-  height: 160px;
+  height: ${UNIT * 20}px;
 
   display: flex;
   gap: ${SHARED_GAP};

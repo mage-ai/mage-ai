@@ -73,6 +73,14 @@ export function setCustomCodeState({
   });
 }
 
+export function setLocalStorageValue(storageKey: string, value: boolean): boolean {
+  if (typeof value !== 'undefined') {
+    set(storageKey, value);
+  }
+
+  return value;
+}
+
 export function resetObjectCounts() {
   return set(LOCAL_STORAGE_KEY_OBJECT_COUNTS, {});
 }

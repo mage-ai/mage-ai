@@ -4,8 +4,6 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import ServerTimeButton from './ServerTimeButton';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-
-import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
 import { BREAKPOINT_MEDIUM } from '@styles/theme';
 import { 
   DropdownCellStyle, 
@@ -17,6 +15,7 @@ import {
   ToggleGroupStyle, 
 } from './index.style';
 import { PURPLE2 } from '@oracle/styles/colors/main';
+import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
 import { 
   shouldDisplayLocalServerTime, 
   shouldIncludeServerTimeSeconds, 
@@ -112,7 +111,7 @@ function ServerTimeDropdown() {
         {!isSmallBreakpoint && showDropdown && (
           <DropdownContainerStyle top={top}>
             <DropdownHeaderStyle>
-              <Text bold muted uppercase>Server Time</Text>
+              <Text bold muted uppercase>Current Time</Text>
             </DropdownHeaderStyle>
             <TimeListContainerStyle>
               {DISPLAYED_TIME_ZONES.map((timeZone) => (

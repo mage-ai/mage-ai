@@ -165,7 +165,6 @@ export function currentTimes({
       switch (timeZone) {
         case TimeZoneEnum.LOCAL:
           moment = currentMoment.local();
-        case TimeZoneEnum.UTC:
         default:
           break;
       }
