@@ -367,8 +367,6 @@ function Table({
   ]);
 
   const rowEls = useMemo(() => rowsSorted?.map((cells, rowIndex) => {
-    console.log('RENDER rows');
-
     const linkProps = buildLinkProps?.(rowIndex);
     const rowProps = buildRowProps?.(rowIndex) || {
       renderCell: null,

@@ -246,3 +246,38 @@ export interface SparkStageType extends SparkStageAttemptType, {
   status: SparkStageStatusEnum;
   submission_time: string;
 }
+
+export interface ExecutorResourceType {
+  amount: number;
+  discovery_script: string;
+  resource_name: string;
+  vendor: string;
+}
+
+export interface SparkEnvironmentType {
+  classpath_entries: string[][];
+  hadoop_properties: string[][];
+  metrics_properties: string[][];
+  resource_profiles: {
+    executor_resources: {
+      cores: ExecutorResourceType;
+      memory: ExecutorResourceType;
+      off_heap: ExecutorResourceType;
+    };
+    id: number;
+    task_resources: {
+      cpus: ExecutorResourceType;
+    };
+  }[];
+  runtime: {
+    java_home: string;
+    java_version: string;
+    scala_version: string;
+  };
+  spark_properties: string[][];
+  spark_properties: string[][];
+}
+
+export interface SparkExecutorType {
+
+}

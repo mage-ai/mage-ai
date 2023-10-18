@@ -11,11 +11,13 @@ import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
 import Spacing from '@oracle/elements/Spacing';
+import System from './System';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { CardStyle } from './index.style';
 import {
+  BlockCubePolygon,
   Monitor,
   PowerOnOffButton,
   WorkspacesUsersIcon,
@@ -151,7 +153,7 @@ function ComputeManagement({
     if (!selectedTab && selectedComputeService) {
       setSelectedTab({
         main: MainNavigationTabEnum.CONNECTION,
-        main: MainNavigationTabEnum.MONITORING,
+        main: MainNavigationTabEnum.SYSTEM,
       });
     }
   }, [
@@ -206,6 +208,10 @@ function ComputeManagement({
       {
         Icon: Monitor,
         uuid: MainNavigationTabEnum.MONITORING,
+      },
+      {
+        Icon: BlockCubePolygon,
+        uuid: MainNavigationTabEnum.SYSTEM,
       },
     ].map(({
       Icon,
@@ -329,12 +335,29 @@ function ComputeManagement({
     updateProject,
   ]);
 
-  const monitoringMemo = useMemo(() => (
-    <Monitoring
-      objectAttributes={objectAttributes}
-      selectedComputeService={selectedComputeService}
-    />
-  ), [
+  const monitoringMemo = useMemo(() => {
+    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+      return (
+        <Monitoring
+          objectAttributes={objectAttributes}
+          selectedComputeService={selectedComputeService}
+        />
+      );
+    }
+  }, [
+    objectAttributes,
+    selectedComputeService,
+  ]);
+
+  const systemMemo = useMemo(() => {
+    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+      return (
+        <System
+          objectAttributes={objectAttributes}
+        />
+      );
+    }
+  }, [
     objectAttributes,
     selectedComputeService,
   ]);
@@ -434,6 +457,7 @@ function ComputeManagement({
           {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
           {MainNavigationTabEnum.RESOURCES === selectedTab?.main && resourcesMemo}
           {MainNavigationTabEnum.MONITORING === selectedTab?.main && monitoringMemo}
+          {MainNavigationTabEnum.SYSTEM === selectedTab?.main && systemMemo}
         </>
       )}
     </TripleLayout>

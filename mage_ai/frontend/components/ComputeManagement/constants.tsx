@@ -20,12 +20,14 @@ export enum MainNavigationTabEnum {
   CONNECTION = 'CONNECTION',
   RESOURCES = 'RESOURCES',
   MONITORING = 'MONITORING',
+  SYSTEM = 'SYSTEM',
 }
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
   [MainNavigationTabEnum.CONNECTION]: 'Connection',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
   [MainNavigationTabEnum.MONITORING]: 'Monitoring',
+  [MainNavigationTabEnum.SYSTEM]: 'System',
 };
 
 export const COMPUTE_SERVICE_DISPLAY_NAME = {

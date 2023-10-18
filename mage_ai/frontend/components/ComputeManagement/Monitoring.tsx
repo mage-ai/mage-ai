@@ -12,13 +12,13 @@ import TasksWaterfallChart from './TasksWaterfallChart';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { ComputeServiceEnum, ObjectAttributesType } from './constants';
 import {
   DATE_FORMAT_LONG,
   DATE_FORMAT_SPARK,
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
+import { ObjectAttributesType } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SparkApplicationType,
@@ -36,12 +36,10 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 
 type MonitoringProps = {
   objectAttributes: ObjectAttributesType;
-  selectedComputeService?: ComputeServiceEnum;
 };
 
 function Monitoring({
   objectAttributes,
-  selectedComputeService,
 }: MonitoringProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
