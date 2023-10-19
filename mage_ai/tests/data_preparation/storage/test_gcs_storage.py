@@ -30,12 +30,19 @@ class TestGCSStorage(TestCase):
         self.assertTrue(self.storage.isdir('your_dirpath/'))
 
     def test_listdir(self):
+        path = 'dirpath'
+
         self.gcs_bucket_mock.list_blobs.return_value = [
-            mock_blob('dirpath/file1.txt'),
-            mock_blob('dirpath/file2.txt'),
+            mock_blob(f'{path}/'),
+            mock_blob(f'{path}/file1.txt'),
+            mock_blob(f'{path}/file2.txt'),
+            mock_blob(f'{path}/depth_0/'),
+            mock_blob(f'{path}/depth_0/file3.txt'),
+            mock_blob(f'{path}/depth_0/depth_1/'),
+            mock_blob(f'{path}/depth_0/depth_1/file4.txt'),
         ]
-        result = self.storage.listdir('dirpath/')
-        self.assertEqual(result, ['file1.txt', 'file2.txt'])
+        result = self.storage.listdir(path)
+        self.assertEqual(result, ['file1.txt', 'file2.txt', 'depth_0'])
 
     def test_path_exists(self):
         self.gcs_bucket_mock.blob.exists = True
