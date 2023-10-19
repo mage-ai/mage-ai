@@ -14,6 +14,7 @@ import {
 import {
   HEADLINE_SIZE,
   LARGE,
+  LARGE_LG,
   REGULAR,
   SMALL,
   XLARGE,
@@ -45,6 +46,7 @@ export type TextProps = {
   italic?: boolean;
   large?: boolean;
   largeSm?: boolean;
+  largeLg?: boolean;
   letterSpacing?: number;
   leftAligned?: boolean;
   lineHeight?: number;
@@ -91,7 +93,7 @@ export const SHARED_LARGE_TEXT_RESPONSIVE_STYLES = css<{
 `;
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
-  ${props => !props.xsmall && !props.small && !props.large && !props.xlarge && `
+  ${props => !props.xsmall && !props.small && !props.large && !props.largeLg && !props.xlarge && `
     ${REGULAR}
   `}
 
@@ -105,6 +107,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.large && `
     ${LARGE}
+  `}
+
+  ${props => props.largeLg && `
+    ${LARGE_LG}
   `}
 
   ${props => props.xlarge && `

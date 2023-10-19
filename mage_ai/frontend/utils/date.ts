@@ -1,4 +1,5 @@
 import moment from 'moment';
+import tzMoment from 'moment-timezone';
 
 import { pluralize } from '@utils/string';
 import { rangeSequential } from '@utils/array';
@@ -7,6 +8,11 @@ export enum TimePeriodEnum {
   TODAY = 'today',
   WEEK = 'week',
   MONTH = 'month',
+}
+
+export enum TimeZoneEnum {
+  LOCAL = 'LOCAL',
+  UTC = 'UTC',
 }
 
 export const TIME_PERIOD_DISPLAY_MAPPING = {
@@ -27,7 +33,16 @@ export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 export const DATE_FORMAT_SPARK = 'YYYY-MM-DDTHH:mm:ss.SSSGMT';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
+export const TIME_FORMAT = 'HH:mm:ss';
+export const TIME_FORMAT_NO_SEC = 'HH:mm';
 export const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+export const TIME_ZONE_NAMES: {
+  [key in TimeZoneEnum]: string
+} = {
+  [TimeZoneEnum.LOCAL]: LOCAL_TIMEZONE,
+  [TimeZoneEnum.UTC]: 'Etc/Universal',
+};
 
 export function formatDateShort(momentObj) {
   return momentObj.format(DATE_FORMAT_SHORT);
@@ -136,6 +151,39 @@ export function utcNowDate(opts?: { dateObj?: boolean }): any {
   }
 
   return utcDate;
+}
+
+// Return a map of the current time in the different provided timezones
+export function currentTimes({ 
+  timeZones, 
+  includeSeconds = false,
+}: { 
+  timeZones: TimeZoneEnum[];
+  includeSeconds?: boolean;
+}) {
+  const currentMoment = tzMoment.utc();
+  const zoneTimes = new Map(
+    timeZones.map((timeZone) => {
+      let moment = currentMoment;
+      switch (timeZone) {
+        case TimeZoneEnum.LOCAL:
+          moment = currentMoment.local();
+        default:
+          break;
+      }
+
+      return [
+        timeZone, 
+        moment.format(includeSeconds ? TIME_FORMAT : TIME_FORMAT_NO_SEC),
+      ];
+    }),
+  );
+
+  return zoneTimes;
+}
+
+export function abbreviatedTimezone(timezone: TimeZoneEnum) {
+  return tzMoment.tz(TIME_ZONE_NAMES[timezone]).zoneAbbr();
 }
 
 export function dateFromFromUnixTimestamp(timestamp: number) {

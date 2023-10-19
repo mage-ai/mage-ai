@@ -19,6 +19,7 @@ import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
 import ProjectType from '@interfaces/ProjectType';
+import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -116,7 +117,7 @@ function Header({
   }], [breadcrumbsProp, project]);
   const { pipeline: pipelineUUID } = router.query;
 
-  const { latest_version: latesetVersion } = project || {};
+  const { latest_version: latestVersion } = project || {};
 
   const logoLink = useMemo(() => (
     <NextLink
@@ -245,7 +246,8 @@ function Header({
           </Flex>
 
           <Flex alignItems="center">
-            {latesetVersion && version && latesetVersion !== version && (
+            <ServerTimeDropdown />
+            {latestVersion && version && latestVersion !== version && (
               <Spacing ml={2}>
                 <Button
                   borderLess
@@ -262,7 +264,7 @@ function Header({
                       inline
                       monospace
                     >
-                      {latesetVersion}
+                      {latestVersion}
                     </Text>
                   </Text>
                 </Button>
