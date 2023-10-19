@@ -85,6 +85,8 @@ import {
   CodeHelperStyle,
   ContainerStyle,
   HeaderHorizontalBorder,
+  ScrollColunnsContainerStyle,
+  ScrollColunnStyle,
   SubheaderStyle,
   TimeTrackerStyle,
   getColorsForBlockType,
@@ -120,6 +122,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import {
   TABS_DBT,
@@ -182,6 +185,12 @@ type CodeBlockProps = {
   interactionsMapping?: {
     [interactionUUID: string]: InteractionType;
   };
+  mainContainerRect?: {
+    height: number;
+    width: number;
+    x: number;
+    y: number;
+  };
   mainContainerRef?: any;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
@@ -195,6 +204,7 @@ type CodeBlockProps = {
   }) => void;
   pipeline: PipelineType;
   project?: ProjectType;
+  refCursor?: any;
   runBlock?: (payload: {
     block: BlockType;
     code: string;
@@ -218,6 +228,11 @@ type CodeBlockProps = {
   setAnyInputFocused?: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
+  setMountedBlocks?: (prev: (data: {
+    [blockUUID: string]: boolean;
+  }) => {
+    [blockUUID: string]: boolean;
+  }) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedBlock?: (block: BlockType) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
@@ -239,7 +254,13 @@ type CodeBlockProps = {
     block: BlockType,
     name: string,
   ) => void;
+  sideBySideEnabled?: boolean;
+  startData?: (data: {
+    event: any;
+    scrollTop: number;
+  }) => void;
   widgets?: BlockType[];
+  windowWidth?: number;
 }
   & CodeEditorSharedProps
   & CommandButtonsSharedProps
@@ -277,6 +298,7 @@ function CodeBlock({
   hideRunButton,
   interactionsMapping,
   interruptKernel,
+  mainContainerRect,
   mainContainerRef,
   mainContainerWidth,
   messages: blockMessages = [],
@@ -288,27 +310,33 @@ function CodeBlock({
   openSidekickView,
   pipeline,
   project,
+  refCursor,
   runBlock,
   runningBlocks,
   savePipelineContent,
   selected,
+  separateCodeAndOutput,
   setAddNewBlockMenuOpenIdx,
   setAnyInputFocused,
   setCreatingNewDBTModel,
   setEditingBlock,
   setErrors,
+  setMountedBlocks,
   setOutputBlocks,
   setSelected,
   setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
+  sideBySideEnabled,
   showBrowseTemplates,
   showConfigureProjectModal,
   showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
+  startData,
   textareaFocused,
   widgets,
+  windowWidth,
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
@@ -316,6 +344,33 @@ function CodeBlock({
     useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
       project?.features,
     ]);
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      if (!startData) {
+        return;
+      }
+
+      ref.current.style.top = `${refCursor?.current?.getBoundingClientRect?.()?.y}px`;
+    };
+
+    if (sideBySideEnabled) {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('mousemove', handleMouseMove);
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('mousemove', handleMouseMove);
+      }
+    };
+  }, [
+    ref,
+    refCursor,
+    sideBySideEnabled,
+    startData,
+  ]);
 
   const {
     callback_content: callbackContentOrig,
@@ -976,6 +1031,10 @@ function CodeBlock({
             onChange?.(val);
           }}
           onDidChangeCursorPosition={onDidChangeCursorPosition}
+          onMountCallback={() => setMountedBlocks(prev => ({
+            ...prev,
+            [block?.uuid]: true,
+          }))}
           placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
             ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
             : 'Start typing here...'
@@ -1092,6 +1151,7 @@ function CodeBlock({
     runBlockAndTrack,
     selected,
     setContent,
+    setMountedBlocks,
     setSelected,
     setTextareaFocused,
     textareaFocused,
@@ -1160,12 +1220,15 @@ function CodeBlock({
         runStartTime={runStartTime}
         selected={selected}
         selectedTab={selectedTab}
-        setCollapsed={(val: boolean) => {
-          setOutputCollapsed(() => {
-            set(outputCollapsedUUID, val);
-            return val;
-          });
-        }}
+        setCollapsed={!sideBySideEnabled
+          ? (val: boolean) => {
+            setOutputCollapsed(() => {
+              set(outputCollapsedUUID, val);
+              return val;
+            });
+          }
+          : null
+        }
         setErrors={setErrors}
         setOutputBlocks={setOutputBlocks}
         setSelectedOutputBlock={setSelectedOutputBlock}
@@ -1195,6 +1258,7 @@ function CodeBlock({
     setOutputBlocks,
     setOutputCollapsed,
     setSelectedOutputBlock,
+    sideBySideEnabled,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
@@ -1408,7 +1472,7 @@ function CodeBlock({
     isInteractionsEnabled,
   ]);
 
-  return (
+  const codeBlockMain = (
     <div ref={drop}>
       <div
         ref={ref}
@@ -1642,7 +1706,7 @@ function CodeBlock({
                 />
               )}
 
-              {!hideExtraCommandButtons && (
+              {!sideBySideEnabled && !hideExtraCommandButtons && (
                 <Spacing px={1}>
                   <Button
                     basic
@@ -1672,7 +1736,6 @@ function CodeBlock({
               )}
             </FlexContainer>
           </BlockHeaderStyle>
-
 
           <ContainerStyle
             onClick={() => onClickSelectBlock()}
@@ -2553,7 +2616,7 @@ function CodeBlock({
               {blockExtras}
             </CodeContainerStyle>
 
-            {codeOutputEl}
+            {!sideBySideEnabled && codeOutputEl}
           </ContainerStyle>
         </div>
 
@@ -2648,6 +2711,71 @@ function CodeBlock({
         )}
       </div>
     </div>
+  );
+
+  const widthColumn = useMemo(() => {
+    return ((mainContainerWidth - (SCROLLBAR_WIDTH * 2)) / 2);
+  }, [
+    mainContainerWidth,
+  ]);
+
+  const column1 = useMemo(() => {
+    const {
+      height,
+      x,
+      width,
+    } = mainContainerRect || {};
+
+    return (
+      <ScrollColunnStyle
+        height={height}
+        left={x + SCROLLBAR_WIDTH}
+        width={widthColumn}
+      >
+        {codeBlockMain}
+      </ScrollColunnStyle>
+    );
+  }, [
+    codeBlockMain,
+    mainContainerRect,
+  ]);
+
+  const column2 = useMemo(() => {
+    const {
+      height,
+      x,
+      width,
+    } = mainContainerRect || {};
+
+    const right = windowWidth - (x + width);
+    // console.log('wtf right', right, width);
+
+    return (
+      <ScrollColunnStyle
+        height={height}
+        right={right}
+        width={widthColumn}
+      >
+        {codeOutputEl}
+      </ScrollColunnStyle>
+    );
+  }, [
+    codeOutputEl,
+    mainContainerRect,
+    widthColumn,
+    windowWidth,
+  ]);
+
+  if (!sideBySideEnabled) {
+    return column1;
+  }
+
+  return (
+    <ScrollColunnsContainerStyle>
+      {column1}
+
+      {column2}
+    </ScrollColunnsContainerStyle>
   );
 }
 

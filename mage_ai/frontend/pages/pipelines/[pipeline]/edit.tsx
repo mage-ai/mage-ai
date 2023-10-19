@@ -90,6 +90,7 @@ import {
 } from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   get,
   set,
 } from '@storage/localStorage';
@@ -154,6 +155,9 @@ function PipelineDetailPage({
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  const [beforeHidden, setBeforeHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
+
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
@@ -2603,10 +2607,12 @@ function PipelineDetailPage({
           onCreateCallback?: (block: BlockType) => void;
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+      afterHidden={afterHidden}
       allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
+      beforeHidden={beforeHidden}
       blockInteractionsMapping={blockInteractionsMapping}
       blockRefs={blockRefs}
       blocks={blocksInNotebook}
@@ -2669,10 +2675,12 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     addWidgetAtIndex,
+    afterHidden,
     allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
     // automaticallyNameBlocks,
+    beforeHidden,
     blockRefs,
     blockInteractionsMapping,
     blocks,
@@ -3021,6 +3029,7 @@ function PipelineDetailPage({
           </FlexContainer>
         )}
         before={beforeToShow}
+        beforeHidden={beforeHidden}
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
@@ -3032,6 +3041,7 @@ function PipelineDetailPage({
         pipeline={pipeline}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
+        setBeforeHidden={setBeforeHidden}
         setErrors={pipelineErrors ? setPipelineErrors : setErrors}
         setMainContainerWidth={setMainContainerWidth}
       >

@@ -155,6 +155,9 @@ export const BlockHeaderStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
+  // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
+  // and the screen width is too small.
+  overflow-x: hidden;
   padding: ${UNIT}px;
   position: sticky;
   top: -5px;
@@ -280,4 +283,36 @@ export const TimeTrackerStyle =  styled.div`
   bottom: ${UNIT * 1}px;
   left: ${LEFT_PADDING}px;
   position: absolute;
+`;
+
+export const ScrollColunnsContainerStyle = styled.div`
+  position: relative;
+  z-index: 1;
+`;
+
+export const ScrollColunnStyle = styled.div<{
+  height: number;
+  left?: number;
+  right?: number;
+  width: number;
+}>`
+  overflow: hidden;
+  position: fixed;
+  z-index: 2;
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+
+  ${props => props.width && `
+    width: ${props.width}px;
+  `}
+
+  ${props => typeof props.left !== 'undefined' && `
+    left: ${props.left}px;
+  `}
+
+  ${props => typeof props.right !== 'undefined' && `
+    right: ${props.right}px;
+  `}
 `;

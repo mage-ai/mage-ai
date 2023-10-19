@@ -704,8 +704,8 @@ function CodeOutput({
           <ExtraInfoBorderStyle />
 
           <FlexContainer justifyContent="space-between">
-            {setCollapsed && (
-              <Flex alignItems="center" px={1}>
+            <Flex alignItems="center" px={1}>
+              {setCollapsed && (
                 <Button
                   {...SHARED_BUTTON_PROPS}
                   onClick={() => setCollapsed(!collapsed)}
@@ -730,8 +730,21 @@ function CodeOutput({
                     </FlexContainer>
                   )}
                 </Button>
-              </Flex>
-            )}
+              )}
+
+              {!setCollapsed && (
+                <FlexContainer alignItems="center">
+                  {dataFrameShape && (
+                    <Spacing pl={1}>
+                      <Text>
+                        {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                      </Text>
+                    </Spacing>
+                  )}
+                </FlexContainer>
+              )}
+            </Flex>
+
             <ExtraInfoContentStyle>
               <FlexContainer
                 alignItems="center"

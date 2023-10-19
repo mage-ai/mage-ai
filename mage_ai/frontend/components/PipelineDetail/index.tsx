@@ -24,6 +24,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock, { DEFAULT_SQL_CONFIG_KEY_LIMIT } from '@components/CodeBlock';
+import ColumnScroller, { StartDataType } from './ColumnScroller';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
@@ -80,6 +81,7 @@ import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
+import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailProps = {
   addNewBlockAtIndex: (
@@ -91,10 +93,12 @@ type PipelineDetailProps = {
   addWidget: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
+  afterHidden?: boolean;
   allBlocks: BlockType[];
   allowCodeBlockShortcuts?: boolean;
   anyInputFocused: boolean;
   autocompleteItems: AutocompleteItemType[];
+  beforeHidden?: boolean;
   blockInteractionsMapping?: {
     [blockUUID: string]: BlockInteractionType[];
   };
@@ -185,10 +189,12 @@ type PipelineDetailProps = {
 function PipelineDetail({
   addNewBlockAtIndex,
   addWidget,
+  afterHidden,
   allBlocks,
   allowCodeBlockShortcuts,
   anyInputFocused,
   autocompleteItems,
+  beforeHidden,
   blockInteractionsMapping,
   blockRefs,
   blocks = [],
@@ -250,6 +256,74 @@ function PipelineDetail({
   const [lastBlockIndex, setLastBlockIndex] = useState<number>(null);
   const [creatingNewDBTModel, setCreatingNewDBTModel] = useState<boolean>(false);
   const [dbtModelName, setDbtModelName] = useState<string>('');
+  const [mainContainerRect, setMainContainerRect] = useState<{
+    height: number;
+  }>(false);
+
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+  const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
+
+  const blocksFiltered =
+    blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type);
+
+  const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
+  const [mountedBlocks, setMountedBlocks] = useState<{
+    [blockUUID: string]: boolean;
+  }>((blocksFiltered || [])?.reduce((acc, { uuid: blockUUID }) => ({
+    ...acc,
+    [blockUUID]: false,
+  }), {}));
+
+  const {
+    height: windowHeight,
+    width: windowWidth,
+  } = useWindowSize();
+
+  useEffect(() => {
+    if (mainContainerRef?.current) {
+      setMainContainerRect(mainContainerRef?.current?.getBoundingClientRect());
+    }
+  }, [
+    afterHidden,
+    beforeHidden,
+    mainContainerRef,
+    mainContainerWidth,
+    setMainContainerRect,
+    windowHeight,
+    windowWidth,
+  ]);
+
+  const refCursor1 =  useRef(null);
+  const [startData1, setStartData1] = useState<StartDataType>(null);
+  const column1ScrollMemo = useMemo(() => {
+    return (
+      <ColumnScroller
+        blockRefs={blockRefs}
+        mainContainerRect={mainContainerRect}
+        mountedBlocks={mountedBlocks}
+        refCursor={refCursor1}
+        startData={startData1}
+        setStartData={setStartData1}
+      />
+    );
+  }, [
+    blockRefs,
+    mainContainerRect,
+    mountedBlocks,
+    refCursor1,
+    setStartData1,
+    startData1,
+  ]);
+
+  // const column2ScrollMemo = useMemo(() => {
+  //   return (
+  //     <ColumnScroller
+  //       mainContainerRect={mainContainerRect}
+  //     />
+  //   );
+  // }, [
+  //   mainContainerRect,
+  // ]);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -267,9 +341,6 @@ function PipelineDetail({
 
   const selectedBlockPrevious = usePrevious(selectedBlock);
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
-
-  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
   const useV2AddNewBlock = useMemo(
     () => PipelineTypeEnum.PYTHON === pipeline?.type
@@ -519,9 +590,6 @@ function PipelineDetail({
   const codeBlocks = useMemo(() => {
     const arr = [];
 
-    const blocksFiltered =
-      blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type);
-
     blocksFiltered.forEach((block: BlockType, idx: number) => {
       const {
         type,
@@ -620,6 +688,7 @@ function PipelineDetail({
             interactionsMapping={interactionsMapping}
             interruptKernel={interruptKernel}
             key={key}
+            mainContainerRect={mainContainerRect}
             mainContainerRef={mainContainerRef}
             mainContainerWidth={mainContainerWidth}
             messages={messages[uuid]}
@@ -632,6 +701,7 @@ function PipelineDetail({
             pipeline={pipeline}
             project={project}
             ref={currentBlockRef}
+            refCursor={refCursor1}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
@@ -641,6 +711,7 @@ function PipelineDetail({
             setCreatingNewDBTModel={setCreatingNewDBTModel}
             setEditingBlock={setEditingBlock}
             setErrors={setErrors}
+            setMountedBlocks={setMountedBlocks}
             setOutputBlocks={setOutputBlocks}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setSelectedBlock={setSelectedBlock}
@@ -651,8 +722,11 @@ function PipelineDetail({
             showDataIntegrationModal={showDataIntegrationModal}
             showGlobalDataProducts={showGlobalDataProducts}
             showUpdateBlockModal={showUpdateBlockModal}
+            sideBySideEnabled={sideBySideEnabled}
+            startData={startData1}
             textareaFocused={selected && textareaFocused}
             widgets={widgets}
+            windowWidth={windowWidth}
           />
         );
       }
@@ -672,8 +746,9 @@ function PipelineDetail({
     blockInteractionsMapping,
     blockRefs,
     blockTemplates,
-    blocksThatNeedToRefresh,
     blocks,
+    blocksFiltered,
+    blocksThatNeedToRefresh,
     containerRef,
     dataProviders,
     deleteBlock,
@@ -686,6 +761,7 @@ function PipelineDetail({
     interruptKernel,
     isIntegration,
     isStreaming,
+    mainContainerRect,
     mainContainerRef,
     mainContainerWidth,
     messages,
@@ -697,6 +773,7 @@ function PipelineDetail({
     openSidekickView,
     pipeline,
     project,
+    refCursor1,
     runBlock,
     runningBlocks,
     runningBlocksByUUID,
@@ -707,6 +784,7 @@ function PipelineDetail({
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
+    setMountedBlocks,
     setOutputBlocks,
     setSelectedBlock,
     setSelectedOutputBlock,
@@ -716,9 +794,12 @@ function PipelineDetail({
     showDataIntegrationModal,
     showGlobalDataProducts,
     showUpdateBlockModal,
+    sideBySideEnabled,
+    startData1,
     textareaFocused,
     updateBlock,
     widgets,
+    windowWidth,
   ]);
 
   const integrationMemo = useMemo(() => (
@@ -885,72 +966,84 @@ function PipelineDetail({
         )}
       </PipelineContainerStyle>
 
-      <Spacing mt={1} px={PADDING_UNITS}>
-        {isIntegration && integrationMemo}
+      {!sideBySideEnabled && (
+        <Spacing mt={1} px={PADDING_UNITS}>
+          {!isIntegration && (
+            <>
+              {codeBlocks}
+              <Spacing mt={PADDING_UNITS}>
+                {addNewBlocksMemo}
+              </Spacing>
+            </>
+          )}
+        </Spacing>
+      )}
 
-        {!isIntegration && (
-          <>
-            {codeBlocks}
-            <Spacing mt={PADDING_UNITS}>
-              {addNewBlocksMemo}
-            </Spacing>
-          </>
-        )}
+      {sideBySideEnabled && (
+        <div style={{ position: 'relative' }}>
+          {column1ScrollMemo}
+          {codeBlocks}
+          {/*{column2ScrollMemo}*/}
 
-        {addDBTModelVisible && (
-          <ClickOutside
-            onClickOutside={closeAddDBTModelPopup}
-            open
-          >
-            <FileSelectorPopup
-              blocks={blocks}
-              creatingNewDBTModel={creatingNewDBTModel}
-              dbtModelName={dbtModelName}
-              files={files}
-              onClose={closeAddDBTModelPopup}
-              onOpenFile={(filePath: string) => {
-                let finalFilePath = filePath;
-                if (creatingNewDBTModel) {
-                  let blockName = addUnderscores(dbtModelName || randomNameGenerator());
-                  const sqlExtension = `.${FileExtensionEnum.SQL}`;
-                  if (blockName.endsWith(sqlExtension)) {
-                    blockName = blockName.slice(0, -4);
-                  }
-                  finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
+          {/*<Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+            {addNewBlocksMemo}
+          </Spacing>*/}
+        </div>
+      )}
+
+      {addDBTModelVisible && (
+        <ClickOutside
+          onClickOutside={closeAddDBTModelPopup}
+          open
+        >
+          <FileSelectorPopup
+            blocks={blocks}
+            creatingNewDBTModel={creatingNewDBTModel}
+            dbtModelName={dbtModelName}
+            files={files}
+            onClose={closeAddDBTModelPopup}
+            onOpenFile={(filePath: string) => {
+              let finalFilePath = filePath;
+              if (creatingNewDBTModel) {
+                let blockName = addUnderscores(dbtModelName || randomNameGenerator());
+                const sqlExtension = `.${FileExtensionEnum.SQL}`;
+                if (blockName.endsWith(sqlExtension)) {
+                  blockName = blockName.slice(0, -4);
                 }
+                finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
+              }
 
-                const newBlock: BlockRequestPayloadType = {
-                  configuration: {
-                    file_path: finalFilePath,
-                    limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
-                  },
-                  language: BlockLanguageEnum.SQL,
-                  name: removeExtensionFromFilename(finalFilePath),
-                  type: BlockTypeEnum.DBT,
-                };
-                if (creatingNewDBTModel) {
-                  newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
+              const newBlock: BlockRequestPayloadType = {
+                configuration: {
+                  file_path: finalFilePath,
+                  limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
+                },
+                language: BlockLanguageEnum.SQL,
+                name: removeExtensionFromFilename(finalFilePath),
+                type: BlockTypeEnum.DBT,
+              };
+              if (creatingNewDBTModel) {
+                newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
 `;
-                }
+              }
 
-                const isAddingFromBlock =
-                  typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
-                const block = blocks[isAddingFromBlock ? blocks.length - 1 : lastBlockIndex];
-                const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+              const isAddingFromBlock =
+                typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
+              const block = blocks[isAddingFromBlock ? blocks.length - 1 : lastBlockIndex];
+              const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
-                addNewBlockAtIndex({
-                  ...newBlock,
-                  upstream_blocks: upstreamBlocks,
-                }, isAddingFromBlock ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
+              addNewBlockAtIndex({
+                ...newBlock,
+                upstream_blocks: upstreamBlocks,
+              }, isAddingFromBlock ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
 
-                closeAddDBTModelPopup();
-                setTextareaFocused(true);
-              }}
-              setDbtModelName={setDbtModelName}
-            />
-          </ClickOutside>
-        )}
-      </Spacing>
+              closeAddDBTModelPopup();
+              setTextareaFocused(true);
+            }}
+            setDbtModelName={setDbtModelName}
+          />
+        </ClickOutside>
+      )}
     </DndProvider>
   );
 }

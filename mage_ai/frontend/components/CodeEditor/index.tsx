@@ -68,6 +68,7 @@ type CodeEditorProps = {
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
+  onMountCallback?: () => void;
   onSave?: (value: string) => void;
   padding?: boolean;
   placeholder?: string;
@@ -90,6 +91,7 @@ function CodeEditor({
   language,
   onChange,
   onDidChangeCursorPosition,
+  onMountCallback,
   onSave,
   padding,
   placeholder,
@@ -199,10 +201,12 @@ function CodeEditor({
     }
 
     setMounted(true);
+    onMountCallback?.();
   }, [
     autoHeight,
     height,
     onDidChangeCursorPosition,
+    onMountCallback,
     onSave,
     selected,
     setMounted,
