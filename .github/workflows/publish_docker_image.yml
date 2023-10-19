@@ -15,6 +15,14 @@ on:
         description: 'Docker image tag'
         required: true
         default: latest
+      dockerfile:
+        description: 'Dockerfile path'
+        required: false
+        default: ./Dockerfile
+      context:
+        description: 'Docker build context path'
+        required: false
+        default: .
 
 jobs:
   push_to_registry:
@@ -47,7 +55,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ${{ github.event.inputs.context }}
+          file: ${{ github.event.inputs.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
