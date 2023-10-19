@@ -143,7 +143,7 @@ import {
 import { capitalize, pluralize } from '@utils/string';
 import { convertValueToVariableDataType } from '@utils/models/interaction';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
-import { find, indexBy } from '@utils/array';
+import { find, indexBy, sum } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { getModelName } from '@utils/models/dbt';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
@@ -165,11 +165,13 @@ type CodeBlockProps = {
   block: BlockType;
   blockIdx: number;
   blockInteractions?: BlockInteractionType[];
+  blockOutputHeights?: number[];
   blockOutputRef: any;
   blockOutputRefs: any;
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
+  codeBlockHeights?: number[];
   containerRef?: any;
   dataProviders?: DataProviderType[];
   defaultValue?: string;
@@ -281,11 +283,13 @@ function CodeBlock({
   block,
   blockIdx,
   blockInteractions,
+  blockOutputHeights,
   blockOutputRef,
   blockOutputRefs,
   blockRefs,
   blockTemplates,
   blocks = [],
+  codeBlockHeights,
   containerRef,
   dataProviders,
   defaultValue = '',
@@ -333,12 +337,12 @@ function CodeBlock({
   setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
-  sideBySideEnabled,
   showBrowseTemplates,
   showConfigureProjectModal,
   showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
+  sideBySideEnabled,
   startData,
   textareaFocused,
   updateBlockOutputHeights,
@@ -2738,18 +2742,24 @@ function CodeBlock({
       height,
       x,
       width,
+      y,
     } = mainContainerRect || {};
+
+    const top = sum(codeBlockHeights?.slice(0, blockIdx) || []);
 
     return (
       <ScrollColunnStyle
         height={height}
         left={x + SCROLLBAR_WIDTH}
+        top={y + top}
         width={widthColumn}
       >
         {codeBlockMain}
       </ScrollColunnStyle>
     );
   }, [
+    blockIdx,
+    codeBlockHeights,
     codeBlockMain,
     mainContainerRect,
   ]);
@@ -2759,21 +2769,25 @@ function CodeBlock({
       height,
       x,
       width,
+      y,
     } = mainContainerRect || {};
 
     const right = windowWidth - (x + width);
-    // console.log('wtf right', right, width);
+
+    const top = sum(blockOutputHeights?.slice(0, blockIdx) || []);
 
     return (
       <ScrollColunnStyle
         height={height}
         right={right}
+        top={y + top}
         width={widthColumn}
       >
         {codeOutputEl}
       </ScrollColunnStyle>
     );
   }, [
+    blockOutputHeights,
     codeOutputEl,
     mainContainerRect,
     widthColumn,

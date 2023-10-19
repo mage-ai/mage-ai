@@ -294,6 +294,7 @@ export const ScrollColunnStyle = styled.div<{
   height: number;
   left?: number;
   right?: number;
+  top?: number;
   width: number;
 }>`
   overflow: hidden;
@@ -314,5 +315,9 @@ export const ScrollColunnStyle = styled.div<{
 
   ${props => typeof props.right !== 'undefined' && `
     right: ${props.right}px;
+  `}
+
+  ${props => typeof props.top !== 'undefined' && `
+    top: ${props.top}px;
   `}
 `;

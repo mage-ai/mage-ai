@@ -721,13 +721,15 @@ function PipelineDetail({
             allowCodeBlockShortcuts={allowCodeBlockShortcuts}
             autocompleteItems={autocompleteItems}
             block={block}
-            blockInteractions={blockInteractionsMapping?.[uuid]}
             blockIdx={idx}
+            blockInteractions={blockInteractionsMapping?.[uuid]}
+            blockOutputHeights={blockOutputHeights}
             blockOutputRef={currentBlockOutputRef}
             blockOutputRefs={blockOutputRefs}
             blockRefs={blockRefs}
             blockTemplates={blockTemplates}
             blocks={blocks}
+            codeBlockHeights={codeBlockHeights}
             containerRef={containerRef}
             dataProviders={dataProviders}
             defaultValue={block.content}
@@ -802,12 +804,14 @@ function PipelineDetail({
     allowCodeBlockShortcuts,
     autocompleteItems,
     blockInteractionsMapping,
+    blockOutputHeights,
     blockOutputRefs,
     blockRefs,
     blockTemplates,
     blocks,
     blocksFiltered,
     blocksThatNeedToRefresh,
+    codeBlockHeights,
     containerRef,
     dataProviders,
     deleteBlock,
