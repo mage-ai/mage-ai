@@ -197,6 +197,7 @@ type CodeBlockProps = {
   };
   mainContainerRef?: any;
   mainContainerWidth?: number;
+  maxHeights?: number[];
   messages: KernelOutputType[];
   noDivider?: boolean;
   onCallbackChange?: (value: string) => void;
@@ -231,6 +232,7 @@ type CodeBlockProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  scrollTogether?: boolean;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused?: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
@@ -290,13 +292,13 @@ function CodeBlock({
   block,
   blockIdx,
   blockInteractions,
-  blockOutputHeights,
+  blockOutputHeights: blockOutputHeightsProp,
   blockOutputRef,
   blockOutputRefs,
   blockRefs,
   blockTemplates,
   blocks = [],
-  codeBlockHeights,
+  codeBlockHeights: codeBlockHeightsProp,
   containerRef,
   dataProviders,
   defaultValue = '',
@@ -318,6 +320,7 @@ function CodeBlock({
   mainContainerRect,
   mainContainerRef,
   mainContainerWidth,
+  maxHeights,
   messages: blockMessages = [],
   noDivider,
   onCallbackChange,
@@ -334,8 +337,8 @@ function CodeBlock({
   runBlock,
   runningBlocks,
   savePipelineContent,
+  scrollTogether,
   selected,
-  separateCodeAndOutput,
   setAddNewBlockMenuOpenIdx,
   setAnyInputFocused,
   setCreatingNewDBTModel,
@@ -370,6 +373,17 @@ function CodeBlock({
       project?.features,
     ]);
 
+  const blockOutputHeights = useMemo(() => scrollTogether ? maxHeights : blockOutputHeightsProp, [
+    blockOutputHeightsProp,
+    maxHeights,
+    scrollTogether,
+  ]);
+  const codeBlockHeights = useMemo(() => scrollTogether ? maxHeights : codeBlockHeightsProp, [
+    codeBlockHeightsProp,
+    maxHeights,
+    scrollTogether,
+  ]);
+
   const totalHeightCodeBlocks = useMemo(() => sum(codeBlockHeights || []), [
     codeBlockHeights,
   ]);
@@ -383,22 +397,33 @@ function CodeBlock({
         return;
       }
 
-      [
-        [
+      const arr = [];
+
+      let columnScrolling;
+
+      if (startData) {
+        columnScrolling = 0;
+        arr.push([
           refCursorContainer,
           refCursor,
           codeBlockHeights,
           totalHeightCodeBlocks,
           refColumn1,
-        ],
-        [
+        ]);
+      }
+
+      if (startData2) {
+        columnScrolling = 1;
+        arr.push([
           refCursorContainer2,
           refCursor2,
           blockOutputHeights,
           totalHeightBlockOuputs,
           refColumn2,
-        ],
-      ].forEach(([
+        ]);
+      }
+
+      arr.forEach(([
         refCC,
         refC,
         heights,
@@ -418,7 +443,12 @@ function CodeBlock({
         const yMove = cursorContainerRect.y - (percentageTraveled * totalHeight)
         const top = yMove + offset;
 
-        refCol.current.style.top = `${top}px`;
+        if (scrollTogether) {
+          refColumn1.current.style.top = `${top}px`;
+          refColumn2.current.style.top = `${top}px`;
+        } else {
+          refCol.current.style.top = `${top}px`;
+        }
       });
     };
 
@@ -442,6 +472,7 @@ function CodeBlock({
     refCursorContainer,
     refCursor2,
     refCursorContainer2,
+    scrollTogether,
     sideBySideEnabled,
     startData,
     startData2,
@@ -2807,9 +2838,10 @@ function CodeBlock({
   );
 
   const widthColumn = useMemo(() => {
-    return ((mainContainerWidth - (SCROLLBAR_WIDTH * 2)) / 2);
+    return ((mainContainerWidth - (SCROLLBAR_WIDTH * (scrollTogether ? 1 : 2))) / 2);
   }, [
     mainContainerWidth,
+    scrollTogether,
   ]);
 
   const column1 = useMemo(() => {
@@ -2825,7 +2857,7 @@ function CodeBlock({
     return (
       <ScrollColunnStyle
         height={height}
-        left={x + SCROLLBAR_WIDTH}
+        left={x + (scrollTogether ? 0 : SCROLLBAR_WIDTH)}
         ref={refColumn1}
         top={y + top}
         width={widthColumn}
@@ -2839,6 +2871,7 @@ function CodeBlock({
     codeBlockMain,
     mainContainerRect,
     refColumn1,
+    scrollTogether,
   ]);
 
   const column2 = useMemo(() => {

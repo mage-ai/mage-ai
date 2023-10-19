@@ -273,6 +273,7 @@ function PipelineDetail({
     ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -296,8 +297,10 @@ function PipelineDetail({
     windowWidth,
   ]);
 
+  const [maxHeights, setMaxHeights] = useState<number[]>(null);
   const [codeBlockHeights, setCodeBlockHeights] = useState<number[]>(null);
   const [blockOutputHeights, setBlockOutputHeights] = useState<number>(null);
+
   const updateCodeBlockHeights = useCallback(() => {
     setCodeBlockHeights(blocksFiltered?.map((block) => {
       const path = buildBlockRefKey(block);
@@ -350,14 +353,28 @@ function PipelineDetail({
     updateCodeBlockHeights,
   ]);
 
+  useEffect(() => {
+    if (scrollTogether && codeBlockHeights?.length >= 1 && blockOutputHeights?.length >= 1) {
+      const arr = [];
+      codeBlockHeights?.forEach((height: number, idx: number) => {
+        arr.push(Math.max((height || 0), (blockOutputHeights?.[idx] || 0)));
+      });
+      setMaxHeights(arr);
+    }
+  }, [
+    blockOutputHeights,
+    codeBlockHeights,
+    scrollTogether,
+    setMaxHeights,
+  ]);
+
   const refCursor1 =  useRef(null);
   const refCursorContainer1 =  useRef(null);
   const [startData1, setStartData1] = useState<StartDataType>(null);
   const column1ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
-        // blockOutputHeights={blockOutputHeights}
-        heights={codeBlockHeights}
+        heights={scrollTogether ? maxHeights : codeBlockHeights}
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor1}
@@ -367,12 +384,13 @@ function PipelineDetail({
       />
     );
   }, [
-    // blockOutputHeights,
     codeBlockHeights,
     mainContainerRect,
+    maxHeights,
     mountedBlocks,
     refCursor1,
     refCursorContainer1,
+    scrollTogether,
     setStartData1,
     startData1,
   ]);
@@ -383,8 +401,7 @@ function PipelineDetail({
   const column2ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
-        heights={blockOutputHeights}
-        // codeBlockHeights={codeBlockHeights}
+        heights={scrollTogether ? maxHeights : blockOutputHeights}
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor2}
@@ -396,12 +413,13 @@ function PipelineDetail({
     );
   }, [
     blockOutputHeights,
-    // codeBlockHeights,
     mainContainerRect,
+    maxHeights,
     mountedBlocks,
     refCursor2,
     refCursorContainer2,
     setStartData2,
+    scrollTogether,
     startData2,
   ]);
 
@@ -780,6 +798,7 @@ function PipelineDetail({
             mainContainerRect={mainContainerRect}
             mainContainerRef={mainContainerRef}
             mainContainerWidth={mainContainerWidth}
+            maxHeights={maxHeights}
             messages={messages[uuid]}
             noDivider={noDivider}
             onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
@@ -797,6 +816,7 @@ function PipelineDetail({
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
+            scrollTogether={scrollTogether}
             selected={selected}
             setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
             setAnyInputFocused={setAnyInputFocused}
@@ -862,6 +882,7 @@ function PipelineDetail({
     mainContainerRect,
     mainContainerRef,
     mainContainerWidth,
+    maxHeights,
     messages,
     numberOfBlocks,
     onChangeCallbackBlock,
@@ -879,6 +900,7 @@ function PipelineDetail({
     runningBlocks,
     runningBlocksByUUID,
     savePipelineContent,
+    scrollTogether,
     selectedBlock,
     setAddNewBlockMenuOpenIdx,
     setAnyInputFocused,
@@ -1085,7 +1107,7 @@ function PipelineDetail({
 
       {sideBySideEnabled && (
         <div style={{ position: 'relative' }}>
-          {column1ScrollMemo}
+          {!scrollTogether && column1ScrollMemo}
           {codeBlocks}
           {column2ScrollMemo}
 

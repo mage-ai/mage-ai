@@ -88,7 +88,9 @@ function ColumnScroller({
       yFinal = (y + height) - cursorHeight;
     }
 
-    refCursor.current.style.top = `${yFinal}px`;
+    if (refCursor?.current) {
+      refCursor.current.style.top = `${yFinal}px`;
+    }
   }, [
     cursorHeight,
     height,
