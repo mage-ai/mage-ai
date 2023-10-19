@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
   ScrollbarContainerStyle,
   ScrollCursorStyle,
@@ -11,8 +12,8 @@ export type StartDataType = {
 };
 
 type ColumnScrollerProps = {
-  blockOutputHeights: number[];
-  codeBlockHeights: number[];
+  // blockOutputHeights: number[];
+  heights: number[];
   mainContainerRect?: {
     height: number;
     width: number;
@@ -24,25 +25,29 @@ type ColumnScrollerProps = {
   };
   refCursor: any;
   refCursorContainer: any;
+  rightAligned?: boolean;
   setStartData: (data: StartDataType) => void;
   startData?: StartDataType;
 };
 
 function ColumnScroller({
-  blockOutputHeights,
-  codeBlockHeights,
+  // blockOutputHeights,
+  heights,
   mainContainerRect,
   mountedBlocks,
   refCursor,
   refCursorContainer,
+  rightAligned,
   setStartData,
   startData,
 }: ColumnScrollerProps) {
-  const totalHeight = useMemo(() => sum(codeBlockHeights || []), [codeBlockHeights]);
-  const totalHeightOutput = useMemo(() => sum(blockOutputHeights || []), [blockOutputHeights]);
+  const totalHeight = useMemo(() => sum(heights || []), [heights]);
+  // const totalHeightOutput = useMemo(() => sum(blockOutputHeights || []), [blockOutputHeights]);
 
   const {
     height,
+    width,
+    x,
     y,
   } = mainContainerRect || {};
 
@@ -120,6 +125,7 @@ function ColumnScroller({
     <ScrollbarContainerStyle
       height={height}
       ref={refCursorContainer}
+      left={rightAligned ? (x + width) - SCROLLBAR_WIDTH : undefined}
     >
       {cursorHeight !== null && (
         <ScrollCursorStyle

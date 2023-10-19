@@ -303,7 +303,12 @@ function PipelineDetail({
       const path = buildBlockRefKey(block);
       const blockRef = blockRefs?.current?.[path];
       if (blockRef) {
-        return blockRef?.current?.getBoundingClientRect()?.height;
+        const value = blockRef?.current?.getBoundingClientRect()?.height;
+        if (typeof value === 'undefined' || value === null) {
+          return 0
+        }
+
+        return value;
       }
 
       return 0;
@@ -318,7 +323,12 @@ function PipelineDetail({
       const path = buildBlockRefKey(block);
       const blockRef = blockOutputRefs?.current?.[path];
       if (blockRef) {
-        return blockRef?.current?.getBoundingClientRect()?.height;
+        const value = blockRef?.current?.getBoundingClientRect()?.height;
+        if (typeof value === 'undefined' || value === null) {
+          return 0
+        }
+
+        return value;
       }
 
       return 0;
@@ -346,8 +356,8 @@ function PipelineDetail({
   const column1ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
-        blockOutputHeights={blockOutputHeights}
-        codeBlockHeights={codeBlockHeights}
+        // blockOutputHeights={blockOutputHeights}
+        heights={codeBlockHeights}
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor1}
@@ -357,7 +367,7 @@ function PipelineDetail({
       />
     );
   }, [
-    blockOutputHeights,
+    // blockOutputHeights,
     codeBlockHeights,
     mainContainerRect,
     mountedBlocks,
@@ -367,15 +377,33 @@ function PipelineDetail({
     startData1,
   ]);
 
-  // const column2ScrollMemo = useMemo(() => {
-  //   return (
-  //     <ColumnScroller
-  //       mainContainerRect={mainContainerRect}
-  //     />
-  //   );
-  // }, [
-  //   mainContainerRect,
-  // ]);
+  const refCursor2 =  useRef(null);
+  const refCursorContainer2 =  useRef(null);
+  const [startData2, setStartData2] = useState<StartDataType>(null);
+  const column2ScrollMemo = useMemo(() => {
+    return (
+      <ColumnScroller
+        heights={blockOutputHeights}
+        // codeBlockHeights={codeBlockHeights}
+        mainContainerRect={mainContainerRect}
+        mountedBlocks={mountedBlocks}
+        refCursor={refCursor2}
+        refCursorContainer={refCursorContainer2}
+        rightAligned
+        setStartData={setStartData2}
+        startData={startData2}
+      />
+    );
+  }, [
+    blockOutputHeights,
+    // codeBlockHeights,
+    mainContainerRect,
+    mountedBlocks,
+    refCursor2,
+    refCursorContainer2,
+    setStartData2,
+    startData2,
+  ]);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -764,6 +792,8 @@ function PipelineDetail({
             ref={currentBlockRef}
             refCursor={refCursor1}
             refCursorContainer={refCursorContainer1}
+            refCursor2={refCursor2}
+            refCursorContainer2={refCursorContainer2}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
@@ -786,6 +816,7 @@ function PipelineDetail({
             showUpdateBlockModal={showUpdateBlockModal}
             sideBySideEnabled={sideBySideEnabled}
             startData={startData1}
+            startData2={startData2}
             textareaFocused={selected && textareaFocused}
             updateBlockOutputHeights={updateBlockOutputHeights}
             updateCodeBlockHeights={updateCodeBlockHeights}
@@ -841,7 +872,9 @@ function PipelineDetail({
     pipeline,
     project,
     refCursor1,
+    refCursor2,
     refCursorContainer1,
+    refCursorContainer2,
     runBlock,
     runningBlocks,
     runningBlocksByUUID,
@@ -864,6 +897,7 @@ function PipelineDetail({
     showUpdateBlockModal,
     sideBySideEnabled,
     startData1,
+    startData2,
     textareaFocused,
     updateBlock,
     updateBlockOutputHeights,
@@ -1053,7 +1087,7 @@ function PipelineDetail({
         <div style={{ position: 'relative' }}>
           {column1ScrollMemo}
           {codeBlocks}
-          {/*{column2ScrollMemo}*/}
+          {column2ScrollMemo}
 
           {/*<Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
             {addNewBlocksMemo}

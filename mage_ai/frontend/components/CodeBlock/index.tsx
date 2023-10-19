@@ -210,6 +210,8 @@ type CodeBlockProps = {
   project?: ProjectType;
   refCursor?: any;
   refCursorContainer?: any;
+  refCursor2?: any;
+  refCursorContainer2?: any;
   runBlock?: (payload: {
     block: BlockType;
     code: string;
@@ -261,6 +263,10 @@ type CodeBlockProps = {
   ) => void;
   sideBySideEnabled?: boolean;
   startData?: (data: {
+    event: any;
+    scrollTop: number;
+  }) => void;
+  startData2?: (data: {
     event: any;
     scrollTop: number;
   }) => void;
@@ -323,6 +329,8 @@ function CodeBlock({
   project,
   refCursor,
   refCursorContainer,
+  refCursor2,
+  refCursorContainer2,
   runBlock,
   runningBlocks,
   savePipelineContent,
@@ -346,6 +354,7 @@ function CodeBlock({
   showUpdateBlockModal,
   sideBySideEnabled,
   startData,
+  startData2,
   textareaFocused,
   updateBlockOutputHeights,
   updateCodeBlockHeights,
@@ -370,24 +379,47 @@ function CodeBlock({
 
   useEffect(() => {
     const handleMouseMove = (event) => {
-      if (!startData) {
+      if (!startData && !startData2) {
         return;
       }
 
-      const cursorContainerRect = refCursorContainer?.current?.getBoundingClientRect();
-      const cursorRect = refCursor?.current?.getBoundingClientRect?.();
+      [
+        [
+          refCursorContainer,
+          refCursor,
+          codeBlockHeights,
+          totalHeightCodeBlocks,
+          refColumn1,
+        ],
+        [
+          refCursorContainer2,
+          refCursor2,
+          blockOutputHeights,
+          totalHeightBlockOuputs,
+          refColumn2,
+        ],
+      ].forEach(([
+        refCC,
+        refC,
+        heights,
+        totalHeight,
+        refCol,
+      ]) => {
+        const cursorContainerRect = refCC?.current?.getBoundingClientRect();
+        const cursorRect = refC?.current?.getBoundingClientRect?.();
 
-      const yStart = cursorContainerRect?.y + cursorRect?.height;
-      const yEnd = cursorRect?.y + cursorRect?.height;
-      const yDistance = yEnd - yStart;
-      const percentageTraveled =
-        Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
+        const yStart = cursorContainerRect?.y + cursorRect?.height;
+        const yEnd = cursorRect?.y + cursorRect?.height;
+        const yDistance = yEnd - yStart;
+        const percentageTraveled =
+          Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
 
-      const offset = sum(codeBlockHeights?.slice(0, blockIdx));
-      const yMove = cursorContainerRect.y - (percentageTraveled * totalHeightCodeBlocks)
-      const top = yMove + offset;
+        const offset = sum(heights?.slice(0, blockIdx));
+        const yMove = cursorContainerRect.y - (percentageTraveled * totalHeight)
+        const top = yMove + offset;
 
-      refColumn1.current.style.top = `${top}px`;
+        refCol.current.style.top = `${top}px`;
+      });
     };
 
     if (sideBySideEnabled) {
@@ -408,8 +440,11 @@ function CodeBlock({
     refColumn2,
     refCursor,
     refCursorContainer,
+    refCursor2,
+    refCursorContainer2,
     sideBySideEnabled,
     startData,
+    startData2,
     totalHeightBlockOuputs,
     totalHeightCodeBlocks,
   ]);
@@ -2822,7 +2857,7 @@ function CodeBlock({
       <ScrollColunnStyle
         height={height}
         ref={refColumn2}
-        right={right}
+        right={right + SCROLLBAR_WIDTH}
         top={y + top}
         width={widthColumn}
       >

@@ -20,6 +20,10 @@ export const ScrollbarContainerStyle = styled.div<{
   ${props => typeof props.height !== 'undefined' && `
     height: ${props.height}px;
   `}
+
+  ${props => typeof props.left !== 'undefined' && `
+    left: ${props.left}px;
+  `}
 `;
 
 export const ScrollCursorStyle = styled.div<{
