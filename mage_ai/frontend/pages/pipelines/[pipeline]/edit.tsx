@@ -108,6 +108,7 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { buildBlockRefKey } from '@components/PipelineDetail/utils';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
   buildNavigationItems as buildNavigationItemsSidekick,
@@ -158,6 +159,7 @@ function PipelineDetailPage({
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
+  const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
@@ -1886,35 +1888,41 @@ function PipelineDetailPage({
 
   const blocksPrevious = usePrevious(blocks);
   useEffect(() => {
-    if (
-      typeof pipeline?.blocks !== 'undefined'
-        && (
-          !blocks.length
-            || !equals(
-              blocksPrevious?.map(({ uuid }) => uuid).sort(),
-              blocks?.map(({ uuid }) => uuid).sort(),
+    if (!initializedMessages) {
+      if (
+        typeof pipeline?.blocks !== 'undefined'
+          && (
+            !blocks.length
+              || !equals(
+                blocksPrevious?.map(({ uuid }) => uuid).sort(),
+                blocks?.map(({ uuid }) => uuid).sort(),
+              )
+              || isEmptyObject(messages)
             )
-            || isEmptyObject(messages)
-          )
-    ) {
-      const {
-        content: contentByBlockUUIDResults,
-        messages: messagesInit,
-      } = initializeContentAndMessages(pipeline.blocks);
-      contentByBlockUUID.current = contentByBlockUUIDResults;
+      ) {
+        const {
+          content: contentByBlockUUIDResults,
+          messages: messagesInit,
+        } = initializeContentAndMessages(pipeline.blocks);
+        contentByBlockUUID.current = contentByBlockUUIDResults;
 
-      if (!isEmptyObject(messagesInit)) {
-        setMessages((messagesPrev) => ({
-          ...messagesInit,
-          ...messagesPrev,
-        }));
+        if (!isEmptyObject(messagesInit)) {
+          setMessages((messagesPrev) => ({
+            ...messagesInit,
+            ...messagesPrev,
+          }));
+        }
+
+        setInitializedMessages(true);
       }
     }
   }, [
     blocks,
     blocksPrevious,
+    initializedMessages,
     messages,
     pipeline?.blocks,
+    setInitializedMessages,
     setMessages,
   ]);
 
@@ -1949,7 +1957,7 @@ function PipelineDetailPage({
     if (block) {
       setSelectedBlock(block);
       if (blockRefs?.current) {
-        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+        const blockRef = blockRefs.current[buildBlockRefKey(block)];
         blockRef?.current?.scrollIntoView();
       }
       goToWithQuery({

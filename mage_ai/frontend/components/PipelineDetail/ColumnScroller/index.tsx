@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import {
   ScrollbarContainerStyle,
   ScrollCursorStyle,
 } from './index.style';
+import { sum } from '@utils/array';
 
 export type StartDataType = {
   event: any;
@@ -11,7 +11,8 @@ export type StartDataType = {
 };
 
 type ColumnScrollerProps = {
-  blockRefs: any;
+  blockOutputHeights: number[];
+  codeBlockHeights: number[];
   mainContainerRect?: {
     height: number;
     width: number;
@@ -26,21 +27,9 @@ type ColumnScrollerProps = {
   startData?: StartDataType;
 };
 
-function getTotalHeight(blockRefs): number {
-  if (blockRefs?.current) {
-    return Object
-      .values(blockRefs?.current || {})
-      .reduce(
-        (acc, ref) => acc + (ref?.current?.getBoundingClientRect?.()?.height || 0),
-        0,
-      );
-  }
-
-  return;
-}
-
 function ColumnScroller({
-  blockRefs,
+  blockOutputHeights,
+  codeBlockHeights,
   mainContainerRect,
   mountedBlocks,
   refCursor,
@@ -49,17 +38,8 @@ function ColumnScroller({
 }: ColumnScrollerProps) {
   const refContainer = useRef(null);
 
-  const [totalHeight, setTotalHeight] = useState<number>(null);
-
-  useEffect(() => {
-    const arr = Object.values(mountedBlocks || {});
-    if (arr?.length >= 1 && arr.every(val => val)) {
-      setTotalHeight(getTotalHeight(blockRefs));
-    }
-  }, [
-    blockRefs,
-    mountedBlocks,
-  ]);
+  const totalHeight = useMemo(() => sum(codeBlockHeights || []), [codeBlockHeights]);
+  const totalHeightOutput = useMemo(() => sum(blockOutputHeights || []), [blockOutputHeights]);
 
   const {
     height,
@@ -100,8 +80,6 @@ function ColumnScroller({
     } else if ((yFinal + cursorHeight) >= (y + height)) {
       yFinal = (y + height) - cursorHeight;
     }
-
-    console.log(yFinal)
 
     refCursor.current.style.top = `${yFinal}px`;
   }, [

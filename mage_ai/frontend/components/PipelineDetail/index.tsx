@@ -75,6 +75,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
+import { buildBlockRefKey } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
@@ -245,8 +246,10 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
+  console.log('PipelineDetail render');
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
+  const blockOutputRefs = useRef({});
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
   const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
@@ -264,15 +267,15 @@ function PipelineDetail({
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
   const blocksFiltered =
-    blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type);
+    useMemo(() => blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type), [
+        blocks,
+        isIntegration,
+    ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
-  }>((blocksFiltered || [])?.reduce((acc, { uuid: blockUUID }) => ({
-    ...acc,
-    [blockUUID]: false,
-  }), {}));
+  }>({});
 
   const {
     height: windowHeight,
@@ -293,21 +296,67 @@ function PipelineDetail({
     windowWidth,
   ]);
 
+  const [codeBlockHeights, setCodeBlockHeights] = useState<number[]>(null);
+  const [blockOutputHeights, setBlockOutputHeights] = useState<number>(null);
+  const updateCodeBlockHeights = useCallback(() => {
+    setCodeBlockHeights(blocksFiltered?.map((block) => {
+      const path = buildBlockRefKey(block);
+      const blockRef = blockRefs?.current?.[path];
+      if (blockRef) {
+        return blockRef?.current?.getBoundingClientRect()?.height;
+      }
+
+      return 0;
+    }));
+  }, [
+    blockRefs,
+    blocksFiltered,
+    setCodeBlockHeights,
+  ]);
+  const updateBlockOutputHeights = useCallback(() => {
+    setBlockOutputHeights(blocksFiltered?.map((block) => {
+      const path = buildBlockRefKey(block);
+      const blockRef = blockOutputRefs?.current?.[path];
+      if (blockRef) {
+        return blockRef?.current?.getBoundingClientRect()?.height;
+      }
+
+      return 0;
+    }));
+  }, [
+    blockOutputRefs,
+    blocksFiltered,
+    setBlockOutputHeights,
+  ]);
+
+  useEffect(() => {
+    if (Object.values(mountedBlocks)?.length >= 1) {
+      updateBlockOutputHeights();
+      updateCodeBlockHeights();
+    }
+  }, [
+    mountedBlocks,
+    updateBlockOutputHeights,
+    updateCodeBlockHeights,
+  ]);
+
   const refCursor1 =  useRef(null);
   const [startData1, setStartData1] = useState<StartDataType>(null);
   const column1ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
-        blockRefs={blockRefs}
+        blockOutputHeights={blockOutputHeights}
+        codeBlockHeights={codeBlockHeights}
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor1}
-        startData={startData1}
         setStartData={setStartData1}
+        startData={startData1}
       />
     );
   }, [
-    blockRefs,
+    blockOutputHeights,
+    codeBlockHeights,
     mainContainerRect,
     mountedBlocks,
     refCursor1,
@@ -604,7 +653,11 @@ function PipelineDetail({
         )
         : ExecutionStateEnum.IDLE;
 
-      const path = `${type}s/${uuid}.py`;
+      const path = buildBlockRefKey({
+        type,
+        uuid,
+      });
+      blockOutputRefs.current[path] = createRef();
       blockRefs.current[path] = createRef();
 
       let el;
@@ -612,6 +665,7 @@ function PipelineDetail({
       const isTransformer = type === BlockTypeEnum.TRANSFORMER;
       const isHidden = !!hiddenBlocks?.[uuid];
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
+      const currentBlockOutputRef = blockOutputRefs.current[path];
       const currentBlockRef = blockRefs.current[path];
 
       let key = uuid;
@@ -669,6 +723,8 @@ function PipelineDetail({
             block={block}
             blockInteractions={blockInteractionsMapping?.[uuid]}
             blockIdx={idx}
+            blockOutputRef={currentBlockOutputRef}
+            blockOutputRefs={blockOutputRefs}
             blockRefs={blockRefs}
             blockTemplates={blockTemplates}
             blocks={blocks}
@@ -725,6 +781,8 @@ function PipelineDetail({
             sideBySideEnabled={sideBySideEnabled}
             startData={startData1}
             textareaFocused={selected && textareaFocused}
+            updateBlockOutputHeights={updateBlockOutputHeights}
+            updateCodeBlockHeights={updateCodeBlockHeights}
             widgets={widgets}
             windowWidth={windowWidth}
           />
@@ -744,6 +802,7 @@ function PipelineDetail({
     allowCodeBlockShortcuts,
     autocompleteItems,
     blockInteractionsMapping,
+    blockOutputRefs,
     blockRefs,
     blockTemplates,
     blocks,
@@ -798,6 +857,8 @@ function PipelineDetail({
     startData1,
     textareaFocused,
     updateBlock,
+    updateBlockOutputHeights,
+    updateCodeBlockHeights,
     widgets,
     windowWidth,
   ]);

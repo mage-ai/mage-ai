@@ -165,6 +165,8 @@ type CodeBlockProps = {
   block: BlockType;
   blockIdx: number;
   blockInteractions?: BlockInteractionType[];
+  blockOutputRef: any;
+  blockOutputRefs: any;
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
@@ -259,6 +261,8 @@ type CodeBlockProps = {
     event: any;
     scrollTop: number;
   }) => void;
+  updateBlockOutputHeights?: () => void;
+  updateCodeBlockHeights?: () => void;
   widgets?: BlockType[];
   windowWidth?: number;
 }
@@ -277,6 +281,8 @@ function CodeBlock({
   block,
   blockIdx,
   blockInteractions,
+  blockOutputRef,
+  blockOutputRefs,
   blockRefs,
   blockTemplates,
   blocks = [],
@@ -335,6 +341,8 @@ function CodeBlock({
   showUpdateBlockModal,
   startData,
   textareaFocused,
+  updateBlockOutputHeights,
+  updateCodeBlockHeights,
   widgets,
   windowWidth,
 }: CodeBlockProps, ref) {
@@ -1029,6 +1037,7 @@ function CodeBlock({
           onChange={(val: string) => {
             setContent(val);
             onChange?.(val);
+            updateCodeBlockHeights?.();
           }}
           onDidChangeCursorPosition={onDidChangeCursorPosition}
           onMountCallback={() => setMountedBlocks(prev => ({
@@ -1155,6 +1164,7 @@ function CodeBlock({
     setSelected,
     setTextareaFocused,
     textareaFocused,
+    updateCodeBlockHeights,
   ]);
 
   useEffect(() => {
@@ -1215,6 +1225,7 @@ function CodeBlock({
         messagesAll={messages}
         openSidekickView={openSidekickView}
         pipeline={pipeline}
+        ref={blockOutputRef}
         runCount={runCount}
         runEndTime={runEndTime}
         runStartTime={runStartTime}
@@ -1233,11 +1244,13 @@ function CodeBlock({
         setOutputBlocks={setOutputBlocks}
         setSelectedOutputBlock={setSelectedOutputBlock}
         setSelectedTab={setSelectedTab}
+        updateBlockOutputHeights={updateBlockOutputHeights}
       />
     </>
   ), [
     block,
     blockMetadata,
+    blockOutputRef,
     borderColorShareProps,
     buttonTabs,
     hasOutput,
@@ -1259,6 +1272,7 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
+    updateBlockOutputHeights,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);

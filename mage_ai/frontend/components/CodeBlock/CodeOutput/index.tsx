@@ -89,6 +89,7 @@ type CodeOutputProps = {
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   setSelectedTab?: (tab: TabType) => void;
+  updateBlockOutputHeights?: () => void;
 } & BorderColorShareProps;
 
 const SHARED_TOOLTIP_PROPS = {
@@ -133,7 +134,15 @@ function CodeOutput({
   setOutputBlocks,
   setSelectedOutputBlock,
   setSelectedTab,
-}: CodeOutputProps) {
+  updateBlockOutputHeights,
+}: CodeOutputProps, ref) {
+  useEffect(() => {
+    updateBlockOutputHeights?.();
+  }, [
+    messages,
+    messagesAll,
+  ]);
+
   const {
     color: blockColor,
     status,
@@ -641,7 +650,7 @@ function CodeOutput({
   }
 
   return (
-    <>
+    <div ref={ref}>
       {contained && (
         <ContainerStyle
           {...borderColorShareProps}
@@ -842,8 +851,8 @@ function CodeOutput({
           </FlexContainer>
         </ExtraInfoStyle>
       )}
-    </>
+    </div>
   );
 }
 
-export default CodeOutput;
+export default React.forwardRef(CodeOutput);
