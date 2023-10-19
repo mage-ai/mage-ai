@@ -23,6 +23,7 @@ type ColumnScrollerProps = {
     [key: string]: boolean;
   };
   refCursor: any;
+  refCursorContainer: any;
   setStartData: (data: StartDataType) => void;
   startData?: StartDataType;
 };
@@ -33,11 +34,10 @@ function ColumnScroller({
   mainContainerRect,
   mountedBlocks,
   refCursor,
+  refCursorContainer,
   setStartData,
   startData,
 }: ColumnScrollerProps) {
-  const refContainer = useRef(null);
-
   const totalHeight = useMemo(() => sum(codeBlockHeights || []), [codeBlockHeights]);
   const totalHeightOutput = useMemo(() => sum(blockOutputHeights || []), [blockOutputHeights]);
 
@@ -62,8 +62,10 @@ function ColumnScroller({
       return;
     }
 
+    event.preventDefault();
+
     let yFinal
-    const yMin = refContainer?.current?.getBoundingClientRect()?.y;
+    const yMin = refCursorContainer?.current?.getBoundingClientRect()?.y;
 
     if (clientY === null) {
       const currentScrollTop = startData?.scrollTop;
@@ -86,6 +88,7 @@ function ColumnScroller({
     cursorHeight,
     height,
     refCursor,
+    refCursorContainer,
     setStartData,
     startData,
     y,
@@ -116,7 +119,7 @@ function ColumnScroller({
   return (
     <ScrollbarContainerStyle
       height={height}
-      ref={refContainer}
+      ref={refCursorContainer}
     >
       {cursorHeight !== null && (
         <ScrollCursorStyle
@@ -127,7 +130,7 @@ function ColumnScroller({
           })}
           ref={refCursor}
           selected={!!startData}
-          top={refContainer?.current?.getBoundingClientRect()?.y}
+          top={refCursorContainer?.current?.getBoundingClientRect()?.y}
         />
       )}
     </ScrollbarContainerStyle>

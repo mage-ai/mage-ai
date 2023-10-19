@@ -143,6 +143,7 @@ export const HeaderHorizontalBorder = styled.div`
 `;
 
 export const BlockHeaderStyle = styled.div<{
+  noSticky?: boolean;
   zIndex: number;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
@@ -155,19 +156,22 @@ export const BlockHeaderStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
-  // and the screen width is too small.
-  overflow-x: hidden;
   padding: ${UNIT}px;
-  position: sticky;
-  top: -5px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};
   `}
 
-  ${props => props.zIndex && `
+  ${props => typeof props.zIndex !== 'undefined' && props.zIndex !== null && `
     z-index: ${6 + (props.zIndex || 0)};
+  `}
+
+  ${props => !props.noSticky && `
+    // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
+    // and the screen width is too small.
+    overflow-x: hidden;
+    position: sticky;
+    top: -5px;
   `}
 `;
 

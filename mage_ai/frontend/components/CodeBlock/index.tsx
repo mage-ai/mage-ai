@@ -209,6 +209,7 @@ type CodeBlockProps = {
   pipeline: PipelineType;
   project?: ProjectType;
   refCursor?: any;
+  refCursorContainer?: any;
   runBlock?: (payload: {
     block: BlockType;
     code: string;
@@ -321,6 +322,7 @@ function CodeBlock({
   pipeline,
   project,
   refCursor,
+  refCursorContainer,
   runBlock,
   runningBlocks,
   savePipelineContent,
@@ -351,11 +353,20 @@ function CodeBlock({
   windowWidth,
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
+  const refColumn1 = useRef(null);
+  const refColumn2 = useRef(null);
 
   const isInteractionsEnabled =
     useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
       project?.features,
     ]);
+
+  const totalHeightCodeBlocks = useMemo(() => sum(codeBlockHeights || []), [
+    codeBlockHeights,
+  ]);
+  const totalHeightBlockOuputs = useMemo(() => sum(blockOutputHeights || []), [
+    blockOutputHeights,
+  ]);
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -363,7 +374,20 @@ function CodeBlock({
         return;
       }
 
-      ref.current.style.top = `${refCursor?.current?.getBoundingClientRect?.()?.y}px`;
+      const cursorContainerRect = refCursorContainer?.current?.getBoundingClientRect();
+      const cursorRect = refCursor?.current?.getBoundingClientRect?.();
+
+      const yStart = cursorContainerRect?.y + cursorRect?.height;
+      const yEnd = cursorRect?.y + cursorRect?.height;
+      const yDistance = yEnd - yStart;
+      const percentageTraveled =
+        Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
+
+      const offset = sum(codeBlockHeights?.slice(0, blockIdx));
+      const yMove = cursorContainerRect.y - (percentageTraveled * totalHeightCodeBlocks)
+      const top = yMove + offset;
+
+      refColumn1.current.style.top = `${top}px`;
     };
 
     if (sideBySideEnabled) {
@@ -378,10 +402,16 @@ function CodeBlock({
       }
     };
   }, [
-    ref,
+    blockIdx,
+    codeBlockHeights,
+    refColumn1,
+    refColumn2,
     refCursor,
+    refCursorContainer,
     sideBySideEnabled,
     startData,
+    totalHeightBlockOuputs,
+    totalHeightCodeBlocks,
   ]);
 
   const {
@@ -464,6 +494,13 @@ function CodeBlock({
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT(block)[0]);
+
+  useEffect(() => {
+    updateCodeBlockHeights?.();
+  }, [
+    content,
+    updateCodeBlockHeights,
+  ]);
 
   const [collected, drag] = useDrag(() => ({
     collect: (monitor) => ({
@@ -1041,7 +1078,6 @@ function CodeBlock({
           onChange={(val: string) => {
             setContent(val);
             onChange?.(val);
-            updateCodeBlockHeights?.();
           }}
           onDidChangeCursorPosition={onDidChangeCursorPosition}
           onMountCallback={() => setMountedBlocks(prev => ({
@@ -1511,7 +1547,11 @@ function CodeBlock({
             }}
             onClick={() => onClickSelectBlock()}
             ref={disableDrag ? null : drag}
-            zIndex={blocksLength + 1 - (blockIdx || 0)}
+            zIndex={!sideBySideEnabled
+              ? blocksLength + 1 - (blockIdx || 0)
+              : null
+            }
+            noSticky={sideBySideEnabled}
           >
             <FlexContainer
               alignItems="center"
@@ -2747,10 +2787,13 @@ function CodeBlock({
 
     const top = sum(codeBlockHeights?.slice(0, blockIdx) || []);
 
+    console.log(blockIdx, top)
+
     return (
       <ScrollColunnStyle
         height={height}
         left={x + SCROLLBAR_WIDTH}
+        ref={refColumn1}
         top={y + top}
         width={widthColumn}
       >
@@ -2762,6 +2805,7 @@ function CodeBlock({
     codeBlockHeights,
     codeBlockMain,
     mainContainerRect,
+    refColumn1,
   ]);
 
   const column2 = useMemo(() => {
@@ -2779,6 +2823,7 @@ function CodeBlock({
     return (
       <ScrollColunnStyle
         height={height}
+        ref={refColumn2}
         right={right}
         top={y + top}
         width={widthColumn}
@@ -2790,6 +2835,7 @@ function CodeBlock({
     blockOutputHeights,
     codeOutputEl,
     mainContainerRect,
+    refColumn2,
     widthColumn,
     windowWidth,
   ]);

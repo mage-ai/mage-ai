@@ -341,6 +341,7 @@ function PipelineDetail({
   ]);
 
   const refCursor1 =  useRef(null);
+  const refCursorContainer1 =  useRef(null);
   const [startData1, setStartData1] = useState<StartDataType>(null);
   const column1ScrollMemo = useMemo(() => {
     return (
@@ -350,6 +351,7 @@ function PipelineDetail({
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor1}
+        refCursorContainer={refCursorContainer1}
         setStartData={setStartData1}
         startData={startData1}
       />
@@ -360,6 +362,7 @@ function PipelineDetail({
     mainContainerRect,
     mountedBlocks,
     refCursor1,
+    refCursorContainer1,
     setStartData1,
     startData1,
   ]);
@@ -760,6 +763,7 @@ function PipelineDetail({
             project={project}
             ref={currentBlockRef}
             refCursor={refCursor1}
+            refCursorContainer={refCursorContainer1}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
@@ -837,6 +841,7 @@ function PipelineDetail({
     pipeline,
     project,
     refCursor1,
+    refCursorContainer1,
     runBlock,
     runningBlocks,
     runningBlocksByUUID,
