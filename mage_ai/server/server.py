@@ -21,9 +21,11 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
+from mage_ai.cluster_manager.manage import check_auto_termination
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
+    get_cluster_type,
     get_project_type,
     get_project_uuid,
     get_variables_dir,
@@ -251,7 +253,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         # TODO: This call is not easily removed from the frontend so will change this
         # in a future PR.
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\-\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
         ),
 
@@ -269,7 +271,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         # Download block output
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
-            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
+            r'(?P<block_uuid>[\w\-\%2f\.(/.*)?]+)/downloads',
             ApiDownloadHandler,
         ),
 
@@ -284,15 +286,16 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             },
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)' \
+            r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
             ApiChildDetailHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)/(?P<child>\w+)',
             ApiChildListHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)',
             ApiResourceDetailHandler,
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
@@ -465,6 +468,14 @@ async def main(
         SCHEDULER_AUTO_RESTART_INTERVAL,
     )
     periodic_callback.start()
+
+    if ProjectType.MAIN == project_type:
+        # Check scheduler status periodically
+        auto_termination_callback = PeriodicCallback(
+            lambda: check_auto_termination(get_cluster_type()),
+            60_000,
+        )
+        auto_termination_callback.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

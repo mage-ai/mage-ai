@@ -14,9 +14,11 @@ class SessionPolicy(BasePolicy, UserPermissionMixIn):
     @classmethod
     def action_rule_with_permissions(self, operation: OperationType) -> Dict:
         return merge_dict(super().action_rule_with_permissions(operation), {
-            OauthScope.CLIENT_PUBLIC: dict(
-                condition=lambda _policy: OperationType.CREATE == operation,
-            ),
+            OauthScope.CLIENT_PUBLIC: [
+                dict(
+                    condition=lambda _policy: OperationType.CREATE == operation,
+                ),
+            ],
         })
 
     @classmethod

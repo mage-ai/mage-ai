@@ -143,8 +143,8 @@ class PipelineRunResource(DatabaseResource):
         total_results = await self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
 
-        limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
-        offset = int(meta.get(META_KEY_OFFSET, 0))
+        limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
 
         include_pipeline_uuids = query_arg.get('include_pipeline_uuids', [False])
         if include_pipeline_uuids:
@@ -198,7 +198,7 @@ class PipelineRunResource(DatabaseResource):
         query arg and set it to True (e.g. in order to make the number of pipeline runs
         returned consistent across pages).
         """
-        if meta.get(META_KEY_LIMIT, None) is not None and \
+        if (meta or {}).get(META_KEY_LIMIT, None) is not None and \
             total_results.count() >= 1 and \
             not disable_retries_grouping and \
                 (pipeline_uuid is not None or pipeline_schedule_id is not None):

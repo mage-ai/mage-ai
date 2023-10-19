@@ -94,8 +94,9 @@ function InteractionDisplay({
                 value,
               }: InteractionInputOptionType) => {
                 const checkboxValues = variablesProp?.[variableUUID] || {};
+                console.log(value, checkboxValues)
                 // @ts-ignore
-                const currentValue = checkboxValues?.[value];
+                const currentValue = checkboxValues?.[value] || checkboxValues?.[String(value)];
 
                 return (
                   <Spacing key={String(value || label)} mr={PADDING_UNITS}>

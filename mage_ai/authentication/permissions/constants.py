@@ -60,6 +60,16 @@ class EntityName(str, Enum):
     SearchResult = 'SearchResult'
     Secret = 'Secret'
     Session = 'Session'
+    SparkApplication = 'SparkApplication'
+    SparkEnvironment = 'SparkEnvironment'
+    SparkExecutor = 'SparkExecutor'
+    SparkJob = 'SparkJob'
+    SparkSql = 'SparkSql'
+    SparkStage = 'SparkStage'
+    SparkStageAttempt = 'SparkStageAttempt'
+    SparkStageAttemptTask = 'SparkStageAttemptTask'
+    SparkStageAttemptTaskSummary = 'SparkStageAttemptTaskSummary'
+    SparkThread = 'SparkThread'
     Status = 'Status'
     Sync = 'Sync'
     Tag = 'Tag'
@@ -192,4 +202,9 @@ ATTRIBUTE_OPERATION_TYPE_TO_PERMISSION_ACCESS_MAPPING = {
     'query': PermissionAccess.QUERY,
     'read': PermissionAccess.READ,
     'write': PermissionAccess.WRITE,
+}
+
+ENTITY_NAME_ENTITY_ID_ATTRIBUTE_NAME_MAPPING = {
+    EntityName.Block: 'uuid',
+    EntityName.Pipeline: 'uuid',
 }

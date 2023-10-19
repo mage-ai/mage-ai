@@ -31,6 +31,7 @@ export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
+export const DATE_FORMAT_SPARK = 'YYYY-MM-DDTHH:mm:ss.SSSGMT';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
 export const TIME_FORMAT = 'HH:mm:ss';
 export const TIME_FORMAT_NO_SEC = 'HH:mm';
@@ -54,6 +55,7 @@ export function dateFormatShort(text) {
 export function dateFormatLong(
   text: string,
   opts?: {
+    dateFormat?: string;
     dayAgo?: boolean;
     includeSeconds?: boolean;
     utcFormat?: boolean;
@@ -65,7 +67,7 @@ export function dateFormatLong(
     utcFormat,
   } = opts || {};
   let momentObj = moment(text);
-  let dateFormat = DATE_FORMAT_LONG_NO_SEC;
+  let dateFormat = opts?.dateFormat || DATE_FORMAT_LONG_NO_SEC;
 
   if (utcFormat) {
     momentObj = momentObj.utc();
@@ -95,7 +97,7 @@ export function datetimeInLocalTimezone(
 }
 
 /**
- * Given a UTC datetime string, find how much time has elapsed between then 
+ * Given a UTC datetime string, find how much time has elapsed between then
  * and now. Return the elapsed time in the first matching format:
  *   - >= 1 year: X year(s) ago
  *   - >= 1 month: X month(s) ago
@@ -106,6 +108,7 @@ export function datetimeInLocalTimezone(
 export function utcStringToElapsedTime(datetime: string) {
   const then = moment.utc(datetime);
   const now = moment.utc();
+  console.log(datetime, then, now)
   const duration = moment.duration(now.diff(then));
 
   let timeDisplay = '';
@@ -181,6 +184,10 @@ export function currentTimes({
 
 export function abbreviatedTimezone(timezone: TimeZoneEnum) {
   return tzMoment.tz(TIME_ZONE_NAMES[timezone]).zoneAbbr();
+}
+
+export function dateFromFromUnixTimestamp(timestamp: number) {
+  return moment.unix(timestamp);
 }
 
 export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean } = {}) {

@@ -188,7 +188,8 @@
                 "data-integrations/destinations/overview",
                 "data-integrations/destinations/add-new-destination"
               ]
-            }
+            },
+            "data-integrations/batch-pipelines"
           ]
         },
         {
@@ -447,7 +448,13 @@
             "visualizations/dashboards"
           ]
         },
-        "development/ai/overview",
+        {
+          "group": "No-code interactions",
+          "icon": "universal-access",
+          "pages": [
+            "interactions/overview"
+          ]
+        },
         "development/updating-mage"
       ]
     },
@@ -664,6 +671,15 @@
           ]
         },
         {
+          "group": "User defined permissions",
+          "icon": "fingerprint",
+          "pages": [
+            "authentication/permissions/overview",
+            "authentication/permissions/roles",
+            "authentication/permissions/permissions"
+          ]
+        },
+        {
           "group": "CI/CD",
           "icon": "circle-check",
           "pages": [
@@ -740,6 +756,12 @@
               "group": "Streaming",
               "pages": [
                 "contributing/backend/streaming/sources-and-destinations"
+              ]
+            },
+            {
+              "group": "Testing",
+              "pages": [
+                "contributing/backend/testing/overview"
               ]
             }
           ]

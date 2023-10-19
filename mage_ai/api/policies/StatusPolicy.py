@@ -14,12 +14,12 @@ class StatusPolicy(BasePolicy, UserPermissionMixIn):
     @classmethod
     def action_rule_with_permissions(self, operation: OperationType) -> Dict:
         return merge_dict(super().action_rule_with_permissions(operation), {
-            OauthScope.CLIENT_PRIVATE: dict(
-                condition=lambda _policy: OperationType.LIST == operation,
-            ),
-            OauthScope.CLIENT_PUBLIC: dict(
-                condition=lambda _policy: OperationType.LIST == operation,
-            ),
+            OauthScope.CLIENT_PRIVATE: [
+                dict(condition=lambda _policy: OperationType.LIST == operation),
+            ],
+            OauthScope.CLIENT_PUBLIC: [
+                dict(condition=lambda _policy: OperationType.LIST == operation),
+            ],
         })
 
     @classmethod

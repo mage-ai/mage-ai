@@ -42,6 +42,7 @@ import { getUser } from '@utils/session';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 
 const ICON_SIZE = 2 * UNIT;
 
@@ -298,7 +299,10 @@ function UserDetail({
     setAfterHidden,
   ]);
 
-  const buildTable = useCallback((objectsArray: RoleType[]) => (
+  const buildTable = useCallback((
+    objectsArray: RoleType[],
+    enableClickRow?: boolean,
+  ) => (
     <Table
       columnFlex={[null, 1]}
       columns={[
@@ -310,7 +314,9 @@ function UserDetail({
               <Checkbox
                 checked={checked}
                 key="checkbox"
-                onClick={() => {
+                onClick={(e) => {
+                  pauseEvent(e);
+
                   if (checked) {
                     setObjectAttributes({
                       rolesMapping: {},
@@ -330,6 +336,15 @@ function UserDetail({
           uuid: 'Role',
         },
       ]}
+      onClickRow={enableClickRow
+        ? (rowIndex: number) => {
+          const object = objectsArray[rowIndex];
+          if (object && typeof window !== 'undefined') {
+            window.open(`/settings/workspace/roles/${object?.id}`, '_blank').focus();
+          }
+        }
+        : null
+      }
       rows={objectsArray?.map((object) => {
         const {
           name,
@@ -341,7 +356,9 @@ function UserDetail({
           <Checkbox
             checked={checked}
             key="checkbox"
-            onClick={() => {
+            onClick={(e) => {
+              pauseEvent(e);
+
               const mapping = { ...rolesMapping };
 
               if (checked) {
@@ -367,10 +384,16 @@ function UserDetail({
     setObjectAttributes,
   ]);
 
-  const buildTablePermissions = useCallback((objectArray: PermissionType[]) => (
+  const buildTablePermissions = useCallback((
+    objectArray: PermissionType[],
+    enableClickRow?: boolean,
+  ) => (
    <Table
-      columnFlex={[2, 1, 1, 6]}
+      columnFlex={[null, 2, 1, 1, 6]}
       columns={[
+        {
+          uuid: 'ID',
+        },
         {
           uuid: 'Entity',
         },
@@ -385,17 +408,30 @@ function UserDetail({
           uuid: 'Access',
         },
       ]}
+      onClickRow={enableClickRow
+        ? (rowIndex: number) => {
+          const object = objectArray[rowIndex];
+          if (object && typeof window !== 'undefined') {
+            window.open(`/settings/workspace/permissions/${object?.id}`, '_blank').focus();
+          }
+        }
+        : null
+      }
       rows={objectArray?.map(({
         access,
         entity,
         entity_id: entityID,
         entity_name: entityName,
         entity_type: entityType,
+        id,
       }) => {
         const accessDisplayNames = access ? displayNames(access) : [];
         const accessDisplayNamesCount = accessDisplayNames?.length || 0;
 
         return [
+          <Text default key="id" monospace>
+            {id}
+          </Text>,
           <Text key="entityName" monospace>
             {entityName || entity}
           </Text>,
@@ -436,12 +472,12 @@ function UserDetail({
     rolesAll,
   ]);
 
-  const rolesMemo = useMemo(() => buildTable(roles), [
+  const rolesMemo = useMemo(() => buildTable(roles, true), [
     buildTable,
     roles,
   ]);
 
-  const permissionsMemo = useMemo(() => buildTablePermissions(permissions), [
+  const permissionsMemo = useMemo(() => buildTablePermissions(permissions, true), [
     buildTablePermissions,
     permissions,
   ]);
@@ -1032,7 +1068,6 @@ function UserDetail({
             </Button>
           </>
         )}
-
       </FlexContainer>
     </ContainerStyle>
   );

@@ -63,7 +63,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LOCAL_STORAGE_KEY_SETUP_AI_LATER } from '@storage/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { DataIntegrationTypeEnum } from '@interfaces/BlockTemplateType';
+import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { UNITS_BETWEEN_SECTIONS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
@@ -375,13 +375,13 @@ function AddNewBlocksV2({
         {
           isGroupingTitle: true,
           label: () => 'Data integrations',
-          uuid: `${BlockTypeEnum.DATA_LOADER}/Data integrations/group`,
+          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
         },
         {
           // @ts-ignore
           items: itemsDataLoaderSource,
           label: () => capitalize(DataIntegrationTypeEnum.SOURCES),
-          uuid: `${BlockTypeEnum.DATA_LOADER}/Data integrations/${DataIntegrationTypeEnum.SOURCES}`,
+          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`,
         },
       ]);
     }
@@ -400,13 +400,13 @@ function AddNewBlocksV2({
         {
           isGroupingTitle: true,
           label: () => 'Data integrations',
-          uuid: `${BlockTypeEnum.DATA_EXPORTER}/Data integrations/group`,
+          uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
         },
         {
           // @ts-ignore
           items: itemsDataExporterDestination,
           label: () => capitalize(DataIntegrationTypeEnum.DESTINATIONS),
-          uuid: `${BlockTypeEnum.DATA_EXPORTER}/Data integrations/${DataIntegrationTypeEnum.DESTINATIONS}`,
+          uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`,
         },
       ]);
     }
@@ -700,6 +700,10 @@ function AddNewBlocksV2({
             increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
           >
             <FlyoutMenuWrapper
+              customSubmenuHeights={{
+                [`${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`]: 504,
+                [`${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`]: 504,
+              }}
               disableKeyboardShortcuts
               items={itemsTemplates}
               onClickCallback={closeButtonMenu}

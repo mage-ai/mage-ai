@@ -113,7 +113,6 @@ def render_template(
             config_string_parts.append(f'  {key}: {value_use}')
         config_string = '\n'.join(config_string_parts)
 
-
     template_path_with_extension = '.'.join([
         config['template_path'],
         BLOCK_LANGUAGE_TO_FILE_EXTENSION[language],

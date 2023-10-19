@@ -19,6 +19,12 @@ You must enter the following credentials when configuring this source:
 | `replication_slot` | Name of the slot used in logical replication. | `mage_slot` |
 | `publication_name` | Name of the publication used in logical replication. | `mage_pub` |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `batch_fetch_limit` | The number of rows to fetch in each batch (default to 50k). You can specify a larger batch size if your instance has higher memory. | `50000`
+
 <br />
 
 ## Change Data Capture (CDC) with PostgreSQL

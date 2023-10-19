@@ -86,10 +86,11 @@ function StreamSettingsEditorTable({
         >
           <option value="" />
           {options?.map(({
+            disabled,
             label: labelOption,
             value,
           }) => (
-            <option key={value} value={value}>
+            <option disabled={disabled} key={value} value={value}>
               {labelOption ? labelOption() : value}
             </option>
           ))}

@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.34',
+    version='0.9.36',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -62,6 +62,7 @@ setuptools.setup(
         'dbt': [
             'dbt-bigquery==1.4.3',
             'dbt-core==1.4.8',
+            'dbt-dremio==1.5.0',
             'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',

@@ -234,7 +234,7 @@ const AccordionPanel = ({
       first={first}
       href="#"
       last={last}
-      noBorderRadius
+      noBorderRadius={noBorderRadius}
       noHoverUnderline
       onClick={(e: any) => {
         e.preventDefault();

@@ -70,6 +70,7 @@ class BigQuery(Destination):
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
+            credentials_info=self.config.get('credentials_info'),
             path_to_credentials_json_file=self.config.get('path_to_credentials_json_file'),
             location=self.config.get('location'),
         )

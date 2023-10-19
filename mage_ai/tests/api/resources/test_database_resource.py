@@ -3,7 +3,6 @@ from unittest.mock import patch
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.orchestration.db.models.oauth import User, UserRole
-from mage_ai.tests.api.mixins import BootstrapMixin
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.api.utils import GenericObject
 
@@ -24,7 +23,22 @@ class TestUserRoleResource(DatabaseResource):
 TestUserRoleResource.register_parent_resource(UserResource)
 
 
-class DatabaseResourceTest(BaseApiTestCase, BootstrapMixin):
+class DatabaseResourceTest(BaseApiTestCase):
+    def bootstrap(self):
+        self.options = dict(lightning=4, rock=5)
+
+        user1 = User.create(username=self.faker.unique.name())
+        user2 = User.create(username=self.faker.unique.name())
+        self.users = [
+            user1,
+            user2,
+        ]
+        self.user = self.users[0]
+
+    def cleanup(self):
+        User.query.delete()
+        UserRole.query.delete()
+
     async def test_process_collection(self):
         self.bootstrap()
 
@@ -56,27 +70,27 @@ class DatabaseResourceTest(BaseApiTestCase, BootstrapMixin):
 
         result_set = await UserResource.process_collection(
             {},
-            dict(_limit=2),
+            dict(_limit=1),
             self.user,
             **self.options,
         )
 
-        self.assertEqual([r.model for r in result_set], self.users[:2])
+        self.assertEqual([r.model for r in result_set], self.users[:1])
         self.assertEqual(result_set.metadata, dict(
-            count=3,
+            count=2,
             next=True,
         ))
 
         result_set = await UserResource.process_collection(
             {},
-            dict(_limit=2, _offset=1),
+            dict(_limit=1, _offset=1),
             self.user,
             **self.options,
         )
 
         self.assertEqual([r.model for r in result_set], self.users[1:])
         self.assertEqual(result_set.metadata, dict(
-            count=3,
+            count=2,
             next=False,
         ))
 

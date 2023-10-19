@@ -37,7 +37,7 @@ function InputsTable({
           uuid: 'Streams',
         },
         {
-          center: true,
+          rightAligned: true,
           uuid: 'Argument shape',
         },
       ]}
@@ -83,7 +83,7 @@ function InputsTable({
               )
             }
           </FlexContainer>,
-          <Text center default key={`shape-${uuid}`} monospace>
+          <Text default key={`shape-${uuid}`} monospace rightAligned>
             {catalog && !hasStreams && 'Dict'}
             {!catalog && hasStreams && 'Union[Dict, pd.DataFrame]'}
             {catalog && hasStreams && 'Tuple[Union[Dict, pd.DataFrame], Dict]'}

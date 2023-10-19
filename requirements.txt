@@ -32,7 +32,7 @@ python-dateutil==2.8.2
 pytz==2022.2.1
 pyyaml~=6.0
 redis
-requests==2.27.1
+requests==2.31.0
 ruamel.yaml==0.17.17
 scikit-learn>=1.0
 sentry-sdk==1.19.1
@@ -96,6 +96,7 @@ elasticsearch==8.9.0
 dbt-bigquery==1.4.3
 dbt-clickhouse==1.4.0
 dbt-core==1.4.8
+dbt-dremio==1.5.0
 dbt-duckdb==1.4.2
 dbt-postgres==1.4.8
 dbt-redshift==1.4.0

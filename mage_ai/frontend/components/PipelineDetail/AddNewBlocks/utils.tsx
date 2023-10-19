@@ -38,6 +38,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,
+        DataSourceTypeEnum.MONGODB
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.AZURE_DATA_LAKE,
@@ -135,6 +136,7 @@ export const getNonPythonMenuItems = (
 export function groupBlockTemplates(
   blockTemplates: BlockTemplateType[],
   addNewBlock,
+  uuidsToHideTooltips?: { [key: string]: boolean },
 ) {
   const mapping = {};
 
@@ -162,7 +164,7 @@ export function groupBlockTemplates(
       };
     }
 
-    const newItem = {
+    const newItem: FlyoutMenuItemType = {
       label: () => name,
       onClick: () => addNewBlock({
         config: {
@@ -175,9 +177,12 @@ export function groupBlockTemplates(
         language,
         type: blockType,
       }),
-      tooltip: () => description,
       uuid: path,
     };
+
+    if (!uuidsToHideTooltips?.[path]) {
+      newItem.tooltip = () => description;
+    }
 
     if (groups?.length >= 1) {
       const obj = {

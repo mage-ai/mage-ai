@@ -47,6 +47,7 @@ export type FlyoutMenuItemType = {
 
 export type FlyoutMenuProps = {
   alternateBackground?: boolean;
+  customSubmenuHeights?: { [key: string]: number };
   disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
@@ -65,6 +66,7 @@ export type FlyoutMenuProps = {
 
 function FlyoutMenu({
   alternateBackground,
+  customSubmenuHeights,
   disableKeyboardShortcuts,
   items,
   left,
@@ -169,8 +171,17 @@ function FlyoutMenu({
   ) => {
     depth += 1;
 
+    const hasCustomHeight = customSubmenuHeights?.hasOwnProperty(uuid);
+    const submenuHeight = hasCustomHeight
+      ? customSubmenuHeights?.[uuid]
+      : null;
+    const customHeightOffset = hasCustomHeight
+      ? customSubmenuHeights?.[uuid] - 36
+      : 0;
+
     return (
       <FlyoutMenuContainerStyle
+        maxHeight={submenuHeight}
         roundedStyle={roundedStyle}
         style={{
           display: (visible || submenuVisible[uuid]) ? null : 'none',
@@ -191,7 +202,7 @@ function FlyoutMenu({
                   ? submenuTopOffset2
                   : submenuTopOffset3)
               ) || 0)
-          ),
+          ) - customHeightOffset,
         }}
         width={width}
       >

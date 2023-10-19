@@ -12,6 +12,7 @@ class SourceType(str, Enum):
     KAFKA = 'kafka'
     KINESIS = 'kinesis'
     RABBITMQ = 'rabbitmq'
+    MONGODB = 'mongodb'
 
 
 class SinkType(str, Enum):

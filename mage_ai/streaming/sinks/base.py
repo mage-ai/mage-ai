@@ -32,11 +32,11 @@ class BaseSink(ABC):
         Initialize the client for the sink.
         """
 
-    @abstractmethod
     def write(self, message: Dict):
         """
         Write the single message to the sink.
         """
+        self.batch_write([message])
 
     @abstractmethod
     def batch_write(self, messages: List[Dict]):

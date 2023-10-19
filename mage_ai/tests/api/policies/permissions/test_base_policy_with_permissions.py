@@ -1,6 +1,6 @@
 import secrets
 from enum import Enum
-from typing import Dict, List
+from typing import Any, Callable, Dict, List, Union
 from unittest.mock import patch
 
 from mage_ai.api.constants import (
@@ -12,26 +12,17 @@ from mage_ai.api.constants import (
 )
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.permissions.constants import (
     EntityName,
     PermissionAccess,
     PermissionCondition,
 )
-from mage_ai.orchestration.db.models.oauth import (
-    Permission,
-    Role,
-    RolePermission,
-    User,
-    UserRole,
-)
+from mage_ai.orchestration.db.models.oauth import Permission, Role, User, UserRole
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.tests.api.mixins import BootstrapMixin
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
-
-ENTITY_NAME = EntityName.Pipeline
+from mage_ai.tests.api.policies.permissions.mixins import PermissionsMixin
 
 
 class TestSuite(str, Enum):
@@ -43,45 +34,11 @@ class TestSuite(str, Enum):
     UNAUTHORIZED_WITH_NO_PERMISSIONS = 'UNAUTHORIZED_WITH_NO_PERMISSIONS'
 
 
-@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
-@patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
-class BasePolicyWithPermissionsTest(BaseApiTestCase, BootstrapMixin):
-    def bootstrap(self):
-        super().bootstrap()
-
+class BasePolicyWithPermissionsTest(BaseApiTestCase, BootstrapMixin, PermissionsMixin):
+    def setUp(self):
+        super().setUp()
         self.role = Role.create(name=secrets.token_urlsafe())
         UserRole.create(role_id=self.role.id, user_id=self.user.id)
-
-    def build_policy(
-        self,
-        entity_name: EntityName = None,
-        current_user=None,
-    ):
-        class CustomTestWithPermissionsResource(GenericResource):
-            model_class = User
-
-        class CustomTestWithPermissionsPolicy(BasePolicy):
-            @classmethod
-            def entity_name_uuid(self):
-                return entity_name or ENTITY_NAME
-
-        model = dict(id=(current_user or self.user).id)
-        resource = CustomTestWithPermissionsResource(model, self.user)
-
-        return CustomTestWithPermissionsPolicy(resource, self.user)
-
-    def create_permission(
-        self,
-        accesses: List[PermissionAccess],
-        entity_name: EntityName = None,
-        options: Dict = None,
-    ):
-        permission = Permission.create(
-            access=Permission.add_accesses(accesses),
-            entity_name=entity_name or ENTITY_NAME,
-            options=options,
-        )
-        RolePermission.create(permission_id=permission.id, role_id=self.role.id)
 
 
 operations = [
@@ -109,17 +66,19 @@ for entity_name in [
             access,
             operation_type,
             current_user=None,
+            entity_name=entity_name,
+            get_entity_id: Callable[[Any], Union[int, str]] = None,
             permission_options: Dict = None,
             test_suites: List[TestSuite] = None,
-            entity_name=entity_name,
         ):
             @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION', 1)
             @patch('mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS', 1)
             async def _test_action(
                 self,
                 access=access,
-                entity_name=entity_name,
                 current_user=current_user,
+                entity_name=entity_name,
+                get_entity_id=get_entity_id,
                 operation_type=operation_type,
                 permission_options=permission_options,
                 test_suites=test_suites,
@@ -143,6 +102,7 @@ for entity_name in [
                 self.create_permission(
                     [access],
                     entity_name=entity_name,
+                    entity_id=get_entity_id(self) if get_entity_id else None,
                     options=permission_options,
                 )
 
@@ -320,6 +280,36 @@ for entity_name in [
                         test_suites=test_suites,
                     ),
                 )
+
+        if operation in [
+            OperationType.DELETE,
+            OperationType.DETAIL,
+            OperationType.UPDATE,
+        ]:
+            method_name = f'test_authorize_action_{operation}_for_{entity_name}_and_entity_id'
+            method_name = f'{method_name}_with_access_{operation_access}'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                build_test_action(
+                    access=operation_access,
+                    get_entity_id=lambda self: self.user.id,
+                    operation_type=operation,
+                ),
+            )
+
+            method_name = f'test_authorize_action_{operation}_for_{entity_name}_and_entity_id'
+            method_name = f'{method_name}_with_access_{operation_access}_unauthorized'
+            setattr(
+                BasePolicyWithPermissionsTest,
+                method_name,
+                build_test_action(
+                    access=operation_access,
+                    get_entity_id=lambda self: f'not_{self.user.id}',
+                    operation_type=operation,
+                    test_suites=[TestSuite.INVERSE],
+                ),
+            )
 
         for access_all in [
             PermissionAccess.ALL,
@@ -724,7 +714,6 @@ for entity_name in [
                 return _test_attribute
 
             attribute_uuid = 'id'
-
             attributes = [attribute_uuid]
 
             options = {}

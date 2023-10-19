@@ -387,8 +387,9 @@ function PipelineInteractions({
 
       arr.push(
         <AccordionPanel
+          first={idx == 0}
           key={blockUUID}
-          noBorderRadius
+          noBorderRadius={idx >= 1}
           noPaddingContent
           titleXPadding={PADDING_UNITS * UNIT}
           titleYPadding={1.5 * UNIT}
@@ -452,7 +453,9 @@ function PipelineInteractions({
 
   const accordionMemo = useMemo(() => blocks?.length >= 1 && (
     <Accordion
+      noBackground
       noBorder
+      noBoxShadow
       visibleMapping={visibleMapping}
     >
       {interactionsMemo}

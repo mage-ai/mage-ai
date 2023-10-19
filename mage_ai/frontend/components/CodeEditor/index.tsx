@@ -206,7 +206,6 @@ function CodeEditor({
     onSave,
     selected,
     setMounted,
-    setSelected,
     setTextareaFocused,
     shortcutsProp,
     tabSize,
@@ -283,6 +282,7 @@ function CodeEditor({
    * re-add the keyboard shortcuts when the upstream or downstream connections change.
    * Including shortcutsProp in the dependency array may lead to unnecessary re-renders.
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block?.downstream_blocks, block?.upstream_blocks]);
 
   useEffect(

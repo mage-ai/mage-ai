@@ -10,4 +10,5 @@ class WorkspacePresenter(BasePresenter):
         'repo_path',
         'project_uuid',
         'success',
+        'config',
     ]
