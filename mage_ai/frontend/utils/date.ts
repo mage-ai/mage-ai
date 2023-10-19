@@ -145,7 +145,6 @@ export function timeDifference({
 export function utcStringToElapsedTime(datetime: string) {
   const then = moment.utc(datetime);
   const now = moment.utc();
-  console.log(datetime, then, now);
   const duration = moment.duration(now.diff(then));
 
   let timeDisplay = '';
