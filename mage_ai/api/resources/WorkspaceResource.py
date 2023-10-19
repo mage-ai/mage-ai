@@ -1,7 +1,5 @@
 import os
 
-import yaml
-
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cluster_manager.config import LifecycleConfig
@@ -79,8 +77,7 @@ class WorkspaceResource(GenericResource):
 
         config = {}
         if 'lifecycle_config' in payload:
-            config_yaml = payload.pop('lifecycle_config')
-            config = yaml.full_load(config_yaml) or {}
+            config = payload.pop('lifecycle_config')
         lifecycle_config = LifecycleConfig(**config)
 
         try:

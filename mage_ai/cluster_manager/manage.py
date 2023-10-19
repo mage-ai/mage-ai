@@ -104,7 +104,7 @@ def check_auto_termination(cluster_type: ClusterType):
 
         workspaces = get_workspaces(cluster_type)
         for ws in workspaces:
-            lifecycle_config = LifecycleConfig.load(ws.get('lifecycle_config', {}))
+            lifecycle_config = LifecycleConfig.load(config=ws.get('lifecycle_config', {}))
             termination_policy = lifecycle_config.termination_policy
             if termination_policy and termination_policy.enable_auto_termination:
                 activity_details = workload_manager.get_workload_activity(

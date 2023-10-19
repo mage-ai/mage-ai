@@ -1,11 +1,11 @@
 import os
 import uuid
-from typing import Dict
+from typing import Dict, Optional
 
 import ruamel.yaml
 import yaml
 
-from mage_ai.cluster_manager.config import WorkspaceConfig
+from mage_ai.cluster_manager.config import LifecycleConfig
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.errors import WorkspaceExistsError
 from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
@@ -30,10 +30,11 @@ class Workspace:
         return os.path.join(self.project_folder, f'{self.name}.yaml')
 
     @property
-    def lifecycle_config(self) -> WorkspaceConfig:
-        with open(self.config_path, 'r', encoding='utf-8') as f:
-            config = yaml.full_load(f.read())
-            return WorkspaceConfig.load(config.get('lifecycle_config', {}))
+    def lifecycle_config(self) -> Optional[LifecycleConfig]:
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                config = yaml.full_load(f)
+                return LifecycleConfig.load(config=config.get('lifecycle_config', {}))
 
     @classmethod
     def workspace_class_from_type(self, cluster_type: ClusterType) -> 'Workspace':
@@ -57,7 +58,7 @@ class Workspace:
         cls,
         cluster_type: ClusterType,
         name: str,
-        lifecycle_config: WorkspaceConfig,
+        lifecycle_config: LifecycleConfig,
         payload: Dict,
     ) -> 'Workspace':
         config_path = None
@@ -77,7 +78,7 @@ class Workspace:
             yml.indent(mapping=2, sequence=2, offset=0)
 
             project_uuid = uuid.uuid4().hex
-            data = dict(project_uuid=project_uuid, config=lifecycle_config.to_dict())
+            data = dict(project_uuid=project_uuid, lifecycle_config=lifecycle_config.to_dict())
 
             with open(config_path, 'w', encoding='utf-8') as f:
                 yml.dump(data, f)

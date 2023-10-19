@@ -392,6 +392,7 @@ function ConfigureWorkspace({
                       workspace: {
                         ...updatedConfig,
                         cluster_type: clusterType,
+                        lifecycle_config: lifecycleConfig,
                       },
                     });
                   }
