@@ -256,7 +256,7 @@ class LLMPipelineWizard:
                                     function_args.get(DataSource.__name__))
         return block_type, block_language, pipeline_type, config
 
-    async def async_create_customized_code_in_block(
+    async def __async_create_customized_code_in_block(
             self,
             block_code: str,
             block_language: str,
@@ -289,10 +289,7 @@ class LLMPipelineWizard:
                 block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
         return block_code
 
-    async def async_generate_block_with_description(
-            self,
-            block_description: str,
-            upstream_blocks: List[str] = None) -> dict:
+    async def __async_identify_function_parameters(self, block_description: str) -> dict:
         messages = [{"role": "user", "content": block_description}]
         response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
@@ -300,7 +297,13 @@ class LLMPipelineWizard:
             functions=TEMPLATE_CLASSIFICATION_FUNCTION,
             function_call={"name": CLASSIFICATION_FUNCTION_NAME},  # explicitly set function call
         )
-        response_message = response["choices"][0]["message"]
+        return response["choices"][0]["message"]
+
+    async def async_generate_block_with_description(
+            self,
+            block_description: str,
+            upstream_blocks: List[str] = None) -> dict:
+        response_message = await self.__async_identify_function_parameters(block_description)
         if response_message.get("function_call"):
             function_args = json.loads(response_message["function_call"]["arguments"])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
@@ -329,7 +332,7 @@ class LLMPipelineWizard:
                             language=block_language,
                             pipeline_type=pipeline_type,
                         )
-                    block_code = await self.async_create_customized_code_in_block(
+                    block_code = await self.__async_create_customized_code_in_block(
                         block_code_template,
                         block_language,
                         block_description)
@@ -442,10 +445,13 @@ class LLMPipelineWizard:
         block_docs_content = '\n'.join(block_docs)
         if print_block_doc:
             print(block_docs_content)
-        prompt_template = PromptTemplate(input_variables=['block_content'],
-                                         template=PROMPT_FOR_SUMMARIZE_BLOCK_DOC)
-        chain = LLMChain(llm=self.llm, prompt=prompt_template)
-        pipeline_doc = chain.run(block_content=block_docs_content)
+        variable_values = dict()
+        variable_values['block_content'] = block_docs_content
+        pipeline_doc = await self.__async_llm_call(
+                variable_values,
+                PROMPT_FOR_SUMMARIZE_BLOCK_DOC,
+                is_json_response=False
+            )
         return dict(
             block_docs=block_docs,
             pipeline_doc=pipeline_doc,
