@@ -42,6 +42,7 @@
     "jwt-decode": "^3.1.2",
     "local-storage": "^2.0.0",
     "moment": "^2.29.4",
+    "moment-duration-format": "^2.3.2",
     "moment-timezone": "^0.5.43",
     "monaco-themes": "^0.4.2",
     "next": "12.3.4",
