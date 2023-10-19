@@ -16,13 +16,13 @@ import TasksWaterfallChart from './TasksWaterfallChart';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import { ComputeServiceEnum, ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
 import {
   DATE_FORMAT_LONG,
   DATE_FORMAT_SPARK,
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
 } from '@utils/date';
-import { ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SparkApplicationType,
@@ -46,12 +46,14 @@ const TAB_SQLS = 'SQLs';
 type MonitoringProps = {
   objectAttributes: ObjectAttributesType;
   refButtonTabs?: any;
+  selectedComputeService?: ComputeServiceEnum;
   setSelectedSql?: (prev: (sql: SparkSQLType) => SparkSQLType) => void;
 };
 
 function Monitoring({
   objectAttributes,
   refButtonTabs,
+  selectedComputeService,
   setSelectedSql,
 }: MonitoringProps) {
   const themeContext = useContext(ThemeContext);
@@ -184,6 +186,7 @@ function Monitoring({
 
   const sqlsMemo = useMemo(() => (
     <SparkJobSqls
+      // @ts-ignore
       setSelectedSql={setSelectedSql}
       stagesMapping={stagesMapping}
     />

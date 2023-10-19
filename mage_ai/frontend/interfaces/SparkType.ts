@@ -85,147 +85,174 @@ export interface PeakExecutorMetricsType {
 }
 
 export interface InputMetricsType {
-  bytesRead: number[];
-  recordsRead: number[];
+  bytes_read: number[];
+  records_read: number[];
 }
 
 export interface OutputMetricsType {
-  bytesWritten: number[];
-  recordsWritten: number[];
+  bytes_written: number[];
+  records_written: number[];
 }
 
 export interface ShuffleReadMetricsType {
-  fetchWaitTime: number[];
-  localBlocksFetched: number[];
-  localBytesRead?: number;
-  readBytes: number[];
-  readRecords: number[];
-  remoteBlocksFetched: number[];
-  remoteBytesRead: number[];
-  remoteBytesReadToDisk: number[];
-  remoteReqsDuration: number[];
-  shufflePushReadMetricsDist: {
-    corruptMergedBlockChunks: number[];
-    localMergedBlocksFetched: number[];
-    localMergedBytesRead: number[];
-    localMergedChunksFetched: number[];
-    mergedFetchFallbackCount: number[];
-    remoteMergedBlocksFetched: number[];
-    remoteMergedBytesRead: number[];
-    remoteMergedChunksFetched: number[];
-    remoteMergedReqsDuration: number[];
+  fetch_wait_time: number[];
+  local_blocks_fetched: number[];
+  local_bytes_read?: number;
+  read_bytes: number[];
+  read_records: number[];
+  remote_blocks_fetched: number[];
+  remote_bytes_read: number[];
+  remote_bytes_read_to_disk: number[];
+  remote_reqs_duration: number[];
+  shuffle_push_read_metrics_dist: {
+    corrupt_merged_block_chunks: number[];
+    local_merged_blocks_fetched: number[];
+    local_merged_bytes_read: number[];
+    local_merged_chunks_fetched: number[];
+    merged_fetch_fallback_count: number[];
+    remote_merged_blocks_fetched: number[];
+    remote_merged_bytes_read: number[];
+    remote_merged_chunks_fetched: number[];
+    remote_merged_reqs_duration: number[];
   };
-  totalBlocksFetched: number[];
+  total_blocks_fetched: number[];
 }
 
 export interface TaskMetricsDistributionsType {
-  diskBytesSpilled: number[];
+  disk_bytes_spilled: number[];
   duration: number[];
-  executorCpuTime: number[];
-  executorDeserializeCpuTime: number[];
-  executorDeserializeTime: number[];
-  executorRunTime: number[];
-  gettingResultTime: number[];
-  inputMetrics: InputMetricsType;
-  jvmGcTime: number[];
-  memoryBytesSpilled: number[];
-  outputMetrics: OutputMetricsType;
-  peakExecutionMemory: number[];
+  executor_cpu_time: number[];
+  executor_deserialize_cpu_time: number[];
+  executor_deserialize_time: number[];
+  executor_run_time: number[];
+  getting_result_time: number[];
+  input_metrics: InputMetricsType;
+  jvm_gc_time: number[];
+  memory_bytes_spilled: number[];
+  output_metrics: OutputMetricsType;
+  peak_execution_memory: number[];
   quantiles: number[];
-  resultSerializationTime: number[];
-  resultSize: number[];
-  schedulerDelay: number[];
-  shuffleReadMetrics: ShuffleReadMetricsType;
-  shuffleWriteMetrics: {
-    writeBytes: number[];
-    writeRecords: number[];
-    writeTime: number[];
+  result_serialization_time: number[];
+  result_size: number[];
+  scheduler_delay: number[];
+  shuffle_read_metrics: ShuffleReadMetricsType;
+  shuffle_write_metrics: {
+    write_bytes: number[];
+    write_records: number[];
+    write_time: number[];
   };
 }
 
 export interface SparkTaskType {
-  accumulatorUpdates: string[];
+  accumulator_updates: string[];
   attempt: number;
   duration: number;
-  executorId: string;
-  executorLogs: {
+  executor_id: string;
+  executor_logs: {
     [key: string]: any;
   };
-  gettingResultTime: number;
+  getting_result_time: number;
   host: string;
   index: number;
-  inputMetrics: InputMetricsType;
-  launchTime: string;
-  outputMetrics: OutputMetricsType;
-  partitionId: number;
-  schedulerDelay: number
-  shuffleReadMetrics: ShuffleReadMetricsType;
-  shuffleWriteMetrics: {
-    bytesWritten: number;
-    recordsWritten: number;
-    writeTime: number;
+  input_metrics: InputMetricsType;
+  launch_time: string;
+  output_metrics: OutputMetricsType;
+  partition_id: number;
+  scheduler_delay: number
+  shuffle_read_metrics: ShuffleReadMetricsType;
+  shuffle_write_metrics: {
+    bytes_written: number;
+    records_written: number;
+    write_time: number;
   };
   speculative: boolean;
   status: SparkTaskStatusEnum;
-  taskId: number;
-  taskLocality: SparkTaskLocalityEnum;
-  taskMetrics: {
-    diskBytesSpilled: number;
-    executorCpuTime: number;
-    executorDeserializeCpuTime: number;
-    executorDeserializeTime: number;
-    executorRunTime: number;
-    jvmGcTime: number;
-    memoryBytesSpilled: number;
-    peakExecutionMemory: number;
-    resultSerializationTime: number;
-    resultSize: number;
+  task_id: number;
+  task_locality: SparkTaskLocalityEnum;
+  task_metrics: {
+    disk_bytes_spilled: number;
+    executor_cpu_time: number;
+    executor_deserialize_cpu_time: number;
+    executor_deserialize_time: number;
+    executor_run_time: number;
+    jvm_gc_time: number;
+    memory_bytes_spilled: number;
+    peak_execution_memory: number;
+    result_serialization_time: number;
+    result_size: number;
+    shuffle_read_metrics: {
+      fetch_wait_time: number;
+      local_blocks_fetched: number;
+      local_bytes_read: number;
+      records_read: number;
+      remote_blocks_fetched: number;
+      remote_bytes_read: number;
+      remote_bytes_read_to_disk: number;
+      remote_reqs_duration: number;
+      shuffle_push_read_metrics: {
+        corrupt_merged_block_chunks: number;
+        local_merged_blocks_fetched: number;
+        local_merged_bytes_read: number;
+        local_merged_chunks_fetched: number;
+        merged_fetch_fallback_count: number;
+        remote_merged_blocks_fetched: number;
+        remote_merged_bytes_read: number;
+        remote_merged_chunks_fetched: number;
+        remote_merged_reqs_duration: number;
+      };
+    };
+    shuffle_write_metrics: {
+      bytes_written: number;
+      records_written: number;
+      write_time: number;
+    };
   };
 }
 
 export interface SparkStageAttemptType {
-  attemptId: number;
-  executorMetricsDistributions: {
-    diskBytesSpilled: number[];
-    failedTasks: number[];
-    inputBytes: number[];
-    inputRecords: number[];
-    killedTasks: number[];
-    memoryBytesSpilled: number[];
-    outputBytes: number[];
-    outputRecords: number[];
+  attempt_id: number;
+  executor_metrics_distributions: {
+    disk_bytes_spilled: number[];
+    failed_tasks: number[];
+    input_bytes: number[];
+    input_records: number[];
+    killed_tasks: number[];
+    memory_bytes_spilled: number[];
+    output_bytes: number[];
+    output_records: number[];
     quantiles: number[];
-    peakMemoryMetrics: {
-      DirectPoolMemory: number[];
-      JVMHeapMemory: number[];
-      JVMOffHeapMemory: number[];
-      MajorGCCount: number[];
-      MajorGCTime: number[];
-      MappedPoolMemory: number[];
-      MinorGCCount: number[];
-      MinorGCTime: number[];
-      OffHeapExecutionMemory: number[];
-      OffHeapStorageMemory: number[];
-      OffHeapUnifiedMemory: number[];
-      OnHeapExecutionMemory: number[];
-      OnHeapStorageMemory: number[];
-      OnHeapUnifiedMemory: number[];
-      ProcessTreeJVMRSSMemory: number[];
-      ProcessTreeJVMVMemory: number[];
-      ProcessTreeOtherRSSMemory: number[];
-      ProcessTreeOtherVMemory: number[];
-      ProcessTreePythonRSSMemory: number[];
-      ProcessTreePythonVMemory: number[];
-      TotalGCTime: number[];
+    peak_memory_metrics: {
+      direct_pool_memory: number[];
+      jvm_heap_memory: number[];
+      jvm_off_heap_memory: number[];
+      major_gc_count: number[];
+      major_gc_time: number[];
+      mapped_pool_memory: number[];
+      minor_gc_count: number[];
+      minor_gc_time: number[];
+      off_heap_execution_memory: number[];
+      off_heap_storage_memory: number[];
+      off_heap_unified_memory: number[];
+      on_heap_execution_memory: number[];
+      on_heap_storage_memory: number[];
+      on_heap_unified_memory: number[];
+      process_tree_jvmrss_memory: number[];
+      process_tree_jvmv_memory: number[];
+      process_tree_other_rss_memory: number[];
+      process_tree_other_v_memory: number[];
+      process_tree_python_rss_memory: number[];
+      process_tree_python_v_memory: number[];
+      total_gc_time: number[];
     },
-    shuffleRead: number[];
-    shuffleReadRecords: number[];
-    shuffleWrite: number[];
-    shuffleWriteRecords: number[];
-    succeededTasks: number[];
-    taskTime: number[];
+    shuffle_read: number[];
+    shuffle_read_records: number[];
+    shuffle_write: number[];
+    shuffle_write_records: number[];
+    succeeded_tasks: number[];
+    task_time: number[];
   };
-  taskMetricsDistributions: TaskMetricsDistributionsType;
+  submission_time: string;
+  task_metrics_distributions: TaskMetricsDistributionsType;
   tasks: {
     [task_id: string]: SparkTaskType;
   };
@@ -236,6 +263,8 @@ export interface SparkStageType extends SparkStageAttemptType {
   completion_time: string;
   details: string;
   first_task_launched_time: string;
+  input_bytes: number;
+  input_records: number;
   name: string;
   num_active_tasks: number;
   num_complete_tasks: number;
@@ -243,8 +272,36 @@ export interface SparkStageType extends SparkStageAttemptType {
   num_failed_tasks: number;
   num_killed_tasks: number;
   num_tasks: number;
+  output_bytes: number;
+  output_records: number;
   peak_executor_metrics: PeakExecutorMetricsType;
   rdd_ids: number[];
+  resource_profile_id: number;
+  result_serialization_time: number;
+  result_size: number;
+  scheduling_pool: number;
+  shuffle_corrupt_merged_block_chunks: number;
+  shuffle_fetch_wait_time: number;
+  shuffle_local_blocks_fetched: number;
+  shuffle_local_bytes_read: number;
+  shuffle_merged_fetch_fallback_count: number;
+  shuffle_merged_local_blocks_fetched: number;
+  shuffle_merged_local_bytes_read: number;
+  shuffle_merged_local_chunks_fetched: number;
+  shuffle_merged_remote_blocks_fetched: number;
+  shuffle_merged_remote_bytes_read: number;
+  shuffle_merged_remote_chunks_fetched: number;
+  shuffle_merged_remote_reqs_duration: number;
+  shuffle_mergers_count: number;
+  shuffle_read_bytes: number;
+  shuffle_read_records: number;
+  shuffle_remote_blocks_fetched: number;
+  shuffle_remote_bytes_read: number;
+  shuffle_remote_bytes_read_to_disk: number;
+  shuffle_remote_reqs_duration: number;
+  shuffle_write_bytes: number;
+  shuffle_write_records: number;
+  shuffle_write_time: number;
   stage_attempts?: SparkStageAttemptType[];
   stage_id: number;
   status: SparkStageStatusEnum;
@@ -279,7 +336,7 @@ export interface SparkEnvironmentType {
     scala_version: string;
   };
   spark_properties: string[][];
-  spark_properties: string[][];
+  system_properties: string[][];
 }
 
 export interface SparkExecutorType {

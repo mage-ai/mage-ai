@@ -50,7 +50,8 @@ export type PortType = {
 
 export type NodeType = {
   data: {
-    block: BlockType;
+    block?: BlockType;
+    [key: string]: any;
   };
   height: number;
   id: string;

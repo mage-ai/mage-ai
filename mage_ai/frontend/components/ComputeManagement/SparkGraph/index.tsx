@@ -24,11 +24,11 @@ import { SparkStageAttemptType, SparkJobType, SparkSQLType } from '@interfaces/S
 import { getNodeHeight, getNodeWidth } from './utils';
 import { indexBy, groupBy } from '@utils/array';
 
-type SparkGraphType = {
+type SparkGraphProps = {
   height: number;
   heightOffset?: number;
   model: SparkSQLType;
-  treeRef?: anyl;
+  treeRef?: any;
 };
 
 function SparkGraph({
@@ -36,7 +36,7 @@ function SparkGraph({
   heightOffset,
   model,
   treeRef,
-}) {
+}: SparkGraphProps) {
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
   const themeContext = useContext(ThemeContext);

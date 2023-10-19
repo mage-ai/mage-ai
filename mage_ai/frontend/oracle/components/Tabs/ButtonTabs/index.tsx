@@ -13,7 +13,7 @@ import { pauseEvent } from '@utils/events';
 export type TabType = {
   Icon?: any;
   IconSelected?: any;
-  label?: () => string;
+  label?: () => string | any;
   uuid: string;
 };
 

@@ -195,7 +195,6 @@ function ComputeManagement({
     if (!selectedTab && selectedComputeService) {
       setSelectedTab({
         main: MainNavigationTabEnum.CONNECTION,
-        main: MainNavigationTabEnum.MONITORING,
       });
     }
   }, [
@@ -345,13 +344,11 @@ function ComputeManagement({
         <SparkGraph
           height={containerHeight - ((buttonTabsRect?.height || 0) + HEADER_HEIGHT + 1)}
           model={selectedSql}
-          refButtonTabs={refButtonTabs}
         />
       );
     }
   }, [
     containerHeight,
-    refButtonTabs,
     selectedSql,
   ]);
 
@@ -396,13 +393,16 @@ function ComputeManagement({
       return (
         <Monitoring
           objectAttributes={objectAttributes}
+          refButtonTabs={refButtonTabs}
           selectedComputeService={selectedComputeService}
+          // @ts-ignore
           setSelectedSql={setSelectedSql}
         />
       );
     }
   }, [
     objectAttributes,
+    refButtonTabs,
     selectedComputeService,
     setSelectedSql,
   ]);

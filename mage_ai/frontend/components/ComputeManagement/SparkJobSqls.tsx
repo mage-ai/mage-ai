@@ -80,6 +80,7 @@ function SparkJobSqls({
       getObjectAtRowIndex={(rowIndex: number) => sqls?.[rowIndex]}
       onClickRow={(rowIndex: number) => {
         const sql = sqls?.[rowIndex];
+        // @ts-ignore
         setSelectedSql?.(prev => {
           if (!prev || prev?.id !== sql?.id) {
             return sql;

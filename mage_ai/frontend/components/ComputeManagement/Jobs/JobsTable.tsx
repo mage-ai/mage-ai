@@ -405,6 +405,7 @@ function JobsTable({
                                             {
                                               uuid: 'Metric',
                                             },
+                                            // @ts-ignore
                                           ].concat(quantiles.map((quantile: number, idx: number) => ({
                                             center: true,
                                             label: () => idx === 0
@@ -547,6 +548,7 @@ function JobsTable({
                                                 </div>
                                               )}
                                             </FlexContainer>,
+                                            // @ts-ignore
                                           ].concat(values?.map((value: number, idx: number) => (
                                             <Text {...SHARED_TEXT_PROPS} center key={`quantile-${quantiles[idx]}-${uuid}`}>
                                               {value}
@@ -619,12 +621,12 @@ function JobsTable({
                                   }).map(({
                                     attempt,
                                     duration,
-                                    launchTime,
-                                    schedulerDelay,
+                                    launch_time: launchTime,
+                                    scheduler_delay: schedulerDelay,
                                     status,
-                                    taskId,
-                                    taskLocality,
-                                    taskMetrics,
+                                    task_id: taskId,
+                                    task_locality: taskLocality,
+                                    task_metrics: taskMetrics,
                                   }: SparkTaskType) => {
                                     const arr = [
                                       <Text {...SHARED_TEXT_PROPS} key="taskId">
@@ -656,13 +658,13 @@ function JobsTable({
                                         {duration ? formatNumberToDuration(duration) : 0}
                                       </Text>,
                                       <Text {...SHARED_TEXT_PROPS} center key="jvmGcTime">
-                                        {taskMetrics?.jvmGcTime ? formatNumberToDuration(taskMetrics?.jvmGcTime) : 0}
+                                        {taskMetrics?.jvm_gc_time ? formatNumberToDuration(taskMetrics?.jvm_gc_time) : 0}
                                       </Text>,
                                       <Text {...SHARED_TEXT_PROPS} center key="schedulerDelay">
                                         {schedulerDelay ? formatNumberToDuration(schedulerDelay) : 0}
                                       </Text>,
                                       <Text {...SHARED_TEXT_PROPS} center key="resultSerializationTime">
-                                        {taskMetrics?.resultSerializationTime ? formatNumberToDuration(taskMetrics?.resultSerializationTime) : 0}
+                                        {taskMetrics?.result_serialization_time ? formatNumberToDuration(taskMetrics?.result_serialization_time) : 0}
                                       </Text>,
                                     ];
 

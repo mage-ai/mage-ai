@@ -122,7 +122,6 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
-  expandRowIndex,
   getObjectAtRowIndex,
   getUUIDFromRow,
   getUniqueRowIdentifier,
@@ -151,8 +150,8 @@ function Table({
   sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
-  uuidColumnIndex,
   uuid,
+  uuidColumnIndex,
   wrapColumns,
 }: TableProps, ref) {
   const [selectedRowIndexInternal, setSelectedRowIndexInternal] = useState<number>(null);
@@ -555,6 +554,7 @@ function Table({
           headerTextEl = (
             <Text
               {...textProps}
+              // @ts-ignore
               style={{
                 opacity: 0,
                 height: 0,
