@@ -2787,8 +2787,6 @@ function CodeBlock({
 
     const top = sum(codeBlockHeights?.slice(0, blockIdx) || []);
 
-    console.log(blockIdx, top)
-
     return (
       <ScrollColunnStyle
         height={height}
@@ -2841,7 +2839,7 @@ function CodeBlock({
   ]);
 
   if (!sideBySideEnabled) {
-    return column1;
+    return codeBlockMain;
   }
 
   return (

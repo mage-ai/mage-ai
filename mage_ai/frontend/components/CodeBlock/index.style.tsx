@@ -301,7 +301,6 @@ export const ScrollColunnStyle = styled.div<{
   top?: number;
   width: number;
 }>`
-  overflow: hidden;
   position: fixed;
   z-index: 2;
 
