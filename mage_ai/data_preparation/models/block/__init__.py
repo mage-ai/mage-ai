@@ -1289,7 +1289,8 @@ class Block(DataIntegrationMixin, SparkBlock):
             if (
                 BlockType.DBT != self.type and
                 self.language in [BlockLanguage.SQL, BlockLanguage.PYTHON, BlockLanguage.R] and
-                any(BlockType.DBT == block.type for block in self.downstream_blocks)
+                any(BlockType.DBT == block.type for block in self.downstream_blocks) and
+                len(outputs) > 0
             ):
                 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
