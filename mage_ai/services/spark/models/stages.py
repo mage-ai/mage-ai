@@ -60,6 +60,58 @@ class InputMetrics(BaseSparkModel):
 
 
 @dataclass
+class InputMetricsQuantile(BaseSparkModel):
+    bytes_read: List[int] = field(default_factory=list)
+    records_read: List[int] = field(default_factory=list)
+
+
+@dataclass
+class OutputMetricsQuantile(BaseSparkModel):
+    bytes_written: List[int] = field(default_factory=list)
+    records_written: List[int] = field(default_factory=list)
+
+
+@dataclass
+class ShufflePushReadMetricsDistQuantile(BaseSparkModel):
+    corrupt_merged_block_chunks: List[int] = field(default_factory=list)
+    local_merged_blocks_fetched: List[int] = field(default_factory=list)
+    local_merged_bytes_read: List[int] = field(default_factory=list)
+    local_merged_chunks_fetched: List[int] = field(default_factory=list)
+    merged_fetch_fallback_count: List[int] = field(default_factory=list)
+    remote_merged_blocks_fetched: List[int] = field(default_factory=list)
+    remote_merged_bytes_read: List[int] = field(default_factory=list)
+    remote_merged_chunks_fetched: List[int] = field(default_factory=list)
+    remote_merged_reqs_duration: List[int] = field(default_factory=list)
+
+
+@dataclass
+class ShuffleReadMetricsQuantile(BaseSparkModel):
+    fetch_wait_time: List[int] = field(default_factory=list)
+    local_blocks_fetched: List[int] = field(default_factory=list)
+    read_bytes: List[int] = field(default_factory=list)
+    read_records: List[int] = field(default_factory=list)
+    remote_blocks_fetched: List[int] = field(default_factory=list)
+    remote_bytes_read: List[int] = field(default_factory=list)
+    remote_bytes_read_to_disk: List[int] = field(default_factory=list)
+    remote_reqs_duration: List[int] = field(default_factory=list)
+    shuffle_push_read_metrics_dist: ShufflePushReadMetricsDistQuantile = None
+    total_blocks_fetched: List[int] = field(default_factory=list)
+
+    def __post_init__(self):
+        if self.shuffle_push_read_metrics_dist:
+            self.shuffle_push_read_metrics_dist = ShufflePushReadMetricsDistQuantile.load(
+                **self.shuffle_push_read_metrics_dist,
+            )
+
+
+@dataclass
+class ShuffleWriteMetricsQuantile(BaseSparkModel):
+    write_bytes: List[int] = field(default_factory=list)
+    write_records: List[int] = field(default_factory=list)
+    write_time: List[int] = field(default_factory=list)
+
+
+@dataclass
 class OutputMetrics(BaseSparkModel):
     bytes_written: int  # 0
     records_written: int  # 0
@@ -92,7 +144,7 @@ class ShuffleReadMetrics(BaseSparkModel):
 
     def __post_init__(self):
         if self.shuffle_push_read_metrics:
-            self.shuffle_push_read_metrics = PushReadMetrics(self.shuffle_push_read_metrics)
+            self.shuffle_push_read_metrics = PushReadMetrics.load(**self.shuffle_push_read_metrics)
 
 
 @dataclass
@@ -100,6 +152,43 @@ class ShuffleWriteMetrics(BaseSparkModel):
     bytes_written: int = None  # 0
     records_written: int = None  # 0
     write_time: int = None  # 0
+
+
+@dataclass
+class TaskMetricsQuantiles(BaseSparkModel):
+    disk_bytes_spilled: List[int] = field(default_factory=list)
+    duration: List[int] = field(default_factory=list)
+    executor_cpu_time: List[int] = field(default_factory=list)
+    executor_deserialize_cpu_time: List[int] = field(default_factory=list)
+    executor_deserialize_time: List[int] = field(default_factory=list)
+    executor_run_time: List[int] = field(default_factory=list)
+    getting_result_time: List[int] = field(default_factory=list)
+    input_metrics: InputMetricsQuantile = None
+    jvm_gc_time: List[int] = field(default_factory=list)
+    memory_bytes_spilled: List[int] = field(default_factory=list)
+    output_metrics: OutputMetricsQuantile = None
+    peak_execution_memory: List[int] = field(default_factory=list)
+    quantiles: List[int] = field(default_factory=list)
+    result_serialization_time: List[int] = field(default_factory=list)
+    result_size: List[int] = field(default_factory=list)
+    scheduler_delay: List[int] = field(default_factory=list)
+    shuffle_read_metrics: ShuffleReadMetricsQuantile = None
+    shuffle_write_metrics: ShuffleWriteMetricsQuantile = None
+
+    def __post_init__(self):
+        if self.input_metrics:
+            self.input_metrics = InputMetricsQuantile.load(**self.input_metrics)
+
+        if self.output_metrics:
+            self.output_metrics = OutputMetricsQuantile.load(**self.output_metrics)
+
+        if self.shuffle_read_metrics:
+            self.shuffle_read_metrics = ShuffleReadMetricsQuantile.load(**self.shuffle_read_metrics)
+
+        if self.shuffle_write_metrics:
+            self.shuffle_write_metrics = ShuffleWriteMetricsQuantile.load(
+                **self.shuffle_write_metrics,
+            )
 
 
 @dataclass
@@ -121,13 +210,37 @@ class TaskMetrics(BaseSparkModel):
 
     def __post_init__(self):
         if self.input_metrics:
-            self.input_metrics = InputMetrics(self.input_metrics)
+            self.input_metrics = InputMetrics.load(**self.input_metrics)
         if self.output_metrics:
-            self.output_metrics = OutputMetrics(self.output_metrics)
+            self.output_metrics = OutputMetrics.load(**self.output_metrics)
         if self.shuffle_read_metrics:
-            self.shuffle_read_metrics = ShuffleReadMetrics(self.shuffle_read_metrics)
+            self.shuffle_read_metrics = ShuffleReadMetrics.load(**self.shuffle_read_metrics)
         if self.shuffle_write_metrics:
-            self.shuffle_write_metrics = ShuffleWriteMetrics(self.shuffle_write_metrics)
+            self.shuffle_write_metrics = ShuffleWriteMetrics.load(**self.shuffle_write_metrics)
+
+
+@dataclass
+class ExecutorMetricsDistributions(BaseSparkModel):
+    disk_bytes_spilled: List[int] = field(default_factory=list)
+    failed_tasks: List[int] = field(default_factory=list)
+    input_bytes: List[int] = field(default_factory=list)
+    input_records: List[int] = field(default_factory=list)
+    killed_tasks: List[int] = field(default_factory=list)
+    memory_bytes_spilled: List[int] = field(default_factory=list)
+    output_bytes: List[int] = field(default_factory=list)
+    output_records: List[int] = field(default_factory=list)
+    peak_memory_metrics: Metrics = None
+    quantiles: List[int] = field(default_factory=list)
+    shuffle_read: List[int] = field(default_factory=list)
+    shuffle_read_records: List[int] = field(default_factory=list)
+    shuffle_write: List[int] = field(default_factory=list)
+    shuffle_write_records: List[int] = field(default_factory=list)
+    succeeded_tasks: List[int] = field(default_factory=list)
+    task_time: List[int] = field(default_factory=list)
+
+    def __post_init__(self):
+        if self.peak_memory_metrics:
+            self.peak_memory_metrics = Metrics(**self.peak_memory_metrics)
 
 
 @dataclass
@@ -165,7 +278,7 @@ class Task(BaseSparkModel):
                 self.task_locality = self.task_locality
 
         if self.task_metrics:
-            self.task_metrics = TaskMetrics(self.task_metrics)
+            self.task_metrics = TaskMetrics.load(**self.task_metrics)
 
     @property
     def id(self) -> int:
@@ -194,6 +307,7 @@ class StageBase(BaseSparkModel):
     # java.base/java.lang.Thread.run(Thread.java:829)
     details: str = None
     disk_bytes_spilled: int = None   # 0
+    executor_metrics_distributions: ExecutorMetricsDistributions = None
     executor_cpu_time: int = None   # 1442666
     executor_deserialize_cpu_time: int = None  # 988667
     executor_deserialize_time: int = None  # 0
@@ -246,10 +360,27 @@ class StageBase(BaseSparkModel):
     stage_id: int = None  # 82
     status: StageStatus = None  # "COMPLETE"
     submission_time: str = None  # "2023-10-15T10:17:00.759GMT"
+    task_metrics_distributions: TaskMetrics = None
 
     def __post_init__(self):
+        if self.executor_metrics_distributions:
+            if 'quantiles' not in self.executor_metrics_distributions:
+                self.executor_metrics_distributions = ExecutorMetricsDistributions.load(
+                    **self.executor_metrics_distributions,
+                )
+
         if self.peak_executor_metrics:
             self.peak_executor_metrics = Metrics.load(**self.peak_executor_metrics)
+
+        if self.task_metrics_distributions:
+            if 'quantiles' in self.task_metrics_distributions:
+                self.task_metrics_distributions = TaskMetricsQuantiles.load(
+                    **self.task_metrics_distributions,
+                )
+            else:
+                self.task_metrics_distributions = TaskMetrics.load(
+                    **self.task_metrics_distributions,
+                )
 
         if self.status:
             try:
@@ -364,6 +495,9 @@ class Stage(StageBase):
     def __post_init__(self):
         super().__post_init__()
 
+        if self.stage_attempts:
+            self.stage_attempts = [StageAttempt.load(**m) for m in self.stage_attempts]
+
 
 @dataclass
 class InputMetricsSummary(BaseSparkModel):
@@ -418,7 +552,7 @@ class ShuffleReadMetricsSummary(BaseSparkModel):
     def __post_init__(self):
         if self.shuffle_push_read_metrics_dist:
             self.shuffle_push_read_metrics_dist = PushReadMetricsDistSummary(
-                self.shuffle_push_read_metrics_dist,
+                **self.shuffle_push_read_metrics_dist,
             )
 
 
@@ -457,10 +591,12 @@ class StageAttemptTaskSummary(BaseSparkModel):
 
     def __post_init__(self):
         if self.input_metrics:
-            self.input_metrics = InputMetricsSummary(self.input_metrics)
+            self.input_metrics = InputMetricsSummary.load(**self.input_metrics)
         if self.output_metrics:
-            self.output_metrics = OutputMetricsSummary(self.output_metrics)
+            self.output_metrics = OutputMetricsSummary.load(**self.output_metrics)
         if self.shuffle_read_metrics:
-            self.shuffle_read_metrics = ShuffleReadMetricsSummary(self.shuffle_read_metrics)
+            self.shuffle_read_metrics = ShuffleReadMetricsSummary.load(**self.shuffle_read_metrics)
         if self.shuffle_write_metrics:
-            self.shuffle_write_metrics = ShuffleWriteMetricsSummary(self.shuffle_write_metrics)
+            self.shuffle_write_metrics = ShuffleWriteMetricsSummary.load(
+                **self.shuffle_write_metrics,
+            )

@@ -1,11 +1,18 @@
 from typing import List
 
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.services.spark.api.service import API
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.utils import get_compute_service
 
 
 class SparkBlock:
+    def compute_management_enabled(self) -> bool:
+        return Project(self.pipeline.repo_config if self.pipeline else None).is_feature_enabled(
+            FeatureUUID.COMPUTE_MANAGEMENT,
+        )
+
     def is_using_spark(self) -> bool:
         return get_compute_service()
 

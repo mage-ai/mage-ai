@@ -289,7 +289,9 @@ function JobsTable({
                       withSummaries: true,
                     }]}
                     apiForFetchingAfterAction={api.spark_stages.detail}
-                    renderExpandedRowWithObject={(rowIndex: number, object: SparkStageType) => {
+                    renderExpandedRowWithObject={(rowIndex: number, object: {
+                      spark_stage: SparkStageType;
+                    }) => {
                       const stage = stages?.[rowIndex];
 
                       if (!stage) {
@@ -355,19 +357,19 @@ function JobsTable({
                             </FlexContainer>
                           </Spacing>
 
-                          {stageAttempts?.map((stageAttempt: SparkStageAttemptType) => {
+                          {stageAttempts?.map((stageAttempt: SparkStageType) => {
                             const {
-                              attemptId,
-                              taskMetricsDistributions,
-                              tasks,
+                              attempt_id: attemptId,
+                              task_metrics_distributions: taskMetricsDistributions,
+                              tasks: tasks,
                             } = stageAttempt;
 
                             const {
-                              inputMetrics,
-                              outputMetrics,
-                              quantiles,
-                              shuffleReadMetrics,
-                              shuffleWriteMetrics,
+                              input_metrics: inputMetrics,
+                              output_metrics: outputMetrics,
+                              quantiles: quantiles,
+                              shuffle_read_metrics: shuffleReadMetrics,
+                              shuffle_write_metrics: shuffleWriteMetrics,
                             } = taskMetricsDistributions;
 
                             return (
@@ -390,7 +392,7 @@ function JobsTable({
                                           <Text bold large>
                                             Summary metrics for {pluralize(
                                               'completed task',
-                                              stageAttempt?.numCompleteTasks,
+                                              stageAttempt?.num_complete_tasks,
                                             )}
                                           </Text>
                                         </Spacing>
@@ -422,102 +424,102 @@ function JobsTable({
                                             {
                                               tooltipMessage: 'GC time is the total JVM garbage collection time.',
                                               uuid: 'GC time',
-                                              values: (taskMetricsDistributions?.jvmGcTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (taskMetricsDistributions?.jvm_gc_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               tooltipMessage: 'Bytes read from storage in this stage.',
                                               uuid: 'Input read (bytes)',
-                                              values: inputMetrics?.bytesRead || [],
+                                              values: inputMetrics?.bytes_read || [],
                                             },
                                             {
                                               tooltipMessage: 'Records read from storage in this stage.',
                                               uuid: 'Input records read',
-                                              values: inputMetrics?.recordsRead || [],
+                                              values: inputMetrics?.records_read || [],
                                             },
                                             {
                                               tooltipMessage: 'Total shuffle bytes read, includes both data read locally and data read from remote executors.',
                                               uuid: 'Shuffle read (bytes)',
-                                              values: shuffleReadMetrics?.readBytes || [],
+                                              values: shuffleReadMetrics?.read_bytes || [],
                                             },
                                             {
                                               tooltipMessage: 'Total shuffle records read, includes both data read locally and data read from remote executors.',
                                               uuid: 'Shuffle read records',
-                                              values: shuffleReadMetrics?.readRecords || [],
+                                              values: shuffleReadMetrics?.read_records || [],
                                             },
                                             {
                                               uuid: 'Shuffle read fetch time',
-                                              values: (shuffleReadMetrics?.fetchWaitTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (shuffleReadMetrics?.fetch_wait_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               tooltipMessage: 'Bytes written to storage in this stage.',
                                               uuid: 'Input write (bytes)',
-                                              values: outputMetrics?.bytesWritten || [],
+                                              values: outputMetrics?.bytes_written || [],
                                             },
                                             {
                                               tooltipMessage: 'Records written to storage in this stage.',
                                               uuid: 'Input records write',
-                                              values: outputMetrics?.recordsWritten || [],
+                                              values: outputMetrics?.records_written || [],
                                             },
                                             {
                                               tooltipMessage: 'Bytes written to disk in order to be read by a shuffle in a future stage.',
                                               uuid: 'Shuffle write (bytes)',
-                                              values: shuffleWriteMetrics?.writeBytes || [],
+                                              values: shuffleWriteMetrics?.write_bytes || [],
                                             },
                                             {
                                               tooltipMessage: 'Records written to disk in order to be read by a shuffle in a future stage.',
                                               uuid: 'Shuffle write records',
-                                              values: shuffleWriteMetrics?.writeRecords || [],
+                                              values: shuffleWriteMetrics?.write_records || [],
                                             },
                                             {
                                               uuid: 'Shuffle write time',
-                                              values: (shuffleWriteMetrics?.writeTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (shuffleWriteMetrics?.write_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               tooltipMessage: 'Scheduler delay is the time the task waits to be scheduled for execution.',
                                               uuid: 'Scheduler delay',
-                                              values: taskMetricsDistributions?.schedulerDelay || [],
+                                              values: taskMetricsDistributions?.scheduler_delay || [],
                                             },
                                             {
                                               uuid: 'Task deserialization time',
-                                              values: (taskMetricsDistributions?.executorDeserializeTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (taskMetricsDistributions?.executor_deserialize_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               uuid: 'Task deserialization CPU time',
-                                              values: (taskMetricsDistributions?.executorDeserializeCpuTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (taskMetricsDistributions?.executor_deserialize_cpu_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               uuid: 'Result size',
-                                              values: taskMetricsDistributions?.resultSize || [],
+                                              values: taskMetricsDistributions?.result_size || [],
                                             },
                                             {
                                               tooltipMessage: 'Result serialization time is the time spent serializing the task result on an executor before sending it back to the driver.',
                                               uuid: 'Result serialization time',
-                                              values: (taskMetricsDistributions?.resultSerializationTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (taskMetricsDistributions?.result_serialization_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               tooltipMessage: 'Getting result time is the time that the driver spends fetching task results from workers.',
                                               uuid: 'Getting result time',
-                                              values: (taskMetricsDistributions?.gettingResultTime || []).map(v => formatNumberToDuration(v)),
+                                              values: (taskMetricsDistributions?.getting_result_time || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               tooltipMessage: 'Scheduler delay is the time the task waits to be scheduled for execution.',
                                               uuid: 'Scheduler delay',
-                                              values: (taskMetricsDistributions?.schedulerDelay || []).map(v => formatNumberToDuration(v)),
+                                              values: (taskMetricsDistributions?.scheduler_delay || []).map(v => formatNumberToDuration(v)),
                                             },
                                             {
                                               tooltipMessage: 'Peak execution memory is the maximum memory used by the internal data structures created during shuffles, aggregations and joins.',
                                               uuid: 'Peak execution memory',
-                                              values: taskMetricsDistributions?.peakExecutionMemory || [],
+                                              values: taskMetricsDistributions?.peak_execution_memory || [],
                                             },
                                             {
                                               tooltipMessage: 'Shuffle spill (memory) is the size of the deserialized form of the shuffled data in memory.',
                                               uuid: 'Memory spilled (bytes)',
-                                              values: taskMetricsDistributions?.memoryBytesSpilled || [],
+                                              values: taskMetricsDistributions?.memory_bytes_spilled || [],
                                             },
                                             {
                                               tooltipMessage: 'Shuffle spill (disk) is the size of the serialized form of the data on disk.',
                                               uuid: 'Disk spilled (bytes)',
-                                              values: taskMetricsDistributions?.diskBytesSpilled || [],
+                                              values: taskMetricsDistributions?.disk_bytes_spilled || [],
                                             },
                                           ].map(({
                                             tooltipMessage,
@@ -612,7 +614,7 @@ function JobsTable({
                                       uuid: 'Result time',
                                     },
                                   ]}
-                                  rows={sortByKey(Object.values(tasks || {}), ({ taskId }) => taskId, {
+                                  rows={sortByKey(Object.values(tasks || {}), ({ task_id: taskId }) => taskId, {
                                     ascending: false,
                                   }).map(({
                                     attempt,

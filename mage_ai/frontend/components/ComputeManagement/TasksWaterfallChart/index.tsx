@@ -31,12 +31,12 @@ function TasksWaterfallChart({
   const themeContext = useContext(ThemeContext);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const {
-    submissionTime,
+    submission_time: submissionTime,
   } = stageAttempt;
   const tasks: SparkTaskType[] =
     useMemo(() => sortByKey(
       Object.values(stageAttempt?.tasks || {}),
-      ({ launchTime }) => launchTime,
+      ({ launch_time: launchTime }) => launchTime,
       {
         ascending: true,
       },
@@ -51,7 +51,7 @@ function TasksWaterfallChart({
 
     tasks?.forEach(({
       duration,
-      launchTime,
+      launch_time: launchTime,
     }) => {
       const timestamp = moment(launchTime, DATE_FORMAT_SPARK).unix();
       if (!minLaunchTimestampInner || timestamp < minLaunchTimestampInner) {
@@ -94,21 +94,21 @@ function TasksWaterfallChart({
 
     tasks?.forEach(({
       duration,
-      taskId,
-      launchTime,
-      schedulerDelay,
-      taskMetrics: {
-        executorDeserializeTime,
-        shuffleReadMetrics: {
-          fetchWaitTime,
+      task_id: taskId,
+      launch_time: launchTime,
+      scheduler_delay: schedulerDelay,
+      task_metrics: {
+        executor_deserialize_time: executorDeserializeTime,
+        shuffle_read_metrics: {
+          fetch_wait_time: fetchWaitTime,
         },
-        executorRunTime,
-        shuffleWriteMetrics: {
-          writeTime,
+        executor_run_time: executorRunTime,
+        shuffle_write_metrics: {
+          write_time: writeTime,
         },
-        resultSerializationTime,
+        result_serialization_time: resultSerializationTime,
       },
-      gettingResultTime,
+      getting_result_time: gettingResultTime,
     }, idx: number) => {
       const launchTimestamp = moment(launchTime, DATE_FORMAT_SPARK).unix();
       const endTimestamp = launchTimestamp + duration;
@@ -289,7 +289,7 @@ function TasksWaterfallChart({
           </TextStyle>
 
           {tasks?.map(({
-            taskId,
+            task_id: taskId,
           }, idx: number) => (
             <Spacing key={taskId} mt={1}>
               <TextStyle>

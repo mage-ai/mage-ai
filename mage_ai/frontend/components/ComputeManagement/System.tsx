@@ -117,7 +117,7 @@ function System({
 
           <AccordionPanel noPaddingContent title="Spark properties">
             <Table
-              columnFlex={[null, null]}
+              columnFlex={[1, 4]}
               columns={[
                 {
                   uuid: 'Property',

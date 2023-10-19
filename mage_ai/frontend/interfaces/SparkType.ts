@@ -231,7 +231,7 @@ export interface SparkStageAttemptType {
   };
 }
 
-export interface SparkStageType extends SparkStageAttemptType, {
+export interface SparkStageType extends SparkStageAttemptType {
   attempt_id: number;
   completion_time: string;
   details: string;
