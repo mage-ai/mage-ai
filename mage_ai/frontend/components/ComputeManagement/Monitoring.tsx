@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { ThemeContext } from 'styled-components';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -45,7 +45,7 @@ const TAB_SQLS = 'SQLs';
 type MonitoringProps = {
   objectAttributes: ObjectAttributesType;
   refButtonTabs?: any;
-  setSelectedSql?: (sql: SparkSQLType) => void;
+  setSelectedSql?: (prev: (sql: SparkSQLType) => SparkSQLType) => void;
 };
 
 function Monitoring({
@@ -54,7 +54,15 @@ function Monitoring({
   setSelectedSql,
 }: MonitoringProps) {
   const themeContext = useContext(ThemeContext);
-  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] = useState(TAB_SQLS);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState(TAB_SQLS);
+
+  const setSelectedSubheaderTabUUID = useCallback((prev) => {
+    setSelectedSql(() => null);
+    setSelectedSubheaderTabUUIDState(prev);
+  }, [
+    setSelectedSql,
+    setSelectedSubheaderTabUUIDState,
+  ]);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 

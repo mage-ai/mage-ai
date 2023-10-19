@@ -95,7 +95,15 @@ function ComputeManagement({
   const localStorageKeyBefore =
     useMemo(() => `compute_management_before_width_${componentUUID}`, [componentUUID]);
 
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
+  const [afterWidth, setAfterWidthState] = useState(get(localStorageKeyAfter, UNIT * 60));
+  const setAfterWidth = useCallback((width) => {
+    setAfterWidthState(width);
+    set(localStorageKeyAfter, Math.max(width, UNIT * 60));
+  }, [
+    localStorageKeyAfter,
+    setAfterWidthState,
+  ]);
+
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidthState] = useState(Math.max(
     get(localStorageKeyBefore),
@@ -113,14 +121,22 @@ function ComputeManagement({
   const [afterHidden, setAfterHidden] = useState<boolean>(true);
 
   const [selectedSql, setSelectedSqlState] = useState<SparkSQLType>(null);
-  const setSelectedSql = useCallback((sql: SparkSQLType) => {
-    setSelectedSqlState(prev => {
-      const value = prev?.id === sql?.id ? null : sql;
-      setAfterHidden(value ? false : true);
 
-      return value;
+  const setSelectedSql = useCallback((prev1) => {
+    setSelectedSqlState(prev2 => {
+      const val = prev1(prev2);
+
+      if (val && afterHidden) {
+        setAfterHidden(false);
+      } else if (!val && !afterHidden) {
+        setAfterHidden(true);
+      }
+
+      return val;
     });
+
   }, [
+    afterHidden,
     setAfterHidden,
     setSelectedSqlState,
   ]);
@@ -473,7 +489,7 @@ function ComputeManagement({
     <TripleLayout
       after={after}
       afterHeightOffset={HEADER_HEIGHT}
-      afterHidden={afterHidden}
+      afterHidden={afterHidden || !selectedSql}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}

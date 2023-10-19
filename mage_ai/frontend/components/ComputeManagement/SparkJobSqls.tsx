@@ -67,7 +67,16 @@ function SparkJobSqls({
           uuid: 'Failed jobs',
         },
       ]}
-      onClickRow={(rowIndex: number) => setSelectedSql?.(sqls?.[rowIndex])}
+      onClickRow={(rowIndex: number) => {
+        const sql = sqls?.[rowIndex];
+        setSelectedSql?.(prev => {
+          if (!prev || prev?.id !== sql?.id) {
+            return sql;
+          }
+
+          return null;
+        });
+      }}
       renderExpandedRowWithObject={(rowIndex: number, object: any) => {
         const sql = sqls?.[rowIndex];
 
@@ -101,9 +110,6 @@ function SparkJobSqls({
             <Spacing p={PADDING_UNITS}>
               <Accordion
                 noBoxShadow
-                visibleMappingForced={{
-                  '0': true,
-                }}
               >
                 <AccordionPanel noPaddingContent title="Plan">
                   <Spacing p={PADDING_UNITS}>
