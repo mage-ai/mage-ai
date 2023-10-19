@@ -1,3 +1,4 @@
+import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
@@ -28,7 +29,7 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def jobs(self, application_id: str, **kwargs) -> List[Job]:
+    def applications_sync(self, **kwargs) -> List[Application]:
         pass
 
     @abstractmethod
@@ -36,7 +37,15 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def stages(self, application_id: str, **kwargs) -> List[Stage]:
+    def jobs_sync(self, application_id: str, **kwargs) -> List[Job]:
+        pass
+
+    @abstractmethod
+    async def stages(self, application_id: str, query: Dict = None, **kwargs) -> List[Stage]:
+        pass
+
+    @abstractmethod
+    async def stage(self, application_id: str, stage_id: int, **kwargs) -> Stage:
         pass
 
     @abstractmethod
@@ -87,7 +96,7 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def sqls(self, application_id: str, **kwargs) -> List[Sql]:
+    async def sqls(self, application_id: str, query: Dict = None, **kwargs) -> List[Sql]:
         pass
 
     @abstractmethod
@@ -98,15 +107,20 @@ class BaseAPI(ABC):
     async def environment(self, application_id: str, **kwargs) -> Environment:
         pass
 
-    async def get(self, path: str):
-        response = await self.__build_request('get', f'{self.endpoint}{path}')
+    async def get(self, path: str, query: Dict = None):
+        response = await self.__build_request('get', f'{self.endpoint}{path}', query=query)
         return response.json()
 
-    async def __build_request(
+    def get_sync(self, path: str, query: Dict = None):
+        response = self.__build_request_sync('get', f'{self.endpoint}{path}', query=query)
+        return response.json()
+
+    def __build_request_sync(
         self,
         http_method: str,
         url: str,
         headers: Dict = None,
+        query: Dict = None,
         payload: Dict = None,
     ):
         session = requests.Session()
@@ -115,6 +129,9 @@ class BaseAPI(ABC):
         session.mount('http://', adapter_http)
         session.mount('https://', adapter_https)
 
+        if query:
+            url = f'{url}?{urllib.parse.urlencode(query)}'
+
         return getattr(session, http_method)(
             url,
             data=payload,
@@ -122,3 +139,6 @@ class BaseAPI(ABC):
             timeout=12,
             verify=False,
         )
+
+    async def __build_request(self, *args, **kwargs):
+        return self.__build_request_sync(*args, **kwargs)

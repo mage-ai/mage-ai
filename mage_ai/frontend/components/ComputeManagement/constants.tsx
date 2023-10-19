@@ -20,12 +20,14 @@ export enum MainNavigationTabEnum {
   CONNECTION = 'CONNECTION',
   RESOURCES = 'RESOURCES',
   MONITORING = 'MONITORING',
+  SYSTEM = 'SYSTEM',
 }
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
   [MainNavigationTabEnum.CONNECTION]: 'Connection',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
   [MainNavigationTabEnum.MONITORING]: 'Monitoring',
+  [MainNavigationTabEnum.SYSTEM]: 'System',
 };
 
 export const COMPUTE_SERVICE_DISPLAY_NAME = {
@@ -88,3 +90,15 @@ export const COMPUTE_SERVICES: {
     uuid: ComputeServiceEnum.AWS_EMR,
   },
 ];
+
+export const SHARED_TEXT_PROPS: {
+  default: boolean;
+  monospace: boolean;
+  preWrap: boolean;
+  small: boolean;
+} = {
+  default: true,
+  monospace: true,
+  preWrap: true,
+  small: true,
+};

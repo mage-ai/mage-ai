@@ -31,3 +31,46 @@ SparkStagePolicy.allow_read(
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
+
+
+SparkStagePolicy.allow_read(
+    [
+        'stage_attempts',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+
+SparkStagePolicy.allow_query(
+    [
+        'details',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+
+SparkStagePolicy.allow_query(
+    [
+        'quantiles',
+        'withSummaries',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
