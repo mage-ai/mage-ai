@@ -141,9 +141,16 @@ function ComputeManagement({
     setSelectedSqlState,
   ]);
 
-  const [selectedTab, setSelectedTab] = useState<{
+  const [selectedTab, setSelectedTabState] = useState<{
     main?: MainNavigationTabEnum;
   }>(null);
+  const setSelectedTab = useCallback((prev) => {
+    setSelectedSql(() => null);
+    setSelectedTabState(prev);
+  }, [
+    setSelectedSql,
+    setSelectedTabState,
+  ]);
 
   const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
