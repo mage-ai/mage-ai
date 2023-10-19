@@ -62,26 +62,8 @@ function ColumnScroller({
     totalHeight,
   ]);
 
-  const handleMouseMove = useCallback((event, clientY = null) => {
-    if (!startData && clientY == null) {
-      return;
-    }
-
-    event.preventDefault();
-
-    let yFinal
+  const updatePosition = useCallback((yFinal: number) => {
     const yMin = refCursorContainer?.current?.getBoundingClientRect()?.y;
-
-    if (clientY === null) {
-      const currentScrollTop = startData?.scrollTop;
-      const yStart = startData?.event?.clientY;
-      const distance = event?.clientY - yStart;
-
-      yFinal = currentScrollTop + distance;
-    } else {
-      yFinal = clientY;
-    }
-
     if (yFinal <= yMin) {
       yFinal = yMin;
     } else if ((yFinal + cursorHeight) >= (y + height)) {
@@ -96,9 +78,41 @@ function ColumnScroller({
     height,
     refCursor,
     refCursorContainer,
-    setStartData,
-    startData,
     y,
+  ]);
+
+  const handleWheel = useCallback((event) => {
+    const rect = refCursor?.current?.getBoundingClientRect();
+    let yFinal = (rect?.y || 0) + (event?.deltaY || 0);
+
+    updatePosition(yFinal);
+  }, [
+    updatePosition,
+  ]);
+
+  const handleMouseMove = useCallback((event, clientY = null) => {
+    if (!startData && clientY == null) {
+      return;
+    }
+
+    event.preventDefault();
+
+    let yFinal
+
+    if (clientY === null) {
+      const currentScrollTop = startData?.scrollTop;
+      const yStart = startData?.event?.clientY;
+      const distance = event?.clientY - yStart;
+
+      yFinal = currentScrollTop + distance;
+    } else {
+      yFinal = clientY;
+    }
+
+    updatePosition(yFinal);
+  }, [
+    startData,
+    updatePosition,
   ]);
 
   useEffect(() => {
@@ -109,17 +123,20 @@ function ColumnScroller({
 
     if (typeof window !== 'undefined') {
       window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('wheel', handleWheel);
       window.addEventListener('mouseup', clearStartData);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('wheel', handleWheel);
         window.removeEventListener('mouseup', clearStartData);
       }
     };
   }, [
     handleMouseMove,
+    handleWheel,
   ]);
 
   // Clicking a part of the container should scroll to the part.

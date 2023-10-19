@@ -393,13 +393,49 @@ function CodeBlock({
 
   useEffect(() => {
     const handleMouseMove = (event) => {
-      if (!startData && !startData2) {
+      if (!startData && !startData2 && event?.type !== 'wheel') {
         return;
       }
 
       const arr = [];
 
       let columnScrolling;
+
+      if (event?.type === 'wheel') {
+        const {
+          pageX,
+          pageY,
+        } = event;
+
+        const {
+          height: height1,
+          width: width1,
+          x: x1,
+          y: y1,
+        } = mainContainerRect || {};
+
+        if (pageX >= x1 && pageX <= x1 + width1 && pageY >= y1 && pageY <= y1 + height1) {
+          if (pageX < (x1 + width1) / 2) {
+            columnScrolling = 0;
+            arr.push([
+              refCursorContainer,
+              refCursor,
+              codeBlockHeights,
+              totalHeightCodeBlocks,
+              refColumn1,
+            ]);
+          } else {
+            columnScrolling = 1;
+            arr.push([
+              refCursorContainer2,
+              refCursor2,
+              blockOutputHeights,
+              totalHeightBlockOuputs,
+              refColumn2,
+            ]);
+          }
+        }
+      }
 
       if (startData) {
         columnScrolling = 0;
@@ -410,9 +446,7 @@ function CodeBlock({
           totalHeightCodeBlocks,
           refColumn1,
         ]);
-      }
-
-      if (startData2) {
+      } else if (startData2) {
         columnScrolling = 1;
         arr.push([
           refCursorContainer2,
@@ -455,17 +489,20 @@ function CodeBlock({
     if (sideBySideEnabled) {
       if (typeof window !== 'undefined') {
         window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('wheel', handleMouseMove);
       }
     }
 
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('wheel', handleMouseMove);
       }
     };
   }, [
     blockIdx,
     codeBlockHeights,
+    mainContainerRect,
     refColumn1,
     refColumn2,
     refCursor,
