@@ -17,6 +17,7 @@
   "dependencies": {
     "@amplitude/react-amplitude": "^1.0.0",
     "@monaco-editor/react": "^4.4.5",
+    "@types/moment-duration-format": "^2.2.5",
     "@types/react-table": "^7.7.12",
     "@visx/axis": "2.14.0",
     "@visx/curve": "2.1.0",
