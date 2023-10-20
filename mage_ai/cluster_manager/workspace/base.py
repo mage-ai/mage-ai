@@ -107,7 +107,7 @@ class Workspace:
         raise NotImplementedError('Initialize method not implemented')
 
     def delete(self, **kwargs):
-        if get_project_type() == ProjectType.MAIN:
+        if get_project_type() == ProjectType.MAIN and os.path.exists(self.config_path):
             os.remove(self.config_path)
 
     def stop(self):

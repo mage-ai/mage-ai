@@ -298,7 +298,7 @@ function ConfigureWorkspace({
     lifecycleConfig,
     setLifecycleConfig,
   ]);
-  
+
   return (
     <Panel>
       <div style={{ width: '750px' }}>

@@ -30,18 +30,19 @@ class CloudRunWorkspace(Workspace):
         )
         region = kwargs.get('region', os.getenv('GCP_REGION'))
 
-        with open(config_path, 'w', encoding='utf-8') as fp:
-            yaml.dump(
-                merge_dict(
-                    kwargs,
-                    dict(
-                        project_id=project_id,
-                        path_to_credentials=path_to_credentials,
-                        region=region,
+        if config_path:
+            with open(config_path, 'w', encoding='utf-8') as fp:
+                yaml.dump(
+                    merge_dict(
+                        kwargs,
+                        dict(
+                            project_id=project_id,
+                            path_to_credentials=path_to_credentials,
+                            region=region,
+                        ),
                     ),
-                ),
-                fp,
-            )
+                    fp,
+                )
 
         cloud_run_service_manager = CloudRunServiceManager(
             project_id, path_to_credentials, region=region

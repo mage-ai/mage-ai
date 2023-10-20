@@ -32,16 +32,17 @@ class KubernetesWorkspace(Workspace):
 
         namespace = kwargs.pop('namespace', os.getenv(KUBE_NAMESPACE))
 
-        with open(config_path, 'w', encoding='utf-8') as fp:
-            yaml.dump(
-                merge_dict(
-                    kwargs,
-                    dict(
-                        namespace=namespace,
+        if config_path:
+            with open(config_path, 'w', encoding='utf-8') as fp:
+                yaml.dump(
+                    merge_dict(
+                        kwargs,
+                        dict(
+                            namespace=namespace,
+                        ),
                     ),
-                ),
-                fp,
-            )
+                    fp,
+                )
 
         workload_manager = WorkloadManager(namespace)
 

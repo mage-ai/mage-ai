@@ -35,18 +35,19 @@ class EcsWorkspace(Workspace):
             'container_name',
             os.getenv(ECS_CONTAINER_NAME),
         )
-        with open(config_path, 'w', encoding='utf-8') as fp:
-            yaml.dump(
-                merge_dict(
-                    kwargs,
-                    dict(
-                        cluster_name=cluster_name,
-                        task_definition=task_definition,
-                        container_name=container_name,
+        if config_path:
+            with open(config_path, 'w', encoding='utf-8') as fp:
+                yaml.dump(
+                    merge_dict(
+                        kwargs,
+                        dict(
+                            cluster_name=cluster_name,
+                            task_definition=task_definition,
+                            container_name=container_name,
+                        ),
                     ),
-                ),
-                fp,
-            )
+                    fp,
+                )
 
         ecs_instance_manager = EcsTaskManager(cluster_name)
 

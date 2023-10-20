@@ -101,14 +101,7 @@ def check_auto_termination(cluster_type: ClusterType):
                                 latest_activity_time,
                                 last_scheduler_activity.timestamp(),
                             )
-                        print('here2')
                         now_time = datetime.utcnow().timestamp()
-                        print(
-                            active_pipeline_run_count,
-                            now_time,
-                            latest_activity_time,
-                            max_idle_seconds,
-                        )
                         if (
                             not active_pipeline_run_count
                             and now_time - latest_activity_time > max_idle_seconds
