@@ -76,7 +76,7 @@ class ApiResourceDownloadHandler(BaseHandler):
 
             file_path = decoded_payload['file_path']
             file_name = file_path.split('/')[-1]
-            is_temporary = TEMPORARY_DOWNLOAD_LOCATION in file_path
+            is_temporary = file_path.startswith(TEMPORARY_DOWNLOAD_LOCATION)
             with open(file_path, "rb") as f:
                 try:
                     while True:
@@ -85,12 +85,13 @@ class ApiResourceDownloadHandler(BaseHandler):
                             self.write(_buffer)
                         else:
                             f.close()
-                            if is_temporary:
-                                os.remove(file_path)
                             break
                 except Exception:
                     self.set_status(400)
                     self.write(f'Error fetching file {file_name}')
+                finally:
+                    if is_temporary:
+                        os.remove(file_path)
 
             self.set_header('Content-Type', 'application/force-download')
             self.set_header('Content-Disposition', f'attachment; filename={file_name}')
