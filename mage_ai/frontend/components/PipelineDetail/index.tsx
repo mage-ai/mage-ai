@@ -247,10 +247,10 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  console.log('PipelineDetail render');
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
   const blockOutputRefs = useRef({});
+  const blockOutputInnerRefs = useRef({});
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
   const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
@@ -300,9 +300,14 @@ function PipelineDetail({
 
   const [maxHeights, setMaxHeights] = useState<number[]>(null);
   const [codeBlockHeights, setCodeBlockHeights] = useState<number[]>(null);
+  const [blockOutputInnerHeights, setBlockOutputInnerHeights] = useState<number>(null);
   const [blockOutputHeights, setBlockOutputHeights] = useState<number>(null);
 
   const updateCodeBlockHeights = useCallback(() => {
+    if (!sideBySideEnabled) {
+      return;
+    }
+
     setCodeBlockHeights(blocksFiltered?.map((block) => {
       const path = buildBlockRefKey(block);
       const blockRef = blockRefs?.current?.[path];
@@ -321,8 +326,13 @@ function PipelineDetail({
     blockRefs,
     blocksFiltered,
     setCodeBlockHeights,
+    sideBySideEnabled,
   ]);
   const updateBlockOutputHeights = useCallback(() => {
+    if (!sideBySideEnabled) {
+      return;
+    }
+
     setBlockOutputHeights(blocksFiltered?.map((block) => {
       const path = buildBlockRefKey(block);
       const blockRef = blockOutputRefs?.current?.[path];
@@ -341,32 +351,109 @@ function PipelineDetail({
     blockOutputRefs,
     blocksFiltered,
     setBlockOutputHeights,
+    sideBySideEnabled,
+  ]);
+  const updateBlockOutputInnerHeights = useCallback(() => {
+    if (!sideBySideEnabled) {
+      return;
+    }
+
+    setBlockOutputInnerHeights(blocksFiltered?.map((block) => {
+      const path = buildBlockRefKey(block);
+      const blockRef = blockOutputInnerRefs?.current?.[path];
+      if (blockRef) {
+        const value = blockRef?.current?.getBoundingClientRect()?.height;
+        if (typeof value === 'undefined' || value === null) {
+          return 0
+        }
+
+        return value;
+      }
+
+      return 0;
+    }));
+  }, [
+    blockOutputInnerRefs,
+    blocksFiltered,
+    setBlockOutputInnerHeights,
+    sideBySideEnabled,
   ]);
 
   useEffect(() => {
-    if (Object.values(mountedBlocks)?.length >= 1) {
+    if (sideBySideEnabled && Object.values(mountedBlocks)?.length >= 1) {
       updateBlockOutputHeights();
+      updateBlockOutputInnerHeights();
       updateCodeBlockHeights();
     }
   }, [
     mountedBlocks,
+    sideBySideEnabled,
     updateBlockOutputHeights,
+    updateBlockOutputInnerHeights,
     updateCodeBlockHeights,
   ]);
 
+  const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
+    acc: {
+      [uuid: string]: BlockType;
+    },
+    block: BlockType,
+    idx: number,
+  ) => ({
+    ...acc,
+    [block.uuid]: {
+      ...block,
+      priority: idx,
+    },
+  }), {}), [runningBlocks]);
+
   useEffect(() => {
-    if (scrollTogether && codeBlockHeights?.length >= 1 && blockOutputHeights?.length >= 1) {
+    if (sideBySideEnabled
+      && scrollTogether
+      && codeBlockHeights?.length >= 1
+      && blockOutputHeights?.length >= 1
+    ) {
+
       const arr = [];
       codeBlockHeights?.forEach((height: number, idx: number) => {
-        arr.push(Math.max((height || 0), (blockOutputHeights?.[idx] || 0)));
+        const block = blocksFiltered?.[idx];
+        const blockUUID = block?.uuid;
+        const blockMessages = messages?.[blockUUID];
+        const runningBlock = runningBlocksByUUID?.[blockUUID];
+        const executionState = runningBlock
+          ? (runningBlock?.priority === 0
+            ? ExecutionStateEnum.BUSY
+            : ExecutionStateEnum.QUEUED
+          )
+          : ExecutionStateEnum.IDLE;
+
+        const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
+          || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
+        const heights = [
+          (height || 0),
+          (blockOutputHeights?.[idx] || 0),
+        ];
+
+        // This will push down the blocks as the output height increases while the block is running.
+        if (isInProgress) {
+          heights.push(blockOutputInnerHeights?.[idx] || 0);
+        }
+
+        arr.push(Math.max(...heights));
       });
       setMaxHeights(arr);
     }
   }, [
     blockOutputHeights,
+    blockOutputInnerHeights,
+    blocksFiltered,
     codeBlockHeights,
+    messages,
+    runningBlocksByUUID,
     scrollTogether,
     setMaxHeights,
+    sideBySideEnabled,
   ]);
 
   const [cursorHeight1, setCursorHeight1] = useState<number>(null);
@@ -410,8 +497,8 @@ function PipelineDetail({
   const column2ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
-        columnIndex={1}
-        columns={2}
+        columnIndex={scrollTogether ? 0 : 1}
+        columns={scrollTogether ? 1 : 2}
         cursorHeight={cursorHeight2}
         heights={scrollTogether ? maxHeights : blockOutputHeights}
         mainContainerRect={mainContainerRect}
@@ -437,20 +524,6 @@ function PipelineDetail({
     setStartData2,
     startData2,
   ]);
-
-  const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
-    acc: {
-      [uuid: string]: BlockType;
-    },
-    block: BlockType,
-    idx: number,
-  ) => ({
-    ...acc,
-    [block.uuid]: {
-      ...block,
-      priority: idx,
-    },
-  }), {}), [runningBlocks]);
 
   const selectedBlockPrevious = usePrevious(selectedBlock);
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
@@ -835,6 +908,7 @@ function PipelineDetail({
         type,
         uuid,
       });
+      blockOutputInnerRefs.current[path] = createRef();
       blockOutputRefs.current[path] = createRef();
       blockRefs.current[path] = createRef();
 
@@ -844,6 +918,7 @@ function PipelineDetail({
       const isHidden = !!hiddenBlocks?.[uuid];
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
       const currentBlockOutputRef = blockOutputRefs.current[path];
+      const currentBlockOutputInnerRef = blockOutputInnerRefs.current[path];
       const currentBlockRef = blockRefs.current[path];
 
       let key = uuid;
@@ -902,6 +977,8 @@ function PipelineDetail({
             blockIdx={idx}
             blockInteractions={blockInteractionsMapping?.[uuid]}
             blockOutputHeights={blockOutputHeights}
+            blockOutputInnerHeights={blockOutputInnerHeights}
+            blockOutputInnerRef={currentBlockOutputInnerRef}
             blockOutputRef={currentBlockOutputRef}
             blockOutputRefs={blockOutputRefs}
             blockRefs={blockRefs}
@@ -970,6 +1047,7 @@ function PipelineDetail({
             startData2={startData2}
             textareaFocused={selected && textareaFocused}
             updateBlockOutputHeights={updateBlockOutputHeights}
+            updateBlockOutputInnerHeights={updateBlockOutputInnerHeights}
             updateCodeBlockHeights={updateCodeBlockHeights}
             widgets={widgets}
             windowWidth={windowWidth}
@@ -1003,6 +1081,8 @@ function PipelineDetail({
     autocompleteItems,
     blockInteractionsMapping,
     blockOutputHeights,
+    blockOutputInnerHeights,
+    blockOutputInnerRefs,
     blockOutputRefs,
     blockRefs,
     blockTemplates,
@@ -1068,6 +1148,7 @@ function PipelineDetail({
     textareaFocused,
     updateBlock,
     updateBlockOutputHeights,
+    updateBlockOutputInnerHeights,
     updateCodeBlockHeights,
     widgets,
     windowWidth,

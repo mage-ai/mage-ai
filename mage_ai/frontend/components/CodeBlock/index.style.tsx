@@ -326,9 +326,9 @@ export const ScrollColunnStyle = styled.div<{
   right?: number;
   top?: number;
   width: number;
+  zIndex?: number;
 }>`
   position: fixed;
-  z-index: 2;
 
   ${props => props.height && `
     height: ${props.height}px;
@@ -348,5 +348,13 @@ export const ScrollColunnStyle = styled.div<{
 
   ${props => typeof props.top !== 'undefined' && `
     top: ${props.top}px;
+  `}
+
+  ${props => typeof props.zIndex === 'undefined' && `
+    z-index: 2;
+  `}
+
+  ${props => typeof props.zIndex !== 'undefined' && `
+    z-index: ${(props?.zIndex || 0) + 2};
   `}
 `;

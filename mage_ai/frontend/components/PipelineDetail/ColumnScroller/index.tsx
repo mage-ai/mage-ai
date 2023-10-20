@@ -94,7 +94,6 @@ function ColumnScroller({
 
     // Make sure they are scrolling on the correct half of the screen
     if (pageX >= x && pageX <= x + width && pageY >= y && pageY <= y + height) {
-      // columnIndex
       const columnWidth = width / columns;
 
       if (pageX >= x + (columnWidth * columnIndex)) {

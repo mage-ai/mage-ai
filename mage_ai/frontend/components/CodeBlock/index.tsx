@@ -171,8 +171,9 @@ type CodeBlockProps = {
   blockIdx: number;
   blockInteractions?: BlockInteractionType[];
   blockOutputHeights?: number[];
-  blockOutputRef: any;
-  blockOutputRefs: any;
+  blockOutputInnerHeights?: number[];
+  blockOutputInnerRef?: any;
+  blockOutputRef?: any;
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
@@ -281,6 +282,7 @@ type CodeBlockProps = {
     scrollTop: number;
   }) => void;
   updateBlockOutputHeights?: () => void;
+  updateBlockOutputInnerHeights?: () => void;
   updateCodeBlockHeights?: () => void;
   widgets?: BlockType[];
   windowWidth?: number;
@@ -301,8 +303,9 @@ function CodeBlock({
   blockIdx,
   blockInteractions,
   blockOutputHeights: blockOutputHeightsProp,
+  blockOutputInnerHeights,
+  blockOutputInnerRef,
   blockOutputRef,
-  blockOutputRefs,
   blockRefs,
   blockTemplates,
   blocks = [],
@@ -371,6 +374,7 @@ function CodeBlock({
   startData2,
   textareaFocused,
   updateBlockOutputHeights,
+  updateBlockOutputInnerHeights,
   updateCodeBlockHeights,
   widgets,
   windowWidth,
@@ -434,16 +438,9 @@ function CodeBlock({
       if (pageX >= x1 && pageX <= x1 + width1 && pageY >= y1 && pageY <= y1 + height1) {
         const columnWidth = width1 / 2;
 
-        if (pageX >= x1 && pageX < (x1 + columnWidth)) {
-          columnScrolling = 0;
-          arr.push([
-            refCursorContainer,
-            refCursor,
-            codeBlockHeights,
-            totalHeightCodeBlocks,
-            refColumn1,
-          ]);
-        } else if (pageX >= (x1 + columnWidth) && pageX < (x1 + (columnWidth * 2))) {
+        if (scrollTogether
+          || pageX >= (x1 + columnWidth) && pageX < (x1 + (columnWidth * 2))
+        ) {
           columnScrolling = 1;
           arr.push([
             refCursorContainer2,
@@ -451,6 +448,15 @@ function CodeBlock({
             blockOutputHeights,
             totalHeightBlockOuputs,
             refColumn2,
+          ]);
+        } else if (pageX >= x1 && pageX < (x1 + columnWidth)) {
+          columnScrolling = 0;
+          arr.push([
+            refCursorContainer,
+            refCursor,
+            codeBlockHeights,
+            totalHeightCodeBlocks,
+            refColumn1,
           ]);
         }
       }
@@ -844,15 +850,7 @@ function CodeBlock({
       bypassOffScreen: boolean;
     },
   ) => {
-    if (sideBySideEnabled
-      && !scrollTogether
-      && mainContainerRect
-      && refColumnToSyncFrom?.current
-      && refColumnToSync?.current
-      && refCursorToSync?.current
-    ) {
-      const height = mainContainerRect?.height;
-      const y = mainContainerRect?.y;
+    if (sideBySideEnabled && !scrollTogether && refColumnToSync?.current) {
       const {
         height: height2,
         y: y2,
@@ -860,38 +858,46 @@ function CodeBlock({
 
       setBlockOutputHeightCache(height2);
 
-      // Top is below the screen or bottom is above the screen
-      if (opts?.bypassOffScreen || (y2 >= y + height || y2 + height2 <= y)) {
-        const top1 = refColumnToSyncFrom?.current?.getBoundingClientRect()?.y;
-        const heightUpToBlockIdx = sum(heights?.slice(0, blockIdx) || []);
+      if (mainContainerRect
+        && refColumnToSyncFrom?.current
+        && refCursorToSync?.current
+      ) {
+        const height = mainContainerRect?.height;
+        const y = mainContainerRect?.y;
 
-        const {
-          height: heightCC2,
-          y: yCC2,
-        } = refCursorContainerToSync?.current?.getBoundingClientRect() || {};
-        const {
-          height: heightC2,
-        } = refCursorToSync?.current?.getBoundingClientRect() || {};
+        // Top is below the screen or bottom is above the screen
+        if (opts?.bypassOffScreen || (y2 >= y + height || y2 + height2 <= y)) {
+          const top1 = refColumnToSyncFrom?.current?.getBoundingClientRect()?.y;
+          const heightUpToBlockIdx = sum(heights?.slice(0, blockIdx) || []);
 
-        const offsetPercentage = calculateOffsetPercentage(
-          heights,
-          totalHeight,
-          height,
-        );
-        const percentageMoved1 = (heightUpToBlockIdx - (top1 - yCC2)) / (totalHeight);
+          const {
+            height: heightCC2,
+            y: yCC2,
+          } = refCursorContainerToSync?.current?.getBoundingClientRect() || {};
+          const {
+            height: heightC2,
+          } = refCursorToSync?.current?.getBoundingClientRect() || {};
 
-        const top = ((percentageMoved1 / (1 - offsetPercentage)) * (heightCC2 - heightC2)) + yCC2;
+          const offsetPercentage = calculateOffsetPercentage(
+            heights,
+            totalHeight,
+            height,
+          );
+          const percentageMoved1 = (heightUpToBlockIdx - (top1 - yCC2)) / (totalHeight);
 
-        refCursorToSync.current.style.top = `${top}px`;
+          const top = ((percentageMoved1 / (1 - offsetPercentage)) * (heightCC2 - heightC2)) + yCC2;
 
-        const evt = new CustomEvent(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, {
-          detail: {
-            columnScrolling,
-          },
-        });
+          refCursorToSync.current.style.top = `${top}px`;
 
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(evt);
+          const evt = new CustomEvent(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, {
+            detail: {
+              columnScrolling,
+            },
+          });
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(evt);
+          }
         }
       }
     }
@@ -919,15 +925,19 @@ function CodeBlock({
       [key: string]: any;
     };
   }) => {
-    syncColumnTopPositions(
-      refColumn1,
-      refColumn2,
-      refCursorContainer2,
-      refCursor2,
-      blockOutputHeights,
-      totalHeightBlockOuputs,
-      1,
-    );
+    if (scrollTogether) {
+      setBlockOutputHeightCache(refColumn2?.current?.getBoundingClientRect?.()?.height);
+    } else {
+      syncColumnTopPositions(
+        refColumn1,
+        refColumn2,
+        refCursorContainer2,
+        refCursor2,
+        blockOutputHeights,
+        totalHeightBlockOuputs,
+        1,
+      );
+    }
 
     const {
       block: blockPayload,
@@ -1008,6 +1018,7 @@ function CodeBlock({
     refCursorContainer2,
     runBlock,
     runCount,
+    scrollTogether,
     selectedTab,
     setRunCount,
     setRunEndTime,
@@ -1562,6 +1573,22 @@ function CodeBlock({
     selectedTab,
   ]);
 
+  const blockOutputHeightCacheUse = useMemo(() => {
+    const height = blockOutputInnerHeights?.[blockIdx];
+
+    // When not scrolling together, this will help push down the other blocks while this block
+    // is executing and the code output is growing.
+    if (height && blockOutputHeightCache) {
+      return Math.max(height, blockOutputHeightCache);
+    }
+
+    return blockOutputHeightCache;
+  }, [
+    blockIdx,
+    blockOutputHeightCache,
+    blockOutputInnerHeights,
+  ]);
+
   const codeOutputEl = useMemo(() => (
     <CodeOutput
       {...borderColorShareProps}
@@ -1570,7 +1597,7 @@ function CodeBlock({
       buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
       hasOutput={hasOutput}
-      height={sideBySideEnabled ? blockOutputHeightCache : null}
+      height={sideBySideEnabled ? blockOutputHeightCacheUse : null}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -1579,6 +1606,7 @@ function CodeBlock({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={blockOutputRef}
+      refInner={blockOutputInnerRef}
       runCount={runCount}
       runEndTime={runEndTime}
       runStartTime={runStartTime}
@@ -1600,6 +1628,7 @@ function CodeBlock({
       showBorderTop={sideBySideEnabled}
       sideBySideEnabled={sideBySideEnabled}
       updateBlockOutputHeights={updateBlockOutputHeights}
+      updateBlockOutputInnerHeights={updateBlockOutputInnerHeights}
     >
       {sideBySideEnabled && (
         <Spacing px={PADDING_UNITS} py={1}>
@@ -1651,7 +1680,8 @@ function CodeBlock({
   ), [
     block,
     blockMetadata,
-    blockOutputHeightCache,
+    blockOutputHeightCacheUse,
+    blockOutputInnerRef,
     blockOutputRef,
     borderColorShareProps,
     buttonTabs,
@@ -1685,6 +1715,7 @@ function CodeBlock({
     syncColumnTopPositions,
     totalHeightCodeBlocks,
     updateBlockOutputHeights,
+    updateBlockOutputInnerHeights,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
@@ -1997,6 +2028,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       <div
         ref={ref}
         style={{
+          height: sideBySideEnabled && scrollTogether ? blockOutputHeightCacheUse : null,
           paddingTop: sideBySideEnabled && blockIdx === 0 ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
           position: 'relative',
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
@@ -3244,7 +3276,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
 
     return (
       <ScrollColunnStyle
-        // height={height}
         left={left}
         ref={refColumn1}
         top={y + top}
@@ -3279,11 +3310,11 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
 
     return (
       <ScrollColunnStyle
-        // height={height}
         ref={refColumn2}
         right={right}
         top={y + top}
         width={widthColumn}
+        zIndex={(blocks?.length || 0) - blockIdx}
       >
         {codeOutputEl}
       </ScrollColunnStyle>
@@ -3291,6 +3322,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
   }, [
     blockIdx,
     blockOutputHeights,
+    blocks,
     codeOutputEl,
     column2HasScroll,
     mainContainerRect,

@@ -84,6 +84,7 @@ type CodeOutputProps = {
   onClickSelectBlock?: () => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline?: PipelineType;
+  refInner?: any;
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
@@ -96,6 +97,7 @@ type CodeOutputProps = {
   showBorderTop?: boolean;
   sideBySideEnabled?: boolean;
   updateBlockOutputHeights?: () => void;
+  updateBlockOutputInnerHeights?: () => void;
 } & BorderColorShareProps;
 
 const SHARED_TOOLTIP_PROPS = {
@@ -133,6 +135,7 @@ function CodeOutput({
   onClickSelectBlock,
   openSidekickView,
   pipeline,
+  refInner,
   runCount,
   runEndTime,
   runStartTime,
@@ -146,12 +149,16 @@ function CodeOutput({
   showBorderTop,
   sideBySideEnabled,
   updateBlockOutputHeights,
+  updateBlockOutputInnerHeights,
 }: CodeOutputProps, ref) {
   useEffect(() => {
     updateBlockOutputHeights?.();
+    updateBlockOutputInnerHeights?.();
   }, [
     messages,
     messagesAll,
+    updateBlockOutputHeights,
+    updateBlockOutputInnerHeights,
   ]);
 
   const {
@@ -674,6 +681,7 @@ function CodeOutput({
           ? () => onClickSelectBlock?.()
           : null
         }
+        ref={refInner}
         style={{
           paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
         }}
