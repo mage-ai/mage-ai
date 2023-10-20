@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import (
@@ -30,3 +30,27 @@ def access_tokens_for_client(
         )
 
     return [row for row in access_tokens]
+
+
+def add_access_token_to_query(data: Dict, query: Dict) -> Dict:
+    access_token = data.get('access_token')
+
+    if access_token:
+        query['access_token'] = access_token
+    else:
+        error = data.get('error')
+        error_description = data.get('error_description')
+        error_uri = data.get('error_uri')
+
+        if error:
+            error = '. '.join(list(filter(lambda x: x, [
+                error,
+                error_description,
+                error_uri,
+            ])))
+        else:
+            error = 'Access token was not created.'
+
+        query['error'] = error
+
+    return query

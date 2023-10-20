@@ -2,6 +2,7 @@ import NextLink from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
+import { get, set, remove } from '@storage/localStorage';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
@@ -224,13 +225,13 @@ function Remote({
       ),
     },
   );
-  const { access_token: accessTokenFromURL } = queryFromUrl() || {};
+  const { access_token: accessTokenFromURL, provider: providerFromURL } = queryFromUrl() || {};
   useEffect(() => {
     if (oauth && !oauth?.authenticated && accessTokenFromURL) {
       // @ts-ignore
       createOauth({
         oauth: {
-          provider: OathProviderEnum.GITHUB,
+          provider: providerFromURL || OathProviderEnum.GITHUB,
           token: accessTokenFromURL,
         },
       });
@@ -239,6 +240,7 @@ function Remote({
     accessTokenFromURL,
     createOauth,
     oauth,
+    providerFromURL,
   ]);
 
   const remotesMemo = useMemo(() => remotes?.map(({
@@ -412,7 +414,13 @@ function Remote({
               <Button
                 beforeIcon={<GitHubIcon size={UNIT * 2} />}
                 loading={isLoadingCreateOauth}
-                onClick={() => router.push(oauth?.url)}
+                onClick={() => {
+                  const url = oauth?.url;
+                  const q = queryFromUrl(url);
+                  const state = q.state;
+                  set('oauth_state', state);
+                  router.push(oauth?.url);
+                }}
                 primary
               >
                 Authenticate with GitHub
