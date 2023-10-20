@@ -1,44 +1,67 @@
 import os
-from typing import Dict
 
+import yaml
+
+from mage_ai.cluster_manager.config import LifecycleConfig
 from mage_ai.cluster_manager.constants import KUBE_NAMESPACE
 from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
 from mage_ai.cluster_manager.workspace.base import Workspace
 from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
+from mage_ai.shared.hash import merge_dict
 
 
 class KubernetesWorkspace(Workspace):
-    def initialize(self, payload: Dict, project_uuid: str):
-        namespace = payload.pop('namespace', os.getenv(KUBE_NAMESPACE))
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.workload_manager = WorkloadManager(
+            self.config.get('namespace', os.getenv(KUBE_NAMESPACE)))
 
-        k8s_workload_manager = WorkloadManager(namespace)
+    @classmethod
+    def initialize(
+        cls,
+        name: str,
+        config_path: str,
+        **kwargs,
+    ) -> Workspace:
         project_type = get_project_type()
         extra_args = {}
         if project_type == ProjectType.MAIN:
             extra_args = {
                 'project_type': ProjectType.SUB,
-                'project_uuid': project_uuid,
             }
-        k8s_workload_manager.create_workload(
-            self.name,
-            self.lifecycle_config,
-            **payload,
+
+        namespace = kwargs.pop('namespace', os.getenv(KUBE_NAMESPACE))
+
+        with open(config_path, 'w', encoding='utf-8') as fp:
+            yaml.dump(
+                merge_dict(
+                    kwargs,
+                    dict(
+                        namespace=namespace,
+                    ),
+                ),
+                fp,
+            )
+
+        workload_manager = WorkloadManager(namespace)
+
+        lifecycle_config = kwargs.pop('lifecycle_config', dict())
+        workload_manager.create_workload(
+            name,
+            LifecycleConfig.load(config=lifecycle_config),
+            **kwargs,
             **extra_args,
         )
 
-    def delete(self, **kwargs):
-        namespace = os.getenv(KUBE_NAMESPACE)
+        return cls(name)
 
-        k8s_workload_manager = WorkloadManager(namespace)
-        k8s_workload_manager.delete_workload(self.name)
+    def delete(self, **kwargs):
+        self.workload_manager.delete_workload(self.name)
 
         super().delete(**kwargs)
 
-    def update(self, action, **kwargs):
-        namespace = os.getenv(KUBE_NAMESPACE)
-        workload_manager = WorkloadManager(namespace)
+    def stop(self, **kwargs):
+        self.workload_manager.scale_down_workload(self.name)
 
-        if action == 'stop':
-            workload_manager.scale_down_workload(self.name)
-        elif action == 'resume':
-            workload_manager.restart_workload(self.name)
+    def resume(self, **kwargs):
+        self.workload_manager.restart_workload(self.name)

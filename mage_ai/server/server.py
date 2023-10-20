@@ -469,11 +469,13 @@ async def main(
     )
     periodic_callback.start()
 
+    print('PROJECT TYPE:', project_type)
+
     if ProjectType.MAIN == project_type:
         # Check scheduler status periodically
         auto_termination_callback = PeriodicCallback(
             lambda: check_auto_termination(get_cluster_type()),
-            60_000,
+            10_000,
         )
         auto_termination_callback.start()
 
