@@ -429,6 +429,7 @@ function PipelineRuns({
         selectedRun={selectedRun}
         selectedRuns={selectedRuns}
         setErrors={setErrors}
+        setSelectedRun={setSelectedRun}
         setSelectedRuns={setSelectedRuns}
       />
       {paginationEl}

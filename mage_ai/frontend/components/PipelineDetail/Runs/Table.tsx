@@ -1,6 +1,6 @@
 import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
-import { createRef, useCallback, useMemo, useRef, useState } from 'react';
+import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
@@ -39,6 +39,7 @@ import {
   TIMEZONE_TOOLTIP_PROPS,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { KEY_CODE_ARROW_DOWN, KEY_CODE_ARROW_UP } from '@utils/hooks/keyboardShortcuts/constants';
 import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
@@ -51,6 +52,7 @@ import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { useKeyboardContext } from '@context/Keyboard';
 
 const SHARED_DATE_FONT_PROPS = {
   monospace: true,
@@ -268,6 +270,7 @@ type PipelineRunsTableProps = {
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
   selectedRuns?: { [keyof: string]: PipelineRunType };
+  setSelectedRun?: (selectedRun: any) => void;
   setSelectedRuns?: (selectedRuns: any) => void;
   setErrors?: (errors: ErrorsType) => void;
 };
@@ -285,6 +288,7 @@ function PipelineRunsTable({
   pipelineRuns,
   selectedRun,
   selectedRuns,
+  setSelectedRun,
   setSelectedRuns,
   setErrors,
 }: PipelineRunsTableProps) {
@@ -324,6 +328,54 @@ function PipelineRunsTable({
         },
       ),
     },
+  );
+
+  const getRunRowIndex = useCallback((run: PipelineRunType) => {
+    if (!run) return null;
+    
+    const rowIndex = pipelineRuns.findIndex(pipelineRun => pipelineRun.id === run.id);
+    return rowIndex >= 0 ? rowIndex : null;
+  }, [pipelineRuns]);
+
+  const uuidKeyboard = 'PipelineDetail/Runs/Table';
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping) => {
+      if (!setSelectedRun) return;
+      
+      setSelectedRun((prevSelectedRun) => {
+        const prevRowIndex = getRunRowIndex(prevSelectedRun);
+        if (prevRowIndex !== null) {
+          if (keyMapping[KEY_CODE_ARROW_UP]) {
+            pauseEvent(event);
+            let newRowIndex = prevRowIndex - 1;
+            if (newRowIndex < 0) {
+              newRowIndex = pipelineRuns.length - 1;
+            }
+            return pipelineRuns[newRowIndex];
+          } else if (keyMapping[KEY_CODE_ARROW_DOWN]) {
+            pauseEvent(event);
+            let newRowIndex = prevRowIndex + 1;
+            if (newRowIndex >= pipelineRuns.length) {
+              newRowIndex = 0;
+            }
+            return pipelineRuns[newRowIndex];
+          }
+        }
+
+        return prevSelectedRun;
+      });
+    }, 
+    [pipelineRuns, setSelectedRun],
   );
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
