@@ -90,6 +90,33 @@ function FileBrowser({
   const { data: serverStatus } = api.statuses.list();
   const repoPath = useMemo(() => serverStatus?.statuses?.[0]?.repo_path, [serverStatus]);
 
+  const [downloadFile] = useMutation(
+    (fullPath: string) => api.downloads.files.useCreate(fullPath)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            const url = response.data.download.uri
+            const a = document.createElement('a');
+            a.href = url;
+            document.body.appendChild(a); 
+
+            // Trigger the download
+            a.click();
+
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        }
+      )
+    }
+  );
+
   const [deleteFile] = useMutation(
     (fullPath: string) => api.files.useDelete(fullPath)(),
     {
@@ -474,6 +501,13 @@ function FileBrowser({
             showModalNewFile({ file: selectedFile, moveFile: true });
           },
           uuid: 'move_file',
+        }, {
+          label: () => 'Download file',
+          onClick: () => {
+            const fp = getFullPathWithoutRootFolder(selectedFile);
+            downloadFile(encodeURIComponent(fp));
+          },
+          uuid: 'download_file',
         },
       ]);
 

@@ -48,6 +48,7 @@ import {
   Pause,
   PipelineV3,
   PlayButtonFilled,
+  Save,
   Secrets,
   Schedule,
 } from '@oracle/icons';
@@ -287,6 +288,40 @@ function PipelineListPage() {
   const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
     q,
   ]);
+
+  const [downloadPipeline] = useMutation(
+    ({
+      pipelineUUID,
+      filesOnly = false,
+    }: {
+      pipelineUUID: string;
+      filesOnly?: boolean;
+    }) => 
+      api.downloads.pipelines.useCreate(pipelineUUID)({'download': {'ignore_folder_structure': filesOnly}}),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            const url = response.data.download.uri
+            const a = document.createElement('a');
+            a.href = url;
+            document.body.appendChild(a);
+
+            // Trigger the download
+            a.click();
+
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        }
+      )
+    }
+  );
 
   useEffect(() => {
     let queryFinal = {};
@@ -1205,6 +1240,26 @@ function PipelineListPage() {
             uuid: 'clone',
           },
           {
+            label: () => 'Download (keep folder structure)',
+            onClick: () => {
+              downloadPipeline({
+                pipelineUUID: selectedPipeline?.uuid,
+                filesOnly: false
+              });
+            },
+            uuid: 'download',
+          },
+          {
+            label: () => 'Download (without folder structure)',
+            onClick: () => {
+              downloadPipeline({
+                pipelineUUID: selectedPipeline?.uuid,
+                filesOnly: true
+              });
+            },
+            uuid: 'download',
+          },
+          {
             label: () => 'Add/Remove tags',
             onClick: () => {
               router.push(
@@ -1248,7 +1303,7 @@ function PipelineListPage() {
         ];
       }}
       rightClickMenuHeight={36 * 7}
-      rightClickMenuWidth={UNIT * 25}
+      rightClickMenuWidth={UNIT * 30}
       rowGroupHeaders={rowGroupHeadersInner}
       rows={pipelinesInner?.map((pipeline, idx) => {
         const {
@@ -1377,6 +1432,16 @@ function PipelineListPage() {
             flex={1} justifyContent="flex-end"
             key={`chevron_icon_${idx}`}
           >
+            <Button
+              {...sharedOpenButtonProps}
+              onClick={() => {
+                downloadPipeline({pipelineUUID: uuid});
+              }}
+              title="Download (keep folder structure)"
+            >
+              <Save default size={2 * UNIT} />
+            </Button>
+            <Spacing mr={1} />
             <Button
               {...sharedOpenButtonProps}
               onClick={() => {
