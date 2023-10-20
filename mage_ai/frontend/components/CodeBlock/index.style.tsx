@@ -320,41 +320,29 @@ export const ScrollColunnsContainerStyle = styled.div`
   z-index: 1;
 `;
 
-export const ScrollColunnStyle = styled.div<{
+export const ScrollColunnStyle = styled.div.attrs(({
+  height,
+  left,
+  right,
+  top,
+  width,
+  zIndex,
+}: {
   height: number;
   left?: number;
   right?: number;
   top?: number;
   width: number;
   zIndex?: number;
-}>`
-  position: fixed;
-
-  ${props => props.height && `
-    height: ${props.height}px;
-  `}
-
-  ${props => props.width && `
-    width: ${props.width}px;
-  `}
-
-  ${props => typeof props.left !== 'undefined' && `
-    left: ${props.left}px;
-  `}
-
-  ${props => typeof props.right !== 'undefined' && `
-    right: ${props.right}px;
-  `}
-
-  ${props => typeof props.top !== 'undefined' && `
-    top: ${props.top}px;
-  `}
-
-  ${props => typeof props.zIndex === 'undefined' && `
-    z-index: 2;
-  `}
-
-  ${props => typeof props.zIndex !== 'undefined' && `
-    z-index: ${(props?.zIndex || 0) + 2};
-  `}
+}) => ({
+  style: {
+    position: 'fixed',
+    height,
+    width,
+    left,
+    right,
+    top,
+    zIndex: (zIndex || 0) + 2,
+  },
+}))`
 `;

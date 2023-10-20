@@ -249,6 +249,7 @@ function PipelineDetail({
 }: PipelineDetailProps) {
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
+  const blockRefsInner = useRef({});
   const blockOutputRefs = useRef({});
   const blockOutputInnerRefs = useRef({});
 
@@ -274,7 +275,7 @@ function PipelineDetail({
     ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -300,6 +301,7 @@ function PipelineDetail({
 
   const [maxHeights, setMaxHeights] = useState<number[]>(null);
   const [codeBlockHeights, setCodeBlockHeights] = useState<number[]>(null);
+  const [codeBlockHeightsInner, setCodeBlockHeightsInner] = useState<number[]>(null);
   const [blockOutputInnerHeights, setBlockOutputInnerHeights] = useState<number>(null);
   const [blockOutputHeights, setBlockOutputHeights] = useState<number>(null);
 
@@ -326,6 +328,31 @@ function PipelineDetail({
     blockRefs,
     blocksFiltered,
     setCodeBlockHeights,
+    sideBySideEnabled,
+  ]);
+  const updateCodeBlockHeightsInner = useCallback(() => {
+    if (!sideBySideEnabled) {
+      return;
+    }
+
+    setCodeBlockHeightsInner(blocksFiltered?.map((block) => {
+      const path = buildBlockRefKey(block);
+      const blockRef = blockRefsInner?.current?.[path];
+      if (blockRef) {
+        const value = blockRef?.current?.getBoundingClientRect()?.height;
+        if (typeof value === 'undefined' || value === null) {
+          return 0
+        }
+
+        return value;
+      }
+
+      return 0;
+    }));
+  }, [
+    blockRefsInner,
+    blocksFiltered,
+    setCodeBlockHeightsInner,
     sideBySideEnabled,
   ]);
   const updateBlockOutputHeights = useCallback(() => {
@@ -384,6 +411,7 @@ function PipelineDetail({
       updateBlockOutputHeights();
       updateBlockOutputInnerHeights();
       updateCodeBlockHeights();
+      updateCodeBlockHeightsInner();
     }
   }, [
     mountedBlocks,
@@ -391,6 +419,7 @@ function PipelineDetail({
     updateBlockOutputHeights,
     updateBlockOutputInnerHeights,
     updateCodeBlockHeights,
+    updateCodeBlockHeightsInner,
   ]);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
@@ -410,12 +439,12 @@ function PipelineDetail({
   useEffect(() => {
     if (sideBySideEnabled
       && scrollTogether
-      && codeBlockHeights?.length >= 1
+      && codeBlockHeightsInner?.length >= 1
       && blockOutputHeights?.length >= 1
     ) {
 
       const arr = [];
-      codeBlockHeights?.forEach((height: number, idx: number) => {
+      codeBlockHeightsInner?.forEach((height: number, idx: number) => {
         const block = blocksFiltered?.[idx];
         const blockUUID = block?.uuid;
         const blockMessages = messages?.[blockUUID];
@@ -438,6 +467,8 @@ function PipelineDetail({
         // This will push down the blocks as the output height increases while the block is running.
         if (isInProgress) {
           heights.push(blockOutputInnerHeights?.[idx] || 0);
+        } else {
+
         }
 
         arr.push(Math.max(...heights));
@@ -448,7 +479,7 @@ function PipelineDetail({
     blockOutputHeights,
     blockOutputInnerHeights,
     blocksFiltered,
-    codeBlockHeights,
+    codeBlockHeightsInner,
     messages,
     runningBlocksByUUID,
     scrollTogether,
@@ -911,6 +942,7 @@ function PipelineDetail({
       blockOutputInnerRefs.current[path] = createRef();
       blockOutputRefs.current[path] = createRef();
       blockRefs.current[path] = createRef();
+      blockRefsInner.current[path] = createRef();
 
       let el;
       const isMarkdown = type === BlockTypeEnum.MARKDOWN;
@@ -920,6 +952,7 @@ function PipelineDetail({
       const currentBlockOutputRef = blockOutputRefs.current[path];
       const currentBlockOutputInnerRef = blockOutputInnerRefs.current[path];
       const currentBlockRef = blockRefs.current[path];
+      const currentBlockRefInner = blockRefsInner.current[path];
 
       let key = uuid;
       const refreshTimestamp = blocksThatNeedToRefresh?.[type]?.[uuid];
@@ -1017,6 +1050,7 @@ function PipelineDetail({
             pipeline={pipeline}
             project={project}
             ref={currentBlockRef}
+            refInner={currentBlockRefInner}
             refCursor={refCursor1}
             refCursorContainer={refCursorContainer1}
             refCursor2={refCursor2}
@@ -1049,6 +1083,7 @@ function PipelineDetail({
             updateBlockOutputHeights={updateBlockOutputHeights}
             updateBlockOutputInnerHeights={updateBlockOutputInnerHeights}
             updateCodeBlockHeights={updateCodeBlockHeights}
+            updateCodeBlockHeightsInner={updateCodeBlockHeightsInner}
             widgets={widgets}
             windowWidth={windowWidth}
           >
@@ -1085,6 +1120,7 @@ function PipelineDetail({
     blockOutputInnerRefs,
     blockOutputRefs,
     blockRefs,
+    blockRefsInner,
     blockTemplates,
     blocks,
     blocksFiltered,
@@ -1150,6 +1186,7 @@ function PipelineDetail({
     updateBlockOutputHeights,
     updateBlockOutputInnerHeights,
     updateCodeBlockHeights,
+    updateCodeBlockHeightsInner,
     widgets,
     windowWidth,
   ]);
