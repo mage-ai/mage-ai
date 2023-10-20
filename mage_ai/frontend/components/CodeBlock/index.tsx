@@ -840,6 +840,77 @@ function CodeBlock({
     widgets,
   ]);
 
+  const syncColumnTopPositions = useCallback((
+    refColumnToSyncFrom,
+    refColumnToSync,
+    refCursorContainerToSync,
+    refCursorToSync,
+    heights,
+    totalHeight,
+    columnScrolling,
+    opts: {
+      bypassOffScreen: boolean;
+    },
+  ) => {
+    if (sideBySideEnabled
+      && !scrollTogether
+      && mainContainerRect
+      && refColumnToSyncFrom?.current
+      && refColumnToSync?.current
+      && refCursorToSync?.current
+    ) {
+      const height = mainContainerRect?.height;
+      const y = mainContainerRect?.y;
+      const {
+        height: height2,
+        y: y2,
+      } = refColumnToSync?.current?.getBoundingClientRect?.() || {};
+
+      setBlockOutputHeightCache(height2);
+
+      // Top is below the screen or bottom is above the screen
+      if (opts?.bypassOffScreen || (y2 >= y + height || y2 + height2 <= y)) {
+        const top1 = refColumnToSyncFrom?.current?.getBoundingClientRect()?.y;
+        const heightUpToBlockIdx = sum(heights?.slice(0, blockIdx) || []);
+
+        const {
+          height: heightCC2,
+          y: yCC2,
+        } = refCursorContainerToSync?.current?.getBoundingClientRect() || {};
+        const {
+          height: heightC2,
+        } = refCursorToSync?.current?.getBoundingClientRect() || {};
+
+        const offsetPercentage = calculateOffsetPercentage(
+          heights,
+          totalHeight,
+        );
+        const percentageMoved1 = (heightUpToBlockIdx - (top1 - yCC2)) / (totalHeight);
+
+        const top = ((percentageMoved1 + offsetPercentage) * (heightCC2 - heightC2)) + yCC2;
+
+        refCursorToSync.current.style.top = `${top}px`;
+
+        const evt = new CustomEvent(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, {
+          detail: {
+            columnScrolling,
+          },
+        });
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(evt);
+        }
+      }
+    }
+  }, [
+    blockIdx,
+    calculateOffsetPercentage,
+    mainContainerRect,
+    scrollTogether,
+    setBlockOutputHeightCache,
+    sideBySideEnabled,
+  ]);
+
   const runBlockAndTrack = useCallback((payload?: {
     block: BlockType;
     code?: string;
@@ -855,61 +926,15 @@ function CodeBlock({
       [key: string]: any;
     };
   }) => {
-    if (sideBySideEnabled
-      && !scrollTogether
-      && mainContainerRect
-      && refColumn2?.current
-      && refCursor?.current
-      && refCursor2?.current
-    ) {
-      const height = mainContainerRect?.height;
-      const y = mainContainerRect?.y;
-      const {
-        height: height2,
-        y: y2,
-      } = refColumn2?.current?.getBoundingClientRect?.() || {};
-
-      setBlockOutputHeightCache(height2);
-
-      // Top is below the screen or bottom is above the screen
-      if (y2 >= y + height || y2 + height2 <= y) {
-        const top1 = refColumn1?.current?.getBoundingClientRect()?.y;
-        const heightUpToBlockOutput = sum(blockOutputHeights?.slice(0, blockIdx) || []);
-
-        const {
-          height: heightCC1,
-          y: yCC1,
-        } = refCursorContainer?.current?.getBoundingClientRect() || {};
-
-        const {
-          height: heightCC2,
-          y: yCC2,
-        } = refCursorContainer2?.current?.getBoundingClientRect() || {};
-        const {
-          height: heightC2,
-        } = refCursor2?.current?.getBoundingClientRect() || {};
-
-        const offsetPercentage = calculateOffsetPercentage(
-          blockOutputHeights,
-          totalHeightBlockOuputs,
-        );
-        const percentageMoved1 = (heightUpToBlockOutput - (top1 - yCC1)) / (totalHeightBlockOuputs);
-
-        const top = ((percentageMoved1 + offsetPercentage) * (heightCC2 - heightC2)) + yCC2;
-
-        refCursor2.current.style.top = `${top}px`;
-
-        const evt = new CustomEvent(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, {
-          detail: {
-            columnScrolling: 1,
-          },
-        });
-
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(evt);
-        }
-      }
-    }
+    syncColumnTopPositions(
+      refColumn1,
+      refColumn2,
+      refCursorContainer2,
+      refCursor2,
+      blockOutputHeights,
+      totalHeightBlockOuputs,
+      1,
+    );
 
     const {
       block: blockPayload,
@@ -978,30 +1003,23 @@ function CodeBlock({
       setOutputCollapsed(false);
     }
   }, [
-    blockIdx,
     blockInteractions,
     blockOutputHeights,
-    calculateOffsetPercentage,
     content,
-    handleMouseMove,
     hasDownstreamWidgets,
     interactionsMapping,
     isDBT,
-    mainContainerRect,
     refColumn1,
     refColumn2,
-    refCursor,
     refCursor2,
-    refCursorContainer,
     refCursorContainer2,
     runBlock,
     runCount,
-    scrollTogether,
     selectedTab,
     setRunCount,
     setRunEndTime,
     setSelectedTab,
-    sideBySideEnabled,
+    syncColumnTopPositions,
     totalHeightBlockOuputs,
     variables,
   ]);
@@ -1593,9 +1611,25 @@ function CodeBlock({
       {sideBySideEnabled && (
         <Spacing px={PADDING_UNITS} py={1}>
           <FlexContainer alignItems="center" justifyContent="space-between">
-            <Text monospace>
+            <Link
+              color={color}
+              monospace
+              onClick={() => syncColumnTopPositions(
+                refColumn2,
+                refColumn1,
+                refCursorContainer,
+                refCursor,
+                codeBlockHeights,
+                totalHeightCodeBlocks,
+                0,
+                {
+                  bypassOffScreen: true,
+                },
+              )}
+              preventDefault
+            >
               {block?.uuid}
-            </Text>
+            </Link>
 
             <Spacing mr={PADDING_UNITS} />
 
@@ -1628,6 +1662,8 @@ function CodeBlock({
     blockOutputRef,
     borderColorShareProps,
     buttonTabs,
+    codeBlockHeights,
+    color,
     hasOutput,
     isInProgress,
     mainContainerWidth,
@@ -1635,10 +1671,13 @@ function CodeBlock({
     messagesWithType,
     onClickSelectBlock,
     openSidekickView,
-    color,
     outputCollapsed,
     outputCollapsedUUID,
     pipeline,
+    refColumn1,
+    refColumn2,
+    refCursor,
+    refCursorContainer,
     runBlockAndTrack,
     runCount,
     runEndTime,
@@ -1650,6 +1689,8 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
+    syncColumnTopPositions,
+    totalHeightCodeBlocks,
     updateBlockOutputHeights,
   ]);
 
