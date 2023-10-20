@@ -76,6 +76,7 @@ import {
   Info,
   ParentEmpty,
   ParentLinked,
+  PlayButtonFilled,
 } from '@oracle/icons';
 import {
   BlockDivider,
@@ -839,15 +840,6 @@ function CodeBlock({
     widgets,
   ]);
 
-  useEffect(() => {
-    if (!isInProgress) {
-      setBlockOutputHeightCache(null);
-    }
-  }, [
-    isInProgress,
-    setBlockOutputHeightCache,
-  ]);
-
   const runBlockAndTrack = useCallback((payload?: {
     block: BlockType;
     code?: string;
@@ -1024,6 +1016,16 @@ function CodeBlock({
   }, [
     isInProgress,
     setRunStartTime,
+  ]);
+
+  useEffect(() => {
+    if (!isInProgress && sideBySideEnabled) {
+      setBlockOutputHeightCache(null);
+    }
+  }, [
+    isInProgress,
+    setBlockOutputHeightCache,
+    sideBySideEnabled,
   ]);
 
   const finalExecutionStatePrevious = usePrevious(executionState);
@@ -1562,6 +1564,7 @@ function CodeBlock({
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
       messagesAll={messages}
+      onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={blockOutputRef}
@@ -1589,9 +1592,32 @@ function CodeBlock({
     >
       {sideBySideEnabled && (
         <Spacing px={PADDING_UNITS} py={1}>
-          <Text monospace>
-            {block?.uuid}
-          </Text>
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <Text monospace>
+              {block?.uuid}
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => runBlockAndTrack({
+                block,
+              })}
+            >
+              <Circle
+                color={color}
+                size={UNIT * 3}
+              >
+                <PlayButtonFilled
+                  black
+                  size={UNIT * 1.5}
+                />
+              </Circle>
+            </Button>
+          </FlexContainer>
         </Spacing>
       )}
     </CodeOutput>
@@ -1607,10 +1633,13 @@ function CodeBlock({
     mainContainerWidth,
     messages,
     messagesWithType,
+    onClickSelectBlock,
     openSidekickView,
+    color,
     outputCollapsed,
     outputCollapsedUUID,
     pipeline,
+    runBlockAndTrack,
     runCount,
     runEndTime,
     runStartTime,

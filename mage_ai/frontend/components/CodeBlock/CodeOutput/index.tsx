@@ -81,6 +81,7 @@ type CodeOutputProps = {
   mainContainerWidth?: number;
   messages: KernelOutputType[];
   messagesAll?: KernelOutputType[];
+  onClickSelectBlock?: () => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline?: PipelineType;
   runCount?: number;
@@ -129,6 +130,7 @@ function CodeOutput({
   mainContainerWidth,
   messages,
   messagesAll,
+  onClickSelectBlock,
   openSidekickView,
   pipeline,
   runCount,
@@ -668,6 +670,10 @@ function CodeOutput({
       }}
     >
       <div
+        onClick={onClickSelectBlock
+          ? () => onClickSelectBlock?.()
+          : null
+        }
         style={{
           paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
         }}
