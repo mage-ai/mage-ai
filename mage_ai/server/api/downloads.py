@@ -3,8 +3,8 @@ import os
 import jwt
 from tornado import gen, iostream
 
+from mage_ai.api.constants import TEMPORARY_DOWNLOAD_LOCATION
 from mage_ai.api.utils import authenticate_client_and_token
-from mage_ai.data_preparation.models.constants import TEMPORARY_DOWNLOAD_LOCATION
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
