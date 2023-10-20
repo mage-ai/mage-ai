@@ -5,6 +5,7 @@ import BlockType, {
   BLOCK_TYPES_WITH_VARIABLES,
   BlockLanguageEnum,
   BlockPipelineType,
+  BlockRequestPayloadType,
   BlockRetryConfigType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
@@ -30,10 +31,11 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add, DiamondShared, Edit } from '@oracle/icons';
+import { Add, DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import { ICON_SIZE_SMALL, ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
@@ -73,6 +75,13 @@ const SHARED_EMPHASIZED_TEXT_PROPS = {
 const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
 type BlockSettingsProps = {
+  addNewBlockAtIndex: (
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+    isReplacingBlock?: boolean,
+  ) => Promise<any>;
   block: BlockType;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
@@ -88,6 +97,7 @@ type BlockSettingsProps = {
 } & OpenDataIntegrationModalType;
 
 function BlockSettings({
+  addNewBlockAtIndex,
   block,
   contentByBlockUUID,
   fetchFileTree,
@@ -118,6 +128,11 @@ function BlockSettings({
     type: blockType,
     uuid: blockUUID,
   } = block;
+  const currentBlockIndex = pipeline?.blocks?.findIndex(({ uuid }) => uuid === blockUUID);
+  const blockWithUpdatedContent = useMemo(
+    () => pipeline?.blocks?.[currentBlockIndex],
+    [currentBlockIndex, pipeline?.blocks],
+  );
 
   const [showError] = useError(null, {}, [], {
     uuid: 'BlockSettings/index',
@@ -357,10 +372,12 @@ function BlockSettings({
                     Shared by {blockPipelinesCount} pipelines
                   </Text>
                 </Flex>
-                {/* <Tooltip
+                <Tooltip
                   appearBefore
                   block
-                  label="Duplicates block and removes any attachment to other pipelines"
+                  label="Duplicates block so it is no longer shared with any other
+                    pipelines (detaches other pipeline associations)"
+                  lightBackground
                   maxWidth={UNIT * 30}
                   size={null}
                 >
@@ -368,12 +385,34 @@ function BlockSettings({
                     {...SHARED_BUTTON_PROPS}
                     afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
                     iconOnly={false}
-                    // onClick={() => {}}
+                    onClick={() => addNewBlockAtIndex(
+                      {
+                        ...ignoreKeys(blockWithUpdatedContent, [
+                          'all_upstream_blocks_executed',
+                          'callback_blocks',
+                          'conditional_blocks',
+                          'downstream_blocks',
+                          'executor_config',
+                          'executor_type',
+                          'name',
+                          'outputs',
+                          'retry_config',
+                          'status',
+                          'tags',
+                          'timeout',
+                        ]),
+                        block_uuid_to_remove: blockUUID,
+                      },
+                      currentBlockIndex,
+                      setSelectedBlock,
+                      undefined,
+                      true,
+                    )}
                     padding={null}
                   >
                     Detach
                   </Button>
-                </Tooltip> */}
+                </Tooltip>
               </FlexContainer>
             </BannerStyle>
           </Spacing>

@@ -50,6 +50,7 @@ import { useError } from '@context/Error';
 type ConfigureBlockProps = {
   block: BlockType | BlockRequestPayloadType;
   defaultName: string;
+  isReplacingBlock?: boolean;
   isUpdatingBlock?: boolean;
   onClose: () => void;
   onSave: (opts: {
@@ -64,6 +65,7 @@ type ConfigureBlockProps = {
 function ConfigureBlock({
   block,
   defaultName,
+  isReplacingBlock,
   isUpdatingBlock,
   onClose,
   onSave,
@@ -300,8 +302,14 @@ function ConfigureBlock({
 
           <Flex flex="6">
             <Text bold warning>
-              Renaming this block will affect {sharedPipelinesCount} pipelines.
-              The renamed block may need to be re-added to the shared pipeline(s).
+              {isUpdatingBlock &&
+                `Renaming this block will affect ${sharedPipelinesCount} pipelines.`
+                + ' The renamed block may need to be re-added to the shared pipeline(s).'
+              }
+              {isReplacingBlock &&
+                'This will create a copy of the selected block and replace the existing'
+                + ' one so that it is no longer shared with any other pipelines.'
+              }
             </Text>
           </Flex>
         </RowStyle>
@@ -523,7 +531,13 @@ function ConfigureBlock({
             tabIndex={0}
             uuid="ConfigureBlock/SaveAndAddBlock"
           >
-            Save and {isUpdatingBlock ? 'update' : 'add'} block
+            Save and&nbsp;
+            {isUpdatingBlock
+              ? 'update'
+              : (isReplacingBlock
+                ? 'replace'
+                : 'add')
+            } block
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>

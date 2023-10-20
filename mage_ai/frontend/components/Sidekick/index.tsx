@@ -77,6 +77,7 @@ export type SidekickProps = {
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
+    isReplacingBlock?: boolean,
   ) => Promise<any>;
   afterWidth: number;
   blockInteractionsMapping: {
@@ -518,6 +519,7 @@ function Sidekick({
 
   const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
     <BlockSettings
+      addNewBlockAtIndex={addNewBlockAtIndex}
       block={selectedBlock}
       contentByBlockUUID={contentByBlockUUID}
       fetchFileTree={fetchFileTree}
@@ -529,6 +531,7 @@ function Sidekick({
       showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
+    addNewBlockAtIndex,
     contentByBlockUUID,
     fetchFileTree,
     fetchPipeline,

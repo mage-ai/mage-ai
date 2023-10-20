@@ -1779,6 +1779,7 @@ function PipelineDetailPage({
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
     block,
     idx,
+    isReplacingBlock = false,
     isUpdatingBlock = false,
     name = randomNameGenerator(),
     onCreateCallback,
@@ -1795,6 +1796,7 @@ function PipelineDetailPage({
       <ConfigureBlock
         block={block}
         defaultName={name}
+        isReplacingBlock={isReplacingBlock}
         isUpdatingBlock={isUpdatingBlock}
         onClose={hideAddBlockModal}
         onSave={(opts: {
@@ -2516,9 +2518,16 @@ function PipelineDetailPage({
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
-      addNewBlockAtIndex={(block, idx, onCreateCallback, name) => new Promise(() => showAddBlockModal({
+      addNewBlockAtIndex={(
+        block: BlockType,
+        idx: number,
+        onCreateCallback: any,
+        name: string,
+        isReplacingBlock = false,
+      ) => new Promise(() => showAddBlockModal({
         block,
         idx,
+        isReplacingBlock,
         name,
         onCreateCallback,
       }))}

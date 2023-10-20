@@ -210,6 +210,7 @@ export interface BlockRequestPayloadType {
     title?: string;
     uuid: string;
   };
+  block_uuid_to_remove?: string;
   color?: BlockColorEnum;
   config?: BlockRequestConfigType;
   configuration?: ConfigurationType;
