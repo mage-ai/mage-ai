@@ -273,7 +273,7 @@ function PipelineDetail({
     ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -685,10 +685,124 @@ function PipelineDetail({
     savePipelineContent,
   ]);
 
+  const addNewBlocksMemo = useMemo(() => pipeline && (
+    <>
+      <AddNewBlocks
+        addNewBlock={(newBlock: BlockRequestPayloadType) => {
+          const block = blocks[blocks.length - 1];
+
+          let content = null;
+          let configuration = newBlock.configuration || {};
+          const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+
+          if (block) {
+            if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+              && BlockTypeEnum.SCRATCHPAD === newBlock.type
+            ) {
+              content = `from mage_ai.data_preparation.variable_manager import get_variable
+
+
+  df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
+  `;
+            }
+
+            if (BlockLanguageEnum.SQL === block.language) {
+              configuration = {
+                ...selectKeys(block.configuration, [
+                  CONFIG_KEY_DATA_PROVIDER,
+                  CONFIG_KEY_DATA_PROVIDER_DATABASE,
+                  CONFIG_KEY_DATA_PROVIDER_PROFILE,
+                  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+                  CONFIG_KEY_EXPORT_WRITE_POLICY,
+                ]),
+                ...configuration,
+              };
+            }
+          }
+
+          if (BlockLanguageEnum.SQL === newBlock.language) {
+            content = addSqlBlockNote(content);
+          }
+          content = addScratchpadNote(newBlock, content);
+
+          addNewBlockAtIndex({
+            ...newBlock,
+            configuration,
+            content,
+            upstream_blocks: upstreamBlocks,
+          }, numberOfBlocks, setSelectedBlock);
+          setTextareaFocused(true);
+        }}
+        blockTemplates={blockTemplates}
+        focusedAddNewBlockSearch={focusedAddNewBlockSearch}
+        hideCustom={isIntegration || isStreaming}
+        hideDataExporter={isIntegration}
+        hideDataLoader={isIntegration}
+        hideDbt={isIntegration || isStreaming}
+        hideScratchpad={isIntegration}
+        hideSensor={isIntegration}
+        onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+        pipeline={pipeline}
+        project={project}
+        searchTextInputRef={searchTextInputRef}
+        setCreatingNewDBTModel={setCreatingNewDBTModel}
+        setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
+        showBrowseTemplates={showBrowseTemplates}
+        showConfigureProjectModal={showConfigureProjectModal}
+        showGlobalDataProducts={showGlobalDataProducts}
+      />
+
+      {!useV2AddNewBlock && !isIntegration && !isStreaming && (
+        <Spacing mt={1}>
+          <Text muted small>
+            Want to try the new add block UI?
+            <br />
+            Turn on the feature named <Text bold inline muted small>
+              {FeatureUUIDEnum.ADD_NEW_BLOCK_V2}
+            </Text> in your <NextLink
+              href="/settings/workspace/preferences"
+              passHref
+            >
+              <Link muted underline>
+                <Text bold inline muted small>
+                  project settings
+                </Text>
+              </Link>
+            </NextLink>.
+          </Text>
+        </Spacing>
+      )}
+    </>
+  ), [
+    addNewBlockAtIndex,
+    blockTemplates,
+    blocks,
+    focusedAddNewBlockSearch,
+    isIntegration,
+    isStreaming,
+    numberOfBlocks,
+    onClickAddSingleDBTModel,
+    pipeline,
+    project,
+    searchTextInputRef,
+    setFocusedAddNewBlockSearch,
+    setSelectedBlock,
+    setTextareaFocused,
+    showBrowseTemplates,
+    showConfigureProjectModal,
+    showGlobalDataProducts,
+    sideBySideEnabled,
+    useV2AddNewBlock,
+  ]);
+
   const codeBlocks = useMemo(() => {
     const arr = [];
 
+    const blocksCount = blocksFiltered?.length || 0;
+
     blocksFiltered.forEach((block: BlockType, idx: number) => {
+      const isLast = idx === blocksCount - 1;
+
       const {
         type,
         uuid,
@@ -760,7 +874,7 @@ function PipelineDetail({
 
               return addNewBlockAtIndex(
                 b,
-                idx + 1,
+                sideBySideEnabled ? idx : idx + 1,
                 onCreateCallback,
               );
             }}
@@ -842,7 +956,13 @@ function PipelineDetail({
             updateCodeBlockHeights={updateCodeBlockHeights}
             widgets={widgets}
             windowWidth={windowWidth}
-          />
+          >
+            {sideBySideEnabled && isLast && (
+              <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+                {addNewBlocksMemo}
+              </Spacing>
+            )}
+          </CodeBlock>
         );
       }
 
@@ -854,6 +974,7 @@ function PipelineDetail({
   [
     addNewBlockAtIndex,
     addNewBlockMenuOpenIdx,
+    addNewBlocksMemo,
     addWidget,
     allBlocks,
     allowCodeBlockShortcuts,
@@ -968,115 +1089,6 @@ function PipelineDetail({
     setSelectedStream,
   ]);
 
-  const addNewBlocksMemo = useMemo(() => pipeline && (
-    <>
-      <AddNewBlocks
-        addNewBlock={(newBlock: BlockRequestPayloadType) => {
-          const block = blocks[blocks.length - 1];
-
-          let content = null;
-          let configuration = newBlock.configuration || {};
-          const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
-
-          if (block) {
-            if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
-              && BlockTypeEnum.SCRATCHPAD === newBlock.type
-            ) {
-              content = `from mage_ai.data_preparation.variable_manager import get_variable
-
-
-  df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
-  `;
-            }
-
-            if (BlockLanguageEnum.SQL === block.language) {
-              configuration = {
-                ...selectKeys(block.configuration, [
-                  CONFIG_KEY_DATA_PROVIDER,
-                  CONFIG_KEY_DATA_PROVIDER_DATABASE,
-                  CONFIG_KEY_DATA_PROVIDER_PROFILE,
-                  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
-                  CONFIG_KEY_EXPORT_WRITE_POLICY,
-                ]),
-                ...configuration,
-              };
-            }
-          }
-
-          if (BlockLanguageEnum.SQL === newBlock.language) {
-            content = addSqlBlockNote(content);
-          }
-          content = addScratchpadNote(newBlock, content);
-
-          addNewBlockAtIndex({
-            ...newBlock,
-            configuration,
-            content,
-            upstream_blocks: upstreamBlocks,
-          }, numberOfBlocks, setSelectedBlock);
-          setTextareaFocused(true);
-        }}
-        blockTemplates={blockTemplates}
-        focusedAddNewBlockSearch={focusedAddNewBlockSearch}
-        hideCustom={isIntegration || isStreaming}
-        hideDataExporter={isIntegration}
-        hideDataLoader={isIntegration}
-        hideDbt={isIntegration || isStreaming}
-        hideScratchpad={isIntegration}
-        hideSensor={isIntegration}
-        onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-        pipeline={pipeline}
-        project={project}
-        searchTextInputRef={searchTextInputRef}
-        setCreatingNewDBTModel={setCreatingNewDBTModel}
-        setFocusedAddNewBlockSearch={setFocusedAddNewBlockSearch}
-        showBrowseTemplates={showBrowseTemplates}
-        showConfigureProjectModal={showConfigureProjectModal}
-        showGlobalDataProducts={showGlobalDataProducts}
-      />
-
-      {!useV2AddNewBlock && !isIntegration && !isStreaming && (
-        <Spacing mt={1}>
-          <Text muted small>
-            Want to try the new add block UI?
-            <br />
-            Turn on the feature named <Text bold inline muted small>
-              {FeatureUUIDEnum.ADD_NEW_BLOCK_V2}
-            </Text> in your <NextLink
-              href="/settings/workspace/preferences"
-              passHref
-            >
-              <Link muted underline>
-                <Text bold inline muted small>
-                  project settings
-                </Text>
-              </Link>
-            </NextLink>.
-          </Text>
-        </Spacing>
-      )}
-    </>
-  ), [
-    addNewBlockAtIndex,
-    blockTemplates,
-    blocks,
-    focusedAddNewBlockSearch,
-    isIntegration,
-    isStreaming,
-    numberOfBlocks,
-    onClickAddSingleDBTModel,
-    pipeline,
-    project,
-    searchTextInputRef,
-    setFocusedAddNewBlockSearch,
-    setSelectedBlock,
-    setTextareaFocused,
-    showBrowseTemplates,
-    showConfigureProjectModal,
-    showGlobalDataProducts,
-    useV2AddNewBlock,
-  ]);
-
   return (
     <DndProvider backend={HTML5Backend}>
       <PipelineContainerStyle ref={containerRef}>
@@ -1110,10 +1122,6 @@ function PipelineDetail({
           {!scrollTogether && column1ScrollMemo}
           {codeBlocks}
           {column2ScrollMemo}
-
-          {/*<Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-            {addNewBlocksMemo}
-          </Spacing>*/}
         </div>
       )}
 
@@ -1159,9 +1167,14 @@ function PipelineDetail({
               const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
               addNewBlockAtIndex({
-                ...newBlock,
-                upstream_blocks: upstreamBlocks,
-              }, isAddingFromBlock ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
+                  ...newBlock,
+                  upstream_blocks: upstreamBlocks,
+                }, (isAddingFromBlock
+                  ? numberOfBlocks
+                  : lastBlockIndex + 1
+                ) - (sideBySideEnabled ? 1 : 0),
+                setSelectedBlock,
+              );
 
               closeAddDBTModelPopup();
               setTextareaFocused(true);

@@ -171,6 +171,7 @@ type CodeBlockProps = {
   blockRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
+  children?: any;
   codeBlockHeights?: number[];
   containerRef?: any;
   dataProviders?: DataProviderType[];
@@ -298,6 +299,7 @@ function CodeBlock({
   blockRefs,
   blockTemplates,
   blocks = [],
+  children,
   codeBlockHeights: codeBlockHeightsProp,
   containerRef,
   dataProviders,
@@ -474,7 +476,7 @@ function CodeBlock({
           Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
 
         const offset = sum(heights?.slice(0, blockIdx));
-        const yMove = cursorContainerRect.y - (percentageTraveled * totalHeight)
+        const yMove = cursorContainerRect?.y - (percentageTraveled * totalHeight)
         const top = yMove + offset;
 
         if (scrollTogether) {
@@ -1629,6 +1631,95 @@ function CodeBlock({
     isInteractionsEnabled,
   ]);
 
+  const buildAddNewBlocks = useCallback((upstreamBlock: BlockType, blockIndex: number) => (
+    <AddNewBlocks
+      addNewBlock={(newBlock: BlockRequestPayloadType) => {
+        let content = newBlock.content;
+        let configuration = newBlock.configuration;
+        const upstreamBlocks = getUpstreamBlockUuids(upstreamBlock, newBlock);
+        const downstreamBlockUUIDs = getDownstreamBlockUuids(pipeline, upstreamBlock, newBlock);
+        const downstreamBlocks = downstreamBlockUUIDs.map(uuid => {
+          const currDownstreamBlock = { ...(blocksMapping[uuid] || {}) };
+          const upstreamsOfDownstreamBlock = currDownstreamBlock.upstream_blocks;
+          if (upstreamsOfDownstreamBlock) {
+            currDownstreamBlock.upstream_blocks = upstreamsOfDownstreamBlock.filter(
+              upstreamUUID => upstreamUUID !== blockUUID,
+            );
+          }
+          return currDownstreamBlock;
+        });
+
+        if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(blockType)
+          && BlockTypeEnum.SCRATCHPAD === newBlock.type
+        ) {
+          content = `from mage_ai.data_preparation.variable_manager import get_variable
+
+
+df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
+        }
+        content = addScratchpadNote(newBlock, content);
+
+        if (BlockLanguageEnum.SQL === blockLanguage) {
+          configuration = {
+            ...selectKeys(blockConfiguration, [
+              CONFIG_KEY_DATA_PROVIDER,
+              CONFIG_KEY_DATA_PROVIDER_DATABASE,
+              CONFIG_KEY_DATA_PROVIDER_PROFILE,
+              CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+              CONFIG_KEY_EXPORT_WRITE_POLICY,
+            ]),
+            ...configuration,
+          };
+        }
+        if (BlockLanguageEnum.SQL === newBlock.language) {
+          content = addSqlBlockNote(content);
+        }
+
+        return addNewBlock(
+          {
+            ...newBlock,
+            configuration,
+            content,
+            upstream_blocks: upstreamBlocks,
+          },
+          downstreamBlocks,
+        );
+      }}
+      blockIdx={blockIndex}
+      blockTemplates={blockTemplates}
+      compact
+      hideCustom={isStreamingPipeline}
+      hideDbt={isStreamingPipeline}
+      onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+      pipeline={pipeline}
+      project={project}
+      setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+      setCreatingNewDBTModel={setCreatingNewDBTModel}
+      showBrowseTemplates={showBrowseTemplates}
+      showConfigureProjectModal={showConfigureProjectModal}
+      showGlobalDataProducts={showGlobalDataProducts}
+    />
+
+  ), [
+    blockConfiguration,
+    blockTemplates,
+    blockType,
+    blockUUID,
+    blocksMapping,
+    isStreamingPipeline,
+    isStreamingPipeline,
+    onClickAddSingleDBTModel,
+    pipeline,
+    pipeline,
+    pipelineUUID,
+    project,
+    setAddNewBlockMenuOpenIdx,
+    setCreatingNewDBTModel,
+    showBrowseTemplates,
+    showConfigureProjectModal,
+    showGlobalDataProducts,
+  ]);
+
   const codeBlockMain = (
     <div ref={drop}>
       <div
@@ -1638,6 +1729,30 @@ function CodeBlock({
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
         }}
       >
+        {blockIdx >= 1 && sideBySideEnabled && !noDivider && (
+          <BlockDivider
+            additionalZIndex={blocksLength - blockIdx}
+            onMouseEnter={() => setAddNewBlocksVisible(true)}
+            onMouseLeave={() => {
+              setAddNewBlocksVisible(false);
+              setAddNewBlockMenuOpenIdx?.(null);
+            }}
+          >
+            {addNewBlocksVisible && addNewBlock && (
+              <Spacing
+                mt={2}
+                mx={2}
+                style={{
+                  width: '100%',
+                }}
+              >
+                {buildAddNewBlocks(blocks?.[blockIdx - 1], blockIdx - 1)}
+              </Spacing>
+            )}
+            <BlockDividerInner className="block-divider-inner" />
+          </BlockDivider>
+        )}
+
         <div
           style={{
             position: 'relative',
@@ -2781,7 +2896,7 @@ function CodeBlock({
           </ContainerStyle>
         </div>
 
-        {!noDivider && (
+        {!sideBySideEnabled && !noDivider && (
           <BlockDivider
             additionalZIndex={blocksLength - blockIdx}
             onMouseEnter={() => setAddNewBlocksVisible(true)}
@@ -2798,78 +2913,14 @@ function CodeBlock({
                   width: '100%',
                 }}
               >
-                <AddNewBlocks
-                  addNewBlock={(newBlock: BlockRequestPayloadType) => {
-                    let content = newBlock.content;
-                    let configuration = newBlock.configuration;
-                    const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
-                    const downstreamBlockUUIDs = getDownstreamBlockUuids(pipeline, block, newBlock);
-                    const downstreamBlocks = downstreamBlockUUIDs.map(uuid => {
-                      const currDownstreamBlock = { ...(blocksMapping[uuid] || {}) };
-                      const upstreamsOfDownstreamBlock = currDownstreamBlock.upstream_blocks;
-                      if (upstreamsOfDownstreamBlock) {
-                        currDownstreamBlock.upstream_blocks = upstreamsOfDownstreamBlock.filter(
-                          upstreamUUID => upstreamUUID !== blockUUID,
-                        );
-                      }
-                      return currDownstreamBlock;
-                    });
-
-                    if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(blockType)
-                      && BlockTypeEnum.SCRATCHPAD === newBlock.type
-                    ) {
-                      content = `from mage_ai.data_preparation.variable_manager import get_variable
-
-
-  df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
-                    }
-                    content = addScratchpadNote(newBlock, content);
-
-                    if (BlockLanguageEnum.SQL === blockLanguage) {
-                      configuration = {
-                        ...selectKeys(blockConfiguration, [
-                          CONFIG_KEY_DATA_PROVIDER,
-                          CONFIG_KEY_DATA_PROVIDER_DATABASE,
-                          CONFIG_KEY_DATA_PROVIDER_PROFILE,
-                          CONFIG_KEY_DATA_PROVIDER_SCHEMA,
-                          CONFIG_KEY_EXPORT_WRITE_POLICY,
-                        ]),
-                        ...configuration,
-                      };
-                    }
-                    if (BlockLanguageEnum.SQL === newBlock.language) {
-                      content = addSqlBlockNote(content);
-                    }
-
-                    return addNewBlock(
-                      {
-                        ...newBlock,
-                        configuration,
-                        content,
-                        upstream_blocks: upstreamBlocks,
-                      },
-                      downstreamBlocks,
-                    );
-                  }}
-                  blockIdx={blockIdx}
-                  blockTemplates={blockTemplates}
-                  compact
-                  hideCustom={isStreamingPipeline}
-                  hideDbt={isStreamingPipeline}
-                  onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-                  pipeline={pipeline}
-                  project={project}
-                  setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-                  setCreatingNewDBTModel={setCreatingNewDBTModel}
-                  showBrowseTemplates={showBrowseTemplates}
-                  showConfigureProjectModal={showConfigureProjectModal}
-                  showGlobalDataProducts={showGlobalDataProducts}
-                />
+                {buildAddNewBlocks(block, blockIdx)}
               </Spacing>
             )}
             <BlockDividerInner className="block-divider-inner" />
           </BlockDivider>
         )}
+
+        {children}
       </div>
     </div>
   );
@@ -2935,6 +2986,7 @@ function CodeBlock({
       </ScrollColunnStyle>
     );
   }, [
+    blockIdx,
     blockOutputHeights,
     codeOutputEl,
     mainContainerRect,
