@@ -4,11 +4,8 @@ from typing import Dict
 
 import jwt
 
+from mage_ai.api.constants import DOWNLOAD_TOKEN_LIFESPAN, TEMPORARY_DOWNLOAD_LOCATION
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.api.constants import (
-    DOWNLOAD_TOKEN_LIFESPAN,
-    TEMPORARY_DOWNLOAD_LOCATION,
-)
 from mage_ai.data_preparation.models.download import Download
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
