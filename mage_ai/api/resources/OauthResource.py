@@ -92,6 +92,14 @@ class OauthResource(GenericResource):
             error.update(dict(message='Invalid provider.'))
             raise ApiError(error)
 
+        request_query = kwargs.get('query', {})
+        code = request_query.get('code', [None])
+        if code:
+            code = code[0]
+        redirect_uri = request_query.get('redirect_uri', [None])
+        if redirect_uri:
+            redirect_uri = redirect_uri[0]
+
         if pk == OAUTH_PROVIDER_GITHUB and GHE_HOSTNAME:
             provider = OAUTH_PROVIDER_GHE
         else:
@@ -107,11 +115,51 @@ class OauthResource(GenericResource):
             model['expires'] = max(
                 [access_token.expires for access_token in access_tokens]
             )
-        else:
-            redirect_uri = kwargs.get('query', {}).get('redirect_uri', [None])
-            if redirect_uri:
-                redirect_uri = redirect_uri[0]
+        # If an oauth code is provided, we need to exchange it for an access token for
+        # the provider.
+        elif code:
+            if OAUTH_PROVIDER_GHE == pk:
+                parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
+                parsed_url_query = parse_qs(parsed_url.query)
 
+                query = {'provider': pk}
+                for k, v in parsed_url_query.items():
+                    if type(v) is list:
+                        v = ','.join(v)
+                    query[k] = v
+
+                if GHE_HOSTNAME.startswith('http'):
+                    host = GHE_HOSTNAME
+                else:
+                    host = f'https://{GHE_HOSTNAME}'
+                resp = requests.post(
+                    f'{host}/login/oauth/access_token',
+                    headers={
+                        'Accept': 'application/json',
+                    },
+                    data=dict(
+                        client_id=GHE_CLIENT_ID,
+                        client_secret=GHE_CLIENT_SECRET,
+                        code=code,
+                    ),
+                    timeout=20,
+                )
+
+                data = resp.json()
+                query = add_access_token_to_query(data, query)
+
+                parts = redirect_uri.split('?')
+                base_url = parts[0]
+
+                redirect_uri_final = '?'.join([
+                    base_url,
+                    urllib.parse.urlencode(query),
+                ])
+
+                model[
+                    'url'
+                ] = redirect_uri_final
+        else:
             if OAUTH_PROVIDER_GITHUB == pk:
                 if GHE_HOSTNAME:
                     parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
@@ -158,54 +206,6 @@ class OauthResource(GenericResource):
                 model[
                     'url'
                 ] = f"{host}/login/oauth/authorize?{'&'.join(query_strings)}"
-            elif OAUTH_PROVIDER_GHE == pk:
-                redirect_uri = kwargs.get('query', {}).get('redirect_uri', [None])
-                if redirect_uri:
-                    redirect_uri = redirect_uri[0]
-
-                parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
-                parsed_url_query = parse_qs(parsed_url.query)
-
-                query = {'provider': pk}
-                for k, v in parsed_url_query.items():
-                    if type(v) is list:
-                        v = ','.join(v)
-                    query[k] = v
-
-                code = kwargs.get('query', {}).get('code', [None])
-                if code:
-                    code = code[0]
-                if GHE_HOSTNAME.startswith('http'):
-                    host = GHE_HOSTNAME
-                else:
-                    host = f'https://{GHE_HOSTNAME}'
-                resp = requests.post(
-                    f'{host}/login/oauth/access_token',
-                    headers={
-                        'Accept': 'application/json',
-                    },
-                    data=dict(
-                        client_id=GHE_CLIENT_ID,
-                        client_secret=GHE_CLIENT_SECRET,
-                        code=code,
-                    ),
-                    timeout=20,
-                )
-
-                data = resp.json()
-                query = add_access_token_to_query(data, query)
-
-                parts = redirect_uri.split('?')
-                base_url = parts[0]
-
-                redirect_uri_final = '?'.join([
-                    base_url,
-                    urllib.parse.urlencode(query),
-                ])
-
-                model[
-                    'url'
-                ] = redirect_uri_final
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
                 ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
                 if ad_directory_id:
