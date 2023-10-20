@@ -1980,7 +1980,22 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                       size={UNIT * 1.5}
                       square
                     />
-
+                    <FlexContainer alignItems="center">
+                      {isDBT && BlockLanguageEnum.YAML !== blockLanguage && (
+                        <Tooltip
+                          block
+                          label={getModelName(block, {
+                            fullPath: true,
+                          })}
+                          size={null}
+                          widthFitContent
+                        >
+                          <Text monospace muted>
+                            {getModelName(block)}
+                          </Text>
+                        </Tooltip>
+                      )}
+                    </FlexContainer>
                     <Spacing mr={1} />
 
                     <FlyoutMenuWrapper

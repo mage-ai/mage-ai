@@ -308,7 +308,8 @@ function ConfigureBlock({
               }
               {isReplacingBlock &&
                 'This will create a copy of the selected block and replace the existing'
-                + ' one so that it is no longer shared with any other pipelines.'
+                + ' one so it is no longer shared with any other pipelines. Note that you'
+                + ' may need to re-add any downstream connections.'
               }
             </Text>
           </Flex>
@@ -373,7 +374,7 @@ function ConfigureBlock({
 
               if (
                 (
-                  (!isCustomBlock || isUpdatingBlock)
+                  (!isCustomBlock || isUpdatingBlock || isReplacingBlock)
                   && !selected
                   && (
                     (!isDataIntegration || BlockLanguageEnum.R === v)
@@ -432,6 +433,7 @@ function ConfigureBlock({
           {isCustomBlock && (
             <Select
               alignRight
+              disabled={isReplacingBlock}
               noBackground
               noBorder
               // @ts-ignore
