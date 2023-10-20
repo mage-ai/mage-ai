@@ -37,6 +37,7 @@ import {
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
   TIMEZONE_TOOLTIP_PROPS,
+  getTableRowUuid,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { KEY_CODE_ARROW_DOWN, KEY_CODE_ARROW_UP } from '@utils/hooks/keyboardShortcuts/constants';
@@ -261,6 +262,7 @@ type PipelineRunsTableProps = {
   allowBulkSelect?: boolean;
   allowDelete?: boolean;
   deletePipelineRun?: MutateFunction<any>;
+  disableKeyboardNav?: boolean;
   disableRowSelect?: boolean;
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
@@ -279,6 +281,7 @@ function PipelineRunsTable({
   allowBulkSelect,
   allowDelete,
   deletePipelineRun,
+  disableKeyboardNav,
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
@@ -295,6 +298,7 @@ function PipelineRunsTable({
   const router = useRouter();
   const isViewerRole = isViewer();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const canRegisterKeyDown = useRef<boolean>(true);
   const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -330,6 +334,9 @@ function PipelineRunsTable({
     },
   );
 
+  const uuidKeyboard = 'PipelineDetail/Runs/Table';
+  const uuidTable = 'pipeline-runs';
+
   const getRunRowIndex = useCallback((run: PipelineRunType) => {
     if (!run) return null;
     
@@ -337,33 +344,41 @@ function PipelineRunsTable({
     return rowIndex >= 0 ? rowIndex : null;
   }, [pipelineRuns]);
 
-  const uuidKeyboard = 'PipelineDetail/Runs/Table';
   const {
     registerOnKeyDown,
+    registerOnKeyUp,
     unregisterOnKeyDown,
+    unregisterOnKeyUp,
   } = useKeyboardContext();
 
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
 
+  useEffect(() => () => {
+    unregisterOnKeyUp(uuidKeyboard);
+  }, [unregisterOnKeyUp, uuidKeyboard]);
+
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping) => {
-      if (!setSelectedRun) return;
+      // This disables the default scrolling response to the arrow keys
+      event.preventDefault();
+
+      if (!setSelectedRun || disableKeyboardNav || !canRegisterKeyDown.current) return;
+
+      canRegisterKeyDown.current = false;
       
       setSelectedRun((prevSelectedRun) => {
         const prevRowIndex = getRunRowIndex(prevSelectedRun);
         if (prevRowIndex !== null) {
           if (keyMapping[KEY_CODE_ARROW_UP]) {
-            pauseEvent(event);
             let newRowIndex = prevRowIndex - 1;
             if (newRowIndex < 0) {
               newRowIndex = pipelineRuns.length - 1;
             }
             return pipelineRuns[newRowIndex];
           } else if (keyMapping[KEY_CODE_ARROW_DOWN]) {
-            pauseEvent(event);
             let newRowIndex = prevRowIndex + 1;
             if (newRowIndex >= pipelineRuns.length) {
               newRowIndex = 0;
@@ -377,6 +392,23 @@ function PipelineRunsTable({
     }, 
     [pipelineRuns, setSelectedRun],
   );
+
+  registerOnKeyUp(
+    uuidKeyboard,
+    () => {
+      canRegisterKeyDown.current = true;
+    }, []);
+
+  useEffect(() => {
+    const rowIndex = getRunRowIndex(selectedRun);
+    if (rowIndex !== null) {
+      const tableRowUuid = getTableRowUuid({ rowIndex, uuid: uuidTable });
+      const newSelectedRow = document.getElementById(tableRowUuid);
+      if (newSelectedRow) {
+        newSelectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [getRunRowIndex, selectedRun]);
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [null, 1];
@@ -798,7 +830,7 @@ function PipelineRunsTable({
 
               return arr;
             })}
-            uuid="pipeline-runs"
+            uuid={uuidTable}
           />
       }
     </TableContainerStyle>

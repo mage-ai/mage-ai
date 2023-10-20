@@ -415,6 +415,7 @@ function PipelineRuns({
         allowBulkSelect={pipeline?.type !== PipelineTypeEnum.STREAMING}
         allowDelete
         deletePipelineRun={deletePipelineRun}
+        disableKeyboardNav={showActionsMenu}
         emptyMessage={variableSearchText
           ? 'No runs on this page match your search.'
           : undefined
@@ -442,6 +443,7 @@ function PipelineRuns({
     pipelineRuns,
     selectedRun,
     selectedRuns,
+    showActionsMenu,
     variableSearchText,
   ]);
 
