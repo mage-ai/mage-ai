@@ -241,6 +241,7 @@ export const CodeContainerStyle = styled.div<{
 
 export const BlockDivider = styled.div<{
   additionalZIndex?: number;
+  bottom?: number;
 }>`
   align-items: center;
   display: flex;
@@ -248,7 +249,6 @@ export const BlockDivider = styled.div<{
   justify-content: center;
   position: relative;
   z-index: 8;
-  bottom: ${UNIT * 0.5}px;
 
   &:hover {
     ${props => props.additionalZIndex > 0 && `
@@ -261,6 +261,22 @@ export const BlockDivider = styled.div<{
       `}
     }
   }
+
+  ${props => !props.height && `
+    height: ${UNIT * 2}px;
+  `}
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+
+  ${props => !props.bottom && `
+    bottom: ${UNIT * 0.5}px;
+  `}
+
+  ${props => typeof props.bottom !== 'undefined' && `
+    bottom: ${props.bottom}px;
+  `}
 `;
 
 export const BlockDividerInner = styled.div`
@@ -268,7 +284,14 @@ export const BlockDividerInner = styled.div`
   width: 100%;
   position: absolute;
   z-index: -1;
-  top: ${UNIT * 1.5}px;
+
+  ${props => !props.top && `
+    top: ${UNIT * 1.5}px;
+  `}
+
+  ${props => typeof props.top !== 'undefined' && `
+    top: ${props.top}px;
+  `}
 `;
 
 export const CodeHelperStyle = styled.div<{

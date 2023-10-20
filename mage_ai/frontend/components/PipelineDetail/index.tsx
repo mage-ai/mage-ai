@@ -376,6 +376,8 @@ function PipelineDetail({
   const column1ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
+        columnIndex={0}
+        columns={2}
         cursorHeight={cursorHeight1}
         heights={scrollTogether ? maxHeights : codeBlockHeights}
         mainContainerRect={mainContainerRect}
@@ -408,6 +410,8 @@ function PipelineDetail({
   const column2ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
+        columnIndex={1}
+        columns={2}
         cursorHeight={cursorHeight2}
         heights={scrollTogether ? maxHeights : blockOutputHeights}
         mainContainerRect={mainContainerRect}
@@ -973,8 +977,8 @@ function PipelineDetail({
             {sideBySideEnabled && isLast && (
               <div
                 style={{
-                  paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING,
-                  paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING,
+                  paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING * 2,
+                  paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING * 2,
                 }}
               >
                 {addNewBlocksMemo}

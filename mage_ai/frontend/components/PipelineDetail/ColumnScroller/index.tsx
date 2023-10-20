@@ -12,6 +12,8 @@ export type StartDataType = {
 };
 
 type ColumnScrollerProps = {
+  columnIndex: number;
+  columns: number;
   cursorHeight: number;
   heights: number[];
   mainContainerRect?: {
@@ -32,6 +34,8 @@ type ColumnScrollerProps = {
 };
 
 function ColumnScroller({
+  columnIndex,
+  columns,
   cursorHeight,
   heights,
   mainContainerRect,
@@ -83,12 +87,33 @@ function ColumnScroller({
   ]);
 
   const handleWheel = useCallback((event) => {
-    const rect = refCursor?.current?.getBoundingClientRect();
-    let yFinal = (rect?.y || 0) + (event?.deltaY || 0);
+    const {
+      pageX,
+      pageY,
+    } = event;
 
-    updatePosition(yFinal);
+    // Make sure they are scrolling on the correct half of the screen
+    if (pageX >= x && pageX <= x + width && pageY >= y && pageY <= y + height) {
+      // columnIndex
+      const columnWidth = width / columns;
+
+      if (pageX >= x + (columnWidth * columnIndex)) {
+        if (pageX < x + (columnWidth * (columnIndex + 1))) {
+          const rect = refCursor?.current?.getBoundingClientRect();
+          let yFinal = (rect?.y || 0) + (event?.deltaY || 0);
+
+          updatePosition(yFinal);
+        }
+      }
+    }
   }, [
+    columnIndex,
+    columns,
+    height,
     updatePosition,
+    width,
+    x,
+    y,
   ]);
 
   const handleMouseMove = useCallback((event, clientY = null) => {

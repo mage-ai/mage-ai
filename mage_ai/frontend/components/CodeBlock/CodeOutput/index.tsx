@@ -49,6 +49,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ResponseTypeEnum } from '@api/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { SIDE_BY_SIDE_VERTICAL_PADDING } from '../index.style';
 import {
   TAB_DBT_LINEAGE_UUID,
   TAB_DBT_LOGS_UUID,
@@ -656,7 +657,13 @@ function CodeOutput({
   }
 
   return (
-    <div ref={ref}>
+    <div
+      ref={ref}
+      style={{
+        paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+        paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+      }}
+    >
       {contained && (
         <ContainerStyle
           {...borderColorShareProps}

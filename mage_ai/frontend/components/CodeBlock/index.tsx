@@ -399,101 +399,120 @@ function CodeBlock({
     blockOutputHeights,
   ]);
 
+  const handleMouseMove = useCallback((
+    event,
+    columnScrolling: number = null,
+  ) => {
+    if (!startData && !startData2 && event?.type !== 'wheel' && columnScrolling === null) {
+      return;
+    }
+
+    const arr = [];
+
+    if (event?.type === 'wheel') {
+      const {
+        pageX,
+        pageY,
+      } = event;
+
+      const {
+        height: height1,
+        width: width1,
+        x: x1,
+        y: y1,
+      } = mainContainerRect || {};
+
+      if (pageX >= x1 && pageX <= x1 + width1 && pageY >= y1 && pageY <= y1 + height1) {
+        // columnIndex
+        const columnWidth = width1 / 2;
+
+        if (pageX >= x1 && pageX < (x1 + columnWidth)) {
+          columnScrolling = 0;
+          arr.push([
+            refCursorContainer,
+            refCursor,
+            codeBlockHeights,
+            totalHeightCodeBlocks,
+            refColumn1,
+          ]);
+        } else if (pageX >= (x1 + columnWidth) && pageX < (x1 + (columnWidth * 2))) {
+          columnScrolling = 1;
+          arr.push([
+            refCursorContainer2,
+            refCursor2,
+            blockOutputHeights,
+            totalHeightBlockOuputs,
+            refColumn2,
+          ]);
+        }
+      }
+    }
+
+    if (startData || columnScrolling === 0) {
+      columnScrolling = 0;
+      arr.push([
+        refCursorContainer,
+        refCursor,
+        codeBlockHeights,
+        totalHeightCodeBlocks,
+        refColumn1,
+      ]);
+    } else if (startData2 || columnScrolling === 1) {
+      columnScrolling = 1;
+      arr.push([
+        refCursorContainer2,
+        refCursor2,
+        blockOutputHeights,
+        totalHeightBlockOuputs,
+        refColumn2,
+      ]);
+    }
+
+    arr.forEach(([
+      refCC,
+      refC,
+      heights,
+      totalHeight,
+      refCol,
+    ]) => {
+      const cursorContainerRect = refCC?.current?.getBoundingClientRect();
+      const cursorRect = refC?.current?.getBoundingClientRect?.();
+
+      const yStart = cursorContainerRect?.y + cursorRect?.height;
+      const yEnd = cursorRect?.y + cursorRect?.height;
+      const yDistance = yEnd - yStart;
+      const percentageTraveled =
+        Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
+
+      const offset = sum(heights?.slice(0, blockIdx));
+      const yMove = cursorContainerRect?.y - (percentageTraveled * totalHeight)
+      const top = yMove + offset;
+
+      if (scrollTogether) {
+        refColumn1.current.style.top = `${top}px`;
+        refColumn2.current.style.top = `${top}px`;
+      } else {
+        refCol.current.style.top = `${top}px`;
+      }
+    });
+  }, [
+    blockIdx,
+    codeBlockHeights,
+    mainContainerRect,
+    refColumn1,
+    refColumn2,
+    refCursor,
+    refCursorContainer,
+    refCursor2,
+    refCursorContainer2,
+    scrollTogether,
+    startData,
+    startData2,
+    totalHeightBlockOuputs,
+    totalHeightCodeBlocks,
+  ]);
+
   useEffect(() => {
-    const handleMouseMove = (event) => {
-      if (!startData && !startData2 && event?.type !== 'wheel') {
-        return;
-      }
-
-      const arr = [];
-
-      let columnScrolling;
-
-      if (event?.type === 'wheel') {
-        const {
-          pageX,
-          pageY,
-        } = event;
-
-        const {
-          height: height1,
-          width: width1,
-          x: x1,
-          y: y1,
-        } = mainContainerRect || {};
-
-        if (pageX >= x1 && pageX <= x1 + width1 && pageY >= y1 && pageY <= y1 + height1) {
-          if (pageX < (x1 + width1) / 2) {
-            columnScrolling = 0;
-            arr.push([
-              refCursorContainer,
-              refCursor,
-              codeBlockHeights,
-              totalHeightCodeBlocks,
-              refColumn1,
-            ]);
-          } else {
-            columnScrolling = 1;
-            arr.push([
-              refCursorContainer2,
-              refCursor2,
-              blockOutputHeights,
-              totalHeightBlockOuputs,
-              refColumn2,
-            ]);
-          }
-        }
-      }
-
-      if (startData) {
-        columnScrolling = 0;
-        arr.push([
-          refCursorContainer,
-          refCursor,
-          codeBlockHeights,
-          totalHeightCodeBlocks,
-          refColumn1,
-        ]);
-      } else if (startData2) {
-        columnScrolling = 1;
-        arr.push([
-          refCursorContainer2,
-          refCursor2,
-          blockOutputHeights,
-          totalHeightBlockOuputs,
-          refColumn2,
-        ]);
-      }
-
-      arr.forEach(([
-        refCC,
-        refC,
-        heights,
-        totalHeight,
-        refCol,
-      ]) => {
-        const cursorContainerRect = refCC?.current?.getBoundingClientRect();
-        const cursorRect = refC?.current?.getBoundingClientRect?.();
-
-        const yStart = cursorContainerRect?.y + cursorRect?.height;
-        const yEnd = cursorRect?.y + cursorRect?.height;
-        const yDistance = yEnd - yStart;
-        const percentageTraveled =
-          Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
-
-        const offset = sum(heights?.slice(0, blockIdx));
-        const yMove = cursorContainerRect?.y - (percentageTraveled * totalHeight)
-        const top = yMove + offset;
-
-        if (scrollTogether) {
-          refColumn1.current.style.top = `${top}px`;
-          refColumn2.current.style.top = `${top}px`;
-        } else {
-          refCol.current.style.top = `${top}px`;
-        }
-      });
-    };
-
     if (sideBySideEnabled) {
       // Reset everything
       if (!cursorHeight1) {
@@ -523,22 +542,43 @@ function CodeBlock({
     };
   }, [
     blockIdx,
+    blockOutputHeights,
     codeBlockHeights,
     cursorHeight1,
     cursorHeight2,
+    handleMouseMove,
     mainContainerRect,
     refColumn1,
     refColumn2,
-    refCursor,
-    refCursorContainer,
-    refCursor2,
-    refCursorContainer2,
+    sideBySideEnabled,
+  ]);
+
+  useEffect(() => {
+    if (sideBySideEnabled) {
+      handleMouseMove({}, 0);
+    }
+  }, [
+    codeBlockHeights,
+    sideBySideEnabled,
+  ]);
+
+  useEffect(() => {
+    if (sideBySideEnabled) {
+      handleMouseMove({}, 1);
+    }
+  }, [
+    blockOutputHeights,
+    sideBySideEnabled,
+  ]);
+
+  useEffect(() => {
+    if (sideBySideEnabled && scrollTogether) {
+      handleMouseMove({}, 1);
+    }
+  }, [
+    maxHeights,
     scrollTogether,
     sideBySideEnabled,
-    startData,
-    startData2,
-    totalHeightBlockOuputs,
-    totalHeightCodeBlocks,
   ]);
 
   const {
@@ -568,7 +608,7 @@ function CodeBlock({
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
-  const [content, setContent] = useState(defaultValue);
+  const [content, setContentState] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
@@ -622,10 +662,18 @@ function CodeBlock({
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT(block)[0]);
 
+  const setContent = useCallback((prev) => {
+    setContentState(prev);
+    updateCodeBlockHeights?.();
+  }, [
+    setContentState,
+    updateCodeBlockHeights,
+  ]);
+
   useEffect(() => {
     updateCodeBlockHeights?.();
   }, [
-    content,
+    isEditingBlock,
     updateCodeBlockHeights,
   ]);
 
@@ -1334,7 +1382,6 @@ function CodeBlock({
     setSelected,
     setTextareaFocused,
     textareaFocused,
-    updateCodeBlockHeights,
   ]);
 
   useEffect(() => {
@@ -1381,12 +1428,7 @@ function CodeBlock({
   ]);
 
   const codeOutputEl = useMemo(() => (
-    <div
-      style={{
-        paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
-        paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
-      }}
-    >
+    <>
       <CodeOutput
         {...borderColorShareProps}
         block={block}
@@ -1423,7 +1465,7 @@ function CodeBlock({
         sideBySideEnabled={sideBySideEnabled}
         updateBlockOutputHeights={updateBlockOutputHeights}
       />
-    </div>
+    </>
   ), [
     block,
     blockMetadata,
@@ -1513,11 +1555,16 @@ function CodeBlock({
         {content}
       </Markdown>
   ), [content]);
+
   useEffect(() => {
     if (isMarkdown && isEditingBlock && !selected) {
       setIsEditingBlock(false);
     }
-  }, [isEditingBlock, isMarkdown, selected]);
+  }, [
+    isEditingBlock,
+    isMarkdown,
+    selected,
+  ]);
 
   const limitInputEl = useMemo(() => (
     <TextInput
@@ -1757,24 +1804,26 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       <div
         ref={ref}
         style={{
-          paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
-          paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+          // paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+          paddingTop: sideBySideEnabled && blockIdx === 0 ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
           position: 'relative',
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
         }}
       >
-        {blockIdx >= 1 && sideBySideEnabled && !noDivider && (
+        {sideBySideEnabled && blockIdx >= 1 && (
           <BlockDivider
             additionalZIndex={blocksLength - blockIdx}
+            bottom={0}
+            height={SIDE_BY_SIDE_VERTICAL_PADDING * 2}
             onMouseEnter={() => setAddNewBlocksVisible(true)}
             onMouseLeave={() => {
               setAddNewBlocksVisible(false);
               setAddNewBlockMenuOpenIdx?.(null);
             }}
+            top={0}
           >
             {addNewBlocksVisible && addNewBlock && (
               <Spacing
-                mt={2}
                 mx={2}
                 style={{
                   width: '100%',
