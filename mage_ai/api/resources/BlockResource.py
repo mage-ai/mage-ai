@@ -650,6 +650,21 @@ class BlockResource(GenericResource):
                 replicated_block=replicated_block,
             )
 
+        async def _create_callback(resource):
+            # Replace existing block in pipeline with newly created copy of that block
+            block_uuid_to_remove = payload.get('block_uuid_to_remove')
+            if block_uuid_to_remove is not None:
+                block_to_remove = Block.get_block(
+                    block_uuid_to_remove,
+                    block_uuid_to_remove,
+                    block_type,
+                    language=language,
+                )
+                block_to_remove.pipeline = pipeline
+                block_to_remove.delete()
+
+        self.on_create_callback = _create_callback
+
         return self(block, user, **kwargs)
 
     @classmethod
