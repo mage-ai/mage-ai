@@ -128,6 +128,7 @@ function BlockSettings({
     type: blockType,
     uuid: blockUUID,
   } = block;
+  const isDbtBlock = useMemo(() => BlockTypeEnum.DBT === blockType, [blockType]);
   const currentBlockIndex = pipeline?.blocks?.findIndex(({ uuid }) => uuid === blockUUID);
   const blockWithUpdatedContent = useMemo(
     () => pipeline?.blocks?.[currentBlockIndex],
@@ -372,47 +373,49 @@ function BlockSettings({
                     Shared by {blockPipelinesCount} pipelines
                   </Text>
                 </Flex>
-                <Tooltip
-                  appearBefore
-                  block
-                  label="Duplicates block so it is no longer shared with any other
-                    pipelines (detaches other pipeline associations)"
-                  lightBackground
-                  maxWidth={UNIT * 30}
-                  size={null}
-                >
-                  <Button
-                    {...SHARED_BUTTON_PROPS}
-                    afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
-                    iconOnly={false}
-                    onClick={() => addNewBlockAtIndex(
-                      {
-                        ...ignoreKeys(blockWithUpdatedContent, [
-                          'all_upstream_blocks_executed',
-                          'callback_blocks',
-                          'conditional_blocks',
-                          'downstream_blocks',
-                          'executor_config',
-                          'executor_type',
-                          'name',
-                          'outputs',
-                          'retry_config',
-                          'status',
-                          'tags',
-                          'timeout',
-                        ]),
-                        block_uuid_to_remove: blockUUID,
-                      },
-                      currentBlockIndex,
-                      setSelectedBlock,
-                      undefined,
-                      true,
-                    )}
-                    padding={null}
+                {!isDbtBlock && (
+                  <Tooltip
+                    appearBefore
+                    block
+                    label="Duplicates block so it is no longer shared with any other
+                      pipelines (detaches other pipeline associations)"
+                    lightBackground
+                    maxWidth={UNIT * 30}
+                    size={null}
                   >
-                    Detach
-                  </Button>
-                </Tooltip>
+                    <Button
+                      {...SHARED_BUTTON_PROPS}
+                      afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
+                      iconOnly={false}
+                      onClick={() => addNewBlockAtIndex(
+                        {
+                          ...ignoreKeys(blockWithUpdatedContent, [
+                            'all_upstream_blocks_executed',
+                            'callback_blocks',
+                            'conditional_blocks',
+                            'downstream_blocks',
+                            'executor_config',
+                            'executor_type',
+                            'name',
+                            'outputs',
+                            'retry_config',
+                            'status',
+                            'tags',
+                            'timeout',
+                          ]),
+                          block_uuid_to_remove: blockUUID,
+                        },
+                        currentBlockIndex,
+                        setSelectedBlock,
+                        undefined,
+                        true,
+                      )}
+                      padding={null}
+                    >
+                      Detach
+                    </Button>
+                  </Tooltip>
+                )}
               </FlexContainer>
             </BannerStyle>
           </Spacing>
@@ -436,7 +439,8 @@ function BlockSettings({
 
                 <Button
                   {...SHARED_BUTTON_PROPS}
-                  afterIcon={<Edit size={ICON_SIZE_SMALL} />}
+                  afterIcon={isDbtBlock ? null : <Edit size={ICON_SIZE_SMALL} />}
+                  disabled={isDbtBlock}
                   onClick={() => showUpdateBlockModal(block, blockName)}
                 >
                   <Text bold>
@@ -774,7 +778,7 @@ function BlockSettings({
           </Spacing>
         )}
 
-        {BlockTypeEnum.DBT === blockType && (
+        {isDbtBlock && (
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <Headline level={5}>
               dbt settings
