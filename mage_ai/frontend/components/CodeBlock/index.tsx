@@ -139,6 +139,7 @@ import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/A
 import {
   buildBorderProps,
   buildConvertBlockMenuItems,
+  calculateOffsetPercentage,
   getDownstreamBlockUuids,
   getMessagesWithType,
   getUpstreamBlockUuids,
@@ -402,19 +403,6 @@ function CodeBlock({
     blockOutputHeights,
   ]);
 
-  const calculateOffsetPercentage = useCallback((
-    heights: number[],
-    totalHeight: number,
-  ) => {
-    const heightsWithValue =
-      heights?.reduce((acc, height: number) => !height ? acc : acc.concat(height), []);
-    const heightLast = heightsWithValue?.[heightsWithValue?.length - 1] || 0;
-
-    return (Math.min(heightLast, mainContainerRect?.height) * 0.25) / totalHeight;
-  }, [
-    mainContainerRect?.height,
-  ]);
-
   const handleMouseMove = useCallback((
     event,
     columnScrolling: number = null,
@@ -506,10 +494,14 @@ function CodeBlock({
       const percentageTraveled =
         (100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height) / 100;
 
-      const offsetPercentage = calculateOffsetPercentage(heights, totalHeight);
+      const offsetPercentage = calculateOffsetPercentage(
+        heights,
+        totalHeight,
+        mainContainerRect?.height,
+      );
 
       const yMove = cursorContainerRect?.y
-        - (Math.max(0, percentageTraveled - offsetPercentage) * totalHeight);
+        - (Math.max(0, percentageTraveled * (1 - offsetPercentage)) * totalHeight);
 
       const offset = sum((heights || [])?.slice(0, blockIdx) || []);
       const top = yMove + offset;
@@ -884,10 +876,11 @@ function CodeBlock({
         const offsetPercentage = calculateOffsetPercentage(
           heights,
           totalHeight,
+          height,
         );
         const percentageMoved1 = (heightUpToBlockIdx - (top1 - yCC2)) / (totalHeight);
 
-        const top = ((percentageMoved1 + offsetPercentage) * (heightCC2 - heightC2)) + yCC2;
+        const top = ((percentageMoved1 / (1 - offsetPercentage)) * (heightCC2 - heightC2)) + yCC2;
 
         refCursorToSync.current.style.top = `${top}px`;
 
