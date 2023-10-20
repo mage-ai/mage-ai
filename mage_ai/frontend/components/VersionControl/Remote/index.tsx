@@ -1,8 +1,7 @@
 import NextLink from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
-import { get, set, remove } from '@storage/localStorage';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
@@ -31,7 +30,8 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
-import { OathProviderEnum } from '@interfaces/OauthType';
+import { LOCAL_STORAGE_KEY_OAUTH_STATE, set } from '@storage/localStorage';
+import { OauthProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -202,7 +202,7 @@ function Remote({
     },
   );
 
-  const { data: dataOauth, mutate: fetchOauth } = api.oauths.detail(OathProviderEnum.GITHUB, {
+  const { data: dataOauth, mutate: fetchOauth } = api.oauths.detail(OauthProviderEnum.GITHUB, {
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
   });
   const oauth = useMemo(() => dataOauth?.oauth || {}, [dataOauth]);
@@ -231,7 +231,7 @@ function Remote({
       // @ts-ignore
       createOauth({
         oauth: {
-          provider: providerFromURL || OathProviderEnum.GITHUB,
+          provider: providerFromURL || OauthProviderEnum.GITHUB,
           token: accessTokenFromURL,
         },
       });
@@ -418,7 +418,7 @@ function Remote({
                   const url = oauth?.url;
                   const q = queryFromUrl(url);
                   const state = q.state;
-                  set('oauth_state', state);
+                  set(LOCAL_STORAGE_KEY_OAUTH_STATE, state);
                   router.push(oauth?.url);
                 }}
                 primary

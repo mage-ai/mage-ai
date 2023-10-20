@@ -1,11 +1,11 @@
-import BasePage from '@components/BasePage';
 import { toast } from 'react-toastify';
-import SignForm from '@components/Sessions/SignForm';
-import { queryFromUrl } from '@utils/url';
-import api from '@api';
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import { get, set } from '@storage/localStorage';
+
+import BasePage from '@components/BasePage';
+import api from '@api';
+import { LOCAL_STORAGE_KEY_OAUTH_STATE, get } from '@storage/localStorage';
+import { queryFromUrl } from '@utils/url';
 
 function OauthPage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ function OauthPage() {
 
   useEffect(() => {
     const state = query?.state;
-    const localState = get('oauth_state');
+    const localState = get(LOCAL_STORAGE_KEY_OAUTH_STATE);
     if (oauthUrl && state === localState) {
       // console.log('oauth url:', oauthUrl);
       router.push(oauthUrl);
