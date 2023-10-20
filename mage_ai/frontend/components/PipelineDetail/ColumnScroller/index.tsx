@@ -121,7 +121,9 @@ function ColumnScroller({
       return;
     }
 
-    event.preventDefault();
+    if (event) {
+      event?.preventDefault();
+    }
 
     let yFinal
 
@@ -139,6 +141,13 @@ function ColumnScroller({
   }, [
     startData,
     updatePosition,
+  ]);
+
+  useEffect(() => {
+    handleMouseMove(null, refCursor?.current?.getBoundingClientRect()?.y)
+  }, [
+    height,
+    refCursor,
   ]);
 
   useEffect(() => {

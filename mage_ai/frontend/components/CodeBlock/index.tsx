@@ -423,7 +423,6 @@ function CodeBlock({
       } = mainContainerRect || {};
 
       if (pageX >= x1 && pageX <= x1 + width1 && pageY >= y1 && pageY <= y1 + height1) {
-        // columnIndex
         const columnWidth = width1 / 2;
 
         if (pageX >= x1 && pageX < (x1 + columnWidth)) {
@@ -484,8 +483,17 @@ function CodeBlock({
       const percentageTraveled =
         Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
 
-      const offset = sum(heights?.slice(0, blockIdx));
-      const yMove = cursorContainerRect?.y - (percentageTraveled * totalHeight)
+      const heightsWithValue =
+        heights?.reduce((acc, height: number) => !height ? acc : acc.concat(height), []);
+      const heightLast = heightsWithValue?.[heightsWithValue?.length - 1] || 0;
+
+      const offsetPercentage =
+        (Math.min(heightLast, mainContainerRect?.height) * 0.25) / totalHeight;
+
+      const yMove = cursorContainerRect?.y
+        - (Math.max(0, percentageTraveled - offsetPercentage) * totalHeight);
+
+      const offset = sum((heights || [])?.slice(0, blockIdx) || []);
       const top = yMove + offset;
 
       if (scrollTogether) {
@@ -577,6 +585,21 @@ function CodeBlock({
     }
   }, [
     maxHeights,
+    scrollTogether,
+    sideBySideEnabled,
+  ]);
+
+  useEffect(() => {
+    if (sideBySideEnabled) {
+      if (scrollTogether) {
+        handleMouseMove({}, 1);
+      } else {
+        handleMouseMove({}, 0);
+        handleMouseMove({}, 1);
+      }
+    }
+  }, [
+    mainContainerRect?.height,
     scrollTogether,
     sideBySideEnabled,
   ]);
