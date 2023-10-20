@@ -89,6 +89,8 @@ REQUESTS_BASE_PATH = os.getenv('MAGE_REQUESTS_BASE_PATH', BASE_PATH)
 # Routes base path is used to configure the base path for the backend routes. Defaults
 # to the MAGE_BASE_PATH environment variable.
 ROUTES_BASE_PATH = os.getenv('MAGE_ROUTES_BASE_PATH', BASE_PATH)
+# Used for OAUTH and for generating download links
+JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
 
 # Sets the trigger interval of the scheduler to a numeric value, in seconds
 # Determines how often the scheduler gets invoked
