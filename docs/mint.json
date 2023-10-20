@@ -292,6 +292,15 @@
               ]
             }
           ]
+        },
+        {
+          "group": "User defined permissions",
+          "icon": "fingerprint",
+          "pages": [
+            "authentication/permissions/overview",
+            "authentication/permissions/roles",
+            "authentication/permissions/permissions"
+          ]
         }
       ]
     },
@@ -668,15 +677,6 @@
           "pages": [
             "production/authentication/overview",
             "production/authentication/microsoft"
-          ]
-        },
-        {
-          "group": "User defined permissions",
-          "icon": "fingerprint",
-          "pages": [
-            "authentication/permissions/overview",
-            "authentication/permissions/roles",
-            "authentication/permissions/permissions"
           ]
         },
         {
