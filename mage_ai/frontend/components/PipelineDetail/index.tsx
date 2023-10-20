@@ -977,8 +977,8 @@ function PipelineDetail({
             {sideBySideEnabled && isLast && (
               <div
                 style={{
-                  paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING * 2,
-                  paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING * 2,
+                  paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING,
+                  paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING,
                 }}
               >
                 {addNewBlocksMemo}

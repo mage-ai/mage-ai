@@ -71,6 +71,7 @@ type CodeOutputProps = {
     };
   };
   buttonTabs?: any;
+  children?: any;
   collapsed?: boolean;
   contained?: boolean;
   hasOutput?: boolean;
@@ -114,6 +115,7 @@ function CodeOutput({
   block,
   blockMetadata,
   buttonTabs,
+  children,
   collapsed,
   contained = true,
   dynamicBlock,
@@ -652,219 +654,228 @@ function CodeOutput({
     tableContent,
   ]);
 
-  if (!buttonTabs && !hasError && !hasOutput && !renderMessagesRaw) {
+  if (!buttonTabs && !hasError && !hasOutput && !renderMessagesRaw && !children) {
     return null;
   }
 
   return (
     <div
       ref={ref}
-      style={{
-        paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
-        paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
-      }}
     >
-      {contained && (
-        <ContainerStyle
-          {...borderColorShareProps}
-          addBottomPadding={isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK}
-          blockType={blockType}
-          dynamicBlock={dynamicBlock}
-          dynamicChildBlock={dynamicChildBlock}
-          executedAndIdle={executedAndIdle}
-          hasError={hasError}
-          selected={selected}
-          showBorderTop={showBorderTop}
-        >
-          {!collapsed && testContent?.length >= 1 && (
-            <>
-              <Spacing py={2}>
-                <OutputRowStyle contained normalPadding={sideBySideEnabled}>
-                  {testContent.map(({
-                    error,
-                    message,
-                    stacktrace,
-                  }, idx) => (
-                    <Spacing key={message} mt={idx >= 1 ? 3 : 0}>
-                      <Text monospace preWrap>
-                        <Ansi>
-                          {`${message}${error ? ' ' + error : ''}`}
-                        </Ansi>
-                      </Text>
+      <div
+        style={{
+          paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+        }}
+      >
+        {contained && (
+          <ContainerStyle
+            {...borderColorShareProps}
+            addBottomPadding={isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK}
+            blockType={blockType}
+            dynamicBlock={dynamicBlock}
+            dynamicChildBlock={dynamicChildBlock}
+            executedAndIdle={executedAndIdle}
+            hasError={hasError}
+            selected={selected}
+            showBorderTop={showBorderTop}
+          >
+            {children}
 
-                      {stacktrace?.map((line: string) => (
-                        <Text default key={line} monospace preWrap small>
+            {!collapsed && testContent?.length >= 1 && (
+              <>
+                <Spacing py={2}>
+                  <OutputRowStyle contained normalPadding={sideBySideEnabled}>
+                    {testContent.map(({
+                      error,
+                      message,
+                      stacktrace,
+                    }, idx) => (
+                      <Spacing key={message} mt={idx >= 1 ? 3 : 0}>
+                        <Text monospace preWrap>
                           <Ansi>
-                            {line}
+                            {`${message}${error ? ' ' + error : ''}`}
                           </Ansi>
                         </Text>
-                      ))}
-                    </Spacing>
-                  ))}
-                </OutputRowStyle>
-              </Spacing>
 
-              <Spacing mb={(sideBySideEnabled || hasError) ? 2 : 0}>
-                <Divider medium />
-              </Spacing>
-            </>
-          )}
-          {!collapsed && currentContentToDisplay}
-        </ContainerStyle>
-      )}
-
-      {!contained && currentContentToDisplay}
-
-      {executedAndIdle && !hideExtraInfo && (
-        <ExtraInfoStyle
-          {...borderColorShareProps}
-          blockType={blockType}
-          dynamicBlock={dynamicBlock}
-          dynamicChildBlock={dynamicChildBlock}
-          hasError={hasError}
-          selected={selected}
-        >
-          <ExtraInfoBorderStyle />
-
-          <FlexContainer justifyContent="space-between">
-            <Flex alignItems="center" px={1}>
-              {setCollapsed && (
-                <Button
-                  {...SHARED_BUTTON_PROPS}
-                  onClick={() => setCollapsed(!collapsed)}
-                >
-                  {collapsed ? (
-                    <FlexContainer alignItems="center">
-                      <ChevronDown muted size={UNIT * 2} />&nbsp;
-                      <Text default>
-                        Expand output
-                      </Text>
-                    </FlexContainer>
-                  ) : (
-                    <FlexContainer alignItems="center">
-                      <ChevronUp muted size={UNIT * 2} />
-                      {dataFrameShape && (
-                        <Spacing ml={2}>
-                          <Text>
-                            {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                        {stacktrace?.map((line: string) => (
+                          <Text default key={line} monospace preWrap small>
+                            <Ansi>
+                              {line}
+                            </Ansi>
                           </Text>
-                        </Spacing>
-                      )}
-                    </FlexContainer>
-                  )}
-                </Button>
-              )}
+                        ))}
+                      </Spacing>
+                    ))}
+                  </OutputRowStyle>
+                </Spacing>
 
-              {!setCollapsed && (
-                <FlexContainer alignItems="center">
-                  {dataFrameShape && (
-                    <Spacing pl={1}>
-                      <Text>
-                        {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
-                      </Text>
-                    </Spacing>
-                  )}
-                </FlexContainer>
-              )}
-            </Flex>
+                <Spacing mb={(sideBySideEnabled || hasError) ? 2 : 0}>
+                  <Divider medium />
+                </Spacing>
+              </>
+            )}
+            {!collapsed && currentContentToDisplay}
+          </ContainerStyle>
+        )}
 
-            <ExtraInfoContentStyle>
-              <FlexContainer
-                alignItems="center"
-                fullWidth
-                justifyContent="flex-end"
-              >
-                <Tooltip
-                  {...SHARED_TOOLTIP_PROPS}
-                  label={runCount >= 1 && runStartTime
-                    ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
-                    : (
-                      hasError
-                        ? 'Block executed with errors'
-                        : 'Block executed successfully'
-                    )
-                  }
-                >
-                  <FlexContainer alignItems="center">
-                    {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
-                      <>
-                        <Text small>
-                          {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+        {!contained && (
+          <>
+            {children}
+            {currentContentToDisplay}
+          </>
+        )}
+
+        {executedAndIdle && !hideExtraInfo && (
+          <ExtraInfoStyle
+            {...borderColorShareProps}
+            blockType={blockType}
+            dynamicBlock={dynamicBlock}
+            dynamicChildBlock={dynamicChildBlock}
+            hasError={hasError}
+            selected={selected}
+          >
+            <ExtraInfoBorderStyle />
+
+            <FlexContainer justifyContent="space-between">
+              <Flex alignItems="center" px={1}>
+                {setCollapsed && (
+                  <Button
+                    {...SHARED_BUTTON_PROPS}
+                    onClick={() => setCollapsed(!collapsed)}
+                  >
+                    {collapsed ? (
+                      <FlexContainer alignItems="center">
+                        <ChevronDown muted size={UNIT * 2} />&nbsp;
+                        <Text default>
+                          Expand output
                         </Text>
-
-                        <Spacing mr={1} />
-                      </>
+                      </FlexContainer>
+                    ) : (
+                      <FlexContainer alignItems="center">
+                        <ChevronUp muted size={UNIT * 2} />
+                        {dataFrameShape && (
+                          <Spacing ml={2}>
+                            <Text>
+                              {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                            </Text>
+                          </Spacing>
+                        )}
+                      </FlexContainer>
                     )}
+                  </Button>
+                )}
 
-                    {!hasError && <Check size={UNIT * 2} success />}
-                    {hasError && (
-                      <Circle
-                        danger
-                        size={UNIT * 2}
-                      >
-                        <Text bold monospace small>
-                          !
+                {!setCollapsed && (
+                  <FlexContainer alignItems="center">
+                    {dataFrameShape && (
+                      <Spacing pl={1}>
+                        <Text>
+                          {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
                         </Text>
-                      </Circle>
+                      </Spacing>
                     )}
                   </FlexContainer>
-                </Tooltip>
-                {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
-                  <Spacing pl={2}>
+                )}
+              </Flex>
+
+              <ExtraInfoContentStyle>
+                <FlexContainer
+                  alignItems="center"
+                  fullWidth
+                  justifyContent="flex-end"
+                >
+                  <Tooltip
+                    {...SHARED_TOOLTIP_PROPS}
+                    label={runCount >= 1 && runStartTime
+                      ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
+                      : (
+                        hasError
+                          ? 'Block executed with errors'
+                          : 'Block executed successfully'
+                      )
+                    }
+                  >
                     <FlexContainer alignItems="center">
-                      <Tooltip
-                        {...SHARED_TOOLTIP_PROPS}
-                        label="Expand table"
-                      >
-                        <Button
-                          {...SHARED_BUTTON_PROPS}
-                          onClick={() => {
-                            addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
-                            openSidekickView?.(ViewKeyEnum.DATA);
-                            setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
-                              if (!prevOutputBlocks.find(({ uuid }) => uuid === blockUUID)) {
-                                setSelectedOutputBlock?.(block);
-                                return prevOutputBlocks.concat(block);
-                              } else {
-                                return prevOutputBlocks;
-                              }
-                            });
-                          }}
-                        >
-                          <Expand muted size={UNIT * 1.75} />
-                        </Button>
-                      </Tooltip>
+                      {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
+                        <>
+                          <Text small>
+                            {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+                          </Text>
 
-                      <Spacing pl={2} />
+                          <Spacing mr={1} />
+                        </>
+                      )}
 
-                      <Tooltip
-                        {...SHARED_TOOLTIP_PROPS}
-                        forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
-                        label={isLoadingDownloadBlockOutputAsCsvFile
-                          ? `${blockOutputDownloadProgress || 0}mb downloaded...`
-                          : 'Save output as CSV file'
-                        }
-                      >
-                        <Button
-                          {...SHARED_BUTTON_PROPS}
-                          compact
-                          loading={isLoadingDownloadBlockOutputAsCsvFile}
-                          onClick={() => {
-                            setBlockOutputDownloadProgress(null);
-                            downloadBlockOutputAsCsvFile();
-                          }}
+                      {!hasError && <Check size={UNIT * 2} success />}
+                      {hasError && (
+                        <Circle
+                          danger
+                          size={UNIT * 2}
                         >
-                          <Save muted size={UNIT * 1.75} />
-                        </Button>
-                      </Tooltip>
+                          <Text bold monospace small>
+                            !
+                          </Text>
+                        </Circle>
+                      )}
                     </FlexContainer>
-                  </Spacing>
-                }
-              </FlexContainer>
-            </ExtraInfoContentStyle>
-          </FlexContainer>
-        </ExtraInfoStyle>
-      )}
+                  </Tooltip>
+                  {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
+                    <Spacing pl={2}>
+                      <FlexContainer alignItems="center">
+                        <Tooltip
+                          {...SHARED_TOOLTIP_PROPS}
+                          label="Expand table"
+                        >
+                          <Button
+                            {...SHARED_BUTTON_PROPS}
+                            onClick={() => {
+                              addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
+                              openSidekickView?.(ViewKeyEnum.DATA);
+                              setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
+                                if (!prevOutputBlocks.find(({ uuid }) => uuid === blockUUID)) {
+                                  setSelectedOutputBlock?.(block);
+                                  return prevOutputBlocks.concat(block);
+                                } else {
+                                  return prevOutputBlocks;
+                                }
+                              });
+                            }}
+                          >
+                            <Expand muted size={UNIT * 1.75} />
+                          </Button>
+                        </Tooltip>
+
+                        <Spacing pl={2} />
+
+                        <Tooltip
+                          {...SHARED_TOOLTIP_PROPS}
+                          forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
+                          label={isLoadingDownloadBlockOutputAsCsvFile
+                            ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                            : 'Save output as CSV file'
+                          }
+                        >
+                          <Button
+                            {...SHARED_BUTTON_PROPS}
+                            compact
+                            loading={isLoadingDownloadBlockOutputAsCsvFile}
+                            onClick={() => {
+                              setBlockOutputDownloadProgress(null);
+                              downloadBlockOutputAsCsvFile();
+                            }}
+                          >
+                            <Save muted size={UNIT * 1.75} />
+                          </Button>
+                        </Tooltip>
+                      </FlexContainer>
+                    </Spacing>
+                  }
+                </FlexContainer>
+              </ExtraInfoContentStyle>
+            </FlexContainer>
+          </ExtraInfoStyle>
+        )}
+      </div>
     </div>
   );
 }

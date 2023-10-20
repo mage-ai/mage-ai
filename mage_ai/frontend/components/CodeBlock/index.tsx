@@ -111,6 +111,7 @@ import {
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
+  CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER,
   DRAG_AND_DROP_TYPE,
   SUBHEADER_TABS,
   SUBHEADER_TAB_CODE,
@@ -399,11 +400,29 @@ function CodeBlock({
     blockOutputHeights,
   ]);
 
+  const calculateOffsetPercentage = useCallback((
+    heights: number[],
+    totalHeight: number,
+  ) => {
+    const heightsWithValue =
+      heights?.reduce((acc, height: number) => !height ? acc : acc.concat(height), []);
+    const heightLast = heightsWithValue?.[heightsWithValue?.length - 1] || 0;
+
+    return (Math.min(heightLast, mainContainerRect?.height) * 0.25) / totalHeight;
+  }, [
+    mainContainerRect?.height,
+  ]);
+
   const handleMouseMove = useCallback((
     event,
     columnScrolling: number = null,
   ) => {
-    if (!startData && !startData2 && event?.type !== 'wheel' && columnScrolling === null) {
+    if (!startData
+      && !startData2
+      && event?.type !== 'wheel'
+      && event?.type !== CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER
+      && columnScrolling === null
+    ) {
       return;
     }
 
@@ -445,6 +464,8 @@ function CodeBlock({
           ]);
         }
       }
+    } else if (event?.type === CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER) {
+      columnScrolling = event?.detail?.columnScrolling;
     }
 
     if (startData || columnScrolling === 0) {
@@ -481,14 +502,9 @@ function CodeBlock({
       const yEnd = cursorRect?.y + cursorRect?.height;
       const yDistance = yEnd - yStart;
       const percentageTraveled =
-        Math.ceil((100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height)) / 100;
+        (100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height) / 100;
 
-      const heightsWithValue =
-        heights?.reduce((acc, height: number) => !height ? acc : acc.concat(height), []);
-      const heightLast = heightsWithValue?.[heightsWithValue?.length - 1] || 0;
-
-      const offsetPercentage =
-        (Math.min(heightLast, mainContainerRect?.height) * 0.25) / totalHeight;
+      const offsetPercentage = calculateOffsetPercentage(heights, totalHeight);
 
       const yMove = cursorContainerRect?.y
         - (Math.max(0, percentageTraveled - offsetPercentage) * totalHeight);
@@ -539,6 +555,7 @@ function CodeBlock({
       if (typeof window !== 'undefined') {
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('wheel', handleMouseMove);
+        window.addEventListener(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, handleMouseMove);
       }
     }
 
@@ -546,11 +563,13 @@ function CodeBlock({
       if (typeof window !== 'undefined') {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('wheel', handleMouseMove);
+        window.removeEventListener(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, handleMouseMove);
       }
     };
   }, [
     blockIdx,
     blockOutputHeights,
+    calculateOffsetPercentage,
     codeBlockHeights,
     cursorHeight1,
     cursorHeight2,
@@ -834,6 +853,61 @@ function CodeBlock({
       [key: string]: any;
     };
   }) => {
+
+    if (sideBySideEnabled
+      && !scrollTogether
+      && mainContainerRect
+      && refColumn2?.current
+      && refCursor?.current
+      && refCursor2?.current
+    ) {
+      const height = mainContainerRect?.height;
+      const y = mainContainerRect?.y;
+      const {
+        height: height2,
+        y: y2,
+      } = refColumn2?.current?.getBoundingClientRect?.() || {};
+
+      // Top is below the screen or bottom is above the screen
+      if (y2 >= y + height || y2 + height2 <= y) {
+        const top1 = refColumn1?.current?.getBoundingClientRect()?.y;
+        const heightUpToBlockOutput = sum(blockOutputHeights?.slice(0, blockIdx) || []);
+
+        const {
+          height: heightCC1,
+          y: yCC1,
+        } = refCursorContainer?.current?.getBoundingClientRect() || {};
+
+        const {
+          height: heightCC2,
+          y: yCC2,
+        } = refCursorContainer2?.current?.getBoundingClientRect() || {};
+        const {
+          height: heightC2,
+        } = refCursor2?.current?.getBoundingClientRect() || {};
+
+        const offsetPercentage = calculateOffsetPercentage(
+          blockOutputHeights,
+          totalHeightBlockOuputs,
+        );
+        const percentageMoved1 = (heightUpToBlockOutput - (top1 - yCC1)) / (totalHeightBlockOuputs);
+
+        const top = ((percentageMoved1 + offsetPercentage) * (heightCC2 - heightC2)) + yCC2;
+
+        refCursor2.current.style.top = `${top}px`;
+
+        const evt = new CustomEvent(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, {
+          detail: {
+            columnScrolling: 1,
+          },
+        });
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(evt);
+        }
+      }
+    }
+
     const {
       block: blockPayload,
       code,
@@ -901,17 +975,31 @@ function CodeBlock({
       setOutputCollapsed(false);
     }
   }, [
+    blockIdx,
     blockInteractions,
+    blockOutputHeights,
+    calculateOffsetPercentage,
     content,
+    handleMouseMove,
     hasDownstreamWidgets,
     interactionsMapping,
     isDBT,
+    mainContainerRect,
+    refColumn1,
+    refColumn2,
+    refCursor,
+    refCursor2,
+    refCursorContainer,
+    refCursorContainer2,
     runBlock,
     runCount,
+    scrollTogether,
     selectedTab,
     setRunCount,
     setRunEndTime,
     setSelectedTab,
+    sideBySideEnabled,
+    totalHeightBlockOuputs,
     variables,
   ]);
 
@@ -1451,44 +1539,50 @@ function CodeBlock({
   ]);
 
   const codeOutputEl = useMemo(() => (
-    <>
-      <CodeOutput
-        {...borderColorShareProps}
-        block={block}
-        blockMetadata={blockMetadata}
-        buttonTabs={buttonTabs}
-        collapsed={outputCollapsed}
-        hasOutput={hasOutput}
-        isInProgress={isInProgress}
-        mainContainerWidth={mainContainerWidth}
-        messages={messagesWithType}
-        messagesAll={messages}
-        openSidekickView={openSidekickView}
-        pipeline={pipeline}
-        ref={blockOutputRef}
-        runCount={runCount}
-        runEndTime={runEndTime}
-        runStartTime={runStartTime}
-        selected={selected}
-        selectedTab={selectedTab}
-        setCollapsed={!sideBySideEnabled
-          ? (val: boolean) => {
-            setOutputCollapsed(() => {
-              set(outputCollapsedUUID, val);
-              return val;
-            });
-          }
-          : null
+    <CodeOutput
+      {...borderColorShareProps}
+      block={block}
+      blockMetadata={blockMetadata}
+      buttonTabs={buttonTabs}
+      collapsed={outputCollapsed}
+      hasOutput={hasOutput}
+      isInProgress={isInProgress}
+      mainContainerWidth={mainContainerWidth}
+      messages={messagesWithType}
+      messagesAll={messages}
+      openSidekickView={openSidekickView}
+      pipeline={pipeline}
+      ref={blockOutputRef}
+      runCount={runCount}
+      runEndTime={runEndTime}
+      runStartTime={runStartTime}
+      selected={selected}
+      selectedTab={selectedTab}
+      setCollapsed={!sideBySideEnabled
+        ? (val: boolean) => {
+          setOutputCollapsed(() => {
+            set(outputCollapsedUUID, val);
+            return val;
+          });
         }
-        setErrors={setErrors}
-        setOutputBlocks={setOutputBlocks}
-        setSelectedOutputBlock={setSelectedOutputBlock}
-        setSelectedTab={setSelectedTab}
-        showBorderTop={sideBySideEnabled}
-        sideBySideEnabled={sideBySideEnabled}
-        updateBlockOutputHeights={updateBlockOutputHeights}
-      />
-    </>
+        : null
+      }
+      setErrors={setErrors}
+      setOutputBlocks={setOutputBlocks}
+      setSelectedOutputBlock={setSelectedOutputBlock}
+      setSelectedTab={setSelectedTab}
+      showBorderTop={sideBySideEnabled}
+      sideBySideEnabled={sideBySideEnabled}
+      updateBlockOutputHeights={updateBlockOutputHeights}
+    >
+      {sideBySideEnabled && (
+        <Spacing px={PADDING_UNITS} py={1}>
+          <Text monospace>
+            {block?.uuid}
+          </Text>
+        </Spacing>
+      )}
+    </CodeOutput>
   ), [
     block,
     blockMetadata,
@@ -1827,7 +1921,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       <div
         ref={ref}
         style={{
-          // paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
           paddingTop: sideBySideEnabled && blockIdx === 0 ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
           position: 'relative',
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
@@ -1837,7 +1930,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
           <BlockDivider
             additionalZIndex={blocksLength - blockIdx}
             bottom={0}
-            height={SIDE_BY_SIDE_VERTICAL_PADDING * 2}
+            height={SIDE_BY_SIDE_VERTICAL_PADDING}
             onMouseEnter={() => setAddNewBlocksVisible(true)}
             onMouseLeave={() => {
               setAddNewBlocksVisible(false);
@@ -3075,7 +3168,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
 
     return (
       <ScrollColunnStyle
-        height={height}
+        // height={height}
         left={left}
         ref={refColumn1}
         top={y + top}
@@ -3110,7 +3203,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
 
     return (
       <ScrollColunnStyle
-        height={height}
+        // height={height}
         ref={refColumn2}
         right={right}
         top={y + top}

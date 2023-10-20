@@ -96,6 +96,8 @@ export const HTMLOutputStyle = styled.div<any>`
 export const ExtraInfoStyle = styled.div<BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
+  border-bottom-left-radius: ${BORDER_RADIUS}px;
+  border-bottom-right-radius: ${BORDER_RADIUS}px;
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-left-style: solid;
@@ -105,8 +107,6 @@ export const ExtraInfoStyle = styled.div<BorderColorShareProps>`
 
   ${props => `
     background-color: ${(props.theme.borders || dark.borders).light};
-    border-bottom-left-radius: ${BORDER_RADIUS}px;
-    border-bottom-right-radius: ${BORDER_RADIUS}px;
   `}
 `;
 
