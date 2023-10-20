@@ -1362,7 +1362,12 @@ function CodeBlock({
   ]);
 
   const codeOutputEl = useMemo(() => (
-    <>
+    <div
+      style={{
+        paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+        paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+      }}
+    >
       <CodeOutput
         {...borderColorShareProps}
         block={block}
@@ -1397,7 +1402,7 @@ function CodeBlock({
         setSelectedTab={setSelectedTab}
         updateBlockOutputHeights={updateBlockOutputHeights}
       />
-    </>
+    </div>
   ), [
     block,
     blockMetadata,
@@ -1731,6 +1736,8 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       <div
         ref={ref}
         style={{
+          paddingBottom: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
+          paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
           position: 'relative',
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
         }}

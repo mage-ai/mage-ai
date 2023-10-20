@@ -273,7 +273,7 @@ function PipelineDetail({
     ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -970,7 +970,7 @@ function PipelineDetail({
             windowWidth={windowWidth}
           >
             {sideBySideEnabled && isLast && (
-              <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+              <Spacing py={PADDING_UNITS}>
                 {addNewBlocksMemo}
               </Spacing>
             )}
