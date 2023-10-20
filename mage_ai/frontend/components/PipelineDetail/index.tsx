@@ -72,6 +72,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { SIDE_BY_SIDE_VERTICAL_PADDING } from '@components/CodeBlock/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
@@ -970,9 +971,14 @@ function PipelineDetail({
             windowWidth={windowWidth}
           >
             {sideBySideEnabled && isLast && (
-              <Spacing py={PADDING_UNITS}>
+              <div
+                style={{
+                  paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING,
+                  paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING,
+                }}
+              >
                 {addNewBlocksMemo}
-              </Spacing>
+              </div>
             )}
           </CodeBlock>
         );

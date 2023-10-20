@@ -196,7 +196,7 @@ export const SubheaderStyle = styled.div<{
 `;
 
 export const CodeContainerStyle = styled.div<{
-  hasOutput: boolean;
+  hideBorderBottom: boolean;
   lightBackground?: boolean;
   noPadding?: boolean;
 } & BorderColorShareProps>`
@@ -221,7 +221,7 @@ export const CodeContainerStyle = styled.div<{
     background-color: ${(props.theme || dark).background.content};
   `}
 
-  ${props => !props.hasOutput && `
+  ${props => !props.hideBorderBottom && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
     border-bottom-style: ${BORDER_STYLE};

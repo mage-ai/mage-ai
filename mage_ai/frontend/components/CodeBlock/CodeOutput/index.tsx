@@ -89,6 +89,8 @@ type CodeOutputProps = {
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   setSelectedTab?: (tab: TabType) => void;
+  showBorderTop?: boolean;
+  sideBySideEnabled?: boolean;
   updateBlockOutputHeights?: () => void;
 } & BorderColorShareProps;
 
@@ -134,6 +136,8 @@ function CodeOutput({
   setOutputBlocks,
   setSelectedOutputBlock,
   setSelectedTab,
+  showBorderTop,
+  sideBySideEnabled,
   updateBlockOutputHeights,
 }: CodeOutputProps, ref) {
   useEffect(() => {
@@ -383,6 +387,7 @@ function CodeOutput({
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
+          normalPadding: sideBySideEnabled,
         };
 
         const borderTop = idx >= 1;
@@ -642,6 +647,7 @@ function CodeOutput({
     pipeline,
     selected,
     selectedTab,
+    sideBySideEnabled,
     tableContent,
   ]);
 
@@ -661,11 +667,12 @@ function CodeOutput({
           executedAndIdle={executedAndIdle}
           hasError={hasError}
           selected={selected}
+          showBorderTop={showBorderTop}
         >
           {!collapsed && testContent?.length >= 1 && (
             <>
               <Spacing py={2}>
-                <OutputRowStyle contained>
+                <OutputRowStyle contained normalPadding={sideBySideEnabled}>
                   {testContent.map(({
                     error,
                     message,
@@ -690,7 +697,7 @@ function CodeOutput({
                 </OutputRowStyle>
               </Spacing>
 
-              <Spacing mb={hasError ? 2 : 0}>
+              <Spacing mb={(sideBySideEnabled || hasError) ? 2 : 0}>
                 <Divider medium />
               </Spacing>
             </>

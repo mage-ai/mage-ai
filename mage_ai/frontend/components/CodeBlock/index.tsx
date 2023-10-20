@@ -495,6 +495,20 @@ function CodeBlock({
     };
 
     if (sideBySideEnabled) {
+      // Reset everything
+      if (!cursorHeight1) {
+        const yStart = mainContainerRect?.y;
+        const top = sum(codeBlockHeights?.slice(0, blockIdx) || []);
+        refColumn1.current.style.top = `${yStart + top}px`;
+      }
+
+      // Reset everything
+      if (!cursorHeight2) {
+        const yStart = mainContainerRect?.y;
+        const top = sum(blockOutputHeights?.slice(0, blockIdx) || []);
+        refColumn2.current.style.top = `${yStart + top}px`;
+      }
+
       if (typeof window !== 'undefined') {
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('wheel', handleMouseMove);
@@ -510,6 +524,8 @@ function CodeBlock({
   }, [
     blockIdx,
     codeBlockHeights,
+    cursorHeight1,
+    cursorHeight2,
     mainContainerRect,
     refColumn1,
     refColumn2,
@@ -1191,10 +1207,13 @@ function CodeBlock({
             onChange?.(val);
           }}
           onDidChangeCursorPosition={onDidChangeCursorPosition}
-          onMountCallback={() => setMountedBlocks(prev => ({
-            ...prev,
-            [block?.uuid]: true,
-          }))}
+          onMountCallback={setMountedBlocks
+            ? () => setMountedBlocks?.(prev => ({
+              ...prev,
+              [block?.uuid]: true,
+            }))
+            : null
+          }
           placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
             ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
             : 'Start typing here...'
@@ -1400,6 +1419,8 @@ function CodeBlock({
         setOutputBlocks={setOutputBlocks}
         setSelectedOutputBlock={setSelectedOutputBlock}
         setSelectedTab={setSelectedTab}
+        showBorderTop={sideBySideEnabled}
+        sideBySideEnabled={sideBySideEnabled}
         updateBlockOutputHeights={updateBlockOutputHeights}
       />
     </div>
@@ -2032,7 +2053,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             <CodeContainerStyle
               {...borderColorShareProps}
               className={selected && textareaFocused ? 'selected' : null}
-              hasOutput={!!buttonTabs || hasOutput}
+              hideBorderBottom={!sideBySideEnabled && (!!buttonTabs || hasOutput)}
               lightBackground={isMarkdown && !isEditingBlock}
               noPadding
               onClick={onClickSelectBlock}
