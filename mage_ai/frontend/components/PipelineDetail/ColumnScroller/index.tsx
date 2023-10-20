@@ -12,7 +12,7 @@ export type StartDataType = {
 };
 
 type ColumnScrollerProps = {
-  // blockOutputHeights: number[];
+  cursorHeight: number;
   heights: number[];
   mainContainerRect?: {
     height: number;
@@ -26,23 +26,24 @@ type ColumnScrollerProps = {
   refCursor: any;
   refCursorContainer: any;
   rightAligned?: boolean;
+  setCursorHeight: (cursorHeight: number) => void;
   setStartData: (data: StartDataType) => void;
   startData?: StartDataType;
 };
 
 function ColumnScroller({
-  // blockOutputHeights,
+  cursorHeight,
   heights,
   mainContainerRect,
   mountedBlocks,
   refCursor,
   refCursorContainer,
   rightAligned,
+  setCursorHeight,
   setStartData,
   startData,
 }: ColumnScrollerProps) {
   const totalHeight = useMemo(() => sum(heights || []), [heights]);
-  // const totalHeightOutput = useMemo(() => sum(blockOutputHeights || []), [blockOutputHeights]);
 
   const {
     height,
@@ -51,14 +52,14 @@ function ColumnScroller({
     y,
   } = mainContainerRect || {};
 
-  const cursorHeight = useMemo(() => {
-    if (totalHeight <= height) {
-      return null;
-    }
-
-    return height * (height / totalHeight);
+  useEffect(() => {
+    setCursorHeight(totalHeight > height
+      ? height * (height / totalHeight)
+      : 0
+    );
   }, [
     height,
+    setCursorHeight,
     totalHeight,
   ]);
 
@@ -121,7 +122,7 @@ function ColumnScroller({
       setStartData(null);
     };
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && cursorHeight) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('wheel', handleWheel);
       window.addEventListener('mouseup', clearStartData);
@@ -138,6 +139,10 @@ function ColumnScroller({
     handleMouseMove,
     handleWheel,
   ]);
+
+  if (!cursorHeight) {
+    return <div />;
+  }
 
   // Clicking a part of the container should scroll to the part.
   return (

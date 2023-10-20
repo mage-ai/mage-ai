@@ -85,8 +85,10 @@ import {
   CodeHelperStyle,
   ContainerStyle,
   HeaderHorizontalBorder,
-  ScrollColunnsContainerStyle,
+  SIDE_BY_SIDE_HORIZONTAL_PADDING,
+  SIDE_BY_SIDE_VERTICAL_PADDING,
   ScrollColunnStyle,
+  ScrollColunnsContainerStyle,
   SubheaderStyle,
   TimeTrackerStyle,
   getColorsForBlockType,
@@ -174,6 +176,8 @@ type CodeBlockProps = {
   children?: any;
   codeBlockHeights?: number[];
   containerRef?: any;
+  cursorHeight1?: number;
+  cursorHeight2?: number;
   dataProviders?: DataProviderType[];
   defaultValue?: string;
   disableDrag?: boolean;
@@ -302,6 +306,8 @@ function CodeBlock({
   children,
   codeBlockHeights: codeBlockHeightsProp,
   containerRef,
+  cursorHeight1,
+  cursorHeight2,
   dataProviders,
   defaultValue = '',
   deleteBlock,
@@ -333,8 +339,8 @@ function CodeBlock({
   pipeline,
   project,
   refCursor,
-  refCursorContainer,
   refCursor2,
+  refCursorContainer,
   refCursorContainer2,
   runBlock,
   runningBlocks,
@@ -2925,11 +2931,31 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     </div>
   );
 
+  const column1HasScroll = useMemo(() => cursorHeight1 >= 1, [
+    cursorHeight1,
+  ]);
+
+  const column2HasScroll = useMemo(() => cursorHeight2 >= 1, [
+    cursorHeight2,
+  ]);
+
   const widthColumn = useMemo(() => {
-    return ((mainContainerWidth - (SCROLLBAR_WIDTH * (scrollTogether ? 1 : 2))) / 2);
+    // 1 for each side (2) and 1 for the middle
+    let minus = SIDE_BY_SIDE_HORIZONTAL_PADDING * 3;
+    if (column1HasScroll) {
+      minus += SCROLLBAR_WIDTH;
+    }
+    if (column2HasScroll) {
+      minus += SCROLLBAR_WIDTH;
+    }
+
+    const widthTotal = mainContainerWidth - minus;
+
+    return widthTotal / 2;
   }, [
+    column1HasScroll,
+    column2HasScroll,
     mainContainerWidth,
-    scrollTogether,
   ]);
 
   const column1 = useMemo(() => {
@@ -2941,11 +2967,16 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     } = mainContainerRect || {};
 
     const top = sum(codeBlockHeights?.slice(0, blockIdx) || []);
+    let left = x + SIDE_BY_SIDE_HORIZONTAL_PADDING;
+
+    if (column1HasScroll) {
+      left += SCROLLBAR_WIDTH;
+    }
 
     return (
       <ScrollColunnStyle
         height={height}
-        left={x + (scrollTogether ? 0 : SCROLLBAR_WIDTH)}
+        left={left}
         ref={refColumn1}
         top={y + top}
         width={widthColumn}
@@ -2957,9 +2988,9 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     blockIdx,
     codeBlockHeights,
     codeBlockMain,
+    column1HasScroll,
     mainContainerRect,
     refColumn1,
-    scrollTogether,
   ]);
 
   const column2 = useMemo(() => {
@@ -2970,15 +3001,18 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       y,
     } = mainContainerRect || {};
 
-    const right = windowWidth - (x + width);
-
     const top = sum(blockOutputHeights?.slice(0, blockIdx) || []);
+
+    let right = (windowWidth + SIDE_BY_SIDE_HORIZONTAL_PADDING) - (x + width);
+    if (column2HasScroll) {
+      right += SIDE_BY_SIDE_HORIZONTAL_PADDING;
+    }
 
     return (
       <ScrollColunnStyle
         height={height}
         ref={refColumn2}
-        right={right + SCROLLBAR_WIDTH}
+        right={right}
         top={y + top}
         width={widthColumn}
       >
@@ -2989,6 +3023,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     blockIdx,
     blockOutputHeights,
     codeOutputEl,
+    column2HasScroll,
     mainContainerRect,
     refColumn2,
     widthColumn,

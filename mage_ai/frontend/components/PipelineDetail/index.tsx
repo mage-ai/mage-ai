@@ -273,7 +273,7 @@ function PipelineDetail({
     ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -368,58 +368,68 @@ function PipelineDetail({
     setMaxHeights,
   ]);
 
+  const [cursorHeight1, setCursorHeight1] = useState<number>(null);
   const refCursor1 =  useRef(null);
   const refCursorContainer1 =  useRef(null);
   const [startData1, setStartData1] = useState<StartDataType>(null);
   const column1ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
+        cursorHeight={cursorHeight1}
         heights={scrollTogether ? maxHeights : codeBlockHeights}
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor1}
         refCursorContainer={refCursorContainer1}
+        setCursorHeight={setCursorHeight1}
         setStartData={setStartData1}
         startData={startData1}
       />
     );
   }, [
     codeBlockHeights,
+    cursorHeight1,
     mainContainerRect,
     maxHeights,
     mountedBlocks,
     refCursor1,
     refCursorContainer1,
     scrollTogether,
+    setCursorHeight1,
     setStartData1,
     startData1,
   ]);
 
+  const [cursorHeight2, setCursorHeight2] = useState<number>(null);
   const refCursor2 =  useRef(null);
   const refCursorContainer2 =  useRef(null);
   const [startData2, setStartData2] = useState<StartDataType>(null);
   const column2ScrollMemo = useMemo(() => {
     return (
       <ColumnScroller
+        cursorHeight={cursorHeight2}
         heights={scrollTogether ? maxHeights : blockOutputHeights}
         mainContainerRect={mainContainerRect}
         mountedBlocks={mountedBlocks}
         refCursor={refCursor2}
         refCursorContainer={refCursorContainer2}
         rightAligned
+        setCursorHeight={setCursorHeight2}
         setStartData={setStartData2}
         startData={startData2}
       />
     );
   }, [
     blockOutputHeights,
+    cursorHeight2,
     mainContainerRect,
     maxHeights,
     mountedBlocks,
     refCursor2,
     refCursorContainer2,
-    setStartData2,
     scrollTogether,
+    setCursorHeight2,
+    setStartData2,
     startData2,
   ]);
 
@@ -894,6 +904,8 @@ function PipelineDetail({
             blocks={blocks}
             codeBlockHeights={codeBlockHeights}
             containerRef={containerRef}
+            cursorHeight1={cursorHeight1}
+            cursorHeight2={cursorHeight2}
             dataProviders={dataProviders}
             defaultValue={block.content}
             deleteBlock={(b: BlockType) => {
@@ -989,6 +1001,8 @@ function PipelineDetail({
     blocksThatNeedToRefresh,
     codeBlockHeights,
     containerRef,
+    cursorHeight1,
+    cursorHeight2,
     dataProviders,
     deleteBlock,
     disableShortcuts,
@@ -1119,9 +1133,15 @@ function PipelineDetail({
 
       {sideBySideEnabled && (
         <div style={{ position: 'relative' }}>
-          {!scrollTogether && column1ScrollMemo}
+          {blocks?.length >= 1 && !scrollTogether && column1ScrollMemo}
           {codeBlocks}
-          {column2ScrollMemo}
+          {blocks?.length >= 1 && column2ScrollMemo}
+
+          {!blocks?.length && (
+            <Spacing p={PADDING_UNITS}>
+              {addNewBlocksMemo}
+            </Spacing>
+          )}
         </div>
       )}
 

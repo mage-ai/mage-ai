@@ -15,6 +15,9 @@ import { transition } from '@oracle/styles/mixins';
 // Look at the code editor div class "margin" and role "presentation"
 export const LEFT_PADDING = 68;
 
+export const SIDE_BY_SIDE_HORIZONTAL_PADDING = 1.5 * UNIT;
+export const SIDE_BY_SIDE_VERTICAL_PADDING = 1.5 * UNIT;
+
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
   props?: {
