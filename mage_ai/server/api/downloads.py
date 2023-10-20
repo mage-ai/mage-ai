@@ -1,12 +1,16 @@
+import os
+
+import jwt
 from tornado import gen, iostream
 
 from mage_ai.api.utils import authenticate_client_and_token
+from mage_ai.data_preparation.models.constants import TEMPORARY_DOWNLOAD_LOCATION
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.server.api.base import BaseHandler
-from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import JWT_SECRET, REQUIRE_USER_AUTHENTICATION
 
 
 class ApiDownloadHandler(BaseHandler):
@@ -62,3 +66,38 @@ class ApiDownloadHandler(BaseHandler):
                     await self.flush()
                     # Sleep for a nanosecond so other handlers can run and avoid blocking
                     await gen.sleep(0.000000001)
+
+
+class ApiResourceDownloadHandler(BaseHandler):
+
+    def get(self, token):
+        try:
+            decoded_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+
+            file_path = decoded_payload['file_path']
+            file_name = file_path.split('/')[-1]
+            is_temporary = TEMPORARY_DOWNLOAD_LOCATION in file_path
+            with open(file_path, "rb") as f:
+                try:
+                    while True:
+                        _buffer = f.read(4096)
+                        if _buffer:
+                            self.write(_buffer)
+                        else:
+                            f.close()
+                            if is_temporary:
+                                os.remove(file_path)
+                            break
+                except Exception:
+                    self.set_status(400)
+                    self.write(f'Error fetching file {file_name}')
+
+            self.set_header('Content-Type', 'application/force-download')
+            self.set_header('Content-Disposition', f'attachment; filename={file_name}')
+            self.flush()
+        except jwt.exceptions.ExpiredSignatureError:
+            self.set_status(400)
+            self.write('Download token is expired.')
+        except jwt.exceptions.InvalidSignatureError:
+            self.set_status(400)
+            self.write('Download token is invalid.')
