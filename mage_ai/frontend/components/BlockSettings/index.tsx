@@ -373,7 +373,7 @@ function BlockSettings({
                     Shared by {blockPipelinesCount} pipelines
                   </Text>
                 </Flex>
-                {!isDbtBlock && (
+                {(!isDbtBlock && pipeline?.type !== PipelineTypeEnum.INTEGRATION) && (
                   <Tooltip
                     appearBefore
                     block
