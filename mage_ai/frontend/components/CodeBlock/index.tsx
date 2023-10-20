@@ -382,6 +382,7 @@ function CodeBlock({
       project?.features,
     ]);
 
+  const [blockOutputHeightCache, setBlockOutputHeightCache] = useState<number>(null);
   const blockOutputHeights = useMemo(() => scrollTogether ? maxHeights : blockOutputHeightsProp, [
     blockOutputHeightsProp,
     maxHeights,
@@ -838,6 +839,15 @@ function CodeBlock({
     widgets,
   ]);
 
+  useEffect(() => {
+    if (!isInProgress) {
+      setBlockOutputHeightCache(null);
+    }
+  }, [
+    isInProgress,
+    setBlockOutputHeightCache,
+  ]);
+
   const runBlockAndTrack = useCallback((payload?: {
     block: BlockType;
     code?: string;
@@ -853,7 +863,6 @@ function CodeBlock({
       [key: string]: any;
     };
   }) => {
-
     if (sideBySideEnabled
       && !scrollTogether
       && mainContainerRect
@@ -867,6 +876,8 @@ function CodeBlock({
         height: height2,
         y: y2,
       } = refColumn2?.current?.getBoundingClientRect?.() || {};
+
+      setBlockOutputHeightCache(height2);
 
       // Top is below the screen or bottom is above the screen
       if (y2 >= y + height || y2 + height2 <= y) {
@@ -1546,6 +1557,7 @@ function CodeBlock({
       buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
       hasOutput={hasOutput}
+      height={sideBySideEnabled ? blockOutputHeightCache : null}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -1586,6 +1598,7 @@ function CodeBlock({
   ), [
     block,
     blockMetadata,
+    blockOutputHeightCache,
     blockOutputRef,
     borderColorShareProps,
     buttonTabs,

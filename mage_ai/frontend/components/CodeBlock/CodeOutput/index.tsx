@@ -75,6 +75,7 @@ type CodeOutputProps = {
   collapsed?: boolean;
   contained?: boolean;
   hasOutput?: boolean;
+  height?: number;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
@@ -122,6 +123,7 @@ function CodeOutput({
   dynamicChildBlock,
   hasError,
   hasOutput,
+  height,
   hideExtraInfo,
   isInProgress,
   mainContainerWidth,
@@ -661,6 +663,9 @@ function CodeOutput({
   return (
     <div
       ref={ref}
+      style={{
+        height,
+      }}
     >
       <div
         style={{
