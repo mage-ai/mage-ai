@@ -31,6 +31,7 @@
     <name>datanucleus.fixedDatastore</name>
     <value>true</value>
   </property>
+
   <property>
     <name>datanucleus.schema.autoCreateTables</name>
     <value>true</value>
