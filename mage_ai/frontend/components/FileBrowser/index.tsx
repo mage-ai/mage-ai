@@ -400,7 +400,7 @@ function FileBrowser({
       x = 0,
       y = 0,
     } = coordinates || {};
-    let xFinal = x;
+    let xFinal = x + UNIT;
     if (x + MENU_WIDTH >= xContainer + width) {
       xFinal = (xContainer + width) - (MENU_WIDTH + UNIT);
     }
