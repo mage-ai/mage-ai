@@ -27,6 +27,7 @@
     <name>datanucleus.autoCreateSchema</name>
     <value>false</value>
   </property>
+    
   <property>
     <name>datanucleus.fixedDatastore</name>
     <value>true</value>
