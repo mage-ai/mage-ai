@@ -442,15 +442,15 @@ function PipelineRunsTable({
       uuid: 'Execution date',
     },
     {
-      uuid: 'Execution time',
-    },
-    {
       ...timezoneTooltipProps,
       uuid: 'Started at',
     },
     {
       ...timezoneTooltipProps,
       uuid: 'Completed at',
+    },
+    {
+      uuid: 'Execution time',
     },
     {
       uuid: 'Block runs',
@@ -623,6 +623,22 @@ function PipelineRunsTable({
                       )
                     }
                   </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -707,22 +723,6 @@ function PipelineRunsTable({
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
                     default
-                    key="row_execution_time"
-                    title={startedAt && completedAt 
-                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
-                      : null}
-                  >
-                    {startedAt && completedAt 
-                    ? (
-                      timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
-                    ): (
-                      <>&#8212;</>
-                    )
-                  }
-                  </Text>,
-                  <Text
-                    {...SHARED_DATE_FONT_PROPS}
-                    default
                     key="row_started_at"
                     title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
@@ -745,6 +745,22 @@ function PipelineRunsTable({
                       ? (displayLocalTimezone
                         ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
                         : getTimeInUTCString(completedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
                       ): (
                         <>&#8212;</>
                       )
