@@ -2,6 +2,23 @@
 
 These are the instructions for setting up the development dependencies and conforming to the style guide for the Mage.ai repo.
 
+## Using helper scripts
+Initialise a `mage` repo so you have a starting point.
+```bash
+# Assuming you are at the root.
+./scripts/init.sh default_repo
+```
+
+Generate a Docker image, start the dev server for the backend at `localhost:6789` and frontend at `localhost:3000`.
+```bash
+# Assuming you are still at the root.
+./scripts/dev.sh default_repo
+```
+
+<sup>The name `default_repo` could technically be anything, but bare in mind, if you decide to change it, please also add it to the `.gitignore` file.</sup>
+
+Our mate @mattppal has an [amazing video](https://youtu.be/mxKh2062sTc?si=5GW_mKF5jOpGEO3I) with further guiding and instructions, if that is what you prefer.
+
 ## Virtual Environment
 The Mage.ai uses at least Python 3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8.
 
