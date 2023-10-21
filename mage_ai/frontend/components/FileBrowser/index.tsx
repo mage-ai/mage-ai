@@ -34,6 +34,7 @@ import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
 const MENU_WIDTH: number = UNIT * 20;
+const MENU_ITEM_HEIGHT = 36;
 
 type FileBrowserProps = {
   addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
@@ -393,6 +394,7 @@ function FileBrowser({
     const {
       x: xContainer,
       width,
+      height,
     } = ref?.current?.getBoundingClientRect() || {};
     const {
       x = 0,
@@ -513,12 +515,18 @@ function FileBrowser({
       }
     }
 
+    let yFinal = y;
+    const menuHeight = MENU_ITEM_HEIGHT * items.length;
+    if (y + menuHeight >= height) {
+      yFinal = height - menuHeight;
+    }
+
     return (
       <div
         style={{
           left: xFinal,
           position: 'fixed',
-          top: y + (UNIT / 2),
+          top: yFinal,
           zIndex: HEADER_Z_INDEX + 100,
         }}
       >
