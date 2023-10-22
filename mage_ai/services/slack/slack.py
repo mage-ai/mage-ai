@@ -13,7 +13,7 @@ def send_slack_message(config: SlackConfig, message: str, title: str = None) -> 
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": title if title else ":x:  Failed to execute pipeline",
+                    "text": title if title else "Mage Notification",
                 },
             },
             {"type": "divider"},
