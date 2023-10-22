@@ -93,6 +93,20 @@ python mage_ai/server/server.py
 ```
 <sup>The above command generates a Mage.ai project called `default_repo` by default before starting the server. Please view the file itself for more advanced usages.</sup>
 
+### Mage.ai frontend
+> [!IMPORTANT]
+> _Even if you are only working on UIs, you would still have to have the server running at port `6789`._
+
+Mage.ai frontend is a Next.js project
+```bash
+cd mage_ai/frontend/
+```
+
+that uses Yarn.
+```bash
+yarn install && yarn dev
+```
+
 ## Git Hooks
 
 To install the Git hooks that we use, run the Make command:
