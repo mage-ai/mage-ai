@@ -87,7 +87,7 @@ class MySQL(BaseSQL):
         **kwargs,
     ) -> None:
         def serialize_obj(val):
-            if type(val) is dict:
+            if type(val) is dict or type(val) is np.ndarray:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,
