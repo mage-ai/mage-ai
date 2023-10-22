@@ -62,7 +62,7 @@ class NotificationSenderTests(DBTestCase):
             f'Open http://localhost:6789/pipelines/test_pipeline/runs/'
             f'{pipeline_run.id} to check pipeline run results and logs.'
         )
-        title = None
+        title = 'Failed to run Mage pipeline test_pipeline'
         mock_send_slack.assert_called_once_with(
             notification_config.slack_config,
             message,
@@ -87,7 +87,7 @@ class NotificationSenderTests(DBTestCase):
             f'{pipeline_run.id}. Pipeline uuid: test_pipeline. '
             f'Trigger name: {pipeline_run.pipeline_schedule.name}.'
         )
-        title = None
+        title = 'Failed to run Mage pipeline test_pipeline'
         mock_send_slack.assert_called_once_with(
             notification_config.slack_config,
             message,
