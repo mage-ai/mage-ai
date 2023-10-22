@@ -95,6 +95,7 @@ First, install dependencies:
 
 ```bash
 pip install -r ./requirements.txt
+pip install toml mage-ai
 ```
 
 Install additional dev dependencies from `pyproject.toml`:
@@ -137,6 +138,9 @@ In case none of the below help resolve your problem, please feel free to ping us
 ## Illegal instruction
 
 If an `Illegal instruction` error is received, or Docker containers exit instantly with code 132, it means your machine is using an older architecture that does not support certain instructions called from the (Python) dependencies. Please either try again on another machine, or manually setup the server, start it in verbose mode to see which pakage caused the error, and look up for alternatives.
+
+List of builds:
+- `polars` -> [`polars-lts-cpu`](https://pypi.org/project/polars-lts-cpu/)
 
 # Git Hooks
 
