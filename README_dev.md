@@ -142,6 +142,10 @@ If an `Illegal instruction` error is received, or Docker containers exit instant
 List of builds:
 - `polars` -> [`polars-lts-cpu`](https://pypi.org/project/polars-lts-cpu/)
 
+## `pip install` fails on Windows
+
+Well, we've all been there. Some Python packages take for granted quite a few core functionalities that are not available on Windows, so you need to install their prebuilds, see the fantastic (but archived) [pipwin](https://github.com/lepisma/pipwin) and [this issue](https://github.com/lepisma/pipwin/issues/64) for more options.
+
 # Git Hooks
 
 To install the Git hooks that we use, run the Make command:
