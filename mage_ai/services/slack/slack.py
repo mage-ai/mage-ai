@@ -5,9 +5,20 @@ import requests
 from mage_ai.services.slack.config import SlackConfig
 
 
-def send_slack_message(config: SlackConfig, message: str) -> None:
+def send_slack_message(config: SlackConfig, message: str, title: str = None) -> None:
+    message = message.replace("\\n", "\n")
     payload = {
-        "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": message}}]
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": title if title else ":x:  Failed to execute pipeline",
+                },
+            },
+            {"type": "divider"},
+            {"type": "section", "text": {"type": "mrkdwn", "text": message}},
+        ]
     }
 
     requests.post(
