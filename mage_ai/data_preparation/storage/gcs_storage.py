@@ -36,6 +36,10 @@ class GCSStorage(BaseStorage):
         blobs = self.bucket.list_blobs(prefix=path)
         keys = []
         for blob in blobs:
+            # Avoid finding files recursevively in the dir path.
+            blob_path = blob.name.replace(path, '').split('/')
+            if len(blob_path) > 1 and blob_path[1] != '':
+                continue
             if (suffix is None or blob.name.endswith(suffix)) and blob.name != path:
                 keys.append(blob.name)
         return [k[len(path):].rstrip('/') for k in keys]

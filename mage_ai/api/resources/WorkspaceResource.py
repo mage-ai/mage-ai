@@ -4,7 +4,7 @@ import yaml
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.cluster_manager.config import WorkspaceConfig
+from mage_ai.cluster_manager.config import LifecycleConfig
 from mage_ai.cluster_manager.manage import (
     create_workspace,
     delete_workspace,
@@ -82,16 +82,16 @@ class WorkspaceResource(GenericResource):
             raise ApiError(error)
 
         config = {}
-        if 'config' in payload:
-            config_yaml = payload.pop('config')
+        if 'lifecycle_config' in payload:
+            config_yaml = payload.pop('lifecycle_config')
             config = yaml.full_load(config_yaml) or {}
-        workspace_config = WorkspaceConfig(**config)
+        lifecycle_config = LifecycleConfig(**config)
 
         try:
             create_workspace(
                 cluster_type,
                 workspace_name,
-                workspace_config,
+                lifecycle_config,
                 payload,
             )
         except Exception as ex:

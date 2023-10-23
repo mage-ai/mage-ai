@@ -10,5 +10,6 @@ class TerminationPolicy(BaseConfig):
 
 
 @dataclass
-class WorkspaceConfig(BaseConfig):
+class LifecycleConfig(BaseConfig):
     termination_policy: TerminationPolicy = None
+    pre_start_script_path: str = None

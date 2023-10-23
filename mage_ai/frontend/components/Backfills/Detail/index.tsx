@@ -163,6 +163,7 @@ function BackfillDetail({
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
           setErrors={setErrors}
+          setSelectedRun={setSelectedRun}
         />
         <Spacing p={2}>
           <Paginate
