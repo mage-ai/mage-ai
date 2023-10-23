@@ -44,7 +44,7 @@ class Workspace(abc.ABC):
 
     @property
     def lifecycle_config(self) -> LifecycleConfig:
-        return LifecycleConfig.load(config=self.config.get('lifecycle_config', {}))
+        return self.config.lifecycle_config or LifecycleConfig()
 
     @property
     def project_uuid(self) -> Optional[str]:

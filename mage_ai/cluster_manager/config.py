@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Dict
 
 from mage_ai.shared.config import BaseConfig
@@ -12,7 +12,12 @@ class WorkspaceConfig(BaseConfig):
 
     @classmethod
     def parse_config(self, config: Dict = None) -> Dict:
-        keys = self.__annotations__.keys()
+        lifecycle_config = config.get('lifecycle_config')
+        if lifecycle_config and type(lifecycle_config) is dict:
+            config['lifecycle_config'] = LifecycleConfig.load(config=lifecycle_config)
+
+        all_fields = fields(self)
+        keys = [field.name for field in all_fields]
         return extract(config, keys)
 
 
@@ -51,3 +56,13 @@ class TerminationPolicy(BaseConfig):
 class LifecycleConfig(BaseConfig):
     termination_policy: TerminationPolicy = None
     pre_start_script_path: str = None
+
+    @classmethod
+    def parse_config(self, config: Dict = None) -> Dict:
+        termination_policy = config.get('termination_policy')
+        if termination_policy and type(termination_policy) is dict:
+            config['termination_policy'] = TerminationPolicy.load(
+                config=termination_policy
+            )
+
+        return config
