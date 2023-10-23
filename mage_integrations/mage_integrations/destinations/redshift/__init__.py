@@ -14,7 +14,6 @@ from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
-    clean_column_name,
 )
 from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
@@ -62,6 +61,7 @@ class Redshift(Destination):
                 full_table_name=f'{schema_name}.{table_name}',
                 if_not_exists=True,
                 unique_constraints=unique_constraints,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -83,7 +83,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns if self.clean_column_name(c)
+                       not in current_columns]
 
         if not new_columns:
             return []
@@ -94,6 +95,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
+                use_lowercase=self.use_lowercase
             ),
         ]
 
@@ -116,6 +118,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             records=records,
             convert_array_func=self.convert_array,
             string_parse_func=self.string_parse_func,
+            use_lowercase=self.use_lowercase,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -133,7 +136,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
             unique_constraints_clean = [
-                f'{clean_column_name(col)}'
+                f'{self.clean_column_name(col)}'
                 for col in unique_constraints
             ]
             commands = commands + [

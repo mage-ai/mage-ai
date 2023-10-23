@@ -34,12 +34,13 @@ def build_alter_table_command(
     columns: List[str],
     full_table_name: str,
     column_identifier: str = '',
+    use_lowercase: bool = True,
 ) -> str:
     if not columns:
         return None
 
     columns_and_types = [
-        f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f"{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}" +
         f" {column_type_mapping[col]['type_converted']}" for col
         in columns
     ]
