@@ -193,8 +193,8 @@ export function buildBlockRefKey({
   type,
   uuid,
 }: {
-  type: string;
-  uuid: string;
+  type?: string;
+  uuid?: string;
 }): string {
   return `${type}s/${uuid}.py`;
 }

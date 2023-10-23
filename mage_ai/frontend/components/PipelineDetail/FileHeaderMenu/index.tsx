@@ -50,8 +50,8 @@ type FileHeaderMenuProps = {
     [uuid: string]: KernelOutputType[];
   }) => void;
   sideBySideEnabled?: boolean;
-  setScrollTogether?: (value: boolean) => void;
-  setSideBySideEnabled?: (value: boolean) => void;
+  setScrollTogether?: (prev: any) => void;
+  setSideBySideEnabled?: (prev: any) => void;
 };
 
 function FileHeaderMenu({

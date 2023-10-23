@@ -275,7 +275,15 @@ function PipelineDetail({
   const [dbtModelName, setDbtModelName] = useState<string>('');
   const [mainContainerRect, setMainContainerRect] = useState<{
     height: number;
-  }>(false);
+    width: number;
+    x: number;
+    y: number;
+  }>({
+    height: null,
+    width: null,
+    x: null,
+    y: null,
+  });
 
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);

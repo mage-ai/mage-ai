@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import BlockType from '@interfaces/BlockType';
 import {
   CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED,
   CUSTOM_EVENT_COLUMN_SCROLLER_RESET,
@@ -21,12 +22,17 @@ export type StartDataType = {
 };
 
 type ColumnScrollerProps = {
+  blocks: BlockType[];
   columnIndex: number;
   columns: number;
-  cursorHeight: number;
   disabled?: boolean;
+  eventNameRefsMapping: {
+    [eventName: string]: {
+      [blockRefKey: string]: any;
+    };
+  };
   invisible?: boolean;
-  mainContainerRect?: {
+  mainContainerRect: {
     height: number;
     width: number;
     x: number;
@@ -34,6 +40,7 @@ type ColumnScrollerProps = {
   };
   rightAligned?: boolean;
   scrollTogether?: boolean;
+  setCursorHeight: (cursorHeight: number) => void;
 };
 
 function ColumnScroller({
@@ -57,6 +64,50 @@ function ColumnScroller({
   const [lockScroll, setLockScroll] = useState(null);
   const [mounted, setMounted] = useState(null);
   const [startData, setStartData] = useState(null);
+
+  const {
+    height,
+    width,
+    x,
+    y,
+  } = mainContainerRect || {};
+  const totalHeight = useMemo(() => sum(heights || []), [heights]);
+  const getCursorHeight = useCallback(() => totalHeight > height
+    ? height * (height / totalHeight)
+    : 0,
+  [
+    height,
+    totalHeight,
+  ]);
+  const cursorHeight = useMemo(() => getCursorHeight(), [
+    getCursorHeight,
+  ]);
+  useMemo(() => {
+    setCursorHeight(cursorHeight);
+  }, [
+    cursorHeight,
+    setCursorHeight,
+  ]);
+
+  const updatePosition = useCallback((yFinal: number) => {
+    if (cursorHeight) {
+      const yMin = refCursorContainer?.current?.getBoundingClientRect()?.y;
+      if (yFinal <= yMin) {
+        yFinal = yMin;
+      } else if ((yFinal + cursorHeight) >= (y + height)) {
+        yFinal = (y + height) - cursorHeight;
+      }
+
+      if (refCursor?.current) {
+        refCursor.current.style.top = `${yFinal}px`;
+      }
+    }
+  }, [
+    cursorHeight,
+    height,
+    refCursor,
+    y,
+  ]);
 
   const dispatchEventCusorMoved = useCallback(() => {
     if (disabled) {
@@ -152,6 +203,7 @@ function ColumnScroller({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       Object.keys(eventNameRefsMapping || {})?.forEach((eventName: string) => {
+        // @ts-ignore
         window.addEventListener(eventName, updateHeights);
       });
     }
@@ -159,6 +211,7 @@ function ColumnScroller({
     return () => {
       if (typeof window !== 'undefined') {
         Object.keys(eventNameRefsMapping || {})?.forEach((eventName: string) => {
+          // @ts-ignore
           window.removeEventListener(eventName, updateHeights);
         });
       }
@@ -178,11 +231,13 @@ function ColumnScroller({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // @ts-ignore
       window.addEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_RESET, refresh);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
         window.removeEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_RESET, refresh);
       }
     };
@@ -209,11 +264,13 @@ function ColumnScroller({
     };
 
     if (typeof window !== 'undefined') {
+      // @ts-ignore
       window.addEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_SCROLL_TO_BLOCK, handleScrollToBlock);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
         window.removeEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_SCROLL_TO_BLOCK, handleScrollToBlock);
       }
     };
@@ -234,50 +291,6 @@ function ColumnScroller({
     disabled,
     scrollTogether,
     updateHeights,
-  ]);
-
-  const {
-    height,
-    width,
-    x,
-    y,
-  } = mainContainerRect || {};
-  const totalHeight = useMemo(() => sum(heights || []), [heights]);
-  const getCursorHeight = useCallback(() => totalHeight > height
-    ? height * (height / totalHeight)
-    : 0,
-  [
-    height,
-    totalHeight,
-  ]);
-  const cursorHeight = useMemo(() => getCursorHeight(), [
-    getCursorHeight,
-  ]);
-  useMemo(() => {
-    setCursorHeight(cursorHeight);
-  }, [
-    cursorHeight,
-    setCursorHeight,
-  ]);
-
-  const updatePosition = useCallback((yFinal: number) => {
-    if (cursorHeight) {
-      const yMin = refCursorContainer?.current?.getBoundingClientRect()?.y;
-      if (yFinal <= yMin) {
-        yFinal = yMin;
-      } else if ((yFinal + cursorHeight) >= (y + height)) {
-        yFinal = (y + height) - cursorHeight;
-      }
-
-      if (refCursor?.current) {
-        refCursor.current.style.top = `${yFinal}px`;
-      }
-    }
-  }, [
-    cursorHeight,
-    height,
-    refCursor,
-    y,
   ]);
 
   useEffect(() => {
@@ -302,11 +315,13 @@ function ColumnScroller({
     }
 
     if (typeof window !== 'undefined') {
+      // @ts-ignore
       window.addEventListener(CUSTOM_EVENT_SYNC_COLUMN_POSITIONS, handleSyncColumnPositions);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
         window.removeEventListener(CUSTOM_EVENT_SYNC_COLUMN_POSITIONS, handleSyncColumnPositions);
       }
     };
@@ -399,15 +414,21 @@ function ColumnScroller({
     };
 
     if (typeof window !== 'undefined' && cursorHeight) {
+      // @ts-ignore
       window.addEventListener('mousemove', handleMouseMove);
+      // @ts-ignore
       window.addEventListener('wheel', handleWheel);
+      // @ts-ignore
       window.addEventListener('mouseup', clearStartData);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
         window.removeEventListener('mousemove', handleMouseMove);
+        // @ts-ignore
         window.removeEventListener('wheel', handleWheel);
+        // @ts-ignore
         window.removeEventListener('mouseup', clearStartData);
       }
     };

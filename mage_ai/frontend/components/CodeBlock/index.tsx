@@ -178,10 +178,8 @@ type CodeBlockProps = {
   blockInteractions?: BlockInteractionType[];
   blockOutputRef?: any;
   blockRefs: any;
-  blockOutputRefs: any;
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
-  blocksFiltered: BlockType[];
   children?: any;
   containerRef?: any;
   cursorHeight1?: number;
@@ -293,10 +291,8 @@ function CodeBlock({
   blockInteractions,
   blockOutputRef,
   blockRefs,
-  blockOutputRefs,
   blockTemplates,
   blocks = [],
-  blocksFiltered,
   children,
   containerRef,
   cursorHeight1,
@@ -453,7 +449,6 @@ function CodeBlock({
     }
   }, [
     blockIdx,
-    blocksFiltered,
     mainContainerRect,
     refColumn1,
     refColumn2,
@@ -467,12 +462,14 @@ function CodeBlock({
 
     if (sideBySideEnabled) {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
         window.addEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED, handleCursorMoved);
       }
     }
 
     return () => {
       if (typeof window !== 'undefined') {
+        // @ts-ignore
         window.removeEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED, handleCursorMoved);
       }
     };
@@ -1904,7 +1901,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 setAddNewBlocksVisible(false);
                 setAddNewBlockMenuOpenIdx?.(null);
               }}
-              top={0}
             >
               {addNewBlocksVisible && addNewBlock && (
                 <Spacing
@@ -3109,6 +3105,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
 
     return (
       <ScrollColunnStyle
+        // @ts-ignore
         left={left}
         ref={refColumn1}
         top={y}
@@ -3146,6 +3143,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     return (
       <ScrollColunnStyle
         ref={refColumn2}
+        // @ts-ignore
         right={right}
         top={y}
         width={widthColumn}

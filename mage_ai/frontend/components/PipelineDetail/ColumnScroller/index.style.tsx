@@ -6,7 +6,7 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 
 export const ScrollbarContainerStyle = styled.div<{
   height: number;
-  invisible?: number;
+  invisible?: boolean;
   left?: number;
   right?: number;
 }>`
@@ -32,7 +32,7 @@ export const ScrollbarContainerStyle = styled.div<{
 
 export const ScrollCursorStyle = styled.div<{
   height?: number;
-  invisible?: number;
+  invisible?: boolean;
   selected?: boolean;
   top?: number;
 }>`

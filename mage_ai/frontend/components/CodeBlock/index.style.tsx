@@ -242,6 +242,7 @@ export const CodeContainerStyle = styled.div<{
 export const BlockDivider = styled.div<{
   additionalZIndex?: number;
   bottom?: number;
+  height?: number;
 }>`
   align-items: center;
   display: flex;
@@ -279,7 +280,9 @@ export const BlockDivider = styled.div<{
   `}
 `;
 
-export const BlockDividerInner = styled.div`
+export const BlockDividerInner = styled.div<{
+  top?: number;
+}>`
   height 1px;
   width: 100%;
   position: absolute;
