@@ -109,7 +109,7 @@ pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')
 Then, start the dev server:
 
 ```bash
-python mage_ai/server/server.py
+./scripts/start.sh default_repo
 ```
 
 <sup>The above command generates a Mage.ai project called `default_repo` by default before starting the server. Please view the file itself for more advanced usages.</sup>
