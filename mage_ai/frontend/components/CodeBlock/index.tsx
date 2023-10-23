@@ -161,6 +161,7 @@ import { isDataIntegrationBlock, useDynamicUpstreamBlocks } from '@utils/models/
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
+import { resetColumnScroller } from '@components/PipelineDetail/ColumnScroller/utils';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -435,6 +436,7 @@ function CodeBlock({
 
     const offset = sum((heights || [])?.slice(0, blockIdx) || []);
     const top = yMove + offset;
+
 
     if (scrollTogether) {
       if (refColumn1?.current) {
@@ -1600,31 +1602,106 @@ function CodeBlock({
     updateDataProviderConfig,
   ]);
 
+  const column1HasScroll = useMemo(() => cursorHeight1 >= 1, [
+    cursorHeight1,
+  ]);
+
+  const column2HasScroll = useMemo(() => cursorHeight2 >= 1, [
+    cursorHeight2,
+  ]);
+
+  const column3HasScroll = useMemo(() => cursorHeight3 >= 1, [
+    cursorHeight3,
+  ]);
+
+  const widthColumn = useMemo(() => {
+    // 1 for each side (2) and 1 for the middle
+    let minus = SIDE_BY_SIDE_HORIZONTAL_PADDING * 3;
+
+    if (scrollTogether) {
+      if (column3HasScroll) {
+        minus += SCROLLBAR_WIDTH;
+      }
+    } else {
+      if (column1HasScroll) {
+        minus += SCROLLBAR_WIDTH;
+      }
+
+      if (column2HasScroll) {
+        minus += SCROLLBAR_WIDTH;
+      }
+    }
+
+    const widthTotal = mainContainerWidth - minus;
+
+    return widthTotal / 2;
+  }, [
+    column1HasScroll,
+    column2HasScroll,
+    column3HasScroll,
+    mainContainerWidth,
+    scrollTogether,
+  ]);
+
   const blockInteractionsMemo = useMemo(() => {
     if (isInteractionsEnabled) {
+      let widthOffset;
+
+      if (sideBySideEnabled) {
+        widthOffset = 0;
+        if (scrollTogether) {
+          if (column3HasScroll) {
+            widthOffset = 18;
+          }
+        } else {
+          if (column1HasScroll) {
+            widthOffset = widthOffset + 18;
+          }
+          if (column2HasScroll) {
+            widthOffset = widthOffset + 2;
+          }
+        }
+      }
+
       return blockInteractions?.map((blockInteraction: BlockInteractionType, idx: number) => (
         <div key={`${blockInteraction?.uuid}-${idx}`}>
           <BlockInteractionController
             blockInteraction={blockInteraction}
             contained
-            containerRef={containerRef}
-            containerWidth={mainContainerWidth}
+            containerRef={sideBySideEnabled ? refColumn1 : containerRef}
+            containerWidth={sideBySideEnabled ? widthColumn : mainContainerWidth}
             interaction={interactionsMapping?.[blockInteraction?.uuid]}
             setVariables={setVariables}
             showVariableUUID
             variables={variables}
+            widthOffset={widthOffset}
           />
         </div>
       ));
     }
   }, [
     blockInteractions,
+    column1HasScroll,
+    column2HasScroll,
+    column3HasScroll,
     containerRef,
     interactionsMapping,
     isInteractionsEnabled,
     mainContainerWidth,
+    scrollTogether,
     setVariables,
+    sideBySideEnabled,
     variables,
+    widthColumn,
+  ]);
+
+
+  useEffect(() => {
+    resetColumnScroller();
+  }, [
+    blockInteractionsMemo,
+    selectedSubheaderTabUUID,
+    variables
   ]);
 
   const headerTabs = useMemo(() => {
@@ -1804,9 +1881,9 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
   ]);
 
   const codeBlockMain = (
-    <div ref={drop}>
+    <div ref={ref}>
       <div
-        ref={ref}
+        ref={drop}
         style={{
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
         }}
@@ -3015,47 +3092,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       </div>
     </div>
   );
-
-  const column1HasScroll = useMemo(() => cursorHeight1 >= 1, [
-    cursorHeight1,
-  ]);
-
-  const column2HasScroll = useMemo(() => cursorHeight2 >= 1, [
-    cursorHeight2,
-  ]);
-
-  const column3HasScroll = useMemo(() => cursorHeight3 >= 1, [
-    cursorHeight3,
-  ]);
-
-  const widthColumn = useMemo(() => {
-    // 1 for each side (2) and 1 for the middle
-    let minus = SIDE_BY_SIDE_HORIZONTAL_PADDING * 3;
-
-    if (scrollTogether) {
-      if (column3HasScroll) {
-        minus += SCROLLBAR_WIDTH;
-      }
-    } else {
-      if (column1HasScroll) {
-        minus += SCROLLBAR_WIDTH;
-      }
-
-      if (column2HasScroll) {
-        minus += SCROLLBAR_WIDTH;
-      }
-    }
-
-    const widthTotal = mainContainerWidth - minus;
-
-    return widthTotal / 2;
-  }, [
-    column1HasScroll,
-    column2HasScroll,
-    column3HasScroll,
-    mainContainerWidth,
-    scrollTogether,
-  ]);
 
   const column1 = useMemo(() => {
     const {

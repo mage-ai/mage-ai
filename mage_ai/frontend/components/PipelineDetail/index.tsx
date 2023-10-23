@@ -85,6 +85,7 @@ import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
+import { resetColumnScroller } from './ColumnScroller/utils';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
@@ -653,6 +654,11 @@ function PipelineDetail({
     pipeline,
     savePipelineContent,
   ]);
+
+  const blocksFilteredUUIDs = useMemo(() => blocksFiltered?.map(({ uuid }) => uuid), [blocksFiltered]);
+  useMemo(() => {
+    resetColumnScroller();
+  }, [blocksFilteredUUIDs]);
 
   const addNewBlocksMemo = useMemo(() => pipeline && (
     <>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED,
+  CUSTOM_EVENT_COLUMN_SCROLLER_RESET,
   CUSTOM_EVENT_SYNC_COLUMN_POSITIONS,
 } from '@components/PipelineDetail/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -48,6 +49,8 @@ function ColumnScroller({
 }: ColumnScrollerProps) {
   const refCursor = useRef(null);
   const refCursorContainer = useRef(null);
+
+  const blockUUIDs = useMemo(() => blocks?.map(({ uuid }) => uuid), [blocks]);
 
   const [heights, setHeights] = useState(null);
   const [lockScroll, setLockScroll] = useState(null);
@@ -164,6 +167,29 @@ function ColumnScroller({
     updateHeights,
   ]);
 
+  const refresh = useCallback(() => {
+    dispatchEventCusorMoved();
+    updateHeights();
+  }, [
+    dispatchEventCusorMoved,
+    updateHeights,
+  ]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_RESET, refresh);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_RESET, refresh);
+      }
+    };
+  }, [
+    refresh,
+  ]);
+
+  // Update everything when these values change.
   useEffect(() => {
     if (!disabled) {
       updateHeights();
