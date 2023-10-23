@@ -791,78 +791,6 @@ function CodeBlock({
     mainContainerRect,
   ]);
 
-  const syncColumnTopPositions = useCallback((
-    refColumnToSyncFrom,
-    refColumnToSync,
-    refCursorContainerToSync,
-    refCursorToSync,
-    heights,
-    totalHeight,
-    columnScrolling,
-    opts: {
-      bypassOffScreen: boolean;
-    },
-  ) => {
-    if (sideBySideEnabled && !scrollTogether && refColumnToSync?.current) {
-      const {
-        height: height2,
-        y: y2,
-      } = refColumnToSync?.current?.getBoundingClientRect?.() || {};
-
-      setBlockOutputHeightCache(height2);
-
-      if (mainContainerRect
-        && refColumnToSyncFrom?.current
-        && refCursorToSync?.current
-      ) {
-        const height = mainContainerRect?.height;
-        const y = mainContainerRect?.y;
-
-        // Top is below the screen or top is above the screen
-        if (opts?.bypassOffScreen || (y2 >= y + height || y2 <= y)) {
-          const top1 = refColumnToSyncFrom?.current?.getBoundingClientRect()?.y;
-          const heightUpToBlockIdx = sum(heights?.slice(0, blockIdx) || []);
-
-          const {
-            height: heightCC2,
-            y: yCC2,
-          } = refCursorContainerToSync?.current?.getBoundingClientRect() || {};
-          const {
-            height: heightC2,
-          } = refCursorToSync?.current?.getBoundingClientRect() || {};
-
-          const offsetPercentage = calculateOffsetPercentage(
-            heights,
-            totalHeight,
-            height,
-          );
-          const percentageMoved1 = (heightUpToBlockIdx - (top1 - yCC2)) / (totalHeight);
-
-          const top = ((percentageMoved1 / (1 - offsetPercentage)) * (heightCC2 - heightC2)) + yCC2;
-
-          refCursorToSync.current.style.top = `${top}px`;
-
-          // const evt = new CustomEvent(CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER, {
-          //   detail: {
-          //     columnScrolling,
-          //   },
-          // });
-
-          // if (typeof window !== 'undefined') {
-          //   window.dispatchEvent(evt);
-          // }
-        }
-      }
-    }
-  }, [
-    blockIdx,
-    calculateOffsetPercentage,
-    mainContainerRect,
-    scrollTogether,
-    setBlockOutputHeightCache,
-    sideBySideEnabled,
-  ]);
-
   const runBlockAndTrack = useCallback((payload?: {
     block: BlockType;
     code?: string;
@@ -874,20 +802,25 @@ function CodeBlock({
     };
     runUpstream?: boolean;
     runTests?: boolean;
+    syncColumnPositions?: {
+      rect: {
+        height: number;
+        y: number;
+      };
+      y: number;
+    };
     variables?: {
       [key: string]: any;
     };
   }) => {
     if (sideBySideEnabled) {
-      if (scrollTogether) {
-        setBlockOutputHeightCache(refColumn2?.current?.getBoundingClientRect?.()?.height);
-      } else {
-        dispatchEventSyncColumnPositions({
-          columnIndex: 1,
+      dispatchEventSyncColumnPositions({
+        columnIndex: 1,
+        ...(payload?.syncColumnPositions || {
           rect: refColumn2?.current?.getBoundingClientRect(),
           y: refColumn1?.current?.getBoundingClientRect()?.y,
-        });
-      }
+        }),
+      });
     }
 
     const {
@@ -1585,18 +1518,12 @@ function CodeBlock({
               color={color}
               monospace
               onClick={() => {
-                // syncColumnTopPositions(
-                //   refColumn2,
-                //   refColumn1,
-                //   refCursorContainer,
-                //   refCursor,
-                //   codeBlockHeights,
-                //   totalHeightCodeBlocks,
-                //   0,
-                //   {
-                //     bypassOffScreen: true,
-                //   },
-                // );
+                dispatchEventSyncColumnPositions({
+                  bypassOffScreen: true,
+                  columnIndex: 0,
+                  rect: refColumn1?.current?.getBoundingClientRect(),
+                  y: refColumn2?.current?.getBoundingClientRect()?.y,
+                });
               }}
               preventDefault
             >
@@ -1611,6 +1538,10 @@ function CodeBlock({
               noPadding
               onClick={() => runBlockAndTrack({
                 block,
+                syncColumnPositions: {
+                  rect: refColumn1?.current?.getBoundingClientRect(),
+                  y: refColumn2?.current?.getBoundingClientRect()?.y,
+                },
               })}
             >
               <Circle
@@ -1661,7 +1592,7 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
-    syncColumnTopPositions,
+    dispatchEventSyncColumnPositions,
     totalHeightCodeBlocks,
     updateBlockOutputHeights,
     updateBlockOutputInnerHeights,
