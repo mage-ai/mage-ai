@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED,
   CUSTOM_EVENT_COLUMN_SCROLLER_RESET,
+  CUSTOM_EVENT_COLUMN_SCROLLER_SCROLL_TO_BLOCK,
   CUSTOM_EVENT_SYNC_COLUMN_POSITIONS,
 } from '@components/PipelineDetail/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -189,6 +190,41 @@ function ColumnScroller({
     refresh,
   ]);
 
+  useEffect(() => {
+    const handleScrollToBlock = ({
+      detail: {
+        block,
+      },
+    }) => {
+      const blockIndex = blocks?.findIndex(({ uuid }) => uuid === block?.uuid);
+      const top = calculateTopFromY({
+        blockIndex,
+        heights,
+        y: refCursorContainer?.current?.getBoundingClientRect()?.y,
+      });
+
+      updatePosition(top);
+      dispatchEventCusorMoved();
+
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_SCROLL_TO_BLOCK, handleScrollToBlock);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(CUSTOM_EVENT_COLUMN_SCROLLER_SCROLL_TO_BLOCK, handleScrollToBlock);
+      }
+    };
+  }, [
+    blocks,
+    calculateTopFromY,
+    dispatchEventCusorMoved,
+    heights,
+    updatePosition,
+  ]);
+
   // Update everything when these values change.
   useEffect(() => {
     if (!disabled) {
@@ -225,15 +261,17 @@ function ColumnScroller({
   ]);
 
   const updatePosition = useCallback((yFinal: number) => {
-    const yMin = refCursorContainer?.current?.getBoundingClientRect()?.y;
-    if (yFinal <= yMin) {
-      yFinal = yMin;
-    } else if ((yFinal + cursorHeight) >= (y + height)) {
-      yFinal = (y + height) - cursorHeight;
-    }
+    if (cursorHeight) {
+      const yMin = refCursorContainer?.current?.getBoundingClientRect()?.y;
+      if (yFinal <= yMin) {
+        yFinal = yMin;
+      } else if ((yFinal + cursorHeight) >= (y + height)) {
+        yFinal = (y + height) - cursorHeight;
+      }
 
-    if (refCursor?.current) {
-      refCursor.current.style.top = `${yFinal}px`;
+      if (refCursor?.current) {
+        refCursor.current.style.top = `${yFinal}px`;
+      }
     }
   }, [
     cursorHeight,

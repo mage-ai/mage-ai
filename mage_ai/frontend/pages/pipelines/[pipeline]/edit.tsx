@@ -132,6 +132,7 @@ import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { resetColumnScroller } from '@components/PipelineDetail/ColumnScroller/utils';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
@@ -778,7 +779,19 @@ function PipelineDetailPage({
         response, {
           callback: () => {
             setPipelineContentTouched(false);
-            fetchPipeline();
+            fetchPipeline().then(({
+              pipeline: pipelineServer,
+            }) => {
+              const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
+              const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
+
+              if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
+                setTimeout(() => {
+                  resetColumnScroller();
+                }, 1);
+              }
+            });
+
             fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -2520,6 +2533,7 @@ function PipelineDetailPage({
         name,
         preventDuplicateBlockName,
       }))}
+      sideBySideEnabled={sideBySideEnabled}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -2595,6 +2609,7 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showDataIntegrationModal,
+    sideBySideEnabled,
     statistics,
     textareaFocused,
     updatePipelineInteraction,
