@@ -16,3 +16,6 @@ export const LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS = 'auto_scroll_logs';
 export const LOCAL_STORAGE_KEY_DISPLAY_LOCAL_TIMEZONE = 'display_local_timezone';
 
 export const LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING = 'hide_public_demo_warning';
+
+export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED = 'pipeline_editor_side_by_side_enabled';
+export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER = 'pipeline_editor_side_by_side_scroll_together';

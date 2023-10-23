@@ -87,6 +87,8 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
 } from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
@@ -159,8 +161,31 @@ function PipelineDetailPage({
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
-  const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(false);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
+  const [sideBySideEnabled, setSideBySideEnabledState] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
+  );
+  const [scrollTogether, setScrollTogetherState] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
+  );
+  const setSideBySideEnabled = useCallback((prev) => {
+    setSideBySideEnabledState(prev);
+    set(
+      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
+      typeof prev === 'function' ? prev() : prev,
+    );
+  }, [
+    setSideBySideEnabledState,
+  ]);
+  const setScrollTogether = useCallback((prev) => {
+    setScrollTogetherState(prev);
+    set(
+      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
+      typeof prev === 'function' ? prev() : prev,
+    );
+  }, [
+    setScrollTogetherState,
+  ]);
+
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
