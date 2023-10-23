@@ -2854,11 +2854,14 @@ function PipelineDetailPage({
             saveStatus={saveStatus}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
+            setSideBySideEnabled={setSideBySideEnabled}
             setRunningBlocks={setRunningBlocks}
+            sideBySideEnabled={sideBySideEnabled}
             updatePipelineMetadata={updatePipelineMetadata}
           >
             {beforeHeader}
           </KernelStatus>
+
           {selectedFilePaths?.length > 0 &&
             <PipelineHeaderStyle relativePosition secondary>
               <FileTabs
@@ -2885,6 +2888,8 @@ function PipelineDetailPage({
     selectedFilePath,
     selectedFilePaths,
     setErrors,
+    setSideBySideEnabled,
+    sideBySideEnabled,
     updatePipelineMetadata,
   ]);
 
