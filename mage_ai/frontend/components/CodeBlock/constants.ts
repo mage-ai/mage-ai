@@ -1,8 +1,6 @@
 import BlockType from '@interfaces/BlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export const CUSTOM_EVENT_UPDATE_COLUMN_SCROLLER = 'UPDATE_COLUMN_SCROLLER';
-
 export const TAB_DBT_PREVIEW_UUID = { uuid: 'Preview results' };
 export const TAB_DBT_LOGS_UUID = { uuid: 'Logs' };
 export const TAB_DBT_SQL_UUID = { uuid: 'SQL' };

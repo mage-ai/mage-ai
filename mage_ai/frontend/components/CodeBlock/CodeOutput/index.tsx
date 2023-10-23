@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
 import InnerHTML from 'dangerously-set-html-content';
 import { useMutation } from 'react-query';
@@ -39,6 +39,7 @@ import {
   HTMLOutputStyle,
   OutputRowStyle,
 } from './index.style';
+import { CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED } from '@components/PipelineDetail/constants';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import {
   INTERNAL_OUTPUT_REGEX,
@@ -64,6 +65,7 @@ import { onSuccess } from '@api/utils/response';
 
 type CodeOutputProps = {
   block: BlockType;
+  blockIndex?: number;
   blockMetadata?: {
     dbt: {
       lineage: BlockType[];
@@ -117,6 +119,7 @@ const SHARED_BUTTON_PROPS = {
 
 function CodeOutput({
   block,
+  blockIndex,
   blockMetadata,
   buttonTabs,
   children,
@@ -151,14 +154,36 @@ function CodeOutput({
   updateBlockOutputHeights,
   updateBlockOutputInnerHeights,
 }: CodeOutputProps, ref) {
+  const [mounted, setMounted] = useState(false);
+
+  const startTime = performance.now();
   useEffect(() => {
-    updateBlockOutputHeights?.();
-    updateBlockOutputInnerHeights?.();
+    console.log('WTF output rendered', blockIndex, ref?.current?.getBoundingClientRect?.()?.height)
+    const duration = performance.now() - startTime;
+    setMounted(true);
+  }, []);
+
+  const dispatchEventChanged = useCallback(() => {
+    const evt = new CustomEvent(CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED, {
+      detail: {
+        blockIndex,
+      },
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(evt);
+    }
   }, [
-    messages,
+    blockIndex,
+  ]);
+
+  useEffect(() => {
+    if (mounted) {
+      dispatchEventChanged();
+    }
+  }, [
     messagesAll,
-    updateBlockOutputHeights,
-    updateBlockOutputInnerHeights,
+    mounted,
   ]);
 
   const {
@@ -672,9 +697,9 @@ function CodeOutput({
   return (
     <div
       ref={ref}
-      style={{
-        height,
-      }}
+      // style={{
+      //   height,
+      // }}
     >
       <div
         onClick={onClickSelectBlock

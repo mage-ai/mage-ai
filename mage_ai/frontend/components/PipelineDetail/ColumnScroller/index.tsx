@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import {
+  CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED,
+  CUSTOM_EVENT_SYNC_COLUMN_POSITIONS,
+} from '@components/PipelineDetail/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
   ScrollbarContainerStyle,
   ScrollCursorStyle,
 } from './index.style';
-import { sum } from '@utils/array';
+import { buildBlockRefKey } from '@components/PipelineDetail/utils';
+import { calculateOffsetPercentage } from '@components/CodeBlock/utils';
+import { sortByKey, sum } from '@utils/array';
 
 export type StartDataType = {
   event: any;
@@ -15,39 +22,131 @@ type ColumnScrollerProps = {
   columnIndex: number;
   columns: number;
   cursorHeight: number;
-  heights: number[];
   mainContainerRect?: {
     height: number;
     width: number;
     x: number;
     y: number;
   };
-  mountedBlocks?: {
-    [key: string]: boolean;
-  };
-  refCursor: any;
-  refCursorContainer: any;
   rightAligned?: boolean;
-  setCursorHeight: (cursorHeight: number) => void;
-  setStartData: (data: StartDataType) => void;
-  startData?: StartDataType;
 };
 
 function ColumnScroller({
+  blocks,
   columnIndex,
   columns,
-  cursorHeight,
-  heights,
+  eventName,
   mainContainerRect,
-  mountedBlocks,
-  refCursor,
-  refCursorContainer,
+  refsMapping,
   rightAligned,
   setCursorHeight,
-  setStartData,
-  startData,
 }: ColumnScrollerProps) {
-  const totalHeight = useMemo(() => sum(heights || []), [heights]);
+  const refCursor = useRef(null);
+  const refCursorContainer = useRef(null);
+
+  const [heights, setHeights] = useState(null);
+  const [lockScroll, setLockScroll] = useState(null);
+  const [mounted, setMounted] = useState(null);
+  const [startData, setStartData] = useState(null);
+
+  const dispatchEventCusorMoved = useCallback(() => {
+    const evt = new CustomEvent(CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED, {
+      detail: {
+        columnScrolling: columnIndex,
+        refCursor,
+        refCursorContainer,
+        refsMapping,
+      },
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(evt);
+    }
+  }, [
+    columnIndex,
+    refsMapping,
+  ]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const calculateTopFromY = useCallback(({
+    blockIndex,
+    heights,
+    y: y2,
+  }: {
+    blockIndex: number;
+    heights: number[];
+    y: number;
+  }) => {
+    const containerRect = refCursorContainer?.current?.getBoundingClientRect();
+    const cursorRect = refCursor?.current?.getBoundingClientRect();
+
+    const heightUpToBlockIdx = sum(heights?.slice(0, blockIndex) || []);
+
+    const totalHeight = sum(heights || []) || 0;
+    const offsetPercentage = calculateOffsetPercentage(
+      heights,
+      totalHeight,
+      height,
+    );
+    const percentageMoved = (heightUpToBlockIdx - (y2 - containerRect?.y))
+      / (totalHeight);
+    const percentage = (percentageMoved / (1 - offsetPercentage));
+
+    const top = (percentage * (containerRect?.height - cursorRect?.height)) + containerRect?.y;
+
+    return top;
+  }, []);
+
+  useEffect(() => {
+    // Need to clear the start data when the mouse leaves the window.
+    const updateHeights = ({
+      detail: {
+        blockIndex,
+      }
+    }) => {
+      const blockRefsInner = [];
+      const heightsInner = [];
+      blocks?.forEach((block) => {
+        const blockRef = refsMapping?.current?.[buildBlockRefKey(block)];
+        const height = blockRef?.current?.getBoundingClientRect()?.height;
+        blockRefsInner.push(blockRef);
+        heightsInner.push(height);
+      });
+
+      setHeights(heightsInner);
+
+      if (lockScroll) {
+        const top = calculateTopFromY({
+          ...lockScroll,
+          heights: heightsInner,
+        });
+        updatePosition(top);
+      }
+
+      dispatchEventCusorMoved();
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(eventName, updateHeights);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(eventName, updateHeights);
+      }
+    };
+  }, [
+    blocks,
+    calculateTopFromY,
+    columnIndex,
+    dispatchEventCusorMoved,
+    lockScroll,
+    refsMapping,
+    setHeights,
+  ]);
 
   const {
     height,
@@ -55,16 +154,22 @@ function ColumnScroller({
     x,
     y,
   } = mainContainerRect || {};
-
-  useEffect(() => {
-    setCursorHeight(totalHeight > height
-      ? height * (height / totalHeight)
-      : 0
-    );
-  }, [
+  const totalHeight = useMemo(() => sum(heights || []), [heights]);
+  const getCursorHeight = useCallback(() => totalHeight > height
+    ? height * (height / totalHeight)
+    : 0,
+  [
     height,
-    setCursorHeight,
     totalHeight,
+  ]);
+  const cursorHeight = useMemo(() => getCursorHeight(), [
+    getCursorHeight,
+  ]);
+  useMemo(() => {
+    setCursorHeight(cursorHeight);
+  }, [
+    cursorHeight,
+    setCursorHeight,
   ]);
 
   const updatePosition = useCallback((yFinal: number) => {
@@ -82,7 +187,46 @@ function ColumnScroller({
     cursorHeight,
     height,
     refCursor,
-    refCursorContainer,
+    y,
+  ]);
+
+  useEffect(() => {
+    const handleSyncColumnPositions = ({
+      detail,
+    }) => {
+      if (columnIndex !== detail?.columnIndex) {
+        return;
+      }
+
+      const top = calculateTopFromY({
+        ...detail,
+        heights,
+      });
+
+      updatePosition(top);
+      dispatchEventCusorMoved();
+
+      if (detail?.lockScroll) {
+        setLockScroll(detail);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(CUSTOM_EVENT_SYNC_COLUMN_POSITIONS, handleSyncColumnPositions);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(CUSTOM_EVENT_SYNC_COLUMN_POSITIONS, handleSyncColumnPositions);
+      }
+    };
+  }, [
+    columnIndex,
+    height,
+    heights,
+    setLockScroll,
+    updatePosition,
+    calculateTopFromY,
     y,
   ]);
 
@@ -102,6 +246,8 @@ function ColumnScroller({
           let yFinal = (rect?.y || 0) + (event?.deltaY || 0);
 
           updatePosition(yFinal);
+          dispatchEventCusorMoved();
+          setLockScroll(null);
         }
       }
     }
@@ -110,6 +256,7 @@ function ColumnScroller({
     columns,
     height,
     updatePosition,
+    dispatchEventCusorMoved,
     width,
     x,
     y,
@@ -125,28 +272,30 @@ function ColumnScroller({
     }
 
     let yFinal
-
+    let distance = 0;
     if (clientY === null) {
       const currentScrollTop = startData?.scrollTop;
       const yStart = startData?.event?.clientY;
-      const distance = event?.clientY - yStart;
-
+      distance = event?.clientY - yStart;
       yFinal = currentScrollTop + distance;
     } else {
       yFinal = clientY;
     }
 
     updatePosition(yFinal);
+    dispatchEventCusorMoved();
+    setLockScroll(null);
   }, [
+    dispatchEventCusorMoved,
     startData,
     updatePosition,
   ]);
 
   useEffect(() => {
-    handleMouseMove(null, refCursor?.current?.getBoundingClientRect()?.y)
+    updatePosition(refCursor?.current?.getBoundingClientRect()?.y)
   }, [
     height,
-    refCursor,
+    updatePosition,
   ]);
 
   useEffect(() => {
@@ -169,13 +318,10 @@ function ColumnScroller({
       }
     };
   }, [
+    cursorHeight,
     handleMouseMove,
     handleWheel,
   ]);
-
-  if (!cursorHeight) {
-    return <div />;
-  }
 
   // Clicking a part of the container should scroll to the part.
   return (
