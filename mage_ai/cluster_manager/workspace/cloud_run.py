@@ -10,6 +10,8 @@ from mage_ai.shared.hash import merge_dict
 
 
 class CloudRunWorkspace(Workspace):
+    config_class = CloudRunWorkspaceConfig
+
     def __init__(self, name: str):
         super().__init__(name)
         self.cloud_run_service_manager = CloudRunServiceManager(
@@ -17,13 +19,6 @@ class CloudRunWorkspace(Workspace):
             self.config.path_to_credentials or os.getenv('path_to_keyfile'),
             region=self.config.region or os.getenv('GCP_REGION'),
         )
-
-    @property
-    def config(self) -> CloudRunWorkspaceConfig:
-        if os.path.exists(self.config_path):
-            return CloudRunWorkspaceConfig.load(config_path=self.config_path)
-        else:
-            return CloudRunWorkspaceConfig()
 
     @classmethod
     def initialize(

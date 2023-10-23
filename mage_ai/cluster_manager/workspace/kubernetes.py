@@ -11,19 +11,14 @@ from mage_ai.shared.hash import merge_dict
 
 
 class KubernetesWorkspace(Workspace):
+    config_class = KubernetesWorkspaceConfig
+
     def __init__(self, name: str):
         super().__init__(name)
         self.cluster_type = ClusterType.K8S
         self.workload_manager = WorkloadManager(
             self.config.namespace or os.getenv(KUBE_NAMESPACE)
         )
-
-    @property
-    def config(self) -> KubernetesWorkspaceConfig:
-        if os.path.exists(self.config_path):
-            return KubernetesWorkspaceConfig.load(config_path=self.config_path)
-        else:
-            return KubernetesWorkspaceConfig()
 
     @classmethod
     def initialize(

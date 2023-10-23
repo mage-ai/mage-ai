@@ -18,8 +18,11 @@ class classproperty(property):
 
 
 class Workspace(abc.ABC):
+    config_class = None
+
     def __init__(self, name: str):
         self.name = name
+        self._config = None
 
     @classproperty
     def project_folder(cls) -> str:
@@ -30,9 +33,14 @@ class Workspace(abc.ABC):
         return os.path.join(self.project_folder, f'{self.name}.yaml')
 
     @property
-    @abc.abstractmethod
     def config(self) -> WorkspaceConfig:
-        pass
+        if self.config_class and not self._config:
+            if os.path.exists(self.config_path):
+                self._config = self.config_class.load(config_path=self.config_path)
+            else:
+                self._config = self.config_class()
+
+        return self._config
 
     @property
     def lifecycle_config(self) -> LifecycleConfig:
@@ -49,12 +57,15 @@ class Workspace(abc.ABC):
     def workspace_class_from_type(cls, cluster_type: ClusterType) -> 'Workspace':
         if cluster_type == ClusterType.K8S:
             from mage_ai.cluster_manager.workspace.kubernetes import KubernetesWorkspace
+
             return KubernetesWorkspace
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.workspace.cloud_run import CloudRunWorkspace
+
             return CloudRunWorkspace
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.workspace.ecs import EcsWorkspace
+
             return EcsWorkspace
 
     @classmethod
@@ -97,9 +108,7 @@ class Workspace(abc.ABC):
                 os.makedirs(cls.project_folder)
             config_path = os.path.join(cls.project_folder, f'{name}.yaml')
             if os.path.exists(config_path):
-                raise WorkspaceExistsError(
-                    f'Project with name {name} already exists'
-                )
+                raise WorkspaceExistsError(f'Project with name {name} already exists')
 
             project_uuid = uuid.uuid4().hex
             data['project_uuid'] = project_uuid

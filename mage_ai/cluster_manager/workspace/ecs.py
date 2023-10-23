@@ -14,18 +14,13 @@ from mage_ai.shared.hash import merge_dict
 
 
 class EcsWorkspace(Workspace):
+    config_class = EcsWorkspaceConfig
+
     def __init__(self, name: str):
         super().__init__(name)
         self.ecs_instance_manager = EcsTaskManager(
             self.config.cluster_name or os.getenv(ECS_CLUSTER_NAME)
         )
-
-    @property
-    def config(self) -> EcsWorkspaceConfig:
-        if os.path.exists(self.config_path):
-            return EcsWorkspaceConfig.load(config_path=self.config_path)
-        else:
-            return EcsWorkspaceConfig()
 
     @classmethod
     def initialize(
