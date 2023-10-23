@@ -35,9 +35,8 @@ function ColumnScroller({
   blocks,
   columnIndex,
   columns,
-  eventName,
+  eventNameRefsMapping,
   mainContainerRect,
-  refsMapping,
   rightAligned,
   setCursorHeight,
 }: ColumnScrollerProps) {
@@ -55,7 +54,7 @@ function ColumnScroller({
         columnScrolling: columnIndex,
         refCursor,
         refCursorContainer,
-        refsMapping,
+        refsMappings: Object.values(eventNameRefsMapping || {}),
       },
     });
 
@@ -64,7 +63,7 @@ function ColumnScroller({
     }
   }, [
     columnIndex,
-    refsMapping,
+    eventNameRefsMapping,
   ]);
 
   useEffect(() => {
@@ -105,15 +104,20 @@ function ColumnScroller({
     const updateHeights = ({
       detail: {
         blockIndex,
-      }
+      },
+      type: eventName,
     }) => {
-      const blockRefsInner = [];
-      const heightsInner = [];
-      blocks?.forEach((block) => {
-        const blockRef = refsMapping?.current?.[buildBlockRefKey(block)];
-        const height = blockRef?.current?.getBoundingClientRect()?.height;
-        blockRefsInner.push(blockRef);
-        heightsInner.push(height);
+      const refsMappings = Object.values(eventNameRefsMapping || {});
+      const heightsInner = blocks?.map((block: BlockType) => {
+        const key = buildBlockRefKey(block);
+
+        const height = Math.max(...refsMappings.map((refsMapping) => {
+          const blockRef = refsMapping?.current?.[key];
+
+          return blockRef?.current?.getBoundingClientRect()?.height || 0;
+        }));
+
+        return height;
       });
 
       setHeights(heightsInner);
@@ -130,12 +134,16 @@ function ColumnScroller({
     }
 
     if (typeof window !== 'undefined') {
-      window.addEventListener(eventName, updateHeights);
+      Object.keys(eventNameRefsMapping || {})?.forEach((eventName: string) => {
+        window.addEventListener(eventName, updateHeights);
+      });
     }
 
     return () => {
       if (typeof window !== 'undefined') {
-        window.removeEventListener(eventName, updateHeights);
+        Object.keys(eventNameRefsMapping || {})?.forEach((eventName: string) => {
+          window.removeEventListener(eventName, updateHeights);
+        });
       }
     };
   }, [
@@ -143,8 +151,8 @@ function ColumnScroller({
     calculateTopFromY,
     columnIndex,
     dispatchEventCusorMoved,
+    eventNameRefsMapping,
     lockScroll,
-    refsMapping,
     setHeights,
   ]);
 

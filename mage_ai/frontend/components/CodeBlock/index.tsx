@@ -447,12 +447,18 @@ function CodeBlock({
     columnScrolling,
     refCursor,
     refCursorContainer,
-    refsMapping,
+    refsMappings,
   }) => {
-    const heights = blocksFiltered?.map((block: BlockType) => {
-      const blockRef = refsMapping?.current?.[buildBlockRefKey(block)];
+    const heights = blocks?.map((block: BlockType) => {
+      const key = buildBlockRefKey(block);
 
-      return blockRef?.current?.getBoundingClientRect()?.height || 0;
+      const height = Math.max(...refsMappings.map((refsMapping) => {
+        const blockRef = refsMapping?.current?.[key];
+
+        return blockRef?.current?.getBoundingClientRect()?.height || 0;
+      }));
+
+      return height;
     });
 
     const totalHeight = sum(heights || []);
@@ -815,7 +821,8 @@ function CodeBlock({
   }) => {
     if (sideBySideEnabled) {
       dispatchEventSyncColumnPositions({
-        columnIndex: 1,
+        columnIndex: scrollTogether ? 0 : 1,
+        bypassOffScreen: scrollTogether,
         ...(payload?.syncColumnPositions || {
           rect: refColumn2?.current?.getBoundingClientRect(),
           y: refColumn1?.current?.getBoundingClientRect()?.y,

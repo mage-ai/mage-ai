@@ -285,7 +285,7 @@ function PipelineDetail({
     ]);
 
   const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -571,9 +571,11 @@ function PipelineDetail({
         blocks={blocksFiltered}
         columnIndex={0}
         columns={2}
-        eventName={CUSTOM_EVENT_CODE_BLOCK_CHANGED}
+        eventNameRefsMapping={{
+          [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
+        }}
+        refsMapping
         mainContainerRect={mainContainerRect}
-        refsMapping={blockRefs}
         setCursorHeight={setCursorHeight1}
       />
     );
@@ -591,15 +593,23 @@ function PipelineDetail({
         blocks={blocksFiltered}
         columnIndex={scrollTogether ? 0 : 1}
         columns={scrollTogether ? 1 : 2}
-        eventName={CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED}
+        eventNameRefsMapping={{
+          [CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED]: blockOutputRefs,
+          ...(scrollTogether
+            ? {
+              [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
+            }
+            : {}
+          ),
+        }}
         mainContainerRect={mainContainerRect}
-        refsMapping={blockOutputRefs}
         rightAligned
         setCursorHeight={setCursorHeight2}
       />
     );
   }, [
     blockOutputRefs,
+    blockRefs,
     blocksFiltered,
     mainContainerRect,
     scrollTogether,
