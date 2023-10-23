@@ -120,6 +120,12 @@ class OauthResource(GenericResource):
         # the provider and return the redirect uri.
         elif code:
             if OAUTH_PROVIDER_GHE == pk:
+                # Fetch access token for GitHub Enterprise and add it to the redirect URI.
+
+                # 1. Get GHE client credentials from environment variables.
+                # 2. Obtain an access token from the GitHub Enterprise OAuth service.
+                # 3. Update uri query parameters with provider and access token from GHE API.
+                # 4. Recreate and return the uri to include the access token and provider.
                 parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
                 parsed_url_query = parse_qs(parsed_url.query)
 
@@ -156,14 +162,14 @@ class OauthResource(GenericResource):
                 parts = redirect_uri.split('?')
                 base_url = parts[0]
 
-                redirect_uri_final = '?'.join([
-                    base_url,
-                    urllib.parse.urlencode(query),
-                ])
+                redirect_uri_final = '?'.join(
+                    [
+                        base_url,
+                        urllib.parse.urlencode(query),
+                    ]
+                )
 
-                model[
-                    'url'
-                ] = redirect_uri_final
+                model['url'] = redirect_uri_final
         # Otherwise, return the authorization url to start the oauth flow.
         else:
             if OAUTH_PROVIDER_GITHUB == pk:
@@ -209,9 +215,7 @@ class OauthResource(GenericResource):
                 for k, v in query.items():
                     query_strings.append(f'{k}={v}')
 
-                model[
-                    'url'
-                ] = f"{host}/login/oauth/authorize?{'&'.join(query_strings)}"
+                model['url'] = f"{host}/login/oauth/authorize?{'&'.join(query_strings)}"
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
                 ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
                 if ad_directory_id:
