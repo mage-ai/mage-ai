@@ -7,16 +7,22 @@ These are the instructions for setting up the development dependencies and confo
 
 ## Using helper scripts
 
-Initialise a `mage` repo so you have a starting point.
+To initialise a `mage` repo so you have a starting point:
 
 ```bash
 ./scripts/init.sh default_repo
 ```
 
-Generate a Docker image, start the dev server for the backend at `localhost:6789` and frontend at `localhost:3000`.
+To generate a Docker image, start the dev server for the backend at `localhost:6789` and frontend at `localhost:3000`:
 
 ```bash
 ./scripts/dev.sh default_repo
+```
+
+In case you only want the backend:
+
+```bash
+./scripts/start.sh default_repo
 ```
 
 <sup>The name `default_repo` could technically be anything, but bare in mind, if you decide to change it, please also add it to the `.gitignore` file.</sup>
@@ -109,7 +115,7 @@ pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')
 Then, start the dev server:
 
 ```bash
-./scripts/start.sh default_repo
+python mage_ai/server/server.py
 ```
 
 <sup>The above command generates a Mage.ai project called `default_repo` by default before starting the server. Please view the file itself for more advanced usages.</sup>
