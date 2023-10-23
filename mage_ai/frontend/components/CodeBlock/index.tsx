@@ -383,7 +383,7 @@ function CodeBlock({
   ]);
 
   useEffect(() => {
-    if (mounted) {
+    if (mounted  && sideBySideEnabled) {
       dispatchEventChanged();
     }
   }, [

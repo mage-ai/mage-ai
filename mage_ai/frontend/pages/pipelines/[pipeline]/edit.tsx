@@ -782,13 +782,15 @@ function PipelineDetailPage({
             fetchPipeline().then(({
               pipeline: pipelineServer,
             }) => {
-              const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
-              const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
+              if (sideBySideEnabled) {
+                const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
+                const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
 
-              if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
-                setTimeout(() => {
-                  resetColumnScroller();
-                }, 1);
+                if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
+                  setTimeout(() => {
+                    resetColumnScroller();
+                  }, 1);
+                }
               }
             });
 
