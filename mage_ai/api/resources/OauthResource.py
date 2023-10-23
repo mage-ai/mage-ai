@@ -1,10 +1,11 @@
 import json
+import os
 import urllib.parse
 import uuid
 from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
-import requests
+import aiohttp
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
@@ -86,7 +87,7 @@ class OauthResource(GenericResource):
         )
 
     @classmethod
-    def member(self, pk, user, **kwargs):
+    async def member(self, pk, user, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
         if pk not in VALID_OAUTH_PROVIDERS:
             error.update(dict(message='Invalid provider.'))
@@ -116,7 +117,7 @@ class OauthResource(GenericResource):
                 [access_token.expires for access_token in access_tokens]
             )
         # If an oauth code is provided, we need to exchange it for an access token for
-        # the provider.
+        # the provider and return the redirect uri.
         elif code:
             if OAUTH_PROVIDER_GHE == pk:
                 parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
@@ -128,24 +129,28 @@ class OauthResource(GenericResource):
                         v = ','.join(v)
                     query[k] = v
 
-                if GHE_HOSTNAME.startswith('http'):
-                    host = GHE_HOSTNAME
+                ghe_hostname = os.getenv(GHE_HOSTNAME)
+                if ghe_hostname.startswith('http'):
+                    host = ghe_hostname
                 else:
-                    host = f'https://{GHE_HOSTNAME}'
-                resp = requests.post(
-                    f'{host}/login/oauth/access_token',
-                    headers={
-                        'Accept': 'application/json',
-                    },
-                    data=dict(
-                        client_id=GHE_CLIENT_ID,
-                        client_secret=GHE_CLIENT_SECRET,
-                        code=code,
-                    ),
-                    timeout=20,
-                )
+                    host = f'https://{ghe_hostname}'
 
-                data = resp.json()
+                data = dict()
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f'{host}/login/oauth/access_token',
+                        headers={
+                            'Accept': 'application/json',
+                        },
+                        data=dict(
+                            client_id=os.getenv(GHE_CLIENT_ID),
+                            client_secret=os.getenv(GHE_CLIENT_SECRET),
+                            code=code,
+                        ),
+                        timeout=20,
+                    ) as response:
+                        data = await response.json()
+
                 query = add_access_token_to_query(data, query)
 
                 parts = redirect_uri.split('?')
@@ -159,6 +164,7 @@ class OauthResource(GenericResource):
                 model[
                     'url'
                 ] = redirect_uri_final
+        # Otherwise, return the authorization url to start the oauth flow.
         else:
             if OAUTH_PROVIDER_GITHUB == pk:
                 if GHE_HOSTNAME:
