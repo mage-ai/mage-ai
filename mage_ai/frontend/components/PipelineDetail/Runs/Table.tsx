@@ -45,7 +45,7 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
+import { datetimeInLocalTimezone, timeDifference, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
@@ -450,6 +450,9 @@ function PipelineRunsTable({
       uuid: 'Completed at',
     },
     {
+      uuid: 'Execution time',
+    },
+    {
       uuid: 'Block runs',
     },
     {
@@ -620,6 +623,22 @@ function PipelineRunsTable({
                       )
                     }
                   </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -726,6 +745,22 @@ function PipelineRunsTable({
                       ? (displayLocalTimezone
                         ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
                         : getTimeInUTCString(completedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
                       ): (
                         <>&#8212;</>
                       )
