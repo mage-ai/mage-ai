@@ -343,7 +343,6 @@ function PipelineDetail({
           [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
         }}
         invisible={!blocks?.length || !cursorHeight1 || scrollTogether}
-        refsMapping
         mainContainerRect={mainContainerRect}
         scrollTogether={scrollTogether}
         setCursorHeight={setCursorHeight1}
@@ -864,11 +863,9 @@ function PipelineDetail({
             blockIdx={idx}
             blockInteractions={blockInteractionsMapping?.[uuid]}
             blockOutputRef={currentBlockOutputRef}
-            blockOutputRefs={blockOutputRefs}
             blockRefs={blockRefs}
             blockTemplates={blockTemplates}
             blocks={blocks}
-            blocksFiltered={blocksFiltered}
             containerRef={containerRef}
             cursorHeight1={cursorHeight1}
             cursorHeight2={cursorHeight2}
