@@ -48,6 +48,20 @@ def get_instances(cluster_type: str) -> List[Dict]:
 
 
 def get_workspaces(cluster_type: ClusterType) -> List[Workspace]:
+    """
+    Retrieve a list of workspaces based on the cluster type and project type.
+
+    1. For main projects, it extracts project names from the config file names.
+    2. Otherwise, it will fetch project names from the cloud instances for the specified cluster.
+    3. It then attempts to create Workspace objects for each project and collects them in a list.
+    4. Exceptions are handled gracefully, and error messages are printed as needed.
+
+    Args:
+        cluster_type (ClusterType): The type of cluster (e.g., ClusterType.K8S).
+
+    Returns:
+        List[Workspace]: A list of Workspace objects.
+    """
     is_main_project = get_project_type() == ProjectType.MAIN
 
     repo_path = get_repo_path()
@@ -72,6 +86,27 @@ def get_workspaces(cluster_type: ClusterType) -> List[Workspace]:
 
 
 def check_auto_termination(cluster_type: ClusterType):
+    """
+    Check and potentially terminate idle workspaces in a given cluster. Currently,
+    this is only supported for Kubernetes clusters.
+
+    This function is responsible for checking and, if necessary, terminating idle workspaces
+    in a specified cluster.
+
+    1. Retrieve a list of workspaces based on the cluster_type by calling get_workspaces().
+    2. For each workspace, attempt to retrieve its termination policy from the lifecycle_config.
+    3. If a termination policy exists and auto-termination is enabled:
+       - Fetch the workload manager associated with the workspace.
+       - Obtain activity details for the workspace using workload_manager.get_workload_activity().
+       - Determine the maximum allowed idle time in seconds from the termination policy.
+       - Check the number of active pipeline runs (active_pipeline_run_count).
+       - Calculate the latest activity time based on user requests and scheduler activity.
+       - If there are no active pipeline runs and the workspace has been idle for longer than
+         the maximum allowed idle time, stop the workspace.
+
+    Args:
+        cluster_type (ClusterType): The type of cluster to check (e.g., ClusterType.K8S).
+    """
     if cluster_type == ClusterType.K8S:
         workspaces = get_workspaces(cluster_type)
         for ws in workspaces:
@@ -106,6 +141,6 @@ def check_auto_termination(cluster_type: ClusterType):
                             not active_pipeline_run_count
                             and now_time - latest_activity_time > max_idle_seconds
                         ):
-                            workload_manager.scale_down_workload(ws.name)
+                            ws.stop()
             except Exception:
                 pass

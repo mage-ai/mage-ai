@@ -1,10 +1,9 @@
+import abc
 import os
 import uuid
 from typing import Dict, Optional
 
-import yaml
-
-from mage_ai.cluster_manager.config import LifecycleConfig
+from mage_ai.cluster_manager.config import LifecycleConfig, WorkspaceConfig
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.errors import WorkspaceExistsError
 from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
@@ -18,7 +17,7 @@ class classproperty(property):
         return self.fget(owner_cls)
 
 
-class Workspace:
+class Workspace(abc.ABC):
     def __init__(self, name: str):
         self.name = name
 
@@ -31,11 +30,9 @@ class Workspace:
         return os.path.join(self.project_folder, f'{self.name}.yaml')
 
     @property
-    def config(self) -> Dict:
-        if os.path.exists(self.config_path):
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                return yaml.full_load(f)
-        return dict()
+    @abc.abstractmethod
+    def config(self) -> WorkspaceConfig:
+        pass
 
     @property
     def lifecycle_config(self) -> LifecycleConfig:
@@ -49,16 +46,15 @@ class Workspace:
         return user.get_access(Entity.PROJECT, self.project_uuid)
 
     @classmethod
-    def workspace_class_from_type(self, cluster_type: ClusterType) -> 'Workspace':
-        from mage_ai.cluster_manager.workspace.cloud_run import CloudRunWorkspace
-        from mage_ai.cluster_manager.workspace.ecs import EcsWorkspace
-        from mage_ai.cluster_manager.workspace.kubernetes import KubernetesWorkspace
-
+    def workspace_class_from_type(cls, cluster_type: ClusterType) -> 'Workspace':
         if cluster_type == ClusterType.K8S:
+            from mage_ai.cluster_manager.workspace.kubernetes import KubernetesWorkspace
             return KubernetesWorkspace
         elif cluster_type == ClusterType.CLOUD_RUN:
+            from mage_ai.cluster_manager.workspace.cloud_run import CloudRunWorkspace
             return CloudRunWorkspace
         elif cluster_type == ClusterType.ECS:
+            from mage_ai.cluster_manager.workspace.ecs import EcsWorkspace
             return EcsWorkspace
 
     @classmethod
@@ -72,6 +68,25 @@ class Workspace:
         name: str,
         payload: Dict,
     ) -> 'Workspace':
+        """
+        Create workspace with the specified parameters
+        1. If the current project is a main project, create the config yaml file in the
+        `repo_path/projects` folder.
+        2. If the config file already exists, throw a WorkspaceExistsError.
+        3. Get the workspace class from the `cluster_type` parameter, and initialize the
+        workspace.
+
+        Args:
+            cluster_type (ClusterType): specifies what kind of infrastructure to use for the
+                workspace
+            name (str): the name of the new workspace
+            payload (Dict): payload for creating the workspace. The payload can have various
+                cluster specific parameters or workspace config
+
+        Returns:
+            Workspace: the created workspace. The returned workspace object will be a
+                Workspace subclass based on the `cluster_type` param.
+        """
         config_path = None
         project_uuid = None
         project_type = get_project_type()
@@ -98,26 +113,47 @@ class Workspace:
             raise
 
     @classmethod
+    @abc.abstractmethod
     def initialize(
         cls,
         name: str,
         config_path: str,
         **kwargs,
     ) -> 'Workspace':
+        """
+        Initialize the workspace and the corresponding cloud instance.
+
+        Returns:
+            Workspace: the initialized workspace
+        """
         raise NotImplementedError('Initialize method not implemented')
 
+    @abc.abstractmethod
     def delete(self, **kwargs):
+        """
+        Delete the workspace. Individual workspace classes should still implement
+        this method to delete the cloud instance.
+        """
         if get_project_type() == ProjectType.MAIN and os.path.exists(self.config_path):
             os.remove(self.config_path)
 
+    @abc.abstractmethod
     def stop(self):
+        """
+        Stop the workspace. The workspace metadata should not be deleted, but the cloud
+        instance should be stopped or paused.
+        """
         raise NotImplementedError('Stop method not implemented')
 
+    @abc.abstractmethod
     def resume(self, **kwargs):
+        """
+        Resume the workspace after being stopped.
+        """
         raise NotImplementedError('Resume method not implemented')
 
     def to_dict(self):
         return dict(
             name=self.name,
-            **self.config,
+            **self.config.to_dict(),
         )

@@ -2,6 +2,7 @@ import os
 
 import yaml
 
+from mage_ai.cluster_manager.config import CloudRunWorkspaceConfig
 from mage_ai.cluster_manager.constants import GCP_PROJECT_ID
 from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
 from mage_ai.cluster_manager.workspace.base import Workspace
@@ -12,10 +13,17 @@ class CloudRunWorkspace(Workspace):
     def __init__(self, name: str):
         super().__init__(name)
         self.cloud_run_service_manager = CloudRunServiceManager(
-            self.config.get('project_id', os.getenv(GCP_PROJECT_ID)),
-            self.config.get('path_to_credentials', os.getenv('path_to_keyfile')),
-            region=self.config.get('region', os.getenv('GCP_REGION')),
+            self.config.project_id or os.getenv(GCP_PROJECT_ID),
+            self.config.path_to_credentials or os.getenv('path_to_keyfile'),
+            region=self.config.region or os.getenv('GCP_REGION'),
         )
+
+    @property
+    def config(self) -> CloudRunWorkspaceConfig:
+        if os.path.exists(self.config_path):
+            return CloudRunWorkspaceConfig.load(config_path=self.config_path)
+        else:
+            return CloudRunWorkspaceConfig()
 
     @classmethod
     def initialize(
@@ -29,18 +37,20 @@ class CloudRunWorkspace(Workspace):
             'path_to_credentials', os.getenv('path_to_keyfile')
         )
         region = kwargs.get('region', os.getenv('GCP_REGION'))
-
+        workspace_config = CloudRunWorkspaceConfig.load(
+            config=merge_dict(
+                kwargs,
+                dict(
+                    project_id=project_id,
+                    path_to_credentials=path_to_credentials,
+                    region=region,
+                ),
+            )
+        )
         if config_path:
             with open(config_path, 'w', encoding='utf-8') as fp:
                 yaml.dump(
-                    merge_dict(
-                        kwargs,
-                        dict(
-                            project_id=project_id,
-                            path_to_credentials=path_to_credentials,
-                            region=region,
-                        ),
-                    ),
+                    workspace_config.to_dict(),
                     fp,
                 )
 

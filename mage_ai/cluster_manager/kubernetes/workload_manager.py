@@ -9,7 +9,7 @@ from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 from kubernetes.stream import stream
 
-from mage_ai.cluster_manager.config import LifecycleConfig
+from mage_ai.cluster_manager.config import KubernetesWorkspaceConfig, LifecycleConfig
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
@@ -142,17 +142,16 @@ class WorkloadManager:
     def create_workload(
         self,
         name: str,
-        lifecycle_config: LifecycleConfig,
+        workspace_config: KubernetesWorkspaceConfig,
         project_type: str = ProjectType.STANDALONE,
-        project_uuid: str = None,
         **kwargs,
     ):
-        container_config_yaml = kwargs.get('container_config')
+        container_config_yaml = workspace_config.container_config
         container_config = dict()
         if container_config_yaml:
             container_config = yaml.full_load(container_config_yaml)
 
-        parameters = self.__get_configurable_parameters(**kwargs)
+        parameters = self.__get_configurable_parameters(workspace_config)
         service_account_name = parameters.get(
             'service_account_name',
             DEFAULT_SERVICE_ACCOUNT_NAME,
@@ -164,7 +163,7 @@ class WorkloadManager:
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
-        ingress_name = kwargs.get('ingress_name')
+        ingress_name = workspace_config.ingress_name
 
         volumes = []
 
@@ -172,7 +171,7 @@ class WorkloadManager:
         env_vars = self.__populate_env_vars(
             name,
             project_type=project_type,
-            project_uuid=project_uuid,
+            project_uuid=workspace_config.project_uuid,
             container_config=container_config,
             set_base_path=ingress_name is not None,
         )
@@ -199,6 +198,7 @@ class WorkloadManager:
         containers = [mage_container_config]
 
         init_containers = []
+        lifecycle_config = workspace_config.lifecycle_config or LifecycleConfig()
         pre_start_script_path = lifecycle_config.pre_start_script_path
         if pre_start_script_path:
             self.configure_pre_start(name, pre_start_script_path, mage_container_config)
@@ -623,7 +623,7 @@ class WorkloadManager:
 
         return env_vars
 
-    def __get_configurable_parameters(self, **kwargs) -> Dict:
+    def __get_configurable_parameters(self, workspace_config: KubernetesWorkspaceConfig) -> Dict:
         service_account_name_default = None
         storage_class_name_default = None
         storage_access_mode_default = None
@@ -647,16 +647,17 @@ class WorkloadManager:
         except Exception:
             pass
 
-        storage_request_size = kwargs.get('storage_request_size')
+        storage_request_size = workspace_config.storage_request_size
         if storage_request_size is None:
             storage_request_size = storage_request_size_default
         else:
             storage_request_size = f'{storage_request_size}Gi'
 
         return dict(
-            service_account_name=kwargs.get('service_account_name', service_account_name_default),
-            storage_class_name=kwargs.get('storage_class_name', storage_class_name_default),
-            storage_access_mode=kwargs.get('storage_access_mode', storage_access_mode_default),
+            service_account_name=workspace_config.service_account_name
+            or service_account_name_default,
+            storage_class_name=workspace_config.storage_class_name or storage_class_name_default,
+            storage_access_mode=workspace_config.storage_access_mode or storage_access_mode_default,
             storage_request_size=storage_request_size,
         )
 

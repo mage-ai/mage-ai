@@ -3,6 +3,7 @@ import os
 import yaml
 
 from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+from mage_ai.cluster_manager.config import EcsWorkspaceConfig
 from mage_ai.cluster_manager.constants import (
     ECS_CLUSTER_NAME,
     ECS_CONTAINER_NAME,
@@ -16,8 +17,15 @@ class EcsWorkspace(Workspace):
     def __init__(self, name: str):
         super().__init__(name)
         self.ecs_instance_manager = EcsTaskManager(
-            self.config.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
+            self.config.cluster_name or os.getenv(ECS_CLUSTER_NAME)
         )
+
+    @property
+    def config(self) -> EcsWorkspaceConfig:
+        if os.path.exists(self.config_path):
+            return EcsWorkspaceConfig.load(config_path=self.config_path)
+        else:
+            return EcsWorkspaceConfig()
 
     @classmethod
     def initialize(
@@ -35,17 +43,20 @@ class EcsWorkspace(Workspace):
             'container_name',
             os.getenv(ECS_CONTAINER_NAME),
         )
+        workspace_config = EcsWorkspaceConfig.load(
+            config=merge_dict(
+                kwargs,
+                dict(
+                    cluster_name=cluster_name,
+                    task_definition=task_definition,
+                    container_name=container_name,
+                ),
+            )
+        )
         if config_path:
             with open(config_path, 'w', encoding='utf-8') as fp:
                 yaml.dump(
-                    merge_dict(
-                        kwargs,
-                        dict(
-                            cluster_name=cluster_name,
-                            task_definition=task_definition,
-                            container_name=container_name,
-                        ),
-                    ),
+                    workspace_config.to_dict(),
                     fp,
                 )
 
@@ -71,13 +82,8 @@ class EcsWorkspace(Workspace):
         self.ecs_instance_manager.stop_task(task_arn)
 
     def resume(self, **kwargs):
-        task_definition = self.config.get(
-            'task_definition',
-            os.getenv(ECS_TASK_DEFINITION),
-        )
-        container_name = self.config.get(
-            'container_name', os.getenv(ECS_CONTAINER_NAME)
-        )
+        task_definition = self.config.task_definition or os.getenv(ECS_TASK_DEFINITION)
+        container_name = self.config.container_name or os.getenv(ECS_CONTAINER_NAME)
         self.ecs_instance_manager.create_task(
             self.name,
             task_definition,
