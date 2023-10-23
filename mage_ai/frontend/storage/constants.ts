@@ -22,6 +22,3 @@ export const LOCAL_STORAGE_KEY_DISPLAY_LOCAL_SERVER_TIME =
 
 export const LOCAL_STORAGE_KEY_INCLUDE_SERVER_TIME_SECONDS =
   'include_server_time_seconds';
-
-export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED = 'pipeline_editor_side_by_side_enabled';
-export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER = 'pipeline_editor_side_by_side_scroll_together';
