@@ -391,8 +391,6 @@ function BlockSettings({
                         {
                           ...ignoreKeys(blockWithUpdatedContent, [
                             'all_upstream_blocks_executed',
-                            'callback_blocks',
-                            'conditional_blocks',
                             'downstream_blocks',
                             'executor_config',
                             'executor_type',
