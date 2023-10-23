@@ -212,6 +212,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
+        (r'/oauth', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
