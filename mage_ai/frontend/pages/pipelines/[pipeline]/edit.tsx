@@ -159,6 +159,8 @@ function PipelineDetailPage({
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
+  const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(false);
+  const [scrollTogether, setScrollTogether] = useState<boolean>(false);
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
@@ -2651,6 +2653,7 @@ function PipelineDetailPage({
       runBlock={runBlock}
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
+      scrollTogether={scrollTogether}
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
@@ -2677,6 +2680,7 @@ function PipelineDetailPage({
         isUpdatingBlock: true,
         name,
       }))}
+      sideBySideEnabled={sideBySideEnabled}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
@@ -2719,6 +2723,7 @@ function PipelineDetailPage({
     runBlock,
     runningBlocks,
     savePipelineContent,
+    scrollTogether,
     selectedBlock,
     setAnyInputFocused,
     setEditingBlock,
@@ -2732,6 +2737,7 @@ function PipelineDetailPage({
     showConfigureProjectModal,
     showDataIntegrationModal,
     showGlobalDataProducts,
+    sideBySideEnabled,
     textareaFocused,
     widgets,
   ]);
@@ -2748,8 +2754,12 @@ function PipelineDetailPage({
           pipeline={pipeline}
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
+          scrollTogether={scrollTogether}
           setActiveSidekickView={setActiveSidekickView}
           setMessages={setMessages}
+          setScrollTogether={setScrollTogether}
+          setSideBySideEnabled={setSideBySideEnabled}
+          sideBySideEnabled={sideBySideEnabled}
         >
           {selectedFilePath && (
             <Spacing ml={1}>
@@ -2777,10 +2787,14 @@ function PipelineDetailPage({
     pipeline,
     restartKernel,
     savePipelineContent,
+    scrollTogether,
     selectedFilePath,
     setActiveSidekickView,
     setMessages,
+    setScrollTogether,
     setSelectedFilePath,
+    setSideBySideEnabled,
+    sideBySideEnabled,
   ]);
 
   const mainContainerHeaderMemo = useMemo(() => {

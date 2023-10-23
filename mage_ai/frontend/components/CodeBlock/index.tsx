@@ -175,9 +175,6 @@ type CodeBlockProps = {
   block: BlockType;
   blockIdx: number;
   blockInteractions?: BlockInteractionType[];
-  blockOutputHeights?: number[];
-  blockOutputInnerHeights?: number[];
-  blockOutputInnerRef?: any;
   blockOutputRef?: any;
   blockRefs: any;
   blockOutputRefs: any;
@@ -185,10 +182,10 @@ type CodeBlockProps = {
   blocks: BlockType[];
   blocksFiltered: BlockType[];
   children?: any;
-  codeBlockHeights?: number[];
   containerRef?: any;
   cursorHeight1?: number;
   cursorHeight2?: number;
+  cursorHeight3?: number;
   dataProviders?: DataProviderType[];
   defaultValue?: string;
   disableDrag?: boolean;
@@ -213,7 +210,6 @@ type CodeBlockProps = {
   };
   mainContainerRef?: any;
   mainContainerWidth?: number;
-  maxHeights?: number[];
   messages: KernelOutputType[];
   noDivider?: boolean;
   onCallbackChange?: (value: string) => void;
@@ -225,7 +221,6 @@ type CodeBlockProps = {
   }) => void;
   pipeline: PipelineType;
   project?: ProjectType;
-  refInner?: any;
   runBlock?: (payload: {
     block: BlockType;
     code: string;
@@ -277,10 +272,6 @@ type CodeBlockProps = {
     name: string,
   ) => void;
   sideBySideEnabled?: boolean;
-  updateBlockOutputHeights?: () => void;
-  updateBlockOutputInnerHeights?: () => void;
-  updateCodeBlockHeights?: () => void;
-  updateCodeBlockHeightsInner?: () => void;
   widgets?: BlockType[];
   windowWidth?: number;
 }
@@ -299,21 +290,17 @@ function CodeBlock({
   block,
   blockIdx,
   blockInteractions,
-  blockOutputHeights: blockOutputHeightsProp,
-  blockOutputInnerHeights,
-  blockOutputInnerRef,
   blockOutputRef,
   blockRefs,
   blockOutputRefs,
-  codeBlockRefs,
   blockTemplates,
   blocks = [],
   blocksFiltered,
   children,
-  codeBlockHeights: codeBlockHeightsProp,
   containerRef,
   cursorHeight1,
   cursorHeight2,
+  cursorHeight3,
   dataProviders,
   defaultValue = '',
   deleteBlock,
@@ -334,7 +321,6 @@ function CodeBlock({
   mainContainerRect,
   mainContainerRef,
   mainContainerWidth,
-  maxHeights,
   messages: blockMessages = [],
   noDivider,
   onCallbackChange,
@@ -344,7 +330,6 @@ function CodeBlock({
   openSidekickView,
   pipeline,
   project,
-  refInner,
   runBlock,
   runningBlocks,
   savePipelineContent,
@@ -368,17 +353,13 @@ function CodeBlock({
   showUpdateBlockModal,
   sideBySideEnabled,
   textareaFocused,
-  updateBlockOutputHeights,
-  updateBlockOutputInnerHeights,
-  updateCodeBlockHeights,
-  updateCodeBlockHeightsInner,
   widgets,
   windowWidth,
 }: CodeBlockProps, ref) {
   const startTime = performance.now();
   useEffect(() => {
     const duration = performance.now() - startTime;
-    console.log(`WTF codeblock mounted ${duration}ms`, blockIdx, ref?.current?.getBoundingClientRect?.()?.height);
+    console.log('CodeBlock render', duration);
   }, []);
 
   const themeContext = useContext(ThemeContext);
@@ -406,42 +387,14 @@ function CodeBlock({
     }
   }, [
     mounted,
+    scrollTogether,
+    sideBySideEnabled,
   ]);
 
   const isInteractionsEnabled =
     useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
       project?.features,
     ]);
-
-  const [blockOutputHeightCache, setBlockOutputHeightCache] = useState<number>(null);
-  const blockOutputHeights = useMemo(() => scrollTogether ? maxHeights : blockOutputHeightsProp, [
-    blockOutputHeightsProp,
-    maxHeights,
-    scrollTogether,
-  ]);
-  // const codeBlockHeights = useMemo(() => scrollTogether ? maxHeights : codeBlockHeightsProp, [
-  //   codeBlockHeightsProp,
-  //   maxHeights,
-  //   scrollTogether,
-  // ]);
-
-  const codeBlockHeights = useMemo(() => codeBlockRefs?.map((blockRef) => {
-      const value = blockRef?.current?.getBoundingClientRect()?.height;
-      if (typeof value === 'undefined' || value === null) {
-        return 0
-      }
-
-      return value;
-  }), [
-    codeBlockRefs,
-  ]);
-
-  const totalHeightCodeBlocks = useMemo(() => sum(codeBlockHeights || []), [
-    codeBlockHeights,
-  ]);
-  const totalHeightBlockOuputs = useMemo(() => sum(blockOutputHeights || []), [
-    blockOutputHeights,
-  ]);
 
   const handleMouseMove = useCallback(({
     columnScrolling,
@@ -504,38 +457,6 @@ function CodeBlock({
     refColumn2,
     scrollTogether,
   ]);
-
-  // useEffect(() => {
-  //   if (sideBySideEnabled) {
-  //     // Reset everything
-  //     if (!cursorHeight1) {
-  //       const yStart = mainContainerRect?.y;
-  //       const top = sum(codeBlockHeights?.slice(0, blockIdx) || []);
-  //       refColumn1.current.style.top = `${yStart + top}px`;
-  //     }
-
-  //     // Reset everything
-  //     if (!cursorHeight2) {
-  //       const yStart = mainContainerRect?.y;
-  //       const top = sum(blockOutputHeights?.slice(0, blockIdx) || []);
-  //       if (refColumn2?.current) {
-  //         refColumn2.current.style.top = `${yStart + top}px`;
-  //       }
-  //     }
-  //   }
-  // }, [
-  //   blockIdx,
-  //   blockOutputHeights,
-  //   calculateOffsetPercentage,
-  //   codeBlockHeights,
-  //   cursorHeight1,
-  //   cursorHeight2,
-  //   handleMouseMove,
-  //   mainContainerRect,
-  //   refColumn1,
-  //   refColumn2,
-  //   sideBySideEnabled,
-  // ]);
 
   useEffect(() => {
     const handleCursorMoved = ({ detail }) => {
@@ -821,7 +742,7 @@ function CodeBlock({
   }) => {
     if (sideBySideEnabled) {
       dispatchEventSyncColumnPositions({
-        columnIndex: scrollTogether ? 0 : 1,
+        columnIndex: scrollTogether ? 2 : 1,
         bypassOffScreen: scrollTogether,
         ...(payload?.syncColumnPositions || {
           rect: refColumn2?.current?.getBoundingClientRect(),
@@ -898,7 +819,6 @@ function CodeBlock({
     }
   }, [
     blockInteractions,
-    blockOutputHeights,
     content,
     hasDownstreamWidgets,
     interactionsMapping,
@@ -913,8 +833,6 @@ function CodeBlock({
     setRunEndTime,
     setSelectedTab,
     sideBySideEnabled,
-    ,
-    totalHeightBlockOuputs,
     variables,
   ]);
 
@@ -1459,23 +1377,6 @@ function CodeBlock({
     selectedTab,
   ]);
 
-  const blockOutputHeightCacheUse = useMemo(() => {
-    return null;
-    const height = blockOutputInnerHeights?.[blockIdx];
-
-    // When not scrolling together, this will help push down the other blocks while this block
-    // is executing and the code output is growing.
-    if (height && blockOutputHeightCache) {
-      return Math.max(height, blockOutputHeightCache);
-    }
-
-    return blockOutputHeightCache;
-  }, [
-    blockIdx,
-    blockOutputHeightCache,
-    blockOutputInnerHeights,
-  ]);
-
   const codeOutputEl = useMemo(() => (
     <CodeOutput
       {...borderColorShareProps}
@@ -1485,7 +1386,6 @@ function CodeBlock({
       buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
       hasOutput={hasOutput}
-      // height={sideBySideEnabled ? blockOutputHeightCacheUse : null}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -1494,10 +1394,10 @@ function CodeBlock({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={blockOutputRef}
-      refInner={blockOutputInnerRef}
       runCount={runCount}
       runEndTime={runEndTime}
       runStartTime={runStartTime}
+      scrollTogether={scrollTogether}
       selected={selected}
       selectedTab={selectedTab}
       setCollapsed={!sideBySideEnabled
@@ -1515,8 +1415,6 @@ function CodeBlock({
       setSelectedTab={setSelectedTab}
       showBorderTop={sideBySideEnabled}
       sideBySideEnabled={sideBySideEnabled}
-      updateBlockOutputHeights={updateBlockOutputHeights}
-      updateBlockOutputInnerHeights={updateBlockOutputInnerHeights}
     >
       {sideBySideEnabled && (
         <Spacing px={PADDING_UNITS} py={1}>
@@ -1569,12 +1467,9 @@ function CodeBlock({
     block,
     blockIdx,
     blockMetadata,
-    blockOutputHeightCacheUse,
-    blockOutputInnerRef,
     blockOutputRef,
     borderColorShareProps,
     buttonTabs,
-    codeBlockHeights,
     color,
     hasOutput,
     isInProgress,
@@ -1592,6 +1487,7 @@ function CodeBlock({
     runCount,
     runEndTime,
     runStartTime,
+    scrollTogether,
     selected,
     selectedTab,
     setErrors,
@@ -1600,9 +1496,6 @@ function CodeBlock({
     setSelectedOutputBlock,
     sideBySideEnabled,
     dispatchEventSyncColumnPositions,
-    totalHeightCodeBlocks,
-    updateBlockOutputHeights,
-    updateBlockOutputInnerHeights,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
@@ -1915,12 +1808,10 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       <div
         ref={ref}
         style={{
-          height: sideBySideEnabled && scrollTogether ? blockOutputHeightCacheUse : null,
           zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
         }}
       >
         <div
-          ref={refInner}
           style={{
             paddingTop: sideBySideEnabled && blockIdx === 0 ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
             position: 'relative',
@@ -3133,14 +3024,26 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     cursorHeight2,
   ]);
 
+  const column3HasScroll = useMemo(() => cursorHeight3 >= 1, [
+    cursorHeight3,
+  ]);
+
   const widthColumn = useMemo(() => {
     // 1 for each side (2) and 1 for the middle
     let minus = SIDE_BY_SIDE_HORIZONTAL_PADDING * 3;
-    if (column1HasScroll) {
-      minus += SCROLLBAR_WIDTH;
-    }
-    if (column2HasScroll) {
-      minus += SCROLLBAR_WIDTH;
+
+    if (scrollTogether) {
+      if (column3HasScroll) {
+        minus += SCROLLBAR_WIDTH;
+      }
+    } else {
+      if (column1HasScroll) {
+        minus += SCROLLBAR_WIDTH;
+      }
+
+      if (column2HasScroll) {
+        minus += SCROLLBAR_WIDTH;
+      }
     }
 
     const widthTotal = mainContainerWidth - minus;
@@ -3149,7 +3052,9 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
   }, [
     column1HasScroll,
     column2HasScroll,
+    column3HasScroll,
     mainContainerWidth,
+    scrollTogether,
   ]);
 
   const column1 = useMemo(() => {
@@ -3162,7 +3067,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
 
     let left = x + SIDE_BY_SIDE_HORIZONTAL_PADDING;
 
-    if (column1HasScroll) {
+    if (column1HasScroll && !scrollTogether) {
       left += SCROLLBAR_WIDTH;
     }
 
@@ -3181,6 +3086,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     codeBlockMain,
     column1HasScroll,
     mainContainerRect,
+    scrollTogether,
   ]);
 
   const column2 = useMemo(() => {
@@ -3192,7 +3098,12 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     } = mainContainerRect || {};
 
     let right = (windowWidth + SIDE_BY_SIDE_HORIZONTAL_PADDING) - (x + width);
-    if (column2HasScroll) {
+
+    if (scrollTogether) {
+      if (column3HasScroll) {
+        right += SIDE_BY_SIDE_HORIZONTAL_PADDING;
+      }
+    } else if (column2HasScroll) {
       right += SIDE_BY_SIDE_HORIZONTAL_PADDING;
     }
 
@@ -3200,7 +3111,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       <ScrollColunnStyle
         ref={refColumn2}
         right={right}
-        // top={y}
+        top={y}
         width={widthColumn}
         zIndex={(blocks?.length || 0) - blockIdx}
       >
@@ -3212,6 +3123,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     blocks,
     codeOutputEl,
     column2HasScroll,
+    column3HasScroll,
     mainContainerRect,
     widthColumn,
     windowWidth,

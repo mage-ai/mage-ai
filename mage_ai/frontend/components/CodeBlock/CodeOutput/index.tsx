@@ -77,7 +77,6 @@ type CodeOutputProps = {
   collapsed?: boolean;
   contained?: boolean;
   hasOutput?: boolean;
-  height?: number;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
@@ -86,10 +85,10 @@ type CodeOutputProps = {
   onClickSelectBlock?: () => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline?: PipelineType;
-  refInner?: any;
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
+  scrollTogether?: boolean;
   selectedTab?: TabType;
   setCollapsed?: (boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
@@ -98,8 +97,6 @@ type CodeOutputProps = {
   setSelectedTab?: (tab: TabType) => void;
   showBorderTop?: boolean;
   sideBySideEnabled?: boolean;
-  updateBlockOutputHeights?: () => void;
-  updateBlockOutputInnerHeights?: () => void;
 } & BorderColorShareProps;
 
 const SHARED_TOOLTIP_PROPS = {
@@ -129,7 +126,6 @@ function CodeOutput({
   dynamicChildBlock,
   hasError,
   hasOutput,
-  height,
   hideExtraInfo,
   isInProgress,
   mainContainerWidth,
@@ -138,10 +134,10 @@ function CodeOutput({
   onClickSelectBlock,
   openSidekickView,
   pipeline,
-  refInner,
   runCount,
   runEndTime,
   runStartTime,
+  scrollTogether,
   selected,
   selectedTab,
   setCollapsed,
@@ -151,15 +147,13 @@ function CodeOutput({
   setSelectedTab,
   showBorderTop,
   sideBySideEnabled,
-  updateBlockOutputHeights,
-  updateBlockOutputInnerHeights,
 }: CodeOutputProps, ref) {
   const [mounted, setMounted] = useState(false);
 
   const startTime = performance.now();
   useEffect(() => {
-    console.log('WTF output rendered', blockIndex, ref?.current?.getBoundingClientRect?.()?.height)
     const duration = performance.now() - startTime;
+    console.log('CodeOutput render', duration);
     setMounted(true);
   }, []);
 
@@ -178,12 +172,14 @@ function CodeOutput({
   ]);
 
   useEffect(() => {
-    if (mounted) {
+    if (mounted && sideBySideEnabled) {
       dispatchEventChanged();
     }
   }, [
     messagesAll,
     mounted,
+    scrollTogether,
+    sideBySideEnabled,
   ]);
 
   const {
@@ -697,16 +693,12 @@ function CodeOutput({
   return (
     <div
       ref={ref}
-      // style={{
-      //   height,
-      // }}
     >
       <div
         onClick={onClickSelectBlock
           ? () => onClickSelectBlock?.()
           : null
         }
-        ref={refInner}
         style={{
           paddingTop: sideBySideEnabled ? SIDE_BY_SIDE_VERTICAL_PADDING : 0,
         }}

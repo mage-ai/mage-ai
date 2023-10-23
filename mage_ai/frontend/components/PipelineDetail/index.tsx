@@ -154,6 +154,7 @@ type PipelineDetailProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  scrollTogether?: boolean;
   selectedBlock: BlockType;
   setAnyInputFocused: (value: boolean) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
@@ -188,6 +189,7 @@ type PipelineDetailProps = {
     block: BlockType,
     name: string,
   ) => void;
+  sideBySideEnabled?: boolean;
   textareaFocused: boolean;
   widgets: BlockType[];
 } & SetEditingBlockType & OpenDataIntegrationModalType;
@@ -230,13 +232,14 @@ function PipelineDetail({
   runBlock,
   runningBlocks = [],
   savePipelineContent,
+  scrollTogether,
   selectedBlock,
   setAnyInputFocused,
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
-  setIntegrationStreams,
   setHiddenBlocks,
+  setIntegrationStreams,
   setOutputBlocks,
   setPipelineContentTouched,
   setSelectedBlock,
@@ -248,20 +251,19 @@ function PipelineDetail({
   showDataIntegrationModal,
   showGlobalDataProducts,
   showUpdateBlockModal,
+  sideBySideEnabled,
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  // console.log('wtf Pipeline render');
   const startTime = performance.now();
   useEffect(() => {
     const duration = performance.now() - startTime;
-    console.log(`WTF Pipeline someMethodIThinkMightBeSlow took ${duration}ms`);
-  }, [])
+    console.log('PipelineDetail render', duration);
+  }, []);
+
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
-  const blockRefsInner = useRef({});
   const blockOutputRefs = useRef({});
-  const blockOutputInnerRefs = useRef({});
 
   const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
   const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
@@ -284,8 +286,6 @@ function PipelineDetail({
       isIntegration,
     ]);
 
-  const [sideBySideEnabled, setSideBySideEnabled] = useState<boolean>(true);
-  const [scrollTogether, setScrollTogether] = useState<boolean>(true);
   const [mountedBlocks, setMountedBlocks] = useState<{
     [blockUUID: string]: boolean;
   }>({});
@@ -309,137 +309,6 @@ function PipelineDetail({
     windowWidth,
   ]);
 
-  const [maxHeights, setMaxHeights] = useState<number[]>(null);
-  const [codeBlockHeights, setCodeBlockHeights] = useState<number[]>(null);
-  const [codeBlockHeightsInner, setCodeBlockHeightsInner] = useState<number[]>(null);
-  const [blockOutputInnerHeights, setBlockOutputInnerHeights] = useState<number>(null);
-  const [blockOutputHeights, setBlockOutputHeights] = useState<number>(null);
-
-  const codeBlockRefs = useMemo(() => blocksFiltered?.map((block) => {
-    const path = buildBlockRefKey(block);
-    return blockRefs?.current?.[path];
-  }), [
-    blockRefs,
-    blocksFiltered,
-  ]);
-
-  const updateCodeBlockHeights = useCallback(() => {
-    // if (!sideBySideEnabled) {
-    //   return;
-    // }
-
-    // setCodeBlockHeights(blocksFiltered?.map((block) => {
-    //   const path = buildBlockRefKey(block);
-    //   const blockRef = blockRefs?.current?.[path];
-    //   if (blockRef) {
-    //     const value = blockRef?.current?.getBoundingClientRect()?.height;
-    //     if (typeof value === 'undefined' || value === null) {
-    //       return 0
-    //     }
-
-    //     return value;
-    //   }
-
-    //   return 0;
-    // }));
-  }, [
-    blockRefs,
-    blocksFiltered,
-    setCodeBlockHeights,
-    sideBySideEnabled,
-  ]);
-  const updateCodeBlockHeightsInner = useCallback(() => {
-    // if (!sideBySideEnabled) {
-    //   return;
-    // }
-
-    // setCodeBlockHeightsInner(blocksFiltered?.map((block) => {
-    //   const path = buildBlockRefKey(block);
-    //   const blockRef = blockRefsInner?.current?.[path];
-    //   if (blockRef) {
-    //     const value = blockRef?.current?.getBoundingClientRect()?.height;
-    //     if (typeof value === 'undefined' || value === null) {
-    //       return 0
-    //     }
-
-    //     return value;
-    //   }
-
-    //   return 0;
-    // }));
-  }, [
-    blockRefsInner,
-    blocksFiltered,
-    setCodeBlockHeightsInner,
-    sideBySideEnabled,
-  ]);
-  const updateBlockOutputHeights = useCallback(() => {
-    // if (!sideBySideEnabled) {
-    //   return;
-    // }
-
-    // setBlockOutputHeights(blocksFiltered?.map((block) => {
-    //   const path = buildBlockRefKey(block);
-    //   const blockRef = blockOutputRefs?.current?.[path];
-    //   if (blockRef) {
-    //     const value = blockRef?.current?.getBoundingClientRect()?.height;
-    //     if (typeof value === 'undefined' || value === null) {
-    //       return 0
-    //     }
-
-    //     return value;
-    //   }
-
-    //   return 0;
-    // }));
-  }, [
-    blockOutputRefs,
-    blocksFiltered,
-    setBlockOutputHeights,
-    sideBySideEnabled,
-  ]);
-  const updateBlockOutputInnerHeights = useCallback(() => {
-    if (!sideBySideEnabled) {
-      return;
-    }
-
-    // setBlockOutputInnerHeights(blocksFiltered?.map((block) => {
-    //   const path = buildBlockRefKey(block);
-    //   const blockRef = blockOutputInnerRefs?.current?.[path];
-    //   if (blockRef) {
-    //     const value = blockRef?.current?.getBoundingClientRect()?.height;
-    //     if (typeof value === 'undefined' || value === null) {
-    //       return 0
-    //     }
-
-    //     return value;
-    //   }
-
-    //   return 0;
-    // }));
-  }, [
-    blockOutputInnerRefs,
-    blocksFiltered,
-    setBlockOutputInnerHeights,
-    sideBySideEnabled,
-  ]);
-
-  useEffect(() => {
-    if (sideBySideEnabled && Object.values(mountedBlocks)?.length >= 1) {
-      updateBlockOutputHeights();
-      updateBlockOutputInnerHeights();
-      updateCodeBlockHeights();
-      updateCodeBlockHeightsInner();
-    }
-  }, [
-    mountedBlocks,
-    sideBySideEnabled,
-    updateBlockOutputHeights,
-    updateBlockOutputInnerHeights,
-    updateCodeBlockHeights,
-    updateCodeBlockHeightsInner,
-  ]);
-
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
       [uuid: string]: BlockType;
@@ -454,116 +323,6 @@ function PipelineDetail({
     },
   }), {}), [runningBlocks]);
 
-  // useEffect(() => {
-  //   if (sideBySideEnabled
-  //     && scrollTogether
-  //     && codeBlockHeightsInner?.length >= 1
-  //     && blockOutputHeights?.length >= 1
-  //   ) {
-
-  //     const arr = [];
-  //     codeBlockHeightsInner?.forEach((height: number, idx: number) => {
-  //       const block = blocksFiltered?.[idx];
-  //       const blockUUID = block?.uuid;
-  //       const blockMessages = messages?.[blockUUID];
-  //       const runningBlock = runningBlocksByUUID?.[blockUUID];
-  //       const executionState = runningBlock
-  //         ? (runningBlock?.priority === 0
-  //           ? ExecutionStateEnum.BUSY
-  //           : ExecutionStateEnum.QUEUED
-  //         )
-  //         : ExecutionStateEnum.IDLE;
-
-  //       const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
-  //         || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
-
-  //       const heights = [
-  //         (height || 0),
-  //         (blockOutputHeights?.[idx] || 0),
-  //       ];
-
-  //       // This will push down the blocks as the output height increases while the block is running.
-  //       if (isInProgress) {
-  //         heights.push(blockOutputInnerHeights?.[idx] || 0);
-  //       } else {
-
-  //       }
-
-  //       arr.push(Math.max(...heights));
-  //     });
-  //     setMaxHeights(arr);
-  //   }
-  // }, [
-  //   blockOutputHeights,
-  //   blockOutputInnerHeights,
-  //   blocksFiltered,
-  //   codeBlockHeightsInner,
-  //   messages,
-  //   runningBlocksByUUID,
-  //   scrollTogether,
-  //   setMaxHeights,
-  //   sideBySideEnabled,
-  // ]);
-
-  // useEffect(() => {
-  //   // updateBlockOutputHeights?.();
-  //   // updateBlockOutputInnerHeights?.();
-  //   if (sideBySideEnabled) {
-  //     const blockIndexes = [];
-  //     const refs = [];
-  //     blocksFiltered?.forEach((block, idx) => {
-  //       const blockUUID = block?.uuid;
-  //       const blockMessages = messages?.[blockUUID];
-  //       const runningBlock = runningBlocksByUUID?.[blockUUID];
-  //       const executionState = runningBlock
-  //         ? (runningBlock?.priority === 0
-  //           ? ExecutionStateEnum.BUSY
-  //           : ExecutionStateEnum.QUEUED
-  //         )
-  //         : ExecutionStateEnum.IDLE;
-
-  //       const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
-  //         || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
-
-  //       if (isInProgress && blockMessages?.length >= 1) {
-  //         console.log('WTF blockMessages', blockUUID, isInProgress, blockMessages)
-
-  //         blockIndexes.push(idx);
-  //         const path = buildBlockRefKey(block);
-  //         const blockRef = blockOutputRefs?.current?.[path];
-  //         refs.push(blockRef)
-
-  //       }
-
-  //     });
-
-  //     if (blockIndexes?.length > 0) {
-  //       console.log('WTF blockIndexes', blockIndexes)
-  //       const evt = new CustomEvent(CUSTOM_EVENT_NEW_MESSAGE1, {
-  //         detail: {
-  //           blockIndexes,
-  //           // blockRefs: refs,
-  //           columnScrolling: 1,
-  //         },
-  //       });
-
-  //       if (typeof window !== 'undefined') {
-  //         window.dispatchEvent(evt);
-  //       }
-  //     }
-  //   }
-  // }, [
-  //   sideBySideEnabled,
-  //   runningBlocksByUUID,
-  //   runningBlocks,
-  //   blockOutputRefs,
-  //   blocksFiltered,
-  //   messages,
-  //   // messagesAll,
-  //   // updateBlockOutputHeights,
-  //   // updateBlockOutputInnerHeights,
-  // ]);
-
   const [cursorHeight1, setCursorHeight1] = useState<number>(null);
   const column1ScrollMemo = useMemo(() => {
     return (
@@ -571,18 +330,23 @@ function PipelineDetail({
         blocks={blocksFiltered}
         columnIndex={0}
         columns={2}
+        disabled={scrollTogether}
         eventNameRefsMapping={{
           [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
         }}
+        invisible={!blocks?.length || !cursorHeight1 || scrollTogether}
         refsMapping
         mainContainerRect={mainContainerRect}
+        scrollTogether={scrollTogether}
         setCursorHeight={setCursorHeight1}
       />
     );
   }, [
     blockRefs,
     blocksFiltered,
+    cursorHeight1,
     mainContainerRect,
+    scrollTogether,
     setCursorHeight1,
   ]);
 
@@ -591,29 +355,55 @@ function PipelineDetail({
     return (
       <ColumnScroller
         blocks={blocksFiltered}
-        columnIndex={scrollTogether ? 0 : 1}
-        columns={scrollTogether ? 1 : 2}
+        columnIndex={1}
+        columns={2}
+        disabled={scrollTogether}
         eventNameRefsMapping={{
           [CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED]: blockOutputRefs,
-          ...(scrollTogether
-            ? {
-              [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
-            }
-            : {}
-          ),
         }}
+        invisible={!blocks?.length || !cursorHeight2 || scrollTogether}
         mainContainerRect={mainContainerRect}
         rightAligned
+        scrollTogether={scrollTogether}
         setCursorHeight={setCursorHeight2}
+      />
+    );
+  }, [
+    blockOutputRefs,
+    blocksFiltered,
+    cursorHeight2,
+    mainContainerRect,
+    scrollTogether,
+    setCursorHeight2,
+  ]);
+
+  const [cursorHeight3, setCursorHeight3] = useState<number>(null);
+  const column3ScrollMemo = useMemo(() => {
+    return (
+      <ColumnScroller
+        blocks={blocksFiltered}
+        disabled={!scrollTogether}
+        columnIndex={2}
+        columns={1}
+        eventNameRefsMapping={{
+          [CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED]: blockOutputRefs,
+          [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
+        }}
+        invisible={!blocks?.length || !cursorHeight3 || !scrollTogether}
+        mainContainerRect={mainContainerRect}
+        rightAligned
+        scrollTogether={scrollTogether}
+        setCursorHeight={setCursorHeight3}
       />
     );
   }, [
     blockOutputRefs,
     blockRefs,
     blocksFiltered,
+    cursorHeight3,
     mainContainerRect,
     scrollTogether,
-    setCursorHeight2,
+    setCursorHeight3,
   ]);
 
   const selectedBlockPrevious = usePrevious(selectedBlock);
@@ -999,10 +789,8 @@ function PipelineDetail({
         type,
         uuid,
       });
-      blockOutputInnerRefs.current[path] = createRef();
       blockOutputRefs.current[path] = createRef();
       blockRefs.current[path] = createRef();
-      blockRefsInner.current[path] = createRef();
 
       let el;
       const isMarkdown = type === BlockTypeEnum.MARKDOWN;
@@ -1010,9 +798,7 @@ function PipelineDetail({
       const isHidden = !!hiddenBlocks?.[uuid];
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
       const currentBlockOutputRef = blockOutputRefs.current[path];
-      const currentBlockOutputInnerRef = blockOutputInnerRefs.current[path];
       const currentBlockRef = blockRefs.current[path];
-      const currentBlockRefInner = blockRefsInner.current[path];
 
       let key = uuid;
       const refreshTimestamp = blocksThatNeedToRefresh?.[type]?.[uuid];
@@ -1069,20 +855,16 @@ function PipelineDetail({
             block={block}
             blockIdx={idx}
             blockInteractions={blockInteractionsMapping?.[uuid]}
-            blockOutputHeights={blockOutputHeights}
-            blockOutputInnerHeights={blockOutputInnerHeights}
-            blockOutputInnerRef={currentBlockOutputInnerRef}
             blockOutputRef={currentBlockOutputRef}
             blockOutputRefs={blockOutputRefs}
             blockRefs={blockRefs}
             blockTemplates={blockTemplates}
             blocks={blocks}
             blocksFiltered={blocksFiltered}
-            codeBlockRefs={codeBlockRefs}
-            codeBlockHeights={codeBlockHeights}
             containerRef={containerRef}
             cursorHeight1={cursorHeight1}
             cursorHeight2={cursorHeight2}
+            cursorHeight3={cursorHeight3}
             dataProviders={dataProviders}
             defaultValue={block.content}
             deleteBlock={(b: BlockType) => {
@@ -1101,7 +883,6 @@ function PipelineDetail({
             mainContainerRect={mainContainerRect}
             mainContainerRef={mainContainerRef}
             mainContainerWidth={mainContainerWidth}
-            maxHeights={maxHeights}
             messages={messages[uuid]}
             noDivider={noDivider}
             onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
@@ -1112,7 +893,6 @@ function PipelineDetail({
             pipeline={pipeline}
             project={project}
             ref={currentBlockRef}
-            refInner={currentBlockRefInner}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
@@ -1136,10 +916,6 @@ function PipelineDetail({
             showUpdateBlockModal={showUpdateBlockModal}
             sideBySideEnabled={sideBySideEnabled}
             textareaFocused={selected && textareaFocused}
-            updateBlockOutputHeights={updateBlockOutputHeights}
-            updateBlockOutputInnerHeights={updateBlockOutputInnerHeights}
-            updateCodeBlockHeights={updateCodeBlockHeights}
-            updateCodeBlockHeightsInner={updateCodeBlockHeightsInner}
             widgets={widgets}
             windowWidth={windowWidth}
           >
@@ -1171,21 +947,16 @@ function PipelineDetail({
     allowCodeBlockShortcuts,
     autocompleteItems,
     blockInteractionsMapping,
-    blockOutputHeights,
-    blockOutputInnerHeights,
-    blockOutputInnerRefs,
     blockOutputRefs,
     blockRefs,
-    blockRefsInner,
     blockTemplates,
     blocks,
     blocksFiltered,
     blocksThatNeedToRefresh,
-    codeBlockRefs,
-    codeBlockHeights,
     containerRef,
     cursorHeight1,
     cursorHeight2,
+    cursorHeight3,
     dataProviders,
     deleteBlock,
     disableShortcuts,
@@ -1200,7 +971,6 @@ function PipelineDetail({
     mainContainerRect,
     mainContainerRef,
     mainContainerWidth,
-    maxHeights,
     messages,
     numberOfBlocks,
     onChangeCallbackBlock,
@@ -1234,10 +1004,6 @@ function PipelineDetail({
     sideBySideEnabled,
     textareaFocused,
     updateBlock,
-    updateBlockOutputHeights,
-    updateBlockOutputInnerHeights,
-    updateCodeBlockHeights,
-    updateCodeBlockHeightsInner,
     widgets,
     windowWidth,
   ]);
@@ -1312,9 +1078,10 @@ function PipelineDetail({
 
       {sideBySideEnabled && (
         <div style={{ position: 'relative' }}>
-          {blocks?.length >= 1 && !scrollTogether && column1ScrollMemo}
+          {column1ScrollMemo}
           {codeBlocks}
-          {blocks?.length >= 1 && column2ScrollMemo}
+          {column2ScrollMemo}
+          {column3ScrollMemo}
 
           {!blocks?.length && (
             <Spacing p={PADDING_UNITS}>

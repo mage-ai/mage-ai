@@ -22,6 +22,8 @@ type ColumnScrollerProps = {
   columnIndex: number;
   columns: number;
   cursorHeight: number;
+  disabled?: boolean;
+  invisible?: boolean;
   mainContainerRect?: {
     height: number;
     width: number;
@@ -29,15 +31,19 @@ type ColumnScrollerProps = {
     y: number;
   };
   rightAligned?: boolean;
+  scrollTogether?: boolean;
 };
 
 function ColumnScroller({
   blocks,
   columnIndex,
   columns,
+  disabled,
   eventNameRefsMapping,
+  invisible,
   mainContainerRect,
   rightAligned,
+  scrollTogether,
   setCursorHeight,
 }: ColumnScrollerProps) {
   const refCursor = useRef(null);
@@ -49,6 +55,10 @@ function ColumnScroller({
   const [startData, setStartData] = useState(null);
 
   const dispatchEventCusorMoved = useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
     const evt = new CustomEvent(CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED, {
       detail: {
         columnScrolling: columnIndex,
@@ -63,6 +73,7 @@ function ColumnScroller({
     }
   }, [
     columnIndex,
+    disabled,
     eventNameRefsMapping,
   ]);
 
@@ -99,40 +110,42 @@ function ColumnScroller({
     return top;
   }, []);
 
-  useEffect(() => {
-    // Need to clear the start data when the mouse leaves the window.
-    const updateHeights = ({
-      detail: {
-        blockIndex,
-      },
-      type: eventName,
-    }) => {
-      const refsMappings = Object.values(eventNameRefsMapping || {});
-      const heightsInner = blocks?.map((block: BlockType) => {
-        const key = buildBlockRefKey(block);
+  const updateHeights = useCallback(() => {
+    const refsMappings = Object.values(eventNameRefsMapping || {});
+    const heightsInner = blocks?.map((block: BlockType) => {
+      const key = buildBlockRefKey(block);
 
-        const height = Math.max(...refsMappings.map((refsMapping) => {
-          const blockRef = refsMapping?.current?.[key];
+      const height = Math.max(...refsMappings.map((refsMapping) => {
+        const blockRef = refsMapping?.current?.[key];
 
-          return blockRef?.current?.getBoundingClientRect()?.height || 0;
-        }));
+        return blockRef?.current?.getBoundingClientRect()?.height || 0;
+      }));
 
-        return height;
+      return height;
+    });
+
+    setHeights(heightsInner);
+
+    if (lockScroll) {
+      const top = calculateTopFromY({
+        ...lockScroll,
+        heights: heightsInner,
       });
-
-      setHeights(heightsInner);
-
-      if (lockScroll) {
-        const top = calculateTopFromY({
-          ...lockScroll,
-          heights: heightsInner,
-        });
-        updatePosition(top);
-      }
-
-      dispatchEventCusorMoved();
+      updatePosition(top);
     }
 
+    dispatchEventCusorMoved();
+  }, [
+    blocks,
+    calculateTopFromY,
+    columnIndex,
+    dispatchEventCusorMoved,
+    eventNameRefsMapping,
+    lockScroll,
+    setHeights,
+  ]);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       Object.keys(eventNameRefsMapping || {})?.forEach((eventName: string) => {
         window.addEventListener(eventName, updateHeights);
@@ -147,13 +160,18 @@ function ColumnScroller({
       }
     };
   }, [
-    blocks,
-    calculateTopFromY,
-    columnIndex,
-    dispatchEventCusorMoved,
     eventNameRefsMapping,
-    lockScroll,
-    setHeights,
+    updateHeights,
+  ]);
+
+  useEffect(() => {
+    if (!disabled) {
+      updateHeights();
+    }
+  }, [
+    disabled,
+    scrollTogether,
+    updateHeights,
   ]);
 
   const {
@@ -248,23 +266,27 @@ function ColumnScroller({
     if (pageX >= x && pageX <= x + width && pageY >= y && pageY <= y + height) {
       const columnWidth = width / columns;
 
-      if (pageX >= x + (columnWidth * columnIndex)) {
-        if (pageX < x + (columnWidth * (columnIndex + 1))) {
-          const rect = refCursor?.current?.getBoundingClientRect();
-          let yFinal = (rect?.y || 0) + (event?.deltaY || 0);
+      if (scrollTogether
+        || (
+          (pageX >= x + (columnWidth * columnIndex))
+            && (pageX < x + (columnWidth * (columnIndex + 1)))
+        )
+      ) {
+        const rect = refCursor?.current?.getBoundingClientRect();
+        let yFinal = (rect?.y || 0) + (event?.deltaY || 0);
 
-          updatePosition(yFinal);
-          dispatchEventCusorMoved();
-          setLockScroll(null);
-        }
+        updatePosition(yFinal);
+        dispatchEventCusorMoved();
+        setLockScroll(null);
       }
     }
   }, [
     columnIndex,
     columns,
-    height,
-    updatePosition,
     dispatchEventCusorMoved,
+    height,
+    scrollTogether,
+    updatePosition,
     width,
     x,
     y,
@@ -335,21 +357,21 @@ function ColumnScroller({
   return (
     <ScrollbarContainerStyle
       height={height}
-      ref={refCursorContainer}
+      invisible={invisible}
       left={rightAligned ? (x + width) - SCROLLBAR_WIDTH : undefined}
+      ref={refCursorContainer}
     >
-      {cursorHeight !== null && (
-        <ScrollCursorStyle
-          height={cursorHeight}
-          onMouseDown={(event) => setStartData({
-            event,
-            scrollTop: refCursor?.current?.getBoundingClientRect()?.y,
-          })}
-          ref={refCursor}
-          selected={!!startData}
-          top={refCursorContainer?.current?.getBoundingClientRect()?.y}
-        />
-      )}
+      <ScrollCursorStyle
+        height={cursorHeight}
+        invisible={invisible}
+        onMouseDown={(event) => setStartData({
+          event,
+          scrollTop: refCursor?.current?.getBoundingClientRect()?.y,
+        })}
+        ref={refCursor}
+        selected={!!startData}
+        top={refCursorContainer?.current?.getBoundingClientRect()?.y}
+      />
     </ScrollbarContainerStyle>
   );
 }
