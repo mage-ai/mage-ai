@@ -1,56 +1,18 @@
-# Setting up a Development Environment
+# Setting up Development Environment
 
-We'd love to have your contribution, but first you'll need to configure your local environment first!
-
-
-These are the steps:
-
-1. Build Mage image (requires Docker)
-2. Configure virtual environment
-3. Install Git hooks
-4. Install pre-commit hooks
-5. Run dev instance!
-
-First, if you haven't already, clone the repo and navigate to the folder:
-
-```bash
-git clone https://github.com/mage-ai/mage-ai mage-ai
-cd mage-ai
-```
-
-Next, we'll configure our virtual environment.
+These are the instructions for setting up the development dependencies and conforming to the style guide for the Mage.ai repo.
 
 ## Virtual Environment
+The Mage.ai uses at least Python 3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8.
 
-Mage requires >= Python 3.8. We recommend using `virtualenv` for your new development environment. You can read about how to install and use `virtualenv` [here](https://www.dataquest.io/blog/a-complete-guide-to-python-virtual-environments/).
-
-### Option 1: Virtualenv
-
-Make sure you're in your development repo— `cd mage-ai` and create a new environment:
-
+As such, make sure you have Python 3.8 on your PATH. Verify this with:
 ```bash
-pyenv virutalenv 3.10.0 mage-dev
+python --version
 ```
 
-Now, make that environment the local default:
-
-```
-pyenv local mage-dev
-```
-
-To install the dev-dependencies from the `pyproject.toml` file, run:
-
-```bash
-pip install -U pip
-pip install toml
-pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
-```
-
-This command just uses Python and the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command.
-
-### Option 2: Anaconda + Poetry
-
-You may also use Anaconda + Poetry for your dev environment.
+### Anaconda + Poetry
+***
+One way to do this is to use Anaconda + poetry.
 
 Create an Anaconda virtual environment with the correct version of python:
 ```bash
@@ -83,6 +45,29 @@ Then install the dev dependencies:
 make dev_env
 ```
 
+### Virtualenv
+***
+To use virtualenv to set up the project, first you need to create a virtualenv environment folder in the root of the repo:
+```bash
+python -m venv .venv
+```
+
+Then activate it:
+```bash
+source .venv/bin/activate
+```
+
+To install the dependencies from any of the requirements.txt files in the repo, run:
+```bash
+pip install -r <path/to/requirements.txt>
+```
+
+Then, to install the dev-dependencies from the `pyproject.toml` file, run:
+```bash
+pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
+```
+
+This command just uses Python and the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command.
 ## Git Hooks
 
 To install the Git hooks that we use, run the Make command:
@@ -100,19 +85,3 @@ pre-commit install
 ```
 
 Note that this will install both pre-commit and pre-push hooks, as per the configuration in `.pre-commit-config.yaml`.
-
-## Run development server
-
-Run the `init` script to build the requisite images, where `default_repo` will be the name of your development project (`default_repo` is what we use, but if you choose a different name, be sure to add it to `.gitignore`):
-
-```bash
-./scripts/init.sh default_repo
-```
-
-You're now ready to contribute!
-
-Run `./scripts/dev.sh default_repo` to run the development Docker container. Any changes you make, backend or frontend, will be reflected in this development instance.
-
-Our pre-commit & pre-push hooks will run when you make a contribution to check style, etc.
-
-Now it's time to create a new branch, contribute code, and open a pull request!
