@@ -187,6 +187,49 @@ class WorkloadManager:
         )
         container_config['env'] = env_vars
 
+        lifecycle_config = workspace_config.lifecycle_config or LifecycleConfig()
+        if lifecycle_config.post_start:
+            file_name = self.configure_post_start(name, lifecycle_config.post_start)
+            if file_name:
+                volumes.append(
+                    {
+                        'name': 'post-start-script',
+                        'configMap': {
+                            'name': f'{name}-post-start',
+                            'items': [
+                                {
+                                    'key': file_name,
+                                    'path': file_name,
+                                }
+                            ]
+                        }
+                    }
+                )
+                volume_mounts.append(
+                    {
+                        'name': 'post-start-script',
+                        'mountPath': f'/app/{file_name}',
+                        'subPath': file_name,
+                    },
+                )
+
+            post_start_command = lifecycle_config.post_start.command
+            if post_start_command:
+                try:
+                    post_start_command = json.loads(post_start_command)
+                except Exception:
+                    pass
+                if type(post_start_command) is str:
+                    post_start_command = shlex.split(post_start_command)
+                container_config['lifecycle'] = {
+                    **container_config.get('lifecycle', {}),
+                    'postStart': {
+                        'exec': {
+                            'command': post_start_command,
+                        }
+                    }
+                }
+
         mage_container_config = {
             'name': f'{name}-container',
             'image': 'mageai/mageai:latest',
@@ -196,19 +239,13 @@ class WorkloadManager:
                     'name': 'web'
                 }
             ],
-            'volumeMounts': [
-                {
-                    'name': 'mage-data',
-                    'mountPath': '/home/src'
-                }
-            ],
+            'volumeMounts': volume_mounts,
             **container_config,
         }
 
         containers = [mage_container_config]
 
         init_containers = []
-        lifecycle_config = workspace_config.lifecycle_config or LifecycleConfig()
         pre_start_script_path = lifecycle_config.pre_start_script_path
         if pre_start_script_path:
             self.configure_pre_start(name, pre_start_script_path, mage_container_config)
@@ -261,63 +298,6 @@ class WorkloadManager:
                     ],
                 }
             )
-
-        if lifecycle_config.post_start:
-            file_name = self.configure_post_start(name, lifecycle_config.post_start)
-            if file_name:
-                volumes.append(
-                    {
-                        'name': 'post-start-script',
-                        'configMap': {
-                            'name': f'{name}-post-start',
-                            'items': [
-                                {
-                                    'key': file_name,
-                                    'path': file_name,
-                                }
-                            ]
-                        }
-                    }
-                )
-                volume_mounts.append(
-                    {
-                        'name': 'post-start-script',
-                        'mountPath': f'/app/{file_name}',
-                        'subPath': file_name,
-                    },
-                )
-
-            post_start_command = lifecycle_config.post_start.command
-            if post_start_command:
-                try:
-                    post_start_command = json.loads(post_start_command)
-                except Exception:
-                    pass
-                if type(post_start_command) is str:
-                    post_start_command = shlex.split(post_start_command)
-                container_config['lifecycle'] = {
-                    **container_config.get('lifecycle', {}),
-                    'postStart': {
-                        'exec': {
-                            'command': post_start_command,
-                        }
-                    }
-                }
-
-        containers = [
-            {
-                'name': f'{name}-container',
-                'image': 'mageai/mageai:latest',
-                'ports': [
-                    {
-                        'containerPort': 6789,
-                        'name': 'web'
-                    }
-                ],
-                'volumeMounts': volume_mounts,
-                **container_config,
-            }
-        ]
 
         if os.getenv(SERVICE_ACCOUNT_SECRETS_NAME):
             credential_file_path = os.getenv(
