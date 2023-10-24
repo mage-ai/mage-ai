@@ -72,7 +72,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/testfiles/kubeconfig')
         except Exception:
             pass
 
@@ -185,6 +185,13 @@ class WorkloadManager:
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
         ingress_name = workspace_config.ingress_name
+
+        self.__create_persistent_volume(
+            name,
+            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
 
         volumes = []
         volume_mounts = [
@@ -338,6 +345,7 @@ class WorkloadManager:
                             {
                                 'key': key,
                                 'path': key,
+                                'mode': 0o0755,
                             }
                             for key in config_map
                         ]
