@@ -54,6 +54,15 @@ UserPolicy.allow_read(UserPresenter.default_attributes + [
 ])
 
 
+UserPolicy.allow_read(UserPresenter.default_attributes + [
+    'permissions',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
+
 UserPolicy.allow_write([
     'avatar',
     'email',
