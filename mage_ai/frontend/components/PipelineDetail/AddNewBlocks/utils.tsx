@@ -177,7 +177,7 @@ export function groupBlockTemplates(
         language,
         type: blockType,
       }),
-      uuid: `${path}/${name}`,
+      uuid: path,
     };
 
     if (!uuidsToHideTooltips?.[path]) {

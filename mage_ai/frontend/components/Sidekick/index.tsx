@@ -64,7 +64,6 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
-import { scrollToBlock } from '@components/PipelineDetail/ColumnScroller/utils';
 import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
@@ -148,7 +147,6 @@ export type SidekickProps = {
     [interactionUUID: string]: InteractionType;
   };
   setPermissions?: (prev: any) => void;
-  sideBySideEnabled?: boolean;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
   updatePipelineInteraction?: (opts: {
@@ -226,7 +224,6 @@ function Sidekick({
   showBrowseTemplates,
   showDataIntegrationModal,
   showUpdateBlockModal,
-  sideBySideEnabled,
   statistics,
   textareaFocused,
   treeRef,
@@ -612,13 +609,7 @@ function Sidekick({
                 selectedBlock={selectedBlock}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
-                setSelectedBlock={(block) => {
-                  setSelectedBlock(block);
-
-                  if (sideBySideEnabled) {
-                    scrollToBlock(block);
-                  }
-                }}
+                setSelectedBlock={setSelectedBlock}
                 setZoom={setDepGraphZoom}
                 treeRef={treeRef}
               />

@@ -87,12 +87,9 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
 } from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   get,
   set,
 } from '@storage/localStorage';
@@ -110,7 +107,6 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
-import { buildBlockRefKey } from '@components/PipelineDetail/utils';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
   buildNavigationItems as buildNavigationItemsSidekick,
@@ -132,7 +128,6 @@ import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
-import { resetColumnScroller } from '@components/PipelineDetail/ColumnScroller/utils';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
@@ -159,35 +154,6 @@ function PipelineDetailPage({
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
-
-  const [sideBySideEnabled, setSideBySideEnabledState] = useState<boolean>(
-    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
-  );
-  const [scrollTogether, setScrollTogetherState] = useState<boolean>(
-    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
-  );
-  const setSideBySideEnabled = useCallback((prev) => {
-    setSideBySideEnabledState(prev);
-    set(
-      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
-      typeof prev === 'function' ? prev() : prev,
-    );
-  }, [
-    setSideBySideEnabledState,
-  ]);
-  const setScrollTogether = useCallback((prev) => {
-    setScrollTogetherState(prev);
-    set(
-      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
-      typeof prev === 'function' ? prev() : prev,
-    );
-  }, [
-    setScrollTogetherState,
-  ]);
-
-  const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
@@ -779,21 +745,7 @@ function PipelineDetailPage({
         response, {
           callback: () => {
             setPipelineContentTouched(false);
-            fetchPipeline().then(({
-              pipeline: pipelineServer,
-            }) => {
-              if (sideBySideEnabled) {
-                const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
-                const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
-
-                if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
-                  setTimeout(() => {
-                    resetColumnScroller();
-                  }, 1);
-                }
-              }
-            });
-
+            fetchPipeline();
             fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -1930,41 +1882,35 @@ function PipelineDetailPage({
 
   const blocksPrevious = usePrevious(blocks);
   useEffect(() => {
-    if (!initializedMessages) {
-      if (
-        typeof pipeline?.blocks !== 'undefined'
-          && (
-            !blocks.length
-              || !equals(
-                blocksPrevious?.map(({ uuid }) => uuid).sort(),
-                blocks?.map(({ uuid }) => uuid).sort(),
-              )
-              || isEmptyObject(messages)
+    if (
+      typeof pipeline?.blocks !== 'undefined'
+        && (
+          !blocks.length
+            || !equals(
+              blocksPrevious?.map(({ uuid }) => uuid).sort(),
+              blocks?.map(({ uuid }) => uuid).sort(),
             )
-      ) {
-        const {
-          content: contentByBlockUUIDResults,
-          messages: messagesInit,
-        } = initializeContentAndMessages(pipeline.blocks);
-        contentByBlockUUID.current = contentByBlockUUIDResults;
+            || isEmptyObject(messages)
+          )
+    ) {
+      const {
+        content: contentByBlockUUIDResults,
+        messages: messagesInit,
+      } = initializeContentAndMessages(pipeline.blocks);
+      contentByBlockUUID.current = contentByBlockUUIDResults;
 
-        if (!isEmptyObject(messagesInit)) {
-          setMessages((messagesPrev) => ({
-            ...messagesInit,
-            ...messagesPrev,
-          }));
-        }
-
-        setInitializedMessages(true);
+      if (!isEmptyObject(messagesInit)) {
+        setMessages((messagesPrev) => ({
+          ...messagesInit,
+          ...messagesPrev,
+        }));
       }
     }
   }, [
     blocks,
     blocksPrevious,
-    initializedMessages,
     messages,
     pipeline?.blocks,
-    setInitializedMessages,
     setMessages,
   ]);
 
@@ -1999,7 +1945,7 @@ function PipelineDetailPage({
     if (block) {
       setSelectedBlock(block);
       if (blockRefs?.current) {
-        const blockRef = blockRefs.current[buildBlockRefKey(block)];
+        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
         blockRef?.current?.scrollIntoView();
       }
       goToWithQuery({
@@ -2535,7 +2481,6 @@ function PipelineDetailPage({
         name,
         preventDuplicateBlockName,
       }))}
-      sideBySideEnabled={sideBySideEnabled}
       statistics={statistics}
       textareaFocused={textareaFocused}
       treeRef={treeRef}
@@ -2611,7 +2556,6 @@ function PipelineDetailPage({
     showAddBlockModal,
     showBrowseTemplates,
     showDataIntegrationModal,
-    sideBySideEnabled,
     statistics,
     textareaFocused,
     updatePipelineInteraction,
@@ -2659,12 +2603,10 @@ function PipelineDetailPage({
           onCreateCallback?: (block: BlockType) => void;
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
-      afterHidden={afterHidden}
       allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
-      beforeHidden={beforeHidden}
       blockInteractionsMapping={blockInteractionsMapping}
       blockRefs={blockRefs}
       blocks={blocksInNotebook}
@@ -2695,7 +2637,6 @@ function PipelineDetailPage({
       runBlock={runBlock}
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
-      scrollTogether={scrollTogether}
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
@@ -2722,19 +2663,16 @@ function PipelineDetailPage({
         isUpdatingBlock: true,
         name,
       }))}
-      sideBySideEnabled={sideBySideEnabled}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
   ), [
     addNewBlockAtIndex,
     addWidgetAtIndex,
-    afterHidden,
     allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
     // automaticallyNameBlocks,
-    beforeHidden,
     blockRefs,
     blockInteractionsMapping,
     blocks,
@@ -2765,7 +2703,6 @@ function PipelineDetailPage({
     runBlock,
     runningBlocks,
     savePipelineContent,
-    scrollTogether,
     selectedBlock,
     setAnyInputFocused,
     setEditingBlock,
@@ -2779,7 +2716,6 @@ function PipelineDetailPage({
     showConfigureProjectModal,
     showDataIntegrationModal,
     showGlobalDataProducts,
-    sideBySideEnabled,
     textareaFocused,
     widgets,
   ]);
@@ -2796,12 +2732,8 @@ function PipelineDetailPage({
           pipeline={pipeline}
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
-          scrollTogether={scrollTogether}
           setActiveSidekickView={setActiveSidekickView}
           setMessages={setMessages}
-          setScrollTogether={setScrollTogether}
-          setSideBySideEnabled={setSideBySideEnabled}
-          sideBySideEnabled={sideBySideEnabled}
         >
           {selectedFilePath && (
             <Spacing ml={1}>
@@ -2829,14 +2761,10 @@ function PipelineDetailPage({
     pipeline,
     restartKernel,
     savePipelineContent,
-    scrollTogether,
     selectedFilePath,
     setActiveSidekickView,
     setMessages,
-    setScrollTogether,
     setSelectedFilePath,
-    setSideBySideEnabled,
-    sideBySideEnabled,
   ]);
 
   const mainContainerHeaderMemo = useMemo(() => {
@@ -2854,14 +2782,11 @@ function PipelineDetailPage({
             saveStatus={saveStatus}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
-            setSideBySideEnabled={setSideBySideEnabled}
             setRunningBlocks={setRunningBlocks}
-            sideBySideEnabled={sideBySideEnabled}
             updatePipelineMetadata={updatePipelineMetadata}
           >
             {beforeHeader}
           </KernelStatus>
-
           {selectedFilePaths?.length > 0 &&
             <PipelineHeaderStyle relativePosition secondary>
               <FileTabs
@@ -2888,8 +2813,6 @@ function PipelineDetailPage({
     selectedFilePath,
     selectedFilePaths,
     setErrors,
-    setSideBySideEnabled,
-    sideBySideEnabled,
     updatePipelineMetadata,
   ]);
 
@@ -3098,7 +3021,6 @@ function PipelineDetailPage({
           </FlexContainer>
         )}
         before={beforeToShow}
-        beforeHidden={beforeHidden}
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
@@ -3110,7 +3032,6 @@ function PipelineDetailPage({
         pipeline={pipeline}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
-        setBeforeHidden={setBeforeHidden}
         setErrors={pipelineErrors ? setPipelineErrors : setErrors}
         setMainContainerWidth={setMainContainerWidth}
       >

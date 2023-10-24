@@ -68,8 +68,6 @@ type CodeEditorProps = {
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
-  onContentSizeChangeCallback?: () => void;
-  onMountCallback?: () => void;
   onSave?: (value: string) => void;
   padding?: boolean;
   placeholder?: string;
@@ -91,9 +89,7 @@ function CodeEditor({
   height,
   language,
   onChange,
-  onContentSizeChangeCallback,
   onDidChangeCursorPosition,
-  onMountCallback,
   onSave,
   padding,
   placeholder,
@@ -170,10 +166,6 @@ function CodeEditor({
       if (autoHeight && contentHeightChanged) {
         editor._domElement.style.height = `${contentHeight + (SINGLE_LINE_HEIGHT * 2)}px`;
       }
-
-      if (onContentSizeChangeCallback) {
-        onContentSizeChangeCallback?.();
-      }
     });
 
     if (selected && textareaFocused) {
@@ -207,13 +199,10 @@ function CodeEditor({
     }
 
     setMounted(true);
-    onMountCallback?.();
   }, [
     autoHeight,
     height,
-    onContentSizeChangeCallback,
     onDidChangeCursorPosition,
-    onMountCallback,
     onSave,
     selected,
     setMounted,

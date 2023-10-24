@@ -88,9 +88,3 @@ export const FileTabStyle = styled.div<{
     border-color: ${(props.theme.borders || dark.borders).light} !important;
   `}
 `;
-
-export const HeaderViewOptionsStyle = styled.div`
-  left: 50%;
-  position: absolute;
-  transform: translateX(-50%);
-`;

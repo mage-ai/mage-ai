@@ -15,9 +15,6 @@ import { transition } from '@oracle/styles/mixins';
 // Look at the code editor div class "margin" and role "presentation"
 export const LEFT_PADDING = 68;
 
-export const SIDE_BY_SIDE_HORIZONTAL_PADDING = 1.5 * UNIT;
-export const SIDE_BY_SIDE_VERTICAL_PADDING = 3 * UNIT;
-
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
   props?: {
@@ -146,7 +143,6 @@ export const HeaderHorizontalBorder = styled.div`
 `;
 
 export const BlockHeaderStyle = styled.div<{
-  noSticky?: boolean;
   zIndex: number;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
@@ -160,21 +156,15 @@ export const BlockHeaderStyle = styled.div<{
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
   padding: ${UNIT}px;
+  position: sticky;
+  top: -5px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};
   `}
 
-  ${props => typeof props.zIndex !== 'undefined' && props.zIndex !== null && `
+  ${props => props.zIndex && `
     z-index: ${6 + (props.zIndex || 0)};
-  `}
-
-  ${props => !props.noSticky && `
-    // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
-    // and the screen width is too small.
-    overflow-x: hidden;
-    position: sticky;
-    top: -5px;
   `}
 `;
 
@@ -196,7 +186,7 @@ export const SubheaderStyle = styled.div<{
 `;
 
 export const CodeContainerStyle = styled.div<{
-  hideBorderBottom: boolean;
+  hasOutput: boolean;
   lightBackground?: boolean;
   noPadding?: boolean;
 } & BorderColorShareProps>`
@@ -221,7 +211,7 @@ export const CodeContainerStyle = styled.div<{
     background-color: ${(props.theme || dark).background.content};
   `}
 
-  ${props => !props.hideBorderBottom && `
+  ${props => !props.hasOutput && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
     border-bottom-style: ${BORDER_STYLE};
@@ -241,8 +231,6 @@ export const CodeContainerStyle = styled.div<{
 
 export const BlockDivider = styled.div<{
   additionalZIndex?: number;
-  bottom?: number;
-  height?: number;
 }>`
   align-items: center;
   display: flex;
@@ -250,6 +238,7 @@ export const BlockDivider = styled.div<{
   justify-content: center;
   position: relative;
   z-index: 8;
+  bottom: ${UNIT * 0.5}px;
 
   &:hover {
     ${props => props.additionalZIndex > 0 && `
@@ -262,39 +251,14 @@ export const BlockDivider = styled.div<{
       `}
     }
   }
-
-  ${props => !props.height && `
-    height: ${UNIT * 2}px;
-  `}
-
-  ${props => props.height && `
-    height: ${props.height}px;
-  `}
-
-  ${props => !props.bottom && `
-    bottom: ${UNIT * 0.5}px;
-  `}
-
-  ${props => typeof props.bottom !== 'undefined' && `
-    bottom: ${props.bottom}px;
-  `}
 `;
 
-export const BlockDividerInner = styled.div<{
-  top?: number;
-}>`
+export const BlockDividerInner = styled.div`
   height 1px;
   width: 100%;
   position: absolute;
   z-index: -1;
-
-  ${props => !props.top && `
-    top: ${UNIT * 1.5}px;
-  `}
-
-  ${props => typeof props.top !== 'undefined' && `
-    top: ${props.top}px;
-  `}
+  top: ${UNIT * 1.5}px;
 `;
 
 export const CodeHelperStyle = styled.div<{
@@ -316,36 +280,4 @@ export const TimeTrackerStyle =  styled.div`
   bottom: ${UNIT * 1}px;
   left: ${LEFT_PADDING}px;
   position: absolute;
-`;
-
-export const ScrollColunnsContainerStyle = styled.div`
-  position: relative;
-  z-index: 1;
-`;
-
-export const ScrollColunnStyle = styled.div.attrs(({
-  height,
-  left,
-  right,
-  top,
-  width,
-  zIndex,
-}: {
-  height: number;
-  left?: number;
-  right?: number;
-  top?: number;
-  width: number;
-  zIndex?: number;
-}) => ({
-  style: {
-    position: 'fixed',
-    height,
-    width,
-    left,
-    right,
-    top,
-    zIndex: (zIndex || 0) + 2,
-  },
-}))`
 `;

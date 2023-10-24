@@ -28,7 +28,6 @@ type BlockInteractionControllerProps = {
   variables?: {
     [key: string]: any;
   };
-  widthOffset?: number;
 };
 
 function BlockInteractionController({
@@ -44,7 +43,6 @@ function BlockInteractionController({
   setVariables,
   showVariableUUID,
   variables,
-  widthOffset,
 }: BlockInteractionControllerProps) {
   const {
     description: blockInteractionDescription,
@@ -93,7 +91,6 @@ function BlockInteractionController({
           setVariables={setVariables}
           showVariableUUID={showVariableUUID}
           variables={variables}
-          widthOffset={widthOffset}
         />
       </Spacing>
     </>
@@ -106,7 +103,6 @@ function BlockInteractionController({
     setVariables,
     showVariableUUID,
     variables,
-    widthOffset,
   ]);
 
   return (
