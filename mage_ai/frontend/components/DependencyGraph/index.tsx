@@ -512,6 +512,7 @@ function DependencyGraph({
   const {
     edges,
     nodes,
+    ports,
   } = useMemo(() => buildNodesEdgesPorts({
     activeNodes,
     blockStatus,
@@ -534,7 +535,12 @@ function DependencyGraph({
     pipeline,
   ]);
 
-  const getBlockStatus = useCallback((block: BlockType) => {
+  const getBlockStatus = useCallback((block: BlockType): {
+    hasFailed: boolean;
+    isInProgress: boolean;
+    isQueued: boolean;
+    isSuccessful: boolean;
+  } => {
     if (noStatus) {
       return {};
     } else if (blockStatus) {
@@ -769,6 +775,33 @@ function DependencyGraph({
     targetNode,
   ]);
 
+  const determineSelectedStatus: {
+    anotherBlockSelected: boolean;
+    selected: boolean;
+  } = useCallback((node: NodeType) => {
+    const block = node?.data?.block;
+    const activePortExists = Object.values(activePorts || {})?.length >= 1;
+    const activePort = activePorts?.[node?.id];
+    const selected = blockEditing
+      ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+      : activePortExists
+        ? activePort
+        : selectedBlock?.uuid === block.uuid;
+    const anotherBlockSelected = activePortExists
+      ? !activePort
+      : !!selectedBlock;
+
+    return {
+      anotherBlockSelected,
+      selected,
+    }
+  }, [
+    activePorts,
+    blockEditing,
+    selectedBlock,
+    upstreamBlocksEditing,
+  ]);
+
   // Show a menu to add a block between or delete the connection.
   // console.log(activeEdges)
 
@@ -871,12 +904,29 @@ function DependencyGraph({
               blockColor: block?.color,
               theme: themeContext,
             });
-            const isActive = activeEdges?.[edge?.id];
+
+            const downstreamBlockUUID = block?.downstream_blocks?.find(
+              uuid => buildPortIDDownstream(block?.uuid, uuid) === edge?.sourcePort,
+            );
+            const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
+            const {
+              isInProgress,
+            } = getBlockStatus(downstreamBlock);
+
+            const {
+              anotherBlockSelected,
+              selected,
+            } = determineSelectedStatus({
+              data: {
+                block,
+              },
+              id: block?.uuid,
+            });
 
             return (
               <Edge
                 {...edge}
-                className={`edge ${isActive ? 'active' : 'inactive'}`}
+                className={`edge ${isInProgress ? 'active' : 'inactive'}`}
                 onClick={(event, edge) => {
                   // setActivePorts(null);
                   // setEdgeSelections([edge.id]);
@@ -974,7 +1024,9 @@ function DependencyGraph({
                 // removable={enablePorts && !editingBlock?.upstreamBlocks}
                 // removable={true}
                 style={{
-                  stroke: colorData?.accent,
+                  stroke: anotherBlockSelected && !selected
+                    ? colorData?.accentLight
+                    : colorData?.accent,
                   strokeWidth: STROKE_WIDTH,
                 }}
               />
@@ -1118,17 +1170,17 @@ function DependencyGraph({
                     },
                   } = node;
 
-                  const activePortExists = Object.values(activePorts || {})?.length >= 1;
-                  const activePort = activePorts?.[node?.id];
-                  const blockStatus = getBlockStatus(block);
-                  const selected = blockEditing
-                    ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                    : activePortExists
-                      ? activePort
-                      : selectedBlock?.uuid === block.uuid;
-                  const anotherBlockSelected = activePortExists
-                    ? !activePort
-                    : !!selectedBlock;
+                  const {
+                    anotherBlockSelected,
+                    selected,
+                  } = determineSelectedStatus(node);
+
+                  const {
+                    hasFailed,
+                    isInProgress,
+                    isQueued,
+                    isSuccessful,
+                  } = getBlockStatus(block);
 
                   return (
                     <foreignObject
@@ -1157,12 +1209,15 @@ function DependencyGraph({
                         disabled={blockEditing?.uuid === block.uuid}
                         downstreamBlocks={children}
                         extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
+                        hasFailed={hasFailed}
                         height={nodeHeight}
                         hideStatus={disabledProp || noStatus}
+                        isInProgress={isInProgress}
+                        isQueued={isQueued}
+                        isSuccessful={isSuccessful}
                         key={block.uuid}
                         pipeline={pipeline}
                         selected={selected}
-                        {...blockStatus}
                       />
                     </foreignObject>
                   );

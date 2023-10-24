@@ -235,6 +235,11 @@ export function buildNodesEdgesPorts({
 }): {
   edges: EdgeType[];
   nodes: NodeType[];
+  ports: {
+    [uuid: string]: {
+      [uuid: string]: PortType;
+    };
+  };
 } {
   const parents = {};
   const nodesInner: {
@@ -418,5 +423,6 @@ export function buildNodesEdgesPorts({
   return {
     edges: Object.values(edgesInner || {}),
     nodes: Object.values(nodesInner || {}),
+    ports,
   };
 }

@@ -195,7 +195,7 @@ function BlockNode({
 
   return (
     <NodeContainerStyle
-      // active
+      active={isInProgress}
       backgroundGradient={getGradientColorForBlockType(type)}
       borderColor={!selected && anotherBlockSelected ? accentLight : accent}
       disabled={disabled}
