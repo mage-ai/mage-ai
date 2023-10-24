@@ -1,4 +1,6 @@
 import moment from 'moment';
+import tzMoment from 'moment-timezone';
+import 'moment-duration-format';
 
 import { pluralize } from '@utils/string';
 import { rangeSequential } from '@utils/array';
@@ -7,6 +9,11 @@ export enum TimePeriodEnum {
   TODAY = 'today',
   WEEK = 'week',
   MONTH = 'month',
+}
+
+export enum TimeZoneEnum {
+  LOCAL = 'LOCAL',
+  UTC = 'UTC',
 }
 
 export const TIME_PERIOD_DISPLAY_MAPPING = {
@@ -25,8 +32,18 @@ export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
+export const DATE_FORMAT_SPARK = 'YYYY-MM-DDTHH:mm:ss.SSSGMT';
 export const DATE_FORMAT_FULL = 'MMMM D, YYYY';
+export const TIME_FORMAT = 'HH:mm:ss';
+export const TIME_FORMAT_NO_SEC = 'HH:mm';
 export const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+export const TIME_ZONE_NAMES: {
+  [key in TimeZoneEnum]: string
+} = {
+  [TimeZoneEnum.LOCAL]: LOCAL_TIMEZONE,
+  [TimeZoneEnum.UTC]: 'Etc/Universal',
+};
 
 export function formatDateShort(momentObj) {
   return momentObj.format(DATE_FORMAT_SHORT);
@@ -39,6 +56,7 @@ export function dateFormatShort(text) {
 export function dateFormatLong(
   text: string,
   opts?: {
+    dateFormat?: string;
     dayAgo?: boolean;
     includeSeconds?: boolean;
     utcFormat?: boolean;
@@ -50,7 +68,7 @@ export function dateFormatLong(
     utcFormat,
   } = opts || {};
   let momentObj = moment(text);
-  let dateFormat = DATE_FORMAT_LONG_NO_SEC;
+  let dateFormat = opts?.dateFormat || DATE_FORMAT_LONG_NO_SEC;
 
   if (utcFormat) {
     momentObj = momentObj.utc();
@@ -79,8 +97,44 @@ export function datetimeInLocalTimezone(
   return datetime;
 }
 
+/** 
+ * Given start and end UTC datetime strings, find the time difference between them 
+ * and return it in the first matching format:
+ *   - >= 1 week: > 1 week
+     - >= 1 day: d,HH:mm:ss.SS
+ *   - < 1 day: HH:mm:ss.SS
+ * If `showFullFormat` is true, we'll return it in a specific, human-readable format.
+ */
+export function timeDifference({
+  startDatetime, 
+  endDatetime,
+  showFullFormat = false,
+}: {
+  startDatetime: string; 
+  endDatetime: string;
+  showFullFormat?: boolean;
+}) {
+  const start = moment.utc(startDatetime);
+  const end = moment.utc(endDatetime);
+  const timeDiff = moment.duration(end.diff(start));
+
+  if (showFullFormat) {
+    return timeDiff.format('Y __, M __, W __, D __, H __, m __, s __, S __');
+  } else if (timeDiff.asWeeks() >= 1) {
+    return '> 1 week';
+  } else if (timeDiff.asDays() >= 1) {
+    return timeDiff.format('d[d],HH:mm:ss.SS', {
+      trim: false,
+    });
+  } else {
+    return timeDiff.format('HH:mm:ss.SS', {
+      trim: false,
+    });
+  }
+}
+
 /**
- * Given a UTC datetime string, find how much time has elapsed between then 
+ * Given a UTC datetime string, find how much time has elapsed between then
  * and now. Return the elapsed time in the first matching format:
  *   - >= 1 year: X year(s) ago
  *   - >= 1 month: X month(s) ago
@@ -133,6 +187,43 @@ export function utcNowDate(opts?: { dateObj?: boolean }): any {
   }
 
   return utcDate;
+}
+
+// Return a map of the current time in the different provided timezones
+export function currentTimes({ 
+  timeZones, 
+  includeSeconds = false,
+}: { 
+  timeZones: TimeZoneEnum[];
+  includeSeconds?: boolean;
+}) {
+  const currentMoment = tzMoment.utc();
+  const zoneTimes = new Map(
+    timeZones.map((timeZone) => {
+      let moment = currentMoment;
+      switch (timeZone) {
+        case TimeZoneEnum.LOCAL:
+          moment = currentMoment.local();
+        default:
+          break;
+      }
+
+      return [
+        timeZone, 
+        moment.format(includeSeconds ? TIME_FORMAT : TIME_FORMAT_NO_SEC),
+      ];
+    }),
+  );
+
+  return zoneTimes;
+}
+
+export function abbreviatedTimezone(timezone: TimeZoneEnum) {
+  return tzMoment.tz(TIME_ZONE_NAMES[timezone]).zoneAbbr();
+}
+
+export function dateFromFromUnixTimestamp(timestamp: number) {
+  return moment.unix(timestamp);
 }
 
 export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean } = {}) {

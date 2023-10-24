@@ -298,7 +298,7 @@ function ConfigureWorkspace({
     lifecycleConfig,
     setLifecycleConfig,
   ]);
-  
+
   return (
     <Panel>
       <div style={{ width: '750px' }}>
@@ -392,6 +392,7 @@ function ConfigureWorkspace({
                       workspace: {
                         ...updatedConfig,
                         cluster_type: clusterType,
+                        lifecycle_config: lifecycleConfig,
                       },
                     });
                   }

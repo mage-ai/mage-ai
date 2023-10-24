@@ -58,7 +58,7 @@ class NotificationSender:
         if summary is None:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
-            send_slack_message(self.config.slack_config, details or summary)
+            send_slack_message(self.config.slack_config, details or summary, title)
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             send_teams_message(self.config.teams_config, summary)

@@ -188,3 +188,13 @@ export function displayPipelineLastSaved(
 
   return saveStatus;
 }
+
+export function buildBlockRefKey({
+  type,
+  uuid,
+}: {
+  type?: string;
+  uuid?: string;
+}): string {
+  return `${type}s/${uuid}.py`;
+}

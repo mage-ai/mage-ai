@@ -11,6 +11,7 @@ export const LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN = 'pipeline_execution_h
 export const LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS = 'data_output_block_uuids';
 const LOCAL_STORAGE_KEY_OBJECT_COUNTS = 'object_counts';
 export const LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING = 'hide_kernel_warning';
+export const LOCAL_STORAGE_KEY_OAUTH_STATE = 'oauth_state';
 
 function getCustomCodeKey(featureSetId: string) {
   return `${LOCAL_STORAGE_KEY_CUSTOM_CODE}_${featureSetId}`;
@@ -71,6 +72,14 @@ export function setCustomCodeState({
     ...get(key),
     [actionType]: newValue,
   });
+}
+
+export function setLocalStorageValue(storageKey: string, value: boolean): boolean {
+  if (typeof value !== 'undefined') {
+    set(storageKey, value);
+  }
+
+  return value;
 }
 
 export function resetObjectCounts() {

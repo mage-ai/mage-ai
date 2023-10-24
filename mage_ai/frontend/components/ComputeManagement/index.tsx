@@ -7,14 +7,18 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
 import Spacing from '@oracle/elements/Spacing';
+import SparkGraph from './SparkGraph';
+import System from './System';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { CardStyle } from './index.style';
 import {
+  BlockCubePolygon,
   Monitor,
   PowerOnOffButton,
   WorkspacesUsersIcon,
@@ -29,7 +33,9 @@ import {
   MainNavigationTabEnum,
   ObjectAttributesType,
 } from './constants';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NavigationStyle } from '@components/DataIntegrationModal/index.style';
+import { SparkSQLType } from '@interfaces/SparkType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -54,6 +60,11 @@ function ComputeManagement({
   heightOffset,
   mainContainerRef,
 }: ComputeManagementProps) {
+  const {
+    height: heightWindow,
+    width: widthWindow,
+  } = useWindowSize();
+
   const componentUUID =
     useMemo(() => `ComputeManagement/${contained ? 'contained' : 'open'}`, [contained]);
   const [showError] = useError(null, {}, [], {
@@ -63,23 +74,36 @@ function ComputeManagement({
   const refAfterHeader = useRef(null);
   const refAfterFooter = useRef(null);
   const refSubheader = useRef(null);
-
-  const {
-    height: heightWindow,
-    width: widthWindow,
-  } = useWindowSize();
+  const refButtonTabs = useRef(null);
 
   const containerHeight = useMemo(() => heightWindow - (heightOffset || 0), [
     heightOffset,
     heightWindow,
   ]);
 
-  const localStorageKeyAfter =
-    useMemo(() => `block_layout_after_width_${componentUUID}`, [componentUUID]);
-  const localStorageKeyBefore =
-    useMemo(() => `block_layout_before_width_${componentUUID}`, [componentUUID]);
+  const [buttonTabsRect, setButtonTabsRect] = useState(null);
 
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
+  useEffect(() => {
+    setButtonTabsRect(refButtonTabs?.current?.getBoundingClientRect());
+  }, [
+    heightWindow,
+    refButtonTabs,
+  ]);
+
+  const localStorageKeyAfter =
+    useMemo(() => `compute_management_after_width_${componentUUID}`, [componentUUID]);
+  const localStorageKeyBefore =
+    useMemo(() => `compute_management_before_width_${componentUUID}`, [componentUUID]);
+
+  const [afterWidth, setAfterWidthState] = useState(get(localStorageKeyAfter, UNIT * 60));
+  const setAfterWidth = useCallback((width) => {
+    setAfterWidthState(width);
+    set(localStorageKeyAfter, Math.max(width, UNIT * 60));
+  }, [
+    localStorageKeyAfter,
+    setAfterWidthState,
+  ]);
+
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidthState] = useState(Math.max(
     get(localStorageKeyBefore),
@@ -96,9 +120,37 @@ function ComputeManagement({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [afterHidden, setAfterHidden] = useState<boolean>(true);
 
-  const [selectedTab, setSelectedTab] = useState<{
+  const [selectedSql, setSelectedSqlState] = useState<SparkSQLType>(null);
+
+  const setSelectedSql = useCallback((prev1) => {
+    setSelectedSqlState(prev2 => {
+      const val = prev1(prev2);
+
+      if (val && afterHidden) {
+        setAfterHidden(false);
+      } else if (!val && !afterHidden) {
+        setAfterHidden(true);
+      }
+
+      return val;
+    });
+
+  }, [
+    afterHidden,
+    setAfterHidden,
+    setSelectedSqlState,
+  ]);
+
+  const [selectedTab, setSelectedTabState] = useState<{
     main?: MainNavigationTabEnum;
   }>(null);
+  const setSelectedTab = useCallback((prev) => {
+    setSelectedSql(() => null);
+    setSelectedTabState(prev);
+  }, [
+    setSelectedSql,
+    setSelectedTabState,
+  ]);
 
   const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
@@ -205,6 +257,10 @@ function ComputeManagement({
         Icon: Monitor,
         uuid: MainNavigationTabEnum.MONITORING,
       },
+      {
+        Icon: BlockCubePolygon,
+        uuid: MainNavigationTabEnum.SYSTEM,
+      },
     ].map(({
       Icon,
       uuid,
@@ -289,7 +345,19 @@ function ComputeManagement({
     setSelectedTab,
   ]);
 
-  const after = useMemo(() => {}, []);
+  const after = useMemo(() => {
+    if (selectedSql) {
+      return (
+        <SparkGraph
+          height={containerHeight - ((buttonTabsRect?.height || 0) + HEADER_HEIGHT + 1)}
+          model={selectedSql}
+        />
+      );
+    }
+  }, [
+    containerHeight,
+    selectedSql,
+  ]);
 
   const connectionMemo = useMemo(() => (
     <ConnectionSettings
@@ -325,6 +393,38 @@ function ComputeManagement({
     selectedComputeService,
     setObjectAttributes,
     updateProject,
+  ]);
+
+  const monitoringMemo = useMemo(() => {
+    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+      return (
+        <Monitoring
+          objectAttributes={objectAttributes}
+          refButtonTabs={refButtonTabs}
+          selectedComputeService={selectedComputeService}
+          // @ts-ignore
+          setSelectedSql={setSelectedSql}
+        />
+      );
+    }
+  }, [
+    objectAttributes,
+    refButtonTabs,
+    selectedComputeService,
+    setSelectedSql,
+  ]);
+
+  const systemMemo = useMemo(() => {
+    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+      return (
+        <System
+          objectAttributes={objectAttributes}
+        />
+      );
+    }
+  }, [
+    objectAttributes,
+    selectedComputeService,
   ]);
 
   const computeServicesMemo = useMemo(() => (
@@ -395,7 +495,8 @@ function ComputeManagement({
   return (
     <TripleLayout
       after={after}
-      afterHidden={afterHidden}
+      afterHeightOffset={HEADER_HEIGHT}
+      afterHidden={afterHidden || !selectedSql}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
@@ -421,6 +522,8 @@ function ComputeManagement({
         <>
           {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
           {MainNavigationTabEnum.RESOURCES === selectedTab?.main && resourcesMemo}
+          {MainNavigationTabEnum.MONITORING === selectedTab?.main && monitoringMemo}
+          {MainNavigationTabEnum.SYSTEM === selectedTab?.main && systemMemo}
         </>
       )}
     </TripleLayout>

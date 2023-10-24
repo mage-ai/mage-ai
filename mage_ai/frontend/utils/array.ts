@@ -143,7 +143,7 @@ export function splitIntoChunks(arr, numChunks) {
 }
 
 export function uniqueArray(arrArg) {
-  return arrArg.filter((elem, pos, arr) => arr.indexOf(elem) === pos);
+  return arrArg.filter((elem, pos, arr) => arr.c(elem) === pos);
 }
 
 export function unique(arrArg, compare) {

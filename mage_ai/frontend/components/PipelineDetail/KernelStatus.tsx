@@ -9,6 +9,7 @@ import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
 import BlockType from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
@@ -28,8 +29,10 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-import { Check } from '@oracle/icons';
+import useProject from '@utils/models/project/useProject';
+import { Check, LayoutSplit, LayoutStacked } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
+import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
   KEY_CODE_META,
@@ -43,12 +46,12 @@ import {
   set,
 } from '@storage/localStorage';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { PipelineHeaderStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
+import { roundNumber } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 
@@ -67,6 +70,8 @@ type KernelStatusProps = {
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
+  setSideBySideEnabled?: (value: boolean) => void;
+  sideBySideEnabled?: boolean;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -83,8 +88,15 @@ function KernelStatus({
   selectedFilePath,
   setErrors,
   setRunningBlocks,
+  setSideBySideEnabled,
+  sideBySideEnabled,
   updatePipelineMetadata,
 }: KernelStatusProps) {
+  const {
+    featureEnabled,
+    featureUUIDs,
+  } = useProject();
+
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
     alive,
@@ -430,7 +442,7 @@ function KernelStatus({
             <Spacing mr={PADDING_UNITS}>
               <Flex flexDirection="column">
                 <Text monospace muted xsmall>
-                  CPU: {usage?.kernel_cpu}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
+                  CPU: {typeof usage?.kernel_cpu !== 'undefined' && roundNumber(usage?.kernel_cpu, 3)}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
                 </Text>
                 <Text monospace muted xsmall>
                   Memory: {kernelMemory}
@@ -439,6 +451,62 @@ function KernelStatus({
             </Spacing>
           )}
         </FlexContainer>
+
+        {featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW) && (
+          <HeaderViewOptionsStyle>
+            <FlexContainer alignItems="center">
+              <Tooltip
+                block
+                center
+                description={(
+                  <Text>
+                    Display the output of a block underneath the block’s code.
+                  </Text>
+                )}
+                size={null}
+              >
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setSideBySideEnabled(false)}
+                  padding={`${1 * UNIT}px`}
+                >
+                  <LayoutStacked
+                    muted={sideBySideEnabled}
+                    size={2 * UNIT}
+                  />
+                </Button>
+              </Tooltip>
+
+              <Tooltip
+                block
+                center
+                description={(
+                  <Text>
+                    Display the output of a block on the right side of the block’s code.
+                  </Text>
+                )}
+                size={null}
+              >
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setSideBySideEnabled(true)}
+                  padding={`${1 * UNIT}px`}
+                >
+                  <LayoutSplit
+                    muted={!sideBySideEnabled}
+                    size={2 * UNIT}
+                  />
+                </Button>
+              </Tooltip>
+            </FlexContainer>
+          </HeaderViewOptionsStyle>
+        )}
 
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">

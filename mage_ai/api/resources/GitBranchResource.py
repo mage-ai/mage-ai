@@ -5,7 +5,7 @@ from github import Auth, Github
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.git import Git, api
+from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
 from mage_ai.data_preparation.preferences import get_preferences
 
 
@@ -283,6 +283,13 @@ class GitBranchResource(GenericResource):
                 args.append(val)
 
             if action_type == 'add_remote':
+                if remote.get('name') == REMOTE_NAME:
+                    error = ApiError.RESOURCE_ERROR
+                    error.update({
+                        'message': f'Remote name {REMOTE_NAME} is reserved, ' +
+                        'please select a different name.',
+                    })
+                    raise ApiError(error)
                 git_manager.add_remote(*args)
             elif action_type == 'remove_remote':
                 git_manager.remove_remote(*args)
