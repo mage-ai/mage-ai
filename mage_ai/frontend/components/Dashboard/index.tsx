@@ -43,6 +43,7 @@ type DashboardProps = {
   breadcrumbs?: BreadcrumbType[];
   children?: any;
   errors?: ErrorsType;
+  header?: any;
   headerMenuItems?: MenuItemType[];
   headerOffset?: number;
   hideAfterCompletely?: boolean;
@@ -65,6 +66,7 @@ function Dashboard({
   breadcrumbs: breadcrumbsProp,
   children,
   errors,
+  header,
   headerMenuItems,
   headerOffset,
   hideAfterCompletely,
@@ -210,6 +212,7 @@ function Dashboard({
             beforeHeightOffset={HEADER_HEIGHT}
             beforeMousedownActive={beforeMousedownActive}
             beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            header={header}
             headerOffset={headerOffset}
             hideAfterCompletely={!setAfterHidden || hideAfterCompletely}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}

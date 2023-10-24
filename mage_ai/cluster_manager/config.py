@@ -1,6 +1,8 @@
+import os
 from dataclasses import dataclass, fields
 from typing import Dict, List
 
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.hash import extract
 
@@ -57,6 +59,16 @@ class PostStart(BaseConfig):
     command: List[str] = None
     hook: str = None
 
+    @classmethod
+    def parse_config(self, config: Dict = None) -> Dict:
+        hook = config.get('hook')
+        if hook and not os.path.isabs(hook):
+            config['hook'] = os.path.join(
+                get_repo_path(), hook
+            )
+
+        return config
+
 
 @dataclass
 class LifecycleConfig(BaseConfig):
@@ -71,11 +83,17 @@ class LifecycleConfig(BaseConfig):
             config['termination_policy'] = TerminationPolicy.load(
                 config=termination_policy
             )
-        
+
         post_start = config.get('post_start')
         if post_start and type(post_start) is dict:
             config['post_start'] = PostStart.load(
                 config=post_start
+            )
+
+        pre_start_script_path = config.get('pre_start_script_path')
+        if pre_start_script_path and not os.path.isabs(pre_start_script_path):
+            config['pre_start_script_path'] = os.path.join(
+                get_repo_path(), pre_start_script_path
             )
 
         return config

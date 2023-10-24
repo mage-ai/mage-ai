@@ -2,6 +2,7 @@ import ast
 import importlib.util
 import json
 import os
+import shlex
 from typing import Dict, List
 
 import yaml
@@ -71,7 +72,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/testfiles/kubeconfig')
         except Exception:
             pass
 
@@ -148,7 +149,6 @@ class WorkloadManager:
         name: str,
         workspace_config: KubernetesWorkspaceConfig,
         project_type: str = ProjectType.STANDALONE,
-        **kwargs,
     ):
         container_config_yaml = workspace_config.container_config
         container_config = dict()
@@ -169,7 +169,12 @@ class WorkloadManager:
 
         ingress_name = workspace_config.ingress_name
 
-        volumes = []
+        self.__create_persistent_volume(
+            name,
+            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
 
         volumes = []
         volume_mounts = [
@@ -263,7 +268,7 @@ class WorkloadManager:
                     ],
                 }
             )
-        
+
         if lifecycle_config.post_start:
             file_name = self.configure_post_start(name, lifecycle_config.post_start)
             if file_name:
@@ -289,11 +294,20 @@ class WorkloadManager:
                     },
                 )
 
-            if lifecycle_config.post_start.command:
+            post_start_command = lifecycle_config.post_start.command
+            if post_start_command:
+                try:
+                    post_start_command = json.loads(post_start_command)
+                except Exception:
+                    pass
+                if type(post_start_command) is str:
+                    post_start_command = shlex.split(post_start_command)
                 container_config['lifecycle'] = {
                     **container_config.get('lifecycle', {}),
-                    'post_start': {
-                        '_exec': lifecycle_config.post_start.command,
+                    'postStart': {
+                        'exec': {
+                            'command': post_start_command,
+                        }
                     }
                 }
 
