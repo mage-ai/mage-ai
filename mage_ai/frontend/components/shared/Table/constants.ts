@@ -21,3 +21,6 @@ export const TIMEZONE_TOOLTIP_PROPS = {
   fitTooltipContentWidth: true,
   tooltipMessage: `Timezone: ${LOCAL_TIMEZONE}`,
 };
+
+export const getTableRowUuid = 
+  ({ uuid, rowIndex }: { uuid: string, rowIndex: number }) => `${uuid}-row-${rowIndex}`;

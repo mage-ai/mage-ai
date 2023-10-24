@@ -1,6 +1,6 @@
 import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
-import { createRef, useCallback, useMemo, useRef, useState } from 'react';
+import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
@@ -37,8 +37,10 @@ import {
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
   TIMEZONE_TOOLTIP_PROPS,
+  getTableRowUuid,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { KEY_CODE_ARROW_DOWN, KEY_CODE_ARROW_UP } from '@utils/hooks/keyboardShortcuts/constants';
 import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
@@ -51,6 +53,7 @@ import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { useKeyboardContext } from '@context/Keyboard';
 
 const SHARED_DATE_FONT_PROPS = {
   monospace: true,
@@ -259,6 +262,7 @@ type PipelineRunsTableProps = {
   allowBulkSelect?: boolean;
   allowDelete?: boolean;
   deletePipelineRun?: MutateFunction<any>;
+  disableKeyboardNav?: boolean;
   disableRowSelect?: boolean;
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
@@ -268,6 +272,7 @@ type PipelineRunsTableProps = {
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
   selectedRuns?: { [keyof: string]: PipelineRunType };
+  setSelectedRun?: (selectedRun: any) => void;
   setSelectedRuns?: (selectedRuns: any) => void;
   setErrors?: (errors: ErrorsType) => void;
 };
@@ -276,6 +281,7 @@ function PipelineRunsTable({
   allowBulkSelect,
   allowDelete,
   deletePipelineRun,
+  disableKeyboardNav,
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
@@ -285,12 +291,14 @@ function PipelineRunsTable({
   pipelineRuns,
   selectedRun,
   selectedRuns,
+  setSelectedRun,
   setSelectedRuns,
   setErrors,
 }: PipelineRunsTableProps) {
   const router = useRouter();
   const isViewerRole = isViewer();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const canRegisterKeyDown = useRef<boolean>(true);
   const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -325,6 +333,74 @@ function PipelineRunsTable({
       ),
     },
   );
+
+  const uuidKeyboard = 'PipelineDetail/Runs/Table';
+  const uuidTable = 'pipeline-runs';
+
+  const getRunRowIndex = useCallback((run: PipelineRunType) => {
+    if (!run) return null;
+    
+    const rowIndex = pipelineRuns.findIndex(pipelineRun => pipelineRun.id === run.id);
+    return rowIndex >= 0 ? rowIndex : null;
+  }, [pipelineRuns]);
+
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping) => {
+      const upPressed = keyMapping[KEY_CODE_ARROW_UP];
+      const downPressed = keyMapping[KEY_CODE_ARROW_DOWN];
+
+      if (setSelectedRun && !disableKeyboardNav && (upPressed || downPressed)) {
+        setSelectedRun((prevSelectedRun) => {
+          const prevRowIndex = getRunRowIndex(prevSelectedRun);
+          if (prevRowIndex !== null) {
+            // This disables the default auto-scrolling response to the up/down arrow keys
+            if (event.repeat) {
+              event.preventDefault();
+              return prevSelectedRun;
+            }
+
+            if (upPressed) {
+              let newRowIndex = prevRowIndex - 1;
+              if (newRowIndex < 0) {
+                newRowIndex = pipelineRuns.length - 1;
+              }
+              return pipelineRuns[newRowIndex];
+            } else if (downPressed) {
+              let newRowIndex = prevRowIndex + 1;
+              if (newRowIndex >= pipelineRuns.length) {
+                newRowIndex = 0;
+              }
+              return pipelineRuns[newRowIndex];
+            }
+          }
+  
+          return prevSelectedRun;
+        });
+      }
+    }, 
+    [pipelineRuns, setSelectedRun],
+  );
+
+  useEffect(() => {
+    const rowIndex = getRunRowIndex(selectedRun);
+    if (rowIndex !== null) {
+      const tableRowUuid = getTableRowUuid({ rowIndex, uuid: uuidTable });
+      const newSelectedRow = document.getElementById(tableRowUuid);
+      if (newSelectedRow) {
+        newSelectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [getRunRowIndex, selectedRun]);
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [null, 1];
@@ -781,7 +857,7 @@ function PipelineRunsTable({
 
               return arr;
             })}
-            uuid="pipeline-runs"
+            uuid={uuidTable}
           />
       }
     </TableContainerStyle>
