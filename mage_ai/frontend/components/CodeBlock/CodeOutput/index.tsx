@@ -150,12 +150,12 @@ function CodeOutput({
 }: CodeOutputProps, ref) {
   const [mounted, setMounted] = useState(false);
 
-  const startTime = performance.now();
-  useEffect(() => {
-    const duration = performance.now() - startTime;
-    console.log('CodeOutput render', duration);
-    setMounted(true);
-  }, []);
+  // const startTime = performance.now();
+  // useEffect(() => {
+  //   const duration = performance.now() - startTime;
+  //   console.log('CodeOutput render', duration);
+  //   setMounted(true);
+  // }, []);
 
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED, {

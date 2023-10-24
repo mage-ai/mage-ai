@@ -29,6 +29,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
 import { Check, LayoutSplit, LayoutStacked } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
@@ -91,6 +92,11 @@ function KernelStatus({
   sideBySideEnabled,
   updatePipelineMetadata,
 }: KernelStatusProps) {
+  const {
+    featureEnabled,
+    featureUUIDs,
+  } = useProject();
+
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
     alive,
@@ -446,59 +452,61 @@ function KernelStatus({
           )}
         </FlexContainer>
 
-        <HeaderViewOptionsStyle>
-          <FlexContainer alignItems="center">
-            <Tooltip
-              block
-              center
-              description={(
-                <Text>
-                  Display the output of a block underneath the block’s code.
-                </Text>
-              )}
-              size={null}
-            >
-              <Button
-                iconOnly
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setSideBySideEnabled(false)}
-                padding={`${1 * UNIT}px`}
+        {featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW) && (
+          <HeaderViewOptionsStyle>
+            <FlexContainer alignItems="center">
+              <Tooltip
+                block
+                center
+                description={(
+                  <Text>
+                    Display the output of a block underneath the block’s code.
+                  </Text>
+                )}
+                size={null}
               >
-                <LayoutStacked
-                  muted={sideBySideEnabled}
-                  size={2 * UNIT}
-                />
-              </Button>
-            </Tooltip>
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setSideBySideEnabled(false)}
+                  padding={`${1 * UNIT}px`}
+                >
+                  <LayoutStacked
+                    muted={sideBySideEnabled}
+                    size={2 * UNIT}
+                  />
+                </Button>
+              </Tooltip>
 
-            <Tooltip
-              block
-              center
-              description={(
-                <Text>
-                  Display the output of a block on the right side of the block’s code.
-                </Text>
-              )}
-              size={null}
-            >
-              <Button
-                iconOnly
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setSideBySideEnabled(true)}
-                padding={`${1 * UNIT}px`}
+              <Tooltip
+                block
+                center
+                description={(
+                  <Text>
+                    Display the output of a block on the right side of the block’s code.
+                  </Text>
+                )}
+                size={null}
               >
-                <LayoutSplit
-                  muted={!sideBySideEnabled}
-                  size={2 * UNIT}
-                />
-              </Button>
-            </Tooltip>
-          </FlexContainer>
-        </HeaderViewOptionsStyle>
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setSideBySideEnabled(true)}
+                  padding={`${1 * UNIT}px`}
+                >
+                  <LayoutSplit
+                    muted={!sideBySideEnabled}
+                    size={2 * UNIT}
+                  />
+                </Button>
+              </Tooltip>
+            </FlexContainer>
+          </HeaderViewOptionsStyle>
+        )}
 
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">

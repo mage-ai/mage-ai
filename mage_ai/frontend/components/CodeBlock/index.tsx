@@ -353,11 +353,11 @@ function CodeBlock({
   widgets,
   windowWidth,
 }: CodeBlockProps, ref) {
-  const startTime = performance.now();
-  useEffect(() => {
-    const duration = performance.now() - startTime;
-    console.log('CodeBlock render', duration);
-  }, []);
+  // const startTime = performance.now();
+  // useEffect(() => {
+  //   const duration = performance.now() - startTime;
+  //   console.log('CodeBlock render', duration);
+  // }, []);
 
   const themeContext = useContext(ThemeContext);
   const refColumn1 = useRef(null);
