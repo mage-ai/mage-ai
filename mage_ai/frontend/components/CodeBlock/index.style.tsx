@@ -172,7 +172,6 @@ export const BlockHeaderStyle = styled.div<{
   ${props => !props.noSticky && `
     // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
     // and the screen width is too small.
-    overflow-x: hidden;
     position: sticky;
     top: -5px;
   `}
