@@ -14,6 +14,12 @@ class GoogleSheets(BaseFile):
     - Sheet URL
     - Sheet Name
 
+    And worksheets using any one of:
+    - Worksheet Name
+    - Worsheet Position
+
+    Exporting worksheets currently requires an existing worksheet to be present.
+
     If GOOGLE_APPLICATION_CREDENTIALS environment is set, no further arguments are needed
     other than those specified below. Otherwise, use the factory method `with_config` to construct
     the data loader using manually specified credentials.
@@ -76,10 +82,23 @@ class GoogleSheets(BaseFile):
 
     def fetch_sheet(
         self,
-        sheet_url=None,
-        sheet_id=None,
-        sheet_name=None,
+        sheet_url: str = None,
+        sheet_id: str = None,
+        sheet_name: str = None,
     ) -> gspread.spreadsheet.Spreadsheet:
+        """Fetches a Google Sheet, given a sheet_url, sheet_id, or sheet_name.
+
+        Args:
+            sheet_url (str, optional): A sheet URL to export the dataframe to. Defaults to None
+            sheet_id (str, optional): A sheet id to export the dataframe to. Defaults to None
+            sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
+
+        Raises:
+            KeyError: _description_
+
+        Returns:
+            gspread.spreadsheet.Spreadsheet: _description_
+        """
         if sheet_url:
             sheet = self.client.open_by_url(sheet_url)
         elif sheet_id:
@@ -97,12 +116,31 @@ class GoogleSheets(BaseFile):
 
     def fetch_worksheet(
         self,
-        sheet_url=None,
-        sheet_id=None,
-        sheet_name=None,
-        worksheet_name=None,
-        worksheet_position=0,
-    ):
+        sheet_url: str = None,
+        sheet_id: str = None,
+        sheet_name: str = None,
+        worksheet_name: str = None,
+        worksheet_position: int = 0,
+    ) -> gspread.worksheet.Worksheet:
+        """Fetches a worksheet from a Google Sheet, given a sheet_url, sheet_id, or sheet_name.
+        The worksheet may be fetched by name or position, but defaults to the first (0-indexed).
+
+        Args:
+            sheet_url (str, optional): A sheet URL to export the dataframe to. Defaults to None
+            sheet_id (str, optional): A sheet id to export the dataframe to. Defaults to None
+            sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
+            worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
+            worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
+
+        Raises:
+            name_ex: Raised if a worksheet cannot be found with the specified name.
+            position_ex: Raised if a worksheet cannot be found at the specified position.
+            KeyError: To be raised if worksheet_name or worksheet_position is not set.
+            ValueError: Raised if there is an error loading the worksheet.
+
+        Returns:
+            gspread.worksheet.Worksheet: A worksheet object.
+        """
         sheet = self.fetch_sheet(
             sheet_url=sheet_url,
             sheet_id=sheet_id,
@@ -114,13 +152,15 @@ class GoogleSheets(BaseFile):
         if worksheet_name is not None:
             try:
                 worksheet = sheet.worksheet(worksheet_name)
-            except Exception as ex:
-                raise ex
-        else:
+            except Exception as name_ex:
+                raise name_ex
+        elif worksheet_position is not None:
             try:
                 worksheet = sheet.get_worksheet(worksheet_position)
-            except Exception as ex:
-                raise ex
+            except Exception as postition_ex:
+                raise postition_ex
+        else:
+            raise KeyError("Please set one of worksheet_name or worksheet_position.")
 
         if worksheet is not None:
             with self.printer.print_msg(
@@ -132,26 +172,24 @@ class GoogleSheets(BaseFile):
 
     def load(
         self,
-        sheet_url=None,
-        sheet_id=None,
-        sheet_name=None,
-        worksheet_name=None,
-        worksheet_position=0,
-        header_rows=1,
-        **kwargs,
+        sheet_url: str = None,
+        sheet_id: str = None,
+        sheet_name: str = None,
+        worksheet_name: str = None,
+        worksheet_position: int = 0,
+        header_rows: int = 1,
     ) -> pd.DataFrame:
         """Loads a Google Sheet into a Pandas DataFrame, given a sheet_url, sheet_id, or sheet_name.
         A worksheet name or position can also be specified, but defaults to the
         first (0-indexed) worksheet.
 
         Args:
-            sheet_url (str, optional): _description_. Defaults to None.
-            sheet_id (str, optional): _description_. Defaults to None.
-            sheet_name (str, optional): _description_. Defaults to None.
-            worksheet_name (str, optional): The name of the worksheet to select. Defaults to None.
-            worksheet_position (str, optional): The position of the worksheet to select.
-            Defaults to 0.
-            header_rows (int, optional): The number of rows to use as headers. Defaults to 0.
+            sheet_url (str, optional): A sheet URL to export the dataframe to. Defaults to None
+            sheet_id (str, optional): A sheet id to export the dataframe to. Defaults to None
+            sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
+            worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
+            worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
+            header_rows (int, optional): The number of rows to use as headers. Defaults to 0
 
         Raises:
             KeyError: To be raised if a sheet_url, sheet_id, or sheet_name is not provided
@@ -173,13 +211,23 @@ class GoogleSheets(BaseFile):
     def export(
         self,
         df: pd.DataFrame,
-        sheet_url=None,
-        sheet_id=None,
-        sheet_name=None,
-        worksheet_name=None,
-        worksheet_position=0,
-        **kwargs,
+        sheet_url: str = None,
+        sheet_id: str = None,
+        sheet_name: str = None,
+        worksheet_name: str = None,
+        worksheet_position: int = 0,
     ) -> None:
+        """Exports a dataframe to an existing Worksheet within a Google Sheet.
+
+        Args:
+            df (pd.DataFrame): The dataframe to be exported.
+            sheet_url (str, optional): A sheet URL to export the dataframe to. Defaults to None
+            sheet_id (str, optional): A sheet id to export the dataframe to. Defaults to None
+            sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
+            worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
+            worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
+        """
+
         worksheet = self.fetch_worksheet(
             sheet_url=sheet_url,
             sheet_id=sheet_id,
@@ -196,13 +244,12 @@ class GoogleSheets(BaseFile):
 
     def exists(
         self,
-        sheet_url=None,
-        sheet_id=None,
-        sheet_name=None,
-        worksheet_name=None,
-        worksheet_position=0,
+        sheet_url: str = None,
+        sheet_id: str = None,
+        sheet_name: str = None,
+        worksheet_name: str = None,
+        worksheet_position: int = 0,
     ) -> bool:
-
         try:
             self.fetch_worksheet(
                 sheet_url=sheet_url,
