@@ -216,7 +216,7 @@ function FileHeaderMenu({
           <Spacing mr={1} />
 
           <Text noWrapping>
-            Show output next to code
+            Show output next to code (beta)
           </Text>
         </FlexContainer>
       ),
@@ -238,11 +238,11 @@ function FileHeaderMenu({
           <Spacing mr={1} />
 
           <Text disabled={!sideBySideEnabled} noWrapping>
-            Scroll output alongside code
+            Scroll output alongside code (beta)
           </Text>
         </FlexContainer>
       ),
-      onClick: () => setScrollTogether(prev => !prev),
+      onClick: () => setScrollTogether(!scrollTogether),
       uuid: 'Scroll output alongside code',
     },
   ], [
