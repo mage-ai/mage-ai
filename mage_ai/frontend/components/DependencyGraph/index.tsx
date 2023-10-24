@@ -778,8 +778,7 @@ function DependencyGraph({
   const determineSelectedStatus: {
     anotherBlockSelected: boolean;
     selected: boolean;
-  } = useCallback((node: NodeType) => {
-    const block = node?.data?.block;
+  } = useCallback((node: NodeType, block: BlockType) => {
     const activePortExists = Object.values(activePorts || {})?.length >= 1;
     const activePort = activePorts?.[node?.id];
     const selected = blockEditing
@@ -917,11 +916,8 @@ function DependencyGraph({
               anotherBlockSelected,
               selected,
             } = determineSelectedStatus({
-              data: {
-                block,
-              },
               id: block?.uuid,
-            });
+            }, block);
 
             return (
               <Edge
@@ -1070,6 +1066,11 @@ function DependencyGraph({
             );
             const isActive = !!activeNodes?.[blockUUID];
 
+            const {
+              anotherBlockSelected,
+              selected,
+            } = determineSelectedStatus(node, block);
+
             return (
               <Node
                 {...node}
@@ -1108,7 +1109,7 @@ function DependencyGraph({
                     ry={isActive ? 10 : null}
                     style={{
                       fill: color?.accentLight,
-                      stroke: color?.accent,
+                      stroke: anotherBlockSelected && !selected ? color?.accentLight : color?.accent,
                       strokeWidth: 1,
                     }}
                   >
@@ -1173,7 +1174,7 @@ function DependencyGraph({
                   const {
                     anotherBlockSelected,
                     selected,
-                  } = determineSelectedStatus(node);
+                  } = determineSelectedStatus(node, block);
 
                   const {
                     hasFailed,
@@ -1211,6 +1212,7 @@ function DependencyGraph({
                         extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
                         hasFailed={hasFailed}
                         height={nodeHeight}
+                        hideNoStatus
                         hideStatus={disabledProp || noStatus}
                         isInProgress={isInProgress}
                         isQueued={isQueued}

@@ -233,7 +233,6 @@ function BlockNode({
               <StatusStyle title={tooltipText}>
                 {!hideStatus && (
                   <>
-                    {isInProgress && <Spinner color={(themeContext || dark).content.active} small />}
                     {success && <Check size={STATUS_SIZE} success />}
                     {failed && <Close danger size={STATUS_SIZE} />}
                     {noStatus && !hideNoStatus && (
