@@ -541,7 +541,7 @@ function DependencyGraph({
     isQueued: boolean;
     isSuccessful: boolean;
   } => {
-    if (noStatus) {
+    if (noStatus || !block) {
       return {};
     } else if (blockStatus) {
       const {
@@ -559,13 +559,13 @@ function DependencyGraph({
         runtime,
       };
     } else {
-      const messagesWithType = getMessagesWithType(messages?.[block.uuid] || []);
+      const messagesWithType = getMessagesWithType(messages?.[block?.uuid] || []);
       const {
         hasError,
         hasOutput,
       } = hasErrorOrOutput(messagesWithType);
 
-      const isInProgress = runningBlocksMapping[block.uuid];
+      const isInProgress = runningBlocksMapping[block?.uuid];
 
       return {
         hasFailed: !isInProgress && (hasError || StatusTypeEnum.FAILED === block.status),
