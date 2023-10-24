@@ -801,6 +801,60 @@ function DependencyGraph({
     upstreamBlocksEditing,
   ]);
 
+  const buildBlockNode = useCallback((node, {
+    nodeHeight,
+  }) => {
+    const {
+      data: {
+        block,
+        children,
+      },
+    } = node;
+
+    const {
+      anotherBlockSelected,
+      selected,
+    } = determineSelectedStatus(node, block);
+
+    const {
+      hasFailed,
+      isInProgress,
+      isQueued,
+      isSuccessful,
+    } = getBlockStatus(block);
+
+    return (
+      <BlockNode
+        anotherBlockSelected={anotherBlockSelected}
+        block={block}
+        callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
+        conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
+        disabled={blockEditing?.uuid === block.uuid}
+        downstreamBlocks={children}
+        extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
+        hasFailed={hasFailed}
+        height={nodeHeight}
+        hideNoStatus
+        hideStatus={disabledProp || noStatus}
+        isInProgress={isInProgress}
+        isQueued={isQueued}
+        isSuccessful={isSuccessful}
+        key={block?.uuid}
+        pipeline={pipeline}
+        selected={selected}
+      />
+    );
+  }, [
+    blockEditing,
+    callbackBlocksByBlockUUID,
+    conditionalBlocksByBlockUUID,
+    disabledProp,
+    extensionBlocksByBlockUUID,
+    getBlockStatus,
+    noStatus,
+    pipeline,
+  ]);
+
   // Show a menu to add a block between or delete the connection.
   // console.log(activeEdges)
 
@@ -1090,6 +1144,7 @@ function DependencyGraph({
                       });
                     }}
                     onDragStart={(event, initial, port) => {
+                      // Build block node, then drag it around.
                       onDragStartPort({
                         event,
                         initial,
