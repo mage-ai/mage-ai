@@ -6,7 +6,7 @@ import { featureEnabled } from '.';
 
 function useProject(): {
   featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
-  featureUUIDs: FeatureUUIDEnum;
+  featureUUIDs: any;
   fetchProjects: () => any;
   project: ProjectType;
 } {
@@ -15,6 +15,10 @@ function useProject(): {
 
   return {
     featureEnabled: (featureUUID: FeatureUUIDEnum): boolean => featureEnabled(project, featureUUID),
+    // featureUUIDs: Object.keys(FeatureUUIDEnum).reduce((acc, key) => ({
+    //   ...acc,
+    //   [key]: FeatureUUIDEnum[key],
+    // }), {}),
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
     project,
