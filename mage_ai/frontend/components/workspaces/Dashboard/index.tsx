@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
+import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import api from '@api';
 import { BreadcrumbType } from '@components/shared/Header';
@@ -12,7 +12,6 @@ type WorkspacesDashboardProps = {
   breadcrumbs?: BreadcrumbType[],
   children: any;
   errors?: ErrorsType;
-  header?: any;
   headerOffset?: number;
   mainContainerHeader?: any;
   pageName: WorkspacesPageNameEnum;
@@ -25,7 +24,6 @@ function WorkspacesDashboard({
   breadcrumbs = [],
   children,
   errors,
-  header,
   headerOffset,
   mainContainerHeader,
   pageName,
@@ -46,7 +44,6 @@ function WorkspacesDashboard({
       beforeWidth={before ? 50 * UNIT : 0}
       breadcrumbs={breadcrumbs}
       errors={errors}
-      header={header}
       headerOffset={headerOffset}
       mainContainerHeader={mainContainerHeader}
       navigationItems={buildNavigationItems(user, projectType, pageName)}

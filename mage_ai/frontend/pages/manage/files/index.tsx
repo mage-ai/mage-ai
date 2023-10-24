@@ -1,19 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import ErrorsType from '@interfaces/ErrorsType';
-import FileEditor from '@components/FileEditor';
-import PrivateRoute from '@components/shared/PrivateRoute';
-import WorkspacesDashboard from '@components/workspaces/Dashboard';
-import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
-import { queryFromUrl } from '@utils/url';
-import FileBrowser from '@components/FileBrowser';
-import { goToWithQuery } from '@utils/routing';
-import api from '@api';
 import ApiReloader from '@components/ApiReloader';
-import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
+import ErrorsType from '@interfaces/ErrorsType';
+import FileBrowser from '@components/FileBrowser';
+import FileEditor from '@components/FileEditor';
 import FileTabs from '@components/PipelineDetail/FileTabs';
-import { equals } from '@utils/array';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
+import WorkspacesDashboard from '@components/workspaces/Dashboard';
+import api from '@api';
+import { equals } from '@utils/array';
+import { goToWithQuery } from '@utils/routing';
+import { queryFromUrl } from '@utils/url';
+import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
+import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
+
 
 function FilesPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);

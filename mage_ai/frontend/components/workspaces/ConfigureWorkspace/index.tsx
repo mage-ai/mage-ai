@@ -3,8 +3,10 @@ import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Button from '@oracle/elements/Button';
 import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
+import FileBrowser from '@components/FileBrowser';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -24,16 +26,14 @@ import {
   WorkspaceFieldType,
 } from './constants';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
+import { Close, Folder } from '@oracle/icons';
 import { ClusterTypeEnum } from '../constants';
-import { PURPLE } from '@oracle/styles/colors/main';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
+import { PURPLE } from '@oracle/styles/colors/main';
+import { WindowContainerStyle, WindowContentStyle, WindowHeaderStyle } from '@components/FileSelectorPopup/index.style';
 import { onSuccess } from '@api/utils/response';
 import { replaceSpaces } from '@utils/string';
-import { Close, Folder } from '@oracle/icons';
-import Button from '@oracle/elements/Button';
 import { useModal } from '@context/Modal';
-import FileBrowser from '@components/FileBrowser';
-import { WindowContainerStyle, WindowContentStyle, WindowHeaderStyle } from '@components/FileSelectorPopup/index.style';
 
 type ConfigureWorkspaceProps = {
   clusterType: string;

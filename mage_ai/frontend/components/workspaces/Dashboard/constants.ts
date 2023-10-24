@@ -1,6 +1,6 @@
-import UserType, { RoleValueEnum } from '@interfaces/UserType';
-import { ProjectTypeEnum } from '@interfaces/ProjectType';
+import UserType from '@interfaces/UserType';
 import { File, Settings, WorkspacesIcon, WorkspacesUsersIcon } from '@oracle/icons';
+import { ProjectTypeEnum } from '@interfaces/ProjectType';
 
 export const SECTION_UUID_WORKSPACE = 'Workspace';
 
