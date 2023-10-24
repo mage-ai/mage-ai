@@ -32,7 +32,9 @@ function ServerTimeButton({
       active={active}
       borderLess
       compact
+      highlightOnHoverAlt
       ref={buttonRef}
+      transparent
     >
       <Text inline monospace>
         {`${time} ${timeZone}`}

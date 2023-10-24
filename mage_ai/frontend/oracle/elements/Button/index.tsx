@@ -46,6 +46,7 @@ export type ButtonProps = {
   disabled?: boolean;
   fullWidth?: boolean;
   highlightOnHover?: boolean;
+  highlightOnHoverAlt?: boolean;
   iconOnly?: boolean;
   id?: string;
   large?: boolean;
@@ -229,6 +230,12 @@ const SHARED_STYLES = css<{
   ${props => props.highlightOnHover && `
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
+    }
+  `}
+
+  ${props => props.highlightOnHoverAlt && `
+    &:hover {
+      background-color: ${(props.theme.background || dark.background).dashboard};
     }
   `}
 

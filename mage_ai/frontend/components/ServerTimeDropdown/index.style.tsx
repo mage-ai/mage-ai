@@ -9,15 +9,9 @@ const SHARED_CELL_PADDING = '12px 20px';
 const SHARED_GAP = '1px';
 
 export const ButtonStyle = styled(Button)<{ active?: boolean }>`
-  background-color: transparent;
-
   ${props => (props.active) && `
     background-color: ${(props.theme.background || dark.background).dashboard};
   `};
-
-  &:hover {
-    background-color: ${props => (props.theme.background || dark.background).dashboard};
-  }
 `;
 
 export const DropdownContainerStyle = styled.div<{
