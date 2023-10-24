@@ -813,8 +813,6 @@ function PipelineDetail({
         key = `${key}:${refreshTimestamp}`;
       }
 
-      console.log('wtf', blocksFiltered)
-
       if (isHidden) {
         el = (
           <HiddenBlock
