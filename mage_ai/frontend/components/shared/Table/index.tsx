@@ -23,7 +23,6 @@ import {
   MENU_WIDTH,
   SortDirectionEnum,
   SortQueryEnum,
-  getTableRowUuid,
 } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
@@ -419,12 +418,10 @@ function Table({
         }
       };
 
-      const uuidRow = getTableRowUuid({ rowIndex, uuid });
       rowEl = (
         <TableRowStyle
           highlightOnHover={highlightRowOnHover}
-          id={uuidRow}
-          key={uuidRow}
+          key={`${uuid}-row-${rowIndex}`}
           noHover={!(linkProps || onClickRow || renderExpandedRowWithObject)}
           // @ts-ignore
           onClick={(e) => {
@@ -719,7 +716,7 @@ function Table({
                     {els}
                   </>
                 </TableStyle>
-              </div>,
+              </div>
             );
           } else {
             acc.push(
@@ -756,7 +753,7 @@ function Table({
       }, []);
     } else if (!!renderExpandedRowWithObject && selectedRowIndexInternal !== null) {
       const rowsBefore = rowEls?.slice(0, selectedRowIndexInternal + 1);
-      const rowsAfter = rowEls?.slice(selectedRowIndexInternal + 1, rowEls?.length);
+      const rowsAfter = rowEls?.slice(selectedRowIndexInternal + 1, rowEls?.length)
 
       return (
         <>
