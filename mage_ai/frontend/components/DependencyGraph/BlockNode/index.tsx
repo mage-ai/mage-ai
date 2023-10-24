@@ -189,13 +189,12 @@ function BlockNode({
 
   return (
     <NodeContainerStyle
-      active
+      active={selected}
       borderColor={accent}
       disabled={disabled}
       height={height}
       isCancelled={isCancelled}
       noBackground={downstreamBlocks?.length >= 1}
-      selected={selected}
     >
       <NodeStyle
         disabled={disabled}

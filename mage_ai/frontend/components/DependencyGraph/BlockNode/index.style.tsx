@@ -14,7 +14,6 @@ export const NodeContainerStyle = styled.div<{
   height?: number;
   isCancelled: boolean;
   noBackground?: boolean;
-  selected?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   min-width: fit-content;
@@ -22,10 +21,6 @@ export const NodeContainerStyle = styled.div<{
 
   ${props => !props.active && props.borderColor && `
     border: ${BORDER_WIDTH}px solid transparent;
-  `}
-
-  ${props => !props.active && props.selected && `
-    border-color: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => !props.active && (props.isCancelled || props.disabled) && `
