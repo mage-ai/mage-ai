@@ -135,7 +135,6 @@ class GoogleSheets(BaseFile):
         Raises:
             name_ex: Raised if a worksheet cannot be found with the specified name.
             position_ex: Raised if a worksheet cannot be found at the specified position.
-            KeyError: To be raised if worksheet_name or worksheet_position is not set.
             ValueError: Raised if there is an error loading the worksheet.
 
         Returns:
@@ -154,13 +153,11 @@ class GoogleSheets(BaseFile):
                 worksheet = sheet.worksheet(worksheet_name)
             except Exception as name_ex:
                 raise name_ex
-        elif worksheet_position is not None:
+        else:
             try:
                 worksheet = sheet.get_worksheet(worksheet_position)
             except Exception as postition_ex:
                 raise postition_ex
-        else:
-            raise KeyError("Please set one of worksheet_name or worksheet_position.")
 
         if worksheet is not None:
             with self.printer.print_msg(
