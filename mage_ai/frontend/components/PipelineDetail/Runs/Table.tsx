@@ -346,58 +346,50 @@ function PipelineRunsTable({
 
   const {
     registerOnKeyDown,
-    registerOnKeyUp,
     unregisterOnKeyDown,
-    unregisterOnKeyUp,
   } = useKeyboardContext();
 
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
 
-  useEffect(() => () => {
-    unregisterOnKeyUp(uuidKeyboard);
-  }, [unregisterOnKeyUp, uuidKeyboard]);
-
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping) => {
-      // This disables the default scrolling response to the arrow keys
-      event.preventDefault();
+      const upPressed = keyMapping[KEY_CODE_ARROW_UP];
+      const downPressed = keyMapping[KEY_CODE_ARROW_DOWN];
 
-      if (!setSelectedRun || disableKeyboardNav || !canRegisterKeyDown.current) return;
+      if (setSelectedRun && !disableKeyboardNav && (upPressed || downPressed)) {
+        setSelectedRun((prevSelectedRun) => {
+          const prevRowIndex = getRunRowIndex(prevSelectedRun);
+          if (prevRowIndex !== null) {
+            // This disables the default auto-scrolling response to the up/down arrow keys
+            if (event.repeat) {
+              event.preventDefault();
+              return prevSelectedRun;
+            }
 
-      canRegisterKeyDown.current = false;
-      
-      setSelectedRun((prevSelectedRun) => {
-        const prevRowIndex = getRunRowIndex(prevSelectedRun);
-        if (prevRowIndex !== null) {
-          if (keyMapping[KEY_CODE_ARROW_UP]) {
-            let newRowIndex = prevRowIndex - 1;
-            if (newRowIndex < 0) {
-              newRowIndex = pipelineRuns.length - 1;
+            if (upPressed) {
+              let newRowIndex = prevRowIndex - 1;
+              if (newRowIndex < 0) {
+                newRowIndex = pipelineRuns.length - 1;
+              }
+              return pipelineRuns[newRowIndex];
+            } else if (downPressed) {
+              let newRowIndex = prevRowIndex + 1;
+              if (newRowIndex >= pipelineRuns.length) {
+                newRowIndex = 0;
+              }
+              return pipelineRuns[newRowIndex];
             }
-            return pipelineRuns[newRowIndex];
-          } else if (keyMapping[KEY_CODE_ARROW_DOWN]) {
-            let newRowIndex = prevRowIndex + 1;
-            if (newRowIndex >= pipelineRuns.length) {
-              newRowIndex = 0;
-            }
-            return pipelineRuns[newRowIndex];
           }
-        }
-
-        return prevSelectedRun;
-      });
+  
+          return prevSelectedRun;
+        });
+      }
     }, 
     [pipelineRuns, setSelectedRun],
   );
-
-  registerOnKeyUp(
-    uuidKeyboard,
-    () => {
-      canRegisterKeyDown.current = true;
-    }, []);
 
   useEffect(() => {
     const rowIndex = getRunRowIndex(selectedRun);
