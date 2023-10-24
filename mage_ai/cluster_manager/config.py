@@ -57,14 +57,14 @@ class TerminationPolicy(BaseConfig):
 @dataclass
 class PostStart(BaseConfig):
     command: List[str] = None
-    hook: str = None
+    hook_path: str = None
 
     @classmethod
     def parse_config(self, config: Dict = None) -> Dict:
-        hook = config.get('hook')
-        if hook and not os.path.isabs(hook):
-            config['hook'] = os.path.join(
-                get_repo_path(), hook
+        hook_path = config.get('hook_path')
+        if hook_path and not os.path.isabs(hook_path):
+            config['hook_path'] = os.path.join(
+                get_repo_path(), hook_path
             )
 
         return config

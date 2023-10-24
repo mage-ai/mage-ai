@@ -150,6 +150,23 @@ class WorkloadManager:
         workspace_config: KubernetesWorkspaceConfig,
         project_type: str = ProjectType.STANDALONE,
     ):
+        """
+        Create workload for k8s.
+
+        1. Get parameters from workspace config.
+        2. Configure container: lifecycle, env, etc.
+        3. Configure stateful set
+        4. Create config map for lifecycle hooks if provided.
+        5. Create stateful set
+        6. Create service
+        7. Update ingress if ingress_name provided
+
+        Args:
+            name (str): name of the workload
+            workspace_config (KuberentesWorkspaceConfig): workspace config that contains
+                options to customize the workload
+            project_type (str): type of project for the workload
+        """
         container_config_yaml = workspace_config.container_config
         container_config = dict()
         if container_config_yaml:
@@ -177,7 +194,6 @@ class WorkloadManager:
             }
         ]
 
-        # Create stateful set
         env_vars = self.__populate_env_vars(
             name,
             project_type=project_type,
@@ -189,27 +205,13 @@ class WorkloadManager:
 
         lifecycle_config = workspace_config.lifecycle_config or LifecycleConfig()
         if lifecycle_config.post_start:
-            file_name = self.configure_post_start(name, lifecycle_config.post_start)
-            if file_name:
-                volumes.append(
-                    {
-                        'name': 'post-start-script',
-                        'configMap': {
-                            'name': f'{name}-post-start',
-                            'items': [
-                                {
-                                    'key': file_name,
-                                    'path': file_name,
-                                }
-                            ]
-                        }
-                    }
-                )
+            if lifecycle_config.post_start.hook_path:
+                post_start_file_name = os.path.basename(lifecycle_config.post_start.hook_path)
                 volume_mounts.append(
                     {
-                        'name': 'post-start-script',
-                        'mountPath': f'/app/{file_name}',
-                        'subPath': file_name,
+                        'name': 'lifecycle-hooks',
+                        'mountPath': f'/app/{post_start_file_name}',
+                        'subPath': post_start_file_name,
                     },
                 )
 
@@ -219,7 +221,7 @@ class WorkloadManager:
                     post_start_command = json.loads(post_start_command)
                 except Exception:
                     pass
-                if type(post_start_command) is str:
+                if isinstance(post_start_command, str):
                     post_start_command = shlex.split(post_start_command)
                 container_config['lifecycle'] = {
                     **container_config.get('lifecycle', {}),
@@ -248,27 +250,6 @@ class WorkloadManager:
         init_containers = []
         pre_start_script_path = lifecycle_config.pre_start_script_path
         if pre_start_script_path:
-            self.configure_pre_start(name, pre_start_script_path, mage_container_config)
-
-            volumes.append(
-                {
-                    'name': 'pre-start-script',
-                    'configMap': {
-                        'name': f'{name}-pre-start',
-                        'items': [
-                            {
-                                'key': 'pre-start.py',
-                                'path': 'pre-start.py',
-                            },
-                            {
-                                'key': 'initial-config.json',
-                                'path': 'initial-config.json',
-                            }
-                        ]
-                    }
-                }
-            )
-
             init_containers.append(
                 {
                     'name': f'{name}-pre-start',
@@ -276,12 +257,12 @@ class WorkloadManager:
                     'imagePullPolicy': 'Always',
                     'volumeMounts': [
                         {
-                            'name': 'pre-start-script',
+                            'name': 'lifecycle-hooks',
                             'mountPath': '/app/pre-start.py',
                             'subPath': 'pre-start.py',
                         },
                         {
-                            'name': 'pre-start-script',
+                            'name': 'lifecycle-hooks',
                             'mountPath': '/app/initial-config.json',
                             'subPath': 'initial-config.json',
                         }
@@ -337,6 +318,29 @@ class WorkloadManager:
                     'name': 'service-account-volume',
                     'secret': {
                         'secretName': os.getenv(SERVICE_ACCOUNT_SECRETS_NAME)
+                    }
+                }
+            )
+
+        config_map = self.create_hooks_config_map(
+            name,
+            lifecycle_config.pre_start_script_path,
+            mage_container_config,
+            lifecycle_config.post_start,
+        )
+        if config_map:
+            volumes.append(
+                {
+                    'name': 'lifecycle-hooks',
+                    'configMap': {
+                        'name': f'{name}-hooks',
+                        'items': [
+                            {
+                                'key': key,
+                                'path': key,
+                            }
+                            for key in config_map
+                        ]
                     }
                 }
             )
@@ -531,30 +535,44 @@ class WorkloadManager:
             name, namespace=self.namespace, body={'spec': {'replicas': 1}},
         )
 
-    def configure_pre_start(
+    def create_hooks_config_map(
         self,
         name: str,
-        pre_start_script_path: str,
-        mage_container_config: Dict,
-    ) -> None:
-        self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
+        pre_start_script_path: str = None,
+        mage_container_config: Dict = None,
+        post_start_config: PostStart = None,
+    ) -> Dict:
+        config_map_data = {}
+        if pre_start_script_path:
+            self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
 
-        with open(pre_start_script_path, 'r', encoding='utf-8') as f:
-            pre_start_script = f.read()
+            with open(pre_start_script_path, 'r', encoding='utf-8') as f:
+                pre_start_script = f.read()
 
-        config_map = {
-            'data': {
-                'pre-start.py': pre_start_script,
-                'initial-config.json': json.dumps(mage_container_config),
-            },
-            'metadata': {
-                'name': f'{name}-pre-start',
+            config_map_data['pre-start.py'] = pre_start_script
+            config_map_data['initial-config.json'] = json.dumps(mage_container_config)
+
+        post_start_file_name = None
+        if post_start_config.hook_path is not None:
+            with open(post_start_config.hook_path, 'r', encoding='utf-8') as f:
+                post_start_script = f.read()
+
+            post_start_file_name = os.path.basename(post_start_config.hook_path)
+            config_map_data[post_start_file_name] = post_start_script
+
+        if config_map_data:
+            config_map = {
+                'data': config_map_data,
+                'metadata': {
+                    'name': f'{name}-hooks',
+                }
             }
-        }
-        self.core_client.create_namespaced_config_map(
-            namespace=self.namespace,
-            body=config_map
-        )
+            self.core_client.create_namespaced_config_map(
+                namespace=self.namespace,
+                body=config_map
+            )
+
+        return config_map_data
 
     def __validate_pre_start_script(
         self,
@@ -583,28 +601,6 @@ class WorkloadManager:
             )
         except Exception as ex:
             raise Exception(f'Pre-start script validation failed with error: {str(ex)}')
-
-    def configure_post_start(self, name: str, post_start_config: PostStart) -> str:
-        if post_start_config.hook is not None:
-            with open(post_start_config.hook, 'r', encoding='utf-8') as f:
-                post_start_script = f.read()
-
-            file_name = os.path.basename(post_start_config.hook)
-
-            config_map = {
-                'data': {
-                    file_name: post_start_script,
-                },
-                'metadata': {
-                    'name': f'{name}-post-start',
-                }
-            }
-            self.core_client.create_namespaced_config_map(
-                namespace=self.namespace,
-                body=config_map
-            )
-
-            return file_name
 
     def __populate_env_vars(
         self,

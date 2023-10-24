@@ -448,7 +448,7 @@ function ConfigureWorkspace({
                         ...prev,
                         post_start: {
                           ...prev?.['post_start'],
-                          hook: filePath,
+                          hook_path: filePath,
                         },
                       }));
                       hideFileSelector();
@@ -468,13 +468,13 @@ function ConfigureWorkspace({
                   ...prev,
                   post_start: {
                     ...prev?.['post_start'],
-                    hook: e.target.value,
+                    hook_path: e.target.value,
                   },
                 }));
               }}
               placeholder="/"
               setContentOnMount
-              value={lifecycleConfig?.['post_start']?.['hook'] || ''}
+              value={lifecycleConfig?.['post_start']?.['hook_path'] || ''}
             />
           </Flex>
         </FlexContainer>
