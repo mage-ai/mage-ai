@@ -288,7 +288,6 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
-  console.log(isIntegration)
   const blocksFiltered =
     useMemo(() => blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type), [
       blocks,
