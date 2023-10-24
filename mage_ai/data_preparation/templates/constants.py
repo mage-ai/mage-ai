@@ -236,6 +236,13 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
     dict(
         block_type=BlockType.DATA_LOADER,
+        description='Load data from a worksheet in Google Sheets.',
+        language=BlockLanguage.PYTHON,
+        name='Google Sheets',
+        path='data_loaders/google_sheets.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
         language=BlockLanguage.PYTHON,
         name='Druid',
         path='data_loaders/druid.py',
@@ -494,6 +501,12 @@ TEMPLATES_ONLY_FOR_V2 = [
         name='Local file',
         path='data_exporters/file.py',
     ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        language=BlockLanguage.PYTHON,
+        name='Google Sheets',
+        path='data_exporters/google_sheets.py',
+    ),
     #   Data lakes
     dict(
         block_type=BlockType.DATA_EXPORTER,
@@ -523,6 +536,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Amazon Redshift',
         path='data_exporters/redshift.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATA_WAREHOUSES],
+        language=BlockLanguage.PYTHON,
+        name='Google BigQuery',
+        path='data_exporters/bigquery.py',
     ),
     dict(
         block_type=BlockType.DATA_EXPORTER,

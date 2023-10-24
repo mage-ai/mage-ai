@@ -48,7 +48,7 @@ class GoogleSheets(BaseFile):
         the same parameters as a service key) with the keyword argument `credentials_mapping`
 
         All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be
-        passed to the Google Cloud Storage client, accepting all other configuration settings there.
+        passed to the Google Sheet client, accepting all other configuration settings there.
         """
 
         super().__init__(verbose=kwargs.get("verbose", True))
@@ -268,7 +268,7 @@ class GoogleSheets(BaseFile):
         **kwargs,
     ) -> "GoogleSheets":
         """
-        Initializes Google Cloud Storage client from configuration loader
+        Initializes Google Sheet client from configuration loader
 
         Args:
             config (BaseConfigLoader): Configuration loader object
@@ -281,7 +281,7 @@ class GoogleSheets(BaseFile):
             ]
         else:
             raise ValueError(
-                "No valid configuration settings found for Google Cloud Storage. You must specify "
+                "No valid configuration settings found for Google Drive. You must specify "
                 "either your service account key or the filepath to your service account key."
             )
         return cls(**kwargs)
