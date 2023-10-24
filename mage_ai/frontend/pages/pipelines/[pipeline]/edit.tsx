@@ -73,7 +73,6 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import useProject from '@utils/models/project/useProject';
 import {
   BLOCK_EXISTS_ERROR,
   EDIT_BEFORE_TABS,
@@ -151,13 +150,6 @@ function PipelineDetailPage({
   page,
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
-  const {
-    featureEnabled,
-    featureUUIDs,
-    fetchProjects,
-    project,
-  } = useProject();
-
   const router = useRouter();
   const {
     height: heightWindow,
@@ -170,27 +162,20 @@ function PipelineDetailPage({
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
-  const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
+  const [sideBySideEnabled, setSideBySideEnabledState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
   );
-  const sideBySideEnabled = useMemo(() => {
-    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && sideBySideEnabledState;
-  }, [
-    featureEnabled,
-    featureUUIDs,
-    sideBySideEnabledState,
-  ]);
-  const [scrollTogetherState, setScrollTogetherState] = useState<boolean>(
+  const [scrollTogether, setScrollTogetherState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
   );
-  const scrollTogether = useMemo(() => {
-    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && scrollTogetherState;
+  const setSideBySideEnabled = useCallback((prev) => {
+    setSideBySideEnabledState(prev);
+    set(
+      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
+      typeof prev === 'function' ? prev() : prev,
+    );
   }, [
-    featureEnabled,
-    featureUUIDs,
-    scrollTogetherState,
+    setSideBySideEnabledState,
   ]);
   const setScrollTogether = useCallback((prev) => {
     setScrollTogetherState(prev);
@@ -200,22 +185,6 @@ function PipelineDetailPage({
     );
   }, [
     setScrollTogetherState,
-  ]);
-  const setSideBySideEnabled = useCallback((prev) => {
-    const value = typeof prev === 'function' ? prev() : prev;
-
-    setSideBySideEnabledState(prev);
-    set(
-      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
-      value,
-    );
-
-    if (!value) {
-      setScrollTogether(prev);
-    }
-  }, [
-    setScrollTogether,
-    setSideBySideEnabledState,
   ]);
 
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
@@ -234,6 +203,8 @@ function PipelineDetailPage({
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
   const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
 
+  const { data: dataProject, mutate: fetchProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProject?.projects?.[0], [dataProject]);
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],

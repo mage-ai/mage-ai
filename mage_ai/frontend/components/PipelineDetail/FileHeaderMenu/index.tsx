@@ -7,7 +7,6 @@ import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import useProject from '@utils/models/project/useProject';
 import { Check } from '@oracle/icons';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
@@ -77,11 +76,6 @@ function FileHeaderMenu({
   const refRun = useRef(null);
   const refEdit = useRef(null);
   const refView = useRef(null);
-
-  const {
-    featureEnabled,
-    featureUUIDs,
-  } = useProject();
 
   const fileItems = [
     {
@@ -227,7 +221,11 @@ function FileHeaderMenu({
         </FlexContainer>
       ),
       onClick: () => {
-        setSideBySideEnabled(!sideBySideEnabled);
+        const val = !sideBySideEnabled;
+        setSideBySideEnabled(val);
+        if (!val) {
+          setScrollTogether(false);
+        }
       },
       uuid: 'Show output next to code',
     },
@@ -354,28 +352,26 @@ function FileHeaderMenu({
           />
         </div>
 
-        {featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW) && (
-          <div style={{ position: 'relative' }}>
-            <LinkStyle
-              highlighted={highlightedIndex === 3}
-              onClick={() => setHighlightedIndex(val => val === 3 ? null : 3)}
-              onMouseEnter={() => setHighlightedIndex(val => val !== null ? 3 : null)}
-              ref={refView}
-            >
-              <Text>
-                View
-              </Text>
-            </LinkStyle>
+        <div style={{ position: 'relative' }}>
+          <LinkStyle
+            highlighted={highlightedIndex === 3}
+            onClick={() => setHighlightedIndex(val => val === 3 ? null : 3)}
+            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 3 : null)}
+            ref={refView}
+          >
+            <Text>
+              View
+            </Text>
+          </LinkStyle>
 
-            <FlyoutMenu
-              items={viewItems}
-              onClickCallback={() => setHighlightedIndex(null)}
-              open={highlightedIndex === 3}
-              parentRef={refView}
-              uuid="FileHeaderMenu/viewItems"
-            />
-          </div>
-        )}
+          <FlyoutMenu
+            items={viewItems}
+            onClickCallback={() => setHighlightedIndex(null)}
+            open={highlightedIndex === 3}
+            parentRef={refView}
+            uuid="FileHeaderMenu/viewItems"
+          />
+        </div>
 
         {children}
       </FlexContainer>
