@@ -486,7 +486,7 @@ class WorkloadManager:
             if ex.status != 404:
                 raise
         try:
-            self.core_client.delete_namespaced_config_map(f'{name}-post-start', self.namespace)
+            self.core_client.delete_namespaced_config_map(f'{name}-hooks', self.namespace)
         except ApiException as ex:
             # The delete operation will return a 404 response if the config map does not exist
             if ex.status != 404:
