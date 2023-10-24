@@ -255,11 +255,11 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  // const startTime = performance.now();
-  // useEffect(() => {
-  //   const duration = performance.now() - startTime;
-  //   console.log('PipelineDetail render', duration);
-  // }, []);
+  const startTime = performance.now();
+  useEffect(() => {
+    const duration = performance.now() - startTime;
+    console.log('PipelineDetail render', duration);
+  }, []);
 
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
@@ -288,6 +288,7 @@ function PipelineDetail({
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
+  console.log(isIntegration)
   const blocksFiltered =
     useMemo(() => blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type), [
       blocks,
@@ -813,6 +814,8 @@ function PipelineDetail({
         key = `${key}:${refreshTimestamp}`;
       }
 
+      console.log('wtf', blocksFiltered)
+
       if (isHidden) {
         el = (
           <HiddenBlock
@@ -937,6 +940,8 @@ function PipelineDetail({
           </CodeBlock>
         );
       }
+
+      console.log('wtf', el)
 
       arr.push(el);
     });
@@ -1067,6 +1072,12 @@ function PipelineDetail({
           </CSSTransition>
         )}
       </PipelineContainerStyle>
+
+      {isIntegration && (
+        <Spacing mt={1} px={PADDING_UNITS}>
+          {integrationMemo}
+        </Spacing>
+      )}
 
       {!sideBySideEnabled && (
         <Spacing mt={1} px={PADDING_UNITS}>
