@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import Ansi from 'ansi-to-react';
 
 import Button from '@oracle/elements/Button';
@@ -47,6 +47,17 @@ function PipelineExecution({
     numberOfMessages > 100 ? pipelineMessages.slice(-100) : pipelineMessages
   ), [numberOfMessages, pipelineMessages]);
 
+  // When the pipeline starts executing, the execution button gets disabled.
+  // Disabled buttons are not focusable, so manually remove the focus here.
+  const handleExecutePipeline = useCallback(() => {
+    (document.activeElement as HTMLElement).blur();
+    executePipeline();
+  }, [executePipeline]);
+  const handleCancelPipeline = useCallback(() => {
+    (document.activeElement as HTMLElement).blur();
+    cancelPipeline();
+  }, [cancelPipeline]);
+
   const togglePipelineExecution = useCallback(() => {
     const val = !pipelineExecutionHidden;
     setPipelineExecutionHidden(val);
@@ -66,7 +77,7 @@ function PipelineExecution({
               compact={isPipelineExecuting}
               disabled={isPipelineExecuting}
               loading={isPipelineExecuting}
-              onClick={executePipeline}
+              onClick={handleExecutePipeline}
               success
             >
               <Text
@@ -83,7 +94,7 @@ function PipelineExecution({
               <>
                 <Button
                   beforeIcon={<Close inverted size={UNIT * 2}/>}
-                  onClick={cancelPipeline}
+                  onClick={handleCancelPipeline}
                   success
                 >
                   <Text

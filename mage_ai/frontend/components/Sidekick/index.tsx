@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -582,6 +582,7 @@ function Sidekick({
           }
         }}
         overflowHidden={activeView === ViewKeyEnum.TREE}
+        tabIndex={0} // Make this div a focusable element
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
@@ -744,11 +745,11 @@ function Sidekick({
 
         {ViewKeyEnum.INTERACTIONS === activeView && isInteractionsEnabled && (
           <PipelineInteractions
+            blockInteractionsMapping={blockInteractionsMapping}
             containerWidth={afterWidth}
             createInteraction={(interaction: InteractionType) => createInteraction({
               interaction,
             })}
-            blockInteractionsMapping={blockInteractionsMapping}
             interactions={interactions}
             interactionsMapping={interactionsMapping}
             isLoadingCreateInteraction={isLoadingCreateInteraction}
