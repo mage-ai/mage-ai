@@ -39,7 +39,10 @@ import {
   getBlockHeaderSubtitle,
   getBlockHeaderText,
 } from './utils';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import {
+  getColorsForBlockType,
+  getGradientColorForBlockType,
+} from '@components/CodeBlock/index.style';
 import { getRuntimeText } from '../utils';
 
 const ICON_MAPPING = {
@@ -52,6 +55,7 @@ const ICON_MAPPING = {
 };
 
 type BlockNodeProps = {
+  anotherBlockSelected?: boolean;
   block: BlockType;
   callbackBlocks?: BlockType[];
   conditionalBlocks?: BlockType[];
@@ -73,6 +77,7 @@ type BlockNodeProps = {
 };
 
 function BlockNode({
+  anotherBlockSelected,
   block,
   callbackBlocks,
   conditionalBlocks,
@@ -125,6 +130,7 @@ function BlockNode({
   } = block;
   const {
     accent,
+    accentLight,
   } = getColorsForBlockType(
     type,
     {
@@ -189,12 +195,14 @@ function BlockNode({
 
   return (
     <NodeContainerStyle
-      active={selected}
-      borderColor={accent}
+      // active
+      backgroundGradient={getGradientColorForBlockType(type)}
+      borderColor={!selected && anotherBlockSelected ? accentLight : accent}
       disabled={disabled}
       height={height}
       isCancelled={isCancelled}
       noBackground={downstreamBlocks?.length >= 1}
+      selected={selected}
     >
       <NodeStyle
         disabled={disabled}

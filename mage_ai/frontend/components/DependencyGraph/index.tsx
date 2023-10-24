@@ -462,7 +462,7 @@ function DependencyGraph({
       type,
       uuid,
     } = block;
-    setSelectedBlock?.(block);
+    setSelectedBlock?.(selectedBlock?.uuid === block?.uuid ? null : block);
     setEdgeSelections([]);
     if (blockRefs?.current) {
       const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
@@ -1118,7 +1118,17 @@ function DependencyGraph({
                     },
                   } = node;
 
+                  const activePortExists = Object.values(activePorts || {})?.length >= 1;
+                  const activePort = activePorts?.[node?.id];
                   const blockStatus = getBlockStatus(block);
+                  const selected = blockEditing
+                    ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                    : activePortExists
+                      ? activePort
+                      : selectedBlock?.uuid === block.uuid;
+                  const anotherBlockSelected = activePortExists
+                    ? !activePort
+                    : !!selectedBlock;
 
                   return (
                     <foreignObject
@@ -1140,6 +1150,7 @@ function DependencyGraph({
                       y={0}
                     >
                       <BlockNode
+                        anotherBlockSelected={anotherBlockSelected}
                         block={block}
                         callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
                         conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
@@ -1150,10 +1161,7 @@ function DependencyGraph({
                         hideStatus={disabledProp || noStatus}
                         key={block.uuid}
                         pipeline={pipeline}
-                        selected={blockEditing
-                          ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                          : selectedBlock?.uuid === block.uuid
-                        }
+                        selected={selected}
                         {...blockStatus}
                       />
                     </foreignObject>

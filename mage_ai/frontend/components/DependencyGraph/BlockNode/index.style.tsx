@@ -5,7 +5,7 @@ import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const ICON_SIZE = UNIT * 3;
-export const BORDER_WIDTH = 1;
+export const BORDER_WIDTH = 2;
 
 export const NodeContainerStyle = styled.div<{
   active?: boolean;
@@ -14,21 +14,27 @@ export const NodeContainerStyle = styled.div<{
   height?: number;
   isCancelled: boolean;
   noBackground?: boolean;
+  selected?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   min-width: fit-content;
-  padding: ${BORDER_WIDTH}px;
-
-  ${props => !props.active && props.borderColor && `
-    border: ${BORDER_WIDTH}px solid transparent;
-  `}
 
   ${props => !props.active && (props.isCancelled || props.disabled) && `
     // opacity doesn’t work on Safari
-    border-color: ${(props.theme.content || dark.content).muted};
-    border-style: dotted;
+    border: ${BORDER_WIDTH}px dotted ${(props.theme.content || dark.content).muted};
     cursor: not-allowed;
     opacity: 0.5;
+  `}
+
+  ${props => !props.selected && !props.active && props.borderColor && `
+    border-color: ${props.borderColor};
+    border-style: solid;
+    border-width: ${BORDER_WIDTH}px;
+  `}
+
+  ${props => props.selected && !props.active && props.backgroundGradient && `
+    background: ${props.backgroundGradient};
+    padding: ${BORDER_WIDTH}px;
   `}
 
   ${props => props.active && props.borderColor && `
@@ -38,6 +44,7 @@ export const NodeContainerStyle = styled.div<{
       linear-gradient(0deg, ${props.borderColor} 50%, transparent 50%),
       linear-gradient(0deg, ${props.borderColor} 50%, transparent 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    padding: ${BORDER_WIDTH}px;
 
     @keyframes border-dance {
       0% {
