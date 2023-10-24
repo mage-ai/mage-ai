@@ -113,7 +113,7 @@ class GoogleSheets(BaseFile):
 
         if worksheet_name is not None:
             try:
-                worksheet = sheet.worksheet(worksheet)
+                worksheet = sheet.worksheet(worksheet_name)
             except Exception as ex:
                 raise ex
         else:
@@ -178,7 +178,6 @@ class GoogleSheets(BaseFile):
         sheet_name=None,
         worksheet_name=None,
         worksheet_position=0,
-        header_rows=1,
         **kwargs,
     ) -> None:
         worksheet = self.fetch_worksheet(
@@ -187,12 +186,11 @@ class GoogleSheets(BaseFile):
             sheet_name=sheet_name,
             worksheet_name=worksheet_name,
             worksheet_position=worksheet_position,
-            header_rows=header_rows,
         )
 
         with self.printer.print_msg(
-            f"Exporting dataframe to worksheet \
-                '{worksheet.title}' in sheet '{worksheet.spreadsheet.title}'"
+            f"Exporting dataframe to worksheet '{worksheet.title}' "
+            f"in sheet '{worksheet.spreadsheet.title}'"
         ):
             worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
@@ -203,27 +201,21 @@ class GoogleSheets(BaseFile):
         sheet_name=None,
         worksheet_name=None,
         worksheet_position=0,
-        header_rows=1,
     ) -> bool:
-        sheet = None
 
         try:
-            sheet = self.fetch_sheet(
+            self.fetch_worksheet(
                 sheet_url=sheet_url,
                 sheet_id=sheet_id,
                 sheet_name=sheet_name,
                 worksheet_name=worksheet_name,
                 worksheet_position=worksheet_position,
-                header_rows=header_rows,
             )
-            with self.printer.print_msg(
-                f"Loaded Google Sheet '{sheet.title}' with ID '{sheet.id}'"
-            ):
-                return True
+            return True
 
         except Exception as ex:
-            with self.printer.print_msg(ex):
-                return False
+            print(ex)
+            return False
 
     @classmethod
     def with_config(
