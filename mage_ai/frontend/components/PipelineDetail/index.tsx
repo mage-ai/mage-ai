@@ -255,11 +255,11 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  const startTime = performance.now();
-  useEffect(() => {
-    const duration = performance.now() - startTime;
-    console.log('PipelineDetail render', duration);
-  }, []);
+  // const startTime = performance.now();
+  // useEffect(() => {
+  //   const duration = performance.now() - startTime;
+  //   console.log('PipelineDetail render', duration);
+  // }, []);
 
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
