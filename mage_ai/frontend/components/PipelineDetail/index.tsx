@@ -938,8 +938,6 @@ function PipelineDetail({
         );
       }
 
-      console.log('wtf', el)
-
       arr.push(el);
     });
 
