@@ -1641,7 +1641,7 @@ function PipelineDetailPage({
     }
 
     // @ts-ignore
-    return createBlock({
+    const func = () => createBlock({
       block: {
         content: blockContent,
         name,
@@ -1663,34 +1663,54 @@ function PipelineDetailPage({
               },
             } = response;
             onCreateCallback?.(block);
-            fetchFileTree();
-            fetchPipeline().then(({
-              pipeline: {
-                blocks: blocksNewInit,
-                extensions,
-              },
-            }) => setBlocks((blocksPrev) => {
-              const blocksNew = [...blocksNewInit];
-              // @ts-ignore
-              Object.entries(extensions || {}).forEach(([extensionUUID, { blocks }]) => {
-                if (blocks) {
-                  blocksNew.push(...blocks.map(b => ({ ...b, extension_uuid: extensionUUID })));
-                }
-              });
 
-              const blocksPrevMapping = indexBy(blocksPrev, ({ uuid }) => uuid);
-              const blocksFinal = [];
-              blocksNew.forEach((blockNew: BlockType) => {
-                const blockPrev = blocksPrevMapping[blockNew.uuid];
-                if (blockPrev) {
-                  blocksFinal.push(blockPrev);
-                } else {
-                  blocksFinal.push(blockNew);
-                }
-              });
+            // TODO (tommy dang): there is a very difficult bug when you add a new block while the
+            // split view is enabled and the 1st block is scrolled out of view, the notebook
+            // will scroll the 1st block down into view, but when calculating where to position
+            // the next blocks after the 1st block, it factors in the 1st block’s initial
+            // negative top positioning. Therefore, all the blocks below the 1st block will be
+            // positioned with a top pixel offset equal to where the 1st block was positioned
+            // prior to adding the new block.
+            // I can’t figure out how to fix this yet, so we’ll just do a refresh of the page
+            // for now until I can fix it.
+            if (sideBySideEnabled
+              && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+            ) {
+              if (typeof window !== 'undefined') {
+                window?.location?.reload();
+              }
+            } else {
+              fetchFileTree();
+              fetchPipeline().then(({
+                pipeline: {
+                  blocks: blocksNewInit,
+                  extensions,
+                },
+              }) => {
+                setBlocks((blocksPrev) => {
+                  const blocksNew = [...blocksNewInit];
+                  // @ts-ignore
+                  Object.entries(extensions || {}).forEach(([extensionUUID, { blocks }]) => {
+                    if (blocks) {
+                      blocksNew.push(...blocks.map(b => ({ ...b, extension_uuid: extensionUUID })));
+                    }
+                  });
 
-              return blocksFinal;
-            }));
+                  const blocksPrevMapping = indexBy(blocksPrev, ({ uuid }) => uuid);
+                  const blocksFinal = [];
+                  blocksNew.forEach((blockNew: BlockType) => {
+                    const blockPrev = blocksPrevMapping[blockNew.uuid];
+                    if (blockPrev) {
+                      blocksFinal.push(blockPrev);
+                    } else {
+                      blocksFinal.push(blockNew);
+                    }
+                  });
+
+                  return blocksFinal;
+                });
+              });
+            }
           },
           onErrorCallback: (response, errors) => {
             const exception = response?.error?.exception;
@@ -1698,6 +1718,7 @@ function PipelineDetailPage({
               ...block,
               name,
             });
+
             if (exception && filePath && exception.startsWith(BLOCK_EXISTS_ERROR)) {
               setErrors(() => ({
                 errors,
@@ -1720,15 +1741,23 @@ function PipelineDetailPage({
         },
       );
     });
+
+    if (sideBySideEnabled && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)) {
+      return savePipelineContent().then(() => func());
+    }
+
+    return func()
   }, [
     createBlock,
     fetchFileTree,
     fetchPipeline,
     isIntegration,
     openFile,
+    pipeline,
+    savePipelineContent,
     setBlocks,
     setErrors,
-    pipeline,
+    sideBySideEnabled,
   ]);
 
   // const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(false);
