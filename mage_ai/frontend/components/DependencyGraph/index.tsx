@@ -97,6 +97,16 @@ export const Port = dynamic(
   },
 );
 
+export const MarkerArrow = dynamic(
+  async () => {
+    const reaflow = await import('reaflow');
+    return reaflow.MarkerArrow;
+  },
+  {
+    ssr: false,
+  },
+);
+
 export type DependencyGraphProps = {
   blockRefs?: {
     [current: string]: any;
@@ -691,6 +701,59 @@ function DependencyGraph({
     heightOffset,
   ]);
 
+  const onClickNodeFunc = useCallback((event, {
+    data: {
+      block,
+    },
+  }) => {
+    setActivePort(null);
+    const disabled = blockEditing?.uuid === block.uuid;
+    if (!disabled) {
+      if (blockEditing) {
+        onClickWhenEditingUpstreamBlocks(block);
+      } else {
+        onClickNode?.({
+          block,
+        });
+
+        // This is required because if the block is hidden, it needs to be un-hidden
+        // before scrolling to it or else the scrollIntoView won’t scroll to the top
+        // of the block.
+        setTimeout(() => {
+          onClick(block);
+        }, 1);
+      }
+    }
+  }, [
+    blockEditing,
+    onClick,
+    onClickNode,
+    onClickWhenEditingUpstreamBlocks,
+    setActivePort,
+  ]);
+
+  const onEnterNodeFunc = useCallback(() => {
+    if (!editingBlock?.upstreamBlocks) {
+      setShowPorts(true);
+    }
+  }, [
+    editingBlock,
+    setShowPorts,
+  ]);
+  const onLeaveNodeFunc = useCallback(() => {
+    if (!activePort) {
+      setShowPorts(false);
+    }
+  }, [
+    activePort,
+    setShowPorts,
+  ]);
+
+  const onContextMenu = useCallback((e, node) => {
+    console.log(e, node);
+  }, [
+  ]);
+
   return (
     <>
       {blockEditing && (
@@ -781,6 +844,7 @@ function DependencyGraph({
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
       >
         <Canvas
+          // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}
           disabled={disabledProp}
           edge={(edge) => {
@@ -789,6 +853,7 @@ function DependencyGraph({
             return (
               <Edge
                 {...edge}
+                className="edge"
                 onClick={(event, edge) => {
                   setActivePort(null);
                   setEdgeSelections([edge.id]);
@@ -824,87 +889,58 @@ function DependencyGraph({
           node={(node) => (
             <Node
               {...node}
-                dragType="port"
-                linkable
-                onClick={(event, {
-                  data: {
-                    block,
-                  },
-                }) => {
-                  setActivePort(null);
-                  const disabled = blockEditing?.uuid === block.uuid;
-                  if (!disabled) {
-                    if (blockEditing) {
-                      onClickWhenEditingUpstreamBlocks(block);
-                    } else {
-                      onClickNode?.({
-                        block,
-                      });
-
-                      // This is required because if the block is hidden, it needs to be un-hidden
-                      // before scrolling to it or else the scrollIntoView won’t scroll to the top
-                      // of the block.
-                      setTimeout(() => {
-                        onClick(block);
-                      }, 1);
-                    }
-                  }
-                }}
-                onEnter={() => {
-                  if (!editingBlock?.upstreamBlocks) {
-                    setShowPorts(true);
-                  }
-                }}
-                onLeave={() => {
-                  if (!activePort) {
-                    setShowPorts(false);
-                  }
-                }}
-                port={(showPorts && (
-                  activePort === null || isActivePort(activePort, node)))
-                  ?
-                    <Port
-                      onDrag={() => setShowPorts(true)}
-                      onDragEnd={() => {
-                        setShowPorts(false);
-                        setActivePort(null);
-                      }}
-                      onDragStart={(e, initial, port) => {
-                        const side = port?.side as SideEnum;
-                        setActivePort({ id: port?.id, side });
-                      }}
-                      onEnter={() => setShowPorts(true)}
-                      rx={10}
-                      ry={10}
-                      style={{
-                        fill: getColorsForBlockType(
-                          node?.properties?.data?.block?.type,
-                          {
-                            blockColor: node?.properties?.data?.block?.color,
-                            theme: themeContext,
-                          },
-                        ).accent,
-                        stroke: 'white',
-                        strokeWidth: '1px',
-                      }}
-                    />
-                  : null
-                }
-                style={{
-                  fill: 'transparent',
-                  stroke: 'transparent',
-                  strokeWidth: 0,
-                }}
-              >
+              dragType="port"
+              linkable
+              onClick={onClickNodeFunc}
+              onContextMenu={onContextMenu}
+              onEnter={onEnterNodeFunc}
+              onLeave={onLeaveNodeFunc}
+              port={(showPorts && (
+                activePort === null || isActivePort(activePort, node)))
+                ?
+                  <Port
+                    onDrag={() => setShowPorts(true)}
+                    onDragEnd={() => {
+                      setShowPorts(false);
+                      setActivePort(null);
+                    }}
+                    onDragStart={(e, initial, port) => {
+                      const side = port?.side as SideEnum;
+                      setActivePort({ id: port?.id, side });
+                    }}
+                    onEnter={() => setShowPorts(true)}
+                    rx={10}
+                    ry={10}
+                    style={{
+                      fill: getColorsForBlockType(
+                        node?.properties?.data?.block?.type,
+                        {
+                          blockColor: node?.properties?.data?.block?.color,
+                          theme: themeContext,
+                        },
+                      ).accent,
+                      stroke: 'white',
+                      strokeWidth: '1px',
+                    }}
+                  />
+                : null
+              }
+              style={{
+                fill: 'transparent',
+                stroke: 'transparent',
+                strokeWidth: 0,
+              }}
+            >
               {(event) => {
                 const {
                   height: nodeHeight,
-                  node: {
-                    data: {
-                      block,
-                    },
-                  },
+                  node,
                 } = event;
+                const {
+                  data: {
+                    block,
+                  },
+                } = node;
 
                 const blockStatus = getBlockStatus(block);
                 const {
@@ -918,8 +954,12 @@ function DependencyGraph({
                     height={nodeHeight}
                     style={{
                       // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
-                      pointerEvents: 'none',
+                      // pointerEvents: 'none',
                     }}
+                    onClick={e => onClickNodeFunc(e, node)}
+                    onContextMenu={(e) => onContextMenu(e, node)}
+                    onMouseEnter={onEnterNodeFunc as MouseEventHandler}
+                    onMouseLeave={onLeaveNodeFunc as MouseEventHandler}
                     width={event.width}
                     x={0}
                     y={0}
@@ -993,7 +1033,8 @@ function DependencyGraph({
           pannable={pannable}
           selections={edgeSelections}
           zoomable={zoomable}
-        />
+        >
+        </Canvas>
       </GraphContainerStyle>
     </>
   );

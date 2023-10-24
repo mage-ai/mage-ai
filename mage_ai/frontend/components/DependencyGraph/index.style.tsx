@@ -15,6 +15,19 @@ export const GraphContainerStyle = styled.div<{
   ${props => props.height && `
     height: ${props.height}px;
   `}
+
+  .edge {
+    animation: dashdraw .5s linear infinite;
+    stroke-dasharray: 5;
+    stroke-width: 1;
+    stroke: #b1b1b7;
+  }
+
+  @keyframes dashdraw {
+    0% {
+      stroke-dashoffset: 10;
+    }
+  }
 `;
 
 export const NodeStyle = styled.div<{
