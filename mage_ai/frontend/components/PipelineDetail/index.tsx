@@ -1068,6 +1068,12 @@ function PipelineDetail({
         )}
       </PipelineContainerStyle>
 
+      {isIntegration && (
+        <Spacing mt={1} px={PADDING_UNITS}>
+          {integrationMemo}
+        </Spacing>
+      )}
+
       {!sideBySideEnabled && (
         <Spacing mt={1} px={PADDING_UNITS}>
           {!isIntegration && (
