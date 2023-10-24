@@ -1,16 +1,18 @@
 import { memo, useEffect, useRef } from 'react';
 
-import Button, { ButtonProps } from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
-import dark from '@oracle/styles/themes/dark';
+import { ButtonProps } from '@oracle/elements/Button';
+import { ButtonStyle } from './index.style';
 
 type ServerTimeButtonProps = {
+  active: boolean;
   mountedCallback: any;
   time: string;
   timeZone: string;
 } & ButtonProps;
 
 function ServerTimeButton({
+  active,
   mountedCallback,
   time,
   timeZone,
@@ -25,17 +27,19 @@ function ServerTimeButton({
   }, [mountedCallback]);
 
   return (
-    <Button 
+    <ButtonStyle 
       {...props}
-      backgroundColor={dark.background.dashboard}
+      active={active}
       borderLess
       compact
+      highlightOnHoverAlt
       ref={buttonRef}
+      transparent
     >
       <Text inline monospace>
         {`${time} ${timeZone}`}
       </Text>
-    </Button>
+    </ButtonStyle>
   );
 }
 

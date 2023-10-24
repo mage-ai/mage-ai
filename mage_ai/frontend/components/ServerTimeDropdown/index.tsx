@@ -101,6 +101,7 @@ function ServerTimeDropdown() {
     <ClickOutside onClickOutside={() => setShowDropdown(false)} open>
       <div style={{ position: 'relative' }}>
         <ServerTimeButton 
+          active={showDropdown}
           disabled={isSmallBreakpoint}
           mountedCallback={setDropdownPosition}
           onClick={handleButtonClick}
