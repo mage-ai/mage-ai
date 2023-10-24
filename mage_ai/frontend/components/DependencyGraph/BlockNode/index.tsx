@@ -71,6 +71,7 @@ type BlockNodeProps = {
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
+  opacity?: boolean;
   pipeline: PipelineType;
   runtime?: number;
   selected?: boolean;
@@ -84,18 +85,19 @@ function BlockNode({
   disabled,
   downstreamBlocks,
   extensionBlocks,
+  hasFailed,
   height,
   hideNoStatus,
   hideStatus,
-  pipeline,
-  selected,
-  hasFailed,
   isCancelled,
   isConditionFailed,
   isInProgress,
   isQueued,
   isSuccessful,
+  opacity,
+  pipeline,
   runtime: runtimeFromBlockRun,
+  selected,
 }: BlockNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
 
@@ -202,6 +204,7 @@ function BlockNode({
       height={height}
       isCancelled={isCancelled}
       noBackground={downstreamBlocks?.length >= 1}
+      opacity={opacity}
       selected={selected}
     >
       <NodeStyle

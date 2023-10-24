@@ -217,15 +217,54 @@ function DependencyGraph({
   const themeContext: ThemeType = useContext(ThemeContext);
   const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
 
+  const containerRef = useRef(null);
   const portRefs = useRef({});
-  const timeoutRefs = useRef({});
+  const timeoutActiveRefs = useRef({});
+  const timeoutDraggingRefs = useRef({});
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
 
   const [activeEdges, setActiveEdges] = useState({});
   const [activeNodes, setActiveNodes] = useState({});
   const [activePorts, setActivePorts] = useState({});
+  const [nodeDragging, setNodeDragging] = useState<{
+    data: {
+      nodeHeight: number;
+    };
+    event: any;
+    node: NodeType;
+  }>(null);
   const [targetNode, setTargetNode] = useState(null);
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      if (nodeDragging) {
+        setNodeDragging(prev => ({
+          ...prev,
+          event,
+        }))
+      }
+    };
+    const handleMouseUp = (event) => {
+      if (nodeDragging) {
+        setNodeDragging(null);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      }
+    };
+  }, [
+    nodeDragging,
+  ]);
 
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const [showPortsState, setShowPorts] = useState<boolean>(false);
@@ -628,13 +667,13 @@ function DependencyGraph({
 
   const clearTimeoutForNode = useCallback((node) => {
     const nodeID = node?.id;
-    if (nodeID in timeoutRefs.current) {
-      clearTimeout(timeoutRefs?.current?.[nodeID]);
+    if (nodeID in timeoutActiveRefs.current) {
+      clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
     }
   }, [activeNodes]);
   const setTimeoutForNode = useCallback((node) => {
     const nodeID = node?.id;
-    timeoutRefs.current[nodeID] = setTimeout(() => {
+    timeoutActiveRefs.current[nodeID] = setTimeout(() => {
       setActiveNodes((prev) => {
         const mapping = { ...prev };
         delete mapping?.[nodeID];
@@ -644,8 +683,8 @@ function DependencyGraph({
     }, 1000);
   }, [setActiveNodes]);
 
-  const onMouseEnterNode = useCallback((event, node) => {
-    if (editingBlock?.upstreamBlocks) {
+  const onMouseEnterNode = useCallback((event, node, opts) => {
+    if (editingBlock?.upstreamBlocks || nodeDragging) {
       return;
     }
 
@@ -671,27 +710,38 @@ function DependencyGraph({
     activePorts,
     clearTimeoutForNode,
     editingBlock,
+    nodeDragging,
     setActiveNodes,
     setTargetNode,
     setTimeoutForNode,
   ]);
 
-  const onMouseLeaveNode = useCallback((event, node) => {
+  const onMouseLeaveNode = useCallback((event, node, opts) => {
     setTimeoutForNode(node);
   }, [
     setTimeoutForNode,
   ]);
 
-  const onMouseDownNode = useCallback((event, node) => {
-    console.log('onMouseDown AND DRAG!');
+  const onMouseDownNode = useCallback((event, node, opts) => {
+    const nodeID = node?.id;
+    timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
+      setNodeDragging({
+        data: opts,
+        event,
+        node,
+      });
+    }, 500)
   }, [
+    setNodeDragging,
   ]);
-  const onMouseUpNode = useCallback((event, node) => {
-    console.log('onMouseUp AND DRAG!');
-  }, [
-  ]);
+  const onMouseUpNode = useCallback((event, node, opts) => {
+    const nodeID = node?.id;
+    if (nodeID in timeoutDraggingRefs.current) {
+      clearTimeout(timeoutDraggingRefs?.current?.[nodeID]);
+    }
+  }, []);
 
-  const onContextMenuNode = useCallback((event, node) => {
+  const onContextMenuNode = useCallback((event, node, opts) => {
     event.preventDefault();
     console.log('SHOW MENU!');
   }, []);
@@ -746,8 +796,6 @@ function DependencyGraph({
             )
       );
 
-      console.log(node, targetNode)
-
       if (!isConnectingIntegrationSourceAndDestination
         && !fromBlock?.upstream_blocks?.includes(toBlock.uuid)
         && node?.id !== targetNode?.id
@@ -779,8 +827,16 @@ function DependencyGraph({
     anotherBlockSelected: boolean;
     selected: boolean;
   } = useCallback((node: NodeType, block: BlockType) => {
+    if (nodeDragging) {
+      return {
+        anotherBlockSelected: true,
+        selected: false,
+      };
+    }
+
     const activePortExists = Object.values(activePorts || {})?.length >= 1;
     const activePort = activePorts?.[node?.id];
+
     const selected = blockEditing
       ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
       : activePortExists
@@ -793,20 +849,21 @@ function DependencyGraph({
     return {
       anotherBlockSelected,
       selected,
-    }
+    };
   }, [
     activePorts,
     blockEditing,
+    nodeDragging,
     selectedBlock,
     upstreamBlocksEditing,
   ]);
 
-  const buildBlockNode = useCallback((node, {
+  const buildBlockNode = useCallback((node, block, {
     nodeHeight,
+    opacity,
   }) => {
     const {
       data: {
-        block,
         children,
       },
     } = node;
@@ -840,6 +897,7 @@ function DependencyGraph({
         isQueued={isQueued}
         isSuccessful={isSuccessful}
         key={block?.uuid}
+        opacity={opacity}
         pipeline={pipeline}
         selected={selected}
       />
@@ -855,11 +913,82 @@ function DependencyGraph({
     pipeline,
   ]);
 
+  const nodeDraggingMemo = useMemo(() => {
+    if (!nodeDragging) {
+      return
+    }
+
+    const {
+      event,
+      node,
+      data,
+    } = nodeDragging;
+
+    const {
+      clientX,
+      clientY,
+    } = event;
+
+    const {
+      x,
+      y,
+    } = containerRef?.current?.getBoundingClientRect() || {};
+
+    const block = node?.data?.block;
+
+    if (!block) {
+      return;
+    }
+
+    const blockStatus = getBlockStatus(block);
+    const callbackBlocks = callbackBlocksByBlockUUID?.[block?.uuid];
+    const conditionalBlocks = conditionalBlocksByBlockUUID?.[block?.uuid];
+    const extensionBlocks = extensionBlocksByBlockUUID?.[block?.uuid];
+
+    const opts = {
+      blockStatus,
+      callbackBlocks,
+      conditionalBlocks,
+      extensionBlocks,
+    };
+    const nodeHeight = getBlockNodeHeight(block, pipeline, opts);
+    const nodeWidth = getBlockNodeWidth(block, pipeline, opts);
+
+    const blockNode = buildBlockNode(node, block, {
+      nodeHeight: data?.nodeHeight,
+      opacity: 0.5,
+    });
+
+    return (
+      <div
+        style={{
+          left: (clientX - x) - (nodeWidth / 2),
+          position: 'absolute',
+          top: (clientY - y) - (nodeHeight / 2),
+        }}
+      >
+        {blockNode}
+      </div>
+    );
+  }, [
+    buildBlockNode,
+    callbackBlocksByBlockUUID,
+    conditionalBlocksByBlockUUID,
+    extensionBlocksByBlockUUID,
+    nodeDragging,
+    pipeline,
+  ]);
+
   // Show a menu to add a block between or delete the connection.
   // console.log(activeEdges)
 
   return (
-    <>
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+      }}
+    >
       {blockEditing && (
         <Spacing my={3} px={PADDING_UNITS}>
           <Spacing mb={PADDING_UNITS}>
@@ -1242,13 +1371,21 @@ function DependencyGraph({
                     <foreignObject
                       height={nodeHeight}
                       onClick={(e) => onClickNode(e, node)}
-                      onContextMenu={(e) => {
-                        onContextMenuNode(e, node);
-                      }}
-                      onMouseEnter={(e) => onMouseEnterNode(e, node)}
-                      onMouseLeave={(e) => onMouseLeaveNode(e, node)}
-                      onMouseDown={(e) => onMouseDownNode(e, node)}
-                      onMouseUp={(e) => onMouseUpNode(e, node)}
+                      onContextMenu={(e) => onContextMenuNode(e, node, {
+                        nodeHeight,
+                      })}
+                      onMouseEnter={(e) => onMouseEnterNode(e, node, {
+                        nodeHeight,
+                      })}
+                      onMouseLeave={(e) => onMouseLeaveNode(e, node, {
+                        nodeHeight,
+                      })}
+                      onMouseDown={(e) => onMouseDownNode(e, node, {
+                        nodeHeight,
+                      })}
+                      onMouseUp={(e) => onMouseUpNode(e, node, {
+                        nodeHeight,
+                      })}
                       style={{
                         // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
                         // pointerEvents: 'none',
@@ -1317,7 +1454,9 @@ function DependencyGraph({
         >
         </Canvas>
       </GraphContainerStyle>
-    </>
+
+      {nodeDraggingMemo}
+    </div>
   );
 }
 

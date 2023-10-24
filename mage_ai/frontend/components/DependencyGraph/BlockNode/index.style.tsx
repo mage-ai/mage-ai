@@ -14,10 +14,15 @@ export const NodeContainerStyle = styled.div<{
   height?: number;
   isCancelled: boolean;
   noBackground?: boolean;
+  opacity?: number;
   selected?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   min-width: fit-content;
+
+  &:hover {
+    cursor: pointer;
+  }
 
   ${props => !props.active && (props.isCancelled || props.disabled) && `
     // opacity doesn’t work on Safari
@@ -72,6 +77,10 @@ export const NodeContainerStyle = styled.div<{
 
   ${props => props.height && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.opacity && `
+    opacity: ${props.opacity};
   `}
 `;
 
