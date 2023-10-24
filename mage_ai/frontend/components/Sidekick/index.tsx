@@ -587,6 +587,7 @@ function Sidekick({
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
               <DependencyGraph
+                addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
                 blocks={blocks}
                 editingBlock={editingBlock}

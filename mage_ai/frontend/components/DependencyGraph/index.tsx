@@ -3,6 +3,7 @@ import { CanvasRef } from 'reaflow';
 import { ThemeContext } from 'styled-components';
 import { parse } from 'yaml';
 import {
+  createRef,
   useCallback,
   useContext,
   useEffect,
@@ -31,17 +32,26 @@ import {
   EdgeType,
   NodeType,
   PortType,
+  STROKE_WIDTH,
   SideEnum,
-  SHARED_PORT_PROPS,
   ZOOMABLE_CANVAS_SIZE,
 } from './constants';
-import { GraphContainerStyle } from './index.style';
+import { GraphContainerStyle, inverseColorsMapping } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import {
   PADDING_UNITS,
   UNIT,
 } from '@oracle/styles/units/spacing';
+import {
+  buildEdge,
+  buildNodesEdgesPorts,
+  buildPortIDDownstream,
+  buildPortsDownstream,
+  buildPortsUpstream,
+  getParentNodeID,
+  isActivePort,
+} from './utils';
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
 import { getBlockRunBlockUUID } from '@utils/models/blockRun';
@@ -51,7 +61,6 @@ import {
   hasErrorOrOutput,
 } from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
-import { isActivePort } from './utils';
 import { onSuccess } from '@api/utils/response';
 
 export const Canvas = dynamic(
@@ -97,6 +106,26 @@ export const Port = dynamic(
   },
 );
 
+export const Add = dynamic(
+  async () => {
+    const reaflow = await import('reaflow');
+    return reaflow.Add;
+  },
+  {
+    ssr: false,
+  },
+);
+
+export const Remove = dynamic(
+  async () => {
+    const reaflow = await import('reaflow');
+    return reaflow.Remove;
+  },
+  {
+    ssr: false,
+  },
+);
+
 export const MarkerArrow = dynamic(
   async () => {
     const reaflow = await import('reaflow');
@@ -108,6 +137,12 @@ export const MarkerArrow = dynamic(
 );
 
 export type DependencyGraphProps = {
+  addNewBlockAtIndex: (
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+  ) => Promise<any>;
   blockRefs?: {
     [current: string]: any;
   };
@@ -153,6 +188,7 @@ export type DependencyGraphProps = {
 } & SetEditingBlockType;
 
 function DependencyGraph({
+  addNewBlockAtIndex,
   blockRefs,
   blockStatus,
   blocksOverride,
@@ -165,7 +201,7 @@ function DependencyGraph({
   heightOffset = UNIT * 10,
   messages,
   noStatus,
-  onClickNode,
+  onClickNode: onClickNodeProp,
   pannable = true,
   pipeline,
   runningBlocks = [],
@@ -179,12 +215,20 @@ function DependencyGraph({
   zoomable = true,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
+  const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
+
+  const portRefs = useRef({});
+  const timeoutRefs = useRef({});
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
 
+  const [activeEdges, setActiveEdges] = useState({});
+  const [activeNodes, setActiveNodes] = useState({});
+  const [activePorts, setActivePorts] = useState({});
+  const [targetNode, setTargetNode] = useState(null);
+
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const [showPortsState, setShowPorts] = useState<boolean>(false);
-  const [activePort, setActivePort] = useState<{ id: string, side: SideEnum }>(null);
   const showPorts = enablePorts && showPortsState;
   const {
     block: blockEditing,
@@ -465,180 +509,26 @@ function DependencyGraph({
     return mapping;
   }, [blocks]);
 
-  const displayTextForBlock = useCallback((block: BlockType): {
-    displayText: string;
-    kicker?: string;
-    subtitle?: string;
-  } => {
-    let displayText;
-    let kicker;
-    let subtitle;
-
-    if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
-      let contentParsed: {
-        destination?: string;
-        source?: string;
-      } = {};
-      if (BlockLanguageEnum.YAML === block.language && block?.content?.length >= 1) {
-        contentParsed = parse(block.content);
-      }
-
-      if (BlockTypeEnum.DATA_LOADER === block.type) {
-        displayText = `${block.uuid}: ${contentParsed?.source}`;
-      } else if (BlockTypeEnum.DATA_EXPORTER === block.type) {
-        displayText = `${block.uuid}: ${contentParsed?.destination}`;
-      }
-    } else if (BlockTypeEnum.DBT === block.type && BlockLanguageEnum.SQL === block.language) {
-      const {
-        name: modelName,
-        project,
-      } = getModelAttributes(block);
-      displayText = modelName;
-      kicker = project;
-    }
-
-    if (block?.replicated_block) {
-      displayText = block?.replicated_block;
-      kicker = block?.uuid;
-    }
-
-    if (!displayText) {
-      displayText = block.uuid;
-    }
-
-    return {
-      displayText,
-      kicker,
-      subtitle,
-    };
-  }, [
-    pipeline,
-  ]);
-
   const {
     edges,
     nodes,
-  } = useMemo(() => {
-    const nodesInner: NodeType[] = [];
-    const edgesInner: EdgeType[] = [];
-
-    blocks.forEach((block: BlockType) => {
-      const {
-        displayText,
-        kicker,
-        subtitle,
-      } = displayTextForBlock(block);
-
-      const {
-        tags = [],
-        upstream_blocks: upstreamBlocks = [],
-        uuid,
-      } = block;
-      const downstreamBlocks = downstreamBlocksMapping[uuid];
-      const ports: PortType[] = [];
-
-      if (downstreamBlocks) {
-        ports.push(...downstreamBlocks.map((block2: BlockType) => ({
-          ...SHARED_PORT_PROPS,
-          id: `${uuid}-${block2.uuid}-from`,
-          side: SideEnum.SOUTH,
-        })));
-      } else {
-        ports.push({
-          ...SHARED_PORT_PROPS,
-          id: `${uuid}-from`,
-          side: SideEnum.SOUTH,
-        });
-      }
-
-      if (upstreamBlocks.length === 0) {
-        ports.push({
-          ...SHARED_PORT_PROPS,
-          id: `${uuid}-to`,
-          side: SideEnum.NORTH,
-        });
-      }
-
-      upstreamBlocks?.forEach((uuidUp: string) => {
-        ports.push({
-          ...SHARED_PORT_PROPS,
-          id: `${uuidUp}-${uuid}-to`,
-          side: SideEnum.NORTH,
-        });
-
-        edgesInner.push({
-          from: uuidUp,
-          fromPort: `${uuidUp}-${uuid}-from`,
-          id: `${uuidUp}-${uuid}`,
-          to: uuid,
-          toPort: `${uuidUp}-${uuid}-to`,
-        });
-      });
-
-      let nodeHeight = 37;
-      if (tags?.length >= 1) {
-        nodeHeight += UNIT * 1.5;
-      }
-      if (kicker) {
-        nodeHeight += UNIT * 1.5;
-      }
-      if (subtitle) {
-        nodeHeight += UNIT * 2;
-      }
-
-      let longestText = displayText;
-      [
-        kicker,
-        subtitle,
-      ].forEach((text) => {
-        if (text && text.length > longestText.length) {
-          longestText = text;
-        }
-      });
-
-      const callbackBlocks = callbackBlocksByBlockUUID?.[block?.uuid];
-      const conditionalBlocks = conditionalBlocksByBlockUUID?.[block?.uuid];
-      const extensionBlocks = extensionBlocksByBlockUUID?.[block?.uuid];
-
-      nodesInner.push({
-        data: {
-          block,
-        },
-        // height: nodeHeight,
-        height: getBlockNodeHeight(block, pipeline, {
-          blockStatus,
-          callbackBlocks,
-          conditionalBlocks,
-          extensionBlocks,
-        }),
-        id: uuid,
-        ports,
-        // width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
-        //   + (disabledProp ? 0 : UNIT * 5)
-        //   + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
-        //   + (blockStatus?.[getBlockRunBlockUUID(block)]?.runtime ? 50 : 0),
-        width: getBlockNodeWidth(block, pipeline, {
-          blockStatus,
-          callbackBlocks,
-          conditionalBlocks,
-          extensionBlocks,
-        }),
-      });
-
-    });
-
-    return {
-      edges: edgesInner,
-      nodes: nodesInner,
-    };
-  }, [
-    // blockEditing?.uuid,
+  } = useMemo(() => buildNodesEdgesPorts({
+    activeNodes,
     blockStatus,
+    blockUUIDMapping,
     blocks,
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
-    // disabledProp,
-    displayTextForBlock,
+    downstreamBlocksMapping,
+    extensionBlocksByBlockUUID,
+    pipeline,
+  }), [
+    activeNodes,
+    blockStatus,
+    blockUUIDMapping,
+    blocks,
+    callbackBlocksByBlockUUID,
+    conditionalBlocksByBlockUUID,
     downstreamBlocksMapping,
     extensionBlocksByBlockUUID,
     pipeline,
@@ -701,18 +591,17 @@ function DependencyGraph({
     heightOffset,
   ]);
 
-  const onClickNodeFunc = useCallback((event, {
+  const onClickNode = useCallback((event, {
     data: {
       block,
     },
   }) => {
-    setActivePort(null);
     const disabled = blockEditing?.uuid === block.uuid;
     if (!disabled) {
       if (blockEditing) {
         onClickWhenEditingUpstreamBlocks(block);
       } else {
-        onClickNode?.({
+        onClickNodeProp?.({
           block,
         });
 
@@ -727,32 +616,161 @@ function DependencyGraph({
   }, [
     blockEditing,
     onClick,
-    onClickNode,
+    onClickNodeProp,
     onClickWhenEditingUpstreamBlocks,
-    setActivePort,
   ]);
 
-  const onEnterNodeFunc = useCallback(() => {
-    if (!editingBlock?.upstreamBlocks) {
-      setShowPorts(true);
+  const clearTimeoutForNode = useCallback((node) => {
+    const nodeID = node?.id;
+    if (nodeID in timeoutRefs.current) {
+      clearTimeout(timeoutRefs?.current?.[nodeID]);
+    }
+  }, [activeNodes]);
+  const setTimeoutForNode = useCallback((node) => {
+    const nodeID = node?.id;
+    timeoutRefs.current[nodeID] = setTimeout(() => {
+      setActiveNodes((prev) => {
+        const mapping = { ...prev };
+        delete mapping?.[nodeID];
+
+        return mapping;
+      });
+    }, 1000);
+  }, [setActiveNodes]);
+
+  const onMouseEnterNode = useCallback((event, node) => {
+    if (editingBlock?.upstreamBlocks) {
+      return;
+    }
+
+    clearTimeoutForNode(node);
+
+    const nodeID = node?.id;
+
+    if (!Object.keys(activePorts || {})?.length || nodeID in activePorts) {
+      setActiveNodes(prev => {
+        Object.values(prev || {}).forEach((nodePrev) => {
+          setTimeoutForNode(nodePrev);
+        });
+
+        return {
+          ...prev,
+          [nodeID]: node,
+        };
+      });
+    } else {
+      setTargetNode(node);
     }
   }, [
+    activePorts,
+    clearTimeoutForNode,
     editingBlock,
-    setShowPorts,
-  ]);
-  const onLeaveNodeFunc = useCallback(() => {
-    if (!activePort) {
-      setShowPorts(false);
-    }
-  }, [
-    activePort,
-    setShowPorts,
+    setActiveNodes,
+    setTargetNode,
+    setTimeoutForNode,
   ]);
 
-  const onContextMenu = useCallback((e, node) => {
-    console.log(e, node);
+  const onMouseLeaveNode = useCallback((event, node) => {
+    setTimeoutForNode(node);
+  }, [
+    setTimeoutForNode,
+  ]);
+
+  const onMouseDownNode = useCallback((event, node) => {
+    console.log('onMouseDown AND DRAG!');
   }, [
   ]);
+  const onMouseUpNode = useCallback((event, node) => {
+    console.log('onMouseUp AND DRAG!');
+  }, [
+  ]);
+
+  const onContextMenuNode = useCallback((event, node) => {
+    event.preventDefault();
+    console.log('SHOW MENU!');
+  }, []);
+
+  const onEnterPort = useCallback(({
+    event,
+    node,
+    port,
+  }) => {
+    clearTimeoutForNode(node);
+  }, [
+    clearTimeoutForNode,
+  ]);
+
+  const onDragStartPort = useCallback(({
+    event,
+    initial,
+    node,
+    port,
+  }) => {
+    setActivePorts(prev => ({
+      ...prev,
+      [node?.id]: {
+        event,
+        initial,
+        node,
+        port,
+      },
+      }));
+  }, [
+    setActivePorts,
+  ]);
+
+  const onDragEndPort = useCallback(({
+    event,
+    inital,
+    node,
+    port,
+  }) => {
+    const nodeID = node?.id;
+    const side = port?.side as SideEnum;
+
+    if (targetNode) {
+      const fromBlock: BlockType = node?.properties?.data?.block;
+      const toBlock: BlockType = targetNode?.data?.block;
+
+      const isConnectingIntegrationSourceAndDestination = (
+        pipeline?.type === PipelineTypeEnum.INTEGRATION
+          && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
+            || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
+              && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
+            )
+      );
+
+      console.log(node, targetNode)
+
+      if (!isConnectingIntegrationSourceAndDestination
+        && !fromBlock?.upstream_blocks?.includes(toBlock.uuid)
+        && node?.id !== targetNode?.id
+      ) {
+        const portSide = port?.side as SideEnum;
+        updateBlockByDragAndDrop({
+          fromBlock,
+          portSide: portSide || SideEnum.SOUTH,
+          toBlock,
+        });
+      }
+    }
+
+    setActivePorts((prev) => {
+      const mapping = { ...prev };
+      delete mapping?.[nodeID];
+
+      return mapping;
+    });
+    setTimeoutForNode(node);
+  }, [
+    pipeline,
+    setActivePorts,
+    setTimeoutForNode,
+    targetNode,
+  ]);
+
+  // Show a menu to add a block between or delete the connection.
+  // console.log(activeEdges)
 
   return (
     <>
@@ -849,32 +867,115 @@ function DependencyGraph({
           disabled={disabledProp}
           edge={(edge) => {
             const block = blockUUIDMapping[edge.source];
+            const colorData = getColorsForBlockType(block?.type, {
+              blockColor: block?.color,
+              theme: themeContext,
+            });
+            const isActive = activeEdges?.[edge?.id];
 
             return (
               <Edge
                 {...edge}
-                className="edge"
+                className={`edge ${isActive ? 'active' : 'inactive'}`}
                 onClick={(event, edge) => {
-                  setActivePort(null);
-                  setEdgeSelections([edge.id]);
-                }}
-                onRemove={(event, edge) => {
-                  const fromBlock = blockUUIDMapping[edge.from];
-                  const toBlock = blockUUIDMapping[edge.to];
+                  // setActivePorts(null);
+                  // setEdgeSelections([edge.id]);
 
-                  updateBlockByDragAndDrop({
-                    fromBlock,
-                    removeDependency: true,
-                    toBlock,
+                  setActiveEdges(prev => {
+                    if (prev?.[edge?.id]) {
+                      const edges = { ...prev };
+                      delete edges[edge?.id];
+
+                      return edges;
+                    } else {
+                      return {
+                        ...prev,
+                        [edge.id]: {
+                          edge,
+                          event,
+                        },
+                      };
+                    }
                   });
-                  setEdgeSelections([]);
                 }}
-                removable={enablePorts && !editingBlock?.upstreamBlocks}
+                // onKeyDown={() => {
+
+                // }}
+                // onEnter={(e) => {
+                //   // function getAllSiblings(elem, filter) {
+                //   //     var sibs = [];
+                //   //     elem = elem.parentNode.firstChild;
+                //   //     do {
+                //   //         if (elem.nodeType === 3) continue; // text node
+                //   //         if (!filter || filter(elem)) sibs.push(elem);
+                //   //     } while (elem = elem.nextSibling)
+                //   //     return sibs;
+                //   // }
+                //   // getAllSiblings(e.target)?.forEach(el => {
+                //   //   const classNames = new Set(...el.className?.baseVal?.split(' '));
+                //   //   classNames.add('show');
+                //   //   // el.className = [...classNames].join(' ');
+                //   //   // el.style.opacity = '1 !important';
+                //   //   console.log(edge)
+                //   // });
+
+                //   setActiveEdges({
+                //     [edge.id]: edge,
+                //   });
+                // }}
+                // onLeave={() => {
+                //   setActiveEdges({});
+                // }}
+                // onAdd={(event, edge) => {
+                //   const fromBlock = blockUUIDMapping[edge.from];
+                //   const toBlock = blockUUIDMapping[edge.to];
+                //   const idx = blocks?.findIndex(({ uuid }) => uuid === toBlock?.uuid);
+
+                //   addNewBlockAtIndex(
+                //     {
+                //       downstream_blocks: [toBlock?.uuid],
+                //       language: toBlock?.language,
+                //       type: BlockTypeEnum.CUSTOM,
+                //       upstream_blocks: [fromBlock?.uuid],
+                //     },
+                //     idx,
+                //     () => {
+
+                //     },
+                //   );
+                // }}
+                // add={
+                //   <Add
+                //     className={`edge-rect edge-rect-${colorsInverse?.[colorData?.accentLight]} edge-line edge-line-${colorsInverse?.[colorData?.accent]}`}
+                //     hidden={!!activeEdges?.[edge?.id]}
+                //     size={2 * UNIT}
+                //   />
+                // }
+                // remove={
+                //   <Remove
+                //     className={`edge-rect edge-line edge-line-remove`}
+                //     // hidden={!activeEdges?.[edge?.id]}
+                //     hidden={false}
+                //     size={2 * UNIT}
+                //   />
+                // }
+                // onRemove={(event, edge) => {
+                //   console.log('WTFF')
+                //   const fromBlock = blockUUIDMapping[edge.from];
+                //   const toBlock = blockUUIDMapping[edge.to];
+
+                //   updateBlockByDragAndDrop({
+                //     fromBlock,
+                //     removeDependency: true,
+                //     toBlock,
+                //   });
+                //   setEdgeSelections([]);
+                // }}
+                // removable={enablePorts && !editingBlock?.upstreamBlocks}
+                // removable={true}
                 style={{
-                  stroke: getColorsForBlockType(
-                    block?.type,
-                    { blockColor: block?.color, theme: themeContext },
-                  )?.accent,
+                  stroke: colorData?.accent,
+                  strokeWidth: STROKE_WIDTH,
                 }}
               />
             );
@@ -882,152 +983,212 @@ function DependencyGraph({
           edges={edges}
           fit
           forwardedRef={canvasRef}
+          // https://github.com/reaviz/reaflow/blob/master/src/layout/elkLayout.ts
+          layoutOptions={{
+            // 'elk.nodeLabels.placement': 'INSIDE V_CENTER H_RIGHT',
+            // 'elk.algorithm': 'org.eclipse.elk.layered',
+            // 'elk.direction': 'DOWN',
+            // nodeLayering: 'INTERACTIVE',
+            // 'org.eclipse.elk.edgeRouting': 'ORTHOGONAL',
+            // 'elk.layered.unnecessaryBendpoints': 'true',
+            // 'elk.layered.spacing.edgeNodeBetweenLayers': '20',
+            // 'org.eclipse.elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
+            // 'org.eclipse.elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
+            // 'org.eclipse.elk.insideSelfLoops.activate': 'true',
+            // separateConnectedComponents: 'false',
+            // 'spacing.componentComponent': '20',
+            // spacing: '25',
+            // 'spacing.nodeNodeBetweenLayers': '20'
+          }}
           maxHeight={ZOOMABLE_CANVAS_SIZE}
           maxWidth={ZOOMABLE_CANVAS_SIZE}
           maxZoom={1}
           minZoom={-0.7}
-          node={(node) => (
-            <Node
-              {...node}
-              dragType="port"
-              linkable
-              onClick={onClickNodeFunc}
-              onContextMenu={onContextMenu}
-              onEnter={onEnterNodeFunc}
-              onLeave={onLeaveNodeFunc}
-              port={(showPorts && (
-                activePort === null || isActivePort(activePort, node)))
-                ?
-                  <Port
-                    onDrag={() => setShowPorts(true)}
-                    onDragEnd={() => {
-                      setShowPorts(false);
-                      setActivePort(null);
-                    }}
-                    onDragStart={(e, initial, port) => {
-                      const side = port?.side as SideEnum;
-                      setActivePort({ id: port?.id, side });
-                    }}
-                    onEnter={() => setShowPorts(true)}
-                    rx={10}
-                    ry={10}
-                    style={{
-                      fill: getColorsForBlockType(
-                        node?.properties?.data?.block?.type,
-                        {
-                          blockColor: node?.properties?.data?.block?.color,
-                          theme: themeContext,
-                        },
-                      ).accent,
-                      stroke: 'white',
-                      strokeWidth: '1px',
-                    }}
-                  />
-                : null
-              }
-              style={{
-                fill: 'transparent',
-                stroke: 'transparent',
-                strokeWidth: 0,
-              }}
-            >
-              {(event) => {
-                const {
-                  height: nodeHeight,
-                  node,
-                } = event;
-                const {
-                  data: {
-                    block,
-                  },
-                } = node;
+          node={(node) => {
+            const nodeID = node?.id;
+            const block = node?.properties?.data?.block;
+            const blockUUID = block?.uuid;
 
-                const blockStatus = getBlockStatus(block);
-                const {
-                  displayText,
-                  kicker,
-                  subtitle,
-                } = displayTextForBlock(block);
-
-                return (
-                  <foreignObject
-                    height={nodeHeight}
-                    style={{
-                      // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
-                      // pointerEvents: 'none',
-                    }}
-                    onClick={e => onClickNodeFunc(e, node)}
-                    onContextMenu={(e) => onContextMenu(e, node)}
-                    onMouseEnter={onEnterNodeFunc as MouseEventHandler}
-                    onMouseLeave={onLeaveNodeFunc as MouseEventHandler}
-                    width={event.width}
-                    x={0}
-                    y={0}
-                  >
-                    <BlockNode
-                      block={block}
-                      callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
-                      conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
-                      disabled={blockEditing?.uuid === block.uuid}
-                      extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
-                      height={nodeHeight}
-                      hideStatus={disabledProp || noStatus}
-                      key={block.uuid}
-                      pipeline={pipeline}
-                      selected={blockEditing
-                        ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                        : selectedBlock?.uuid === block.uuid
-                      }
-                      {...blockStatus}
-                    />
-
-                    {/*<GraphNode
-                      block={block}
-                      bodyText={`${displayText}${blockEditing?.uuid === block.uuid ? ' (editing)' : ''}`}
-                      disabled={blockEditing?.uuid === block.uuid}
-                      height={nodeHeight}
-                      hideStatus={disabledProp}
-                      key={block.uuid}
-                      kicker={kicker}
-                      selected={blockEditing
-                        ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                        : selectedBlock?.uuid === block.uuid
-                      }
-                      subtitle={subtitle}
-                      {...blockStatus}
-                    />*/}
-
-                  </foreignObject>
-                );
-              }}
-            </Node>
-          )}
-          nodes={nodes}
-          onNodeLink={(_event, from, to, port) => {
-            const fromBlock: BlockType = blockUUIDMapping[from.id];
-            const toBlock: BlockType = blockUUIDMapping[to.id];
-
-            const isConnectingIntegrationSourceAndDestination = (
-              pipeline?.type === PipelineTypeEnum.INTEGRATION
-                && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
-                  || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
-                    && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
-                  )
+            const color = getColorsForBlockType(
+              block?.type,
+              {
+                blockColor: block?.color,
+                theme: themeContext,
+              },
             );
-            if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
-              || from.id === to.id
-              || isConnectingIntegrationSourceAndDestination
-            ) {
-              return;
-            }
+            const isActive = !!activeNodes?.[blockUUID];
 
-            const portSide = port?.side as SideEnum;
-            updateBlockByDragAndDrop({
-              fromBlock,
-              portSide: portSide || SideEnum.SOUTH,
-              toBlock,
-            });
+            return (
+              <Node
+                {...node}
+                dragType="port"
+                linkable
+                port={
+                  <Port
+                    onDrag={() => {
+                      clearTimeoutForNode(node);
+                    }}
+                    onDragEnd={(event, initial, port) => {
+                      onDragEndPort({
+                        event,
+                        initial,
+                        node,
+                        port,
+                      });
+                    }}
+                    onDragStart={(event, initial, port) => {
+                      onDragStartPort({
+                        event,
+                        initial,
+                        node,
+                        port,
+                      });
+                    }}
+                    onEnter={(event, port) => {
+                      onEnterPort({
+                        event,
+                        node,
+                        port,
+                      });
+                    }}
+                    // onEnter={() => setShowPorts(true)}
+                    rx={isActive ? 10 : null}
+                    ry={isActive ? 10 : null}
+                    style={{
+                      fill: color?.accentLight,
+                      stroke: color?.accent,
+                      strokeWidth: 1,
+                    }}
+                  >
+                    <h1>HELLO</h1>
+                    {(portData) => {
+                      console.log(portData);
+                      return (
+                        <Port>
+                        </Port>
+                      );
+                    }}
+                  </Port>
+                }
+                // port={(showPorts && (
+                //   activePort === null || isActivePort(activePort, node)))
+                //   ?
+                //     <Port
+                //       onDrag={() => setShowPorts(true)}
+                //       onDragEnd={() => {
+                //         setShowPorts(false);
+                //         setActivePorts(null);
+                //       }}
+                //       onDragStart={(e, initial, port) => {
+                //         const side = port?.side as SideEnum;
+                //         setActivePorts({ id: port?.id, side });
+                //       }}
+                //       onEnter={() => setShowPorts(true)}
+                //       rx={10}
+                //       ry={10}
+                //       style={{
+                //         fill: getColorsForBlockType(
+                //           node?.properties?.data?.block?.type,
+                //           {
+                //             blockColor: node?.properties?.data?.block?.color,
+                //             theme: themeContext,
+                //           },
+                //         ).accent,
+                //         stroke: 'white',
+                //         strokeWidth: '1px',
+                //       }}
+                //     />
+                //   : null
+                // }
+                style={{
+                  fill: 'transparent',
+                  stroke: 'transparent',
+                  strokeWidth: 0,
+                }}
+              >
+                {(event) => {
+                  const {
+                    height: nodeHeight,
+                    node,
+                  } = event;
+                  const {
+                    data: {
+                      block,
+                      children,
+                    },
+                  } = node;
+
+                  const blockStatus = getBlockStatus(block);
+
+                  return (
+                    <foreignObject
+                      height={nodeHeight}
+                      onClick={(e) => onClickNode(e, node)}
+                      onContextMenu={(e) => {
+                        onContextMenuNode(e, node);
+                      }}
+                      onMouseEnter={(e) => onMouseEnterNode(e, node)}
+                      onMouseLeave={(e) => onMouseLeaveNode(e, node)}
+                      onMouseDown={(e) => onMouseDownNode(e, node)}
+                      onMouseUp={(e) => onMouseUpNode(e, node)}
+                      style={{
+                        // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
+                        // pointerEvents: 'none',
+                      }}
+                      width={event.width}
+                      x={0}
+                      y={0}
+                    >
+                      <BlockNode
+                        block={block}
+                        callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
+                        conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
+                        disabled={blockEditing?.uuid === block.uuid}
+                        downstreamBlocks={children}
+                        extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
+                        height={nodeHeight}
+                        hideStatus={disabledProp || noStatus}
+                        key={block.uuid}
+                        pipeline={pipeline}
+                        selected={blockEditing
+                          ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                          : selectedBlock?.uuid === block.uuid
+                        }
+                        {...blockStatus}
+                      />
+                    </foreignObject>
+                  );
+                }}
+              </Node>
+            );
           }}
+          nodes={nodes}
+          // onNodeLink={(_event, from, to, port) => {
+          //   console.log('wtf', _event)
+          //   const fromBlock: BlockType = blockUUIDMapping[from.id];
+          //   const toBlock: BlockType = blockUUIDMapping[to.id];
+
+          //   const isConnectingIntegrationSourceAndDestination = (
+          //     pipeline?.type === PipelineTypeEnum.INTEGRATION
+          //       && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
+          //         || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
+          //           && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
+          //         )
+          //   );
+          //   if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
+          //     || from.id === to.id
+          //     || isConnectingIntegrationSourceAndDestination
+          //   ) {
+          //     return;
+          //   }
+
+          //   const portSide = port?.side as SideEnum;
+          //   updateBlockByDragAndDrop({
+          //     fromBlock,
+          //     portSide: portSide || SideEnum.SOUTH,
+          //     toBlock,
+          //   });
+          // }}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           onZoomChange={z => setZoom?.(z)}
           pannable={pannable}

@@ -5,6 +5,39 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const STROKE_WIDTH = 2;
+
+export function inverseColorsMapping(themeContext = dark) {
+  const mapping = {};
+  [
+    themeContext?.accent,
+    themeContext?.content,
+    themeContext?.monotone,
+  ].forEach((colors) => {
+    Object.entries(colors).forEach(([k, v]) => {
+      mapping[v] = k;
+    });
+  });
+
+  return mapping;
+}
+
+const colorStyles = Object.entries(inverseColorsMapping()).reduce((acc, [k, v]) => {
+  return acc.concat(`
+    .edge-rect-${v} {
+      rect {
+        fill: ${k};
+      }
+    }
+
+    .edge-line-${v} {
+      line {
+        stroke: ${k};
+      }
+    }
+  `);
+}, []);
+
 export const GraphContainerStyle = styled.div<{
   height?: number;
 }>`
@@ -17,10 +50,14 @@ export const GraphContainerStyle = styled.div<{
   `}
 
   .edge {
-    animation: dashdraw .5s linear infinite;
-    stroke-dasharray: 5;
-    stroke-width: 1;
-    stroke: #b1b1b7;
+    &.active {
+      animation: dashdraw .5s linear infinite;
+      stroke-dasharray: 5;
+      stroke-width: ${STROKE_WIDTH};
+    }
+
+    &.inactive {
+    }
   }
 
   @keyframes dashdraw {
@@ -28,6 +65,28 @@ export const GraphContainerStyle = styled.div<{
       stroke-dashoffset: 10;
     }
   }
+
+  .edge-rect {
+    rect {
+      fill: none;
+    }
+  }
+
+  .edge-line {
+    line {
+      stroke-width: ${UNIT / 4}px;
+    }
+  }
+
+  .edge-line-remove {
+    line {
+      ${props => `
+        stroke: ${(props.theme.accent || dark.accent).negative};
+      `}
+    }
+  }
+
+  ${colorStyles.join('\n')}
 `;
 
 export const NodeStyle = styled.div<{

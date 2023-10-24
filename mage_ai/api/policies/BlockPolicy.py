@@ -86,6 +86,7 @@ BlockPolicy.allow_write([
     'content',
     'converted_from',
     'defaults',
+    'downstream_blocks',
     'extension_uuid',
     'has_callback',
     'language',

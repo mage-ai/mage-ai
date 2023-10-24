@@ -5,38 +5,86 @@ import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const ICON_SIZE = UNIT * 3;
+export const BORDER_WIDTH = 1;
 
-export const NodeStyle = styled.div<{
+export const NodeContainerStyle = styled.div<{
+  active?: boolean;
   borderColor?: string;
   disabled?: boolean;
   height?: number;
   isCancelled: boolean;
-  isConditionFailed: boolean;
+  noBackground?: boolean;
   selected?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
-  border: 1px solid transparent;
   min-width: fit-content;
-  overflow: hidden;
+  padding: ${BORDER_WIDTH}px;
 
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).codeTextarea};
+  ${props => !props.active && props.borderColor && `
+    border: ${BORDER_WIDTH}px solid transparent;
   `}
 
-  ${props => props.borderColor && `
-    border-color: ${props.borderColor};
-  `}
-
-  ${props => props.selected && `
+  ${props => !props.active && props.selected && `
     border-color: ${(props.theme.content || dark.content).active};
   `}
 
-  ${props => (props.isCancelled || props.disabled) && `
+  ${props => !props.active && (props.isCancelled || props.disabled) && `
     // opacity doesn’t work on Safari
     border-color: ${(props.theme.content || dark.content).muted};
     border-style: dotted;
     cursor: not-allowed;
     opacity: 0.5;
+  `}
+
+  ${props => props.active && props.borderColor && `
+    animation: border-dance .5s infinite linear;
+    background: linear-gradient(90deg, ${props.borderColor} 50%, transparent 50%),
+      linear-gradient(90deg, ${props.borderColor} 50%, transparent 50%),
+      linear-gradient(0deg, ${props.borderColor} 50%, transparent 50%),
+      linear-gradient(0deg, ${props.borderColor} 50%, transparent 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+
+    @keyframes border-dance {
+      0% {
+        background-position: left top,
+          right bottom,
+          left bottom,
+          right top;
+      }
+      100% {
+        background-position: left 15px top,
+          right 15px bottom,
+          left bottom 15px,
+          right top 15px;
+      }
+    }
+  `}
+
+  ${props => props.active && props.borderColor && !props.noBackground && `
+    background-size: 15px 4px, 15px 4px, 4px 15px, 4px 15px;
+  `}
+
+  ${props => props.active && props.borderColor && props.noBackground && `
+    background-size: 15px 1.5px, 15px 1.5px, 1.5px 15px, 1.5px 15px;
+  `}
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+`;
+
+export const NodeStyle = styled.div<{
+  disabled?: boolean;
+  height?: number;
+  isConditionFailed: boolean;
+  noBackground?: boolean;
+}>`
+  border-radius: ${BORDER_RADIUS}px;
+  min-width: fit-content;
+  overflow: hidden;
+
+  ${props => !props.noBackground && `
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 
   ${props => props.isConditionFailed && `

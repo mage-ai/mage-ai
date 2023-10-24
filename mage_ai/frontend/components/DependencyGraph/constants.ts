@@ -16,6 +16,11 @@ export const SHARED_PORT_PROPS = {
   width: 10,
 };
 
+export const SHARED_PORT_PROPS_SQUARE = {
+  height: 6,
+  width: 6,
+};
+
 export const INVERTED_TEXT_COLOR_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.SENSOR,
