@@ -1,18 +1,15 @@
 import ast
 import asyncio
 import json
-import os
 import re
 from typing import Dict, List
 
 import astor
 import openai
-from huggingface_hub import login
 from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 
-from mage_ai.ai.ai_client import AIClient
 from mage_ai.ai.hugging_face_client import HuggingFaceClient
 from mage_ai.ai.openai_client import OpenAIClient
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
@@ -104,7 +101,7 @@ Implement it in {code_language} language.
 Provide your response in JSON format with the key "code".
 """
 PROMPT_TO_SPLIT_BLOCKS = """
-[INST]A BLOCK does one action either reading data from one data source, transforming the data from
+A BLOCK does one action either reading data from one data source, transforming the data from
 one format to another or exporting data into a data source.
 Based on the code description delimited by triple backticks, your task is to identify
 how many BLOCKS required, function for each BLOCK and upstream blocks between BLOCKs.
@@ -302,6 +299,7 @@ class LLMPipelineWizard:
 
     async def __async_identify_function_parameters(self, block_description: str) -> dict:
         messages = [{"role": "user", "content": block_description}]
+        # TODO(Replace with a generic LLM call so all LLM clients can support this funciton.)
         response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
             messages=messages,
@@ -379,16 +377,13 @@ class LLMPipelineWizard:
         block_dict[block_id] = block
 
     async def async_generate_pipeline_from_description(self, pipeline_description: str) -> dict:
-        print(f"Testing client name: {self.client.__class__.__name__}")
         variable_values = dict()
         variable_values['code_description'] = pipeline_description
-        # splited_block_descriptions =
-        await self.client.inference_with_prompt(
+        splited_block_descriptions = await self.client.inference_with_prompt(
             variable_values,
             PROMPT_TO_SPLIT_BLOCKS,
             is_json_response=False,
         )
-        # print(f"Testing splited_block_descriptions: {splited_block_descriptions}")
         blocks = {}
         block_tasks = []
         for line in splited_block_descriptions.strip().split('\n'):
