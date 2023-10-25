@@ -170,8 +170,6 @@ setuptools.setup(
             'snowflake-connector-python==3.2.1',
             'sshtunnel==0.4.0',
             'thefuzz[speedup]==0.19.0',
-            'torch>=2.0.1',
-            'transformers>=4.34.0',
         ],
     },
 )

@@ -45,6 +45,7 @@ class RepoConfig:
         self.cluster_type = None
 
         self.remote_variables_dir = None
+        self.ai_config = None
         self.azure_container_instance_config = None
         self.ecs_config = None
         self.emr_config = None
@@ -55,7 +56,6 @@ class RepoConfig:
         self.notification_config = None
         self.queue_config = None
         self.help_improve_mage = None
-        self.huggingface_token = None
         self.openai_api_key = None
         self.retry_config = None
         self.ldap_config = None
@@ -103,6 +103,7 @@ class RepoConfig:
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
 
             # Executor configs
+            self.ai_config = repo_config.get('ai_config', dict())
             self.azure_container_instance_config = \
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
@@ -116,7 +117,6 @@ class RepoConfig:
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.openai_api_key = repo_config.get('openai_api_key')
-            self.huggingface_token = repo_config.get('huggingface_token')
             self.retry_config = repo_config.get('retry_config')
 
             self.ldap_config = repo_config.get('ldap_config')
@@ -151,6 +151,7 @@ class RepoConfig:
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
+            ai_config=self.ai_config,
             azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,

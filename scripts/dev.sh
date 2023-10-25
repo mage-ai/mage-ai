@@ -37,8 +37,13 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    --huggingface_token)
-    HUGGINGFACE_TOKEN="$3"
+    --huggingface_api)
+    HUGGINGFACE_API="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --huggingface_inference_api_token)
+    HUGGINGFACE_INFERENCE_API_TOKEN="$3"
     shift # past argument
     shift # past value
     ;;
@@ -127,7 +132,8 @@ export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
 export GCP_REGION=$GCP_REGION
 
-export HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN
+export HUGGINGFACE_API=$HUGGINGFACE_API
+export HUGGINGFACE_INFERENCE_API_TOKEN=$HUGGINGFACE_INFERENCE_API_TOKEN
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH

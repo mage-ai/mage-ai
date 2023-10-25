@@ -1,25 +1,22 @@
 import ast
 import asyncio
 import json
-import os
 import re
 from typing import Dict, List
 
 import astor
 import openai
-from huggingface_hub import login
 from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
-from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 
-from mage_ai.ai.ai_client import AIClient
 from mage_ai.ai.hugging_face_client import HuggingFaceClient
 from mage_ai.ai.openai_client import OpenAIClient
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
+    AIMode,
     BlockLanguage,
     BlockType,
     PipelineType,
@@ -103,7 +100,7 @@ Implement it in {code_language} language.
 Provide your response in JSON format with the key "code".
 """
 PROMPT_TO_SPLIT_BLOCKS = """
-[INST]A BLOCK does one action either reading data from one data source, transforming the data from
+A BLOCK does one action either reading data from one data source, transforming the data from
 one format to another or exporting data into a data source.
 Based on the code description delimited by triple backticks, your task is to identify
 how many BLOCKS required, function for each BLOCK and upstream blocks between BLOCKs.
@@ -193,14 +190,13 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
 class LLMPipelineWizard:
     def __init__(self):
         repo_config = get_repo_config()
-        openai_api_key = repo_config.openai_api_key or os.getenv('OPENAI_API_KEY')
-        print(f"Testing openai_api_key: {openai_api_key}")
-        # if not openai_api_key:
-        #     print(f"Testing openai_api_key: {openai_api_key}")
-
-        self.client = HuggingFaceClient()
-        # else:
-        #     self.client = OpenAIClient()
+        ai_config = repo_config.ai_config
+        if ai_config.get("model_type") == AIMode.OPEN_AI:
+            self.client = OpenAIClient()
+        elif ai_config.get("model_type") == AIMode.HUGGING_FACE:
+            self.client = HuggingFaceClient()
+        else:
+            print("Error: AI Mode is not available.")
 
     async def __async_llm_call(
         self,
@@ -278,15 +274,13 @@ class LLMPipelineWizard:
         variable_values = dict()
         variable_values['code_description'] = code_description
         if block_language == BlockLanguage.PYTHON:
-            # customized_logic = await self.__async_llm_call(
-            #     variable_values,
-            #     PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
-            # )
             customized_logic = await self.client.inference_with_prompt(
                 variable_values,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
-            if 'action_code' in customized_logic.keys():
+            if 'action_code' in customized_logic.keys() \
+                and customized_logic.get("action_code") \
+                    and "null" != customized_logic.get("action_code"):
                 block_code = block_code.replace(
                     'action_code=\'\'',
                     f'action_code=\'{customized_logic.get("action_code")}\'')
@@ -305,6 +299,7 @@ class LLMPipelineWizard:
 
     async def __async_identify_function_parameters(self, block_description: str) -> dict:
         messages = [{"role": "user", "content": block_description}]
+        # TODO(Replace with a generic LLM call so all LLM clients can support this funciton.)
         response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo-0613",
             messages=messages,
@@ -381,33 +376,30 @@ class LLMPipelineWizard:
         block_dict[block_id] = block
 
     async def async_generate_pipeline_from_description(self, pipeline_description: str) -> dict:
-        print(f"Testing client name: {self.client.__class__.__name__}")
         variable_values = dict()
         variable_values['code_description'] = pipeline_description
-        # splited_block_descriptions =
-        await self.client.inference_with_prompt(
+        splited_block_descriptions = await self.client.inference_with_prompt(
             variable_values,
             PROMPT_TO_SPLIT_BLOCKS,
             is_json_response=False,
         )
-        # print(f"Testing splited_block_descriptions: {splited_block_descriptions}")
         blocks = {}
         block_tasks = []
-        # for line in splited_block_descriptions.strip().split('\n'):
-        #     if line.startswith("BLOCK") and ":" in line:
-        #         # Extract the block_id and block_description from the line
-        #         match = re.search(BLOCK_SPLIT_PATTERN, line)
-        #         if match:
-        #             block_id = match.group(1)
-        #             block_description = match.group(2).strip()
-        #             upstream_blocks = match.group(3).split(", ")
-        #             block_tasks.append(
-        #                 self.__async_generate_blocks(
-        #                     blocks,
-        #                     block_id,
-        #                     block_description,
-        #                     upstream_blocks))
-        # await asyncio.gather(*block_tasks)
+        for line in splited_block_descriptions.strip().split('\n'):
+            if line.startswith("BLOCK") and ":" in line:
+                # Extract the block_id and block_description from the line
+                match = re.search(BLOCK_SPLIT_PATTERN, line)
+                if match:
+                    block_id = match.group(1)
+                    block_description = match.group(2).strip()
+                    upstream_blocks = match.group(3).split(", ")
+                    block_tasks.append(
+                        self.__async_generate_blocks(
+                            blocks,
+                            block_id,
+                            block_description,
+                            upstream_blocks))
+        await asyncio.gather(*block_tasks)
         return blocks
 
     def __insert_comments_in_functions(self, code: str, function_comments: Dict):
@@ -464,7 +456,7 @@ class LLMPipelineWizard:
             print(block_docs_content)
         variable_values = dict()
         variable_values['block_content'] = block_docs_content
-        pipeline_doc = await self.__async_llm_call(
+        pipeline_doc = await self.client.inference_with_prompt(
                 variable_values,
                 PROMPT_FOR_SUMMARIZE_BLOCK_DOC,
                 is_json_response=False
@@ -493,11 +485,11 @@ class LLMPipelineWizard:
             add_on_prompt = 'Focus on the customized business logic in execute_transformer_action' \
                             'function.'
         variable_values = dict()
-        variable_values['block_content'] = block.content
-        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language]
-        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, '')
+        # Remove the @test function so hugging face can generate documentation.
+        variable_values['block_content'] = re.sub(
+            r'\s*\n*\s*@test.*', '', block.content, flags=re.DOTALL)
+        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE.get(block.language, "")
+        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, "")
         variable_values['add_on_prompt'] = add_on_prompt
         return await self.client.inference_with_prompt(
-            variable_values,
-            PROMPT_FOR_BLOCK,
-            is_json_response=False)
+            variable_values, PROMPT_FOR_BLOCK, False)
