@@ -20,6 +20,7 @@ import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VariableType } from '@interfaces/PipelineVariableType';
 import { onSuccess } from '@api/utils/response';
+import { removeKeyboardFocus } from '@context/shared/utils';
 
 
 type SecretsProps = {
@@ -100,14 +101,16 @@ function Secrets({
         secret: {
           name: newSecretName,
           value: newSecretValue,
-        }
+        },
       }).then(() => {
         fetchSecrets();
         setNewSecretName(null);
         setNewSecretValue(null);
       });
+      removeKeyboardFocus();
       setShowNewSecret(false);
     } else if (e.key === 'Escape') {
+      removeKeyboardFocus();
       setShowNewSecret(false);
     }
   }, [
@@ -116,6 +119,11 @@ function Secrets({
     newSecretName,
     newSecretValue,
   ]);
+
+  const handleDelete = useCallback((secretName) => {
+    removeKeyboardFocus();
+    deleteSecret(secretName);
+  }, [deleteSecret]);
 
   const SAMPLE_SECRET_VALUE = `
     "{{ mage_secret_var('<secret_name>') }}"
@@ -235,7 +243,7 @@ function Secrets({
           {secrets?.map((secret: SecretType) => (
             <VariableRow
               copyText={secret.name}
-              deleteVariable={() => deleteSecret(secret.name)}
+              deleteVariable={() => handleDelete(secret.name)}
               fetchVariables={fetchSecrets}
               hideEdit
               key={secret.name}
@@ -259,9 +267,9 @@ function Secrets({
       <Spacing mb={PADDING_UNITS}>
         <CodeBlock
           language="yaml"
+          maxWidth={tableWidth}
           small
           source={SAMPLE_SECRET_VALUE}
-          maxWidth={tableWidth}
         />
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
@@ -272,9 +280,9 @@ function Secrets({
       <Spacing mb={PADDING_UNITS}>
         <CodeBlock
           language="python"
+          maxWidth={tableWidth}
           small
           source={SECRET_IN_CODE}
-          maxWidth={tableWidth}
         />
       </Spacing>
     </Spacing>

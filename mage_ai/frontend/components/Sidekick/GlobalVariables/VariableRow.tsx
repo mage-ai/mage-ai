@@ -14,6 +14,7 @@ import { LIME_DARK } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VariableType } from '@interfaces/PipelineVariableType';
 import { onSuccess } from '@api/utils/response';
+import { removeKeyboardFocus } from '@context/shared/utils';
 import { useMutation } from 'react-query';
 import api from '@api';
 
@@ -97,8 +98,10 @@ function VariableRow({
           },
         });
       }
+      removeKeyboardFocus();
       onEnterCallback?.();
     } else if (e.key === 'Escape') {
+      removeKeyboardFocus();
       setEdit(false);
       onEscapeCallback?.();
     }
@@ -110,6 +113,11 @@ function VariableRow({
     variableName,
     variableValue,
   ]);
+
+  const handleDelete = useCallback(() => {
+    removeKeyboardFocus();
+    deleteVariable();
+  }, [deleteVariable]);
 
   useEffect(() => {
     if (edit) {
@@ -129,7 +137,7 @@ function VariableRow({
       onMouseLeave={() => setShowActions(false)}
     >
       <Row>
-        <Col md={1} hiddenSmDown>
+        <Col hiddenSmDown md={1}>
           <CellStyle noPadding>
             <KeyboardShortcutButton
               backgroundColor={DARK_CONTENT_BACKGROUND}
@@ -236,7 +244,7 @@ function VariableRow({
                     borderless
                     inline
                     muted
-                    onClick={deleteVariable}
+                    onClick={handleDelete}
                     small
                     uuid={`Sidekick/GlobalVariables/delete_${uuid}`}
                     withIcon
