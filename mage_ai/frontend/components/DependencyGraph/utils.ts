@@ -307,21 +307,28 @@ export function buildNodesEdgesPorts({
     } = info;
 
     if (downstreamBlocks?.length >= 2) {
-      downstreamBlocks?.forEach((block2) => {
-        const uuid2 = block2?.uuid;
-        if (!(uuid2 in blocksInGroups)) {
-          blocksInGroups[uuid2] = []
-        }
-        blocksInGroups[uuid2].push(info);
-      });
+      // Only group these blocks if their downstream is identical
+      const keys = downstreamBlocks?.map(({
+        downstream_blocks: downstreamBlockUUIDs,
+      }) => sortByKey(downstreamBlockUUIDs || [], uuid => uuid).join(','));
 
-      upstreamBlocks?.forEach((block2) => {
-        const uuid2 = block2?.uuid;
-        if (!(uuid2 in blocksWithDownstreamBlockSet)) {
-          blocksWithDownstreamBlockSet[uuid2] = []
-        }
-        blocksWithDownstreamBlockSet[uuid2].push(info);
-      });
+      if ((new Set(keys)).size <= 1) {
+        downstreamBlocks?.forEach((block2) => {
+          const uuid2 = block2?.uuid;
+          if (!(uuid2 in blocksInGroups)) {
+            blocksInGroups[uuid2] = []
+          }
+          blocksInGroups[uuid2].push(info);
+        });
+
+        upstreamBlocks?.forEach((block2) => {
+          const uuid2 = block2?.uuid;
+          if (!(uuid2 in blocksWithDownstreamBlockSet)) {
+            blocksWithDownstreamBlockSet[uuid2] = []
+          }
+          blocksWithDownstreamBlockSet[uuid2].push(info);
+        });
+      }
     }
   });
 

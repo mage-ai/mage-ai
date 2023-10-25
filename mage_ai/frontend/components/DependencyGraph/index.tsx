@@ -670,8 +670,6 @@ function DependencyGraph({
   const onMouseEnterNode = useCallback((event, node, opts) => {
     event?.preventDefault();
 
-    console.log(node)
-
     if (!isDragging && nodeDragging) {
       const fromBlock: BlockType = node?.data?.block;
       const toBlock: BlockType = nodeDragging?.node?.data?.block;
