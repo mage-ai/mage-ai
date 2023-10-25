@@ -158,6 +158,7 @@ BlockPolicy.allow_query([
 
 BlockPolicy.allow_query([
     'extension_uuid',
+    'force',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

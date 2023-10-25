@@ -274,6 +274,7 @@ export default interface BlockType {
   executor_type?: ExecutorTypeEnum;
   extension_uuid?: string;
   file?: string;
+  force?: boolean;
   has_callback?: boolean;
   language?: BlockLanguageEnum;
   metadata?: {

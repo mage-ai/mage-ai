@@ -1437,12 +1437,6 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          deleteBlock?.(block);
-        },
-        uuid: 'Delete block',
-      },
-      {
-        onClick: () => {
           showUpdateBlockModal(
             block,
             block?.name,
@@ -1484,6 +1478,41 @@ function DependencyGraph({
         },
         uuid: 'Add downstream block',
       },
+      {
+        disabled: !block?.upstream_blocks?.length,
+        onClick: () => {
+          updateBlockByDragAndDrop({
+            block,
+            upstreamBlocks: [],
+          });
+        },
+        uuid: 'Remove upstream dependencies',
+      },
+      {
+        disabled: !block?.downstream_blocks?.length,
+        onClick: () => {
+          updateBlockByDragAndDrop({
+            block,
+            downstreamBlocks: [],
+          });
+        },
+        uuid: 'Remove downstream dependencies',
+      },
+      {
+        onClick: () => {
+          deleteBlock?.(block);
+        },
+        uuid: 'Delete block',
+      },
+      {
+        onClick: () => {
+          deleteBlock?.({
+            ...block,
+            force: true,
+          });
+        },
+        uuid: 'Delete block (ignore dependencies)',
+      },
     ];
 
     return (
@@ -1501,11 +1530,13 @@ function DependencyGraph({
         >
           <Panel noPadding>
             {menuItems.map(({
+              disabled,
               onClick,
               uuid,
             }) => (
               <Spacing key={uuid} px={PADDING_UNITS} py={1}>
                 <Link
+                  disabled={disabled}
                   onClick={() => {
                     onClick();
                     setContextMenuData(null);
