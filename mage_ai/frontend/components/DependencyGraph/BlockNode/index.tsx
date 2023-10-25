@@ -78,6 +78,7 @@ type BlockNodeProps = {
   pipeline: PipelineType;
   runtime?: number;
   selected?: boolean;
+  selectedBlock?: BlockType;
 };
 
 function BlockNode({
@@ -104,6 +105,7 @@ function BlockNode({
   pipeline,
   runtime: runtimeFromBlockRun,
   selected,
+  selectedBlock,
 }: BlockNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
 
@@ -216,7 +218,15 @@ function BlockNode({
     const borderColorsSelected = [];
 
     if (blocksWithSameDownstreamBlocks?.length >= 2 && downstreamBlocks?.length >= 1) {
-      blocksWithSameDownstreamBlocks?.slice(0, 4)?.forEach((upstreamBlock: BlockType) => {
+      const arr = [];
+
+      if (blocksWithSameDownstreamBlocks?.find(({ uuid }) => selectedBlock?.uuid === uuid)) {
+        arr.push(selectedBlock);
+      } else {
+        arr.push(...blocksWithSameDownstreamBlocks);
+      }
+
+      arr?.slice(0, 4)?.forEach((upstreamBlock: BlockType) => {
         const {
           accent: accent2,
           accentLight: accentLight2,
@@ -236,10 +246,27 @@ function BlockNode({
     }
 
     if (borderColors?.length < 4) {
-      borderColors.push(...borderColors?.slice(0, 4 - borderColors?.length));
+      let idx = 0;
+      const count = borderColors?.length || 0;
+      while (borderColors?.length < 4) {
+        borderColors.push(borderColors?.[idx]);
+        idx += 1;
+        if (idx === count) {
+          idx = 0;
+        }
+      }
     }
+
     if (borderColorsSelected?.length < 4) {
-      borderColorsSelected.push(...borderColorsSelected?.slice(0, 4 - borderColorsSelected?.length));
+      let idx = 0;
+      const count = borderColorsSelected?.length || 0;
+      while (borderColorsSelected?.length < 4) {
+        borderColorsSelected.push(borderColorsSelected?.[idx]);
+        idx += 1;
+        if (idx === count) {
+          idx = 0;
+        }
+      }
     }
 
     return [
@@ -258,6 +285,7 @@ function BlockNode({
     blocksWithSameDownstreamBlocks,
     downstreamBlocks,
     selected,
+    selectedBlock,
     themeContext,
   ]);
 

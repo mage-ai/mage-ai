@@ -626,6 +626,8 @@ function DependencyGraph({
       blocks,
     },
   }) => {
+    event.preventDefault();
+
     let block = blockInit;
 
     if (blocks?.length >= 2 && selectedBlock) {
@@ -682,6 +684,8 @@ function DependencyGraph({
   }, [setActiveNodes]);
 
   const onMouseEnterNode = useCallback((event, node, opts) => {
+    event.preventDefault();
+
     if (!isDragging && nodeDragging) {
       const fromBlock: BlockType = node?.data?.block;
       const toBlock: BlockType = nodeDragging?.node?.data?.block;
@@ -771,6 +775,8 @@ function DependencyGraph({
   ]);
 
   const onMouseLeaveNode = useCallback((event, node, opts) => {
+    event.preventDefault();
+
     setNodeHovering(null);
     setTimeoutForNode(node);
   }, [
@@ -779,6 +785,8 @@ function DependencyGraph({
   ]);
 
   const onMouseDownNode = useCallback((event, node, opts) => {
+    event.preventDefault();
+
     const nodeID = node?.id;
     timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
       setActiveEdge(null);
@@ -798,6 +806,8 @@ function DependencyGraph({
   ]);
 
   const onMouseUpNode = useCallback((event, node, opts) => {
+    event.preventDefault();
+
     const nodeID = node?.id;
     if (nodeID in timeoutDraggingRefs.current) {
       clearTimeout(timeoutDraggingRefs?.current?.[nodeID]);
@@ -806,6 +816,7 @@ function DependencyGraph({
 
   const onContextMenuNode = useCallback((event, node, opts) => {
     event.preventDefault();
+
     console.log('SHOW MENU!');
   }, []);
 
@@ -814,6 +825,8 @@ function DependencyGraph({
     node,
     port,
   }) => {
+    event.preventDefault();
+
     clearTimeoutForNode(node);
     setNodeHovering(node);
   }, [
@@ -826,6 +839,8 @@ function DependencyGraph({
     node,
     port,
   }) => {
+    event.preventDefault();
+
     setNodeHovering(null);
     setTimeoutForNode(node);
   }, [
@@ -839,6 +854,8 @@ function DependencyGraph({
     node,
     port,
   }) => {
+    event.preventDefault();
+
     setActivePorts(prev => ({
       ...prev,
       [node?.id]: {
@@ -858,6 +875,8 @@ function DependencyGraph({
     node,
     port,
   }) => {
+    event.preventDefault();
+
     const nodeID = node?.id;
     const side = port?.side as SideEnum;
 
@@ -903,10 +922,9 @@ function DependencyGraph({
   const determineSelectedStatus: {
     anotherBlockSelected: boolean;
     selected: boolean;
-    opts?: {
-      blocksWithSameDownstreamBlocks?: BlockType[];
-    },
-  } = useCallback((node: NodeType, block: BlockType) => {
+  } = useCallback((node: NodeType, block: BlockType, opts?: {
+    blocksWithSameDownstreamBlocks?: BlockType[];
+  }) => {
     if (nodeDragging) {
       return {
         anotherBlockSelected: true,
@@ -917,11 +935,20 @@ function DependencyGraph({
     const activePortExists = Object.values(activePorts || {})?.length >= 1;
     const activePort = activePorts?.[node?.id];
 
-    const selected = blockEditing
-      ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-      : activePortExists
-        ? activePort
-        : selectedBlock?.uuid === block.uuid;
+    let selected = false;
+
+    if (blockEditing) {
+      selected = !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid);
+    } else if (activePortExists) {
+      selected = !!activePort;
+    } else if (opts?.blocksWithSameDownstreamBlocks?.length >= 2) {
+      selected = opts?.blocksWithSameDownstreamBlocks?.map(
+        ({ uuid }) => uuid,
+      )?.includes(selectedBlock?.uuid);
+    } else {
+      selected = selectedBlock?.uuid === block.uuid;
+    }
+
     const anotherBlockSelected = activePortExists
       ? !activePort
       : !!selectedBlock;
@@ -1759,6 +1786,7 @@ function DependencyGraph({
                         key={block.uuid}
                         pipeline={pipeline}
                         selected={selected}
+                        selectedBlock={selectedBlock}
                       />
                     </foreignObject>
                   );
