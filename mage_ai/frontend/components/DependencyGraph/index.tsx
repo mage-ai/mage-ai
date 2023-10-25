@@ -562,7 +562,7 @@ function DependencyGraph({
     edges,
     nodes,
     ports,
-    blocksWithSameDownstreamBlocks: blocksWithSameDownstreamBlocksMapping,
+    blocksWithDownstreamBlockSet,
   } = useMemo(() => buildNodesEdgesPorts({
     activeNodes,
     blockStatus,
@@ -669,6 +669,8 @@ function DependencyGraph({
 
   const onMouseEnterNode = useCallback((event, node, opts) => {
     event?.preventDefault();
+
+    console.log(node)
 
     if (!isDragging && nodeDragging) {
       const fromBlock: BlockType = node?.data?.block;
@@ -1226,13 +1228,13 @@ function DependencyGraph({
       y,
     } = containerRef?.current?.getBoundingClientRect() || {};
 
-    let info;
+    let infos;
     // Upstream is a block, downstream is a group.
     if (fromBlock && !toBlock) {
-      info = blocksWithSameDownstreamBlocksMapping?.[fromBlock?.uuid];
+      infos = blocksWithDownstreamBlockSet?.[fromBlock?.uuid];
     } else if (!fromBlock && toBlock) {
       // Upstream is a group, downstream is a block.
-      info = blocksWithSameDownstreamBlocksMapping?.[toBlock?.uuid];
+      infos = blocksWithDownstreamBlockSet?.[toBlock?.uuid];
     }
 
     let removeBlocks = () => {
@@ -1242,35 +1244,37 @@ function DependencyGraph({
       });
     }
 
-    if (info) {
-      const {
+    if (infos?.length >= 1) {
+      infos?.forEach(({
         downstreamBlocks,
         upstreamBlocks,
-      } = info || {};
+      }) => {
+        const parentID = getParentNodeIDShared(upstreamBlocks?.map(({ uuid }) => uuid));
 
-      // Upstream is a block, downstream is a group.
-      if (fromBlock && !toBlock) {
-        // Update the fromBlock’s downstream to exclude all the downstreamBlocks
-        const mapping = indexBy(downstreamBlocks || [], ({ uuid }) => uuid);
-        removeBlocks = () => {
-          updateBlockByDragAndDrop({
-            block: fromBlock,
-            downstreamBlocks: (fromBlock?.downstream_blocks || [])
-              .filter(uuid => !(uuid in mapping)),
-          });
-        };
-      } else if (!fromBlock && toBlock) {
-        // Upstream is a group, downstream is a block.
-        // Update the toBlock’s upstream to exclude all the upstreamBlocks
-        const mapping = indexBy(upstreamBlocks || [], ({ uuid }) => uuid);
-        removeBlocks = () => {
-          updateBlockByDragAndDrop({
-            block: toBlock,
-            upstreamBlocks: (toBlock?.upstream_blocks || [])
-              .filter(uuid => !(uuid in mapping)),
-          });
-        };
-      }
+        // Upstream is a block, downstream is a group.
+        if (fromBlock && !toBlock && edge?.to === parentID) {
+          // Update the fromBlock’s downstream to exclude all the downstreamBlocks
+          const mapping = indexBy(downstreamBlocks || [], ({ uuid }) => uuid);
+          removeBlocks = () => {
+            updateBlockByDragAndDrop({
+              block: fromBlock,
+              downstreamBlocks: (fromBlock?.downstream_blocks || [])
+                .filter(uuid => !(uuid in mapping)),
+            });
+          };
+        } else if (!fromBlock && toBlock && edge?.from === parentID) {
+          // Upstream is a group, downstream is a block.
+          // Update the toBlock’s upstream to exclude all the upstreamBlocks
+          const mapping = indexBy(upstreamBlocks || [], ({ uuid }) => uuid);
+          removeBlocks = () => {
+            updateBlockByDragAndDrop({
+              block: toBlock,
+              upstreamBlocks: (toBlock?.upstream_blocks || [])
+                .filter(uuid => !(uuid in mapping)),
+            });
+          };
+        }
+      });
     }
 
     return (
@@ -1442,18 +1446,20 @@ function DependencyGraph({
             let blocksWithSameDownstreamBlocks;
             const downstreamBlocks = [];
 
-            if (blockUUID in (blocksWithSameDownstreamBlocksMapping || {})) {
-              const {
-                blocks,
+            if (blockUUID in (blocksWithDownstreamBlockSet || {})) {
+              const infos = blocksWithDownstreamBlockSet?.[blockUUID];
+
+              infos?.map(({
                 downstreamBlocks: downstreamBlocksInit,
-              } = blocksWithSameDownstreamBlocksMapping?.[blockUUID];
+                upstreamBlocks,
+              }) => {
+                const blockUUIDs = sortByKey(upstreamBlocks?.map(({ uuid }) => uuid) || [], uuid => uuid);
 
-              const blockUUIDs = sortByKey(blocks?.map(({ uuid }) => uuid) || [], uuid => uuid);
-
-              if (getParentNodeIDShared(blockUUIDs) === edge?.target) {
-                downstreamBlocks.push(...downstreamBlocksInit);
-                blocksWithSameDownstreamBlocks = blocks;
-              }
+                if (getParentNodeIDShared(blockUUIDs) === edge?.target) {
+                  downstreamBlocks.push(...downstreamBlocksInit);
+                  blocksWithSameDownstreamBlocks = upstreamBlocks;
+                }
+              });
             }
 
             if (!downstreamBlocks?.length) {
