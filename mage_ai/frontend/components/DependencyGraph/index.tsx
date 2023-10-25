@@ -469,44 +469,26 @@ function DependencyGraph({
   );
 
   const [updateBlockByDragAndDrop] = useMutation(({
+    block: blockToUpdate,
     downstreamBlocks,
-    fromBlock,
-    portSide,
-    removeDependency,
-    toBlock,
-    upstreamBlocks: upstreamBlocksProp,
+    upstreamBlocks,
   }: {
     downstreamBlocks?: string[];
-    fromBlock: BlockType;
-    portSide?: SideEnum;
-    removeDependency?: boolean;
-    toBlock: BlockType;
     upstreamBlocks?: string[];
   }) => {
-    let blockToUpdate = toBlock;
     let blockPayload = {
       ...blockToUpdate,
     };
 
-    if (downstreamBlocks?.length >= 1) {
+    if (typeof downstreamBlocks !== 'undefined') {
       blockPayload.downstream_blocks = downstreamBlocks;
-    } else {
-      let upstreamBlocks = upstreamBlocksProp || toBlock.upstream_blocks.concat(fromBlock.uuid);
-
-      if (!removeDependency && portSide === SideEnum.NORTH) {
-        blockToUpdate = fromBlock;
-        upstreamBlocks = fromBlock.upstream_blocks.concat(toBlock.uuid);
-      }
-
-      blockPayload.upstream_blocks = removeDependency
-        ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
-        : upstreamBlocks;
     };
 
-    return api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      encodeURIComponent(blockToUpdate.uuid),
-    )({
+    if (typeof upstreamBlocks !== 'undefined') {
+      blockPayload.upstream_blocks = upstreamBlocks;
+    };
+
+    return api.blocks.pipelines.useUpdate(pipeline?.uuid, encodeURIComponent(blockToUpdate.uuid))({
       block: blockPayload,
     });
   },
@@ -704,13 +686,6 @@ function DependencyGraph({
         && !fromBlock?.upstream_blocks?.includes(toBlock?.uuid)
         && fromBlock?.uuid !== toBlock?.uuid
       ) {
-        const portSide = SideEnum.SOUTH;
-        const args = {
-          fromBlock,
-          portSide,
-          toBlock,
-        };
-
         // The node that is being dropped on is a group node.
         if (node?.data?.children?.length >= 1) {
           const upstreamBlocks = fromBlock?.downstream_blocks?.filter(
@@ -718,7 +693,7 @@ function DependencyGraph({
           );
 
           updateBlockByDragAndDrop({
-            ...args,
+            block: toBlock,
             upstreamBlocks,
           });
         } else if (nodeDragging?.node?.data?.children?.length >= 1) {
@@ -729,13 +704,16 @@ function DependencyGraph({
           );
 
           updateBlockByDragAndDrop({
-            ...args,
+            block: fromBlock,
             downstreamBlocks,
-            fromBlock: toBlock,
-            toBlock: fromBlock,
           });
         } else {
-          updateBlockByDragAndDrop(args);
+          updateBlockByDragAndDrop({
+            block: toBlock,
+            upstreamBlocks: (toBlock?.upstream_blocks || [])
+              .concat(fromBlock?.uuid)
+              .filter(uuid => uuid && !toBlock?.upstream_blocks?.includes(uuid)),
+          });
         }
       }
     }
@@ -894,11 +872,23 @@ function DependencyGraph({
         && !fromBlock?.upstream_blocks?.includes(toBlock.uuid)
         && node?.id !== targetNode?.id
       ) {
-        const portSide = port?.side as SideEnum;
+        const payload = {};
+
+        // If port is south, then update the toBlock’s upstream
+        if (SideEnum.SOUTH === port?.side as SideEnum) {
+          payload.upstreamBlocks = (toBlock?.upstream_blocks || [])
+            .concat(fromBlock?.uuid)
+            .filter(uuid => uuid && !toBlock?.upstream_blocks?.includes(uuid));
+        } else {
+          // If port is north, then update the toBlock’s downstream
+          payload.downstreamBlocks = (toBlock?.downstream_blocks || [])
+            .concat(fromBlock?.uuid)
+            .filter(uuid => uuid && !toBlock?.downstream_blocks?.includes(uuid));
+        }
+
         updateBlockByDragAndDrop({
-          fromBlock,
-          portSide: portSide || SideEnum.SOUTH,
-          toBlock,
+          block: toBlock,
+          ...payload,
         });
       }
     }
@@ -1240,6 +1230,53 @@ function DependencyGraph({
       y,
     } = containerRef?.current?.getBoundingClientRect() || {};
 
+    let info;
+    // Upstream is a block, downstream is a group.
+    if (fromBlock && !toBlock) {
+      info = blocksWithSameDownstreamBlocksMapping?.[fromBlock?.uuid];
+    } else if (!fromBlock && toBlock) {
+      // Upstream is a group, downstream is a block.
+      info = blocksWithSameDownstreamBlocksMapping?.[toBlock?.uuid];
+    }
+
+    let removeBlocks = () => {
+      updateBlockByDragAndDrop({
+        block: toBlock,
+        upstreamBlocks: (toBlock?.upstream_blocks || []).filter(uuid => uuid !== fromBlock?.uuid),
+      });
+    }
+
+    if (info) {
+      const {
+        downstreamBlocks,
+        upstreamBlocks,
+      } = info || {};
+
+      // Upstream is a block, downstream is a group.
+      if (fromBlock && !toBlock) {
+        // Update the fromBlock’s downstream to exclude all the downstreamBlocks
+        const mapping = indexBy(downstreamBlocks || [], ({ uuid }) => uuid);
+        removeBlocks = () => {
+          updateBlockByDragAndDrop({
+            block: fromBlock,
+            downstreamBlocks: (fromBlock?.downstream_blocks || [])
+              .filter(uuid => !(uuid in mapping)),
+          });
+        };
+      } else if (!fromBlock && toBlock) {
+        // Upstream is a group, downstream is a block.
+        // Update the toBlock’s upstream to exclude all the upstreamBlocks
+        const mapping = indexBy(upstreamBlocks || [], ({ uuid }) => uuid);
+        removeBlocks = () => {
+          updateBlockByDragAndDrop({
+            block: toBlock,
+            upstreamBlocks: (toBlock?.upstream_blocks || [])
+              .filter(uuid => !(uuid in mapping)),
+          });
+        };
+      }
+    }
+
     return (
       <div
         style={{
@@ -1284,11 +1321,7 @@ function DependencyGraph({
             <Spacing px={PADDING_UNITS} py={1}>
               <Link
                 onClick={() => {
-                  updateBlockByDragAndDrop({
-                    fromBlock,
-                    removeDependency: true,
-                    toBlock,
-                  });
+                  removeBlocks?.();
                   setActiveEdge(null);
                 }}
                 preventDefault
@@ -1665,16 +1698,7 @@ function DependencyGraph({
                       stroke: anotherBlockSelected && !selected ? color?.accentLight : color?.accent,
                       strokeWidth: 1,
                     }}
-                  >
-                    <h1>HELLO</h1>
-                    {(portData) => {
-                      console.log(portData);
-                      return (
-                        <Port>
-                        </Port>
-                      );
-                    }}
-                  </Port>
+                  />
                 }
                 style={{
                   fill: 'transparent',

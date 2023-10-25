@@ -2125,7 +2125,25 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             )
 
         if 'downstream_blocks' in data and self.pipeline:
-            for block_uuid in (data.get('downstream_blocks') or []):
+            arr = (data.get('downstream_blocks') or [])
+            block_uuids_to_remove = \
+                [uuid for uuid in self.downstream_block_uuids if uuid not in arr]
+
+            for block_uuid in block_uuids_to_remove:
+                block = self.pipeline.get_block(block_uuid)
+                if not block:
+                    continue
+                block.update(
+                    dict(
+                        upstream_blocks=list(filter(
+                            lambda x, uuid=self.uuid: x != uuid,
+                            block.upstream_block_uuids or [],
+                        )),
+                    ),
+                    check_upstream_block_order=check_upstream_block_order,
+                )
+
+            for block_uuid in arr:
                 block = self.pipeline.get_block(block_uuid)
                 if not block:
                     continue
