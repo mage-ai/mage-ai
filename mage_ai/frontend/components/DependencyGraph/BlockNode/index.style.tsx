@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_RADIUS_SMALL, BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const ICON_SIZE = UNIT * 3;
@@ -10,6 +10,8 @@ export const BORDER_WIDTH = 2;
 export const NodeContainerStyle = styled.div<{
   active?: boolean;
   borderColor?: string;
+  borderDeemphasized?: boolean;
+  borderRadiusLarge?: boolean;
   disabled?: boolean;
   height?: number;
   isCancelled: boolean;
@@ -18,7 +20,6 @@ export const NodeContainerStyle = styled.div<{
   opacity?: number;
   selected?: boolean;
 }>`
-  border-radius: ${BORDER_RADIUS}px;
   min-width: fit-content;
 
   ${props => !props.isDragging && `
@@ -40,13 +41,33 @@ export const NodeContainerStyle = styled.div<{
 
   ${props => !props.selected && !props.active && props.borderColor && `
     border-color: ${props.borderColor};
-    border-style: solid;
     border-width: ${BORDER_WIDTH}px;
   `}
 
   ${props => props.selected && !props.active && props.backgroundGradient && `
     background: ${props.backgroundGradient};
     padding: ${BORDER_WIDTH}px;
+  `}
+
+  ${props => props.selected && !props.active && !props.backgroundGradient && props.borderColor && `
+    border-color: ${props.borderColor};
+    border-width: ${BORDER_WIDTH}px;
+  `}
+
+  ${props => !props.borderDeemphasized && `
+    border-style: solid;
+  `}
+
+  ${props => props.borderDeemphasized && `
+    border-style: double;
+  `}
+
+  ${props => !props.borderRadiusLarge && `
+    border-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.borderRadiusLarge && `
+    border-radius: ${BORDER_RADIUS_XLARGE}px;
   `}
 
   ${props => props.active && props.borderColor && `

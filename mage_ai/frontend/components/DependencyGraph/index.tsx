@@ -1359,6 +1359,7 @@ function DependencyGraph({
           forwardedRef={canvasRef}
           // https://github.com/reaviz/reaflow/blob/master/src/layout/elkLayout.ts
           layoutOptions={{
+            'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
             // 'elk.nodeLabels.placement': 'INSIDE V_CENTER H_RIGHT',
             // 'elk.algorithm': 'org.eclipse.elk.layered',
             // 'elk.direction': 'DOWN',

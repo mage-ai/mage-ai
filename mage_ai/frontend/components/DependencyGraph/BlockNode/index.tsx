@@ -200,8 +200,10 @@ function BlockNode({
   return (
     <NodeContainerStyle
       active={isInProgress}
-      backgroundGradient={getGradientColorForBlockType(type)}
+      backgroundGradient={!downstreamBlocks?.length && getGradientColorForBlockType(type)}
       borderColor={!selected && anotherBlockSelected ? accentLight : accent}
+      borderDeemphasized={downstreamBlocks?.length >= 1}
+      borderRadiusLarge={downstreamBlocks?.length >= 1}
       disabled={disabled}
       height={height}
       isCancelled={isCancelled}
