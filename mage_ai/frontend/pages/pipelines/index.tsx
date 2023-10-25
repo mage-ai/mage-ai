@@ -1247,7 +1247,7 @@ function PipelineListPage() {
                 filesOnly: false
               });
             },
-            uuid: 'download',
+            uuid: 'download_keep_folder_structure',
           },
           {
             label: () => 'Download (without folder structure)',
