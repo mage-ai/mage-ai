@@ -590,6 +590,7 @@ function Sidekick({
                 addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
                 blocks={blocks}
+                deleteBlock={deleteBlock}
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
@@ -609,6 +610,7 @@ function Sidekick({
                   };
                 })}
                 pipeline={pipeline}
+                runBlock={runBlock}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}
                 setEditingBlock={setEditingBlock}
@@ -621,6 +623,7 @@ function Sidekick({
                   }
                 }}
                 setZoom={setDepGraphZoom}
+                showUpdateBlockModal={showUpdateBlockModal}
                 treeRef={treeRef}
               />
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (

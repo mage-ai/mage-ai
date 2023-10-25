@@ -8,9 +8,11 @@ import {
   SHARED_PORT_PROPS_SQUARE,
   SideEnum,
 } from './constants';
+import { RunStatus } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals, indexBy, sortByKey } from '@utils/array';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
+import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import {
   getMessagesWithType,
   hasErrorOrOutput,

@@ -68,6 +68,7 @@ import {
 } from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 
 export const Canvas = dynamic(
   async () => {
@@ -160,6 +161,7 @@ export type DependencyGraphProps = {
   };
   blocksOverride?: BlockType[];
   blocks?: BlockType[];
+  deleteBlock?: (block: BlockType) => void;
   disabled?: boolean;
   editingBlock?: {
     upstreamBlocks: {
@@ -180,6 +182,12 @@ export type DependencyGraphProps = {
   }) => void;
   pannable?: boolean;
   pipeline: PipelineType;
+  runBlock?: (payload: {
+    block: BlockType;
+    code: string;
+    ignoreAlreadyRunning?: boolean;
+    runUpstream?: boolean;
+  }) => void;
   runningBlocks?: BlockType[];
   selectedBlock?: BlockType;
   setErrors?: (opts: {
@@ -189,6 +197,11 @@ export type DependencyGraphProps = {
   setSelectedBlock?: (block: BlockType) => void;
   setZoom?: (zoom: number) => void;
   showDynamicBlocks?: boolean;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+    preventDuplicateBlockName?: boolean,
+  ) => void;
   treeRef?: { current?: CanvasRef };
   zoomable?: boolean;
 } & SetEditingBlockType;
@@ -199,6 +212,7 @@ function DependencyGraph({
   blockStatus,
   blocksOverride,
   blocks: allBlocksProp,
+  deleteBlock,
   disabled: disabledProp,
   editingBlock,
   enablePorts = false,
@@ -208,6 +222,7 @@ function DependencyGraph({
   messages,
   noStatus,
   onClickNode: onClickNodeProp,
+  runBlock,
   pannable = true,
   pipeline,
   runningBlocks = [],
@@ -217,6 +232,7 @@ function DependencyGraph({
   setSelectedBlock,
   setZoom,
   showDynamicBlocks = false,
+  showUpdateBlockModal,
   treeRef,
   zoomable = true,
 }: DependencyGraphProps) {
@@ -237,6 +253,7 @@ function DependencyGraph({
   }>(null);
   const [activeNodes, setActiveNodes] = useState({});
   const [activePorts, setActivePorts] = useState({});
+  const [contextMenuData, setContextMenuData] = useState(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [nodeDragging, setNodeDragging] = useState<{
     data: {
@@ -611,7 +628,7 @@ function DependencyGraph({
       blocks,
     },
   }) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
     let block = blockInit;
 
@@ -684,7 +701,7 @@ function DependencyGraph({
   }, [setActiveNodes]);
 
   const onMouseEnterNode = useCallback((event, node, opts) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
     if (!isDragging && nodeDragging) {
       const fromBlock: BlockType = node?.data?.block;
@@ -771,7 +788,7 @@ function DependencyGraph({
   ]);
 
   const onMouseLeaveNode = useCallback((event, node, opts) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
     setNodeHovering(null);
     setTimeoutForNode(node);
@@ -781,10 +798,18 @@ function DependencyGraph({
   ]);
 
   const onMouseDownNode = useCallback((event, node, opts) => {
-    event?.preventDefault();
+    pauseEvent(event);
+
+    if (contextMenuData) {
+      return;
+    }
 
     const nodeID = node?.id;
     timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
+      if (contextMenuData) {
+        return;
+      }
+
       setActiveEdge(null);
       setActiveNodes({});
       setIsDragging(true);
@@ -795,6 +820,7 @@ function DependencyGraph({
       });
     }, 500)
   }, [
+    contextMenuData,
     setActiveNodes,
     setActiveEdge,
     setIsDragging,
@@ -802,7 +828,7 @@ function DependencyGraph({
   ]);
 
   const onMouseUpNode = useCallback((event, node, opts) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
     const nodeID = node?.id;
     if (nodeID in timeoutDraggingRefs.current) {
@@ -811,17 +837,27 @@ function DependencyGraph({
   }, []);
 
   const onContextMenuNode = useCallback((event, node, opts) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
-    console.log('SHOW MENU!');
-  }, []);
+    const nodeID = node?.id;
+
+    clearTimeout(timeoutDraggingRefs.current?.[nodeID]);
+
+    setContextMenuData({
+      data: opts,
+      event,
+      node,
+    });
+  }, [
+    setContextMenuData,
+  ]);
 
   const onEnterPort = useCallback(({
     event,
     node,
     port,
   }) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
     clearTimeoutForNode(node);
     setNodeHovering(node);
@@ -835,7 +871,7 @@ function DependencyGraph({
     node,
     port,
   }) => {
-    event?.preventDefault();
+    pauseEvent(event);
 
     setNodeHovering(null);
     setTimeoutForNode(node);
@@ -1353,6 +1389,147 @@ function DependencyGraph({
     blocks,
     setActiveEdge,
     updateBlockByDragAndDrop,
+  ]);
+
+  const contextMenuMemo = useMemo(() => {
+    if (!contextMenuData) {
+      return;
+    }
+
+    const {
+      event,
+      node,
+      data,
+    } = contextMenuData;
+    const {
+      data: {
+        block,
+        blocks,
+        children,
+      },
+    } = node;
+
+    const {
+      clientX,
+      clientY,
+    } = event;
+
+    const {
+      x,
+      y,
+    } = containerRef?.current?.getBoundingClientRect() || {};
+
+    const allDependenciesShowing = selectedBlock
+      && selectedBlock?.uuid === block?.uuid
+      && selectedBlockTwice
+      && selectedBlockTwice?.uuid === block?.uuid;
+
+    const idx = blocks?.findIndex(({ uuid }) => uuid === block?.uuid);
+
+    const menuItems = [
+      {
+        onClick: () => {
+          runBlock?.({
+            block,
+          });
+        },
+        uuid: 'Run block',
+      },
+      {
+        onClick: () => {
+          deleteBlock?.(block);
+        },
+        uuid: 'Delete block',
+      },
+      {
+        onClick: () => {
+          showUpdateBlockModal(
+            block,
+            block?.name,
+            true,
+          );
+        },
+        uuid: 'Rename block',
+      },
+      {
+        onClick: () => {
+          setSelectedBlock(allDependenciesShowing ? null : block);
+          setSelectedBlockTwice(allDependenciesShowing ? null : block);
+        },
+        uuid: allDependenciesShowing ? 'Hide all dependencies' : 'Show all dependencies',
+      },
+      {
+        onClick: () => {
+          addNewBlockAtIndex(
+            {
+              downstream_blocks: block ? [block?.uuid] : null,
+              language: block?.language,
+              type: BlockTypeEnum.CUSTOM,
+            },
+            Math.max(0, idx - 1),
+          );
+        },
+        uuid: 'Add upstream block',
+      },
+      {
+        onClick: () => {
+          addNewBlockAtIndex(
+            {
+              language: block?.language,
+              type: BlockTypeEnum.CUSTOM,
+              upstream_blocks: block ? [block?.uuid] : null,
+            },
+            idx + 1,
+          );
+        },
+        uuid: 'Add downstream block',
+      },
+    ];
+
+    return (
+      <div
+        style={{
+          left: clientX - x,
+          position: 'absolute',
+          top: clientY - y,
+        }}
+      >
+        <ClickOutside
+          disableEscape
+          onClickOutside={() => setContextMenuData(null)}
+          open
+        >
+          <Panel noPadding>
+            {menuItems.map(({
+              onClick,
+              uuid,
+            }) => (
+              <Spacing key={uuid} px={PADDING_UNITS} py={1}>
+                <Link
+                  onClick={() => {
+                    onClick();
+                    setContextMenuData(null);
+                  }}
+                  preventDefault
+                  sameColorAsText
+                >
+                  {uuid}
+                </Link>
+              </Spacing>
+            ))}
+          </Panel>
+        </ClickOutside>
+      </div>
+    );
+  }, [
+    addNewBlockAtIndex,
+    blocks,
+    contextMenuData,
+    deleteBlock,
+    runBlock,
+    setContextMenuData,
+    setSelectedBlock,
+    setSelectedBlockTwice,
   ]);
 
   return (
@@ -1886,6 +2063,7 @@ function DependencyGraph({
       </GraphContainerStyle>
 
       {activeEdgeMenu}
+      {contextMenuMemo}
       {nodeDraggingMemo}
     </div>
   );
