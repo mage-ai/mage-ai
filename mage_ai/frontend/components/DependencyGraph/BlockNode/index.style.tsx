@@ -9,7 +9,10 @@ export const BORDER_WIDTH = 2;
 
 export const NodeContainerStyle = styled.div<{
   active?: boolean;
-  borderColor?: string;
+  borderColorBottom?: string;
+  borderColorLeft?: string;
+  borderColorRight?: string;
+  borderColorTop?: string;
   borderDeemphasized?: boolean;
   borderRadiusLarge?: boolean;
   disabled?: boolean;
@@ -39,19 +42,29 @@ export const NodeContainerStyle = styled.div<{
     opacity: 0.5;
   `}
 
-  ${props => !props.selected && !props.active && props.borderColor && `
-    border-color: ${props.borderColor};
+  ${props => (!props.selected || !props.backgroundGradient) && !props.active && props.borderColorBottom && `
+    border-bottom-color: ${props.borderColorBottom};
+    border-width: ${BORDER_WIDTH}px;
+  `}
+
+  ${props => (!props.selected || !props.backgroundGradient) && !props.active && props.borderColorLeft && `
+    border-left-color: ${props.borderColorLeft};
+    border-width: ${BORDER_WIDTH}px;
+  `}
+
+  ${props => (!props.selected || !props.backgroundGradient) && !props.active && props.borderColorRight && `
+    border-right-color: ${props.borderColorRight};
+    border-width: ${BORDER_WIDTH}px;
+  `}
+
+  ${props => (!props.selected || !props.backgroundGradient) && !props.active && props.borderColorTop && `
+    border-top-color: ${props.borderColorTop};
     border-width: ${BORDER_WIDTH}px;
   `}
 
   ${props => props.selected && !props.active && props.backgroundGradient && `
     background: ${props.backgroundGradient};
     padding: ${BORDER_WIDTH}px;
-  `}
-
-  ${props => props.selected && !props.active && !props.backgroundGradient && props.borderColor && `
-    border-color: ${props.borderColor};
-    border-width: ${BORDER_WIDTH}px;
   `}
 
   ${props => !props.borderDeemphasized && `
@@ -70,12 +83,12 @@ export const NodeContainerStyle = styled.div<{
     border-radius: ${BORDER_RADIUS_XLARGE}px;
   `}
 
-  ${props => props.active && props.borderColor && `
+  ${props => props.active && (props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop) && `
     animation: border-dance .5s infinite linear;
-    background: linear-gradient(90deg, ${props.borderColor} 50%, transparent 50%),
-      linear-gradient(90deg, ${props.borderColor} 50%, transparent 50%),
-      linear-gradient(0deg, ${props.borderColor} 50%, transparent 50%),
-      linear-gradient(0deg, ${props.borderColor} 50%, transparent 50%);
+    background: linear-gradient(90deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%),
+      linear-gradient(90deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%),
+      linear-gradient(0deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%),
+      linear-gradient(0deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     padding: ${BORDER_WIDTH}px;
 
@@ -95,11 +108,11 @@ export const NodeContainerStyle = styled.div<{
     }
   `}
 
-  ${props => props.active && props.borderColor && !props.noBackground && `
+  ${props => props.active && (props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop) && !props.noBackground && `
     background-size: 15px 4px, 15px 4px, 4px 15px, 4px 15px;
   `}
 
-  ${props => props.active && props.borderColor && props.noBackground && `
+  ${props => props.active && (props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop) && props.noBackground && `
     background-size: 15px 1.5px, 15px 1.5px, 1.5px 15px, 1.5px 15px;
   `}
 

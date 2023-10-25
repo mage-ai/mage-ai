@@ -57,6 +57,7 @@ const ICON_MAPPING = {
 type BlockNodeProps = {
   anotherBlockSelected?: boolean;
   block: BlockType;
+  blocksWithSameDownstreamBlocks?: BlockType[];
   callbackBlocks?: BlockType[];
   children?: any;
   conditionalBlocks?: BlockType[];
@@ -82,6 +83,7 @@ type BlockNodeProps = {
 function BlockNode({
   anotherBlockSelected,
   block,
+  blocksWithSameDownstreamBlocks,
   callbackBlocks,
   children,
   conditionalBlocks,
@@ -199,11 +201,74 @@ function BlockNode({
     type,
   ]);
 
+  const {
+    borderColorBottom,
+    borderColorLeft,
+    borderColorRight,
+    borderColorTop,
+  }: {
+    borderColorBottom: string;
+    borderColorLeft: string;
+    borderColorRight: string;
+    borderColorTop: string;
+  } = useMemo(() => {
+    const borderColors = [];
+    const borderColorsSelected = [];
+
+    if (blocksWithSameDownstreamBlocks?.length >= 2 && downstreamBlocks?.length >= 1) {
+      blocksWithSameDownstreamBlocks?.slice(0, 4)?.forEach((upstreamBlock: BlockType) => {
+        const {
+          accent: accent2,
+          accentLight: accentLight2,
+        } = getColorsForBlockType(
+          upstreamBlock?.type,
+          {
+            blockColor: upstreamBlock?.color,
+            theme: themeContext,
+          },
+        );
+        borderColors.push(accentLight2);
+        borderColorsSelected.push(accent2);
+      });
+    } else {
+      borderColors.push(...[accentLight, accentLight, accentLight, accentLight]);
+      borderColorsSelected.push(...[accent, accent, accent, accent]);
+    }
+
+    if (borderColors?.length < 4) {
+      borderColors.push(...borderColors?.slice(0, 4 - borderColors?.length));
+    }
+    if (borderColorsSelected?.length < 4) {
+      borderColorsSelected.push(...borderColorsSelected?.slice(0, 4 - borderColorsSelected?.length));
+    }
+
+    return [
+      'borderColorBottom',
+      'borderColorLeft',
+      'borderColorRight',
+      'borderColorTop',
+    ].reduce((acc, key: string, idx: number) => ({
+      ...acc,
+      [key]: !selected && anotherBlockSelected ? borderColors?.[idx] : borderColorsSelected?.[idx],
+    }), {});
+  }, [
+    accent,
+    accentLight,
+    anotherBlockSelected,
+    blocksWithSameDownstreamBlocks,
+    downstreamBlocks,
+    selected,
+    themeContext,
+  ]);
+
   return (
     <NodeContainerStyle
       active={isInProgress}
       backgroundGradient={!downstreamBlocks?.length && getGradientColorForBlockType(type)}
-      borderColor={!selected && anotherBlockSelected ? accentLight : accent}
+      borderColorBottom={borderColorBottom}
+      borderColorLeft={borderColorLeft}
+      borderColorRight={borderColorRight}
+      borderColorTop={borderColorTop}
       borderDeemphasized={downstreamBlocks?.length >= 1}
       borderRadiusLarge={downstreamBlocks?.length >= 1}
       disabled={disabled}

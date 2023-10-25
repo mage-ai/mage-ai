@@ -55,9 +55,10 @@ import {
   buildPortsUpstream,
   getBlockStatus,
   getParentNodeID,
+  getParentNodeIDShared,
   isActivePort,
 } from './utils';
-import { find, indexBy, removeAtIndex } from '@utils/array';
+import { find, indexBy, removeAtIndex, sortByKey } from '@utils/array';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
 import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -579,6 +580,7 @@ function DependencyGraph({
     edges,
     nodes,
     ports,
+    blocksWithSameDownstreamBlocks: blocksWithSameDownstreamBlocksMapping,
   } = useMemo(() => buildNodesEdgesPorts({
     activeNodes,
     blockStatus,
@@ -620,9 +622,21 @@ function DependencyGraph({
 
   const onClickNode = useCallback((event, {
     data: {
-      block,
+      block: blockInit,
+      blocks,
     },
   }) => {
+    let block = blockInit;
+
+    if (blocks?.length >= 2 && selectedBlock) {
+      const idx = blocks?.findIndex(({ uuid }) => selectedBlock?.uuid === uuid);
+      if (idx < blocks?.length - 1) {
+        block = blocks?.[idx + 1];
+      } else {
+        block = blocks?.[0];
+      }
+    }
+
     const disabled = blockEditing?.uuid === block.uuid;
     if (!disabled) {
       if (blockEditing) {
@@ -645,6 +659,7 @@ function DependencyGraph({
     onClick,
     onClickNodeProp,
     onClickWhenEditingUpstreamBlocks,
+    selectedBlock,
   ]);
 
   const clearTimeoutForNode = useCallback((node) => {
@@ -888,6 +903,9 @@ function DependencyGraph({
   const determineSelectedStatus: {
     anotherBlockSelected: boolean;
     selected: boolean;
+    opts?: {
+      blocksWithSameDownstreamBlocks?: BlockType[];
+    },
   } = useCallback((node: NodeType, block: BlockType) => {
     if (nodeDragging) {
       return {
@@ -928,6 +946,7 @@ function DependencyGraph({
   }) => {
     const {
       data: {
+        blocks: blocksWithSameDownstreamBlocks,
         children: downstreamBlocks,
       },
     } = node;
@@ -1011,7 +1030,9 @@ function DependencyGraph({
     const {
       anotherBlockSelected,
       selected,
-    } = determineSelectedStatus(node, block);
+    } = determineSelectedStatus(node, block, {
+      blocksWithSameDownstreamBlocks,
+    });
 
     const {
       hasFailed,
@@ -1047,6 +1068,7 @@ function DependencyGraph({
       <BlockNode
         anotherBlockSelected={anotherBlockSelected}
         block={block}
+        blocksWithSameDownstreamBlocks={blocksWithSameDownstreamBlocks}
         callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
         conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
         disabled={blockEditing?.uuid === block?.uuid}
@@ -1360,24 +1382,39 @@ function DependencyGraph({
           arrow={null}
           disabled={disabledProp}
           edge={(edge) => {
-            const block = blockUUIDMapping[edge.source];
-            const colorData = getColorsForBlockType(block?.type, {
-              blockColor: block?.color,
-              theme: themeContext,
-            });
+            const block = blockUUIDMapping[edge?.source];
+            const blockUUID = block?.uuid;
 
+            let blocksWithSameDownstreamBlocks;
             const downstreamBlocks = [];
-            if (getParentNodeID(block?.uuid) === edge?.target) {
-              downstreamBlocks.push(
-                ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
-              );
-            } else {
-              const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => {
-                return buildPortIDDownstream(block?.uuid, uuid) === edge?.sourcePort
-                  || getParentNodeID(block?.uuid) === edge.target;
-              });
-              const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
-              downstreamBlocks.push(downstreamBlock);
+
+            if (blockUUID in (blocksWithSameDownstreamBlocksMapping || {})) {
+              const {
+                blocks,
+                downstreamBlocks: downstreamBlocksInit,
+              } = blocksWithSameDownstreamBlocksMapping?.[blockUUID];
+
+              const blockUUIDs = sortByKey(blocks?.map(({ uuid }) => uuid) || [], uuid => uuid);
+
+              if (getParentNodeIDShared(blockUUIDs) === edge?.target) {
+                downstreamBlocks.push(...downstreamBlocksInit);
+                blocksWithSameDownstreamBlocks = blocks;
+              }
+            }
+
+            if (!downstreamBlocks?.length) {
+              if (getParentNodeID(blockUUID) === edge?.target) {
+                downstreamBlocks.push(
+                  ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
+                );
+              } else {
+                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => {
+                  return buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
+                    || getParentNodeID(blockUUID) === edge.target;
+                });
+                const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
+                downstreamBlocks.push(downstreamBlock);
+              }
             }
 
             const isInProgress = downstreamBlocks?.some(
@@ -1394,9 +1431,20 @@ function DependencyGraph({
             const {
               anotherBlockSelected,
               selected,
-            } = determineSelectedStatus({
-              id: block?.uuid,
-            }, block);
+            } = determineSelectedStatus(
+              {
+                id: blockUUID,
+              },
+              block,
+              {
+                blocksWithSameDownstreamBlocks,
+              },
+            );
+
+            const colorData = getColorsForBlockType(block?.type, {
+              blockColor: block?.color,
+              theme: themeContext,
+            });
 
             return (
               <Edge
@@ -1521,7 +1569,10 @@ function DependencyGraph({
           minZoom={-0.7}
           node={(node) => {
             const nodeID = node?.id;
-            const block = node?.properties?.data?.block;
+            const {
+              block,
+              blocks: blocksWithSameDownstreamBlocks,
+            } = node?.properties?.data || {};
             const blockUUID = block?.uuid;
 
             const color = getColorsForBlockType(
@@ -1536,7 +1587,9 @@ function DependencyGraph({
             const {
               anotherBlockSelected,
               selected,
-            } = determineSelectedStatus(node, block);
+            } = determineSelectedStatus(node, block, {
+              blocksWithSameDownstreamBlocks,
+            });
 
             return (
               <Node
@@ -1613,14 +1666,17 @@ function DependencyGraph({
                   const {
                     data: {
                       block,
-                      children,
+                      blocks: blocksWithSameDownstreamBlocks,
+                      children: downstreamBlocks,
                     },
                   } = node;
 
                   const {
                     anotherBlockSelected,
                     selected,
-                  } = determineSelectedStatus(node, block);
+                  } = determineSelectedStatus(node, block, {
+                    blocksWithSameDownstreamBlocks,
+                  });
 
                   const {
                     hasFailed,
@@ -1637,8 +1693,8 @@ function DependencyGraph({
                   });
 
                   let isInProgressFinal;
-                  if (children?.length >= 1) {
-                    isInProgressFinal = children?.some(
+                  if (downstreamBlocks?.length >= 1) {
+                    isInProgressFinal = downstreamBlocks?.some(
                       downstreamBlock => downstreamBlock && getBlockStatus({
                         block: downstreamBlock,
                         blockStatus,
@@ -1687,10 +1743,11 @@ function DependencyGraph({
                       <BlockNode
                         anotherBlockSelected={anotherBlockSelected}
                         block={block}
+                        blocksWithSameDownstreamBlocks={blocksWithSameDownstreamBlocks}
                         callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
                         conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
                         disabled={blockEditing?.uuid === block.uuid}
-                        downstreamBlocks={children}
+                        downstreamBlocks={downstreamBlocks}
                         extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
                         hasFailed={hasFailed}
                         height={nodeHeight}

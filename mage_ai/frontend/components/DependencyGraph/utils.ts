@@ -72,7 +72,7 @@ export function getParentNodeID(uuid: string): string {
 }
 
 export function getParentNodeIDShared(uuids: string[]): string {
-  return ['parent'].concat(uuids).join('-');
+  return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join('-');
 }
 
 export function buildEdgeID(blockUUID: string, upstreamUUID: string): string {
@@ -244,6 +244,12 @@ export function buildNodesEdgesPorts({
   nodeHovering?: NodeType;
   pipeline: PipelineType;
 }): {
+  blocksWithSameDownstreamBlocks: {
+    [uuid: string]: {
+      blocks: BlockType[];
+      downstreamBlocks: BlockType[];
+    };
+  };
   edges: EdgeType[];
   nodes: NodeType[];
   ports: {
@@ -557,6 +563,7 @@ export function buildNodesEdgesPorts({
   });
 
   return {
+    blocksWithSameDownstreamBlocks,
     edges: Object.values(edgesInner || {}),
     nodes: Object.values(nodesInner || {}),
     ports,
