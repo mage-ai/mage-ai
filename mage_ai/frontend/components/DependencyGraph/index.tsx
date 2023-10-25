@@ -281,6 +281,7 @@ function DependencyGraph({
     nodeDragging,
   ]);
 
+  const [selectedBlockTwice, setSelectedBlockTwice] = useState(null);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const [showPortsState, setShowPorts] = useState<boolean>(false);
   const showPorts = enablePorts && showPortsState;
@@ -511,7 +512,7 @@ function DependencyGraph({
       type,
       uuid,
     } = block;
-    setSelectedBlock?.(selectedBlock?.uuid === block?.uuid ? null : block);
+    setSelectedBlock(block);
     setEdgeSelections([]);
     if (blockRefs?.current) {
       const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
@@ -574,7 +575,7 @@ function DependencyGraph({
     extensionBlocksByBlockUUID,
     nodeHovering,
     pipeline,
-    selectedBlock,
+    selectedBlock: selectedBlockTwice,
   }), [
     activeNodes,
     blockStatus,
@@ -586,7 +587,7 @@ function DependencyGraph({
     extensionBlocksByBlockUUID,
     nodeHovering,
     pipeline,
-    selectedBlock,
+    selectedBlockTwice,
   ]);
 
   const containerHeight = useMemo(() => {
@@ -632,12 +633,25 @@ function DependencyGraph({
           block,
         });
 
-        // This is required because if the block is hidden, it needs to be un-hidden
-        // before scrolling to it or else the scrollIntoView won’t scroll to the top
-        // of the block.
-        setTimeout(() => {
-          onClick(block);
-        }, 1);
+        if (selectedBlock
+          && selectedBlock?.uuid === block?.uuid
+          && selectedBlockTwice
+          && selectedBlockTwice?.uuid === selectedBlock?.uuid
+        ) {
+          setSelectedBlock(null);
+          setSelectedBlockTwice(null);
+        } else {
+          if (selectedBlock && selectedBlock?.uuid === block?.uuid) {
+            setSelectedBlockTwice(block);
+          }
+
+          // This is required because if the block is hidden, it needs to be un-hidden
+          // before scrolling to it or else the scrollIntoView won’t scroll to the top
+          // of the block.
+          setTimeout(() => {
+            onClick(block);
+          }, 1);
+        }
       }
     }
   }, [
@@ -646,6 +660,8 @@ function DependencyGraph({
     onClickNodeProp,
     onClickWhenEditingUpstreamBlocks,
     selectedBlock,
+    selectedBlockTwice,
+    setSelectedBlockTwice,
   ]);
 
   const clearTimeoutForNode = useCallback((node) => {
