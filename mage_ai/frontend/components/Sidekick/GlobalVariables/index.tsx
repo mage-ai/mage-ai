@@ -148,14 +148,16 @@ function GlobalVariables({
         variable: {
           name: newVariableName,
           value: updatedValue,
-        }
+        },
       }).then(() => {
         fetchVariables();
         setNewVariableName(null);
         setNewVariableValue(null);
       });
+      (document.activeElement as HTMLElement).blur();
       setShowNewVariable(false);
     } else if (e.key === 'Escape') {
+      (document.activeElement as HTMLElement).blur();
       setShowNewVariable(false);
     }
   }, [
@@ -207,8 +209,8 @@ function GlobalVariables({
           <Col md={4}>
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
                 fullWidth
                 monospace
                 onChange={(e) => {
@@ -226,8 +228,8 @@ function GlobalVariables({
           <Col md={7}>
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
                 fullWidth
                 monospace
                 onChange={(e) => {
