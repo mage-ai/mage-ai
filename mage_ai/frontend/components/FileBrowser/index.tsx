@@ -96,7 +96,7 @@ function FileBrowser({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            const url = response.data.download.uri
+            const url = response.data.download.uri;
             const a = document.createElement('a');
             a.href = url;
             document.body.appendChild(a); 
@@ -571,6 +571,7 @@ function FileBrowser({
     deleteFile,
     deleteFolder,
     deleteWidget,
+    downloadFile,
     ref,
     showModal,
     showModalNewFile,

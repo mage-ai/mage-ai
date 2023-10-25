@@ -297,12 +297,12 @@ function PipelineListPage() {
       pipelineUUID: string;
       filesOnly?: boolean;
     }) => 
-      api.downloads.pipelines.useCreate(pipelineUUID)({'download': {'ignore_folder_structure': filesOnly}}),
+      api.downloads.pipelines.useCreate(pipelineUUID)({ 'download': { 'ignore_folder_structure': filesOnly } }),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            const url = response.data.download.uri
+            const url = response.data.download.uri;
             const a = document.createElement('a');
             a.href = url;
             document.body.appendChild(a);
@@ -1257,7 +1257,7 @@ function PipelineListPage() {
                 filesOnly: true
               });
             },
-            uuid: 'download',
+            uuid: 'download_without_folder_structure',
           },
           {
             label: () => 'Add/Remove tags',
@@ -1435,7 +1435,7 @@ function PipelineListPage() {
             <Button
               {...sharedOpenButtonProps}
               onClick={() => {
-                downloadPipeline({pipelineUUID: uuid});
+                downloadPipeline({ pipelineUUID: uuid });
               }}
               title="Download (keep folder structure)"
             >
@@ -1479,6 +1479,7 @@ function PipelineListPage() {
   ), [
     clonePipeline,
     deletePipeline,
+    downloadPipeline,
     displayLocalTimezone,
     getUniqueRowIdentifier,
     pipelinesEditing,
