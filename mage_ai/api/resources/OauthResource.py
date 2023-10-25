@@ -14,13 +14,13 @@ from mage_ai.authentication.oauth.constants import (
     ACTIVE_DIRECTORY_CLIENT_ID,
     GHE_CLIENT_ID_ENV_VAR,
     GHE_CLIENT_SECRET_ENV_VAR,
-    GHE_HOSTNAME_ENV_VAR,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
     OAUTH_PROVIDER_ACTIVE_DIRECTORY,
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
     VALID_OAUTH_PROVIDERS,
+    get_ghe_hostname,
 )
 from mage_ai.authentication.oauth.utils import (
     access_tokens_for_client,
@@ -101,7 +101,7 @@ class OauthResource(GenericResource):
         if redirect_uri:
             redirect_uri = redirect_uri[0]
 
-        ghe_hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
+        ghe_hostname = get_ghe_hostname()
 
         if pk == OAUTH_PROVIDER_GITHUB and ghe_hostname:
             provider = OAUTH_PROVIDER_GHE
@@ -137,15 +137,10 @@ class OauthResource(GenericResource):
                         v = ','.join(v)
                     query[k] = v
 
-                if ghe_hostname.startswith('http'):
-                    host = ghe_hostname
-                else:
-                    host = f'https://{ghe_hostname}'
-
                 data = dict()
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f'{host}/login/oauth/access_token',
+                        f'{ghe_hostname}/login/oauth/access_token',
                         headers={
                             'Accept': 'application/json',
                         },
@@ -194,10 +189,7 @@ class OauthResource(GenericResource):
                         scope='repo',
                         state=uuid.uuid4().hex,
                     )
-                    if ghe_hostname.startswith('http'):
-                        host = ghe_hostname
-                    else:
-                        host = f'https://{ghe_hostname}'
+                    host = ghe_hostname
                 else:
                     query = dict(
                         client_id=GITHUB_CLIENT_ID,

@@ -1,3 +1,6 @@
+import os
+from typing import Optional
+
 ACTIVE_DIRECTORY_CLIENT_ID = '51aec820-9d49-40a9-b046-17c1f28f620d'
 
 GITHUB_CLIENT_ID = '8577f13ddc81e2848b07'
@@ -16,3 +19,12 @@ VALID_OAUTH_PROVIDERS = [
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
 ]
+
+
+def get_ghe_hostname() -> Optional[str]:
+    ghe_hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
+    if ghe_hostname:
+        if not ghe_hostname.startswith('http'):
+            ghe_hostname = f'https://{ghe_hostname}'
+
+    return ghe_hostname
