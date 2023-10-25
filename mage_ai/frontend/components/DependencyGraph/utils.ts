@@ -68,24 +68,24 @@ export const isActivePort = (
 };
 
 export function getParentNodeID(uuid: string): string {
-  return `parent-${uuid}`;
+  return `parent:${uuid}`;
 }
 
 export function getParentNodeIDShared(uuids: string[]): string {
-  return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join('-');
+  return ['parent'].concat(sortByKey(uuids, uuid => uuid)).join(':');
 }
 
 export function buildEdgeID(blockUUID: string, upstreamUUID: string): string {
-  return `${upstreamUUID}-${blockUUID}`
+  return `${upstreamUUID}:${blockUUID}`
 }
 
 export function buildEdge(blockUUID: string, upstreamUUID: string): EdgeType {
   return {
     from: upstreamUUID,
-    fromPort: `${upstreamUUID}-${blockUUID}-from`,
+    fromPort: `${upstreamUUID}:${blockUUID}:from`,
     id: buildEdgeID(blockUUID, upstreamUUID),
     to: blockUUID,
-    toPort: `${upstreamUUID}-${blockUUID}-to`,
+    toPort: `${upstreamUUID}:${blockUUID}:to`,
   };
 }
 
@@ -94,7 +94,7 @@ export function buildPortIDDownstream(upstreamBlockUUID: string, downstreamBlock
     upstreamBlockUUID,
     downstreamBlockUUID,
     'from',
-  ].filter(n => n).join('-');
+  ].filter(n => n).join(':');
 }
 
 export function buildPortsDownstream(
@@ -150,7 +150,7 @@ export function buildPortIDUpstream(downstreamBlockUUID: string, upstreamBlockUU
     upstreamBlockUUID,
     downstreamBlockUUID,
     'to',
-  ].filter(n => n).join('-');
+  ].filter(n => n).join(':');
 }
 
 export function buildPortsUpstream(
@@ -587,6 +587,20 @@ export function buildNodesEdgesPorts({
         const edgeID = buildEdgeID(parentID2, uuid2)
         if (edgeID in edgesInner) {
           delete edgesInner[edgeID];
+        }
+
+        if (uuid2 in ports) {
+          const portID = buildPortIDDownstream(uuid2, parentID2);
+          if (portID in ports?.[uuid2]) {
+            delete ports[uuid2][portID];
+          }
+        }
+
+        if (parentID2 in ports) {
+          const portID = buildPortIDUpstream(parentID2, uuid2);
+          if (portID in ports?.[parentID2]) {
+            delete ports[parentID2][portID];
+          }
         }
       });
 

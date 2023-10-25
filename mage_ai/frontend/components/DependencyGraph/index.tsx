@@ -1454,9 +1454,26 @@ function DependencyGraph({
           arrow={null}
           disabled={disabledProp}
           edge={(edge) => {
-            const block = blockUUIDMapping[edge?.source];
-            const blockUUID = block?.uuid;
+            let block = blockUUIDMapping[edge?.source];
 
+            const blocks = [];
+            if (!block) {
+              edge?.id?.replace(edge?.source, '')?.split(':')?.forEach((sourcePart) => {
+                if (sourcePart?.length >= 1 && sourcePart !== 'parent') {
+                  const block2 = blockUUIDMapping?.[sourcePart];
+
+                  if (block2) {
+                    blocks.push(block2);
+                  }
+                }
+              });
+
+              if (blocks?.length) {
+                block = blocks[0];
+              }
+            }
+
+            const blockUUID = block?.uuid;
             let blocksWithSameDownstreamBlocks;
             const downstreamBlocks = [];
 
