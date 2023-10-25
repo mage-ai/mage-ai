@@ -876,14 +876,10 @@ function DependencyGraph({
 
         // If port is south, then update the toBlock’s upstream
         if (SideEnum.SOUTH === port?.side as SideEnum) {
-          payload.upstreamBlocks = (toBlock?.upstream_blocks || [])
-            .concat(fromBlock?.uuid)
-            .filter(uuid => uuid && !toBlock?.upstream_blocks?.includes(uuid));
+          payload.upstreamBlocks = (toBlock?.upstream_blocks || []).concat(fromBlock?.uuid);
         } else {
           // If port is north, then update the toBlock’s downstream
-          payload.downstreamBlocks = (toBlock?.downstream_blocks || [])
-            .concat(fromBlock?.uuid)
-            .filter(uuid => uuid && !toBlock?.downstream_blocks?.includes(uuid));
+          payload.downstreamBlocks = (toBlock?.downstream_blocks || []).concat(fromBlock?.uuid);
         }
 
         updateBlockByDragAndDrop({
