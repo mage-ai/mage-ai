@@ -8,9 +8,10 @@ from git.remote import RemoteProgress
 from git.repo.base import Repo
 
 from mage_ai.authentication.oauth.constants import (
-    GHE_CLIENT_ID,
+    DEFAULT_GITHUB_HOSTNAME,
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
+    get_ghe_hostname,
 )
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.repo_manager import get_project_uuid
@@ -28,7 +29,7 @@ def get_access_token_for_user(
     provider: str = None
 ) -> Oauth2AccessToken:
     if not provider:
-        provider = OAUTH_PROVIDER_GHE if GHE_CLIENT_ID else OAUTH_PROVIDER_GITHUB
+        provider = OAUTH_PROVIDER_GHE if get_ghe_hostname() else OAUTH_PROVIDER_GITHUB
     access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
     if access_tokens:
         return access_tokens[0]
@@ -155,7 +156,11 @@ def get_user(token: str) -> Dict:
     """
     https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-the-authenticated-user
     """
-    resp = requests.get(f'{API_ENDPOINT}/user', headers={
+    ghe_hostname = get_ghe_hostname()
+    endpoint = f'{API_ENDPOINT}/user'
+    if ghe_hostname and ghe_hostname != DEFAULT_GITHUB_HOSTNAME:
+        endpoint = f'{ghe_hostname}/api/v3/user'
+    resp = requests.get(endpoint, headers={
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
         'X-GitHub-Api-Version': '2022-11-28',
