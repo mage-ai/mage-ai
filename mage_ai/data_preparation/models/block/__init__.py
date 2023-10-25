@@ -2124,6 +2124,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 check_upstream_block_order=check_upstream_block_order,
             )
 
+        if 'downstream_blocks' in data and self.pipeline:
+            for block_uuid in (data.get('downstream_blocks') or []):
+                block = self.pipeline.get_block(block_uuid)
+                if not block:
+                    continue
+                block.update(
+                    dict(
+                        upstream_blocks=(block.upstream_block_uuids or []) + [self.uuid],
+                    ),
+                    check_upstream_block_order=check_upstream_block_order,
+                )
+
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
             self.callback_block_uuids
         ):

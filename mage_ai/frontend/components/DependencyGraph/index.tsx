@@ -240,6 +240,7 @@ function DependencyGraph({
   const [nodeDragging, setNodeDragging] = useState<{
     data: {
       nodeHeight: number;
+      nodeWidth: number;
     };
     event: any;
     node: NodeType;
@@ -467,12 +468,14 @@ function DependencyGraph({
   );
 
   const [updateBlockByDragAndDrop] = useMutation(({
+    downstreamBlocks,
     fromBlock,
     portSide,
     removeDependency,
     toBlock,
     upstreamBlocks: upstreamBlocksProp,
   }: {
+    downstreamBlocks?: string[];
     fromBlock: BlockType;
     portSide?: SideEnum;
     removeDependency?: boolean;
@@ -480,22 +483,30 @@ function DependencyGraph({
     upstreamBlocks?: string[];
   }) => {
     let blockToUpdate = toBlock;
-    let upstreamBlocks = upstreamBlocksProp || toBlock.upstream_blocks.concat(fromBlock.uuid);
-    if (!removeDependency && portSide === SideEnum.NORTH) {
-      blockToUpdate = fromBlock;
-      upstreamBlocks = fromBlock.upstream_blocks.concat(toBlock.uuid);
-    }
+    let blockPayload = {
+      ...blockToUpdate,
+    };
+
+    if (downstreamBlocks?.length >= 1) {
+      blockPayload.downstream_blocks = downstreamBlocks;
+    } else {
+      let upstreamBlocks = upstreamBlocksProp || toBlock.upstream_blocks.concat(fromBlock.uuid);
+
+      if (!removeDependency && portSide === SideEnum.NORTH) {
+        blockToUpdate = fromBlock;
+        upstreamBlocks = fromBlock.upstream_blocks.concat(toBlock.uuid);
+      }
+
+      blockPayload.upstream_blocks = removeDependency
+        ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
+        : upstreamBlocks;
+    };
 
     return api.blocks.pipelines.useUpdate(
       pipeline?.uuid,
       encodeURIComponent(blockToUpdate.uuid),
     )({
-      block: {
-        ...blockToUpdate,
-        upstream_blocks: removeDependency
-          ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
-          : upstreamBlocks,
-      },
+      block: blockPayload,
     });
   },
   {
@@ -592,8 +603,6 @@ function DependencyGraph({
     pipeline,
   ]);
 
-
-
   const containerHeight = useMemo(() => {
     let v = 0;
     if (height) {
@@ -681,7 +690,7 @@ function DependencyGraph({
           toBlock,
         };
 
-        // Current node is a group node.
+        // The node that is being dropped on is a group node.
         if (node?.data?.children?.length >= 1) {
           const upstreamBlocks = fromBlock?.downstream_blocks?.filter(
             (uuid: string) => !toBlock?.upstream_blocks?.includes(uuid),
@@ -690,6 +699,19 @@ function DependencyGraph({
           updateBlockByDragAndDrop({
             ...args,
             upstreamBlocks,
+          });
+        } else if (nodeDragging?.node?.data?.children?.length >= 1) {
+          // The node that is being dragged is a group node.
+
+          const downstreamBlocks = toBlock?.downstream_blocks?.filter(
+            (uuid: string) => !fromBlock?.downstream_blocks?.includes(uuid),
+          );
+
+          updateBlockByDragAndDrop({
+            ...args,
+            downstreamBlocks,
+            fromBlock: toBlock,
+            toBlock: fromBlock,
           });
         } else {
           updateBlockByDragAndDrop(args);
@@ -901,13 +923,90 @@ function DependencyGraph({
   const buildBlockNode = useCallback((node, block, {
     isDragging,
     nodeHeight,
+    nodeWidth,
     opacity,
   }) => {
     const {
       data: {
-        children,
+        children: downstreamBlocks,
       },
     } = node;
+
+    let blockNodeChildrenEl;
+
+    if (downstreamBlocks?.length >= 1) {
+      const blockNodes = [];
+
+      downstreamBlocks?.forEach((downstreamBlock: BlockType) => {
+        const {
+          anotherBlockSelected,
+          selected,
+        } = determineSelectedStatus(node, downstreamBlock);
+
+        const {
+          hasFailed,
+          isInProgress,
+          isQueued,
+          isSuccessful,
+        } = getBlockStatus({
+          downstreamBlock,
+          blockStatus,
+          messages,
+          noStatus,
+          runningBlocks,
+          runningBlocksMapping,
+        });
+
+        const callbackBlocks = callbackBlocksByBlockUUID?.[downstreamBlock?.uuid];
+        const conditionalBlocks = conditionalBlocksByBlockUUID?.[downstreamBlock?.uuid];
+        const extensionBlocks = extensionBlocksByBlockUUID?.[downstreamBlock?.uuid];
+
+        blockNodes.push(
+          <BlockNode
+            anotherBlockSelected={anotherBlockSelected}
+            block={downstreamBlock}
+            callbackBlocks={callbackBlocksByBlockUUID?.[downstreamBlock?.uuid]}
+            conditionalBlocks={conditionalBlocksByBlockUUID?.[downstreamBlock?.uuid]}
+            disabled={blockEditing?.uuid === downstreamBlock?.uuid}
+            extensionBlocks={extensionBlocksByBlockUUID?.[downstreamBlock?.uuid]}
+            hasFailed={hasFailed}
+            height={getBlockNodeHeight(downstreamBlock, pipeline, {
+              blockStatus,
+              callbackBlocks,
+              conditionalBlocks,
+              extensionBlocks,
+            })}
+            hideNoStatus
+            hideStatus={disabledProp || noStatus}
+            isDragging={isDragging}
+            isInProgress={isInProgress}
+            isQueued={isQueued}
+            isSuccessful={isSuccessful}
+            key={downstreamBlock?.uuid}
+            opacity={opacity}
+            pipeline={pipeline}
+            selected={selected}
+          />
+        );
+      });
+
+      blockNodeChildrenEl = (
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+          style={{
+            height: nodeHeight,
+            width: nodeWidth,
+          }}
+        >
+          <Spacing pr={PADDING_UNITS} />
+
+          {blockNodes}
+
+          <Spacing pr={PADDING_UNITS} />
+        </FlexContainer>
+      );
+    }
 
     const {
       anotherBlockSelected,
@@ -928,28 +1027,46 @@ function DependencyGraph({
       runningBlocksMapping,
     });
 
+    let isInProgressFinal;
+    if (downstreamBlocks?.length >= 1) {
+      isInProgressFinal = downstreamBlocks?.some(
+        downstreamBlock => downstreamBlock && getBlockStatus({
+          block,
+          blockStatus,
+          messages,
+          noStatus,
+          runningBlocks,
+          runningBlocksMapping,
+        })?.isInProgress,
+      );
+    } else {
+      isInProgressFinal = isInProgress;
+    }
+
     return (
       <BlockNode
         anotherBlockSelected={anotherBlockSelected}
         block={block}
         callbackBlocks={callbackBlocksByBlockUUID?.[block?.uuid]}
         conditionalBlocks={conditionalBlocksByBlockUUID?.[block?.uuid]}
-        disabled={blockEditing?.uuid === block.uuid}
-        downstreamBlocks={children}
+        disabled={blockEditing?.uuid === block?.uuid}
+        downstreamBlocks={downstreamBlocks}
         extensionBlocks={extensionBlocksByBlockUUID?.[block?.uuid]}
         hasFailed={hasFailed}
         height={nodeHeight}
         hideNoStatus
         hideStatus={disabledProp || noStatus}
         isDragging={isDragging}
-        isInProgress={isInProgress}
+        isInProgress={isInProgressFinal}
         isQueued={isQueued}
         isSuccessful={isSuccessful}
         key={block?.uuid}
         opacity={opacity}
         pipeline={pipeline}
         selected={selected}
-      />
+      >
+        {blockNodeChildrenEl}
+      </BlockNode>
     );
   }, [
     blockEditing,
@@ -1024,6 +1141,7 @@ function DependencyGraph({
     const blockNode = buildBlockNode(node, block, {
       isDragging: true,
       nodeHeight: data?.nodeHeight,
+      nodeWidth: data?.nodeWidth,
       opacity: 0.5,
     });
 
@@ -1387,14 +1505,15 @@ function DependencyGraph({
             // nodeLayering: 'INTERACTIVE',
             // 'org.eclipse.elk.edgeRouting': 'ORTHOGONAL',
             // 'elk.layered.unnecessaryBendpoints': 'true',
-            // 'elk.layered.spacing.edgeNodeBetweenLayers': '20',
+            // 'elk.layered.spacing.edgeNodeBetweenLayers': '500',
             // 'org.eclipse.elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
             // 'org.eclipse.elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
             // 'org.eclipse.elk.insideSelfLoops.activate': 'true',
             // separateConnectedComponents: 'false',
-            // 'spacing.componentComponent': '20',
-            // spacing: '25',
-            // 'spacing.nodeNodeBetweenLayers': '20'
+            // 'spacing.componentComponent': '500',
+            // spacing: '500',
+            // Vertical spacing between a node above and a node below
+            // 'spacing.nodeNodeBetweenLayers': '500',
           }}
           maxHeight={ZOOMABLE_CANVAS_SIZE}
           maxWidth={ZOOMABLE_CANVAS_SIZE}
@@ -1489,6 +1608,7 @@ function DependencyGraph({
                   const {
                     height: nodeHeight,
                     node,
+                    width: nodeWidth,
                   } = event;
                   const {
                     data: {
@@ -1538,18 +1658,23 @@ function DependencyGraph({
                       onClick={(e) => onClickNode(e, node)}
                       onContextMenu={(e) => onContextMenuNode(e, node, {
                         nodeHeight,
+                        nodeWidth,
                       })}
                       onMouseEnter={(e) => onMouseEnterNode(e, node, {
                         nodeHeight,
+                        nodeWidth,
                       })}
                       onMouseLeave={(e) => onMouseLeaveNode(e, node, {
                         nodeHeight,
+                        nodeWidth,
                       })}
                       onMouseDown={(e) => onMouseDownNode(e, node, {
                         nodeHeight,
+                        nodeWidth,
                       })}
                       onMouseUp={(e) => onMouseUpNode(e, node, {
                         nodeHeight,
+                        nodeWidth,
                       })}
                       style={{
                         // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node

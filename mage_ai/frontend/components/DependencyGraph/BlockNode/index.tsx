@@ -58,6 +58,7 @@ type BlockNodeProps = {
   anotherBlockSelected?: boolean;
   block: BlockType;
   callbackBlocks?: BlockType[];
+  children?: any;
   conditionalBlocks?: BlockType[];
   disabled?: boolean;
   downstreamBlocks?: BlockType[];
@@ -82,6 +83,7 @@ function BlockNode({
   anotherBlockSelected,
   block,
   callbackBlocks,
+  children,
   conditionalBlocks,
   disabled,
   downstreamBlocks,
@@ -326,6 +328,8 @@ function BlockNode({
               )}
             </>
           )}
+
+          {children}
         </BodyStyle>
       </NodeStyle>
     </NodeContainerStyle>
