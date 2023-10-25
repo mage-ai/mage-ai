@@ -88,7 +88,7 @@ type TableProps = {
   menu?: any;
   noBorder?: boolean;
   noHeader?: boolean;
-  onClickRow?: (index: number) => void;
+  onClickRow?: (index: number, event?: any) => void;
   onDoubleClickRow?: (index: number) => void;
   onRightClickRow?: (index: number, event?: any) => void;
   renderExpandedRowWithObject?: (index: number, object: any) => any;
@@ -413,7 +413,7 @@ function Table({
     } else {
       const handleRowClick = (rowIndex: number, event: React.MouseEvent) => {
         if (event?.detail === 1) {
-          onClickRow(rowIndex);
+          onClickRow(rowIndex, event);
         } else if (onDoubleClickRow && event?.detail === 2) {
           onDoubleClickRow(rowIndex);
         }
@@ -432,7 +432,7 @@ function Table({
               if (onClickRow) {
                 handleRowClick(rowIndex, e);
               }
-  
+
               onClickRowInternal(rowIndex, e);
             }
           }}

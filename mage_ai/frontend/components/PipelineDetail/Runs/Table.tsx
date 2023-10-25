@@ -497,6 +497,21 @@ function PipelineRunsTable({
     });
   }
 
+  const handleOnClickRow = useCallback((rowIndex: number, event: any) => {
+    if (onClickRow && setSelectedRuns && event && event.metaKey) {
+      const pipelineRun = pipelineRuns[rowIndex];
+      setSelectedRuns(prevRuns => {
+        const selected = !!prevRuns?.[pipelineRun.id];
+        return {
+          ...prevRuns,
+          [pipelineRun.id]: selected ? null : pipelineRun,
+        };
+      });
+    } else if (onClickRow) {
+      onClickRow(rowIndex);
+    }
+  }, [onClickRow, pipelineRuns, setSelectedRuns]);
+
   return (
     <TableContainerStyle
       minHeight={UNIT * 30}
@@ -517,7 +532,7 @@ function PipelineRunsTable({
               ? false
               : pipelineRuns[rowIndex].id === selectedRun?.id
             }
-            onClickRow={disableRowSelect ? null : onClickRow}
+            onClickRow={disableRowSelect ? null : handleOnClickRow}
             rowVerticalPadding={6}
             rows={pipelineRuns?.map((pipelineRun, index) => {
               const {
