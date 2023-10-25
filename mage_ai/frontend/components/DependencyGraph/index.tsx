@@ -21,9 +21,13 @@ import BlockType, {
   SetEditingBlockType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
+import ClickOutside from '@oracle/components/ClickOutside';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType  from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
+import Panel from '@oracle/components/Panel';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -224,7 +228,11 @@ function DependencyGraph({
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
 
-  const [activeEdges, setActiveEdges] = useState({});
+  const [activeEdge, setActiveEdge] = useState<{
+    block: BlockType;
+    edge: EdgeType;
+    event: any;
+  }>(null);
   const [activeNodes, setActiveNodes] = useState({});
   const [activePorts, setActivePorts] = useState({});
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -674,7 +682,6 @@ function DependencyGraph({
   const clearTimeoutForNode = useCallback((node) => {
     const nodeID = node?.id;
     if (nodeID in timeoutActiveRefs.current) {
-      console.log('WTF clear', nodeID)
       clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
     }
   }, [activeNodes]);
@@ -763,6 +770,7 @@ function DependencyGraph({
   const onMouseDownNode = useCallback((event, node, opts) => {
     const nodeID = node?.id;
     timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
+      setActiveEdge(null);
       setActiveNodes({});
       setIsDragging(true);
       setNodeDragging({
@@ -773,6 +781,7 @@ function DependencyGraph({
     }, 500)
   }, [
     setActiveNodes,
+    setActiveEdge,
     setIsDragging,
     setNodeDragging,
   ]);
@@ -1041,7 +1050,94 @@ function DependencyGraph({
   ]);
 
   // Show a menu to add a block between or delete the connection.
-  // console.log(activeEdges)
+  const activeEdgeMenu = useMemo(() => {
+    if (!activeEdge) {
+      return;
+    }
+
+    const {
+      edge,
+    } = activeEdge;
+    const fromBlock = blockUUIDMapping[edge?.from];
+    const toBlock = blockUUIDMapping[edge?.to];
+
+    const {
+      clientX,
+      clientY,
+    } = event;
+
+    const {
+      x,
+      y,
+    } = containerRef?.current?.getBoundingClientRect() || {};
+
+    return (
+      <div
+        style={{
+          left: clientX - x,
+          position: 'absolute',
+          top: clientY - y,
+        }}
+      >
+        <ClickOutside
+          disableEscape
+          onClickOutside={() => setActiveEdge(null)}
+          open
+        >
+          <Panel noPadding>
+            <Spacing px={PADDING_UNITS} py={1}>
+              <Link
+                onClick={() => {
+                  const idx = blocks?.findIndex(({ uuid }) => uuid === toBlock?.uuid);
+
+                  addNewBlockAtIndex(
+                    {
+                      downstream_blocks: toBlock ? [toBlock?.uuid] : null,
+                      language: toBlock?.language,
+                      type: BlockTypeEnum.CUSTOM,
+                      upstream_blocks: fromBlock ? [fromBlock?.uuid] : null,
+                    },
+                    idx,
+                    () => {
+                      setActiveEdge(null);
+                    },
+                  );
+                }}
+                preventDefault
+                sameColorAsText
+              >
+                Add new block between
+              </Link>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing px={PADDING_UNITS} py={1}>
+              <Link
+                onClick={() => {
+                  updateBlockByDragAndDrop({
+                    fromBlock,
+                    removeDependency: true,
+                    toBlock,
+                  });
+                  setActiveEdge(null);
+                }}
+                preventDefault
+                sameColorAsText
+              >
+                Remove connection
+              </Link>
+            </Spacing>
+          </Panel>
+        </ClickOutside>
+      </div>
+    );
+  }, [
+    activeEdge,
+    blocks,
+    setActiveEdge,
+    updateBlockByDragAndDrop,
+  ]);
 
   return (
     <div
@@ -1168,24 +1264,10 @@ function DependencyGraph({
                 {...edge}
                 className={`edge ${isInProgress ? 'active' : 'inactive'}`}
                 onClick={(event, edge) => {
-                  // setActivePorts(null);
-                  // setEdgeSelections([edge.id]);
-
-                  setActiveEdges(prev => {
-                    if (prev?.[edge?.id]) {
-                      const edges = { ...prev };
-                      delete edges[edge?.id];
-
-                      return edges;
-                    } else {
-                      return {
-                        ...prev,
-                        [edge.id]: {
-                          edge,
-                          event,
-                        },
-                      };
-                    }
+                  setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {
+                    block,
+                    edge,
+                    event,
                   });
                 }}
                 // onKeyDown={() => {
@@ -1323,6 +1405,7 @@ function DependencyGraph({
                 port={
                   <Port
                     onDrag={() => {
+                      setActiveEdge(null);
                       clearTimeoutForNode(node);
                     }}
                     onDragEnd={(event, initial, port) => {
@@ -1522,6 +1605,7 @@ function DependencyGraph({
         </Canvas>
       </GraphContainerStyle>
 
+      {activeEdgeMenu}
       {nodeDraggingMemo}
     </div>
   );
