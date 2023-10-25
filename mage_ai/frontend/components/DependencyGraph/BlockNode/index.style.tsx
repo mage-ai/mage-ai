@@ -85,9 +85,9 @@ export const NodeContainerStyle = styled.div<{
 
   ${props => props.active && (props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop) && `
     animation: border-dance .5s infinite linear;
-    background: linear-gradient(90deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%),
-      linear-gradient(90deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%),
-      linear-gradient(0deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%),
+    background: linear-gradient(90deg, ${props.borderColorTop || props.borderColorBottom || props.borderColorLeft || props.borderColorRight} 50%, transparent 50%),
+      linear-gradient(90deg, ${props.borderColorRight || props.borderColorTop || props.borderColorBottom || props.borderColorLeft} 50%, transparent 50%),
+      linear-gradient(0deg, ${props.borderColorLeft || props.borderColorRight || props.borderColorTop || props.borderColorBottom} 50%, transparent 50%),
       linear-gradient(0deg, ${props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop} 50%, transparent 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     padding: ${BORDER_WIDTH}px;
