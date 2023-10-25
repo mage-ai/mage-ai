@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 from typing import Dict
 from urllib.parse import urlsplit, urlunsplit
@@ -8,7 +9,7 @@ from git.remote import RemoteProgress
 from git.repo.base import Repo
 
 from mage_ai.authentication.oauth.constants import (
-    GHE_CLIENT_ID,
+    GHE_HOSTNAME_ENV_VAR,
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
 )
@@ -27,8 +28,9 @@ def get_access_token_for_user(
     user: User,
     provider: str = None
 ) -> Oauth2AccessToken:
+    ghe_hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
     if not provider:
-        provider = OAUTH_PROVIDER_GHE if GHE_CLIENT_ID else OAUTH_PROVIDER_GITHUB
+        provider = OAUTH_PROVIDER_GHE if ghe_hostname else OAUTH_PROVIDER_GITHUB
     access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
     if access_tokens:
         return access_tokens[0]

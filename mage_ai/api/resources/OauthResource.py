@@ -157,6 +157,7 @@ class OauthResource(GenericResource):
                         timeout=20,
                     ) as response:
                         data = await response.json()
+                        print('data:', data)
 
                 query = add_access_token_to_query(data, query)
 
