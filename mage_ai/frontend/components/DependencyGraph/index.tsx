@@ -592,6 +592,7 @@ function DependencyGraph({
     extensionBlocksByBlockUUID,
     nodeHovering,
     pipeline,
+    selectedBlock,
   }), [
     activeNodes,
     blockStatus,
@@ -603,6 +604,7 @@ function DependencyGraph({
     extensionBlocksByBlockUUID,
     nodeHovering,
     pipeline,
+    selectedBlock,
   ]);
 
   const containerHeight = useMemo(() => {

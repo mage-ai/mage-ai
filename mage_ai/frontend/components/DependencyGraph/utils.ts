@@ -220,6 +220,7 @@ export function buildNodesEdgesPorts({
   extensionBlocksByBlockUUID,
   nodeHovering,
   pipeline,
+  selectedBlock,
 }: {
   activeNodes: {
     [nodeID: string]: NodeType;
@@ -243,6 +244,7 @@ export function buildNodesEdgesPorts({
   };
   nodeHovering?: NodeType;
   pipeline: PipelineType;
+  selectedBlock?: BlockType;
 }): {
   blocksWithSameDownstreamBlocks: {
     [uuid: string]: {
@@ -430,19 +432,6 @@ export function buildNodesEdgesPorts({
 
       const parentID = getParentNodeID(upstreamBlockUUID);
 
-      // Need to remove the ports for every parent.
-      downstreamBlocks?.forEach(({ uuid }) => {
-        if (uuid in nodesInner) {
-          nodesInner[uuid].parent = parentID;
-        }
-
-        const portID = buildPortIDDownstream(upstreamBlockUUID, uuid);
-
-        if (upstreamBlockUUID in ports && portID in ports?.[upstreamBlockUUID]) {
-          delete ports?.[upstreamBlockUUID]?.[portID];
-        }
-      });
-
       const node = {
         data: {
           block,
@@ -456,23 +445,56 @@ export function buildNodesEdgesPorts({
         ports[upstreamBlockUUID] = {};
       }
 
-      const edge = buildEdge(parentID, upstreamBlockUUID);
-      edgesInner[edge.id] = edge;
+      const upstreamOrDownstreamSelected = selectedBlock?.uuid === upstreamBlockUUID
+        || downstreamBlocks?.find(({ uuid }) => selectedBlock?.uuid === uuid);
 
-      const portsForParent = {
-        ...buildPortsUpstream(parentID, [upstreamBlockUUID], {
-          activeNodes,
-        }),
-      };
-      ports[parentID] = portsForParent;
+      downstreamBlocks?.forEach(({ uuid }) => {
+        if (upstreamOrDownstreamSelected) {
+          const edge = buildEdge(uuid, upstreamBlockUUID);
+          edgesInner[edge.id] = edge;
 
-      const portsForUpstream  ={
-        ...ports?.[upstreamBlockUUID],
-        ...buildPortsDownstream(upstreamBlockUUID, [parentID], {
-          activeNodes,
-        }),
-      };
-      ports[upstreamBlockUUID] = portsForUpstream;
+          const portsForUpstream  ={
+            ...ports?.[upstreamBlockUUID],
+            ...buildPortsDownstream(upstreamBlockUUID, [uuid], {
+              activeNodes,
+            }),
+          };
+          ports[upstreamBlockUUID] = portsForUpstream;
+        } else {
+          // Need to remove the ports for every parent.
+          const portID = buildPortIDDownstream(upstreamBlockUUID, uuid);
+
+          if (upstreamBlockUUID in ports && portID in ports?.[upstreamBlockUUID]) {
+            delete ports?.[upstreamBlockUUID]?.[portID];
+          }
+        }
+      });
+
+      downstreamBlocks?.forEach(({ uuid }) => {
+        if (uuid in nodesInner) {
+          nodesInner[uuid].parent = parentID;
+        }
+      });
+
+      if (!upstreamOrDownstreamSelected) {
+        const edge = buildEdge(parentID, upstreamBlockUUID);
+        edgesInner[edge.id] = edge;
+
+        const portsForParent = {
+          ...buildPortsUpstream(parentID, [upstreamBlockUUID], {
+            activeNodes,
+          }),
+        };
+        ports[parentID] = portsForParent;
+
+        const portsForUpstream  ={
+          ...ports?.[upstreamBlockUUID],
+          ...buildPortsDownstream(upstreamBlockUUID, [parentID], {
+            activeNodes,
+          }),
+        };
+        ports[upstreamBlockUUID] = portsForUpstream;
+      }
     } else {
       downstreamBlocks?.forEach(({ uuid }) => {
         const edge = buildEdge(uuid, upstreamBlockUUID);
@@ -500,21 +522,6 @@ export function buildNodesEdgesPorts({
 
     const parentID = getParentNodeIDShared(blocks2?.map(({ uuid }) => uuid));
 
-    // Need to remove the ports for every parent.
-    downstreamBlocks2?.forEach(({ uuid }) => {
-      if (uuid in nodesInner) {
-        nodesInner[uuid].parent = parentID;
-      }
-
-      blocks2?.forEach(({ uuid: upstreamBlockUUID }) => {
-        const portID = buildPortIDDownstream(upstreamBlockUUID, uuid);
-
-        if (upstreamBlockUUID in ports && portID in ports?.[upstreamBlockUUID]) {
-          delete ports?.[upstreamBlockUUID]?.[portID];
-        }
-      });
-    });
-
     const node = {
       data: {
         block: blocks?.[0],
@@ -532,23 +539,54 @@ export function buildNodesEdgesPorts({
         ports[upstreamBlockUUID] = {};
       }
 
-      const edge = buildEdge(parentID, upstreamBlockUUID);
-      edgesInner[edge.id] = edge;
+      const upstreamOrDownstreamSelected = selectedBlock?.uuid === upstreamBlockUUID
+        || downstreamBlocks2?.find(({ uuid }) => selectedBlock?.uuid === uuid);
 
-      const portsForParent = {
-        ...buildPortsUpstream(parentID, [upstreamBlockUUID], {
-          activeNodes,
-        }),
-      };
-      ports[parentID] = portsForParent;
+      downstreamBlocks2?.forEach(({ uuid }) => {
+        if (upstreamOrDownstreamSelected) {
+          const edge = buildEdge(uuid, upstreamBlockUUID);
+          edgesInner[edge.id] = edge;
 
-      const portsForUpstream  ={
-        ...ports?.[upstreamBlockUUID],
-        ...buildPortsDownstream(upstreamBlockUUID, [parentID], {
-          activeNodes,
-        }),
-      };
-      ports[upstreamBlockUUID] = portsForUpstream;
+          const portsForUpstream  ={
+            ...ports?.[upstreamBlockUUID],
+            ...buildPortsDownstream(upstreamBlockUUID, [uuid], {
+              activeNodes,
+            }),
+          };
+          ports[upstreamBlockUUID] = portsForUpstream;
+        } else {
+          // Need to remove the ports for every parent.
+          const portID = buildPortIDDownstream(upstreamBlockUUID, uuid);
+
+          if (upstreamBlockUUID in ports && portID in ports?.[upstreamBlockUUID]) {
+            delete ports?.[upstreamBlockUUID]?.[portID];
+          }
+        }
+
+        if (uuid in nodesInner) {
+          nodesInner[uuid].parent = parentID;
+        }
+      });
+
+      if (!upstreamOrDownstreamSelected) {
+        const edge = buildEdge(parentID, upstreamBlockUUID);
+        edgesInner[edge.id] = edge;
+
+        const portsForParent = {
+          ...buildPortsUpstream(parentID, [upstreamBlockUUID], {
+            activeNodes,
+          }),
+        };
+        ports[parentID] = portsForParent;
+
+        const portsForUpstream  ={
+          ...ports?.[upstreamBlockUUID],
+          ...buildPortsDownstream(upstreamBlockUUID, [parentID], {
+            activeNodes,
+          }),
+        };
+        ports[upstreamBlockUUID] = portsForUpstream;
+      }
     });
   });
 
