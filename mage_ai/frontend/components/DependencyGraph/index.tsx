@@ -628,7 +628,7 @@ function DependencyGraph({
       blocks,
     },
   }) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     let block = blockInit;
 
@@ -686,7 +686,7 @@ function DependencyGraph({
   }, [setActiveNodes]);
 
   const onMouseEnterNode = useCallback((event, node, opts) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     if (!isDragging && nodeDragging) {
       const fromBlock: BlockType = node?.data?.block;
@@ -777,7 +777,7 @@ function DependencyGraph({
   ]);
 
   const onMouseLeaveNode = useCallback((event, node, opts) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     setNodeHovering(null);
     setTimeoutForNode(node);
@@ -787,7 +787,7 @@ function DependencyGraph({
   ]);
 
   const onMouseDownNode = useCallback((event, node, opts) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     const nodeID = node?.id;
     timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
@@ -808,7 +808,7 @@ function DependencyGraph({
   ]);
 
   const onMouseUpNode = useCallback((event, node, opts) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     const nodeID = node?.id;
     if (nodeID in timeoutDraggingRefs.current) {
@@ -817,7 +817,7 @@ function DependencyGraph({
   }, []);
 
   const onContextMenuNode = useCallback((event, node, opts) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     console.log('SHOW MENU!');
   }, []);
@@ -827,7 +827,7 @@ function DependencyGraph({
     node,
     port,
   }) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     clearTimeoutForNode(node);
     setNodeHovering(node);
@@ -841,7 +841,7 @@ function DependencyGraph({
     node,
     port,
   }) => {
-    event.preventDefault();
+    event?.preventDefault();
 
     setNodeHovering(null);
     setTimeoutForNode(node);
@@ -856,8 +856,6 @@ function DependencyGraph({
     node,
     port,
   }) => {
-    event.preventDefault();
-
     setActivePorts(prev => ({
       ...prev,
       [node?.id]: {
@@ -877,8 +875,6 @@ function DependencyGraph({
     node,
     port,
   }) => {
-    event.preventDefault();
-
     const nodeID = node?.id;
     const side = port?.side as SideEnum;
 

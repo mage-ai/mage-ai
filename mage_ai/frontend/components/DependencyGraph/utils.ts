@@ -301,12 +301,24 @@ export function buildNodesEdgesPorts({
   Object.values(mappingOfDownstreamBlockSet).forEach((obj) => {
     const {
       blocks: arr,
+      downstreamBlocks: downstreamBlocks2,
     } = obj;
 
+    const upstreamUUIDsMapping = indexBy(arr || [], ({ uuid }) => uuid);
+
     if (arr?.length >= 2) {
-      arr?.forEach((blockInner: BlockType) => {
-        blocksWithSameDownstreamBlocks[blockInner?.uuid] = obj;
-      });
+      const everyDownstreamOnlyHasTheseBlocks =
+        downstreamBlocks2?.every(({
+          upstream_blocks: upstreamBlockUUIDs,
+        }) => upstreamBlockUUIDs?.every(
+          uuid => upstreamUUIDsMapping?.[uuid],
+        ));
+
+      if (everyDownstreamOnlyHasTheseBlocks) {
+        arr?.forEach((blockInner: BlockType) => {
+          blocksWithSameDownstreamBlocks[blockInner?.uuid] = obj;
+        });
+      }
     }
   });
 
