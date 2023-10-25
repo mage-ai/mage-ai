@@ -296,11 +296,13 @@ function PipelineListPage() {
     }: {
       pipelineUUID: string;
       filesOnly?: boolean;
-    }) => 
-      api.downloads.pipelines.useCreate(pipelineUUID)({ 'download': { 'ignore_folder_structure': filesOnly } }),
+    }) =>
+      api.downloads.pipelines.useCreate(pipelineUUID)({
+        download: { ignore_folder_structure: filesOnly },
+      }),
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
           callback: () => {
             const url = response.data.download.uri;
             const a = document.createElement('a');
@@ -314,12 +316,12 @@ function PipelineListPage() {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        }
-      )
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
     }
   );
 
