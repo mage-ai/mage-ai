@@ -13,6 +13,7 @@ export const NodeContainerStyle = styled.div<{
   disabled?: boolean;
   height?: number;
   isCancelled: boolean;
+  isDragging?: boolean;
   noBackground?: boolean;
   opacity?: number;
   selected?: boolean;
@@ -20,9 +21,15 @@ export const NodeContainerStyle = styled.div<{
   border-radius: ${BORDER_RADIUS}px;
   min-width: fit-content;
 
-  &:hover {
-    cursor: pointer;
-  }
+  ${props => !props.isDragging && `
+    &:hover {
+      cursor: pointer;
+    }
+  `}
+
+  ${props => props.isDragging && `
+    cursor: grab;
+  `}
 
   ${props => !props.active && (props.isCancelled || props.disabled) && `
     // opacity doesn’t work on Safari

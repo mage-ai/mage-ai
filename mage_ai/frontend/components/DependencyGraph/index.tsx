@@ -227,6 +227,7 @@ function DependencyGraph({
   const [activeEdges, setActiveEdges] = useState({});
   const [activeNodes, setActiveNodes] = useState({});
   const [activePorts, setActivePorts] = useState({});
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [nodeDragging, setNodeDragging] = useState<{
     data: {
       nodeHeight: number;
@@ -234,11 +235,12 @@ function DependencyGraph({
     event: any;
     node: NodeType;
   }>(null);
+  const [nodeHovering, setNodeHovering] = useState<NodeType>(null);
   const [targetNode, setTargetNode] = useState(null);
 
   useEffect(() => {
     const handleMouseMove = (event) => {
-      if (nodeDragging) {
+      if (isDragging, nodeDragging) {
         setNodeDragging(prev => ({
           ...prev,
           event,
@@ -246,8 +248,9 @@ function DependencyGraph({
       }
     };
     const handleMouseUp = (event) => {
-      if (nodeDragging) {
-        setNodeDragging(null);
+      if (isDragging, nodeDragging) {
+        setIsDragging(false);
+        setTimeout(() => setNodeDragging(null), 1);
       }
     };
 
@@ -263,6 +266,7 @@ function DependencyGraph({
       }
     };
   }, [
+    isDragging,
     nodeDragging,
   ]);
 
@@ -561,6 +565,7 @@ function DependencyGraph({
     conditionalBlocksByBlockUUID,
     downstreamBlocksMapping,
     extensionBlocksByBlockUUID,
+    nodeHovering,
     pipeline,
   }), [
     activeNodes,
@@ -571,6 +576,7 @@ function DependencyGraph({
     conditionalBlocksByBlockUUID,
     downstreamBlocksMapping,
     extensionBlocksByBlockUUID,
+    nodeHovering,
     pipeline,
   ]);
 
@@ -668,9 +674,11 @@ function DependencyGraph({
   const clearTimeoutForNode = useCallback((node) => {
     const nodeID = node?.id;
     if (nodeID in timeoutActiveRefs.current) {
+      console.log('WTF clear', nodeID)
       clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
     }
   }, [activeNodes]);
+
   const setTimeoutForNode = useCallback((node) => {
     const nodeID = node?.id;
     timeoutActiveRefs.current[nodeID] = setTimeout(() => {
@@ -684,11 +692,36 @@ function DependencyGraph({
   }, [setActiveNodes]);
 
   const onMouseEnterNode = useCallback((event, node, opts) => {
-    if (editingBlock?.upstreamBlocks || nodeDragging) {
+    if (!isDragging && nodeDragging) {
+      const fromBlock: BlockType = node?.data?.block;
+      const toBlock: BlockType = nodeDragging?.node?.data?.block;
+
+      const isConnectingIntegrationSourceAndDestination = (
+        pipeline?.type === PipelineTypeEnum.INTEGRATION
+          && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
+            || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
+              && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
+            )
+      );
+
+      if (!isConnectingIntegrationSourceAndDestination
+        && !fromBlock?.upstream_blocks?.includes(toBlock?.uuid)
+        && fromBlock?.uuid !== toBlock?.uuid
+      ) {
+        updateBlockByDragAndDrop({
+          fromBlock,
+          portSide: SideEnum.SOUTH,
+          toBlock,
+        });
+      }
+    }
+
+    if (editingBlock?.upstreamBlocks) {
       return;
     }
 
     clearTimeoutForNode(node);
+    setNodeHovering(node);
 
     const nodeID = node?.id;
 
@@ -710,21 +743,28 @@ function DependencyGraph({
     activePorts,
     clearTimeoutForNode,
     editingBlock,
+    isDragging,
     nodeDragging,
+    pipeline,
     setActiveNodes,
+    setNodeHovering,
     setTargetNode,
     setTimeoutForNode,
   ]);
 
   const onMouseLeaveNode = useCallback((event, node, opts) => {
+    setNodeHovering(null);
     setTimeoutForNode(node);
   }, [
+    setNodeHovering,
     setTimeoutForNode,
   ]);
 
   const onMouseDownNode = useCallback((event, node, opts) => {
     const nodeID = node?.id;
     timeoutDraggingRefs.current[nodeID] = setTimeout(() => {
+      setActiveNodes({});
+      setIsDragging(true);
       setNodeDragging({
         data: opts,
         event,
@@ -732,8 +772,11 @@ function DependencyGraph({
       });
     }, 500)
   }, [
+    setActiveNodes,
+    setIsDragging,
     setNodeDragging,
   ]);
+
   const onMouseUpNode = useCallback((event, node, opts) => {
     const nodeID = node?.id;
     if (nodeID in timeoutDraggingRefs.current) {
@@ -752,8 +795,22 @@ function DependencyGraph({
     port,
   }) => {
     clearTimeoutForNode(node);
+    setNodeHovering(node);
   }, [
     clearTimeoutForNode,
+    setNodeHovering,
+  ]);
+
+  const onLeavePort = useCallback(({
+    event,
+    node,
+    port,
+  }) => {
+    setNodeHovering(null);
+    setTimeoutForNode(node);
+  }, [
+    setNodeHovering,
+    setTimeoutForNode,
   ]);
 
   const onDragStartPort = useCallback(({
@@ -859,6 +916,7 @@ function DependencyGraph({
   ]);
 
   const buildBlockNode = useCallback((node, block, {
+    isDragging,
     nodeHeight,
     opacity,
   }) => {
@@ -893,6 +951,7 @@ function DependencyGraph({
         height={nodeHeight}
         hideNoStatus
         hideStatus={disabledProp || noStatus}
+        isDragging={isDragging}
         isInProgress={isInProgress}
         isQueued={isQueued}
         isSuccessful={isSuccessful}
@@ -914,7 +973,7 @@ function DependencyGraph({
   ]);
 
   const nodeDraggingMemo = useMemo(() => {
-    if (!nodeDragging) {
+    if (!isDragging || !nodeDragging) {
       return
     }
 
@@ -955,6 +1014,7 @@ function DependencyGraph({
     const nodeWidth = getBlockNodeWidth(block, pipeline, opts);
 
     const blockNode = buildBlockNode(node, block, {
+      isDragging: true,
       nodeHeight: data?.nodeHeight,
       opacity: 0.5,
     });
@@ -975,6 +1035,7 @@ function DependencyGraph({
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
     extensionBlocksByBlockUUID,
+    isDragging,
     nodeDragging,
     pipeline,
   ]);
@@ -1247,7 +1308,7 @@ function DependencyGraph({
                 theme: themeContext,
               },
             );
-            const isActive = !!activeNodes?.[blockUUID];
+            const isActive = nodeHovering?.id === node?.id || !!activeNodes?.[blockUUID];
 
             const {
               anotherBlockSelected,
@@ -1288,9 +1349,15 @@ function DependencyGraph({
                         port,
                       });
                     }}
-                    // onEnter={() => setShowPorts(true)}
-                    rx={isActive ? 10 : null}
-                    ry={isActive ? 10 : null}
+                    onLeave={(event, port) => {
+                      onLeavePort({
+                        event,
+                        node,
+                        port,
+                      });
+                    }}
+                    rx={isActive ? 10 : 0}
+                    ry={isActive ? 10 : 0}
                     style={{
                       fill: color?.accentLight,
                       stroke: anotherBlockSelected && !selected ? color?.accentLight : color?.accent,

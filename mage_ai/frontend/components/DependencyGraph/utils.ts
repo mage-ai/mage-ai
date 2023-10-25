@@ -201,7 +201,7 @@ export function buildAddDownstreamBlockPortID(blockUUID: string): string {
 }
 
 export function buildNodesEdgesPorts({
-  activeNodes,
+  activeNodes: activeNodesProp,
   blockStatus,
   blockUUIDMapping,
   blocks,
@@ -209,6 +209,7 @@ export function buildNodesEdgesPorts({
   conditionalBlocksByBlockUUID,
   downstreamBlocksMapping,
   extensionBlocksByBlockUUID,
+  nodeHovering,
   pipeline,
 }: {
   activeNodes: {
@@ -231,6 +232,7 @@ export function buildNodesEdgesPorts({
   extensionBlocksByBlockUUID: {
     [uuid: string]: BlockType;
   };
+  nodeHovering?: NodeType;
   pipeline: PipelineType;
 }): {
   edges: EdgeType[];
@@ -241,6 +243,14 @@ export function buildNodesEdgesPorts({
     };
   };
 } {
+  const activeNodes = {
+    ...activeNodesProp,
+  };
+
+  if (nodeHovering) {
+    activeNodes[nodeHovering?.id] = nodeHovering;
+  }
+
   const parents = {};
   const nodesInner: {
     [id: string]: NodeType;

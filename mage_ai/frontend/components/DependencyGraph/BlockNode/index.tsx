@@ -68,6 +68,7 @@ type BlockNodeProps = {
   hideStatus?: boolean;
   isCancelled?: boolean;
   isConditionFailed?: boolean;
+  isDragging?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
@@ -91,6 +92,7 @@ function BlockNode({
   hideStatus,
   isCancelled,
   isConditionFailed,
+  isDragging,
   isInProgress,
   isQueued,
   isSuccessful,
@@ -203,6 +205,7 @@ function BlockNode({
       disabled={disabled}
       height={height}
       isCancelled={isCancelled}
+      isDragging={isDragging}
       noBackground={downstreamBlocks?.length >= 1}
       opacity={opacity}
       selected={selected}
