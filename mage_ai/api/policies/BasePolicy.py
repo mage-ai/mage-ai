@@ -503,15 +503,12 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
     async def authorize_query(self, query, **kwargs):
-        if not REQUIRE_USER_AUTHENTICATION:
+        if not REQUIRE_USER_AUTHENTICATION and not DISABLE_NOTEBOOK_EDIT_ACCESS:
             return True
 
         query_filtered = ignore_keys(query or {}, [URL_PARAMETER_API_KEY])
 
         if not query_filtered:
-            return True
-
-        if self.is_owner():
             return True
 
         api_operation_action = self.options.get(
