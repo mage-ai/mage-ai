@@ -30,3 +30,13 @@ export const isFunctionalComponent = (Component: Function) => {
 export const removeKeyboardFocus = () => {
   (document.activeElement as HTMLElement).blur();
 };
+
+/** Determine whether the event target is an interactive element */
+export const isInteractiveElement = (event): boolean => {
+  if (event.target instanceof Element) {
+    const tagName = (event.target as Element).tagName.toLowerCase();
+    return ['a', 'button', 'input', 'select'].includes(tagName);
+  }
+
+  return false;
+};

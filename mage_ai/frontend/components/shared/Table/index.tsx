@@ -1,6 +1,5 @@
 import NextLink from 'next/link';
 import React, {
-  createRef,
   useCallback,
   useEffect,
   useMemo,
@@ -36,8 +35,9 @@ import {
   TableWrapperStyle,
 } from './index.style';
 import { goToWithQuery } from '@utils/routing';
-import { pushAtIndex, sortByKey } from '@utils/array';
+import { isInteractiveElement } from '@context/shared/utils';
 import { set } from '@storage/localStorage';
+import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
@@ -428,11 +428,13 @@ function Table({
           noHover={!(linkProps || onClickRow || renderExpandedRowWithObject)}
           // @ts-ignore
           onClick={(e) => {
-            if (onClickRow) {
-              handleRowClick(rowIndex, e);
+            if (!isInteractiveElement(e)) {
+              if (onClickRow) {
+                handleRowClick(rowIndex, e);
+              }
+  
+              onClickRowInternal(rowIndex, e);
             }
-
-            onClickRowInternal(rowIndex, e);
           }}
           onContextMenu={hasRightClickMenu
             ? (e) => {

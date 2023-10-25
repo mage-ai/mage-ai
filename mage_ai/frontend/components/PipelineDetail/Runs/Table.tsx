@@ -182,7 +182,11 @@ function RetryButton({
         default={RunStatus.INITIAL === status}
         disabled={disabled || isViewerRole}
         loading={!pipelineRun}
-        onClick={() => setShowConfirmationId(pipelineRunId)}
+        onClick={(e) => {
+          // Stop table row from being highlighted as well
+          e.stopPropagation();
+          setShowConfirmationId(pipelineRunId);
+        }}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isCancelingPipeline && !isViewerRole}
         warning={RunStatus.CANCELLED === status && !isViewerRole}
@@ -298,7 +302,6 @@ function PipelineRunsTable({
   const router = useRouter();
   const isViewerRole = isViewer();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  const canRegisterKeyDown = useRef<boolean>(true);
   const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -650,9 +653,13 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => router.push(
-                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                    )}
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
                   >
                     <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
@@ -779,9 +786,13 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => router.push(
-                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                    )}
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
                   >
                     <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
@@ -837,7 +848,9 @@ function PipelineRunsTable({
                   <Checkbox
                     checked={selected}
                     key={`selected-pipeline-run-${id}`}
-                    onClick={() => {
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
                       setSelectedRuns(prev => ({
                         ...prev,
                         [id]: selected ? null : pipelineRun,
