@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import Button from '@oracle/elements/Button';
@@ -22,6 +22,7 @@ import {
 } from '@storage/localStorage';
 import { OutputContainerStyle, OutputHeaderStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { removeKeyboardFocus } from '@context/shared/utils';
 
 export type PipelineExecutionProps = {
   cancelPipeline: () => void;
@@ -50,11 +51,11 @@ function PipelineExecution({
   // When the pipeline starts executing, the execution button gets disabled.
   // Disabled buttons are not focusable, so manually remove the focus here.
   const handleExecutePipeline = useCallback(() => {
-    (document.activeElement as HTMLElement).blur();
+    removeKeyboardFocus();
     executePipeline();
   }, [executePipeline]);
   const handleCancelPipeline = useCallback(() => {
-    (document.activeElement as HTMLElement).blur();
+    removeKeyboardFocus();
     cancelPipeline();
   }, [cancelPipeline]);
 

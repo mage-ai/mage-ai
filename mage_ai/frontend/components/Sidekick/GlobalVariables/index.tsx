@@ -26,8 +26,9 @@ import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariables } from '../utils';
-import { onSuccess } from '@api/utils/response';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+import { removeKeyboardFocus } from '@context/shared/utils';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -154,10 +155,10 @@ function GlobalVariables({
         setNewVariableName(null);
         setNewVariableValue(null);
       });
-      (document.activeElement as HTMLElement).blur();
+      removeKeyboardFocus();
       setShowNewVariable(false);
     } else if (e.key === 'Escape') {
-      (document.activeElement as HTMLElement).blur();
+      removeKeyboardFocus();
       setShowNewVariable(false);
     }
   }, [

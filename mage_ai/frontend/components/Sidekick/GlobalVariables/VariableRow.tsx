@@ -14,6 +14,7 @@ import { LIME_DARK } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VariableType } from '@interfaces/PipelineVariableType';
 import { onSuccess } from '@api/utils/response';
+import { removeKeyboardFocus } from '@context/shared/utils';
 import { useMutation } from 'react-query';
 import api from '@api';
 
@@ -97,10 +98,10 @@ function VariableRow({
           },
         });
       }
-      (document.activeElement as HTMLElement).blur();
+      removeKeyboardFocus();
       onEnterCallback?.();
     } else if (e.key === 'Escape') {
-      (document.activeElement as HTMLElement).blur();
+      removeKeyboardFocus();
       setEdit(false);
       onEscapeCallback?.();
     }
@@ -114,7 +115,7 @@ function VariableRow({
   ]);
 
   const handleDelete = useCallback(() => {
-    (document.activeElement as HTMLElement).blur();
+    removeKeyboardFocus();
     deleteVariable();
   }, [deleteVariable]);
 
