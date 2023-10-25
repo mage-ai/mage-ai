@@ -14,6 +14,8 @@ GHE_CLIENT_ID_ENV_VAR = 'GHE_CLIENT_ID'
 GHE_CLIENT_SECRET_ENV_VAR = 'GHE_CLIENT_SECRET'
 GHE_HOSTNAME_ENV_VAR = 'GHE_HOSTNAME'
 
+DEFAULT_GITHUB_HOSTNAME = 'https://github.com'
+
 VALID_OAUTH_PROVIDERS = [
     OAUTH_PROVIDER_ACTIVE_DIRECTORY,
     OAUTH_PROVIDER_GHE,
@@ -23,8 +25,7 @@ VALID_OAUTH_PROVIDERS = [
 
 def get_ghe_hostname() -> Optional[str]:
     ghe_hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
-    if ghe_hostname:
-        if not ghe_hostname.startswith('http'):
-            ghe_hostname = f'https://{ghe_hostname}'
+    if ghe_hostname and not ghe_hostname.startswith('http'):
+        ghe_hostname = f'https://{ghe_hostname}'
 
     return ghe_hostname

@@ -8,6 +8,7 @@ from git.remote import RemoteProgress
 from git.repo.base import Repo
 
 from mage_ai.authentication.oauth.constants import (
+    DEFAULT_GITHUB_HOSTNAME,
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
     get_ghe_hostname,
@@ -157,7 +158,7 @@ def get_user(token: str) -> Dict:
     """
     ghe_hostname = get_ghe_hostname()
     endpoint = f'{API_ENDPOINT}/user'
-    if ghe_hostname:
+    if ghe_hostname and ghe_hostname != DEFAULT_GITHUB_HOSTNAME:
         endpoint = f'{ghe_hostname}/api/v3/user'
     resp = requests.get(endpoint, headers={
         'Accept': 'application/vnd.github+json',
