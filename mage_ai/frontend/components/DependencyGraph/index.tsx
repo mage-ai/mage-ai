@@ -938,7 +938,7 @@ function DependencyGraph({
     let selected = false;
 
     if (blockEditing) {
-      selected = !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid);
+      selected = !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block?.uuid);
     } else if (activePortExists) {
       selected = !!activePort;
     } else if (opts?.blocksWithSameDownstreamBlocks?.length >= 2) {
@@ -946,7 +946,7 @@ function DependencyGraph({
         ({ uuid }) => uuid,
       )?.includes(selectedBlock?.uuid);
     } else {
-      selected = selectedBlock?.uuid === block.uuid;
+      selected = selectedBlock?.uuid === block?.uuid;
     }
 
     const anotherBlockSelected = activePortExists

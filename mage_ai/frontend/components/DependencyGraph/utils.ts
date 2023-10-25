@@ -308,11 +308,24 @@ export function buildNodesEdgesPorts({
 
     if (downstreamBlocks?.length >= 2) {
       // Only group these blocks if their downstream is identical
-      const keys = downstreamBlocks?.map(({
+      // or at least 2 of them have downstreams that match exactly (subgroup).
+      const counts = {};
+      downstreamBlocks?.forEach(({
         downstream_blocks: downstreamBlockUUIDs,
-      }) => sortByKey(downstreamBlockUUIDs || [], uuid => uuid).join(','));
+      }) => {
+        if (downstreamBlockUUIDs?.length >= 1) {
+          const key = sortByKey(downstreamBlockUUIDs || [], uuid => uuid).join(',');
+          if (!(key in counts)) {
+            counts[key] = 0;
+          }
+          counts[key] += 1;
+        }
+      });
 
-      if ((new Set(keys)).size <= 1) {
+      const countValues = (Object.values(counts || {}) || []);
+      const count = Math.max(...countValues);
+
+      if (!countValues?.length || count >= 2) {
         downstreamBlocks?.forEach((block2) => {
           const uuid2 = block2?.uuid;
           if (!(uuid2 in blocksInGroups)) {
@@ -453,6 +466,8 @@ export function buildNodesEdgesPorts({
     });
   });
 
+  const subgroups = {};
+
   Object.entries(groupsByParentID || {}).forEach(([
     parentID,
     {
@@ -470,14 +485,34 @@ export function buildNodesEdgesPorts({
     };
     nodesInner[parentID] = node;
 
+    const subgroup2 = blocksInSameGroup(
+      downstreamBlocks,
+      blocksInGroups,
+      blocksWithDownstreamBlockSet,
+      groupsByParentID,
+      parentID,
+    );
+
+    if (subgroup2) {
+      subgroups[parentID] = subgroup2;
+    }
+
+    const uuidsInSubgroup = Object.values(
+      subgroup2 || {},
+    )?.reduce((acc, { upstreamBlocks: upstreamBlocks2 }) => acc.concat(
+      upstreamBlocks2?.map(({ uuid: uuid3 }) => uuid3),
+    ), []);
+
+    // Each block node can only be in 1 group at a time.
     downstreamBlocks?.forEach(({ uuid: uuid2 }) => {
-      if (uuid2 in nodesInner) {
+      if (!uuidsInSubgroup?.includes(uuid2) && uuid2 in nodesInner) {
         nodesInner[uuid2].parent = parentID;
       }
     });
 
     upstreamBlocks?.forEach((block) => {
       const uuid = block?.uuid;
+
       const upstreamOrDownstreamSelected = selectedBlock?.uuid === uuid
         || downstreamBlocks?.find(({ uuid: uuid2 }) => selectedBlock?.uuid === uuid2);
 
@@ -521,6 +556,59 @@ export function buildNodesEdgesPorts({
     });
   });
 
+  Object.entries(subgroups || {}).forEach(([
+    parentID,
+    groups,
+  ]) => {
+    Object.entries(groups || {}).forEach(([
+      parentID2,
+      {
+        downstreamBlocks,
+        upstreamBlocks,
+      },
+    ]) => {
+      const parentID3 = getParentNodeIDShared([parentID, parentID2]);
+
+      const node = {
+        data: {
+          block: upstreamBlocks?.[0],
+          blocks: upstreamBlocks,
+          children: downstreamBlocks,
+        },
+        id: parentID3,
+        parent: parentID,
+      };
+      nodesInner[parentID3] = node;
+
+      upstreamBlocks?.forEach(({ uuid: uuid2 }) => {
+        if (uuid2 in nodesInner) {
+          nodesInner[uuid2].parent = parentID3;
+        }
+        const edgeID = buildEdgeID(parentID2, uuid2)
+        if (edgeID in edgesInner) {
+          delete edgesInner[edgeID];
+        }
+      });
+
+      const edge = buildEdge(parentID2, parentID3);
+      edgesInner[edge.id] = edge;
+
+      ports[parentID3] = {
+        ...ports?.[parentID3],
+        ...buildPortsDownstream(parentID3, [parentID2], {
+          activeNodes,
+        }),
+      };
+
+      ports[parentID2] = {
+        ...ports?.[parentID2],
+        ...buildPortsUpstream(parentID2, [parentID3], {
+          activeNodes,
+        }),
+      };
+    });
+  });
+
   Object.entries(ports).forEach(([
     blockUUID,
     portsMapping,
@@ -537,6 +625,62 @@ export function buildNodesEdgesPorts({
     nodes: Object.values(nodesInner || {}),
     ports,
   };
+}
+
+export function blocksInSameGroup(
+  blocks: BlockType[],
+  blocksInGroups,
+  blocksWithDownstreamBlockSet,
+  groupsByParentID,
+  parentID,
+) {
+  const uuids = sortByKey(blocks?.map(({ uuid }) => uuid) || [], ({ uuid }) => uuid);
+
+  const upstreamBlockParents = {};
+  // Check to see if the current upstreams are in the same group.
+  blocks?.forEach((block2) => {
+    const { uuid } = block2;
+
+    const groups = blocksInGroups?.[uuid];
+    groups?.forEach((info) => {
+      const {
+        downstreamBlocks: downstreamBlocks2,
+        upstreamBlocks: upstreamBlocks2,
+      } = info;
+
+      const uuids2 = sortByKey(
+        upstreamBlocks2?.map(({ uuid }) => uuid) || [],
+        ({ uuid }) => uuid,
+      );
+
+      const parentID2 = getParentNodeIDShared(uuids2);
+      if (!(parentID2 in upstreamBlockParents)) {
+        upstreamBlockParents[parentID2] = [];
+      }
+      upstreamBlockParents[parentID2].push(block2);
+    });
+  });
+
+  const subgroups = {};
+
+  // Each block node can only be in 1 group at a time.
+  Object.entries(upstreamBlockParents || {}).forEach(([
+    parentID2,
+    blocks,
+  ]) => {
+    const blocks2 = blocks?.filter(({ uuid }) => blocksWithDownstreamBlockSet?.[uuid]);
+    const uuids2 = blocks2?.map(({ uuid }) => uuid);
+    const parentID3 = getParentNodeIDShared(uuids2);
+
+    if (parentID3 in groupsByParentID) {
+      const group = groupsByParentID?.[parentID3];
+      subgroups[parentID3] = group;
+    }
+  });
+
+  if (Object.keys(subgroups)?.length >= 1) {
+    return subgroups;
+  }
 }
 
 export function getBlockStatus({
