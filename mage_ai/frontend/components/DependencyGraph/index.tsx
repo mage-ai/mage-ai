@@ -466,48 +466,51 @@ function DependencyGraph({
     },
   );
 
-  const [updateBlockByDragAndDrop] = useMutation(
-    ({ fromBlock, portSide, toBlock, removeDependency }:
-      {
-        fromBlock: BlockType;
-        portSide?: SideEnum;
-        toBlock: BlockType;
-        removeDependency?: boolean;
-      },
-    ) => {
-      let blockToUpdate = toBlock;
-      let upstreamBlocks = toBlock.upstream_blocks.concat(fromBlock.uuid);
-      if (!removeDependency && portSide === SideEnum.NORTH) {
-        blockToUpdate = fromBlock;
-        upstreamBlocks = fromBlock.upstream_blocks.concat(toBlock.uuid);
-      }
+  const [updateBlockByDragAndDrop] = useMutation(({
+    fromBlock,
+    portSide,
+    removeDependency,
+    toBlock,
+    upstreamBlocks: upstreamBlocksProp,
+  }: {
+    fromBlock: BlockType;
+    portSide?: SideEnum;
+    removeDependency?: boolean;
+    toBlock: BlockType;
+    upstreamBlocks?: string[];
+  }) => {
+    let blockToUpdate = toBlock;
+    let upstreamBlocks = upstreamBlocksProp || toBlock.upstream_blocks.concat(fromBlock.uuid);
+    if (!removeDependency && portSide === SideEnum.NORTH) {
+      blockToUpdate = fromBlock;
+      upstreamBlocks = fromBlock.upstream_blocks.concat(toBlock.uuid);
+    }
 
-      return api.blocks.pipelines.useUpdate(
-        pipeline?.uuid,
-        encodeURIComponent(blockToUpdate.uuid),
-      )({
-        block: {
-          ...blockToUpdate,
-          upstream_blocks: removeDependency
-            ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
-            : upstreamBlocks,
+    return api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(blockToUpdate.uuid),
+    )({
+      block: {
+        ...blockToUpdate,
+        upstream_blocks: removeDependency
+          ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
+          : upstreamBlocks,
+      },
+    });
+  },
+  {
+    onSuccess: (response: any) => onSuccess(
+      response, {
+        callback: () => {
+          fetchPipeline?.();
         },
-      });
-    },
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchPipeline?.();
-          },
-          onErrorCallback: (response, errors) => setErrors?.({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
+        onErrorCallback: (response, errors) => setErrors?.({
+          errors,
+          response,
+        }),
+      },
+    ),
+  });
 
   const onClick = useCallback((block: BlockType) => {
     const {
@@ -671,11 +674,26 @@ function DependencyGraph({
         && !fromBlock?.upstream_blocks?.includes(toBlock?.uuid)
         && fromBlock?.uuid !== toBlock?.uuid
       ) {
-        updateBlockByDragAndDrop({
+        const portSide = SideEnum.SOUTH;
+        const args = {
           fromBlock,
-          portSide: SideEnum.SOUTH,
+          portSide,
           toBlock,
-        });
+        };
+
+        // Current node is a group node.
+        if (node?.data?.children?.length >= 1) {
+          const upstreamBlocks = fromBlock?.downstream_blocks?.filter(
+            (uuid: string) => !toBlock?.upstream_blocks?.includes(uuid),
+          );
+
+          updateBlockByDragAndDrop({
+            ...args,
+            upstreamBlocks,
+          });
+        } else {
+          updateBlockByDragAndDrop(args);
+        }
       }
     }
 
@@ -1461,36 +1479,6 @@ function DependencyGraph({
                     }}
                   </Port>
                 }
-                // port={(showPorts && (
-                //   activePort === null || isActivePort(activePort, node)))
-                //   ?
-                //     <Port
-                //       onDrag={() => setShowPorts(true)}
-                //       onDragEnd={() => {
-                //         setShowPorts(false);
-                //         setActivePorts(null);
-                //       }}
-                //       onDragStart={(e, initial, port) => {
-                //         const side = port?.side as SideEnum;
-                //         setActivePorts({ id: port?.id, side });
-                //       }}
-                //       onEnter={() => setShowPorts(true)}
-                //       rx={10}
-                //       ry={10}
-                //       style={{
-                //         fill: getColorsForBlockType(
-                //           node?.properties?.data?.block?.type,
-                //           {
-                //             blockColor: node?.properties?.data?.block?.color,
-                //             theme: themeContext,
-                //           },
-                //         ).accent,
-                //         stroke: 'white',
-                //         strokeWidth: '1px',
-                //       }}
-                //     />
-                //   : null
-                // }
                 style={{
                   fill: 'transparent',
                   stroke: 'transparent',
