@@ -12,9 +12,9 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth2 import generate_access_token
 from mage_ai.authentication.oauth.constants import (
     ACTIVE_DIRECTORY_CLIENT_ID,
-    GHE_CLIENT_ID,
-    GHE_CLIENT_SECRET,
-    GHE_HOSTNAME,
+    GHE_CLIENT_ID_ENV_VAR,
+    GHE_CLIENT_SECRET_ENV_VAR,
+    GHE_HOSTNAME_ENV_VAR,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
     OAUTH_PROVIDER_ACTIVE_DIRECTORY,
@@ -101,7 +101,9 @@ class OauthResource(GenericResource):
         if redirect_uri:
             redirect_uri = redirect_uri[0]
 
-        if pk == OAUTH_PROVIDER_GITHUB and GHE_HOSTNAME:
+        ghe_hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
+
+        if pk == OAUTH_PROVIDER_GITHUB and ghe_hostname:
             provider = OAUTH_PROVIDER_GHE
         else:
             provider = pk
@@ -135,7 +137,6 @@ class OauthResource(GenericResource):
                         v = ','.join(v)
                     query[k] = v
 
-                ghe_hostname = os.getenv(GHE_HOSTNAME)
                 if ghe_hostname.startswith('http'):
                     host = ghe_hostname
                 else:
@@ -149,8 +150,8 @@ class OauthResource(GenericResource):
                             'Accept': 'application/json',
                         },
                         data=dict(
-                            client_id=os.getenv(GHE_CLIENT_ID),
-                            client_secret=os.getenv(GHE_CLIENT_SECRET),
+                            client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
+                            client_secret=os.getenv(GHE_CLIENT_SECRET_ENV_VAR),
                             code=code,
                         ),
                         timeout=20,
@@ -173,7 +174,7 @@ class OauthResource(GenericResource):
         # Otherwise, return the authorization url to start the oauth flow.
         else:
             if OAUTH_PROVIDER_GITHUB == pk:
-                if GHE_HOSTNAME:
+                if ghe_hostname:
                     parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
                     base_url = parsed_url.scheme + '://' + parsed_url.netloc
                     if ROUTES_BASE_PATH:
@@ -185,17 +186,17 @@ class OauthResource(GenericResource):
                         )
                     )
                     query = dict(
-                        client_id=GHE_CLIENT_ID,
+                        client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
                         redirect_uri=urllib.parse.quote_plus(
                             f'{base_url}/oauth?{redirect_uri_query}',
                         ),
                         scope='repo',
                         state=uuid.uuid4().hex,
                     )
-                    if GHE_HOSTNAME.startswith('http'):
-                        host = GHE_HOSTNAME
+                    if ghe_hostname.startswith('http'):
+                        host = ghe_hostname
                     else:
-                        host = f'https://{GHE_HOSTNAME}'
+                        host = f'https://{ghe_hostname}'
                 else:
                     query = dict(
                         client_id=GITHUB_CLIENT_ID,
