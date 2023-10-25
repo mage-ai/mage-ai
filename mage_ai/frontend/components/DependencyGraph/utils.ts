@@ -10,6 +10,10 @@ import {
 } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
+import {
+  getMessagesWithType,
+  hasErrorOrOutput,
+} from '@components/CodeBlock/utils';
 import { roundNumber } from '@utils/string';
 
 export const getFinalLevelIndex = (
@@ -435,4 +439,62 @@ export function buildNodesEdgesPorts({
     nodes: Object.values(nodesInner || {}),
     ports,
   };
+}
+
+
+export function getBlockStatus({
+  block,
+  blockStatus,
+  messages,
+  noStatus,
+  runningBlocks,
+  runningBlocksMapping,
+}: {
+  block: BlockType[];
+  blockStatus: StatusTypeEnum;
+  messages: string[];
+  noStatus: boolean;
+  runningBlocks: BlockType[];
+  runningBlocksMapping: {
+    [uuid: string]: BlockType;
+  };
+}): {
+  hasFailed: boolean;
+  isInProgress: boolean;
+  isQueued: boolean;
+  isSuccessful: boolean;
+} {
+  if (noStatus || !block) {
+    return {};
+  } else if (blockStatus) {
+    const {
+      status,
+      runtime,
+    } = blockStatus?.[getBlockRunBlockUUID(block)] || {};
+
+    return {
+      hasFailed: RunStatus.FAILED === status,
+      isCancelled: RunStatus.CANCELLED === status,
+      isConditionFailed: RunStatus.CONDITION_FAILED === status,
+      isInProgress: RunStatus.RUNNING === status,
+      isQueued: RunStatus.INITIAL === status,
+      isSuccessful: RunStatus.COMPLETED === status,
+      runtime,
+    };
+  } else {
+    const messagesWithType = getMessagesWithType(messages?.[block?.uuid] || []);
+    const {
+      hasError,
+      hasOutput,
+    } = hasErrorOrOutput(messagesWithType);
+
+    const isInProgress = runningBlocksMapping?.[block?.uuid];
+
+    return {
+      hasFailed: !isInProgress && (hasError || StatusTypeEnum.FAILED === block.status),
+      isInProgress,
+      isQueued: isInProgress && runningBlocks[0]?.uuid !== block.uuid,
+      isSuccessful: !isInProgress && ((!hasError && hasOutput) || StatusTypeEnum.EXECUTED === block.status),
+    };
+  }
 }

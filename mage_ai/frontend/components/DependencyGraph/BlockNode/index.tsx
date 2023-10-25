@@ -43,7 +43,7 @@ import {
   getColorsForBlockType,
   getGradientColorForBlockType,
 } from '@components/CodeBlock/index.style';
-import { getRuntimeText } from '../utils';
+import { getBlockStatus, getRuntimeText } from '../utils';
 
 const ICON_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,

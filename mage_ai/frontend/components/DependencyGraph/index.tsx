@@ -53,6 +53,7 @@ import {
   buildPortIDDownstream,
   buildPortsDownstream,
   buildPortsUpstream,
+  getBlockStatus,
   getParentNodeID,
   isActivePort,
 } from './utils';
@@ -588,52 +589,7 @@ function DependencyGraph({
     pipeline,
   ]);
 
-  const getBlockStatus = useCallback((block: BlockType): {
-    hasFailed: boolean;
-    isInProgress: boolean;
-    isQueued: boolean;
-    isSuccessful: boolean;
-  } => {
-    if (noStatus || !block) {
-      return {};
-    } else if (blockStatus) {
-      const {
-        status,
-        runtime,
-      } = blockStatus[getBlockRunBlockUUID(block)] || {};
 
-      return {
-        hasFailed: RunStatus.FAILED === status,
-        isCancelled: RunStatus.CANCELLED === status,
-        isConditionFailed: RunStatus.CONDITION_FAILED === status,
-        isInProgress: RunStatus.RUNNING === status,
-        isQueued: RunStatus.INITIAL === status,
-        isSuccessful: RunStatus.COMPLETED === status,
-        runtime,
-      };
-    } else {
-      const messagesWithType = getMessagesWithType(messages?.[block?.uuid] || []);
-      const {
-        hasError,
-        hasOutput,
-      } = hasErrorOrOutput(messagesWithType);
-
-      const isInProgress = runningBlocksMapping[block?.uuid];
-
-      return {
-        hasFailed: !isInProgress && (hasError || StatusTypeEnum.FAILED === block.status),
-        isInProgress,
-        isQueued: isInProgress && runningBlocks[0]?.uuid !== block.uuid,
-        isSuccessful: !isInProgress && ((!hasError && hasOutput) || StatusTypeEnum.EXECUTED === block.status),
-      };
-    }
-  }, [
-    blockStatus,
-    messages,
-    noStatus,
-    runningBlocks,
-    runningBlocksMapping,
-  ]);
 
   const containerHeight = useMemo(() => {
     let v = 0;
@@ -945,7 +901,14 @@ function DependencyGraph({
       isInProgress,
       isQueued,
       isSuccessful,
-    } = getBlockStatus(block);
+    } = getBlockStatus({
+      block,
+      blockStatus,
+      messages,
+      noStatus,
+      runningBlocks,
+      runningBlocksMapping,
+    });
 
     return (
       <BlockNode
@@ -972,13 +935,16 @@ function DependencyGraph({
     );
   }, [
     blockEditing,
+    blockStatus,
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
     disabledProp,
     extensionBlocksByBlockUUID,
-    getBlockStatus,
+    messages,
     noStatus,
     pipeline,
+    runningBlocks,
+    runningBlocksMapping
   ]);
 
   const nodeDraggingMemo = useMemo(() => {
@@ -1008,16 +974,31 @@ function DependencyGraph({
       return;
     }
 
-    const blockStatus = getBlockStatus(block);
+    const {
+      hasFailed,
+      isInProgress,
+      isQueued,
+      isSuccessful,
+    } = getBlockStatus({
+      block,
+      blockStatus,
+      messages,
+      noStatus,
+      runningBlocks,
+      runningBlocksMapping,
+    });
     const callbackBlocks = callbackBlocksByBlockUUID?.[block?.uuid];
     const conditionalBlocks = conditionalBlocksByBlockUUID?.[block?.uuid];
     const extensionBlocks = extensionBlocksByBlockUUID?.[block?.uuid];
 
     const opts = {
-      blockStatus,
       callbackBlocks,
       conditionalBlocks,
       extensionBlocks,
+      hasFailed,
+      isInProgress,
+      isQueued,
+      isSuccessful,
     };
     const nodeHeight = getBlockNodeHeight(block, pipeline, opts);
     const nodeWidth = getBlockNodeWidth(block, pipeline, opts);
@@ -1040,13 +1021,18 @@ function DependencyGraph({
       </div>
     );
   }, [
+    blockStatus,
     buildBlockNode,
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
     extensionBlocksByBlockUUID,
     isDragging,
+    messages,
+    noStatus,
     nodeDragging,
     pipeline,
+    runningBlocks,
+    runningBlocksMapping,
   ]);
 
   // Show a menu to add a block between or delete the connection.
@@ -1244,13 +1230,30 @@ function DependencyGraph({
               theme: themeContext,
             });
 
-            const downstreamBlockUUID = block?.downstream_blocks?.find(
-              uuid => buildPortIDDownstream(block?.uuid, uuid) === edge?.sourcePort,
+            const downstreamBlocks = [];
+            if (getParentNodeID(block?.uuid) === edge?.target) {
+              downstreamBlocks.push(
+                ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
+              );
+            } else {
+              const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => {
+                return buildPortIDDownstream(block?.uuid, uuid) === edge?.sourcePort
+                  || getParentNodeID(block?.uuid) === edge.target;
+              });
+              const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
+              downstreamBlocks.push(downstreamBlock);
+            }
+
+            const isInProgress = downstreamBlocks?.some(
+              downstreamBlock => downstreamBlock && getBlockStatus({
+                block: downstreamBlock,
+                blockStatus,
+                messages,
+                noStatus,
+                runningBlocks,
+                runningBlocksMapping,
+              })?.isInProgress,
             );
-            const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
-            const {
-              isInProgress,
-            } = getBlockStatus(downstreamBlock);
 
             const {
               anotherBlockSelected,
@@ -1516,7 +1519,30 @@ function DependencyGraph({
                     isInProgress,
                     isQueued,
                     isSuccessful,
-                  } = getBlockStatus(block);
+                  } = getBlockStatus({
+                    block,
+                    blockStatus,
+                    messages,
+                    noStatus,
+                    runningBlocks,
+                    runningBlocksMapping,
+                  });
+
+                  let isInProgressFinal;
+                  if (children?.length >= 1) {
+                    isInProgressFinal = children?.some(
+                      downstreamBlock => downstreamBlock && getBlockStatus({
+                        block: downstreamBlock,
+                        blockStatus,
+                        messages,
+                        noStatus,
+                        runningBlocks,
+                        runningBlocksMapping,
+                      })?.isInProgress,
+                    );
+                  } else {
+                    isInProgressFinal = isInProgress;
+                  }
 
                   return (
                     <foreignObject
@@ -1557,7 +1583,7 @@ function DependencyGraph({
                         height={nodeHeight}
                         hideNoStatus
                         hideStatus={disabledProp || noStatus}
-                        isInProgress={isInProgress}
+                        isInProgress={isInProgressFinal}
                         isQueued={isQueued}
                         isSuccessful={isSuccessful}
                         key={block.uuid}
