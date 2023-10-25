@@ -47,6 +47,7 @@ import {
   PADDING_UNITS,
   UNIT,
 } from '@oracle/styles/units/spacing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   buildEdge,
   buildNodesEdgesPorts,
@@ -190,6 +191,10 @@ export type DependencyGraphProps = {
   }) => void;
   runningBlocks?: BlockType[];
   selectedBlock?: BlockType;
+  setActiveSidekickView?: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => void;
   setErrors?: (opts: {
     errors: any;
     response: any;
@@ -227,6 +232,7 @@ function DependencyGraph({
   pipeline,
   runningBlocks = [],
   selectedBlock,
+  setActiveSidekickView,
   setEditingBlock,
   setErrors,
   setSelectedBlock,
@@ -1513,6 +1519,13 @@ function DependencyGraph({
         },
         uuid: 'Delete block (ignore dependencies)',
       },
+      {
+        onClick: () => {
+          setSelectedBlock(block);
+          setActiveSidekickView(ViewKeyEnum.FILE_VERSIONS);
+        },
+        uuid: 'View file versions',
+      },
     ];
 
     return (
@@ -1558,6 +1571,7 @@ function DependencyGraph({
     contextMenuData,
     deleteBlock,
     runBlock,
+    setActiveSidekickView,
     setContextMenuData,
     setSelectedBlock,
     setSelectedBlockTwice,

@@ -132,6 +132,10 @@ export type SidekickProps = {
   selectedBlock: BlockType;
   selectedFilePath?: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
+  setActiveSidekickView: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
   setBlockInteractionsMapping: (prev: any) => {
     [blockUUID: string]: BlockInteractionType[];
@@ -211,6 +215,7 @@ function Sidekick({
   selectedBlock,
   selectedFilePath,
   sendTerminalMessage,
+  setActiveSidekickView,
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
   setBlockInteractionsMapping,
@@ -310,6 +315,7 @@ function Sidekick({
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
       onActionCallback={onUpdateFileSuccess}
+      pipeline={pipeline}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
       setErrors={setErrors}
@@ -318,6 +324,7 @@ function Sidekick({
   ), [
     afterWidth,
     onUpdateFileSuccess,
+    pipeline,
     selectedBlock,
     selectedFilePath,
     setErrors,
@@ -613,6 +620,7 @@ function Sidekick({
                 runBlock={runBlock}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}
+                setActiveSidekickView={setActiveSidekickView}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
                 setSelectedBlock={(block) => {
