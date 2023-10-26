@@ -754,9 +754,7 @@ function DependencyGraph({
         } else {
           updateBlockByDragAndDrop({
             block: toBlock,
-            upstreamBlocks: (toBlock?.upstream_blocks || [])
-              .concat(fromBlock?.uuid)
-              .filter(uuid => uuid && !toBlock?.upstream_blocks?.includes(uuid)),
+            upstreamBlocks: (toBlock?.upstream_blocks || []).concat(fromBlock?.uuid),
           });
         }
       }
