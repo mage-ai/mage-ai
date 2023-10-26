@@ -72,7 +72,10 @@ setuptools.setup(
             'dbt-trino==1.4.0',
             'dbt-clickhouse==1.4.0',
         ],
-        'google-cloud-storage': ['google-cloud-storage==2.5.0'],
+        'google-cloud-storage': [
+            'google-cloud-storage==2.5.0',
+            'gspread==5.7.2',
+        ],
         'hdf5': ['tables==3.7.0'],
         'mysql': [
             'mysql-connector-python==8.0.31',
