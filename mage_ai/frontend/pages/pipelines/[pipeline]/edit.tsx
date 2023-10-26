@@ -403,8 +403,6 @@ function PipelineDetailPage({
   const kernel = useMemo(() => {
     const kernels = dataKernels?.kernels;
 
-    console.log(pipeline?.type, kernels)
-
     return kernels?.find(({ name }) =>
       name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type],
     ) || kernels?.[0];
