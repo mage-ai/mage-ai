@@ -24,7 +24,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
+import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
 import { Branch, Slack } from '@oracle/icons';
 import {
   HeaderStyle,
@@ -290,6 +290,7 @@ function Header({
             {latestVersion && version && latestVersion !== version && (
               <Spacing ml={1}>
                 <Button
+                  backgroundColor={YELLOW}
                   borderLess
                   compact
                   linkProps={{
@@ -297,11 +298,11 @@ function Header({
                   }}
                   noHoverUnderline
                   pill
-                  primary
+                  sameColorAsText
                   target="_blank"
                   title={`Update to version ${latestVersion}`}
                 >
-                  <Text bold>Update</Text>
+                  <Text black bold>Update</Text>
                 </Button>
               </Spacing>
             )}
