@@ -23,12 +23,6 @@ RUN \
     unixodbc-dev && \
     # R
     # r-base=4.2.2.20221110-2 && \
-  # Resolve the conflicts between libodbc1 (from msodbcsql18) library and libodbc2 library (from freetds-bin)
-  apt-get -y remove libodbc1 && \
-  apt-get -y install --no-install-recommends \
-    # pymssql dependencies
-    freetds-dev \
-    freetds-bin && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
