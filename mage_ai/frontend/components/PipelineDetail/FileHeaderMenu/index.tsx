@@ -262,7 +262,14 @@ function FileHeaderMenu({
   ]);
 
   const computeItems = useMemo(() => {
-    const arr = [
+    const arr: {
+      label: () => string;
+      linkProps?: {
+        href: string;
+      };
+      onClick?: () => void;
+      uuid: string;
+    }[] = [
       {
         label: () => 'Open compute management',
         linkProps: {

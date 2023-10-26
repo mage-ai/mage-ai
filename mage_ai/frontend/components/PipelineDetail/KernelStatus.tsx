@@ -53,6 +53,7 @@ import {
   set,
 } from '@storage/localStorage';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SparkApplicationType } from '@interfaces/SparkType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { roundNumber } from '@utils/string';
 import { find } from '@utils/array';
@@ -153,9 +154,10 @@ function KernelStatus({
   const {
     data: dataSparkApplications,
   } = api.spark_applications.list();
-  const sparkApplications = useMemo(() => dataSparkApplications?.spark_applications, [
-    dataSparkApplications
-  ]);
+  const sparkApplications: SparkApplicationType[] =
+    useMemo(() => dataSparkApplications?.spark_applications, [
+      dataSparkApplications,
+    ]);
 
   useEffect(() => {
     if (pipeline?.uuid) {
@@ -296,6 +298,13 @@ function KernelStatus({
         return 'Loading compute';
       } else if (!sparkApplications?.length) {
         return 'Compute unavailable';
+      } else if (sparkApplications?.length >= 1) {
+        const sparkApplication = sparkApplications?.[0];
+
+        return [
+          sparkApplication?.name,
+          sparkApplication?.attempts?.[0]?.app_spark_version,
+        ].filter(value => value).join(' ');
       }
     }
 
@@ -461,11 +470,13 @@ function KernelStatus({
     clusters,
     isBusy,
     pipeline,
+    pipelineDisplayName,
     selectedCluster,
     setShowSelectCluster,
     setShowSelectKernel,
     showSelectCluster,
     showSelectKernel,
+    statusIconMemo,
     themeContext,
     updateCluster,
     updatePipelineMetadata,
