@@ -2867,6 +2867,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             os.makedirs(parent_dir, exist_ok=True)
 
             if detach:
+                """"
+                Detaching a block creates a copy of the block file while keeping the existing block
+                file the same. Without detaching a block, the existing block file is simply renamed.
+                """
                 with open(new_file_path, 'w') as f:
                     f.write(self.content)
             else:
