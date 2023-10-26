@@ -16,8 +16,53 @@ interrogate = "*"
 commitizen = "*"
 ipykernel = "^6.17.1"
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "mage_ai/data_preparation/templates",
+    "mage_ai/orchestration/db/migrations/versions"
+]
+
+# Same as Black.
+line-length = 80
+indent-width = 4
+
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+ignore = ["E501"]
+select = [
+    "B",
+    "C9",
+    "E",
+    "F",
+    "T",
+    "T1",
+    "T2",
+    "W",
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
 
 [build-system]
 requires = ["setuptools>=42"]
