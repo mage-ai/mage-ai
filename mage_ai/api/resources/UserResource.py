@@ -9,9 +9,9 @@ from mage_ai.authentication.passwords import (
 )
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.oauth import Permission, Role, User
-from mage_ai.shared.hash import extract, ignore_keys
+from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.orchestration.db.models.oauth import Permission, Role, User, UserRole
+from mage_ai.shared.hash import extract, ignore_keys, index_by
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -176,12 +176,45 @@ class UserResource(DatabaseResource):
             payload['password_hash'] = create_bcrypt_hash(password, password_salt)
             payload['password_salt'] = password_salt
 
+        role_ids = [int(i) for i in payload.get('role_ids') or []]
+        # Need to call roles_new directly on the model or else the resource will
+        # cache the result because of the collective loader.
+        role_mapping = index_by(lambda x: x.id, self.model.roles_new or [])
+
+        role_ids_create = []
+        role_ids_delete = []
+
+        for role_id in role_ids:
+            if role_id not in role_mapping:
+                role_ids_create.append(role_id)
+
+        for role_id in role_mapping.keys():
+            if role_id not in role_ids:
+                role_ids_delete.append(role_id)
+
+        if role_ids_create:
+            db_connection.session.bulk_save_objects(
+                [UserRole(
+                    role_id=role_id,
+                    user_id=self.id,
+                ) for role_id in role_ids_create],
+                return_defaults=True,
+            )
+
+        if role_ids_delete:
+            delete_statement = UserRole.__table__.delete().where(
+                UserRole.role_id.in_(role_ids_delete),
+                UserRole.user_id == self.id,
+            )
+            db_connection.session.execute(delete_statement)
+
         return super().update(ignore_keys(payload, [
+            'owner',
             'password',
             'password_confirmation',
             'password_current',
-            'owner',
             'project_access',
+            'role_ids',
             'roles_display',
         ]), **kwargs)
 
@@ -210,3 +243,41 @@ class UserResource(DatabaseResource):
             raise ApiError(error)
 
         return roles_new
+
+
+def __load_permissions(resource):
+    from mage_ai.api.resources.PermissionResource import PermissionResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [PermissionResource(p, resource.current_user) for p in User.fetch_permissions(ids)]
+
+
+def __select_permissions(resource, arr):
+    return [r for r in arr if r.user_id == resource.id]
+
+
+def __load_roles(resource):
+    from mage_ai.api.resources.RoleResource import RoleResource
+
+    ids = [r.id for r in resource.result_set()]
+
+    return [RoleResource(p, resource.current_user) for p in User.fetch_roles(ids)]
+
+
+def __select_roles(resource, arr):
+    return [r for r in arr if r.user_id == resource.id]
+
+
+UserResource.register_collective_loader(
+    'permissions',
+    load=__load_permissions,
+    select=__select_permissions,
+)
+
+
+UserResource.register_collective_loader(
+    'roles_new',
+    load=__load_roles,
+    select=__select_roles,
+)

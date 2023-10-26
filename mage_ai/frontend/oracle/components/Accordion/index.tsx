@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import AccordionPanelImport, { AccordionPanelProps } from './AccordionPanel';
@@ -8,6 +8,9 @@ import { BORDER_WIDTH, BORDER_RADIUS, BORDER_STYLE } from '@oracle/styles/units/
 
 export type AccordionProps = {
   activeItemIndex?: number;
+  noBackground?: boolean;
+  noBorder?: boolean;
+  noBoxShadow?: boolean;
   children: any;
   onClick?: (visibleMapping: {
     [key: number]: boolean;
@@ -18,7 +21,7 @@ export type AccordionProps = {
     [key: number]: boolean;
   };
   visibleMappingForced?: {
-    [key: number]: boolean;
+    [key: number | number]: boolean;
   };
 } & AccordionPanelProps;
 
@@ -28,14 +31,14 @@ type AccordionPanelContainerProps = {
 };
 
 const AccordionStyle = styled.div<AccordionProps>`
-  border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
-  border-width: ${BORDER_WIDTH}px;
-  border-style: ${BORDER_STYLE};
 
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).content};
+  ${props => !props.noBoxShadow && `
     box-shadow: ${(props.theme || dark).shadow.frame};
+  `}
+
+  ${props => !props.noBackground && `
+    background-color: ${(props.theme.background || dark.background).content};
   `}
 
   ${props => !props.highlighted && `
@@ -44,6 +47,12 @@ const AccordionStyle = styled.div<AccordionProps>`
 
   ${props => props.highlighted && `
     border-color: ${(props.theme || dark).brand.wind400};
+  `}
+
+  ${props => !props.noBorder && `
+    border-radius: ${BORDER_RADIUS}px;
+    border-width: ${BORDER_WIDTH}px;
+    border-style: ${BORDER_STYLE};
   `}
 `;
 
@@ -59,12 +68,17 @@ const Accordion = ({
   visibleMappingForced,
   ...props
 }: AccordionProps) => {
-  const [visibleMappingState, setVisibleMapping] = useState(visibleMappingProps || {});
+  const [visibleMapping, setVisibleMapping] = useState(visibleMappingProps || {});
   const [visibleCount, setVisibleCount] = useState({});
-  const visibleMapping = {
-    ...visibleMappingState,
-    ...visibleMappingForced,
-  };
+
+  useEffect(() => {
+    if (visibleMappingForced) {
+      setVisibleMapping(prev => ({
+        ...prev,
+        ...visibleMappingForced,
+      }));
+    }
+  }, [visibleMappingForced]);
 
   return (
     <AccordionStyle {...props}>
@@ -73,7 +87,7 @@ const Accordion = ({
         const last = idx === (panelCount - 1);
         const visible: boolean = visibleMapping[idx];
 
-        return (
+        return child && (
           <div key={idx}>
             <AccordionPanelContainerStyle
               index={idx}

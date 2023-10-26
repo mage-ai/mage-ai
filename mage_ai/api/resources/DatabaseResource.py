@@ -1,3 +1,7 @@
+import inspect
+
+from sqlalchemy.orm.query import Query
+
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
@@ -5,8 +9,6 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import DoesNotExistError, ValidationError
 from mage_ai.shared.hash import ignore_keys, merge_dict
-from sqlalchemy.orm.query import Query
-import inspect
 
 
 class DatabaseResource(BaseResource):
@@ -15,8 +17,8 @@ class DatabaseResource(BaseResource):
     @classmethod
     @safe_db_query
     async def process_collection(self, query, meta, user, **kwargs):
-        limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
-        offset = int(meta.get(META_KEY_OFFSET, 0))
+        limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
 
         total_results = self.collection(query, meta, user, **kwargs)
         if total_results and inspect.isawaitable(total_results):
@@ -52,22 +54,22 @@ class DatabaseResource(BaseResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
-        query = ignore_keys(query_arg, [settings.QUERY_API_KEY])
+        query_parameters = ignore_keys(query_arg, [settings.QUERY_API_KEY])
+
+        query = self.model_class.query
+
+        for key, value in query_parameters.items():
+            query = query.filter(getattr(self.model_class, key) == value)
+
         parent_model = kwargs.get('parent_model')
         if parent_model and self.parent_resource():
-            column_name, parent_class = next(
+            column_name, _parent_class = next(
                 (k, v) for k, v in self.parent_resource().items() if isinstance(
                     parent_model, v.model_class))
-            where = {}
-            where[column_name] = parent_model.id
 
-            filters = []
-            for col, val in merge_dict(query, where).items():
-                filters.append(self.model_class)
-            return self.model_class.query.filter(
-                **merge_dict(query, where)).all()
-        else:
-            return self.model_class.query.filter(**query).all()
+            query = query.filter(getattr(self.model_class, column_name) == parent_model.id)
+
+        return query
 
     @classmethod
     @safe_db_query
@@ -142,14 +144,14 @@ class DatabaseResource(BaseResource):
             db_connection.session.commit()
 
             if self.on_update_callback:
-                self.on_update_callback(resource=res)
+                self.on_update_callback(resource=self)
 
             return res
         except Exception as err:
             db_connection.session.rollback()
 
             if self.on_update_failure_callback:
-                self.on_update_failure_callback(resource=res)
+                self.on_update_failure_callback(resource=self)
 
             raise err
 

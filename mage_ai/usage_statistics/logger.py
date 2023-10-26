@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import PipelineRun
-from mage_ai.shared.environments import get_env
+from mage_ai.shared.environments import get_env, is_test
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
     API_ENDPOINT,
@@ -266,14 +266,16 @@ class UsageStatisticLogger():
         block_configs = pipeline.all_block_configs
 
         encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
+        pipeline_schedule = pipeline_run.pipeline_schedule
         data = dict(
+            landing_time_enabled=1 if pipeline_schedule.landing_time_enabled() else 0,
             num_pipeline_blocks=len(block_configs),
             pipeline_run_uuid=pipeline_run.id,
             pipeline_status=pipeline_run.status,
             pipeline_type=pipeline_type,
             pipeline_uuid=hashlib.sha256(encoded_pipeline_uuid).hexdigest(),
             run_time_seconds=run_time_seconds,
-            trigger_method=pipeline_run.pipeline_schedule.schedule_type,
+            trigger_method=pipeline_schedule.schedule_type,
             unique_block_types=list(set([b.get('type') for b in block_configs])),
             unique_languages=list(set([b.get('language') for b in block_configs])),
         )
@@ -288,6 +290,9 @@ class UsageStatisticLogger():
         data: Dict,
         event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
     ) -> bool:
+        if is_test():
+            return False
+
         if not self.help_improve_mage:
             return False
 

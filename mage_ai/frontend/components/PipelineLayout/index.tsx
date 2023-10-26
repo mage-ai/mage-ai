@@ -30,15 +30,18 @@ import { useWindowSize } from '@utils/sizes';
 
 type PipelineLayoutProps = {
   after?: any;
+  afterFooter?: any;
   afterHeader?: any;
   afterHeightOffset?: number;
   afterHidden?: boolean;
+  afterInnerHeightMinus?: number;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
   afterSubheader?: any;
   before?: any;
   beforeHeader?: any;
   beforeHeightOffset?: number;
+  beforeHidden?: boolean;
   beforeNavigationItems?: NavigationItem[];
   children: any;
   errors: any;
@@ -49,21 +52,25 @@ type PipelineLayoutProps = {
   pipeline: PipelineType;
   setAfterHidden?: (value: boolean) => void;
   setAfterWidthForChildren?: (width: number) => void;
+  setBeforeHidden?: (value: boolean) => void;
   setErrors?: (errors: any) => void;
   setMainContainerWidth?: (width: number) => void;
 };
 
 function PipelineLayout({
   after,
+  afterFooter,
   afterHeader,
   afterHeightOffset,
   afterHidden: afterHiddenProp,
+  afterInnerHeightMinus,
   afterNavigationItems,
   afterOverflow,
   afterSubheader,
   before,
   beforeHeader,
   beforeHeightOffset,
+  beforeHidden: beforeHiddenProp,
   beforeNavigationItems,
   children,
   errors,
@@ -74,6 +81,7 @@ function PipelineLayout({
   pipeline,
   setAfterHidden: setAfterHiddenProp,
   setAfterWidthForChildren,
+  setBeforeHidden: setBeforeHiddenProp,
   setErrors,
   setMainContainerWidth,
 }: PipelineLayoutProps) {
@@ -84,8 +92,7 @@ function PipelineLayout({
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH, AFTER_DEFAULT_WIDTH));
   const [beforeWidth, setBeforeWidth] = useState(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH, BEFORE_DEFAULT_WIDTH));
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
+
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
@@ -95,6 +102,14 @@ function PipelineLayout({
   if (!setAfterHidden) {
     [afterHidden, setAfterHidden] =
       useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  }
+
+  let beforeHidden = beforeHiddenProp;
+  let setBeforeHidden = setBeforeHiddenProp;
+
+  if (!setBeforeHidden) {
+    [beforeHidden, setBeforeHidden] =
+      useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   }
 
   useEffect(() => {
@@ -186,9 +201,11 @@ function PipelineLayout({
 
       <TripleLayout
         after={after}
+        afterFooter={afterFooter}
         afterHeader={afterHeader}
         afterHeightOffset={afterHeightOffset}
         afterHidden={afterHidden}
+        afterInnerHeightMinus={afterInnerHeightMinus}
         afterMousedownActive={afterMousedownActive}
         afterNavigationItems={afterNavigationItems}
         afterOverflow={afterOverflow}

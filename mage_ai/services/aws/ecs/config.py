@@ -84,6 +84,7 @@ class EcsConfig(BaseConfig):
             count=1,
             networkConfiguration=network_configuration,
             tags=self.tags,
+            propagateTags='TASK_DEFINITION',
         )
         if command is not None:
             task_config['overrides'] = {

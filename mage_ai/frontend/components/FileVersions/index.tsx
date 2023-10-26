@@ -11,6 +11,7 @@ import FileType, { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileTy
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
@@ -26,6 +27,7 @@ import { pushAtIndex } from '@utils/array';
 
 type FileVersionsProps = {
   onActionCallback?: (file: FileType) => void;
+  pipeline?: PipelineType;
   selectedBlock?: BlockType;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
@@ -34,6 +36,7 @@ type FileVersionsProps = {
 
 function FileVersions({
   onActionCallback,
+  pipeline,
   selectedBlock,
   selectedFilePath,
   setErrors,
@@ -41,7 +44,16 @@ function FileVersions({
 }: FileVersionsProps) {
   const [, setApiReloads] = useGlobalState('apiReloads');
   const { data: dataFileVersions1, mutate: fetchFileVersions1 } =
-    api.file_versions.files.list(selectedFilePath && encodeURIComponent(selectedFilePath));
+    api.file_versions.files.list(selectedFilePath
+      ? encodeURIComponent(selectedFilePath)
+      : selectedBlock
+        ? encodeURIComponent(`${selectedBlock?.uuid}/${selectedBlock?.type}`)
+        : null,
+    {
+      block_uuid: selectedBlock?.uuid,
+      pipeline_uuid: pipeline?.uuid,
+    },
+  );
   const fileVersions: FileType[] = useMemo(() => dataFileVersions1?.file_versions || [], [
     dataFileVersions1,
   ]);

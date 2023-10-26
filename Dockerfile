@@ -15,11 +15,14 @@ RUN \
     # odbc dependencies
     msodbcsql18\
     unixodbc-dev \
-    # pymssql dependencies
-    freetds-dev \
-    freetds-bin \
     # R
     r-base && \
+  # Resolve the conflicts between libodbc1 (from msodbcsql18) library and libodbc2 library (from freetds-bin)
+  apt-get -y remove libodbc1 && \
+  apt-get -y install --no-install-recommends \
+    # pymssql dependencies
+    freetds-dev \
+    freetds-bin && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
@@ -37,9 +40,11 @@ RUN \
   jupyter-kernelspec install --user "$(pip3 show sparkmagic | grep Location | cut -d' ' -f2)/sparkmagic/kernels/pysparkkernel"
 # Mage integrations and other related packages
 RUN \
+  pip3 install --no-cache-dir "git+https://github.com/wbond/oscrypto.git@d5f3437ed24257895ae1edd9e503cfb352e635a8" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py

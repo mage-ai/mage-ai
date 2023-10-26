@@ -68,6 +68,8 @@ type CodeEditorProps = {
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
+  onContentSizeChangeCallback?: () => void;
+  onMountCallback?: () => void;
   onSave?: (value: string) => void;
   padding?: boolean;
   placeholder?: string;
@@ -89,7 +91,9 @@ function CodeEditor({
   height,
   language,
   onChange,
+  onContentSizeChangeCallback,
   onDidChangeCursorPosition,
+  onMountCallback,
   onSave,
   padding,
   placeholder,
@@ -166,6 +170,10 @@ function CodeEditor({
       if (autoHeight && contentHeightChanged) {
         editor._domElement.style.height = `${contentHeight + (SINGLE_LINE_HEIGHT * 2)}px`;
       }
+
+      if (onContentSizeChangeCallback) {
+        onContentSizeChangeCallback?.();
+      }
     });
 
     if (selected && textareaFocused) {
@@ -199,14 +207,16 @@ function CodeEditor({
     }
 
     setMounted(true);
+    onMountCallback?.();
   }, [
     autoHeight,
     height,
+    onContentSizeChangeCallback,
     onDidChangeCursorPosition,
+    onMountCallback,
     onSave,
     selected,
     setMounted,
-    setSelected,
     setTextareaFocused,
     shortcutsProp,
     tabSize,
@@ -283,6 +293,7 @@ function CodeEditor({
    * re-add the keyboard shortcuts when the upstream or downstream connections change.
    * Including shortcutsProp in the dependency array may lead to unnecessary re-renders.
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block?.downstream_blocks, block?.upstream_blocks]);
 
   useEffect(

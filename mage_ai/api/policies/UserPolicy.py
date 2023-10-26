@@ -5,7 +5,7 @@ from mage_ai.api.presenters.UserPresenter import UserPresenter
 
 
 class UserPolicy(BasePolicy):
-    def is_current_user(self):
+    def is_current_user(self) -> bool:
         return self.current_user.owner or self.current_user.id == self.resource.id
 
 
@@ -16,6 +16,7 @@ UserPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.is_owner())
 
+
 UserPolicy.allow_actions([
     constants.DETAIL,
     constants.UPDATE,
@@ -23,24 +24,44 @@ UserPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
 
+
 UserPolicy.allow_actions([
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_admin_role())
 
-UserPolicy.allow_read(UserPresenter.default_attributes, scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
 
 UserPolicy.allow_read(UserPresenter.default_attributes + [
+    'permissions',
+    'token',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+    constants.UPDATE,
+], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
+
+
+UserPolicy.allow_read(UserPresenter.default_attributes + [
+    'permissions',
     'token',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
     constants.DELETE,
-], condition=lambda policy: policy.is_current_user() or policy.is_owner())
+])
+
+
+UserPolicy.allow_read(UserPresenter.default_attributes + [
+    'permissions',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
 
 UserPolicy.allow_write([
     'avatar',
@@ -57,14 +78,18 @@ UserPolicy.allow_write([
     constants.UPDATE,
 ], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
 
+
 UserPolicy.allow_write([
+    'role_ids',
     'roles',
-    'roles_new'
+    'roles_new',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.DELETE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_admin_role())
+
 
 UserPolicy.allow_write([
     'owner',
@@ -74,6 +99,7 @@ UserPolicy.allow_write([
     constants.UPDATE,
 ], condition=lambda policy: policy.is_owner())
 
+
 UserPolicy.allow_write([
     'avatar',
     'email',
@@ -81,6 +107,7 @@ UserPolicy.allow_write([
     'last_name',
     'password',
     'password_confirmation',
+    'role_ids',
     'roles',
     'roles_new',
     'username',

@@ -14,6 +14,7 @@ const TextInputStyle = styled.textarea<TextAreaProps>`
 const TextInput = ({ rows = 3, ...props }: TextAreaProps, ref) => (
   <InputWrapper
     {...props}
+    // @ts-ignore
     input={<TextInputStyle rows={rows} {...props} />}
     ref={ref}
   />

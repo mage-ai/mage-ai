@@ -3,6 +3,7 @@ from sqlalchemy.orm import selectinload
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
+from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
@@ -15,6 +16,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     configure_pipeline_run_payload,
     stop_pipeline_run,
 )
+from mage_ai.settings.repo import get_repo_path
 
 
 class PipelineRunResource(DatabaseResource):
@@ -23,7 +25,7 @@ class PipelineRunResource(DatabaseResource):
 
     @classmethod
     @safe_db_query
-    def collection(self, query_arg, meta, user, **kwargs):
+    async def collection(self, query_arg, meta, user, **kwargs):
         pipeline_schedule_id = None
         parent_model = kwargs.get('parent_model')
         if parent_model:
@@ -37,6 +39,11 @@ class PipelineRunResource(DatabaseResource):
         pipeline_uuid = query_arg.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
+        pipeline_uuids = query_arg.get('pipeline_uuid[]', [])
+        if pipeline_uuids:
+            pipeline_uuids = pipeline_uuids[0]
+        if pipeline_uuids:
+            pipeline_uuids = pipeline_uuids.split(',')
 
         global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
         if global_data_product_uuid:
@@ -45,6 +52,25 @@ class PipelineRunResource(DatabaseResource):
         status = query_arg.get('status', [None])
         if status:
             status = status[0]
+        statuses = query_arg.get('status[]', [])
+        if statuses:
+            statuses = statuses[0]
+        if statuses:
+            statuses = statuses.split(',')
+
+        pipeline_tags = query_arg.get('pipeline_tag[]', [None])
+        pipeline_uuids_with_tags = []
+        if pipeline_tags:
+            pipeline_tags = pipeline_tags[0]
+        if pipeline_tags:
+            pipeline_tags = pipeline_tags.split(',')
+
+            await TagCache.initialize_cache()
+
+            pipeline_tag_cache = TagCache()
+            pipeline_uuids_with_tags = pipeline_tag_cache.get_pipeline_uuids_with_tags(
+                pipeline_tags,
+            )
 
         order_by_arg = query_arg.get('order_by[]', [None])
         if order_by_arg:
@@ -84,8 +110,14 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id))
         if pipeline_uuid is not None:
             results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
+        if pipeline_uuids:
+            results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
+        if pipeline_uuids_with_tags:
+            results = results.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids_with_tags))
         if status is not None:
             results = results.filter(PipelineRun.status == status)
+        if statuses:
+            results = results.filter(PipelineRun.status.in_(statuses))
         if start_timestamp is not None:
             results = results.filter(PipelineRun.created_at >= start_timestamp)
         if end_timestamp is not None:
@@ -108,26 +140,36 @@ class PipelineRunResource(DatabaseResource):
     @classmethod
     @safe_db_query
     async def process_collection(self, query_arg, meta, user, **kwargs):
-        total_results = self.collection(query_arg, meta, user, **kwargs)
+        total_results = await self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
 
-        limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
-        offset = int(meta.get(META_KEY_OFFSET, 0))
+        limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
+
+        include_pipeline_uuids = query_arg.get('include_pipeline_uuids', [False])
+        if include_pipeline_uuids:
+            include_pipeline_uuids = include_pipeline_uuids[0]
 
         pipeline_type = query_arg.get('pipeline_type', [None])
         if pipeline_type:
             pipeline_type = pipeline_type[0]
 
         if pipeline_type is not None:
-            pipeline_type_by_pipeline_uuid = dict()
             try:
+                pipeline_type_by_pipeline_uuid = dict()
                 pipeline_runs = total_results.all()
                 results = []
                 for run in pipeline_runs:
+                    filters = []
+
+                    # Check pipeline_type of pipeline runs if filtering by pipeline type
                     if run.pipeline_uuid not in pipeline_type_by_pipeline_uuid:
                         pipeline_type_by_pipeline_uuid[run.pipeline_uuid] = run.pipeline_type
                     run_pipeline_type = pipeline_type_by_pipeline_uuid[run.pipeline_uuid]
-                    if run_pipeline_type == pipeline_type:
+                    filters.append(run_pipeline_type == pipeline_type)
+
+                    # Multiple filters can be added while iterating through pipeline_runs once
+                    if all(filters):
                         results.append(run)
                 total_count = len(results)
                 results = results[offset:(offset + limit)]
@@ -156,7 +198,7 @@ class PipelineRunResource(DatabaseResource):
         query arg and set it to True (e.g. in order to make the number of pipeline runs
         returned consistent across pages).
         """
-        if meta.get(META_KEY_LIMIT, None) is not None and \
+        if (meta or {}).get(META_KEY_LIMIT, None) is not None and \
             total_results.count() >= 1 and \
             not disable_retries_grouping and \
                 (pipeline_uuid is not None or pipeline_schedule_id is not None):
@@ -198,6 +240,10 @@ class PipelineRunResource(DatabaseResource):
             'count': total_count,
             'next': has_next,
         }
+
+        if include_pipeline_uuids:
+            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+            result_set.metadata['pipeline_uuids'] = pipeline_uuids
 
         return result_set
 

@@ -3,6 +3,8 @@ import os
 import stat
 import shutil
 
+from typing import Dict
+
 from mage_ai.shared.io import chmod
 
 template_env = jinja2.Environment(
@@ -75,3 +77,20 @@ def template_exists(template_path: str) -> bool:
         template_path,
     )
     return os.path.exists(template_path)
+
+
+def get_variable_for_template(
+    variable_uuid: str,
+    parse: str = None,
+    variables: Dict = None,
+):
+    if not variables:
+        return None
+
+    value = variables.get(variable_uuid)
+    if parse:
+        results = {}
+        exec(f'_parse_func = {parse}', results)
+        return results['_parse_func'](value)
+
+    return value

@@ -3,12 +3,14 @@ import { CanvasRef } from 'reaflow';
 import { useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
+import Breadcrumbs, { BreadcrumbType as BreadcrumbTypeOrig } from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ExtensionOptionType from '@interfaces/ExtensionOptionType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -31,10 +33,12 @@ type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
   depGraphZoom?: number;
   pipeline: PipelineType;
+  project?: ProjectType;
   secrets?: {
     [key: string]: any;
   }[];
   selectedBlock?: BlockType;
+  setSelectedBlock?: (block: BlockType) => void;
   treeRef?: { current?: CanvasRef };
   variables?: {
     [key: string]: any;
@@ -45,8 +49,10 @@ function SidekickHeader({
   activeView,
   depGraphZoom,
   pipeline,
+  project,
   secrets,
   selectedBlock,
+  setSelectedBlock,
   treeRef,
   variables,
 }: SidekickHeaderProps) {
@@ -54,7 +60,9 @@ function SidekickHeader({
   const query = queryFromUrl();
   const globalVars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
-  const sidekickView = SIDEKICK_VIEWS_BY_KEY[activeView];
+  const sidekickView = SIDEKICK_VIEWS_BY_KEY({
+    project,
+  })[activeView];
   let sidekickLabel = sidekickView?.buildLabel?.({
     pipeline,
     secrets,
@@ -94,7 +102,37 @@ function SidekickHeader({
 
   const showAddonDetails = ViewKeyEnum.ADDON_BLOCKS === activeView && query?.addon;
 
-  if (!activeView) {
+  if (ViewKeyEnum.INTERACTIONS === activeView) {
+    const breadcrumbs = [];
+
+    if (selectedBlock?.uuid) {
+      breadcrumbs.push(...[
+        {
+          label: () => 'All interactions',
+          monospace: false,
+          onClick: () => setSelectedBlock(null),
+        },
+        {
+          bold: true,
+          label: () => selectedBlock?.uuid,
+          monospace: true,
+        },
+      ]);
+    } else {
+      breadcrumbs.push({
+        bold: true,
+        label: () => 'Interactions',
+        monospace: false,
+      });
+    }
+
+    el = (
+      <Breadcrumbs
+        breadcrumbs={breadcrumbs}
+        noMarginLeft
+      />
+    )
+  } else if (!activeView) {
     return <div />;
   } else if (treeRef && ViewKeyEnum.TREE === activeView) {
     el = (

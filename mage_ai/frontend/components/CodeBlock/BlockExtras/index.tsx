@@ -84,9 +84,17 @@ function BlockExtras({
     pipeline,
   ]);
 
+  const cb = useMemo(() => conditionalBlocks?.length, [conditionalBlocks]);
+  const callb = useMemo(() => callbackBlocks?.length, [callbackBlocks]);
+  const eb = useMemo(() => extensionBlocks?.length, [extensionBlocks]);
+
+  if (!cb && !callb && !eb) {
+    return null;
+  }
+
   return (
-    <>
-      {conditionalBlocks?.length >= 1 && (
+    <Spacing pb={(cb >= 1 || callb >= 1 || eb >= 1) ? 1 : 0}>
+      {cb >= 1 && (
         <Spacing mt={1}>
           <Flex flexDirection="column">
             <Spacing px={1}>
@@ -105,7 +113,7 @@ function BlockExtras({
         </Spacing>
       )}
 
-      {callbackBlocks?.length >= 1 && (
+      {callb >= 1 && (
         <Spacing mt={1}>
           <Flex flexDirection="column">
             <Spacing px={1}>
@@ -124,7 +132,7 @@ function BlockExtras({
         </Spacing>
       )}
 
-      {extensionBlocks?.length >= 1 && (
+      {eb >= 1 && (
         <Spacing mt={1}>
           <Flex flexDirection="column">
             <Spacing px={1}>
@@ -145,7 +153,7 @@ function BlockExtras({
           </Flex>
         </Spacing>
       )}
-    </>
+    </Spacing>
   );
 }
 

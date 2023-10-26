@@ -189,7 +189,7 @@ class Postgres(BaseSQL):
                     # All values are empty list
                     return column_type
                 value = values_not_empty_list[0]
-                if type(value) is list:
+                if isinstance(value, list):
                     if len(value) >= 1:
                         item = value[0]
                         if type(item) is dict:
@@ -268,6 +268,7 @@ class Postgres(BaseSQL):
         allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
+        **kwargs,
     ) -> None:
         if unique_constraints and unique_conflict_method:
             use_insert_command = True
@@ -283,7 +284,7 @@ class Postgres(BaseSQL):
             return val
 
         def serialize_obj(val):
-            if type(val) is dict:
+            if type(val) is dict or type(val) is np.ndarray:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,

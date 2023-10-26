@@ -1,14 +1,9 @@
 # for when we add pre-push hooks, so users only need to run pre-commit install
 default_install_hook_types: [pre-commit, pre-push]
-exclude: "^mage_ai/data_preparation/templates|^mage_ai/orchestration/db/migrations/versions"
-
-# Force all unspecified python hooks to run python 3.8
-default_language_version:
-  python: python3
-
+exclude: "^mage_ai/data_preparation/templates|^mage_ai/orchestration/db/migrations/versions|^scripts/pre-start"
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
     -   id: trailing-whitespace
         types: [python]
@@ -21,7 +16,7 @@ repos:
         types: [python]
     -   id: name-tests-test
         types: [python]
-        exclude: "base_test"
+        exclude: "base_test|factory|mixins|utils"
         args:
           - "--pytest-test-first"
     -   id: requirements-txt-fixer

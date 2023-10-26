@@ -63,7 +63,9 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LOCAL_STORAGE_KEY_SETUP_AI_LATER } from '@storage/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { UNITS_BETWEEN_SECTIONS, UNIT } from '@oracle/styles/units/spacing';
+import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getdataSourceMenuItems } from '../utils';
@@ -233,6 +235,23 @@ function AddNewBlocksV2({
     blockTemplatesByBlockType,
     pipelineType,
   ]);
+  const itemsDataLoaderSource = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.DATA_LOADER,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+      dataIntegrationType: DataIntegrationTypeEnum.SOURCES,
+      v2: true,
+    },
+  )?.find(({
+    uuid,
+  }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${DataIntegrationTypeEnum.SOURCES}`)?.items,
+  [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
+  ]);
 
   const itemsDataExporter = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
@@ -245,6 +264,23 @@ function AddNewBlocksV2({
   )?.find(({
       uuid,
   }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`)?.items,
+  [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
+  ]);
+  const itemsDataExporterDestination = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.DATA_EXPORTER,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+      dataIntegrationType: DataIntegrationTypeEnum.DESTINATIONS,
+      v2: true,
+    },
+  )?.find(({
+    uuid,
+  }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${DataIntegrationTypeEnum.DESTINATIONS}`)?.items,
   [
     addNewBlock,
     blockTemplatesByBlockType,
@@ -319,140 +355,185 @@ function AddNewBlocksV2({
     addNewBlock,
   ]);
 
-  const itemsTemplates = useMemo(() => [
-    {
-      beforeIcon: (
-        <CubeWithArrowDown
-          fill={getColorsForBlockType(
-            BlockTypeEnum.DATA_LOADER,
-          ).accent}
-          size={ICON_SIZE}
-        />
-      ),
-      items: [
+  const itemsTemplates = useMemo(() => {
+    const dataLoaderGroupItems = [
+      {
+        isGroupingTitle: true,
+        label: () => 'Python',
+        uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_LOADER}/group`,
+      },
+      // @ts-ignore
+    ].concat(
+      itemsDataLoader,
+    ).concat(
+      // @ts-ignore
+      buildNonPythonItems(BlockTypeEnum.DATA_LOADER),
+    );
+
+    if (itemsDataLoaderSource) {
+      dataLoaderGroupItems.push(...[
         {
           isGroupingTitle: true,
-          label: () => 'Python',
-          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_LOADER}/group`,
+          label: () => 'Data integrations',
+          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
         },
-        // @ts-ignore
-      ].concat(itemsDataLoader).concat(buildNonPythonItems(BlockTypeEnum.DATA_LOADER)),
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
-      uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
-    },
-    {
-      beforeIcon: (
-        <FrameBoxSelection
-          fill={getColorsForBlockType(
-            BlockTypeEnum.TRANSFORMER,
-          ).accent}
-          size={ICON_SIZE}
-        />
-      ),
-      items: [
+        {
+          // @ts-ignore
+          items: itemsDataLoaderSource,
+          label: () => capitalize(DataIntegrationTypeEnum.SOURCES),
+          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`,
+        },
+      ]);
+    }
+
+    const dataExporterGroupItems =[
+      {
+        isGroupingTitle: true,
+        label: () => 'Python',
+        uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_EXPORTER}/group`,
+      },
+      // @ts-ignore
+    ].concat(itemsDataExporter).concat(buildNonPythonItems(BlockTypeEnum.DATA_EXPORTER));
+
+    if (itemsDataExporterDestination) {
+      dataExporterGroupItems.push(...[
         {
           isGroupingTitle: true,
-          label: () => 'Python',
-          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.TRANSFORMER}/group`,
+          label: () => 'Data integrations',
+          uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
         },
-        // @ts-ignore
-      ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
-      uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
-    },
-    {
-      beforeIcon: (
-        <CircleWithArrowUp
-          fill={getColorsForBlockType(
-            BlockTypeEnum.DATA_EXPORTER,
-          ).accent}
-          size={ICON_SIZE}
-        />
-      ),
-      items: [
         {
-          isGroupingTitle: true,
-          label: () => 'Python',
-          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_EXPORTER}/group`,
+          // @ts-ignore
+          items: itemsDataExporterDestination,
+          label: () => capitalize(DataIntegrationTypeEnum.DESTINATIONS),
+          uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`,
         },
-        // @ts-ignore
-      ].concat(itemsDataExporter).concat(buildNonPythonItems(BlockTypeEnum.DATA_EXPORTER)),
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
-      uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
-    },
-    {
-      beforeIcon: (
-        <Sensor
-          fill={getColorsForBlockType(
-            BlockTypeEnum.SENSOR,
-          ).accent}
-          size={ICON_SIZE}
-        />
-      ),
-      items: [
-        {
-          isGroupingTitle: true,
-          label: () => 'Python',
-          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
-        },
-        // @ts-ignore
-      ].concat(itemsSensors),
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
-      uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
-    },
-    {
-      beforeIcon: (
-        <DBTIcon
-          fill={getColorsForBlockType(
-            BlockTypeEnum.DBT,
-          ).accent}
-          size={ICON_SIZE}
-        />
-      ),
-      items: itemsDBT,
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
-      uuid: BlockTypeEnum.DBT,
-    },
-    {
-      beforeIcon: (
-        <HexagonAll
-          size={ICON_SIZE}
-        />
-      ),
-      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
-      onClick: () => showGlobalDataProducts({
-        // @ts-ignore
-        addNewBlock,
-      }),
-      uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
-    },
-    {
-      isGroupingTitle: true,
-      label: () => 'Custom templates',
-      uuid: 'custom_templates',
-    },
-    {
-      beforeIcon: <TemplateShapes default size={ICON_SIZE} />,
-      label: () => 'Browse templates',
-      onClick: () => showBrowseTemplates({
-        addNewBlock,
-      }),
-      uuid: 'browse_templates',
-    },
-    {
-      beforeIcon: <ArrowsAdjustingFrameSquare default size={ICON_SIZE} />,
-      label: () => 'Create new template',
-      onClick: () => showBrowseTemplates({
-        addNew: true,
-        addNewBlock,
-      }),
-      uuid: 'create_template',
-    },
-  ], [
+      ]);
+    }
+
+    return [
+      {
+        beforeIcon: (
+          <CubeWithArrowDown
+            fill={getColorsForBlockType(
+              BlockTypeEnum.DATA_LOADER,
+            ).accent}
+            size={ICON_SIZE}
+          />
+        ),
+        items: dataLoaderGroupItems,
+        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
+        uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
+      },
+      {
+        beforeIcon: (
+          <FrameBoxSelection
+            fill={getColorsForBlockType(
+              BlockTypeEnum.TRANSFORMER,
+            ).accent}
+            size={ICON_SIZE}
+          />
+        ),
+        items: [
+          {
+            isGroupingTitle: true,
+            label: () => 'Python',
+            uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.TRANSFORMER}/group`,
+          },
+          // @ts-ignore
+        ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
+        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
+        uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
+      },
+      {
+        beforeIcon: (
+          <CircleWithArrowUp
+            fill={getColorsForBlockType(
+              BlockTypeEnum.DATA_EXPORTER,
+            ).accent}
+            size={ICON_SIZE}
+          />
+        ),
+        items: dataExporterGroupItems,
+        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
+        uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
+      },
+      {
+        beforeIcon: (
+          <Sensor
+            fill={getColorsForBlockType(
+              BlockTypeEnum.SENSOR,
+            ).accent}
+            size={ICON_SIZE}
+          />
+        ),
+        items: [
+          {
+            isGroupingTitle: true,
+            label: () => 'Python',
+            uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
+          },
+          // @ts-ignore
+        ].concat(itemsSensors),
+        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
+        uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
+      },
+      {
+        beforeIcon: (
+          <DBTIcon
+            fill={getColorsForBlockType(
+              BlockTypeEnum.DBT,
+            ).accent}
+            size={ICON_SIZE}
+          />
+        ),
+        items: itemsDBT,
+        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
+        uuid: BlockTypeEnum.DBT,
+      },
+      {
+        beforeIcon: (
+          <HexagonAll
+            size={ICON_SIZE}
+          />
+        ),
+        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
+        onClick: () => showGlobalDataProducts({
+          // @ts-ignore
+          addNewBlock,
+        }),
+        uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+      },
+      {
+        isGroupingTitle: true,
+        label: () => 'Custom templates',
+        uuid: 'custom_templates',
+      },
+      {
+        beforeIcon: <TemplateShapes default size={ICON_SIZE} />,
+        label: () => 'Browse templates',
+        onClick: () => showBrowseTemplates({
+          addNewBlock,
+        }),
+        uuid: 'browse_templates',
+      },
+      {
+        beforeIcon: <ArrowsAdjustingFrameSquare default size={ICON_SIZE} />,
+        label: () => 'Create new template',
+        onClick: () => showBrowseTemplates({
+          addNew: true,
+          addNewBlock,
+        }),
+        uuid: 'create_template',
+      },
+    ];
+  }, [
     addNewBlock,
     buildNonPythonItems,
     itemsDataExporter,
+    itemsDataExporterDestination,
     itemsDataLoader,
+    itemsDataLoaderSource,
     itemsDBT,
     itemsSensors,
     itemsTransformer,
@@ -619,6 +700,10 @@ function AddNewBlocksV2({
             increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
           >
             <FlyoutMenuWrapper
+              customSubmenuHeights={{
+                [`${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`]: 504,
+                [`${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`]: 504,
+              }}
               disableKeyboardShortcuts
               items={itemsTemplates}
               onClickCallback={closeButtonMenu}
@@ -749,6 +834,8 @@ function AddNewBlocksV2({
                 fullWidth
                 noBackground
                 noBorder
+                noBorderRadiusBottom
+                noBorderRadiusTop
                 // Need setTimeout because when clicking a row, the onBlur will be triggered.
                 // If the onBlur triggers too soon, clicking a row does nothing.
                 onBlur={() => setTimeout(() => setFocused(false), 150)}

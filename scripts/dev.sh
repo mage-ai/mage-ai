@@ -87,6 +87,16 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --require-user-authentication)
+    REQUIRE_USER_PERMISSIONS=1
+    shift # past argument
+    shift # past value
+    ;;
+    --debug)
+    DEBUG=1
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -117,6 +127,8 @@ export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
 export OPENAI_API_KEY=$OPENAI_API_KEY
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
+export DEBUG=$DEBUG
 
 if command -v docker-compose &> /dev/null
 then

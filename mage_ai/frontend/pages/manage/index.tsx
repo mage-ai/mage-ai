@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureWorkspace from '@components/workspaces/ConfigureWorkspace';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -25,13 +26,15 @@ import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
 function MoreActions({
+  clusterType,
   fetchWorkspaces,
   instance,
-  clusterType,
+  setErrors,
 }: {
+  clusterType: string;
   fetchWorkspaces: any;
   instance: InstanceType;
-  clusterType: string;
+  setErrors: (errors: ErrorsType) => void;
 }) {
   const refMoreActions = useRef(null);
   const [showMoreActions, setShowMoreActions] = useState<boolean>();
@@ -55,14 +58,10 @@ function MoreActions({
             fetchWorkspaces();
             setShowMoreActions(false);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -77,14 +76,10 @@ function MoreActions({
             fetchWorkspaces();
             setShowMoreActions(false);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -128,6 +123,36 @@ function MoreActions({
               cluster_type: clusterType,
               name: instance.name,
               task_arn: instance.task_arn,
+            },
+          }),
+          uuid: 'stop_instance',
+        });
+      }
+    }
+
+    if (clusterType === 'k8s') {
+      if (status === 'STOPPED') {
+        items.unshift({
+          label: () => <Text>Resume instance</Text>,
+          // @ts-ignore
+          onClick: () => updateWorkspace({
+            workspace: {
+              action: 'resume',
+              cluster_type: clusterType,
+              name: instance.name,
+            },
+          }),
+          uuid: 'resume_instance',
+        });
+      } else if (status === 'RUNNING') {
+        items.unshift({
+          label: () => <Text>Stop instance</Text>,
+          // @ts-ignore
+          onClick: () => updateWorkspace({
+            workspace: {
+              action: 'stop',
+              cluster_type: clusterType,
+              name: instance.name,
             },
           }),
           uuid: 'stop_instance',
@@ -214,6 +239,7 @@ function MoreActions({
 
 function WorkspacePage() {
   const { data: dataStatus } = api.statuses.list();
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const clusterType = useMemo(
     () => dataStatus?.statuses?.[0]?.instance_type || 'ecs',
     [dataStatus],
@@ -247,6 +273,8 @@ function WorkspacePage() {
     fetchWorkspaces,
   ], {
     background: true,
+    disableClickOutside: true,
+    disableEscape: true,
     uuid: 'configure_workspace',
   });
 
@@ -258,7 +286,9 @@ function WorkspacePage() {
           label: () => 'Workspaces',
         },
       ]}
+      errors={errors}
       pageName={WorkspacesPageNameEnum.WORKSPACES}
+      setErrors={setErrors}
       subheaderChildren={
         <KeyboardShortcutButton
           background={BUTTON_GRADIENT}
@@ -349,6 +379,7 @@ function WorkspacePage() {
               fetchWorkspaces={fetchWorkspaces}
               instance={instance}
               key="more_actions"
+              setErrors={setErrors}
             />,
           ];
         })}

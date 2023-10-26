@@ -36,6 +36,23 @@ logging_config:
 
 Then you can run command `mage clean-old-logs [project_uuid]` to clean up old logs
 
+### Block logging
+A logger is available in the block's context. You can use it to log messages to the block's log file. The logger is passed into
+each block as a keyword argument. You can retrieve the logger by calling `kwargs.get('logger')` within the block.
+
+Example:
+```python
+@data_loader
+def load_data(*args, **kwargs):
+    kwarg_logger = kwargs.get('logger')
+
+    kwarg_logger.info('Test logger info')
+    kwarg_logger.warning('Test logger warning')
+    kwarg_logger.error('Test logger error')
+
+    ...
+```
+
 ## Logging to external destination
 
 ### S3

@@ -1,9 +1,15 @@
+import ast
+import importlib.util
+import json
 import os
 from typing import Dict, List
 
 import yaml
 from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
+from kubernetes.stream import stream
 
+from mage_ai.cluster_manager.config import KubernetesWorkspaceConfig, LifecycleConfig
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
@@ -71,6 +77,15 @@ class WorkloadManager:
         services = self.core_client.list_namespaced_service(self.namespace).items
         workloads_list = []
 
+        stateful_sets = self.apps_client.list_namespaced_stateful_set(self.namespace).items
+        stateful_set_mapping = dict()
+        for ss in stateful_sets:
+            try:
+                name = ss.metadata.name
+                stateful_set_mapping[name] = ss
+            except Exception:
+                pass
+
         pods = self.core_client.list_namespaced_pod(self.namespace).items
         pod_mapping = dict()
         for pod in pods:
@@ -85,6 +100,7 @@ class WorkloadManager:
                 if not labels.get('dev-instance'):
                     continue
                 name = labels.get('app')
+                stateful_set = stateful_set_mapping.get(name)
                 service_type = service.spec.type
                 workload = dict(
                     name=name,
@@ -112,6 +128,8 @@ class WorkloadManager:
                                     workload['ip'] = f'{ip}:{node_port}'
                         except Exception:
                             pass
+                elif stateful_set and stateful_set.spec.replicas == 0:
+                    workload['status'] = 'STOPPED'
                 else:
                     workload['status'] = 'UNAVAILABLE'
 
@@ -124,16 +142,16 @@ class WorkloadManager:
     def create_workload(
         self,
         name: str,
+        workspace_config: KubernetesWorkspaceConfig,
         project_type: str = ProjectType.STANDALONE,
-        project_uuid: str = None,
         **kwargs,
     ):
-        container_config_yaml = kwargs.get('container_config')
+        container_config_yaml = workspace_config.container_config
         container_config = dict()
         if container_config_yaml:
             container_config = yaml.full_load(container_config_yaml)
 
-        parameters = self.__get_configurable_parameters(**kwargs)
+        parameters = self.__get_configurable_parameters(workspace_config)
         service_account_name = parameters.get(
             'service_account_name',
             DEFAULT_SERVICE_ACCOUNT_NAME,
@@ -145,39 +163,95 @@ class WorkloadManager:
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
-        ingress_name = kwargs.get('ingress_name')
+        ingress_name = workspace_config.ingress_name
+
+        volumes = []
 
         # Create stateful set
         env_vars = self.__populate_env_vars(
             name,
             project_type=project_type,
-            project_uuid=project_uuid,
+            project_uuid=workspace_config.project_uuid,
             container_config=container_config,
             set_base_path=ingress_name is not None,
         )
         container_config['env'] = env_vars
 
-        containers = [
-            {
-                'name': f'{name}-container',
-                'image': 'mageai/mageai:latest',
-                'ports': [
-                    {
-                        'containerPort': 6789,
-                        'name': 'web'
-                    }
-                ],
-                'volumeMounts': [
-                    {
-                        'name': 'mage-data',
-                        'mountPath': '/home/src'
-                    }
-                ],
-                **container_config,
-            }
-        ]
+        mage_container_config = {
+            'name': f'{name}-container',
+            'image': 'mageai/mageai:latest',
+            'ports': [
+                {
+                    'containerPort': 6789,
+                    'name': 'web'
+                }
+            ],
+            'volumeMounts': [
+                {
+                    'name': 'mage-data',
+                    'mountPath': '/home/src'
+                }
+            ],
+            **container_config,
+        }
 
-        volumes = []
+        containers = [mage_container_config]
+
+        init_containers = []
+        lifecycle_config = workspace_config.lifecycle_config or LifecycleConfig()
+        pre_start_script_path = lifecycle_config.pre_start_script_path
+        if pre_start_script_path:
+            self.configure_pre_start(name, pre_start_script_path, mage_container_config)
+
+            volumes.append(
+                {
+                    'name': 'pre-start-script',
+                    'configMap': {
+                        'name': f'{name}-pre-start',
+                        'items': [
+                            {
+                                'key': 'pre-start.py',
+                                'path': 'pre-start.py',
+                            },
+                            {
+                                'key': 'initial-config.json',
+                                'path': 'initial-config.json',
+                            }
+                        ]
+                    }
+                }
+            )
+
+            init_containers.append(
+                {
+                    'name': f'{name}-pre-start',
+                    'image': 'mageai/pre-start:latest',
+                    'imagePullPolicy': 'Always',
+                    'volumeMounts': [
+                        {
+                            'name': 'pre-start-script',
+                            'mountPath': '/app/pre-start.py',
+                            'subPath': 'pre-start.py',
+                        },
+                        {
+                            'name': 'pre-start-script',
+                            'mountPath': '/app/initial-config.json',
+                            'subPath': 'initial-config.json',
+                        }
+                    ],
+                    'env': [
+                        {
+                            'name': 'WORKSPACE_NAME',
+                            'value': name,
+                        },
+                        {
+                            'name': KUBE_NAMESPACE,
+                            'value': os.getenv(KUBE_NAMESPACE, 'default'),
+                        }
+                    ],
+                }
+            )
+
         if os.getenv(SERVICE_ACCOUNT_SECRETS_NAME):
             credential_file_path = os.getenv(
                 SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
@@ -223,6 +297,7 @@ class WorkloadManager:
         pod_spec = self.pod_config.spec.to_dict() if self.pod_config else dict()
         stateful_set_template_spec = dict(
             imagePullSecrets=pod_spec.get('image_pull_secrets'),
+            initContainers=init_containers,
             terminationGracePeriodSeconds=10,
             containers=containers,
             volumes=volumes,
@@ -353,6 +428,108 @@ class WorkloadManager:
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
         # TODO: remove service from ingress paths
+        try:
+            self.core_client.delete_namespaced_config_map(f'{name}-pre-start', self.namespace)
+        except ApiException as ex:
+            # The delete operation will return a 404 response if the config map does not exist
+            if ex.status != 404:
+                raise
+
+    def get_workload_activity(self, name: str) -> Dict:
+        pods = self.core_client.list_namespaced_pod(self.namespace).items
+        pod_name = None
+        for pod in pods:
+            try:
+                metadata_name = pod.metadata.labels.get('app')
+                if metadata_name == name:
+                    pod_name = pod.metadata.name
+                    break
+            except Exception:
+                pass
+        if pod_name:
+            exec_command = [
+                '/bin/sh',
+                '-c',
+                'curl -s --request GET --url '
+                'http://localhost:6789/api/statuses?_format=with_activity_details '
+                '--header "Content-Type: application/json"',
+            ]
+            resp = stream(
+                self.core_client.connect_get_namespaced_pod_exec,
+                pod_name,
+                self.namespace,
+                command=exec_command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+            )
+            resp = ast.literal_eval(resp)
+            status = resp.get('statuses')[0]
+            return status
+
+    def scale_down_workload(self, name: str) -> None:
+        self.apps_client.patch_namespaced_stateful_set_scale(
+            name, namespace=self.namespace, body={'spec': {'replicas': 0}},
+        )
+
+    def restart_workload(self, name: str) -> None:
+        self.apps_client.patch_namespaced_stateful_set_scale(
+            name, namespace=self.namespace, body={'spec': {'replicas': 1}},
+        )
+
+    def configure_pre_start(
+        self,
+        name: str,
+        pre_start_script_path: str,
+        mage_container_config: Dict,
+    ) -> None:
+        self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
+
+        with open(pre_start_script_path, 'r', encoding='utf-8') as f:
+            pre_start_script = f.read()
+
+        config_map = {
+            'data': {
+                'pre-start.py': pre_start_script,
+                'initial-config.json': json.dumps(mage_container_config),
+            },
+            'metadata': {
+                'name': f'{name}-pre-start',
+            }
+        }
+        self.core_client.create_namespaced_config_map(
+            namespace=self.namespace,
+            body=config_map
+        )
+
+    def __validate_pre_start_script(
+        self,
+        pre_start_script_path: str,
+        mage_container_config: Dict,
+    ) -> None:
+        with open(pre_start_script_path, 'r', encoding='utf-8') as f:
+            pre_start_script = f.read()
+        try:
+            compile(pre_start_script, pre_start_script_path, 'exec')
+        except Exception as ex:
+            raise Exception(f'Pre-start script is invalid: {str(ex)}')
+
+        spec = importlib.util.spec_from_file_location('pre_start', pre_start_script_path)
+        module = importlib.util.module_from_spec(spec)
+
+        try:
+            spec.loader.exec_module(module)
+            get_custom_configs = module.get_custom_configs
+
+            get_custom_configs(mage_container_config)
+        except AttributeError as ex:
+            raise Exception(
+                'Could not find get_custom_configs function in pre-start script'
+                f', error: {str(ex)}'
+            )
+        except Exception as ex:
+            raise Exception(f'Pre-start script validation failed with error: {str(ex)}')
 
     def __populate_env_vars(
         self,
@@ -446,7 +623,7 @@ class WorkloadManager:
 
         return env_vars
 
-    def __get_configurable_parameters(self, **kwargs) -> Dict:
+    def __get_configurable_parameters(self, workspace_config: KubernetesWorkspaceConfig) -> Dict:
         service_account_name_default = None
         storage_class_name_default = None
         storage_access_mode_default = None
@@ -470,16 +647,17 @@ class WorkloadManager:
         except Exception:
             pass
 
-        storage_request_size = kwargs.get('storage_request_size')
+        storage_request_size = workspace_config.storage_request_size
         if storage_request_size is None:
             storage_request_size = storage_request_size_default
         else:
             storage_request_size = f'{storage_request_size}Gi'
 
         return dict(
-            service_account_name=kwargs.get('service_account_name', service_account_name_default),
-            storage_class_name=kwargs.get('storage_class_name', storage_class_name_default),
-            storage_access_mode=kwargs.get('storage_access_mode', storage_access_mode_default),
+            service_account_name=workspace_config.service_account_name
+            or service_account_name_default,
+            storage_class_name=workspace_config.storage_class_name or storage_class_name_default,
+            storage_access_mode=workspace_config.storage_access_mode or storage_access_mode_default,
             storage_request_size=storage_request_size,
         )
 
@@ -528,7 +706,7 @@ class WorkloadManager:
             }
         }
         persistent_volumes = self.core_client.list_persistent_volume().items
-        for pv in persistent_volumes:
-            if pv.metadata.name == f'{name}-pv':
+        for volume in persistent_volumes:
+            if volume.metadata.name == f'{name}-pv':
                 return
         self.core_client.create_persistent_volume(pv)

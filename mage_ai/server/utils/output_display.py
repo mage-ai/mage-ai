@@ -149,7 +149,6 @@ def __custom_output():
 
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
-
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame) and (
@@ -233,6 +232,7 @@ def add_execution_code(
     run_upstream: bool = False,
     update_status: bool = True,
     upstream_blocks: List[str] = None,
+    variables: Dict = None,
     widget: bool = False,
 ) -> str:
     escaped_code = code.replace("'''", "\"\"\"")
@@ -302,6 +302,10 @@ def execute_custom_code():
     \'\'\'
 
     global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
+
+    if {variables}:
+        global_vars = merge_dict(global_vars, {variables})
+
     if pipeline.run_pipeline_in_one_process:
         # Use shared context for blocks
         global_vars['context'] = context
@@ -312,10 +316,16 @@ def execute_custom_code():
         pass
 
     if run_incomplete_upstream or run_upstream:
-        block.run_upstream_blocks(global_vars=global_vars, incomplete_only=run_incomplete_upstream)
+        block.run_upstream_blocks(
+            from_notebook=True,
+            global_vars=global_vars,
+            incomplete_only=run_incomplete_upstream,
+        )
 
     logger = logging.getLogger('{block_uuid}_test')
     logger.setLevel('INFO')
+    if 'logger' not in global_vars:
+        global_vars['logger'] = logger
     block_output = block.execute_with_callback(
         custom_code=code,
         from_notebook=True,

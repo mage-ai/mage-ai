@@ -1,7 +1,8 @@
 import importlib
+import importlib.util
 import inspect
 from collections import UserList
-from typing import Dict
+from typing import Any, Callable, Dict, Union
 
 import dateutil.parser
 import inflection
@@ -11,6 +12,7 @@ from mage_ai.api.api_context import ApiContext
 from mage_ai.api.errors import ApiError
 from mage_ai.api.monitors.BaseMonitor import BaseMonitor
 from mage_ai.api.operations.constants import (
+    COOKIE_PREFIX,
     CREATE,
     DELETE,
     DETAIL,
@@ -21,14 +23,15 @@ from mage_ai.api.operations.constants import (
     UPDATE,
     WRITE,
 )
+from mage_ai.api.parsers.BaseParser import BaseParser
+from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
 from mage_ai.api.result_set import ResultSet
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.errors import DoesNotExistError
+from mage_ai.settings import REQUIRE_USER_PERMISSIONS
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import ignore_keys, merge_dict
-
-
-def classify(name):
-    return ''.join([n.capitalize() for n in name.split('_')])
+from mage_ai.shared.strings import classify
 
 
 def singularize(name):
@@ -45,7 +48,7 @@ class BaseOperation():
         self.oauth_client = kwargs.get('oauth_client')
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
-        self.payload = kwargs.get('payload', {})
+        self.payload = kwargs.get('payload') or {}
         self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
@@ -57,24 +60,91 @@ class BaseOperation():
         self.__updated_options_attr = None
 
     async def execute(self):
+        db_connection.start_cache()
+
         response = {}
         try:
+            already_validated = False
+
             result = await self.__executed_result()
             presented = await self.__present_results(result)
-            attrb = flatten([d.keys() for d in presented]) if issubclass(
-                type(presented), list) else presented.keys()
-            attrb = list(set(attrb))
+
+            if isinstance(presented, CustomDict) or isinstance(presented, CustomList):
+                already_validated = presented.already_validated
+
+            presented_results = []
+            resource_attributes = []
+
+            presented_is_list = issubclass(type(presented), list)
+            if presented_is_list:
+                presented_results = presented
+                resource_attributes = flatten([d.keys() for d in presented])
+            else:
+                presented_results = [presented]
+                resource_attributes = presented.keys()
+
+            resource_attributes = list(set(resource_attributes))
+
             if (issubclass(type(result), list) or issubclass(type(result), UserList)):
                 results = result
             else:
                 results = [result]
-            for res in results:
+
+            presented_results_count = len(presented_results)
+            presented_results_parsed = []
+            for idx, res in enumerate(results):
                 updated_options = await self.__updated_options()
                 policy = self.__policy_class()(res, self.user, **updated_options)
-                policy.authorize_attributes(
-                    READ, attrb, api_operation_action=self.action)
+
+                presented_result = None
+                if idx < presented_results_count:
+                    presented_result = presented_results[idx]
+
+                if already_validated:
+                    presented_results_parsed.append(presented_result)
+                    continue
+
+                # Skip this if result has already been validated
+                def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
+                    return policy.authorize_attributes(
+                        READ,
+                        parsed_value.keys(),
+                        api_operation_action=self.action,
+                    )
+
+                parser = None
+                parser_class = self.__parser_class()
+                if parser_class:
+                    parser = parser_class(
+                        resource=res,
+                        current_user=self.user,
+                        policy=policy,
+                        **updated_options,
+                    )
+
+                if parser:
+                    presented_result_parsed = await parser.parse_read_attributes_and_authorize(
+                        presented_result,
+                        _build_authorize_attributes,
+                        **updated_options,
+                    )
+                    presented_results_parsed.append(presented_result_parsed)
+                else:
+                    await policy.authorize_attributes(
+                        READ,
+                        resource_attributes,
+                        api_operation_action=self.action,
+                    )
+                    presented_results_parsed.append(presented_result)
+
             response_key = self.resource if LIST == self.action else self.__resource_name_singular()
-            response[response_key] = presented
+
+            if presented_is_list:
+                response[response_key] = presented_results_parsed
+            else:
+                response[response_key] = presented_results_parsed[0] if len(
+                    presented_results_parsed,
+                ) >= 1 else presented_results_parsed
 
             if isinstance(result, ResultSet):
                 response['metadata'] = result.metadata
@@ -104,13 +174,20 @@ class BaseOperation():
                 }
         except ApiError as err:
             if err.code == 403 and \
-                    self.user and self.user.project_access == 0 and not self.user.roles:
-                err.message = 'You do not have access to this project. ' + \
-                    'Please ask an admin or owner for permissions.'
+                    self.user and \
+                    self.user.project_access == 0 and \
+                    not self.user.roles:
+
+                if not REQUIRE_USER_PERMISSIONS:
+                    err.message = 'You don’t have access to this project. ' + \
+                        'Please ask an admin or owner for permissions.'
             if settings.DEBUG:
                 raise err
             else:
                 response['error'] = self.__present_error(err)
+
+        db_connection.stop_cache()
+
         return response
 
     @property
@@ -121,7 +198,7 @@ class BaseOperation():
         query = {}
         for key, values in self._query.items():
             query[key] = values
-            if type(values) is list:
+            if isinstance(values, list):
                 arr = []
                 for v in values:
                     try:
@@ -139,6 +216,10 @@ class BaseOperation():
 
         return query
 
+    @query.setter
+    def query(self, value):
+        self._query = value
+
     async def __executed_result(self):
         if self.action in [CREATE, LIST]:
             return await self.__create_or_index()
@@ -147,55 +228,182 @@ class BaseOperation():
 
     async def __create_or_index(self):
         updated_options = await self.__updated_options()
+
         policy = self.__policy_class()(None, self.user, **updated_options)
-        policy.authorize_action(self.action)
-        if CREATE == self.action:
-            policy.authorize_attributes(
-                WRITE,
-                self.__payload_for_resource().keys(),
-                **self.__payload_for_resource(),
+        await policy.authorize_action(self.action)
+
+        parser = None
+        parser_class = self.__parser_class()
+        if parser_class:
+            parser = parser_class(
+                resource=None,
+                current_user=self.user,
+                policy=policy,
+                **updated_options,
             )
+
+        if CREATE == self.action:
+            def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_attributes(
+                    WRITE,
+                    parsed_value.keys(),
+                    **parsed_value,
+                )
+
+            payload = self.__payload_for_resource()
+            if parser:
+                payload = await parser.parse_write_attributes_and_authorize(
+                    payload,
+                    _build_authorize_attributes,
+                    **updated_options,
+                )
+            else:
+                await _build_authorize_attributes(payload)
+
             options = updated_options.copy()
             options.pop('payload', None)
+
             return await self.__resource_class().process_create(
-                self.__payload_for_resource(),
+                payload,
                 self.user,
+                result_set_from_external=policy.result_set(),
                 **options,
             )
         elif LIST == self.action:
-            policy.authorize_query(self.query)
+            def _build_authorize_query(
+                parsed_value: Any,
+                policy=policy,
+                updated_options=updated_options,
+                **_kwargs,
+            ) -> Callable:
+                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
+                    'query',
+                ]))
+
+            if parser:
+                value_parsed, parser_found, error = await parser.parse_query_and_authorize(
+                    self.query,
+                    _build_authorize_query,
+                    **updated_options,
+                )
+                self.query = value_parsed
+            else:
+                await _build_authorize_query(self.query)
+
             options = updated_options.copy()
             options.pop('meta', None)
             options.pop('query', None)
+
             return await self.__resource_class().process_collection(
                 self.query,
                 self.meta,
                 self.user,
+                result_set_from_external=policy.result_set(),
                 **options,
             )
 
     async def __delete_show_or_update(self):
         updated_options = await self.__updated_options()
+
         res = await self.__resource_class().process_member(
-            self.pk, self.user, **updated_options)
+            self.pk,
+            self.user,
+            **updated_options,
+        )
 
         policy = self.__policy_class()(res, self.user, **updated_options)
-        policy.authorize_action(self.action)
+        await policy.authorize_action(self.action)
+
+        parser = None
+        parser_class = self.__parser_class()
+        if parser_class:
+            parser = parser_class(
+                resource=res,
+                current_user=self.user,
+                policy=policy,
+                **updated_options,
+            )
 
         if DELETE == self.action:
             await res.process_delete(**updated_options)
         elif DETAIL == self.action:
-            policy.authorize_query(self.query)
+            def _build_authorize_query(
+                parsed_value: Any,
+                policy=policy,
+                updated_options=updated_options,
+                **_kwargs,
+            ) -> Callable:
+                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
+                    'query',
+                ]))
+
+            if parser:
+                value_parsed, parser_found, error = await parser.parse_query_and_authorize(
+                    self.query,
+                    _build_authorize_query,
+                    return_on_first_failure=True,
+                    **updated_options,
+                )
+
+                if error:
+                    if parser_found:
+                        self.query = value_parsed
+                        res = await self.__resource_class().process_member(
+                            self.pk,
+                            self.user,
+                            **merge_dict(updated_options, dict(query=self.query)),
+                        )
+                        policy = self.__policy_class()(res, self.user, **updated_options)
+                        await policy.authorize_query(self.query, **ignore_keys(updated_options, [
+                            'query',
+                        ]))
+                    else:
+                        raise error
+            else:
+                await _build_authorize_query(self.query)
+
         elif UPDATE == self.action:
-            policy.authorize_attributes(
-                WRITE,
-                self.__payload_for_resource().keys(),
-                **self.__payload_for_resource(),
-            )
-            policy.authorize_query(self.query)
-            options = updated_options.copy()
+            def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
+                return policy.authorize_attributes(
+                    WRITE,
+                    parsed_value.keys(),
+                    **parsed_value,
+                )
+
+            payload = self.__payload_for_resource()
+            if parser:
+                payload = await parser.parse_write_attributes_and_authorize(
+                    payload,
+                    _build_authorize_attributes,
+                    **updated_options,
+                )
+            else:
+                await _build_authorize_attributes(payload)
+
+            def _build_authorize_query(
+                parsed_value: Any,
+                policy=policy,
+                updated_options=updated_options,
+                **_kwargs,
+            ) -> Callable:
+                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
+                    'query',
+                ]))
+
+            if parser:
+                value_parsed, parser_found, error = await parser.parse_query_and_authorize(
+                    self.query,
+                    _build_authorize_query,
+                    **updated_options,
+                )
+                self.query = value_parsed
+            else:
+                await _build_authorize_query(self.query, **updated_options)
+
+            options = merge_dict(updated_options.copy(), dict(query=self.query))
             options.pop('payload', None)
-            await res.process_update(self.__payload_for_resource(), **options)
+
+            await res.process_update(payload, **options)
 
         return res
 
@@ -222,6 +430,16 @@ class BaseOperation():
                     self.__classified_class()), )
         except ModuleNotFoundError:
             return BaseMonitor
+
+    def __parser_class(self) -> Union[BaseParser, None]:
+        klass = self.__classified_class()
+        module_name = f'mage_ai.api.parsers.{klass}Parser'
+        class_name = f'{klass}Parser'
+
+        try:
+            return getattr(importlib.import_module(module_name), class_name)
+        except ModuleNotFoundError:
+            return None
 
     def __policy_class(self):
         return getattr(
@@ -284,6 +502,30 @@ class BaseOperation():
                 if type(payload[key]) is str:
                     payload[key] = dateutil.parser.parse(payload[key])
 
+        # Inject any cookies declared by the resource into the payload
+        # - expecting a list of cookie names
+        # - payload keys are contructed as COOKIE_PREFIX + <cookie_name>
+        cookie_names = self.__resource_class().cookie_names
+        if len(cookie_names) > 0:
+            # Parse cookies
+            cookies = None
+            cookie_header = self.headers.get('Cookie')
+            if cookie_header is not None:
+                from http.cookies import SimpleCookie
+                cookies = SimpleCookie()
+                cookies.load(cookie_header)
+            # Handle each cookie:
+            # - remove any matching name from incoming payload, for security
+            # - inject cookie values (if available)
+            for cookie_name in cookie_names:
+                payload_key = COOKIE_PREFIX + cookie_name
+                payload.pop(payload_key, None)
+                cookie = None
+                if cookies is not None:
+                    cookie = cookies.get(cookie_name)
+                if cookie is not None:
+                    payload[payload_key] = cookie.value
+
         return payload
 
     async def __present_results(self, results):
@@ -294,7 +536,7 @@ class BaseOperation():
 
     def __presentation_format(self):
         if not self.__presentation_format_attr:
-            self.__presentation_format_attr = self.meta.get(
+            self.__presentation_format_attr = (self.meta or {}).get(
                 META_KEY_FORMAT, self.action)
         return self.__presentation_format_attr
 

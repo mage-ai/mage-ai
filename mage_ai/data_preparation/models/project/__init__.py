@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.environments import is_debug
 
 
 class Project():
@@ -34,10 +35,33 @@ class Project():
         features = self.repo_config.features
 
         for uuid in FeatureUUID:
+            if FeatureUUID.COMPUTE_MANAGEMENT == uuid:
+                continue
+
             key = uuid.value
             data[key] = features.get(key) if features else None
 
         return data
+
+    @property
+    def emr_config(self) -> Dict:
+        return self.repo_config.emr_config or None
+
+    @property
+    def spark_config(self) -> Dict:
+        return self.repo_config.spark_config or None
+
+    @property
+    def remote_variables_dir(self) -> Dict:
+        return self.repo_config.remote_variables_dir
+
+    def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
+        feature_enabled = self.repo_config.features.get(feature_name.value, False)
+
+        if is_debug():
+            print(f'[Project.is_feature_enabled]: {feature_name} | {feature_enabled}')
+
+        return feature_enabled
 
     async def latest_version(self) -> str:
         try:

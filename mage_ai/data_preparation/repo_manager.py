@@ -2,13 +2,14 @@ import os
 import traceback
 import uuid
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 from warnings import warn
 
 import ruamel.yaml
 import yaml
 from jinja2 import Template
 
+from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
@@ -233,6 +234,14 @@ def get_project_type(repo_path=None) -> ProjectType:
         return ProjectType.STANDALONE
 
 
+def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
+    try:
+        return get_repo_config(repo_path=repo_path).cluster_type
+    except Exception:
+        # default to None
+        return None
+
+
 def get_variables_dir(
     repo_path: str = None,
     repo_config: Dict = None,
@@ -278,7 +287,7 @@ def get_variables_dir(
             variables_dir = DEFAULT_MAGE_DATA_DIR
         variables_dir = os.path.expanduser(variables_dir)
 
-    if not variables_dir.startswith('s3'):
+    if not variables_dir.startswith('s3') and not variables_dir.startswith('gs'):
         if os.path.isabs(variables_dir) and variables_dir != repo_path:
             # If the variables_dir is an absolute path and not same as repo_path
             variables_dir = os.path.join(variables_dir, repo_name)

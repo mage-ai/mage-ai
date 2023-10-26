@@ -67,6 +67,7 @@ const Select = ({
     {...props}
     beforeIcon={beforeIcon}
     input={
+      // @ts-ignore
       <SelectStyle multiple={multiple} {...props}>
         {(label || placeholder) && (
           <option

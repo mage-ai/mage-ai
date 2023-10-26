@@ -4,6 +4,7 @@ import TransformerActionType from './TransformerActionType';
 import { Batch, HexagonAll, Integration, Streaming } from '@oracle/icons';
 import { CatalogType } from './IntegrationSourceType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
+import { KernelNameEnum } from './KernelType';
 import { PipelineMetadataType } from './MetadataType';
 
 export enum PipelineTypeEnum {
@@ -12,6 +13,13 @@ export enum PipelineTypeEnum {
   PYSPARK = 'pyspark',
   STREAMING = 'streaming',
 }
+
+export const PIPELINE_TYPE_DISPLAY_NAME = {
+  [PipelineTypeEnum.INTEGRATION]: 'Integration',
+  [PipelineTypeEnum.PYTHON]: 'Python',
+  [PipelineTypeEnum.PYSPARK]: 'PySpark',
+  [PipelineTypeEnum.STREAMING]: 'Streaming',
+};
 
 export const PIPELINE_TYPE_LABEL_MAPPING = {
   [PipelineTypeEnum.INTEGRATION]: 'Integration',
@@ -44,10 +52,13 @@ export enum PipelineStatusEnum {
   INACTIVE = 'inactive',    // All inactive triggers
   NO_SCHEDULES = 'no_schedules',    // No triggers
   RETRY = 'retry',
+  // Retry incomplete block runs for failed pipeline runs specifically
+  RETRY_INCOMPLETE_BLOCK_RUNS = 'retry_incomplete_block_runs',
 }
 
 export enum PipelineQueryEnum {
   GROUP = 'group_by',
+  HISTORY_DAYS = 'from_history_days',
   STATUS = 'status[]',
   TAG = 'tag[]',
   TYPE = 'type[]',
@@ -59,10 +70,22 @@ export enum PipelineGroupingEnum {
   TYPE = 'type',
 }
 
+export const FILTERABLE_PIPELINE_STATUSES: PipelineStatusEnum[] = [
+  PipelineStatusEnum.ACTIVE,
+  PipelineStatusEnum.INACTIVE,
+  PipelineStatusEnum.NO_SCHEDULES,
+];
+
 export const PIPELINE_TYPE_TO_KERNEL_NAME = {
-  [PipelineTypeEnum.PYTHON]: 'python3',
-  [PipelineTypeEnum.PYSPARK]: 'pysparkkernel',
+  [PipelineTypeEnum.PYTHON]: KernelNameEnum.PYTHON3,
+  [PipelineTypeEnum.PYSPARK]: KernelNameEnum.PYSPARK,
 };
+
+export const KERNEL_NAME_TO_PIPELINE_TYPE =
+  Object.entries(PIPELINE_TYPE_TO_KERNEL_NAME).reduce((acc, [k, v]) => ({
+    ...acc,
+    [v]: k,
+  }), {});
 
 export interface PipelineExtensionsType {
   [key: string]: {

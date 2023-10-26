@@ -1,7 +1,6 @@
 import os
 from enum import Enum
 
-BLOCK_CATALOG_FILENAME = 'catalog.json'
 DATA_INTEGRATION_CATALOG_FILE = 'data_integration_catalog.json'
 DATAFRAME_ANALYSIS_KEYS = frozenset(
     [
@@ -140,3 +139,5 @@ NON_PIPELINE_EXECUTABLE_BLOCK_TYPES = [
     BlockType.MARKDOWN,
     BlockType.SCRATCHPAD,
 ]
+
+PYTHON_COMMAND = 'python3'

@@ -196,6 +196,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_LOADER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='DuckDB',
+        path='data_loaders/duckdb.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='MySQL',
         path='data_loaders/mysql.py',
     ),
@@ -536,6 +543,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_EXPORTER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='DuckDB',
+        path='data_exporters/duckdb.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='MySQL',
         path='data_exporters/mysql.py',
     ),
@@ -560,6 +574,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Amazon S3',
         path='sensors/s3.py',
+    ),
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATA_LAKES],
+        language=BlockLanguage.PYTHON,
+        name='Google Cloud Storage',
+        path='sensors/google_cloud_storage.py',
     ),
     #   Data warehouses
     dict(

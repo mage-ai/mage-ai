@@ -7,8 +7,10 @@ import {
 } from 'react';
 import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import BlockType from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
@@ -20,16 +22,24 @@ import KernelType from '@interfaces/KernelType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KeyboardText from '@oracle/elements/KeyboardText';
 import Link from '@oracle/elements/Link';
-import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import Panel from '@oracle/components/Panel';
+import PipelineType, {
+  PipelineTypeEnum,
+  PIPELINE_TYPE_DISPLAY_NAME,
+  PIPELINE_TYPE_TO_KERNEL_NAME,
+} from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-import { Check } from '@oracle/icons';
+import useProject from '@utils/models/project/useProject';
+import { Check, LayoutSplit, LayoutStacked, PowerOnOffButton } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
+import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
   KEY_CODE_META,
@@ -43,17 +53,13 @@ import {
   set,
 } from '@storage/localStorage';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { PipelineHeaderStyle } from './index.style';
+import { SparkApplicationType } from '@interfaces/SparkType';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import {
-  dateFormatLongFromUnixTimestamp,
-  datetimeInLocalTimezone,
-} from '@utils/date';
+import { roundNumber } from '@utils/string';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
-import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 
@@ -64,16 +70,16 @@ type KernelStatusProps = {
     [path: string]: boolean;
   };
   isBusy: boolean;
-  isPipelineUpdating: boolean;
   kernel: KernelType;
   pipeline: PipelineType;
-  pipelineContentTouched: boolean;
-  pipelineLastSaved: Date;
   restartKernel: () => void;
   savePipelineContent: () => void;
+  saveStatus?: string;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
+  setSideBySideEnabled?: (value: boolean) => void;
+  sideBySideEnabled?: boolean;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -82,20 +88,25 @@ function KernelStatus({
   filePaths: filePathsProp,
   filesTouched,
   isBusy,
-  isPipelineUpdating,
   kernel,
   pipeline,
-  pipelineContentTouched,
-  pipelineLastSaved,
   restartKernel,
   savePipelineContent,
+  saveStatus,
   selectedFilePath,
   setErrors,
   setRunningBlocks,
+  setSideBySideEnabled,
+  sideBySideEnabled,
   updatePipelineMetadata,
 }: KernelStatusProps) {
+  const router = useRouter();
+  const {
+    featureEnabled,
+    featureUUIDs,
+  } = useProject();
+
   const themeContext: ThemeType = useContext(ThemeContext);
-  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const {
     alive,
     usage,
@@ -140,26 +151,19 @@ function KernelStatus({
     },
   );
 
+  const {
+    data: dataSparkApplications,
+  } = api.spark_applications.list();
+  const sparkApplications: SparkApplicationType[] =
+    useMemo(() => dataSparkApplications?.spark_applications, [
+      dataSparkApplications,
+    ]);
+
   useEffect(() => {
     if (pipeline?.uuid) {
       setNewPipelineName(pipeline.uuid);
     }
   }, [pipeline?.uuid]);
-
-  let saveStatus;
-  if (pipelineContentTouched) {
-    saveStatus = 'Unsaved changes';
-  } else if (isPipelineUpdating) {
-    saveStatus = 'Saving changes...';
-  } else if (pipelineLastSaved) {
-    let lastSavedDate = dateFormatLongFromUnixTimestamp(Number(pipelineLastSaved) / 1000);
-    if (pipeline?.updated_at) {
-      lastSavedDate = datetimeInLocalTimezone(pipeline?.updated_at, displayLocalTimezone);
-    }
-    saveStatus = `Last saved ${lastSavedDate}`;
-  } else {
-    saveStatus = 'All changes saved';
-  }
 
   const uuidKeyboard = 'KernelStatus';
   const {
@@ -247,6 +251,71 @@ function KernelStatus({
     showKernelWarning,
   ]);
 
+  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
+
+  const statusIconMemo = useMemo(() => {
+    if (computeManagementEnabled) {
+      if (!dataSparkApplications) {
+        return (
+          <Spinner
+            inverted
+            small
+          />
+        );
+      } else if (!sparkApplications?.length) {
+        return (
+          <PowerOnOffButton
+            danger
+          />
+        );
+      }
+    }
+
+    return (
+      <Circle
+        color={isBusy
+          ? (themeContext || dark).borders.info
+          : (alive
+            ? (themeContext || dark).borders.success
+            : (themeContext || dark).borders.danger
+          )
+        }
+        size={UNIT}
+      />
+    );
+  }, [
+    alive,
+    computeManagementEnabled,
+    dataSparkApplications,
+    isBusy,
+    sparkApplications,
+    themeContext,
+  ]);
+
+  const pipelineDisplayName = useMemo(() => {
+    if (computeManagementEnabled) {
+      if (!dataSparkApplications) {
+        return 'Loading compute';
+      } else if (!sparkApplications?.length) {
+        return 'Compute unavailable';
+      } else if (sparkApplications?.length >= 1) {
+        const sparkApplication = sparkApplications?.[0];
+
+        return [
+          sparkApplication?.name,
+          sparkApplication?.attempts?.[0]?.app_spark_version,
+        ].filter(value => value).join(' ');
+      }
+    }
+
+    return PIPELINE_TYPE_DISPLAY_NAME[pipeline?.type || PipelineTypeEnum.PYTHON];
+  }, [
+    computeManagementEnabled,
+    dataSparkApplications,
+    pipeline,
+    sparkApplications,
+  ]);
+
   const kernelStatus = useMemo(() => (
     <div
       ref={refSelectKernel}
@@ -255,135 +324,145 @@ function KernelStatus({
       }}
     >
       <FlexContainer alignItems="center">
-        {pipeline?.type === PipelineTypeEnum.PYSPARK && (
-          <Spacing mr={1}>
-            <Link
-              muted={!!selectedCluster}
-              onClick={() => setShowSelectCluster(true)}
-              preventDefault
-              sameColorAsText={!selectedCluster}
-              underline={!selectedCluster}
+        {!computeManagementEnabled && (
+          <>
+            {pipeline?.type === PipelineTypeEnum.PYSPARK && (
+              <Spacing mr={1}>
+                <Link
+                  muted={!!selectedCluster}
+                  onClick={() => setShowSelectCluster(true)}
+                  preventDefault
+                  sameColorAsText={!selectedCluster}
+                  underline={!selectedCluster}
+                >
+                  {selectedCluster && selectedCluster.id}
+                  {!selectedCluster && 'Select cluster'}
+                </Link>
+
+                <ClickOutside
+                  disableEscape
+                  onClickOutside={() => setShowSelectCluster(false)}
+                  open={showSelectCluster}
+                >
+                  <FlyoutMenu
+                    items={[
+                      {
+                        isGroupingTitle: true,
+                        label: () => 'Select cluster',
+                        uuid: 'select_cluster',
+                      },
+                      ...clusters.map(({
+                        id,
+                        is_active: isActive,
+                        status,
+                      }) => ({
+                          label: () => (
+                            <FlexContainer
+                              alignItems="center"
+                              fullWidth
+                              justifyContent="space-between"
+                            >
+                              <Flex flex={1}>
+                                <Text
+                                  muted={!isActive && ClusterStatusEnum.WAITING !== status}
+                                >
+                                  {id}
+                                </Text>
+                              </Flex>
+
+                              {isActive && (
+                                <Check
+                                  size={2 * UNIT}
+                                  success
+                                />
+                              )}
+
+                              {!isActive && (
+                                <Text monospace muted>
+                                  {status}
+                                </Text>
+                              )}
+                            </FlexContainer>
+                          ),
+                          onClick: isActive || ClusterStatusEnum.WAITING !== status
+                            ? null
+                            // @ts-ignore
+                            : () => updateCluster({
+                                cluster: {
+                                  id,
+                                },
+                              }),
+                          uuid: id,
+                        })),
+                    ]}
+                    onClickCallback={() => setShowSelectCluster(false)}
+                    open={showSelectCluster}
+                    parentRef={refSelectKernel}
+                    uuid="KernelStatus/select_cluster"
+                    width={UNIT * 40}
+                  />
+                </ClickOutside>
+              </Spacing>
+            )}
+
+            <KeyboardShortcutButton
+              beforeElement={statusIconMemo}
+              blackBorder
+              compact
+              inline
+              onClick={() => setShowSelectKernel(true)}
+              uuid="Pipeline/KernelStatus/kernel"
             >
-              {selectedCluster && selectedCluster.id}
-              {!selectedCluster && 'Select cluster'}
-            </Link>
+              {pipelineDisplayName}
+            </KeyboardShortcutButton>
 
             <ClickOutside
               disableEscape
-              onClickOutside={() => setShowSelectCluster(false)}
-              open={showSelectCluster}
+              onClickOutside={() => setShowSelectKernel(false)}
+              open={showSelectKernel}
             >
               <FlyoutMenu
                 items={[
                   {
                     isGroupingTitle: true,
-                    label: () => 'Select cluster',
-                    uuid: 'select_cluster',
+                    label: () => 'Select kernel',
+                    uuid: 'select_kernel',
                   },
-                  ...clusters.map(({
-                    id,
-                    is_active: isActive,
-                    status,
-                  }) => ({
-                      label: () => (
-                        <FlexContainer
-                          alignItems="center"
-                          fullWidth
-                          justifyContent="space-between"
-                        >
-                          <Flex flex={1}>
-                            <Text
-                              muted={!isActive && ClusterStatusEnum.WAITING !== status}
-                            >
-                              {id}
-                            </Text>
-                          </Flex>
-
-                          {isActive && (
-                            <Check
-                              size={2 * UNIT}
-                              success
-                            />
-                          )}
-
-                          {!isActive && (
-                            <Text monospace muted>
-                              {status}
-                            </Text>
-                          )}
-                        </FlexContainer>
-                      ),
-                      onClick: isActive || ClusterStatusEnum.WAITING !== status
-                        ? null
-                        // @ts-ignore
-                        : () => updateCluster({
-                            cluster: {
-                              id,
-                            },
-                          }),
-                      uuid: id,
+                  ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME)
+                    .filter(type => pipeline?.type != type)
+                    .map(type => ({
+                      label: () => type,
+                      onClick: () => updatePipelineMetadata(pipeline?.name, type),
+                      uuid: type,
                     })),
                 ]}
-                onClickCallback={() => setShowSelectCluster(false)}
-                open={showSelectCluster}
+                onClickCallback={() => setShowSelectKernel(false)}
+                open={showSelectKernel}
                 parentRef={refSelectKernel}
-                uuid="KernelStatus/select_cluster"
-                width={UNIT * 40}
+                rightOffset={0}
+                uuid="KernelStatus/select_kernel"
+                width={UNIT * 25}
               />
             </ClickOutside>
-          </Spacing>
+          </>
         )}
 
-        <KeyboardShortcutButton
-          beforeElement={
-            <Circle
-              color={isBusy
-                ? (themeContext || dark).borders.info
-                : (alive
-                  ? (themeContext || dark).borders.success
-                  : (themeContext || dark).borders.danger
-                )
-              }
-              size={UNIT}
-            />
-          }
-          blackBorder
-          compact
-          inline
-          onClick={() => setShowSelectKernel(true)}
-          uuid="Pipeline/KernelStatus/kernel"
-        >
-          {pipeline?.type || PipelineTypeEnum.PYTHON}
-        </KeyboardShortcutButton>
-
-        <ClickOutside
-          disableEscape
-          onClickOutside={() => setShowSelectKernel(false)}
-          open={showSelectKernel}
-        >
-          <FlyoutMenu
-            items={[
-              {
-                isGroupingTitle: true,
-                label: () => 'Select kernel',
-                uuid: 'select_kernel',
-              },
-              ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME)
-                .filter(type => pipeline?.type != type)
-                .map(type => ({
-                  label: () => type,
-                  onClick: () => updatePipelineMetadata(pipeline?.name, type),
-                  uuid: type,
-                })),
-            ]}
-            onClickCallback={() => setShowSelectKernel(false)}
-            open={showSelectKernel}
-            parentRef={refSelectKernel}
-            rightOffset={0}
-            uuid="KernelStatus/select_kernel"
-            width={UNIT * 25}
-          />
-        </ClickOutside>
+        {computeManagementEnabled && (
+          <KeyboardShortcutButton
+            beforeElement={statusIconMemo}
+            blackBorder
+            compact
+            inline
+            noHover={!dataSparkApplications || sparkApplications?.length >= 1}
+            onClick={dataSparkApplications && !sparkApplications?.length
+              ? () => router.push('/compute')
+              : null
+            }
+            uuid="Pipeline/KernelStatus/kernel"
+          >
+            {pipelineDisplayName}
+          </KeyboardShortcutButton>
+        )}
       </FlexContainer>
     </div>
   ), [
@@ -391,11 +470,13 @@ function KernelStatus({
     clusters,
     isBusy,
     pipeline,
+    pipelineDisplayName,
     selectedCluster,
     setShowSelectCluster,
     setShowSelectKernel,
     showSelectCluster,
     showSelectKernel,
+    statusIconMemo,
     themeContext,
     updateCluster,
     updatePipelineMetadata,
@@ -455,7 +536,7 @@ function KernelStatus({
             <Spacing mr={PADDING_UNITS}>
               <Flex flexDirection="column">
                 <Text monospace muted xsmall>
-                  CPU: {usage?.kernel_cpu}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
+                  CPU: {typeof usage?.kernel_cpu !== 'undefined' && roundNumber(usage?.kernel_cpu, 3)}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
                 </Text>
                 <Text monospace muted xsmall>
                   Memory: {kernelMemory}
@@ -464,6 +545,62 @@ function KernelStatus({
             </Spacing>
           )}
         </FlexContainer>
+
+        {featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW) && (
+          <HeaderViewOptionsStyle>
+            <FlexContainer alignItems="center">
+              <Tooltip
+                block
+                center
+                description={(
+                  <Text>
+                    Display the output of a block underneath the block’s code.
+                  </Text>
+                )}
+                size={null}
+              >
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setSideBySideEnabled(false)}
+                  padding={`${1 * UNIT}px`}
+                >
+                  <LayoutStacked
+                    muted={sideBySideEnabled}
+                    size={2 * UNIT}
+                  />
+                </Button>
+              </Tooltip>
+
+              <Tooltip
+                block
+                center
+                description={(
+                  <Text>
+                    Display the output of a block on the right side of the block’s code.
+                  </Text>
+                )}
+                size={null}
+              >
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setSideBySideEnabled(true)}
+                  padding={`${1 * UNIT}px`}
+                >
+                  <LayoutSplit
+                    muted={!sideBySideEnabled}
+                    size={2 * UNIT}
+                  />
+                </Button>
+              </Tooltip>
+            </FlexContainer>
+          </HeaderViewOptionsStyle>
+        )}
 
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">

@@ -63,7 +63,12 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { convertSeconds, getTriggerApiEndpoint } from '../utils';
+import {
+  checkIfCustomInterval,
+  convertSeconds,
+  convertUtcCronExpressionToLocalTimezone,
+  getTriggerApiEndpoint,
+} from '../utils';
 import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
@@ -117,6 +122,11 @@ function TriggerDetail({
     variables: scheduleVariablesInit = {},
   } = pipelineSchedule || {};
 
+  const isCustomInterval = useMemo(
+    () => checkIfCustomInterval(scheduleInterval),
+    [scheduleInterval],
+  );
+
   const q = queryFromUrl();
 
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
@@ -157,6 +167,7 @@ function TriggerDetail({
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
           setErrors={setErrors}
+          setSelectedRun={setSelectedRun}
         />
         <Spacing p={2}>
           <Paginate
@@ -354,7 +365,10 @@ function TriggerDetail({
             key="trigger_frequency"
             monospace
           >
-            {scheduleInterval.replace('@', '')}
+            {(displayLocalTimezone && isCustomInterval)
+              ? convertUtcCronExpressionToLocalTimezone(scheduleInterval)
+              : scheduleInterval.replace('@', '')
+            }
           </Text>,
         ],
         [
@@ -522,6 +536,7 @@ function TriggerDetail({
     description,
     displayLocalTimezone,
     isActive,
+    isCustomInterval,
     nextRunDate,
     pipelineSchedule,
     scheduleInterval,

@@ -7,6 +7,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.shared.strings import is_number
 
 
 class BlockRunResource(DatabaseResource):
@@ -17,24 +18,42 @@ class BlockRunResource(DatabaseResource):
     def build_result_set(self, arr, user, **kwargs):
         block_runs = []
         for tup in arr:
-            (
-                block_uuid,
-                completed_at,
-                created_at,
-                id,
-                pipeline_run_id,
-                status,
-                updated_at,
-                pipeline_schedule_id,
-                pipeline_schedule_name,
-            ) = tup
+            if isinstance(tup, BlockRun):
+                block_uuid = tup.block_uuid if hasattr(tup, 'block_uuid') else None
+                completed_at = tup.completed_at if hasattr(tup, 'completed_at') else None
+                created_at = tup.created_at if hasattr(tup, 'created_at') else None
+                model_id = tup.id if hasattr(tup, 'id') else None
+                pipeline_run_id = tup.pipeline_run_id if hasattr(tup, 'pipeline_run_id') else None
+                started_at = tup.started_at if hasattr(tup, 'started_at') else None
+                status = tup.status if hasattr(tup, 'status') else None
+                updated_at = tup.updated_at if hasattr(tup, 'updated_at') else None
+                pipeline_schedule_id = tup.pipeline_schedule_id if hasattr(
+                    tup, 'pipeline_schedule_id',
+                ) else None
+                pipeline_schedule_name = tup.pipeline_schedule_name if hasattr(
+                    tup, 'pipeline_schedule_name',
+                ) else None
+            else:
+                (
+                    block_uuid,
+                    completed_at,
+                    created_at,
+                    model_id,
+                    pipeline_run_id,
+                    started_at,
+                    status,
+                    updated_at,
+                    pipeline_schedule_id,
+                    pipeline_schedule_name,
+                ) = tup
 
             block_run = dict(
                 block_uuid=block_uuid,
                 completed_at=completed_at,
                 created_at=created_at,
-                id=id,
+                id=model_id,
                 pipeline_run_id=pipeline_run_id,
+                started_at=started_at,
                 status=status,
                 updated_at=updated_at,
                 pipeline_schedule_id=pipeline_schedule_id,
@@ -71,6 +90,7 @@ class BlockRunResource(DatabaseResource):
             a.created_at,
             a.id,
             a.pipeline_run_id,
+            a.started_at,
             a.status,
             a.updated_at,
             c.id.label('pipeline_schedule_id'),
@@ -87,7 +107,7 @@ class BlockRunResource(DatabaseResource):
         pipeline_run_id = query_arg.get('pipeline_run_id', [None])
         if pipeline_run_id:
             pipeline_run_id = pipeline_run_id[0]
-        if pipeline_run_id:
+        if pipeline_run_id and is_number(pipeline_run_id):
             query = (
                 query.
                 filter(a.pipeline_run_id == int(pipeline_run_id))
@@ -123,6 +143,10 @@ class BlockRunResource(DatabaseResource):
                                 'must be an attribute of the BlockRun model. The sort direction ' +
                                 'is either "asc" (ascending order) or "desc" (descending order).')
         else:
-            initial_results = query.order_by(a.created_at.desc(), a.completed_at.desc())
+            initial_results = query.order_by(
+                a.started_at.desc(),
+                a.created_at.desc(),
+                a.completed_at.desc(),
+            )
 
         return initial_results

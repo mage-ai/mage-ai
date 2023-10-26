@@ -6,6 +6,7 @@ import React, {
 import App, { AppProps } from 'next/app';
 import Cookies from 'js-cookie';
 import LoadingBar from 'react-top-loading-bar';
+import dynamic from 'next/dynamic';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeProvider } from 'styled-components';
 
@@ -18,12 +19,16 @@ import ToastWrapper from '@components/Toast/ToastWrapper';
 import api from '@api';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import { ErrorProvider } from '@context/Error';
+import { LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING } from '@storage/constants';
 import { ModalProvider } from '@context/Modal';
 import { RED } from '@oracle/styles/colors/main';
 import {
   REQUIRE_USER_AUTHENTICATION,
   REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
   REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+  REQUIRE_USER_PERMISSIONS,
+  REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+  REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
 } from '@utils/session';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -33,6 +38,8 @@ import {
   theme as stylesTheme,
 } from '@styles/theme';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
+
+const Banner = dynamic(() => import('@oracle/components/Banner'), { ssr: false });
 
 type AppInternalProps = {
   defaultTitle?: string;
@@ -117,14 +124,33 @@ function MyApp(props: MyAppProps & AppProps) {
     unregisterOnKeyUp,
   ]);
 
+  const windowIsDefined = typeof window !== 'undefined';
+  const isDemoApp = useMemo(() =>
+    windowIsDefined && window.location.hostname === 'demo.mage.ai',
+    [windowIsDefined],
+  );
+
   const val = Cookies.get(
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
     REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
   );
   const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
-  const { data } = api.statuses.list({}, {}, { pauseFetch: !noValue });
+
+  const valPermissions = Cookies.get(
+    REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+    REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
+  );
+  const noValuePermissions = typeof valPermissions === 'undefined'
+    || valPermissions === null
+    || !REQUIRE_USER_PERMISSIONS();
+
+  const { data } = api.statuses.list({}, {}, { pauseFetch: !noValue && !noValuePermissions });
+
   const requireUserAuthentication =
     useMemo(() => data?.statuses?.[0]?.require_user_authentication, [data]);
+  const requireUserPermissions =
+    useMemo(() => data?.statuses?.[0]?.require_user_permissions, [data]);
+
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 
   useEffect(() => {
@@ -139,9 +165,20 @@ function MyApp(props: MyAppProps & AppProps) {
       );
     }
 
+    if (noValuePermissions &&
+      typeof requireUserPermissions !== 'undefined' &&
+      requireUserPermissions !== null
+    ) {
+      Cookies.set(
+        REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+        requireUserPermissions,
+        REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
+      );
+    }
+
     const loggedIn = AuthToken.isLoggedIn();
     if ((requireUserAuthentication && !loggedIn) || dataProjects?.error?.code === 401) {
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+      const currentPath = windowIsDefined ? window.location.pathname : null;
       if ('/sign-in' !== currentPath) {
         const query = {
           ...queryFromUrl(),
@@ -153,7 +190,10 @@ function MyApp(props: MyAppProps & AppProps) {
   }, [
     dataProjects,
     noValue,
+    noValuePermissions,
     requireUserAuthentication,
+    requireUserPermissions,
+    windowIsDefined,
   ]);
 
   return (
@@ -182,6 +222,20 @@ function MyApp(props: MyAppProps & AppProps) {
 
                 {/* @ts-ignore */}
                 <Component {...pageProps} />
+
+                {isDemoApp && (
+                  <Banner
+                    linkProps={{
+                      href: 'https://github.com/mage-ai/mage-ai',
+                      label: 'GET MAGE',
+                    }}
+                    localStorageHideKey={LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING}
+                    textProps={{
+                      message: 'Public demo. Do not add private credentials.',
+                      warning: true,
+                    }}
+                  />
+                )}
               </ErrorProvider>
             </SheetProvider>
           </ModalProvider>

@@ -5,6 +5,7 @@ import BlockType, {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { BORDER_WIDTH } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { buildTags } from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
@@ -14,13 +15,13 @@ export const HEADER_SPACING_HORIZONTAL_UNITS = PADDING_UNITS;
 const HEADER_SPACING_HORIZONTAL = PADDING_UNITS * UNIT;
 export const STATUS_SIZE = UNIT * 2;
 
-const WIDTH_OF_HEADER_TEXT_CHARACTER = 8.62;
-const WIDTH_OF_SMALL_CHARACTER = 7.43;
+export const WIDTH_OF_HEADER_TEXT_CHARACTER = 8.62;
+export const WIDTH_OF_SMALL_CHARACTER = 7.43;
 
 // Border vertical
-const NODE_HEIGHT = 2;
+const NODE_HEIGHT = BORDER_WIDTH * 2;
 // Border horizontal
-const NODE_WIDTH = 2;
+const NODE_WIDTH = BORDER_WIDTH * 2;
 
 // Padding vertical, icon height
 const HEADER_HEIGHT = (UNIT * 2) + (UNIT * 5);
@@ -61,11 +62,13 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   subtitle?: string;
 } {
   const {
+    description,
+    name,
     type,
   } = block;
 
   let displayText;
-  let subtitle = BLOCK_TYPE_NAME_MAPPING?.[type] || type;
+  let subtitle = description || BLOCK_TYPE_NAME_MAPPING?.[type] || type;
 
   if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
     let contentParsed: {
@@ -91,8 +94,22 @@ export function displayTextForBlock(block: BlockType, pipeline: PipelineType): {
   }
 
   if (block?.replicated_block) {
-    displayText = block?.replicated_block;
-    subtitle = block?.uuid;
+    if (name && description) {
+      displayText = name;
+    } else {
+      displayText = block?.uuid;
+    }
+
+    if (!description) {
+      subtitle = block?.replicated_block;
+    }
+  }
+
+  // Dynamic blocks and data integration blocks
+  if (block?.uuid?.split(':')?.length >= 2) {
+    if (name) {
+      displayText = name;
+    }
   }
 
   if (!displayText) {

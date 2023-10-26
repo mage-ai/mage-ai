@@ -84,15 +84,27 @@ export function useDetail(
   id: string,
   query: any = {},
   swrOptions: any = {},
+  customOptions?: {
+    key?: string;
+    pauseFetch?: boolean;
+  },
 ) {
+  const {
+    key: keyInit,
+    pauseFetch,
+  } = customOptions || {};
+
+  const url = id ? buildUrl(resource, id) : null;
+  const key = url && keyInit ? keyInit : url;
+
   const {
     data,
     isValidating,
     error,
     mutate,
   } = useSWR(
-    id ? buildUrl(resource, id) : null,
-    url => fetcher(url, {
+    pauseFetch ? null : key,
+    () => fetcher(url, {
       method: GET,
       query,
     }),
@@ -115,21 +127,31 @@ export function useDetailWithParent(
   query: any = {},
   swrOptions: any = {},
   grandchildResource?: string,
+  customOptions?: {
+    key?: string;
+  },
 ) {
+  const {
+    key: keyInit,
+  } = customOptions || {};
+
+  const url = id && (parentId ? buildUrl(
+    parentResource,
+    parentId,
+    resource,
+    id,
+    query,
+    grandchildResource,
+  ) : null);
+  const key = url && keyInit ? keyInit : url;
+
   const {
     data,
     error,
     mutate,
   } = useSWR(
-    id && (parentId ? buildUrl(
-      parentResource,
-      parentId,
-      resource,
-      id,
-      query,
-      grandchildResource,
-    ) : null),
-    url => fetcher(url, { method: GET, query }),
+    key,
+    () => fetcher(url, { method: GET, query }),
     swrOptions,
   );
 
@@ -148,7 +170,6 @@ export function useDetailWithParentAsync(
   query: any = {},
   options: FetcherOptionsType = {},
   grandchildResource?: string,
-
 ) {
   return buildFetchV2(buildUrl(
       parentResource,

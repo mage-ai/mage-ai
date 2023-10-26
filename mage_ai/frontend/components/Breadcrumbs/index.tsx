@@ -14,15 +14,18 @@ export type BreadcrumbType = {
     href: string;
     as?: string;
   };
+  monospace?: boolean;
   onClick?: () => void;
 };
 
 type BreadcrumbsProps = {
   breadcrumbs?: BreadcrumbType[];
+  noMarginLeft?: boolean;
 };
 
 function Breadcrumbs({
   breadcrumbs,
+  noMarginLeft,
 }: BreadcrumbsProps) {
   const count = breadcrumbs.length;
   const arr = [];
@@ -32,6 +35,7 @@ function Breadcrumbs({
     danger,
     label,
     linkProps,
+    monospace = true,
     onClick,
   }, idx: number) => {
     const title = label();
@@ -53,7 +57,7 @@ function Breadcrumbs({
         bold={bold}
         danger={danger}
         default={!bold}
-        monospace
+        monospace={monospace}
       >
         {title}
       </Text>
@@ -61,7 +65,7 @@ function Breadcrumbs({
     let el = (
       <Spacing
         key={`breadcrumb-${title}`}
-        ml={idx === 0 ? 2 : 0}
+        ml={(!noMarginLeft && idx === 0) ? 2 : 0}
       >
         {titleEl}
       </Spacing>

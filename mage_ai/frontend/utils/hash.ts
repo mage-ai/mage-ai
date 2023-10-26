@@ -38,10 +38,20 @@ export function isObject(variable: any) {
   );
 }
 
-export function isEmptyObject(obj) {
-  return !obj || Object.values({ ...obj, id: null }).every(
-    (val) =>
-      val === null || (Array.isArray(val) && val.length === 0) || JSON.stringify(val) === '{}',
+export function isEmptyObject(obj, opts?: {
+  idIsInObject?: boolean;
+}) {
+  const idIsInObject = opts?.idIsInObject;
+  const obj2 = { ...obj };
+  if (!idIsInObject) {
+    obj2.id = null;
+  }
+  const values = Object.values(obj2);
+
+  return values.every(
+    (val) => val === null
+      || (Array.isArray(val) && val.length === 0)
+      || JSON.stringify(val) === '{}',
   );
 }
 
@@ -54,10 +64,12 @@ export function pickKey(obj) {
   return keys.filter(k => obj[k]);
 }
 
-export function selectKeys(obj, keys) {
+export function selectKeys(obj, keys, opts?: {
+  include_blanks?: boolean;
+}) {
   return keys.reduce((acc, key) => {
-    if (obj[key]) {
-      acc[key] = obj[key];
+    if (key in obj || opts?.include_blanks) {
+      acc[key] = obj?.[key];
     }
 
     return acc;

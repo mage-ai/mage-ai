@@ -5,9 +5,11 @@ import shutil
 import stat
 import traceback
 import webbrowser
+from datetime import datetime
 from time import sleep
-from typing import Union
+from typing import Optional, Union
 
+import pytz
 import tornado.ioloop
 import tornado.web
 from tornado import autoreload
@@ -19,9 +21,11 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
+from mage_ai.cluster_manager.manage import check_auto_termination
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
+    get_cluster_type,
     get_project_type,
     get_project_uuid,
     get_variables_dir,
@@ -35,6 +39,7 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
+from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
@@ -70,12 +75,15 @@ from mage_ai.server.terminal_server import (
     TerminalWebsocketServer,
 )
 from mage_ai.server.websocket_server import WebSocketServer
+from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
+    REDIS_URL,
     REQUESTS_BASE_PATH,
     REQUIRE_USER_AUTHENTICATION,
+    REQUIRE_USER_PERMISSIONS,
     ROUTES_BASE_PATH,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
@@ -93,7 +101,32 @@ BASE_PATH_EXPORTS_FOLDER = 'frontend_dist_base_path'
 BASE_PATH_TEMPLATE_EXPORTS_FOLDER = 'frontend_dist_base_path_template'
 BASE_PATH_PLACEHOLDER = 'CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_'
 
+lock = DistributedLock()
 logger = Logger().new_server_logger(__name__)
+
+
+class ActivityTracker:
+    def __init__(self):
+        self.latest_activity = None
+        self.redis_client = init_redis_client(REDIS_URL)
+
+    def get_latest_activity(self) -> Optional[datetime]:
+        if self.redis_client:
+            latest_activity_ts = self.redis_client.get('latest_activity')
+            if latest_activity_ts:
+                return datetime.fromisoformat(latest_activity_ts)
+            else:
+                return None
+        return self.latest_activity
+
+    def update_latest_activity(self) -> None:
+        if self.redis_client and lock.try_acquire_lock('activity_tracker', timeout=10):
+            self.redis_client.set('latest_activity', datetime.now(tz=pytz.UTC).isoformat())
+        else:
+            self.latest_activity = datetime.now(tz=pytz.UTC)
+
+
+latest_user_activity = ActivityTracker()
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -179,6 +212,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
+        (r'/oauth', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
@@ -220,20 +254,25 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         # TODO: This call is not easily removed from the frontend so will change this
         # in a future PR.
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\-\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
         ),
 
         # Trigger pipeline via API
+        # Original route for backwards compatibility
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
+            ApiTriggerPipelineHandler,
+        ),
+        (
+            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/api_trigger',
             ApiTriggerPipelineHandler,
         ),
 
         # Download block output
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
-            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
+            r'(?P<block_uuid>[\w\-\%2f\.(/.*)?]+)/downloads',
             ApiDownloadHandler,
         ),
 
@@ -241,18 +280,23 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (
             r'/api/status(?:es)?',
             ApiListHandler,
-            {'resource': 'statuses', 'bypass_oauth_check': True},
+            {
+                'resource': 'statuses',
+                'bypass_oauth_check': True,
+                'is_health_check': True,
+            },
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)' \
+            r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
             ApiChildDetailHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)/(?P<child>\w+)',
             ApiChildListHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)',
             ApiResourceDetailHandler,
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
@@ -268,11 +312,8 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     if update_routes:
         updated_routes = []
         for route in routes:
-            if route[0] == r'/':
-                updated_routes.append((f'/{ROUTES_BASE_PATH}', *route[1:]))
-            else:
-                updated_routes.append(
-                    (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
+            updated_routes.append(
+                (route[0].replace('/', f'/{ROUTES_BASE_PATH}/', 1), *route[1:]))
     else:
         updated_routes = routes
 
@@ -334,6 +375,7 @@ async def main(
     logger.info(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
+    latest_user_activity.update_latest_activity()
 
     # Git sync if option is enabled
     preferences = get_preferences()
@@ -409,6 +451,9 @@ async def main(
                 user_id=owner_user.id,
             )
 
+    if REQUIRE_USER_PERMISSIONS:
+        logger.info('User permissions requirement is enabled.')
+
     logger.info('Initializing block cache.')
     await BlockCache.initialize_cache(replace=True)
 
@@ -424,6 +469,14 @@ async def main(
         SCHEDULER_AUTO_RESTART_INTERVAL,
     )
     periodic_callback.start()
+
+    if ProjectType.MAIN == project_type:
+        # Check scheduler status periodically
+        auto_termination_callback = PeriodicCallback(
+            lambda: check_auto_termination(get_cluster_type()),
+            60_000,
+        )
+        auto_termination_callback.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

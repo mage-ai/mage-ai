@@ -5,6 +5,7 @@ import Flex from '@oracle/components/Flex';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tile from '@oracle/components/Tile';
+import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import { GroupedPipelineRunCountType } from '@interfaces/MonitorStatsType';
 import { MetricsSummaryContainerStyle } from './index.style';
@@ -14,8 +15,10 @@ import {
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
+import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
 import { capitalize } from '@utils/string';
 import { formatNumber } from '@utils/number';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortTuplesArrayByFirstItem } from '@utils/array';
 
 type MetricsSummaryProps = {
@@ -25,6 +28,7 @@ type MetricsSummaryProps = {
 function MetricsSummary({
   pipelineRunCountByPipelineType,
 }: MetricsSummaryProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineRunCounts = useMemo(() => {
     if (!pipelineRunCountByPipelineType) {
       return [];
@@ -48,11 +52,26 @@ function MetricsSummary({
     );
   }, [pipelineRunCountByPipelineType]);
 
+  const utcTooltipEl = useMemo(() => (
+    displayLocalTimezone
+      ? (
+        <Spacing ml="4px">
+          <Tooltip
+            {...SHARED_UTC_TOOLTIP_PROPS}
+            label="Please note that these metrics are based on UTC time."
+          />
+        </Spacing>
+      ) : null
+  ), [displayLocalTimezone]);
+
   return (
     <MetricsSummaryContainerStyle>
-      <Text bold large>
-        Pipeline run metrics
-      </Text>
+      <FlexContainer alignItems="center">
+        <Text bold large>
+          Pipeline run metrics
+        </Text>
+        {utcTooltipEl}
+      </FlexContainer>
 
       <Spacing mb={2} />
 

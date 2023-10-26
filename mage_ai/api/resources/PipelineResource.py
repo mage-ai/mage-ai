@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List
 
@@ -6,12 +7,14 @@ from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
 from mage_ai.ai.constants import LLMUseCase
-from mage_ai.api.operations.constants import DELETE
+from mage_ai.api.operations.constants import DELETE, DETAIL
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
-from mage_ai.data_preparation.models.block.dbt.utils import (
-    add_blocks_upstream_from_refs,
+from mage_ai.authentication.operation_history.utils import (
+    load_pipelines_detail_async,
+    record_create_pipeline_async,
+    record_detail_pipeline_async,
 )
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -22,13 +25,19 @@ from mage_ai.data_preparation.models.custom_templates.custom_pipeline_template i
     CustomPipelineTemplate,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import (
     ScheduleStatus,
     get_trigger_configs_by_name,
     update_triggers_for_pipeline_and_persist,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
     retry_pipeline_run,
@@ -38,6 +47,7 @@ from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
+from mage_ai.shared.strings import is_number
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -68,21 +78,35 @@ class PipelineResource(BaseResource):
         if pipeline_statuses:
             pipeline_statuses = pipeline_statuses.split(',')
 
-        if tags:
-            from mage_ai.cache.tag import KEY_FOR_PIPELINES, TagCache
+        from_history_days = query.get('from_history_days', [None])
+        if from_history_days:
+            from_history_days = from_history_days[0]
+
+        history_by_pipeline_uuid = {}
+        if from_history_days is not None and is_number(from_history_days):
+            timestamp_start = (datetime.utcnow() - timedelta(
+                hours=24 * int(from_history_days),
+            )).timestamp()
+            history = await load_pipelines_detail_async(timestamp_start=timestamp_start)
+            history = sorted(
+                history,
+                key=lambda x: int(x.timestamp),
+                reverse=True,
+            )
+
+            for h in history:
+                pipeline_uuid = str(h.resource.get('uuid'))
+                if pipeline_uuid not in history_by_pipeline_uuid:
+                    history_by_pipeline_uuid[pipeline_uuid] = [h]
+
+            pipeline_uuids = list(history_by_pipeline_uuid.keys())
+        elif tags:
+            from mage_ai.cache.tag import TagCache
 
             await TagCache.initialize_cache()
 
             cache = TagCache()
-            tags_mapping = cache.get_tags()
-            pipeline_uuids = set()
-
-            for tag_uuid in tags:
-                pipelines_dict = tags_mapping.get(tag_uuid, {}).get(KEY_FOR_PIPELINES, {})
-                if pipelines_dict:
-                    pipeline_uuids.update(pipelines_dict.keys())
-
-            pipeline_uuids = list(pipeline_uuids)
+            pipeline_uuids = cache.get_pipeline_uuids_with_tags(tags)
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
@@ -158,6 +182,11 @@ class PipelineResource(BaseResource):
 
         if include_schedules and pipeline_statuses:
             pipelines = filtered_pipelines
+
+        if len(history_by_pipeline_uuid) >= 1:
+            for pipeline in pipelines:
+                if pipeline.uuid in history_by_pipeline_uuid:
+                    pipeline.history = history_by_pipeline_uuid.get(pipeline.uuid)
 
         return self.build_result_set(
             pipelines,
@@ -251,6 +280,11 @@ class PipelineResource(BaseResource):
                 template_uuid=template_uuid,
             )
 
+        await record_create_pipeline_async(
+            resource_uuid=pipeline.uuid,
+            user=user.id if user else None,
+        )
+
         return self(pipeline, user, **kwargs)
 
     @classmethod
@@ -263,8 +297,18 @@ class PipelineResource(BaseResource):
     async def member(self, pk, user, **kwargs):
         pipeline = await Pipeline.get_async(pk)
 
-        if kwargs.get('api_operation_action', None) != DELETE:
+        api_operation_action = kwargs.get('api_operation_action', None)
+        if api_operation_action != DELETE:
             switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
+
+        if api_operation_action == DETAIL:
+            if Project(pipeline.repo_config).is_feature_enabled(
+                FeatureUUID.OPERATION_HISTORY,
+            ):
+                await record_detail_pipeline_async(
+                    resource_uuid=pipeline.uuid,
+                    user=user.id if user else None,
+                )
 
         query = kwargs.get('query', {})
         include_block_pipelines = query.get('include_block_pipelines', [False])
@@ -286,19 +330,14 @@ class PipelineResource(BaseResource):
         if 'add_upstream_for_block_uuid' in payload:
             block_uuid = payload['add_upstream_for_block_uuid']
             block = self.model.get_block(block_uuid, widget=False)
-            arr = add_blocks_upstream_from_refs(block)
-            upstream_block_uuids = [b.uuid for b in arr]
-
-            for b in block.upstream_blocks:
-                upstream_block_uuids.append(b.uuid)
-
-            self.model.add_block(
-                block,
-                upstream_block_uuids,
-                priority=len(upstream_block_uuids),
-                widget=False,
-            )
-
+            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in block.upstream_dbt_blocks()
+                }
+                self.model.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                self.model.validate('A cycle was formed while adding a block')
+                self.model.save()
             return self
 
         query = kwargs.get('query', {})
@@ -421,6 +460,44 @@ class PipelineResource(BaseResource):
             for run in pipeline_runs:
                 retry_pipeline_run(run)
 
+        @safe_db_query
+        def query_incomplete_block_runs(pipeline_uuid: str):
+            a = aliased(PipelineRun, name='a')
+            b = aliased(BlockRun, name='b')
+            columns = [
+                b.id,
+                b.status,
+                b.pipeline_run_id,
+                a.status,
+                a.pipeline_uuid,
+            ]
+            result = (
+                PipelineRun.
+                select(*columns).
+                join(b, a.id == b.pipeline_run_id).
+                filter(a.pipeline_uuid == pipeline_uuid).
+                filter(a.status == PipelineRun.PipelineRunStatus.FAILED).
+                filter(b.status.not_in([
+                    BlockRun.BlockRunStatus.COMPLETED,
+                    BlockRun.BlockRunStatus.CONDITION_FAILED,
+                ]))
+            ).all()
+
+            return result
+
+        def retry_incomplete_block_runs(pipeline_uuid: str):
+            incomplete_block_run_results = query_incomplete_block_runs(pipeline_uuid)
+            block_run_ids = [r[0] for r in incomplete_block_run_results]
+            pipeline_run_ids = list(set([r[2] for r in incomplete_block_run_results]))
+            BlockRun.batch_update_status(
+                block_run_ids,
+                BlockRun.BlockRunStatus.INITIAL,
+            )
+            PipelineRun.batch_update_status(
+                pipeline_run_ids,
+                PipelineRun.PipelineRunStatus.INITIAL,
+            )
+
         status = payload.get('status')
         pipeline_uuid = self.model.uuid
 
@@ -439,6 +516,8 @@ class PipelineResource(BaseResource):
                         cancel_pipeline_runs(pipeline_runs=pipeline_runs)
                 elif status == 'retry' and pipeline_runs:
                     retry_pipeline_runs(pipeline_runs)
+                elif status == 'retry_incomplete_block_runs':
+                    retry_incomplete_block_runs(pipeline_uuid)
 
         self.on_update_callback = _update_callback
 

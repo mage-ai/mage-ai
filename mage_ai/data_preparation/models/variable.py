@@ -1,6 +1,6 @@
-import json
 import os
 import traceback
+from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, List
 
@@ -57,7 +57,8 @@ class Variable:
         partition: str = None,
         spark=None,
         storage: BaseStorage = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         self.uuid = uuid
         if storage is None:
@@ -68,7 +69,7 @@ class Variable:
         #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
-        self.block_dir_name = clean_name(self.block_uuid)
+        self.block_dir_name = clean_name(self.block_uuid) if clean_block_uuid else self.block_uuid
         self.partition = partition
         self.variable_dir_path = os.path.join(
             pipeline_path,
@@ -84,7 +85,7 @@ class Variable:
 
     @property
     def variable_path(self):
-        return os.path.join(self.variable_dir_path, self.uuid)
+        return os.path.join(self.variable_dir_path, self.uuid or '')
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
@@ -138,6 +139,7 @@ class Variable:
     def read_data(
         self,
         dataframe_analysis_keys: List[str] = None,
+        raise_exception: bool = False,
         sample: bool = False,
         sample_count: int = None,
         spark=None,
@@ -148,6 +150,8 @@ class Variable:
         Args:
             dataframe_analysis_keys (List[str], optional): For DATAFRAME_ANALYSIS variable,
                 only read the selected keys.
+            raise_exception (bool, optional): Whether to raise exception when reading variable
+                data fails. Defaults to false.
             sample (bool, optional): Whether to sample the rows of a dataframe, used for
                 DATAFRAME variable.
             sample_count (int, optional): The number of rows to sample, used for
@@ -155,14 +159,18 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.variable_type == VariableType.DATAFRAME:
-            return self.__read_parquet(sample=sample, sample_count=sample_count)
+            return self.__read_parquet(
+                raise_exception=raise_exception,
+                sample=sample,
+                sample_count=sample_count,
+            )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
-        return self.__read_json(sample=sample)
+        return self.__read_json(raise_exception=raise_exception, sample=sample)
 
     async def read_data_async(
         self,
@@ -192,6 +200,20 @@ class Variable:
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
         return await self.__read_json_async(sample=sample)
+
+    @contextmanager
+    def open_to_write(self, filename: str) -> None:
+        if not self.storage.isdir(self.variable_path):
+            self.storage.makedirs(self.variable_path, exist_ok=True)
+
+        with self.storage.open_to_write(self.full_path(filename)) as f:
+            yield f
+
+    def full_path(self, filename: str = None) -> str:
+        if filename:
+            return os.path.join(self.variable_path, filename)
+
+        return self.variable_path
 
     def write_data(self, data: Any) -> None:
         """
@@ -274,7 +296,12 @@ class Variable:
             self.storage.remove(file_path)
             self.storage.remove_dir(self.variable_path)
 
-    def __read_json(self, default_value: Dict = None, sample: bool = False) -> Dict:
+    def __read_json(
+        self,
+        default_value: Dict = None,
+        raise_exception: bool = False,
+        sample: bool = False
+    ) -> Dict:
         if default_value is None:
             default_value = {}
         # For backward compatibility
@@ -291,9 +318,19 @@ class Variable:
                 pass
         if not read_sample_success:
             if self.storage.path_exists(file_path):
-                data = self.storage.read_json_file(file_path, default_value)
+                try:
+                    data = self.storage.read_json_file(
+                        file_path, default_value=default_value, raise_exception=raise_exception)
+                except Exception as ex:
+                    if raise_exception:
+                        raise Exception(f'Failed to read json file: {file_path}') from ex
             else:
-                data = self.storage.read_json_file(old_file_path, default_value)
+                try:
+                    data = self.storage.read_json_file(
+                        old_file_path, default_value=default_value, raise_exception=raise_exception)
+                except Exception as ex:
+                    if raise_exception:
+                        raise Exception(f'Failed to read json file: {old_file_path}') from ex
         if sample:
             data = sample_output(data)[0]
         return data
@@ -375,17 +412,17 @@ class Variable:
             try:
                 df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
                 read_sample_success = True
-            except Exception as e:
+            except Exception as ex:
                 if raise_exception:
-                    raise e
+                    raise Exception(f'Failed to read parquet file: {sample_file_path}') from ex
                 else:
                     traceback.print_exc()
         if not read_sample_success:
             try:
                 df = self.storage.read_parquet(file_path, engine='pyarrow')
-            except Exception as e:
+            except Exception as ex:
                 if raise_exception:
-                    raise e
+                    raise Exception(f'Failed to read parquet file: {file_path}') from ex
                 else:
                     traceback.print_exc()
                 df = pd.DataFrame()
@@ -395,16 +432,15 @@ class Variable:
                 df = df.iloc[:sample_count]
 
         column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
-        if os.path.exists(column_types_filename):
-            with open(column_types_filename, 'r') as f:
-                column_types = json.load(f)
-                # ddf = dask_from_pandas(df)
-                if should_deserialize_pandas(column_types):
-                    df = apply_transform_pandas(
-                        df,
-                        lambda row: deserialize_columns(row, column_types),
-                    )
-                df = cast_column_types(df, column_types)
+        if self.storage.path_exists(column_types_filename):
+            column_types = self.storage.read_json_file(column_types_filename)
+            # ddf = dask_from_pandas(df)
+            if should_deserialize_pandas(column_types):
+                df = apply_transform_pandas(
+                    df,
+                    lambda row: deserialize_columns(row, column_types),
+                )
+            df = cast_column_types(df, column_types)
         return df
 
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
@@ -464,8 +500,10 @@ class Variable:
                         column_types[c] = type(series_non_null.iloc[0].item()).__name__
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
-        with open(os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), 'w') as f:
-            f.write(json.dumps(column_types))
+        self.storage.write_json_file(
+            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
+            column_types,
+        )
 
         if should_serialize_pandas(column_types):
             # Try using Polars to write the dataframe to improve performance

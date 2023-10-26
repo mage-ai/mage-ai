@@ -1,10 +1,7 @@
 import json
 from typing import Dict, List
 
-import boto3
-from botocore.config import Config
-
-from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws import get_aws_boto3_client
 from mage_ai.services.aws.ecs.config import EcsConfig
 
 
@@ -15,7 +12,7 @@ def run_task(
 ) -> None:
     if type(ecs_config) is dict:
         ecs_config = EcsConfig.load(config=ecs_config)
-    client = boto3.client('ecs')
+    client = get_aws_boto3_client('ecs')
     response = client.run_task(**ecs_config.get_task_config(command=command))
 
     print(json.dumps(response, indent=4, default=str))
@@ -55,7 +52,7 @@ def run_task(
 
 
 def stop_task(task_arn: str, cluster: str = None) -> None:
-    client = boto3.client('ecs')
+    client = get_aws_boto3_client('ecs')
     return client.stop_task(
         cluster=cluster,
         task=task_arn,
@@ -63,9 +60,7 @@ def stop_task(task_arn: str, cluster: str = None) -> None:
 
 
 def list_tasks(cluster) -> List[Dict]:
-    region_name = get_aws_region_name()
-    config = Config(region_name=region_name)
-    ecs_client = boto3.client('ecs', config=config)
+    ecs_client = get_aws_boto3_client('ecs')
 
     task_arns = ecs_client.list_tasks(
         cluster=cluster,
@@ -81,9 +76,7 @@ def list_tasks(cluster) -> List[Dict]:
 
 
 def list_services(cluster) -> List[Dict]:
-    region_name = get_aws_region_name()
-    config = Config(region_name=region_name)
-    ecs_client = boto3.client('ecs', config=config)
+    ecs_client = get_aws_boto3_client('ecs')
 
     service_arns = ecs_client.list_services(
         cluster=cluster,

@@ -64,5 +64,10 @@ export type ExtensionProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+    preventDuplicateBlockName?: boolean,
+  ) => Promise<any>;
   textareaFocused: boolean;
 };

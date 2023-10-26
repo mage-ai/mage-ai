@@ -75,3 +75,23 @@ def render(function):
 
 def columns(function):
     return function
+
+
+def data_integration_destination(function):
+    return function
+
+
+def data_integration_source(function):
+    return function
+
+
+def data_integration_catalog(function):
+    return function
+
+
+def data_integration_config(function):
+    return function
+
+
+def data_integration_selected_streams(function):
+    return function

@@ -1,4 +1,5 @@
 import NextLink from 'next/link';
+import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
@@ -8,6 +9,7 @@ import PipelineRunType from '@interfaces/PipelineRunType';
 import RowDataTable, { RowStyle } from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import {
   ALL_PIPELINE_RUNS_TYPE,
   PipelineTypeEnum,
@@ -15,6 +17,7 @@ import {
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
 import { ImageStyle } from '@components/Dashboard/index.style';
+import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
   TIME_PERIOD_DISPLAY_MAPPING,
@@ -53,6 +56,20 @@ function Widget({
     ? ''
     : `(${count})`;
 
+  const utcTooltipEl = useMemo(() => (
+    displayLocalTimezone
+      ? (
+        <Spacing ml="4px">
+          <Tooltip
+            {...SHARED_UTC_TOOLTIP_PROPS}
+            label="The pipeline run failures are displayed in local time."
+            maxWidth={UNIT * 24}
+            widthFitContent={false}
+          />
+        </Spacing>
+      ) : null
+  ), [displayLocalTimezone]);
+
   return (
     <RowDataTable
       footer={
@@ -83,6 +100,7 @@ function Widget({
           <Text bold>
             Latest {isAllRuns ? '' : `${lowercase(pipelineTypeLabel)} `}pipeline run failures {countDisplay}
           </Text>
+          {utcTooltipEl}
         </FlexContainer>
       }
       maxHeight={MAX_HEIGHT}
@@ -135,7 +153,8 @@ function Widget({
                   Run created on&nbsp;
                   {displayLocalTimezone
                     ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
-                    : dateFormatLong(createdAt, { includeSeconds: true, utcFormat: true })}
+                    : createdAt
+                  }
                 </Link>
               </NextLink>
             </FlexContainer>

@@ -51,6 +51,7 @@ IntegrationSourcePolicy.allow_read([
 
 IntegrationSourcePolicy.allow_write([
     'action_type',
+    'block_uuid',
     'config',
     'pipeline_uuid',
     'streams',
@@ -61,6 +62,7 @@ IntegrationSourcePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 IntegrationSourcePolicy.allow_write([
+    'block_uuid',
     'streams',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

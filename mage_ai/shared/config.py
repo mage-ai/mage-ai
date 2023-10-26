@@ -32,7 +32,7 @@ class BaseConfig:
 
         config = self.parse_config(config)
         extra_config = self.load_extra_config()
-        config = merge_dict(config, extra_config)
+        config = merge_dict(extra_config, config)
 
         for config_key, config_value in config.items():
             config_key_type = self.__annotations__.get(config_key, None)

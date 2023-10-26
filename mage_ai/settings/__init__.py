@@ -1,5 +1,9 @@
 import os
 
+# If you add a new environment variable, make sure to check if it should be added to
+# the `MAGE_SETTINGS_ENVIRONMENT_VARIABLES` list at the bottom of this file. Also, update
+# the environment variable documentation at docs/development/variables/environment-variables.mdx
+
 DEBUG = os.getenv('DEBUG', False)
 HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 QUERY_API_KEY = 'api_key'
@@ -19,8 +23,11 @@ except ValueError:
     DISABLE_NOTEBOOK_EDIT_ACCESS = 1 if os.getenv('DISABLE_NOTEBOOK_EDIT_ACCESS') else 0
 
 
-def is_disable_pipeline_edit_access():
-    return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
+def is_disable_pipeline_edit_access(disable_notebook_edit_access_override: int = None) -> bool:
+    value = DISABLE_NOTEBOOK_EDIT_ACCESS
+    if disable_notebook_edit_access_override is not None:
+        value = disable_notebook_edit_access_override
+    return value >= 1
 
 
 # ------------------------- DISABLE TERMINAL ----------------------
@@ -30,6 +37,8 @@ DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', '0').lower() in ('true', '1', '
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
+REQUIRE_USER_PERMISSIONS = REQUIRE_USER_AUTHENTICATION and \
+    os.getenv('REQUIRE_USER_PERMISSIONS', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
 try:
     MAGE_ACCESS_TOKEN_EXPIRY_TIME = int(os.getenv('MAGE_ACCESS_TOKEN_EXPIRY_TIME', '2592000'))
@@ -81,6 +90,13 @@ REQUESTS_BASE_PATH = os.getenv('MAGE_REQUESTS_BASE_PATH', BASE_PATH)
 # to the MAGE_BASE_PATH environment variable.
 ROUTES_BASE_PATH = os.getenv('MAGE_ROUTES_BASE_PATH', BASE_PATH)
 
+# Sets the trigger interval of the scheduler to a numeric value, in seconds
+# Determines how often the scheduler gets invoked
+try:
+    SCHEDULER_TRIGGER_INTERVAL = float(os.getenv('SCHEDULER_TRIGGER_INTERVAL', '10'))
+except ValueError:
+    SCHEDULER_TRIGGER_INTERVAL = 10
+
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
 MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
@@ -104,4 +120,6 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'SENTRY_TRACES_SAMPLE_RATE',
     'MAGE_PUBLIC_HOST',
     'ACTIVE_DIRECTORY_DIRECTORY_ID',
+    'SCHEDULER_TRIGGER_INTERVAL',
+    'REQUIRE_USER_PERMISSIONS',
 ]

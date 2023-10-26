@@ -34,7 +34,7 @@ Sometimes, upstream data is out of our contol. If we're expecting a column in a 
 
 <Frame><img alt="Oh no" src="https://media0.giphy.com/media/t1RCtCTlFUhby/200w.gif" /></Frame>
 
-Thankfully, [Mage Community](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
+Thankfully, [Mage Community](https://www.mage.ai/chat) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
 
 Say you have an upstream block that looks like:
 
@@ -102,4 +102,18 @@ services:
     ...
     volumes:
       - ~/.aws:/root/.aws
+```
+
+## "Run block" button doesn't work when running Mage with Nginx
+
+If Mage terminal or "Run block" button doesn't work, it usually means there's a WebSocket connection issue. If Mage server is deployed with Nginx, you can add the below config to Nginx config to enable WebScoket connection.
+
+```
+        location / {
+          proxy_pass      http://127.0.0.1:6789;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "Upgrade";
+          proxy_set_header Host $host;
+        }
 ```

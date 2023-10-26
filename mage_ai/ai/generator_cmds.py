@@ -24,7 +24,7 @@ PRINT_BLOCK_DOC_DEFAULT = typer.Option(
 def generate_block_documentation(project_path: str = PROJECT_NAME_DEFAULT,
                                  pipeline_uuid: str = PROJECT_NAME_DEFAULT,
                                  block_uuid: str = BLOCK_NAME_DEFAULT):
-    print(asyncio.run(LLMPipelineWizard().async_generate_block_documentation_with_name(
+    print(asyncio.run(LLMPipelineWizard().async_generate_doc_for_block(
         pipeline_uuid,
         block_uuid,
         project_path=project_path,
@@ -35,7 +35,7 @@ def generate_block_documentation(project_path: str = PROJECT_NAME_DEFAULT,
 def generate_pipeline_documentation(project_path: str = PROJECT_NAME_DEFAULT,
                                     pipeline_uuid: str = PROJECT_NAME_DEFAULT,
                                     print_block_doc: bool = PRINT_BLOCK_DOC_DEFAULT):
-    print(asyncio.run(LLMPipelineWizard().async_generate_pipeline_documentation(
+    print(asyncio.run(LLMPipelineWizard().async_generate_doc_for_pipeline(
         pipeline_uuid,
         print_block_doc=print_block_doc,
         project_path=project_path,

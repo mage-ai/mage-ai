@@ -373,6 +373,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         run_upstream = message.get('run_upstream')
         upstream_blocks = message.get('upstream_blocks')
 
+        variables = message.get('variables') or None
+
         pipeline_uuid = pipeline.uuid
 
         widget = BlockType.CHART == block_type
@@ -428,14 +430,28 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
+                    # The UI can execute a block and send run_settings to control the behavior
+                    # of the block run while executing it from the notebook.
+                    # E.G.
+                    # run_settings = dict(selected_streams=[
+                    #     'account_v2',
+                    #     'user_with_emails',
+                    # ])
                     run_settings=run_settings,
                     run_tests=run_tests,
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
                     upstream_blocks=upstream_blocks,
+                    variables=variables,
                     widget=widget,
                 )
-
+            elif BlockType.SCRATCHPAD == block_type:
+                # Initialize the db_connection session if it hasn't been initialized yet.
+                initialize_db_connection = """
+from mage_ai.orchestration.db import db_connection
+db_connection.start_session()
+"""
+                client.execute(initialize_db_connection)
             msg_id = client.execute(add_internal_output_info(code))
 
             WebSocketServer.running_executions_mapping[msg_id] = value

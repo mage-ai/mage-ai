@@ -65,6 +65,13 @@ class BaseModel(Base):
         return self.query.get(uuid)
 
     def save(self, commit=True) -> None:
+        # Validate decorator isn’t invoked if value for column is empty.
+        for table_column in self.__table__.columns:
+            column = table_column.name
+            value = getattr(self, column)
+            if value is None and hasattr(self, f'validate_{column}'):
+                getattr(self, f'validate_{column}')(column, value)
+
         self.session.add(self)
         if commit:
             try:

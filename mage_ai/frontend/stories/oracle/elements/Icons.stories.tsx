@@ -1,11 +1,12 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ThemeBlock from '../../ThemeBlock';
 import {
+  AISparkle,
   Action,
   Add,
-  AISparkle,
+  AddUserSmileyFace,
   AlertCircle,
   AlertTriangle,
   Alphabet,
@@ -13,8 +14,8 @@ import {
   ArrowDownSplitTwo,
   ArrowLeft,
   ArrowRight,
-  ArrowsAdjustingFrameSquare,
   ArrowUp,
+  ArrowsAdjustingFrameSquare,
   Backfill,
   BackfillV2,
   Batch,
@@ -52,8 +53,8 @@ import {
   Copy,
   CubeWithArrowDown,
   Cursor,
-  DataIntegrationPipeline,
   DBT,
+  DataIntegrationPipeline,
   DiamondDetached,
   DiamondShared,
   DocumentIcon,
@@ -76,6 +77,9 @@ import {
   Input,
   Insights,
   Integration,
+  Interactions,
+  LayoutSplit,
+  LayoutStacked,
   Lightning,
   List,
   Locked,
@@ -108,6 +112,7 @@ import {
   PlayButton,
   PlayButtonFilled,
   PlugAPI,
+  PowerOnOffButton,
   PowerUps,
   PreviewHidden,
   PreviewOpen,
@@ -137,6 +142,7 @@ import {
   Tree,
   Union,
   Variables,
+  VisibleEye,
   WeekDots,
   WorkspacesIcon,
   WorkspacesUsersIcon,
@@ -145,9 +151,10 @@ import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 
 const ICONS = [
+  AISparkle,
   Action,
   Add,
-  AISparkle,
+  AddUserSmileyFace,
   AlertCircle,
   AlertTriangle,
   Alphabet,
@@ -155,8 +162,8 @@ const ICONS = [
   ArrowDownSplitTwo,
   ArrowLeft,
   ArrowRight,
-  ArrowsAdjustingFrameSquare,
   ArrowUp,
+  ArrowsAdjustingFrameSquare,
   Backfill,
   BackfillV2,
   Batch,
@@ -194,8 +201,8 @@ const ICONS = [
   Copy,
   CubeWithArrowDown,
   Cursor,
-  DataIntegrationPipeline,
   DBT,
+  DataIntegrationPipeline,
   DiamondDetached,
   DiamondShared,
   DocumentIcon,
@@ -219,6 +226,9 @@ const ICONS = [
   Input,
   Insights,
   Integration,
+  Interactions,
+  LayoutSplit,
+  LayoutStacked,
   Lightning,
   List,
   Locked,
@@ -252,6 +262,7 @@ const ICONS = [
   PlayButton,
   PlayButtonFilled,
   PlugAPI,
+  PowerOnOffButton,
   PowerUps,
   PreviewHidden,
   PreviewOpen,
@@ -281,6 +292,7 @@ const ICONS = [
   Tree,
   Union,
   Variables,
+  VisibleEye,
   WeekDots,
   WorkspacesIcon,
   WorkspacesUsersIcon,
@@ -308,6 +320,6 @@ export default {
   title: 'Oracle/Icons',
 } as Meta;
 
-const Template: Story = () => <Icons />;
+const Template: StoryFn = () => <Icons />;
 
 export const Main = Template.bind({});

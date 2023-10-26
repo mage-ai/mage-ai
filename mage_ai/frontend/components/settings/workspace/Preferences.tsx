@@ -21,6 +21,7 @@ import { ContainerStyle } from './index.style';
 import { Edit } from '@oracle/icons';
 import { ICON_SIZE_MEDIUM, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
@@ -53,6 +54,11 @@ function Preferences({
     openai_api_key: openaiApiKey,
     project_uuid: projectUUID,
   } = project || {};
+
+  const isDemoApp = useMemo(() =>
+    typeof window !== 'undefined' && window.location.hostname === 'demo.mage.ai',
+    [],
+  );
 
   useEffect(() => {
     if (!projectAttributes) {
@@ -152,6 +158,7 @@ function Preferences({
             <Spacing mr={PADDING_UNITS} />
 
             <ToggleSwitch
+              compact
               checked={projectAttributes?.help_improve_mage}
               onCheck={() => setProjectAttributes(prev => ({
                 ...prev,
@@ -196,16 +203,30 @@ function Preferences({
           {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
             <Spacing
               key={k}
-              mt={idx === 0 ? 0 : '4px'}
+              mt={idx === 0 ? 0 : 1}
             >
               <FlexContainer
                 alignItems="center"
-                justifyContent="space-between"
               >
+                <ToggleSwitch
+                  checked={!!v}
+                  compact
+                  onCheck={() => setProjectAttributes(prev => ({
+                    ...prev,
+                    features: {
+                      ...projectAttributes?.features,
+                      [k]: !v,
+                    },
+                  }))}
+                />
+
+                <Spacing mr={PADDING_UNITS} />
+
                 <Flex>
-                  <Text default monospace>
-                    {k}
+                  <Text default={!v} monospace>
+                    {capitalizeRemoveUnderscoreLower(k)}
                   </Text>
+
                   {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
                     <Spacing ml={1}>
                       <Tooltip
@@ -221,19 +242,6 @@ function Preferences({
                     </Spacing>
                   }
                 </Flex>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <ToggleSwitch
-                  checked={!!v}
-                  onCheck={() => setProjectAttributes(prev => ({
-                    ...prev,
-                    features: {
-                      ...projectAttributes?.features,
-                      [k]: !v,
-                    },
-                  }))}
-                />
               </FlexContainer>
             </Spacing>
           ))}
@@ -267,7 +275,8 @@ function Preferences({
               </FlexContainer>
             :
               <TextInput
-                label="API key"
+                disabled={isDemoApp}
+                label={isDemoApp ? 'Entering API key is disabled on demo' : 'API key'}
                 monospace
                 onChange={e => setProjectAttributes(prev => ({
                   ...prev,
