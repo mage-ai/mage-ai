@@ -246,40 +246,16 @@ function Header({
           </Flex>
 
           <Flex alignItems="center">
-            <ServerTimeDropdown />
-            {latestVersion && version && latestVersion !== version && (
-              <Spacing ml={2}>
-                <Button
-                  borderLess
-                  linkProps={{
-                    href: 'https://docs.mage.ai/about/releases',
-                  }}
-                  noHoverUnderline
-                  primary
-                  target="_blank"
-                >
-                  <Text>
-                    🚀 Download new version <Text
-                      bold
-                      inline
-                      monospace
-                    >
-                      {latestVersion}
-                    </Text>
-                  </Text>
-                </Button>
-              </Spacing>
-            )}
-
             {gitIntegrationEnabled && branch && (
-              <Spacing ml={2}>
+              <Spacing ml={1}>
                 <KeyboardShortcutButton
-                  blackBorder
-                  block
                   compact
+                  highlightOnHoverAlt
+                  noBackground
                   noHoverUnderline
                   onClick={showModal}
                   sameColorAsText
+                  title={branch}
                   uuid="Header/GitActions"
                 >
                   <FlexContainer alignItems="center">
@@ -293,29 +269,54 @@ function Header({
               </Spacing>
             )}
 
+            <Spacing ml={1}>
+              <ServerTimeDropdown />
+            </Spacing>
+
             {version && typeof(version) !== 'undefined' && (
               <Spacing ml={2}>
                 <Link
-                  default
                   href="https://www.mage.ai/changelog"
                   monospace
                   openNewWindow
+                  sameColorAsText
+                  small
                 >
                   {`v${version}`}
                 </Link>
               </Spacing>
             )}
 
-            <Spacing ml={2}>
+            {latestVersion && version && latestVersion !== version && (
+              <Spacing ml={1}>
+                <Button
+                  borderLess
+                  compact
+                  linkProps={{
+                    href: 'https://docs.mage.ai/about/releases',
+                  }}
+                  noHoverUnderline
+                  pill
+                  primary
+                  target="_blank"
+                  title={`Update to version ${latestVersion}`}
+                >
+                  <Text bold>Update</Text>
+                </Button>
+              </Spacing>
+            )}
+
+            <Spacing ml={3}>
               <KeyboardShortcutButton
                 beforeElement={<Slack />}
-                blackBorder
                 compact
+                highlightOnHoverAlt
                 inline
                 linkProps={{
                   as: 'https://www.mage.ai/chat',
                   href: 'https://www.mage.ai/chat',
                 }}
+                noBackground
                 noHoverUnderline
                 openNewTab
                 sameColorAsText

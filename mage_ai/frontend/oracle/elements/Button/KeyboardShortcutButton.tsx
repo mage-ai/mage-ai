@@ -20,6 +20,7 @@ import {
   OUTLINE_OFFSET,
   OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
+import { ButtonHighlightProps, SHARED_HIGHLIGHT_STYLES } from '.';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_REGULAR,
@@ -104,10 +105,11 @@ export type KeyboardShortcutButtonProps = {
   withIcon?: boolean;
   wrapText?: boolean;
   useModelTheme?: boolean;
-} & KeyboardShortcutSharedProps & LinkProps;
+} & ButtonHighlightProps & KeyboardShortcutSharedProps & LinkProps;
 
 const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   ${transition()}
+  ${SHARED_HIGHLIGHT_STYLES}
 
   align-items: center;
   border: none;
