@@ -1,7 +1,12 @@
 import json
+
 import singer
-from tap_google_ads.client import create_sdk_client
-from tap_google_ads.streams import initialize_core_streams, initialize_reports
+
+from mage_integrations.sources.google_ads.tap_google_ads.client import create_sdk_client
+from mage_integrations.sources.google_ads.tap_google_ads.streams import (
+    initialize_core_streams,
+    initialize_reports,
+)
 
 LOGGER = singer.get_logger()
 DEFAULT_QUERY_LIMIT = 1000000

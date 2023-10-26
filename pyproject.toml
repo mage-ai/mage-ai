@@ -31,8 +31,11 @@ indent-width = 4
 target-version = "py38"
 
 [tool.ruff.lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-ignore = ["E501"]
+
+ignore = [
+    "E501", 
+]
+
 select = [
     "B",
     "C9",

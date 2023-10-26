@@ -51,7 +51,7 @@ class AmazonS3(Destination):
             endpoint_url=self.endpoint,
         )
 
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
         client = self.build_client()
 
         table_name = self.config.get('table')

@@ -3,7 +3,10 @@ from typing import List
 from mage_integrations.connections.mysql import ConnectionMethod
 from mage_integrations.connections.mysql import MySQL as MySQLConnection
 from mage_integrations.sources.base import main
-from mage_integrations.sources.constants import COLUMN_FORMAT_DATETIME
+from mage_integrations.sources.constants import (
+    COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_INTEGER,
+)
 from mage_integrations.sources.sql.base import Source
 
 
@@ -46,6 +49,8 @@ WHERE table_schema = '{database}'
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         if COLUMN_FORMAT_DATETIME == column_format:
             return 'DATETIME'
+        elif COLUMN_TYPE_INTEGER == column_type:
+            return 'UNSIGNED'
         return super().column_type_mapping(column_type, column_format)
 
     def update_column_names(self, columns: List[str]) -> List[str]:

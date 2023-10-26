@@ -17,12 +17,14 @@ def build_sample_postgres_rows():
         ('demo_users', None, None, 'id', 'character varying', 'YES'),
     ]
 
+
 def build_log_based_sample_catalog_entry():
     return CatalogEntry(
         replication_method='LOG_BASED',
         stream='demo_users',
         tap_stream_id='demo_users',
     )
+
 
 class BaseSQLSourceTests(unittest.TestCase):
     maxDiff = None

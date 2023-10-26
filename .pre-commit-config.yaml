@@ -44,18 +44,6 @@ repos:
   - id: docformatter
     stages: [manual]
 
-- repo: https://github.com/pycqa/flake8
-  rev: 6.1.0
-  hooks:
-  - id: flake8
-    additional_dependencies:
-    - flake8-bugbear==23.9.16
-  - id: flake8
-    alias: flake8-extra
-    stages: [manual]
-    additional_dependencies:
-    - flake8-comprehensions
-    - flake8-simplify
 # Theres a lot to do in order to make mage mypy compliant
 # e.g. we would have to load all stubs in the dev environment
 # this makes sense only after we have merged tool.poetry.group.dev.dependencies

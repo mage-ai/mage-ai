@@ -34,19 +34,23 @@ def build_create_table_command(
     column_identifier: str = '',
     if_not_exists: bool = False,
     key_properties: List[str] = None,
+    use_lowercase: bool = True,
 ) -> str:
     columns_and_types = [
-        f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f"{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}" +
         f" {column_type_mapping[col]['type_converted']}"
         for col in columns
     ]
 
     if unique_constraints:
-        unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
+        unique_constraints_clean = [clean_column_name(col, use_lowercase)
+                                    for col in unique_constraints]
+
         unique_constraints_escaped = [f'{column_identifier}{col}{column_identifier}'
                                       for col in unique_constraints_clean]
+
         index_name = '_'.join([
-            clean_column_name(full_table_name),
+            clean_column_name(full_table_name, use_lowercase),
         ] + unique_constraints_clean)
         index_name = f'unique{index_name}'[:64]
         columns_and_types.append(
@@ -55,7 +59,7 @@ def build_create_table_command(
 
     if key_properties and len(key_properties) >= 1:
         key_properties_clean = [
-            f'{column_identifier}{clean_column_name(col)}{column_identifier}'
+            f'{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}'
             for col in key_properties
         ]
         columns_and_types.append(f"PRIMARY KEY ({', '.join(key_properties_clean)})")
@@ -78,12 +82,13 @@ def build_alter_table_command(
     columns: List[str],
     full_table_name: str,
     column_identifier: str = '',
+    use_lowercase: bool = True,
 ) -> str:
     if not columns:
         return None
 
     columns_and_types = [
-        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f"ADD COLUMN {column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}" + # noqa
         f" {column_type_mapping[col]['type_converted']}" for col
         in columns
     ]
@@ -226,6 +231,15 @@ def convert_column_to_type(value, column_type) -> str:
     return f"CAST('{value}' AS {column_type})"
 
 
+def build_insert_columns(
+    columns: List[str],
+    column_identifier: str = '',
+    use_lowercase: bool = True,
+):
+    return [f'{column_identifier}{clean_column_name(col, use_lowercase)}{column_identifier}'
+            for col in columns]
+
+
 def build_insert_command(
     column_type_mapping: Dict,
     columns: List[str],
@@ -237,6 +251,7 @@ def build_insert_command(
     stringify_values: bool = True,
     convert_column_types: bool = True,
     column_identifier: str = '',
+    use_lowercase: bool = True,
 ) -> List[str]:
     values = []
     for row in records:
@@ -284,6 +299,8 @@ def build_insert_command(
         values.append(vals)
 
     return [
-        [f'{column_identifier}{clean_column_name(col)}{column_identifier}' for col in columns],
+        build_insert_columns(columns,
+                             column_identifier=column_identifier,
+                             use_lowercase=use_lowercase),
         values,
     ]
