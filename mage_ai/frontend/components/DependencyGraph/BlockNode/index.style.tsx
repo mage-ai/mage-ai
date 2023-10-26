@@ -9,6 +9,7 @@ export const BORDER_WIDTH = 2;
 
 export const NodeContainerStyle = styled.div<{
   active?: boolean;
+  backgroundGradient?: string;
   borderColorBottom?: string;
   borderColorLeft?: string;
   borderColorRight?: string;

@@ -1,4 +1,5 @@
 import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import KernelOutputType  from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
 import {
   EdgeType,
@@ -228,23 +229,28 @@ export function buildNodesEdgesPorts({
   activeNodes: {
     [nodeID: string]: NodeType;
   };
-  blockStatus: StatusTypeEnum;
+  blockStatus: {
+    [uuid: string]: {
+      status: RunStatus,
+      runtime?: number,
+    };
+  };
   blockUUIDMapping: {
     [uuid: string]: BlockType;
   };
   blocks: BlockType[];
   callbackBlocksByBlockUUID: {
-    [uuid: string]: BlockType;
+    [uuid: string]: BlockType[];
   };
   conditionalBlocksByBlockUUID: {
-    [uuid: string]: BlockType;
+    [uuid: string]: BlockType[];
   };
   downstreamBlocksMapping: {
-    [uuid: string]: BlockType;
+    [uuid: string]: BlockType[];
   };
   enablePorts?: boolean;
   extensionBlocksByBlockUUID: {
-    [uuid: string]: BlockType;
+    [uuid: string]: BlockType[];
   };
   nodeHovering?: NodeType;
   pipeline: PipelineType;
@@ -280,12 +286,19 @@ export function buildNodesEdgesPorts({
     [id: string]: EdgeType;
   } = {};
   const ports: {
-    [uuid: string]: PortType;
-  } = [];
+    [uuid: string]: {
+      [uuid: string]: PortType;
+    };
+  } = {};
 
   const blocksMapping = indexBy(blocks || [], ({ uuid }) => uuid);
 
-  const mappingUpstreamBlockSet = {};
+  const mappingUpstreamBlockSet: {
+    [uuid: string]: {
+      downstreamBlocks: BlockType[];
+      upstreamBlocks: BlockType[];
+    };
+  } = {};
   blocks?.forEach((block: BlockType) => {
     if (block?.upstream_blocks?.length >= 1) {
       const arr = block?.upstream_blocks || [];
@@ -302,7 +315,12 @@ export function buildNodesEdgesPorts({
   });
 
   const blocksInGroups = {};
-  const blocksWithDownstreamBlockSet = {};
+  const blocksWithDownstreamBlockSet: {
+    [uuid: string]: {
+      downstreamBlocks: BlockType[];
+      upstreamBlocks: BlockType[];
+    }[];
+  } = {};
 
   Object.values(mappingUpstreamBlockSet || {}).forEach((info) => {
     const {
@@ -326,8 +344,8 @@ export function buildNodesEdgesPorts({
         }
       });
 
-      const countValues = (Object.values(counts || {}) || []);
-      const count = Math.max(...countValues);
+      const countValues: number[] = (Object.values(counts || {}) || []);
+      const count: number = Math.max(...countValues);
 
       if (!countValues?.length || count >= 2) {
         downstreamBlocks?.forEach((block2) => {
@@ -446,7 +464,12 @@ export function buildNodesEdgesPorts({
     }
   });
 
-  const groupsByParentID = {};
+  const groupsByParentID: {
+    [uuid: string]: {
+      downstreamBlocks: BlockType[];
+      upstreamBlocks: BlockType[];
+    };
+  } = {};
 
   // Create unique groups
   // Iterate through the blocks that have a downstream as a group
@@ -489,7 +512,12 @@ export function buildNodesEdgesPorts({
     };
     nodesInner[parentID] = node;
 
-    const subgroup2 = blocksInSameGroup(
+    const subgroup2: {
+      [uuid: string]: {
+        downstreamBlocks: BlockType[];
+        upstreamBlocks: BlockType[];
+      };
+    } = blocksInSameGroup(
       downstreamBlocks,
       blocksInGroups,
       blocksWithDownstreamBlockSet,
@@ -503,6 +531,7 @@ export function buildNodesEdgesPorts({
 
     const uuidsInSubgroup = Object.values(
       subgroup2 || {},
+    // @ts-ignore
     )?.reduce((acc, { upstreamBlocks: upstreamBlocks2 }) => acc.concat(
       upstreamBlocks2?.map(({ uuid: uuid3 }) => uuid3),
     ), []);
@@ -653,10 +682,17 @@ export function blocksInSameGroup(
   blocksWithDownstreamBlockSet,
   groupsByParentID,
   parentID,
-) {
+): {
+  [uuid: string]: {
+    downstreamBlocks: BlockType[];
+    upstreamBlocks: BlockType[];
+  };
+} {
   const uuids = sortByKey(blocks?.map(({ uuid }) => uuid) || [], ({ uuid }) => uuid);
 
-  const upstreamBlockParents = {};
+  const upstreamBlockParents: {
+    [uuid: string]: BlockType[];
+  } = {};
   // Check to see if the current upstreams are in the same group.
   blocks?.forEach((block2) => {
     const { uuid } = block2;
@@ -711,19 +747,26 @@ export function getBlockStatus({
   runningBlocks,
   runningBlocksMapping,
 }: {
-  block: BlockType[];
-  blockStatus: StatusTypeEnum;
-  messages: string[];
+  block: BlockType;
+  blockStatus: {
+    [uuid: string]: {
+      runtime?: number;
+      status: RunStatus;
+    };
+  };
+  messages: {
+    [uuid: string]: KernelOutputType[];
+  };
   noStatus: boolean;
   runningBlocks: BlockType[];
   runningBlocksMapping: {
     [uuid: string]: BlockType;
   };
 }): {
-  hasFailed: boolean;
-  isInProgress: boolean;
-  isQueued: boolean;
-  isSuccessful: boolean;
+  hasFailed?: boolean;
+  isInProgress?: boolean;
+  isQueued?: boolean;
+  isSuccessful?: boolean;
 } {
   if (noStatus || !block) {
     return {};

@@ -17,6 +17,7 @@ import BlockNode from './BlockNode';
 import BlockType, {
   BLOCK_TYPES_WITH_NO_PARENTS,
   BlockLanguageEnum,
+  BlockRequestPayloadType,
   BlockTypeEnum,
   SetEditingBlockType,
   StatusTypeEnum,
@@ -36,11 +37,10 @@ import {
   EdgeType,
   NodeType,
   PortType,
-  STROKE_WIDTH,
   SideEnum,
   ZOOMABLE_CANVAS_SIZE,
 } from './constants';
-import { GraphContainerStyle, inverseColorsMapping } from './index.style';
+import { GraphContainerStyle, STROKE_WIDTH, inverseColorsMapping } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import {
@@ -145,7 +145,7 @@ export const MarkerArrow = dynamic(
 );
 
 export type DependencyGraphProps = {
-  addNewBlockAtIndex: (
+  addNewBlockAtIndex?: (
     block: BlockRequestPayloadType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
@@ -185,7 +185,7 @@ export type DependencyGraphProps = {
   pipeline: PipelineType;
   runBlock?: (payload: {
     block: BlockType;
-    code: string;
+    code?: string;
     ignoreAlreadyRunning?: boolean;
     runUpstream?: boolean;
   }) => void;
@@ -274,7 +274,7 @@ function DependencyGraph({
 
   useEffect(() => {
     const handleMouseMove = (event) => {
-      if (isDragging, nodeDragging) {
+      if (isDragging && nodeDragging) {
         setNodeDragging(prev => ({
           ...prev,
           event,
@@ -282,7 +282,7 @@ function DependencyGraph({
       }
     };
     const handleMouseUp = (event) => {
-      if (isDragging, nodeDragging) {
+      if (isDragging && nodeDragging) {
         setIsDragging(false);
         setTimeout(() => setNodeDragging(null), 1);
       }
@@ -497,6 +497,7 @@ function DependencyGraph({
     downstreamBlocks,
     upstreamBlocks,
   }: {
+    block: BlockType;
     downstreamBlocks?: string[];
     upstreamBlocks?: string[];
   }) => {
@@ -630,13 +631,15 @@ function DependencyGraph({
     heightOffset,
   ]);
 
-  const onClickNode = useCallback((event, {
-    data: {
-      block: blockInit,
-      blocks,
-    },
-  }) => {
+  const onClickNode = useCallback((event, node: any) => {
     pauseEvent(event);
+
+    const {
+      data: {
+        block: blockInit,
+        blocks,
+      },
+    } = node;
 
     let block = blockInit;
 
@@ -890,7 +893,6 @@ function DependencyGraph({
 
   const onDragStartPort = useCallback(({
     event,
-    initial,
     node,
     port,
   }) => {
@@ -898,7 +900,6 @@ function DependencyGraph({
       ...prev,
       [node?.id]: {
         event,
-        initial,
         node,
         port,
       },
@@ -909,7 +910,6 @@ function DependencyGraph({
 
   const onDragEndPort = useCallback(({
     event,
-    inital,
     node,
     port,
   }) => {
@@ -932,7 +932,10 @@ function DependencyGraph({
         && !fromBlock?.upstream_blocks?.includes(toBlock.uuid)
         && node?.id !== targetNode?.id
       ) {
-        const payload = {};
+        const payload: {
+          downstreamBlocks?: string[]
+          upstreamBlocks?: string[]
+        } = {};
 
         // If port is south, then update the toBlock’s upstream
         if (SideEnum.SOUTH === port?.side as SideEnum) {
@@ -963,12 +966,14 @@ function DependencyGraph({
     targetNode,
   ]);
 
-  const determineSelectedStatus: {
+  const determineSelectedStatus = useCallback((node: {
+    id: string;
+  }, block: BlockType, opts?: {
+    blocksWithSameDownstreamBlocks?: BlockType[];
+  }): {
     anotherBlockSelected: boolean;
     selected: boolean;
-  } = useCallback((node: NodeType, block: BlockType, opts?: {
-    blocksWithSameDownstreamBlocks?: BlockType[];
-  }) => {
+  } => {
     if (nodeDragging) {
       return {
         anotherBlockSelected: true,
@@ -1039,7 +1044,7 @@ function DependencyGraph({
           isQueued,
           isSuccessful,
         } = getBlockStatus({
-          downstreamBlock,
+          block: downstreamBlock,
           blockStatus,
           messages,
           noStatus,
@@ -1220,13 +1225,10 @@ function DependencyGraph({
     const extensionBlocks = extensionBlocksByBlockUUID?.[block?.uuid];
 
     const opts = {
+      blockStatus,
       callbackBlocks,
       conditionalBlocks,
       extensionBlocks,
-      hasFailed,
-      isInProgress,
-      isQueued,
-      isSuccessful,
     };
     const nodeHeight = getBlockNodeHeight(block, pipeline, opts);
     const nodeWidth = getBlockNodeWidth(block, pipeline, opts);
@@ -1276,10 +1278,10 @@ function DependencyGraph({
     const fromBlock = blockUUIDMapping[edge?.from];
     const toBlock = blockUUIDMapping[edge?.to];
 
-    const {
-      clientX,
-      clientY,
-    } = event;
+    // @ts-ignore
+    const clientX = event?.clientX;
+    // @ts-ignore
+    const clientY = event?.clientY;
 
     const {
       x,
@@ -1354,7 +1356,7 @@ function DependencyGraph({
                 onClick={() => {
                   const idx = blocks?.findIndex(({ uuid }) => uuid === toBlock?.uuid);
 
-                  addNewBlockAtIndex(
+                  addNewBlockAtIndex?.(
                     {
                       downstream_blocks: toBlock ? [toBlock?.uuid] : null,
                       language: toBlock?.language,
@@ -1462,7 +1464,7 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          addNewBlockAtIndex(
+          addNewBlockAtIndex?.(
             {
               downstream_blocks: block ? [block?.uuid] : null,
               language: block?.language,
@@ -1475,7 +1477,7 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          addNewBlockAtIndex(
+          addNewBlockAtIndex?.(
             {
               language: block?.language,
               type: BlockTypeEnum.CUSTOM,
@@ -1766,87 +1768,13 @@ function DependencyGraph({
                 {...edge}
                 className={`edge ${isInProgress ? 'active' : 'inactive'}`}
                 onClick={(event, edge) => {
+                  // @ts-ignore
                   setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {
                     block,
                     edge,
                     event,
                   });
                 }}
-                // onKeyDown={() => {
-
-                // }}
-                // onEnter={(e) => {
-                //   // function getAllSiblings(elem, filter) {
-                //   //     var sibs = [];
-                //   //     elem = elem.parentNode.firstChild;
-                //   //     do {
-                //   //         if (elem.nodeType === 3) continue; // text node
-                //   //         if (!filter || filter(elem)) sibs.push(elem);
-                //   //     } while (elem = elem.nextSibling)
-                //   //     return sibs;
-                //   // }
-                //   // getAllSiblings(e.target)?.forEach(el => {
-                //   //   const classNames = new Set(...el.className?.baseVal?.split(' '));
-                //   //   classNames.add('show');
-                //   //   // el.className = [...classNames].join(' ');
-                //   //   // el.style.opacity = '1 !important';
-                //   //   console.log(edge)
-                //   // });
-
-                //   setActiveEdges({
-                //     [edge.id]: edge,
-                //   });
-                // }}
-                // onLeave={() => {
-                //   setActiveEdges({});
-                // }}
-                // onAdd={(event, edge) => {
-                //   const fromBlock = blockUUIDMapping[edge.from];
-                //   const toBlock = blockUUIDMapping[edge.to];
-                //   const idx = blocks?.findIndex(({ uuid }) => uuid === toBlock?.uuid);
-
-                //   addNewBlockAtIndex(
-                //     {
-                //       downstream_blocks: [toBlock?.uuid],
-                //       language: toBlock?.language,
-                //       type: BlockTypeEnum.CUSTOM,
-                //       upstream_blocks: [fromBlock?.uuid],
-                //     },
-                //     idx,
-                //     () => {
-
-                //     },
-                //   );
-                // }}
-                // add={
-                //   <Add
-                //     className={`edge-rect edge-rect-${colorsInverse?.[colorData?.accentLight]} edge-line edge-line-${colorsInverse?.[colorData?.accent]}`}
-                //     hidden={!!activeEdges?.[edge?.id]}
-                //     size={2 * UNIT}
-                //   />
-                // }
-                // remove={
-                //   <Remove
-                //     className={`edge-rect edge-line edge-line-remove`}
-                //     // hidden={!activeEdges?.[edge?.id]}
-                //     hidden={false}
-                //     size={2 * UNIT}
-                //   />
-                // }
-                // onRemove={(event, edge) => {
-                //   console.log('WTFF')
-                //   const fromBlock = blockUUIDMapping[edge.from];
-                //   const toBlock = blockUUIDMapping[edge.to];
-
-                //   updateBlockByDragAndDrop({
-                //     fromBlock,
-                //     removeDependency: true,
-                //     toBlock,
-                //   });
-                //   setEdgeSelections([]);
-                // }}
-                // removable={enablePorts && !editingBlock?.upstreamBlocks}
-                // removable={true}
                 style={{
                   stroke: anotherBlockSelected && !selected
                     ? colorData?.accentLight
@@ -1917,19 +1845,17 @@ function DependencyGraph({
                       setActiveEdge(null);
                       clearTimeoutForNode(node);
                     }}
-                    onDragEnd={(event, initial, port) => {
+                    onDragEnd={(event, _, port) => {
                       onDragEndPort({
                         event,
-                        initial,
                         node,
                         port,
                       });
                     }}
-                    onDragStart={(event, initial, port) => {
+                    onDragStart={(event, _, port) => {
                       // Build block node, then drag it around.
                       onDragStartPort({
                         event,
-                        initial,
                         node,
                         port,
                       });
@@ -2074,32 +2000,6 @@ function DependencyGraph({
             );
           }}
           nodes={nodes}
-          // onNodeLink={(_event, from, to, port) => {
-          //   console.log('wtf', _event)
-          //   const fromBlock: BlockType = blockUUIDMapping[from.id];
-          //   const toBlock: BlockType = blockUUIDMapping[to.id];
-
-          //   const isConnectingIntegrationSourceAndDestination = (
-          //     pipeline?.type === PipelineTypeEnum.INTEGRATION
-          //       && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
-          //         || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
-          //           && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
-          //         )
-          //   );
-          //   if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
-          //     || from.id === to.id
-          //     || isConnectingIntegrationSourceAndDestination
-          //   ) {
-          //     return;
-          //   }
-
-          //   const portSide = port?.side as SideEnum;
-          //   updateBlockByDragAndDrop({
-          //     fromBlock,
-          //     portSide: portSide || SideEnum.SOUTH,
-          //     toBlock,
-          //   });
-          // }}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           onZoomChange={z => setZoom?.(z)}
           pannable={pannable}

@@ -7,7 +7,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export const STROKE_WIDTH = 2;
 
-export function inverseColorsMapping(themeContext = dark) {
+export function inverseColorsMapping(themeContext: any = dark) {
   const mapping = {};
   [
     themeContext?.accent,
@@ -15,6 +15,7 @@ export function inverseColorsMapping(themeContext = dark) {
     themeContext?.monotone,
   ].forEach((colors) => {
     Object.entries(colors).forEach(([k, v]) => {
+      // @ts-ignore
       mapping[v] = k;
     });
   });

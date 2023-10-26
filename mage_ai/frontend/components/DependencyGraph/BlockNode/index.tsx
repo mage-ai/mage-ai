@@ -74,7 +74,7 @@ type BlockNodeProps = {
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
-  opacity?: boolean;
+  opacity?: number;
   pipeline: PipelineType;
   runtime?: number;
   selected?: boolean;
@@ -209,10 +209,10 @@ function BlockNode({
     borderColorRight,
     borderColorTop,
   }: {
-    borderColorBottom: string;
-    borderColorLeft: string;
-    borderColorRight: string;
-    borderColorTop: string;
+    borderColorBottom?: string;
+    borderColorLeft?: string;
+    borderColorRight?: string;
+    borderColorTop?: string;
   } = useMemo(() => {
     const borderColors = [];
     const borderColorsSelected = [];

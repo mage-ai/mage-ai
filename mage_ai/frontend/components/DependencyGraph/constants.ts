@@ -56,10 +56,13 @@ export type PortType = {
 export type NodeType = {
   data: {
     block?: BlockType;
+    blocks?: BlockType[];
+    children?: BlockType[];
     [key: string]: any;
   };
-  height: number;
+  height?: number;
   id: string;
-  ports: PortType[];
-  width: number;
+  parent?: string;
+  ports?: PortType[];
+  width?: number;
 };
