@@ -416,7 +416,9 @@ function CodeBlock({
     const cursorRect = refCursor?.current?.getBoundingClientRect?.();
 
     const yStart = cursorContainerRect?.y + cursorRect?.height;
-    const yEnd = cursorRect?.y + cursorRect?.height;
+    const yEnd = cursorRect?.height === 0
+      ? 0
+      : cursorRect?.y + cursorRect?.height;
     const yDistance = yEnd - yStart;
     const percentageTraveled =
       (100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height) / 100;
@@ -425,14 +427,13 @@ function CodeBlock({
       heights,
       totalHeight,
       mainContainerRect?.height,
-    );
+    ) || 0;
 
     const yMove = cursorContainerRect?.y
       - (Math.max(0, percentageTraveled * (1 - offsetPercentage)) * totalHeight);
 
     const offset = sum((heights || [])?.slice(0, blockIdx) || []);
     const top = yMove + offset;
-
 
     if (scrollTogether) {
       if (refColumn1?.current) {
