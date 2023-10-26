@@ -256,8 +256,12 @@ class GoogleSheets(BaseFile):
             )
             return True
 
-        except gspread.exceptions.SpreadsheetNotFound:
-            return False
+        except gspread.exceptions.APIError as api_error:
+            # Sample responses show a 404 error not found
+            if api_error.response.status_code == 404:
+                return False
+            else:
+                raise api_error
 
     @classmethod
     def with_config(
