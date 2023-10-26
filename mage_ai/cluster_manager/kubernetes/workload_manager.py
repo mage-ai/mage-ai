@@ -27,6 +27,7 @@ from mage_ai.cluster_manager.constants import (
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME,
 )
+from mage_ai.cluster_manager.errors import ConfigurationError
 from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
@@ -72,7 +73,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -185,13 +186,6 @@ class WorkloadManager:
         storage_request_size = parameters.get('storage_request_size', '2Gi')
 
         ingress_name = workspace_config.ingress_name
-
-        self.__create_persistent_volume(
-            name,
-            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
-            storage_request_size=storage_request_size,
-            access_mode=storage_access_mode,
-        )
 
         volumes = []
         volume_mounts = [
@@ -345,7 +339,8 @@ class WorkloadManager:
                             {
                                 'key': key,
                                 'path': key,
-                                'mode': 0o0755,
+                                # Only set the mode for shell scripts
+                                **({'mode': 0o0755} if key.endswith('.sh') else {}),
                             }
                             for key in config_map
                         ]
@@ -486,13 +481,6 @@ class WorkloadManager:
     def delete_workload(self, name: str):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
-        # TODO: remove service from ingress paths
-        try:
-            self.core_client.delete_namespaced_config_map(f'{name}-pre-start', self.namespace)
-        except ApiException as ex:
-            # The delete operation will return a 404 response if the config map does not exist
-            if ex.status != 404:
-                raise
         try:
             self.core_client.delete_namespaced_config_map(f'{name}-hooks', self.namespace)
         except ApiException as ex:
@@ -552,6 +540,8 @@ class WorkloadManager:
     ) -> Dict:
         config_map_data = {}
         if pre_start_script_path:
+            if not mage_container_config:
+                raise ConfigurationError('The container config can not be None')
             self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
 
             with open(pre_start_script_path, 'r', encoding='utf-8') as f:
@@ -603,12 +593,12 @@ class WorkloadManager:
 
             get_custom_configs(mage_container_config)
         except AttributeError as ex:
-            raise Exception(
+            raise ConfigurationError(
                 'Could not find get_custom_configs function in pre-start script'
                 f', error: {str(ex)}'
             )
         except Exception as ex:
-            raise Exception(f'Pre-start script validation failed with error: {str(ex)}')
+            raise ConfigurationError(f'Pre-start script validation failed with error: {str(ex)}')
 
     def __populate_env_vars(
         self,

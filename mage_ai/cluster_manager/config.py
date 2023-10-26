@@ -78,18 +78,6 @@ class LifecycleConfig(BaseConfig):
 
     @classmethod
     def parse_config(self, config: Dict = None) -> Dict:
-        termination_policy = config.get('termination_policy')
-        if termination_policy and type(termination_policy) is dict:
-            config['termination_policy'] = TerminationPolicy.load(
-                config=termination_policy
-            )
-
-        post_start = config.get('post_start')
-        if post_start and type(post_start) is dict:
-            config['post_start'] = PostStart.load(
-                config=post_start
-            )
-
         pre_start_script_path = config.get('pre_start_script_path')
         if pre_start_script_path and not os.path.isabs(pre_start_script_path):
             config['pre_start_script_path'] = os.path.join(
