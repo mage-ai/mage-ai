@@ -53,7 +53,6 @@ export default [
   'spring',
   'still',
   'summer',
-  'throbbing',
   'twilight',
   'wandering',
   'weathered',
