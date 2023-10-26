@@ -29,7 +29,7 @@ def load_from_google_sheet(*args, **kwargs):
     config_profile = 'default'
 
     header_rows = 1
-    sheet_url = "your_sheet_url"
+    sheet_url = 'your_sheet_url'
 
     return GoogleSheets.with_config(ConfigFileLoader(config_path, config_profile)).load(
         sheet_url=sheet_url,

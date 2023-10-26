@@ -25,10 +25,10 @@ def export_to_google_sheet(df: DataFrame, **kwargs) -> None:
     Docs: [TODO]
     """
 
-    config_path = path.join(get_repo_path(), "io_config.yaml")
-    config_profile = "default"
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
 
-    sheet_url = "your_sheet_url"
+    sheet_url = 'your_sheet_url'
 
     GoogleSheets.with_config(ConfigFileLoader(config_path, config_profile)).export(
         df, 

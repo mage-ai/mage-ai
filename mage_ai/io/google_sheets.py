@@ -51,33 +51,33 @@ class GoogleSheets(BaseFile):
         passed to the Google Sheet client, accepting all other configuration settings there.
         """
 
-        super().__init__(verbose=kwargs.get("verbose", True))
+        super().__init__(verbose=kwargs.get('verbose', True))
 
-        if kwargs.get("verbose") is not None:
-            kwargs.pop("verbose")
+        if kwargs.get('verbose') is not None:
+            kwargs.pop('verbose')
 
         scopes = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive",
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive',
         ]
 
-        credentials = kwargs.get("credentials")
+        credentials = kwargs.get('credentials')
         if credentials is None:
-            if "credentials_mapping" in kwargs:
-                mapping_obj = kwargs.pop("credentials_mapping")
+            if 'credentials_mapping' in kwargs:
+                mapping_obj = kwargs.pop('credentials_mapping')
                 if mapping_obj is not None:
                     credentials = service_account.Credentials.from_service_account_info(
                         mapping_obj, scopes=scopes
                     )
-            if "path_to_credentials" in kwargs:
-                path = kwargs.pop("path_to_credentials")
+            if 'path_to_credentials' in kwargs:
+                path = kwargs.pop('path_to_credentials')
                 if path is not None:
                     credentials = service_account.Credentials.from_service_account_file(
                         path, scopes=scopes
                     )
-            if "credentials" in kwargs:
-                kwargs.pop("credentials")
-        with self.printer.print_msg("Opening connection to Google Sheets"):
+            if 'credentials' in kwargs:
+                kwargs.pop('credentials')
+        with self.printer.print_msg('Opening connection to Google Sheets'):
             self.client = gspread.authorize(credentials, **kwargs)
 
     def fetch_sheet(
@@ -109,15 +109,15 @@ class GoogleSheets(BaseFile):
             sheet = self.client.open(sheet_name)
         else:
             raise KeyError(
-                "Please set one of sheet_url, sheet_id, or sheet_name to a valid Google Sheet."
+                'Please set one of sheet_url, sheet_id, or sheet_name to a valid Google Sheet.'
             )
         if sheet is not None:
             with self.printer.print_msg(
-                f"Loaded Google Sheet '{sheet.title}' with ID '{sheet.id}'"
+                f'Loaded Google Sheet \'{sheet.title}\' with ID \'{sheet.id}\''
             ):
                 return sheet
         else:
-            raise ValueError("There was an error loading the Google Sheet.")
+            raise ValueError('There was an error loading the Google Sheet.')
 
     def fetch_worksheet(
         self,
@@ -160,11 +160,11 @@ class GoogleSheets(BaseFile):
 
         if worksheet is not None:
             with self.printer.print_msg(
-                f"Loaded worksheet '{worksheet.title}' at index '{worksheet.index}'"
+                f'Loaded worksheet \'{worksheet.title}\' at index \'{worksheet.index}\''
             ):
                 return worksheet
         else:
-            raise ValueError("There was an error loading the worksheet.")
+            raise ValueError('There was an error loading the worksheet.')
 
     def load(
         self,
@@ -233,8 +233,8 @@ class GoogleSheets(BaseFile):
         )
 
         with self.printer.print_msg(
-            f"Exporting dataframe to worksheet '{worksheet.title}' "
-            f"in sheet '{worksheet.spreadsheet.title}'"
+            f'Exporting dataframe to worksheet \'{worksheet.title}\''
+            f'in sheet \'{worksheet.spreadsheet.title}\''
         ):
             worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
@@ -268,7 +268,7 @@ class GoogleSheets(BaseFile):
         cls,
         config: BaseConfigLoader,
         **kwargs,
-    ) -> "GoogleSheets":
+    ) -> 'GoogleSheets':
         """
         Initializes Google Sheet client from configuration loader
 
@@ -276,14 +276,14 @@ class GoogleSheets(BaseFile):
             config (BaseConfigLoader): Configuration loader object
         """
         if ConfigKey.GOOGLE_SERVICE_ACC_KEY in config:
-            kwargs["credentials_mapping"] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY]
+            kwargs['credentials_mapping'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY]
         elif ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH in config:
-            kwargs["path_to_credentials"] = config[
+            kwargs['path_to_credentials'] = config[
                 ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH
             ]
         else:
             raise ValueError(
-                "No valid configuration settings found for Google Drive. You must specify "
-                "either your service account key or the filepath to your service account key."
+                'No valid configuration settings found for Google Drive. You must specify '
+                'either your service account key or the filepath to your service account key.'
             )
         return cls(**kwargs)
