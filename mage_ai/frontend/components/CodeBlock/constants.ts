@@ -23,6 +23,17 @@ export const TABS_DBT = ({
   return arr;
 };
 
+export const TAB_SPARK_OUTPUT = { uuid: 'Output' };
+export const TAB_SPARK_JOBS = { uuid: 'Jobs' };
+export const TABS_SPARK = (block: BlockType) => {
+  const arr = [
+    TAB_SPARK_OUTPUT,
+    TAB_SPARK_JOBS,
+  ];
+
+  return arr;
+};
+
 export const DEFAULT_ICON_SIZE = UNIT * 2.5;
 export const DRAG_AND_DROP_TYPE = 'CodeBlock_HiddenBlock';
 

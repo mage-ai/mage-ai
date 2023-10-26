@@ -39,7 +39,9 @@ function SparkJobSqls({
 }: SparkJobSqlsProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
-  const { data: dataSqls } = api.spark_sqls.list();
+  const { data: dataSqls } = api.spark_sqls.list({
+    length: 9999,
+  });
   const sqls: SparkSQLType[] = useMemo(() => [].concat(dataSqls?.spark_sqls || []), [dataSqls]);
 
   const tableMemo = useMemo(() => (

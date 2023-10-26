@@ -312,6 +312,7 @@ class StageBase(BaseSparkModel):
     executor_deserialize_cpu_time: int = None  # 988667
     executor_deserialize_time: int = None  # 0
     executor_run_time: int = None  # 8
+    failure_reason: str = None
     first_task_launched_time: str = None  # "2023-10-15T10:17:00.761GMT"
     input_bytes: int = None  # 0
     input_records: int = None  # 0
