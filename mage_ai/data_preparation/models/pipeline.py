@@ -1252,8 +1252,10 @@ class Pipeline:
         self,
         block: Block,
         callback_block_uuids: List[str] = None,
+        check_downstream_block_order: bool = False,
         check_upstream_block_order: bool = False,
         conditional_block_uuids: List[str] = None,
+        downstream_block_uuids: List[str] = None,
         upstream_block_uuids: List[str] = None,
         widget: bool = False,
     ):
