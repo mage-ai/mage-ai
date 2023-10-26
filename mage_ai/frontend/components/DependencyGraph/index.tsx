@@ -535,7 +535,7 @@ function DependencyGraph({
       type,
       uuid,
     } = block;
-    setSelectedBlock(block);
+    setSelectedBlock?.(block);
     setEdgeSelections([]);
     if (blockRefs?.current) {
       const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
@@ -595,6 +595,7 @@ function DependencyGraph({
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
     downstreamBlocksMapping,
+    enablePorts,
     extensionBlocksByBlockUUID,
     nodeHovering,
     pipeline,
@@ -607,6 +608,7 @@ function DependencyGraph({
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
     downstreamBlocksMapping,
+    enablePorts,
     extensionBlocksByBlockUUID,
     nodeHovering,
     pipeline,
@@ -661,7 +663,7 @@ function DependencyGraph({
           && selectedBlockTwice
           && selectedBlockTwice?.uuid === selectedBlock?.uuid
         ) {
-          setSelectedBlock(null);
+          setSelectedBlock?.(null);
           setSelectedBlockTwice(null);
         } else {
           if (selectedBlock && selectedBlock?.uuid === block?.uuid) {
@@ -1453,7 +1455,7 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          setSelectedBlock(allDependenciesShowing ? null : block);
+          setSelectedBlock?.(allDependenciesShowing ? null : block);
           setSelectedBlockTwice(allDependenciesShowing ? null : block);
         },
         uuid: allDependenciesShowing ? 'Hide all dependencies' : 'Show all dependencies',
@@ -1521,7 +1523,7 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          setSelectedBlock(block);
+          setSelectedBlock?.(block);
           setActiveSidekickView(ViewKeyEnum.FILE_VERSIONS);
         },
         uuid: 'View file versions',

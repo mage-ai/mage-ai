@@ -219,6 +219,7 @@ export function buildNodesEdgesPorts({
   callbackBlocksByBlockUUID,
   conditionalBlocksByBlockUUID,
   downstreamBlocksMapping,
+  enablePorts,
   extensionBlocksByBlockUUID,
   nodeHovering,
   pipeline,
@@ -241,6 +242,7 @@ export function buildNodesEdgesPorts({
   downstreamBlocksMapping: {
     [uuid: string]: BlockType;
   };
+  enablePorts?: boolean;
   extensionBlocksByBlockUUID: {
     [uuid: string]: BlockType;
   };
@@ -625,15 +627,17 @@ export function buildNodesEdgesPorts({
     });
   });
 
-  Object.entries(ports).forEach(([
-    blockUUID,
-    portsMapping,
-  ]) => {
-    const node = nodesInner?.[blockUUID];
-    if (node) {
-      node.ports = Object.values(portsMapping);
-    }
-  });
+  if (enablePorts) {
+    Object.entries(ports).forEach(([
+      blockUUID,
+      portsMapping,
+    ]) => {
+      const node = nodesInner?.[blockUUID];
+      if (node) {
+        node.ports = Object.values(portsMapping);
+      }
+    });
+  }
 
   return {
     blocksWithDownstreamBlockSet,
