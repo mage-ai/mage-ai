@@ -1,4 +1,5 @@
 export enum SparkJobStatusEnum {
+  FAILED = 'FAILED',
   SUCCEEDED = 'SUCCEEDED',
 }
 
@@ -262,6 +263,7 @@ export interface SparkStageType extends SparkStageAttemptType {
   attempt_id: number;
   completion_time: string;
   details: string;
+  failure_reason: string;
   first_task_launched_time: string;
   input_bytes: number;
   input_records: number;

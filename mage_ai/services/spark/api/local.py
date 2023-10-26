@@ -32,6 +32,19 @@ class LocalAPI(BaseAPI):
         models = self.get_sync(f'/applications/{application_id}/jobs')
         return [Job.load(**model) for model in models]
 
+    def sqls_sync(self, application_id: str, query: Dict = None, **kwargs) -> List[Sql]:
+        models = self.get_sync(f'/applications/{application_id}/sql', query=query)
+        return sorted(
+            [Sql.load(**model) for model in models],
+            key=lambda s: s.submission_time,
+            reverse=True,
+        )
+
+    def stages_sync(self, application_id: str, query: Dict = None, **kwargs) -> List[Stage]:
+        models = self.get_sync(f'/applications/{application_id}/stages', query=query)
+        model_class = StageAttempt if query and query.get('details') else Stage
+        return [model_class.load(**model) for model in models]
+
     async def applications(self, **kwargs) -> List[Application]:
         models = await self.get('/applications')
         return [Application.load(**model) for model in models]

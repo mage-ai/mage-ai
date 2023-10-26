@@ -947,10 +947,6 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         if from_notebook and self.is_using_spark() and self.compute_management_enabled():
             self.set_spark_job_after_execution()
-            if self.spark_job_before_execution:
-                print(f'[INFO] Job ID before execution: {self.spark_job_before_execution.id}')
-            if self.spark_job_after_execution:
-                print(f'[INFO] Job ID after execution : {self.spark_job_after_execution.id}')
 
         return output
 

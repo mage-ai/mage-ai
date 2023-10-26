@@ -98,7 +98,7 @@ class Sql(BaseSparkModel):
             self.edges = [Edge.load(**edge) for edge in self.edges]
 
         if self.jobs:
-            self.jobs = [StageAttempt.load(**m) for m in self.jobs]
+            self.jobs = [Job.load(**m) for m in self.jobs]
 
         if self.nodes:
             self.nodes = [Node.load(**node) for node in self.nodes]

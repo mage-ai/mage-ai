@@ -46,6 +46,7 @@ import DataProviderType, {
 } from '@interfaces/DataProviderType';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
+import ExecutionStateType from '@interfaces/ExecutionStateType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -68,6 +69,7 @@ import UpstreamBlockSettings from './UpstreamBlockSettings';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
 import {
   ArrowDown,
   ChevronDown,
@@ -138,6 +140,13 @@ import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/c
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
+import {
+  TABS_DBT,
+  TABS_SPARK,
+  TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
+  TAB_DBT_SQL_UUID,
+} from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
@@ -363,6 +372,13 @@ function CodeBlock({
   const refColumn1 = useRef(null);
   const refColumn2 = useRef(null);
 
+  const {
+    featureEnabled,
+    featureUUIDs,
+    sparkEnabled: sparkEnabledInit,
+  } = useProject();
+  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
+
   const [mounted, setMounted] = useState(false);
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
@@ -558,7 +574,20 @@ function CodeBlock({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
-  const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT(block)[0]);
+  const [selectedTab, setSelectedTab] = useState<TabType>(null);
+
+  useEffect(() => {
+    if (sparkEnabled) {
+      setSelectedTab(TABS_SPARK(block)[0]);
+    } else if (isDBT) {
+      setSelectedTab(TABS_DBT(block)[0]);
+    }
+  }, [
+    block,
+    isDBT,
+    setSelectedTab,
+    sparkEnabled,
+  ]);
 
   const setIsEditingBlock = useCallback((prev) => {
     setIsEditingBlockState(prev);
@@ -838,6 +867,30 @@ function CodeBlock({
 
   const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
+  const sparkEnabled = useMemo(() => sparkEnabledInit
+    && !isStreamingPipeline
+    && !isDataIntegration
+    && BlockLanguageEnum.PYTHON === blockLanguage,
+    [
+      blockLanguage,
+      isDataIntegration,
+      isStreamingPipeline,
+      sparkEnabledInit,
+    ],
+  );
+
+  const { data: dataExecutionStates, mutate: fetchExecutionStates } = api.execution_states.list({
+    block_uuid: blockUUID,
+    pipeline_uuid: pipelineUUID,
+  }, {
+    refreshInterval: selected && isInProgress ? 1000 : 5000,
+    revalidateOnFocus: true,
+  }, {
+    pauseFetch: !selected || !sparkEnabled,
+  });
+  const blockExecutionStates: ExecutionStateType[] =
+    useMemo(() => dataExecutionStates?.execution_states || [], [dataExecutionStates]);
 
   useEffect(() => {
     if (isInProgress) {
@@ -1352,9 +1405,11 @@ function CodeBlock({
     pipeline,
   ]);
 
-  const buttonTabs = useMemo(() => isDBT
-    ? (
-      <SubheaderStyle>
+  const buttonTabs = useMemo(() => {
+    let buttonEl;
+
+    if (isDBT) {
+      buttonEl (
         <ButtonTabs
           onClickTab={(tab: TabType) => {
             setSelectedTab(tab);
@@ -1373,14 +1428,38 @@ function CodeBlock({
           ).accent}
           underlineStyle
         />
+      );
+    } else if (sparkEnabled) {
+      buttonEl = (
+        <ButtonTabs
+          onClickTab={(tab: TabType) => {
+            setSelectedTab(tab);
+          }}
+          selectedTabUUID={selectedTab?.uuid}
+          small
+          tabs={TABS_SPARK(block)}
+          underlineColor={color}
+          underlineStyle
+        />
+      );
+    }
+
+    if (!buttonEl) {
+      return null;
+    }
+
+    return (
+      <SubheaderStyle>
+        {buttonEl}
       </SubheaderStyle>
-    )
-    : null
-  , [
+    );
+  }, [
     block,
+    color,
     fetchBlock,
     isDBT,
     selectedTab,
+    sparkEnabled,
     themeContext,
   ]);
 

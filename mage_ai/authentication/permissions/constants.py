@@ -22,6 +22,7 @@ class EntityName(str, Enum):
     Database = 'Database'
     EventMatcher = 'EventMatcher'
     EventRule = 'EventRule'
+    ExecutionState = 'ExecutionState'
     ExtensionOption = 'ExtensionOption'
     Feature = 'Feature'
     File = 'File'
