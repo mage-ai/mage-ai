@@ -1,15 +1,13 @@
 # Setting up a Development Environment
 
-We'd love to have your contribution, but first you'll need to configure your local environment first!
+We'd love to have your contribution, but first you'll need to configure your local environment first. In this guide, we'll walk through:
 
-These are the steps:
-
-1. Build Mage image (requires Docker)
-2. Configure virtual environment
-3. Install dependencies
-4. Install Git hooks
-5. Install pre-commit hooks
-6. Run dev!
+1. Configuring virtual environment
+2. Installing dependencies
+3. Installing Git hooks
+4. Installing pre-commit hooks
+5. Building the Mage Docker image
+6. Running dev!
 
 > [!WARNING]
 > _All commands below, without any notes, assume you are at the root of the repo._
@@ -116,7 +114,7 @@ yarn install && yarn dev
 
 ## Git Hooks
 
-To install the Git hooks that we use, run the Make command:
+Install Git hooks by running the Make command:
 
 ```bash
 make install-hooks
@@ -126,17 +124,17 @@ This will copy the git hooks from `.git-dev/hooks` into `.git/hooks`, and make t
 
 ## Pre-Commit
 
-To use pre-commit, install the pre-commit hooks:
+Install the pre-commit hooks:
 
 ```bash
 pre-commit install
 ```
 
-Note that this will install both pre-commit and pre-push hooks, as per the configuration in `.pre-commit-config.yaml`.
+Note that this will install both pre-commit and pre-push hooks.
 
 ## Run development server
 
-To initialize a `mage` repo so you have a starting point:
+To initialize a development mage project so you have a starting point:
 
 ```bash
 ./scripts/init.sh default_repo
@@ -154,15 +152,13 @@ In case you only want the backend:
 ./scripts/start.sh default_repo
 ```
 
-The name `default_repo` could technically be anything, but bare in mind, if you decide to change it, please also add it to the `.gitignore` file.
+The name `default_repo` could technically be anything, but if you decide to change it, be sure to add it to the `.gitignore` file. You're now ready to contribute!
 
 See this [video](https://youtu.be/mxKh2062sTc?si=5GW_mKF5jOpGEO3I) for further guidance and instructions.
 
-You're now ready to contribute!
+Any time you'd like to build, just run `./scripts/dev.sh default_repo` to run the development containers.
 
-Any time you'd like to build, just run `./scripts/dev.sh default_repo` to run the development Docker container. 
-
-Any changes you make, backend or frontend, will be reflected in this development instance.
+Any changes you make, backend or frontend, will be reflected in the development instance.
 
 Our pre-commit & pre-push hooks will run when you make a commit/push to check style, etc.
 
@@ -170,15 +166,17 @@ Now it's time to create a new branch, contribute code, and open a pull request!
 
 ## Troubleshoot
 
-In case none of the below help resolve your problem, please feel free to ping us anytime on Slack. We are more than happy to talk.
+Here are some common problems our users have encountered. If other issues arise, please reach out to us in Slack!
 
 ### Illegal instruction
 
-If an `Illegal instruction` error is received, or Docker containers exit instantly with code 132, it means your machine is using an older architecture that does not support certain instructions called from the (Python) dependencies. Please either try again on another machine, or manually setup the server, start it in verbose mode to see which pakage caused the error, and look up for alternatives.
+If an `Illegal instruction` error is received, or Docker containers exit instantly with `code 132`, it means your machine is using an older architecture that does not support certain instructions called from the (Python) dependencies. Please either try again on another machine, or manually setup the server, start it in verbose mode to see which package caused the error, and look up for alternatives.
 
 List of builds:
 - `polars` -> [`polars-lts-cpu`](https://pypi.org/project/polars-lts-cpu/)
 
 ### `pip install` fails on Windows
 
-Well, we've all been there. Some Python packages take for granted quite a few core functionalities that are not available on Windows, so you need to install their prebuilds, see the fantastic (but archived) [pipwin](https://github.com/lepisma/pipwin) and [this issue](https://github.com/lepisma/pipwin/issues/64) for more options.
+Some Python packages assume a few core functionalities that are not available on Windows, so you need to install these prerequisites, see the fantastic (but archived) [pipwin](https://github.com/lepisma/pipwin) and [this issue](https://github.com/lepisma/pipwin/issues/64) for more options.
+
+Please report any other build errors in our Slack.
