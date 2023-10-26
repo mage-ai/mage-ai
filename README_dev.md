@@ -14,30 +14,6 @@ These are the steps:
 > [!WARNING]
 > _All commands below, without any notes, assume you are at the root of the repo._
 
-## Using helper scripts
-
-To initialise a `mage` repo so you have a starting point:
-
-```bash
-./scripts/init.sh default_repo
-```
-
-To generate a Docker image, start the dev server for the backend at `localhost:6789` and frontend at `localhost:3000`:
-
-```bash
-./scripts/dev.sh default_repo
-```
-
-In case you only want the backend:
-
-```bash
-./scripts/start.sh default_repo
-```
-
-The name `default_repo` could technically be anything, but bare in mind, if you decide to change it, please also add it to the `.gitignore` file.
-
-See this [video](https://youtu.be/mxKh2062sTc?si=5GW_mKF5jOpGEO3I) for further guidance and instructions.
-
 Mage server uses Python >=3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8. We [use Python 3.10](./Dockerfile).
 
 As such, make sure you have Python >=3.8. Verify this with:
@@ -103,11 +79,7 @@ Then activate it:
 source .venv/bin/activate
 ```
 
-## Installing Dependencies
-
-### Backend
-
-First:
+To install dependencies:
 
 ```bash
 pip install -U pip
@@ -123,20 +95,14 @@ pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')
 
 The above command uses the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command.
 
-Then, start the dev server:
+## Mage frontend
 
-```bash
-python mage_ai/server/server.py
-```
-
-The above command generates a Mage.ai project called `default_repo` by default before starting the server. Please view the file itself for more advanced usages.
-
-### Mage.ai frontend
+If you'll only be contributing to backend code, this section may be omitted.
 
 > [!IMPORTANT]
 > _Even if you are only working on UIs, you would still have to have the server running at port `6789`._
 
-Mage.ai frontend is a Next.js project
+The Mage frontend is a Next.js project
 
 ```bash
 cd mage_ai/frontend/
@@ -148,22 +114,7 @@ that uses Yarn.
 yarn install && yarn dev
 ```
 
-# Troubleshoot
-
-In case none of the below help resolve your problem, please feel free to ping us anytime on Slack. We are more than happy to talk.
-
-## Illegal instruction
-
-If an `Illegal instruction` error is received, or Docker containers exit instantly with code 132, it means your machine is using an older architecture that does not support certain instructions called from the (Python) dependencies. Please either try again on another machine, or manually setup the server, start it in verbose mode to see which pakage caused the error, and look up for alternatives.
-
-List of builds:
-- `polars` -> [`polars-lts-cpu`](https://pypi.org/project/polars-lts-cpu/)
-
-## `pip install` fails on Windows
-
-Well, we've all been there. Some Python packages take for granted quite a few core functionalities that are not available on Windows, so you need to install their prebuilds, see the fantastic (but archived) [pipwin](https://github.com/lepisma/pipwin) and [this issue](https://github.com/lepisma/pipwin/issues/64) for more options.
-
-# Git Hooks
+## Git Hooks
 
 To install the Git hooks that we use, run the Make command:
 
@@ -173,7 +124,7 @@ make install-hooks
 
 This will copy the git hooks from `.git-dev/hooks` into `.git/hooks`, and make them executable.
 
-# Pre-Commit
+## Pre-Commit
 
 To use pre-commit, install the pre-commit hooks:
 
@@ -185,16 +136,49 @@ Note that this will install both pre-commit and pre-push hooks, as per the confi
 
 ## Run development server
 
-Run the `init` script to build the requisite images, where `default_repo` will be the name of your development project (`default_repo` is what we use, but if you choose a different name, be sure to add it to `.gitignore`):
+To initialize a `mage` repo so you have a starting point:
 
 ```bash
 ./scripts/init.sh default_repo
 ```
 
+Then, to start the dev server for the backend at `localhost:6789` and frontend at `localhost:3000`:
+
+```bash
+./scripts/dev.sh default_repo
+```
+
+In case you only want the backend:
+
+```bash
+./scripts/start.sh default_repo
+```
+
+The name `default_repo` could technically be anything, but bare in mind, if you decide to change it, please also add it to the `.gitignore` file.
+
+See this [video](https://youtu.be/mxKh2062sTc?si=5GW_mKF5jOpGEO3I) for further guidance and instructions.
+
 You're now ready to contribute!
 
-Run `./scripts/dev.sh default_repo` to run the development Docker container. Any changes you make, backend or frontend, will be reflected in this development instance.
+Any time you'd like to build, just run `./scripts/dev.sh default_repo` to run the development Docker container. 
 
-Our pre-commit & pre-push hooks will run when you make a contribution to check style, etc.
+Any changes you make, backend or frontend, will be reflected in this development instance.
+
+Our pre-commit & pre-push hooks will run when you make a commit/push to check style, etc.
 
 Now it's time to create a new branch, contribute code, and open a pull request!
+
+## Troubleshoot
+
+In case none of the below help resolve your problem, please feel free to ping us anytime on Slack. We are more than happy to talk.
+
+### Illegal instruction
+
+If an `Illegal instruction` error is received, or Docker containers exit instantly with code 132, it means your machine is using an older architecture that does not support certain instructions called from the (Python) dependencies. Please either try again on another machine, or manually setup the server, start it in verbose mode to see which pakage caused the error, and look up for alternatives.
+
+List of builds:
+- `polars` -> [`polars-lts-cpu`](https://pypi.org/project/polars-lts-cpu/)
+
+### `pip install` fails on Windows
+
+Well, we've all been there. Some Python packages take for granted quite a few core functionalities that are not available on Windows, so you need to install their prebuilds, see the fantastic (but archived) [pipwin](https://github.com/lepisma/pipwin) and [this issue](https://github.com/lepisma/pipwin/issues/64) for more options.
