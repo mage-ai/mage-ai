@@ -10,7 +10,7 @@ class MSSQL(Connection):
         host: str,
         password: str,
         username: str,
-        driver: str = 'ODBC Driver 18 for SQL Server',
+        driver: str = None,
         port: int = 1433,
         **kwargs,
     ):
@@ -20,7 +20,7 @@ class MSSQL(Connection):
         self.password = password
         self.port = port or 1433
         self.username = username
-        self.driver = driver
+        self.driver = driver or 'ODBC Driver 18 for SQL Server'
 
     def build_connection(self):
         connection_string = (
