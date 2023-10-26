@@ -548,13 +548,6 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_EXPORTER,
         groups=[GROUP_DATA_WAREHOUSES],
         language=BlockLanguage.PYTHON,
-        name='Google BigQuery',
-        path='data_exporters/bigquery.py',
-    ),
-    dict(
-        block_type=BlockType.DATA_EXPORTER,
-        groups=[GROUP_DATA_WAREHOUSES],
-        language=BlockLanguage.PYTHON,
         name='Snowflake',
         path='data_exporters/snowflake.py',
     ),

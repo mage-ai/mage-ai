@@ -186,7 +186,7 @@ class GoogleSheets(BaseFile):
             sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
             worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
             worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
-            header_rows (int, optional): The number of rows to use as headers. Defaults to 0
+            header_rows (int, optional): The number of rows to use as headers. Defaults to 1
 
         Raises:
             KeyError: To be raised if a sheet_url, sheet_id, or sheet_name is not provided
