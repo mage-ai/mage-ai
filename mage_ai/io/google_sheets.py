@@ -16,7 +16,7 @@ class GoogleSheets(BaseFile):
 
     And worksheets using any one of:
     - Worksheet Name
-    - Worsheet Position
+    - Worksheet Position
 
     Exporting worksheets currently requires an existing worksheet to be present.
 
@@ -97,8 +97,10 @@ class GoogleSheets(BaseFile):
             KeyError: _description_
 
         Returns:
-            gspread.spreadsheet.Spreadsheet: _description_
+            gspread.spreadsheet.Spreadsheet: A gspread Spreadsheet object.
         """
+        sheet = None
+
         if sheet_url:
             sheet = self.client.open_by_url(sheet_url)
         elif sheet_id:
@@ -109,10 +111,13 @@ class GoogleSheets(BaseFile):
             raise KeyError(
                 "Please set one of sheet_url, sheet_id, or sheet_name to a valid Google Sheet."
             )
-        with self.printer.print_msg(
-            f"Loaded Google Sheet '{sheet.title}' with ID '{sheet.id}'"
-        ):
-            return sheet
+        if sheet is not None:
+            with self.printer.print_msg(
+                f"Loaded Google Sheet '{sheet.title}' with ID '{sheet.id}'"
+            ):
+                return sheet
+        else:
+            raise ValueError("There was an error loading the Google Sheet.")
 
     def fetch_worksheet(
         self,
@@ -149,15 +154,9 @@ class GoogleSheets(BaseFile):
         worksheet = None
 
         if worksheet_name is not None:
-            try:
-                worksheet = sheet.worksheet(worksheet_name)
-            except Exception as name_ex:
-                raise name_ex
+            worksheet = sheet.worksheet(worksheet_name)
         else:
-            try:
-                worksheet = sheet.get_worksheet(worksheet_position)
-            except Exception as postition_ex:
-                raise postition_ex
+            worksheet = sheet.get_worksheet(worksheet_position)
 
         if worksheet is not None:
             with self.printer.print_msg(
@@ -257,8 +256,7 @@ class GoogleSheets(BaseFile):
             )
             return True
 
-        except Exception as ex:
-            print(ex)
+        except gspread.exceptions.SpreadsheetNotFound:
             return False
 
     @classmethod
