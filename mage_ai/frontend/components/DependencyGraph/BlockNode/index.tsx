@@ -44,6 +44,7 @@ import {
   getGradientColorForBlockType,
 } from '@components/CodeBlock/index.style';
 import { getBlockStatus, getRuntimeText } from '../utils';
+import { range } from '@utils/array';
 
 const ICON_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
@@ -217,7 +218,12 @@ function BlockNode({
     const borderColors = [];
     const borderColorsSelected = [];
 
-    if (blocksWithSameDownstreamBlocks?.length >= 2 && downstreamBlocks?.length >= 1) {
+    if (isQueued) {
+      range(4).forEach(() => {
+        borderColors.push(themeContext?.content?.muted);
+        borderColorsSelected.push(themeContext?.content?.muted);
+      });
+    } else if (blocksWithSameDownstreamBlocks?.length >= 2 && downstreamBlocks?.length >= 1) {
       const arr = [];
 
       if (blocksWithSameDownstreamBlocks?.find(({ uuid }) => selectedBlock?.uuid === uuid)) {
@@ -284,6 +290,7 @@ function BlockNode({
     anotherBlockSelected,
     blocksWithSameDownstreamBlocks,
     downstreamBlocks,
+    isQueued,
     selected,
     selectedBlock,
     themeContext,
@@ -292,6 +299,7 @@ function BlockNode({
   return (
     <NodeContainerStyle
       active={isInProgress}
+      activeSlow={isQueued}
       backgroundGradient={!downstreamBlocks?.length && getGradientColorForBlockType(type)}
       borderColorBottom={borderColorBottom}
       borderColorLeft={borderColorLeft}

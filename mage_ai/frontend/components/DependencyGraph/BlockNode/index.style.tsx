@@ -9,6 +9,7 @@ export const BORDER_WIDTH = 2;
 
 export const NodeContainerStyle = styled.div<{
   active?: boolean;
+  activeSlow?: boolean;
   backgroundGradient?: string;
   borderColorBottom?: string;
   borderColorLeft?: string;
@@ -85,7 +86,7 @@ export const NodeContainerStyle = styled.div<{
   `}
 
   ${props => props.active && (props.borderColorBottom || props.borderColorLeft || props.borderColorRight || props.borderColorTop) && `
-    animation: border-dance .5s infinite linear;
+    animation: border-dance ${props?.activeSlow ? '2s' : '.5s'} infinite linear;
     background: linear-gradient(90deg, ${props.borderColorTop || props.borderColorBottom || props.borderColorLeft || props.borderColorRight} 50%, transparent 50%),
       linear-gradient(90deg, ${props.borderColorRight || props.borderColorTop || props.borderColorBottom || props.borderColorLeft} 50%, transparent 50%),
       linear-gradient(0deg, ${props.borderColorLeft || props.borderColorRight || props.borderColorTop || props.borderColorBottom} 50%, transparent 50%),
