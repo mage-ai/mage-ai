@@ -394,7 +394,6 @@ function FileBrowser({
     const {
       x: xContainer,
       width,
-      height,
     } = ref?.current?.getBoundingClientRect() || {};
     const {
       x = 0,
@@ -517,8 +516,8 @@ function FileBrowser({
 
     let yFinal = y;
     const menuHeight = MENU_ITEM_HEIGHT * items.length;
-    if (y + menuHeight >= height) {
-      yFinal = height - menuHeight;
+    if (y + menuHeight >= window.innerHeight) {
+      yFinal = y - menuHeight;
     }
 
     return (
