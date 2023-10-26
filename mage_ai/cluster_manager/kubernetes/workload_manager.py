@@ -541,7 +541,7 @@ class WorkloadManager:
         config_map_data = {}
         if pre_start_script_path:
             if not mage_container_config:
-                raise ConfigurationError('The container config can not be None')
+                raise ConfigurationError('The container config can not be empty')
             self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
 
             with open(pre_start_script_path, 'r', encoding='utf-8') as f:
@@ -551,7 +551,7 @@ class WorkloadManager:
             config_map_data['initial-config.json'] = json.dumps(mage_container_config)
 
         post_start_file_name = None
-        if post_start_config.hook_path is not None:
+        if post_start_config and post_start_config.hook_path is not None:
             with open(post_start_config.hook_path, 'r', encoding='utf-8') as f:
                 post_start_script = f.read()
 
