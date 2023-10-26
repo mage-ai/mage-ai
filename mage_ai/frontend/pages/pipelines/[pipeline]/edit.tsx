@@ -1783,7 +1783,6 @@ function PipelineDetailPage({
     isUpdatingBlock = false,
     name = randomNameGenerator(),
     onCreateCallback,
-    preventDuplicateBlockName,
   }: {
     block: BlockRequestPayloadType;
     idx?: number;
@@ -1791,7 +1790,6 @@ function PipelineDetailPage({
     isUpdatingBlock?: boolean;
     name: string;
     onCreateCallback?: (block: BlockType) => void;
-    preventDuplicateBlockName?: boolean;
   }) => (
     <ErrorProvider>
       <ConfigureBlock
@@ -1805,10 +1803,12 @@ function PipelineDetailPage({
           language?: BlockLanguageEnum;
           name?: string;
         } = {}) => {
-          if (isUpdatingBlock) {
+          if (isUpdatingBlock || isReplacingBlock) {
+            const detachBlock = block.detach || false;
             savePipelineContent({
               block: {
                 color: opts?.color || null,
+                detach: detachBlock,
                 name: opts?.name,
                 uuid: block.uuid,
               },
@@ -1833,7 +1833,6 @@ function PipelineDetailPage({
         }
         }
         pipeline={pipeline}
-        preventDuplicateBlockName={preventDuplicateBlockName}
       />
     </ErrorProvider>
   ), {
@@ -2607,12 +2606,12 @@ function PipelineDetailPage({
       showUpdateBlockModal={(
         block,
         name = randomNameGenerator(),
-        preventDuplicateBlockName,
+        isReplacingBlock = false,
       ) => new Promise(() => showAddBlockModal({
         block,
-        isUpdatingBlock: true,
+        isReplacingBlock,
+        isUpdatingBlock: !isReplacingBlock,
         name,
-        preventDuplicateBlockName,
       }))}
       sideBySideEnabled={sideBySideEnabled}
       statistics={statistics}

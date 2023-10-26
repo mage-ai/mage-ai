@@ -650,46 +650,6 @@ class BlockResource(GenericResource):
                 replicated_block=replicated_block,
             )
 
-        async def _create_callback(resource):
-            # Replace existing block in pipeline with newly created copy of that block
-            block_uuid_to_remove = payload.get('block_uuid_to_remove')
-            if pipeline and block_uuid_to_remove is not None:
-                callback_blocks = payload.get('callback_blocks')
-                if callback_blocks:
-                    callbacks_by_uuid = pipeline.callbacks_by_uuid
-                    for callback_uuid in callback_blocks:
-                        callback_block = callbacks_by_uuid.get(callback_uuid)
-                        if callback_block:
-                            existing_upstream_block_uuids = \
-                                [b.uuid for b in callback_block.upstream_blocks]
-                            callback_block.update(
-                                dict(upstream_blocks=existing_upstream_block_uuids + [block.uuid])
-                            )
-
-                conditional_blocks = payload.get('conditional_blocks')
-                if conditional_blocks:
-                    conditionals_by_uuid = pipeline.conditionals_by_uuid
-                    for conditional_uuid in conditional_blocks:
-                        conditional_block = conditionals_by_uuid.get(conditional_uuid)
-                        if conditional_block:
-                            existing_upstream_block_uuids = \
-                                [b.uuid for b in conditional_block.upstream_blocks]
-                            conditional_block.update(
-                                dict(upstream_blocks=existing_upstream_block_uuids + [block.uuid])
-                            )
-
-                block_to_remove = Block.get_block(
-                    block_uuid_to_remove,
-                    block_uuid_to_remove,
-                    block_type,
-                    language=language,
-                    pipeline=pipeline,
-                )
-                cache.remove_pipeline(block_to_remove, pipeline.uuid)
-                block_to_remove.delete()
-
-        self.on_create_callback = _create_callback
-
         return self(block, user, **kwargs)
 
     @classmethod

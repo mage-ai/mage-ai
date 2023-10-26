@@ -205,7 +205,6 @@ export type DependencyGraphProps = {
   showUpdateBlockModal?: (
     block: BlockType,
     name: string,
-    preventDuplicateBlockName?: boolean,
   ) => void;
   treeRef?: { current?: CanvasRef };
   zoomable?: boolean;
@@ -1448,7 +1447,6 @@ function DependencyGraph({
           showUpdateBlockModal(
             block,
             block?.name,
-            true,
           );
         },
         uuid: 'Rename block',

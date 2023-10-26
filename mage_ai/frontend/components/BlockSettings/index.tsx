@@ -92,7 +92,7 @@ type BlockSettingsProps = {
   showUpdateBlockModal?: (
     block: BlockType,
     name: string,
-    preventDuplicateBlockName?: boolean,
+    isReplacingBlock?: boolean,
   ) => void;
 } & OpenDataIntegrationModalType;
 
@@ -231,7 +231,7 @@ function BlockSettings({
   , [blockDetails]);
   const blockPipelinesCount = blockPipelines?.length || 1;
 
-  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+  const [updateBlock, { isLoading: isLoadingUpdateBlock }]: any = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
@@ -387,10 +387,12 @@ function BlockSettings({
                       {...SHARED_BUTTON_PROPS}
                       afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
                       iconOnly={false}
-                      onClick={() => addNewBlockAtIndex(
+                      onClick={() => showUpdateBlockModal(
                         {
                           ...ignoreKeys(blockWithUpdatedContent, [
                             'all_upstream_blocks_executed',
+                            'callback_blocks',
+                            'conditional_blocks',
                             'downstream_blocks',
                             'executor_config',
                             'executor_type',
@@ -401,11 +403,9 @@ function BlockSettings({
                             'tags',
                             'timeout',
                           ]),
-                          block_uuid_to_remove: blockUUID,
+                          detach: true,
                         },
-                        currentBlockIndex,
-                        setSelectedBlock,
-                        undefined,
+                        `${blockName}_copy`,
                         true,
                       )}
                       padding={null}
@@ -932,7 +932,6 @@ function BlockSettings({
           <Button
             disabled={!blockAttributesTouched}
             loading={isLoadingUpdateBlock}
-            // @ts-ignore
             onClick={() => updateBlock({
               block: {
                 configuration: blockAttributes?.configuration,

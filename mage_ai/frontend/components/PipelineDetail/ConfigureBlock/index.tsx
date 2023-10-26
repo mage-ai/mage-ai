@@ -59,7 +59,6 @@ type ConfigureBlockProps = {
     name: string;
   }) => void;
   pipeline: PipelineType;
-  preventDuplicateBlockName?: boolean;
 };
 
 function ConfigureBlock({
@@ -70,7 +69,6 @@ function ConfigureBlock({
   onClose,
   onSave,
   pipeline,
-  preventDuplicateBlockName,
 }: ConfigureBlockProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'ConfigureBlock',
@@ -308,8 +306,7 @@ function ConfigureBlock({
               }
               {isReplacingBlock &&
                 'This will create a copy of the selected block and replace the existing'
-                + ' one so it is no longer shared with any other pipelines. Note that you'
-                + ' may need to re-add any downstream connections.'
+                + ' one so it is no longer shared with any other pipelines.'
               }
             </Text>
           </Flex>
@@ -323,6 +320,7 @@ function ConfigureBlock({
 
         <TextInput
           alignRight
+          fullWidth
           noBackground
           noBorder
           // @ts-ignore

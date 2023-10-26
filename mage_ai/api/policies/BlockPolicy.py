@@ -79,9 +79,6 @@ BlockPolicy.allow_read([
 
 BlockPolicy.allow_write([
     'block_action_object',
-    'block_uuid_to_remove',
-    'callback_blocks',
-    'conditional_blocks',
     'catalog',
     'color',
     'config',
