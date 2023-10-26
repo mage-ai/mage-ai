@@ -292,6 +292,7 @@ function BlockNode({
   return (
     <NodeContainerStyle
       active={isInProgress}
+      activeSlow={isQueued}
       backgroundGradient={!downstreamBlocks?.length && getGradientColorForBlockType(type)}
       borderColorBottom={borderColorBottom}
       borderColorLeft={borderColorLeft}

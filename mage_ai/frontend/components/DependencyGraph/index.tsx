@@ -1732,16 +1732,33 @@ function DependencyGraph({
               }
             }
 
-            const isInProgress = downstreamBlocks?.some(
-              downstreamBlock => downstreamBlock && getBlockStatus({
-                block: downstreamBlock,
-                blockStatus,
-                messages,
-                noStatus,
-                runningBlocks,
-                runningBlocksMapping,
-              })?.isInProgress,
-            );
+            let isInProgress;
+            let isQueued;
+
+            downstreamBlocks?.forEach((downstreamBlock) => {
+              if (isInProgress || isQueued) {
+                return;
+              }
+
+              if (downstreamBlock) {
+                const status = getBlockStatus({
+                  block: downstreamBlock,
+                  blockStatus,
+                  messages,
+                  noStatus,
+                  runningBlocks,
+                  runningBlocksMapping,
+                });
+
+                if (status?.isInProgress) {
+                  isInProgress = status?.isInProgress;
+                }
+
+                if (status?.isQueued) {
+                  isQueued = status?.isQueued;
+                }
+              };
+            });
 
             const {
               anotherBlockSelected,
@@ -1764,7 +1781,7 @@ function DependencyGraph({
             return (
               <Edge
                 {...edge}
-                className={`edge ${isInProgress ? 'active' : 'inactive'}`}
+                className={`edge ${isInProgress ? (isQueued ? 'activeSlow' : 'active') : 'inactive'}`}
                 onClick={(event, edge) => {
                   // @ts-ignore
                   setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {

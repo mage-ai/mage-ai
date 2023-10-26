@@ -60,6 +60,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
@@ -1377,93 +1378,116 @@ function CodeBlock({
     selectedTab,
   ]);
 
-  const codeOutputEl = useMemo(() => (
-    <CodeOutput
-      {...borderColorShareProps}
-      block={block}
-      blockIndex={blockIdx}
-      blockMetadata={blockMetadata}
-      buttonTabs={buttonTabs}
-      collapsed={outputCollapsed}
-      hasOutput={hasOutput}
-      isInProgress={isInProgress}
-      mainContainerWidth={mainContainerWidth}
-      messages={messagesWithType}
-      messagesAll={messages}
-      onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
-      openSidekickView={openSidekickView}
-      pipeline={pipeline}
-      ref={blockOutputRef}
-      runCount={runCount}
-      runEndTime={runEndTime}
-      runStartTime={runStartTime}
-      scrollTogether={scrollTogether}
-      selected={selected}
-      selectedTab={selectedTab}
-      setCollapsed={!sideBySideEnabled
-        ? (val: boolean) => {
-          setOutputCollapsed(() => {
-            set(outputCollapsedUUID, val);
-            return val;
-          });
+  const codeOutputEl = useMemo(() => {
+    let busyEl;
+    if (ExecutionStateEnum.QUEUED === executionState) {
+      busyEl = (
+        <Spinner
+          color={themeContext?.content?.active}
+          type="cylon"
+        />
+      );
+    }
+    if (ExecutionStateEnum.BUSY === executionState) {
+      busyEl = (
+        <Spinner
+          color={themeContext?.content?.active}
+        />
+      );
+    }
+
+    return (
+      <CodeOutput
+        {...borderColorShareProps}
+        block={block}
+        blockIndex={blockIdx}
+        blockMetadata={blockMetadata}
+        buttonTabs={buttonTabs}
+        collapsed={outputCollapsed}
+        hasOutput={hasOutput}
+        isInProgress={isInProgress}
+        mainContainerWidth={mainContainerWidth}
+        messages={messagesWithType}
+        messagesAll={messages}
+        onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
+        openSidekickView={openSidekickView}
+        pipeline={pipeline}
+        ref={blockOutputRef}
+        runCount={runCount}
+        runEndTime={runEndTime}
+        runStartTime={runStartTime}
+        scrollTogether={scrollTogether}
+        selected={selected}
+        selectedTab={selectedTab}
+        setCollapsed={!sideBySideEnabled
+          ? (val: boolean) => {
+            setOutputCollapsed(() => {
+              set(outputCollapsedUUID, val);
+              return val;
+            });
+          }
+          : null
         }
-        : null
-      }
-      setErrors={setErrors}
-      setOutputBlocks={setOutputBlocks}
-      setSelectedOutputBlock={setSelectedOutputBlock}
-      setSelectedTab={setSelectedTab}
-      showBorderTop={sideBySideEnabled}
-      sideBySideEnabled={sideBySideEnabled}
-    >
-      {sideBySideEnabled && (
-        <Spacing px={PADDING_UNITS} py={1}>
-          <FlexContainer alignItems="center" justifyContent="space-between">
-            <Link
-              color={color}
-              monospace
-              onClick={() => {
-                dispatchEventSyncColumnPositions({
-                  bypassOffScreen: true,
-                  columnIndex: 0,
-                  rect: refColumn1?.current?.getBoundingClientRect(),
-                  y: refColumn2?.current?.getBoundingClientRect()?.y,
-                });
-              }}
-              preventDefault
-            >
-              {block?.uuid}
-            </Link>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => runBlockAndTrack({
-                block,
-                syncColumnPositions: {
-                  rect: refColumn1?.current?.getBoundingClientRect(),
-                  y: refColumn2?.current?.getBoundingClientRect()?.y,
-                },
-              })}
-            >
-              <Circle
+        setErrors={setErrors}
+        setOutputBlocks={setOutputBlocks}
+        setSelectedOutputBlock={setSelectedOutputBlock}
+        setSelectedTab={setSelectedTab}
+        showBorderTop={sideBySideEnabled}
+        sideBySideEnabled={sideBySideEnabled}
+      >
+        {sideBySideEnabled && (
+          <Spacing px={PADDING_UNITS} py={1}>
+            <FlexContainer alignItems="center" justifyContent="space-between">
+              <Link
                 color={color}
-                size={UNIT * 3}
+                monospace
+                onClick={() => {
+                  dispatchEventSyncColumnPositions({
+                    bypassOffScreen: true,
+                    columnIndex: 0,
+                    rect: refColumn1?.current?.getBoundingClientRect(),
+                    y: refColumn2?.current?.getBoundingClientRect()?.y,
+                  });
+                }}
+                preventDefault
               >
-                <PlayButtonFilled
-                  black
-                  size={UNIT * 1.5}
-                />
-              </Circle>
-            </Button>
-          </FlexContainer>
-        </Spacing>
-      )}
-    </CodeOutput>
-  ), [
+                {block?.uuid}
+              </Link>
+
+              <Spacing mr={PADDING_UNITS} />
+
+              {busyEl}
+
+              {!busyEl && (
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => runBlockAndTrack({
+                    block,
+                    syncColumnPositions: {
+                      rect: refColumn1?.current?.getBoundingClientRect(),
+                      y: refColumn2?.current?.getBoundingClientRect()?.y,
+                    },
+                  })}
+                >
+                  <Circle
+                    color={color}
+                    size={UNIT * 3}
+                  >
+                    <PlayButtonFilled
+                      black
+                      size={UNIT * 1.5}
+                    />
+                  </Circle>
+                </Button>
+              )}
+            </FlexContainer>
+          </Spacing>
+        )}
+      </CodeOutput>
+    );
+  }, [
     block,
     blockIdx,
     blockMetadata,
@@ -1471,6 +1495,7 @@ function CodeBlock({
     borderColorShareProps,
     buttonTabs,
     color,
+    executionState,
     hasOutput,
     isInProgress,
     mainContainerWidth,
