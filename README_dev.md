@@ -6,9 +6,10 @@ These are the steps:
 
 1. Build Mage image (requires Docker)
 2. Configure virtual environment
-3. Install Git hooks
-4. Install pre-commit hooks
-5. Run dev instance!
+3. Install dependencies
+4. Install Git hooks
+5. Install pre-commit hooks
+6. Run dev!
 
 > [!WARNING]
 > _All commands below, without any notes, assume you are at the root of the repo._
@@ -35,19 +36,16 @@ In case you only want the backend:
 
 The name `default_repo` could technically be anything, but bare in mind, if you decide to change it, please also add it to the `.gitignore` file.
 
-Our mate @mattppal has an [amazing video](https://youtu.be/mxKh2062sTc?si=5GW_mKF5jOpGEO3I) with further guiding and instructions, if that is what you prefer.
+See this [video](https://youtu.be/mxKh2062sTc?si=5GW_mKF5jOpGEO3I) for further guidance and instructions.
 
-## Manual setup
-
-### Mage.ai server
-
-Mage.ai server uses at least Python 3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8. We [use Python 3.10](./Dockerfile).
+Mage server uses Python >=3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8. We [use Python 3.10](./Dockerfile).
 
 As such, make sure you have Python >=3.8. Verify this with:
 
 ```bash
 git clone https://github.com/mage-ai/mage-ai mage-ai
 cd mage-ai
+python --version
 ```
 
 Using a virtual environment is recommended.
