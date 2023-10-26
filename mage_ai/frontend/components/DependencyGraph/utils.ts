@@ -764,9 +764,12 @@ export function getBlockStatus({
   };
 }): {
   hasFailed?: boolean;
+  isCancelled?: boolean;
+  isConditionFailed?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
+  runtime?: number;
 } {
   if (noStatus || !block) {
     return {};
@@ -792,7 +795,7 @@ export function getBlockStatus({
       hasOutput,
     } = hasErrorOrOutput(messagesWithType);
 
-    const isInProgress = runningBlocksMapping?.[block?.uuid];
+    const isInProgress = !!runningBlocksMapping?.[block?.uuid];
 
     return {
       hasFailed: !isInProgress && (hasError || StatusTypeEnum.FAILED === block.status),
