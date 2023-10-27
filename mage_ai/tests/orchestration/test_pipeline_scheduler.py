@@ -63,6 +63,26 @@ class PipelineSchedulerTests(DBTestCase):
             mock_schedule2.assert_called_once()
             self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
 
+    def test_start_with_exception(self):
+        # Not create block runs at the beginning
+        pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline', create_block_runs=False)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            with patch.object(pipeline_run, 'create_block_runs') as mock_create_block_runs:
+                with patch.object(
+                    scheduler.notification_sender,
+                    'send_pipeline_run_failure_message'
+                ) as mock_send_message:
+                    mock_create_block_runs.side_effect = Exception()
+                    scheduler.start()
+                    self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+                    mock_send_message.assert_called_once_with(
+                        error='Fail to initialize block runs.',
+                        pipeline=scheduler.pipeline,
+                        pipeline_run=pipeline_run,
+                    )
+                    self.assertEqual(mock_schedule.call_count, 0)
+
     def test_stop(self):
         pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
         block_runs = pipeline_run.block_runs
@@ -102,7 +122,10 @@ class PipelineSchedulerTests(DBTestCase):
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
-            self.assertEqual(mock_send_message.call_count, 1)
+            mock_send_message.assert_called_once_with(
+                pipeline=scheduler.pipeline,
+                pipeline_run=pipeline_run,
+            )
 
     @freeze_time('2023-10-11 12:13:14')
     def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
@@ -223,7 +246,8 @@ class PipelineSchedulerTests(DBTestCase):
         )
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         ct = 0
-        for b in pipeline_run.block_runs:
+        block_runs = pipeline_run.block_runs
+        for b in block_runs:
             if ct == 0:
                 b.update(status=BlockRun.BlockRunStatus.FAILED)
             else:
@@ -236,7 +260,11 @@ class PipelineSchedulerTests(DBTestCase):
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
-            self.assertEqual(mock_send_message.call_count, 1)
+            mock_send_message.assert_called_once_with(
+                error=f'Failed blocks: {block_runs[0].block_uuid}.',
+                pipeline=scheduler.pipeline,
+                pipeline_run=pipeline_run,
+            )
 
     def test_schedule_with_block_failures(self):
         pipeline_run = create_pipeline_run_with_schedule(
@@ -244,7 +272,8 @@ class PipelineSchedulerTests(DBTestCase):
         )
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         ct = 0
-        for b in pipeline_run.block_runs:
+        block_runs = pipeline_run.block_runs
+        for b in block_runs:
             if ct == 0:
                 b.update(status=BlockRun.BlockRunStatus.FAILED)
             ct += 1
@@ -255,7 +284,11 @@ class PipelineSchedulerTests(DBTestCase):
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
-            self.assertEqual(mock_send_message.call_count, 1)
+            mock_send_message.assert_called_once_with(
+                error=f'Failed blocks: {block_runs[0].block_uuid}.',
+                pipeline=scheduler.pipeline,
+                pipeline_run=pipeline_run,
+            )
 
     @patch('mage_ai.orchestration.pipeline_scheduler.run_pipeline')
     @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')

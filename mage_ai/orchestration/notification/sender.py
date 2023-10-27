@@ -166,10 +166,11 @@ class NotificationSender:
             `default_message`.
 
         Args:
-            default_message (TYPE): default message dict, containing "title",
+            default_message (Dict): default message dict, containing "title",
                 "summary", "details" keys.
             pipeline: the pipeline object, used to interpolate variables in the message.
             pipeline_run: the pipeline run object, used to interpolate variables in the message.
+            error (str): the error message that can be interpolated in the message.
             message_template (MessageTemplate, optional): custom message template that's provided
                 by user.
             summary (str, optional): summary that's used to override the custom message template.

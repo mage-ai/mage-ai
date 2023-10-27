@@ -148,7 +148,7 @@ class PipelineScheduler:
                 else:
                     self.pipeline_run.create_block_runs()
         except Exception as e:
-            error_msg = 'Fail to initialize block runs'
+            error_msg = 'Fail to initialize block runs.'
             self.logger.exception(
                 error_msg,
                 **merge_dict(tags, dict(
@@ -203,7 +203,7 @@ class PipelineScheduler:
                     )
                     failed_block_runs = self.pipeline_run.failed_block_runs
                     error_msg = 'Failed blocks: '\
-                                f'{", ".join([b.block_uuid for b in failed_block_runs])}'
+                                f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
                     self.notification_sender.send_pipeline_run_failure_message(
                         error=error_msg,
                         pipeline=self.pipeline,
@@ -255,9 +255,9 @@ class PipelineScheduler:
                 failed_block_runs = self.pipeline_run.failed_block_runs
                 if len(failed_block_runs) > 0:
                     error_msg = 'Failed blocks: '\
-                                f'{", ".join([b.block_uuid for b in failed_block_runs])}'
+                                f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
                 else:
-                    error_msg = 'Pipelien run timed out'
+                    error_msg = 'Pipelien run timed out.'
                 self.notification_sender.send_pipeline_run_failure_message(
                     pipeline=self.pipeline,
                     pipeline_run=self.pipeline_run,
@@ -1391,7 +1391,7 @@ def schedule_all():
             ),
             PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
         )
-        query = query.add_column(row_number_column)
+        query = query.add_columns(row_number_column)
         query = query.from_self().filter(row_number_column == 1)
         for tup in query.all():
             pr, _ = tup

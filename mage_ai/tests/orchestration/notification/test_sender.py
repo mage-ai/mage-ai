@@ -58,7 +58,7 @@ class NotificationSenderTests(DBTestCase):
             'Failed to run Pipeline `test_pipeline` '
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{pipeline_run.execution_date}`.\n'
+            f'at execution time `{pipeline_run.execution_date}`. Error: None\n'
             f'Open http://localhost:6789/pipelines/test_pipeline/runs/'
             f'{pipeline_run.id} to check pipeline run results and logs.'
         )
@@ -110,7 +110,7 @@ class NotificationSenderTests(DBTestCase):
             'Failed to run Pipeline `test_pipeline` '
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{pipeline_run.execution_date}`.'
+            f'at execution time `{pipeline_run.execution_date}`. Error: None'
         )
         mock_send_teams_message.assert_called_once_with(
             notification_config.teams_config,
