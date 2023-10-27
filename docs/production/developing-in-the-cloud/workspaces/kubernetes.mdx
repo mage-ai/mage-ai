@@ -54,10 +54,12 @@ rules:
       - apps
     resources:
       - nodes
-      - persistentvolumeclaims
       - services
       - statefulsets
-      - ingress
+      - statefulsets/scale
+      - persistentvolumes
+      - ingresses
+      - configmaps
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 EOF
 ```
@@ -73,7 +75,7 @@ kubectl create clusterrolebinding manage-role-binding \
 
 ## Usage
 
-Once you start Mage and log in, you should land on the workspaces dashboard (/manage).
+Once you start Mage, you should land on the workspaces dashboard (/manage).
 
 <Frame>
     <img
