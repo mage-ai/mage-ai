@@ -515,7 +515,7 @@ function FileBrowser({
       }
     }
 
-    let yFinal = y;
+    let yFinal = y + (UNIT / 2);
     const menuHeight = MENU_ITEM_HEIGHT * items.length;
     if (y + menuHeight >= window.innerHeight) {
       yFinal = y - menuHeight;
