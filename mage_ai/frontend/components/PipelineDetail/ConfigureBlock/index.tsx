@@ -50,6 +50,7 @@ import { useError } from '@context/Error';
 type ConfigureBlockProps = {
   block: BlockType | BlockRequestPayloadType;
   defaultName: string;
+  isReplacingBlock?: boolean;
   isUpdatingBlock?: boolean;
   onClose: () => void;
   onSave: (opts: {
@@ -58,17 +59,16 @@ type ConfigureBlockProps = {
     name: string;
   }) => void;
   pipeline: PipelineType;
-  preventDuplicateBlockName?: boolean;
 };
 
 function ConfigureBlock({
   block,
   defaultName,
+  isReplacingBlock,
   isUpdatingBlock,
   onClose,
   onSave,
   pipeline,
-  preventDuplicateBlockName,
 }: ConfigureBlockProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'ConfigureBlock',
@@ -300,8 +300,14 @@ function ConfigureBlock({
 
           <Flex flex="6">
             <Text bold warning>
-              Renaming this block will affect {sharedPipelinesCount} pipelines.
-              The renamed block may need to be re-added to the shared pipeline(s).
+              {isUpdatingBlock &&
+                `Renaming this block will affect ${sharedPipelinesCount} pipelines.`
+                + ' The renamed block may need to be re-added to the shared pipeline(s).'
+              }
+              {isReplacingBlock &&
+                'This will create a copy of the selected block and replace the existing'
+                + ' one so it is no longer shared with any other pipelines.'
+              }
             </Text>
           </Flex>
         </RowStyle>
@@ -314,6 +320,7 @@ function ConfigureBlock({
 
         <TextInput
           alignRight
+          fullWidth
           noBackground
           noBorder
           // @ts-ignore
@@ -365,7 +372,7 @@ function ConfigureBlock({
 
               if (
                 (
-                  (!isCustomBlock || isUpdatingBlock)
+                  (!isCustomBlock || isUpdatingBlock || isReplacingBlock)
                   && !selected
                   && (
                     (!isDataIntegration || BlockLanguageEnum.R === v)
@@ -424,6 +431,7 @@ function ConfigureBlock({
           {isCustomBlock && (
             <Select
               alignRight
+              disabled={isReplacingBlock}
               noBackground
               noBorder
               // @ts-ignore
@@ -523,7 +531,13 @@ function ConfigureBlock({
             tabIndex={0}
             uuid="ConfigureBlock/SaveAndAddBlock"
           >
-            Save and {isUpdatingBlock ? 'update' : 'add'} block
+            Save and&nbsp;
+            {isUpdatingBlock
+              ? 'update'
+              : (isReplacingBlock
+                ? 'replace'
+                : 'add')
+            } block
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>

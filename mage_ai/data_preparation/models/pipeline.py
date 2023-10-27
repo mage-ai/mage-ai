@@ -970,7 +970,10 @@ class Pipeline:
 
                         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
                         cache_block_action_object.update_block(block, remove=True)
-                        block.update(extract(block_data, ['name']))
+                        block.update(
+                            extract(block_data, ['name']),
+                            detach=block_data.get('detach', False)
+                        )
                         cache_block_action_object.update_block(block)
                         block_uuid_mapping[block_data.get('uuid')] = block.uuid
                         should_save_async = should_save_async or True

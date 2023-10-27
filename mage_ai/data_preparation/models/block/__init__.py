@@ -2100,7 +2100,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def update(self, data, **kwargs) -> 'Block':
         if 'name' in data and data['name'] != self.name:
-            self.__update_name(data['name'])
+            detach = kwargs.get('detach', False)
+            self.__update_name(data['name'], detach=detach)
 
         if (
             'type' in data
@@ -2828,7 +2829,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return custom_code
 
     # TODO: Update all pipelines that use this block
-    def __update_name(self, name) -> None:
+    def __update_name(
+        self,
+        name: str,
+        detach: bool = False,
+    ) -> None:
         """
         1. Rename block file
         2. Update the folder of variable
@@ -2837,6 +2842,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         old_uuid = self.uuid
         # This has to be here
         old_file_path = self.file_path
+        block_content = self.content
 
         new_uuid = clean_name(name)
         self.name = name
@@ -2861,16 +2867,39 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             parent_dir = os.path.dirname(new_file_path)
             os.makedirs(parent_dir, exist_ok=True)
 
-            os.rename(old_file_path, new_file_path)
+            if detach:
+                """"
+                Detaching a block creates a copy of the block file while keeping the existing block
+                file the same. Without detaching a block, the existing block file is simply renamed.
+                """
+                with open(new_file_path, 'w') as f:
+                    f.write(block_content)
+            else:
+                os.rename(old_file_path, new_file_path)
 
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
             cache = BlockCache()
-            cache.move_pipelines(self, dict(
-                type=self.type,
-                uuid=old_uuid,
-            ))
+            if detach:
+                """"
+                New block added to pipeline, so it must be added to the block cache.
+                Old block no longer in pipeline, so it must be removed from block cache.
+                """
+                cache.add_pipeline(self, self.pipeline)
+                old_block = self.get_block(
+                    old_uuid,
+                    old_uuid,
+                    self.type,
+                    language=self.language,
+                    pipeline=self.pipeline,
+                )
+                cache.remove_pipeline(old_block, self.pipeline.uuid)
+            else:
+                cache.move_pipelines(self, dict(
+                    type=self.type,
+                    uuid=old_uuid,
+                ))
 
     def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:
