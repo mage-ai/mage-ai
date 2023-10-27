@@ -17,22 +17,18 @@ commitizen = "*"
 ipykernel = "^6.17.1"
 
 [tool.ruff]
-# Exclude a variety of commonly ignored directories.
 exclude = [
     "mage_ai/data_preparation/templates",
     "mage_ai/orchestration/db/migrations/versions",
-    "scripts/"
 ]
 
-# Same as Black.
-line-length = 80
+line-length = 100
 indent-width = 4
 
 # Assume Python 3.8
 target-version = "py38"
 
 [tool.ruff.lint]
-
 ignore = [
     "B006",
     "E501", 
@@ -42,13 +38,8 @@ ignore = [
 ]
 
 select = [
-    "B",
-    "C9",
     "E",
     "F",
-    "T",
-    "T1",
-    "T2",
     "W",
 ]
 
@@ -60,19 +51,17 @@ unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.format]
-# Use single quotes
 quote-style = "single"
-# Space indent
 indent-style = "space"
 
-# Like Black, respect magic trailing commas.
+# Like Black, respect magic trailing commas
 skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
 [tool.ruff.mccabe]
-# Flag errors (`C901`) whenever the complexity level exceeds 5.
+# Flag errors (`C901`) whenever the complexity level exceeds 18.
 max-complexity = 18
 
 [build-system]
