@@ -202,7 +202,8 @@ class PipelineScheduler:
                         completed_at=datetime.now(tz=pytz.UTC),
                     )
                     failed_block_runs = self.pipeline_run.failed_block_runs
-                    error_msg = f'Failed blocks: {[b.uuid for b in failed_block_runs]}'
+                    error_msg = 'Failed blocks: '\
+                                f'{", ".join([b.block_uuid for b in failed_block_runs])}'
                     self.notification_sender.send_pipeline_run_failure_message(
                         error=error_msg,
                         pipeline=self.pipeline,
@@ -253,7 +254,8 @@ class PipelineScheduler:
 
                 failed_block_runs = self.pipeline_run.failed_block_runs
                 if len(failed_block_runs) > 0:
-                    error_msg = f'Failed blocks: {[b.uuid for b in failed_block_runs]}'
+                    error_msg = 'Failed blocks: '\
+                                f'{", ".join([b.block_uuid for b in failed_block_runs])}'
                 else:
                     error_msg = 'Pipelien run timed out'
                 self.notification_sender.send_pipeline_run_failure_message(
