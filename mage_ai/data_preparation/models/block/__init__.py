@@ -2842,6 +2842,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         old_uuid = self.uuid
         # This has to be here
         old_file_path = self.file_path
+        block_content = self.content
 
         new_uuid = clean_name(name)
         self.name = name
@@ -2872,7 +2873,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 file the same. Without detaching a block, the existing block file is simply renamed.
                 """
                 with open(new_file_path, 'w') as f:
-                    f.write(self.content)
+                    f.write(block_content)
             else:
                 os.rename(old_file_path, new_file_path)
 
