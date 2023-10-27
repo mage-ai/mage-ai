@@ -155,6 +155,10 @@ class PipelineScheduler:
                 )),
             )
             self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+            self.notification_sender.send_pipeline_run_failure_message(
+                pipeline=self.pipeline,
+                pipeline_run=self.pipeline_run,
+            )
             return False
 
         self.pipeline_run.update(
