@@ -20,7 +20,8 @@ ipykernel = "^6.17.1"
 # Exclude a variety of commonly ignored directories.
 exclude = [
     "mage_ai/data_preparation/templates",
-    "mage_ai/orchestration/db/migrations/versions"
+    "mage_ai/orchestration/db/migrations/versions",
+    "scripts/"
 ]
 
 # Same as Black.
@@ -33,7 +34,11 @@ target-version = "py38"
 [tool.ruff.lint]
 
 ignore = [
+    "B006",
     "E501", 
+    "W191",
+    "T201",
+    "F841"
 ]
 
 select = [
@@ -65,6 +70,10 @@ skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
+
+[tool.ruff.mccabe]
+# Flag errors (`C901`) whenever the complexity level exceeds 5.
+max-complexity = 18
 
 [build-system]
 requires = ["setuptools>=42"]
