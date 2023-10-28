@@ -67,7 +67,7 @@ class JobManager():
         api_response = None
         job_completed = False
         while not job_completed:
-            api_response = self.batch_api_client.read_namespaced_job_status(
+            api_response = self.batch_api_client.read_namespaced_job(
                 name=self.job_name,
                 namespace=self.namespace
             )
