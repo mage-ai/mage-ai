@@ -103,6 +103,9 @@ class PipelineResource(BaseResource):
         elif len(tags) == 1 and tags[0] == 'no_tag':
             # Get all pipelines to filter later.
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+        elif 'no_tag' in tags:
+            # Someone requested pipelines with tags and `no_tag`.
+            pipeline_uuids = []
         elif tags:
             from mage_ai.cache.tag import TagCache
 
