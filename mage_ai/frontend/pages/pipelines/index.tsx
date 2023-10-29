@@ -661,7 +661,15 @@ function PipelineListPage() {
   ]);
 
   const { data: dataTags } = api.tags.list();
-  const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
+  const tags: TagType[] = useMemo(() => {
+    const t = dataTags?.tags
+    if (t?.length > 0 && t[0].uuid !== 'no_tag') { // <- So as to not to re-add the `no_tag` tag.
+      t.push({
+        uuid: 'no_tag',
+      })
+    }
+    return sortByKey(t || [], ({ uuid }) => uuid)
+  }, [
     dataTags,
   ]);
 
