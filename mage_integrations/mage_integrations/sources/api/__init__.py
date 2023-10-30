@@ -190,7 +190,7 @@ class Api(Source):
 
         checked_type = self._check_response_type(response)
 
-        if checked_type == 'text/plain':
+        if checked_type == 'text/plain' or checked_type == 'text/csv':
             df = polars.read_csv(StringIO(response.content.decode()), separator=separator,
                                  has_header=header).to_pandas()
             yield df.to_dict()
