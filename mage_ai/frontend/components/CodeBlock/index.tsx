@@ -789,7 +789,7 @@ function CodeBlock({
         Object.entries(interaction?.variables || {}).forEach(([
           variableUUID,
           {
-            types
+            types,
           },
         ]) => {
           if (variablesToUse && variableUUID in variablesToUse) {

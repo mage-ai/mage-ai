@@ -324,6 +324,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         replicated_block = msg_id_value.get('replicated_block')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')
 
+        if block_type == BlockType.GLOBAL_DATA_PRODUCT and \
+            type(message['data']) is list and \
+                message['data'][0].startswith('INFO:'):
+            return
+
         error = message.get('error')
         if error:
             message['data'] = cls.format_error(
