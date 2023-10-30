@@ -397,7 +397,7 @@ class IntegrationBlock(Block):
                 )
 
             # Automatically clean up the input file to save space
-            if self.config.get(CONFIG_KEY_CLEAN_UP_INPUT_FILE):
+            if config.get(CONFIG_KEY_CLEAN_UP_INPUT_FILE):
                 if os.path.exists(source_output_file_path):
                     os.remove(source_output_file_path)
 
