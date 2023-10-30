@@ -403,11 +403,19 @@ class PipelineResource(BaseResource):
             if pipeline_doc:
                 await _add_markdown_block(pipeline_doc, self.model.uuid, 0)
 
+        pipeline_type = self.model.type
         await self.model.update(
             ignore_keys(payload, ['add_upstream_for_block_uuid']),
             update_content=update_content,
         )
-        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
+        try:
+            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
+        except Exception as e:
+            pipeline_type_updated = payload.get('type')
+            if pipeline_type_updated is not None:
+                await self.model.update(dict(type=pipeline_type))
+
+            raise Exception(e)
 
         @safe_db_query
         def update_schedule_status(status, pipeline_uuid):
