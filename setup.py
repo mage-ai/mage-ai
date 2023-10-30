@@ -94,7 +94,7 @@ setuptools.setup(
             'botocore==1.29.60',
         ],
         'snowflake': [
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==3.2.1',
         ],
         'spark': [
             'boto3==1.26.60',
