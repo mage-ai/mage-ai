@@ -16,10 +16,9 @@ can set workspace level permissions for users. The current additional features s
 still to come...
 
 * common workspace metadata file
-* project level permissions
 * customizable permissions and roles
 
-### Setup
+## Setup
 
 In order to start using workspace management, you will first need to create a "main project". The
 main project is the parent project that will handle the management of all the workspaces. To create
@@ -38,9 +37,6 @@ you will need to set the `REQUIRE_USER_AUTHENTICATION` variable.
 | `MAGE_DATABASE_CONNECTION_URL` | `postgresql+psycopg2://...` |
 
 Depending on your cloud environment, Mage may expect additional environment variables.
-
-### Cloud environments
-
 Mage currently natively supports creating workspaces in these cloud providers:
 
 * [Kubernetes](/production/developing-in-the-cloud/workspaces/kubernetes)
@@ -53,9 +49,7 @@ still to come...
 If you run into issues deploying your infrastructure, feel free to reach out in our
 [Slack](https://www.mage.ai/chat).
 
-<img src="https://github.com/mage-ai/assets/blob/main/multi-dev-cloud-env.jpg?raw=true" />
-
-### User management
+## User management
 
 <Note>
     Only the global owner can manage users from the workspace management page.
@@ -84,7 +78,7 @@ on the left hand side. Otherwise, you can set project level permissions on the r
     />
 </Frame>
 
-### Settings
+## Settings
 
 In the settings tab, you can adjust the project metadata for the main project. This tab will be mostly useful
 if any of the initial settings are incorrect. In the future, we plan on allowing users to configure their
