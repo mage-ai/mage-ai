@@ -1348,9 +1348,22 @@ def check_sla():
 
 def schedule_all():
     """
+    This method manages the scheduling and execution of pipeline runs based on specified
+    concurrency and pipeline scheduling rules.
+
     1. Check whether any new pipeline runs need to be scheduled.
-    2. Run git sync if "sync_on_pipeline_run" is enabled.
-    3. In active pipeline runs, check whether any block runs need to be scheduled.
+    2. Group active pipeline runs by pipeline.
+    3. Run git sync if "sync_on_pipeline_run" is enabled.
+    4. For each pipeline, check whether or not any pipeline runs need to be scheduled for
+       the active pipeline schedules by performing the following steps:
+        1. Loop over pipeline schedules and acquire locks.
+        2. Determine whether to schedule pipeline runs based on pipeline schedule trigger interval.
+        3. Enforce per trigger pipeline run limit and create or cancel pipeline runs.
+        4. Start pipeline runs and handle per pipeline pipeline run limit.
+    5. In active pipeline runs, check whether any block runs need to be scheduled.
+
+    The current limit checks can potentially run into race conditions with api or event triggered
+    schedules, so that needs to be addressed at some point.
     """
     db_connection.session.expire_all()
 
@@ -1409,6 +1422,8 @@ def schedule_all():
         for key, runs in groupby(active_pipeline_schedules, key=lambda x: x.pipeline_uuid)
     }
 
+    # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
+    # each pipeline.
     for pipeline_uuid, active_pipeline_schedules in pipeline_schedules_by_pipeline.items():
         pipeline = Pipeline.get(pipeline_uuid)
         concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
@@ -1420,94 +1435,100 @@ def schedule_all():
             if not lock.try_acquire_lock(lock_key):
                 continue
 
-            previous_runtimes = []
-            if pipeline_schedule.id in active_pipeline_schedule_ids_with_landing_time_enabled:
-                previous_pipeline_run = previous_pipeline_run_by_pipeline_schedule_id.get(
-                    pipeline_schedule.id,
-                )
-                if previous_pipeline_run:
-                    previous_runtimes = pipeline_schedule.runtime_history(
-                        pipeline_run=previous_pipeline_run,
+            try:
+                previous_runtimes = []
+                if pipeline_schedule.id in active_pipeline_schedule_ids_with_landing_time_enabled:
+                    previous_pipeline_run = previous_pipeline_run_by_pipeline_schedule_id.get(
+                        pipeline_schedule.id,
                     )
-
-            # Decide whether to schedule any pipeline runs
-            should_schedule = pipeline_schedule.should_schedule(previous_runtimes=previous_runtimes)
-            initial_pipeline_runs = [
-                r for r in pipeline_schedule.pipeline_runs
-                if r.status == PipelineRun.PipelineRunStatus.INITIAL
-            ]
-
-            if not should_schedule and not initial_pipeline_runs:
-                lock.release_lock(lock_key)
-                continue
-
-            running_pipeline_runs = [
-                r for r in pipeline_schedule.pipeline_runs
-                if r.status == PipelineRun.PipelineRunStatus.RUNNING
-            ]
-
-            if should_schedule and \
-                    pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
-                # Perform git sync if "sync_on_pipeline_run" is enabled and no other git sync
-                # has been run for this scheduler loop.
-                if not git_sync_result and sync_config and sync_config.sync_on_pipeline_run:
-                    git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
-
-                payload = dict(
-                    execution_date=pipeline_schedule.current_execution_date(),
-                    pipeline_schedule_id=pipeline_schedule.id,
-                    pipeline_uuid=pipeline_uuid,
-                    variables=pipeline_schedule.variables,
-                )
-
-                if len(previous_runtimes) >= 1:
-                    payload['metrics'] = dict(previous_runtimes=previous_runtimes)
-
-                if PipelineType.INTEGRATION == pipeline.type:
-                    payload['create_block_runs'] = False
-
-                if (
-                    pipeline_schedule.get_settings().skip_if_previous_running
-                    and (initial_pipeline_runs or running_pipeline_runs)
-                ):
-                    # Cancel the current pipeline run if previous pipeline runs haven't completed
-                    from mage_ai.orchestration.triggers.utils import (
-                        create_and_cancel_pipeline_run,
-                    )
-
-                    pipeline_run = create_and_cancel_pipeline_run(
-                        pipeline,
-                        pipeline_schedule,
-                        payload,
-                        message='Pipeline run limit reached... skipping this run',
-                    )
-                else:
-                    pipeline_run = PipelineRun.create(**payload, create_block_runs=False)
-                    # Log Git sync status for new pipeline runs if a git sync result exists
-                    if git_sync_result:
-                        pipeline_scheduler = PipelineScheduler(pipeline_run)
-                        log_git_sync(
-                            git_sync_result,
-                            pipeline_scheduler.logger,
-                            pipeline_scheduler.build_tags(),
+                    if previous_pipeline_run:
+                        previous_runtimes = pipeline_schedule.runtime_history(
+                            pipeline_run=previous_pipeline_run,
                         )
-                    initial_pipeline_runs.append(pipeline_run)
 
-            # Enforce pipeline concurrency limit
-            pipeline_run_quota = None
-            if concurrency_config.pipeline_run_limit is not None:
-                pipeline_run_quota = concurrency_config.pipeline_run_limit - \
-                    len(running_pipeline_runs)
+                # Decide whether to schedule any pipeline runs
+                should_schedule = pipeline_schedule.should_schedule(
+                    previous_runtimes=previous_runtimes
+                )
+                initial_pipeline_runs = [
+                    r for r in pipeline_schedule.pipeline_runs
+                    if r.status == PipelineRun.PipelineRunStatus.INITIAL
+                ]
 
-            if pipeline_run_quota is None:
-                pipeline_run_quota = len(initial_pipeline_runs)
+                if not should_schedule and not initial_pipeline_runs:
+                    lock.release_lock(lock_key)
+                    continue
 
-            if pipeline_run_quota > 0:
-                initial_pipeline_runs.sort(key=lambda x: x.execution_date)
-                pipeline_runs_to_start.extend(initial_pipeline_runs[:pipeline_run_quota])
-                pipeline_runs_excluded_by_limit.extend(initial_pipeline_runs[pipeline_run_quota:])
+                running_pipeline_runs = [
+                    r for r in pipeline_schedule.pipeline_runs
+                    if r.status == PipelineRun.PipelineRunStatus.RUNNING
+                ]
 
-            lock.release_lock(lock_key)
+                if should_schedule and \
+                        pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
+                    # Perform git sync if "sync_on_pipeline_run" is enabled and no other git sync
+                    # has been run for this scheduler loop.
+                    if not git_sync_result and sync_config and sync_config.sync_on_pipeline_run:
+                        git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
+
+                    payload = dict(
+                        execution_date=pipeline_schedule.current_execution_date(),
+                        pipeline_schedule_id=pipeline_schedule.id,
+                        pipeline_uuid=pipeline_uuid,
+                        variables=pipeline_schedule.variables,
+                    )
+
+                    if len(previous_runtimes) >= 1:
+                        payload['metrics'] = dict(previous_runtimes=previous_runtimes)
+
+                    if PipelineType.INTEGRATION == pipeline.type:
+                        payload['create_block_runs'] = False
+
+                    if (
+                        pipeline_schedule.get_settings().skip_if_previous_running
+                        and (initial_pipeline_runs or running_pipeline_runs)
+                    ):
+                        # Cancel the pipeline run if previous pipeline runs haven't completed and
+                        # skip_if_previous_running is enabled
+                        from mage_ai.orchestration.triggers.utils import (
+                            create_and_cancel_pipeline_run,
+                        )
+
+                        pipeline_run = create_and_cancel_pipeline_run(
+                            pipeline,
+                            pipeline_schedule,
+                            payload,
+                            message='Pipeline run limit reached... skipping this run',
+                        )
+                    else:
+                        pipeline_run = PipelineRun.create(**payload, create_block_runs=False)
+                        # Log Git sync status for new pipeline runs if a git sync result exists
+                        if git_sync_result:
+                            pipeline_scheduler = PipelineScheduler(pipeline_run)
+                            log_git_sync(
+                                git_sync_result,
+                                pipeline_scheduler.logger,
+                                pipeline_scheduler.build_tags(),
+                            )
+                        initial_pipeline_runs.append(pipeline_run)
+
+                # Enforce pipeline concurrency limit
+                pipeline_run_quota = None
+                if concurrency_config.pipeline_run_limit is not None:
+                    pipeline_run_quota = concurrency_config.pipeline_run_limit - \
+                        len(running_pipeline_runs)
+
+                if pipeline_run_quota is None:
+                    pipeline_run_quota = len(initial_pipeline_runs)
+
+                if pipeline_run_quota > 0:
+                    initial_pipeline_runs.sort(key=lambda x: x.execution_date)
+                    pipeline_runs_to_start.extend(initial_pipeline_runs[:pipeline_run_quota])
+                    pipeline_runs_excluded_by_limit.extend(
+                        initial_pipeline_runs[pipeline_run_quota:]
+                    )
+            finally:
+                lock.release_lock(lock_key)
 
         pipeline_run_limit = concurrency_config.pipeline_run_limit_all_triggers
         if pipeline_run_limit is not None:
@@ -1517,16 +1538,21 @@ def schedule_all():
         else:
             pipeline_quota = None
 
+        quota_filtered_runs = pipeline_runs_to_start
         if pipeline_quota is not None:
             pipeline_runs_to_start.sort(key=lambda x: x.execution_date)
-            pipeline_runs_to_start = pipeline_runs_to_start[:pipeline_quota]
-            pipeline_runs_excluded_by_limit.extend(pipeline_runs_to_start[pipeline_quota:])
+            quota_filtered_runs = pipeline_runs_to_start[:pipeline_quota]
+            pipeline_runs_excluded_by_limit.extend(
+                pipeline_runs_to_start[pipeline_quota:]
+            )
 
-        for r in pipeline_runs_to_start:
+        for r in quota_filtered_runs:
             if r.block_runs_count == 0 and r.pipeline_uuid is not None:
                 r.create_block_runs()
             PipelineScheduler(r).start()
 
+        # If on_pipeline_run_limit_reached is set as SKIP, cancel the pipeline runs that
+        # were not scheduled due to pipeline run limits.
         if concurrency_config.on_pipeline_run_limit_reached == OnLimitReached.SKIP:
             for r in pipeline_runs_excluded_by_limit:
                 pipeline_scheduler = PipelineScheduler(r)
@@ -1555,6 +1581,20 @@ def schedule_all():
 
 
 def schedule_with_event(event: Dict = None):
+    """
+    This method manages the scheduling and execution of pipeline runs for event triggered
+    schedules. The logic is relatively similar to the `schedule_all()` method.
+
+    1. Evaluate event matchers and get active pipeline schedules for each matched event matcher.
+    2. Run git sync if "sync_on_pipeline_run" is enabled.
+    3. Group matched pipeline schedules by pipeline.
+    4. Create a new pipeline run for each matched pipeline schedule, but check the pipeline run
+       limit for each pipeline defined in the pipeline concurrency config. If there is no quota
+       remaining, cancel the pipeline run.
+
+    Args:
+        event (Dict): the trigger event
+    """
     if event is None:
         event = dict()
     logger.info(f'Schedule with event {event}')
