@@ -54,6 +54,29 @@ def check_pipeline_run_status(
     return pipeline_run
 
 
+def create_and_cancel_pipeline_run(
+    pipeline: Pipeline,
+    pipeline_schedule: PipelineSchedule,
+    payload: Dict,
+    message: str = None,
+) -> PipelineRun:
+    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+
+    payload_copy = payload.copy()
+    configured_payload, _ = configure_pipeline_run_payload(
+        pipeline_schedule,
+        pipeline.type,
+        payload_copy,
+    )
+    configured_payload['create_block_runs'] = False
+    pipeline_run = PipelineRun.create(**configured_payload)
+    if message:
+        pipeline_scheduler = PipelineScheduler(pipeline_run)
+        pipeline_scheduler.logger.warning(message, **pipeline_scheduler.build_tags())
+    pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+    return pipeline_run
+
+
 @safe_db_query
 def create_and_start_pipeline_run(
     pipeline: Pipeline,
@@ -70,12 +93,11 @@ def create_and_start_pipeline_run(
         payload,
     )
 
-    pipeline_run = PipelineRun.create(**configured_payload)
-
     # Do not start the pipeline run immediately due to concurrency control
     if should_schedule:
         from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 
+        pipeline_run = PipelineRun.create(**configured_payload)
         pipeline_scheduler = PipelineScheduler(pipeline_run)
 
         # if is_integration:
