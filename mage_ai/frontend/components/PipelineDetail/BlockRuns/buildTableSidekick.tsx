@@ -218,7 +218,6 @@ export default function({
           <DependencyGraph
             {...updatedProps}
             blocksOverride={blocksOverride}
-            enablePorts={false}
             height={height}
             heightOffset={(heightOffset || 0) + (showTabs ? TABS_HEIGHT_OFFSET : 0)}
             pipeline={pipeline}

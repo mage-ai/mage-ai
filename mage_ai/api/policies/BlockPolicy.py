@@ -86,7 +86,6 @@ BlockPolicy.allow_write([
     'content',
     'converted_from',
     'defaults',
-    'downstream_blocks',
     'extension_uuid',
     'has_callback',
     'language',
@@ -158,7 +157,6 @@ BlockPolicy.allow_query([
 
 BlockPolicy.allow_query([
     'extension_uuid',
-    'force',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

@@ -646,7 +646,6 @@ function CodeOutput({
         const lineage = blockMetadata?.dbt?.lineage;
         if (lineage) {
           el = (
-            // @ts-ignore
             <DependencyGraph
               disabled
               enablePorts={false}

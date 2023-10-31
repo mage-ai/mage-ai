@@ -580,7 +580,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
-            downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
@@ -599,17 +598,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                     priority=priority,
                     widget=widget,
                 )
-                if downstream_block_uuids:
-                    for downstream_block_uuid in downstream_block_uuids:
-                        downstream_block = pipeline.get_block(downstream_block_uuid)
-                        if not downstream_block:
-                            continue
-                        pipeline.update_block(
-                            downstream_block,
-                            upstream_block_uuids=(
-                                downstream_block.upstream_block_uuids or []
-                            ) + [block.uuid],
-                        )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
@@ -663,7 +651,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         upstream_block_uuids: List[str] = None,
         config: Dict = None,
         widget: bool = False,
-        downstream_block_uuids: List[str] = None,
     ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
@@ -745,7 +732,6 @@ class Block(DataIntegrationMixin, SparkBlock):
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
             widget=widget,
-            downstream_block_uuids=downstream_block_uuids,
         )
         return block
 
@@ -2124,36 +2110,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 data['upstream_blocks'],
                 check_upstream_block_order=check_upstream_block_order,
             )
-
-        if 'downstream_blocks' in data and self.pipeline:
-            arr = (data.get('downstream_blocks') or [])
-            block_uuids_to_remove = \
-                [uuid for uuid in self.downstream_block_uuids if uuid not in arr]
-
-            for block_uuid in block_uuids_to_remove:
-                block = self.pipeline.get_block(block_uuid)
-                if not block:
-                    continue
-                block.update(
-                    dict(
-                        upstream_blocks=list(filter(
-                            lambda x, uuid=self.uuid: x != uuid,
-                            block.upstream_block_uuids or [],
-                        )),
-                    ),
-                    check_upstream_block_order=check_upstream_block_order,
-                )
-
-            for block_uuid in arr:
-                block = self.pipeline.get_block(block_uuid)
-                if not block:
-                    continue
-                block.update(
-                    dict(
-                        upstream_blocks=(block.upstream_block_uuids or []) + [self.uuid],
-                    ),
-                    check_upstream_block_order=check_upstream_block_order,
-                )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
             self.callback_block_uuids
