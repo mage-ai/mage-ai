@@ -74,9 +74,6 @@ class BigQuery(Destination):
             location=self.config.get('location'),
         )
 
-    def test_connection(self):
-        super().test_connection()
-
     def build_create_table_commands(
         self,
         schema: Dict,
