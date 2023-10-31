@@ -208,6 +208,8 @@ class Context():
     @classmethod
     def is_selected(cls, stream_name):
         stream = cls.get_catalog_entry(stream_name)
+        if not stream:
+            return False
         stream_metadata = metadata.to_map(stream['metadata'])
         return metadata.get(stream_metadata, (), 'selected')
 
@@ -366,7 +368,9 @@ def get_discovery_metadata(schema, key_properties, replication_method, replicati
     return metadata.to_list(mdata)
 
 
-def discover(logger=LOGGER):
+def discover(logger=None):
+    if logger is None:
+        logger = LOGGER
     raw_schemas = load_schemas()
     streams = []
 
@@ -594,7 +598,7 @@ def convert_dict_to_stripe_object(record):
 # pylint: disable=too-many-statements
 
 
-def sync_stream(stream_name, is_sub_stream=False, logger=LOGGER):
+def sync_stream(stream_name, is_sub_stream=False, logger=None):
     """
     Sync each stream, looking for newly created records. Updates are captured by events stream.
     :param
@@ -603,6 +607,8 @@ def sync_stream(stream_name, is_sub_stream=False, logger=LOGGER):
     parent-child are selected)
                     or when called through only child stream i.e. when parent is not selected.
     """
+    if logger is None:
+        logger = LOGGER
     logger.info(f"Started syncing stream {stream_name}")
 
     stream_metadata = metadata.to_map(Context.get_catalog_entry(stream_name)['metadata'])
@@ -965,7 +971,7 @@ def recursive_to_dict(some_obj):
 
 
 def sync_event_updates(stream_name, is_sub_stream):
-    '''
+    """
     Get updates via events endpoint
     look at 'events update' bookmark and pull events after that
     :param
@@ -973,7 +979,7 @@ def sync_event_updates(stream_name, is_sub_stream):
     is_sub_stream - Check whether the function is called via
                     the parent stream(only parent/both are selected)
                     or when called through only child stream i.e. when parent is not selected.
-    '''
+    """
     LOGGER.info("Started syncing event based updates")
     reset_brk_flag_value = False
     event_update_window_size = Context.event_update_window_size
@@ -1174,33 +1180,6 @@ def reset_bookmark_for_event_updates(is_sub_stream, stream_name, sub_stream_name
     singer.write_state(Context.state)
 
 
-def sync(logger=LOGGER):
-    """
-    The sync function called for the sync mode.
-    """
-    # Write all schemas and init count to 0
-    for catalog_entry in Context.catalog['streams']:
-        stream_name = catalog_entry["tap_stream_id"]
-        if Context.is_selected(stream_name):
-            singer.write_schema(stream_name,
-                                catalog_entry['schema'],
-                                catalog_entry['key_properties'])
-
-            Context.new_counts[stream_name] = 0
-            Context.updated_counts[stream_name] = 0
-
-    # Loop over streams in catalog
-    for catalog_entry in Context.catalog['streams']:
-        stream_name = catalog_entry['tap_stream_id']
-        if Context.is_selected(stream_name):
-            # Run the sync for only parent streams/only child streams/both parent-child streams
-            if not Context.is_sub_stream(stream_name) or not is_parent_selected(stream_name):
-                sync_stream(stream_name, Context.is_sub_stream(stream_name), logger=logger)
-                # This prevents us from retrieving immutable stream events.
-                if STREAM_TO_TYPE_FILTER.get(stream_name):
-                    sync_event_updates(stream_name, Context.is_sub_stream(stream_name))
-
-
 def get_date_window_size(param, default_value):
     """
     Get date_window value from config, if the value is passed.
@@ -1312,5 +1291,5 @@ def main():
             Context.print_counts()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
