@@ -103,7 +103,7 @@ class ElasticSink(BatchSink):
         key_properties: Optional[List[str]],
     ):
         super().__init__(target, stream_name, schema, key_properties)
-        self.client = self._authenticated_client()
+        self.client = self.authenticated_client()
 
     def build_request_body_and_distinct_indices(
         self, records: List[Dict[str, Union[str, Dict[str, str], int]]]
@@ -165,7 +165,7 @@ class ElasticSink(BatchSink):
         self.create_indices(distinct_indices)
         return updated_records
 
-    def _authenticated_client(self) -> elasticsearch.Elasticsearch:
+    def authenticated_client(self) -> elasticsearch.Elasticsearch:
         """
         _authenticated_client generates a newly authenticated elasticsearch client
         attempting to support all auth permutations and ssl concerns
