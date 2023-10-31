@@ -74,6 +74,9 @@ class BigQuery(Destination):
             location=self.config.get('location'),
         )
 
+    def test_connection(self):
+        super().test_connection()
+
     def build_create_table_commands(
         self,
         schema: Dict,
@@ -225,17 +228,6 @@ WHERE table_id = '{table_name}'
                     records_inserted += t[0]
 
         return records_inserted, 0
-
-    def handle_insert_commands(
-        self,
-        record_data: List[Dict],
-        stream: str,
-        tags: Dict = None,
-    ) -> List[str]:
-        if tags is None:
-            tags = {}
-
-        return []
 
     def process_queries(
         self,

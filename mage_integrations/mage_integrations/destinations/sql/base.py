@@ -204,26 +204,6 @@ class Destination(BaseDestination):
 
         return query_strings
 
-    def handle_insert_commands(
-        self,
-        record_data: List[Dict],
-        stream: str,
-        tags: Dict = None,
-    ) -> List[str]:
-        if tags is None:
-            tags = {}
-        query_strings = []
-
-        for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
-            query_strings += self._handle_insert_commands_single_batch(
-                sub_batch,
-                stream,
-                idx=idx,
-                tags=tags,
-            )
-
-        return query_strings
-
     def _handle_insert_commands_single_batch(
         self,
         record_data: List[Dict],
