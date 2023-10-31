@@ -299,6 +299,12 @@ class TriggerGlobalDataProductTest(DBTestCase):
         )
 
     def test_trigger_and_check_status_with_schedule_all(self):
+        pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
+
+        count = PipelineRun.query.filter(
+            PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+        ).count()
+
         self.global_data_product.outdated_after = dict(seconds=2)
         self.global_data_product.outdated_starting_at = {}
 
@@ -314,7 +320,6 @@ class TriggerGlobalDataProductTest(DBTestCase):
         with patch.object(PipelineScheduler, 'schedule') as _:
             schedule_all()
 
-        pipeline_schedule = fetch_or_create_pipeline_schedule(self.global_data_product)
         pipeline_runs = PipelineRun.query.filter(
             PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
         ).all()
@@ -325,6 +330,12 @@ class TriggerGlobalDataProductTest(DBTestCase):
         self.assertEqual(
             pipeline_run.status,
             PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        self.assertEqual(
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+            ).count(),
+            count + 1,
         )
 
     def test_fetch_or_create_pipeline_schedule(self):
