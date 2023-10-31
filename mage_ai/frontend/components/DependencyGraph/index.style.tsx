@@ -51,12 +51,6 @@ export const GraphContainerStyle = styled.div<{
   `}
 
   .edge {
-    &.activeSlow {
-      animation: dashdraw 2s linear infinite;
-      stroke-dasharray: 5;
-      stroke-width: ${STROKE_WIDTH};
-    }
-
     &.active {
       animation: dashdraw .5s linear infinite;
       stroke-dasharray: 5;

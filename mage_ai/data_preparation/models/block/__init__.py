@@ -891,7 +891,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
-        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
+        if from_notebook and self.is_using_spark():
             self.set_spark_job_before_execution()
 
         if logging_tags is None:
@@ -955,7 +955,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 from_notebook=from_notebook,
             )
 
-        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
+        if from_notebook and self.is_using_spark():
             self.set_spark_job_after_execution()
             if self.spark_job_before_execution:
                 print(f'[INFO] Job ID before execution: {self.spark_job_before_execution.id}')
