@@ -73,8 +73,6 @@ def build_test_destination():
 
 
 class BaseDestinationTests(ABC):
-    destination_class = None
-
     """
     Base unit tests that will be applied to all subclasses.
     """
