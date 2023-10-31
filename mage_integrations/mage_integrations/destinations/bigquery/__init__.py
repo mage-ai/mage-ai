@@ -226,17 +226,6 @@ WHERE table_id = '{table_name}'
 
         return records_inserted, 0
 
-    def handle_insert_commands(
-        self,
-        record_data: List[Dict],
-        stream: str,
-        tags: Dict = None,
-    ) -> List[str]:
-        if tags is None:
-            tags = {}
-
-        return []
-
     def process_queries(
         self,
         query_strings: List[str],
