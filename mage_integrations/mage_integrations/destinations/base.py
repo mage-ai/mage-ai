@@ -187,10 +187,10 @@ class Destination(ABC):
     def test_connection(self) -> None:
         raise NotImplementedError('Subclasses must implement the test_connection method.')
 
-    def before_process(self) -> None:
+    def before_process(self) -> None:   # noqa: B027
         pass
 
-    def after_process(self) -> None:
+    def after_process(self) -> None:    # noqa: B027
         pass
 
     def export_data(
