@@ -710,14 +710,15 @@ function Remote({
                   onClick={() => {
                     setActionProgress(null);
                     if (actionName !== ACTION_CLONE || (
-                      typeof window !== 'undefined'
-                      && typeof location !== 'undefined'
-                      && window.confirm(
-                        `Are you sure you want to clone remote ${actionRemoteName}? This will ` +
-                        'overwrite all your local changes and may reset any settings you may ' + 
-                        'have configured for your local Git repo. This action cannot be undone.',
+                        typeof window !== 'undefined'
+                        && typeof location !== 'undefined'
+                        && window.confirm(
+                          `Are you sure you want to clone remote ${actionRemoteName}? This will ` +
+                          'overwrite all your local changes and may reset any settings you may ' + 
+                          'have configured for your local Git repo. This action cannot be undone.',
+                        )
                       )
-                    )) {
+                    ) {
                       // @ts-ignore
                       actionGitBranch({
                         git_custom_branch: {

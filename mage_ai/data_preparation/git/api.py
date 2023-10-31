@@ -165,10 +165,12 @@ def clone(remote_name: str, remote_url: str, token: str) -> None:
             origin=remote_name,
         )
 
+        shutil.rmtree(os.path.join(git_manager.repo_path, '.git'))
         shutil.copytree(
             tmp_path,
             git_manager.repo_path,
             dirs_exist_ok=True,
+            ignore=lambda x, y: ['.preferences.yaml']
         )
         Git.get_manager().repo.git.clean('-fd', exclude='.preferences.yaml')
     finally:
