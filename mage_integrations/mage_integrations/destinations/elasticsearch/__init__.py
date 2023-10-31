@@ -1,8 +1,6 @@
 import argparse
 import sys
 
-from elasticsearch import Elasticsearch as Elasticsearch_client
-
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.elasticsearch.target_elasticsearch.sinks import (
     ElasticSink,
