@@ -159,6 +159,8 @@ def clone(remote_name: str, remote_url: str, token: str) -> None:
     tmp_path = f'{git_manager.repo_path}_{uuid.uuid4().hex}'
     os.mkdir(tmp_path)
     try:
+        # Clone to a tmp folder first, then copy the folder to the actual repo path. Git
+        # won't allow you to clone to a folder that is not empty.
         Repo.clone_from(
             url,
             to_path=tmp_path,
@@ -180,6 +182,7 @@ def clone(remote_name: str, remote_url: str, token: str) -> None:
         except Exception as err:
             print('WARNING (mage_ai.data_preparation.git.api):')
             print(err)
+        # Add old remotes since they may be deleted when cloning.
         git_manager = Git.get_manager()
         existing_remotes = set(remote['name'] for remote in git_manager.remotes())
         for remote in all_remotes:
