@@ -731,6 +731,19 @@
             "production/data-sync/github",
             "production/data-sync/git-integration"
           ]
+        },
+        {
+          "group": "Workspaces",
+          "icon": "boxes-stacked",
+          "pages": [
+            "production/developing-in-the-cloud/workspaces/overview",
+            {
+              "group": "Environments",
+              "pages": [
+                "production/developing-in-the-cloud/workspaces/kubernetes"
+              ]
+            }
+          ]
         }
       ]
     },

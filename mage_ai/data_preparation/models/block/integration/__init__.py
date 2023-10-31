@@ -16,6 +16,9 @@ from mage_ai.data_integrations.utils.config import (
     get_catalog_by_stream,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.data_integration.constants import (
+    CONFIG_KEY_CLEAN_UP_INPUT_FILE,
+)
 from mage_ai.data_preparation.models.constants import PYTHON_COMMAND, BlockType
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
@@ -392,6 +395,11 @@ class IntegrationBlock(Block):
                     proc.returncode,
                     filter_out_config_values(cmd, config),
                 )
+
+            # Automatically clean up the input file to save space
+            if config.get(CONFIG_KEY_CLEAN_UP_INPUT_FILE):
+                if os.path.exists(source_output_file_path):
+                    os.remove(source_output_file_path)
 
             outputs.append(proc)
 

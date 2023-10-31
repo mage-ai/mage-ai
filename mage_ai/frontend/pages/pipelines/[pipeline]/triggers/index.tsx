@@ -222,7 +222,6 @@ function PipelineSchedules({
         <>
           <DependencyGraph
             {...props}
-            enablePorts={false}
             height={dependencyGraphHeight}
             noStatus
           />

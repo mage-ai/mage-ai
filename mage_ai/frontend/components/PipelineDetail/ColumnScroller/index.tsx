@@ -179,20 +179,17 @@ function ColumnScroller({
       return height;
     });
 
-    if (heightsInner?.every(value => typeof value !== 'undefined' && !isNaN(value))) {
-      setHeights(heightsInner);
+    setHeights(heightsInner);
 
-      if (lockScroll) {
-        const top = calculateTopFromY({
-          ...lockScroll,
-          heights: heightsInner,
-        });
-        updatePosition(top);
-      }
-
-      dispatchEventCusorMoved();
+    if (lockScroll) {
+      const top = calculateTopFromY({
+        ...lockScroll,
+        heights: heightsInner,
+      });
+      updatePosition(top);
     }
 
+    dispatchEventCusorMoved();
   }, [
     blocks,
     calculateTopFromY,

@@ -150,9 +150,12 @@ function CodeOutput({
 }: CodeOutputProps, ref) {
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // const startTime = performance.now();
+  // useEffect(() => {
+  //   const duration = performance.now() - startTime;
+  //   console.log('CodeOutput render', duration);
+  //   setMounted(true);
+  // }, []);
 
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED, {
@@ -643,7 +646,6 @@ function CodeOutput({
         const lineage = blockMetadata?.dbt?.lineage;
         if (lineage) {
           el = (
-            // @ts-ignore
             <DependencyGraph
               disabled
               enablePorts={false}
