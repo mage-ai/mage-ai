@@ -19,7 +19,13 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { ACTION_FETCH, ACTION_PULL, ACTION_RESET, ACTION_RESET_HARD } from '../constants';
+import {
+  ACTION_CLONE,
+  ACTION_FETCH,
+  ACTION_PULL,
+  ACTION_RESET,
+  ACTION_RESET_HARD,
+} from '../constants';
 import {
   Add,
   Branch,
@@ -653,6 +659,9 @@ function Remote({
                   <option value={ACTION_RESET}>
                     {capitalizeRemoveUnderscoreLower(ACTION_RESET_HARD)}
                   </option>
+                  <option value={ACTION_CLONE}>
+                    {capitalizeRemoveUnderscoreLower(ACTION_CLONE)}
+                  </option>
                 </Select>
 
                 <Spacing mr={1} />
@@ -672,7 +681,7 @@ function Remote({
                   ))}
                 </Select>
                 
-                {actionName !== ACTION_FETCH && (
+                {![ACTION_FETCH, ACTION_CLONE].includes(actionName) && (
                   <Spacing ml={1}>
                     <Select
                       beforeIcon={<Branch />}
@@ -700,16 +709,26 @@ function Remote({
                   loading={isLoadingAction}
                   onClick={() => {
                     setActionProgress(null);
-                    // @ts-ignore
-                    actionGitBranch({
-                      git_custom_branch: {
-                        action_type: actionName,
-                        [actionName]: {
-                          branch: actionBranchName,
-                          remote: actionRemoteName,
+                    if (actionName !== ACTION_CLONE || (
+                      typeof window !== 'undefined'
+                      && typeof location !== 'undefined'
+                      && window.confirm(
+                        `Are you sure you want to clone remote ${actionRemoteName}? This will ` +
+                        'overwrite all your local changes and may reset any settings you may ' + 
+                        'have configured for your local Git repo. This action cannot be undone.',
+                      )
+                    )) {
+                      // @ts-ignore
+                      actionGitBranch({
+                        git_custom_branch: {
+                          action_type: actionName,
+                          [actionName]: {
+                            branch: actionBranchName,
+                            remote: actionRemoteName,
+                          },
                         },
-                      },
-                    });
+                      });
+                    }
                   }}
                   primary
                 >

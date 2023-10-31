@@ -1,5 +1,8 @@
 import asyncio
+import os
+import shutil
 import subprocess
+import uuid
 from typing import Dict
 from urllib.parse import urlsplit, urlunsplit
 
@@ -131,14 +134,58 @@ def reset_hard(remote_name: str, remote_url: str, branch_name: str, token: str) 
     try:
         remote.fetch()
         git_manager.repo.git.reset('--hard', f'{remote_name}/{branch_name}')
-    except Exception as err:
-        raise err
     finally:
         try:
             remote.set_url(url_original)
         except Exception as err:
             print('WARNING (mage_ai.data_preparation.git.api):')
             print(err)
+
+
+def clone(remote_name: str, remote_url: str, token: str) -> None:
+    from mage_ai.data_preparation.git import Git
+
+    username = get_username(token)
+
+    url = build_authenticated_remote_url(remote_url, username, token)
+    git_manager = Git.get_manager()
+
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
+
+    all_remotes = git_manager.remotes()
+
+    tmp_path = f'{git_manager.repo_path}_{uuid.uuid4().hex}'
+    os.mkdir(tmp_path)
+    try:
+        Repo.clone_from(
+            url,
+            to_path=tmp_path,
+            origin=remote_name,
+        )
+
+        shutil.copytree(
+            tmp_path,
+            git_manager.repo_path,
+            dirs_exist_ok=True,
+        )
+        Git.get_manager().repo.git.clean('-fd', exclude='.preferences.yaml')
+    finally:
+        shutil.rmtree(tmp_path)
+        try:
+            remote.set_url(url_original)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
+        git_manager = Git.get_manager()
+        existing_remotes = set(remote['name'] for remote in git_manager.remotes())
+        for remote in all_remotes:
+            try:
+                if remote['name'] not in existing_remotes:
+                    git_manager.add_remote(remote['name'], remote['urls'][0])
+            except Exception:
+                pass
 
 
 def build_authenticated_remote_url(remote_url: str, username: str, token: str) -> str:

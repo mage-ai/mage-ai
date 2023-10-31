@@ -251,7 +251,27 @@ class GitBranchResource(GenericResource):
                     except GitCommandError as err:
                         self.model['error'] = str(err)
         elif action_type == 'clone':
-            git_manager.clone()
+            clone = payload.get('clone', None)
+            if clone and 'remote' in clone:
+                from git.exc import GitCommandError
+                try:
+                    access_token = api.get_access_token_for_user(self.current_user)
+                    if access_token:
+                        remote = git_manager.repo.remotes[clone['remote']]
+                        url = list(remote.urls)[0]
+
+                        api.clone(
+                            remote.name,
+                            url,
+                            access_token.token,
+                        )
+                    else:
+                        self.model['error'] = \
+                            'Please authenticate with GitHub before trying to pull.'
+                except GitCommandError as err:
+                    self.model['error'] = str(err)
+            else:
+                git_manager.clone()
         elif action_type == 'add':
             for file_path in files:
                 git_manager.add_file(file_path, ['-f'])
