@@ -10,7 +10,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.server.api.base import BaseHandler
-from mage_ai.settings import JWT_SECRET, REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import JWT_DOWNLOAD_SECRET, REQUIRE_USER_AUTHENTICATION
 
 
 class ApiDownloadHandler(BaseHandler):
@@ -72,7 +72,7 @@ class ApiResourceDownloadHandler(BaseHandler):
 
     def get(self, token):
         try:
-            decoded_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            decoded_payload = jwt.decode(token, JWT_DOWNLOAD_SECRET, algorithms=["HS256"])
 
             file_path = decoded_payload['file_path']
             file_name = file_path.split('/')[-1]

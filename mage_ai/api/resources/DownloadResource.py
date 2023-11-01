@@ -10,7 +10,7 @@ from mage_ai.data_preparation.models.download import Download
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings import JWT_SECRET
+from mage_ai.settings import JWT_DOWNLOAD_SECRET
 
 
 class DownloadResource(GenericResource):
@@ -58,4 +58,4 @@ class DownloadResource(GenericResource):
             "iat": now,
             "exp": now + datetime.timedelta(seconds=DOWNLOAD_TOKEN_LIFESPAN)
         }
-        return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+        return jwt.encode(payload, JWT_DOWNLOAD_SECRET, algorithm="HS256")
