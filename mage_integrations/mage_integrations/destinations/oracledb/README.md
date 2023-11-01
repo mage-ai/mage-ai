@@ -14,4 +14,8 @@ You must enter the following credentials when configuring Oracle DB destination:
 | `user` | User name with connection and query access to db. | `xyz123` |
 | `database` | The database you want to create the table and export data. | `xyz123` |
 
+### Optional Configs
+| Key | Description | Sample value
+| --- | --- | --- |
+| `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
 <br />

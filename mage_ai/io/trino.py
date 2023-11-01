@@ -225,7 +225,7 @@ class Trino(BaseSQL):
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
 
         def serialize_obj(val):
-            if type(val) is dict or type(val) is list:
+            if type(val) is dict or type(val) is list or type(val) is np.ndarray:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,

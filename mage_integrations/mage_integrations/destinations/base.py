@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import traceback
+from abc import ABC, abstractmethod
 from os.path import isfile
 from typing import Dict, List
 
@@ -49,7 +50,7 @@ LOGGER = singer.get_logger()
 MAXIMUM_BATCH_SIZE_MB = 100
 
 
-class Destination():
+class Destination(ABC):
     def __init__(
         self,
         argument_parser=None,
@@ -126,21 +127,6 @@ class Destination():
 
         self._streams_from_catalog = None
 
-    @classmethod
-    def templates(self) -> List[Dict]:
-        parts = inspect.getfile(self).split('/')
-        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
-
-        templates = {}
-        for filename in os.listdir(absolute_path):
-            path = absolute_path + '/' + filename
-            if isfile(path):
-                file_raw = filename.replace('.json', '')
-                with open(path) as file:
-                    templates[file_raw] = json.load(file)
-
-        return templates
-
     @property
     def config(self) -> Dict:
         if self._config:
@@ -172,6 +158,10 @@ class Destination():
             return self._settings
         return {}
 
+    @settings.setter
+    def settings(self, settings):
+        self._settings = settings
+
     @property
     def streams_from_catalog(self) -> Dict:
         if self._streams_from_catalog is not None:
@@ -185,21 +175,22 @@ class Destination():
 
         return self._streams_from_catalog
 
-    @settings.setter
-    def settings(self, settings):
-        self._settings = settings
-
     @property
     def streams_override_settings(self) -> Dict:
         return self.config.get(STREAM_OVERRIDE_SETTINGS_KEY, {})
 
-    def test_connection(self) -> None:
-        raise Exception('Subclasses must implement the test_connection method.')
+    @abstractmethod
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
+        raise NotImplementedError('Subclasses must implement the export_batch_data method.')
 
-    def before_process(self) -> None:
+    @abstractmethod
+    def test_connection(self) -> None:
+        raise NotImplementedError('Subclasses must implement the test_connection method.')
+
+    def before_process(self) -> None:   # noqa: B027
         pass
 
-    def after_process(self) -> None:
+    def after_process(self) -> None:    # noqa: B027
         pass
 
     def export_data(
@@ -219,9 +210,6 @@ class Destination():
             stream=stream,
             tags=tags,
         )], stream)
-
-    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
-        raise Exception('Subclasses must implement the export_batch_data method.')
 
     def process_record(
         self,
@@ -733,3 +721,18 @@ class Destination():
                     })
 
         return record_adjusted
+
+    @classmethod
+    def templates(cls) -> List[Dict]:
+        parts = inspect.getfile(cls).split('/')
+        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
+
+        templates = {}
+        for filename in os.listdir(absolute_path):
+            path = absolute_path + '/' + filename
+            if isfile(path):
+                file_raw = filename.replace('.json', '')
+                with open(path) as file:
+                    templates[file_raw] = json.load(file)
+
+        return templates

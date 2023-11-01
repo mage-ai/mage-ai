@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.opensearch.target_opensearch.sinks import OpenSink
 from mage_integrations.destinations.opensearch.target_opensearch.target import (
     TargetOpensearch,
 )
@@ -14,6 +15,16 @@ class Opensearch(Destination):
                          logger=self.logger).listen_override(
             file_input=open(self.input_file_path, 'r')
         )
+
+    def test_connection(self) -> None:
+        target = TargetOpensearch(config=self.config,
+                                  logger=self.logger)
+        client = OpenSink(target=target,
+                          stream_name='test',
+                          schema={},
+                          key_properties=None,).client
+        client.cat.health()
+        client.close()
 
 
 if __name__ == '__main__':

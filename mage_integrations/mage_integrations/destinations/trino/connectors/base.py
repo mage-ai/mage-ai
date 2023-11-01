@@ -275,14 +275,6 @@ DESCRIBE {schema_name}.{table_name}
 
         return results
 
-    def handle_insert_commands(
-        self,
-        record_data: List[Dict],
-        stream: str,
-        tags: Dict = None,
-    ) -> List[str]:
-        return []
-
     def string_parse_func(self, value: str, column_type_dict: Dict) -> str:
         return convert_json_or_string(value, column_type_dict)
 

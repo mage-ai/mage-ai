@@ -26,8 +26,9 @@ import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariables } from '../utils';
-import { onSuccess } from '@api/utils/response';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+import { removeKeyboardFocus } from '@context/shared/utils';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -148,14 +149,16 @@ function GlobalVariables({
         variable: {
           name: newVariableName,
           value: updatedValue,
-        }
+        },
       }).then(() => {
         fetchVariables();
         setNewVariableName(null);
         setNewVariableValue(null);
       });
+      removeKeyboardFocus();
       setShowNewVariable(false);
     } else if (e.key === 'Escape') {
+      removeKeyboardFocus();
       setShowNewVariable(false);
     }
   }, [
@@ -207,8 +210,8 @@ function GlobalVariables({
           <Col md={4}>
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
                 fullWidth
                 monospace
                 onChange={(e) => {
@@ -226,8 +229,8 @@ function GlobalVariables({
           <Col md={7}>
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
                 fullWidth
                 monospace
                 onChange={(e) => {

@@ -5,6 +5,7 @@ import BlockType, {
   BLOCK_TYPES_WITH_VARIABLES,
   BlockLanguageEnum,
   BlockPipelineType,
+  BlockRequestPayloadType,
   BlockRetryConfigType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
@@ -30,10 +31,11 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import VariableRow from '@components/Sidekick/GlobalVariables/VariableRow';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add, DiamondShared, Edit } from '@oracle/icons';
+import { Add, DiamondDetached, DiamondShared, Edit } from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import { ICON_SIZE_SMALL, ICON_SIZE_LARGE } from '@oracle/styles/units/icons';
@@ -73,6 +75,13 @@ const SHARED_EMPHASIZED_TEXT_PROPS = {
 const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
 type BlockSettingsProps = {
+  addNewBlockAtIndex: (
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+    isReplacingBlock?: boolean,
+  ) => Promise<any>;
   block: BlockType;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
@@ -83,11 +92,12 @@ type BlockSettingsProps = {
   showUpdateBlockModal?: (
     block: BlockType,
     name: string,
-    preventDuplicateBlockName?: boolean,
+    isReplacingBlock?: boolean,
   ) => void;
 } & OpenDataIntegrationModalType;
 
 function BlockSettings({
+  addNewBlockAtIndex,
   block,
   contentByBlockUUID,
   fetchFileTree,
@@ -118,6 +128,12 @@ function BlockSettings({
     type: blockType,
     uuid: blockUUID,
   } = block;
+  const isDbtBlock = useMemo(() => BlockTypeEnum.DBT === blockType, [blockType]);
+  const currentBlockIndex = pipeline?.blocks?.findIndex(({ uuid }) => uuid === blockUUID);
+  const blockWithUpdatedContent = useMemo(
+    () => pipeline?.blocks?.[currentBlockIndex],
+    [currentBlockIndex, pipeline?.blocks],
+  );
 
   const [showError] = useError(null, {}, [], {
     uuid: 'BlockSettings/index',
@@ -215,7 +231,7 @@ function BlockSettings({
   , [blockDetails]);
   const blockPipelinesCount = blockPipelines?.length || 1;
 
-  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+  const [updateBlock, { isLoading: isLoadingUpdateBlock }]: any = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
@@ -357,23 +373,47 @@ function BlockSettings({
                     Shared by {blockPipelinesCount} pipelines
                   </Text>
                 </Flex>
-                {/* <Tooltip
-                  appearBefore
-                  block
-                  label="Duplicates block and removes any attachment to other pipelines"
-                  maxWidth={UNIT * 30}
-                  size={null}
-                >
-                  <Button
-                    {...SHARED_BUTTON_PROPS}
-                    afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
-                    iconOnly={false}
-                    // onClick={() => {}}
-                    padding={null}
+                {(!isDbtBlock && pipeline?.type !== PipelineTypeEnum.INTEGRATION) && (
+                  <Tooltip
+                    appearBefore
+                    block
+                    label="Duplicates block so it is no longer shared with any other
+                      pipelines (detaches other pipeline associations)"
+                    lightBackground
+                    maxWidth={UNIT * 30}
+                    size={null}
                   >
-                    Detach
-                  </Button>
-                </Tooltip> */}
+                    <Button
+                      {...SHARED_BUTTON_PROPS}
+                      afterIcon={<DiamondDetached size={ICON_SIZE_SMALL} />}
+                      iconOnly={false}
+                      onClick={() => showUpdateBlockModal(
+                        {
+                          ...ignoreKeys(blockWithUpdatedContent, [
+                            'all_upstream_blocks_executed',
+                            'callback_blocks',
+                            'conditional_blocks',
+                            'downstream_blocks',
+                            'executor_config',
+                            'executor_type',
+                            'name',
+                            'outputs',
+                            'retry_config',
+                            'status',
+                            'tags',
+                            'timeout',
+                          ]),
+                          detach: true,
+                        },
+                        `${blockName}_copy`,
+                        true,
+                      )}
+                      padding={null}
+                    >
+                      Detach
+                    </Button>
+                  </Tooltip>
+                )}
               </FlexContainer>
             </BannerStyle>
           </Spacing>
@@ -397,7 +437,8 @@ function BlockSettings({
 
                 <Button
                   {...SHARED_BUTTON_PROPS}
-                  afterIcon={<Edit size={ICON_SIZE_SMALL} />}
+                  afterIcon={isDbtBlock ? null : <Edit size={ICON_SIZE_SMALL} />}
+                  disabled={isDbtBlock}
                   onClick={() => showUpdateBlockModal(block, blockName)}
                 >
                   <Text bold>
@@ -735,7 +776,7 @@ function BlockSettings({
           </Spacing>
         )}
 
-        {BlockTypeEnum.DBT === blockType && (
+        {isDbtBlock && (
           <Spacing mb={UNITS_BETWEEN_SECTIONS} px={PADDING_UNITS}>
             <Headline level={5}>
               dbt settings
@@ -891,7 +932,6 @@ function BlockSettings({
           <Button
             disabled={!blockAttributesTouched}
             loading={isLoadingUpdateBlock}
-            // @ts-ignore
             onClick={() => updateBlock({
               block: {
                 configuration: blockAttributes?.configuration,

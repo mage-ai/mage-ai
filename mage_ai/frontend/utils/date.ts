@@ -1,5 +1,6 @@
 import moment from 'moment';
 import tzMoment from 'moment-timezone';
+import 'moment-duration-format';
 
 import { pluralize } from '@utils/string';
 import { rangeSequential } from '@utils/array';
@@ -96,6 +97,42 @@ export function datetimeInLocalTimezone(
   return datetime;
 }
 
+/** 
+ * Given start and end UTC datetime strings, find the time difference between them 
+ * and return it in the first matching format:
+ *   - >= 1 week: > 1 week
+     - >= 1 day: d,HH:mm:ss.SS
+ *   - < 1 day: HH:mm:ss.SS
+ * If `showFullFormat` is true, we'll return it in a specific, human-readable format.
+ */
+export function timeDifference({
+  startDatetime, 
+  endDatetime,
+  showFullFormat = false,
+}: {
+  startDatetime: string; 
+  endDatetime: string;
+  showFullFormat?: boolean;
+}) {
+  const start = moment.utc(startDatetime);
+  const end = moment.utc(endDatetime);
+  const timeDiff = moment.duration(end.diff(start));
+
+  if (showFullFormat) {
+    return timeDiff.format('Y __, M __, W __, D __, H __, m __, s __, S __');
+  } else if (timeDiff.asWeeks() >= 1) {
+    return '> 1 week';
+  } else if (timeDiff.asDays() >= 1) {
+    return timeDiff.format('d[d],HH:mm:ss.SS', {
+      trim: false,
+    });
+  } else {
+    return timeDiff.format('HH:mm:ss.SS', {
+      trim: false,
+    });
+  }
+}
+
 /**
  * Given a UTC datetime string, find how much time has elapsed between then
  * and now. Return the elapsed time in the first matching format:
@@ -108,7 +145,6 @@ export function datetimeInLocalTimezone(
 export function utcStringToElapsedTime(datetime: string) {
   const then = moment.utc(datetime);
   const now = moment.utc();
-  console.log(datetime, then, now)
   const duration = moment.duration(now.diff(then));
 
   let timeDisplay = '';

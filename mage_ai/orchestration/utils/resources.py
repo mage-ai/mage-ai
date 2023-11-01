@@ -1,5 +1,7 @@
-from typing import Tuple
 import os
+import subprocess
+from typing import Tuple
+
 import psutil
 
 
@@ -17,10 +19,9 @@ def get_memory() -> Tuple[float, float, float]:
     used_memory = None
 
     try:
-        total_memory, used_memory, free_memory = map(
-            int,
-            os.popen('free -t -m').readlines()[-1].split()[1:],
-        )
+        output = subprocess.check_output('free -t -m', shell=True).decode('utf-8')
+        values = output.splitlines()[-1].split()[1:]
+        total_memory, used_memory, free_memory = map(float, values)
     except Exception as err:
         print(err)
 

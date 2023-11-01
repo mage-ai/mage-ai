@@ -834,6 +834,8 @@ function AddNewBlocksV2({
                 fullWidth
                 noBackground
                 noBorder
+                noBorderRadiusBottom
+                noBorderRadiusTop
                 // Need setTimeout because when clicking a row, the onBlur will be triggered.
                 // If the onBlur triggers too soon, clicking a row does nothing.
                 onBlur={() => setTimeout(() => setFocused(false), 150)}

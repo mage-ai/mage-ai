@@ -339,15 +339,14 @@ def load_data(*args, **kwargs):
 
 Here is an overview of the steps required to use Mage locally with Spark in AWS:
 
-1. [Create an EC2 key pair](#1-create-an-ec2-key-pair)
-2. [Create an S3 bucket for Spark](#2-create-an-s3-bucket-for-spark)
-3. [Start Mage](#3-start-mage)
-4. [Configure project’s metadata settings](#4-configure-projects-metadata-settings)
-5. [Launch EMR cluster](#5-launch-emr-cluster)
-6. [Allow EMR connection permissions](#6-allow-emr-connection-permissions)
-7. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
-8. [Debugging](#8-debugging)
-9. [Clean up](#9-clean-up)
+1. [Create an S3 bucket for Spark](#1-create-an-s3-bucket-for-spark)
+2. [Start Mage](#2-start-mage)
+3. [Configure project’s metadata settings](#3-configure-projects-metadata-settings)
+4. [Launch EMR cluster](#4-launch-emr-cluster)
+5. [Allow EMR connection permissions](#5-allow-emr-connection-permissions)
+6. [Sample pipeline with PySpark code](#6-sample-pipeline-with-pyspark-code)
+7. [Debugging](#7-debugging)
+8. [Clean up](#8-clean-up)
 
 If you get stuck, run into problems, or just want someone to walk you through
 these steps, please join our [Slack](https://www.mage.ai/chat)
@@ -570,6 +569,10 @@ def load_data(**kwargs) -> DataFrame:
 
 If you run into any problems, 1st thing to try is restarting the kernel: `Run` >
 `Restart kernel`.
+
+If the block is hanging when running the block, it could be due to network connection issue.
+Make sure the EMR cluster is accessible from the Mage server. You can verify whether Mage server's
+security group or IP is whitelisted in EMR cluster's security group following section [Allow EMR connection permissions](#5-allow-emr-connection-permissions)
 
 If that doesn’t work, restart the app by stopping the docker container and
 starting it again.

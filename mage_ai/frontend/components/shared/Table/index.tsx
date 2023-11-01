@@ -1,6 +1,5 @@
 import NextLink from 'next/link';
 import React, {
-  createRef,
   useCallback,
   useEffect,
   useMemo,
@@ -23,6 +22,7 @@ import {
   MENU_WIDTH,
   SortDirectionEnum,
   SortQueryEnum,
+  getTableRowUuid,
 } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
@@ -35,8 +35,9 @@ import {
   TableWrapperStyle,
 } from './index.style';
 import { goToWithQuery } from '@utils/routing';
-import { pushAtIndex, sortByKey } from '@utils/array';
+import { isInteractiveElement } from '@context/shared/utils';
 import { set } from '@storage/localStorage';
+import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
@@ -87,7 +88,7 @@ type TableProps = {
   menu?: any;
   noBorder?: boolean;
   noHeader?: boolean;
-  onClickRow?: (index: number) => void;
+  onClickRow?: (index: number, event?: any) => void;
   onDoubleClickRow?: (index: number) => void;
   onRightClickRow?: (index: number, event?: any) => void;
   renderExpandedRowWithObject?: (index: number, object: any) => any;
@@ -412,24 +413,28 @@ function Table({
     } else {
       const handleRowClick = (rowIndex: number, event: React.MouseEvent) => {
         if (event?.detail === 1) {
-          onClickRow(rowIndex);
+          onClickRow(rowIndex, event);
         } else if (onDoubleClickRow && event?.detail === 2) {
           onDoubleClickRow(rowIndex);
         }
       };
 
+      const uuidRow = getTableRowUuid({ rowIndex, uuid });
       rowEl = (
         <TableRowStyle
           highlightOnHover={highlightRowOnHover}
-          key={`${uuid}-row-${rowIndex}`}
+          id={uuidRow}
+          key={uuidRow}
           noHover={!(linkProps || onClickRow || renderExpandedRowWithObject)}
           // @ts-ignore
           onClick={(e) => {
-            if (onClickRow) {
-              handleRowClick(rowIndex, e);
-            }
+            if (!isInteractiveElement(e)) {
+              if (onClickRow) {
+                handleRowClick(rowIndex, e);
+              }
 
-            onClickRowInternal(rowIndex, e);
+              onClickRowInternal(rowIndex, e);
+            }
           }}
           onContextMenu={hasRightClickMenu
             ? (e) => {
@@ -716,7 +721,7 @@ function Table({
                     {els}
                   </>
                 </TableStyle>
-              </div>
+              </div>,
             );
           } else {
             acc.push(
@@ -753,7 +758,7 @@ function Table({
       }, []);
     } else if (!!renderExpandedRowWithObject && selectedRowIndexInternal !== null) {
       const rowsBefore = rowEls?.slice(0, selectedRowIndexInternal + 1);
-      const rowsAfter = rowEls?.slice(selectedRowIndexInternal + 1, rowEls?.length)
+      const rowsAfter = rowEls?.slice(selectedRowIndexInternal + 1, rowEls?.length);
 
       return (
         <>

@@ -19,7 +19,6 @@ from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_command,
-    clean_column_name,
     column_type_mapping,
 )
 from mage_integrations.utils.array import batch
@@ -74,6 +73,7 @@ class Snowflake(Destination):
             ),
             unique_constraints=unique_constraints,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
 
         return [
@@ -104,7 +104,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         schema_columns = schema['properties'].keys()
 
         new_columns = [c for c in schema_columns
-                       if clean_column_name(c) not in current_columns]
+                       if self.clean_column_name(c)
+                       not in current_columns]
 
         if not new_columns:
             return []
@@ -124,6 +125,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     table_name,
                 ),
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -136,11 +138,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         unique_constraints: List[str] = None,
     ) -> str:
         unique_constraints_clean = [
-            self._wrap_with_quotes(clean_column_name(col))
+            self._wrap_with_quotes(self.clean_column_name(col))
             for col in unique_constraints
         ]
         columns_cleaned = [
-            self._wrap_with_quotes(clean_column_name(col))
+            self._wrap_with_quotes(self.clean_column_name(col))
             for col in columns
         ]
 
@@ -191,6 +193,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             convert_column_to_type_func=convert_column_if_json,
             records=records,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
 
         insert_columns = ', '.join(insert_columns)

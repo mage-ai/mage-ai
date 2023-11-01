@@ -15,9 +15,6 @@ RUN \
     # odbc dependencies
     msodbcsql18\
     unixodbc-dev \
-    # pymssql dependencies
-    freetds-dev \
-    freetds-bin \
     # R
     r-base && \
   apt-get clean && \

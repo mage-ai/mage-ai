@@ -1,23 +1,16 @@
 import os
 
-import yaml
-
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.cluster_manager.config import LifecycleConfig
-from mage_ai.cluster_manager.manage import (
-    create_workspace,
-    delete_workspace,
-    get_instances,
-    get_workspaces,
-    update_workspace,
-)
+from mage_ai.cluster_manager.manage import get_instances, get_workspaces
+from mage_ai.cluster_manager.workspace.base import Workspace
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
     get_repo_config,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.server.logger import Logger
@@ -44,9 +37,27 @@ class WorkspaceResource(GenericResource):
             if user_id:
                 query_user = User.query.get(user_id)
 
-        workspaces = get_workspaces(cluster_type, user=query_user)
+        instances = get_instances(cluster_type)
+        instance_map = {instance.get('name'): instance for instance in instances}
 
-        return self.build_result_set(workspaces, user, **kwargs)
+        workspaces = get_workspaces(cluster_type)
+
+        result_set = [
+            dict(
+                workspace=workspace,
+                access=query_user.get_access(
+                    Entity.PROJECT,
+                    workspace.project_uuid,
+                )
+                if query_user
+                else None,
+                instance=instance_map.get(workspace.name),
+            )
+            for workspace in workspaces
+            if workspace.name in instance_map
+        ]
+
+        return self.build_result_set(result_set, user, **kwargs)
 
     @classmethod
     @safe_db_query
@@ -57,23 +68,25 @@ class WorkspaceResource(GenericResource):
             cluster_type = query.get('cluster_type')[0]
 
         instances = get_instances(cluster_type)
-        instance_map = {
-            instance.get('name'): instance
-            for instance in instances
-        }
+        instance_map = {instance.get('name'): instance for instance in instances}
 
-        return self(dict(
-            name=pk,
-            cluster_type=cluster_type,
-            instance=instance_map[pk],
-        ), user, **kwargs)
+        workspace = Workspace.get_workspace(cluster_type, pk)
+
+        return self(
+            dict(
+                workspace=workspace,
+                instance=instance_map[pk],
+            ),
+            user,
+            **kwargs,
+        )
 
     @classmethod
     @safe_db_query
     def create(self, payload, user, **kwargs):
         cluster_type = self.verify_project()
         if not cluster_type:
-            cluster_type = payload.get('cluster_type')
+            cluster_type = payload.pop('cluster_type')
 
         error = ApiError.RESOURCE_ERROR.copy()
         workspace_name = payload.pop('name')
@@ -81,17 +94,10 @@ class WorkspaceResource(GenericResource):
             error.update(message='Please enter a valid workspace name.')
             raise ApiError(error)
 
-        config = {}
-        if 'lifecycle_config' in payload:
-            config_yaml = payload.pop('lifecycle_config')
-            config = yaml.full_load(config_yaml) or {}
-        lifecycle_config = LifecycleConfig(**config)
-
         try:
-            create_workspace(
+            Workspace.create(
                 cluster_type,
                 workspace_name,
-                lifecycle_config,
                 payload,
             )
         except Exception as ex:
@@ -101,16 +107,16 @@ class WorkspaceResource(GenericResource):
         return self(dict(success=True), user, **kwargs)
 
     def update(self, payload, **kwargs):
-        cluster_type = self.model.get('cluster_type')
-        workspace_name = self.model.get('name')
+        workspace = self.model.get('workspace')
 
         error = ApiError.RESOURCE_ERROR.copy()
         try:
-            update_workspace(
-                cluster_type,
-                workspace_name,
-                **ignore_keys(payload, ['name', 'cluster_type']),
-            )
+            action = payload.pop('action')
+            args = ignore_keys(payload, ['name', 'cluster_type'])
+            if action == 'stop':
+                workspace.stop(**args)
+            elif action == 'resume':
+                workspace.resume(**args)
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)
@@ -118,18 +124,13 @@ class WorkspaceResource(GenericResource):
         return self
 
     def delete(self, **kwargs):
-        cluster_type = self.model.get('cluster_type')
-        workspace_name = self.model.get('name')
+        workspace = self.model.get('workspace')
         instance = self.model.get('instance')
 
         error = ApiError.RESOURCE_ERROR.copy()
 
         try:
-            delete_workspace(
-                cluster_type,
-                workspace_name,
-                **ignore_keys(instance, ['name', 'cluster_type'])
-            )
+            workspace.delete(**ignore_keys(instance, ['name', 'cluster_type']))
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)
@@ -147,7 +148,11 @@ class WorkspaceResource(GenericResource):
         if project_type == ProjectType.MAIN and subproject:
             repo_path = get_repo_path()
             projects_folder = os.path.join(repo_path, 'projects')
-            projects = [f.name.split('.')[0] for f in os.scandir(projects_folder) if not f.is_dir()]
+            projects = [
+                f.name.split('.')[0]
+                for f in os.scandir(projects_folder)
+                if not f.is_dir()
+            ]
             if subproject not in projects:
                 error = ApiError.RESOURCE_NOT_FOUND.copy()
                 error.update(message=f'Project {subproject} was not found.')

@@ -110,7 +110,7 @@ class TargetOpensearch(Target):
     to monthly `{{ to_monthly(timestamp) }}`,
     to yearly `{{ to_yearly(timestamp) }}`
             """,
-            default="ecs-{{ stream_name }}-{{ current_timestamp_daily}}",
+            default="{{ stream_name }}",
         ),
         th.Property(
             INDEX_TEMPLATE_FIELDS,
