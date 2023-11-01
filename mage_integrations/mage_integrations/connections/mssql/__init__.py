@@ -1,5 +1,6 @@
+import pyodbc
+
 from mage_integrations.connections.sql.base import Connection
-import pymssql
 
 
 class MSSQL(Connection):
@@ -9,6 +10,7 @@ class MSSQL(Connection):
         host: str,
         password: str,
         username: str,
+        driver: str = None,
         port: int = 1433,
         **kwargs,
     ):
@@ -18,18 +20,16 @@ class MSSQL(Connection):
         self.password = password
         self.port = port or 1433
         self.username = username
-
-        self.charset = 'utf8'
-        self.tds_version = '7.3'
+        self.driver = driver or 'ODBC Driver 18 for SQL Server'
 
     def build_connection(self):
-        connect_kwargs = dict(
-            charset=self.charset,
-            database=self.database,
-            server=self.host,
-            password=self.password,
-            port=self.port,
-            user=self.username,
-            tds_version=self.tds_version,
+        connection_string = (
+            f'DRIVER={{{self.driver}}};'
+            f'SERVER={self.host};'
+            f'DATABASE={self.database};'
+            f'UID={self.username};'
+            f'PWD={self.password};'
+            'ENCRYPT=yes;'
+            'TrustServerCertificate=yes;'
         )
-        return pymssql.connect(**connect_kwargs)
+        return pyodbc.connect(connection_string)

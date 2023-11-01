@@ -41,7 +41,6 @@ from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_columns,
     build_insert_command,
-    clean_column_name,
     column_type_mapping,
 )
 from mage_integrations.utils.dictionary import merge_dict
@@ -107,6 +106,7 @@ class BigQuery(Destination):
                 unique_constraints=None,
                 create_temporary_table=create_temporary_table,
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase
             )
 
         stream_partition_keys = self.partition_keys.get(stream, [])
@@ -115,7 +115,7 @@ class BigQuery(Destination):
             create_table_command = f'''
 {create_table_command}
 PARTITION BY
-  DATE(`{clean_column_name(partition_col)}`)
+  DATE(`{self.clean_column_name(partition_col)}`)
             '''
 
         return [
@@ -143,7 +143,7 @@ WHERE TABLE_NAME = '{table_name}'
 
         current_mapping = reduce(
             lambda obj, tup: merge_dict(obj, {
-                clean_column_name(tup[0]): tup[1],
+                self.clean_column_name(tup[0]): tup[1],
             }),
             results,
             {},
@@ -159,7 +159,9 @@ WHERE TABLE_NAME = '{table_name}'
 
         new_mapping_column_types = {}
         for col, obj in new_mapping.items():
-            new_mapping_column_types[clean_column_name(col)] = obj['type_converted']
+            new_mapping_column_types[
+                self.clean_column_name(col)
+            ] = obj['type_converted']
 
         new_column_types = {}
         for col, col_type in current_mapping.items():
@@ -183,13 +185,16 @@ WHERE TABLE_NAME = '{table_name}'
                 ', '.join(cmds),
             ]))
 
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns if
+                       self.clean_column_name(c)
+                       not in current_columns]
         if new_columns:
             alter_table_commands.append(build_alter_table_command(
                 column_type_mapping=new_mapping,
                 columns=new_columns,
                 full_table_name=full_table_name,
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             ))
 
         return alter_table_commands
@@ -220,17 +225,6 @@ WHERE table_id = '{table_name}'
                     records_inserted += t[0]
 
         return records_inserted, 0
-
-    def handle_insert_commands(
-        self,
-        record_data: List[Dict],
-        stream: str,
-        tags: Dict = None,
-    ) -> List[str]:
-        if tags is None:
-            tags = {}
-
-        return []
 
     def process_queries(
         self,
@@ -454,6 +448,7 @@ WHERE table_id = '{table_name}'
         insert_columns = build_insert_columns(
             columns=columns,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
         insert_columns = ', '.join(insert_columns)
 
@@ -500,8 +495,10 @@ WHERE table_id = '{table_name}'
                 tags=tags,
             )
 
-            unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns]
+            unique_constraints = [self.clean_column_name(col)
+                                  for col in unique_constraints]
+            columns_cleaned = [self.clean_column_name(col)
+                               for col in columns]
 
             on_conditions = []
             for col in unique_constraints:
@@ -590,6 +587,7 @@ WHERE table_id = '{table_name}'
                 stringify_values=False,
                 convert_column_types=True,
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             )
             insert_columns = ', '.join(insert_columns)
 

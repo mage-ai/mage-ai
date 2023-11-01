@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -64,6 +64,7 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
+import { scrollToBlock } from '@components/PipelineDetail/ColumnScroller/utils';
 import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
@@ -76,6 +77,7 @@ export type SidekickProps = {
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
+    isReplacingBlock?: boolean,
   ) => Promise<any>;
   afterWidth: number;
   blockInteractionsMapping: {
@@ -147,6 +149,7 @@ export type SidekickProps = {
     [interactionUUID: string]: InteractionType;
   };
   setPermissions?: (prev: any) => void;
+  sideBySideEnabled?: boolean;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
   updatePipelineInteraction?: (opts: {
@@ -224,6 +227,7 @@ function Sidekick({
   showBrowseTemplates,
   showDataIntegrationModal,
   showUpdateBlockModal,
+  sideBySideEnabled,
   statistics,
   textareaFocused,
   treeRef,
@@ -508,6 +512,7 @@ function Sidekick({
 
   const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
     <BlockSettings
+      addNewBlockAtIndex={addNewBlockAtIndex}
       block={selectedBlock}
       contentByBlockUUID={contentByBlockUUID}
       fetchFileTree={fetchFileTree}
@@ -519,6 +524,7 @@ function Sidekick({
       showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
+    addNewBlockAtIndex,
     contentByBlockUUID,
     fetchFileTree,
     fetchPipeline,
@@ -579,6 +585,7 @@ function Sidekick({
           }
         }}
         overflowHidden={activeView === ViewKeyEnum.TREE}
+        tabIndex={0} // Make this div a focusable element
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
@@ -609,7 +616,13 @@ function Sidekick({
                 selectedBlock={selectedBlock}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
-                setSelectedBlock={setSelectedBlock}
+                setSelectedBlock={(block) => {
+                  setSelectedBlock(block);
+
+                  if (sideBySideEnabled) {
+                    scrollToBlock(block);
+                  }
+                }}
                 setZoom={setDepGraphZoom}
                 treeRef={treeRef}
               />
@@ -735,11 +748,11 @@ function Sidekick({
 
         {ViewKeyEnum.INTERACTIONS === activeView && isInteractionsEnabled && (
           <PipelineInteractions
+            blockInteractionsMapping={blockInteractionsMapping}
             containerWidth={afterWidth}
             createInteraction={(interaction: InteractionType) => createInteraction({
               interaction,
             })}
-            blockInteractionsMapping={blockInteractionsMapping}
             interactions={interactions}
             interactionsMapping={interactionsMapping}
             isLoadingCreateInteraction={isLoadingCreateInteraction}

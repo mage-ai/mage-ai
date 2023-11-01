@@ -3,8 +3,10 @@ import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Button from '@oracle/elements/Button';
 import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
+import FileBrowser from '@components/FileBrowser';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -24,11 +26,14 @@ import {
   WorkspaceFieldType,
 } from './constants';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
+import { Close, Folder } from '@oracle/icons';
 import { ClusterTypeEnum } from '../constants';
-import { PURPLE } from '@oracle/styles/colors/main';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
+import { PURPLE } from '@oracle/styles/colors/main';
+import { WindowContainerStyle, WindowContentStyle, WindowHeaderStyle } from '@components/FileSelectorPopup/index.style';
 import { onSuccess } from '@api/utils/response';
 import { replaceSpaces } from '@utils/string';
+import { useModal } from '@context/Modal';
 
 type ConfigureWorkspaceProps = {
   clusterType: string;
@@ -79,6 +84,49 @@ function ConfigureWorkspace({
       return replaceSpaces(name, '-');
     }
   };
+
+  const { data: filesData, mutate: fetchFileTree } = api.files.list();
+  const files = useMemo(() => filesData?.files || [], [filesData]);
+
+  const [showFileSelector, hideFileSelector] = useModal((opts: {
+    onFileOpen: (filePath: string) => void; 
+    isFileDisabled?: (filePath: string, children: any) => boolean;
+  }) => (
+    <WindowContainerStyle>
+      <WindowHeaderStyle>
+        <Flex alignItems="center">
+          <Text
+            disableWordBreak
+            monospace
+          >
+            Select file
+          </Text>
+        </Flex>
+        <Button
+          iconOnly
+          onClick={hideFileSelector}
+        >
+          <Close muted />
+        </Button>
+      </WindowHeaderStyle>
+      <WindowContentStyle>
+        <FileBrowser
+          disableContextMenu
+          fetchFileTree={fetchFileTree}
+          files={files}
+          isFileDisabled={opts?.isFileDisabled}
+          openFile={opts.onFileOpen}
+        />
+      </WindowContentStyle>
+    </WindowContainerStyle>
+  ), {
+  }, [
+    files,
+    fetchFileTree,
+  ], {
+    background: true,
+    uuid: 'file_selector',
+  });
 
   const createWorkspaceTextField = useCallback(({
     autoComplete,
@@ -147,7 +195,6 @@ function ConfigureWorkspace({
           </Text>
         </Spacing>
       </FlexContainer>
-      <Divider muted/>
       {VOLUME_CLAIM_K8S_FIELDS.map(
         (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
       <Divider muted/>
@@ -293,12 +340,154 @@ function ConfigureWorkspace({
           </Flex>
         </FlexContainer>
       </Spacing>
+      <Divider muted/>
+      <FlexContainer>
+        <Spacing ml={2} my={2}>
+          <Text bold sky>
+            Pre start
+          </Text>
+        </Spacing>
+      </FlexContainer>
+      <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={3} justifyContent="space-between">
+            <Text>
+              Path to pre start script
+            </Text>
+            <Spacing mr={1}>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                onClick={() => 
+                  showFileSelector({
+                    isFileDisabled: (filePath, children) => 
+                      !children && !filePath.endsWith('.py'),
+                    onFileOpen: (filePath) => {
+                      setLifecycleConfig(prev => ({
+                        ...prev,
+                        pre_start_script_path: filePath,
+                      }));
+                      hideFileSelector();
+                    },
+                  })
+                }
+              >
+                <Folder />
+              </Button>
+            </Spacing>
+          </Flex>
+          <Flex flex={1}>
+            <TextInput
+              // @ts-ignore
+              onChange={e => {
+                setLifecycleConfig(prev => ({
+                  ...prev,
+                  pre_start_script_path: e.target.value,
+                }));
+              }}
+              placeholder="/"
+              setContentOnMount
+              value={lifecycleConfig?.['pre_start_script_path'] || ''}
+            />
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+      <FlexContainer>
+        <Spacing ml={2} my={2}>
+          <Text bold sky>
+            Post start
+          </Text>
+        </Spacing>
+      </FlexContainer>
+      <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={3}>
+            <Text>
+              Command
+            </Text>
+          </Flex>
+          <Flex flex={1}>
+            <TextInput
+              monospace
+              // @ts-ignore
+              onChange={e => {
+                setLifecycleConfig(prev => ({
+                  ...prev,
+                  post_start: {
+                    ...prev?.['post_start'],
+                    command: e.target.value,
+                  },
+                }));
+              }}
+              setContentOnMount
+              value={lifecycleConfig?.['post_start']?.['command'] || ''}
+            />
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={3} justifyContent="space-between">
+            <Text>
+              Path to hook (optional)
+            </Text>
+            <Spacing mr={1}>
+              <Button
+                iconOnly
+                noBackground
+                noBorder
+                onClick={() => 
+                  showFileSelector({
+                    onFileOpen: (filePath) => {
+                      setLifecycleConfig(prev => ({
+                        ...prev,
+                        post_start: {
+                          ...prev?.['post_start'],
+                          hook_path: filePath,
+                        },
+                      }));
+                      hideFileSelector();
+                    },
+                  })
+                }
+              >
+                <Folder />
+              </Button>
+            </Spacing>
+          </Flex>
+          <Flex flex={1}>
+            <TextInput
+              // @ts-ignore
+              onChange={e => {
+                setLifecycleConfig(prev => ({
+                  ...prev,
+                  post_start: {
+                    ...prev?.['post_start'],
+                    hook_path: e.target.value,
+                  },
+                }));
+              }}
+              placeholder="/"
+              setContentOnMount
+              value={lifecycleConfig?.['post_start']?.['hook_path'] || ''}
+            />
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted />
     </>
   ), [
+    hideFileSelector,
     lifecycleConfig,
     setLifecycleConfig,
+    showFileSelector,
   ]);
-  
+
   return (
     <Panel>
       <div style={{ width: '750px' }}>
@@ -392,6 +581,7 @@ function ConfigureWorkspace({
                       workspace: {
                         ...updatedConfig,
                         cluster_type: clusterType,
+                        lifecycle_config: lifecycleConfig,
                       },
                     });
                   }

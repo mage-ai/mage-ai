@@ -1,5 +1,8 @@
 import asyncio
+import os
+import shutil
 import subprocess
+import uuid
 from typing import Dict
 from urllib.parse import urlsplit, urlunsplit
 
@@ -7,7 +10,12 @@ import requests
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
+from mage_ai.authentication.oauth.constants import (
+    DEFAULT_GITHUB_HOSTNAME,
+    OAUTH_PROVIDER_GHE,
+    OAUTH_PROVIDER_GITHUB,
+    get_ghe_hostname,
+)
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, User
@@ -21,8 +29,10 @@ def get_oauth_client_id(provider: str) -> str:
 
 def get_access_token_for_user(
     user: User,
-    provider: str = OAUTH_PROVIDER_GITHUB
+    provider: str = None
 ) -> Oauth2AccessToken:
+    if not provider:
+        provider = OAUTH_PROVIDER_GHE if get_ghe_hostname() else OAUTH_PROVIDER_GITHUB
     access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
     if access_tokens:
         return access_tokens[0]
@@ -124,14 +134,63 @@ def reset_hard(remote_name: str, remote_url: str, branch_name: str, token: str) 
     try:
         remote.fetch()
         git_manager.repo.git.reset('--hard', f'{remote_name}/{branch_name}')
-    except Exception as err:
-        raise err
     finally:
         try:
             remote.set_url(url_original)
         except Exception as err:
             print('WARNING (mage_ai.data_preparation.git.api):')
             print(err)
+
+
+def clone(remote_name: str, remote_url: str, token: str) -> None:
+    from mage_ai.data_preparation.git import Git
+
+    username = get_username(token)
+
+    url = build_authenticated_remote_url(remote_url, username, token)
+    git_manager = Git.get_manager()
+
+    remote = git_manager.repo.remotes[remote_name]
+    url_original = list(remote.urls)[0]
+    remote.set_url(url)
+
+    all_remotes = git_manager.remotes()
+
+    tmp_path = f'{git_manager.repo_path}_{uuid.uuid4().hex}'
+    os.mkdir(tmp_path)
+    try:
+        # Clone to a tmp folder first, then copy the folder to the actual repo path. Git
+        # won't allow you to clone to a folder that is not empty.
+        Repo.clone_from(
+            url,
+            to_path=tmp_path,
+            origin=remote_name,
+        )
+
+        shutil.rmtree(os.path.join(git_manager.repo_path, '.git'))
+        shutil.copytree(
+            tmp_path,
+            git_manager.repo_path,
+            dirs_exist_ok=True,
+            ignore=lambda x, y: ['.preferences.yaml']
+        )
+        Git.get_manager().repo.git.clean('-fd', exclude='.preferences.yaml')
+    finally:
+        shutil.rmtree(tmp_path)
+        try:
+            remote.set_url(url_original)
+        except Exception as err:
+            print('WARNING (mage_ai.data_preparation.git.api):')
+            print(err)
+        # Add old remotes since they may be deleted when cloning.
+        git_manager = Git.get_manager()
+        existing_remotes = set(remote['name'] for remote in git_manager.remotes())
+        for remote in all_remotes:
+            try:
+                if remote['name'] not in existing_remotes:
+                    git_manager.add_remote(remote['name'], remote['urls'][0])
+            except Exception:
+                pass
 
 
 def build_authenticated_remote_url(remote_url: str, username: str, token: str) -> str:
@@ -149,7 +208,11 @@ def get_user(token: str) -> Dict:
     """
     https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-the-authenticated-user
     """
-    resp = requests.get(f'{API_ENDPOINT}/user', headers={
+    ghe_hostname = get_ghe_hostname()
+    endpoint = f'{API_ENDPOINT}/user'
+    if ghe_hostname and ghe_hostname != DEFAULT_GITHUB_HOSTNAME:
+        endpoint = f'{ghe_hostname}/api/v3/user'
+    resp = requests.get(endpoint, headers={
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {token}',
         'X-GitHub-Api-Version': '2022-11-28',

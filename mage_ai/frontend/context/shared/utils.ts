@@ -2,7 +2,7 @@
  * Utility function to generate unique number per component instance
  */
 export const generateKey = (() => {
-  let count = 0;
+  const count = 0;
 
   return () => `${count}`;
 
@@ -24,4 +24,19 @@ export const isFunctionalComponent = (Component: Function) => {
   const prototype = Component.prototype;
 
   return !prototype || !prototype.isReactComponent;
+};
+
+/** Remove keyboard focus from the currently focused element  */
+export const removeKeyboardFocus = () => {
+  (document.activeElement as HTMLElement).blur();
+};
+
+/** Determine whether the event target is an interactive element */
+export const isInteractiveElement = (event): boolean => {
+  if (event.target instanceof Element) {
+    const tagName = (event.target as Element).tagName.toLowerCase();
+    return ['a', 'button', 'input', 'select'].includes(tagName);
+  }
+
+  return false;
 };

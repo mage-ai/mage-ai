@@ -1,6 +1,6 @@
-from mage_integrations.connections.mssql import (
-    MSSQL as MSSQLConnection
-)
+from typing import Dict, List, Tuple
+
+from mage_integrations.connections.mssql import MSSQL as MSSQLConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
@@ -16,13 +16,14 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping,
 )
-from typing import Dict, List, Tuple
 
 
 class MSSQL(Destination):
+
     def build_connection(self) -> MSSQLConnection:
         return MSSQLConnection(
             database=self.config['database'],
+            driver=self.config.get('driver'),
             host=self.config['host'],
             password=self.config['password'],
             port=self.config.get('port', 1433),
@@ -64,6 +65,7 @@ END
                 key_properties=self.key_properties.get(stream),
                 schema=schema,
                 unique_constraints=unique_constraints,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -85,7 +87,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns
+                       if clean_column_name(c, self.use_lowercase) not in current_columns]
 
         if not new_columns:
             return []
@@ -100,6 +103,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 ),
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -126,14 +130,18 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             records=records,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
             if COLUMN_TYPE_OBJECT == y['type'] else x,
+            use_lowercase=self.use_lowercase,
         )
-        insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
+        insert_columns = ', '.join([clean_column_name(col, self.use_lowercase)
+                                    for col in insert_columns])
         insert_values = ', '.join(insert_values)
 
         # https://learn.microsoft.com/en-us/sql/t-sql/statements/merge-transact-sql?view=sql-server-ver16
         if unique_constraints and unique_conflict_method:
-            columns_cleaned = [clean_column_name(col) for col in columns]
-            unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
+            columns_cleaned = [clean_column_name(col, self.use_lowercase) for col in columns]
+
+            unique_constraints_clean = [clean_column_name(col, self.use_lowercase)
+                                        for col in unique_constraints]
 
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
