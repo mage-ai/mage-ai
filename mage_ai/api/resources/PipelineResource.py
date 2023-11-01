@@ -415,7 +415,7 @@ class PipelineResource(BaseResource):
             if pipeline_type_updated is not None:
                 await self.model.update(dict(type=pipeline_type))
 
-            raise Exception(e)
+            raise e
 
         @safe_db_query
         def update_schedule_status(status, pipeline_uuid):
