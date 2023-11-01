@@ -74,7 +74,7 @@ class ApiResourceDownloadHandler(BaseHandler):
 
     def get(self, token):
         try:
-            decoded_payload = jwt.decode(token, JWT_DOWNLOAD_SECRET, algorithms=["HS256"])
+            decoded_payload = jwt.decode(token, JWT_DOWNLOAD_SECRET, algorithms=['HS256'])
 
             file_name = decoded_payload['file_name']
             file_list = decoded_payload['file_list']

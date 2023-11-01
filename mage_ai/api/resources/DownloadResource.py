@@ -47,10 +47,10 @@ class DownloadResource(GenericResource):
     def generate_download_token(file_name, file_list, ignore_folder_structure):
         now = datetime.datetime.utcnow()
         payload = {
-            "file_name": file_name,
-            "file_list": file_list,
-            "ignore_folder_structure": ignore_folder_structure,
-            "iat": now,
-            "exp": now + datetime.timedelta(seconds=DOWNLOAD_TOKEN_LIFESPAN)
+            'file_name': file_name,
+            'file_list': file_list,
+            'ignore_folder_structure': ignore_folder_structure,
+            'iat': now,
+            'exp': now + datetime.timedelta(seconds=DOWNLOAD_TOKEN_LIFESPAN)
         }
         return jwt.encode(payload, JWT_DOWNLOAD_SECRET, algorithm="HS256")
