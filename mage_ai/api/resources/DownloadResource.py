@@ -31,7 +31,7 @@ class DownloadResource(GenericResource):
             file_path = parent_model.file_path
 
         token = self.generate_download_token(file_path)
-        download = Download(token, host)
+        download = Download(token)
 
         return self(download, user)
 

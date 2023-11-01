@@ -1,8 +1,8 @@
 class Download():
-    def __init__(self, token, host):
-        self.uri = f'http://{host}/api/downloads/{token}'
+    def __init__(self, token):
+        self.token = token
 
     def to_dict(self, **kwargs):
         data = {}
-        data['uri'] = self.uri
+        data['token'] = self.token
         return data
