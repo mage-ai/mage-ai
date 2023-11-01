@@ -1,10 +1,9 @@
 import datetime
-import zipfile
 from typing import Dict
 
 import jwt
 
-from mage_ai.api.constants import DOWNLOAD_TOKEN_LIFESPAN, TEMPORARY_DOWNLOAD_LOCATION
+from mage_ai.api.constants import DOWNLOAD_TOKEN_LIFESPAN
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.download import Download
 from mage_ai.data_preparation.models.file import File
@@ -23,38 +22,35 @@ class DownloadResource(GenericResource):
 
         ignore_folder_structure = payload.get('ignore_folder_structure', False)
 
+        file_list = []
+
         if isinstance(parent_model, Pipeline):
-            file_path = self.zip_pipeline(parent_model, ignore_folder_structure)
+            file_name, file_list = self.fetch_pipeline_files(parent_model)
         elif isinstance(parent_model, File):
             if not parent_model.exists():
                 raise Exception(f'File {parent_model.filename} does not exist.')
-            file_path = parent_model.file_path
+            file_name = parent_model.filename
+            file_list.append(parent_model.file_path)
 
-        token = self.generate_download_token(file_path)
+        token = self.generate_download_token(file_name, file_list, ignore_folder_structure)
         download = Download(token)
 
         return self(download, user)
 
-    def zip_pipeline(pipeline: Pipeline, ignore_folder_structure: bool = False):
+    def fetch_pipeline_files(pipeline: Pipeline):
         config_path = pipeline.config_path
-        repo_path = pipeline.repo_path
 
-        zip_name = f'/{TEMPORARY_DOWNLOAD_LOCATION}/{pipeline.uuid}.zip'
-        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as pipeline_zip:
-            rel_path = config_path.replace(repo_path, '')
-            arcname = config_path.split('/')[-1] if ignore_folder_structure else rel_path
-            pipeline_zip.write(config_path, arcname)  # write pipeline config to zip
+        zip_name = f'{pipeline.uuid}.zip'
+        file_list = [config_path] + [block.file_path for block in pipeline.blocks_by_uuid.values()]
 
-            for block in pipeline.blocks_by_uuid.values():
-                rel_path = block.file_path.replace(repo_path, '')
-                arcname = block.file_path.split('/')[-1] if ignore_folder_structure else rel_path
-                pipeline_zip.write(block.file_path, arcname)  # write individual blocks to pipeline
-        return zip_name
+        return [zip_name, file_list]
 
-    def generate_download_token(file_path):
+    def generate_download_token(file_name, file_list, ignore_folder_structure):
         now = datetime.datetime.utcnow()
         payload = {
-            "file_path": file_path,
+            "file_name": file_name,
+            "file_list": file_list,
+            "ignore_folder_structure": ignore_folder_structure,
             "iat": now,
             "exp": now + datetime.timedelta(seconds=DOWNLOAD_TOKEN_LIFESPAN)
         }
