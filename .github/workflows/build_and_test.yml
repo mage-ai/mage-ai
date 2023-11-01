@@ -68,12 +68,7 @@ jobs:
           pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
         run: |
-          python3 -m unittest discover -s mage_ai --failfast -p "^(?!.*test_ai_function).*$"
-      - name: Run AI unit tests
-        run: |
-          python3 -m unittest -p "*test_ai_functions.py"
-        exclude:
-          - python-version: "3.7"
+          python3 -m unittest discover -s mage_ai --failfast
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
