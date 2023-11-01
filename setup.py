@@ -41,7 +41,6 @@ setuptools.setup(
     },
     extras_require={
         'ai': [
-            'astunparse>=1.6.3',
             'langchain>=0.0.222',
             'openai>=0.27.8',
         ],
@@ -63,7 +62,6 @@ setuptools.setup(
         'dbt': [
             'dbt-bigquery==1.4.3',
             'dbt-core==1.4.8',
-            'dbt-dremio==1.5.0',
             'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',
@@ -112,7 +110,6 @@ setuptools.setup(
             'elasticsearch==8.9.0',
         ],
         'all': [
-            'astunparse>=1.6.3',
             'PyGithub==1.59.0',
             'aws-secretsmanager-caching==1.1.1.5',
             'azure-eventhub==5.11.2',

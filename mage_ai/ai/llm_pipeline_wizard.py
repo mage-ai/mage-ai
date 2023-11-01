@@ -5,7 +5,6 @@ import os
 import re
 from typing import Dict, List
 
-import astunparse
 import openai
 from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
@@ -416,7 +415,7 @@ class LLMPipelineWizard:
                         # Add newly generated doc string.
                         new_comment = ast.Expr(value=ast.Str(s=comment_text))
                     node.body.insert(0, new_comment)
-        return astunparse.unparse(tree)
+        return ast.unparse(tree)
 
     async def async_generate_comment_for_block(self, block_content: str) -> str:
         variable_values = dict()
