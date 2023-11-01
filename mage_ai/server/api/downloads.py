@@ -83,7 +83,7 @@ class ApiResourceDownloadHandler(BaseHandler):
             self.abs_repo_path = os.path.abspath(get_repo_path())
 
             relative_file_list = list(map(self.relative_path_mapping, file_list))
-            
+
             try:
                 file_pointer = self.get_file_pointer(file_list, relative_file_list)
 
@@ -97,7 +97,7 @@ class ApiResourceDownloadHandler(BaseHandler):
                 self.write(f'Error fetching file {file_name}.\n{e}')
             finally:
                 file_pointer.close()
-            
+
             self.set_header('Content-Type', 'application/force-download')
             self.set_header('Content-Disposition', f'attachment; filename={file_name}')
             self.flush()
@@ -111,13 +111,11 @@ class ApiResourceDownloadHandler(BaseHandler):
             self.set_status(400)
             self.write(f'Attepmt at fetching file outside of project folder: {e}')
 
-
     # file pointer points to either a singular file or a temporary zip
     def get_file_pointer(self, file_list, relative_file_list):
         if len(file_list) == 1:
             return open(file_list[0])
         return self.zip_files(file_list, relative_file_list)
-
 
     # creates a temporary zip and returns the (open) file pointer
     def zip_files(self, file_list, relative_file_list):
@@ -125,16 +123,17 @@ class ApiResourceDownloadHandler(BaseHandler):
         with zipfile.ZipFile(zip_file, 'w') as zipf:
             for path, relative in zip(file_list, relative_file_list):
                 zipf.write(path, relative)
-        zip_file.seek(0) # set cursor to start of file to prepare for content extraction
+        zip_file.seek(0)  # set cursor to start of file to prepare for content extraction
         return zip_file
-
 
     def relative_path_mapping(self, path):
         abs_path = os.path.abspath(path)
         common_ground = os.path.commonpath([self.abs_repo_path, abs_path])
 
-        if common_ground != self.abs_repo_path: # trying to access files outside of the project folder
+        # trying to access files outside of the project folder
+        if common_ground != self.abs_repo_path:
             raise Exception(abs_path)
-        
-        return os.path.basename(abs_path) if self.ignore_folder_structure else os.path.relpath(abs_path, common_ground)
-    
+
+        return (os.path.basename(abs_path)
+                if self.ignore_folder_structure
+                else os.path.relpath(abs_path, common_ground))

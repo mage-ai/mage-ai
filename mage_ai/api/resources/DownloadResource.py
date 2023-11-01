@@ -17,7 +17,6 @@ class DownloadResource(GenericResource):
     @classmethod
     @safe_db_query
     async def create(self, payload: Dict, user, **kwargs) -> 'DownloadResource':
-        host = kwargs['Host']
         parent_model = kwargs.get('parent_model')
 
         ignore_folder_structure = payload.get('ignore_folder_structure', False)
