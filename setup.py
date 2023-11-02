@@ -41,6 +41,7 @@ setuptools.setup(
     },
     extras_require={
         'ai': [
+            'astor>=0.8.1',
             'langchain>=0.0.222',
             'openai>=0.27.8',
         ],
@@ -111,6 +112,7 @@ setuptools.setup(
         ],
         'all': [
             'PyGithub==1.59.0',
+            'astor>=0.8.1',
             'aws-secretsmanager-caching==1.1.1.5',
             'azure-eventhub==5.11.2',
             'azure-identity==1.12.0',
