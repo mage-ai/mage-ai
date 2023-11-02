@@ -516,6 +516,28 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       ) {
         event.preventDefault();
         savePipelineContent();
+      } else if (onlyKeysPresent([KEY_CODE_A], keyMapping)) {
+        if (!event.repeat && !isInputElement(event)) {
+          const selectedBlockIndex =
+            blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
+            if (selectedBlockIndex !== -1) {
+              // Add new scratchpad block above the current selected block
+              addNewBlock({
+                type: BlockTypeEnum.SCRATCHPAD,
+              }, selectedBlockIndex);
+            }
+        }
+      } else if (onlyKeysPresent([KEY_CODE_B], keyMapping)) {
+        if (!event.repeat && !isInputElement(event)) {
+          const selectedBlockIndex =
+            blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
+            if (selectedBlockIndex !== -1) {
+              // Add new scratchpad block below the current selected block
+              addNewBlock({
+                type: BlockTypeEnum.SCRATCHPAD,
+              }, selectedBlockIndex + 1);
+            }
+        }
       } else if (textareaFocused) {
         if (keyMapping[KEY_CODE_ESCAPE]) {
           setTextareaFocused(false);
@@ -541,21 +563,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
 
-          if (onlyKeysPresent([KEY_CODE_A], keyMapping) && !event.repeat && selectedBlockIndex !== -1) {
-            if (!isInputElement(event)) {
-              // Add new scratchpad block above the current selected block
-              addNewBlock({
-                type: BlockTypeEnum.SCRATCHPAD,
-              }, selectedBlockIndex);
-            }
-          } else if (onlyKeysPresent([KEY_CODE_B], keyMapping) && !event.repeat && selectedBlockIndex !== -1) {
-            if (!isInputElement(event)) {
-              // Add new scratchpad block below the current selected block
-              addNewBlock({
-                type: BlockTypeEnum.SCRATCHPAD,
-              }, selectedBlockIndex + 1);
-            }
-          } else if (keyMapping[KEY_CODE_ESCAPE]) {
+          if (keyMapping[KEY_CODE_ESCAPE]) {
             setSelectedBlock(null);
           } else if (keyHistory[0] === KEY_CODE_I
             && keyHistory[1] === KEY_CODE_I
