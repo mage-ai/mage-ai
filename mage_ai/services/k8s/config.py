@@ -41,6 +41,7 @@ class K8sExecutorConfig(BaseConfig):
     metadata: Dict = None
     container: Dict = None
     pod: Dict = None
+    # parsed k8s objects
     pod_config: V1PodSpec = None
     meta: V1ObjectMeta = None
 
@@ -79,7 +80,7 @@ class K8sExecutorConfig(BaseConfig):
         resources = V1ResourceRequirements()
         if executor_config.container:
             if (executor_config.container
-                and (executor_config.container.get("resources")
+                and (executor_config.container.get('resources')
                      and isinstance(executor_config.container['resources'], Dict))):
                 resources = V1ResourceRequirements(**executor_config.container['resources'])
 

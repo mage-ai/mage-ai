@@ -117,7 +117,7 @@ class JobManager():
             )
 
         if k8s_config and k8s_config.container_config:
-            k8s_config.container_config.setdefault("name", "mage-data")
+            k8s_config.container_config.setdefault('name', 'mage-data')
             pod_spec.containers = [
                 merge_containers(
                     client.V1Container(**k8s_config.container_config),
@@ -140,6 +140,16 @@ class JobManager():
         return job
 
     def merge_pod_spec(self, pod_spec: V1PodSpec, command: str) -> V1PodSpec:
+        """
+        Merges the pod spec with the current pod's spec.
+
+        Args:
+        - pod_spec (V1PodSpec): The pod specification to be merged.
+        - command (str): The command to be executed.
+
+        Returns:
+        - V1PodSpec: The merged pod specification.
+        """
         container = self.merge_container_spec(pod_spec.containers[0], command)
         pod_spec.containers = [container]
         mage_server_pod_spec = self.pod_config.spec
@@ -150,6 +160,16 @@ class JobManager():
         return pod_spec
 
     def merge_container_spec(self, container_spec: V1Container, command: str) -> V1Container:
+        """
+        Merges the container spec with the current pod's container spec.
+
+        Args:
+        - container_spec (V1Container): The container specification to be merged.
+        - command (str): The command to be executed.
+
+        Returns:
+        - V1Container: The merged container specification.
+        """
         mage_server_container_spec = self.get_mage_server_container()
         container_spec.env = container_spec.env + \
             [item for item in mage_server_container_spec.env if item not in container_spec.env]
