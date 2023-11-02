@@ -23,3 +23,13 @@ FileVersionPolicy.allow_read(FileVersionPresenter.default_attributes + [], scope
 ], on_action=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+
+FileVersionPolicy.allow_query([
+  'block_uuid',
+  'pipeline_uuid',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())

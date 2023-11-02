@@ -133,6 +133,10 @@ export type SidekickProps = {
   selectedBlock: BlockType;
   selectedFilePath?: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
+  setActiveSidekickView: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
   setBlockInteractionsMapping: (prev: any) => {
     [blockUUID: string]: BlockInteractionType[];
@@ -212,6 +216,7 @@ function Sidekick({
   selectedBlock,
   selectedFilePath,
   sendTerminalMessage,
+  setActiveSidekickView,
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
   setBlockInteractionsMapping,
@@ -311,6 +316,7 @@ function Sidekick({
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
       onActionCallback={onUpdateFileSuccess}
+      pipeline={pipeline}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
       setErrors={setErrors}
@@ -319,6 +325,7 @@ function Sidekick({
   ), [
     afterWidth,
     onUpdateFileSuccess,
+    pipeline,
     selectedBlock,
     selectedFilePath,
     setErrors,
@@ -591,8 +598,10 @@ function Sidekick({
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
               <DependencyGraph
+                addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
                 blocks={blocks}
+                deleteBlock={deleteBlock}
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
@@ -612,8 +621,10 @@ function Sidekick({
                   };
                 })}
                 pipeline={pipeline}
+                runBlock={runBlock}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}
+                setActiveSidekickView={setActiveSidekickView}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
                 setSelectedBlock={(block) => {
@@ -624,6 +635,7 @@ function Sidekick({
                   }
                 }}
                 setZoom={setDepGraphZoom}
+                showUpdateBlockModal={showUpdateBlockModal}
                 treeRef={treeRef}
               />
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
