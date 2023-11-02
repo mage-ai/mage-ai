@@ -657,15 +657,7 @@ function PipelineListPage() {
   ]);
 
   const { data: dataTags } = api.tags.list();
-  const tags: TagType[] = useMemo(() => {
-    const t = dataTags?.tags
-    if (t?.length > 0 && t[0].uuid !== 'no_tag') { // <- So as to not to re-add the `no_tag` tag.
-      t.push({
-        uuid: 'no_tag',
-      })
-    }
-    return sortByKey(t || [], ({ uuid }) => uuid)
-  }, [
+  const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
     dataTags,
   ]);
 
@@ -706,17 +698,20 @@ function PipelineListPage() {
       }}
       filterOptions={{
         status: FILTERABLE_PIPELINE_STATUSES,
-        tag: tags.map(({ uuid }) => uuid),
+        tag: ['no_tags', ...tags.map(({ uuid }) => uuid)],
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={{
         status: FILTERABLE_PIPELINE_STATUSES.reduce(
           (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }), {},
         ),
-        tag: tags.reduce((acc, { uuid }) => ({
-          ...acc,
-          [uuid]: uuid,
-        }), {}),
+        tag: {
+          no_tags: 'No tags',
+          ...tags.reduce((acc, { uuid }) => ({
+            ...acc,
+            [uuid]: uuid,
+          }), {}),
+        },
         type: PIPELINE_TYPE_LABEL_MAPPING,
       }}
       groupButtonProps={{
