@@ -516,26 +516,18 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       ) {
         event.preventDefault();
         savePipelineContent();
-      } else if (onlyKeysPresent([KEY_CODE_A], keyMapping)) {
-        if (!event.repeat && !isInputElement(event)) {
+      } else if (onlyKeysPresent([KEY_CODE_A], keyMapping) || onlyKeysPresent([KEY_CODE_B], keyMapping)) {
+        if (selectedBlock && !event.repeat && !isInputElement(event)) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
             if (selectedBlockIndex !== -1) {
-              // Add new scratchpad block above the current selected block
+              // Add new scratchpad block above (A) or below (B) the current selected block
+              const newBlockIndex = (onlyKeysPresent([KEY_CODE_A], keyMapping)) 
+                ? selectedBlockIndex 
+                : selectedBlockIndex + 1;
               addNewBlock({
                 type: BlockTypeEnum.SCRATCHPAD,
-              }, selectedBlockIndex);
-            }
-        }
-      } else if (onlyKeysPresent([KEY_CODE_B], keyMapping)) {
-        if (!event.repeat && !isInputElement(event)) {
-          const selectedBlockIndex =
-            blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
-            if (selectedBlockIndex !== -1) {
-              // Add new scratchpad block below the current selected block
-              addNewBlock({
-                type: BlockTypeEnum.SCRATCHPAD,
-              }, selectedBlockIndex + 1);
+              }, newBlockIndex);
             }
         }
       } else if (textareaFocused) {
