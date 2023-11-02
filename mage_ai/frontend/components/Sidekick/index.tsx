@@ -602,7 +602,9 @@ function Sidekick({
                 blockRefs={blockRefs}
                 blocks={blocks}
                 contentByBlockUUID={contentByBlockUUID}
+                contextMenuEnabled
                 deleteBlock={deleteBlock}
+                dragEnabled
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}

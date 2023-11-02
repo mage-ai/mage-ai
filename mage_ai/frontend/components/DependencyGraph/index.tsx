@@ -169,8 +169,10 @@ export type DependencyGraphProps = {
       };
     };
   };
+  contextMenuEnabled?: boolean;
   deleteBlock?: (block: BlockType) => void;
   disabled?: boolean;
+  dragEnabled?: boolean;
   editingBlock?: {
     upstreamBlocks: {
       block: BlockType;
@@ -224,8 +226,10 @@ function DependencyGraph({
   blocksOverride,
   blocks: allBlocksProp,
   contentByBlockUUID,
+  contextMenuEnabled,
   deleteBlock,
   disabled: disabledProp,
+  dragEnabled,
   editingBlock,
   enablePorts = false,
   fetchPipeline,
@@ -1986,10 +1990,13 @@ function DependencyGraph({
                     <foreignObject
                       height={nodeHeight}
                       onClick={(e) => onClickNode(e, node)}
-                      onContextMenu={(e) => onContextMenuNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
+                      onContextMenu={contextMenuEnabled
+                        ? (e) => onContextMenuNode(e, node, {
+                          nodeHeight,
+                          nodeWidth,
+                        })
+                        : null
+                      }
                       onMouseEnter={(e) => onMouseEnterNode(e, node, {
                         nodeHeight,
                         nodeWidth,
@@ -1998,14 +2005,20 @@ function DependencyGraph({
                         nodeHeight,
                         nodeWidth,
                       })}
-                      onMouseDown={(e) => onMouseDownNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
-                      onMouseUp={(e) => onMouseUpNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
+                      onMouseDown={dragEnabled
+                        ? (e) => onMouseDownNode(e, node, {
+                          nodeHeight,
+                          nodeWidth,
+                        })
+                        : null
+                      }
+                      onMouseUp={dragEnabled
+                        ? (e) => onMouseUpNode(e, node, {
+                          nodeHeight,
+                          nodeWidth,
+                        })
+                        : null
+                      }
                       style={{
                         // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
                         // pointerEvents: 'none',
