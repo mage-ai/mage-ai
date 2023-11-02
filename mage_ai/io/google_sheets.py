@@ -94,7 +94,7 @@ class GoogleSheets(BaseFile):
             sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
 
         Raises:
-            KeyError: _description_
+            KeyError: raised if one of sheet_id, sheet_url, or sheet_name is not provided.
 
         Returns:
             gspread.spreadsheet.Spreadsheet: A gspread Spreadsheet object.
@@ -117,7 +117,7 @@ class GoogleSheets(BaseFile):
             ):
                 return sheet
         else:
-            raise ValueError('There was an error loading the Google Sheet.')
+            return None
 
     def fetch_worksheet(
         self,
@@ -136,11 +136,6 @@ class GoogleSheets(BaseFile):
             sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
             worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
             worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
-
-        Raises:
-            name_ex: Raised if a worksheet cannot be found with the specified name.
-            position_ex: Raised if a worksheet cannot be found at the specified position.
-            ValueError: Raised if there is an error loading the worksheet.
 
         Returns:
             gspread.worksheet.Worksheet: A worksheet object.
@@ -164,7 +159,7 @@ class GoogleSheets(BaseFile):
             ):
                 return worksheet
         else:
-            raise ValueError('There was an error loading the worksheet.')
+            return None
 
     def load(
         self,
@@ -189,7 +184,6 @@ class GoogleSheets(BaseFile):
 
         Raises:
             KeyError: To be raised if a sheet_url, sheet_id, or sheet_name is not provided
-            ValueError: To be raised if the provided worksheet does not exist.
 
         Returns:
             pd.DataFrame: A dataframe of the requested sheet.
@@ -246,6 +240,21 @@ class GoogleSheets(BaseFile):
         worksheet_name: str = None,
         worksheet_position: int = 0,
     ) -> bool:
+        """Checks if a given sheet & worksheet (optional) exists.
+
+        Args:
+            sheet_url (str, optional): A sheet URL to export the dataframe to. Defaults to None
+            sheet_id (str, optional): A sheet id to export the dataframe to. Defaults to None
+            sheet_name (str, optional): A sheet name (title) to export the df. Defaults to None
+            worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
+            worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
+
+        Raises:
+            api_error: Sample responses show a 404 error not found— to be raised if sheet not found.
+
+        Returns:
+            bool: True/False if sheet exists
+        """
         try:
             self.fetch_worksheet(
                 sheet_url=sheet_url,
@@ -257,7 +266,6 @@ class GoogleSheets(BaseFile):
             return True
 
         except gspread.exceptions.APIError as api_error:
-            # Sample responses show a 404 error not found
             if api_error.response.status_code == 404:
                 return False
             else:
