@@ -811,6 +811,7 @@ function PipelineDetail({
       const refreshTimestamp = blocksThatNeedToRefresh?.[type]?.[uuid];
       if (refreshTimestamp) {
         key = `${key}:${refreshTimestamp}`;
+        console.log(uuid, key)
       }
 
       if (isHidden) {

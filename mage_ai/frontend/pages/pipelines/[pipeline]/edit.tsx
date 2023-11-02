@@ -1229,13 +1229,21 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
-  const onUpdateFileSuccess = useCallback((fileContent: FileType) => {
+  const onUpdateFileSuccess = useCallback((fileContent: FileType, opts?: {
+    blockUUID: string;
+  }) => {
     const {
       content,
       path: filePath,
     } = fileContent || {};
 
-    const block = getBlockFromFilePath(filePath, blocks);
+    let block;
+
+    if (opts?.blockUUID) {
+      block = blocks?.find(({ uuid }) => uuid === opts?.blockUUID);
+    } else {
+      block = getBlockFromFilePath(filePath, blocks);
+    }
 
     if (block) {
       const {

@@ -119,7 +119,9 @@ export type SidekickProps = {
   isPipelineExecuting: boolean;
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
-  onUpdateFileSuccess?: (fileContent: FileType) => void;
+  onUpdateFileSuccess?: (fileContent: FileType, opts?: {
+    blockUUID: string;
+  }) => void;
   permissions?: InteractionPermission[] | InteractionPermissionWithUUID[];
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
