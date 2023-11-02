@@ -11,7 +11,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import {
-  DATE_FORMAT_LONG,
+  DATE_FORMAT_LONG_MS,
   DATE_FORMAT_SPARK,
   dateFormatLongFromUnixTimestamp,
   datetimeInLocalTimezone,
@@ -370,7 +370,7 @@ function JobsTable({
                               quantiles: quantiles,
                               shuffle_read_metrics: shuffleReadMetrics,
                               shuffle_write_metrics: shuffleWriteMetrics,
-                            } = taskMetricsDistributions;
+                            } = taskMetricsDistributions || {};
 
                             return (
                               <>
@@ -406,7 +406,7 @@ function JobsTable({
                                               uuid: 'Metric',
                                             },
                                             // @ts-ignore
-                                          ].concat(quantiles.map((quantile: number, idx: number) => ({
+                                          ].concat(quantiles?.map((quantile: number, idx: number) => ({
                                             center: true,
                                             label: () => idx === 0
                                               ? 'Min'
@@ -416,7 +416,7 @@ function JobsTable({
                                                   ? 'Median'
                                                   : `${Number(quantile * 100)}th`,
                                             uuid: quantile,
-                                          })))}
+                                          })) || [])}
                                           rows={[
                                             {
                                               uuid: 'Duration',
@@ -648,7 +648,7 @@ function JobsTable({
                                       <Text {...SHARED_TEXT_PROPS} key="launchTime">
                                         {launchTime
                                           ? datetimeInLocalTimezone(
-                                            moment(launchTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
+                                            moment(launchTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG_MS),
                                             displayLocalTimezone,
                                           )
                                           : '-'
@@ -718,7 +718,7 @@ function JobsTable({
                         <Text {...SHARED_TEXT_PROPS} key="submissionTime">
                           {submissionTime
                             ? datetimeInLocalTimezone(
-                              moment(submissionTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
+                              moment(submissionTime, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG_MS),
                               displayLocalTimezone,
                             )
                             : '-'
@@ -727,7 +727,7 @@ function JobsTable({
                         // <Text {...SHARED_TEXT_PROPS} key="firstTaskLaunchedTime">
                         //   {firstTaskLaunchedTime
                         //     ? datetimeInLocalTimezone(
-                        //       startTime.format(DATE_FORMAT_LONG),
+                        //       startTime.format(DATE_FORMAT_LONG_MS),
                         //       displayLocalTimezone,
                         //     )
                         //     : '-'
@@ -736,7 +736,7 @@ function JobsTable({
                         // <Text {...SHARED_TEXT_PROPS} key="completionTime">
                         //   {completionTime
                         //     ? datetimeInLocalTimezone(
-                        //       endTime.format(DATE_FORMAT_LONG),
+                        //       endTime.format(DATE_FORMAT_LONG_MS),
                         //       displayLocalTimezone,
                         //     )
                         //     : '-'
@@ -813,13 +813,18 @@ function JobsTable({
           <Text {...SHARED_TEXT_PROPS} key="submittedAt">
             {submittedAt
               ? datetimeInLocalTimezone(
-                moment(submittedAt, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG),
+                moment(submittedAt, DATE_FORMAT_SPARK).format(DATE_FORMAT_LONG_MS),
                 displayLocalTimezone,
               )
               : '-'
              }
           </Text>,
-          <Text {...SHARED_TEXT_PROPS} key="status" success={SparkJobStatusEnum.SUCCEEDED === status}>
+          <Text
+            {...SHARED_TEXT_PROPS}
+            danger={SparkJobStatusEnum.FAILED === status}
+            key="status"
+            success={SparkJobStatusEnum.SUCCEEDED === status}
+          >
             {status}
           </Text>,
           <Text {...SHARED_TEXT_PROPS} center key="stageIds">

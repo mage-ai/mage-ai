@@ -3267,13 +3267,9 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   </>
                 )}
 
-                {extraContent && (
-                  <Spacing mb={1}>
-                    {React.cloneElement(extraContent, {
-                      runBlockAndTrack,
-                    })}
-                  </Spacing>
-                )}
+                {extraContent && React.cloneElement(extraContent, {
+                  runBlockAndTrack,
+                })}
 
                 {blockError && (
                   <Spacing p={PADDING_UNITS}>

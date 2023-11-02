@@ -815,7 +815,7 @@ function PipelineDetailPage({
                 const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
                 const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
 
-                if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
+                if (!equals(blockUUIDsPrevious || [], blockUUIDsServer || [])) {
                   setTimeout(() => {
                     resetColumnScroller();
                   }, 1);

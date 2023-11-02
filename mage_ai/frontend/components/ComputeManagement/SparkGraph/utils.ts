@@ -10,11 +10,43 @@ export function getNodeHeight(node: SparkSQLNodeType): number {
 
   let height = NODE_MIN_HEIGHT;
 
-  if (metrics?.length) {
+  const regexp = new RegExp('\n', 'g');
+  let numberOfLines = 0;
+  metrics?.forEach(({
+    name,
+    value,
+  }) => {
+    numberOfLines += 1;
+
+    const numberOfLinesInRow = [];
+
+    [
+      name,
+      value,
+    ].forEach((text) => {
+      const matches = text.matchAll(regexp);
+      if (matches) {
+        let count = 0;
+
+        while (typeof matches.next().value !== 'undefined') {
+          count += 1;
+        }
+
+        numberOfLinesInRow.push(count);
+      }
+    });
+
+    numberOfLines += Math.max(...numberOfLinesInRow);
+  });
+
+  const rows = metrics?.length || 0;
+  if (rows >= 1) {
     // Table header height
     height += 37;
-    // Table row height
-    height += (metrics?.length || 0) * 35;
+    // Table row line height
+    height += (numberOfLines || 0) * 18;
+    // Table row padding top, padding bottom, border
+    height += (rows || 0) * (8 + 8 + 1);
   }
 
   return height;
@@ -28,7 +60,7 @@ export function getNodeWidth(node: SparkSQLNodeType): number {
     value,
   }) => (name?.length || 0) + (value?.length || 0)))
 
-  let width = (HORIZONTAL_PADDING * 2) + maxCharacters * (WIDTH_OF_HEADER_TEXT_CHARACTER + 0.2);
+  let width = (HORIZONTAL_PADDING * 2) + maxCharacters * (WIDTH_OF_HEADER_TEXT_CHARACTER + 0.3);
 
   if (metrics?.length) {
     // Padding on the left, in between columns, and on the right.

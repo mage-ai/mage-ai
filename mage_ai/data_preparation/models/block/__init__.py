@@ -336,8 +336,8 @@ class Block(DataIntegrationMixin, SparkBlock):
         # Used when interpolating upstream block outputs in YAML files
         self.fetched_inputs_from_blocks = None
 
-        self.spark_job_before_execution = None
-        self.spark_job_after_execution = None
+        self.execution_timestamp_start = None
+        self.execution_timestamp_end = None
 
     @property
     def uuid(self) -> str:
@@ -881,9 +881,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
-        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
-            self.set_spark_job_before_execution()
-
         if logging_tags is None:
             logging_tags = dict()
 
@@ -944,9 +941,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                 parent_block=self,
                 from_notebook=from_notebook,
             )
-
-        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
-            self.set_spark_job_after_execution()
 
         return output
 
@@ -1028,6 +1022,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
+
             block_output = self.post_process_output(output)
             variable_mapping = dict()
 
@@ -1469,10 +1464,18 @@ class Block(DataIntegrationMixin, SparkBlock):
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
+        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
+            self.clear_spark_jobs_cache()
+            self.set_spark_job_execution_start()
+
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
+
+        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
+            self.set_spark_job_execution_end()
+
         return output
 
     def __initialize_decorator_modules(
@@ -1799,6 +1802,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_type: VariableType = None,
         block_uuid: str = None,
     ) -> List[Dict]:
+        # TODO (tommy dang): remove this
+        return []
+
         if self.pipeline is None:
             return
 
