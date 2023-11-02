@@ -147,6 +147,7 @@ setuptools.setup(
             'google-cloud-run==0.5.0',
             'google-cloud-storage==2.5.0',
             'great_expectations==0.15.50',
+            'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',
