@@ -101,12 +101,18 @@ class PipelineResource(BaseResource):
 
             pipeline_uuids = list(history_by_pipeline_uuid.keys())
         elif tags:
-            from mage_ai.cache.tag import TagCache
+            from mage_ai.cache.tag import NO_TAGS_QUERY, TagCache
 
             await TagCache.initialize_cache()
 
             cache = TagCache()
             pipeline_uuids = cache.get_pipeline_uuids_with_tags(tags)
+
+            if NO_TAGS_QUERY in tags:
+                pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
+                all_pipeline_uuids = set(Pipeline.get_all_pipelines(get_repo_path()))
+                pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
+                pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
