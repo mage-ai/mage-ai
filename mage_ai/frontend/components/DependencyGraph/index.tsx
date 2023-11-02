@@ -162,6 +162,13 @@ export type DependencyGraphProps = {
   };
   blocksOverride?: BlockType[];
   blocks?: BlockType[];
+  contentByBlockUUID?: {
+    current: {
+      [blockType: string]: {
+        [blockUUID: string]: string;
+      };
+    };
+  };
   deleteBlock?: (block: BlockType) => void;
   disabled?: boolean;
   editingBlock?: {
@@ -216,6 +223,7 @@ function DependencyGraph({
   blockStatus,
   blocksOverride,
   blocks: allBlocksProp,
+  contentByBlockUUID,
   deleteBlock,
   disabled: disabledProp,
   editingBlock,
@@ -1438,6 +1446,7 @@ function DependencyGraph({
         onClick: () => {
           runBlock?.({
             block,
+            code: contentByBlockUUID?.current?.[block?.type]?.[block?.uuid],
           });
         },
         uuid: 'Run block',
@@ -1568,6 +1577,7 @@ function DependencyGraph({
   }, [
     addNewBlockAtIndex,
     blocks,
+    contentByBlockUUID,
     contextMenuData,
     deleteBlock,
     runBlock,

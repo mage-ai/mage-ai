@@ -135,7 +135,7 @@ const DEFAULT_NAV_ITEMS = ({
         {
           Icon: HexagonAll,
           id: 'global-data-products',
-          label: () => 'Global data products (beta)',
+          label: () => 'Global data products',
           linkProps: {
             href: '/global-data-products',
           },

@@ -481,7 +481,13 @@ export function buildNodesEdgesPorts({
       downstreamBlocks,
       upstreamBlocks,
     }) => {
-      const uuids = upstreamBlocks?.map(({ uuid: uuid2 }) => uuid2);
+      const uuids = upstreamBlocks?.reduce((acc, block) => {
+        if (block && block?.uuid) {
+          return acc.concat(block?.uuid);
+        }
+
+        return acc;
+      }, []);
       const parentID = getParentNodeIDShared(uuids);
 
       if (!(parentID in groupsByParentID)) {

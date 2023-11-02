@@ -601,6 +601,7 @@ function Sidekick({
                 addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
                 blocks={blocks}
+                contentByBlockUUID={contentByBlockUUID}
                 deleteBlock={deleteBlock}
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
