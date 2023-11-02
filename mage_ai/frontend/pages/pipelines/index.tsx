@@ -205,6 +205,10 @@ function PipelineListPage() {
   const pipelines: PipelineType[] = useMemo(
     () => {
       let pipelinesFiltered = filterPipelinesBySearchText(data?.pipelines || []);
+      if (q?.[PipelineQueryEnum.TAG]) {
+        pipelinesFiltered = pipelinesFiltered
+          .filter(({ tags }) => tags.some(t => (q[PipelineQueryEnum.TAG]).includes(t)));
+      }
 
       return pipelinesFiltered;
     },
