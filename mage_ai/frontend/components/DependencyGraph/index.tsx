@@ -868,7 +868,10 @@ function DependencyGraph({
       event,
       node,
     });
+
+    setActiveEdge(null);
   }, [
+    setActiveEdge,
     setContextMenuData,
   ]);
 
@@ -1820,6 +1823,7 @@ function DependencyGraph({
                     edge,
                     event,
                   });
+                  setContextMenuData(null);
                 }}
                 style={{
                   stroke: anotherBlockSelected && !selected
