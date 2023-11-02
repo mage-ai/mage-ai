@@ -101,7 +101,7 @@ class PipelineResource(BaseResource):
 
             pipeline_uuids = list(history_by_pipeline_uuid.keys())
         elif tags:
-            from mage_ai.cache.tag import TagCache, NO_TAGS_QUERY
+            from mage_ai.cache.tag import NO_TAGS_QUERY, TagCache
 
             await TagCache.initialize_cache()
 
