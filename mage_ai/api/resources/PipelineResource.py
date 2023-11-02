@@ -132,6 +132,7 @@ class PipelineResource(BaseResource):
         pipelines = await asyncio.gather(
             *[get_pipeline(uuid) for uuid in pipeline_uuids]
         )
+        pipelines = [p for p in pipelines if p is not None]
 
         @safe_db_query
         def query_pipeline_schedules(pipeline_uuids):
