@@ -1441,8 +1441,15 @@ function DependencyGraph({
 
     const idx = blocks?.findIndex(({ uuid }) => uuid === block?.uuid);
 
-    const menuItems = [
-      {
+    const isIntegrationPipeline = PipelineTypeEnum.INTEGRATION === pipeline?.type;
+
+    const menuItems: {
+      onClick: () => void;
+      uuid: string;
+    }[] = [];
+
+    if (!isIntegrationPipeline) {
+      menuItems.push({
         onClick: () => {
           runBlock?.({
             block,
@@ -1450,7 +1457,10 @@ function DependencyGraph({
           });
         },
         uuid: 'Run block',
-      },
+      });
+    }
+
+    menuItems.push(...[
       {
         onClick: () => {
           showUpdateBlockModal(
@@ -1460,59 +1470,67 @@ function DependencyGraph({
         },
         uuid: 'Rename block',
       },
-      {
-        onClick: () => {
-          setSelectedBlock?.(allDependenciesShowing ? null : block);
-          setSelectedBlockTwice(allDependenciesShowing ? null : block);
+    ]);
+
+    if (!isIntegrationPipeline) {
+      menuItems.push(...[
+        {
+          onClick: () => {
+            setSelectedBlock?.(allDependenciesShowing ? null : block);
+            setSelectedBlockTwice(allDependenciesShowing ? null : block);
+          },
+          uuid: allDependenciesShowing ? 'Hide all dependencies' : 'Show all dependencies',
         },
-        uuid: allDependenciesShowing ? 'Hide all dependencies' : 'Show all dependencies',
-      },
-      {
-        onClick: () => {
-          addNewBlockAtIndex?.(
-            {
-              downstream_blocks: block ? [block?.uuid] : null,
-              language: block?.language,
-              type: BlockTypeEnum.CUSTOM,
-            },
-            Math.max(0, idx - 1),
-          );
+        {
+          onClick: () => {
+            addNewBlockAtIndex?.(
+              {
+                downstream_blocks: block ? [block?.uuid] : null,
+                language: block?.language,
+                type: BlockTypeEnum.CUSTOM,
+              },
+              Math.max(0, idx - 1),
+            );
+          },
+          uuid: 'Add upstream block',
         },
-        uuid: 'Add upstream block',
-      },
-      {
-        onClick: () => {
-          addNewBlockAtIndex?.(
-            {
-              language: block?.language,
-              type: BlockTypeEnum.CUSTOM,
-              upstream_blocks: block ? [block?.uuid] : null,
-            },
-            idx + 1,
-          );
+        {
+          onClick: () => {
+            addNewBlockAtIndex?.(
+              {
+                language: block?.language,
+                type: BlockTypeEnum.CUSTOM,
+                upstream_blocks: block ? [block?.uuid] : null,
+              },
+              idx + 1,
+            );
+          },
+          uuid: 'Add downstream block',
         },
-        uuid: 'Add downstream block',
-      },
-      {
-        disabled: !block?.upstream_blocks?.length,
-        onClick: () => {
-          updateBlockByDragAndDrop({
-            block,
-            upstreamBlocks: [],
-          });
+        {
+          disabled: !block?.upstream_blocks?.length,
+          onClick: () => {
+            updateBlockByDragAndDrop({
+              block,
+              upstreamBlocks: [],
+            });
+          },
+          uuid: 'Remove upstream dependencies',
         },
-        uuid: 'Remove upstream dependencies',
-      },
-      {
-        disabled: !block?.downstream_blocks?.length,
-        onClick: () => {
-          updateBlockByDragAndDrop({
-            block,
-            downstreamBlocks: [],
-          });
+        {
+          disabled: !block?.downstream_blocks?.length,
+          onClick: () => {
+            updateBlockByDragAndDrop({
+              block,
+              downstreamBlocks: [],
+            });
+          },
+          uuid: 'Remove downstream dependencies',
         },
-        uuid: 'Remove downstream dependencies',
-      },
+      ]);
+    }
+
+    menuItems.push(...[
       {
         onClick: () => {
           deleteBlock?.(block);
@@ -1535,7 +1553,7 @@ function DependencyGraph({
         },
         uuid: 'View file versions',
       },
-    ];
+    ]);
 
     return (
       <div
@@ -1580,6 +1598,7 @@ function DependencyGraph({
     contentByBlockUUID,
     contextMenuData,
     deleteBlock,
+    pipeline,
     runBlock,
     setActiveSidekickView,
     setContextMenuData,
