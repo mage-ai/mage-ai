@@ -698,7 +698,7 @@ function PipelineListPage() {
       }}
       filterOptions={{
         status: FILTERABLE_PIPELINE_STATUSES,
-        tag: ['no_tags', ...tags.map(({ uuid }) => uuid)],
+        tag: [PipelineQueryEnum.NO_TAGS, ...tags.map(({ uuid }) => uuid)],
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={{
@@ -706,7 +706,7 @@ function PipelineListPage() {
           (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }), {},
         ),
         tag: {
-          no_tags: 'No tags',
+          [PipelineQueryEnum.NO_TAGS]: 'No tags',
           ...tags.reduce((acc, { uuid }) => ({
             ...acc,
             [uuid]: uuid,
