@@ -412,7 +412,7 @@ class PipelineResource(BaseResource):
             switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
         except Exception as e:
             pipeline_type_updated = payload.get('type')
-            if pipeline_type_updated is not None:
+            if pipeline_type_updated is not None and pipeline_type_updated != pipeline_type:
                 await self.model.update(dict(type=pipeline_type))
 
             raise e
