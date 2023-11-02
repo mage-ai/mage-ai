@@ -35,7 +35,17 @@ export const removeKeyboardFocus = () => {
 export const isInteractiveElement = (event): boolean => {
   if (event.target instanceof Element) {
     const tagName = (event.target as Element).tagName.toLowerCase();
-    return ['a', 'button', 'input', 'select'].includes(tagName);
+    return ['a', 'button', 'input', 'select', 'textarea'].includes(tagName);
+  }
+
+  return false;
+};
+
+/** Determine whether the event target is an input element */
+export const isInputElement = (event): boolean => {
+  if (event.target instanceof Element) {
+    const tagName = (event.target as Element).tagName.toLowerCase();
+    return ['input', 'textarea'].includes(tagName);
   }
 
   return false;
