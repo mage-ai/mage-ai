@@ -307,6 +307,19 @@ function PipelineDetailPage({
   }>({});
   const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
 
+  const {
+    data: dataKernels,
+    mutate: fetchKernels,
+  } = api.kernels.list({}, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+  });
+  const kernels = dataKernels?.kernels;
+  const kernel =
+    kernels?.find(({ name }) =>
+      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type],
+    ) || kernels?.[0];
+
   // Pipeline
   let pipeline;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
@@ -392,24 +405,6 @@ function PipelineDetailPage({
   const files = useMemo(() => filesData?.files || [], [filesData]);
   pipeline = useMemo(() => data?.pipeline, [data]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-
-  const {
-    data: dataKernels,
-    mutate: fetchKernels,
-  } = api.kernels.list({}, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
-  });
-  const kernel = useMemo(() => {
-    const kernels = dataKernels?.kernels;
-
-    return kernels?.find(({ name }) =>
-      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type],
-    ) || kernels?.[0];
-  }, [
-    dataKernels,
-    pipeline,
-  ]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineLastSavedState, setPipelineLastSavedState] = useState<Date>(utcNowDate({ dateObj: true }));
@@ -1278,8 +1273,7 @@ function PipelineDetailPage({
     };
   }, [blocks]);
 
-  const updatePipelineMetadata =
-    useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
+  const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
       pipeline: {
         name,
         type,
@@ -2866,7 +2860,6 @@ function PipelineDetailPage({
           executePipeline={executePipeline}
           interruptKernel={interruptKernel}
           isPipelineExecuting={isPipelineExecuting}
-          kernel={kernel}
           pipeline={pipeline}
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
@@ -2876,7 +2869,6 @@ function PipelineDetailPage({
           setScrollTogether={setScrollTogether}
           setSideBySideEnabled={setSideBySideEnabled}
           sideBySideEnabled={sideBySideEnabled}
-          updatePipelineMetadata={updatePipelineMetadata}
         >
           {selectedFilePath && (
             <Spacing ml={1}>
@@ -2900,7 +2892,6 @@ function PipelineDetailPage({
     executePipeline,
     interruptKernel,
     isPipelineExecuting,
-    kernel,
     page,
     pipeline,
     restartKernel,
@@ -2913,7 +2904,6 @@ function PipelineDetailPage({
     setSelectedFilePath,
     setSideBySideEnabled,
     sideBySideEnabled,
-    updatePipelineMetadata,
   ]);
 
   const mainContainerHeaderMemo = useMemo(() => {

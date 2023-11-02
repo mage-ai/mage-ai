@@ -1,10 +1,5 @@
 import KernelOutputType from './KernelOutputType';
 
-export enum KernelNameEnum {
-  PYSPARK = 'pysparkkernel',
-  PYTHON3 = 'python3',
-}
-
 export default interface KernelType {
   alive: boolean;
   id: string;
