@@ -100,19 +100,19 @@ class PipelineResource(BaseResource):
                     history_by_pipeline_uuid[pipeline_uuid] = [h]
 
             pipeline_uuids = list(history_by_pipeline_uuid.keys())
-        elif len(tags) == 1 and tags[0] == 'no_tag':
-            # Get all pipelines to filter later.
-            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
-        elif 'no_tag' in tags:
-            # Someone requested pipelines with tags and `no_tag`.
-            pipeline_uuids = []
         elif tags:
-            from mage_ai.cache.tag import TagCache
+            from mage_ai.cache.tag import TagCache, NO_TAGS_QUERY
 
             await TagCache.initialize_cache()
 
             cache = TagCache()
             pipeline_uuids = cache.get_pipeline_uuids_with_tags(tags)
+
+            if NO_TAGS_QUERY in tags:
+                pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
+                all_pipeline_uuids = set(Pipeline.get_all_pipelines(get_repo_path()))
+                pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
+                pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
@@ -132,10 +132,6 @@ class PipelineResource(BaseResource):
         pipelines = await asyncio.gather(
             *[get_pipeline(uuid) for uuid in pipeline_uuids]
         )
-        if len(tags) == 1 and tags[0] == 'no_tag':
-            pipelines = [p for p in pipelines if p.tags == []]
-        else:
-            pipelines = [p for p in pipelines if p is not None]
 
         @safe_db_query
         def query_pipeline_schedules(pipeline_uuids):
