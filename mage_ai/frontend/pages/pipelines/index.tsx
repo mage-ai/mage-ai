@@ -206,8 +206,12 @@ function PipelineListPage() {
     () => {
       let pipelinesFiltered = filterPipelinesBySearchText(data?.pipelines || []);
       if (q?.[PipelineQueryEnum.TAG]) {
+        const tagsFromQuery = q[PipelineQueryEnum.TAG];
         pipelinesFiltered = pipelinesFiltered
-          .filter(({ tags }) => tags.some(t => (q[PipelineQueryEnum.TAG]).includes(t)));
+          .filter(({ tags }) => (
+            tags.some(t => tagsFromQuery.includes(t))
+              || (tags.length === 0 && tagsFromQuery.includes(PipelineQueryEnum.NO_TAGS))
+          ));
       }
 
       return pipelinesFiltered;
