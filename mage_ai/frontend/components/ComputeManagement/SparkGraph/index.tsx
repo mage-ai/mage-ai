@@ -180,54 +180,8 @@ function SparkGraph({
             {...node}
             dragType="port"
             linkable
-            // onClick={(event, {
-            //   data: {
-            //     block,
-            //   },
-            // }) => {
-            //   setActivePort(null);
-            //   const disabled = blockEditing?.uuid === block.uuid;
-            //   if (!disabled) {
-            //     if (blockEditing) {
-            //       onClickWhenEditingUpstreamBlocks(block);
-            //     } else {
-            //       onClickNode?.({
-            //         block,
-            //       });
-
-            //       // This is required because if the block is hidden, it needs to be un-hidden
-            //       // before scrolling to it or else the scrollIntoView won’t scroll to the top
-            //       // of the block.
-            //       setTimeout(() => {
-            //         onClick(block);
-            //       }, 1);
-            //     }
-            //   }
-            // }}
-            // onEnter={() => {
-            //   if (!editingBlock?.upstreamBlocks) {
-            //     setShowPorts(true);
-            //   }
-            // }}
-            // onLeave={() => {
-            //   if (!activePort) {
-            //     setShowPorts(false);
-            //   }
-            // }}
             port={(
               <Port
-                // onDrag={() => setShowPorts(true)}
-                // onDragEnd={() => {
-                //   setShowPorts(false);
-                //   setActivePort(null);
-                // }}
-                // onDragStart={(e, initial, port) => {
-                //   const side = port?.side as SideEnum;
-                //   setActivePort({ id: port?.id, side });
-                // }}
-                // onEnter={() => setShowPorts(true)}
-                rx={10}
-                ry={10}
                 style={{
                   fill: themeContext?.borders?.light,
                   stroke: themeContext?.accent?.purple,
@@ -254,10 +208,6 @@ function SparkGraph({
               return (
                 <foreignObject
                   height={nodeHeight}
-                  style={{
-                    // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
-                    pointerEvents: 'none',
-                  }}
                   width={event.width}
                   x={0}
                   y={0}
@@ -272,36 +222,6 @@ function SparkGraph({
           </Node>
         )}
         nodes={nodes}
-        // onNodeLink={(_event, from, to, port) => {
-        //   const fromBlock: BlockType = blockUUIDMapping[from.id];
-        //   const toBlock: BlockType = blockUUIDMapping[to.id];
-
-        //   const isConnectingIntegrationSourceAndDestination = (
-        //     pipeline?.type === PipelineTypeEnum.INTEGRATION
-        //       && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
-        //         || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
-        //           && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
-        //         )
-        //   );
-        //   if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
-        //     || from.id === to.id
-        //     || isConnectingIntegrationSourceAndDestination
-        //   ) {
-        //     return;
-        //   }
-
-        //   const portSide = port?.side as SideEnum;
-        //   updateBlockByDragAndDrop({
-        //     fromBlock,
-        //     portSide: portSide || SideEnum.SOUTH,
-        //     toBlock,
-        //   });
-        // }}
-        // onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
-        // onZoomChange={z => setZoom?.(z)}
-        // pannable={pannable}
-        // selections={edgeSelections}
-        // zoomable={zoomable}
       />
     </GraphContainerStyle>
   );

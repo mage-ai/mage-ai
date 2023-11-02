@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 from typing import List
 
 from mage_ai.data_preparation.models.block.spark.constants import (
@@ -27,16 +28,23 @@ class SparkBlock:
     def jobs_during_execution(self) -> List[Job]:
         self.__load_spark_jobs_during_execution()
 
-        if self.spark_job_before_execution:
+        if self.spark_job_execution_start:
             jobs = self.__get_jobs()
 
             def _filter(
-                job,
-                job_before_execution=self.spark_job_before_execution,
-                job_after_execution=self.spark_job_after_execution,
+                job: Job,
+                execution_timestamp_start: float = self.execution_timestamp_start,
+                execution_timestamp_end: float = self.execution_timestamp_end,
             ) -> bool:
-                return int(job.id) > int(job_before_execution.id) and \
-                    (not job_after_execution or int(job.id) <= int(job_after_execution.id))
+                submission_timestamp = job.submission_time.timestamp()
+
+                return execution_timestamp_start and \
+                    execution_timestamp_end and \
+                    submission_timestamp >= execution_timestamp_start and \
+                    (
+                        not execution_timestamp_end or
+                        submission_timestamp <= execution_timestamp_end
+                    )
 
             return list(filter(_filter, jobs))
 
@@ -74,19 +82,24 @@ class SparkBlock:
 
         return list(filter(_filter, sqls))
 
-    def set_spark_job_before_execution(self) -> None:
-        jobs = self.__get_jobs()
-        if jobs:
-            self.spark_job_before_execution = jobs[0]
-            if self.spark_job_before_execution:
-                self.__update_spark_jobs(self.spark_job_before_execution, overwrite=True)
+    def clear_spark_jobs_cache(self) -> None:
+        if os.path.exists(self.spark_jobs_full_path):
+            os.remove(self.spark_jobs_full_path)
 
-    def set_spark_job_after_execution(self) -> None:
-        jobs = self.__get_jobs()
-        if jobs:
-            self.spark_job_after_execution = jobs[0]
-            if self.spark_job_after_execution:
-                self.__update_spark_jobs(self.spark_job_after_execution)
+    def set_spark_job_execution_start(self) -> None:
+        self.execution_timestamp_start = datetime.utcnow().timestamp()
+        self.__update_spark_jobs_cache(
+            self.execution_timestamp_start,
+            'before',
+            overwrite=True,
+        )
+
+    def set_spark_job_execution_end(self) -> None:
+        self.execution_timestamp_end = datetime.utcnow().timestamp()
+        self.__update_spark_jobs_cache(
+            self.execution_timestamp_end,
+            'after',
+        )
 
     def __get_jobs(self) -> List[Job]:
         api = API.build()
@@ -150,7 +163,7 @@ class SparkBlock:
             return os.path.join(self.spark_dir, SPARK_JOBS_FILENAME)
 
     def __load_spark_jobs_cache(self) -> List[Job]:
-        jobs = []
+        jobs = {}
 
         if not os.path.exists(self.spark_jobs_full_path):
             return jobs
@@ -158,31 +171,44 @@ class SparkBlock:
         with open(self.spark_jobs_full_path) as f:
             content = f.read()
             if content:
-                job_dicts = json.loads(content) or []
-                jobs.extend([Job.load(**job_dict) for job_dict in job_dicts])
+                mapping = json.loads(content)
+                if mapping:
+                    for key, job_dict in mapping.items():
+                        jobs[key] = Job.load(**job_dict)
 
         return jobs
 
-    def __update_spark_jobs(self, job: Job, overwrite: bool = False) -> None:
+    def __update_spark_jobs_cache(
+        self,
+        submission_timestamp: float,
+        key: str,
+        overwrite: bool = False,
+    ) -> None:
         os.makedirs(self.spark_dir, exist_ok=True)
 
-        jobs_data = []
+        data = {}
         if not overwrite:
             if os.path.exists(self.spark_jobs_full_path):
                 with open(self.spark_jobs_full_path) as f:
                     content = f.read()
                     if content:
-                        jobs_data.extend(json.loads(content) or [])
+                        data.update(json.loads(content) or {})
 
-        jobs_data.append(job.to_dict())
+        data.update({
+            key: dict(
+                submission_timestamp=submission_timestamp,
+            ),
+        })
 
         with open(self.spark_jobs_full_path, 'w') as f:
-            f.write(json.dumps(jobs_data))
+            f.write(json.dumps(data))
 
     def __load_spark_jobs_during_execution(self) -> None:
         jobs_cache = self.__load_spark_jobs_cache()
         if jobs_cache:
-            if len(jobs_cache) >= 1:
-                self.spark_job_before_execution = jobs_cache[0]
-            if len(jobs_cache) >= 2:
-                self.spark_job_after_execution = jobs_cache[-1]
+            self.execution_timestamp_start = (jobs_cache.get('before') or {}).get(
+                'submission_timestamp',
+            )
+            self.execution_timestamp_end = (jobs_cache.get('after') or {}).get(
+                'submission_timestamp',
+            )
