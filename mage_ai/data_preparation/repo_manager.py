@@ -298,7 +298,7 @@ def get_variables_dir(
         try:
             os.makedirs(variables_dir, exist_ok=True)
         except Exception:
-            traceback.print_exc()
+            pass
     return variables_dir
 
 
