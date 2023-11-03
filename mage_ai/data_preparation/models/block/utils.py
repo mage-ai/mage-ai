@@ -590,6 +590,7 @@ def input_variables(
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
+    include_df: bool = False,
     input_args: List[Any] = None,
     data_integration_settings_mapping: Dict = None,
 ) -> Dict[str, List[str]]:
@@ -600,6 +601,8 @@ def input_variables(
         pipeline: The pipeline.
         upstream_block_uuids (List[str]): The UUIDs of the upstream blocks.
         execution_partition (str, optional): The execution partition.
+        include_df (bool, optional): Whether to include the `df` variable. Only set it to True
+            when saving or fetching sample Spark dataframe.
 
     Returns:
         Dict[str, List[str]]: A mapping from upstream block UUID to a list of variable names.
@@ -616,6 +619,7 @@ def input_variables(
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
+            include_df=include_df,
             input_args=input_args,
             data_integration_settings_mapping=data_integration_settings_mapping,
         )
