@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.40',
+    version='0.9.41',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -33,7 +33,7 @@ setuptools.setup(
         'Operating System :: OS Independent',
     ],
     install_requires=requirements,
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     entry_points={
         'console_scripts': [
             'mage=mage_ai.cli.main:app',
@@ -63,10 +63,11 @@ setuptools.setup(
         'dbt': [
             'dbt-bigquery==1.4.3',
             'dbt-core==1.4.8',
+            'dbt-dremio==1.5.0',
             'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',
-            'dbt-snowflake==1.4.1',
+            'dbt-snowflake==1.4.4',
             'dbt-spark==1.4.3',
             'dbt-sqlserver==1.4.3',
             'dbt-trino==1.4.0',
@@ -94,7 +95,7 @@ setuptools.setup(
             'botocore==1.29.60',
         ],
         'snowflake': [
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==3.2.1',
         ],
         'spark': [
             'boto3==1.26.60',
@@ -130,7 +131,7 @@ setuptools.setup(
             'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',
-            'dbt-snowflake==1.4.1',
+            'dbt-snowflake==1.4.4',
             'dbt-spark==1.4.3',
             'dbt-sqlserver==1.4.3',
             'dbt-trino==1.4.0',
@@ -161,7 +162,7 @@ setuptools.setup(
             'pyodbc==4.0.35',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==3.2.1',
             'sshtunnel==0.4.0',
             'thefuzz[speedup]==0.19.0',
         ],
