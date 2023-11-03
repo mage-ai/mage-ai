@@ -7,7 +7,7 @@ import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { CanvasRef } from 'reaflow';
 import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { ZoomControlsStyle } from './index.style';
+import { ZoomControlsStyle, ZoomDisplayStyle } from './index.style';
 
 type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };
@@ -60,12 +60,7 @@ function ZoomControls({ canvasRef, zoomLevel }: ZoomControlProps) {
         </Button>
       </Tooltip>
       <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom level">
-        <Button 
-          {...SHARED_BUTTON_PROPS}
-          borderRadius={`0 ${BORDER_RADIUS_PILL}px ${BORDER_RADIUS_PILL}px 0`}
-          iconOnly={false}
-          padding={`${UNIT * 1.5}px ${UNIT * 3.25}px ${UNIT * 1.5}px ${UNIT * 1.875}px`}
-        >
+        <ZoomDisplayStyle>
           <Text 
             center
             large
@@ -73,7 +68,7 @@ function ZoomControls({ canvasRef, zoomLevel }: ZoomControlProps) {
           >
             {`${Math.round(zoomLevel * 100)}%`}
           </Text>
-        </Button>
+        </ZoomDisplayStyle>
       </Tooltip>
     </ZoomControlsStyle>
   );
