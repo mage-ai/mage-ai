@@ -21,10 +21,12 @@ import {
   Union,
 } from '@oracle/icons';
 import {
+  BORDER_WIDTH,
   ICON_SIZE,
   BodyStyle,
   HeaderStyle,
   IconStyle,
+  NodeContainerStyle,
   NodeStyle,
   StatusStyle,
 } from './index.style';
@@ -37,8 +39,12 @@ import {
   getBlockHeaderSubtitle,
   getBlockHeaderText,
 } from './utils';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { getRuntimeText } from '../utils';
+import {
+  getColorsForBlockType,
+  getGradientColorForBlockType,
+} from '@components/CodeBlock/index.style';
+import { getBlockStatus, getRuntimeText } from '../utils';
+import { range } from '@utils/array';
 
 const ICON_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
@@ -50,41 +56,57 @@ const ICON_MAPPING = {
 };
 
 type BlockNodeProps = {
+  anotherBlockSelected?: boolean;
   block: BlockType;
+  blocksWithSameDownstreamBlocks?: BlockType[];
   callbackBlocks?: BlockType[];
+  children?: any;
   conditionalBlocks?: BlockType[];
   disabled?: boolean;
+  downstreamBlocks?: BlockType[];
   extensionBlocks?: BlockType[];
   hasFailed?: boolean;
   height: number;
+  hideNoStatus?: boolean;
   hideStatus?: boolean;
   isCancelled?: boolean;
   isConditionFailed?: boolean;
+  isDragging?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
+  opacity?: number;
   pipeline: PipelineType;
   runtime?: number;
   selected?: boolean;
+  selectedBlock?: BlockType;
 };
 
 function BlockNode({
+  anotherBlockSelected,
   block,
+  blocksWithSameDownstreamBlocks,
   callbackBlocks,
+  children,
   conditionalBlocks,
   disabled,
+  downstreamBlocks,
   extensionBlocks,
-  height,
-  hideStatus,
-  pipeline,
-  selected,
   hasFailed,
+  height,
+  hideNoStatus,
+  hideStatus,
   isCancelled,
   isConditionFailed,
+  isDragging,
   isInProgress,
   isQueued,
   isSuccessful,
+  opacity,
+  pipeline,
   runtime: runtimeFromBlockRun,
+  selected,
+  selectedBlock,
 }: BlockNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
 
@@ -119,6 +141,7 @@ function BlockNode({
   } = block;
   const {
     accent,
+    accentLight,
   } = getColorsForBlockType(
     type,
     {
@@ -181,120 +204,236 @@ function BlockNode({
     type,
   ]);
 
+  const {
+    borderColorBottom,
+    borderColorLeft,
+    borderColorRight,
+    borderColorTop,
+  }: {
+    borderColorBottom?: string;
+    borderColorLeft?: string;
+    borderColorRight?: string;
+    borderColorTop?: string;
+  } = useMemo(() => {
+    const borderColors = [];
+    const borderColorsSelected = [];
+
+    if (isQueued) {
+      range(4).forEach(() => {
+        borderColors.push(themeContext?.content?.muted);
+        borderColorsSelected.push(themeContext?.content?.muted);
+      });
+    } else if (blocksWithSameDownstreamBlocks?.length >= 2 && downstreamBlocks?.length >= 1) {
+      const arr = [];
+
+      if (blocksWithSameDownstreamBlocks?.find(({ uuid }) => selectedBlock?.uuid === uuid)) {
+        arr.push(selectedBlock);
+      } else {
+        arr.push(...blocksWithSameDownstreamBlocks);
+      }
+
+      arr?.slice(0, 4)?.forEach((upstreamBlock: BlockType) => {
+        const {
+          accent: accent2,
+          accentLight: accentLight2,
+        } = getColorsForBlockType(
+          upstreamBlock?.type,
+          {
+            blockColor: upstreamBlock?.color,
+            theme: themeContext,
+          },
+        );
+        borderColors.push(accentLight2);
+        borderColorsSelected.push(accent2);
+      });
+    } else {
+      borderColors.push(...[accentLight, accentLight, accentLight, accentLight]);
+      borderColorsSelected.push(...[accent, accent, accent, accent]);
+    }
+
+    if (borderColors?.length < 4) {
+      let idx = 0;
+      const count = borderColors?.length || 0;
+      while (borderColors?.length < 4) {
+        borderColors.push(borderColors?.[idx]);
+        idx += 1;
+        if (idx === count) {
+          idx = 0;
+        }
+      }
+    }
+
+    if (borderColorsSelected?.length < 4) {
+      let idx = 0;
+      const count = borderColorsSelected?.length || 0;
+      while (borderColorsSelected?.length < 4) {
+        borderColorsSelected.push(borderColorsSelected?.[idx]);
+        idx += 1;
+        if (idx === count) {
+          idx = 0;
+        }
+      }
+    }
+
+    return [
+      'borderColorBottom',
+      'borderColorLeft',
+      'borderColorRight',
+      'borderColorTop',
+    ].reduce((acc, key: string, idx: number) => ({
+      ...acc,
+      [key]: !selected && anotherBlockSelected ? borderColors?.[idx] : borderColorsSelected?.[idx],
+    }), {});
+  }, [
+    accent,
+    accentLight,
+    anotherBlockSelected,
+    blocksWithSameDownstreamBlocks,
+    downstreamBlocks,
+    isQueued,
+    selected,
+    selectedBlock,
+    themeContext,
+  ]);
+
   return (
-    <NodeStyle
-      borderColor={accent}
+    <NodeContainerStyle
+      active={isInProgress}
+      activeSlow={isQueued}
+      backgroundGradient={!downstreamBlocks?.length && getGradientColorForBlockType(type)}
+      borderColorBottom={borderColorBottom}
+      borderColorLeft={borderColorLeft}
+      borderColorRight={borderColorRight}
+      borderColorTop={borderColorTop}
+      borderDeemphasized={downstreamBlocks?.length >= 1}
+      borderRadiusLarge={downstreamBlocks?.length >= 1}
       disabled={disabled}
       height={height}
       isCancelled={isCancelled}
-      isConditionFailed={isConditionFailed}
+      isDragging={isDragging}
+      noBackground={downstreamBlocks?.length >= 1}
+      opacity={opacity}
       selected={selected}
     >
-      <HeaderStyle>
-        <FlexContainer alignItems="center" justifyContent="space-between">
-          <Flex flex={1}>
-            {iconEl}
+      <NodeStyle
+        disabled={disabled}
+        height={height - (BORDER_WIDTH * 2)}
+        isConditionFailed={isConditionFailed}
+        noBackground={downstreamBlocks?.length >= 1}
+      >
+        {!downstreamBlocks?.length && (
+          <HeaderStyle>
+            <FlexContainer alignItems="center" justifyContent="space-between">
+              <Flex flex={1}>
+                {iconEl}
 
-            <Spacing mr={HEADER_SPACING_HORIZONTAL_UNITS} />
+                <Spacing mr={HEADER_SPACING_HORIZONTAL_UNITS} />
 
-            <Flex flexDirection="column">
-              <Text bold monospace>
-                {getBlockHeaderText(block, pipeline)}
-              </Text>
-              <Text default monospace small>
-                {getBlockHeaderSubtitle(block, pipeline)}
-              </Text>
-            </Flex>
-          </Flex>
+                <Flex flexDirection="column">
+                  <Text bold monospace>
+                    {getBlockHeaderText(block, pipeline)}
+                  </Text>
+                  <Text default monospace small>
+                    {getBlockHeaderSubtitle(block, pipeline)}
+                  </Text>
+                </Flex>
+              </Flex>
 
-          <Spacing mr="15px" />
+              <Spacing mr="15px" />
 
-          <StatusStyle title={tooltipText}>
-            {!hideStatus && (
-              <>
-                {isInProgress && <Spinner color={(themeContext || dark).content.active} small />}
-                {success && <Check size={STATUS_SIZE} success />}
-                {failed && <Close danger size={STATUS_SIZE} />}
-                {noStatus && (
-                  <Circle
-                    borderSize={1}
-                    muted
-                    size={STATUS_SIZE}
-                  />
+              <StatusStyle title={tooltipText}>
+                {!hideStatus && (
+                  <>
+                    {success && <Check size={STATUS_SIZE} success />}
+                    {failed && <Close danger size={STATUS_SIZE} />}
+                    {noStatus && !hideNoStatus && (
+                      <Circle
+                        borderSize={1}
+                        muted
+                        size={STATUS_SIZE}
+                      />
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </StatusStyle>
-        </FlexContainer>
-      </HeaderStyle>
-
-      <BodyStyle>
-        {tagsText?.length >= 1 && (
-          <Spacing mt={1}>
-            <Text default monospace small>
-              {tagsText}
-            </Text>
-          </Spacing>
+              </StatusStyle>
+            </FlexContainer>
+          </HeaderStyle>
         )}
 
-        {/* This is in a specific order */}
-        {[
-          conditionalBlocks,
-          callbackBlocks,
-          extensionBlocks,
-        ].map((blocks, idx) => {
-          if (blocks?.length >= 1) {
-            return (
-              <div key={`badge-blocks-${idx}`} style={{ marginTop: 4 }}>
-                <FlexContainer alignItems="center" flexWrap="wrap">
-                  {blocks.reduce((acc, b, idx) => {
-                    if (idx >= 1) {
-                      acc.push(
-                        <div key={`space-${b.uuid}`} style={{ width: 4 }} />,
-                      );
-                    }
+        <BodyStyle>
+          {!downstreamBlocks?.length && (
+            <>
+              {tagsText?.length >= 1 && (
+                <Spacing mt={1}>
+                  <Text default monospace small>
+                    {tagsText}
+                  </Text>
+                </Spacing>
+              )}
 
-                    acc.push(
-                      <div key={`badge-${b.uuid}`} style={{ marginTop: 4 }}>
-                        <Badge
-                          color={getColorsForBlockType(
-                            b.type,
-                            {
-                              blockColor: b.color,
-                              theme: themeContext,
-                            },
-                          ).accentLight}
-                          monospace
-                          small
-                        >
-                          {b.uuid}
-                        </Badge>
-                      </div>,
-                    );
+              {/* This is in a specific order */}
+              {[
+                conditionalBlocks,
+                callbackBlocks,
+                extensionBlocks,
+              ].map((blocks, idx) => {
+                if (blocks?.length >= 1) {
+                  return (
+                    <div key={`badge-blocks-${idx}`} style={{ marginTop: 4 }}>
+                      <FlexContainer alignItems="center" flexWrap="wrap">
+                        {blocks.reduce((acc, b, idx) => {
+                          if (idx >= 1) {
+                            acc.push(
+                              <div key={`space-${b.uuid}`} style={{ width: 4 }} />,
+                            );
+                          }
 
-                    return acc;
-                  }, [])}
-                </FlexContainer>
-              </div>
-            );
-          }
+                          acc.push(
+                            <div key={`badge-${b.uuid}`} style={{ marginTop: 4 }}>
+                              <Badge
+                                color={getColorsForBlockType(
+                                  b.type,
+                                  {
+                                    blockColor: b.color,
+                                    theme: themeContext,
+                                  },
+                                ).accentLight}
+                                monospace
+                                small
+                              >
+                                {b.uuid}
+                              </Badge>
+                            </div>,
+                          );
 
-          return;
-        })}
+                          return acc;
+                        }, [])}
+                      </FlexContainer>
+                    </div>
+                  );
+                }
 
-        {(runtimeFromBlock || runtimeFromBlockRun) && (
-          <Spacing mt={1}>
-            <Text
-              monospace
-              muted
-              small
-            >
-              {getRuntimeText(runtimeFromBlock || runtimeFromBlockRun)}
-            </Text>
-          </Spacing>
-        )}
-      </BodyStyle>
-    </NodeStyle>
+                return;
+              })}
+
+              {(runtimeFromBlock || runtimeFromBlockRun) && (
+                <Spacing mt={1}>
+                  <Text
+                    monospace
+                    muted
+                    small
+                  >
+                    {getRuntimeText(runtimeFromBlock || runtimeFromBlockRun)}
+                  </Text>
+                </Spacing>
+              )}
+            </>
+          )}
+
+          {children}
+        </BodyStyle>
+      </NodeStyle>
+    </NodeContainerStyle>
   );
 }
 

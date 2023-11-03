@@ -8,8 +8,23 @@ import {
   BORDER_WIDTH,
   BORDER_WIDTH_THICK,
 } from '@oracle/styles/units/borders';
+import {
+  BUTTON_GRADIENT,
+  CHART,
+  EARTH_GRADIENT,
+  EARTH_LIGHTING,
+  FIRE_GRADIENT,
+  // FIRE_PRIMARY,
+  ICE_WATER,
+  PSYCHIC_EARTH,
+  PURPLE_BLUE,
+  SPARK_EARTH,
+  WATER_GRADIENT,
+  // WIND_GRADIENT,
+} from '@oracle/styles/colors/gradients';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
 // Look at the code editor div class "margin" and role "presentation"
@@ -17,6 +32,40 @@ export const LEFT_PADDING = 68;
 
 export const SIDE_BY_SIDE_HORIZONTAL_PADDING = 1.5 * UNIT;
 export const SIDE_BY_SIDE_VERTICAL_PADDING = 3 * UNIT;
+
+export function getGradientColorForBlockType(blockType: BlockTypeEnum) {
+  let value = BUTTON_GRADIENT;
+
+  if (BlockTypeEnum.CALLBACK === blockType) {
+    value = SPARK_EARTH;
+  } else if (BlockTypeEnum.CHART === blockType) {
+    value = CHART;
+  } else if (BlockTypeEnum.CONDITIONAL === blockType) {
+    value = CHART;
+  } else if (BlockTypeEnum.CUSTOM === blockType) {
+    value = PSYCHIC_EARTH;
+  } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
+    value = EARTH_LIGHTING;
+  } else if (BlockTypeEnum.DATA_LOADER === blockType) {
+    value = ICE_WATER;
+  } else if (BlockTypeEnum.DBT === blockType) {
+    value = SPARK_EARTH;
+  } else if (BlockTypeEnum.EXTENSION === blockType) {
+    value = EARTH_GRADIENT;
+  } else if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType) {
+    value = PURPLE_BLUE;
+  } else if (BlockTypeEnum.SCRATCHPAD === blockType) {
+    value = CHART;
+  } else if (BlockTypeEnum.SENSOR === blockType) {
+    value = FIRE_GRADIENT;
+  } else if (BlockTypeEnum.MARKDOWN === blockType) {
+    value = WATER_GRADIENT;
+  } else if (BlockTypeEnum.TRANSFORMER === blockType) {
+    value = BUTTON_GRADIENT;
+  }
+
+  return value;
+}
 
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
@@ -159,7 +208,8 @@ export const BlockHeaderStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  padding: ${UNIT}px;
+  padding-bottom: ${1 * UNIT}px;
+  padding-top: ${1 * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};
@@ -174,6 +224,13 @@ export const BlockHeaderStyle = styled.div<{
     // and the screen width is too small.
     position: sticky;
     top: -5px;
+  `}
+
+  ${props => props.noSticky && `
+    ${hideScrollBar()}
+
+    overflow-x: auto;
+    overflow-y: visible;
   `}
 `;
 
@@ -317,9 +374,14 @@ export const TimeTrackerStyle =  styled.div`
   position: absolute;
 `;
 
-export const ScrollColunnsContainerStyle = styled.div`
+export const ScrollColunnsContainerStyle = styled.div<{
+  zIndex?: number;
+}>`
   position: relative;
-  z-index: 1;
+
+  ${props => `
+    z-index: ${props?.zIndex || 1};
+  `}
 `;
 
 export const ScrollColunnStyle = styled.div.attrs(({

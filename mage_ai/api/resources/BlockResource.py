@@ -582,6 +582,7 @@ class BlockResource(GenericResource):
             color=payload.get('color'),
             config=payload_config,
             configuration=payload.get('configuration'),
+            downstream_block_uuids=payload.get('downstream_blocks', []),
             extension_uuid=payload.get('extension_uuid'),
             language=language,
             pipeline=pipeline,

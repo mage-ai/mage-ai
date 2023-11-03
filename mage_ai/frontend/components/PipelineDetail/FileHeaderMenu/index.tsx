@@ -4,7 +4,8 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
-import PipelineType from '@interfaces/PipelineType';
+import KernelType from '@interfaces/KernelType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useProject from '@utils/models/project/useProject';
@@ -22,7 +23,6 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from './index.style';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
@@ -354,7 +354,9 @@ function FileHeaderMenu({
           />
         </div>
 
-        {featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW) && (
+        {PipelineTypeEnum.INTEGRATION !== pipeline?.type
+          && featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+          && (
           <div style={{ position: 'relative' }}>
             <LinkStyle
               highlighted={highlightedIndex === 3}
