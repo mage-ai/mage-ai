@@ -1702,7 +1702,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         if not include_print_outputs:
             all_variables = self.output_variables(
                 execution_partition=execution_partition,
-                include_df=True,
             )
 
         for v in all_variables:
