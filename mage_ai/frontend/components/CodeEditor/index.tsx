@@ -179,6 +179,10 @@ function CodeEditor({
       setTextareaFocused?.(true);
     });
 
+    editor.onDidBlurEditorWidget(() => {
+      setTextareaFocused?.(false);
+    });
+
     editor.onDidContentSizeChange(({
       contentHeight,
       contentHeightChanged,

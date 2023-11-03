@@ -26,17 +26,36 @@ export const isFunctionalComponent = (Component: Function) => {
   return !prototype || !prototype.isReactComponent;
 };
 
-/** Remove keyboard focus from the currently focused element  */
-export const removeKeyboardFocus = () => {
-  (document.activeElement as HTMLElement).blur();
-};
 
-/** Determine whether the event target is an interactive element */
-export const isInteractiveElement = (event): boolean => {
+/* * * * * * * * * * *
+ * Element utilities *
+ * * * * * * * * * * */
+
+enum EventElementType {
+  INPUT = 'input',
+  INTERACTIVE = 'interactive',
+}
+
+const isEventElementType = (event, elementType): boolean => {
   if (event.target instanceof Element) {
     const tagName = (event.target as Element).tagName.toLowerCase();
-    return ['a', 'button', 'input', 'select'].includes(tagName);
+    if (elementType === EventElementType.INPUT) {
+      return ['input', 'textarea'].includes(tagName);
+    } else if (elementType === EventElementType.INTERACTIVE) {
+      return ['a', 'button', 'input', 'select', 'textarea'].includes(tagName);
+    }
   }
 
   return false;
+};
+
+/** Determine whether the event target is an input element */
+export const isInputElement = (event): boolean => isEventElementType(event, EventElementType.INPUT);
+
+/** Determine whether the event target is an interactive element */
+export const isInteractiveElement = (event): boolean => isEventElementType(event, EventElementType.INTERACTIVE);
+
+/** Remove keyboard focus from the currently focused element  */
+export const removeKeyboardFocus = () => {
+  (document.activeElement as HTMLElement).blur();
 };
