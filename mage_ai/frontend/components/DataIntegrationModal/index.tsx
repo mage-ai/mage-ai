@@ -609,7 +609,7 @@ function DataIntegrationModal({
         const buuid = blockInGroup?.uuid;
 
         arr.push(
-          <Divider key={`block-${buuid}-divider-top`} light />
+          <Divider key={`block-${buuid}-divider-top`} light />,
         );
 
         arr.push(
@@ -1182,7 +1182,7 @@ function DataIntegrationModal({
                           </FlexContainer>
 
                           {streams?.map((stream: string) => {
-                            const selected = selectedInputStreams?.includes(stream)
+                            const selected = selectedInputStreams?.includes(stream);
 
                             return (
                               <Spacing key={stream} mt={1}>

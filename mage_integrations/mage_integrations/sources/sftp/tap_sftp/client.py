@@ -65,7 +65,8 @@ class SFTPConnection():
             self.__sftp = paramiko.SFTPClient.from_transport(self.transport)
             LOGGER.info('Connection successful')
         except (AuthenticationException, SSHException):
-            self.transport.close()
+            if self.transport:
+                self.transport.close()
             self.transport = paramiko.Transport((self.host, self.port))
             self.transport.use_compression(True)
             self.transport.connect(username=self.username,
@@ -85,7 +86,8 @@ class SFTPConnection():
 
     def close(self):
         self.sftp.close()
-        self.transport.close()
+        if self.transport:
+            self.transport.close()
         # decrypted files require an open file object, so close it
         if self.decrypted_file:
             self.decrypted_file.close()

@@ -99,7 +99,7 @@ function StreamDetailOverview({
   const summaryTable = useMemo(() => {
     const columns = [];
     const columnsByType = {};
-    const columnsSelected = []
+    const columnsSelected = [];
     const schemaProperties = getSchemaPropertiesWithMetadata(stream) || {};
 
     Object.entries(schemaProperties || {})?.forEach(([
@@ -114,7 +114,6 @@ function StreamDetailOverview({
         columnsSelected.push(column);
       }
 
-      const types2 = types?.filter(t => t !== ColumnTypeEnum.NULL);
       if (types?.length >= 1) {
         const t = types[types?.length - 1];
         if (!columnsByType?.[t]) {
