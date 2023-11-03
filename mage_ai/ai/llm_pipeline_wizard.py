@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import json
+import os
 import re
 from typing import Dict, List
 
@@ -297,14 +298,17 @@ class LLMPipelineWizard:
                 block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
         return block_code
 
-    async def __async_identify_function_parameters(self, block_description: str) -> dict:
-        messages = [{"role": "user", "content": block_description}]
+    async def async_generate_block_with_description(
+            self,
+            block_description: str,
+            upstream_blocks: List[str] = None) -> dict:
+        messages = [{'role': 'user', 'content': block_description}]
         # TODO(Replace with a generic LLM call so all LLM clients can support this funciton.)
         response = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo-0613",
+            model='gpt-3.5-turbo-0613',
             messages=messages,
             functions=TEMPLATE_CLASSIFICATION_FUNCTION,
-            function_call={"name": CLASSIFICATION_FUNCTION_NAME},  # explicitly set function call
+            function_call={'name': CLASSIFICATION_FUNCTION_NAME},  # explicitly set function call
         )
         return response["choices"][0]["message"]
 
