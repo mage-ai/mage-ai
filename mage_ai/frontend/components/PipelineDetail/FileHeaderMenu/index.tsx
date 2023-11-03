@@ -4,11 +4,8 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
-import KernelType, { KernelNameEnum } from '@interfaces/KernelType';
-import PipelineType, {
-  KERNEL_NAME_TO_PIPELINE_TYPE,
-  PipelineTypeEnum,
-} from '@interfaces/PipelineType';
+import KernelType from '@interfaces/KernelType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useProject from '@utils/models/project/useProject';
