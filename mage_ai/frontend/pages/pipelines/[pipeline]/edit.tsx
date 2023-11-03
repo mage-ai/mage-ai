@@ -182,7 +182,6 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
-  const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
 
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
@@ -2593,7 +2592,6 @@ function PipelineDetailPage({
       setAnyInputFocused={setAnyInputFocused}
       // @ts-ignore
       setBlockInteractionsMapping={setBlockInteractionsMapping}
-      setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
