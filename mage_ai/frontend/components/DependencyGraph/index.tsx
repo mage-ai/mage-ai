@@ -32,6 +32,7 @@ import Panel from '@oracle/components/Panel';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import ZoomControls from './ZoomControls';
 import api from '@api';
 import {
   EdgeType,
@@ -262,6 +263,7 @@ function DependencyGraph({
   const timeoutDraggingRefs = useRef({});
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   const [activeEdge, setActiveEdge] = useState<{
     block: BlockType;
@@ -289,7 +291,7 @@ function DependencyGraph({
         setNodeDragging(prev => ({
           ...prev,
           event,
-        }))
+        }));
       }
     };
     const handleMouseUp = (event) => {
@@ -513,17 +515,17 @@ function DependencyGraph({
     downstreamBlocks?: string[];
     upstreamBlocks?: string[];
   }) => {
-    let blockPayload = {
+    const blockPayload = {
       ...blockToUpdate,
     };
 
     if (typeof downstreamBlocks !== 'undefined') {
       blockPayload.downstream_blocks = downstreamBlocks;
-    };
+    }
 
     if (typeof upstreamBlocks !== 'undefined') {
       blockPayload.upstream_blocks = upstreamBlocks;
-    };
+    }
 
     return api.blocks.pipelines.useUpdate(
       pipeline?.uuid,
@@ -848,7 +850,7 @@ function DependencyGraph({
         event,
         node,
       });
-    }, 500)
+    }, 500);
   }, [
     contextMenuData,
     setActiveNodes,
@@ -1103,7 +1105,7 @@ function DependencyGraph({
             opacity={opacity}
             pipeline={pipeline}
             selected={selected}
-          />
+          />,
         );
       });
 
@@ -1199,12 +1201,12 @@ function DependencyGraph({
     noStatus,
     pipeline,
     runningBlocks,
-    runningBlocksMapping
+    runningBlocksMapping,
   ]);
 
   const nodeDraggingMemo = useMemo(() => {
     if (!isDragging || !nodeDragging) {
-      return
+      return;
     }
 
     const {
@@ -1319,14 +1321,14 @@ function DependencyGraph({
       infos = blocksWithDownstreamBlockSet?.[toBlock?.uuid];
     }
 
-    console.log(edge, infos)
+    console.log(edge, infos);
 
     let removeBlocks = () => {
       updateBlockByDragAndDrop({
         block: toBlock,
         upstreamBlocks: (toBlock?.upstream_blocks || []).filter(uuid => uuid !== fromBlock?.uuid),
       });
-    }
+    };
 
     if (infos?.length >= 1) {
       infos?.forEach(({
@@ -1742,7 +1744,8 @@ function DependencyGraph({
       <GraphContainerStyle
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
-      >
+      > 
+        <ZoomControls canvasRef={canvasRef} zoomLevel={zoomLevel} />
         <Canvas
           // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}
@@ -1793,10 +1796,8 @@ function DependencyGraph({
                   ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
                 );
               } else {
-                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => {
-                  return buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
-                    || getParentNodeID(blockUUID) === edge.target;
-                });
+                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
+                    || getParentNodeID(blockUUID) === edge.target);
                 const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
                 downstreamBlocks.push(downstreamBlock);
               }
@@ -1827,7 +1828,7 @@ function DependencyGraph({
                 if (status?.isQueued) {
                   isQueued = status?.isQueued;
                 }
-              };
+              }
             });
 
             const {
@@ -2061,6 +2062,13 @@ function DependencyGraph({
                         })
                         : null
                       }
+                      onMouseDown={dragEnabled
+                        ? (e) => onMouseDownNode(e, node, {
+                          nodeHeight,
+                          nodeWidth,
+                        })
+                        : null
+                      }
                       onMouseEnter={(e) => onMouseEnterNode(e, node, {
                         nodeHeight,
                         nodeWidth,
@@ -2069,13 +2077,6 @@ function DependencyGraph({
                         nodeHeight,
                         nodeWidth,
                       })}
-                      onMouseDown={dragEnabled
-                        ? (e) => onMouseDownNode(e, node, {
-                          nodeHeight,
-                          nodeWidth,
-                        })
-                        : null
-                      }
                       onMouseUp={dragEnabled
                         ? (e) => onMouseUpNode(e, node, {
                           nodeHeight,
@@ -2120,7 +2121,10 @@ function DependencyGraph({
           }}
           nodes={nodes}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
-          onZoomChange={z => setZoom?.(z)}
+          onZoomChange={z => {
+            setZoom?.(z);
+            setZoomLevel(z);
+          }}
           pannable={pannable}
           selections={edgeSelections}
           zoomable={zoomable}

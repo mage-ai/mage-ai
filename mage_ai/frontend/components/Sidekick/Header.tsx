@@ -1,23 +1,17 @@
 import NextLink from 'next/link';
-import { CanvasRef } from 'reaflow';
 import { useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
-import Breadcrumbs, { BreadcrumbType as BreadcrumbTypeOrig } from '@components/Breadcrumbs';
-import Button from '@oracle/elements/Button';
+import Breadcrumbs from '@components/Breadcrumbs';
 import ExtensionOptionType from '@interfaces/ExtensionOptionType';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import ProjectType from '@interfaces/ProjectType';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { AsideHeaderInnerStyle } from '@components/TripleLayout/index.style';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
-import { SHARED_ZOOM_BUTTON_PROPS } from '@components/DependencyGraph/constants';
 import {
   SIDEKICK_VIEWS_BY_KEY,
   VIEW_QUERY_PARAM,
@@ -31,7 +25,6 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
-  depGraphZoom?: number;
   pipeline: PipelineType;
   project?: ProjectType;
   secrets?: {
@@ -39,7 +32,6 @@ type SidekickHeaderProps = {
   }[];
   selectedBlock?: BlockType;
   setSelectedBlock?: (block: BlockType) => void;
-  treeRef?: { current?: CanvasRef };
   variables?: {
     [key: string]: any;
   }[];
@@ -47,13 +39,11 @@ type SidekickHeaderProps = {
 
 function SidekickHeader({
   activeView,
-  depGraphZoom,
   pipeline,
   project,
   secrets,
   selectedBlock,
   setSelectedBlock,
-  treeRef,
   variables,
 }: SidekickHeaderProps) {
   const pipelineUUID = pipeline?.uuid;
@@ -131,66 +121,9 @@ function SidekickHeader({
         breadcrumbs={breadcrumbs}
         noMarginLeft
       />
-    )
+    );
   } else if (!activeView) {
     return <div />;
-  } else if (treeRef && ViewKeyEnum.TREE === activeView) {
-    el = (
-      <FlexContainer
-        alignItems="center"
-        fullWidth
-        justifyContent="space-between"
-      >
-        {el}
-        <Spacing mr={1} />
-        <Flex alignItems="center">
-          <Button
-            {...SHARED_ZOOM_BUTTON_PROPS}
-            onClick={() => {
-              treeRef?.current?.zoomIn?.();
-            }}
-          >
-            <Text noWrapping>
-              Zoom in
-            </Text>
-          </Button>
-          <Spacing mr={1} />
-          <Button
-            {...SHARED_ZOOM_BUTTON_PROPS}
-            onClick={() => {
-              treeRef?.current?.zoomOut?.();
-            }}
-          >
-            <Text noWrapping>
-              Zoom out
-            </Text>
-          </Button>
-          <Spacing mr={1} />
-          <Tooltip
-            appearAbove
-            appearBefore
-            default
-            label="Shortcut: Double-click canvas"
-            lightBackground
-            size={null}
-            widthFitContent
-          >
-            <Button
-              {...SHARED_ZOOM_BUTTON_PROPS}
-              onClick={() => {
-                treeRef?.current?.fitCanvas?.();
-              }}
-            >
-              <Text noWrapping>
-                Reset
-              </Text>
-            </Button>
-          </Tooltip>
-          <Spacing mr={1} />
-          <Text bold>{depGraphZoom?.toFixed(2)}x</Text>
-        </Flex>
-      </FlexContainer>
-    );
   } else if (showExtensionDetails) {
     const extensionOption = extensionOptionsByUUID[query?.extension];
 

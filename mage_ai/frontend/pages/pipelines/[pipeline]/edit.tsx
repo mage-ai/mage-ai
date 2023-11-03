@@ -1,4 +1,3 @@
-import * as osPath from 'path';
 import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
@@ -97,13 +96,12 @@ import {
   get,
   set,
 } from '@storage/localStorage';
-import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import { RoleFromServerEnum } from '@interfaces/UserType';
@@ -348,11 +346,9 @@ function PipelineDetailPage({
   const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
   );
-  const sideBySideEnabled = useMemo(() => {
-    return !isIntegration
+  const sideBySideEnabled = useMemo(() => !isIntegration
       && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && sideBySideEnabledState;
-  }, [
+      && sideBySideEnabledState, [
     featureEnabled,
     featureUUIDs,
     isIntegration,
@@ -361,10 +357,8 @@ function PipelineDetailPage({
   const [scrollTogetherState, setScrollTogetherState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
   );
-  const scrollTogether = useMemo(() => {
-    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && scrollTogetherState;
-  }, [
+  const scrollTogether = useMemo(() => featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+      && scrollTogetherState, [
     featureEnabled,
     featureUUIDs,
     scrollTogetherState,
@@ -1767,7 +1761,7 @@ function PipelineDetailPage({
       return savePipelineContent().then(() => func());
     }
 
-    return func()
+    return func();
   }, [
     createBlock,
     fetchFileTree,
@@ -2946,8 +2940,8 @@ function PipelineDetailPage({
             saveStatus={saveStatus}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
-            setSideBySideEnabled={setSideBySideEnabled}
             setRunningBlocks={setRunningBlocks}
+            setSideBySideEnabled={setSideBySideEnabled}
             sideBySideEnabled={sideBySideEnabled}
             updatePipelineMetadata={updatePipelineMetadata}
           >
@@ -3122,13 +3116,11 @@ function PipelineDetailPage({
         afterHeader={(
           <SidekickHeader
             activeView={activeSidekickView}
-            depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             project={project}
             secrets={secrets}
             selectedBlock={selectedBlock}
             setSelectedBlock={setSelectedBlock}
-            treeRef={treeRef}
             variables={globalVariables}
           />
         )}
@@ -3190,9 +3182,9 @@ function PipelineDetailPage({
           </FlexContainer>
         )}
         before={beforeToShow}
-        beforeHidden={beforeHidden}
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
+        beforeHidden={beforeHidden}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={pipelineErrors || errors}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
