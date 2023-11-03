@@ -1587,6 +1587,7 @@ function DependencyGraph({
             }) => (
               <Spacing key={uuid} px={PADDING_UNITS} py={1}>
                 <Link
+                  block
                   disabled={disabled}
                   onClick={() => {
                     onClick();
