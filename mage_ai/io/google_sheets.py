@@ -137,6 +137,9 @@ class GoogleSheets(BaseFile):
             worksheet_name (str, optional): A worksheet name to export the df. Defaults to None
             worksheet_position (int, optional): A worksheet position to export the df. Defaults to 0
 
+        Raises:
+            ValueError: To be raised if a sheet is not found.
+
         Returns:
             gspread.worksheet.Worksheet: A worksheet object.
         """
@@ -145,6 +148,9 @@ class GoogleSheets(BaseFile):
             sheet_id=sheet_id,
             sheet_name=sheet_name,
         )
+
+        if sheet is None:
+            raise ValueError('Sheet not found!')
 
         worksheet = None
 
