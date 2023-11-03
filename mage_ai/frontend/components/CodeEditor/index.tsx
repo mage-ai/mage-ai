@@ -1,22 +1,29 @@
+import * as ReactDOM from 'react-dom';
+import Editor, { loader } from '@monaco-editor/react';
 import React, {
   useCallback,
   useEffect,
   useRef,
   useState,
 } from 'react';
-import * as ReactDOM from 'react-dom';
-import Editor, { loader } from '@monaco-editor/react';
 
 /*
- * If https://cdn.jsdelivr.net (the default CDN) is down, uncomment the
- * loader.config method call below to use a different CDN for loading
- * the Monaco Editor.
+ * In order to load the Monaco Editor locally and avoid fetching it from a CDN
+ * (the default CDN is https://cdn.jsdelivr.net), the monaco-editor bundle was
+ * copied into the "public" folder from node_modules, and we called the
+ * loader.config method below to reference it.
+ *
+ * We can also use this method to load the Monaco Editor from a different
+ * CDN like Cloudflare.
  */
-// loader.config({
-//   paths: {
-//     vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs',
-//   },
-// });
+loader.config({
+  paths: {
+    // Load Monaco Editor from "public" directory
+    vs: '/monaco-editor/min/vs',
+    // Load Monaco Editor from different CDN
+    // vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs',
+  },
+});
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Text from '@oracle/elements/Text';
