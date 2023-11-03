@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
@@ -11,8 +11,12 @@ import { ZoomControlsStyle, ZoomDisplayStyle } from './index.style';
 
 type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };
+  containerRef?: { current?: any };
   zoomLevel: number;
 };
+
+// Min container width required for showing the full zoom controls
+const MIN_CONTAINER_WIDTH = UNIT * 35;
 
 const SHARED_TOOLTIP_PROPS = {
   bottomOffset: UNIT * 6.5,
@@ -30,37 +34,55 @@ const SHARED_ICON_PROPS = {
   size: UNIT * 2.5,
 };
 
-function ZoomControls({ canvasRef, zoomLevel }: ZoomControlProps) {
+function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) {
+  const [minimizeControls, setMinimizeControls] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!containerRef?.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      const containerWidth = containerRef.current.offsetWidth;
+      setMinimizeControls(containerWidth < MIN_CONTAINER_WIDTH);
+    });
+    resizeObserver.observe(containerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [containerRef]);
+
   return (
     <ZoomControlsStyle>
-      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
-        <Button 
-          {...SHARED_BUTTON_PROPS}
-          borderRadius={`${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
-          onClick={() => canvasRef?.current?.fitCanvas?.()}
-          padding={`${UNIT * 1.5}px ${UNIT * 1.875}px ${UNIT * 1.5}px ${UNIT * 3.25}px`}
-        >
-          <Recenter {...SHARED_ICON_PROPS} />
-        </Button>
-      </Tooltip>
-      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom in">
-        <Button  
-          {...SHARED_BUTTON_PROPS}
-          onClick={() => canvasRef?.current?.zoomIn?.()}
-        >
-          <ZoomIn {...SHARED_ICON_PROPS} />
-        </Button>
-      </Tooltip>
-      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom out">
-        <Button 
-          {...SHARED_BUTTON_PROPS}
-          onClick={() => canvasRef?.current?.zoomOut?.()}
-        >
-          <ZoomOut {...SHARED_ICON_PROPS} />
-        </Button>
-      </Tooltip>
+      {!minimizeControls && (
+        <>
+          <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
+            <Button 
+              {...SHARED_BUTTON_PROPS}
+              borderRadius={`${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
+              onClick={() => canvasRef?.current?.fitCanvas?.()}
+              padding={`${UNIT * 1.5}px ${UNIT * 1.875}px ${UNIT * 1.5}px ${UNIT * 3.25}px`}
+            >
+              <Recenter {...SHARED_ICON_PROPS} />
+            </Button>
+          </Tooltip>
+          <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom in">
+            <Button  
+              {...SHARED_BUTTON_PROPS}
+              onClick={() => canvasRef?.current?.zoomIn?.()}
+            >
+              <ZoomIn {...SHARED_ICON_PROPS} />
+            </Button>
+          </Tooltip>
+          <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom out">
+            <Button 
+              {...SHARED_BUTTON_PROPS}
+              onClick={() => canvasRef?.current?.zoomOut?.()}
+            >
+              <ZoomOut {...SHARED_ICON_PROPS} />
+            </Button>
+          </Tooltip>
+        </>
+      )}
       <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom level">
-        <ZoomDisplayStyle>
+        <ZoomDisplayStyle minimizeControls={minimizeControls}>
           <Text 
             center
             large

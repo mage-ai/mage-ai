@@ -1745,7 +1745,11 @@ function DependencyGraph({
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
       > 
-        <ZoomControls canvasRef={canvasRef} zoomLevel={zoomLevel} />
+        <ZoomControls 
+          canvasRef={canvasRef} 
+          containerRef={containerRef} 
+          zoomLevel={zoomLevel}
+        />
         <Canvas
           // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}
