@@ -110,3 +110,7 @@ dbt-snowflake==1.4.4
 dbt-spark==1.4.0
 dbt-sqlserver==1.4.3
 dbt-trino==1.4.0
+
+# SSO
+okta==2.9.3
+google-auth-oauthlib==1.1.0

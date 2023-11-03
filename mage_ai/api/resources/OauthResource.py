@@ -19,6 +19,8 @@ from mage_ai.authentication.oauth.constants import (
     OAUTH_PROVIDER_ACTIVE_DIRECTORY,
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
+    OAUTH_PROVIDER_GOOGLE,
+    OAUTH_PROVIDER_OKTA,
     VALID_OAUTH_PROVIDERS,
     get_ghe_hostname,
 )
@@ -26,6 +28,8 @@ from mage_ai.authentication.oauth.utils import (
     access_tokens_for_client,
     add_access_token_to_query,
 )
+from mage_ai.authentication.providers.google import GoogleProvider
+from mage_ai.authentication.providers.okta import OktaProvider
 from mage_ai.data_preparation.git.api import get_oauth_client_id
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
@@ -118,6 +122,12 @@ class OauthResource(GenericResource):
             model['expires'] = max(
                 [access_token.expires for access_token in access_tokens]
             )
+
+        provider_instance = None
+        if OAUTH_PROVIDER_OKTA == pk:
+            provider_instance = OktaProvider()
+        elif OAUTH_PROVIDER_GOOGLE == pk:
+            provider_instance = GoogleProvider()
         # If an oauth code is provided, we need to exchange it for an access token for
         # the provider and return the redirect uri.
         elif code:
@@ -153,6 +163,36 @@ class OauthResource(GenericResource):
                     ) as response:
                         data = await response.json()
 
+                query = add_access_token_to_query(data, query)
+
+                parts = redirect_uri.split('?')
+                base_url = parts[0]
+
+                redirect_uri_final = '?'.join(
+                    [
+                        base_url,
+                        urllib.parse.urlencode(query),
+                    ]
+                )
+
+                model['url'] = redirect_uri_final
+            elif provider_instance is not None:
+                # Fetch access token for GitHub Enterprise and add it to the redirect URI.
+
+                # 1. Get GHE client credentials from environment variables.
+                # 2. Obtain an access token from the GitHub Enterprise OAuth service.
+                # 3. Update uri query parameters with provider and access token from GHE API.
+                # 4. Recreate and return the uri to include the access token and provider.
+                parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
+                parsed_url_query = parse_qs(parsed_url.query)
+
+                query = {'provider': pk}
+                for k, v in parsed_url_query.items():
+                    if type(v) is list:
+                        v = ','.join(v)
+                    query[k] = v
+
+                data = provider_instance.get_access_token_response(code)
                 query = add_access_token_to_query(data, query)
 
                 parts = redirect_uri.split('?')
@@ -236,6 +276,8 @@ class OauthResource(GenericResource):
                     model[
                         'url'
                     ] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
+            elif provider_instance is not None:
+                model['url'] = provider_instance.get_auth_url()
 
         return self(model, user, **kwargs)
 

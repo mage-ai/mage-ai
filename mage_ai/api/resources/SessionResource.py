@@ -5,8 +5,14 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.oauth.active_directory import get_user_info
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_ACTIVE_DIRECTORY
+from mage_ai.authentication.oauth.constants import (
+    OAUTH_PROVIDER_ACTIVE_DIRECTORY,
+    OAUTH_PROVIDER_GOOGLE,
+    OAUTH_PROVIDER_OKTA,
+)
 from mage_ai.authentication.passwords import verify_password
+from mage_ai.authentication.providers.google import GoogleProvider
+from mage_ai.authentication.providers.okta import OktaProvider
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import AUTHENTICATION_MODE, LDAP_DEFAULT_ACCESS
@@ -23,19 +29,43 @@ class SessionResource(BaseResource):
         token = payload.get('token')
         provider = payload.get('provider')
 
+        oauth_client = kwargs.get('oauth_client')
+
+        # Oauth sign in
         if token and provider:
+            roles = []
+            provider_instance = None
+            if provider == OAUTH_PROVIDER_OKTA:
+                provider_instance = OktaProvider()
+            elif provider == OAUTH_PROVIDER_GOOGLE:
+                provider_instance = GoogleProvider()
+
             if provider == OAUTH_PROVIDER_ACTIVE_DIRECTORY:
                 user_info = get_user_info(token)
-                principal_name = user_info.get('userPrincipalName')
-                user = User.query.filter(User.email == principal_name).first()
+                username = user_info.get('userPrincipalName')
+                email = user_info.get('userPrincipalName')
+            elif provider is not None:
+                user_info = provider_instance.get_user_info(access_token=token)
+                username = user_info.get('name')
+                email = user_info.get('email')
+                if 'roles' in user_info:
+                    roles = user_info.get('roles')
+
+            if email:
+                user = User.query.filter(User.email == email).first()
                 if not user:  # noqa: E712
                     print('first user login, creating user.')
                     user = User.create(
-                        username=principal_name,
-                        email=principal_name,
+                        username=username,
+                        email=email,
+                        roles_new=roles,
                     )
-                oauth_token = generate_access_token(user, kwargs['oauth_client'])
+                oauth_token = generate_access_token(user, oauth_client)
                 return self(oauth_token, user, **kwargs)
+            else:
+                error = ApiError.RESOURCE_NOT_FOUND
+                error.update({'message': 'Could not get email from oauth provider.'})
+                raise ApiError(error)
 
         error = ApiError.RESOURCE_NOT_FOUND
         error.update({'message': 'Email/username and/or password invalid.'})
