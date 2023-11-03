@@ -101,10 +101,10 @@ import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/cons
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import { RoleFromServerEnum } from '@interfaces/UserType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,

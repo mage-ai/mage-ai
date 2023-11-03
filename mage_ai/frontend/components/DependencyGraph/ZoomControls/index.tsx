@@ -1,12 +1,13 @@
-import Button from '@oracle/elements/Button';
-import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { memo } from 'react';
-import { CanvasRef } from 'reaflow';
-import { ZoomControlsStyle } from './index.style';
+
+import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
+import { CanvasRef } from 'reaflow';
+import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { ZoomControlsStyle } from './index.style';
 
 type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };

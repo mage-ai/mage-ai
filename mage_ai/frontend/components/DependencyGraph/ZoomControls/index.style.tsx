@@ -14,7 +14,7 @@ export const ZoomControlsStyle = styled.div`
   transform: translateX(-50%);
 
   background-color: ${props => (props.theme.background || dark.background).panel};
-  border: 1px solid ${props => (props.theme || dark).borders.darkLight};
+  border: 1px solid ${props => (props.theme.borders || dark.borders).darkLight};
   border-radius: ${BORDER_RADIUS_PILL}px;
   box-shadow: ${props => (props.theme.shadow || dark.shadow).frame};
 `;
