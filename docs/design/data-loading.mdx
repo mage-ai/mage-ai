@@ -12,6 +12,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 -   [Filesystem](#fileio)
 -   [Google BigQuery](#bigquery)
 -   [Google Cloud Storage](#googlecloudstorage)
+-   [Google Sheets](#googlesheets)
 -   [MySQL](#mysql)
 -   [OracleDB](#oracledb)
 -   [PostgreSQL](#postgresql)
@@ -563,6 +564,16 @@ Exports data frame to an Azure Blob Storage container.
 **_load_** - `load(container_name: str, blob_path: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
 
 Loads data from object in Azure Blob Storage into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
+
+## GoogleSheets
+
+`mage_ai.io.google_sheets.GoogleSheets`
+
+Handles data transfer between a Google Sheets spreadsheet and the Mage app.
+
+Authentication is the same for our other Google Cloud data loaders. Read more about configuration [here](integrations/databases/GoogleSheets#configuration).
+
+The Google Sheets class is defined [here](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/io/google_sheets.py).
 
 ## BigQuery
 
