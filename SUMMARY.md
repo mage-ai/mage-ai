@@ -88,6 +88,7 @@
     * [BigQuery](docs/integrations/BigQuery.md)
     * [Druid](docs/integrations/Druid.md)
     * [MySQL](docs/integrations/MySQL.md)
+    * [Pinot](docs/integrations/Pinot.md)
     * [PostgreSQL](docs/integrations/PostgreSQL.md)
     * [Redshift](docs/integrations/Redshift.md)
     * [S3](docs/integrations/S3.md)

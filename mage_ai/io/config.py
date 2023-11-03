@@ -77,6 +77,13 @@ class ConfigKey(str, Enum):
     ORACLEDB_PORT = 'ORACLEDB_PORT'
     ORACLEDB_SERVICE = 'ORACLEDB_SERVICE'
 
+    PINOT_HOST = 'PINOT_HOST'
+    PINOT_PASSWORD = 'PINOT_PASSWORD'
+    PINOT_PATH = 'PINOT_PATH'
+    PINOT_PORT = 'PINOT_PORT'
+    PINOT_SCHEME = 'PINOT_SCHEME'
+    PINOT_USER = 'PINOT_USER'
+
     POSTGRES_CONNECTION_METHOD = 'POSTGRES_CONNECTION_METHOD'
     POSTGRES_CONNECT_TIMEOUT = 'POSTGRES_CONNECT_TIMEOUT'
     POSTGRES_DBNAME = 'POSTGRES_DBNAME'
@@ -319,6 +326,7 @@ class VerboseConfigKey(str, Enum):
     CLICKHOUSE = 'ClickHouse'
     DRUID = 'Druid'
     DUCKDB = 'Duck DB'
+    PINOT = 'Pinot'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
@@ -382,6 +390,12 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.DRUID_USER: (VerboseConfigKey.DRUID, 'user'),
         ConfigKey.DUCKDB_DATABASE: (VerboseConfigKey.DUCKDB, 'database'),
         ConfigKey.DUCKDB_SCHEMA: (VerboseConfigKey.DUCKDB, 'schema'),
+        ConfigKey.PINOT_HOST: (VerboseConfigKey.PINOT, 'host'),
+        ConfigKey.PINOT_USER: (VerboseConfigKey.PINOT, 'password'),
+        ConfigKey.PINOT_PATH: (VerboseConfigKey.PINOT, 'path'),
+        ConfigKey.PINOT_PORT: (VerboseConfigKey.PINOT, 'port'),
+        ConfigKey.PINOT_SCHEME: (VerboseConfigKey.PINOT, 'scheme'),
+        ConfigKey.PINOT_USER: (VerboseConfigKey.PINOT, 'user'),
         ConfigKey.POSTGRES_DBNAME: (VerboseConfigKey.POSTGRES, 'database'),
         ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),

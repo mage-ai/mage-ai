@@ -13,6 +13,7 @@ class IOConfigKeys(str, Enum):
     DRUID = 'Druid'
     DUCKDB = 'DuckDB'
     FILE = 'File'
+    PINOT = 'Pinot'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     S3 = 'S3'
