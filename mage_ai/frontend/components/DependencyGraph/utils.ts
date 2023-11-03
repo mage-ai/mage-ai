@@ -552,10 +552,10 @@ export function buildNodesEdgesPorts({
     upstreamBlocks?.forEach((block) => {
       const uuid = block?.uuid;
 
-      const upstreamOrDownstreamSelected = selectedBlock?.uuid === uuid
-        || downstreamBlocks?.find(({ uuid: uuid2 }) => selectedBlock?.uuid === uuid2);
-
       downstreamBlocks?.forEach(({ uuid: uuid2 }) => {
+        const upstreamOrDownstreamSelected =
+          selectedBlock?.uuid === uuid || selectedBlock?.uuid === uuid2;
+
         if (upstreamOrDownstreamSelected) {
           const edge = buildEdge(uuid2, uuid);
           edgesInner[edge.id] = edge;

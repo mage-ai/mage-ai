@@ -509,6 +509,7 @@ function DependencyGraph({
     upstreamBlocks,
   }: {
     block: BlockType;
+    blocks?: BlockType[];
     downstreamBlocks?: string[];
     upstreamBlocks?: string[];
   }) => {
@@ -524,7 +525,10 @@ function DependencyGraph({
       blockPayload.upstream_blocks = upstreamBlocks;
     };
 
-    return api.blocks.pipelines.useUpdate(pipeline?.uuid, encodeURIComponent(blockToUpdate.uuid))({
+    return api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(blockToUpdate?.uuid),
+    )({
       block: blockPayload,
     });
   },
@@ -675,15 +679,19 @@ function DependencyGraph({
         if (selectedBlock
           && selectedBlock?.uuid === block?.uuid
           && (
-            (block?.downstream_blocks?.length || 0) <= 1
+            ((block?.downstream_blocks?.length || 0) <= 1 && !block?.upstream_blocks?.length)
             || (selectedBlockTwice && selectedBlockTwice?.uuid === selectedBlock?.uuid)
           )
         ) {
           setSelectedBlock?.(null);
           setSelectedBlockTwice(null);
         } else {
-          if (selectedBlock && selectedBlock?.uuid === block?.uuid) {
-            setSelectedBlockTwice(block);
+          if (selectedBlock) {
+            if (selectedBlock?.uuid === block?.uuid) {
+              setSelectedBlockTwice(block);
+            } else {
+              setSelectedBlockTwice(null);
+            }
           }
 
           // This is required because if the block is hidden, it needs to be un-hidden
@@ -1311,6 +1319,8 @@ function DependencyGraph({
       infos = blocksWithDownstreamBlockSet?.[toBlock?.uuid];
     }
 
+    console.log(edge, infos)
+
     let removeBlocks = () => {
       updateBlockByDragAndDrop({
         block: toBlock,
@@ -1349,6 +1359,25 @@ function DependencyGraph({
           };
         }
       });
+    } else if (!fromBlock && !toBlock) {
+      const blocksInGroup = [];
+
+      edge?.to?.split(':')?.forEach((part) => {
+        if (part?.length >= 1 && part !== 'parent') {
+          const block2 = blockUUIDMapping?.[part];
+
+          if (block2) {
+            blocksInGroup.push(block2);
+          }
+        }
+      });
+
+      removeBlocks = () => {
+        blocksInGroup?.forEach(block => updateBlockByDragAndDrop({
+          block,
+          downstreamBlocks: [],
+        }));
+      };
     }
 
     return (
@@ -1367,6 +1396,7 @@ function DependencyGraph({
           <Panel noPadding>
             <Spacing px={PADDING_UNITS} py={1}>
               <Link
+                block
                 onClick={() => {
                   const idx = blocks?.findIndex(({ uuid }) => uuid === toBlock?.uuid);
 
@@ -1394,6 +1424,7 @@ function DependencyGraph({
 
             <Spacing px={PADDING_UNITS} py={1}>
               <Link
+                block
                 onClick={() => {
                   removeBlocks?.();
                   setActiveEdge(null);
@@ -1485,7 +1516,7 @@ function DependencyGraph({
     if (!isIntegrationPipeline) {
       menuItems.push(...[
         {
-          disabled: (block?.downstream_blocks?.length || 0) <= 1,
+          disabled: ((block?.downstream_blocks?.length || 0) <= 1 && !block?.upstream_blocks?.length),
           onClick: () => {
             setSelectedBlock?.(allDependenciesShowing ? null : block);
             setSelectedBlockTwice(allDependenciesShowing ? null : block);
@@ -1827,8 +1858,14 @@ function DependencyGraph({
                 : 'inactive',
             ];
 
-            if (selectedBlockTwice?.uuid === blockUUID) {
-              edgeClassNames.push('selected-twice');
+            const blockUUIDs = blocks.map(({ uuid }) => uuid);
+            if (selectedBlockTwice) {
+              if (selectedBlockTwice?.uuid === blockUUID
+                || blockUUIDs?.includes(selectedBlockTwice?.uuid)
+                || downstreamBlocks?.map(({ uuid }) => uuid)?.includes(selectedBlockTwice?.uuid)
+              ) {
+                edgeClassNames.push('selected-twice');
+              }
             }
 
             if (edge?.target?.startsWith('parent')) {

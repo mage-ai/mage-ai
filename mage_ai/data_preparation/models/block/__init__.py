@@ -595,21 +595,11 @@ class Block(DataIntegrationMixin, SparkBlock):
             else:
                 pipeline.add_block(
                     block,
-                    upstream_block_uuids,
+                    downstream_block_uuids=downstream_block_uuids,
+                    upstream_block_uuids=upstream_block_uuids,
                     priority=priority,
                     widget=widget,
                 )
-                if downstream_block_uuids:
-                    for downstream_block_uuid in downstream_block_uuids:
-                        downstream_block = pipeline.get_block(downstream_block_uuid)
-                        if not downstream_block:
-                            continue
-                        pipeline.update_block(
-                            downstream_block,
-                            upstream_block_uuids=(
-                                downstream_block.upstream_block_uuids or []
-                            ) + [block.uuid],
-                        )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
@@ -2126,34 +2116,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             )
 
         if 'downstream_blocks' in data and self.pipeline:
-            arr = (data.get('downstream_blocks') or [])
-            block_uuids_to_remove = \
-                [uuid for uuid in self.downstream_block_uuids if uuid not in arr]
-
-            for block_uuid in block_uuids_to_remove:
-                block = self.pipeline.get_block(block_uuid)
-                if not block:
-                    continue
-                block.update(
-                    dict(
-                        upstream_blocks=list(filter(
-                            lambda x, uuid=self.uuid: x != uuid,
-                            block.upstream_block_uuids or [],
-                        )),
-                    ),
-                    check_upstream_block_order=check_upstream_block_order,
-                )
-
-            for block_uuid in arr:
-                block = self.pipeline.get_block(block_uuid)
-                if not block:
-                    continue
-                block.update(
-                    dict(
-                        upstream_blocks=(block.upstream_block_uuids or []) + [self.uuid],
-                    ),
-                    check_upstream_block_order=check_upstream_block_order,
-                )
+            self.pipeline.update_block(
+                self,
+                downstream_block_uuids=data.get('downstream_blocks') or [],
+                widget=BlockType.CHART == self.type,
+            )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
             self.callback_block_uuids
