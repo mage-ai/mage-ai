@@ -408,24 +408,6 @@ function PipelineDetailPage({
     setSideBySideEnabledState,
   ]);
 
-  const {
-    data: dataKernels,
-    mutate: fetchKernels,
-  } = api.kernels.list({}, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
-  });
-  const kernel = useMemo(() => {
-    const kernels = dataKernels?.kernels;
-
-    return kernels?.find(({ name }) =>
-      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type],
-    ) || kernels?.[0];
-  }, [
-    dataKernels,
-    pipeline,
-  ]);
-
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineLastSavedState, setPipelineLastSavedState] = useState<Date>(utcNowDate({ dateObj: true }));
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
