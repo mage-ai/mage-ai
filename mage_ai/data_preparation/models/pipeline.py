@@ -1092,6 +1092,7 @@ class Pipeline:
         self,
         block: Block,
         upstream_block_uuids: List[str] = None,
+        downstream_block_uuids: List[str] = None,
         priority: int = None,
         widget: bool = False,
     ) -> Block:
@@ -1145,6 +1146,19 @@ class Pipeline:
                 upstream_blocks=self.get_blocks(upstream_block_uuids),
                 priority=priority,
             )
+
+        if downstream_block_uuids:
+            for downstream_block_uuid in downstream_block_uuids:
+                downstream_block = self.get_block(downstream_block_uuid)
+                if not downstream_block:
+                    continue
+
+                self.update_block(
+                    downstream_block,
+                    upstream_block_uuids=(
+                        downstream_block.upstream_block_uuids or []
+                    ) + [block.uuid],
+                )
 
         self.validate('A cycle was formed while adding a block')
         self.save()
@@ -1257,6 +1271,7 @@ class Pipeline:
         callback_block_uuids: List[str] = None,
         check_upstream_block_order: bool = False,
         conditional_block_uuids: List[str] = None,
+        downstream_block_uuids: List[str] = None,
         upstream_block_uuids: List[str] = None,
         widget: bool = False,
     ):
@@ -1356,6 +1371,35 @@ class Pipeline:
             # The normal block will know about the conditional block via the
             # conditional_blocks field.
             block.update_conditional_blocks(conditional_blocks)
+        elif downstream_block_uuids is not None:
+            block_uuids_to_remove = \
+                [uuid for uuid in block.downstream_block_uuids
+                    if uuid not in downstream_block_uuids]
+
+            for block_uuid in block_uuids_to_remove:
+                block_inner = self.get_block(block_uuid)
+                if not block_inner:
+                    continue
+                block_inner.update(
+                    dict(
+                        upstream_blocks=list(filter(
+                            lambda x, uuid=block.uuid: x != uuid,
+                            block_inner.upstream_block_uuids or [],
+                        )),
+                    ),
+                    check_upstream_block_order=check_upstream_block_order,
+                )
+
+            for block_uuid in downstream_block_uuids:
+                block_inner = self.get_block(block_uuid)
+                if not block_inner:
+                    continue
+                block_inner.update(
+                    dict(
+                        upstream_blocks=(block_inner.upstream_block_uuids or []) + [block.uuid],
+                    ),
+                    check_upstream_block_order=check_upstream_block_order,
+                )
         else:
             save_kwargs['block_uuid'] = block.uuid
 

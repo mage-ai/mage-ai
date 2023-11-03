@@ -46,6 +46,7 @@ typer[all]==0.7.0
 typing-extensions==4.5.0
 
 # extras
+astor>=0.8.1
 aws-secretsmanager-caching==1.1.1.5
 boto3==1.26.60
 botocore==1.29.60
@@ -59,6 +60,7 @@ google-cloud-iam==2.9.0
 google-cloud-pubsub==2.16.0
 google-cloud-run==0.5.0
 google-cloud-storage==2.5.0
+gspread==5.7.2
 kubernetes==25.3.0
 langchain>=0.0.222; python_version >= '3.8'
 mysql-connector-python==8.0.31

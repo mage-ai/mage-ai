@@ -105,7 +105,7 @@ function CodeEditor({
   showLineNumbers = true,
   tabSize = 4,
   textareaFocused,
-  theme: themeProp,
+  theme = DEFAULT_THEME,
   value,
   width = '100%',
 }: CodeEditorProps) {
@@ -116,12 +116,28 @@ function CodeEditor({
   const [completionDisposable, setCompletionDisposable] = useState([]);
   const [monacoInstance, setMonacoInstance] = useState(null);
   const [mounted, setMounted] = useState<boolean>(false);
-  const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
+  const [loadedTheme, setLoadedTheme] = useState<string>(null);
+
+  const updateTheme = useCallback((monaco) => {
+    setLoadedTheme((prevTheme) => {
+      if (prevTheme !== theme) {
+        defineTheme(theme).then((loaded) => {
+          if (loaded) {
+            monaco.editor.setTheme(theme);
+            return theme;
+          }
+        });
+      }
+
+      return prevTheme;
+    });
+  }, [theme]);
 
   const handleEditorWillMount = useCallback((monaco) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
     setMonacoInstance(monaco);
-  }, []);
+    updateTheme(monaco);
+  }, [updateTheme]);
 
   const handleEditorDidMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
@@ -161,6 +177,10 @@ function CodeEditor({
        */
       // setSelected?.(true);
       setTextareaFocused?.(true);
+    });
+
+    editor.onDidBlurEditorWidget(() => {
+      setTextareaFocused?.(false);
     });
 
     editor.onDidContentSizeChange(({
@@ -223,12 +243,6 @@ function CodeEditor({
     textareaFocused,
     value,
   ]);
-
-  useEffect(() => {
-    defineTheme(DEFAULT_THEME).then(() => {
-      setTheme(DEFAULT_THEME);
-    });
-  }, []);
 
   useEffect(() => {
     let autoSaveInterval;
@@ -366,7 +380,7 @@ function CodeEditor({
           wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
         }}
-        theme={theme}
+        theme={loadedTheme || 'vs-dark'}
         value={value}
         width={width}
       />

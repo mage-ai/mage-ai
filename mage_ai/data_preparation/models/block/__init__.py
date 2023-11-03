@@ -580,6 +580,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
+            downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
@@ -594,7 +595,8 @@ class Block(DataIntegrationMixin, SparkBlock):
             else:
                 pipeline.add_block(
                     block,
-                    upstream_block_uuids,
+                    downstream_block_uuids=downstream_block_uuids,
+                    upstream_block_uuids=upstream_block_uuids,
                     priority=priority,
                     widget=widget,
                 )
@@ -651,6 +653,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         upstream_block_uuids: List[str] = None,
         config: Dict = None,
         widget: bool = False,
+        downstream_block_uuids: List[str] = None,
     ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
@@ -732,6 +735,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
             widget=widget,
+            downstream_block_uuids=downstream_block_uuids,
         )
         return block
 
@@ -877,7 +881,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
-        if from_notebook and self.is_using_spark():
+        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
             self.set_spark_job_before_execution()
 
         if logging_tags is None:
@@ -941,7 +945,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 from_notebook=from_notebook,
             )
 
-        if from_notebook and self.is_using_spark():
+        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
             self.set_spark_job_after_execution()
             if self.spark_job_before_execution:
                 print(f'[INFO] Job ID before execution: {self.spark_job_before_execution.id}')
@@ -2109,6 +2113,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_upstream_blocks(
                 data['upstream_blocks'],
                 check_upstream_block_order=check_upstream_block_order,
+            )
+
+        if 'downstream_blocks' in data and self.pipeline:
+            self.pipeline.update_block(
+                self,
+                downstream_block_uuids=data.get('downstream_blocks') or [],
+                widget=BlockType.CHART == self.type,
             )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(

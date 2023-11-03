@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.40',
+    version='0.9.41',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -41,6 +41,7 @@ setuptools.setup(
     },
     extras_require={
         'ai': [
+            'astor>=0.8.1',
             'langchain>=0.0.222',
             'openai>=0.27.8',
         ],
@@ -72,7 +73,10 @@ setuptools.setup(
             'dbt-trino==1.4.0',
             'dbt-clickhouse==1.4.0',
         ],
-        'google-cloud-storage': ['google-cloud-storage==2.5.0'],
+        'google-cloud-storage': [
+            'google-cloud-storage==2.5.0',
+            'gspread==5.7.2',
+        ],
         'hdf5': ['tables==3.7.0'],
         'mysql': [
             'mysql-connector-python==8.0.31',
@@ -112,6 +116,7 @@ setuptools.setup(
         ],
         'all': [
             'PyGithub==1.59.0',
+            'astor>=0.8.1',
             'aws-secretsmanager-caching==1.1.1.5',
             'azure-eventhub==5.11.2',
             'azure-identity==1.12.0',
@@ -144,6 +149,7 @@ setuptools.setup(
             'google-cloud-run==0.5.0',
             'google-cloud-storage==2.5.0',
             'great_expectations==0.15.50',
+            'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',

@@ -106,6 +106,8 @@ function KernelStatus({
     featureUUIDs,
   } = useProject();
 
+  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
+
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
     alive,
@@ -153,7 +155,9 @@ function KernelStatus({
 
   const {
     data: dataSparkApplications,
-  } = api.spark_applications.list();
+  } = api.spark_applications.list({}, {}, {
+    pauseFetch: !computeManagementEnabled,
+  });
   const sparkApplications: SparkApplicationType[] =
     useMemo(() => dataSparkApplications?.spark_applications, [
       dataSparkApplications,
@@ -250,8 +254,6 @@ function KernelStatus({
     setRunningBlocks,
     showKernelWarning,
   ]);
-
-  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
 
   const statusIconMemo = useMemo(() => {
     if (computeManagementEnabled) {
@@ -546,7 +548,9 @@ function KernelStatus({
           )}
         </FlexContainer>
 
-        {featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW) && (
+        {PipelineTypeEnum.INTEGRATION !== pipeline?.type
+          && featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+          && (
           <HeaderViewOptionsStyle>
             <FlexContainer alignItems="center">
               <Tooltip

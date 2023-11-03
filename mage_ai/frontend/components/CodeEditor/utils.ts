@@ -56,7 +56,7 @@ const monacoThemes = {
   zenburnesque: 'Zenburnesque',
 };
 
-export const defineTheme = theme => new Promise((res) => {
+export const defineTheme = theme => new Promise<boolean>((loaded) => {
   Promise.all([
     loader.init(),
     import(`monaco-themes/themes/${monacoThemes[theme]}.json`),
@@ -70,12 +70,14 @@ export const defineTheme = theme => new Promise((res) => {
         "editorCursor.foreground": "#A7A7A7",
         "editorWhitespace.foreground": "#FFFFFF40"
       }
-    `
+    `;
     themeData.colors['editor.background'] = '#000000';
     themeData.colors['editor.foreground'] = '#FFFFFF';
     monaco.editor.defineTheme(theme, themeData);
     // @ts-ignore
-    res();
+    loaded(true);
+  }).catch(() => {
+    loaded(false);
   });
 });
 

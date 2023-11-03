@@ -170,54 +170,6 @@ function PipelineDetailPage({
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
-  const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
-    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
-  );
-  const sideBySideEnabled = useMemo(() => {
-    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && sideBySideEnabledState;
-  }, [
-    featureEnabled,
-    featureUUIDs,
-    sideBySideEnabledState,
-  ]);
-  const [scrollTogetherState, setScrollTogetherState] = useState<boolean>(
-    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
-  );
-  const scrollTogether = useMemo(() => {
-    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && scrollTogetherState;
-  }, [
-    featureEnabled,
-    featureUUIDs,
-    scrollTogetherState,
-  ]);
-  const setScrollTogether = useCallback((prev) => {
-    setScrollTogetherState(prev);
-    set(
-      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
-      typeof prev === 'function' ? prev() : prev,
-    );
-  }, [
-    setScrollTogetherState,
-  ]);
-  const setSideBySideEnabled = useCallback((prev) => {
-    const value = typeof prev === 'function' ? prev() : prev;
-
-    setSideBySideEnabledState(prev);
-    set(
-      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
-      value,
-    );
-
-    if (!value) {
-      setScrollTogether(prev);
-    }
-  }, [
-    setScrollTogether,
-    setSideBySideEnabledState,
-  ]);
-
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
@@ -392,6 +344,56 @@ function PipelineDetailPage({
   const files = useMemo(() => filesData?.files || [], [filesData]);
   pipeline = useMemo(() => data?.pipeline, [data]);
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
+  const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
+  );
+  const sideBySideEnabled = useMemo(() => {
+    return !isIntegration
+      && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+      && sideBySideEnabledState;
+  }, [
+    featureEnabled,
+    featureUUIDs,
+    isIntegration,
+    sideBySideEnabledState,
+  ]);
+  const [scrollTogetherState, setScrollTogetherState] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
+  );
+  const scrollTogether = useMemo(() => {
+    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+      && scrollTogetherState;
+  }, [
+    featureEnabled,
+    featureUUIDs,
+    scrollTogetherState,
+  ]);
+  const setScrollTogether = useCallback((prev) => {
+    setScrollTogetherState(prev);
+    set(
+      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER,
+      typeof prev === 'function' ? prev() : prev,
+    );
+  }, [
+    setScrollTogetherState,
+  ]);
+  const setSideBySideEnabled = useCallback((prev) => {
+    const value = typeof prev === 'function' ? prev() : prev;
+
+    setSideBySideEnabledState(prev);
+    set(
+      LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED,
+      value,
+    );
+
+    if (!value) {
+      setScrollTogether(prev);
+    }
+  }, [
+    setScrollTogether,
+    setSideBySideEnabledState,
+  ]);
 
   const {
     data: dataKernels,
@@ -1214,13 +1216,21 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
-  const onUpdateFileSuccess = useCallback((fileContent: FileType) => {
+  const onUpdateFileSuccess = useCallback((fileContent: FileType, opts?: {
+    blockUUID: string;
+  }) => {
     const {
       content,
       path: filePath,
     } = fileContent || {};
 
-    const block = getBlockFromFilePath(filePath, blocks);
+    let block;
+
+    if (opts?.blockUUID) {
+      block = blocks?.find(({ uuid }) => uuid === opts?.blockUUID);
+    } else {
+      block = getBlockFromFilePath(filePath, blocks);
+    }
 
     if (block) {
       const {
@@ -1373,12 +1383,14 @@ function PipelineDetailPage({
 
   const [deleteBlock] = useMutation(
     ({
-      type: blockType,
       extension_uuid: extensionUUID,
+      force,
+      type: blockType,
       uuid,
     }: BlockType) => {
       const query: {
         extension_uuid?: string;
+        force?: boolean;
         block_type?: string;
       } = {};
 
@@ -1387,6 +1399,9 @@ function PipelineDetailPage({
       }
       if (extensionUUID) {
         query.extension_uuid = extensionUUID;
+      }
+      if (typeof force !== 'undefined') {
+        query.force = force;
       }
 
       return api.blocks.pipelines.useDelete(

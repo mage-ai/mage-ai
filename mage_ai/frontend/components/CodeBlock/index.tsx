@@ -60,6 +60,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
@@ -416,7 +417,9 @@ function CodeBlock({
     const cursorRect = refCursor?.current?.getBoundingClientRect?.();
 
     const yStart = cursorContainerRect?.y + cursorRect?.height;
-    const yEnd = cursorRect?.y + cursorRect?.height;
+    const yEnd = cursorRect?.height === 0
+      ? 0
+      : cursorRect?.y + cursorRect?.height;
     const yDistance = yEnd - yStart;
     const percentageTraveled =
       (100 * yDistance) / (cursorContainerRect?.height - cursorRect?.height) / 100;
@@ -425,14 +428,13 @@ function CodeBlock({
       heights,
       totalHeight,
       mainContainerRect?.height,
-    );
+    ) || 0;
 
     const yMove = cursorContainerRect?.y
       - (Math.max(0, percentageTraveled * (1 - offsetPercentage)) * totalHeight);
 
     const offset = sum((heights || [])?.slice(0, blockIdx) || []);
     const top = yMove + offset;
-
 
     if (scrollTogether) {
       if (refColumn1?.current) {
@@ -1376,93 +1378,120 @@ function CodeBlock({
     selectedTab,
   ]);
 
-  const codeOutputEl = useMemo(() => (
-    <CodeOutput
-      {...borderColorShareProps}
-      block={block}
-      blockIndex={blockIdx}
-      blockMetadata={blockMetadata}
-      buttonTabs={buttonTabs}
-      collapsed={outputCollapsed}
-      hasOutput={hasOutput}
-      isInProgress={isInProgress}
-      mainContainerWidth={mainContainerWidth}
-      messages={messagesWithType}
-      messagesAll={messages}
-      onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
-      openSidekickView={openSidekickView}
-      pipeline={pipeline}
-      ref={blockOutputRef}
-      runCount={runCount}
-      runEndTime={runEndTime}
-      runStartTime={runStartTime}
-      scrollTogether={scrollTogether}
-      selected={selected}
-      selectedTab={selectedTab}
-      setCollapsed={!sideBySideEnabled
-        ? (val: boolean) => {
-          setOutputCollapsed(() => {
-            set(outputCollapsedUUID, val);
-            return val;
-          });
+  const codeOutputEl = useMemo(() => {
+    let busyEl;
+    if (ExecutionStateEnum.QUEUED === executionState) {
+      busyEl = (
+        <Spinner
+          color={themeContext?.content?.active}
+          type="cylon"
+        />
+      );
+    }
+    if (ExecutionStateEnum.BUSY === executionState) {
+      busyEl = (
+        <Spinner
+          color={themeContext?.content?.active}
+        />
+      );
+    }
+
+    return (
+      <CodeOutput
+        {...borderColorShareProps}
+        block={block}
+        blockIndex={blockIdx}
+        blockMetadata={blockMetadata}
+        buttonTabs={buttonTabs}
+        collapsed={outputCollapsed}
+        hasOutput={hasOutput}
+        isInProgress={isInProgress}
+        mainContainerWidth={mainContainerWidth}
+        messages={messagesWithType}
+        messagesAll={messages}
+        onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
+        openSidekickView={openSidekickView}
+        pipeline={pipeline}
+        ref={blockOutputRef}
+        runCount={runCount}
+        runEndTime={runEndTime}
+        runStartTime={runStartTime}
+        scrollTogether={scrollTogether}
+        selected={selected}
+        selectedTab={selectedTab}
+        setCollapsed={!sideBySideEnabled
+          ? (val: boolean) => {
+            setOutputCollapsed(() => {
+              set(outputCollapsedUUID, val);
+              return val;
+            });
+          }
+          : null
         }
-        : null
-      }
-      setErrors={setErrors}
-      setOutputBlocks={setOutputBlocks}
-      setSelectedOutputBlock={setSelectedOutputBlock}
-      setSelectedTab={setSelectedTab}
-      showBorderTop={sideBySideEnabled}
-      sideBySideEnabled={sideBySideEnabled}
-    >
-      {sideBySideEnabled && (
-        <Spacing px={PADDING_UNITS} py={1}>
-          <FlexContainer alignItems="center" justifyContent="space-between">
-            <Link
-              color={color}
-              monospace
-              onClick={() => {
-                dispatchEventSyncColumnPositions({
-                  bypassOffScreen: true,
-                  columnIndex: 0,
-                  rect: refColumn1?.current?.getBoundingClientRect(),
-                  y: refColumn2?.current?.getBoundingClientRect()?.y,
-                });
-              }}
-              preventDefault
-            >
-              {block?.uuid}
-            </Link>
+        setErrors={setErrors}
+        setOutputBlocks={setOutputBlocks}
+        setSelectedOutputBlock={setSelectedOutputBlock}
+        setSelectedTab={setSelectedTab}
+        showBorderTop={sideBySideEnabled}
+        sideBySideEnabled={sideBySideEnabled}
+      >
+        {sideBySideEnabled && (
+          <>
+            <Spacing px={PADDING_UNITS} py={1}>
+              <FlexContainer alignItems="center" justifyContent="space-between">
+                <Link
+                  color={color}
+                  monospace
+                  onClick={() => {
+                    dispatchEventSyncColumnPositions({
+                      bypassOffScreen: true,
+                      columnIndex: 0,
+                      rect: refColumn1?.current?.getBoundingClientRect(),
+                      y: refColumn2?.current?.getBoundingClientRect()?.y,
+                    });
+                  }}
+                  preventDefault
+                >
+                  {block?.uuid}
+                </Link>
 
-            <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => runBlockAndTrack({
-                block,
-                syncColumnPositions: {
-                  rect: refColumn1?.current?.getBoundingClientRect(),
-                  y: refColumn2?.current?.getBoundingClientRect()?.y,
-                },
-              })}
-            >
-              <Circle
-                color={color}
-                size={UNIT * 3}
-              >
-                <PlayButtonFilled
-                  black
-                  size={UNIT * 1.5}
-                />
-              </Circle>
-            </Button>
-          </FlexContainer>
-        </Spacing>
-      )}
-    </CodeOutput>
-  ), [
+                {busyEl}
+
+                {!busyEl && (
+                  <Button
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={() => runBlockAndTrack({
+                      block,
+                      syncColumnPositions: {
+                        rect: refColumn1?.current?.getBoundingClientRect(),
+                        y: refColumn2?.current?.getBoundingClientRect()?.y,
+                      },
+                    })}
+                  >
+                    <Circle
+                      color={color}
+                      size={UNIT * 3}
+                    >
+                      <PlayButtonFilled
+                        black
+                        size={UNIT * 1.5}
+                      />
+                    </Circle>
+                  </Button>
+                )}
+              </FlexContainer>
+            </Spacing>
+
+            {hasOutput && <Divider medium />}
+          </>
+        )}
+      </CodeOutput>
+    );
+  }, [
     block,
     blockIdx,
     blockMetadata,
@@ -1470,6 +1499,7 @@ function CodeBlock({
     borderColorShareProps,
     buttonTabs,
     color,
+    executionState,
     hasOutput,
     isInProgress,
     mainContainerWidth,
@@ -1938,6 +1968,8 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 alignItems="center"
                 justifyContent="space-between"
               >
+                <Spacing pr={1} />
+
                 <Flex alignItems="center" flex={1}>
                   <FlexContainer alignItems="center">
                     <Badge monospace>
@@ -2034,60 +2066,63 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                         )}
                       </FlexContainer>
 
-                      <Spacing mr={2} />
-
                       {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
                         && mainContainerWidth > 800) && (
-                        <Tooltip
-                          appearBefore
-                          block
-                          label={`
-                            ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0
-                              ? 'Click to select 1 or more blocks to depend on.'
-                              : 'Edit parent blocks.'
-                            }
-                          `}
-                          size={null}
-                          widthFitContent={numberOfParentBlocks >= 1}
-                        >
-                          <Button
-                            noBackground
-                            noBorder
-                            noPadding
-                            onClick={() => {
-                              setSelected(true);
-                              setEditingBlock({
-                                upstreamBlocks: {
-                                  block,
-                                  values: blockUpstreamBlocks?.map(uuid => ({ uuid })),
-                                },
-                              });
-                            }}
-                            >
-                            <FlexContainer alignItems="center">
-                              {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
-                              {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
+                        <>
+                          <Spacing mr={PADDING_UNITS} />
 
-                              <Spacing mr={1} />
-
-                              <Text
-                                default
-                                monospace={numberOfParentBlocks >= 1}
-                                noWrapping
-                                small
-                                underline={numberOfParentBlocks === 0}
+                          <Tooltip
+                            appearBefore
+                            block
+                            label={`
+                              ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0
+                                ? 'Click to select 1 or more blocks to depend on.'
+                                : 'Edit parent blocks.'
+                              }
+                            `}
+                            size={null}
+                            widthFitContent={numberOfParentBlocks >= 1}
+                          >
+                            <Button
+                              noBackground
+                              noBorder
+                              noPadding
+                              onClick={() => {
+                                setSelected(true);
+                                setEditingBlock({
+                                  upstreamBlocks: {
+                                    block,
+                                    values: blockUpstreamBlocks?.map(uuid => ({ uuid })),
+                                  },
+                                });
+                              }}
                               >
-                                {numberOfParentBlocks === 0 && 'Edit parents'}
-                                {numberOfParentBlocks >= 1 && pluralize('parent', numberOfParentBlocks)}
-                              </Text>
-                            </FlexContainer>
-                          </Button>
-                        </Tooltip>
+                              <FlexContainer alignItems="center">
+                                {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
+                                {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
+
+                                <Spacing mr={1} />
+
+                                <Text
+                                  default
+                                  monospace={numberOfParentBlocks >= 1}
+                                  noWrapping
+                                  small
+                                  underline={numberOfParentBlocks === 0}
+                                >
+                                  {numberOfParentBlocks === 0 && 'Edit parents'}
+                                  {numberOfParentBlocks >= 1 && pluralize('parent', numberOfParentBlocks)}
+                                </Text>
+                              </FlexContainer>
+                            </Button>
+                          </Tooltip>
+                        </>
                       )}
 
                       {(blockPipelinesLength >= 2 && mainContainerWidth > 725) && (
                         <>
-                          <Spacing ml={2} />
+                          <Spacing mr={PADDING_UNITS} />
+
                           <Tooltip
                             block
                             label={`This block is used in ${blockPipelinesLength} pipelines.`}
@@ -2116,37 +2151,43 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 </Flex>
 
                 {runBlock && (
-                  <CommandButtons
-                    addNewBlock={addNewBlock}
-                    addWidget={addWidget}
-                    block={block}
-                    blockContent={content}
-                    blocks={blocks}
-                    deleteBlock={deleteBlock}
-                    executionState={executionState}
-                    fetchFileTree={fetchFileTree}
-                    fetchPipeline={fetchPipeline}
-                    hideExtraButtons={hideExtraCommandButtons}
-                    interruptKernel={interruptKernel}
-                    isEditingBlock={isEditingBlock}
-                    openSidekickView={openSidekickView}
-                    pipeline={pipeline}
-                    project={project}
-                    runBlock={hideRunButton ? null : runBlockAndTrack}
-                    savePipelineContent={savePipelineContent}
-                    setBlockContent={(val: string) => {
-                      setContent(val);
-                      onChange?.(val);
-                    }}
-                    setErrors={setErrors}
-                    setIsEditingBlock={setIsEditingBlock}
-                    setOutputCollapsed={setOutputCollapsed}
-                    showConfigureProjectModal={showConfigureProjectModal}
-                  />
+                  <>
+                    <Spacing pr={PADDING_UNITS} />
+
+                    <CommandButtons
+                      addNewBlock={addNewBlock}
+                      addWidget={addWidget}
+                      block={block}
+                      blockContent={content}
+                      blocks={blocks}
+                      deleteBlock={deleteBlock}
+                      executionState={executionState}
+                      fetchFileTree={fetchFileTree}
+                      fetchPipeline={fetchPipeline}
+                      hideExtraButtons={hideExtraCommandButtons}
+                      interruptKernel={interruptKernel}
+                      isEditingBlock={isEditingBlock}
+                      openSidekickView={openSidekickView}
+                      pipeline={pipeline}
+                      project={project}
+                      runBlock={hideRunButton ? null : runBlockAndTrack}
+                      savePipelineContent={savePipelineContent}
+                      setBlockContent={(val: string) => {
+                        setContent(val);
+                        onChange?.(val);
+                      }}
+                      setErrors={setErrors}
+                      setIsEditingBlock={setIsEditingBlock}
+                      setOutputCollapsed={setOutputCollapsed}
+                      showConfigureProjectModal={showConfigureProjectModal}
+                    />
+                  </>
                 )}
 
                 {!sideBySideEnabled && !hideExtraCommandButtons && (
-                  <Spacing px={1}>
+                  <>
+                    <Spacing pr={PADDING_UNITS} />
+
                     <Button
                       basic
                       iconOnly
@@ -2171,8 +2212,12 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                         : <ChevronUp muted size={UNIT * 2} />
                       }
                     </Button>
-                  </Spacing>
+                  </>
                 )}
+
+                <Flex>
+                  <div style={{ height: 1, width: UNIT }} />
+                </Flex>
               </FlexContainer>
             </BlockHeaderStyle>
 
@@ -3122,6 +3167,11 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     scrollTogether,
   ]);
 
+  const zIndex = useMemo(() => (blocks?.length || 0) - blockIdx, [
+    blockIdx,
+    blocks,
+  ]);
+
   const column2 = useMemo(() => {
     const {
       height,
@@ -3147,7 +3197,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
         right={right}
         top={y}
         width={widthColumn}
-        zIndex={(blocks?.length || 0) - blockIdx}
+        zIndex={zIndex}
       >
         {codeOutputEl}
       </ScrollColunnStyle>
@@ -3161,6 +3211,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     mainContainerRect,
     widthColumn,
     windowWidth,
+    zIndex,
   ]);
 
   if (!sideBySideEnabled) {
@@ -3168,7 +3219,14 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
   }
 
   return (
-    <ScrollColunnsContainerStyle>
+    <ScrollColunnsContainerStyle
+      zIndex={selected
+        ? zIndex
+        : addNewBlocksVisible
+          ? zIndex * 2
+          : null
+      }
+    >
       {column1}
 
       {column2}

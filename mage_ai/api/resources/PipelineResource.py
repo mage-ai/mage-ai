@@ -101,12 +101,18 @@ class PipelineResource(BaseResource):
 
             pipeline_uuids = list(history_by_pipeline_uuid.keys())
         elif tags:
-            from mage_ai.cache.tag import TagCache
+            from mage_ai.cache.tag import NO_TAGS_QUERY, TagCache
 
             await TagCache.initialize_cache()
 
             cache = TagCache()
             pipeline_uuids = cache.get_pipeline_uuids_with_tags(tags)
+
+            if NO_TAGS_QUERY in tags:
+                pipeline_uuids_with_tags = set(cache.get_all_pipeline_uuids_with_tags())
+                all_pipeline_uuids = set(Pipeline.get_all_pipelines(get_repo_path()))
+                pipeline_uuids_without_tags = list(all_pipeline_uuids - pipeline_uuids_with_tags)
+                pipeline_uuids = pipeline_uuids + pipeline_uuids_without_tags
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
@@ -403,11 +409,19 @@ class PipelineResource(BaseResource):
             if pipeline_doc:
                 await _add_markdown_block(pipeline_doc, self.model.uuid, 0)
 
+        pipeline_type = self.model.type
         await self.model.update(
             ignore_keys(payload, ['add_upstream_for_block_uuid']),
             update_content=update_content,
         )
-        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
+        try:
+            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
+        except Exception as e:
+            pipeline_type_updated = payload.get('type')
+            if pipeline_type_updated is not None and pipeline_type_updated != pipeline_type:
+                await self.model.update(dict(type=pipeline_type))
+
+            raise e
 
         @safe_db_query
         def update_schedule_status(status, pipeline_uuid):

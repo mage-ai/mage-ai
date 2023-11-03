@@ -8,6 +8,7 @@ from mage_ai.cache.constants import CACHE_KEY_TAGS_TO_OBJECT_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
 
 KEY_FOR_PIPELINES = 'Pipeline'
+NO_TAGS_QUERY = 'no_tags'
 
 
 class TagCache(BaseCache):
@@ -30,6 +31,17 @@ class TagCache(BaseCache):
 
         for tag_uuid in tags:
             pipelines_dict = tags_mapping.get(tag_uuid, {}).get(KEY_FOR_PIPELINES, {})
+            if pipelines_dict:
+                pipeline_uuids.update(pipelines_dict.keys())
+
+        return list(pipeline_uuids)
+
+    def get_all_pipeline_uuids_with_tags(self):
+        tags_mapping = self.get_tags()
+        pipeline_uuids = set()
+
+        for tag in tags_mapping.values():
+            pipelines_dict = tag.get(KEY_FOR_PIPELINES, {})
             if pipelines_dict:
                 pipeline_uuids.update(pipelines_dict.keys())
 

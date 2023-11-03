@@ -79,3 +79,15 @@ the `z` option.
 
 For more information about using the `z` option,
 read [Docker’s documentation](https://docs.docker.com/storage/bind-mounts/).
+
+### No such file or directory for "install_and_run.sh" file
+
+If you are using a Windows machine and run into the following error while executing the
+`docker-compose.yml` file: `exec ./scripts/install_and_run.sh: no such file or directory`,
+it may be due to a difference in line-endings used on Windows versus Macs.
+
+You can check the `mage_ai/frontend/scripts/install_and_run.sh` file in VSCode to see if
+it is using CRLFs (carriage return line feeds), and if it is, change it to LFs (line feeds)
+and save the file. Then try running the `docker-compose` command again.
+
+<img src="https://github.com/mage-ai/assets/blob/main/development/windows/update-crlf-to-lf-vscode.gif?raw=True"/>
