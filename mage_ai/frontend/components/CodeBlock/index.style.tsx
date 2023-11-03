@@ -24,6 +24,7 @@ import {
 } from '@oracle/styles/colors/gradients';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
 // Look at the code editor div class "margin" and role "presentation"
@@ -207,7 +208,8 @@ export const BlockHeaderStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  padding: ${UNIT}px;
+  padding-bottom: ${1 * UNIT}px;
+  padding-top: ${1 * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};
@@ -222,6 +224,13 @@ export const BlockHeaderStyle = styled.div<{
     // and the screen width is too small.
     position: sticky;
     top: -5px;
+  `}
+
+  ${props => props.noSticky && `
+    ${hideScrollBar()}
+
+    overflow-x: auto;
+    overflow-y: visible;
   `}
 `;
 
@@ -365,9 +374,14 @@ export const TimeTrackerStyle =  styled.div`
   position: absolute;
 `;
 
-export const ScrollColunnsContainerStyle = styled.div`
+export const ScrollColunnsContainerStyle = styled.div<{
+  zIndex?: number;
+}>`
   position: relative;
-  z-index: 1;
+
+  ${props => `
+    z-index: ${props?.zIndex || 1};
+  `}
 `;
 
 export const ScrollColunnStyle = styled.div.attrs(({
