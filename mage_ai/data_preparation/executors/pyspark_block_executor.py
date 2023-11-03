@@ -74,6 +74,7 @@ class PySparkBlockExecutor(BlockExecutor):
     def submit_spark_job(self):
         step = {
             'name': f'run_mage_block_{self.pipeline.uuid}_{self.block_uuid}',
+            'jars': self.executor_config.get('spark_jars', []),
             'script_uri': self.spark_script_path,
             'script_args': [],
         }
