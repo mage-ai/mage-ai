@@ -65,6 +65,16 @@ export const GraphContainerStyle = styled.div<{
 
     &.inactive {
     }
+
+    &.selected-twice {
+      stroke-dasharray: 4 2 4 2 4 10;
+      stroke-width: ${STROKE_WIDTH};
+    }
+
+    &.selected-twice.group {
+      stroke-dasharray: 10 10;
+      stroke-width: ${STROKE_WIDTH};
+    }
   }
 
   @keyframes dashdraw {

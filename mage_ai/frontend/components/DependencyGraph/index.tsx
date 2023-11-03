@@ -674,8 +674,10 @@ function DependencyGraph({
 
         if (selectedBlock
           && selectedBlock?.uuid === block?.uuid
-          && selectedBlockTwice
-          && selectedBlockTwice?.uuid === selectedBlock?.uuid
+          && (
+            (block?.downstream_blocks?.length || 0) <= 1
+            || (selectedBlockTwice && selectedBlockTwice?.uuid === selectedBlock?.uuid)
+          )
         ) {
           setSelectedBlock?.(null);
           setSelectedBlockTwice(null);
@@ -1451,6 +1453,7 @@ function DependencyGraph({
     const isIntegrationPipeline = PipelineTypeEnum.INTEGRATION === pipeline?.type;
 
     const menuItems: {
+      disabled?: boolean;
       onClick: () => void;
       uuid: string;
     }[] = [];
@@ -1482,6 +1485,7 @@ function DependencyGraph({
     if (!isIntegrationPipeline) {
       menuItems.push(...[
         {
+          disabled: (block?.downstream_blocks?.length || 0) <= 1,
           onClick: () => {
             setSelectedBlock?.(allDependenciesShowing ? null : block);
             setSelectedBlockTwice(allDependenciesShowing ? null : block);
@@ -1812,10 +1816,28 @@ function DependencyGraph({
               theme: themeContext,
             });
 
+            const edgeClassNames = [
+              'edge',
+              isInProgress
+                ? (isQueued
+                  ? 'activeSlow'
+                  : 'active'
+                )
+                : 'inactive',
+            ];
+
+            if (selectedBlockTwice?.uuid === blockUUID) {
+              edgeClassNames.push('selected-twice');
+            }
+
+            if (edge?.target?.startsWith('parent')) {
+              edgeClassNames.push('group');
+            }
+
             return (
               <Edge
                 {...edge}
-                className={`edge ${isInProgress ? (isQueued ? 'activeSlow' : 'active') : 'inactive'}`}
+                className={edgeClassNames.join(' ')}
                 onClick={(event, edge) => {
                   // @ts-ignore
                   setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {
