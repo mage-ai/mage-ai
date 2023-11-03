@@ -115,7 +115,7 @@ const TABS = [
 const QUERY_PARAM_TAB = 'tab';
 
 const sharedOpenButtonProps = {
-  borderRadius: BORDER_RADIUS_SMALL,
+  borderRadius: `${BORDER_RADIUS_SMALL}px`,
   iconOnly: true,
   noBackground: true,
   noBorder: true,
