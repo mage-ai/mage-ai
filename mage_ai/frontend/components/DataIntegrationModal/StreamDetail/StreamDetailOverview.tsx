@@ -113,9 +113,10 @@ function StreamDetailOverview({
       if (!metadata || !metadata?.metadata || metadata?.metadata?.selected) {
         columnsSelected.push(column);
       }
-
-      if (types?.length >= 1) {
-        const t = types[types?.length - 1];
+      
+      const typeArray = Array.isArray(types) ? types : [types];
+      if (typeArray?.length >= 1) {
+        const t = typeArray[typeArray?.length - 1];
         if (!columnsByType?.[t]) {
           columnsByType[t] = [];
         }
