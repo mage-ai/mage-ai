@@ -274,20 +274,32 @@ def __add_step(emr_client, cluster_id, steps):
 
 
 def __build_steps_config(steps):
-    return [{
-        'Name': step['name'],
-        'ActionOnFailure': 'CONTINUE',
-        'HadoopJarStep': {
-            'Jar': 'command-runner.jar',
-            'Args': [
-                'spark-submit',
-                '--deploy-mode',
-                'cluster',
-                step['script_uri'],
-                *step['script_args'],
+    step_configs = []
+
+    for step in steps:
+        args = [
+            'spark-submit',
+            '--deploy-mode',
+            'cluster',
+        ]
+        if step['jars']:
+            args += [
+                '--jars',
+                ','.join(step['jars']),
             ]
-        }
-    } for step in steps]
+        args += [
+            step['script_uri'],
+            *step['script_args'],
+        ]
+        step_configs.append({
+            'Name': step['name'],
+            'ActionOnFailure': 'CONTINUE',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': args,
+            }
+        })
+    return step_configs
 
 
 def __status_poller(intro, done_status, func):
