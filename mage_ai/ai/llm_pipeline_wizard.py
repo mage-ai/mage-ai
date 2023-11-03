@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import json
+import os
 import re
 from typing import Dict, List
 
@@ -29,6 +30,7 @@ from mage_ai.data_preparation.templates.template import (
     is_default_transformer_template,
 )
 from mage_ai.io.base import DataSource
+from mage_ai.orchestration.ai.config import AIConfig
 from mage_ai.server.logger import Logger
 
 logger = Logger().new_server_logger(__name__)
@@ -189,14 +191,19 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
 
 class LLMPipelineWizard:
     def __init__(self):
-        repo_config = get_repo_config()
-        ai_config = repo_config.ai_config
-        if ai_config.get("model_type") == AIMode.OPEN_AI:
-            self.client = OpenAIClient()
-        elif ai_config.get("model_type") == AIMode.HUGGING_FACE:
-            self.client = HuggingFaceClient()
+        ai_config = AIConfig.load(config=get_repo_config().ai_config)
+        if ai_config.mode == AIMode.OPEN_AI:
+            self.client = OpenAIClient(ai_config.open_ai_config)
+        elif ai_config.mode == AIMode.HUGGING_FACE:
+            self.client = HuggingFaceClient(ai_config.hugging_face_config)
+            # TODO(Remove the following open ai key dependency once the function call is replaced.)
+            open_ai_config = ai_config.open_ai_config
+            repo_config = get_repo_config()
+            openai_api_key = repo_config.openai_api_key or \
+                open_ai_config.openai_api_key or os.getenv('OPENAI_API_KEY')
+            openai.api_key = openai_api_key
         else:
-            print("Error: AI Mode is not available.")
+            raise Exception('AI Mode is not available.')
 
     async def __async_llm_call(
         self,
@@ -279,8 +286,8 @@ class LLMPipelineWizard:
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
             if 'action_code' in customized_logic.keys() \
-                and customized_logic.get("action_code") \
-                    and "null" != customized_logic.get("action_code"):
+                and customized_logic.get('action_code') \
+                    and "null" != customized_logic.get('action_code'):
                 block_code = block_code.replace(
                     'action_code=\'\'',
                     f'action_code=\'{customized_logic.get("action_code")}\'')
@@ -293,28 +300,25 @@ class LLMPipelineWizard:
                 variable_values,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
             )
-            if "sql_code" in customized_logic.keys():
+            if 'sql_code' in customized_logic.keys():
                 block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
         return block_code
-
-    async def __async_identify_function_parameters(self, block_description: str) -> dict:
-        messages = [{"role": "user", "content": block_description}]
-        # TODO(Replace with a generic LLM call so all LLM clients can support this funciton.)
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo-0613",
-            messages=messages,
-            functions=TEMPLATE_CLASSIFICATION_FUNCTION,
-            function_call={"name": CLASSIFICATION_FUNCTION_NAME},  # explicitly set function call
-        )
-        return response["choices"][0]["message"]
 
     async def async_generate_block_with_description(
             self,
             block_description: str,
             upstream_blocks: List[str] = None) -> dict:
-        response_message = await self.__async_identify_function_parameters(block_description)
-        if response_message.get("function_call"):
-            function_args = json.loads(response_message["function_call"]["arguments"])
+        messages = [{'role': 'user', 'content': block_description}]
+        # TODO(Replace with a generic LLM call so all LLM clients can support this funciton.)
+        response = await openai.ChatCompletion.acreate(
+            model='gpt-3.5-turbo-0613',
+            messages=messages,
+            functions=TEMPLATE_CLASSIFICATION_FUNCTION,
+            function_call={'name': CLASSIFICATION_FUNCTION_NAME},  # explicitly set function call
+        )
+        response_message = response['choices'][0]['message']
+        if response_message.get('function_call'):
+            function_args = json.loads(response_message['function_call']['arguments'])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
             variable_values = dict()
@@ -326,7 +330,7 @@ class LLMPipelineWizard:
                     PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
                 )
                 if 'code' in customized_logic.keys():
-                    config["existing_code"] = customized_logic.get("code")
+                    config['existing_code'] = customized_logic.get('code')
                 block_code = fetch_template_source(
                         block_type=block_type,
                         config=config,
@@ -364,7 +368,7 @@ class LLMPipelineWizard:
                 upstream_blocks=upstream_blocks,
             )
         else:
-            logger.error("Failed to interpret the description as a block template.")
+            logger.error('Failed to interpret the description as a block template.')
             return None
 
     async def __async_generate_blocks(self,
@@ -386,13 +390,13 @@ class LLMPipelineWizard:
         blocks = {}
         block_tasks = []
         for line in splited_block_descriptions.strip().split('\n'):
-            if line.startswith("BLOCK") and ":" in line:
+            if line.startswith('BLOCK') and ':' in line:
                 # Extract the block_id and block_description from the line
                 match = re.search(BLOCK_SPLIT_PATTERN, line)
                 if match:
                     block_id = match.group(1)
                     block_description = match.group(2).strip()
-                    upstream_blocks = match.group(3).split(", ")
+                    upstream_blocks = match.group(3).split(', ')
                     block_tasks.append(
                         self.__async_generate_blocks(
                             blocks,

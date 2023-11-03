@@ -9,14 +9,14 @@ from langchain.prompts import PromptTemplate
 
 from mage_ai.ai.ai_client import AIClient
 from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.orchestration.ai.config import OpenAIConfig
 
 
 class OpenAIClient(AIClient):
-    def __init__(self):
+    def __init__(self, open_ai_config: OpenAIConfig):
         repo_config = get_repo_config()
-        open_ai_config = repo_config.ai_config.get("open_ai_config")
         openai_api_key = repo_config.openai_api_key or \
-            open_ai_config.get("openai_api_key") or os.getenv('OPENAI_API_KEY')
+            open_ai_config.openai_api_key or os.getenv('OPENAI_API_KEY')
         openai.api_key = openai_api_key
         self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
 
