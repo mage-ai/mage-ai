@@ -35,7 +35,8 @@ class Project():
         features = self.repo_config.features
 
         for uuid in FeatureUUID:
-            if FeatureUUID.COMPUTE_MANAGEMENT == uuid:
+            if FeatureUUID.COMPUTE_MANAGEMENT == uuid and \
+                    not self.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
                 continue
 
             key = uuid.value
