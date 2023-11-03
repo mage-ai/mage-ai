@@ -6,13 +6,19 @@ import { CanvasRef } from 'reaflow';
 import { ZoomControlsStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 
 type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };
   zoomLevel: number;
 };
 
-const SHARED_BUTTOM_PROPS = {
+const SHARED_TOOLTIP_PROPS = {
+  bottomOffset: UNIT * 6.5,
+  size: null,
+  widthFitContent: true,
+};
+const SHARED_BUTTON_PROPS = {
   highlightOnHoverAlt: true,
   iconOnly: true,
   noBorder: true,
@@ -26,43 +32,48 @@ const SHARED_ICON_PROPS = {
 function ZoomControls({ canvasRef, zoomLevel }: ZoomControlProps) {
   return (
     <ZoomControlsStyle>
-      <Button 
-        {...SHARED_BUTTOM_PROPS}
-        onClick={() => canvasRef?.current?.fitCanvas?.()}
-        padding={`${UNIT * 1.5}px ${UNIT * 1.875}px ${UNIT * 1.5}px ${UNIT * 3.25}px`}
-        title="Reset (shortcut: double-click canvas)"
-      >
-        <Recenter {...SHARED_ICON_PROPS} />
-      </Button>
-      <Button  
-        {...SHARED_BUTTOM_PROPS}
-        onClick={() => canvasRef?.current?.zoomIn?.()}
-        title="Zoom in"
-      >
-        <ZoomIn {...SHARED_ICON_PROPS} />
-      </Button>
-      <Button 
-        {...SHARED_BUTTOM_PROPS}
-        onClick={() => canvasRef?.current?.zoomOut?.()}
-        title="Zoom out"
-      >
-        <ZoomOut {...SHARED_ICON_PROPS} />
-      </Button>
-      
-      <Button 
-        {...SHARED_BUTTOM_PROPS}
-        iconOnly={false}
-        padding={`${UNIT * 1.5}px ${UNIT * 3.25}px ${UNIT * 1.5}px ${UNIT * 1.875}px`}
-        title="Zoom level"
-      >
-        <Text 
-          center
-          large
-          minWidth={UNIT * 5} // Prevent button resizing due to varying number of digits
+      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
+        <Button 
+          {...SHARED_BUTTON_PROPS}
+          borderRadius={`${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
+          onClick={() => canvasRef?.current?.fitCanvas?.()}
+          padding={`${UNIT * 1.5}px ${UNIT * 1.875}px ${UNIT * 1.5}px ${UNIT * 3.25}px`}
         >
-          {`${Math.round(zoomLevel * 100)}%`}
-        </Text>
-      </Button>
+          <Recenter {...SHARED_ICON_PROPS} />
+        </Button>
+      </Tooltip>
+      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom in">
+        <Button  
+          {...SHARED_BUTTON_PROPS}
+          onClick={() => canvasRef?.current?.zoomIn?.()}
+        >
+          <ZoomIn {...SHARED_ICON_PROPS} />
+        </Button>
+      </Tooltip>
+      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom out">
+        <Button 
+          {...SHARED_BUTTON_PROPS}
+          onClick={() => canvasRef?.current?.zoomOut?.()}
+        >
+          <ZoomOut {...SHARED_ICON_PROPS} />
+        </Button>
+      </Tooltip>
+      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom level">
+        <Button 
+          {...SHARED_BUTTON_PROPS}
+          borderRadius={`0 ${BORDER_RADIUS_PILL}px ${BORDER_RADIUS_PILL}px 0`}
+          iconOnly={false}
+          padding={`${UNIT * 1.5}px ${UNIT * 3.25}px ${UNIT * 1.5}px ${UNIT * 1.875}px`}
+        >
+          <Text 
+            center
+            large
+            minWidth={UNIT * 5} // Prevent button resizing due to varying number of digits
+          >
+            {`${Math.round(zoomLevel * 100)}%`}
+          </Text>
+        </Button>
+      </Tooltip>
     </ZoomControlsStyle>
   );
 }

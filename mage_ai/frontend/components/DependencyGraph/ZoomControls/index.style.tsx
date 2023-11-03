@@ -12,7 +12,6 @@ export const ZoomControlsStyle = styled.div`
   bottom: ${UNIT * 3}px;
   left: 50%;
   transform: translateX(-50%);
-  overflow: hidden;
 
   background-color: ${props => (props.theme.background || dark.background).panel};
   border: 1px solid ${props => (props.theme || dark).borders.darkLight};

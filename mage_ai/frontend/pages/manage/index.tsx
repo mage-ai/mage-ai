@@ -340,7 +340,7 @@ function WorkspacePage() {
 
           return [
             <Button
-              borderRadius={BORDER_RADIUS_XXXLARGE}
+              borderRadius={`${BORDER_RADIUS_XXXLARGE}px`}
               danger={'STOPPED' === status}
               default={'PROVISIONING' === status}
               key="status"

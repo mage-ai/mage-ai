@@ -41,7 +41,7 @@ export type ButtonProps = {
   beforeIcon?: any;
   borderColor?: string;
   borderLess?: boolean;
-  borderRadius?: number;
+  borderRadius?: string;
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
@@ -192,7 +192,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.borderRadius && `
-    border-radius: ${props.borderRadius}px;
+    border-radius: ${props.borderRadius} !important;
   `}
 
   ${props => !props.borderRadiusLeft && props.borderRadiusRight && `

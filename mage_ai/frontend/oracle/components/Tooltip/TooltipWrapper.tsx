@@ -15,6 +15,7 @@ export type TooltipWrapperProps = {
   autoWidth?: boolean;
   basic?: boolean;
   block?: boolean;
+  bottomOffset?: number;
   center?: boolean;
   children?: any;
   default?: boolean;
@@ -146,6 +147,10 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
   ${props => props.topOffset && `
     top: ${props.topOffset}px;
   `}
+
+  ${props => props.bottomOffset && `
+    bottom: ${props.bottomOffset}px;
+  `}
 `;
 
 function TooltipWrapper({
@@ -156,6 +161,7 @@ function TooltipWrapper({
   autoWidth,
   basic,
   block,
+  bottomOffset,
   center,
   children,
   content,
@@ -232,6 +238,7 @@ function TooltipWrapper({
         <ContentStyle
           appearAbove={appearAbove}
           appearBefore={appearBefore}
+          bottomOffset={bottomOffset}
           leftPosition={center ? leftPosition : null}
           lightBackground={lightBackground}
           minWidth={autoWidth ? minWidth : null}
