@@ -4,8 +4,11 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
-import KernelType from '@interfaces/KernelType';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import KernelType, { KernelNameEnum } from '@interfaces/KernelType';
+import PipelineType, {
+  KERNEL_NAME_TO_PIPELINE_TYPE,
+  PipelineTypeEnum,
+} from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useProject from '@utils/models/project/useProject';
@@ -31,6 +34,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
 const ICON_SIZE = 1.5 * UNIT;
+const INDEX_COMPUTE = 4;
 
 type FileHeaderMenuProps = {
   cancelPipeline: () => void;
@@ -39,6 +43,7 @@ type FileHeaderMenuProps = {
   executePipeline: () => void;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
+  kernel: KernelType;
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
@@ -53,6 +58,7 @@ type FileHeaderMenuProps = {
   sideBySideEnabled?: boolean;
   setScrollTogether?: (prev: any) => void;
   setSideBySideEnabled?: (prev: any) => void;
+  updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
 function FileHeaderMenu({
@@ -62,6 +68,7 @@ function FileHeaderMenu({
   executePipeline,
   interruptKernel,
   isPipelineExecuting,
+  kernel,
   pipeline,
   restartKernel,
   savePipelineContent,
@@ -71,12 +78,14 @@ function FileHeaderMenu({
   setScrollTogether,
   setSideBySideEnabled,
   sideBySideEnabled,
+  updatePipelineMetadata,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);
   const refRun = useRef(null);
   const refEdit = useRef(null);
   const refView = useRef(null);
+  const refCompute = useRef(null);
 
   const {
     featureEnabled,
@@ -254,6 +263,49 @@ function FileHeaderMenu({
     sideBySideEnabled,
   ]);
 
+  const computeItems = useMemo(() => {
+    const arr: {
+      label: () => string;
+      linkProps?: {
+        href: string;
+      };
+      onClick?: () => void;
+      uuid: string;
+    }[] = [
+      {
+        label: () => 'Open compute management',
+        linkProps: {
+          href: '/compute',
+        },
+        uuid: 'Open compute management',
+      },
+    ];
+
+    if (KernelNameEnum.PYTHON3 === kernel?.name) {
+      arr.push({
+        label: () => 'Switch to PySpark kernel',
+        onClick: () => updatePipelineMetadata?.(
+          pipeline?.name, KERNEL_NAME_TO_PIPELINE_TYPE[KernelNameEnum.PYSPARK],
+        ),
+        uuid: 'Switch to PySpark kernel',
+      });
+    } else if (KernelNameEnum.PYSPARK === kernel?.name) {
+      arr.push({
+        label: () => 'Switch to Python kernel',
+        onClick: () => updatePipelineMetadata?.(
+          pipeline?.name, KERNEL_NAME_TO_PIPELINE_TYPE[KernelNameEnum.PYTHON3],
+        ),
+        uuid: 'Switch to Python kernel',
+      });
+    }
+
+    return arr;
+  }, [
+    kernel,
+    pipeline,
+    updatePipelineMetadata,
+  ]);
+
   const uuidKeyboard = 'FileHeaderMenu/index';
   const {
     registerOnKeyDown,
@@ -374,6 +426,29 @@ function FileHeaderMenu({
               onClickCallback={() => setHighlightedIndex(null)}
               open={highlightedIndex === 3}
               parentRef={refView}
+              uuid="FileHeaderMenu/viewItems"
+            />
+          </div>
+        )}
+
+        {featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT) && (
+          <div style={{ position: 'relative' }}>
+            <LinkStyle
+              highlighted={highlightedIndex === INDEX_COMPUTE}
+              onClick={() => setHighlightedIndex(val => val === INDEX_COMPUTE ? null : INDEX_COMPUTE)}
+              onMouseEnter={() => setHighlightedIndex(val => val !== null ? INDEX_COMPUTE : null)}
+              ref={refCompute}
+            >
+              <Text>
+                Compute
+              </Text>
+            </LinkStyle>
+
+            <FlyoutMenu
+              items={computeItems}
+              onClickCallback={() => setHighlightedIndex(null)}
+              open={highlightedIndex === INDEX_COMPUTE}
+              parentRef={refCompute}
               uuid="FileHeaderMenu/viewItems"
             />
           </div>
