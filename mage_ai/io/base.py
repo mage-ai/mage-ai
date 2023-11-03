@@ -21,6 +21,7 @@ class DataSource(str, Enum):
     DUCKDB = 'duckdb'
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
+    GOOGLE_SHEETS = 'google_sheets'
     KAFKA = 'kafka'
     MYSQL = 'mysql'
     MSSQL = 'sqlserver'
