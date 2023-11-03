@@ -338,7 +338,7 @@ export function mergeSchemaProperties(
 
   function updateNewColumnSettings(column, data) {
     if (!newColumnSettings?.[column]) {
-      newColumnSettings[column] = {}
+      newColumnSettings[column] = {};
     }
 
     newColumnSettings[column] = {
@@ -358,8 +358,10 @@ export function mergeSchemaProperties(
 
     // Existing column
     if (settings2) {
-      const t1 = settings1?.type || [];
-      const t2 = settings2?.type || [];
+      let t1 = settings1?.type || [];
+      t1 = Array.isArray(t1) ? t1 : [t1];
+      let t2 = settings2?.type || [];
+      t2 = Array.isArray(t2) ? t2 : [t2];
       if (!equals(t1, t2)) {
         updateNewColumnSettings(column, {
           type: t1,
