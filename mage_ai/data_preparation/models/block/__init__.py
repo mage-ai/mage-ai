@@ -1803,8 +1803,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_type: VariableType = None,
         block_uuid: str = None,
     ) -> List[Dict]:
-        print(f'start get outputs async {self.uuid}')
-
         if self.pipeline is None:
             return
 
