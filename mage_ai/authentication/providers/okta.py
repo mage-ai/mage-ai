@@ -1,9 +1,10 @@
 import urllib.parse
 import uuid
-from typing import Dict
+from typing import Dict, Optional
 from urllib.parse import urlparse
 
 import aiohttp
+from aiohttp import BasicAuth
 
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_OKTA
 from mage_ai.authentication.providers.base import BaseProvider
@@ -20,34 +21,40 @@ class OktaProvider(BaseProvider, OauthProvider):
         if not self.hostname.startswith('https'):
             self.hostname = f'https://{self.hostname}'
 
-    async def get_auth_url(self, redirect_uri: str = None, **kwargs) -> str:
-        parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
-        base_url = parsed_url.scheme + '://' + parsed_url.netloc
-        if ROUTES_BASE_PATH:
-            base_url += f'/{ROUTES_BASE_PATH}'
-        redirect_uri_query = urllib.parse.urlencode(
-            dict(
+    async def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Optional[Dict]:
+        if OKTA_CLIENT_ID:
+            parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
+            base_url = parsed_url.scheme + '://' + parsed_url.netloc
+            if ROUTES_BASE_PATH:
+                base_url += f'/{ROUTES_BASE_PATH}'
+            redirect_uri_query = dict(
                 provider=self.provider,
                 redirect_uri=redirect_uri,
             )
-        )
-        query = dict(
-            client_id=OKTA_CLIENT_ID,
-            redirect_uri=urllib.parse.quote_plus(
-                f'{base_url}/oauth?{redirect_uri_query}',
-            ),
-            response_mode='query',
-            response_type='code',
-            scope='openid email profile',
-            state=uuid.uuid4().hex,
-        )
-        query_strings = []
-        for k, v in query.items():
-            query_strings.append(f'{k}={v}')
+            query = dict(
+                client_id=OKTA_CLIENT_ID,
+                redirect_uri=urllib.parse.quote_plus(
+                    f'{base_url}/oauth',
+                ),
+                response_mode='query',
+                response_type='code',
+                scope='openid email profile',
+                state=uuid.uuid4().hex,
+            )
+            query_strings = []
+            for k, v in query.items():
+                query_strings.append(f'{k}={v}')
 
-        return f"{self.hostname}/oauth2/default/v1/authorize?{'&'.join(query_strings)}"
+            return dict(
+                url=f"{self.hostname}/oauth2/default/v1/authorize?{'&'.join(query_strings)}",
+                redirect_query_params=redirect_uri_query,
+            )
 
     async def get_access_token_response(self, code: str, **kwargs) -> Dict:
+        parsed_url = urlparse(urllib.parse.unquote(kwargs.get('redirect_uri')))
+        base_url = parsed_url.scheme + '://' + parsed_url.netloc
+        if ROUTES_BASE_PATH:
+            base_url += f'/{ROUTES_BASE_PATH}'
         data = dict()
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -58,8 +65,9 @@ class OktaProvider(BaseProvider, OauthProvider):
                 data=dict(
                     grant_type='authorization_code',
                     code=code,
+                    redirect_uri=f'{base_url}/oauth',
                 ),
-                auth=(OKTA_CLIENT_ID, OKTA_CLIENT_SECRET),
+                auth=BasicAuth(OKTA_CLIENT_ID, OKTA_CLIENT_SECRET),
                 timeout=20,
             ) as response:
                 data = await response.json()

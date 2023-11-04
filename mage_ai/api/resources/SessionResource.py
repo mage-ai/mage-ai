@@ -45,13 +45,17 @@ class SessionResource(BaseResource):
                 username = user_info.get('userPrincipalName')
                 email = user_info.get('userPrincipalName')
             elif provider is not None:
-                user_info = provider_instance.get_user_info(access_token=token)
-                username = user_info.get('name')
+                user_info = await provider_instance.get_user_info(access_token=token)
+                username = user_info.get('username')
                 email = user_info.get('email')
                 if 'roles' in user_info:
                     roles = user_info.get('roles')
 
-            if email:
+            if not email:
+                error = ApiError.RESOURCE_NOT_FOUND
+                error.update({'message': 'Could not get email from oauth provider.'})
+                raise ApiError(error)
+            else:
                 user = User.query.filter(User.email == email).first()
                 if not user:  # noqa: E712
                     print('first user login, creating user.')
@@ -62,10 +66,6 @@ class SessionResource(BaseResource):
                     )
                 oauth_token = generate_access_token(user, oauth_client)
                 return self(oauth_token, user, **kwargs)
-            else:
-                error = ApiError.RESOURCE_NOT_FOUND
-                error.update({'message': 'Could not get email from oauth provider.'})
-                raise ApiError(error)
 
         error = ApiError.RESOURCE_NOT_FOUND
         error.update({'message': 'Email/username and/or password invalid.'})

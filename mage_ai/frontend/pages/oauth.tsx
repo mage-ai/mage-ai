@@ -4,34 +4,48 @@ import { useRouter } from 'next/router';
 
 import BasePage from '@components/BasePage';
 import api from '@api';
-import { LOCAL_STORAGE_KEY_OAUTH_STATE, get } from '@storage/localStorage';
-import { queryFromUrl } from '@utils/url';
+import { LOCAL_STORAGE_KEY_OAUTH_STATE, get, remove } from '@storage/localStorage';
+import { queryFromUrl, queryString } from '@utils/url';
+import PublicRoute from '@components/shared/PublicRoute';
 
 function OauthPage() {
   const router = useRouter();
   const query = queryFromUrl();
 
-  const provider = query?.provider;
+  const state = query?.state;
+  const localState = get(state);
+  const provider = localState?.provider;
 
-  const { data: dataOauth } = api.oauths.detail(provider, query);
+  let newQuery = query;
+  if (localState) {
+    newQuery = {
+      ...query,
+      ...localState,
+    };
+  }
+
+  console.log('new query:', newQuery);
+
+  const { data: dataOauth } = api.oauths.detail(provider, newQuery);
   const oauthUrl = useMemo(() => dataOauth?.oauth?.url, [dataOauth]);
 
   useEffect(() => {
-    const state = query?.state;
-    const localState = get(LOCAL_STORAGE_KEY_OAUTH_STATE);
-    if (oauthUrl && state === localState) {
-      // console.log('oauth url:', oauthUrl);
-      router.push(oauthUrl);
-    } else if (state !== localState) {
-      toast.error(
-        'Oauth failed due to state not matching!',
-        {
-          position: toast.POSITION.BOTTOM_RIGHT,
-          toastId: 'oauth-state-error',
-        },
-      );
+    if (oauthUrl) {
+      if (localState) {
+        // console.log('oauth url:', oauthUrl);
+        remove(state);
+        router.push(oauthUrl);
+      } else if (!localState) {
+        toast.error(
+          'Oauth failed due to state not matching!',
+          {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: 'oauth-state-error',
+          },
+        );
+      }
     }
-  }, [oauthUrl, router, query]);
+  }, [localState, oauthUrl, router, query, state]);
   
 
   return (
@@ -43,4 +57,4 @@ function OauthPage() {
 
 OauthPage.getInitialProps = async () => ({});
 
-export default OauthPage;
+export default PublicRoute(OauthPage);

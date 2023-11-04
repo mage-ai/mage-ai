@@ -111,6 +111,13 @@ class OauthResource(GenericResource):
             provider = OAUTH_PROVIDER_GHE
         else:
             provider = pk
+
+        provider_instance = None
+        if OAUTH_PROVIDER_OKTA == pk:
+            provider_instance = OktaProvider()
+        elif OAUTH_PROVIDER_GOOGLE == pk:
+            provider_instance = GoogleProvider()
+
         access_tokens = access_tokens_for_client(
             get_oauth_client_id(provider),
             user=user,
@@ -122,12 +129,6 @@ class OauthResource(GenericResource):
             model['expires'] = max(
                 [access_token.expires for access_token in access_tokens]
             )
-
-        provider_instance = None
-        if OAUTH_PROVIDER_OKTA == pk:
-            provider_instance = OktaProvider()
-        elif OAUTH_PROVIDER_GOOGLE == pk:
-            provider_instance = GoogleProvider()
         # If an oauth code is provided, we need to exchange it for an access token for
         # the provider and return the redirect uri.
         elif code:
@@ -192,7 +193,9 @@ class OauthResource(GenericResource):
                         v = ','.join(v)
                     query[k] = v
 
-                data = provider_instance.get_access_token_response(code)
+                data = await provider_instance.get_access_token_response(
+                    code, redirect_uri=redirect_uri
+                )
                 query = add_access_token_to_query(data, query)
 
                 parts = redirect_uri.split('?')
@@ -277,7 +280,9 @@ class OauthResource(GenericResource):
                         'url'
                     ] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
             elif provider_instance is not None:
-                model['url'] = provider_instance.get_auth_url()
+                resp = await provider_instance.get_auth_url_response(redirect_uri=redirect_uri)
+                if resp:
+                    model.update(resp)
 
         return self(model, user, **kwargs)
 

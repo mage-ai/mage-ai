@@ -23,8 +23,10 @@ import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl, queryString } from '@utils/url';
 import { setUser } from '@utils/session';
-import { MicrosoftIcon } from '@oracle/icons';
+import { MicrosoftIcon, GoogleIcon } from '@oracle/icons';
 import { OauthProviderEnum } from '@interfaces/OauthType';
+import GoogleSignIn from '../GoogleSignIn';
+import OktaSignIn from '../OktaSignIn';
 
 const KEY_EMAIL = 'email';
 const KEY_PASSWORD = 'password';
@@ -92,6 +94,11 @@ function SignForm({
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
   });
   const adOauthUrl = useMemo(() => dataOauthAD?.oauth?.url, [dataOauthAD]);
+
+  const { data: dataOauthGoogle } = api.oauths.detail(OauthProviderEnum.GOOGLE, {
+    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
+  });
+  const googleOauthUrl = useMemo(() => dataOauthGoogle?.oauth?.url, [dataOauthGoogle]);
 
   const { 
     access_token: accessTokenFromURL,
@@ -220,6 +227,14 @@ function SignForm({
                     </KeyboardShortcutButton>
                   </Spacing>
                 )}
+
+                <Spacing mt={4}>
+                  <GoogleSignIn />
+                </Spacing>
+
+                <Spacing mt={4}>
+                  <OktaSignIn />
+                </Spacing>
               </form>
             </ContainerStyle>
           </Spacing>
