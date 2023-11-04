@@ -15,6 +15,9 @@ type ZoomControlProps = {
   zoomLevel: number;
 };
 
+export const DEFAULT_ZOOM_LEVEL = 1;
+// How much to change the zoom via the zooming in or out actions
+const ZOOM_FACTOR = 0.5;
 // Min container width required for showing the full zoom controls
 const MIN_CONTAINER_WIDTH = UNIT * 35;
 
@@ -66,7 +69,9 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom in">
             <Button  
               {...SHARED_BUTTON_PROPS}
-              onClick={() => canvasRef?.current?.zoomIn?.()}
+              onClick={() => canvasRef?.current?.setZoom?.(
+                (zoomLevel - DEFAULT_ZOOM_LEVEL) + ZOOM_FACTOR,
+              )}
             >
               <ZoomIn {...SHARED_ICON_PROPS} />
             </Button>
@@ -74,7 +79,9 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom out">
             <Button 
               {...SHARED_BUTTON_PROPS}
-              onClick={() => canvasRef?.current?.zoomOut?.()}
+              onClick={() => canvasRef?.current?.setZoom?.(
+                (zoomLevel - DEFAULT_ZOOM_LEVEL) - ZOOM_FACTOR,
+              )}
             >
               <ZoomOut {...SHARED_ICON_PROPS} />
             </Button>

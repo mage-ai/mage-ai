@@ -32,7 +32,7 @@ import Panel from '@oracle/components/Panel';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import ZoomControls from './ZoomControls';
+import ZoomControls, { DEFAULT_ZOOM_LEVEL } from './ZoomControls';
 import api from '@api';
 import {
   EdgeType,
@@ -263,7 +263,7 @@ function DependencyGraph({
   const timeoutDraggingRefs = useRef({});
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM_LEVEL);
 
   const [activeEdge, setActiveEdge] = useState<{
     block: BlockType;
