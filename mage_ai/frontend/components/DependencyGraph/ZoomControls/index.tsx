@@ -5,6 +5,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { CanvasRef } from 'reaflow';
+import { ICON_SIZE_MEDIUM } from '@oracle/styles/units/icons';
 import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ZoomControlsStyle, ZoomDisplayStyle } from './index.style';
@@ -34,7 +35,7 @@ const SHARED_BUTTON_PROPS = {
   transparent: true,
 };
 const SHARED_ICON_PROPS = {
-  size: UNIT * 2.5,
+  size: ICON_SIZE_MEDIUM,
 };
 
 function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) {
