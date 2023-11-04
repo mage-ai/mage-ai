@@ -1803,6 +1803,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_type: VariableType = None,
         block_uuid: str = None,
     ) -> List[Dict]:
+        print(f'start get outputs async {self.uuid}')
+
         if self.pipeline is None:
             return
 
@@ -1822,6 +1824,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if not include_print_outputs:
             all_variables = self.output_variables(execution_partition=execution_partition)
 
+        variables = []
         for v in all_variables:
             variable_object = variable_manager.get_variable_object(
                 self.pipeline.uuid,
@@ -1834,11 +1837,26 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             if variable_type is not None and variable_object.variable_type != variable_type:
                 continue
 
-            data = await variable_object.read_data_async(
-                sample=True,
-                sample_count=sample_count,
-                spark=self.__get_spark_session(),
+            variables.append(
+                dict(
+                    uuid=v,
+                    object=variable_object,
+                )
             )
+
+        variables_data = await asyncio.gather(
+            *[
+                variable['object'].read_data_async(
+                    sample=True,
+                    sample_count=sample_count,
+                    spark=self.__get_spark_session(),
+                ) for variable in variables
+            ]
+        )
+
+        for idx, variable in enumerate(variables):
+            v = variable['uuid']
+            data = variables_data[idx]
             if type(data) is pd.DataFrame:
                 try:
                     analysis = variable_manager.get_variable(
@@ -2053,32 +2071,45 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             include_conditional_blocks=include_conditional_blocks,
         )
 
+        if check_if_file_exists and not \
+                self.replicated_block and \
+                BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
+            file_path = self.file.file_path
+            if not os.path.isfile(file_path):
+                data['error'] = dict(
+                    error='No such file or directory',
+                    message='You may have moved it or changed its filename. '
+                    'Delete the current block to remove it from the pipeline or write code ' +
+                    f'and save the pipeline to create a new file at {file_path}.',
+                )
+
+        async_tasks = []
+        async_task_keys = []
+
         if include_content:
-            data['content'] = await self.content_async()
+            async_tasks.append(self.content_async())
+            async_task_keys.append('content')
             if self.callback_block is not None:
-                data['callback_content'] = await self.callback_block.content_async()
+                async_tasks.append(self.callback_block.content_async())
+                async_task_keys.append('callback_content')
 
         if include_block_catalog and self.is_data_integration() and self.pipeline:
-            data['catalog'] = await self.get_catalog_from_file_async()
+            async_tasks.append(self.get_catalog_from_file_async())
+            async_task_keys.append('catalog')
 
         if include_outputs:
-            data['outputs'] = await self.outputs_async()
-
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
-
-                file_path = self.file.file_path
-                if not os.path.isfile(file_path):
-                    data['error'] = dict(
-                        error='No such file or directory',
-                        message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
-                    )
+            async_tasks.append(self.outputs_async())
+            async_task_keys.append('outputs')
 
         if include_block_metadata:
-            data['metadata'] = await self.metadata_async()
+            async_tasks.append(self.metadata_async())
+            async_task_keys.append('metadata')
+
+        async_task_results = await asyncio.gather(*async_tasks)
+
+        for idx, result in enumerate(async_task_results):
+            data[async_task_keys[idx]] = result
 
         if include_block_tags:
             data['tags'] = self.tags()
