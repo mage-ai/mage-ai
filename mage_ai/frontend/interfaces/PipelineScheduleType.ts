@@ -86,6 +86,7 @@ export default interface PipelineScheduleType {
   last_pipeline_run_status?: RunStatusEnum;
   name?: string;
   next_pipeline_run_date?: string;
+  pipeline_in_progress_runs_count?: number;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;
   runtime_average?: number;

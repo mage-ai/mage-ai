@@ -127,6 +127,10 @@ class PipelineSchedule(BaseModel):
         return Pipeline.get(self.pipeline_uuid)
 
     @property
+    def pipeline_in_progress_runs_count(self) -> int:
+        return len(PipelineRun.in_progress_runs([self.id]))
+
+    @property
     def pipeline_runs_count(self) -> int:
         return len(self.fetch_pipeline_runs([self.id]))
 
