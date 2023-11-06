@@ -254,6 +254,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             {'path': os.path.join(template_dir, 'images')},
         ),
         (
+            r'/monaco-editor/(.*)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(template_dir, 'monaco-editor')},
+        ),
+        (
             r'/(favicon.ico)',
             tornado.web.StaticFileHandler,
             {'path': template_dir},
