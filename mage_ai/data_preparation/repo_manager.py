@@ -92,7 +92,10 @@ class RepoConfig:
                     repo_path=self.repo_path,
                     repo_config=repo_config
                 )
-            os.makedirs(self.variables_dir, exist_ok=True)
+            try:
+                os.makedirs(self.variables_dir, exist_ok=True)
+            except Exception:
+                pass
 
             self.project_type = repo_config.get('project_type')
             self.cluster_type = repo_config.get('cluster_type')
@@ -298,7 +301,7 @@ def get_variables_dir(
         try:
             os.makedirs(variables_dir, exist_ok=True)
         except Exception:
-            traceback.print_exc()
+            pass
     return variables_dir
 
 

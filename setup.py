@@ -33,7 +33,7 @@ setuptools.setup(
         'Operating System :: OS Independent',
     ],
     install_requires=requirements,
-    python_requires='>=3.8',
+    python_requires='>=3.7',
     entry_points={
         'console_scripts': [
             'mage=mage_ai.cli.main:app',
@@ -159,6 +159,7 @@ setuptools.setup(
             'opensearch-py==2.0.0',
             'oracledb==1.3.1',
             'pika==1.3.1',
+            'pinotdb==5.1.0',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
             'pydruid==0.6.5',

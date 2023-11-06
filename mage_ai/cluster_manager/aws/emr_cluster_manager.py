@@ -57,6 +57,7 @@ class EmrClusterManager(ClusterManager):
             return
 
         self.active_cluster_id = cluster_id
+        emr_config = EmrConfig.load(config=get_repo_config().emr_config or dict())
 
         # Fetch cluster master instance public DNS
         cluster_info = describe_cluster(cluster_id)
@@ -73,6 +74,7 @@ class EmrClusterManager(ClusterManager):
             if type(v) is dict and 'url' in v:
                 v['url'] = f'http://{emr_dns}:8998'
 
+        config['session_configs']['jars'] = emr_config.spark_jars
         with open(sparkmagic_config_path, 'w') as f:
             f.write(json.dumps(config))
 

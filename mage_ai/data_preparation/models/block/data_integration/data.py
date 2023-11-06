@@ -5,11 +5,13 @@ import os
 from typing import Any, Callable, Dict, List, Union
 
 import pandas as pd
+import simplejson
 
 from mage_ai.data_preparation.models.block.data_integration.constants import (
     OUTPUT_TYPE_RECORD,
 )
 from mage_ai.data_preparation.models.pipelines.utils import number_string
+from mage_ai.shared.parsers import encode_complex
 
 CHUNK_SIZE_BUFFER_PERCENTAGE = 0.1
 
@@ -26,11 +28,14 @@ def convert_dataframe_to_output(
     records = df.to_dict('records')
 
     def _output(record, stream=stream):
-        text = json.dumps(dict(
-            record=record,
-            stream=stream,
-            type=OUTPUT_TYPE_RECORD,
-        ))
+        text = simplejson.dumps(
+            dict(
+                record=record,
+                stream=stream,
+                type=OUTPUT_TYPE_RECORD,
+            ),
+            default=encode_complex,
+        )
         return f'{text}\n'
 
     output_file_paths = []

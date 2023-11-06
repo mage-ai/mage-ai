@@ -12,7 +12,7 @@ import { SHARED_STYLES } from '@oracle/elements/Text';
 
 export const ContainerStyle = styled.div<{
   addBottomPadding?: boolean;
-  executedAndIdle: boolean;
+  executedAndIdle?: boolean;
   showBorderTop?: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}

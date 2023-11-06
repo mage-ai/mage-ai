@@ -19,7 +19,7 @@ class KernelPresenter(BasePresenter):
             id=kernel.kernel_id,
             name=kernel.kernel_name,
         )
-        if kernel.has_kernel:
+        if kernel.is_alive() and kernel.has_kernel:
             try:
                 client = kernel.client()
                 session = kernel.session
@@ -33,8 +33,9 @@ class KernelPresenter(BasePresenter):
                     # depending on configured KernelManager class
                     res = await res
                 kernel_response['usage'] = res.get('content')
-                control_channel.stop()
+                client.stop_channels()
             except Exception:
-                pass
+                if client and client.is_alive():
+                    client.stop_channels()
 
         return kernel_response

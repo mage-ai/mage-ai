@@ -282,6 +282,7 @@ export const CodeContainerStyle = styled.div<{
     border-bottom-right-radius: ${BORDER_RADIUS}px;
     border-bottom-style: ${BORDER_STYLE};
     border-bottom-width: ${BORDER_WIDTH_THICK}px;
+    overflow: hidden;
   `}
 
   .line-numbers {

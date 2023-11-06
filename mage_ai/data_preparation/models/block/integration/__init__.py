@@ -439,10 +439,10 @@ class DestinationBlock(IntegrationBlock):
 
         return merge_dict(
             super().to_dict(
-                include_content,
-                include_outputs,
-                sample_count,
-                check_if_file_exists,
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+                check_if_file_exists=check_if_file_exists,
             ),
             data,
         )

@@ -26,6 +26,7 @@ class DataSource(str, Enum):
     MYSQL = 'mysql'
     MSSQL = 'sqlserver'
     OPENSEARCH = 'opensearch'
+    PINOT = 'pinot'
     POSTGRES = 'postgres'
     REDSHIFT = 'redshift'
     S3 = 's3'

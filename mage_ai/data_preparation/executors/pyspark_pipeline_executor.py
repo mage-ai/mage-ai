@@ -66,6 +66,7 @@ class PySparkPipelineExecutor(PipelineExecutor):
     def submit_spark_job(self):
         step = {
             'name': f'run_mage_pipeline_{self.pipeline.uuid}',
+            'jars': self.emr_config.spark_jars,
             'script_uri': self.spark_script_path,
             'script_args': [],
         }
