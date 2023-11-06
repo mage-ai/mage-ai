@@ -43,7 +43,7 @@ setuptools.setup(
         'ai': [
             'astor>=0.8.1',
             'langchain>=0.0.222',
-            'openai>=0.27.8',
+            'openai>=0.27.8, <1.0.0',
         ],
         'azure': [
             'azure-eventhub==5.11.2',
@@ -155,7 +155,7 @@ setuptools.setup(
             'kubernetes==25.3.0',
             'langchain>=0.0.222',
             'ldap3==2.9.1',
-            'openai>=0.27.8',
+            'openai>=0.27.8, <1.0.0',
             'opensearch-py==2.0.0',
             'oracledb==1.3.1',
             'pika==1.3.1',
