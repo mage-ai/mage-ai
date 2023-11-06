@@ -245,6 +245,9 @@ class BlockResource(GenericResource):
                     arr = block_dict.get(key) or []
                     for block_uuid_base in arr:
                         block = pipeline.get_block(block_uuid_base)
+                        if block is None:
+                            # If the block is a Widget, `get_block` will return None
+                            continue
                         if block.replicated_block and not is_dynamic_block_child(block):
                             blocks_arr = block_dicts_by_uuid[block_uuid].get(key) or []
                             block_dicts_by_uuid[block_uuid][key] = \
