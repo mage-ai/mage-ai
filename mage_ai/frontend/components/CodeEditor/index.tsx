@@ -366,7 +366,7 @@ function CodeEditor({
           fontLigatures: true,
           fontSize,
           hideCursorInOverviewRuler: true,
-          lineNumbers: showLineNumbers,
+          lineNumbers: showLineNumbers ? 'on' : 'off',
           minimap: {
             enabled: false,
           },
