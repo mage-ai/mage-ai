@@ -61,10 +61,8 @@ import {
 } from './constants';
 import {
   KEY_CODES_SYSTEM,
-  KEY_CODE_A,
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
-  KEY_CODE_B,
   KEY_CODE_CONTROL,
   KEY_CODE_D,
   KEY_CODE_ENTER,
@@ -84,7 +82,6 @@ import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/A
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { buildBlockRefKey } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
-import { isInputElement } from '@context/shared/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
@@ -335,8 +332,9 @@ function PipelineDetail({
   }), {}), [runningBlocks]);
 
   const [cursorHeight1, setCursorHeight1] = useState<number>(null);
-  const column1ScrollMemo = useMemo(() => (
-    <ColumnScroller
+  const column1ScrollMemo = useMemo(() => {
+    return (
+      <ColumnScroller
         blocks={blocksFiltered}
         columnIndex={0}
         columns={2}
@@ -349,7 +347,8 @@ function PipelineDetail({
         scrollTogether={scrollTogether}
         setCursorHeight={setCursorHeight1}
       />
-    ), [
+    );
+  }, [
     blockRefs,
     blocksFiltered,
     cursorHeight1,
@@ -359,8 +358,9 @@ function PipelineDetail({
   ]);
 
   const [cursorHeight2, setCursorHeight2] = useState<number>(null);
-  const column2ScrollMemo = useMemo(() => (
-    <ColumnScroller
+  const column2ScrollMemo = useMemo(() => {
+    return (
+      <ColumnScroller
         blocks={blocksFiltered}
         columnIndex={1}
         columns={2}
@@ -374,7 +374,8 @@ function PipelineDetail({
         scrollTogether={scrollTogether}
         setCursorHeight={setCursorHeight2}
       />
-    ), [
+    );
+  }, [
     blockOutputRefs,
     blocksFiltered,
     cursorHeight2,
@@ -384,12 +385,13 @@ function PipelineDetail({
   ]);
 
   const [cursorHeight3, setCursorHeight3] = useState<number>(null);
-  const column3ScrollMemo = useMemo(() => (
-    <ColumnScroller
+  const column3ScrollMemo = useMemo(() => {
+    return (
+      <ColumnScroller
         blocks={blocksFiltered}
+        disabled={!scrollTogether}
         columnIndex={2}
         columns={1}
-        disabled={!scrollTogether}
         eventNameRefsMapping={{
           [CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED]: blockOutputRefs,
           [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
@@ -400,7 +402,8 @@ function PipelineDetail({
         scrollTogether={scrollTogether}
         setCursorHeight={setCursorHeight3}
       />
-    ), [
+    );
+  }, [
     blockOutputRefs,
     blockRefs,
     blocksFiltered,
@@ -430,60 +433,6 @@ function PipelineDetail({
     useMemo(() => dataBlockTemplates?.block_templates || [], [
       dataBlockTemplates,
     ]);
-
-  const addNewBlock = useCallback((newBlock: BlockRequestPayloadType, newBlockIndex?: number) => {
-      const block = blocks[blocks.length - 1];
-
-      let content = null;
-      let configuration = newBlock.configuration || {};
-      const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
-
-      if (block) {
-        if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
-          && BlockTypeEnum.SCRATCHPAD === newBlock.type
-        ) {
-          content = `from mage_ai.data_preparation.variable_manager import get_variable
-
-
-df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
-`;
-        }
-
-        if (BlockLanguageEnum.SQL === block.language) {
-          configuration = {
-            ...selectKeys(block.configuration, [
-              CONFIG_KEY_DATA_PROVIDER,
-              CONFIG_KEY_DATA_PROVIDER_DATABASE,
-              CONFIG_KEY_DATA_PROVIDER_PROFILE,
-              CONFIG_KEY_DATA_PROVIDER_SCHEMA,
-              CONFIG_KEY_EXPORT_WRITE_POLICY,
-            ]),
-            ...configuration,
-          };
-        }
-      }
-
-      if (BlockLanguageEnum.SQL === newBlock.language) {
-        content = addSqlBlockNote(content);
-      }
-      content = addScratchpadNote(newBlock, content);
-
-      const blockIndex = (newBlockIndex !== null) ? newBlockIndex : numberOfBlocks;
-      addNewBlockAtIndex({
-        ...newBlock,
-        configuration,
-        content,
-        upstream_blocks: upstreamBlocks,
-      }, blockIndex, setSelectedBlock);
-      setTextareaFocused(true);
-  }, [
-    addNewBlockAtIndex,
-    blocks,
-    numberOfBlocks,
-    pipeline,
-    setSelectedBlock,
-    setTextareaFocused,
-  ]);
 
   const uuidKeyboard = 'PipelineDetail/index';
   const {
@@ -516,20 +465,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       ) {
         event.preventDefault();
         savePipelineContent();
-      } else if (onlyKeysPresent([KEY_CODE_A], keyMapping) || onlyKeysPresent([KEY_CODE_B], keyMapping)) {
-        if (selectedBlock && !event.repeat && !isInputElement(event)) {
-          const selectedBlockIndex =
-            blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
-            if (selectedBlockIndex !== -1) {
-              // Add new scratchpad block above (A) or below (B) the current selected block
-              const newBlockIndex = (onlyKeysPresent([KEY_CODE_A], keyMapping)) 
-                ? selectedBlockIndex 
-                : selectedBlockIndex + 1;
-              addNewBlock({
-                type: BlockTypeEnum.SCRATCHPAD,
-              }, newBlockIndex);
-            }
-        }
       } else if (textareaFocused) {
         if (keyMapping[KEY_CODE_ESCAPE]) {
           setTextareaFocused(false);
@@ -729,7 +664,51 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   const addNewBlocksMemo = useMemo(() => pipeline && (
     <>
       <AddNewBlocks
-        addNewBlock={addNewBlock}
+        addNewBlock={(newBlock: BlockRequestPayloadType) => {
+          const block = blocks[blocks.length - 1];
+
+          let content = null;
+          let configuration = newBlock.configuration || {};
+          const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+
+          if (block) {
+            if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+              && BlockTypeEnum.SCRATCHPAD === newBlock.type
+            ) {
+              content = `from mage_ai.data_preparation.variable_manager import get_variable
+
+
+  df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
+  `;
+            }
+
+            if (BlockLanguageEnum.SQL === block.language) {
+              configuration = {
+                ...selectKeys(block.configuration, [
+                  CONFIG_KEY_DATA_PROVIDER,
+                  CONFIG_KEY_DATA_PROVIDER_DATABASE,
+                  CONFIG_KEY_DATA_PROVIDER_PROFILE,
+                  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+                  CONFIG_KEY_EXPORT_WRITE_POLICY,
+                ]),
+                ...configuration,
+              };
+            }
+          }
+
+          if (BlockLanguageEnum.SQL === newBlock.language) {
+            content = addSqlBlockNote(content);
+          }
+          content = addScratchpadNote(newBlock, content);
+
+          addNewBlockAtIndex({
+            ...newBlock,
+            configuration,
+            content,
+            upstream_blocks: upstreamBlocks,
+          }, numberOfBlocks, setSelectedBlock);
+          setTextareaFocused(true);
+        }}
         blockTemplates={blockTemplates}
         focusedAddNewBlockSearch={focusedAddNewBlockSearch}
         hideCustom={isIntegration || isStreaming}
@@ -771,19 +750,24 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       )}
     </>
   ), [
-    addNewBlock,
+    addNewBlockAtIndex,
     blockTemplates,
+    blocks,
     focusedAddNewBlockSearch,
     isIntegration,
     isStreaming,
+    numberOfBlocks,
     onClickAddSingleDBTModel,
     pipeline,
     project,
     searchTextInputRef,
     setFocusedAddNewBlockSearch,
+    setSelectedBlock,
+    setTextareaFocused,
     showBrowseTemplates,
     showConfigureProjectModal,
     showGlobalDataProducts,
+    sideBySideEnabled,
     useV2AddNewBlock,
   ]);
 
