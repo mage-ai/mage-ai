@@ -888,6 +888,7 @@ class Pipeline:
                 key, blocks_arr, mapping = tup
                 widget = key == 'widgets'
                 should_save_async = False
+                cache_block_action_object = None
 
                 for block_data in blocks_arr:
                     if 'uuid' not in block_data:
@@ -901,9 +902,16 @@ class Pipeline:
                             BlockActionObjectCache,
                         )
 
-                        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
-                        await block.update_content_async(block_data['content'], widget=widget)
-                        cache_block_action_object.update_block(block)
+                        old_block_content = await block.content_async()
+                        if block_data['content'] != old_block_content:
+                            if cache_block_action_object is None:
+                                cache_block_action_object = \
+                                    await BlockActionObjectCache.initialize_cache()
+
+                            await block.update_content_async(block_data['content'], widget=widget)
+
+                            cache_block_action_object.update_block(block)
+
                     if 'callback_content' in block_data \
                             and block.callback_block:
                         await block.callback_block.update_content_async(
@@ -968,7 +976,9 @@ class Pipeline:
                             BlockActionObjectCache,
                         )
 
-                        cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+                        if cache_block_action_object is None:
+                            cache_block_action_object = \
+                                await BlockActionObjectCache.initialize_cache()
                         cache_block_action_object.update_block(block, remove=True)
                         block.update(
                             extract(block_data, ['name']),
