@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
-
-from mage_ai.orchestration.db.models.oauth import Role
+from typing import Dict
 
 
 class BaseProvider(ABC):
