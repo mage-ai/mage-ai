@@ -84,6 +84,7 @@ type CodeOutputProps = {
   messagesAll?: KernelOutputType[];
   onClickSelectBlock?: () => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  outputRowNormalPadding?: boolean;
   pipeline?: PipelineType;
   runCount?: number;
   runEndTime?: number;
@@ -133,6 +134,7 @@ function CodeOutput({
   messagesAll,
   onClickSelectBlock,
   openSidekickView,
+  outputRowNormalPadding,
   pipeline,
   runCount,
   runEndTime,
@@ -419,7 +421,7 @@ function CodeOutput({
           contained,
           first: idx === 0 && idxInner === 0,
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
-          normalPadding: sideBySideEnabled,
+          normalPadding: outputRowNormalPadding, sideBySideEnabled,
         };
 
         const borderTop = idx >= 1;
@@ -576,6 +578,7 @@ function CodeOutput({
     isDBT,
     isInProgress,
     mainContainerWidth,
+    outputRowNormalPadding,
     pipeline,
     progressBar,
     renderMessagesRaw,

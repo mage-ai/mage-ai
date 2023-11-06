@@ -440,11 +440,14 @@ function DataIntegrationModal({
           // If changing from a main tab to a stream detail tab and the subTabUse isn’t
           // a subtab that exists in the stream detail tab, set a default subtab.
           // @ts-ignore
-          if (subTabUse && !subTabsForStreamDetail?.includes(subTabUse)) {
+          if (subTabUse
+            && !subTabsForStreamDetail?.includes(subTabUse)
+            && SubTabEnum.STREAM_CONFLICTS !== subTabUse
+          ) {
             subTabUse = subTabsForStreamDetail?.[0]?.uuid;
           }
-
         }
+
         if (val1 !== prev2) {
           setHighlightedColumnsMapping({});
         }
