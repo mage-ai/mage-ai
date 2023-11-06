@@ -40,6 +40,7 @@ type DataIntegrationBlockProps = {
   blocksMapping?: {
     [blockUUID: string]: BlockType;
   };
+  children?: any;
   codeEditor?: any;
   callbackEl?: any;
   hasElementsBelow?: boolean;
@@ -58,6 +59,7 @@ function DataIntegrationBlock({
   block,
   blockContent,
   blocksMapping,
+  children,
   codeEditor,
   callbackEl,
   hasElementsBelow,

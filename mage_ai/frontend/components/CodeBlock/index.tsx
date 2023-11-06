@@ -96,6 +96,7 @@ import {
   getColorsForBlockType,
 } from './index.style';
 import { BlockInteractionType } from '@interfaces/PipelineInteractionType';
+import { ContainerStyle as CodeOutputContainerStyle } from './CodeOutput/index.style';
 import {
   CONFIG_KEY_DATA_PROVIDER,
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
@@ -1378,6 +1379,41 @@ function CodeBlock({
     selectedTab,
   ]);
 
+  const currentTimeTrackerMemo = useMemo(() => {
+    if (isInProgress && currentTime && currentTime > runStartTime) {
+      const el = (
+        <Text muted>
+          {`${Math.round((currentTime - runStartTime) / 1000)}`}s
+        </Text>
+      );
+
+      if (isDataIntegration && BlockLanguageEnum.PYTHON !== blockLanguage) {
+        return (
+          <CodeOutputContainerStyle>
+            <Spacing p={1}>
+              {el}
+            </Spacing>
+          </CodeOutputContainerStyle>
+        );
+      }
+
+      return (
+        <TimeTrackerStyle>
+          {el}
+        </TimeTrackerStyle>
+      );
+    }
+
+    return null;
+  },
+  [
+    blockLanguage,
+    currentTime,
+    isDataIntegration,
+    isInProgress,
+    runStartTime,
+  ]);
+
   const codeOutputEl = useMemo(() => {
     let busyEl;
     if (ExecutionStateEnum.QUEUED === executionState) {
@@ -1411,6 +1447,7 @@ function CodeBlock({
         messagesAll={messages}
         onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
         openSidekickView={openSidekickView}
+        outputRowNormalPadding={sideBySideEnabled || isDataIntegration}
         pipeline={pipeline}
         ref={blockOutputRef}
         runCount={runCount}
@@ -1499,8 +1536,10 @@ function CodeBlock({
     borderColorShareProps,
     buttonTabs,
     color,
+    dispatchEventSyncColumnPositions,
     executionState,
     hasOutput,
+    isDataIntegration,
     isInProgress,
     mainContainerWidth,
     messages,
@@ -1524,7 +1563,6 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
-    dispatchEventSyncColumnPositions,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
@@ -3089,13 +3127,9 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   </Spacing>
                 )}
 
-                {isInProgress && currentTime && currentTime > runStartTime && (
-                  <TimeTrackerStyle>
-                    <Text muted>
-                      {`${Math.round((currentTime - runStartTime) / 1000)}`}s
-                    </Text>
-                  </TimeTrackerStyle>
-                )}
+                {!(isDataIntegration && BlockLanguageEnum.PYTHON !== blockLanguage) && currentTimeTrackerMemo}
+
+                {(isDataIntegration && BlockLanguageEnum.PYTHON !== blockLanguage) && currentTimeTrackerMemo}
 
                 {blockExtras}
               </CodeContainerStyle>
