@@ -107,7 +107,7 @@ class ApiResourceDownloadHandler(BaseHandler):
         except (jwt.exceptions.InvalidSignatureError, jwt.exceptions.DecodeError):
             self.set_status(400)
             self.write('Download token is invalid.')
-        except Exception as e:
+        except ValueError as e:
             self.set_status(400)
             self.write(f'Attepmt at fetching file outside of project folder: {e}')
 
@@ -132,7 +132,7 @@ class ApiResourceDownloadHandler(BaseHandler):
 
         # trying to access files outside of the project folder
         if common_ground != self.abs_repo_path:
-            raise Exception(abs_path)
+            raise ValueError(abs_path)
 
         return (os.path.basename(abs_path)
                 if self.ignore_folder_structure
