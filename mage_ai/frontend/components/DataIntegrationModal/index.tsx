@@ -441,6 +441,7 @@ function DataIntegrationModal({
           // a subtab that exists in the stream detail tab, set a default subtab.
           // @ts-ignore
           if (subTabUse
+            // @ts-ignore
             && !subTabsForStreamDetail?.includes(subTabUse)
             && SubTabEnum.STREAM_CONFLICTS !== subTabUse
           ) {
