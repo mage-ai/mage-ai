@@ -44,6 +44,8 @@ case $key in
     ;;
     --huggingface_inference_api_token)
     HUGGINGFACE_INFERENCE_API_TOKEN="$3"
+    --enable_prometheus)
+    ENABLE_PROMETHEUS=1
     shift # past argument
     shift # past value
     ;;
@@ -127,6 +129,7 @@ export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
 export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
+export ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
 
 export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
