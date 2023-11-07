@@ -80,6 +80,6 @@ class OktaProvider(SsoProvider, OauthProvider):
                 userinfo_resp = await response.json()
 
         return dict(
-            username=userinfo_resp.get('sub'),
             email=userinfo_resp.get('email'),
+            username=userinfo_resp.get('sub'),
         )
