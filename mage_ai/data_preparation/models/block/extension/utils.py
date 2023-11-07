@@ -11,9 +11,9 @@ def handle_run_tests(
     block,
     dynamic_block_uuid: str = None,
     execution_partition: str = None,
-    global_vars: Dict = {},
+    global_vars: Dict = None,
     logger: Logger = None,
-    logging_tags: Dict = {},
+    logging_tags: Dict = None,
 ):
     if not block.pipeline:
         return
