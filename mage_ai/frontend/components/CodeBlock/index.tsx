@@ -377,7 +377,6 @@ function CodeBlock({
     featureUUIDs,
     sparkEnabled: sparkEnabledInit,
   } = useProject();
-  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
 
   const [mounted, setMounted] = useState(false);
   const dispatchEventChanged = useCallback(() => {

@@ -493,10 +493,10 @@ class Block(DataIntegrationMixin, SparkBlock):
                 self._outputs = self.get_outputs()
         return self._outputs
 
-    async def outputs_async(self) -> List:
+    async def __outputs_async(self) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = await self.get_outputs_async()
+                self._outputs = await self.__get_outputs_async()
         return self._outputs
 
     @property
@@ -1795,7 +1795,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    async def get_outputs_async(
+    async def __get_outputs_async(
         self,
         execution_partition: str = None,
         include_print_outputs: bool = True,
@@ -1803,9 +1803,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_type: VariableType = None,
         block_uuid: str = None,
     ) -> List[Dict]:
-        # TODO (tommy dang): remove this
-        return []
-
         if self.pipeline is None:
             return
 
@@ -2005,6 +2002,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
+        include_outputs_spark: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
         **kwargs,
@@ -2020,20 +2018,26 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['catalog'] = self.get_catalog_from_file()
 
         if include_outputs:
-            data['outputs'] = self.outputs
+            include_outputs_use = include_outputs
+            if self.is_using_spark() and self.compute_management_enabled():
+                include_outputs_use = include_outputs_use and include_outputs_spark
 
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+            if include_outputs_use:
+                data['outputs'] = self.outputs
 
-                file_path = self.file.file_path
-                if not os.path.isfile(file_path):
-                    data['error'] = dict(
-                        error='No such file or directory',
-                        message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
-                    )
+                if check_if_file_exists and not \
+                        self.replicated_block and \
+                        BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
+                    file_path = self.file.file_path
+                    if not os.path.isfile(file_path):
+                        data['error'] = dict(
+                            error='No such file or directory',
+                            message='You may have moved it or changed its filename. '
+                            'Delete the current block to remove it from the pipeline '
+                            'or write code and save the pipeline to create a new file at '
+                            f'{file_path}.',
+                        )
 
         return data
 
@@ -2047,6 +2051,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_conditional_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
+        include_outputs_spark: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
         **kwargs,
@@ -2065,20 +2070,26 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
-            data['outputs'] = await self.outputs_async()
+            include_outputs_use = include_outputs
+            if self.is_using_spark() and self.compute_management_enabled():
+                include_outputs_use = include_outputs_use and include_outputs_spark
 
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+            if include_outputs_use:
+                data['outputs'] = await self.__outputs_async()
 
-                file_path = self.file.file_path
-                if not os.path.isfile(file_path):
-                    data['error'] = dict(
-                        error='No such file or directory',
-                        message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
-                    )
+                if check_if_file_exists and not \
+                        self.replicated_block and \
+                        BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
+                    file_path = self.file.file_path
+                    if not os.path.isfile(file_path):
+                        data['error'] = dict(
+                            error='No such file or directory',
+                            message='You may have moved it or changed its filename. '
+                            'Delete the current block to remove it from the pipeline '
+                            'or write code and save the pipeline to create a new file at '
+                            f'{file_path}.',
+                        )
 
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()
