@@ -6,13 +6,13 @@ import aiohttp
 from aiohttp import BasicAuth
 
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_OKTA
-from mage_ai.authentication.providers.base import BaseProvider
 from mage_ai.authentication.providers.oauth import OauthProvider
+from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.settings.sso import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN_URL
 
 
-class OktaProvider(BaseProvider, OauthProvider):
+class OktaProvider(SsoProvider, OauthProvider):
     provider = OAUTH_PROVIDER_OKTA
 
     def __init__(self):
@@ -22,6 +22,7 @@ class OktaProvider(BaseProvider, OauthProvider):
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Optional[Dict]:
         if OKTA_CLIENT_ID:
+            print('redirect uri:', redirect_uri)
             base_url = get_base_url(redirect_uri)
             redirect_uri_query = dict(
                 provider=self.provider,

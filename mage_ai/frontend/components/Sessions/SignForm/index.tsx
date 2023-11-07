@@ -5,8 +5,10 @@ import { useRouter } from 'next/router';
 import ApiErrorType from '@interfaces/ApiErrorType';
 import AuthToken from '@api/utils/AuthToken';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GoogleSignIn from '../GoogleSignIn';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import OktaSignIn from '../OktaSignIn';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -23,10 +25,8 @@ import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl, queryString } from '@utils/url';
 import { setUser } from '@utils/session';
-import { MicrosoftIcon, GoogleIcon } from '@oracle/icons';
+import { MicrosoftIcon } from '@oracle/icons';
 import { OauthProviderEnum } from '@interfaces/OauthType';
-import GoogleSignIn from '../GoogleSignIn';
-import OktaSignIn from '../OktaSignIn';
 
 const KEY_EMAIL = 'email';
 const KEY_PASSWORD = 'password';
@@ -94,11 +94,6 @@ function SignForm({
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
   });
   const adOauthUrl = useMemo(() => dataOauthAD?.oauth?.url, [dataOauthAD]);
-
-  const { data: dataOauthGoogle } = api.oauths.detail(OauthProviderEnum.GOOGLE, {
-    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
-  });
-  const googleOauthUrl = useMemo(() => dataOauthGoogle?.oauth?.url, [dataOauthGoogle]);
 
   const { 
     access_token: accessTokenFromURL,

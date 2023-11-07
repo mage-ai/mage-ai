@@ -1,18 +1,17 @@
 import urllib.parse
 import uuid
 from typing import Dict
-from urllib.parse import urlparse
 
 import aiohttp
 
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GOOGLE
-from mage_ai.authentication.providers.base import BaseProvider
 from mage_ai.authentication.providers.oauth import OauthProvider
+from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.settings.sso import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
 
-class GoogleProvider(BaseProvider, OauthProvider):
+class GoogleProvider(SsoProvider, OauthProvider):
     provider = OAUTH_PROVIDER_GOOGLE
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
@@ -59,8 +58,6 @@ class GoogleProvider(BaseProvider, OauthProvider):
             ) as response:
                 data = await response.json()
 
-        print('data:', data)
-
         return data
 
     async def get_user_info(self, access_token: str = None, **kwargs) -> Dict:
@@ -71,8 +68,6 @@ class GoogleProvider(BaseProvider, OauthProvider):
                 timeout=10,
             ) as response:
                 userinfo_resp = await response.json()
-
-        print('userinfo_resp:', userinfo_resp)
 
         return dict(
             username=userinfo_resp.get('email'),

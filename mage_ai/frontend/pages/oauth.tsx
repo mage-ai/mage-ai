@@ -4,9 +4,8 @@ import { useRouter } from 'next/router';
 
 import BasePage from '@components/BasePage';
 import api from '@api';
-import { LOCAL_STORAGE_KEY_OAUTH_STATE, get, remove } from '@storage/localStorage';
-import { queryFromUrl, queryString } from '@utils/url';
-import PublicRoute from '@components/shared/PublicRoute';
+import { get, remove } from '@storage/localStorage';
+import { queryFromUrl } from '@utils/url';
 
 function OauthPage() {
   const router = useRouter();
@@ -27,14 +26,11 @@ function OauthPage() {
   const { data: dataOauth } = api.oauths.detail(provider, newQuery);
   const oauthUrl = useMemo(() => dataOauth?.oauth?.url, [dataOauth]);
 
-  console.log('oauth url 2:', oauthUrl);
-
   useEffect(() => {
     if (oauthUrl) {
       if (localState) {
-        // console.log('oauth url:', oauthUrl);
-        // remove(state);
-        // router.push(oauthUrl);
+        remove(state);
+        router.push(oauthUrl);
       } else if (!localState) {
         toast.error(
           'Oauth failed due to state not matching!',
@@ -57,4 +53,4 @@ function OauthPage() {
 
 OauthPage.getInitialProps = async () => ({});
 
-export default PublicRoute(OauthPage);
+export default OauthPage;

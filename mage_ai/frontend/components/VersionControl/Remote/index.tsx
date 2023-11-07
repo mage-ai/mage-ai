@@ -36,7 +36,6 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
-import { LOCAL_STORAGE_KEY_OAUTH_STATE, set } from '@storage/localStorage';
 import { OauthProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
@@ -48,6 +47,7 @@ import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 type RemoteProps = {
   actionRemoteName: string;
@@ -425,7 +425,6 @@ function Remote({
                   const q = queryFromUrl(url);
                   const state = q.state;
                   set(state, oauth?.redirect_query_params || {});
-                  console.log('oauth url 1:', oauth?.url);
                   router.push(url);
                 }}
                 primary

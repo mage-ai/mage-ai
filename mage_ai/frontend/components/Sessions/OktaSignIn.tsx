@@ -1,13 +1,11 @@
 import React, { useMemo } from 'react';
+import { useRouter } from 'next/router';
 
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import api from '@api';
 import { OauthProviderEnum } from '@interfaces/OauthType';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import { GoogleIcon } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { useRouter } from 'next/router';
-import { set } from '@storage/localStorage';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 
 function OktaSignIn() {
@@ -20,13 +18,10 @@ function OktaSignIn() {
     redirect_query_params: redirectQueryParams = {},
   } = useMemo(() => data?.oauth || {}, [data]);
 
-  console.log('oauth url', oauthUrl);
-
   return (
     <>
       {oauthUrl && (
         <KeyboardShortcutButton
-          beforeElement={<GoogleIcon size={UNIT * 2} />}
           bold
           inline
           onClick={() => {

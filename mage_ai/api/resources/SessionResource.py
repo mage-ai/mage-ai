@@ -5,14 +5,9 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.oauth.active_directory import get_user_info
-from mage_ai.authentication.oauth.constants import (
-    OAUTH_PROVIDER_ACTIVE_DIRECTORY,
-    OAUTH_PROVIDER_GOOGLE,
-    OAUTH_PROVIDER_OKTA,
-)
+from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_ACTIVE_DIRECTORY
 from mage_ai.authentication.passwords import verify_password
-from mage_ai.authentication.providers.google import GoogleProvider
-from mage_ai.authentication.providers.okta import OktaProvider
+from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import AUTHENTICATION_MODE, LDAP_DEFAULT_ACCESS
@@ -34,17 +29,16 @@ class SessionResource(BaseResource):
         # Oauth sign in
         if token and provider:
             roles = []
+            provider_class = NAME_TO_PROVIDER.get(provider)
             provider_instance = None
-            if provider == OAUTH_PROVIDER_OKTA:
-                provider_instance = OktaProvider()
-            elif provider == OAUTH_PROVIDER_GOOGLE:
-                provider_instance = GoogleProvider()
+            if provider_class is not None:
+                provider_instance = provider_class()
 
             if provider == OAUTH_PROVIDER_ACTIVE_DIRECTORY:
                 user_info = get_user_info(token)
                 username = user_info.get('userPrincipalName')
                 email = user_info.get('userPrincipalName')
-            elif provider is not None:
+            elif provider_instance is not None:
                 user_info = await provider_instance.get_user_info(access_token=token)
                 username = user_info.get('username')
                 email = user_info.get('email')

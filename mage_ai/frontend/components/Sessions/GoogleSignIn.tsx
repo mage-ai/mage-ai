@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
-
-import api from '@api';
-import { OauthProviderEnum } from '@interfaces/OauthType';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import { GoogleIcon } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { useRouter } from 'next/router';
-import { set } from '@storage/localStorage';
+
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import api from '@api';
+import { GoogleIcon } from '@oracle/icons';
+import { OauthProviderEnum } from '@interfaces/OauthType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 
 function GoogleSignIn() {
