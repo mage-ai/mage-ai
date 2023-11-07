@@ -450,7 +450,6 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/updating-mage",
         "development/ai/overview",
         {
           "group": "Visualizations",
