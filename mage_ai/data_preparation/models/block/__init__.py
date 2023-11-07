@@ -1464,7 +1464,8 @@ class Block(DataIntegrationMixin, SparkBlock):
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
-        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
+        track_spark = from_notebook and self.is_using_spark() and self.compute_management_enabled()
+        if track_spark:
             self.clear_spark_jobs_cache()
             self.set_spark_job_execution_start()
 
@@ -1473,7 +1474,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         else:
             output = block_function_updated(*input_vars)
 
-        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
+        if track_spark:
             self.set_spark_job_execution_end()
 
         return output

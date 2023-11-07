@@ -1429,14 +1429,17 @@ function CodeBlock({
           underlineStyle
         />
       );
-    } else if (sparkEnabled) {
+    } else if (sparkEnabled && ![
+        BlockTypeEnum.CALLBACK,
+        BlockTypeEnum.CONDITIONAL,
+        BlockTypeEnum.EXTENSION,
+      ].includes(blockType)) {
       buttonEl = (
         <ButtonTabs
           onClickTab={(tab: TabType) => {
             setSelectedTab(tab);
           }}
           selectedTabUUID={selectedTab?.uuid}
-          small
           tabs={TABS_SPARK(block)}
           underlineColor={color}
           underlineStyle
@@ -1455,6 +1458,7 @@ function CodeBlock({
     );
   }, [
     block,
+    blockType,
     color,
     fetchBlock,
     isDBT,

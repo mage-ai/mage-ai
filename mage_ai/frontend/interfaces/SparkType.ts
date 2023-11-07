@@ -5,6 +5,7 @@ export enum SparkJobStatusEnum {
 
 export enum SparkStageStatusEnum {
   COMPLETE = 'COMPLETE',
+  SKIPPED = 'SKIPPED',
 }
 
 export enum SparkTaskLocalityEnum {
