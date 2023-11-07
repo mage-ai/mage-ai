@@ -1,9 +1,10 @@
+from typing import Dict, List
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.extensions.constants import (
-    EXTENSION_UUIDS,
     EXTENSION_UUID_GREAT_EXPECTATIONS,
+    EXTENSION_UUIDS,
 )
-from typing import Dict, List
 
 
 class ExtensionBlock(Block):
@@ -32,13 +33,15 @@ class ExtensionBlock(Block):
             def inner(function):
                 def func(*args, **kwargs):
                     if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
-                        from mage_ai.data_preparation.models.block.extension.great_expectations \
-                            import GreatExpectations
+                        from mage_ai.data_preparation.models.block import extension
 
-                        ge = GreatExpectations(self, expectations=expectations)
+                        ge = extension.great_expectations.GreatExpectations(
+                            self,
+                            expectations=expectations,
+                        )
                         validators_and_uuids = ge.build_validators(*args, **kwargs)
                         validators = [t[0] for t in validators_and_uuids]
-                        function(*validators)
+                        function(*validators, **kwargs)
 
                         validation_results = []
                         for validator, uuid in validators_and_uuids:
