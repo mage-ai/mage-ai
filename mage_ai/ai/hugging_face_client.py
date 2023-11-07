@@ -45,7 +45,10 @@ class HuggingFaceClient(AIClient):
         response = requests.post(self.api, headers=headers, data=data)
         response_json = response.json()
         if 'error' in response_json:
-            print(f'Error from hugging face endpoint: {response_json["error"]}')
+            if response_json['error'] == 'Bad Gateway':
+                raise Exception('Error hugging face endpoint Bad Gateway. \
+                                Please start hugging face inference endpoint.')
+            print(f'Unexpected error from hugging face: {response_json["error"]}')
             return ""
         generated_text = response.json()[0]['generated_text'].lstrip('\n')
         if is_json_response:
