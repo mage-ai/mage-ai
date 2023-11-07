@@ -24,6 +24,11 @@ REPO_CONFIG_FILE = 'metadata.yaml'
 VARIABLE_DIR = '.variables'
 
 
+class AIMode(str, Enum):
+    OPEN_AI = 'open_ai'
+    HUGGING_FACE = 'hugging_face'
+
+
 class BlockLanguage(str, Enum):
     MARKDOWN = 'markdown'
     PYTHON = 'python'

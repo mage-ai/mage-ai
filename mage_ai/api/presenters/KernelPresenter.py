@@ -33,9 +33,8 @@ class KernelPresenter(BasePresenter):
                     # depending on configured KernelManager class
                     res = await res
                 kernel_response['usage'] = res.get('content')
-                client.stop_channels()
+                control_channel.stop()
             except Exception:
-                if client and client.is_alive():
-                    client.stop_channels()
+                pass
 
         return kernel_response

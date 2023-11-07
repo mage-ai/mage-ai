@@ -63,7 +63,7 @@ class AIFunctionTest(TestCase):
 
     def test_async_generate_pipeline_from_description(self):
         mock_customized_code = self.__set_expected_future_result({"action_code": "filter"})
-        self.wizard._LLMPipelineWizard__async_llm_call = MagicMock(
+        self.wizard.client.inference_with_prompt = MagicMock(
             side_effect=[self.__set_expected_future_result(EXPECTED_RESPONSE_FOR_LLM_SPLIT),
                          mock_customized_code,
                          mock_customized_code,
@@ -95,7 +95,7 @@ class AIFunctionTest(TestCase):
             return_value=self.__set_expected_future_result(MOCK_TRANSFORMER_CLASSIFICATION))
         upstream_blocks = [1, 2, 3]
         customized_code = {'code': 'Test code'}
-        self.wizard._LLMPipelineWizard__async_llm_call = MagicMock(
+        self.wizard.client.inference_with_prompt = MagicMock(
             return_value=self.__set_expected_future_result(customized_code))
         block = asyncio.run(self.wizard.async_generate_block_with_description(
             'test block generation', upstream_blocks))
@@ -107,7 +107,7 @@ class AIFunctionTest(TestCase):
         comment_line = 'Return the sum of 1 + 1'
         function_name = 'calculator_function'
         function_comments = {f'{function_name}': comment_line}
-        self.wizard._LLMPipelineWizard__async_llm_call = MagicMock(
+        self.wizard.client.inference_with_prompt = MagicMock(
             return_value=self.__set_expected_future_result(function_comments))
         block = asyncio.run(self.wizard.async_generate_comment_for_block(
             f'def {function_name}(self): \n    return 1+1'))
@@ -115,7 +115,7 @@ class AIFunctionTest(TestCase):
 
     def test_async_generate_doc_for_block(self):
         expected_value = 'documentation'
-        self.wizard._LLMPipelineWizard__async_llm_call = MagicMock(
+        self.wizard.client.inference_with_prompt = MagicMock(
             return_value=self.__set_expected_future_result(expected_value))
 
         block_doc = asyncio.run(self.wizard.async_generate_doc_for_block(
@@ -124,7 +124,7 @@ class AIFunctionTest(TestCase):
 
     def test_async_generate_doc_for_pipeline(self):
         expected_value = 'documentation'
-        self.wizard._LLMPipelineWizard__async_llm_call = MagicMock(
+        self.wizard.client.inference_with_prompt = MagicMock(
             return_value=self.__set_expected_future_result(expected_value))
 
         doc_dict = asyncio.run(self.wizard.async_generate_doc_for_pipeline(
