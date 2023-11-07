@@ -1,4 +1,5 @@
-from urllib.parse import urlparse, unquote
+from urllib.parse import unquote, urlparse
+
 from mage_ai.settings import ROUTES_BASE_PATH
 
 
