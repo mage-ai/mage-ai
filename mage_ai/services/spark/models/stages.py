@@ -13,6 +13,7 @@ class Locality(str, Enum):
 
 class StageStatus(str, Enum):
     COMPLETE = 'COMPLETE'
+    SKIPPED = 'SKIPPED'
 
 
 class TaskStatus(str, Enum):

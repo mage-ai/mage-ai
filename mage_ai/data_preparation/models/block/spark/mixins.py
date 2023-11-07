@@ -3,6 +3,8 @@ import os
 from datetime import datetime
 from typing import List
 
+import dateutil.parser
+
 from mage_ai.data_preparation.models.block.spark.constants import (
     SPARK_DIR_NAME,
     SPARK_JOBS_FILENAME,
@@ -26,9 +28,9 @@ class SparkBlock:
         return get_compute_service()
 
     def jobs_during_execution(self) -> List[Job]:
-        self.__load_spark_jobs_during_execution()
+        self.__load_spark_job_submission_timestamps()
 
-        if self.spark_job_execution_start:
+        if self.execution_timestamp_start:
             jobs = self.__get_jobs()
 
             def _filter(
@@ -36,7 +38,13 @@ class SparkBlock:
                 execution_timestamp_start: float = self.execution_timestamp_start,
                 execution_timestamp_end: float = self.execution_timestamp_end,
             ) -> bool:
-                submission_timestamp = job.submission_time.timestamp()
+                if not job.submission_time:
+                    return False
+
+                if isinstance(job.submission_time, str):
+                    submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
+                elif isinstance(job.submission_time, float) or isinstance(job.submission_time, int):
+                    submission_timestamp = datetime.fromtimestamp(job.submission_time)
 
                 return execution_timestamp_start and \
                     execution_timestamp_end and \
@@ -52,7 +60,7 @@ class SparkBlock:
 
     def stages_during_execution(self, jobs: List[Job]):
         if not jobs:
-            self.__load_spark_jobs_during_execution()
+            self.__load_spark_job_submission_timestamps()
 
         def _filter(
             stage: Stage,
@@ -66,7 +74,7 @@ class SparkBlock:
 
     def sqls_during_execution(self, jobs: List[Job]):
         if not jobs:
-            self.__load_spark_jobs_during_execution()
+            self.__load_spark_job_submission_timestamps()
 
         def _filter(
             sql: Sql,
@@ -162,7 +170,7 @@ class SparkBlock:
         if self.pipeline:
             return os.path.join(self.spark_dir, SPARK_JOBS_FILENAME)
 
-    def __load_spark_jobs_cache(self) -> List[Job]:
+    def __load_spark_job_submission_timestamps_cache(self) -> List[Job]:
         jobs = {}
 
         if not os.path.exists(self.spark_jobs_full_path):
@@ -171,12 +179,7 @@ class SparkBlock:
         with open(self.spark_jobs_full_path) as f:
             content = f.read()
             if content:
-                mapping = json.loads(content)
-                if mapping:
-                    for key, job_dict in mapping.items():
-                        jobs[key] = Job.load(**job_dict)
-
-        return jobs
+                return json.loads(content)
 
     def __update_spark_jobs_cache(
         self,
@@ -203,8 +206,8 @@ class SparkBlock:
         with open(self.spark_jobs_full_path, 'w') as f:
             f.write(json.dumps(data))
 
-    def __load_spark_jobs_during_execution(self) -> None:
-        jobs_cache = self.__load_spark_jobs_cache()
+    def __load_spark_job_submission_timestamps(self) -> None:
+        jobs_cache = self.__load_spark_job_submission_timestamps_cache()
         if jobs_cache:
             self.execution_timestamp_start = (jobs_cache.get('before') or {}).get(
                 'submission_timestamp',

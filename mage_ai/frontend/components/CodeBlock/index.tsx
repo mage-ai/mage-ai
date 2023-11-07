@@ -1419,7 +1419,13 @@ function CodeBlock({
           />
         </Spacing>
       );
-    } else if (sparkEnabled) {
+    } else if (sparkEnabled
+      && ![
+        BlockTypeEnum.CALLBACK,
+        BlockTypeEnum.CONDITIONAL,
+        BlockTypeEnum.EXTENSION,
+      ].includes(blockType)
+    ) {
       return (
         <Spacing>
           <ButtonTabs
@@ -1437,6 +1443,7 @@ function CodeBlock({
     }
   }, [
     block,
+    blockType,
     color,
     fetchBlock,
     isDBT,
