@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 import uuid
 from typing import Dict
@@ -5,23 +6,20 @@ from typing import Dict
 import aiohttp
 
 from mage_ai.authentication.oauth.constants import (
-    OAUTH_PROVIDER_GHE,
     GHE_CLIENT_ID_ENV_VAR,
     GHE_CLIENT_SECRET_ENV_VAR,
-    GHE_HOSTNAME_ENV_VAR,
+    OAUTH_PROVIDER_GHE,
+    get_ghe_hostname,
 )
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.utils import get_base_url
-import os
 
 
 class GHEProvider(OauthProvider):
     provider = OAUTH_PROVIDER_GHE
 
     def __init__(self):
-        self.hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
-        if self.hostname and not self.hostname.startswith('http'):
-            self.hostname = f'https://{self.hostname}'
+        self.hostname = get_ghe_hostname()
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
         if self.hostname:
