@@ -5,6 +5,16 @@ icon: "alien"
 description: "Want to get started contributing code? You're in the right place! Read on to learn how to set up your development environment."
 ---
 
+## Getting started
+
+Configuring a development environment can be _hard_, but at Mage we're trying to make things as simple and straightforward as possible. 
+
+To get started, you'll need Docker installed on your machine. You can read more about Docker [here](https://www.docker.com/).
+
+## Environment setup
+
+Next, you'll need to configure your development environment. This should be as simple as running a few commands. You can watch the video below or skip to the numbered instructions.
+
 <Frame>
 <iframe
    width="560"
@@ -38,34 +48,13 @@ description: "Want to get started contributing code? You're in the right place! 
 
 ## Push code changes
 
-* Fork the Mage github repo: https://github.com/mage-ai/mage-ai
-* Create a branch in your forked repo and commit your changes
-* Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) 
-* Tag Mage team members for PR review (@wangxiaoyou1993, @dy46, @johnson-mage, @tommydangerous)
+Once your environment is configured, you can make edits and see changes in real time! Now you're ready to contribute to the Mage repo. This is very similar to contributing to other open source projects on GitHub. 
 
-## Debugging
+If you _don't_ have any experience contributing code and this is confusing, feel free to reach out in Slack and we'll help you get started.
 
-Instead of using `breakpoint()`, add the following line to your code where you
-want a debug:
+Otherwise, follow the steps below to push your code changes to the Mage repo.
 
-```python
-import pdb; pdb.set_trace()
-```
-
-Attach to running container to use debugger. To get the container ID, run
-`docker ps` and look in the `NAMES` column.
-
-```bash
-docker attach [container_id]
-```
-
-## Backend server
-
-[Contributing to the backend server](/contributing/backend/overview)
-
-## Frontend app
-
-[Contributing to the frontend client](/contributing/frontend/overview)
+<Snippet file="contribution-process.mdx"/>
 
 ## Troubleshoot
 
