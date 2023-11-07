@@ -43,7 +43,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     retry_pipeline_run,
 )
 from mage_ai.server.active_kernel import switch_active_kernel
-from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
+from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
@@ -305,7 +305,11 @@ class PipelineResource(BaseResource):
 
         api_operation_action = kwargs.get('api_operation_action', None)
         if api_operation_action != DELETE:
-            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
+            kernel_name = PIPELINE_TO_KERNEL_NAME[pipeline.type]
+            switch_active_kernel(
+                kernel_name,
+                emr_config=pipeline.executor_config if kernel_name == KernelName.PYSPARK else None,
+            )
 
         if api_operation_action == DETAIL:
             if Project(pipeline.repo_config).is_feature_enabled(
@@ -415,7 +419,12 @@ class PipelineResource(BaseResource):
             update_content=update_content,
         )
         try:
-            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
+            kernel_name = PIPELINE_TO_KERNEL_NAME[self.model.type]
+            switch_active_kernel(
+                kernel_name,
+                emr_config=self.model.executor_config
+                if kernel_name == KernelName.PYSPARK else None,
+            )
         except Exception as e:
             pipeline_type_updated = payload.get('type')
             if pipeline_type_updated is not None and pipeline_type_updated != pipeline_type:
