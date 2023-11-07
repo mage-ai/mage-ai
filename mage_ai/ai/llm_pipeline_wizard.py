@@ -9,13 +9,15 @@ import astor
 import openai
 from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
-from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 
+from mage_ai.ai.hugging_face_client import HuggingFaceClient
+from mage_ai.ai.openai_client import OpenAIClient
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
+    AIMode,
     BlockLanguage,
     BlockType,
     PipelineType,
@@ -28,6 +30,7 @@ from mage_ai.data_preparation.templates.template import (
     is_default_transformer_template,
 )
 from mage_ai.io.base import DataSource
+from mage_ai.orchestration.ai.config import AIConfig
 from mage_ai.server.logger import Logger
 
 logger = Logger().new_server_logger(__name__)
@@ -188,10 +191,19 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
 
 class LLMPipelineWizard:
     def __init__(self):
-        repo_config = get_repo_config()
-        openai_api_key = repo_config.openai_api_key or os.getenv('OPENAI_API_KEY')
-        openai.api_key = openai_api_key
-        self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
+        ai_config = AIConfig.load(config=get_repo_config().ai_config)
+        if ai_config.mode == AIMode.OPEN_AI:
+            self.client = OpenAIClient(ai_config.open_ai_config)
+        elif ai_config.mode == AIMode.HUGGING_FACE:
+            self.client = HuggingFaceClient(ai_config.hugging_face_config)
+            # TODO(Remove the following open ai key dependency once the function call is replaced.)
+            open_ai_config = ai_config.open_ai_config
+            repo_config = get_repo_config()
+            openai_api_key = repo_config.openai_api_key or \
+                open_ai_config.openai_api_key or os.getenv('OPENAI_API_KEY')
+            openai.api_key = openai_api_key
+        else:
+            raise Exception('AI Mode is not available.')
 
     async def __async_llm_call(
         self,
@@ -269,11 +281,13 @@ class LLMPipelineWizard:
         variable_values = dict()
         variable_values['code_description'] = code_description
         if block_language == BlockLanguage.PYTHON:
-            customized_logic = await self.__async_llm_call(
+            customized_logic = await self.client.inference_with_prompt(
                 variable_values,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_PYTHON
             )
-            if 'action_code' in customized_logic.keys():
+            if 'action_code' in customized_logic.keys() \
+                and customized_logic.get('action_code') \
+                    and "null" != customized_logic.get('action_code'):
                 block_code = block_code.replace(
                     'action_code=\'\'',
                     f'action_code=\'{customized_logic.get("action_code")}\'')
@@ -282,11 +296,11 @@ class LLMPipelineWizard:
                     'arguments=[]',
                     f'arguments={customized_logic.get("arguments")}')
         elif block_language == BlockLanguage.SQL:
-            customized_logic = await self.__async_llm_call(
+            customized_logic = await self.client.inference_with_prompt(
                 variable_values,
                 PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
             )
-            if "sql_code" in customized_logic.keys():
+            if 'sql_code' in customized_logic.keys():
                 block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
         return block_code
 
@@ -304,21 +318,22 @@ class LLMPipelineWizard:
             self,
             block_description: str,
             upstream_blocks: List[str] = None) -> dict:
+        # TODO(Replace with a generic LLM call so all LLM clients can support this funciton.)
         response_message = await self.__async_identify_function_parameters(block_description)
-        if response_message.get("function_call"):
-            function_args = json.loads(response_message["function_call"]["arguments"])
+        if response_message.get('function_call'):
+            function_args = json.loads(response_message['function_call']['arguments'])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
             variable_values = dict()
             variable_values['code_description'] = block_description
             variable_values['code_language'] = block_language
             if is_default_transformer_template(config):
-                customized_logic = await self.__async_llm_call(
+                customized_logic = await self.client.inference_with_prompt(
                     variable_values,
                     PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
                 )
                 if 'code' in customized_logic.keys():
-                    config["existing_code"] = customized_logic.get("code")
+                    config['existing_code'] = customized_logic.get('code')
                 block_code = fetch_template_source(
                         block_type=block_type,
                         config=config,
@@ -340,7 +355,7 @@ class LLMPipelineWizard:
                 except TemplateNotFound:
                     # Use default template if template not found and
                     # ask LLM to fully generate the customized code.
-                    customized_logic = await self.__async_llm_call(
+                    customized_logic = await self.client.inference_with_prompt(
                         variable_values,
                         PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
                     )
@@ -356,7 +371,7 @@ class LLMPipelineWizard:
                 upstream_blocks=upstream_blocks,
             )
         else:
-            logger.error("Failed to interpret the description as a block template.")
+            logger.error('Failed to interpret the description as a block template.')
             return None
 
     async def __async_generate_blocks(self,
@@ -370,7 +385,7 @@ class LLMPipelineWizard:
     async def async_generate_pipeline_from_description(self, pipeline_description: str) -> dict:
         variable_values = dict()
         variable_values['code_description'] = pipeline_description
-        splited_block_descriptions = await self.__async_llm_call(
+        splited_block_descriptions = await self.client.inference_with_prompt(
             variable_values,
             PROMPT_TO_SPLIT_BLOCKS,
             is_json_response=False,
@@ -378,13 +393,13 @@ class LLMPipelineWizard:
         blocks = {}
         block_tasks = []
         for line in splited_block_descriptions.strip().split('\n'):
-            if line.startswith("BLOCK") and ":" in line:
+            if line.startswith('BLOCK') and ':' in line:
                 # Extract the block_id and block_description from the line
                 match = re.search(BLOCK_SPLIT_PATTERN, line)
                 if match:
                     block_id = match.group(1)
                     block_description = match.group(2).strip()
-                    upstream_blocks = match.group(3).split(", ")
+                    upstream_blocks = match.group(3).split(', ')
                     block_tasks.append(
                         self.__async_generate_blocks(
                             blocks,
@@ -421,7 +436,7 @@ class LLMPipelineWizard:
     async def async_generate_comment_for_block(self, block_content: str) -> str:
         variable_values = dict()
         variable_values['block_content'] = block_content
-        function_comments = await self.__async_llm_call(
+        function_comments = await self.client.inference_with_prompt(
             variable_values,
             PROMPT_FOR_FUNCTION_COMMENT
         )
@@ -448,7 +463,7 @@ class LLMPipelineWizard:
             print(block_docs_content)
         variable_values = dict()
         variable_values['block_content'] = block_docs_content
-        pipeline_doc = await self.__async_llm_call(
+        pipeline_doc = await self.client.inference_with_prompt(
                 variable_values,
                 PROMPT_FOR_SUMMARIZE_BLOCK_DOC,
                 is_json_response=False
@@ -477,12 +492,11 @@ class LLMPipelineWizard:
             add_on_prompt = 'Focus on the customized business logic in execute_transformer_action' \
                             'function.'
         variable_values = dict()
-        variable_values['block_content'] = block.content
-        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language]
-        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, '')
+        # Remove the @test function so hugging face can generate documentation.
+        variable_values['block_content'] = re.sub(
+            r'\s*\n*\s*@test.*', '', block.content, flags=re.DOTALL)
+        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE.get(block.language, "")
+        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, "")
         variable_values['add_on_prompt'] = add_on_prompt
-        return await self.__async_llm_call(
-            variable_values,
-            PROMPT_FOR_BLOCK,
-            is_json_response=False,
-        )
+        return await self.client.inference_with_prompt(
+            variable_values, PROMPT_FOR_BLOCK, False)
