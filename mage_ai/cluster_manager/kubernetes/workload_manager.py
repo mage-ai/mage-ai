@@ -73,7 +73,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config()
+            config.load_kube_config('/home/src/testfiles/kubeconfig')
         except Exception:
             pass
 
@@ -184,6 +184,13 @@ class WorkloadManager:
         )
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
+
+        self.__create_persistent_volume(
+            name,
+            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
+            storage_request_size=storage_request_size,
+            access_mode=storage_access_mode,
+        )
 
         ingress_name = workspace_config.ingress_name
 
@@ -504,7 +511,7 @@ class WorkloadManager:
                 '/bin/sh',
                 '-c',
                 'curl -s --request GET --url '
-                'http://localhost:6789/api/statuses?_format=with_activity_details '
+                'http://localhost:6789/{}api/statuses?_format=with_activity_details '
                 '--header "Content-Type: application/json"',
             ]
             resp = stream(
@@ -522,12 +529,12 @@ class WorkloadManager:
             return status
 
     def scale_down_workload(self, name: str) -> None:
-        self.apps_client.patch_namespaced_stateful_set_scale(
+        self.apps_client.patch_namespaced_stateful_set(
             name, namespace=self.namespace, body={'spec': {'replicas': 0}},
         )
 
     def restart_workload(self, name: str) -> None:
-        self.apps_client.patch_namespaced_stateful_set_scale(
+        self.apps_client.patch_namespaced_stateful_set(
             name, namespace=self.namespace, body={'spec': {'replicas': 1}},
         )
 
