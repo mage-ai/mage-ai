@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 import { ActionsStyle, ContentStyle, ModalStyle } from './index.style';
+import { AlertTriangle } from '@oracle/icons';
 import { ICON_SIZE_XLARGE } from '@oracle/styles/units/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { Warning } from '@oracle/icons';
 import { YELLOW } from '@oracle/styles/colors/main';
 import { pluralize } from '@utils/string';
 
@@ -47,7 +47,7 @@ function DisableTriggerModal({
       top={finalTop}
     >
       <ContentStyle>
-        <Warning fill={YELLOW} size={ICON_SIZE_XLARGE} />
+        <AlertTriangle fill={YELLOW} size={ICON_SIZE_XLARGE} />
         <Text bold large warning>
           {`There ${
               inProgressRunsCount === 1 ? 'is' : 'are'

@@ -254,7 +254,7 @@ function TriggersTable({
         // Cancel all in progress runs
         updatePipeline({
           pipeline: {
-            pipelineScheduleId: pipelineScheduleId,
+            pipeline_schedule_id: pipelineScheduleId,
             status: RunStatus.CANCELLED,
           },
         });
