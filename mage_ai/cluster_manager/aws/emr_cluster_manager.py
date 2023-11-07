@@ -59,7 +59,7 @@ class EmrClusterManager(ClusterManager):
             if len(clusters) > 0:
                 cluster_id = clusters[0]['id']
             else:
-                self.create_cluster()
+                self.create_cluster(emr_config=emr_config)
         if cluster_id is None:
             return
 
