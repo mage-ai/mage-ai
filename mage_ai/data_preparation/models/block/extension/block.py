@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.extensions.constants import (
@@ -11,7 +11,7 @@ class ExtensionBlock(Block):
     def post_process_output(self, output: Dict) -> List:
         return output
 
-    def _block_decorator(self, decorated_functions):
+    def _block_decorator(self, decorated_functions: List[Callable]):
         def custom_code(
             extension_name: str,
             expectations: List[Dict] = None,
@@ -30,7 +30,7 @@ class ExtensionBlock(Block):
                     f"{', '.join(EXTENSION_UUIDS)}",
                 )
 
-            def inner(function):
+            def inner(function: Callable):
                 def func(*args, **kwargs):
                     if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
                         from mage_ai.data_preparation.models.block import extension
