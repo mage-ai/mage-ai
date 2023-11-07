@@ -8,12 +8,12 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import DisableTriggerModal from './DisableTriggerModal';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
 } from '@interfaces/PipelineScheduleType';
 import PipelineTriggerType from '@interfaces/PipelineTriggerType';
+import PipelineType from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -96,7 +96,8 @@ function TriggersTable({
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
 
   const [updatePipeline]: any = useMutation(
-    api.pipelines.useUpdate(pipelineUUID),
+    (pipeline: PipelineType) =>
+      api.pipelines.useUpdate(pipeline.uuid)({ pipeline }),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -236,6 +237,7 @@ function TriggersTable({
     inProgressRunsCount,
     left,
     pipelineScheduleId,
+    pipelineUuid,
     top,
     topOffset,
   }) => (
@@ -249,14 +251,13 @@ function TriggersTable({
           status: ScheduleStatusEnum.INACTIVE,
         });
       }}
-      onStop={(pipelineScheduleId) => {
+      onStop={(pipelineScheduleId, pipelineUuid) => {
         hideDisableTriggerModal();
         // Cancel all in progress runs
         updatePipeline({
-          pipeline: {
-            pipeline_schedule_id: pipelineScheduleId,
-            status: RunStatus.CANCELLED,
-          },
+          pipeline_schedule_id: pipelineScheduleId,
+          status: RunStatus.CANCELLED,
+          uuid: pipelineUuid,
         });
         updatePipelineSchedule({
           id: pipelineScheduleId,
@@ -264,6 +265,7 @@ function TriggersTable({
         });
       }}
       pipelineScheduleId={pipelineScheduleId} 
+      pipelineUuid={pipelineUuid}
       top={top} 
       topOffset={topOffset}
     />
@@ -278,12 +280,13 @@ function TriggersTable({
     inProgressRunsCount,
     pipelineIsActive,
     pipelineScheduleId, 
+    pipelineUuid,
   }) => {
     pauseEvent(event);
     if (pipelineIsActive && inProgressRunsCount > 0) {
       const toggleEl = toggleTriggerRefs.current[pipelineScheduleId]?.current as Element;
       const { height, left, top } = toggleEl?.getBoundingClientRect();
-      showDisableTriggerModal({ inProgressRunsCount, left, pipelineScheduleId, top, topOffset: height });
+      showDisableTriggerModal({ inProgressRunsCount, left, pipelineScheduleId, pipelineUuid, top, topOffset: height });
     } else {
       updatePipelineSchedule({
         id: pipelineScheduleId,
@@ -377,6 +380,7 @@ function TriggersTable({
                           inProgressRunsCount,
                           pipelineIsActive: isActive,
                           pipelineScheduleId: id, 
+                          pipelineUuid: triggerPipelineUUID,
                         })}
                         purpleBackground
                       />

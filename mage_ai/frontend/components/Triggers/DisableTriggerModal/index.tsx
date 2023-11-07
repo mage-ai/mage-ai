@@ -13,8 +13,9 @@ type DisableTriggerModalProps = {
   inProgressRunsCount: number;
   left?: number;
   onAllow?: (pipelineScheduleId: number) => void;
-  onStop?: (pipelineScheduleId: number) => void;
+  onStop?: (pipelineScheduleId: number, pipelineUuid: string) => void;
   pipelineScheduleId: number;
+  pipelineUuid: string;
   top?: number;
   topOffset?: number;
 };
@@ -25,6 +26,7 @@ function DisableTriggerModal({
   onAllow,
   onStop,
   pipelineScheduleId, 
+  pipelineUuid,
   top = 0, 
   topOffset = 0,
 }: DisableTriggerModalProps) {
@@ -60,7 +62,7 @@ function DisableTriggerModal({
         </Text>
       </ContentStyle>
       <ActionsStyle>
-        <Button large onClick={() => onStop(pipelineScheduleId)}>Stop</Button>
+        <Button large onClick={() => onStop(pipelineScheduleId, pipelineUuid)}>Stop</Button>
         <Button large onClick={() => onAllow(pipelineScheduleId)}>Allow</Button>
       </ActionsStyle>
     </ModalStyle>
