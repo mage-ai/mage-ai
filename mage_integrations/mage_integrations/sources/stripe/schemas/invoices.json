@@ -783,6 +783,20 @@
         "string"
       ]
     },
+    "subscription_details": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "metadata": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
     "status": {
       "type": [
         "null",
