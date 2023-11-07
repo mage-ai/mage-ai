@@ -4,7 +4,7 @@ from typing import Dict
 
 class OauthProvider(ABC):
     @abstractmethod
-    async def get_auth_url_response(self, **kwargs) -> Dict:
+    def get_auth_url_response(self, **kwargs) -> Dict:
         pass
 
     @abstractmethod

@@ -1,7 +1,6 @@
 import urllib.parse
 import uuid
 from typing import Dict, Optional
-from urllib.parse import urlparse
 
 import aiohttp
 from aiohttp import BasicAuth
@@ -9,7 +8,7 @@ from aiohttp import BasicAuth
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_OKTA
 from mage_ai.authentication.providers.base import BaseProvider
 from mage_ai.authentication.providers.oauth import OauthProvider
-from mage_ai.settings import ROUTES_BASE_PATH
+from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.settings.sso import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN_URL
 
 
@@ -21,12 +20,9 @@ class OktaProvider(BaseProvider, OauthProvider):
         if not self.hostname.startswith('https'):
             self.hostname = f'https://{self.hostname}'
 
-    async def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Optional[Dict]:
+    def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Optional[Dict]:
         if OKTA_CLIENT_ID:
-            parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
-            base_url = parsed_url.scheme + '://' + parsed_url.netloc
-            if ROUTES_BASE_PATH:
-                base_url += f'/{ROUTES_BASE_PATH}'
+            base_url = get_base_url(redirect_uri)
             redirect_uri_query = dict(
                 provider=self.provider,
                 redirect_uri=redirect_uri,
@@ -51,10 +47,7 @@ class OktaProvider(BaseProvider, OauthProvider):
             )
 
     async def get_access_token_response(self, code: str, **kwargs) -> Dict:
-        parsed_url = urlparse(urllib.parse.unquote(kwargs.get('redirect_uri')))
-        base_url = parsed_url.scheme + '://' + parsed_url.netloc
-        if ROUTES_BASE_PATH:
-            base_url += f'/{ROUTES_BASE_PATH}'
+        base_url = get_base_url(kwargs.get('redirect_uri'))
         data = dict()
         async with aiohttp.ClientSession() as session:
             async with session.post(

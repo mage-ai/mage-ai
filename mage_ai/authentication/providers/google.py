@@ -8,19 +8,16 @@ import aiohttp
 from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GOOGLE
 from mage_ai.authentication.providers.base import BaseProvider
 from mage_ai.authentication.providers.oauth import OauthProvider
-from mage_ai.settings import ROUTES_BASE_PATH
+from mage_ai.authentication.providers.utils import get_base_url
 from mage_ai.settings.sso import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
 
 class GoogleProvider(BaseProvider, OauthProvider):
     provider = OAUTH_PROVIDER_GOOGLE
 
-    async def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
+    def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
         if GOOGLE_CLIENT_ID:
-            parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
-            base_url = parsed_url.scheme + '://' + parsed_url.netloc
-            if ROUTES_BASE_PATH:
-                base_url += f'/{ROUTES_BASE_PATH}'
+            base_url = get_base_url(redirect_uri)
             redirect_uri_query = dict(
                 provider=self.provider,
                 redirect_uri=redirect_uri,
@@ -45,11 +42,7 @@ class GoogleProvider(BaseProvider, OauthProvider):
             )
 
     async def get_access_token_response(self, code: str, **kwargs) -> Dict:
-        redirect_uri = kwargs.get('redirect_uri')
-        parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
-        base_url = parsed_url.scheme + '://' + parsed_url.netloc
-        if ROUTES_BASE_PATH:
-            base_url += f'/{ROUTES_BASE_PATH}'
+        base_url = get_base_url(kwargs.get('redirect_uri'))
 
         data = dict()
         async with aiohttp.ClientSession() as session:

@@ -24,17 +24,17 @@ function OauthPage() {
     };
   }
 
-  console.log('new query:', newQuery);
-
   const { data: dataOauth } = api.oauths.detail(provider, newQuery);
   const oauthUrl = useMemo(() => dataOauth?.oauth?.url, [dataOauth]);
+
+  console.log('oauth url 2:', oauthUrl);
 
   useEffect(() => {
     if (oauthUrl) {
       if (localState) {
         // console.log('oauth url:', oauthUrl);
-        remove(state);
-        router.push(oauthUrl);
+        // remove(state);
+        // router.push(oauthUrl);
       } else if (!localState) {
         toast.error(
           'Oauth failed due to state not matching!',

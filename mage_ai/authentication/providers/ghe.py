@@ -1,0 +1,67 @@
+import urllib.parse
+import uuid
+from typing import Dict
+
+import aiohttp
+
+from mage_ai.authentication.oauth.constants import (
+    OAUTH_PROVIDER_GHE,
+    GHE_CLIENT_ID_ENV_VAR,
+    GHE_CLIENT_SECRET_ENV_VAR,
+    GHE_HOSTNAME_ENV_VAR,
+)
+from mage_ai.authentication.providers.oauth import OauthProvider
+from mage_ai.authentication.providers.utils import get_base_url
+import os
+
+
+class GHEProvider(OauthProvider):
+    provider = OAUTH_PROVIDER_GHE
+
+    def __init__(self):
+        self.hostname = os.getenv(GHE_HOSTNAME_ENV_VAR)
+        if self.hostname and not self.hostname.startswith('http'):
+            self.hostname = f'https://{self.hostname}'
+
+    def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
+        if self.hostname:
+            base_url = get_base_url(redirect_uri)
+            redirect_uri_query = dict(
+                provider=self.provider,
+                redirect_uri=redirect_uri,
+            )
+            query = dict(
+                client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
+                redirect_uri=urllib.parse.quote_plus(
+                    f'{base_url}/oauth',
+                ),
+                scope='repo',
+                state=uuid.uuid4().hex,
+            )
+            query_strings = []
+            for k, v in query.items():
+                query_strings.append(f'{k}={v}')
+
+            return dict(
+                url=f"{self.hostname}/login/oauth/authorize?{'&'.join(query_strings)}",
+                redirect_query_params=redirect_uri_query,
+            )
+
+    async def get_access_token_response(self, code: str, **kwargs) -> Dict:
+        data = dict()
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f'{self.hostname}/login/oauth/access_token',
+                headers={
+                    'Accept': 'application/json',
+                },
+                data=dict(
+                    client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
+                    client_secret=os.getenv(GHE_CLIENT_SECRET_ENV_VAR),
+                    code=code,
+                ),
+                timeout=20,
+            ) as response:
+                data = await response.json()
+
+        return data

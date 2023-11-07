@@ -424,8 +424,9 @@ function Remote({
                   const url = oauth?.url;
                   const q = queryFromUrl(url);
                   const state = q.state;
-                  set(LOCAL_STORAGE_KEY_OAUTH_STATE, state);
-                  router.push(oauth?.url);
+                  set(state, oauth?.redirect_query_params || {});
+                  console.log('oauth url 1:', oauth?.url);
+                  router.push(url);
                 }}
                 primary
               >
