@@ -44,6 +44,7 @@ class EmrClusterManager(ClusterManager):
         return create_cluster(
             get_repo_path(),
             done_status=None,
+            emr_config=emr_config,
             tags=dict(name=CLUSTER_NAME),
             bootstrap_script_path=emr_config.bootstrap_script_path,
         )
