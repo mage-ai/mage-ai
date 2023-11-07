@@ -2293,9 +2293,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         else:
             test_functions = self.test_functions
 
-        if not test_functions or len(test_functions) == 0:
-            return
-
         outputs = self.get_raw_outputs(
             dynamic_block_uuid or self.uuid,
             execution_partition=execution_partition,
@@ -2312,49 +2309,50 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             logger=logger,
             logging_tags=logging_tags,
         ):
-            tests_passed = 0
-            for func in test_functions:
-                test_function = func
-                if from_notebook and self.module:
-                    test_function = getattr(self.module, func.__name__)
-                try:
-                    sig = signature(test_function)
-                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                        test_function(*outputs, **global_vars)
-                    else:
-                        test_function(*outputs)
-                    tests_passed += 1
-                except AssertionError as err:
-                    error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
-                    stacktrace = traceback.format_exc()
+            if test_functions and len(test_functions) >= 0:
+                tests_passed = 0
+                for func in test_functions:
+                    test_function = func
+                    if from_notebook and self.module:
+                        test_function = getattr(self.module, func.__name__)
+                    try:
+                        sig = signature(test_function)
+                        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                            test_function(*outputs, **global_vars)
+                        else:
+                            test_function(*outputs)
+                        tests_passed += 1
+                    except AssertionError as err:
+                        error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
+                        stacktrace = traceback.format_exc()
 
-                    if from_notebook:
-                        error_json = json.dumps(dict(
-                            error=str(err),
-                            message=error_message,
-                            stacktrace=stacktrace.split('\n'),
+                        if from_notebook:
+                            error_json = json.dumps(dict(
+                                error=str(err),
+                                message=error_message,
+                                stacktrace=stacktrace.split('\n'),
+                            ))
+                            print(f'[__internal_test__]{error_json}')
+                        else:
+                            print('==============================================================')
+                            print(error_message)
+                            print('--------------------------------------------------------------')
+                            print(stacktrace)
+
+                message = f'{tests_passed}/{len(test_functions)} tests passed.'
+                if from_notebook:
+                    if len(test_functions) >= 1:
+                        success_json = json.dumps(dict(
+                            message=message,
                         ))
-                        print(f'[__internal_test__]{error_json}')
-                    else:
-                        print('==============================================================')
-                        print(error_message)
-                        print('--------------------------------------------------------------')
-                        print(stacktrace)
+                        print(f'[__internal_test__]{success_json}')
+                else:
+                    print('--------------------------------------------------------------')
+                    print(message)
 
-            message = f'{tests_passed}/{len(test_functions)} tests passed.'
-            if from_notebook:
-                if len(test_functions) >= 1:
-                    success_json = json.dumps(dict(
-                        message=message,
-                    ))
-                    print(f'[__internal_test__]{success_json}')
-            else:
-                print('--------------------------------------------------------------')
-                print(message)
-
-            if tests_passed != len(test_functions):
-                raise Exception(f'Failed to pass tests for block {self.uuid}')
+                if tests_passed != len(test_functions):
+                    raise Exception(f'Failed to pass tests for block {self.uuid}')
 
             handle_run_tests(
                 self,

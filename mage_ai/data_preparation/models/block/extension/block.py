@@ -33,12 +33,20 @@ class ExtensionBlock(Block):
             def inner(function: Callable):
                 def func(*args, **kwargs):
                     if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
-                        from mage_ai.data_preparation.models.block import extension
+                        import mage_ai.data_preparation.models.block.extension.great_expectations
 
-                        ge = extension.great_expectations.GreatExpectations(
-                            self,
-                            expectations=expectations,
-                        )
+                        ge = (
+                                mage_ai.
+                                data_preparation.
+                                models.
+                                block.
+                                extension.
+                                great_expectations.
+                                GreatExpectations(
+                                    self,
+                                    expectations=expectations,
+                                )
+                            )
                         validators_and_uuids = ge.build_validators(*args, **kwargs)
                         validators = [t[0] for t in validators_and_uuids]
                         function(*validators, **kwargs)
