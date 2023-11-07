@@ -52,6 +52,10 @@ class PipelinePresenter(BasePresenter):
             if include_outputs:
                 include_outputs = include_outputs[0]
 
+            include_outputs_spark = query.get('includes_outputs_spark', [False])
+            if include_outputs_spark:
+                include_outputs_spark = include_outputs_spark[0]
+
             include_block_metadata = query.get('includes_block_metadata', [True])
             if include_block_metadata:
                 include_block_metadata = include_block_metadata[0]
@@ -71,6 +75,7 @@ class PipelinePresenter(BasePresenter):
                 include_content=include_content,
                 include_extensions=include_extensions,
                 include_outputs=include_outputs,
+                include_outputs_spark=include_outputs_spark,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
         elif constants.UPDATE == display_format:

@@ -395,7 +395,12 @@ function Table({
             maxWidth={columnMaxWidth?.(colIndex)}
             noBorder={noBorder}
             rowVerticalPadding={rowVerticalPadding}
-            selected={isSelectedRow?.(rowIndex)}
+            selected={isSelectedRow
+              ? isSelectedRow?.(rowIndex)
+              : renderExpandedRowWithObject
+                ? selectedRowIndexInternal === rowIndex
+                : null
+            }
             stickyFirstColumn={stickyFirstColumn && colIndex === 0}
             width={calculateCellWidth(colIndex)}
             wrapColumns={wrapColumns}
@@ -512,6 +517,7 @@ function Table({
     renderExpandedRowWithObject,
     rowVerticalPadding,
     rowsSorted,
+    selectedRowIndexInternal,
     setFocusedRowIndex,
     sortedColumn,   // Included in dep array so table rows re-render when sorting column changes
     stickyFirstColumn,
