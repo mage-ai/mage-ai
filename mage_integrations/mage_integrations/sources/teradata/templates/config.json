@@ -1,0 +1,13 @@
+{
+    "database": "HR",
+    "host": "172.191.176.128",
+    "port": 1025,  
+    "username": "dbc",
+    "password": "abzooba",
+    "connection_method": "direct",
+    "ssh_host": "",
+    "ssh_port": 22,
+    "ssh_username": "",
+    "ssh_password": "",
+    "ssh_pkey": ""
+  }
