@@ -16,6 +16,7 @@ The following instructions are tailored to Github, but the Git integration can w
 other Git providers as well, such as GitLab, BitBucket, or Azure DevOps: 
 <AccordionGroup>
 <Accordion title="SSH" icon="terminal">
+
 <Warning>
 **SSH keys with passphrase are not supported**
 
@@ -29,71 +30,68 @@ you don't have to enter your SSH key passphrase every time you perform an action
 
 </Warning>
 <Steps>
-<Step title="Check preferences.yaml">
- Ensure that `.preferences.yaml` is added to your repo's `.gitignore` file so that your Git settings aren't pushed to Github, unless you want them to.
+<Step title="Check .gitignore settings">
+    Ensure that `.preferences.yaml` is added to your repo's `.gitignore` file so that your Git settings aren't pushed to Github.
 </Step>
-<Step title="Navigate to your Mage settings">
-    Wizard > Settings
-    <div align="center">
-    <img src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True" width="50%"/>
-    </div>
-</Step>
-<Step title="Navigate to the 'Git settings' section">
-</Step>
-<Step title="Set up your SSH key">
-  This will allow your machine to access GitHub. 
-  Check out this sections this [guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) to set up your SSH key.
+<Step title="Navigate to Git settings">
+    Navigate to the Wizard icon in the top right, then select _Settings_ to open your Mage settings.
+    <Frame>
+    <img src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True"/>
+    </Frame>
+    There should be an option for _Git settings_ on the left side of the settings modal.
 </Step>
 <Step title="Select SSH as the authentication type.">
+    Change the authentication type to SSH. The interface will change for you to input a remote repo url. 
+    <Frame>
+    <img src="https://github.com/mage-ai/assets/blob/main/git-settings.png?raw=True"/>
+    </Frame>
 </Step>
-<Step title="Fill out the form">
-    <div align="center">
-    <img src="https://github.com/mage-ai/assets/blob/main/github-url.png?raw=True" width="50%"/>
-    </div>
+<Step title="Set up your SSH key">
+  If you haven't already, configure your SSH key— this will allow your instance to access GitHub. You can click the link within the app to be taken to a page with instructions on how to set up your SSH key. Check out this sections this [guide](/development/git/generate-an-ssh-token) to set up your SSH key.
+</Step>
+<Step title="Add Git details">
     - `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
     - `Local directory path`: The directory in your machine that will be synced with the Github repository. If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can check what your current working directory is in a Scratchpad block.
 </Step>
-<Step title="Fill out the remaining optional, but recommended fields.">
+<Step title="[Optional] Fill out the remaining fields.">
   Filling out these fields will allow Mage to recreate your git and SSH settings if they are deleted (i.e. if your container restarts):
     - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
     - `Email`: Your git email. Used for the same purpose as your username.
     - `SSH public key in base64`, `SSH public key in base64`: Enter your SSH public and private key encoded in base64. You can follow the instructions in the field description if you want to Mage to save your SSH keys.
 </Step>
 <Step title="Save your Git settings">
+    Click "Save repository settings" to complete the setup.
 </Step>
 </Steps>
 </Accordion>
 
 <Accordion title="HTTPS/Token" icon="coin">
-<Steps>
-    <Step title="Check preferences.yaml">
-    Ensure that `.preferences.yaml` is added to your repo's `.gitignore` file so that your Git settings aren't pushed to Github, unless you want them to.
+    <Steps>
+        <Step title="Check .gitignore settings">
+        Ensure that `.preferences.yaml` is added to your repo's `.gitignore` file so that your Git settings aren't pushed to Github.
     </Step>
-    <Step title="Navigate to your Mage settings">
-        Wizard > Settings
-        <div align="center">
-        <img src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True" width="50%"/>
-        </div>
-    </Step>
-    <Step title="Navigate to the 'Git settings' section">
+    <Step title="Navigate to Git settings">
+        Navigate to the Wizard icon in the top right, then select _Settings_ to open your Mage settings.
+        <Frame>
+        <img src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True"/>
+        </Frame>
+        There should be an option for _Git settings_ on the left side of the settings modal.
     </Step>
     <Step title="Create a Git access token and save it for later">
         - [GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
         - [GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
     </Step>
-    <Step title="Fill out the form">
-        <div align="center">
-        <img src="https://github.com/mage-ai/assets/blob/main/github-url.png?raw=True" width="50%"/>
-        </div>
+    <Step title="Add Git details">
         - `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
         - `Local directory path`: The directory in your machine that will be synced with the Github repository. If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can check what your current working directory is in a Scratchpad block.
     </Step>
-    <Step title="Fill out the remaining optional, but recommended fields.">
+    <Step title="[Optional] Fill out the remaining fields.">
         - `Username`: Your git username. If you push to your remote repo, this username will show up next to your commits.
         - `Email`: Your git email. Used for the same purpose as your username.
         - `Access token`: Enter the Git access token that you created in step 4.
     </Step>
     <Step title="Save your Git settings">
+        Click "Save repository settings" to complete the setup.
     </Step>
 </Steps>
 </Accordion>
@@ -104,7 +102,9 @@ you don't have to enter your SSH key passphrase every time you perform an action
 Once your git settings are configured, you can use the Git integration to perform git actions.
 To start, click the button at the top right with the name of the current branch.
 
-<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/branch-button.png?raw=true" width="100%"/>
+<Frame>
+<img src="https://github.com/mage-ai/assets/blob/main/version-control/git-integration/branch-button.png?raw=true"/>
+</Frame>
 
 Once the modal is open, you can start performing actions. Currently, the Git integration supports the following actions:
 <AccordionGroup>

@@ -729,9 +729,9 @@
           "group": "Version control",
           "icon": "code-branch",
           "pages": [
-            "production/data-sync/git-sync",
+            "production/data-sync/git-integration",
             "production/data-sync/github",
-            "production/data-sync/git-integration"
+            "production/data-sync/git-sync"
           ]
         },
         {
