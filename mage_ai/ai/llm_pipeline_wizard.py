@@ -373,7 +373,7 @@ class LLMPipelineWizard:
         splited_block_descriptions = await self.__async_llm_call(
             variable_values,
             PROMPT_TO_SPLIT_BLOCKS,
-            False,
+            is_json_response=False,
         )
         blocks = {}
         block_tasks = []
@@ -472,13 +472,17 @@ class LLMPipelineWizard:
         self,
         block: Block,
     ) -> str:
-        add_on_prompt = ""
+        add_on_prompt = ''
         if block.type == BlockType.TRANSFORMER:
-            add_on_prompt = "Focus on the customized business logic in execute_transformer_action \
-                             function."
+            add_on_prompt = 'Focus on the customized business logic in execute_transformer_action' \
+                            'function.'
         variable_values = dict()
         variable_values['block_content'] = block.content
-        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language],
-        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, ""),
+        variable_values['file_type'] = BLOCK_LANGUAGE_TO_FILE_TYPE_VARIABLE[block.language]
+        variable_values['purpose'] = BLOCK_TYPE_TO_PURPOSE_VARIABLE.get(block.type, '')
         variable_values['add_on_prompt'] = add_on_prompt
-        return await self.__async_llm_call(variable_values, PROMPT_FOR_BLOCK)
+        return await self.__async_llm_call(
+            variable_values,
+            PROMPT_FOR_BLOCK,
+            is_json_response=False,
+        )
