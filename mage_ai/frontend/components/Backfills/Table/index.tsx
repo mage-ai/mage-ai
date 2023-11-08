@@ -91,13 +91,13 @@ function BackfillsTable({
         const arr = [
           <Text
             danger={BackfillStatusEnum.FAILED === status}
-            default={BackfillStatusEnum.CANCELLED === status}
-            info={BackfillStatusEnum.INITIAL === status}
+            default={status === null}
+            info={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.INITIAL === status}
             key="status"
             monospace
             success={BackfillStatusEnum.COMPLETED === status}
-            warning={BackfillStatusEnum.RUNNING === status}
-            >
+            warning={BackfillStatusEnum.CANCELLED === status}
+          >
             {status || 'inactive'}
           </Text>,
           <NextLink
