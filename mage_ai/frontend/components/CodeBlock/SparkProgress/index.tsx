@@ -109,6 +109,12 @@ function SparkProgress({
     tasksCountCompleted,
   ]);
 
+  console.log('wtf', jobsCount)
+
+  if (!isInProgress && !jobsCount) {
+    return null;
+  }
+
   return (
     <>
       <Spacing p={PADDING_UNITS}>

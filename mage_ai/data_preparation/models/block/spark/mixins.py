@@ -17,6 +17,7 @@ from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.sqls import Sql
 from mage_ai.services.spark.models.stages import Stage
 from mage_ai.services.spark.utils import get_compute_service
+from mage_ai.shared.array import find
 
 
 class SparkBlock:
@@ -28,6 +29,21 @@ class SparkBlock:
         self._spark_session_current = self.get_spark_session()
 
         return self._spark_session_current
+
+    def spark_session_application(self) -> Application:
+        if not self.spark_session:
+            return
+
+        spark_confs = self.spark_session.sparkContext.getConf().getAll()
+        value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
+
+        if value_tup:
+            application_id = value_tup[1]
+
+            return Application(
+                id=application_id,
+                spark_ui_url=self.spark_session.sparkContext.uiWebUrl,
+            )
 
     def compute_management_enabled(self) -> bool:
         return Project(self.pipeline.repo_config if self.pipeline else None).is_feature_enabled(
@@ -67,7 +83,7 @@ class SparkBlock:
         self.__load_spark_job_submission_timestamps()
 
         if self.execution_timestamp_start:
-            jobs = self.__get_jobs()
+            jobs = self.__get_jobs(application=self.execution_start_application)
 
             def _filter(
                 job: Job,
@@ -104,7 +120,7 @@ class SparkBlock:
         ) -> bool:
             return any([job.stage_ids and stage.id in job.stage_ids for job in jobs])
 
-        stages = self.__get_stages()
+        stages = self.__get_stages(application=self.execution_start_application)
 
         return list(filter(_filter, stages))
 
@@ -122,7 +138,7 @@ class SparkBlock:
                 job.id in sql.success_job_ids
             ) for job in jobs])
 
-        sqls = self.__get_sqls()
+        sqls = self.__get_sqls(application=self.execution_start_application)
 
         return list(filter(_filter, sqls))
 
@@ -138,8 +154,11 @@ class SparkBlock:
 
     def set_spark_job_execution_start(self) -> None:
         self.execution_timestamp_start = datetime.utcnow().timestamp()
+        application = self.spark_session_application()
+
         self.__update_spark_jobs_cache(
             dict(
+                application=application.to_dict() if application else None,
                 submission_timestamp=self.execution_timestamp_start,
             ),
             'before',
@@ -150,24 +169,42 @@ class SparkBlock:
         # Need a slight buffer of 10 seconds because stages are still being submitted even after
         # the end of the block function execution.
         self.execution_timestamp_end = datetime.utcnow().timestamp() + 10
+        application = self.spark_session_application()
+
         self.__update_spark_jobs_cache(
             dict(
+                application=application.to_dict() if application else None,
                 submission_timestamp=self.execution_timestamp_end,
             ),
             'after',
         )
 
-    def __get_jobs(self) -> List[Job]:
-        api = API.build(all_applications=True)
+    def __build_api(self, application: Application = None) -> API:
+        build_options = {}
+
+        if application:
+            build_options.update(dict(
+                application_id=application.id,
+                application_spark_ui_url=application.spark_ui_url,
+            ))
+        else:
+            build_options.update(dict(all_applications=True))
+
+        return API.build(**build_options)
+
+    def __get_jobs(self, application: Application = None) -> List[Job]:
+        api = self.__build_api(application=application)
 
         if not api:
             return
 
-        applications = api.applications_sync()
-
         jobs = []
-        if applications:
-            jobs = api.jobs_sync(applications[0].id)
+        if application:
+            jobs = api.jobs_sync()
+        else:
+            applications = api.applications_sync()
+            if applications:
+                jobs = api.jobs_sync(applications[0].id)
 
         return sorted(
             jobs,
@@ -175,36 +212,47 @@ class SparkBlock:
             reverse=True,
         )
 
-    def __get_stages(self) -> List[Stage]:
-        api = API.build(all_applications=True)
+    def __get_stages(self, application: Application = None) -> List[Stage]:
+        api = self.__build_api(application=application)
 
         if not api:
             return
 
-        applications = api.applications_sync()
-
         stages = []
-        if applications:
-            stages = api.stages_sync(applications[0].id, dict(
+        if application:
+            stages = api.stages_sync(dict(
                 quantiles='0.01,0.25,0.5,0.75,0.99',
                 withSummaries=True,
             ))
+        else:
+            applications = api.applications_sync()
+
+            if applications:
+                stages = api.stages_sync(applications[0].id, dict(
+                    quantiles='0.01,0.25,0.5,0.75,0.99',
+                    withSummaries=True,
+                ))
 
         return stages
 
-    def __get_sqls(self) -> List[Sql]:
-        api = API.build(all_applications=True)
+    def __get_sqls(self, application: Application = None) -> List[Sql]:
+        api = self.__build_api(application=application)
 
         if not api:
             return
 
-        applications = api.applications_sync()
-
-        sqls = []
-        if applications:
-            sqls = api.sqls_sync(applications[0].id, dict(
+        if application:
+            sqls = api.sqls_sync(dict(
                 length=9999,
             ))
+        else:
+            applications = api.applications_sync()
+
+            sqls = []
+            if applications:
+                sqls = api.sqls_sync(applications[0].id, dict(
+                    length=9999,
+                ))
 
         return sqls
 
@@ -255,9 +303,28 @@ class SparkBlock:
     def __load_spark_job_submission_timestamps(self) -> None:
         jobs_cache = self.__load_cache()
         if jobs_cache:
-            self.execution_timestamp_start = (jobs_cache.get('before') or {}).get(
-                'submission_timestamp',
-            )
-            self.execution_timestamp_end = (jobs_cache.get('after') or {}).get(
-                'submission_timestamp',
-            )
+            before = jobs_cache.get('before')
+            if before:
+                self.execution_timestamp_start = (before or {}).get(
+                    'submission_timestamp',
+                )
+                self.execution_start_application = (before or {}).get(
+                    'application',
+                )
+                if self.execution_start_application:
+                    self.execution_start_application = Application.load(
+                        **self.execution_start_application,
+                    )
+
+            after = jobs_cache.get('after')
+            if after:
+                self.execution_timestamp_end = (after or {}).get(
+                    'submission_timestamp',
+                )
+                self.execution_end_application = (after or {}).get(
+                    'application',
+                )
+                if self.execution_end_application:
+                    self.execution_end_application = Application.load(
+                        **self.execution_end_application,
+                    )

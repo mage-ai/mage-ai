@@ -1,5 +1,6 @@
 export enum SparkJobStatusEnum {
   FAILED = 'FAILED',
+  RUNNING = 'RUNNING',
   SUCCEEDED = 'SUCCEEDED',
 }
 
