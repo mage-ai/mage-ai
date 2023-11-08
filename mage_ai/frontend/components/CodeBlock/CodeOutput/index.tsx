@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Ansi from 'ansi-to-react';
 import InnerHTML from 'dangerously-set-html-content';
 import { useMutation } from 'react-query';
@@ -167,9 +167,7 @@ function CodeOutput({
       },
     });
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(evt);
-    }
+    window.dispatchEvent(evt);
   }, [
     blockIndex,
   ]);
@@ -674,7 +672,9 @@ function CodeOutput({
     return (
       <>
         {buttonTabs}
+
         {childrenBelowTabs}
+
         {!hideOutput && el}
       </>
     );

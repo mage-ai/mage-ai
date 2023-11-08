@@ -74,6 +74,7 @@ import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
+import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import {
   ArrowDown,
   ChevronDown,
@@ -120,6 +121,7 @@ import {
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
+  CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED,
   CUSTOM_EVENT_CODE_BLOCK_CHANGED,
   CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED,
   CUSTOM_EVENT_SYNC_COLUMN_POSITIONS,
@@ -380,6 +382,8 @@ function CodeBlock({
   const themeContext = useContext(ThemeContext);
   const refColumn1 = useRef(null);
   const refColumn2 = useRef(null);
+  const childrenBelowTabsRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   const {
     featureEnabled,
@@ -387,6 +391,8 @@ function CodeBlock({
     sparkEnabled: sparkEnabledInit,
   } = useProject();
 
+  const [sparkEnabled, setSparkEnabled] = useState(false);
+  const [executionStatesFetchedCount, setExecutionStatesFetched] = useState(0);
   const [mounted, setMounted] = useState(false);
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
@@ -400,6 +406,53 @@ function CodeBlock({
     }
   }, [
     blockIdx,
+  ]);
+
+  const dispatchEventChangedOutput = useCallback(() => {
+    const evt = new CustomEvent(CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED, {
+      detail: {
+        blockIndex: blockIdx,
+      },
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(evt);
+    }
+  }, [
+    blockIdx,
+  ]);
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      const rect = childrenBelowTabsRef?.current?.getBoundingClientRect();
+
+      if (rect) {
+        if (event?.clientX >= rect?.x
+          && event?.clientX <= rect?.x + rect?.width
+          && event?.clientY >= rect?.y
+          && event?.clientY <= rect?.y + rect?.height
+        ) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current =
+            setTimeout(dispatchEventChangedOutput, ANIMATION_DURATION_CONTENT + 1);
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      if (sparkEnabled) {
+        window.addEventListener('click', handleClick);
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('click', handleClick);
+      }
+    };
+  }, [
+    dispatchEventChangedOutput,
+    sparkEnabled,
   ]);
 
   useEffect(() => {
@@ -583,13 +636,13 @@ function CodeBlock({
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTabState] = useState<TabType>(null);
-  const setSelectedTab = useCallback((prev) => {
-    if (!selected) {
-      setSelected?.(true);
-    }
-    setSelectedTabState(prev);
+
+  const setSelectedTab = useCallback((tab) => {
+    dispatchEventChangedOutput();
+    setSelected?.(!!tab);
+    setSelectedTabState(tab);
   }, [
-    selected,
+    dispatchEventChangedOutput,
     setSelected,
     setSelectedTabState,
   ]);
@@ -895,17 +948,17 @@ function CodeBlock({
   const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
-  const sparkEnabled = useMemo(() => sparkEnabledInit
-    && !isStreamingPipeline
-    && !isDataIntegration
-    && BlockLanguageEnum.PYTHON === blockLanguage,
-    [
-      blockLanguage,
-      isDataIntegration,
-      isStreamingPipeline,
-      sparkEnabledInit,
-    ],
-  );
+  useEffect(() => {
+    setSparkEnabled(sparkEnabledInit
+      && !isStreamingPipeline
+      && !isDataIntegration
+      && BlockLanguageEnum.PYTHON === blockLanguage);
+  }, [
+    blockLanguage,
+    isDataIntegration,
+    isStreamingPipeline,
+    sparkEnabledInit,
+  ]);
 
   const { data: dataExecutionStates, mutate: fetchExecutionStates } = api.execution_states.list({
     block_uuid: blockUUID,
@@ -914,10 +967,30 @@ function CodeBlock({
     refreshInterval: selected && isInProgress ? 1000 : 5000,
     revalidateOnFocus: true,
   }, {
-    pauseFetch: !selected || !sparkEnabled,
+    pauseFetch: (!selected && executionStatesFetchedCount >= 1) || !sparkEnabled,
   });
-  const blockExecutionStates: ExecutionStateType[] =
-    useMemo(() => dataExecutionStates?.execution_states || [], [dataExecutionStates]);
+  const [blockExecutionStates, setBlockExecutionStates] = useState<ExecutionStateType[]>(null);
+  useEffect(() => {
+    if (dataExecutionStates) {
+      setExecutionStatesFetched(prev => prev + 1);
+      setBlockExecutionStates(dataExecutionStates?.execution_states || []);
+    }
+  }, [
+    dataExecutionStates,
+    setBlockExecutionStates,
+    setExecutionStatesFetched,
+  ]);
+
+  useEffect(() => {
+    if (blockExecutionStates !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(dispatchEventChangedOutput, 1);
+    }
+  }, [
+    blockExecutionStates,
+    dispatchEventChangedOutput,
+    selectedTab,
+  ]);
 
   useEffect(() => {
     if (isInProgress) {
@@ -1700,9 +1773,12 @@ function CodeBlock({
 
               <Divider light />
 
-              {outputChildren}
+              <div ref={childrenBelowTabsRef}>
+                {outputChildren}
+              </div>
             </>
           ),
+          clickChildrenBelowTabsDispatchEvent: true,
           hideOutput: !isOnOutputTab,
         });
       }
