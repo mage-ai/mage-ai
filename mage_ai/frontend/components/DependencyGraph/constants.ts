@@ -7,9 +7,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 export const MIN_NODE_WIDTH = UNIT * 20;
 
 export const ZOOMABLE_CANVAS_SIZE = 10000;
-export const SHARED_ZOOM_BUTTON_PROPS = {
-  compact: true,
-};
 
 export const SHARED_PORT_PROPS = {
   height: 10,
