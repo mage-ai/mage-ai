@@ -1,7 +1,6 @@
 ---
 title: "Documentation"
 sidebarTitle: "Overview"
-icon: "newspaper"
 description: "Like every other part of Mage, our documentation is open-source. Read on to learn how to make edits or even write entirely new docs for Mage!"
 ---
 
@@ -11,7 +10,7 @@ description: "Like every other part of Mage, our documentation is open-source. R
 
 ## Overview
 
-Mage uses [Mintlify](mintlify.com/) as our documentation framework. Mintlify provides CI/CD and hosting for our docs, which makes editing quite simple. In this guide, we'll discuss different "levels" of contributing to our docs, starting from simplest to most advanced.
+Mage uses [Mintlify](mintlify.com/) as our documentation framework. Mintlify provides hosting and deployment for our docs, which makes editing quite simple. In this guide, we'll discuss different "levels" of contributing to our docs, starting from simplest to most advanced.
 
 All of our docs are written in plain text as Markdown files. If you're not familiar with Markdown, check out [this guide](https://www.markdownguide.org/basic-syntax/) to get started. You can take a look at the structure and contents of our docs by navigating this site and checking out the [docs directory](https://github.com/mage-ai/mage-ai) on GitHub.
 
@@ -33,9 +32,11 @@ To add images to the Mage docs, you'll need to contact a team member or host the
 
 Reach out in [Slack](https://www.mage.ai/chat) if you're editing documentation that requires additional assets and we'll get them hosted for you.
 
+When adding images, we use centered divs or the Mintlify frame component. You can see the code in this page for examples of both.
+
 ### Mintlify elements
 
-To learn more about how we format our Mintlify instance, visit the Mintlify docs [here](https://mintlify.com/docs/content/page). You can add things like accordion groups, interactive lists, html elements, and more. Anything you can do in Mintlify, you can do in our docs.
+To learn more about Mintlify-specific elements, visit the Mintlify docs [here](https://mintlify.com/docs/content/page). You can add things like accordion groups, interactive lists, html elements, and more. Anything you can do in Mintlify, you can do in our docs.
 
 ## Level 3: Add entirely new docs 🪄
 
@@ -49,19 +50,22 @@ Each page is an MDX file that should begin with the following metadata syntax wi
 
 Once you add a new page in the appropriate folder in our `docs` directory, you'll need to add it to our site navigation. That is accomplished through the `mint.json` file in the root of our `docs` directory. 
 
-You'll need to add a new entry to the `pages` array in that file. The `path` should be the relative path to your new page, and the `title` should be the title of your page.
+You'll need to add a new entry to the `pages` array in that file. The `path` should be the relative path to your new page, and the `title` should be the title of your page. Paths in `mint.json` should _not_ include file extensions.
 
 The best way to understand the structure is to read about it in the [Mintlify docs](https://mintlify.com/docs/settings/global) and to take a look at our `mint.json` file [here](https://github.com/mage-ai/mage-ai/blob/master/docs/mint.json).
 
+### Developing locally in Mintlify
+
+If you _really_ want to level up your docs contributions, you can create a local development environment. This will allow you to see changes _live_ as you make them on your machine.
+
+Follow the instructions from Mintlify [here](https://mintlify.com/docs/quickstart#2-updating-your-docs) to get started. Once configured, you'll be able to run a local server that will allow you to see your changes in real-time.
+
+Simply `cd mage-ai/docs` + `mintlify dev` and you'll be able to navigate to a live version at `localhost:3000`.
+
 ### Adding icons
 
-Some elements in Mintlify have icons. Those are sourced from [fontawesome](https://fontawesome.com/) any icon you find there can be added as an icon to the Mage docs, where appropriate. 
+Some elements in Mintlify have icons. Those are sourced from [fontawesome](https://fontawesome.com/). Any icon you find there can be added as an icon to the Mage docs, where appropriate. We only add icons to top-levl items in our sidebar. 
 
-## Level 4: Developing locally in Mintlify 🧙🏻‍♂️
-
-If you _really_ want to level up your docs contributions, you can create a local development environment. Follow the instructions from Mintlify [here](https://mintlify.com/docs/quickstart#2-updating-your-docs) to get started. Once configured, you'll be able to run a local server that will allow you to see your changes in real-time.
-
-
-### Adding entirely new sections
+## Level 4: Adding entirely new sections 🧙🏻‍♂️
 
 If you'd like to contribute a larger, more structured section of our documentation, please reach out to a member of our team via Slack. They'll be able to guide you through the process of making sweeping changes. 
