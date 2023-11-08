@@ -79,6 +79,7 @@ type CodeOutputProps = {
   contained?: boolean;
   hasOutput?: boolean;
   hideExtraInfo?: boolean;
+  hideOutput?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
@@ -130,6 +131,7 @@ function CodeOutput({
   hasError,
   hasOutput,
   hideExtraInfo,
+  hideOutput,
   isInProgress,
   mainContainerWidth,
   messages,
@@ -673,7 +675,7 @@ function CodeOutput({
       <>
         {buttonTabs}
         {childrenBelowTabs}
-        {el}
+        {!hideOutput && el}
       </>
     );
   }, [
@@ -682,6 +684,7 @@ function CodeOutput({
     childrenBelowTabs,
     content,
     hasError,
+    hideOutput,
     isDBT,
     isInProgress,
     pipeline,
