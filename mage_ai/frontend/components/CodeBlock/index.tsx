@@ -578,7 +578,17 @@ function CodeBlock({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
-  const [selectedTab, setSelectedTab] = useState<TabType>(null);
+  const [selectedTab, setSelectedTabState] = useState<TabType>(null);
+  const setSelectedTab = useCallback((prev) => {
+    if (!selected) {
+      setSelected?.(true);
+    }
+    setSelectedTabState(prev);
+  }, [
+    selected,
+    setSelected,
+    setSelectedTabState,
+  ]);
 
   useEffect(() => {
     if (!selectedTab) {
@@ -1521,15 +1531,26 @@ function CodeBlock({
       );
     }
 
-    const outputEl = (
+    const outputEl = ({
+      childrenBelowTabs,
+      hideOutput,
+    }: {
+      childrenBelowTabs?: any;
+      hideOutput?: boolean;
+    } = {
+      childrenBelowTabs: null,
+      hideOutput: false,
+    }) => (
       <CodeOutput
         {...borderColorShareProps}
         block={block}
         blockIndex={blockIdx}
         blockMetadata={blockMetadata}
         buttonTabs={sparkEnabled ? null : buttonTabs}
+        childrenBelowTabs={childrenBelowTabs}
         collapsed={outputCollapsed}
         hasOutput={hasOutput}
+        hideOutput={hideOutput}
         isInProgress={isInProgress}
         mainContainerWidth={mainContainerWidth}
         messages={messagesWithType}
@@ -1652,6 +1673,21 @@ function CodeBlock({
         );
       }
 
+      if (sideBySideEnabled) {
+        return outputEl({
+          childrenBelowTabs: (
+            <>
+              {buttonTabs}
+
+              <Divider light />
+
+              {outputChildren}
+            </>
+          ),
+          hideOutput: !isOnOutputTab,
+        });
+      }
+
       return (
         <>
           <CodeContainerStyle
@@ -1668,12 +1704,12 @@ function CodeBlock({
             {outputChildren}
           </CodeContainerStyle>
 
-          {isOnOutputTab && outputEl}
+          {isOnOutputTab && outputEl()}
         </>
       );
     }
 
-    return outputEl;
+    return outputEl();
   }, [
     block,
     blockExecutionStates,

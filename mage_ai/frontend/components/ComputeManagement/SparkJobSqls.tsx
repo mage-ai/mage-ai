@@ -71,19 +71,25 @@ function SparkJobSqls({
       groups[application?.id]?.sqls?.push(sql);
     });
 
+    const groupsCount = Object.values(groups)?.length;
+
     return Object.values(groups).map(({
       application,
       sqls,
     }) => {
       return (
         <div key={application?.id}>
-          <Spacing p={PADDING_UNITS}>
-            <Text default bold>
-              Application {application?.id}
-            </Text>
-          </Spacing>
+          {groupsCount >= 2 && (
+            <>
+              <Spacing p={PADDING_UNITS}>
+                <Text default bold>
+                  Application {application?.id}
+                </Text>
+              </Spacing>
 
-          <Divider light />
+              <Divider light />
+            </>
+          )}
 
           <Table
             apiForFetchingAfterAction={api.spark_sqls.detail}
