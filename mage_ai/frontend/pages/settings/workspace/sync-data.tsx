@@ -33,6 +33,9 @@ import {
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
 import { onSuccess } from '@api/utils/response';
+import ErrorsType from '@interfaces/ErrorsType';
+import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
 
 export interface SyncFieldType {
   autoComplete?: string;
@@ -48,7 +51,7 @@ function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
   const [sync, setSync] = useState<SyncType>(null);
   const [userGitSettings, setUserGitSettings] = useState<UserGitSettingsType>(null);
-  const [error, setError] = useState<string>(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const [showSyncSettings, setShowSyncSettings] = useState<boolean>(null);
 
@@ -87,11 +90,10 @@ function SyncData() {
               );
             }
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => setError(exception),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -113,11 +115,10 @@ function SyncData() {
               );
             }
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => setError(exception),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -498,12 +499,17 @@ function SyncData() {
           </Button>
         </Spacing>
 
-        {error && (
-          <Spacing mt={1}>
-            <Text danger>
-              {error}
-            </Text>
-          </Spacing>
+        {errors && (
+          <ClickOutside
+            disableClickOutside
+            isOpen
+            onClickOutside={() => setErrors?.(null)}
+          >
+            <ErrorPopup
+              {...errors}
+              onClose={() => setErrors?.(null)}
+            />
+          </ClickOutside>
         )}
         
         {showSyncOperations && (
