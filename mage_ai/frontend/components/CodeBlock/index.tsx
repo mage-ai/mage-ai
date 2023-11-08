@@ -1741,7 +1741,9 @@ function CodeBlock({
       } else if (TAB_SPARK_SQLS.uuid === selectedTab?.uuid) {
         outputChildren = (
           <SparkSqls
+            disableGraph={!selected}
             executionStates={blockExecutionStates}
+            overrideScrollForGraph={selected}
           />
         );
       }

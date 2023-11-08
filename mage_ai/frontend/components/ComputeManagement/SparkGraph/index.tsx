@@ -1,6 +1,6 @@
 import { CanvasRef } from 'reaflow';
 import { ThemeContext } from 'styled-components';
-import { useContext, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 
 import GraphNode from './GraphNode';
 import Text from '@oracle/elements/Text';
@@ -25,16 +25,20 @@ import { getNodeHeight, getNodeWidth } from './utils';
 import { indexBy, groupBy } from '@utils/array';
 
 type SparkGraphProps = {
+  disableGraph?: boolean;
   height: number;
   heightOffset?: number;
   model: SparkSQLType;
+  overrideScroll?: boolean;
   treeRef?: any;
 };
 
 function SparkGraph({
+  disableGraph,
   height,
   heightOffset,
   model,
+  overrideScroll,
   treeRef,
 }: SparkGraphProps) {
   const treeInnerRef = useRef<CanvasRef>(null);
@@ -126,17 +130,17 @@ function SparkGraph({
   ]);
 
   useEffect(() => {
-    setTimeout(() => {
-      /*
-       * On Chrome browsers, the dep graph would not center automatically when
-       * navigating to the Pipeline Editor page even though the "fit" prop was
-       * added to the Canvas component. This centers it if it is not already.
-       */
-      if (canvasRef?.current?.containerRef?.current?.scrollTop === 0) {
-        canvasRef?.current?.fitCanvas?.();
-      }
-    }, 1000);
-  }, [canvasRef]);
+    if (!disableGraph) {
+      setTimeout(() => {
+        if (canvasRef?.current?.containerRef?.current?.scrollTop === 0) {
+          canvasRef?.current?.fitCanvas?.();
+        }
+      }, 1000);
+    }
+  }, [
+    canvasRef,
+    disableGraph,
+  ]);
 
   const containerHeight = useMemo(() => {
     let v = 0;
@@ -153,6 +157,36 @@ function SparkGraph({
     heightOffset,
   ]);
 
+  const disableWheel = useCallback((event) => {
+    event.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    if (disableGraph) {
+      canvasRef?.current?.containerRef?.current?.addEventListener('wheel', disableWheel);
+    } else {
+      canvasRef?.current?.containerRef?.current?.removeEventListener('wheel', disableWheel);
+    }
+  }, [
+    disableGraph,
+    disableWheel,
+  ]);
+
+  const overrideWheel = useCallback((event) => {
+    event.stopPropagation();
+  }, []);
+
+  useEffect(() => {
+    if (overrideScroll) {
+      canvasRef?.current?.containerRef?.current?.addEventListener('wheel', overrideWheel);
+    } else {
+      canvasRef?.current?.containerRef?.current?.removeEventListener('wheel', overrideWheel);
+    }
+  }, [
+    overrideScroll,
+    overrideWheel,
+  ]);
+
   return (
     <GraphContainerStyle
       height={containerHeight}
@@ -160,6 +194,7 @@ function SparkGraph({
     >
       <Canvas
         arrow={null}
+        disabled={disableGraph}
         edge={(edge) => {
           return (
             <Edge

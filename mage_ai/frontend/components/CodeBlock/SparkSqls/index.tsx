@@ -7,13 +7,17 @@ import {
 } from '@interfaces/SparkType';
 
 type SparkSqlsType = {
+  disableGraph?: boolean;
   executionStates: SparkExecutionState[];
   isInProgress?: boolean;
+  overrideScrollForGraph?: boolean;
 };
 
 function SparkSqls({
+  disableGraph,
   executionStates,
   isInProgress,
+  overrideScrollForGraph,
 }: SparkSqlsType) {
   const {
     sqls,
@@ -23,11 +27,14 @@ function SparkSqls({
 
   const tableMemo = useMemo(() => (
     <SparkJobSqls
+      disableGraph={disableGraph}
       disableJobExpansion
+      overrideScrollForGraph={overrideScrollForGraph}
       showSparkGraph
       sqls={sqls}
     />
    ), [
+    disableGraph,
     sqls,
   ]);
 

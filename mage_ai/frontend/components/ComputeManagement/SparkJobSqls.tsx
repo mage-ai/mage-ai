@@ -28,7 +28,9 @@ import { formatNumberToDuration } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type SparkJobSqlsProps = {
+  disableGraph?: boolean;
   disableJobExpansion?: boolean;
+  overrideScrollForGraph?: boolean;
   setSelectedSql?: (sql: SparkSQLType) => void;
   showSparkGraph?: boolean;
   sqls?: SparkSQLType[];
@@ -38,7 +40,9 @@ type SparkJobSqlsProps = {
 };
 
 function SparkJobSqls({
+  disableGraph,
   disableJobExpansion,
+  overrideScrollForGraph,
   setSelectedSql,
   showSparkGraph,
   sqls: sqlsProp,
@@ -191,8 +195,10 @@ function SparkJobSqls({
                               titleYPadding={1.5 * UNIT}
                             >
                               <SparkGraph
+                                disableGraph={disableGraph}
                                 height={100 * UNIT}
                                 model={sql}
+                                overrideScroll={overrideScrollForGraph}
                               />
                             </AccordionPanel>
                           )}
@@ -277,6 +283,8 @@ function SparkJobSqls({
       );
     })
   }, [
+    disableGraph,
+    overrideScrollForGraph,
     sqlsArr,
     stagesMapping,
   ]);
