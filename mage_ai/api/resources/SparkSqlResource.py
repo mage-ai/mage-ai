@@ -16,8 +16,20 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
             if length:
                 query['length'] = length
 
+        application_id = query_arg.get('application_id', [])
+        if application_id:
+            application_id = application_id[0]
+
+        application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
+        if application_spark_ui_url:
+            application_spark_ui_url = application_spark_ui_url[0]
+
         return self.build_result_set(
-            await LocalAPI().sqls(query=query),
+            await LocalAPI().sqls(
+                application_id=application_id,
+                application_spark_ui_url=application_spark_ui_url,
+                query=query,
+            ),
             user,
             **kwargs,
         )
@@ -30,17 +42,33 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
         if include_jobs_and_stages:
             include_jobs_and_stages = include_jobs_and_stages[0]
 
-        model = await LocalAPI().sql(sql_id=pk)
+        application_id = query_arg.get('application_id', [])
+        if application_id:
+            application_id = application_id[0]
+
+        application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
+        if application_spark_ui_url:
+            application_spark_ui_url = application_spark_ui_url[0]
+
+        model = await LocalAPI().sql(
+            application_id=application_id,
+            application_spark_ui_url=application_spark_ui_url,
+            sql_id=pk,
+        )
 
         if include_jobs_and_stages:
             job_ids = (model.failed_job_ids or []) + (
                 model.running_job_ids or []) + (model.success_job_ids or [])
             model.jobs = [await LocalAPI().job(
+                application_id=application_id,
+                application_spark_ui_url=application_spark_ui_url,
                 job_id=job_id,
             ) for job_id in job_ids]
 
             stage_ids = reduce(lambda acc, job: acc + (job.stage_ids or []), model.jobs, [])
             model.stages = [await LocalAPI().stage(
+                application_id=application_id,
+                application_spark_ui_url=application_spark_ui_url,
                 stage_id=stage_id,
             ) for stage_id in stage_ids]
 
