@@ -169,9 +169,8 @@ function Table({
     selectedRowIndexInternal,
   ]);
   const apiArguments = buildApiOptionsFromObject && objectAtRowIndex
-      ? buildApiOptionsFromObject(objectAtRowIndex)
-      : [null];
-  console.log('omg', apiArguments)
+    ? buildApiOptionsFromObject(objectAtRowIndex)
+    : [null];
   const { data } = apiForFetchingAfterAction?.(...apiArguments) || {};
 
   const [coordinates, setCoordinates] = useState<{
