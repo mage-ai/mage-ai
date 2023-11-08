@@ -27,6 +27,8 @@ def check_pipeline_run_status(
         if PipelineRun.PipelineRunStatus.FAILED.value == status:
             if error_on_failure:
                 raise Exception(message)
+            else:
+                break
 
         if verbose:
             print(message)
