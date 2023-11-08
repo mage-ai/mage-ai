@@ -35,7 +35,9 @@ type SparkJobSqlsProps = {
   showSparkGraph?: boolean;
   sqls?: SparkSQLType[];
   stagesMapping?: {
-    [key: number]: SparkStageType;
+    [applicationID: string]: {
+      [stageID: number]: SparkStageType;
+    };
   };
 };
 

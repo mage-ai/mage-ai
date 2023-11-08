@@ -1,19 +1,19 @@
 import { useMemo } from 'react';
 
+import ExecutionStateType from '@interfaces/ExecutionStateType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ProgressDotsStyle } from './index.style';
 import {
-  SparkExecutionState,
   SparkJobStatusEnum,
   SparkStageStatusEnum,
 } from '@interfaces/SparkType';
 
 type SparkProgressProps = {
   children?: any;
-  executionStates: SparkExecutionState[];
+  executionStates: ExecutionStateType[];
   isInProgress?: boolean;
 };
 

@@ -817,6 +817,31 @@ function CodeBlock({
     mainContainerRect,
   ]);
 
+  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
+    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
+  useEffect(() => {
+    setSparkEnabled(sparkEnabledInit
+      && !isStreamingPipeline
+      && !isDataIntegration
+      && BlockLanguageEnum.PYTHON === blockLanguage);
+  }, [
+    blockLanguage,
+    isDataIntegration,
+    isStreamingPipeline,
+    sparkEnabledInit,
+  ]);
+
+  const { data: dataExecutionStates, mutate: fetchExecutionStates } = api.execution_states.list({
+    block_uuid: blockUUID,
+    pipeline_uuid: pipelineUUID,
+  }, {
+    refreshInterval: selected && isInProgress ? 1000 : 5000,
+    revalidateOnFocus: true,
+  }, {
+    pauseFetch: (!selected && executionStatesFetchedCount >= 1) || !sparkEnabled,
+  });
+
   const runBlockAndTrack = useCallback((payload?: {
     block: BlockType;
     code?: string;
@@ -941,30 +966,6 @@ function CodeBlock({
     variables,
   ]);
 
-  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
-    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
-
-  useEffect(() => {
-    setSparkEnabled(sparkEnabledInit
-      && !isStreamingPipeline
-      && !isDataIntegration
-      && BlockLanguageEnum.PYTHON === blockLanguage);
-  }, [
-    blockLanguage,
-    isDataIntegration,
-    isStreamingPipeline,
-    sparkEnabledInit,
-  ]);
-
-  const { data: dataExecutionStates, mutate: fetchExecutionStates } = api.execution_states.list({
-    block_uuid: blockUUID,
-    pipeline_uuid: pipelineUUID,
-  }, {
-    refreshInterval: selected && isInProgress ? 1000 : 5000,
-    revalidateOnFocus: true,
-  }, {
-    pauseFetch: (!selected && executionStatesFetchedCount >= 1) || !sparkEnabled,
-  });
   const [blockExecutionStates, setBlockExecutionStates] = useState<ExecutionStateType[]>(null);
   useEffect(() => {
     if (dataExecutionStates) {
@@ -1761,7 +1762,6 @@ function CodeBlock({
               </div>
             </>
           ),
-          clickChildrenBelowTabsDispatchEvent: true,
           hideOutput: !isOnOutputTab,
         });
       }

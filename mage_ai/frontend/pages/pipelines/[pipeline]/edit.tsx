@@ -2807,7 +2807,6 @@ function PipelineDetailPage({
       setErrors={setErrors}
       // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
-      setIncludeSparkOutputs={setIncludeSparkOutputs}
       setIntegrationStreams={setIntegrationStreams}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
@@ -2876,7 +2875,6 @@ function PipelineDetailPage({
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
-    setIncludeSparkOutputs,
     setPipelineContentTouched,
     setSelectedBlock,
     setTextareaFocused,

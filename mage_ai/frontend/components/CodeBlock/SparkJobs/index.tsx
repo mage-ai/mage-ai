@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 
+import ExecutionStateType from '@interfaces/ExecutionStateType';
 import JobsTable from '@components/ComputeManagement/Jobs/JobsTable';
-import {
-  SparkExecutionState,
-  SparkStageType,
-} from '@interfaces/SparkType';
+import { SparkStageType } from '@interfaces/SparkType';
 
 type SparkJobsType = {
-  executionStates: SparkExecutionState[];
+  executionStates: ExecutionStateType[];
   isInProgress?: boolean;
 };
 
@@ -26,7 +24,9 @@ function SparkJobs({
   };
 
   const stagesMapping: {
-    [applicationID: string]: SparkStageType;
+    [applicationID: string]: {
+      [stageID: number]: SparkStageType;
+    };
   } = useMemo(() => (stages || []).reduce((acc, stage) => {
     const application = stage?.application;
 
