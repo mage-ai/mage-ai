@@ -1773,7 +1773,7 @@ function CodeBlock({
             <>
               {buttonTabs}
 
-              <Divider light />
+              <Divider medium />
 
               <div ref={childrenBelowTabsRef}>
                 {outputChildren}
