@@ -57,7 +57,7 @@ function Monitoring({
   setSelectedSql,
 }: MonitoringProps) {
   const themeContext = useContext(ThemeContext);
-  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState(TAB_JOBS);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState(TAB_APPLICATIONS);
 
   const setSelectedSubheaderTabUUID = useCallback((prev) => {
     setSelectedSql(() => null);
@@ -182,12 +182,43 @@ function Monitoring({
     displayLocalTimezone,
   ]);
 
-  const jobsMemo = useMemo(() => (
-    <JobsTable
-      jobs={jobs}
-      stagesMapping={stagesMapping}
-    />
-  ), [
+  const jobsMemo = useMemo(() => {
+    const groups = {};
+
+    jobs?.forEach((job) => {
+      const application = job?.application;
+      if (!(application?.id in groups)) {
+        groups[application?.id] = {
+          application: application,
+          jobs: [],
+        };
+      }
+
+      groups[application?.id]?.jobs?.push(job);
+    });
+
+    return Object.values(groups).map(({
+      application,
+      jobs: jobsArr,
+    }) => {
+      return (
+        <div key={application?.id}>
+          <Spacing p={PADDING_UNITS}>
+            <Text default bold>
+              Application {application?.id}
+            </Text>
+          </Spacing>
+
+          <Divider light />
+
+          <JobsTable
+            jobs={jobsArr}
+            stagesMapping={stagesMapping}
+          />
+        </div>
+      );
+    });
+  }, [
     jobs,
     stagesMapping,
   ]);

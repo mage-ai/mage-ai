@@ -40,6 +40,7 @@ export interface SparkApplicationType {
 }
 
 export interface SparkJobType {
+  application: SparkApplicationType;
   completion_time: string;
   job_id: number;
   job_tags: string[];

@@ -3,6 +3,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class SparkJobPresenter(BasePresenter):
     default_attributes = [
+        'application',
         'completion_time',
         'job_id',
         'job_tags',

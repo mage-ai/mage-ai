@@ -13,6 +13,7 @@ from mage_ai.services.spark.models.stages import (
     Task,
 )
 from mage_ai.services.spark.models.threads import Thread
+from mage_ai.shared.hash import index_by
 
 API_VERSION = 'v1'
 SPARK_UI_HOST = 'localhost'
@@ -29,21 +30,20 @@ class LocalAPI(BaseAPI):
 
         return url
 
-    @property
-    def endpoint(self) -> str:
-        return f'{self.spark_ui_url}/api/{API_VERSION}'
+    def endpoint(self, host: str = None, **kwargs) -> str:
+        return f'{host or self.spark_ui_url}/api/{API_VERSION}'
 
     def applications_sync(self, **kwargs) -> List[Application]:
         models = self.get_sync('/applications')
-        return [Application.load(**model) for model in models]
+        return [Application.load(**model, spark_ui_url=self.spark_ui_url) for model in models]
 
     def jobs_sync(self, application_id: str = None, **kwargs) -> List[Job]:
-        models = self.get_sync(f'/applications/{self.application_id or application_id}/jobs')
+        models = self.get_sync(f'/applications/{application_id or self.application_id}/jobs')
         return [Job.load(**model) for model in models]
 
     def sqls_sync(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Sql]:
         models = self.get_sync(
-            f'/applications/{self.application_id or application_id}/sql', query=query,
+            f'/applications/{application_id or self.application_id}/sql', query=query,
         )
         return sorted(
             [Sql.load(**model) for model in models],
@@ -53,28 +53,57 @@ class LocalAPI(BaseAPI):
 
     def stages_sync(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Stage]:
         models = self.get_sync(
-            f'/applications/{self.application_id or application_id}/stages', query=query,
+            f'/applications/{application_id or self.application_id}/stages', query=query,
         )
         model_class = StageAttempt if query and query.get('details') else Stage
         return [model_class.load(**model) for model in models]
 
     async def applications(self, **kwargs) -> List[Application]:
         models = await self.get('/applications')
-        return [Application.load(**model, spark_ui_url=self.spark_ui_url) for model in models]
+        applications = [Application.load(
+            **model,
+            spark_ui_url=self.spark_ui_url,
+        ) for model in models]
+        mapping = index_by(lambda x: x.id, applications)
+
+        applications_cache = Application.get_applications_from_cache()
+        if applications_cache:
+            for application in applications_cache.values():
+                if application.id in mapping:
+                    continue
+                applications.append(application)
+                mapping[application.id] = application
+
+        return applications
 
     async def jobs(self, application_id: str = None, **kwargs) -> List[Job]:
-        models = await self.get(f'/applications/{self.application_id or application_id}/jobs')
-        return [Job.load(**model) for model in models]
+        application_id = application_id or self.application_id
+        models = await self.get(f'/applications/{application_id}/jobs')
+
+        arr = []
+        if self.all_applications:
+            applications = await self.applications(**kwargs)
+            for application in applications:
+                if application.id == application_id:
+                    arr.extend([Job.load(application=application, **model) for model in models])
+                else:
+                    jobs = await self.get(
+                        f'/applications/{application.id}/jobs',
+                        host=application.spark_ui_url,
+                    )
+                    arr.extend([Job.load(application=application, **model) for model in jobs])
+
+        return arr
 
     async def job(self, job_id: int, application_id: str = None, **kwargs) -> Job:
         model = await self.get(
-            f'/applications/{self.application_id or application_id}/jobs/{job_id}',
+            f'/applications/{application_id or self.application_id}/jobs/{job_id}',
         )
         return Job.load(**model)
 
     async def stages(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Stage]:
         models = await self.get(
-            f'/applications/{self.application_id or application_id}/stages', query=query,
+            f'/applications/{application_id or self.application_id}/stages', query=query,
         )
         model_class = StageAttempt if query and query.get('details') else Stage
         return [model_class.load(**model) for model in models]
@@ -87,7 +116,7 @@ class LocalAPI(BaseAPI):
         **kwargs,
     ) -> Stage:
         stage_attempts = await self.get(
-            f'/applications/{self.application_id or application_id}/stages/{stage_id}',
+            f'/applications/{application_id or self.application_id}/stages/{stage_id}',
             query=query,
         )
         return Stage.load(stage_attempts=stage_attempts, stage_id=stage_id)
@@ -99,7 +128,7 @@ class LocalAPI(BaseAPI):
         **kwargs,
     ) -> List[StageAttempt]:
         models = await self.get(
-            f'/applications/{self.application_id or application_id}/stages/{stage_id}',
+            f'/applications/{application_id or self.application_id}/stages/{stage_id}',
         )
         return [StageAttempt.load(**model) for model in models]
 
@@ -111,7 +140,7 @@ class LocalAPI(BaseAPI):
         **kwargs,
     ) -> StageAttempt:
         model = await self.get(
-            f'/applications/{self.application_id or application_id}/stages/{stage_id}/{attempt_id}',
+            f'/applications/{application_id or self.application_id}/stages/{stage_id}/{attempt_id}',
         )
         return StageAttempt.load(**model)
 
@@ -123,7 +152,7 @@ class LocalAPI(BaseAPI):
         **kwargs,
     ) -> StageAttemptTaskSummary:
         model = await self.get(
-            f'/applications/{self.application_id or application_id}'
+            f'/applications/{application_id or self.application_id}'
             f'/stages/{stage_id}/{attempt_id}/taskSummary',
         )
         return StageAttemptTaskSummary.load(**model)
@@ -136,27 +165,27 @@ class LocalAPI(BaseAPI):
         **kwargs,
     ) -> List[Task]:
         models = await self.get(
-            f'/applications/{self.application_id or application_id}'
+            f'/applications/{application_id or self.application_id}'
             f'/stages/{stage_id}/{attempt_id}/taskList',
         )
         return [Task.load(**model) for model in models]
 
     async def executors(self, application_id: str = None, **kwargs) -> List[Executor]:
         models = await self.get(
-            f'/applications/{self.application_id or application_id}/allexecutors',
+            f'/applications/{application_id or self.application_id}/allexecutors',
         )
         return [Executor.load(**model) for model in models]
 
     async def threads(self, executor_id: str, application_id: str = None, **kwargs) -> List[Thread]:
         models = await self.get(
-            f'/applications/{self.application_id or application_id}'
+            f'/applications/{application_id or self.application_id}'
             f'/executors/{executor_id}/threads',
         )
         return [Thread.load(**model) for model in models]
 
     async def sqls(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Sql]:
         models = await self.get(
-            f'/applications/{self.application_id or application_id}/sql', query=query,
+            f'/applications/{application_id or self.application_id}/sql', query=query,
         )
         return sorted(
             [Sql.load(**model) for model in models],
@@ -166,12 +195,12 @@ class LocalAPI(BaseAPI):
 
     async def sql(self, sql_id: int, application_id: str = None, **kwargs) -> Sql:
         model = await self.get(
-            f'/applications/{self.application_id or application_id}/sql/{sql_id}',
+            f'/applications/{application_id or self.application_id}/sql/{sql_id}',
         )
         return Sql.load(**model)
 
     async def environment(self, application_id: str = None, **kwargs) -> Environment:
         model = await self.get(
-            f'/applications/{self.application_id or application_id}/environment',
+            f'/applications/{application_id or self.application_id}/environment',
         )
         return Environment.load(**model)
