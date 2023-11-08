@@ -54,7 +54,7 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
   }, [containerRef]);
 
   return (
-    <ZoomControlsStyle>
+    <ZoomControlsStyle onDoubleClick={(event) => { event.stopPropagation(); }}>
       {!minimizeControls && (
         <>
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
