@@ -140,12 +140,13 @@ class BaseAPI(ABC):
 
         return {}
 
-    def get_sync(self, path: str, query: Dict = None):
-        response = self.__build_request_sync('get', f'{self.endpoint()}{path}', query=query)
+    def get_sync(self, path: str, host: str = None, query: Dict = None):
+        url = f'{self.endpoint(host=host)}{path}'
+        response = self.__build_request_sync('get', url, query=query)
         if response.status_code == 200:
             return response.json()
         else:
-            print(f'[WARNING] {self.__class__.__name__}: {response}')
+            print(f'[WARNING] {self.__class__.__name__} {url}: {response}')
 
         return {}
 

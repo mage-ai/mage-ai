@@ -61,6 +61,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import SparkProgress from './SparkProgress';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -125,6 +126,8 @@ import {
   SUBHEADER_TABS,
   SUBHEADER_TAB_CODE,
   SUBHEADER_TAB_INTERACTIONS,
+  TAB_SPARK_JOBS,
+  TAB_SPARK_OUTPUT,
 } from './constants';
 import {
   KEY_CODE_CONTROL,
@@ -1437,6 +1440,7 @@ function CodeBlock({
             underlineColor={color}
             underlineStyle
           />
+          <Divider medium />
         </Spacing>
       );
     }
@@ -1503,6 +1507,18 @@ function CodeBlock({
       );
     }
 
+    let outputChildren;
+
+    if (sparkEnabled) {
+      if (TAB_SPARK_OUTPUT.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkProgress
+            executionStates={blockExecutionStates}
+          />
+        );
+      }
+    }
+
     return (
       <CodeOutput
         {...borderColorShareProps}
@@ -1510,6 +1526,7 @@ function CodeBlock({
         blockIndex={blockIdx}
         blockMetadata={blockMetadata}
         buttonTabs={buttonTabs}
+        childrenBelowTabs={outputChildren}
         collapsed={outputCollapsed}
         hasOutput={hasOutput}
         isInProgress={isInProgress}
@@ -1601,6 +1618,7 @@ function CodeBlock({
     );
   }, [
     block,
+    blockExecutionStates,
     blockIdx,
     blockMetadata,
     blockOutputRef,
@@ -1634,6 +1652,7 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
+    sparkEnabled,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);

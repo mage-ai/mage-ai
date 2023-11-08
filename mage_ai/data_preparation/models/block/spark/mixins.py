@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from datetime import datetime
 from typing import Dict, List
 
@@ -44,33 +43,21 @@ class SparkBlock:
         if 'execution_states' in jobs_cache:
             return jobs_cache.get('execution_states')
 
-        execution_states = {}
+        jobs = self.jobs_during_execution()
+        sqls = self.sqls_during_execution()
+        stages = self.stages_during_execution()
+
+        execution_states = dict(
+            jobs=[m.to_dict() for m in jobs],
+            sqls=[m.to_dict() for m in sqls],
+            stages=[m.to_dict() for m in stages],
+        )
+
         if cache:
-            jobs = []
-            tries = 0
-
-            while len(jobs) == 0 and tries < 3:
-                jobs = self.jobs_during_execution()
-
-                if len(jobs) >= 1:
-                    sqls = self.sqls_during_execution(jobs=jobs)
-                    stages = self.stages_during_execution(jobs=jobs)
-
-                    execution_states = dict(
-                        jobs=[m.to_dict() for m in jobs],
-                        sqls=[m.to_dict() for m in sqls],
-                        stages=[m.to_dict() for m in stages],
-                    )
-                else:
-                    time.sleep(1)
-
-                tries += 1
-
-            if len(jobs) >= 1:
-                self.__update_spark_jobs_cache(
-                    execution_states,
-                    'execution_states',
-                )
+            self.__update_spark_jobs_cache(
+                execution_states,
+                'execution_states',
+            )
 
         return execution_states
 
@@ -105,37 +92,63 @@ class SparkBlock:
 
         return []
 
-    def stages_during_execution(self, jobs: List[Job]):
-        if not jobs:
-            self.__load_spark_job_submission_timestamps()
+    def stages_during_execution(self):
+        self.__load_spark_job_submission_timestamps()
 
         def _filter(
             stage: Stage,
-            jobs=jobs,
+            execution_timestamp_start: float = self.execution_timestamp_start,
+            execution_timestamp_end: float = self.execution_timestamp_end,
         ) -> bool:
-            return any([job.stage_ids and stage.id in job.stage_ids for job in jobs])
+            if not stage.submission_time:
+                return False
+
+            if isinstance(stage.submission_time, str):
+                submission_timestamp = dateutil.parser.parse(stage.submission_time).timestamp()
+            elif isinstance(stage.submission_time, float) or isinstance(stage.submission_time, int):
+                submission_timestamp = datetime.fromtimestamp(stage.submission_time)
+
+            return execution_timestamp_start and \
+                execution_timestamp_end and \
+                submission_timestamp >= execution_timestamp_start and \
+                (
+                    not execution_timestamp_end or
+                    submission_timestamp <= execution_timestamp_end
+                )
 
         stages = self.__get_stages()
+        arr = list(filter(_filter, stages))
 
-        return list(filter(_filter, stages))
+        return arr
 
-    def sqls_during_execution(self, jobs: List[Job]):
-        if not jobs:
-            self.__load_spark_job_submission_timestamps()
+    def sqls_during_execution(self):
+        self.__load_spark_job_submission_timestamps()
 
         def _filter(
             sql: Sql,
-            jobs=jobs,
+            execution_timestamp_start: float = self.execution_timestamp_start,
+            execution_timestamp_end: float = self.execution_timestamp_end,
         ) -> bool:
-            return any([(
-                job.id in sql.failed_job_ids or
-                job.id in sql.running_job_ids or
-                job.id in sql.success_job_ids
-            ) for job in jobs])
+            if not sql.submission_time:
+                return False
+
+            if isinstance(sql.submission_time, str):
+                submission_timestamp = dateutil.parser.parse(sql.submission_time).timestamp()
+            elif isinstance(sql.submission_time, float) or isinstance(sql.submission_time, int):
+                submission_timestamp = datetime.fromtimestamp(sql.submission_time)
+
+            return execution_timestamp_start and \
+                execution_timestamp_end and \
+                submission_timestamp >= execution_timestamp_start and \
+                (
+                    not execution_timestamp_end or
+                    submission_timestamp <= execution_timestamp_end
+                )
 
         sqls = self.__get_sqls()
+        arr = list(filter(_filter, sqls))
 
-        return list(filter(_filter, sqls))
+        return arr
 
     def clear_spark_jobs_cache(self) -> None:
         if os.path.exists(self.spark_jobs_full_path):
@@ -158,7 +171,9 @@ class SparkBlock:
         )
 
     def set_spark_job_execution_end(self) -> None:
-        self.execution_timestamp_end = datetime.utcnow().timestamp()
+        # Need a slight buffer of 10 seconds because stages are still being submitted even after
+        # the end of the block function execution.
+        self.execution_timestamp_end = datetime.utcnow().timestamp() + 10
         self.__update_spark_jobs_cache(
             dict(
                 submission_timestamp=self.execution_timestamp_end,
@@ -167,7 +182,7 @@ class SparkBlock:
         )
 
     def __get_jobs(self) -> List[Job]:
-        api = API.build(all_applications=False, spark_session=self.spark_session)
+        api = API.build(all_applications=True)
 
         if not api:
             return
@@ -185,7 +200,7 @@ class SparkBlock:
         )
 
     def __get_stages(self) -> List[Stage]:
-        api = API.build(all_applications=False, spark_session=self.spark_session)
+        api = API.build(all_applications=True)
 
         if not api:
             return
@@ -202,7 +217,7 @@ class SparkBlock:
         return stages
 
     def __get_sqls(self) -> List[Sql]:
-        api = API.build(all_applications=False, spark_session=self.spark_session)
+        api = API.build(all_applications=True)
 
         if not api:
             return

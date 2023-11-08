@@ -1478,7 +1478,6 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         if track_spark:
             self.set_spark_job_execution_end()
-            self.execution_states(cache=True)
 
         return output
 
