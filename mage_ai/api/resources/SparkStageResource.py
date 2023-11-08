@@ -42,7 +42,17 @@ class SparkStageResource(GenericResource, SparkApplicationChild):
             if quantiles:
                 query['withSummaries'] = with_summaries
 
+        application_id = query_arg.get('application_id', [])
+        if application_id:
+            application_id = application_id[0]
+
+        application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
+        if application_spark_ui_url:
+            application_spark_ui_url = application_spark_ui_url[0]
+
         stage = await LocalAPI().stage(
+            application_id=application_id,
+            application_spark_ui_url=application_spark_ui_url,
             stage_id=pk,
             query=query if query else None,
         )

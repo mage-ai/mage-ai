@@ -6,6 +6,7 @@ from mage_ai.api.presenters.SparkStageAttemptPresenter import SparkStageAttemptP
 class SparkStagePresenter(BasePresenter):
     default_attributes = [
         'accumulator_updates',
+        'application',
         'attempt_id',
         'completion_time',
         'details',

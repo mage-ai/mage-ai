@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 from mage_ai.services.spark.models.metrics import Metrics
 
@@ -289,6 +290,7 @@ class Task(BaseSparkModel):
 @dataclass
 class StageBase(BaseSparkModel):
     accumulator_updates: List[str] = field(default_factory=list)  # []
+    application: Application = None
     attempt_id: int = None  # 0
     completion_time: str = None  # "2023-10-15T10:17:00.772GMT"
     # org.apache.spark.sql.Dataset.count(Dataset.scala:3625)
@@ -365,6 +367,9 @@ class StageBase(BaseSparkModel):
     task_metrics_distributions: TaskMetrics = None
 
     def __post_init__(self):
+        if self.application and isinstance(self.application, dict):
+            self.application = Application.load(**self.application)
+
         if self.executor_metrics_distributions:
             if 'quantiles' not in self.executor_metrics_distributions:
                 self.executor_metrics_distributions = ExecutorMetricsDistributions.load(

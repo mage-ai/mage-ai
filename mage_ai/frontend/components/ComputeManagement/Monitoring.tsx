@@ -36,8 +36,8 @@ import {
   SparkTaskType,
 } from '@interfaces/SparkType';
 import { formatNumberToDuration, pluralize } from '@utils/string';
-import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { sortByKey } from '@utils/array';
 
 const TAB_APPLICATIONS = 'Applications';
 const TAB_JOBS = 'Jobs';
@@ -82,10 +82,21 @@ function Monitoring({
     _format: 'with_details',
   });
   const stagesMapping: {
-    [stageId: number]: SparkStageType;
-  } = useMemo(() => indexBy(dataStages?.spark_stages || [], ({ stage_id: stageId }) => stageId), [
-      dataStages,
-    ]);
+    [applicationID: string]: SparkStageType;
+  } = useMemo(() => (dataStages?.spark_stages || []).reduce((acc, stage) => {
+    const application = stage?.application;
+
+    if (!(application?.id in acc)) {
+      acc[application?.id] = {};
+    }
+
+    acc[application?.id][stage?.stage_id] = stage;
+
+    return acc;
+  }, {}),
+  [
+    dataStages,
+  ]);
 
   const applicationsMemo = useMemo(() => (
     <Table

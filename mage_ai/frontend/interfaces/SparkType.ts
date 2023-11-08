@@ -214,6 +214,7 @@ export interface SparkTaskType {
 }
 
 export interface SparkStageAttemptType {
+  application: SparkApplication;
   attempt_id: number;
   executor_metrics_distributions: {
     disk_bytes_spilled: number[];
