@@ -844,9 +844,14 @@ function CodeBlock({
       setRunEndTime(null);
       setOutputCollapsed(false);
     }
+
+    if (sparkEnabled) {
+      fetchExecutionStates();
+    }
   }, [
     blockInteractions,
     content,
+    fetchExecutionStates,
     hasDownstreamWidgets,
     interactionsMapping,
     isDBT,
@@ -860,6 +865,7 @@ function CodeBlock({
     setRunEndTime,
     setSelectedTab,
     sideBySideEnabled,
+    sparkEnabled,
     variables,
   ]);
 
@@ -1514,6 +1520,7 @@ function CodeBlock({
         outputChildren = (
           <SparkProgress
             executionStates={blockExecutionStates}
+            isInProgress={isInProgress}
           />
         );
       }
