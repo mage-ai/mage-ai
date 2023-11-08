@@ -173,10 +173,13 @@ The recommended way to install the latest version of Mage is through Docker with
 docker pull mageai/mageai:latest
 ```
 
-You can also install Mage using pip or conda, though this may cause dependency issues:
+You can also install Mage using pip or conda, though this may cause dependency issues without the proper environment.
 
 ```bash
 pip install mage-ai
+```
+```bash
+conda install -c conda-forge mage-ai
 ```
 
 Looking for help? The _fastest_ way to get started is by checking out our documentation [here](https://docs.mage.ai/getting-started/setup).
