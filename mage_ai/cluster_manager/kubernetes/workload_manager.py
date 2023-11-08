@@ -73,7 +73,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -184,13 +184,6 @@ class WorkloadManager:
         )
         storage_access_mode = parameters.get('storage_access_mode', 'ReadWriteOnce')
         storage_request_size = parameters.get('storage_request_size', '2Gi')
-
-        self.__create_persistent_volume(
-            name,
-            volume_host_path='/Users/david_yang/mage/mage-ai/testfiles',
-            storage_request_size=storage_request_size,
-            access_mode=storage_access_mode,
-        )
 
         ingress_name = workspace_config.ingress_name
 
@@ -507,11 +500,15 @@ class WorkloadManager:
             except Exception:
                 pass
         if pod_name:
+            # Check for base path environment variable in case it exists
             exec_command = [
-                '/bin/sh',
+                '/bin/bash',
                 '-c',
+                '[[ -z "${MAGE_ROUTES_BASE_PATH:-${MAGE_BASE_PATH}}" ]] '
+                '&& BasePath="" '
+                '|| BasePath="/${MAGE_ROUTES_BASE_PATH:-${MAGE_BASE_PATH}}";'
                 'curl -s --request GET --url '
-                'http://localhost:6789/{}api/statuses?_format=with_activity_details '
+                'http://localhost:6789${BasePath}/api/statuses?_format=with_activity_details '
                 '--header "Content-Type: application/json"',
             ]
             resp = stream(
