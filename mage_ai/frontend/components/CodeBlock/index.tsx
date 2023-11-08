@@ -63,6 +63,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import SparkJobs from './SparkJobs';
 import SparkProgress from './SparkProgress';
+import SparkStages from './SparkStages';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -579,14 +580,17 @@ function CodeBlock({
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
   useEffect(() => {
-    if (sparkEnabled) {
-      setSelectedTab(TABS_SPARK(block)[0]);
-    } else if (isDBT) {
-      setSelectedTab(TABS_DBT(block)[0]);
+    if (!selectedTab) {
+      if (sparkEnabled) {
+        setSelectedTab(TABS_SPARK(block)[0]);
+      } else if (isDBT) {
+        setSelectedTab(TABS_DBT(block)[0]);
+      }
     }
   }, [
     block,
     isDBT,
+    selectedTab,
     setSelectedTab,
     sparkEnabled,
   ]);
@@ -1531,7 +1535,7 @@ function CodeBlock({
         messagesAll={messages}
         onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
         openSidekickView={openSidekickView}
-        outputRowNormalPadding={sideBySideEnabled || isDataIntegration}
+        outputRowNormalPadding={sideBySideEnabled || isDataIntegration || sparkEnabled}
         pipeline={pipeline}
         ref={blockOutputRef}
         runCount={runCount}
@@ -1633,6 +1637,12 @@ function CodeBlock({
             isInProgress={isInProgress}
           />
         );
+      } else if (TAB_SPARK_STAGES.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkStages
+            executionStates={blockExecutionStates}
+          />
+        );
       }
 
       return (
@@ -1640,11 +1650,14 @@ function CodeBlock({
           <CodeContainerStyle
             {...borderColorShareProps}
             className={selected && textareaFocused ? 'selected' : null}
-            hideBorderBottom={isOnOutputTab}
+            hideBorderBottom={isOnOutputTab && hasOutput}
             lightBackground
             noPadding
           >
             {buttonTabs}
+
+            <Divider light />
+
             {outputChildren}
           </CodeContainerStyle>
 

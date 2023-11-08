@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -110,17 +109,9 @@ function SparkProgress({
     tasksCountCompleted,
   ]);
 
-  if (!isInProgress && !jobs?.length) {
-    return null;
-  }
-
   return (
     <>
-      <Spacing pb={PADDING_UNITS}>
-        <Divider light />
-      </Spacing>
-
-      <Spacing px={PADDING_UNITS} pb={PADDING_UNITS}>
+      <Spacing p={PADDING_UNITS}>
         <Spacing mb={1}>
           <FlexContainer alignContent="center" justifyContent="space-between">
             <Text default monospace small>
