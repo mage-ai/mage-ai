@@ -49,6 +49,8 @@ SparkSqlPolicy.allow_query(
 
 SparkSqlPolicy.allow_query(
     [
+        'application_id',
+        'application_spark_ui_url',
         'include_jobs_and_stages',
     ],
     scopes=[

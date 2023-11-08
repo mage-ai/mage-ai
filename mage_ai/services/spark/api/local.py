@@ -126,7 +126,6 @@ class LocalAPI(BaseAPI):
         if self.all_applications:
             applications = await self.applications(**kwargs)
             for application in applications:
-                print('WTF0', application)
                 if application.id == application_id:
                     arr.extend([model_class.load(
                         application=application,
@@ -138,7 +137,6 @@ class LocalAPI(BaseAPI):
                         host=application.spark_ui_url,
                         query=query,
                     )
-                    print('WTFFFFFFFFFFFFF', models2)
                     arr.extend([model_class.load(
                         application=application,
                         **model,
@@ -231,21 +229,68 @@ class LocalAPI(BaseAPI):
         )
         return [Thread.load(**model) for model in models]
 
-    async def sqls(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Sql]:
+    async def sqls(
+        self,
+        application_id: str = None,
+        application_spark_ui_url: str = None,
+        query: Dict = None,
+        **kwargs,
+    ) -> List[Sql]:
+        application_id = application_id or self.application_id
         models = await self.get(
-            f'/applications/{application_id or self.application_id}/sql', query=query,
-        )
-        return sorted(
-            [Sql.load(**model) for model in models],
-            key=lambda s: s.submission_time,
-            reverse=True,
+            f'/applications/{application_id}/sql',
+            query=query,
         )
 
-    async def sql(self, sql_id: int, application_id: str = None, **kwargs) -> Sql:
+        arr = []
+        if self.all_applications:
+            applications = await self.applications(**kwargs)
+            for application in applications:
+                if application.id == application_id:
+                    arr.extend(sorted(
+                        [Sql.load(
+                            application=application,
+                            **model,
+                        ) for model in models],
+                        key=lambda s: s.submission_time,
+                        reverse=True,
+                    ))
+                else:
+                    models2 = await self.get(
+                        f'/applications/{application.id}/sql',
+                        host=application.spark_ui_url,
+                        query=query,
+                    )
+                    arr.extend(sorted(
+                        [Sql.load(
+                            application=application,
+                            **model,
+                        ) for model in models2],
+                        key=lambda s: s.submission_time,
+                        reverse=True,
+                    ))
+
+        return arr
+
+    async def sql(
+        self,
+        sql_id: int,
+        application_id: str = None,
+        application_spark_ui_url: str = None,
+        **kwargs,
+    ) -> Sql:
+        application_id = application_id or self.application_id
         model = await self.get(
-            f'/applications/{application_id or self.application_id}/sql/{sql_id}',
+            f'/applications/{application_id}/sql/{sql_id}',
+            host=application_spark_ui_url,
         )
-        return Sql.load(**model)
+        return Sql.load(
+            application=Application(
+                id=application_id,
+                spark_ui_url=application_spark_ui_url,
+            ),
+            **model,
+        )
 
     async def environment(self, application_id: str = None, **kwargs) -> Environment:
         model = await self.get(
