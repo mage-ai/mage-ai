@@ -219,6 +219,8 @@ export interface BlockRequestPayloadType {
   defaults?: {
     language?: BlockLanguageEnum;
   };
+  detach?: boolean;
+  downstream_blocks?: string[];
   extension_uuid?: string;
   language?: BlockLanguageEnum;
   name?: string;
@@ -263,6 +265,7 @@ export default interface BlockType {
   defaults?: {
     language?: BlockLanguageEnum;
   };
+  detach?: boolean;
   description?: string;
   documentation?: string;
   downstream_blocks?: string[];
@@ -273,6 +276,7 @@ export default interface BlockType {
   executor_type?: ExecutorTypeEnum;
   extension_uuid?: string;
   file?: string;
+  force?: boolean;
   has_callback?: boolean;
   language?: BlockLanguageEnum;
   metadata?: {

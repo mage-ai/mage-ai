@@ -24,7 +24,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
+import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
 import { Branch, Slack } from '@oracle/icons';
 import {
   HeaderStyle,
@@ -246,40 +246,16 @@ function Header({
           </Flex>
 
           <Flex alignItems="center">
-            <ServerTimeDropdown />
-            {latestVersion && version && latestVersion !== version && (
-              <Spacing ml={2}>
-                <Button
-                  borderLess
-                  linkProps={{
-                    href: 'https://docs.mage.ai/about/releases',
-                  }}
-                  noHoverUnderline
-                  primary
-                  target="_blank"
-                >
-                  <Text>
-                    🚀 Download new version <Text
-                      bold
-                      inline
-                      monospace
-                    >
-                      {latestVersion}
-                    </Text>
-                  </Text>
-                </Button>
-              </Spacing>
-            )}
-
             {gitIntegrationEnabled && branch && (
-              <Spacing ml={2}>
+              <Spacing ml={1}>
                 <KeyboardShortcutButton
-                  blackBorder
-                  block
                   compact
+                  highlightOnHoverAlt
+                  noBackground
                   noHoverUnderline
                   onClick={showModal}
                   sameColorAsText
+                  title={branch}
                   uuid="Header/GitActions"
                 >
                   <FlexContainer alignItems="center">
@@ -293,29 +269,55 @@ function Header({
               </Spacing>
             )}
 
+            <Spacing ml={1}>
+              <ServerTimeDropdown />
+            </Spacing>
+
             {version && typeof(version) !== 'undefined' && (
               <Spacing ml={2}>
                 <Link
-                  default
                   href="https://www.mage.ai/changelog"
                   monospace
                   openNewWindow
+                  sameColorAsText
+                  small
                 >
                   {`v${version}`}
                 </Link>
               </Spacing>
             )}
 
-            <Spacing ml={2}>
+            {latestVersion && version && latestVersion !== version && (
+              <Spacing ml={1}>
+                <Button
+                  backgroundColor={YELLOW}
+                  borderLess
+                  compact
+                  linkProps={{
+                    href: 'https://docs.mage.ai/about/releases',
+                  }}
+                  noHoverUnderline
+                  pill
+                  sameColorAsText
+                  target="_blank"
+                  title={`Update to version ${latestVersion}`}
+                >
+                  <Text black bold>Update</Text>
+                </Button>
+              </Spacing>
+            )}
+
+            <Spacing ml={3}>
               <KeyboardShortcutButton
                 beforeElement={<Slack />}
-                blackBorder
                 compact
+                highlightOnHoverAlt
                 inline
                 linkProps={{
                   as: 'https://www.mage.ai/chat',
                   href: 'https://www.mage.ai/chat',
                 }}
+                noBackground
                 noHoverUnderline
                 openNewTab
                 sameColorAsText

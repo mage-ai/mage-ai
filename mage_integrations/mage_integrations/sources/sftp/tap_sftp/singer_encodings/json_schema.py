@@ -18,10 +18,10 @@ def get_schema_for_table(conn, table_spec, config):
 
     data_schema = {
         **generate_schema(samples, table_spec),
-        SDC_SOURCE_FILE_COLUMN: {'type': 'string'},
-        SDC_SOURCE_LINENO_COLUMN: {'type': 'integer'},
-        SDC_SOURCE_LAST_MODIFIED: {'type': 'string', 'format': 'date-time'},
-        csv_handler.SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}},
+        SDC_SOURCE_FILE_COLUMN: {'type': ['string']},
+        SDC_SOURCE_LINENO_COLUMN: {'type': ['integer']},
+        SDC_SOURCE_LAST_MODIFIED: {'type': ['string'], 'format': 'date-time'},
+        csv_handler.SDC_EXTRA_COLUMN: {'type': ['array'], 'items': {'type': 'string'}},
     }
 
     return {

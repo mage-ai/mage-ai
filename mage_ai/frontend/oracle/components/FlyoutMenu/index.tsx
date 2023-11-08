@@ -21,8 +21,11 @@ import {
   KEY_CODE_ARROW_UP,
   KEY_CODE_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
+
+export const DEFAULT_MENU_ITEM_HEIGHT = UNIT * 4.5;
 
 export type FlyoutMenuItemType = {
   beforeIcon?: JSX.Element;
@@ -176,7 +179,7 @@ function FlyoutMenu({
       ? customSubmenuHeights?.[uuid]
       : null;
     const customHeightOffset = hasCustomHeight
-      ? customSubmenuHeights?.[uuid] - 36
+      ? customSubmenuHeights?.[uuid] - DEFAULT_MENU_ITEM_HEIGHT
       : 0;
 
     return (

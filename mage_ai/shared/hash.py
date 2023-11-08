@@ -126,3 +126,7 @@ def replace_dict_nan_value(d):
             return None
         return v
     return {k: _replace_nan_value(v) for k, v in d.items()}
+
+
+def get_safe_value(data: Dict, key: str, default_value):
+    return data.get(key, default_value) if data else default_value

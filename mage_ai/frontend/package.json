@@ -17,6 +17,7 @@
   "dependencies": {
     "@amplitude/react-amplitude": "^1.0.0",
     "@monaco-editor/react": "^4.4.5",
+    "@types/moment-duration-format": "^2.2.5",
     "@types/react-table": "^7.7.12",
     "@visx/axis": "2.14.0",
     "@visx/curve": "2.1.0",
@@ -42,6 +43,7 @@
     "jwt-decode": "^3.1.2",
     "local-storage": "^2.0.0",
     "moment": "^2.29.4",
+    "moment-duration-format": "^2.3.2",
     "moment-timezone": "^0.5.43",
     "monaco-themes": "^0.4.2",
     "next": "12.3.4",

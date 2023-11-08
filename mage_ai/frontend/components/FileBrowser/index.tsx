@@ -11,7 +11,7 @@ import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import FileType from '@interfaces/FileType';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import FlyoutMenu, { DEFAULT_MENU_ITEM_HEIGHT } from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
 import NewFile from './NewFile';
 import NewFolder from './NewFolder';
@@ -28,12 +28,14 @@ import {
 import { HEADER_Z_INDEX } from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
+import { createPortal } from 'react-dom';
 import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
 import { find } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
 const MENU_WIDTH: number = UNIT * 20;
+const MENU_ITEM_HEIGHT = 36;
 
 type FileBrowserProps = {
   addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
@@ -398,7 +400,7 @@ function FileBrowser({
       x = 0,
       y = 0,
     } = coordinates || {};
-    let xFinal = x;
+    let xFinal = x + UNIT;
     if (x + MENU_WIDTH >= xContainer + width) {
       xFinal = (xContainer + width) - (MENU_WIDTH + UNIT);
     }
@@ -513,23 +515,32 @@ function FileBrowser({
       }
     }
 
+    let yFinal = y + (UNIT / 2);
+    const menuHeight = MENU_ITEM_HEIGHT * items.length;
+    if (y + menuHeight >= window.innerHeight) {
+      yFinal = y - menuHeight;
+    }
+
     return (
-      <div
-        style={{
-          left: xFinal,
-          position: 'fixed',
-          top: y + (UNIT / 2),
-          zIndex: HEADER_Z_INDEX + 100,
-        }}
-      >
-        <FlyoutMenu
-          items={items}
-          open
-          parentRef={undefined}
-          uuid="FileBrowser/ContextMenu"
-          width={MENU_WIDTH}
-        />
-      </div>
+      createPortal(
+        <div
+          style={{
+            left: xFinal,
+            position: 'fixed',
+            top: yFinal,
+            zIndex: HEADER_Z_INDEX + 100,
+          }}
+        >
+          <FlyoutMenu
+            items={items}
+            open
+            parentRef={undefined}
+            uuid="FileBrowser/ContextMenu"
+            width={MENU_WIDTH}
+          />
+        </div>, 
+        document.body,
+      )
     );
   }, [
     coordinates,

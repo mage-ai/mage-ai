@@ -39,7 +39,7 @@ export type TooltipWrapperProps = {
 };
 
 const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
-  position: relative;
+  position: static;
 
   ${props => props.height && `
     height: ${props.height}px;

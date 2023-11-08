@@ -9,7 +9,10 @@ from mage_integrations.destinations.constants import (
     REPLICATION_METHOD_INCREMENTAL,
     REPLICATION_METHOD_LOG_BASED,
 )
-from mage_integrations.destinations.utils import update_record_with_internal_columns
+from mage_integrations.destinations.utils import (
+    clean_column_name,
+    update_record_with_internal_columns,
+)
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
 
@@ -31,6 +34,13 @@ class Destination(BaseDestination):
     @property
     def quote(self):
         return ''
+
+    @property
+    def use_lowercase(self) -> bool:
+        return self.config.get('lower_case', True)
+
+    def clean_column_name(self, col):
+        return clean_column_name(col, lower_case=self.use_lowercase)
 
     def test_connection(self) -> None:
         sql_connection = self.build_connection()
@@ -191,26 +201,6 @@ class Destination(BaseDestination):
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
             raise Exception(message)
-
-        return query_strings
-
-    def handle_insert_commands(
-        self,
-        record_data: List[Dict],
-        stream: str,
-        tags: Dict = None,
-    ) -> List[str]:
-        if tags is None:
-            tags = {}
-        query_strings = []
-
-        for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
-            query_strings += self._handle_insert_commands_single_batch(
-                sub_batch,
-                stream,
-                idx=idx,
-                tags=tags,
-            )
 
         return query_strings
 

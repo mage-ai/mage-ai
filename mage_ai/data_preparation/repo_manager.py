@@ -45,6 +45,7 @@ class RepoConfig:
         self.cluster_type = None
 
         self.remote_variables_dir = None
+        self.ai_config = None
         self.azure_container_instance_config = None
         self.ecs_config = None
         self.emr_config = None
@@ -92,13 +93,17 @@ class RepoConfig:
                     repo_path=self.repo_path,
                     repo_config=repo_config
                 )
-            os.makedirs(self.variables_dir, exist_ok=True)
+            try:
+                os.makedirs(self.variables_dir, exist_ok=True)
+            except Exception:
+                pass
 
             self.project_type = repo_config.get('project_type')
             self.cluster_type = repo_config.get('cluster_type')
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
 
             # Executor configs
+            self.ai_config = repo_config.get('ai_config', dict())
             self.azure_container_instance_config = \
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
@@ -146,6 +151,7 @@ class RepoConfig:
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
+            ai_config=self.ai_config,
             azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
@@ -298,7 +304,7 @@ def get_variables_dir(
         try:
             os.makedirs(variables_dir, exist_ok=True)
         except Exception:
-            traceback.print_exc()
+            pass
     return variables_dir
 
 

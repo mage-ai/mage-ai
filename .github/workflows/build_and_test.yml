@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
     needs: check-code-quality
     steps:
       - uses: actions/checkout@v3
@@ -60,7 +60,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install libkrb5-dev
           sudo apt-get install freetds-dev
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -69,6 +68,8 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
+        env:
+          OPENAI_API_KEY: abcdefg
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests

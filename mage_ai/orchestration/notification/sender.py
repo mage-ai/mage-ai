@@ -25,7 +25,8 @@ DEFAULT_MESSAGES = dict(
         title='Failed to run Mage pipeline {pipeline_uuid}',
         summary=(
             'Failed to run Pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
-            '`{pipeline_schedule_name}` at execution time `{execution_time}`.'
+            '`{pipeline_schedule_name}` at execution time `{execution_time}`. '
+            'Error: {error}'
         ),
     ),
     passed_sla=dict(
@@ -58,7 +59,7 @@ class NotificationSender:
         if summary is None:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
-            send_slack_message(self.config.slack_config, details or summary)
+            send_slack_message(self.config.slack_config, details or summary, title)
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             send_teams_message(self.config.teams_config, summary)
@@ -98,6 +99,7 @@ class NotificationSender:
         self,
         pipeline,
         pipeline_run,
+        error: str = None,
         summary: str = None,
     ) -> None:
         if AlertOn.PIPELINE_RUN_FAILURE in self.config.alert_on:
@@ -110,6 +112,7 @@ class NotificationSender:
                 default_message,
                 pipeline,
                 pipeline_run,
+                error=error,
                 message_template=message_template,
                 summary=summary,
             )
@@ -128,10 +131,17 @@ class NotificationSender:
                 message_template=message_template,
             )
 
-    def __interpolate_vars(self, text: str, pipeline, pipeline_run):
+    def __interpolate_vars(
+        self,
+        text: str,
+        pipeline,
+        pipeline_run,
+        error: str = None,
+    ):
         if text is None or pipeline is None or pipeline_run is None:
             return text
         return text.format(
+            error=error,
             execution_time=pipeline_run.execution_date,
             pipeline_run_url=self.__pipeline_run_url(pipeline, pipeline_run),
             pipeline_schedule_id=pipeline_run.pipeline_schedule.id,
@@ -144,6 +154,7 @@ class NotificationSender:
         default_message: Dict,
         pipeline,
         pipeline_run,
+        error: str = None,
         message_template: MessageTemplate = None,
         summary: str = None,
     ):
@@ -155,10 +166,11 @@ class NotificationSender:
             `default_message`.
 
         Args:
-            default_message (TYPE): default message dict, containing "title",
+            default_message (Dict): default message dict, containing "title",
                 "summary", "details" keys.
             pipeline: the pipeline object, used to interpolate variables in the message.
             pipeline_run: the pipeline run object, used to interpolate variables in the message.
+            error (str): the error message that can be interpolated in the message.
             message_template (MessageTemplate, optional): custom message template that's provided
                 by user.
             summary (str, optional): summary that's used to override the custom message template.
@@ -182,9 +194,24 @@ class NotificationSender:
                 details = message_template.details
 
         self.send(
-            title=self.__interpolate_vars(title or default_title, pipeline, pipeline_run),
-            summary=self.__interpolate_vars(summary or default_summary, pipeline, pipeline_run),
-            details=self.__interpolate_vars(details or default_details, pipeline, pipeline_run),
+            title=self.__interpolate_vars(
+                title or default_title,
+                pipeline,
+                pipeline_run,
+                error=error,
+            ),
+            summary=self.__interpolate_vars(
+                summary or default_summary,
+                pipeline,
+                pipeline_run,
+                error=error,
+            ),
+            details=self.__interpolate_vars(
+                details or default_details,
+                pipeline,
+                pipeline_run,
+                error=error,
+            ),
         )
 
     def __with_pipeline_run_url(self, text, pipeline, pipeline_run):

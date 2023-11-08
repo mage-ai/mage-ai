@@ -1,11 +1,18 @@
 import styled from 'styled-components';
 
+import Button from '@oracle/elements/Button';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 const SHARED_CELL_PADDING = '12px 20px';
 const SHARED_GAP = '1px';
+
+export const ButtonStyle = styled(Button)<{ active?: boolean }>`
+  ${props => (props.active) && `
+    background-color: ${(props.theme.background || dark.background).dashboard};
+  `};
+`;
 
 export const DropdownContainerStyle = styled.div<{
   top?: number;

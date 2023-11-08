@@ -5,7 +5,22 @@ icon: "alien"
 description: "Want to get started contributing code? You're in the right place! Read on to learn how to set up your development environment."
 ---
 
+<Frame>
+<iframe
+   width="560"
+   height="315"
+   src="https://www.youtube.com/embed/mxKh2062sTc"
+   title="YouTube video player"
+   frameborder="0"
+   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+   allowFullScreen
+></iframe>
+</Frame>
+
 <Steps>
+<Step title="Configure your development environment">
+   Configure your coding environment for local development: `pyenv`, pre-commit hooks, etc. Follow the instructions [here](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md).
+</Step>
 <Step title="Create a new project">
    ```bash
    ./scripts/init.sh [project_name]
@@ -13,15 +28,13 @@ description: "Want to get started contributing code? You're in the right place! 
 </Step>
 <Step title="Build the dev docker image and run all services">
    ```bash
-   ./scripts/dev.sh [project]
+   ./scripts/dev.sh [project_name]
    ```
 </Step>
 <Step title="Open Mage">
     Open your browser and go to [http://localhost:3000](http://localhost:3000).
 </Step>
 </Steps>
-
-You can find more information about setting up your local environment for development [here](https://github.com/mage-ai/mage-ai/blob/master/README_dev.md).
 
 ## Push code changes
 
@@ -66,3 +79,15 @@ the `z` option.
 
 For more information about using the `z` option,
 read [Docker’s documentation](https://docs.docker.com/storage/bind-mounts/).
+
+### No such file or directory for "install_and_run.sh" file
+
+If you are using a Windows machine and run into the following error while executing the
+`docker-compose.yml` file: `exec ./scripts/install_and_run.sh: no such file or directory`,
+it may be due to a difference in line-endings used on Windows versus Macs.
+
+You can check the `mage_ai/frontend/scripts/install_and_run.sh` file in VSCode to see if
+it is using CRLFs (carriage return line feeds), and if it is, change it to LFs (line feeds)
+and save the file. Then try running the `docker-compose` command again.
+
+<img src="https://github.com/mage-ai/assets/blob/main/development/windows/update-crlf-to-lf-vscode.gif?raw=True"/>

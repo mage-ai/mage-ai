@@ -12,9 +12,6 @@ from mage_integrations.destinations.opensearch.target_opensearch.common import (
     API_KEY,
     API_KEY_ID,
     BEARER_TOKEN,
-    ELASTIC_DAILY_FORMAT,
-    ELASTIC_MONTHLY_FORMAT,
-    ELASTIC_YEARLY_FORMAT,
     HOST,
     INDEX_FORMAT,
     INDEX_TEMPLATE_FIELDS,
@@ -24,14 +21,11 @@ from mage_integrations.destinations.opensearch.target_opensearch.common import (
     SCHEME,
     SSL_CA_FILE,
     USERNAME,
-    to_daily,
-    to_monthly,
-    to_yearly,
 )
 from mage_integrations.destinations.sink import BatchSink
 
 
-def template_index(stream_name: str, index_format: str, schemas: Dict) -> str:
+def template_index(table_name: str, index_format: str, schemas: Dict) -> str:
     """
     _index templates the input index config to be used for elasticsearch indexing
     currently it operates using current time as index.
@@ -46,13 +40,7 @@ def template_index(stream_name: str, index_format: str, schemas: Dict) -> str:
     today = datetime.date.today()
     arguments = {
         **{
-            "stream_name": stream_name,
-            "current_timestamp_daily": today.strftime(ELASTIC_DAILY_FORMAT),
-            "current_timestamp_monthly": today.strftime(ELASTIC_MONTHLY_FORMAT),
-            "current_timestamp_yearly": today.strftime(ELASTIC_YEARLY_FORMAT),
-            "to_daily": to_daily,
-            "to_monthly": to_monthly,
-            "to_yearly": to_yearly,
+            "stream_name": table_name,
         },
         **schemas,
     }
@@ -109,7 +97,7 @@ class OpenSink(BatchSink):
         key_properties: Optional[List[str]],
     ):
         super().__init__(target, stream_name, schema, key_properties)
-        self.client = self._authenticated_client()
+        self.client = self.authenticated_client()
 
     def build_request_body_and_distinct_indices(
         self, records: List[Dict[str, Union[str, Dict[str, str], int]]]
@@ -131,7 +119,7 @@ class OpenSink(BatchSink):
 
         for r in records:
             index = template_index(
-                self.stream_name,
+                self.config['table'],
                 self.config[INDEX_FORMAT],
                 build_fields(self.stream_name, index_mapping, r, self.logger),
             )
@@ -171,7 +159,7 @@ class OpenSink(BatchSink):
         self.create_indices(distinct_indices)
         return updated_records
 
-    def _authenticated_client(self) -> opensearchpy.OpenSearch:
+    def authenticated_client(self) -> opensearchpy.OpenSearch:
         """
         _authenticated_client generates a newly authenticated elasticsearch client
         attempting to support all auth permutations and ssl concerns

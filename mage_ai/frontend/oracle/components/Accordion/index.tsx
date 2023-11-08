@@ -87,7 +87,7 @@ const Accordion = ({
         const last = idx === (panelCount - 1);
         const visible: boolean = visibleMapping[idx];
 
-        return (
+        return child && (
           <div key={idx}>
             <AccordionPanelContainerStyle
               index={idx}

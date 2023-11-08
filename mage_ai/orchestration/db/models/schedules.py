@@ -776,7 +776,7 @@ class PipelineRun(BaseModel):
                 for upstream_block_uuid in dynamic_upstream_block_uuids:
                     block = pipeline.get_block(upstream_block_uuid)
                     if is_dynamic_block_child(block):
-                        uuids_to_check.append(f'{block.uuid}:{dynamic_block_index}')
+                        uuids_to_check.append(upstream_block_uuid)
                     else:
                         uuids_to_check.append(upstream_block_uuid)
 
@@ -815,6 +815,9 @@ class PipelineRun(BaseModel):
                             metrics.get('upstream_block_uuids'):
 
                         upstream_block_uuids_override = metrics.get('upstream_block_uuids')
+                elif metrics and metrics.get('dynamic_upstream_block_uuids'):
+                    upstream_block_uuids_override = \
+                        metrics.get('dynamic_upstream_block_uuids') or []
 
                 completed = block is not None and \
                     block.all_upstream_blocks_completed(

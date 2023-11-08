@@ -1,9 +1,10 @@
 import io
 import unittest
+from abc import ABC, abstractmethod
+from typing import Dict, List
 from unittest.mock import MagicMock, patch
 
 from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.postgresql import PostgreSQL
 
 SAMPLE_RECORD = {
     'id': 2,
@@ -45,8 +46,16 @@ SAMPLE_SCHEMA_ROW = {
 SAMPLE_STREAM_NAME = 'demo_users'
 
 
+class MockDestination(Destination):
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
+        pass
+
+    def test_connection(self) -> None:
+        pass
+
+
 def build_test_destination():
-    destination = Destination(
+    destination = MockDestination(
         config=dict(database='demo_db'),
     )
     destination.disable_column_type_check = dict(demo_users=True)
@@ -63,25 +72,27 @@ def build_test_destination():
     return destination
 
 
-class BaseDestinationTests(unittest.TestCase):
+class BaseDestinationTests(ABC):
+    """
+    Base unit tests that will be applied to all subclasses.
+    """
+    @abstractmethod
     def test_templates(self):
-        destination = PostgreSQL()
-        templates = destination.templates()
-        self.assertEqual(
-            templates,
-            {
-                'config': {
-                    'database': '',
-                    'host': '',
-                    'password': '',
-                    'port': 5432,
-                    'schema': '',
-                    'table': '',
-                    'username': '',
-                }
-            },
-        )
+        pass
 
+    @abstractmethod
+    def test_export_batch_data(self):
+        pass
+
+    @abstractmethod
+    def test_test_connection(self):
+        pass
+
+
+class DestinationTests(unittest.TestCase):
+    """
+    Unit tests for the common methods in the base destination.
+    """
     def test_process_record(self):
         destination = build_test_destination()
         with patch.object(destination, 'export_data') as mock_export_data:

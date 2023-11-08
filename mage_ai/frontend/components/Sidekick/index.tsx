@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -64,6 +64,7 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
+import { scrollToBlock } from '@components/PipelineDetail/ColumnScroller/utils';
 import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
@@ -76,6 +77,7 @@ export type SidekickProps = {
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
+    isReplacingBlock?: boolean,
   ) => Promise<any>;
   afterWidth: number;
   blockInteractionsMapping: {
@@ -117,7 +119,9 @@ export type SidekickProps = {
   isPipelineExecuting: boolean;
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
-  onUpdateFileSuccess?: (fileContent: FileType) => void;
+  onUpdateFileSuccess?: (fileContent: FileType, opts?: {
+    blockUUID: string;
+  }) => void;
   permissions?: InteractionPermission[] | InteractionPermissionWithUUID[];
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
@@ -131,6 +135,10 @@ export type SidekickProps = {
   selectedBlock: BlockType;
   selectedFilePath?: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
+  setActiveSidekickView: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
   setBlockInteractionsMapping: (prev: any) => {
     [blockUUID: string]: BlockInteractionType[];
@@ -147,6 +155,7 @@ export type SidekickProps = {
     [interactionUUID: string]: InteractionType;
   };
   setPermissions?: (prev: any) => void;
+  sideBySideEnabled?: boolean;
   statistics: StatisticsType;
   treeRef?: { current?: CanvasRef };
   updatePipelineInteraction?: (opts: {
@@ -209,6 +218,7 @@ function Sidekick({
   selectedBlock,
   selectedFilePath,
   sendTerminalMessage,
+  setActiveSidekickView,
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
   setBlockInteractionsMapping,
@@ -224,6 +234,7 @@ function Sidekick({
   showBrowseTemplates,
   showDataIntegrationModal,
   showUpdateBlockModal,
+  sideBySideEnabled,
   statistics,
   textareaFocused,
   treeRef,
@@ -307,6 +318,7 @@ function Sidekick({
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
       onActionCallback={onUpdateFileSuccess}
+      pipeline={pipeline}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
       setErrors={setErrors}
@@ -315,6 +327,7 @@ function Sidekick({
   ), [
     afterWidth,
     onUpdateFileSuccess,
+    pipeline,
     selectedBlock,
     selectedFilePath,
     setErrors,
@@ -508,6 +521,7 @@ function Sidekick({
 
   const blockSettingsMemo = useMemo(() => pipeline && selectedBlock && (
     <BlockSettings
+      addNewBlockAtIndex={addNewBlockAtIndex}
       block={selectedBlock}
       contentByBlockUUID={contentByBlockUUID}
       fetchFileTree={fetchFileTree}
@@ -519,6 +533,7 @@ function Sidekick({
       showUpdateBlockModal={showUpdateBlockModal}
     />
   ), [
+    addNewBlockAtIndex,
     contentByBlockUUID,
     fetchFileTree,
     fetchPipeline,
@@ -579,13 +594,19 @@ function Sidekick({
           }
         }}
         overflowHidden={activeView === ViewKeyEnum.TREE}
+        tabIndex={0} // Make this div a focusable element
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
               <DependencyGraph
+                addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
                 blocks={blocks}
+                contentByBlockUUID={contentByBlockUUID}
+                contextMenuEnabled
+                deleteBlock={deleteBlock}
+                dragEnabled
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
@@ -605,12 +626,21 @@ function Sidekick({
                   };
                 })}
                 pipeline={pipeline}
+                runBlock={runBlock}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}
+                setActiveSidekickView={setActiveSidekickView}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
-                setSelectedBlock={setSelectedBlock}
+                setSelectedBlock={(block) => {
+                  setSelectedBlock(block);
+
+                  if (sideBySideEnabled) {
+                    scrollToBlock(block);
+                  }
+                }}
                 setZoom={setDepGraphZoom}
+                showUpdateBlockModal={showUpdateBlockModal}
                 treeRef={treeRef}
               />
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
@@ -735,11 +765,11 @@ function Sidekick({
 
         {ViewKeyEnum.INTERACTIONS === activeView && isInteractionsEnabled && (
           <PipelineInteractions
+            blockInteractionsMapping={blockInteractionsMapping}
             containerWidth={afterWidth}
             createInteraction={(interaction: InteractionType) => createInteraction({
               interaction,
             })}
-            blockInteractionsMapping={blockInteractionsMapping}
             interactions={interactions}
             interactionsMapping={interactionsMapping}
             isLoadingCreateInteraction={isLoadingCreateInteraction}

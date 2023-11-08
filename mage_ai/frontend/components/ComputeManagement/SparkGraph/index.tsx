@@ -81,6 +81,7 @@ function SparkGraph({
 
       portsMapping[fromID].push({
         ...SHARED_PORT_PROPS,
+        disabled: true,
         id: `${fromID}-${toID}-from`,
         side: SideEnum.SOUTH,
       });
@@ -91,6 +92,7 @@ function SparkGraph({
 
       portsMapping[toID].push({
         ...SHARED_PORT_PROPS,
+        disabled: true,
         id: `${fromID}-${toID}-to`,
         side: SideEnum.NORTH,
       });

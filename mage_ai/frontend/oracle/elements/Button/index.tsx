@@ -28,6 +28,11 @@ export function selectOutlineColor(props) {
   return (props.theme.background || dark.background).panel;
 }
 
+export type ButtonHighlightProps = {
+  highlightOnHover?: boolean;
+  highlightOnHoverAlt?: boolean;
+};
+
 export type ButtonProps = {
   afterIcon?: any;
   backgroundColor?: string;
@@ -45,7 +50,6 @@ export type ButtonProps = {
   default?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
-  highlightOnHover?: boolean;
   iconOnly?: boolean;
   id?: string;
   large?: boolean;
@@ -88,12 +92,27 @@ export type ButtonProps = {
   transparent?: boolean;
   warning?: boolean;
   width?: number;
-};
+} & ButtonHighlightProps;
+
+export const SHARED_HIGHLIGHT_STYLES = css<ButtonHighlightProps>`
+  ${props => props.highlightOnHover && `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder} !important;
+    }
+  `}
+
+  ${props => props.highlightOnHoverAlt && `
+    &:hover {
+      background-color: ${(props.theme.background || dark.background).dashboard} !important;
+    }
+  `}
+`;
 
 const SHARED_STYLES = css<{
   hasOnClick?: boolean;
 } & ButtonProps>`
   ${transition()}
+  ${SHARED_HIGHLIGHT_STYLES}
 
   border: none;
   display: block;
@@ -224,12 +243,6 @@ const SHARED_STYLES = css<{
 
   ${props => props.transparent && `
     background-color: transparent;
-  `}
-
-  ${props => props.highlightOnHover && `
-    &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
-    }
   `}
 
   ${props => props.outline && !props.disabled && !props.notClickable && `

@@ -1,4 +1,4 @@
-export enum OathProviderEnum {
+export enum OauthProviderEnum {
   ACTIVE_DIRECTORY = 'active_directory',
   GITHUB = 'github',
 }

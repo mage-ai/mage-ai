@@ -45,7 +45,7 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
+import { datetimeInLocalTimezone, timeDifference, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
@@ -182,7 +182,11 @@ function RetryButton({
         default={RunStatus.INITIAL === status}
         disabled={disabled || isViewerRole}
         loading={!pipelineRun}
-        onClick={() => setShowConfirmationId(pipelineRunId)}
+        onClick={(e) => {
+          // Stop table row from being highlighted as well
+          e.stopPropagation();
+          setShowConfirmationId(pipelineRunId);
+        }}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isCancelingPipeline && !isViewerRole}
         warning={RunStatus.CANCELLED === status && !isViewerRole}
@@ -298,7 +302,6 @@ function PipelineRunsTable({
   const router = useRouter();
   const isViewerRole = isViewer();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  const canRegisterKeyDown = useRef<boolean>(true);
   const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -346,58 +349,50 @@ function PipelineRunsTable({
 
   const {
     registerOnKeyDown,
-    registerOnKeyUp,
     unregisterOnKeyDown,
-    unregisterOnKeyUp,
   } = useKeyboardContext();
 
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
 
-  useEffect(() => () => {
-    unregisterOnKeyUp(uuidKeyboard);
-  }, [unregisterOnKeyUp, uuidKeyboard]);
-
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping) => {
-      // This disables the default scrolling response to the arrow keys
-      event.preventDefault();
+      const upPressed = keyMapping[KEY_CODE_ARROW_UP];
+      const downPressed = keyMapping[KEY_CODE_ARROW_DOWN];
 
-      if (!setSelectedRun || disableKeyboardNav || !canRegisterKeyDown.current) return;
+      if (setSelectedRun && !disableKeyboardNav && (upPressed || downPressed)) {
+        setSelectedRun((prevSelectedRun) => {
+          const prevRowIndex = getRunRowIndex(prevSelectedRun);
+          if (prevRowIndex !== null) {
+            // This disables the default auto-scrolling response to the up/down arrow keys
+            if (event.repeat) {
+              event.preventDefault();
+              return prevSelectedRun;
+            }
 
-      canRegisterKeyDown.current = false;
-      
-      setSelectedRun((prevSelectedRun) => {
-        const prevRowIndex = getRunRowIndex(prevSelectedRun);
-        if (prevRowIndex !== null) {
-          if (keyMapping[KEY_CODE_ARROW_UP]) {
-            let newRowIndex = prevRowIndex - 1;
-            if (newRowIndex < 0) {
-              newRowIndex = pipelineRuns.length - 1;
+            if (upPressed) {
+              let newRowIndex = prevRowIndex - 1;
+              if (newRowIndex < 0) {
+                newRowIndex = pipelineRuns.length - 1;
+              }
+              return pipelineRuns[newRowIndex];
+            } else if (downPressed) {
+              let newRowIndex = prevRowIndex + 1;
+              if (newRowIndex >= pipelineRuns.length) {
+                newRowIndex = 0;
+              }
+              return pipelineRuns[newRowIndex];
             }
-            return pipelineRuns[newRowIndex];
-          } else if (keyMapping[KEY_CODE_ARROW_DOWN]) {
-            let newRowIndex = prevRowIndex + 1;
-            if (newRowIndex >= pipelineRuns.length) {
-              newRowIndex = 0;
-            }
-            return pipelineRuns[newRowIndex];
           }
-        }
-
-        return prevSelectedRun;
-      });
+  
+          return prevSelectedRun;
+        });
+      }
     }, 
     [pipelineRuns, setSelectedRun],
   );
-
-  registerOnKeyUp(
-    uuidKeyboard,
-    () => {
-      canRegisterKeyDown.current = true;
-    }, []);
 
   useEffect(() => {
     const rowIndex = getRunRowIndex(selectedRun);
@@ -450,6 +445,9 @@ function PipelineRunsTable({
       uuid: 'Completed at',
     },
     {
+      uuid: 'Execution time',
+    },
+    {
       uuid: 'Block runs',
     },
     {
@@ -499,6 +497,21 @@ function PipelineRunsTable({
     });
   }
 
+  const handleOnClickRow = useCallback((rowIndex: number, event: any) => {
+    if (onClickRow && setSelectedRuns && event && event.metaKey) {
+      const pipelineRun = pipelineRuns[rowIndex];
+      setSelectedRuns(prevRuns => {
+        const selected = !!prevRuns?.[pipelineRun.id];
+        return {
+          ...prevRuns,
+          [pipelineRun.id]: selected ? null : pipelineRun,
+        };
+      });
+    } else if (onClickRow) {
+      onClickRow(rowIndex);
+    }
+  }, [onClickRow, pipelineRuns, setSelectedRuns]);
+
   return (
     <TableContainerStyle
       minHeight={UNIT * 30}
@@ -519,7 +532,7 @@ function PipelineRunsTable({
               ? false
               : pipelineRuns[rowIndex].id === selectedRun?.id
             }
-            onClickRow={disableRowSelect ? null : onClickRow}
+            onClickRow={disableRowSelect ? null : handleOnClickRow}
             rowVerticalPadding={6}
             rows={pipelineRuns?.map((pipelineRun, index) => {
               const {
@@ -620,6 +633,22 @@ function PipelineRunsTable({
                       )
                     }
                   </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -639,9 +668,13 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => router.push(
-                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                    )}
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
                   >
                     <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
@@ -731,6 +764,22 @@ function PipelineRunsTable({
                       )
                     }
                   </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -752,9 +801,13 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => router.push(
-                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                    )}
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
                   >
                     <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
@@ -810,7 +863,9 @@ function PipelineRunsTable({
                   <Checkbox
                     checked={selected}
                     key={`selected-pipeline-run-${id}`}
-                    onClick={() => {
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
                       setSelectedRuns(prev => ({
                         ...prev,
                         [id]: selected ? null : pipelineRun,

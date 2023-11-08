@@ -3,6 +3,7 @@ export enum FeatureUUIDEnum {
   COMPUTE_MANAGEMENT = 'compute_management',
   DATA_INTEGRATION_IN_BATCH_PIPELINE = 'data_integration_in_batch_pipeline',
   INTERACTIONS = 'interactions',
+  NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view',
   LOCAL_TIMEZONE = 'display_local_timezone',
   OPERATION_HISTORY = 'operation_history',
 }

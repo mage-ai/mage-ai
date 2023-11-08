@@ -20,6 +20,7 @@ import {
   OUTLINE_OFFSET,
   OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
+import { ButtonHighlightProps, SHARED_HIGHLIGHT_STYLES } from '.';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_REGULAR,
@@ -104,10 +105,11 @@ export type KeyboardShortcutButtonProps = {
   withIcon?: boolean;
   wrapText?: boolean;
   useModelTheme?: boolean;
-} & KeyboardShortcutSharedProps & LinkProps;
+} & ButtonHighlightProps & KeyboardShortcutSharedProps & LinkProps;
 
 const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   ${transition()}
+  ${SHARED_HIGHLIGHT_STYLES}
 
   align-items: center;
   border: none;
@@ -325,12 +327,16 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     background-color: ${(props.theme.monotone || dark.monotone).black};
   `}
 
-  ${props => !props.inverted && !props.noBackground && !props.primary && `
+  ${props => !props.inverted && !props.noBackground && !props.primary && !props.noHover && `
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
 
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
+  `}
+
+  ${props => !props.inverted && !props.noBackground && !props.primary && props.noHover && `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
   `}
 
   ${props => !props.noBackground && props.backgroundColor && `

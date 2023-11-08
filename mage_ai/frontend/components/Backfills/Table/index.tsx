@@ -3,6 +3,7 @@ import NextLink from 'next/link';
 import BackfillType, {
   BACKFILL_TYPE_DATETIME,
   BACKFILL_TYPE_CODE,
+  BackfillStatusEnum,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
 import Link from '@oracle/elements/Link';
@@ -88,7 +89,17 @@ function BackfillsTable({
         total_run_count: totalRunCount,
       }, idx) => {
         const arr = [
-          <Text default key="status" monospace>{status || 'inactive'}</Text>,
+          <Text
+            danger={BackfillStatusEnum.FAILED === status}
+            default={status === null}
+            info={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.INITIAL === status}
+            key="status"
+            monospace
+            success={BackfillStatusEnum.COMPLETED === status}
+            warning={BackfillStatusEnum.CANCELLED === status}
+          >
+            {status || 'inactive'}
+          </Text>,
           <NextLink
             as={`/pipelines/${pipelineUUID}/backfills/${id}`}
             href={'/pipelines/[pipeline]/backfills/[...slug]'}

@@ -19,7 +19,7 @@ class KernelPresenter(BasePresenter):
             id=kernel.kernel_id,
             name=kernel.kernel_name,
         )
-        if kernel.has_kernel:
+        if kernel.is_alive() and kernel.has_kernel:
             try:
                 client = kernel.client()
                 session = kernel.session

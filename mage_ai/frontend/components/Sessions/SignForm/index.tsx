@@ -24,7 +24,7 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl, queryString } from '@utils/url';
 import { setUser } from '@utils/session';
 import { MicrosoftIcon } from '@oracle/icons';
-import { OathProviderEnum } from '@interfaces/OauthType';
+import { OauthProviderEnum } from '@interfaces/OauthType';
 
 const KEY_EMAIL = 'email';
 const KEY_PASSWORD = 'password';
@@ -88,7 +88,7 @@ function SignForm({
     createRequest,
   ]);
 
-  const { data: dataOauthAD } = api.oauths.detail(OathProviderEnum.ACTIVE_DIRECTORY, {
+  const { data: dataOauthAD } = api.oauths.detail(OauthProviderEnum.ACTIVE_DIRECTORY, {
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
   });
   const adOauthUrl = useMemo(() => dataOauthAD?.oauth?.url, [dataOauthAD]);

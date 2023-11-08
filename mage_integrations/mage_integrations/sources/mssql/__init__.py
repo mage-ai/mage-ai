@@ -1,13 +1,11 @@
-from mage_integrations.connections.mssql import (
-    MSSQL as MSSQLConnection
-)
-from mage_integrations.sources.base import main
-from mage_integrations.sources.constants import (
-    COLUMN_FORMAT_DATETIME,
-)
-from mage_integrations.sources.sql.base import Source
 from typing import List
+
 import dateutil
+
+from mage_integrations.connections.mssql import MSSQL as MSSQLConnection
+from mage_integrations.sources.base import main
+from mage_integrations.sources.constants import COLUMN_FORMAT_DATETIME
+from mage_integrations.sources.sql.base import Source
 
 
 class MSSQL(Source):
@@ -19,6 +17,7 @@ class MSSQL(Source):
     def build_connection(self) -> MSSQLConnection:
         return MSSQLConnection(
             database=self.config['database'],
+            driver=self.config.get('driver'),
             host=self.config['host'],
             password=self.config['password'],
             port=self.config.get('port', 1433),

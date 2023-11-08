@@ -20,12 +20,9 @@ RUN \
     nfs-common \
     # odbc dependencies
     msodbcsql18 \
-    unixodbc-dev \
-    # pymssql dependencies
-    freetds-dev \
-    freetds-bin && \
+    unixodbc-dev && \
     # R
-    # r-base=4.2.2.20221110-2 \
+    # r-base=4.2.2.20221110-2 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 

@@ -507,3 +507,15 @@ export const getBlockColorHexCodeMapping = () => (
     ).accent,
   }), {})
 );
+
+export function calculateOffsetPercentage(
+  heights: number[],
+  totalHeight: number,
+  containerHeight: number,
+): number {
+  const heightsWithValue =
+    heights?.reduce((acc, height: number) => !height ? acc : acc.concat(height), []);
+  const heightLast = heightsWithValue?.[heightsWithValue?.length - 1] || 0;
+
+  return ((Math.min(heightLast, containerHeight) * 0.25) || 0) / totalHeight;
+}

@@ -17,7 +17,6 @@ import {
   WindowContentStyle,
   WindowFooterStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy } from '@utils/array';
 
 type FileSelectorPopupProps = {

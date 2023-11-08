@@ -930,3 +930,79 @@ class BasePolicyWithoutUserAuthenticationTest(BaseApiTestCase, BootstrapMixin):
                 self.assertTrue(context.exception.code == 403)
 
         self.cleanup()
+
+    async def test_authorize_query_require_user_authentication_off(self):
+        self.bootstrap()
+
+        def _rule(action):
+            return {
+                'query1': {
+                    OauthScopeType.CLIENT_PRIVATE: {
+                        OperationType.UPDATE: [
+                            dict(
+                                condition=lambda _policy: False,
+                            ),
+                        ],
+                    },
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'query_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, None)
+            await policy.authorize_query(
+                dict(query1='1'),
+                api_operation_action=OperationType.UPDATE,
+            )
+
+        self.cleanup()
+
+    @patch('mage_ai.api.policies.BasePolicy.DISABLE_NOTEBOOK_EDIT_ACCESS', 2)
+    @patch('mage_ai.api.utils.DISABLE_NOTEBOOK_EDIT_ACCESS', 2)
+    @patch('mage_ai.api.utils.is_disable_pipeline_edit_access')
+    async def test_authorize_query_notebook_pipeline_edit_access(self, mock_access_method):
+        self.bootstrap()
+        mock_access_method.return_value = True
+
+        def _rule(action):
+            return {
+                'query1': {
+                    OauthScopeType.CLIENT_PRIVATE: {
+                        OperationType.UPDATE: [
+                            dict(
+                                condition=lambda _policy: (
+                                    _policy.has_at_least_editor_role_and_notebook_edit_access()
+                                ),
+                            ),
+                        ],
+                    },
+                },
+                'query2': {
+                    OauthScopeType.CLIENT_PRIVATE: {
+                        OperationType.UPDATE: [
+                            dict(
+                                condition=lambda _policy: (
+                                    _policy.has_at_least_editor_role_and_pipeline_edit_access()
+                                ),
+                            ),
+                        ],
+                    },
+                },
+            }[action]
+
+        with patch.object(CustomTestPolicy, 'query_rule', _rule):
+            resource = CustomTestResource(None, None)
+            policy = CustomTestPolicy(resource, None)
+            await policy.authorize_query(
+                dict(query1='1'),
+                api_operation_action=OperationType.UPDATE,
+            )
+
+            with self.assertRaises(ApiError) as context:
+                await policy.authorize_query(
+                    dict(query2='1'),
+                    api_operation_action=OperationType.UPDATE,
+                )
+                self.assertTrue(context.exception.code == 403)
+
+        self.cleanup()

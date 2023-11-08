@@ -1,6 +1,6 @@
-import UserType, { RoleValueEnum } from '@interfaces/UserType';
+import UserType from '@interfaces/UserType';
+import { File, Settings, WorkspacesIcon, WorkspacesUsersIcon } from '@oracle/icons';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
-import { Settings, WorkspacesIcon, WorkspacesUsersIcon } from '@oracle/icons';
 
 export const SECTION_UUID_WORKSPACE = 'Workspace';
 
@@ -8,6 +8,7 @@ export enum WorkspacesPageNameEnum {
   WORKSPACES = 'workspaces',
   USERS = 'users',
   SETTINGS = 'settings',
+  FILE_BROWSER = 'file_browser',
 }
 
 export function buildNavigationItems(
@@ -50,6 +51,16 @@ export function buildNavigationItems(
       },
     });
   }
+
+  workspaceItems.push({
+    Icon: File,
+    id: WorkspacesPageNameEnum.FILE_BROWSER,
+    isSelected: () => WorkspacesPageNameEnum.FILE_BROWSER === pageName,
+    label: () => 'File browser',
+    linkProps: {
+      href: '/manage/files',
+    },
+  });
 
   return workspaceItems;
 }

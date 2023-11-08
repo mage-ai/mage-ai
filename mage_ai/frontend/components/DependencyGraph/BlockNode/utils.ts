@@ -5,6 +5,7 @@ import BlockType, {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { BORDER_WIDTH } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { buildTags } from '@components/CodeBlock/utils';
 import { getModelAttributes } from '@utils/models/dbt';
@@ -18,9 +19,9 @@ export const WIDTH_OF_HEADER_TEXT_CHARACTER = 8.62;
 export const WIDTH_OF_SMALL_CHARACTER = 7.43;
 
 // Border vertical
-const NODE_HEIGHT = 2;
+const NODE_HEIGHT = BORDER_WIDTH * 2;
 // Border horizontal
-const NODE_WIDTH = 2;
+const NODE_WIDTH = BORDER_WIDTH * 2;
 
 // Padding vertical, icon height
 const HEADER_HEIGHT = (UNIT * 2) + (UNIT * 5);

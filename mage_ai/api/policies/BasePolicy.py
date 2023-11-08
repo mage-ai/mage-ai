@@ -403,6 +403,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         ):
             return True
 
+        if not DISABLE_NOTEBOOK_EDIT_ACCESS and REQUIRE_USER_PERMISSIONS and self.is_owner():
+            return True
+
         config = self.__class__.action_rule(action)
         if config:
             await self.__validate_scopes(action, config.keys())
@@ -433,6 +436,9 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
 
     async def authorize_attribute(self, read_or_write, attrb, **kwargs):
         if not REQUIRE_USER_AUTHENTICATION or self.is_owner():
+            return True
+
+        if not DISABLE_NOTEBOOK_EDIT_ACCESS and REQUIRE_USER_PERMISSIONS and self.is_owner():
             return True
 
         api_operation_action = self.options.get(
@@ -503,15 +509,19 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             await self.authorize_attribute(read_or_write, attrb, **kwargs)
 
     async def authorize_query(self, query, **kwargs):
-        if not REQUIRE_USER_AUTHENTICATION:
+        # If DISABLE_NOTEBOOK_EDIT_ACCESS is enabled, we will need to perform
+        # the policy check for queries.
+        if not DISABLE_NOTEBOOK_EDIT_ACCESS and (
+            not REQUIRE_USER_AUTHENTICATION or self.is_owner()
+        ):
+            return True
+
+        if not DISABLE_NOTEBOOK_EDIT_ACCESS and REQUIRE_USER_PERMISSIONS and self.is_owner():
             return True
 
         query_filtered = ignore_keys(query or {}, [URL_PARAMETER_API_KEY])
 
         if not query_filtered:
-            return True
-
-        if self.is_owner():
             return True
 
         api_operation_action = self.options.get(

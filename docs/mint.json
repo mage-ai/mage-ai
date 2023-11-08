@@ -343,9 +343,11 @@
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
                 "integrations/databases/Druid",
+                "integrations/databases/DuckDB",
                 "integrations/databases/MicrosoftSQLServer",
                 "integrations/databases/MongoDB",
                 "integrations/databases/MySQL",
+                "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
@@ -448,7 +450,6 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/updating-mage",
         "development/ai/overview",
         {
           "group": "Visualizations",
@@ -518,7 +519,14 @@
           ]
         },
         "guides/dbt/developing-dbt-in-mage",
-        "guides/ai/overview",
+        {
+          "group": "Using AI",
+          "icon": "microchip-ai",
+          "pages": [
+            "guides/ai/overview",
+            "guides/ai/ai-client"
+          ]
+        },
         "guides/docker/connecting-a-database",
         "guides/community-examples",
         "guides/tips-and-tricks"
@@ -730,6 +738,19 @@
             "production/data-sync/git-sync",
             "production/data-sync/github",
             "production/data-sync/git-integration"
+          ]
+        },
+        {
+          "group": "Workspaces",
+          "icon": "boxes-stacked",
+          "pages": [
+            "production/developing-in-the-cloud/workspaces/overview",
+            {
+              "group": "Environments",
+              "pages": [
+                "production/developing-in-the-cloud/workspaces/kubernetes"
+              ]
+            }
           ]
         }
       ]
@@ -1058,3 +1079,4 @@
     }
   ]
 }
+

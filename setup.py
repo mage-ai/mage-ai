@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.36',
+    version='0.9.43',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -33,7 +33,7 @@ setuptools.setup(
         'Operating System :: OS Independent',
     ],
     install_requires=requirements,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     entry_points={
         'console_scripts': [
             'mage=mage_ai.cli.main:app',
@@ -41,8 +41,9 @@ setuptools.setup(
     },
     extras_require={
         'ai': [
+            'astor>=0.8.1',
             'langchain>=0.0.222',
-            'openai>=0.27.8',
+            'openai>=0.27.8, <1.0.0',
         ],
         'azure': [
             'azure-eventhub==5.11.2',
@@ -66,13 +67,16 @@ setuptools.setup(
             'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',
-            'dbt-snowflake==1.4.1',
+            'dbt-snowflake==1.4.4',
             'dbt-spark==1.4.3',
             'dbt-sqlserver==1.4.3',
             'dbt-trino==1.4.0',
             'dbt-clickhouse==1.4.0',
         ],
-        'google-cloud-storage': ['google-cloud-storage==2.5.0'],
+        'google-cloud-storage': [
+            'google-cloud-storage==2.5.0',
+            'gspread==5.7.2',
+        ],
         'hdf5': ['tables==3.7.0'],
         'mysql': [
             'mysql-connector-python==8.0.31',
@@ -94,7 +98,7 @@ setuptools.setup(
             'botocore==1.29.60',
         ],
         'snowflake': [
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==3.2.1',
         ],
         'spark': [
             'boto3==1.26.60',
@@ -112,6 +116,7 @@ setuptools.setup(
         ],
         'all': [
             'PyGithub==1.59.0',
+            'astor>=0.8.1',
             'aws-secretsmanager-caching==1.1.1.5',
             'azure-eventhub==5.11.2',
             'azure-identity==1.12.0',
@@ -129,7 +134,7 @@ setuptools.setup(
             'dbt-duckdb==1.4.2',
             'dbt-postgres==1.4.8',
             'dbt-redshift==1.4.0',
-            'dbt-snowflake==1.4.1',
+            'dbt-snowflake==1.4.4',
             'dbt-spark==1.4.3',
             'dbt-sqlserver==1.4.3',
             'dbt-trino==1.4.0',
@@ -144,15 +149,17 @@ setuptools.setup(
             'google-cloud-run==0.5.0',
             'google-cloud-storage==2.5.0',
             'great_expectations==0.15.50',
+            'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',
             'langchain>=0.0.222',
             'ldap3==2.9.1',
-            'openai>=0.27.8',
+            'openai>=0.27.8, <1.0.0',
             'opensearch-py==2.0.0',
             'oracledb==1.3.1',
             'pika==1.3.1',
+            'pinotdb==5.1.0',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
             'pydruid==0.6.5',
@@ -160,7 +167,7 @@ setuptools.setup(
             'pyodbc==4.0.35',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==3.2.1',
             'sshtunnel==0.4.0',
             'thefuzz[speedup]==0.19.0',
         ],

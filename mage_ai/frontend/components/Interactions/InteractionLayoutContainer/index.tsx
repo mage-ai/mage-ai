@@ -27,6 +27,7 @@ type InteractionLayoutContainerProps = {
   variables?: {
     [key: string]: any;
   };
+  widthOffset?: number;
 };
 
 function InteractionLayoutContainer({
@@ -37,6 +38,7 @@ function InteractionLayoutContainer({
   showVariableUUID,
   updateLayout,
   variables: variablesProp,
+  widthOffset: widthOffsetProp,
 }: InteractionLayoutContainerProps) {
   const windowSize = useWindowSize();
 
@@ -182,10 +184,14 @@ function InteractionLayoutContainer({
 
         let widthOffset = 0;
 
-        if (updateLayout) {
-          widthOffset = Math.round(24 / columnsCount);
+        if (typeof widthOffsetProp === 'undefined' || widthOffsetProp === null) {
+          if (updateLayout) {
+            widthOffset = Math.round(24 / columnsCount);
+          } else {
+            widthOffset = Math.round(50 / columnsCount);
+          }
         } else {
-          widthOffset = Math.round(50 / columnsCount);
+          widthOffset = Math.round(widthOffsetProp / columnsCount);
         }
 
         const widthItem = widthAdjusted - widthOffset;
@@ -293,6 +299,7 @@ function InteractionLayoutContainer({
     updateLayout,
     variables,
     variablesProp,
+    widthOffsetProp,
   ]);
 
   if (!updateLayout) {

@@ -206,8 +206,12 @@ function PipelineListPage() {
     () => {
       let pipelinesFiltered = filterPipelinesBySearchText(data?.pipelines || []);
       if (q?.[PipelineQueryEnum.TAG]) {
+        const tagsFromQuery = q[PipelineQueryEnum.TAG];
         pipelinesFiltered = pipelinesFiltered
-          .filter(({ tags }) => tags.some(t => (q[PipelineQueryEnum.TAG]).includes(t)));
+          .filter(({ tags }) => (
+            tags.some(t => tagsFromQuery.includes(t))
+              || (tags.length === 0 && tagsFromQuery.includes(PipelineQueryEnum.NO_TAGS))
+          ));
       }
 
       return pipelinesFiltered;
@@ -702,17 +706,20 @@ function PipelineListPage() {
       }}
       filterOptions={{
         status: FILTERABLE_PIPELINE_STATUSES,
-        tag: tags.map(({ uuid }) => uuid),
+        tag: [PipelineQueryEnum.NO_TAGS, ...tags.map(({ uuid }) => uuid)],
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={{
         status: FILTERABLE_PIPELINE_STATUSES.reduce(
           (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }), {},
         ),
-        tag: tags.reduce((acc, { uuid }) => ({
-          ...acc,
-          [uuid]: uuid,
-        }), {}),
+        tag: {
+          [PipelineQueryEnum.NO_TAGS]: 'No tags',
+          ...tags.reduce((acc, { uuid }) => ({
+            ...acc,
+            [uuid]: uuid,
+          }), {}),
+        },
         type: PIPELINE_TYPE_LABEL_MAPPING,
       }}
       groupButtonProps={{

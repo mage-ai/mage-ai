@@ -147,6 +147,10 @@ def submit_spark_job(
 ):
     if emr_config is None:
         emr_config = dict()
+
+    if isinstance(emr_config, dict):
+        emr_config = EmrConfig.load(config=emr_config)
+
     emr_client = get_aws_boto3_client('emr')
 
     clusters = emr_client.list_clusters(
@@ -204,7 +208,7 @@ def submit_spark_job(
         cluster_id = create_a_new_cluster(
             cluster_name,
             steps,
-            EmrConfig.load(config=emr_config),
+            emr_config,
             bootstrap_script_path=bootstrap_script_path,
             idle_timeout=idle_timeout,
             log_uri=log_uri,
@@ -274,20 +278,32 @@ def __add_step(emr_client, cluster_id, steps):
 
 
 def __build_steps_config(steps):
-    return [{
-        'Name': step['name'],
-        'ActionOnFailure': 'CONTINUE',
-        'HadoopJarStep': {
-            'Jar': 'command-runner.jar',
-            'Args': [
-                'spark-submit',
-                '--deploy-mode',
-                'cluster',
-                step['script_uri'],
-                *step['script_args'],
+    step_configs = []
+
+    for step in steps:
+        args = [
+            'spark-submit',
+            '--deploy-mode',
+            'cluster',
+        ]
+        if step['jars']:
+            args += [
+                '--jars',
+                ','.join(step['jars']),
             ]
-        }
-    } for step in steps]
+        args += [
+            step['script_uri'],
+            *step['script_args'],
+        ]
+        step_configs.append({
+            'Name': step['name'],
+            'ActionOnFailure': 'CONTINUE',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': args,
+            }
+        })
+    return step_configs
 
 
 def __status_poller(intro, done_status, func):

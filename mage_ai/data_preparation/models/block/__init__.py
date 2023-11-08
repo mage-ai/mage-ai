@@ -580,6 +580,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
+            downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
@@ -594,7 +595,8 @@ class Block(DataIntegrationMixin, SparkBlock):
             else:
                 pipeline.add_block(
                     block,
-                    upstream_block_uuids,
+                    downstream_block_uuids=downstream_block_uuids,
+                    upstream_block_uuids=upstream_block_uuids,
                     priority=priority,
                     widget=widget,
                 )
@@ -651,6 +653,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         upstream_block_uuids: List[str] = None,
         config: Dict = None,
         widget: bool = False,
+        downstream_block_uuids: List[str] = None,
     ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
@@ -732,6 +735,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
             widget=widget,
+            downstream_block_uuids=downstream_block_uuids,
         )
         return block
 
@@ -877,7 +881,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
-        if from_notebook and self.is_using_spark():
+        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
             self.set_spark_job_before_execution()
 
         if logging_tags is None:
@@ -941,7 +945,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 from_notebook=from_notebook,
             )
 
-        if from_notebook and self.is_using_spark():
+        if from_notebook and self.is_using_spark() and self.compute_management_enabled():
             self.set_spark_job_after_execution()
             if self.spark_job_before_execution:
                 print(f'[INFO] Job ID before execution: {self.spark_job_before_execution.id}')
@@ -2086,7 +2090,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def update(self, data, **kwargs) -> 'Block':
         if 'name' in data and data['name'] != self.name:
-            self.__update_name(data['name'])
+            detach = kwargs.get('detach', False)
+            self.__update_name(data['name'], detach=detach)
 
         if (
             'type' in data
@@ -2108,6 +2113,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_upstream_blocks(
                 data['upstream_blocks'],
                 check_upstream_block_order=check_upstream_block_order,
+            )
+
+        if 'downstream_blocks' in data and self.pipeline:
+            self.pipeline.update_block(
+                self,
+                downstream_block_uuids=data.get('downstream_blocks') or [],
+                widget=BlockType.CHART == self.type,
             )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
@@ -2281,9 +2293,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         else:
             test_functions = self.test_functions
 
-        if not test_functions or len(test_functions) == 0:
-            return
-
         outputs = self.get_raw_outputs(
             dynamic_block_uuid or self.uuid,
             execution_partition=execution_partition,
@@ -2300,49 +2309,50 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             logger=logger,
             logging_tags=logging_tags,
         ):
-            tests_passed = 0
-            for func in test_functions:
-                test_function = func
-                if from_notebook and self.module:
-                    test_function = getattr(self.module, func.__name__)
-                try:
-                    sig = signature(test_function)
-                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                        test_function(*outputs, **global_vars)
-                    else:
-                        test_function(*outputs)
-                    tests_passed += 1
-                except AssertionError as err:
-                    error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
-                    stacktrace = traceback.format_exc()
+            if test_functions and len(test_functions) >= 0:
+                tests_passed = 0
+                for func in test_functions:
+                    test_function = func
+                    if from_notebook and self.module:
+                        test_function = getattr(self.module, func.__name__)
+                    try:
+                        sig = signature(test_function)
+                        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                            test_function(*outputs, **global_vars)
+                        else:
+                            test_function(*outputs)
+                        tests_passed += 1
+                    except AssertionError as err:
+                        error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
+                        stacktrace = traceback.format_exc()
 
-                    if from_notebook:
-                        error_json = json.dumps(dict(
-                            error=str(err),
-                            message=error_message,
-                            stacktrace=stacktrace.split('\n'),
+                        if from_notebook:
+                            error_json = json.dumps(dict(
+                                error=str(err),
+                                message=error_message,
+                                stacktrace=stacktrace.split('\n'),
+                            ))
+                            print(f'[__internal_test__]{error_json}')
+                        else:
+                            print('==============================================================')
+                            print(error_message)
+                            print('--------------------------------------------------------------')
+                            print(stacktrace)
+
+                message = f'{tests_passed}/{len(test_functions)} tests passed.'
+                if from_notebook:
+                    if len(test_functions) >= 1:
+                        success_json = json.dumps(dict(
+                            message=message,
                         ))
-                        print(f'[__internal_test__]{error_json}')
-                    else:
-                        print('==============================================================')
-                        print(error_message)
-                        print('--------------------------------------------------------------')
-                        print(stacktrace)
+                        print(f'[__internal_test__]{success_json}')
+                else:
+                    print('--------------------------------------------------------------')
+                    print(message)
 
-            message = f'{tests_passed}/{len(test_functions)} tests passed.'
-            if from_notebook:
-                if len(test_functions) >= 1:
-                    success_json = json.dumps(dict(
-                        message=message,
-                    ))
-                    print(f'[__internal_test__]{success_json}')
-            else:
-                print('--------------------------------------------------------------')
-                print(message)
-
-            if tests_passed != len(test_functions):
-                raise Exception(f'Failed to pass tests for block {self.uuid}')
+                if tests_passed != len(test_functions):
+                    raise Exception(f'Failed to pass tests for block {self.uuid}')
 
             handle_run_tests(
                 self,
@@ -2784,7 +2794,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return custom_code
 
     # TODO: Update all pipelines that use this block
-    def __update_name(self, name) -> None:
+    def __update_name(
+        self,
+        name: str,
+        detach: bool = False,
+    ) -> None:
         """
         1. Rename block file
         2. Update the folder of variable
@@ -2793,6 +2807,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         old_uuid = self.uuid
         # This has to be here
         old_file_path = self.file_path
+        block_content = self.content
 
         new_uuid = clean_name(name)
         self.name = name
@@ -2817,16 +2832,39 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             parent_dir = os.path.dirname(new_file_path)
             os.makedirs(parent_dir, exist_ok=True)
 
-            os.rename(old_file_path, new_file_path)
+            if detach:
+                """"
+                Detaching a block creates a copy of the block file while keeping the existing block
+                file the same. Without detaching a block, the existing block file is simply renamed.
+                """
+                with open(new_file_path, 'w') as f:
+                    f.write(block_content)
+            else:
+                os.rename(old_file_path, new_file_path)
 
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
             cache = BlockCache()
-            cache.move_pipelines(self, dict(
-                type=self.type,
-                uuid=old_uuid,
-            ))
+            if detach:
+                """"
+                New block added to pipeline, so it must be added to the block cache.
+                Old block no longer in pipeline, so it must be removed from block cache.
+                """
+                cache.add_pipeline(self, self.pipeline)
+                old_block = self.get_block(
+                    old_uuid,
+                    old_uuid,
+                    self.type,
+                    language=self.language,
+                    pipeline=self.pipeline,
+                )
+                cache.remove_pipeline(old_block, self.pipeline.uuid)
+            else:
+                cache.move_pipelines(self, dict(
+                    type=self.type,
+                    uuid=old_uuid,
+                ))
 
     def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:

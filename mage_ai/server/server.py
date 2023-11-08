@@ -21,6 +21,7 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
+from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
@@ -43,7 +44,6 @@ from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
-from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.api.downloads import ApiDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
@@ -212,6 +212,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
+        (r'/oauth', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),

@@ -5,6 +5,7 @@ AWS_REGION_NAME = 'AWS_REGION_NAME'
 AWS_DEFAULT_REGION = 'AWS_DEFAULT_REGION'
 AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID'
 AWS_SECRET_ACCESS_KEY = 'AWS_SECRET_ACCESS_KEY'
+AWS_SESSION_TOKEN = 'AWS_SESSION_TOKEN'
 
 
 def get_aws_value_from_secrets(name: str) -> Optional[str]:
@@ -42,6 +43,13 @@ def get_aws_secret_access_key() -> Optional[str]:
     return aws_secret_access_key
 
 
+def get_aws_session_token() -> Optional[str]:
+    aws_session_token = os.getenv(AWS_SESSION_TOKEN)
+    if aws_session_token is None:
+        aws_session_token = get_aws_value_from_secrets(AWS_SESSION_TOKEN)
+    return aws_session_token
+
+
 def get_aws_boto3_client(aws_service):
     import boto3
     from botocore.config import Config
@@ -55,6 +63,9 @@ def get_aws_boto3_client(aws_service):
     aws_secret_access_key = get_aws_secret_access_key()
     if aws_secret_access_key:
         kwargs['aws_secret_access_key'] = aws_secret_access_key
+    aws_session_token = get_aws_session_token()
+    if aws_session_token:
+        kwargs['aws_session_token'] = aws_session_token
 
     return boto3.client(
         aws_service,

@@ -34,7 +34,6 @@ export const GENERAL_K8S_FIELDS = [
 export const VOLUME_CLAIM_K8S_FIELDS = [
   {
     label: 'Storage class name',
-    labelDescription: 'Volume claim parameters',
     placeholder: 'default',
     uuid: 'storage_class_name',
   },
