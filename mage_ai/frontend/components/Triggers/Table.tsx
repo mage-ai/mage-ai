@@ -104,7 +104,7 @@ function TriggersTable({
           callback: () => {
             fetchPipelineSchedules?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -124,7 +124,7 @@ function TriggersTable({
           callback: () => {
             fetchPipelineSchedules?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
