@@ -2,6 +2,7 @@ DESTINATIONS = [
     dict(name='Amazon S3'),
     dict(name='BigQuery'),
     dict(name='Clickhouse'),
+    dict(name='Delta Lake Azure'),
     dict(name='Delta Lake S3'),
     dict(name='Google Cloud Storage'),
     dict(name='MongoDB'),
