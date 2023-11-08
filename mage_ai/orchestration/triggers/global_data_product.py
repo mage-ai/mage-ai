@@ -3,15 +3,13 @@ from time import sleep
 from typing import Dict, List, Optional
 
 from mage_ai.data_preparation.models.global_data_product import GlobalDataProduct
-from mage_ai.data_preparation.models.triggers import ScheduleType
+from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
     TRIGGER_NAME_FOR_GLOBAL_DATA_PRODUCT,
 )
-from mage_ai.orchestration.triggers.utils import (
-    create_and_start_pipeline_run,
-)
+from mage_ai.orchestration.triggers.utils import create_and_start_pipeline_run
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.shared.hash import group_by
 
@@ -26,7 +24,7 @@ def trigger_and_check_status(
     poll_interval: float = DEFAULT_POLL_INTERVAL,
     poll_timeout: Optional[float] = None,
     verbose: bool = True,
-    should_schedule: bool = True,
+    should_schedule: bool = False,
 ):
     pipeline_run_created = None
     tries = 0
@@ -143,6 +141,8 @@ def trigger_and_check_status(
                 timeout=10,
             ):
                 pipeline_schedule = fetch_or_create_pipeline_schedule(global_data_product)
+                if pipeline_schedule.status != ScheduleStatus.ACTIVE:
+                    pipeline_schedule.update(status=ScheduleStatus.ACTIVE)
                 pipeline_run_created = create_and_start_pipeline_run(
                     global_data_product.pipeline,
                     pipeline_schedule,
