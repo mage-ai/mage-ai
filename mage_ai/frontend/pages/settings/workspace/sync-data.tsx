@@ -5,6 +5,9 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
+import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -33,9 +36,6 @@ import {
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
 import { onSuccess } from '@api/utils/response';
-import ErrorsType from '@interfaces/ErrorsType';
-import ClickOutside from '@oracle/components/ClickOutside';
-import ErrorPopup from '@components/ErrorPopup';
 
 export interface SyncFieldType {
   autoComplete?: string;
