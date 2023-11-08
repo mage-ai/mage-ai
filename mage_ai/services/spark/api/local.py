@@ -118,7 +118,6 @@ class LocalAPI(BaseAPI):
         if self.all_applications:
             applications = self.applications_sync(**kwargs)
             for application in applications:
-                print('WTFFFFFFFFFFFFFFFFF))))))))))))))))))', application)
                 if application.id == application_id:
                     arr.extend([model_class.load(
                         application=application,
