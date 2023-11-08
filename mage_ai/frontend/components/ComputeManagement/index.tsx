@@ -179,8 +179,11 @@ function ComputeManagement({
   const queryURL = queryFromUrl();
   useEffect(() => {
     const uuid = queryURL?.[QUERY_PARAM_TAB];
-    setSelectedTabState(uuid ? { main: uuid } : null);
+    if (selectedTab?.main !== uuid) {
+      setSelectedTabState(uuid ? { main: uuid } : null);
+    }
   }, [
+    selectedTab,
     queryURL,
   ]);
 

@@ -24,7 +24,7 @@ from mage_ai.shared.array import find
 
 
 class BaseAPI(ABC):
-    def __init__(self, spark_session=None):
+    def __init__(self, all_applications: bool = True, spark_session=None):
         if spark_session:
             self.spark_session = spark_session
         else:
@@ -37,9 +37,10 @@ class BaseAPI(ABC):
         if value_tup:
             self.application_id = value_tup[1]
 
-    @property
+        self.all_applications = all_applications
+
     @abstractmethod
-    def endpoint(self) -> str:
+    def endpoint(self, **kwargs) -> str:
         pass
 
     @abstractmethod
@@ -125,13 +126,23 @@ class BaseAPI(ABC):
     async def environment(self, application_id: str = None, **kwargs) -> Environment:
         pass
 
-    async def get(self, path: str, query: Dict = None):
-        response = await self.__build_request('get', f'{self.endpoint}{path}', query=query)
-        return response.json()
+    async def get(self, path: str, host: str = None, query: Dict = None):
+        response = await self.__build_request(
+            'get',
+            f'{self.endpoint(host=host)}{path}',
+            query=query,
+        )
+        if response.status_code == 200:
+            return response.json()
+
+        return {}
 
     def get_sync(self, path: str, query: Dict = None):
-        response = self.__build_request_sync('get', f'{self.endpoint}{path}', query=query)
-        return response.json()
+        response = self.__build_request_sync('get', f'{self.endpoint()}{path}', query=query)
+        if response.status_code == 200:
+            return response.json()
+
+        return {}
 
     def __build_request_sync(
         self,

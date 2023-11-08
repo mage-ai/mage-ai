@@ -142,7 +142,7 @@ class SparkBlock:
             os.remove(self.spark_jobs_full_path)
 
     def cache_spark_application(self) -> None:
-        api = API.build(spark_session=self.spark_session)
+        api = API.build(all_applications=False, spark_session=self.spark_session)
         applications = api.applications_sync()
         for application in applications:
             Application.cache_application(application)
@@ -167,7 +167,7 @@ class SparkBlock:
         )
 
     def __get_jobs(self) -> List[Job]:
-        api = API.build(spark_session=self.spark_session)
+        api = API.build(all_applications=False, spark_session=self.spark_session)
 
         if not api:
             return
@@ -185,7 +185,7 @@ class SparkBlock:
         )
 
     def __get_stages(self) -> List[Stage]:
-        api = API.build(spark_session=self.spark_session)
+        api = API.build(all_applications=False, spark_session=self.spark_session)
 
         if not api:
             return
@@ -202,7 +202,7 @@ class SparkBlock:
         return stages
 
     def __get_sqls(self) -> List[Sql]:
-        api = API.build(spark_session=self.spark_session)
+        api = API.build(all_applications=False, spark_session=self.spark_session)
 
         if not api:
             return
