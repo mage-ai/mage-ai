@@ -154,6 +154,7 @@ function PipelineDetailPage({
     featureUUIDs,
     fetchProjects,
     project,
+    sparkEnabled,
   } = useProject();
 
   const router = useRouter();
@@ -182,7 +183,7 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
-  const [includeSparkOutputs, setIncludeSparkOutputs] = useState<boolean>(false);
+  const [includeSparkOutputs, setIncludeSparkOutputs] = useState<boolean>(true);
 
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
@@ -273,7 +274,12 @@ function PipelineDetailPage({
         || typeof pipeline?.blocks === 'undefined'
         || pipeline?.blocks === null
         || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
-      includes_outputs_spark: includeSparkOutputs,
+      ...(includeSparkOutputs
+        ? {
+          includes_outputs_spark: true,
+        }
+        : {}
+      ),
     },
     {
       refreshInterval: 60000,
@@ -346,13 +352,14 @@ function PipelineDetailPage({
   const isDataIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   useEffect(() => {
-    if (pipeline && includeSparkOutputs) {
+    if (pipeline && includeSparkOutputs && sparkEnabled) {
       setIncludeSparkOutputs(false);
     }
   }, [
     includeSparkOutputs,
     pipeline,
     setIncludeSparkOutputs,
+    sparkEnabled,
   ]);
 
   const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
@@ -909,7 +916,7 @@ function PipelineDetailPage({
       const messagesForBlock = messages[uuid]?.filter(m => !!m);
       const hasError = messagesForBlock?.find(({ error }) => error);
 
-      if (messagesForBlock) {
+      if (messagesForBlock && (!sparkEnabled || !runningBlocks?.length)) {
         const arr2 = [];
         let plainTextLineCount = 0;
 
@@ -1118,7 +1125,9 @@ function PipelineDetailPage({
     pipeline,
     pipelineLastSaved,
     pipelineLastSavedState,
+    runningBlocks,
     showStalePipelineMessageModal,
+    sparkEnabled,
     updatePipeline,
     widgets,
   ]);
@@ -2798,6 +2807,7 @@ function PipelineDetailPage({
       setErrors={setErrors}
       // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
+      setIncludeSparkOutputs={setIncludeSparkOutputs}
       setIntegrationStreams={setIntegrationStreams}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
@@ -2866,6 +2876,7 @@ function PipelineDetailPage({
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
+    setIncludeSparkOutputs,
     setPipelineContentTouched,
     setSelectedBlock,
     setTextareaFocused,

@@ -162,12 +162,13 @@ type PipelineDetailProps = {
   setAnyInputFocused: (value: boolean) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  setIntegrationStreams: (streams: string[]) => void;
   setHiddenBlocks: ((opts: {
     [uuid: string]: BlockType;
   }) => {
     [uuid: string]: BlockType;
   });
+  setIncludeSparkOutputs?: (value: boolean) => void;
+  setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setSelectedBlock: (block: BlockType) => void;
@@ -242,6 +243,7 @@ function PipelineDetail({
   setEditingBlock,
   setErrors,
   setHiddenBlocks,
+  setIncludeSparkOutputs,
   setIntegrationStreams,
   setOutputBlocks,
   setPipelineContentTouched,
@@ -924,6 +926,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             setCreatingNewDBTModel={setCreatingNewDBTModel}
             setEditingBlock={setEditingBlock}
             setErrors={setErrors}
+            setIncludeSparkOutputs={setIncludeSparkOutputs}
             setMountedBlocks={setMountedBlocks}
             setOutputBlocks={setOutputBlocks}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
@@ -1012,6 +1015,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
+    setIncludeSparkOutputs,
     setMountedBlocks,
     setOutputBlocks,
     setSelectedBlock,
