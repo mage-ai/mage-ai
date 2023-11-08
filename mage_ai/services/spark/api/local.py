@@ -25,7 +25,9 @@ class LocalAPI(BaseAPI):
     def spark_ui_url(self) -> str:
         url = f'http://{SPARK_UI_HOST}:{SPARK_UI_PORT}'
 
-        if self.spark_session:
+        if self.application_spark_ui_url:
+            url = self.application_spark_ui_url
+        elif self.spark_session:
             url = self.spark_session.sparkContext.uiWebUrl
 
         return url
@@ -58,15 +60,18 @@ class LocalAPI(BaseAPI):
         arr = []
         if self.all_applications:
             applications = self.applications_sync(**kwargs)
-            for application in applications:
-                if application.id == application_id:
-                    arr.extend([Job.load(application=application, **model) for model in models])
-                else:
-                    jobs = self.get_sync(
-                        f'/applications/{application.id}/jobs',
-                        host=application.spark_ui_url,
-                    )
-                    arr.extend([Job.load(application=application, **model) for model in jobs])
+        else:
+            applications = [self.application]
+
+        for application in applications:
+            if application.id == application_id:
+                arr.extend([Job.load(application=application, **model) for model in models])
+            else:
+                jobs = self.get_sync(
+                    f'/applications/{application.id}/jobs',
+                    host=application.spark_ui_url,
+                )
+                arr.extend([Job.load(application=application, **model) for model in jobs])
 
         return arr
 
@@ -80,30 +85,33 @@ class LocalAPI(BaseAPI):
         arr = []
         if self.all_applications:
             applications = self.applications_sync(**kwargs)
-            for application in applications:
-                if application.id == application_id:
-                    arr.extend(sorted(
-                        [Sql.load(
-                            application=application,
-                            **model,
-                        ) for model in models],
-                        key=lambda s: s.submission_time,
-                        reverse=True,
-                    ))
-                else:
-                    models2 = self.get_sync(
-                        f'/applications/{application.id}/sql',
-                        host=application.spark_ui_url,
-                        query=query,
-                    )
-                    arr.extend(sorted(
-                        [Sql.load(
-                            application=application,
-                            **model,
-                        ) for model in models2],
-                        key=lambda s: s.submission_time,
-                        reverse=True,
-                    ))
+        else:
+            applications = [self.application]
+
+        for application in applications:
+            if application.id == application_id:
+                arr.extend(sorted(
+                    [Sql.load(
+                        application=application,
+                        **model,
+                    ) for model in models],
+                    key=lambda s: s.submission_time,
+                    reverse=True,
+                ))
+            else:
+                models2 = self.get_sync(
+                    f'/applications/{application.id}/sql',
+                    host=application.spark_ui_url,
+                    query=query,
+                )
+                arr.extend(sorted(
+                    [Sql.load(
+                        application=application,
+                        **model,
+                    ) for model in models2],
+                    key=lambda s: s.submission_time,
+                    reverse=True,
+                ))
 
         return arr
 
@@ -117,22 +125,25 @@ class LocalAPI(BaseAPI):
         arr = []
         if self.all_applications:
             applications = self.applications_sync(**kwargs)
-            for application in applications:
-                if application.id == application_id:
-                    arr.extend([model_class.load(
-                        application=application,
-                        **model,
-                    ) for model in models])
-                else:
-                    models2 = self.get_sync(
-                        f'/applications/{application.id}/stages',
-                        host=application.spark_ui_url,
-                        query=query,
-                    )
-                    arr.extend([model_class.load(
-                        application=application,
-                        **model,
-                    ) for model in models2])
+        else:
+            applications = [self.application]
+
+        for application in applications:
+            if application.id == application_id:
+                arr.extend([model_class.load(
+                    application=application,
+                    **model,
+                ) for model in models])
+            else:
+                models2 = self.get_sync(
+                    f'/applications/{application.id}/stages',
+                    host=application.spark_ui_url,
+                    query=query,
+                )
+                arr.extend([model_class.load(
+                    application=application,
+                    **model,
+                ) for model in models2])
 
         return arr
 
@@ -161,15 +172,18 @@ class LocalAPI(BaseAPI):
         arr = []
         if self.all_applications:
             applications = await self.applications(**kwargs)
-            for application in applications:
-                if application.id == application_id:
-                    arr.extend([Job.load(application=application, **model) for model in models])
-                else:
-                    jobs = await self.get(
-                        f'/applications/{application.id}/jobs',
-                        host=application.spark_ui_url,
-                    )
-                    arr.extend([Job.load(application=application, **model) for model in jobs])
+        else:
+            applications = [self.application]
+
+        for application in applications:
+            if application.id == application_id:
+                arr.extend([Job.load(application=application, **model) for model in models])
+            else:
+                jobs = await self.get(
+                    f'/applications/{application.id}/jobs',
+                    host=application.spark_ui_url,
+                )
+                arr.extend([Job.load(application=application, **model) for model in jobs])
 
         return arr
 
@@ -203,22 +217,25 @@ class LocalAPI(BaseAPI):
         arr = []
         if self.all_applications:
             applications = await self.applications(**kwargs)
-            for application in applications:
-                if application.id == application_id:
-                    arr.extend([model_class.load(
-                        application=application,
-                        **model,
-                    ) for model in models])
-                else:
-                    models2 = await self.get(
-                        f'/applications/{application.id}/stages',
-                        host=application.spark_ui_url,
-                        query=query,
-                    )
-                    arr.extend([model_class.load(
-                        application=application,
-                        **model,
-                    ) for model in models2])
+        else:
+            applications = [self.application]
+
+        for application in applications:
+            if application.id == application_id:
+                arr.extend([model_class.load(
+                    application=application,
+                    **model,
+                ) for model in models])
+            else:
+                models2 = await self.get(
+                    f'/applications/{application.id}/stages',
+                    host=application.spark_ui_url,
+                    query=query,
+                )
+                arr.extend([model_class.load(
+                    application=application,
+                    **model,
+                ) for model in models2])
 
         return arr
 
@@ -323,30 +340,33 @@ class LocalAPI(BaseAPI):
         arr = []
         if self.all_applications:
             applications = await self.applications(**kwargs)
-            for application in applications:
-                if application.id == application_id:
-                    arr.extend(sorted(
-                        [Sql.load(
-                            application=application,
-                            **model,
-                        ) for model in models],
-                        key=lambda s: s.submission_time,
-                        reverse=True,
-                    ))
-                else:
-                    models2 = await self.get(
-                        f'/applications/{application.id}/sql',
-                        host=application.spark_ui_url,
-                        query=query,
-                    )
-                    arr.extend(sorted(
-                        [Sql.load(
-                            application=application,
-                            **model,
-                        ) for model in models2],
-                        key=lambda s: s.submission_time,
-                        reverse=True,
-                    ))
+        else:
+            applications = [self.application]
+
+        for application in applications:
+            if application.id == application_id:
+                arr.extend(sorted(
+                    [Sql.load(
+                        application=application,
+                        **model,
+                    ) for model in models],
+                    key=lambda s: s.submission_time,
+                    reverse=True,
+                ))
+            else:
+                models2 = await self.get(
+                    f'/applications/{application.id}/sql',
+                    host=application.spark_ui_url,
+                    query=query,
+                )
+                arr.extend(sorted(
+                    [Sql.load(
+                        application=application,
+                        **model,
+                    ) for model in models2],
+                    key=lambda s: s.submission_time,
+                    reverse=True,
+                ))
 
         return arr
 

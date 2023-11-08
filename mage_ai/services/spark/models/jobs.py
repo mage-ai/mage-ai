@@ -8,6 +8,7 @@ from mage_ai.services.spark.models.base import BaseSparkModel
 
 class JobStatus(str, Enum):
     FAILED = 'FAILED'
+    RUNNING = 'RUNNING'
     SUCCEEDED = 'SUCCEEDED'
 
 

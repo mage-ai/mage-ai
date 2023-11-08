@@ -24,7 +24,15 @@ from mage_ai.shared.array import find
 
 
 class BaseAPI(ABC):
-    def __init__(self, all_applications: bool = True, spark_session=None):
+    def __init__(
+        self,
+        all_applications: bool = True,
+        application_id: str = None,
+        application_spark_ui_url: str = None,
+        spark_session=None,
+    ):
+        self.application_id = application_id
+
         if spark_session:
             self.spark_session = spark_session
         else:
@@ -32,12 +40,27 @@ class BaseAPI(ABC):
             spark_config = SparkConfig.load(config=repo_config.spark_config)
             self.spark_session = get_spark_session(spark_config)
 
-        spark_confs = self.spark_session.sparkContext.getConf().getAll()
-        value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
-        if value_tup:
-            self.application_id = value_tup[1]
+            if not self.application_id:
+                spark_confs = self.spark_session.sparkContext.getConf().getAll()
+                value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
+                if value_tup:
+                    self.application_id = value_tup[1]
 
         self.all_applications = all_applications
+        self.application_spark_ui_url = application_spark_ui_url
+        self._application = None
+
+    @property
+    def application(self):
+        if self._application:
+            return self._application
+
+        self._application = Application(
+            id=self.application_id,
+            spark_ui_url=self.application_spark_ui_url,
+        )
+
+        return self._application
 
     @abstractmethod
     def endpoint(self, **kwargs) -> str:
@@ -143,6 +166,7 @@ class BaseAPI(ABC):
     def get_sync(self, path: str, host: str = None, query: Dict = None):
         url = f'{self.endpoint(host=host)}{path}'
         response = self.__build_request_sync('get', url, query=query)
+        print('WTFFFFFFFFFFFFFFF', url, response)
         if response.status_code == 200:
             return response.json()
         else:
