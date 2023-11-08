@@ -51,26 +51,26 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    async def job(self, application_id: str, job_id: int, **kwargs) -> Job:
+    async def job(self, job_id: int, application_id: str = None, **kwargs) -> Job:
         pass
 
     @abstractmethod
-    def jobs_sync(self, application_id: str, **kwargs) -> List[Job]:
+    def jobs_sync(self, application_id: str = None, **kwargs) -> List[Job]:
         pass
 
     @abstractmethod
-    async def stages(self, application_id: str, query: Dict = None, **kwargs) -> List[Stage]:
+    async def stages(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Stage]:
         pass
 
     @abstractmethod
-    async def stage(self, application_id: str, stage_id: int, **kwargs) -> Stage:
+    async def stage(self, stage_id: int, application_id: str = None, **kwargs) -> Stage:
         pass
 
     @abstractmethod
     async def stage_attempts(
         self,
-        application_id: str,
         stage_id: int,
+        application_id: str = None,
         **kwargs,
     ) -> List[StageAttempt]:
         pass
@@ -78,9 +78,9 @@ class BaseAPI(ABC):
     @abstractmethod
     async def stage_attempt(
         self,
-        application_id: str,
         stage_id: int,
         attempt_id: int,
+        application_id: str = None,
         **kwargs,
     ) -> StageAttempt:
         pass
@@ -88,9 +88,9 @@ class BaseAPI(ABC):
     @abstractmethod
     async def stage_attempt_task_summary(
         self,
-        application_id: str,
         stage_id: int,
         attempt_id: int,
+        application_id: str = None,
         **kwargs,
     ) -> StageAttemptTaskSummary:
         pass
@@ -98,31 +98,31 @@ class BaseAPI(ABC):
     @abstractmethod
     async def stage_attempt_tasks(
         self,
-        application_id: str,
         stage_id: int,
         attempt_id: int,
+        application_id: str = None,
         **kwargs,
     ) -> List[Task]:
         pass
 
     @abstractmethod
-    async def executors(self, application_id: str, **kwargs) -> List[Executor]:
+    async def executors(self, application_id: str = None, **kwargs) -> List[Executor]:
         pass
 
     @abstractmethod
-    async def threads(self, application_id: str, executor_id: str, **kwargs) -> List[Thread]:
+    async def threads(self, executor_id: str, application_id: str = None, **kwargs) -> List[Thread]:
         pass
 
     @abstractmethod
-    async def sqls(self, application_id: str, query: Dict = None, **kwargs) -> List[Sql]:
+    async def sqls(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Sql]:
         pass
 
     @abstractmethod
-    async def sql(self, application_id: str, sql_id: int, **kwargs) -> Sql:
+    async def sql(self, sql_id: int, application_id: str = None, **kwargs) -> Sql:
         pass
 
     @abstractmethod
-    async def environment(self, application_id: str, **kwargs) -> Environment:
+    async def environment(self, application_id: str = None, **kwargs) -> Environment:
         pass
 
     async def get(self, path: str, query: Dict = None):
