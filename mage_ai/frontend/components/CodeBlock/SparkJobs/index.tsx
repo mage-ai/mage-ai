@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import Divider from '@oracle/elements/Divider';
 import JobsTable from '@components/ComputeManagement/Jobs/JobsTable';
 import {
   SparkExecutionState,
@@ -56,7 +55,6 @@ function SparkJobs({
 
   return (
     <>
-      <Divider light />
       {jobsMemo}
     </>
   );
