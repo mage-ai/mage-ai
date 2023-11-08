@@ -171,6 +171,7 @@ function Table({
   const apiArguments = buildApiOptionsFromObject && objectAtRowIndex
       ? buildApiOptionsFromObject(objectAtRowIndex)
       : [null];
+  console.log('omg', apiArguments)
   const { data } = apiForFetchingAfterAction?.(...apiArguments) || {};
 
   const [coordinates, setCoordinates] = useState<{

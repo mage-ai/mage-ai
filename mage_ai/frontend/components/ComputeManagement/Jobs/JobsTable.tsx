@@ -35,6 +35,7 @@ import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type JobsTableProps = {
+  disableJobExpansion?: boolean;
   disableStageExpansion?: boolean;
   jobs: SparkJobType[];
   stagesMapping: {
@@ -45,6 +46,7 @@ type JobsTableProps = {
 };
 
 function JobsTable({
+  disableJobExpansion,
   disableStageExpansion,
   jobs,
   stagesMapping,
@@ -53,11 +55,14 @@ function JobsTable({
 
   return (
     <Table
-      apiForFetchingAfterAction={api.spark_jobs.detail}
-      buildApiOptionsFromObject={(object: any) => [object?.job_id, {
-        application_id: object?.application?.id,
-        application_spark_ui_url: object?.application?.spark_ui_url,
-      }]}
+      apiForFetchingAfterAction={!disableJobExpansion ? api.spark_jobs.detail : null}
+      buildApiOptionsFromObject={!disableJobExpansion
+        ? (object: any) => [object?.job_id, {
+          application_id: object?.application?.id,
+          application_spark_ui_url: encodeURIComponent(object?.application?.spark_ui_url),
+        }]
+        : null
+      }
       columnFlex={[
         null,
         null,
@@ -89,119 +94,122 @@ function JobsTable({
         },
       ]}
       getObjectAtRowIndex={(rowIndex: number) => jobs?.[rowIndex]}
-      renderExpandedRowWithObject={(rowIndex: number, object: any) => {
-        const job = object?.spark_job;
-        if (job) {
-          const {
-            num_active_stages: numActiveStages,
-            num_active_tasks: numActiveTasks,
-            num_completed_stages: numCompletedStages,
-            num_completed_tasks: numCompletedTasks,
-            num_failed_stages: numFailedStages,
-            num_failed_tasks: numFailedTasks,
-            num_killed_tasks: numKilledTasks,
-            num_skipped_stages: numSkippedStages,
-            num_skipped_tasks: numSkippedTasks,
-            num_tasks: numTasks,
-            stage_ids: stageIds,
-          } = job;
+      renderExpandedRowWithObject={!disableJobExpansion
+        ? (rowIndex: number, object: any) => {
+          const job = object?.spark_job;
+          if (job) {
+            const {
+              num_active_stages: numActiveStages,
+              num_active_tasks: numActiveTasks,
+              num_completed_stages: numCompletedStages,
+              num_completed_tasks: numCompletedTasks,
+              num_failed_stages: numFailedStages,
+              num_failed_tasks: numFailedTasks,
+              num_killed_tasks: numKilledTasks,
+              num_skipped_stages: numSkippedStages,
+              num_skipped_tasks: numSkippedTasks,
+              num_tasks: numTasks,
+              stage_ids: stageIds,
+            } = job;
 
-          const stages: SparkStageType[] = sortByKey(stageIds, stageId => stageId, {
-            ascending: false,
-          }).reduce((acc, stageId: number) => {
-            const stage = stagesMapping?.[job?.application?.id]?.[stageId];
-            if (stage){
-              return acc.concat(stage);
-            }
+            const stages: SparkStageType[] = sortByKey(stageIds, stageId => stageId, {
+              ascending: false,
+            }).reduce((acc, stageId: number) => {
+              const stage = stagesMapping?.[job?.application?.id]?.[stageId];
+              if (stage){
+                return acc.concat(stage);
+              }
 
-            return stage;
-          }, []);
+              return stage;
+            }, []);
+
+            return (
+              <>
+                <Spacing p={PADDING_UNITS}>
+                  <FlexContainer>
+                    <Flex flex={1} alignItems="stretch">
+                      <Panel noPadding>
+                        <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
+                          <Text bold large>
+                            Stage summary
+                          </Text>
+                        </Spacing>
+
+                        <Divider light short />
+
+                        {buildTable([
+                          ['IDs', stageIds?.join(', ')],
+                          ['Completed', numCompletedStages],
+                          ['Active', numActiveStages],
+                          ['Skipped', numSkippedStages],
+                          ['Failed', numFailedStages],
+                        ])}
+                      </Panel>
+                    </Flex>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Flex flex={1} alignItems="stretch">
+                      <Panel noPadding>
+                        <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
+                          <Text bold large>
+                            Task summary
+                          </Text>
+                        </Spacing>
+
+                        <Divider light short />
+
+                        {buildTable([
+                          ['Total', numTasks],
+                          ['Completed', numCompletedTasks],
+                          ['Active', numActiveTasks],
+                          ['Skipped', numSkippedTasks],
+                          ['Failed', numFailedTasks],
+                          ['Killed', numKilledTasks],
+                        ])}
+                      </Panel>
+                    </Flex>
+                  </FlexContainer>
+                </Spacing>
+
+                <Divider light />
+
+                <Spacing p={PADDING_UNITS}>
+                  <Panel noPadding>
+                    <Spacing p={PADDING_UNITS}>
+                      <Text bold large>
+                        Stages&nbsp;&nbsp;&nbsp;<Text
+                          default
+                          inline
+                          large
+                          monospace
+                        >
+                          {stages?.length}
+                        </Text>
+                      </Text>
+                    </Spacing>
+
+                    <Divider light />
+
+                    <StagesTable
+                      disableStageExpansion={disableStageExpansion}
+                      stages={stages}
+                    />
+
+                    <Spacing p={PADDING_UNITS} />
+                  </Panel>
+                </Spacing>
+              </>
+            );
+          }
 
           return (
-            <>
-              <Spacing p={PADDING_UNITS}>
-                <FlexContainer>
-                  <Flex flex={1} alignItems="stretch">
-                    <Panel noPadding>
-                      <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
-                        <Text bold large>
-                          Stage summary
-                        </Text>
-                      </Spacing>
-
-                      <Divider light short />
-
-                      {buildTable([
-                        ['IDs', stageIds?.join(', ')],
-                        ['Completed', numCompletedStages],
-                        ['Active', numActiveStages],
-                        ['Skipped', numSkippedStages],
-                        ['Failed', numFailedStages],
-                      ])}
-                    </Panel>
-                  </Flex>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <Flex flex={1} alignItems="stretch">
-                    <Panel noPadding>
-                      <Spacing px={PADDING_UNITS} py={PADDING_UNITS}>
-                        <Text bold large>
-                          Task summary
-                        </Text>
-                      </Spacing>
-
-                      <Divider light short />
-
-                      {buildTable([
-                        ['Total', numTasks],
-                        ['Completed', numCompletedTasks],
-                        ['Active', numActiveTasks],
-                        ['Skipped', numSkippedTasks],
-                        ['Failed', numFailedTasks],
-                        ['Killed', numKilledTasks],
-                      ])}
-                    </Panel>
-                  </Flex>
-                </FlexContainer>
-              </Spacing>
-
-              <Divider light />
-
-              <Spacing p={PADDING_UNITS}>
-                <Panel noPadding>
-                  <Spacing p={PADDING_UNITS}>
-                    <Text bold large>
-                      Stages&nbsp;&nbsp;&nbsp;<Text
-                        default
-                        inline
-                        large
-                        monospace
-                      >
-                        {stages?.length}
-                      </Text>
-                    </Text>
-                  </Spacing>
-
-                  <Divider light />
-
-                  <StagesTable
-                    disableStageExpansion={disableStageExpansion}
-                    stages={stages}
-                  />
-
-                  <Spacing p={PADDING_UNITS} />
-                </Panel>
-              </Spacing>
-            </>
+            <Spacing p={PADDING_UNITS}>
+            </Spacing>
           );
         }
-
-        return (
-          <Spacing p={PADDING_UNITS}>
-          </Spacing>
-        );
-      }}
+        : null
+      }
       rows={jobs?.map(({
         job_id: id,
         name,

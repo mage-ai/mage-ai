@@ -63,6 +63,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import SparkJobs from './SparkJobs';
 import SparkProgress from './SparkProgress';
+import SparkSqls from './SparkSqls';
 import SparkStages from './SparkStages';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -1640,6 +1641,12 @@ function CodeBlock({
       } else if (TAB_SPARK_STAGES.uuid === selectedTab?.uuid) {
         outputChildren = (
           <SparkStages
+            executionStates={blockExecutionStates}
+          />
+        );
+      } else if (TAB_SPARK_SQLS.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkSqls
             executionStates={blockExecutionStates}
           />
         );

@@ -124,7 +124,7 @@ function StagesTable({
       buildApiOptionsFromObject={!disableStageExpansion
         ? (object: any) => [object?.stage_id, {
           application_id: object?.application?.id,
-          application_spark_ui_url: object?.application?.spark_ui_url,
+          application_spark_ui_url: encodeURIComponent(object?.application?.spark_ui_url),
           quantiles: '0.01,0.25,0.5,0.75,0.99',
           withSummaries: true,
         }]
@@ -515,14 +515,14 @@ function StagesTable({
                       </Text>
                     </Spacing>
 
-                    <Divider light />
-
                     {!tasksContained && tasksTable}
 
                     {tasksContained && (
-                      <Spacing p={PADDING_UNITS}>
-                        <Panel>
+                      <Spacing px={PADDING_UNITS}>
+                        <Panel noPadding>
                           {tasksTable}
+
+                          <Spacing pb={PADDING_UNITS} />
                         </Panel>
                       </Spacing>
                     )}
