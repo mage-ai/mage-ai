@@ -61,6 +61,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import SparkJobs from './SparkJobs';
 import SparkProgress from './SparkProgress';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -132,6 +133,9 @@ import {
   TAB_DBT_SQL_UUID,
   TAB_SPARK_JOBS,
   TAB_SPARK_OUTPUT,
+  TAB_SPARK_SQLS,
+  TAB_SPARK_STAGES,
+  TAB_SPARK_TASKS,
 } from './constants';
 import {
   KEY_CODE_CONTROL,
@@ -1531,27 +1535,13 @@ function CodeBlock({
       );
     }
 
-    let outputChildren;
-
-    if (sparkEnabled) {
-      if (TAB_SPARK_OUTPUT.uuid === selectedTab?.uuid) {
-        outputChildren = (
-          <SparkProgress
-            executionStates={blockExecutionStates}
-            isInProgress={isInProgress}
-          />
-        );
-      }
-    }
-
-    return (
+    const outputEl = (
       <CodeOutput
         {...borderColorShareProps}
         block={block}
         blockIndex={blockIdx}
         blockMetadata={blockMetadata}
-        buttonTabs={buttonTabs}
-        childrenBelowTabs={outputChildren}
+        buttonTabs={sparkEnabled ? null : buttonTabs}
         collapsed={outputCollapsed}
         hasOutput={hasOutput}
         isInProgress={isInProgress}
@@ -1641,6 +1631,48 @@ function CodeBlock({
         )}
       </CodeOutput>
     );
+
+    const isOnOutputTab = TAB_SPARK_OUTPUT.uuid === selectedTab?.uuid;
+
+    let outputChildren;
+
+    if (sparkEnabled) {
+      if (isOnOutputTab) {
+        outputChildren = (
+          <SparkProgress
+            executionStates={blockExecutionStates}
+            isInProgress={isInProgress}
+          />
+
+        );
+      } else if (TAB_SPARK_JOBS.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkJobs
+            executionStates={blockExecutionStates}
+            isInProgress={isInProgress}
+          />
+        );
+      }
+
+      return (
+        <>
+          <CodeContainerStyle
+            {...borderColorShareProps}
+            className={selected && textareaFocused ? 'selected' : null}
+            hideBorderBottom={isOnOutputTab}
+            lightBackground
+            noPadding
+          >
+            {buttonTabs}
+            {outputChildren}
+          </CodeContainerStyle>
+
+          {isOnOutputTab && outputEl}
+        </>
+      );
+    }
+
+    return outputEl;
   }, [
     block,
     blockExecutionStates,
@@ -1654,7 +1686,9 @@ function CodeBlock({
     executionState,
     hasOutput,
     isDataIntegration,
+    isEditingBlock,
     isInProgress,
+    isMarkdown,
     mainContainerWidth,
     messages,
     messagesWithType,
@@ -1678,6 +1712,7 @@ function CodeBlock({
     setSelectedOutputBlock,
     sideBySideEnabled,
     sparkEnabled,
+    textareaFocused,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
