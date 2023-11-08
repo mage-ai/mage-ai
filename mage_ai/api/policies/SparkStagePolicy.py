@@ -63,6 +63,8 @@ SparkStagePolicy.allow_query(
 
 SparkStagePolicy.allow_query(
     [
+        'application_id',
+        'application_spark_ui_url',
         'quantiles',
         'withSummaries',
     ],

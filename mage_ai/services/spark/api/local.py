@@ -95,31 +95,79 @@ class LocalAPI(BaseAPI):
 
         return arr
 
-    async def job(self, job_id: int, application_id: str = None, **kwargs) -> Job:
+    async def job(
+        self,
+        job_id: int,
+        application_id: str = None,
+        application_spark_ui_url: str = None,
+        **kwargs,
+    ) -> Job:
+        application_id = application_id or self.application_id
         model = await self.get(
-            f'/applications/{application_id or self.application_id}/jobs/{job_id}',
+            f'/applications/{application_id}/jobs/{job_id}',
+            host=application_spark_ui_url,
         )
-        return Job.load(**model)
+        return Job.load(
+            application=Application(
+                id=application_id,
+                spark_ui_url=application_spark_ui_url,
+            ),
+            **model,
+        )
 
     async def stages(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Stage]:
+        application_id = application_id or self.application_id
         models = await self.get(
             f'/applications/{application_id or self.application_id}/stages', query=query,
         )
         model_class = StageAttempt if query and query.get('details') else Stage
-        return [model_class.load(**model) for model in models]
+
+        arr = []
+        if self.all_applications:
+            applications = await self.applications(**kwargs)
+            for application in applications:
+                print('WTF0', application)
+                if application.id == application_id:
+                    arr.extend([model_class.load(
+                        application=application,
+                        **model,
+                    ) for model in models])
+                else:
+                    models2 = await self.get(
+                        f'/applications/{application.id}/stages',
+                        host=application.spark_ui_url,
+                        query=query,
+                    )
+                    print('WTFFFFFFFFFFFFF', models2)
+                    arr.extend([model_class.load(
+                        application=application,
+                        **model,
+                    ) for model in models2])
+
+        return arr
 
     async def stage(
         self,
         stage_id: int,
         application_id: str = None,
+        application_spark_ui_url: str = None,
         query: Dict = None,
         **kwargs,
     ) -> Stage:
+        application_id = application_id or self.application_id
         stage_attempts = await self.get(
-            f'/applications/{application_id or self.application_id}/stages/{stage_id}',
+            f'/applications/{application_id}/stages/{stage_id}',
+            host=application_spark_ui_url,
             query=query,
         )
-        return Stage.load(stage_attempts=stage_attempts, stage_id=stage_id)
+        return Stage.load(
+            application=Application(
+                id=application_id,
+                spark_ui_url=application_spark_ui_url,
+            ),
+            stage_attempts=stage_attempts,
+            stage_id=stage_id,
+        )
 
     async def stage_attempts(
         self,

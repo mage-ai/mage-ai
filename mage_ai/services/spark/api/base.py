@@ -127,13 +127,16 @@ class BaseAPI(ABC):
         pass
 
     async def get(self, path: str, host: str = None, query: Dict = None):
+        url = f'{self.endpoint(host=host)}{path}'
         response = await self.__build_request(
             'get',
-            f'{self.endpoint(host=host)}{path}',
+            url,
             query=query,
         )
         if response.status_code == 200:
             return response.json()
+        else:
+            print(f'[WARNING] {self.__class__.__name__} {url}: {response}')
 
         return {}
 
@@ -141,6 +144,8 @@ class BaseAPI(ABC):
         response = self.__build_request_sync('get', f'{self.endpoint()}{path}', query=query)
         if response.status_code == 200:
             return response.json()
+        else:
+            print(f'[WARNING] {self.__class__.__name__}: {response}')
 
         return {}
 

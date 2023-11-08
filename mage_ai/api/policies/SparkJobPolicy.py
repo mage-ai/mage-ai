@@ -31,3 +31,17 @@ SparkJobPolicy.allow_read(
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
+
+SparkJobPolicy.allow_query(
+    [
+        'application_id',
+        'application_spark_ui_url',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
