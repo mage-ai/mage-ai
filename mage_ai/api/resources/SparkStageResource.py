@@ -15,10 +15,8 @@ class SparkStageResource(GenericResource, SparkApplicationChild):
             if details:
                 query['details'] = details
 
-        application_id = await self.get_application_id(**kwargs)
-
         return self.build_result_set(
-            await LocalAPI().stages(application_id=application_id, query=query),
+            await LocalAPI().stages(query=query),
             user,
             **kwargs,
         )
@@ -44,9 +42,7 @@ class SparkStageResource(GenericResource, SparkApplicationChild):
             if quantiles:
                 query['withSummaries'] = with_summaries
 
-        application_id = await self.get_application_id(**kwargs)
         stage = await LocalAPI().stage(
-            application_id=application_id,
             stage_id=pk,
             query=query if query else None,
         )

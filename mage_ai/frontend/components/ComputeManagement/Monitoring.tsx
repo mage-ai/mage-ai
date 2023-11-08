@@ -96,10 +96,14 @@ function Monitoring({
         null,
         null,
         null,
+        null,
       ]}
       columns={[
         {
           uuid: 'ID',
+        },
+        {
+          uuid: 'URL',
         },
         {
           uuid: 'Name',
@@ -122,6 +126,7 @@ function Monitoring({
         attempts,
         id,
         name,
+        spark_ui_url: sparkUIURL,
       }) => {
         const {
           app_spark_version: version,
@@ -141,6 +146,9 @@ function Monitoring({
         return [
           <Text {...SHARED_TEXT_PROPS} key="id">
             {id}
+          </Text>,
+          <Text {...SHARED_TEXT_PROPS} key="sparkUIURL">
+            {sparkUIURL}
           </Text>,
           <Text {...SHARED_TEXT_PROPS} key="name">
             {name}

@@ -21,16 +21,8 @@ class ExecutionStateResource(GenericResource):
             if pipeline and PipelineType.PYTHON == pipeline.type:
                 block = pipeline.get_block(block_uuid)
                 if block and block.compute_management_enabled() and block.is_using_spark():
-                    jobs = block.jobs_during_execution()
-                    sqls = block.sqls_during_execution(jobs=jobs)
-                    stages = block.stages_during_execution(jobs=jobs)
-
                     arr.append(dict(
-                        spark=dict(
-                            jobs=[m.to_dict() for m in jobs],
-                            sqls=[m.to_dict() for m in sqls],
-                            stages=[m.to_dict() for m in stages],
-                        ),
+                        spark=block.execution_states(),
                     ))
 
         return self.build_result_set(

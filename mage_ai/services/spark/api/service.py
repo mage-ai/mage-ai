@@ -5,8 +5,8 @@ from mage_ai.services.spark.utils import get_compute_service
 
 class API:
     @classmethod
-    def build(self, repo_config=None):
+    def build(self, repo_config=None, spark_session=None):
         compute_service = get_compute_service(repo_config)
 
         if ComputeService.STANDALONE_CLUSTER == compute_service:
-            return LocalAPI()
+            return LocalAPI(spark_session=spark_session)

@@ -16,10 +16,8 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
             if length:
                 query['length'] = length
 
-        application_id = await self.get_application_id(**kwargs)
-
         return self.build_result_set(
-            await LocalAPI().sqls(application_id=application_id, query=query),
+            await LocalAPI().sqls(query=query),
             user,
             **kwargs,
         )
@@ -32,20 +30,17 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
         if include_jobs_and_stages:
             include_jobs_and_stages = include_jobs_and_stages[0]
 
-        application_id = await self.get_application_id(**kwargs)
-        model = await LocalAPI().sql(application_id=application_id, sql_id=pk)
+        model = await LocalAPI().sql(sql_id=pk)
 
         if include_jobs_and_stages:
             job_ids = (model.failed_job_ids or []) + (
                 model.running_job_ids or []) + (model.success_job_ids or [])
             model.jobs = [await LocalAPI().job(
-                application_id=application_id,
                 job_id=job_id,
             ) for job_id in job_ids]
 
             stage_ids = reduce(lambda acc, job: acc + (job.stage_ids or []), model.jobs, [])
             model.stages = [await LocalAPI().stage(
-                application_id=application_id,
                 stage_id=stage_id,
             ) for stage_id in stage_ids]
 

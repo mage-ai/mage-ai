@@ -4,6 +4,8 @@ from typing import Dict, List
 
 import requests
 
+from mage_ai.data_preparation.repo_manager import RepoConfig
+from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.environments import Environment
 from mage_ai.services.spark.models.executors import Executor
@@ -16,9 +18,25 @@ from mage_ai.services.spark.models.stages import (
     Task,
 )
 from mage_ai.services.spark.models.threads import Thread
+from mage_ai.services.spark.spark import get_spark_session
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import find
 
 
 class BaseAPI(ABC):
+    def __init__(self, spark_session=None):
+        if spark_session:
+            self.spark_session = spark_session
+        else:
+            repo_config = RepoConfig(repo_path=get_repo_path())
+            spark_config = SparkConfig.load(config=repo_config.spark_config)
+            self.spark_session = get_spark_session(spark_config)
+
+        spark_confs = self.spark_session.sparkContext.getConf().getAll()
+        value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
+        if value_tup:
+            self.application_id = value_tup[1]
+
     @property
     @abstractmethod
     def endpoint(self) -> str:

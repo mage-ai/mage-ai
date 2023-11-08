@@ -36,6 +36,7 @@ export interface SparkApplicationType {
   }[];
   id: string;
   name: string;
+  spark_ui_url: string;
 }
 
 export interface SparkJobType {
