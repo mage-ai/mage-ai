@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
 
+import ExecutionStateType from '@interfaces/ExecutionStateType';
 import SparkJobSqls from '@components/ComputeManagement/SparkJobSqls';
-import {
-  SparkExecutionState,
-  SparkStageType,
-} from '@interfaces/SparkType';
+import { SparkStageType } from '@interfaces/SparkType';
 
 type SparkSqlsType = {
   disableGraph?: boolean;
-  executionStates: SparkExecutionState[];
+  executionStates: ExecutionStateType[];
   isInProgress?: boolean;
   overrideScrollForGraph?: boolean;
 };

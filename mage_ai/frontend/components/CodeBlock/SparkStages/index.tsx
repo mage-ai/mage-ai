@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 
+import ExecutionStateType from '@interfaces/ExecutionStateType';
 import StagesTable from '@components/ComputeManagement/Stages/StagesTable';
-import {
-  SparkExecutionState,
-  SparkStageType,
-} from '@interfaces/SparkType';
+import { SparkStageType } from '@interfaces/SparkType';
 
 type SparkStagesType = {
-  executionStates: SparkExecutionState[];
+  executionStates: ExecutionStateType[];
   isInProgress?: boolean;
 };
 

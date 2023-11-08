@@ -82,7 +82,9 @@ function Monitoring({
     _format: 'with_details',
   });
   const stagesMapping: {
-    [applicationID: string]: SparkStageType;
+    [applicationID: string]: {
+      [stageID: number]: SparkStageType;
+    };
   } = useMemo(() => (dataStages?.spark_stages || []).reduce((acc, stage) => {
     const application = stage?.application;
 

@@ -20,6 +20,7 @@ import {
   SparkStageStatusEnum,
   SparkStageType,
   SparkTaskStatusEnum,
+  SparkTaskType,
 } from '@interfaces/SparkType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SHARED_TEXT_PROPS } from '../constants';

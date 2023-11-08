@@ -438,11 +438,3 @@ export interface SparkSQLType {
   submission_time: string;
   success_job_ids: number[];
 }
-
-export interface SparkExecutionState {
-  spark: {
-    jobs: SparkJobType[];
-    sqls: SparkSQLType[];
-    stages: SparkStageType[];
-  };
-}
