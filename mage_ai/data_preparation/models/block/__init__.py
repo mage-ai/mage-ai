@@ -338,6 +338,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         self.execution_timestamp_start = None
         self.execution_timestamp_end = None
+        self._spark_session_current = None
 
     @property
     def uuid(self) -> str:
@@ -1467,6 +1468,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         track_spark = from_notebook and self.is_using_spark() and self.compute_management_enabled()
         if track_spark:
             self.clear_spark_jobs_cache()
+            self.cache_spark_application()
             self.set_spark_job_execution_start()
 
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
@@ -1476,6 +1478,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         if track_spark:
             self.set_spark_job_execution_end()
+            self.execution_states(cache=True)
 
         return output
 
@@ -1631,7 +1634,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             block_uuid=block_uuid_use,
             clean_block_uuid=clean_block_uuid,
             partition=partition,
-            spark=self.__get_spark_session(),
+            spark=self.get_spark_session(),
             variable_uuid=variable_uuid,
         )
 
@@ -1710,7 +1713,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             data = variable_object.read_data(
                 sample=sample,
                 sample_count=sample_count,
-                spark=self.__get_spark_session(),
+                spark=self.get_spark_session(),
             )
             if type(data) is pd.DataFrame:
                 if csv_lines_only:
@@ -1828,7 +1831,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 block_uuid,
                 v,
                 partition=execution_partition,
-                spark=self.__get_spark_session(),
+                spark=self.get_spark_session(),
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -1837,7 +1840,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data = await variable_object.read_data_async(
                 sample=True,
                 sample_count=sample_count,
-                spark=self.__get_spark_session(),
+                spark=self.get_spark_session(),
             )
             if type(data) is pd.DataFrame:
                 try:
@@ -2500,7 +2503,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
                 is_spark_env()):
             if not global_vars.get('spark'):
-                spark = self.__get_spark_session()
+                spark = self.get_spark_session()
                 if spark is not None:
                     global_vars['spark'] = spark
         if 'env' not in global_vars:
@@ -2511,7 +2514,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             global_vars['context'] = dict()
         return global_vars
 
-    def __get_spark_session(self):
+    def get_spark_session(self):
         if self.spark_init and (not self.pipeline or
                                 not self.pipeline.spark_config):
             return self.spark
