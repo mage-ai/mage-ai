@@ -10,6 +10,7 @@ import JobsTable from './Jobs/JobsTable';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
+import SparkGraph from './SparkGraph';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -20,35 +21,45 @@ import {
   datetimeInLocalTimezone,
 } from '@utils/date';
 import { MOCK_SQL } from './shared/mocks';
-import { PADDING_UNITS, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
 import { SHARED_TEXT_PROPS } from './constants';
 import { SparkStageType, SparkSQLStatusEnum, SparkSQLType, } from '@interfaces/SparkType';
 import { formatNumberToDuration } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type SparkJobSqlsProps = {
+  disableJobExpansion?: boolean;
   setSelectedSql?: (sql: SparkSQLType) => void;
+  showSparkGraph?: boolean;
+  sqls?: SparkSQLType[];
   stagesMapping?: {
     [key: number]: SparkStageType;
   };
 };
 
 function SparkJobSqls({
+  disableJobExpansion,
   setSelectedSql,
+  showSparkGraph,
+  sqls: sqlsProp,
   stagesMapping,
 }: SparkJobSqlsProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const { data: dataSqls } = api.spark_sqls.list({
     length: 9999,
+  }, {}, {
+    pauseFetch: typeof sqlsProp !== 'undefined' && sqlsProp !== null,
   });
-  const sqls: SparkSQLType[] = useMemo(() => [].concat(dataSqls?.spark_sqls || []), [dataSqls]);
-  // const grouped = useMemo(() => {})
+  const sqlsArr: SparkSQLType[] = useMemo(() => sqlsProp ? sqlsProp : dataSqls?.spark_sqls || [], [
+    dataSqls,
+    sqlsProp,
+  ]);
 
   const tableMemo = useMemo(() => {
     const groups = {};
 
-    sqls?.forEach((sql) => {
+    sqlsArr?.forEach((sql) => {
       const application = sql?.application;
       if (!(application?.id in groups)) {
         groups[application?.id] = {
@@ -62,7 +73,7 @@ function SparkJobSqls({
 
     return Object.values(groups).map(({
       application,
-      sqls: sqlsArr,
+      sqls,
     }) => {
       return (
         <div key={application?.id}>
@@ -78,7 +89,7 @@ function SparkJobSqls({
             apiForFetchingAfterAction={api.spark_sqls.detail}
             buildApiOptionsFromObject={(object: any) => [object?.id, {
               application_id: object?.application?.id,
-              application_spark_ui_url: object?.application?.spark_ui_url,
+              application_spark_ui_url: encodeURIComponent(object?.application?.spark_ui_url),
               include_jobs_and_stages: 1,
               _format: 'with_jobs_and_stages',
             }]}
@@ -128,11 +139,7 @@ function SparkJobSqls({
 
               return (
                 <>
-                  <Spacing
-                    mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
-                    mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
-                    px={PADDING_UNITS}
-                  >
+                  <Spacing p={PADDING_UNITS}>
                     <Panel noPadding>
                       <Spacing p={PADDING_UNITS}>
                         <FlexContainer
@@ -157,20 +164,39 @@ function SparkJobSqls({
                         <Accordion
                           noBoxShadow
                         >
-                          <AccordionPanel noPaddingContent title="Plan">
+                          <AccordionPanel
+                            noPaddingContent
+                            title="Plan"
+                            titleXPadding={PADDING_UNITS * UNIT}
+                            titleYPadding={1.5 * UNIT}
+                          >
                             <Spacing p={PADDING_UNITS}>
                               <Text default monospace preWrap small>
                                 {sql?.plan_description}
                               </Text>
                             </Spacing>
                           </AccordionPanel>
+
+                          {showSparkGraph && (
+                            <AccordionPanel
+                              noPaddingContent
+                              title="Graph"
+                              titleXPadding={PADDING_UNITS * UNIT}
+                              titleYPadding={1.5 * UNIT}
+                            >
+                              <SparkGraph
+                                height={100 * UNIT}
+                                model={sql}
+                              />
+                            </AccordionPanel>
+                          )}
                         </Accordion>
                       </Spacing>
                     </Panel>
                   </Spacing>
 
-                  <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={PADDING_UNITS}>
-                    <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
+                  <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
+                    <Spacing mb={PADDING_UNITS}>
                       <FlexContainer
                         alignItems="center"
                         justifyContent="space-between"
@@ -185,15 +211,17 @@ function SparkJobSqls({
 
                     <Panel overflowVisible noPadding>
                       <JobsTable
+                        disableJobExpansion={disableJobExpansion}
                         jobs={jobs}
                         stagesMapping={stagesMapping}
                       />
+                      <Spacing pb={PADDING_UNITS} />
                     </Panel>
                   </Spacing>
                 </>
               );
             }}
-            rows={sqlsArr?.map(({
+            rows={sqls?.map(({
               duration,
               failed_job_ids: failedJobIds,
               id,
@@ -243,7 +271,7 @@ function SparkJobSqls({
       );
     })
   }, [
-    sqls,
+    sqlsArr,
     stagesMapping,
   ]);
 
