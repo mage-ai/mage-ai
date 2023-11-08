@@ -7,13 +7,15 @@ import { PADDING_HORIZONTAL, UNIT } from '@oracle/styles/units/spacing';
 const DOT_SIZE = UNIT / 2;
 
 export const ProgressDotsStyle = styled.div<{
-  width: number;
+  progress: number;
+  success?: boolean;
 }>`
+  border-top-width: ${DOT_SIZE}px;
+  border-top-style: dotted;
+  height: ${DOT_SIZE}px;
+
   ${props => `
-    border-top-color: ${(props.theme || dark).accent.positive};
-    border-top-width: ${DOT_SIZE}px;
-    border-top-style: dotted;
-    height: ${DOT_SIZE}px;
-    width: ${props.width}%;
+    border-top-color: ${props.success ? (props.theme || dark).accent.positive : (props.theme || dark).content.muted};
+    width: ${props.progress}%;
   `}
 `;

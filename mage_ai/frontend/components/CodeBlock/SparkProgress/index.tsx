@@ -1,19 +1,26 @@
 import { useMemo } from 'react';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ProgressDotsStyle } from './index.style';
-import { SparkExecutionState, SparkStageStatusEnum } from '@interfaces/SparkType';
+import {
+  SparkExecutionState,
+  SparkJobStatusEnum,
+  SparkStageStatusEnum,
+} from '@interfaces/SparkType';
 
 type SparkProgressProps = {
   children?: any;
   executionStates: SparkExecutionState[];
+  isInProgress?: boolean;
 };
 
 function SparkProgress({
   children,
   executionStates,
+  isInProgress,
 }: SparkProgressProps) {
   const {
     jobs,
@@ -26,68 +33,155 @@ function SparkProgress({
   };
 
   const {
-    completedTasks,
-    tasks,
-    completedStages,
+    jobsCountCompleted,
+    jobsCount,
     stagesCount,
-    activeStages,
-    activeTasks,
+    stagesCountCompleted,
+    tasksCount,
+    tasksCountCompleted,
   } = useMemo(() => {
-    let completedTasksInner = 0;
-    let tasksInner = 0;
-    let completedStagesInner = 0;
-    let stagesInner = 0;
-
-    let activeStagesInner = 0;
-    let activeTasksInner = 0;
+    let jobsCountCompletedInner = 0;
+    let jobsCountInner = 0;
+    let stagesCountCompletedInner = 0;
+    let stagesCountInner = 0;
 
     jobs?.forEach(({
-      num_completed_stages: numCompletedStages,
-      num_completed_tasks: numCompletedTasks,
-      num_active_stages: numActiveStages,
-      num_active_tasks: numActivedTasks,
-      num_skipped_stages: numSkippedStages,
-      num_skipped_tasks: numSkippedTasks,
-      num_tasks: numTasks,
-      stage_ids: stageIDs,
-      // status,
+      num_completed_stages: stagesCountCompleted,
+      status,
+    }) => {
+      jobsCountCompletedInner += SparkJobStatusEnum.SUCCEEDED === status ? 1 : 0;
+      jobsCountInner += 1;
+    });
+
+    let tasksCountCompletedInner = 0;
+    let tasksCountInner = 0;
+
+    stages?.forEach(({
+      num_complete_tasks: tasksCountCompleted,
+      num_tasks: tasks,
+      status,
     }) => {
       if (SparkStageStatusEnum.SKIPPED !== status) {
+        stagesCountCompletedInner += SparkStageStatusEnum.COMPLETE === status ? 1 : 0;
+        stagesCountInner += 1;
+        tasksCountCompletedInner += tasksCountCompleted || 0;
+        tasksCountInner += tasks || 0;
       }
-      completedTasksInner += numCompletedTasks;
-      tasksInner += numTasks - (numSkippedTasks || 0);
-
-      completedStagesInner += numCompletedStages;
-      stagesInner += stageIDs?.length - (numSkippedStages || 0);
     });
 
     return {
-      completedTasks: completedTasksInner,
-      tasks: tasksInner,
-      completedStages: completedStagesInner,
-      stagesCount: stagesInner,
-      activeStages: activeStagesInner,
-      activeTasks: activeTasksInner,
+      jobsCountCompleted: jobsCountCompletedInner,
+      jobsCount: jobsCountInner,
+      stagesCount: stagesCountInner,
+      stagesCountCompleted: stagesCountCompletedInner,
+      tasksCount: tasksCountInner,
+      tasksCountCompleted: tasksCountCompletedInner,
     };
   }, [
     jobs,
+    stages,
+  ]);
+
+  const jobsProgress = useMemo(() => !jobsCount
+    ? 0
+    : Math.min(isInProgress ? 90 : 1, jobsCountCompleted / jobsCount),
+  [
+    isInProgress,
+    jobsCount,
+    jobsCountCompleted,
+  ]);
+
+  const stagesProgress = useMemo(() => !stagesCount
+    ? 0
+    : Math.min(jobsProgress < 1 ? 90 : 1, stagesCountCompleted / stagesCount),
+  [
+    jobsProgress,
+    stagesCount,
+    stagesCountCompleted,
+  ]);
+
+  const tasksProgress = useMemo(() => !tasksCount
+    ? 0
+    : Math.min(jobsProgress < 1 ? 90 : 1, tasksCountCompleted / tasksCount),
+  [
+    jobsProgress,
+    tasksCount,
+    tasksCountCompleted,
   ]);
 
   return (
     <>
-      <Spacing p={PADDING_UNITS}>
-        <ProgressDotsStyle
-          width={100}
-        />
-      </Spacing>`
+      <Spacing px={PADDING_UNITS} mt={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <FlexContainer alignContent="center" justifyContent="space-between">
+            <Text default monospace small>
+              Jobs
+            </Text>
+            <Spacing mr={PADDING_UNITS} />
+            <Text default monospace small>
+              {jobsCountCompleted} / {jobsCount} ({Math.round(jobsProgress * 100)}%)
+            </Text>
+          </FlexContainer>
+        </Spacing>
+        <FlexContainer>
+          <ProgressDotsStyle
+            progress={jobsProgress * 100}
+            success
+          />
+          {jobsProgress > 0 && jobsProgress < 1 && <div style={{ width: UNIT / 2 }} />}
+          <ProgressDotsStyle
+            progress={(1 - jobsProgress) * 100}
+          />
+        </FlexContainer>
+      </Spacing>
 
-      <Text>
-        {completedTasks} / {tasks} / {activeTasks}
-      </Text>
+      <Spacing px={PADDING_UNITS} mt={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <FlexContainer alignContent="center" justifyContent="space-between">
+            <Text default monospace small>
+              Stages
+            </Text>
+            <Spacing mr={PADDING_UNITS} />
+            <Text default monospace small>
+              {stagesCountCompleted} / {stagesCount} ({Math.round(stagesProgress * 100)}%)
+            </Text>
+          </FlexContainer>
+        </Spacing>
+        <FlexContainer>
+          <ProgressDotsStyle
+            progress={stagesProgress * 100}
+            success
+          />
+          {stagesProgress > 0 && stagesProgress < 1 && <div style={{ width: UNIT / 2 }} />}
+          <ProgressDotsStyle
+            progress={(1 - stagesProgress) * 100}
+          />
+        </FlexContainer>
+      </Spacing>
 
-      <Text>
-        {completedStages} / {stagesCount} / {activeStages}
-      </Text>
+      <Spacing px={PADDING_UNITS} my={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <FlexContainer alignContent="center" justifyContent="space-between">
+            <Text default monospace small>
+              Tasks
+            </Text>
+            <Spacing mr={PADDING_UNITS} />
+            <Text default monospace small>
+              {tasksCountCompleted} / {tasksCount} ({Math.round(tasksProgress * 100)}%)
+            </Text>
+          </FlexContainer>
+        </Spacing>
+        <FlexContainer>
+          <ProgressDotsStyle
+            progress={tasksProgress * 100}
+            success
+          />
+          {tasksProgress > 0 && tasksProgress < 1 && <div style={{ width: UNIT / 2 }} />}
+          <ProgressDotsStyle
+            progress={(1 - tasksProgress) * 100}
+          />
+        </FlexContainer>
+      </Spacing>
 
       {children}
     </>

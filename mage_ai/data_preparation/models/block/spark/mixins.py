@@ -43,21 +43,23 @@ class SparkBlock:
         if 'execution_states' in jobs_cache:
             return jobs_cache.get('execution_states')
 
+        execution_states = {}
         jobs = self.jobs_during_execution()
-        sqls = self.sqls_during_execution()
-        stages = self.stages_during_execution()
+        if jobs:
+            sqls = self.sqls_during_execution(jobs=jobs)
+            stages = self.stages_during_execution(jobs=jobs)
 
-        execution_states = dict(
-            jobs=[m.to_dict() for m in jobs],
-            sqls=[m.to_dict() for m in sqls],
-            stages=[m.to_dict() for m in stages],
-        )
-
-        if cache:
-            self.__update_spark_jobs_cache(
-                execution_states,
-                'execution_states',
+            execution_states = dict(
+                jobs=[m.to_dict() for m in jobs],
+                sqls=[m.to_dict() for m in sqls],
+                stages=[m.to_dict() for m in stages],
             )
+
+            if cache:
+                self.__update_spark_jobs_cache(
+                    execution_states,
+                    'execution_states',
+                )
 
         return execution_states
 
@@ -92,63 +94,37 @@ class SparkBlock:
 
         return []
 
-    def stages_during_execution(self):
-        self.__load_spark_job_submission_timestamps()
+    def stages_during_execution(self, jobs: List[Job]):
+        if not jobs:
+            self.__load_spark_jobs_during_execution()
 
         def _filter(
             stage: Stage,
-            execution_timestamp_start: float = self.execution_timestamp_start,
-            execution_timestamp_end: float = self.execution_timestamp_end,
+            jobs=jobs,
         ) -> bool:
-            if not stage.submission_time:
-                return False
-
-            if isinstance(stage.submission_time, str):
-                submission_timestamp = dateutil.parser.parse(stage.submission_time).timestamp()
-            elif isinstance(stage.submission_time, float) or isinstance(stage.submission_time, int):
-                submission_timestamp = datetime.fromtimestamp(stage.submission_time)
-
-            return execution_timestamp_start and \
-                execution_timestamp_end and \
-                submission_timestamp >= execution_timestamp_start and \
-                (
-                    not execution_timestamp_end or
-                    submission_timestamp <= execution_timestamp_end
-                )
+            return any([job.stage_ids and stage.id in job.stage_ids for job in jobs])
 
         stages = self.__get_stages()
-        arr = list(filter(_filter, stages))
 
-        return arr
+        return list(filter(_filter, stages))
 
-    def sqls_during_execution(self):
-        self.__load_spark_job_submission_timestamps()
+    def sqls_during_execution(self, jobs: List[Job]):
+        if not jobs:
+            self.__load_spark_jobs_during_execution()
 
         def _filter(
             sql: Sql,
-            execution_timestamp_start: float = self.execution_timestamp_start,
-            execution_timestamp_end: float = self.execution_timestamp_end,
+            jobs=jobs,
         ) -> bool:
-            if not sql.submission_time:
-                return False
-
-            if isinstance(sql.submission_time, str):
-                submission_timestamp = dateutil.parser.parse(sql.submission_time).timestamp()
-            elif isinstance(sql.submission_time, float) or isinstance(sql.submission_time, int):
-                submission_timestamp = datetime.fromtimestamp(sql.submission_time)
-
-            return execution_timestamp_start and \
-                execution_timestamp_end and \
-                submission_timestamp >= execution_timestamp_start and \
-                (
-                    not execution_timestamp_end or
-                    submission_timestamp <= execution_timestamp_end
-                )
+            return any([(
+                job.id in sql.failed_job_ids or
+                job.id in sql.running_job_ids or
+                job.id in sql.success_job_ids
+            ) for job in jobs])
 
         sqls = self.__get_sqls()
-        arr = list(filter(_filter, sqls))
 
-        return arr
+        return list(filter(_filter, sqls))
 
     def clear_spark_jobs_cache(self) -> None:
         if os.path.exists(self.spark_jobs_full_path):
