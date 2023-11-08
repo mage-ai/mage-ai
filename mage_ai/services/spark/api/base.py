@@ -166,7 +166,6 @@ class BaseAPI(ABC):
     def get_sync(self, path: str, host: str = None, query: Dict = None):
         url = f'{self.endpoint(host=host)}{path}'
         response = self.__build_request_sync('get', url, query=query)
-        print('WTFFFFFFFFFFFFFFF', url, response)
         if response.status_code == 200:
             return response.json()
         else:
