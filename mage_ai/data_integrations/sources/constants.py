@@ -9,6 +9,7 @@ SQL_SOURCES = [
     dict(name='PostgreSQL'),
     dict(name='Redshift'),
     dict(name='Snowflake'),
+    dict(name='Teradata'),
 ]
 
 SOURCES = sorted([
