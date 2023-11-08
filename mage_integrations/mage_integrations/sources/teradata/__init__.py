@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, Generator, List, Tuple
 import teradatasql
 from mage_integrations.connections.teradata import ConnectionMethod
 from mage_integrations.connections.teradata import Teradata as TeradataConnection
@@ -6,9 +6,8 @@ from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_INTEGER,
 )
-from mage_integrations.sources.sql.base import Source
+from mage_integrations.sources.teradata.base import Source
 from mage_integrations.sources.base import main
-
 
 class Teradata(Source):
     def build_connection(self) -> TeradataConnection:
@@ -59,17 +58,8 @@ class Teradata(Source):
             return 'UNSIGNED'
         return super().column_type_mapping(column_type, column_format)
 
-    def _limit_query_string(self, limit, offset):
-        return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
-
     def update_column_names(self, columns: List[str]) -> List[str]:
         return columns
-"""
-    def wrap_column_in_quotes(self, column: str) -> str:
-        if "`" not in column:
-            return column
-        return column
-"""
 
 if __name__ == '__main__':
     main(Teradata)
