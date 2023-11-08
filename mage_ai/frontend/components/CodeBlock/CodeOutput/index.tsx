@@ -74,6 +74,7 @@ type CodeOutputProps = {
   };
   buttonTabs?: any;
   children?: any;
+  childrenBelowTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
   hasOutput?: boolean;
@@ -121,6 +122,7 @@ function CodeOutput({
   blockMetadata,
   buttonTabs,
   children,
+  childrenBelowTabs,
   collapsed,
   contained = true,
   dynamicBlock,
@@ -670,12 +672,14 @@ function CodeOutput({
     return (
       <>
         {buttonTabs}
+        {childrenBelowTabs}
         {el}
       </>
     );
   }, [
     blockMetadata,
     buttonTabs,
+    childrenBelowTabs,
     content,
     hasError,
     isDBT,

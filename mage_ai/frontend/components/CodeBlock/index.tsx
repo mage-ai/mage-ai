@@ -61,6 +61,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import SparkProgress from './SparkProgress';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -129,6 +130,8 @@ import {
   TAB_DBT_LINEAGE_UUID,
   TAB_DBT_LOGS_UUID,
   TAB_DBT_SQL_UUID,
+  TAB_SPARK_JOBS,
+  TAB_SPARK_OUTPUT,
 } from './constants';
 import {
   KEY_CODE_CONTROL,
@@ -1434,15 +1437,18 @@ function CodeBlock({
         BlockTypeEnum.EXTENSION,
       ].includes(blockType)) {
       buttonEl = (
-        <ButtonTabs
-          onClickTab={(tab: TabType) => {
-            setSelectedTab(tab);
-          }}
-          selectedTabUUID={selectedTab?.uuid}
-          tabs={TABS_SPARK(block)}
-          underlineColor={color}
-          underlineStyle
-        />
+        <>
+          <ButtonTabs
+            onClickTab={(tab: TabType) => {
+              setSelectedTab(tab);
+            }}
+            selectedTabUUID={selectedTab?.uuid}
+            tabs={TABS_SPARK(block)}
+            underlineColor={color}
+            underlineStyle
+          />
+          <Divider medium />
+        </>
       );
     }
 
@@ -1519,6 +1525,18 @@ function CodeBlock({
       );
     }
 
+    let outputChildren;
+
+    if (sparkEnabled) {
+      if (TAB_SPARK_OUTPUT.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkProgress
+            executionStates={blockExecutionStates}
+          />
+        );
+      }
+    }
+
     return (
       <CodeOutput
         {...borderColorShareProps}
@@ -1526,6 +1544,7 @@ function CodeBlock({
         blockIndex={blockIdx}
         blockMetadata={blockMetadata}
         buttonTabs={buttonTabs}
+        childrenBelowTabs={outputChildren}
         collapsed={outputCollapsed}
         hasOutput={hasOutput}
         isInProgress={isInProgress}
@@ -1617,6 +1636,7 @@ function CodeBlock({
     );
   }, [
     block,
+    blockExecutionStates,
     blockIdx,
     blockMetadata,
     blockOutputRef,
@@ -1650,6 +1670,7 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
+    sparkEnabled,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);

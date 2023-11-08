@@ -35,28 +35,107 @@ class LocalAPI(BaseAPI):
 
     def applications_sync(self, **kwargs) -> List[Application]:
         models = self.get_sync('/applications')
-        return [Application.load(**model, spark_ui_url=self.spark_ui_url) for model in models]
+        applications = [Application.load(
+            **model,
+            spark_ui_url=self.spark_ui_url,
+        ) for model in models]
+        mapping = index_by(lambda x: x.id, applications)
+
+        applications_cache = Application.get_applications_from_cache()
+        if applications_cache:
+            for application in applications_cache.values():
+                if application.id in mapping:
+                    continue
+                applications.append(application)
+                mapping[application.id] = application
+
+        return applications
 
     def jobs_sync(self, application_id: str = None, **kwargs) -> List[Job]:
-        models = self.get_sync(f'/applications/{application_id or self.application_id}/jobs')
-        return [Job.load(**model) for model in models]
+        application_id = application_id or self.application_id
+        models = self.get_sync(f'/applications/{application_id}/jobs')
+
+        arr = []
+        if self.all_applications:
+            applications = self.applications_sync(**kwargs)
+            for application in applications:
+                if application.id == application_id:
+                    arr.extend([Job.load(application=application, **model) for model in models])
+                else:
+                    jobs = self.get_sync(
+                        f'/applications/{application.id}/jobs',
+                        host=application.spark_ui_url,
+                    )
+                    arr.extend([Job.load(application=application, **model) for model in jobs])
+
+        return arr
 
     def sqls_sync(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Sql]:
+        application_id = application_id or self.application_id
         models = self.get_sync(
-            f'/applications/{application_id or self.application_id}/sql', query=query,
-        )
-        return sorted(
-            [Sql.load(**model) for model in models],
-            key=lambda s: s.submission_time,
-            reverse=True,
+            f'/applications/{application_id}/sql',
+            query=query,
         )
 
+        arr = []
+        if self.all_applications:
+            applications = self.applications_sync(**kwargs)
+            for application in applications:
+                if application.id == application_id:
+                    arr.extend(sorted(
+                        [Sql.load(
+                            application=application,
+                            **model,
+                        ) for model in models],
+                        key=lambda s: s.submission_time,
+                        reverse=True,
+                    ))
+                else:
+                    models2 = self.get_sync(
+                        f'/applications/{application.id}/sql',
+                        host=application.spark_ui_url,
+                        query=query,
+                    )
+                    arr.extend(sorted(
+                        [Sql.load(
+                            application=application,
+                            **model,
+                        ) for model in models2],
+                        key=lambda s: s.submission_time,
+                        reverse=True,
+                    ))
+
+        return arr
+
     def stages_sync(self, application_id: str = None, query: Dict = None, **kwargs) -> List[Stage]:
+        application_id = application_id or self.application_id
         models = self.get_sync(
             f'/applications/{application_id or self.application_id}/stages', query=query,
         )
         model_class = StageAttempt if query and query.get('details') else Stage
-        return [model_class.load(**model) for model in models]
+
+        arr = []
+        if self.all_applications:
+            applications = self.applications_sync(**kwargs)
+            for application in applications:
+                print('WTFFFFFFFFFFFFFFFFF))))))))))))))))))', application)
+                if application.id == application_id:
+                    arr.extend([model_class.load(
+                        application=application,
+                        **model,
+                    ) for model in models])
+                else:
+                    models2 = self.get_sync(
+                        f'/applications/{application.id}/stages',
+                        host=application.spark_ui_url,
+                        query=query,
+                    )
+                    arr.extend([model_class.load(
+                        application=application,
+                        **model,
+                    ) for model in models2])
+
+        return arr
 
     async def applications(self, **kwargs) -> List[Application]:
         models = await self.get('/applications')
