@@ -195,12 +195,12 @@ function BlockRunsTable({
         const rows = [
           <Text
             danger={RunStatus.FAILED === status}
-            default={RunStatus.CANCELLED === status}
-            info={RunStatus.INITIAL === status}
+            default={!status}
+            info={RunStatus.RUNNING === status}
             key={`${id}_status`}
             monospace
             success={RunStatus.COMPLETED === status}
-            warning={RunStatus.RUNNING === status}
+            warning={RunStatus.CANCELLED === status}
           >
             {status}
           </Text>,

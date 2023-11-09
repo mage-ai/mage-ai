@@ -387,6 +387,7 @@ function TriggersTable({
                 <Text
                   danger={RunStatus.FAILED === lastPipelineRunStatus}
                   default={!lastPipelineRunStatus}
+                  info={RunStatus.RUNNING === lastPipelineRunStatus}
                   key={`latest_run_status_${idx}`}
                   monospace
                   success={RunStatus.COMPLETED === lastPipelineRunStatus}

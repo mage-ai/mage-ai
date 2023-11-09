@@ -91,8 +91,8 @@ function BackfillsTable({
         const arr = [
           <Text
             danger={BackfillStatusEnum.FAILED === status}
-            default={status === null}
-            info={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.INITIAL === status}
+            default={!status}
+            info={BackfillStatusEnum.RUNNING === status}
             key="status"
             monospace
             success={BackfillStatusEnum.COMPLETED === status}
