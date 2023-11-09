@@ -42,7 +42,7 @@ Choose one result from: {action_types}
 Question DataSource: If BlockType is data_loader or data_exporter, where the data loads from or
 export to? Choose one result from: {data_sources}
 
-Please return your responses in JSON format with the question name as the key and
+Return your responses in JSON format with the question name as the key and
 the answer as the value.
 """
 
@@ -61,7 +61,7 @@ class HuggingFaceClient(AIClient):
             os.getenv('HUGGINGFACE_API')
         print(f'Using Hugging Face API: {self.api}')
 
-    def __parse_function_args(self, function_args: json):
+    def __parse_function_args(self, function_args: Dict):
         try:
             block_type = BlockType(function_args[f'Question {BlockType.__name__}'])
         except ValueError:
@@ -113,7 +113,12 @@ class HuggingFaceClient(AIClient):
             except ValueError:
                 print(f'Error not valid DataSource: \
                     {function_args.get(f"Question {DataSource.__name__}")}')
-        return block_type, block_language, pipeline_type, config
+        output = {}
+        output['block_type'] = block_type
+        output['block_language'] = block_language
+        output['pipeline_type'] = pipeline_type
+        output['config'] = config
+        return output
 
     async def inference_with_prompt(
             self,

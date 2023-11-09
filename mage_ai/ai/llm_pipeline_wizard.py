@@ -268,8 +268,11 @@ class LLMPipelineWizard:
             self,
             block_description: str,
             upstream_blocks: List[str] = None) -> dict:
-        block_type, block_language, pipeline_type, config = \
-            await self.client.find_block_params(block_description)
+        function_params = await self.client.find_block_params(block_description)
+        block_type = function_params['block_type']
+        block_language = function_params['block_language']
+        pipeline_type = function_params['pipeline_type']
+        config = function_params['config']
         variable_values = dict()
         variable_values['code_description'] = block_description
         variable_values['code_language'] = block_language

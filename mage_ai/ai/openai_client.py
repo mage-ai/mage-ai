@@ -158,6 +158,11 @@ class OpenAIClient(AIClient):
             function_args = json.loads(response_message['function_call']['arguments'])
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
+            output = {}
+            output['block_type'] = block_type
+            output['block_language'] = block_language
+            output['pipeline_type'] = pipeline_type
+            output['config'] = config
+            return output
         else:
             raise Exception('Failed to interpret the description as a block template.')
-        return block_type, block_language, pipeline_type, config

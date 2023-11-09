@@ -43,12 +43,24 @@ class AIFunctionTest(TestCase):
                          mock_customized_code])
         self.wizard.client.find_block_params = MagicMock(
             side_effect=[
-                self.__set_expected_future_result(('data_loader', 'python', 'python',
-                                                   {'data_source': 'mysql'})),
-                self.__set_expected_future_result(('transformer', 'python', 'python',
-                                                   {'action_type': 'filter'})),
-                self.__set_expected_future_result(('data_exporter', 'python', 'python',
-                                                   {'data_source': 'postgres'}))]
+                self.__set_expected_future_result(({
+                    'block_type': 'data_loader',
+                    'block_language': 'python',
+                    'pipeline_type': 'python',
+                    'config': {'data_source': 'mysql'}
+                })),
+                self.__set_expected_future_result(({
+                    'block_type': 'transformer',
+                    'block_language': 'python',
+                    'pipeline_type': 'python',
+                    'config': {'action_type': 'filter'}
+                })),
+                self.__set_expected_future_result(({
+                    'block_type': 'data_exporter',
+                    'block_language': 'python',
+                    'pipeline_type': 'python',
+                    'config': {'data_source': 'postgres'}
+                }))]
         )
 
         pipeine_description = 'load data from mysql, filter out \
@@ -74,8 +86,12 @@ class AIFunctionTest(TestCase):
             return_value=self.__set_expected_future_result(customized_code))
         self.wizard.client.find_block_params = MagicMock(
             side_effect=[
-                self.__set_expected_future_result(('transformer', 'python', 'python',
-                                                   {'action_type': 'filter'}))])
+                self.__set_expected_future_result(({
+                    'block_type': 'transformer',
+                    'block_language': 'python',
+                    'pipeline_type': 'python',
+                    'config': {'action_type': 'filter'}
+                }))])
         block = asyncio.run(self.wizard.async_generate_block_with_description(
             'test block generation', upstream_blocks))
         self.assertEqual(block.get('block_type'), 'transformer')

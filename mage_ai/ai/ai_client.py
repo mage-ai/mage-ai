@@ -37,9 +37,10 @@ class AIClient():
           block_description: description of the block functions.
 
         Returns:
-          block_type: type of the block: data_loader, transfomer or data_exporter.
-          block_language: language of the block.
-          pipeline_type: type of the pipeline.
-          config: config of the block including "action_type", "data_source".
+          return the response in JSON format with following keys:
+            block_type: type of the block: data_loader, transfomer or data_exporter.
+            block_language: language of the block.
+            pipeline_type: type of the pipeline.
+            config: config of the block. It is a JSON including "action_type", "data_source".
         """
         raise Exception('Subclasses must override this method.')
