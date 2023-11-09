@@ -37,17 +37,14 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
       },
       uuid: SECTION_ITEM_UUID_PREFERENCES,
     },
-  ];
-
-  if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
-    workspaceItems.push({
+    {
       Icon: Settings,
       linkProps: {
         href: '/settings/workspace/sync-data',
       },
       uuid: SECTION_ITEM_UUID_GIT_SETTINGS,
-    });
-  }
+    },
+  ];
 
   const arr = [
     {
@@ -60,7 +57,7 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
     return arr;
   }
 
-  if (owner || roles === RoleValueEnum.ADMIN || (project_access & 2) !== 0) {
+  if (owner || roles === RoleValueEnum.ADMIN || (project_access & 3) !== 0) {
     const items = [
       {
         Icon: WorkspacesUsersIcon,
