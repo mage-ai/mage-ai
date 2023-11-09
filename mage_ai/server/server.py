@@ -326,7 +326,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         TornadoInstrumentor().instrument()
         # Service name is required for most backends
         resource = Resource(attributes={
-            SERVICE_NAME: "mage"
+            SERVICE_NAME: 'mage'
         })
 
         # Initialize PrometheusMetricReader which pulls metrics from the SDK
