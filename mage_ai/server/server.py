@@ -90,7 +90,7 @@ from mage_ai.settings import (
     USE_UNIQUE_TERMINAL,
 )
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
-from mage_ai.shared.constants import InstanceType
+from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -577,7 +577,7 @@ if __name__ == '__main__':
     project = args.project
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
-    instance_type = args.instance_type
+    instance_type = os.getenv(ENV_VAR_INSTANCE_TYPE, args.instance_type)
     project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
     cluster_type = os.getenv('CLUSTER_TYPE')
 
