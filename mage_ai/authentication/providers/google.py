@@ -14,6 +14,16 @@ from mage_ai.settings.sso import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 class GoogleProvider(SsoProvider, OauthProvider):
     provider = OAUTH_PROVIDER_GOOGLE
 
+    def __init__(self):
+        if not GOOGLE_CLIENT_ID:
+            raise Exception(
+                'Google client id is empty. '
+                'Make sure the GOOGLE_CLIENT_ID environment variable is set.')
+        if not GOOGLE_CLIENT_SECRET:
+            raise Exception(
+                'Google client secret is empty. '
+                'Make sure the GOOGLE_CLIENT_SECRET environment variable is set.')
+
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
         if GOOGLE_CLIENT_ID:
             base_url = get_base_url(redirect_uri)
@@ -61,6 +71,8 @@ class GoogleProvider(SsoProvider, OauthProvider):
         return data
 
     async def get_user_info(self, access_token: str = None, **kwargs) -> Dict:
+        if access_token is None:
+            raise Exception('Access token is required to fetch user info.')
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 'https://www.googleapis.com/oauth2/v3/userinfo',

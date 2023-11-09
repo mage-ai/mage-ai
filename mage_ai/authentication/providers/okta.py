@@ -20,9 +20,24 @@ class OktaProvider(SsoProvider, OauthProvider):
         if not self.hostname.startswith('https'):
             self.hostname = f'https://{self.hostname}'
 
+        self.__validate()
+
+    def __validate(self):
+        if not self.hostname:
+            raise Exception(
+                'Okta hostname is empty. '
+                'Make sure the OKTA_DOMAIN_URL environment variable is set.')
+        if not OKTA_CLIENT_ID:
+            raise Exception(
+                'Okta client id is empty. '
+                'Make sure the OKTA_CLIENT_ID environment variable is set.')
+        if not OKTA_CLIENT_SECRET:
+            raise Exception(
+                'Okta client secret is empty. '
+                'Make sure the OKTA_CLIENT_SECRET environment variable is set.')
+
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Optional[Dict]:
         if OKTA_CLIENT_ID:
-            print('redirect uri:', redirect_uri)
             base_url = get_base_url(redirect_uri)
             redirect_uri_query = dict(
                 provider=self.provider,
@@ -69,6 +84,8 @@ class OktaProvider(SsoProvider, OauthProvider):
         return data
 
     async def get_user_info(self, access_token: str = None, **kwargs) -> Dict:
+        if access_token is None:
+            raise Exception('Access token is required to fetch user info.')
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f'{self.hostname}/oauth2/default/v1/userinfo',

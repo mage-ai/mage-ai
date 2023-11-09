@@ -40,10 +40,10 @@ class SessionResource(BaseResource):
                 email = user_info.get('userPrincipalName')
             elif provider_instance is not None:
                 user_info = await provider_instance.get_user_info(access_token=token)
-                username = user_info.get('username')
                 email = user_info.get('email')
-                if 'roles' in user_info:
-                    roles = user_info.get('roles')
+                username = user_info.get('username')
+                if 'user_roles' in user_info:
+                    roles = user_info.get('user_roles')
 
             if not email:
                 error = ApiError.RESOURCE_NOT_FOUND

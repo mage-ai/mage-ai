@@ -20,6 +20,23 @@ class GHEProvider(OauthProvider):
 
     def __init__(self):
         self.hostname = get_ghe_hostname()
+        self.client_id = os.getenv(GHE_CLIENT_ID_ENV_VAR)
+        self.client_secret = os.getenv(GHE_CLIENT_SECRET_ENV_VAR)
+        self.__validate()
+
+    def __validate(self):
+        if not self.hostname:
+            raise Exception(
+                'GHE hostname is empty. '
+                'Make sure the GHE_HOSTNAME environment variable is set.')
+        if not self.client_id:
+            raise Exception(
+                'GHE client id is empty. '
+                'Make sure the GHE_CLIENT_ID environment variable is set.')
+        if not self.client_secret:
+            raise Exception(
+                'GHE client secret is empty. '
+                'Make sure the GHE_CLIENT_SECRET environment variable is set.')
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
         if self.hostname:
