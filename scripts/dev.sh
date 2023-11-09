@@ -37,6 +37,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --enable_prometheus)
+    ENABLE_PROMETHEUS=1
+    shift # past argument
+    shift # past value
+    ;;
     --huggingface_api)
     HUGGINGFACE_API="$3"
     shift # past argument
@@ -44,8 +49,6 @@ case $key in
     ;;
     --huggingface_inference_api_token)
     HUGGINGFACE_INFERENCE_API_TOKEN="$3"
-    --enable_prometheus)
-    ENABLE_PROMETHEUS=1
     shift # past argument
     shift # past value
     ;;
