@@ -180,10 +180,6 @@ class Destination(ABC):
         return self.config.get(STREAM_OVERRIDE_SETTINGS_KEY, {})
 
     @abstractmethod
-    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
-        raise NotImplementedError('Subclasses must implement the export_batch_data method.')
-
-    @abstractmethod
     def test_connection(self) -> None:
         raise NotImplementedError('Subclasses must implement the test_connection method.')
 
@@ -192,6 +188,9 @@ class Destination(ABC):
 
     def after_process(self) -> None:    # noqa: B027
         pass
+
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
+        raise NotImplementedError('Subclasses must implement the export_batch_data method.')
 
     def export_data(
         self,
