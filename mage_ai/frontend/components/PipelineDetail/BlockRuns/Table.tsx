@@ -24,6 +24,7 @@ import {
   SortDirectionEnum,
   SortQueryEnum,
   TIMEZONE_TOOLTIP_PROPS,
+  getRunStatusTextProps,
 } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
@@ -194,13 +195,8 @@ function BlockRunsTable({
 
         const rows = [
           <Text
-            danger={RunStatus.FAILED === status}
-            default={!status}
-            info={RunStatus.RUNNING === status}
+            {...getRunStatusTextProps(status)}
             key={`${id}_status`}
-            monospace
-            success={RunStatus.COMPLETED === status}
-            warning={RunStatus.CANCELLED === status}
           >
             {status}
           </Text>,
