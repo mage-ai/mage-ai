@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Dashboard from '@components/Dashboard';
@@ -23,6 +23,8 @@ import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils'
 
 function TriggerListPage() {
   const router = useRouter();
+  const [errors, setErrors] = useState(null);
+
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
   const orderByQuery = q?.order_by || SortQueryParamEnum.CREATED_AT;
@@ -62,6 +64,8 @@ function TriggerListPage() {
 
   return (
     <Dashboard
+      errors={errors}
+      setErrors={setErrors}
       title="Triggers"
       uuid="triggers/index"
     >
@@ -101,6 +105,7 @@ function TriggerListPage() {
         includeCreatedAtColumn
         includePipelineColumn
         pipelineSchedules={pipelineSchedules}
+        setErrors={setErrors}
         stickyHeader
       />
 

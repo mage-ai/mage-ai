@@ -31,6 +31,7 @@ class PipelineSchedulePresenter(BasePresenter):
             data = self.model.to_dict(include_attributes=[
                 'event_matchers',
                 'last_pipeline_run_status',
+                'pipeline_in_progress_runs_count',
                 'pipeline_runs_count',
             ])
             data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
@@ -58,6 +59,7 @@ PipelineSchedulePresenter.register_format(
     PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
         'last_pipeline_run_status',
+        'pipeline_in_progress_runs_count',
         'pipeline_runs_count',
     ],
 )

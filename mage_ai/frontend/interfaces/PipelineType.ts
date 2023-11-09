@@ -116,6 +116,7 @@ export default interface PipelineType {
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;
+  pipeline_schedule_id?: string;
   retry_config?: PipelineRetryConfigType;
   run_pipeline_in_one_process?: boolean;
   schedules?: PipelineScheduleType[];

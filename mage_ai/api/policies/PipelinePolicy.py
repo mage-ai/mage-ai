@@ -109,6 +109,7 @@ PipelinePolicy.allow_write([
 
 PipelinePolicy.allow_write([
     'pipeline_runs',
+    'pipeline_schedule_id',
     'status',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

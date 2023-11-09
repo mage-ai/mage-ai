@@ -457,6 +457,7 @@ class PipelineResource(BaseResource):
         @safe_db_query
         def cancel_pipeline_runs(
             pipeline_uuid: str = None,
+            pipeline_schedule_id: int = None,
             pipeline_runs: List[Dict] = None,
         ):
             if pipeline_runs is not None:
@@ -466,6 +467,8 @@ class PipelineResource(BaseResource):
                     query.
                     filter(PipelineRun.id.in_(pipeline_run_ids))
                 )
+            elif pipeline_schedule_id is not None:
+                pipeline_runs_to_cancel = PipelineRun.in_progress_runs([pipeline_schedule_id])
             else:
                 pipeline_runs_to_cancel = (
                     PipelineRun.
@@ -526,6 +529,7 @@ class PipelineResource(BaseResource):
 
         def _update_callback(resource):
             if status:
+                pipeline_schedule_id = payload.get('pipeline_schedule_id')
                 pipeline_runs = payload.get('pipeline_runs')
                 if status in [
                     ScheduleStatus.ACTIVE.value,
@@ -533,10 +537,12 @@ class PipelineResource(BaseResource):
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
-                    if pipeline_runs is None:
-                        cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
-                    else:
+                    if pipeline_runs is not None:
                         cancel_pipeline_runs(pipeline_runs=pipeline_runs)
+                    elif pipeline_schedule_id is not None:
+                        cancel_pipeline_runs(pipeline_schedule_id=pipeline_schedule_id)
+                    else:
+                        cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
                 elif status == 'retry' and pipeline_runs:
                     retry_pipeline_runs(pipeline_runs)
                 elif status == 'retry_incomplete_block_runs':
