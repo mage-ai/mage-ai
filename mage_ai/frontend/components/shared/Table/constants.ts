@@ -1,4 +1,5 @@
 import { LOCAL_TIMEZONE } from '@utils/date';
+import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const MENU_WIDTH: number = UNIT * 20;
@@ -24,3 +25,24 @@ export const TIMEZONE_TOOLTIP_PROPS = {
 
 export const getTableRowUuid = 
   ({ uuid, rowIndex }: { uuid: string, rowIndex: number }) => `${uuid}-row-${rowIndex}`;
+
+/*
+ * Run statuses that appear in tables (e.g. Block Runs, Triggers,
+ * and Backfills) have the following text colors:
+ * cancelled - yellow
+ * completed - green
+ * failed - red
+ * inactive or N/A - grey
+ * initial - white
+ * running - blue
+ */
+export const getRunStatusTextProps = (
+  status: RunStatusEnum,
+) => ({
+  danger: RunStatusEnum.FAILED === status,
+  default: !status,
+  info: RunStatusEnum.RUNNING === status,
+  monospace: true,
+  success: RunStatusEnum.COMPLETED === status,
+  warning: RunStatusEnum.CANCELLED === status,
+});

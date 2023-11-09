@@ -33,6 +33,7 @@ import {
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
   TIMEZONE_TOOLTIP_PROPS,
+  getRunStatusTextProps,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
@@ -385,12 +386,8 @@ function TriggersTable({
                   }
                 </Text>,
                 <Text
-                  danger={RunStatus.FAILED === lastPipelineRunStatus}
-                  default={!lastPipelineRunStatus}
+                  {...getRunStatusTextProps(lastPipelineRunStatus)}
                   key={`latest_run_status_${idx}`}
-                  monospace
-                  success={RunStatus.COMPLETED === lastPipelineRunStatus}
-                  warning={RunStatus.CANCELLED === lastPipelineRunStatus}
                 >
                   {lastPipelineRunStatus || 'N/A'}
                 </Text>,

@@ -11,7 +11,10 @@ import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Edit } from '@oracle/icons';
 import { RunStatus } from '@interfaces/PipelineRunType';
-import { TIMEZONE_TOOLTIP_PROPS } from '@components/shared/Table/constants';
+import {
+  TIMEZONE_TOOLTIP_PROPS,
+  getRunStatusTextProps,
+} from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
@@ -90,13 +93,8 @@ function BackfillsTable({
       }, idx) => {
         const arr = [
           <Text
-            danger={BackfillStatusEnum.FAILED === status}
-            default={status === null}
-            info={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.INITIAL === status}
+            {...getRunStatusTextProps(status)}
             key="status"
-            monospace
-            success={BackfillStatusEnum.COMPLETED === status}
-            warning={BackfillStatusEnum.CANCELLED === status}
           >
             {status || 'inactive'}
           </Text>,
