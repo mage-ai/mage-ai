@@ -17,6 +17,7 @@ class EntityName(str, Enum):
     Chart = 'Chart'
     ClientPage = 'ClientPage'
     Cluster = 'Cluster'
+    ComputeService = 'ComputeService'
     CustomTemplate = 'CustomTemplate'
     DataProvider = 'DataProvider'
     Database = 'Database'

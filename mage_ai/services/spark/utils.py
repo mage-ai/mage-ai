@@ -1,8 +1,8 @@
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.services.spark.constants import ComputeService, SparkMaster
+from mage_ai.services.spark.constants import ComputeServiceUUID, SparkMaster
 
 
-def get_compute_service(repo_config=None) -> ComputeService:
+def get_compute_service(repo_config=None) -> ComputeServiceUUID:
     if not repo_config:
         repo_config = get_repo_config()
 
@@ -11,8 +11,8 @@ def get_compute_service(repo_config=None) -> ComputeService:
 
     if repo_config.spark_config:
         if repo_config.emr_config:
-            return ComputeService.AWS_EMR
+            return ComputeServiceUUID.AWS_EMR
         elif SparkMaster.LOCAL.value == repo_config.spark_config.get('spark_master'):
-            return ComputeService.STANDALONE_CLUSTER
+            return ComputeServiceUUID.STANDALONE_CLUSTER
 
     return None
