@@ -9,9 +9,15 @@ from datetime import datetime
 from time import sleep
 from typing import Optional, Union
 
+import prometheus_client
 import pytz
 import tornado.ioloop
 import tornado.web
+from opentelemetry import metrics
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.instrumentation.tornado import TornadoInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -78,6 +84,7 @@ from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
+    ENABLE_PROMETHEUS,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
     REDIS_URL,
@@ -154,6 +161,12 @@ class ApiSchedulerHandler(BaseHandler):
         elif action_type == 'stop':
             scheduler_manager.stop_scheduler()
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
+
+
+class PrometheusMetricsHandler(BaseHandler):
+    def get(self):
+        self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
+        self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
 
 def replace_base_path(base_path: str) -> str:
@@ -308,6 +321,20 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/templates/(?P<uuid>\w+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    if ENABLE_PROMETHEUS:
+        TornadoInstrumentor().instrument()
+        # Service name is required for most backends
+        resource = Resource(attributes={
+            SERVICE_NAME: 'mage'
+        })
+
+        # Initialize PrometheusMetricReader which pulls metrics from the SDK
+        # on-demand to respond to scrape requests
+        reader = PrometheusMetricReader()
+        provider = MeterProvider(resource=resource, metric_readers=[reader])
+        metrics.set_meter_provider(provider)
+        routes += [(r'/metrics', PrometheusMetricsHandler)]
 
     if update_routes:
         updated_routes = []

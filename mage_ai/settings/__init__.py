@@ -77,6 +77,11 @@ SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
 ENABLE_NEW_RELIC = os.getenv('ENABLE_NEW_RELIC', False)
 NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
 
+# If enabled, the /metrics route will expose Tornado server metrics
+ENABLE_PROMETHEUS = os.getenv(
+    'ENABLE_PROMETHEUS', 'False'
+).lower() in ('true', '1', 't')
+
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
 
@@ -122,4 +127,5 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'ACTIVE_DIRECTORY_DIRECTORY_ID',
     'SCHEDULER_TRIGGER_INTERVAL',
     'REQUIRE_USER_PERMISSIONS',
+    'ENABLE_PROMETHEUS',
 ]
