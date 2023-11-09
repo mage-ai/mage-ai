@@ -81,10 +81,6 @@ class BaseDestinationTests(ABC):
         pass
 
     @abstractmethod
-    def test_export_batch_data(self):
-        pass
-
-    @abstractmethod
     def test_test_connection(self):
         pass
 
