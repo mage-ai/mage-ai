@@ -1586,11 +1586,8 @@ def schedule_with_event(event: Dict = None):
     schedules. The logic is relatively similar to the `schedule_all()` method.
 
     1. Evaluate event matchers and get active pipeline schedules for each matched event matcher.
-    2. Run git sync if "sync_on_pipeline_run" is enabled.
-    3. Group matched pipeline schedules by pipeline.
-    4. Create a new pipeline run for each matched pipeline schedule, but check the pipeline run
-       limit for each pipeline defined in the pipeline concurrency config. If there is no quota
-       remaining, cancel the pipeline run.
+    2. Group matched pipeline schedules by pipeline.
+    3. Create a new pipeline run for each matched pipeline schedule.
 
     Args:
         event (Dict): the trigger event
@@ -1609,65 +1606,20 @@ def schedule_with_event(event: Dict = None):
             logger.info(f'Event not matched with {e}')
 
     if len(matched_pipeline_schedules) > 0:
-        sync_config = get_sync_config()
-
-        git_sync_result = None
-        if sync_config and sync_config.sync_on_pipeline_run:
-            git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
-
-        matched_pipeline_uuids = list(set([s.pipeline_uuid for s in matched_pipeline_schedules]))
-        pipeline_runs_by_pipeline = PipelineRun.active_runs_for_pipelines_grouped(
-            matched_pipeline_uuids
-        )
-
-        pipeline_schedules_by_pipeline = {
-            key: list(runs)
-            for key, runs in groupby(matched_pipeline_schedules, key=lambda x: x.pipeline_uuid)
-        }
-
-        for pipeline_uuid, matched_pipeline_schedules in pipeline_schedules_by_pipeline.items():
-            pipeline = Pipeline.get(pipeline_uuid)
-            concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
-            pipeline_run_limit = concurrency_config.pipeline_run_limit_all_triggers
-            if pipeline_run_limit is not None:
-                remaining_quota = pipeline_run_limit - len(
-                    pipeline_runs_by_pipeline.get(pipeline_uuid, [])
-                )
-            else:
-                remaining_quota = None
-
-            for p in matched_pipeline_schedules:
-                payload = dict(
-                    execution_date=datetime.now(tz=pytz.UTC),
-                    pipeline_schedule_id=p.id,
-                    pipeline_uuid=pipeline_uuid,
-                    variables=merge_dict(p.variables or dict(), dict(event=event)),
-                )
-
-                if remaining_quota is not None and remaining_quota <= 0:
-                    from mage_ai.orchestration.triggers.utils import (
-                        create_and_cancel_pipeline_run,
-                    )
-                    pipeline_run = create_and_cancel_pipeline_run(
-                        pipeline,
-                        p,
-                        payload,
-                        message='Pipeline run limit reached... skipping this run',
-                    )
-                else:
-                    pipeline_run = PipelineRun.create(**payload)
-                    pipeline_scheduler = PipelineScheduler(pipeline_run)
-
-                    log_git_sync(
-                        git_sync_result,
-                        pipeline_scheduler.logger,
-                        pipeline_scheduler.build_tags(),
-                    )
-
-                    pipeline_scheduler.start(should_schedule=True)
-
-                    if remaining_quota is not None:
-                        remaining_quota -= 1
+        from mage_ai.orchestration.triggers.utils import create_and_start_pipeline_run
+        for p in matched_pipeline_schedules:
+            payload = dict(
+                execution_date=datetime.now(tz=pytz.UTC),
+                pipeline_schedule_id=p.id,
+                pipeline_uuid=p.pipeline_uuid,
+                variables=merge_dict(p.variables or dict(), dict(event=event)),
+            )
+            create_and_start_pipeline_run(
+                p.pipeline,
+                p,
+                payload,
+                should_schedule=False,
+            )
 
 
 def sync_schedules(pipeline_uuids: List[str]):
