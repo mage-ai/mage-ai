@@ -246,8 +246,11 @@ class PipelineSchedule(BaseModel):
                     existing_trigger.status != kwargs.get('status'),
                     existing_trigger.variables != kwargs.get('variables'),
                 ]):
+                    if existing_trigger.token is None:
+                        kwargs['token'] = uuid.uuid4().hex
                     existing_trigger.update(**kwargs)
             else:
+                kwargs['token'] = uuid.uuid4().hex
                 triggers_to_create.append(kwargs)
 
         db_connection.session.bulk_save_objects(

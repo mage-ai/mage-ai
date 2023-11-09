@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
     ScheduleType,
+    Trigger,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db.models.schedules import (
@@ -674,6 +675,70 @@ class PipelineScheduleTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
         self.assertFalse(pipeline_schedule.should_schedule())
+
+    def test_create_or_update_batch(self):
+        create_pipeline_with_blocks(
+            'test create or update batch',
+            self.repo_path,
+        )
+
+        PipelineSchedule.create(**dict(
+            name='test create batch trigger 3',
+            pipeline_uuid='test_create_or_update_batch',
+            schedule_type=ScheduleType.TIME,
+            schedule_interval=ScheduleInterval.DAILY,
+        ))
+
+        trigger_configs = [
+            Trigger.load(
+                config=dict(
+                    name='test create batch trigger 1',
+                    pipeline_uuid='test_create_or_update_batch',
+                    schedule_type=ScheduleType.TIME,
+                    start_time=datetime.now(),
+                    schedule_interval=ScheduleInterval.HOURLY,
+                    status=ScheduleStatus.ACTIVE,
+                )
+            ),
+            Trigger.load(
+                config=dict(
+                    name='test create batch trigger 2',
+                    pipeline_uuid='test_create_or_update_batch',
+                    schedule_type=ScheduleType.API,
+                    start_time=datetime.now(),
+                    schedule_interval=None,
+                    status=ScheduleStatus.ACTIVE,
+                )
+            ),
+            Trigger.load(
+                config=dict(
+                    name='test create batch trigger 3',
+                    pipeline_uuid='test_create_or_update_batch',
+                    schedule_type=ScheduleType.TIME,
+                    start_time=datetime.now(),
+                    schedule_interval=ScheduleInterval.WEEKLY,
+                    status=ScheduleStatus.ACTIVE,
+                )
+            )
+        ]
+
+        PipelineSchedule.create_or_update_batch(trigger_configs)
+
+        ps1 = PipelineSchedule.query.filter(
+            PipelineSchedule.name == 'test create batch trigger 1'
+        ).one_or_none()
+        self.assertIsNotNone(ps1)
+        self.assertEqual(ps1.schedule_type, ScheduleType.TIME)
+        self.assertEqual(ps1.pipeline_uuid, 'test_create_or_update_batch')
+        self.assertEqual(ps1.schedule_interval, ScheduleInterval.HOURLY)
+        self.assertIsNotNone(ps1.token)
+
+        ps3 = PipelineSchedule.query.filter(
+            PipelineSchedule.name == 'test create batch trigger 3'
+        ).one_or_none()
+        self.assertEqual(ps3.schedule_type, ScheduleType.TIME)
+        self.assertEqual(ps3.pipeline_uuid, 'test_create_or_update_batch')
+        self.assertEqual(ps3.schedule_interval, ScheduleInterval.WEEKLY)
 
 
 class PipelineRunTests(DBTestCase):
