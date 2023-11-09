@@ -1,4 +1,5 @@
 import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import { TripleBoxes } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -11,10 +12,8 @@ export type ObjectAttributesType = {
   spark_config?: SparkConfigType;
 };
 
-export enum ComputeServiceEnum {
-  AWS_EMR = 'AWS_EMR',
-  STANDALONE_CLUSTER = 'STANDALONE_CLUSTER',
-}
+export const ComputeServiceEnum = { ...ComputeServiceUUIDEnum };
+export type ComputeServiceEnum = typeof ComputeServiceEnum;
 
 export enum MainNavigationTabEnum {
   CONNECTION = 'CONNECTION',

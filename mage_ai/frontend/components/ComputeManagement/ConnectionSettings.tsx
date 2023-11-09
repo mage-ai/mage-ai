@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
+import ComputeServiceType from '@interfaces/ComputeServiceType';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -13,6 +14,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import api from '@api';
 import {
   Add,
   Edit,
@@ -54,6 +56,11 @@ function ConnectionSettings({
   selectedComputeService,
   setObjectAttributes,
 }: ConnectionSettingsProps) {
+  const { data: dataComputeService } = api.compute_services.detail('current');
+  const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
+    dataComputeService,
+  ]);
+
   const setObjectAttributesEMRConfig =
     useCallback((data: EMRConfigType) => setObjectAttributes({
       emr_config: {
@@ -458,6 +465,203 @@ function ConnectionSettings({
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
+
+      {computeService?.connection_credentials && (
+        <>
+          <Panel noPadding>
+            <Spacing p={PADDING_UNITS}>
+              <Headline level={4}>
+                Setup
+              </Headline>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <Text
+                  danger={'app_name' in attributesTouched && !objectAttributesSparkConfig?.app_name}
+                  default
+                  large
+                >
+                  Application name {'app_name' in attributesTouched && !objectAttributesSparkConfig?.app_name && (
+                    <Text danger inline large>
+                      is required
+                    </Text>
+                  )}
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    autoComplete="off"
+                    large
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributesSparkConfig({
+                      app_name: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="e.g. Sparkmage"
+                    value={objectAttributesSparkConfig?.app_name || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="flex-start">
+                <FlexContainer flexDirection="column">
+                  <Text
+                    danger={'spark_master' in attributesTouched && !objectAttributesSparkConfig?.spark_master}
+                    default
+                    large
+                  >
+                    Master URL {'spark_master' in attributesTouched && !objectAttributesSparkConfig?.spark_master && (
+                      <Text danger inline large>
+                        is required
+                      </Text>
+                    )}
+                  </Text>
+
+                  <Text muted small>
+                    The URL for connecting to the master.
+                  </Text>
+                </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    large
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributesSparkConfig({
+                      spark_master: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="e.g. local, yarn, spark://host:port"
+                    value={objectAttributesSparkConfig?.spark_master || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="flex-start">
+                <FlexContainer flexDirection="column">
+                  <Text
+                    default
+                    large
+                  >
+                    Spark home directory
+                  </Text>
+
+                  <Text muted small>
+                    Path where Spark is installed on worker nodes.
+                  </Text>
+                </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    large
+                    monospace
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributesSparkConfig({
+                      spark_home: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="e.g. /usr/lib/spark"
+                    value={objectAttributesSparkConfig?.spark_home || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+              <>
+                <Divider light />
+
+                <Spacing p={PADDING_UNITS}>
+                  <FlexContainer alignItems="flex-start">
+                    <FlexContainer flexDirection="column">
+                      <Text
+                        default
+                        large
+                      >
+                        Remote variables directory
+                      </Text>
+
+                      <Text muted small>
+                        This S3 bucket will be used by Spark.
+                      </Text>
+                    </FlexContainer>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Flex flex={1}>
+                      <TextInput
+                        afterIcon={<Edit />}
+                        afterIconClick={(_, inputRef) => {
+                          inputRef?.current?.focus();
+                        }}
+                        afterIconSize={ICON_SIZE}
+                        alignRight
+                        large
+                        monospace
+                        noBackground
+                        noBorder
+                        fullWidth
+                        onChange={e => setObjectAttributes({
+                          remote_variables_dir: e.target.value,
+                        })}
+                        paddingHorizontal={0}
+                        paddingVertical={0}
+                        placeholder="e.g. s3://magically-powerful-bucket"
+                        value={objectAttributes?.remote_variables_dir || ''}
+                      />
+                    </Flex>
+                  </FlexContainer>
+                </Spacing>
+              </>
+            )}
+          </Panel>
+
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} />
+        </>
+      )}
 
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
