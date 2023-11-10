@@ -1,10 +1,10 @@
 import BlockType from '@interfaces/BlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export const TAB_DBT_PREVIEW_UUID = { uuid: 'Preview results' };
-export const TAB_DBT_LOGS_UUID = { uuid: 'Logs' };
+export const TAB_DBT_PREVIEW_UUID = { uuid: 'PREVIEW RESULTS' };
+export const TAB_DBT_LOGS_UUID = { uuid: 'LOGS' };
 export const TAB_DBT_SQL_UUID = { uuid: 'SQL' };
-export const TAB_DBT_LINEAGE_UUID = { uuid: 'Lineage' };
+export const TAB_DBT_LINEAGE_UUID = { uuid: 'LINEAGE' };
 export const TABS_DBT = ({
   metadata,
 }: BlockType) => {

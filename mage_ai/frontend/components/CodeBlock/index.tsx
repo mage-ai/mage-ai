@@ -123,6 +123,10 @@ import {
   SUBHEADER_TABS,
   SUBHEADER_TAB_CODE,
   SUBHEADER_TAB_INTERACTIONS,
+  TABS_DBT,
+  TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
+  TAB_DBT_SQL_UUID,
 } from './constants';
 import {
   KEY_CODE_CONTROL,
@@ -134,12 +138,6 @@ import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/c
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
-import {
-  TABS_DBT,
-  TAB_DBT_LINEAGE_UUID,
-  TAB_DBT_LOGS_UUID,
-  TAB_DBT_SQL_UUID,
-} from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
@@ -1356,7 +1354,7 @@ function CodeBlock({
 
   const buttonTabs = useMemo(() => isDBT
     ? (
-      <Spacing py={1}>
+      <SubheaderStyle>
         <ButtonTabs
           onClickTab={(tab: TabType) => {
             setSelectedTab(tab);
@@ -1366,10 +1364,16 @@ function CodeBlock({
             }
           }}
           selectedTabUUID={selectedTab?.uuid}
-          small
           tabs={TABS_DBT(block)}
+          underlineColor={getColorsForBlockType(
+            BlockTypeEnum.DBT,
+            {
+              theme: themeContext,
+            },
+          ).accent}
+          underlineStyle
         />
-      </Spacing>
+      </SubheaderStyle>
     )
     : null
   , [
@@ -1377,6 +1381,7 @@ function CodeBlock({
     fetchBlock,
     isDBT,
     selectedTab,
+    themeContext,
   ]);
 
   const currentTimeTrackerMemo = useMemo(() => {
@@ -2993,7 +2998,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                             }
 
                             return acc;
-                          }, [])}}
+                          }, [])}
                         </FlexContainer>
                       </Spacing>
                     )}

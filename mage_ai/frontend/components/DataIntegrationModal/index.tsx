@@ -596,6 +596,7 @@ function DataIntegrationModal({
 
     [
       {
+        block: null,
         streams: streamsWithNoParents,
       },
       ...sortByKey(
