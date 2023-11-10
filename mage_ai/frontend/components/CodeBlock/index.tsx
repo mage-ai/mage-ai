@@ -2277,6 +2277,32 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
               >
                 <HeaderHorizontalBorder />
 
+                {tags.length >= 1 && (
+                  <SubheaderStyle>
+                    <Spacing p={1}>
+                      <FlexContainer>
+                        {tags.map(({
+                          description,
+                          title,
+                        }, idx) => (
+                          <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                            <Tooltip
+                              block
+                              description={description}
+                              size={null}
+                              widthFitContent
+                            >
+                              <Badge>
+                                {title}
+                              </Badge>
+                            </Tooltip>
+                          </Spacing>
+                        ))}
+                      </FlexContainer>
+                    </Spacing>
+                  </SubheaderStyle>
+                )}
+
                 {!hideExtraConfiguration && BlockTypeEnum.DBT === blockType
                   && !codeCollapsed
                   && (
@@ -2892,143 +2918,186 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   </CodeHelperStyle>
                 )}
 
-                {tags.length >= 1 && (
-                  <SubheaderStyle>
-                    <Spacing p={1}>
-                      <FlexContainer>
-                        {tags.map(({
-                          description,
-                          title,
-                        }, idx) => (
-                          <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
-                            <Tooltip
-                              block
-                              description={description}
-                              size={null}
-                              widthFitContent
-                            >
-                              <Badge>
-                                {title}
-                              </Badge>
-                            </Tooltip>
-                          </Spacing>
-                        ))}
-                      </FlexContainer>
-                    </Spacing>
-                  </SubheaderStyle>
-                )}
-
                 {headerTabs}
 
                 {blockUpstreamBlocks.length >= 1
                   && !codeCollapsed
-                  && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
+                  && (
+                    BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
+                      || (BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage)
+                  )
                   && !isStreamingPipeline
                   && !replicatedBlockUUID
                   && !isDataIntegration
                   && (!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
                   && (
                   <CodeHelperStyle noMargin normalPadding>
-                    <Spacing mr={1} pt={1}>
-                      <Text muted small>
-                        {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
-                        {isSQLBlock && (
-                          <>
-                            The interpolated tables below are available in queries from upstream blocks.
-                            <br />
-                            Example: <Text inline monospace small>
-                              {'SELECT * FROM {{ df_1 }}'}
-                            </Text> to insert
-                            all rows from <Text inline monospace small>
-                              {blockUpstreamBlocks?.[0]}
-                            </Text> into a table.
-                          </>
-                        )}
-                      </Text>
-                    </Spacing>
+                    {BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage && (
+                      <Spacing pb={1}>
+                        <Text muted small>
+                          Positional order of upstream block outputs for <Text
+                            inline
+                            monospace
+                            muted
+                            small
+                          >
+                            block_output
+                          </Text> function:
+                        </Text>
 
-                    <Spacing my={1}>
-                      {(!isSQLBlock && !isRBlock) && (
-                        <>
-                          <Text monospace muted small>
-                            {BlockTypeEnum.DATA_EXPORTER === blockType && '@data_exporter'}
-                            {BlockTypeEnum.DATA_LOADER === blockType && '@data_loader'}
-                            {BlockTypeEnum.TRANSFORMER === blockType && '@transformer'}
-                            {BlockTypeEnum.CUSTOM === blockType && '@custom'}
-                          </Text>
-                          <Text monospace muted small>
-                            def {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
-                              || (BlockTypeEnum.DATA_LOADER === blockType && 'load_data')
-                              || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')
-                              || (BlockTypeEnum.CUSTOM === blockType && 'transform_custom')}
-                            ({blockUpstreamBlocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
-                          </Text>
-                        </>
-                      )}
-                      {isRBlock && (
-                        <>
-                          <Text monospace muted small>
-                            {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
-                              || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')}
-                            &nbsp;← function({blockUpstreamBlocks.map((_,i) => `df_${i + 1}`).join(', ')}):
-                          </Text>
-                        </>
-                      )}
+                        <FlexContainer>
+                          {blockUpstreamBlocks.reduce((acc, blockUUID, i) => {
+                            const b = blocksMapping[blockUUID];
+                            const blockColor = getColorsForBlockType(
+                              b?.type,
+                              { blockColor: b?.color, theme: themeContext },
+                            ).accent;
 
-                      {isSQLBlock && blockUpstreamBlocks?.length >= 1 && (
-                        <UpstreamBlockSettings
-                          block={block}
-                          blockConfiguration={dataProviderConfig}
-                          blockRefs={blockRefs}
-                          blocks={blockUpstreamBlocks?.map(blockUUID => blocksMapping?.[blockUUID])}
-                          updateBlockConfiguration={updateDataProviderConfig}
-                        />
-                      )}
-
-                      {!isSQLBlock && blockUpstreamBlocks.map((blockUUID, i) => {
-                        const b = blocksMapping[blockUUID];
-                        const blockColor = getColorsForBlockType(
-                            b?.type,
-                            { blockColor: b?.color, theme: themeContext },
-                          ).accent;
-                        const sqlVariable = `{{ df_${i + 1} }}`;
-
-                        return (
-                          <div key={blockUUID}>
-                            {(!isSQLBlock && !isRBlock) && (
-                              <Text inline monospace muted small>
-                                &nbsp;&nbsp;&nbsp;&nbsp;data{i >= 1 ? `_${i + 1}` : null}
-                              </Text>
-                            )}{isSQLBlock && (
-                              <Text inline monospace muted small>
-                                {sqlVariable}
-                              </Text>
-                            )}{isRBlock && (
-                              <Text inline monospace muted small>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{`df${i + 1}`}
-                              </Text>
-                            )} <Text inline monospace muted small>→</Text> <Link
-                              color={blockColor}
-                              onClick={() => {
-                                const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
-                                refBlock?.current?.scrollIntoView();
-                              }}
-                              preventDefault
-                              small
-                            >
-                              <Text
+                            acc.push(
+                              <Link
                                 color={blockColor}
-                                inline
-                                monospace
+                                key={blockUUID}
+                                onClick={() => {
+                                  const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+                                  refBlock?.current?.scrollIntoView();
+                                }}
+                                preventDefault
                                 small
                               >
-                                {blockUUID}
+                                <Text
+                                  color={blockColor}
+                                  inline
+                                  monospace
+                                  small
+                                >
+                                  {blockUUID}
+                                </Text>
+                              </Link>
+                            );
+
+                            const count = blockUpstreamBlocks?.length || 0;
+                            if (count >= 2 && i < count - 1) {
+                              acc.push(
+                                <Text
+                                  inline
+                                  key={`${blockUUID}-comma`}
+                                  muted
+                                  small
+                                >
+                                  ,&nbsp;
+                                </Text>
+                              );
+                            }
+
+                            return acc;
+                          }, [])}}
+                        </FlexContainer>
+                      </Spacing>
+                    )}
+
+                    {BlockTypeEnum.DBT !== blockType && (
+                      <>
+                        <Spacing mr={1} pt={1}>
+                          <Text muted small>
+                            {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
+                            {isSQLBlock && (
+                              <>
+                                The interpolated tables below are available in queries from upstream blocks.
+                                <br />
+                                Example: <Text inline monospace small>
+                                  {'SELECT * FROM {{ df_1 }}'}
+                                </Text> to insert
+                                all rows from <Text inline monospace small>
+                                  {blockUpstreamBlocks?.[0]}
+                                </Text> into a table.
+                              </>
+                            )}
+                          </Text>
+                        </Spacing>
+                        <Spacing my={1}>
+                          {(!isSQLBlock && !isRBlock) && (
+                            <>
+                              <Text monospace muted small>
+                                {BlockTypeEnum.DATA_EXPORTER === blockType && '@data_exporter'}
+                                {BlockTypeEnum.DATA_LOADER === blockType && '@data_loader'}
+                                {BlockTypeEnum.TRANSFORMER === blockType && '@transformer'}
+                                {BlockTypeEnum.CUSTOM === blockType && '@custom'}
                               </Text>
-                            </Link>
-                          </div>
-                        );
-                      })}
-                    </Spacing>
+                              <Text monospace muted small>
+                                def {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
+                                  || (BlockTypeEnum.DATA_LOADER === blockType && 'load_data')
+                                  || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')
+                                  || (BlockTypeEnum.CUSTOM === blockType && 'transform_custom')}
+                                ({blockUpstreamBlocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
+                              </Text>
+                            </>
+                          )}
+                          {isRBlock && (
+                            <>
+                              <Text monospace muted small>
+                                {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
+                                  || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')}
+                                &nbsp;← function({blockUpstreamBlocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                              </Text>
+                            </>
+                          )}
+
+                          {isSQLBlock && blockUpstreamBlocks?.length >= 1 && (
+                            <UpstreamBlockSettings
+                              block={block}
+                              blockConfiguration={dataProviderConfig}
+                              blockRefs={blockRefs}
+                              blocks={blockUpstreamBlocks?.map(blockUUID => blocksMapping?.[blockUUID])}
+                              updateBlockConfiguration={updateDataProviderConfig}
+                            />
+                          )}
+
+                          {!isSQLBlock && blockUpstreamBlocks.map((blockUUID, i) => {
+                            const b = blocksMapping[blockUUID];
+                            const blockColor = getColorsForBlockType(
+                                b?.type,
+                                { blockColor: b?.color, theme: themeContext },
+                              ).accent;
+                            const sqlVariable = `{{ df_${i + 1} }}`;
+
+                            return (
+                              <div key={blockUUID}>
+                                {(!isSQLBlock && !isRBlock) && (
+                                  <Text inline monospace muted small>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;data{i >= 1 ? `_${i + 1}` : null}
+                                  </Text>
+                                )}{isSQLBlock && (
+                                  <Text inline monospace muted small>
+                                    {sqlVariable}
+                                  </Text>
+                                )}{isRBlock && (
+                                  <Text inline monospace muted small>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;{`df${i + 1}`}
+                                  </Text>
+                                )} <Text inline monospace muted small>→</Text> <Link
+                                  color={blockColor}
+                                  onClick={() => {
+                                    const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+                                    refBlock?.current?.scrollIntoView();
+                                  }}
+                                  preventDefault
+                                  small
+                                >
+                                  <Text
+                                    color={blockColor}
+                                    inline
+                                    monospace
+                                    small
+                                  >
+                                    {blockUUID}
+                                  </Text>
+                                </Link>
+                              </div>
+                            );
+                          })}
+                        </Spacing>
+                      </>
+                    )}
                   </CodeHelperStyle>
                 )}
 

@@ -522,8 +522,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
             if (selectedBlockIndex !== -1) {
               // Add new scratchpad block above (A) or below (B) the current selected block
-              const newBlockIndex = (onlyKeysPresent([KEY_CODE_A], keyMapping)) 
-                ? selectedBlockIndex 
+              const newBlockIndex = (onlyKeysPresent([KEY_CODE_A], keyMapping))
+                ? selectedBlockIndex
                 : selectedBlockIndex + 1;
               addNewBlock({
                 type: BlockTypeEnum.SCRATCHPAD,
