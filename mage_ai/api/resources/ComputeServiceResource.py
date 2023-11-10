@@ -18,6 +18,12 @@ class ComputeServiceResource(GenericResource):
 
     @classmethod
     async def member(self, _, user, **kwargs):
-        compute_service = ComputeService(Project())
+        query_arg = kwargs.get('query', {})
+
+        with_clusters = query_arg.get('with_clusters', [False])
+        if with_clusters:
+            with_clusters = with_clusters[0]
+
+        compute_service = ComputeService.build(Project(), with_clusters=with_clusters)
 
         return self(compute_service, user, **kwargs)

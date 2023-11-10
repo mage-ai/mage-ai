@@ -6,6 +6,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 class ComputeServicePresenter(BasePresenter):
     default_attributes = [
         'connection_credentials',
+        'clusters',
         'setup_steps',
         'uuid',
     ]

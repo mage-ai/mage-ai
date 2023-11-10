@@ -33,3 +33,18 @@ ComputeServicePolicy.allow_read(
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
 )
+
+
+ComputeServicePolicy.allow_query(
+    [
+        'with_clusters',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+    override_permission_condition=lambda _policy: True,
+)

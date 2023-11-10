@@ -1,24 +1,21 @@
-import os
-from dataclasses import asdict, dataclass, field
+from abc import abstractmethod
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.project import Project
-from mage_ai.services.compute.aws.constants import (
-    CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
-    CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
-)
 from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class ConnectionCredentialError:
+class ConnectionCredentialError(BaseDataClass):
     message: str
     variables: Dict = field(default_factory=dict)
 
 
 @dataclass
-class ConnectionCredential:
+class ConnectionCredential(BaseDataClass):
     uuid: str
     description: str = None
     error: ConnectionCredentialError = None
@@ -29,7 +26,7 @@ class ConnectionCredential:
 
     def __post_init__(self):
         if self.error and isinstance(self.error, dict):
-            self.error = ConnectionCredentialError(**self.error)
+            self.error = ConnectionCredentialError.load(**self.error)
 
 
 class SetupStepStatus(str, Enum):
@@ -39,7 +36,7 @@ class SetupStepStatus(str, Enum):
 
 
 @dataclass
-class SetupStep:
+class SetupStep(BaseDataClass):
     name: str
     description: str = None
     status: SetupStepStatus = SetupStepStatus.INCOMPLETE
@@ -54,7 +51,7 @@ class SetupStep:
 
             for step in self.steps:
                 if isinstance(step, dict):
-                    steps.append(SetupStep(**step))
+                    steps.append(SetupStep.load(**step))
                 else:
                     steps.append(step)
 
@@ -62,125 +59,48 @@ class SetupStep:
 
 
 class ComputeService:
-    def __init__(self, project: Project):
-        self.project = project
+    uuid = ComputeServiceUUID.STANDALONE_CLUSTER
 
-        self._uuid = None
+    def __init__(self, project: Project, with_clusters: bool = False):
+        self.project = project
+        self.with_clusters = with_clusters
+
+    @classmethod
+    def build(self, project: Project, with_clusters: bool = False):
+        service_class = self
+
+        if project and project.spark_config:
+            if project.emr_config:
+                from mage_ai.services.compute.aws.models import AWSEMRComputeService
+
+                service_class = AWSEMRComputeService
+
+        return service_class(project=project, with_clusters=with_clusters)
+
+    def to_dict(self) -> Dict:
+        result = dict(
+            connection_credentials=[m.to_dict() for m in self.connection_credentials()],
+            setup_steps=[m.to_dict() for m in self.setup_steps()],
+            uuid=self.uuid,
+        )
+
+        if self.with_clusters:
+            result['clusters'] = self.clusters_and_metadata()
+
+        return result
 
     @property
     def uuid(self) -> ComputeServiceUUID:
-        if self._uuid:
-            return self._uuid
+        return self.__class__.uuid
 
-        if self.project.spark_config:
-            if self.project.emr_config:
-                self._uuid = ComputeServiceUUID.AWS_EMR
-            else:
-                self._uuid = ComputeServiceUUID.STANDALONE_CLUSTER
+    @abstractmethod
+    def clusters_and_metadata(self) -> Dict:
+        pass
 
-        return self._uuid
-
+    @abstractmethod
     def connection_credentials(self) -> List[ConnectionCredential]:
-        arr = []
-        if ComputeServiceUUID.AWS_EMR == self.uuid:
-            valid_key = True if os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID) else False
-            key = ConnectionCredential(
-                description=f'Environment variable {CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}',
-                name='Access key ID',
-                error=ConnectionCredentialError(
-                    message='Environment variable '
-                            f'{{{{{CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}}}}} '
-                            'is missing',
-                    variables={
-                        CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID: dict(
-                            monospace=True,
-                            muted=True,
-                        ),
-                    },
-                ) if not valid_key else None,
-                required=True,
-                valid=valid_key,
-                uuid=CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
-            )
+        pass
 
-            valid_secret = True if os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY) else False
-            secret = ConnectionCredential(
-                description=f'Environment variable {CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}',
-                name='Secret access key',
-                error=ConnectionCredentialError(
-                    message='Environment variable '
-                            f'{{{{{CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}}}}} '
-                            'is missing',
-                    variables={
-                        CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY: dict(
-                            monospace=True,
-                            muted=True,
-                        ),
-                    },
-                ) if not valid_secret else None,
-                required=True,
-                valid=valid_secret,
-                uuid=CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
-            )
-
-            arr += [
-                key,
-                secret,
-            ]
-
-        return arr
-
+    @abstractmethod
     def setup_steps(self) -> List[SetupStep]:
-        arr = []
-
-        if ComputeServiceUUID.AWS_EMR == self.uuid:
-            valid_key = True if os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID) else False
-            valid_secret = True if os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY) else False
-
-            # How do we let the client know clicking a step will take them to the right place?
-            arr.append(SetupStep(
-                description='Setup connection credentials.',
-                name='Credentials',
-                steps=[
-                    SetupStep(
-                        name='Access key ID',
-                        status=(
-                            SetupStepStatus.COMPLETED if valid_key
-                            else SetupStepStatus.INCOMPLETE
-                        ),
-                    ),
-                    SetupStep(
-                        name='Secret access key',
-                        status=(
-                            SetupStepStatus.COMPLETED if valid_secret
-                            else SetupStepStatus.INCOMPLETE
-                        ),
-                    ),
-                ],
-                status=(
-                    SetupStepStatus.COMPLETED if valid_key and
-                    valid_secret else SetupStepStatus.INCOMPLETE
-                ),
-            ))
-
-            remote_variables_dir_status = SetupStepStatus.INCOMPLETE
-            if self.project.remote_variables_dir:
-                if self.project.remote_variables_dir.startswith('s3://'):
-                    remote_variables_dir_status = SetupStepStatus.COMPLETED
-                else:
-                    remote_variables_dir_status = SetupStepStatus.ERROR
-
-            arr.append(SetupStep(
-                description='Set the Amazon S3 bucket.',
-                name='Remote variables directory',
-                status=remote_variables_dir_status,
-            ))
-
-        return arr
-
-    def to_dict(self) -> Dict:
-        return dict(
-            connection_credentials=[asdict(m) for m in self.connection_credentials()],
-            setup_steps=[asdict(m) for m in self.setup_steps()],
-            uuid=self.uuid,
-        )
+        pass
