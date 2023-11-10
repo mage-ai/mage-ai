@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import importlib.util
+import inspect
 import json
 import logging
 import os
@@ -923,7 +924,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 from_notebook=from_notebook,
                 **kwargs
             )
-        except Exception as e:
+        except Exception as error:
             for callback_block in callback_arr:
                 callback_block.execute_callback(
                     'on_failure',
@@ -932,8 +933,11 @@ class Block(DataIntegrationMixin, SparkBlock):
                     logging_tags=logging_tags,
                     parent_block=self,
                     from_notebook=from_notebook,
+                    callback_kwargs=dict(
+                        error=error,
+                    )
                 )
-            raise e
+            raise
 
         for callback_block in callback_arr:
             callback_block.execute_callback(
@@ -3065,6 +3069,7 @@ class CallbackBlock(AddonBlock):
     def execute_callback(
         self,
         callback: str,
+        callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         execution_partition: str = None,
@@ -3079,6 +3084,8 @@ class CallbackBlock(AddonBlock):
             logger=logger,
             logging_tags=logging_tags,
         ):
+            if callback_kwargs is None:
+                callback_kwargs = dict()
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -3130,23 +3137,39 @@ class CallbackBlock(AddonBlock):
             for kwargs_var in kwargs_vars:
                 global_vars_copy.update(kwargs_var)
 
+            callback_kwargs = merge_dict(
+                callback_kwargs,
+                global_vars_copy,
+            )
+
             for callback_function in callback_functions_legacy:
-                callback_function(**global_vars_copy)
+                callback_function(**callback_kwargs)
 
             for callback_function in callback_functions:
-                try:
+                inner_function = callback_function(callback_status)
+                if inner_function is not None:
+                    sig = inspect.signature(inner_function)
                     # As of version 0.8.81, callback functions have access to the parent block’s
-                    # data output.
-                    callback_function(callback_status, *input_vars, **global_vars_copy)
-                except TypeError:
-                    # This try except block will make the above code backwards compatible in case
+                    # data output. If the callback function has any positional arguments, we will
+                    # pass in the input variables as positional arguments.
+                    if not input_vars or any(
+                        [
+                            p.kind not in [p.KEYWORD_ONLY, p.VAR_KEYWORD]
+                            for p in sig.parameters.values()
+                        ]
+                    ):
+                        inner_function(
+                            *input_vars,
+                            **callback_kwargs,
+                        )
+                    # This else block will make the above code backwards compatible in case
                     # a user has already written callback functions with only keyword arguments.
-                    callback_function(
-                        callback_status,
-                        **merge_dict(global_vars_copy, dict(
-                            __input=outputs_from_input_vars,
-                        )),
-                    )
+                    else:
+                        inner_function(
+                            **merge_dict(callback_kwargs, dict(
+                                __input=outputs_from_input_vars,
+                            )),
+                        )
 
     def update_content(self, content, widget=False) -> 'CallbackBlock':
         if not self.file.exists():
@@ -3181,9 +3204,9 @@ class CallbackBlock(AddonBlock):
                 )
 
             def inner(function):
-                def func(callback_status_inner, *args, **kwargs):
+                def func(callback_status_inner):
                     if callback_status_inner == callback_status:
-                        return function(*args, **kwargs)
+                        return function
                 decorated_functions.append(func)
 
             return inner

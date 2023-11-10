@@ -562,6 +562,9 @@ class BlockExecutor:
                         global_vars=global_vars,
                         logging_tags=tags,
                         pipeline_run=pipeline_run,
+                        callback_kwargs=dict(
+                            error=error,
+                        )
                     )
                     raise error
 
@@ -1043,6 +1046,7 @@ class BlockExecutor:
         global_vars: Dict,
         logging_tags: Dict,
         pipeline_run: PipelineRun,
+        callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):
@@ -1068,6 +1072,7 @@ class BlockExecutor:
             try:
                 callback_block.execute_callback(
                     callback,
+                    callback_kwargs=callback_kwargs,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     execution_partition=self.execution_partition,
