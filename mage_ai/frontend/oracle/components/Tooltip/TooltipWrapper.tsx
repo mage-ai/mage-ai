@@ -63,7 +63,7 @@ const ContainerSpanStyle = styled.span`
   ${SHARED_CONTAINER_STYLES}
 `;
 
-const HoverStyle = styled.a<TooltipWrapperProps>`
+const HoverStyle = styled.div<TooltipWrapperProps>`
   ${transition()}
 
   ${props => props.size && `
@@ -90,6 +90,12 @@ const HoverStyle = styled.a<TooltipWrapperProps>`
   &:focus {
     outline: none;
   }
+
+  ${props => props.noHoverOutline && `
+    &:hover {
+      cursor: pointer;
+    }
+  `}
 
   ${props => !props.noHoverOutline && `
     &:hover {

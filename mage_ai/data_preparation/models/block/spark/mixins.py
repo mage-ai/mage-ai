@@ -106,7 +106,7 @@ class SparkBlock:
                         submission_timestamp <= execution_timestamp_end
                     )
 
-            return list(filter(_filter, jobs))
+            return list(filter(_filter, jobs or []))
 
         return []
 
@@ -122,7 +122,7 @@ class SparkBlock:
 
         stages = self.__get_stages(application=self.execution_start_application)
 
-        return list(filter(_filter, stages))
+        return list(filter(_filter, stages or []))
 
     def sqls_during_execution(self, jobs: List[Job]):
         if not jobs:
@@ -140,7 +140,7 @@ class SparkBlock:
 
         sqls = self.__get_sqls(application=self.execution_start_application)
 
-        return list(filter(_filter, sqls))
+        return list(filter(_filter, sqls or []))
 
     def clear_spark_jobs_cache(self) -> None:
         if os.path.exists(self.spark_jobs_full_path):

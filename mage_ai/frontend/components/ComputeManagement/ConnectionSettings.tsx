@@ -1,3 +1,4 @@
+import { renderToString } from 'react-dom/server';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
@@ -39,6 +40,7 @@ type ConnectionSettingsProps = {
   attributesTouched: {
     [key: string]: any;
   }
+  computeService?: ComputeServiceType;
   isLoading?: boolean;
   mutateObject: (data?: ObjectAttributesType) => void;
   objectAttributes: ObjectAttributesType;
@@ -49,6 +51,7 @@ type ConnectionSettingsProps = {
 
 function ConnectionSettings({
   attributesTouched,
+  computeService,
   isLoading,
   mutateObject,
   objectAttributes,
@@ -56,11 +59,6 @@ function ConnectionSettings({
   selectedComputeService,
   setObjectAttributes,
 }: ConnectionSettingsProps) {
-  const { data: dataComputeService } = api.compute_services.detail('current');
-  const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
-    dataComputeService,
-  ]);
-
   const setObjectAttributesEMRConfig =
     useCallback((data: EMRConfigType) => setObjectAttributes({
       emr_config: {
@@ -423,10 +421,15 @@ function ConnectionSettings({
               <FlexContainer alignItems="flex-start">
                 <FlexContainer flexDirection="column">
                   <Text
+                    danger={!objectAttributes?.remote_variables_dir}
                     default
                     large
                   >
-                    Remote variables directory
+                    Remote variables directory {!objectAttributes?.remote_variables_dir && (
+                      <Text danger inline large>
+                        is required
+                      </Text>
+                    )}
                   </Text>
 
                   <Text muted small>
@@ -471,192 +474,115 @@ function ConnectionSettings({
           <Panel noPadding>
             <Spacing p={PADDING_UNITS}>
               <Headline level={4}>
-                Setup
+                Credentials
               </Headline>
             </Spacing>
 
-            <Divider light />
+            {computeService?.connection_credentials?.map(({
+              description,
+              error,
+              name,
+              required,
+              uuid,
+              valid,
+              value,
+            }) => {
+              let errorEl;
 
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="center">
-                <Text
-                  danger={'app_name' in attributesTouched && !objectAttributesSparkConfig?.app_name}
-                  default
-                  large
-                >
-                  Application name {'app_name' in attributesTouched && !objectAttributesSparkConfig?.app_name && (
-                    <Text danger inline large>
-                      is required
-                    </Text>
-                  )}
-                </Text>
+              if (error) {
+                const {
+                  message: messageInit,
+                  variables,
+                } = error;
 
-                <Spacing mr={PADDING_UNITS} />
+                let errorHTML = messageInit;
 
-                <Flex flex={1}>
-                  <TextInput
-                    afterIcon={<Edit />}
-                    afterIconClick={(_, inputRef) => {
-                      inputRef?.current?.focus();
-                    }}
-                    afterIconSize={ICON_SIZE}
-                    alignRight
-                    autoComplete="off"
-                    large
-                    noBackground
-                    noBorder
-                    fullWidth
-                    onChange={e => setObjectAttributesSparkConfig({
-                      app_name: e.target.value,
-                    })}
-                    paddingHorizontal={0}
-                    paddingVertical={0}
-                    placeholder="e.g. Sparkmage"
-                    value={objectAttributesSparkConfig?.app_name || ''}
-                  />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
+                if (variables) {
+                  Object.entries(variables || {}).forEach(([key, value]) => {
+                    errorHTML = errorHTML.replace(
+                      `{{${key}}}`,
+                      renderToString(
+                        <Text
+                          inline
+                          large
+                          muted
+                          {...(value || {})}
+                        >
+                          {key}
+                        </Text>
+                      ),
+                    )
+                  });
+                }
 
-            <Divider light />
-
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="flex-start">
-                <FlexContainer flexDirection="column">
+                errorEl = (
                   <Text
-                    danger={'spark_master' in attributesTouched && !objectAttributesSparkConfig?.spark_master}
-                    default
-                    large
-                  >
-                    Master URL {'spark_master' in attributesTouched && !objectAttributesSparkConfig?.spark_master && (
-                      <Text danger inline large>
-                        is required
-                      </Text>
-                    )}
-                  </Text>
-
-                  <Text muted small>
-                    The URL for connecting to the master.
-                  </Text>
-                </FlexContainer>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <Flex flex={1}>
-                  <TextInput
-                    afterIcon={<Edit />}
-                    afterIconClick={(_, inputRef) => {
-                      inputRef?.current?.focus();
+                    dangerouslySetInnerHTML={{
+                      __html: errorHTML,
                     }}
-                    afterIconSize={ICON_SIZE}
-                    alignRight
+                    muted
                     large
-                    noBackground
-                    noBorder
-                    fullWidth
-                    onChange={e => setObjectAttributesSparkConfig({
-                      spark_master: e.target.value,
-                    })}
-                    paddingHorizontal={0}
-                    paddingVertical={0}
-                    placeholder="e.g. local, yarn, spark://host:port"
-                    value={objectAttributesSparkConfig?.spark_master || ''}
                   />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
+                );
+              }
 
-            <Divider light />
+              return (
+                <div key={uuid}>
+                  <Divider light />
 
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="flex-start">
-                <FlexContainer flexDirection="column">
-                  <Text
-                    default
-                    large
-                  >
-                    Spark home directory
-                  </Text>
+                  <Spacing p={PADDING_UNITS}>
+                    <FlexContainer alignItems="center">
+                      <FlexContainer flexDirection="column">
+                        <Text
+                          danger={!valid}
+                          default
+                          large
+                          monospace={!name}
+                        >
+                          {name || uuid} {!valid && (
+                            <Text danger inline large>
+                              is invalid
+                            </Text>
+                          )}
+                        </Text>
 
-                  <Text muted small>
-                    Path where Spark is installed on worker nodes.
-                  </Text>
-                </FlexContainer>
+                        {description && (
+                          <Text muted small>
+                            {description}
+                          </Text>
+                        )}
+                      </FlexContainer>
 
-                <Spacing mr={PADDING_UNITS} />
+                      <Spacing mr={PADDING_UNITS} />
 
-                <Flex flex={1}>
-                  <TextInput
-                    afterIcon={<Edit />}
-                    afterIconClick={(_, inputRef) => {
-                      inputRef?.current?.focus();
-                    }}
-                    afterIconSize={ICON_SIZE}
-                    alignRight
-                    large
-                    monospace
-                    noBackground
-                    noBorder
-                    fullWidth
-                    onChange={e => setObjectAttributesSparkConfig({
-                      spark_home: e.target.value,
-                    })}
-                    paddingHorizontal={0}
-                    paddingVertical={0}
-                    placeholder="e.g. /usr/lib/spark"
-                    value={objectAttributesSparkConfig?.spark_home || ''}
-                  />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
+                      <Flex flex={1} justifyContent="flex-end">
+                        {!valid && (
+                          <>
+                            {!error && required && (
+                              <Text muted large>
+                                Required but missing
+                              </Text>
+                            )}
+                            {!error && !required && (
+                              <Text muted large>
+                                Invalid
+                              </Text>
+                            )}
+                            {error && errorEl}
+                          </>
+                        )}
 
-            {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
-              <>
-                <Divider light />
-
-                <Spacing p={PADDING_UNITS}>
-                  <FlexContainer alignItems="flex-start">
-                    <FlexContainer flexDirection="column">
-                      <Text
-                        default
-                        large
-                      >
-                        Remote variables directory
-                      </Text>
-
-                      <Text muted small>
-                        This S3 bucket will be used by Spark.
-                      </Text>
+                        {valid && value && (
+                          <Text default large>
+                            {value}
+                          </Text>
+                        )}
+                      </Flex>
                     </FlexContainer>
-
-                    <Spacing mr={PADDING_UNITS} />
-
-                    <Flex flex={1}>
-                      <TextInput
-                        afterIcon={<Edit />}
-                        afterIconClick={(_, inputRef) => {
-                          inputRef?.current?.focus();
-                        }}
-                        afterIconSize={ICON_SIZE}
-                        alignRight
-                        large
-                        monospace
-                        noBackground
-                        noBorder
-                        fullWidth
-                        onChange={e => setObjectAttributes({
-                          remote_variables_dir: e.target.value,
-                        })}
-                        paddingHorizontal={0}
-                        paddingVertical={0}
-                        placeholder="e.g. s3://magically-powerful-bucket"
-                        value={objectAttributes?.remote_variables_dir || ''}
-                      />
-                    </Flex>
-                  </FlexContainer>
-                </Spacing>
-              </>
-            )}
+                  </Spacing>
+                </div>
+              );
+            })}
           </Panel>
 
           <Spacing mb={UNITS_BETWEEN_SECTIONS} />

@@ -332,3 +332,8 @@ export function formatNumberToDuration(duration: number): string {
 
   return displayText
 }
+
+export function alphabet(): string[] {
+  const alpha = Array.from(Array(26)).map((e, i) => i + 65);
+  return alpha.map((x) => String.fromCharCode(x));
+}

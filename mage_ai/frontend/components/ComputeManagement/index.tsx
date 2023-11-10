@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import ComputeServiceType, {
+  SetupStepStatusEnum,
+  SetupStepType,
+} from '@interfaces/ComputeServiceType';
 import ConnectionSettings from './ConnectionSettings';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -18,7 +23,10 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { CardStyle } from './index.style';
 import {
+  AlertTriangle,
   BlockCubePolygon,
+  Check,
+  Info,
   Monitor,
   PowerOnOffButton,
   WorkspacesUsersIcon,
@@ -42,6 +50,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { alphabet } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getComputeServiceFromProject } from './utils';
 import { goToWithQuery } from '@utils/routing';
@@ -221,6 +230,14 @@ function ComputeManagement({
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
   const projectName = useMemo(() => project?.name, [project]);
 
+  const {
+    data: dataComputeService,
+    mutate: fetchComputeService,
+  } = api.compute_services.detail('compute-service');
+  const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
+    dataComputeService,
+  ]);
+
   useEffect(() => {
     if (project) {
       setObjectAttributesState(project);
@@ -255,6 +272,7 @@ function ComputeManagement({
           }) => {
             setAttributesTouched({});
             setObjectAttributesState(objectServer);
+            fetchComputeService();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -277,6 +295,95 @@ function ComputeManagement({
     objectAttributes,
     updateProjectBase,
   ]);
+
+  function buildStep(
+    {
+      name,
+      description,
+      status,
+      steps,
+    }: SetupStepType,
+    idx: number,
+    stepsCount: number,
+    opts?: {
+      level?: number;
+    },
+  ) {
+    const level = opts?.level || 0;
+    const substepsCount = steps?.length || 0;
+
+    let stepNumber = level === 0
+      ? String(idx + 1)
+      : alphabet()[idx].toLowerCase();
+
+    if (level === 0 && stepsCount >= 10 && stepNumber <= 9 && 0) {
+      stepNumber = `0${stepNumber}`;
+    }
+
+    return (
+      <Spacing
+        key={name}
+        mt={level >= 1 ? 1 : 0}
+        px={level === 0 ? PADDING_UNITS : 0}
+        py={level === 0 ? 1 : 0}
+      >
+        <FlexContainer>
+          <Text monospace muted>
+            {stepNumber}.
+          </Text>
+
+          <Spacing mr={1} />
+
+          <Flex flex={1} flexDirection="column">
+            <FlexContainer>
+              <Flex flex={1}>
+                <Text default={SetupStepStatusEnum.COMPLETED === status}>
+                  {name}
+                </Text>
+              </Flex>
+
+              <Spacing mr={1} />
+
+              {SetupStepStatusEnum.COMPLETED === status && (
+                <Check
+                  size={2 * UNIT}
+                  success
+                />
+              )}
+
+              {SetupStepStatusEnum.INCOMPLETE === status && (
+                <Info
+                  muted
+                  size={2 * UNIT}
+                />
+              )}
+
+              {SetupStepStatusEnum.ERROR === status && (
+                <AlertTriangle
+                  danger
+                  size={2 * UNIT}
+                />
+              )}
+            </FlexContainer>
+
+            {description && (
+              <Text muted small>
+                {description}
+              </Text>
+            )}
+
+            {substepsCount >= 1 && steps?.map((substep, idx2) => buildStep(
+              substep,
+              idx2,
+              substepsCount, {
+                level: 1,
+              },
+            ))}
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+    );
+  }
 
   const before = useMemo(() => {
     const arr = TABS.map(({
@@ -320,9 +427,50 @@ function ComputeManagement({
       const kicker = COMPUTE_SERVICE_KICKER[selectedComputeService];
       const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
 
+      let stepsCompleted = false;
+
+      if (computeService?.setup_steps) {
+        const stepsEls = [];
+        const stepsCount = computeService?.setup_steps?.length || 0;
+        const statuses = [];
+
+        computeService?.setup_steps?.forEach((step, idx: number) => {
+          const {
+            name,
+            description,
+            status,
+            steps,
+          } = step;
+
+          statuses.push(status);
+          stepsEls.push(buildStep(step, idx, stepsCount));
+        });
+
+        stepsCompleted = statuses.every(status => SetupStepStatusEnum.COMPLETED === status);
+
+        if (!stepsCompleted) {
+          arr.unshift(
+            <>
+              <Spacing mb={1}>
+                <Divider light />
+              </Spacing>
+
+              {stepsEls}
+
+              <Spacing mt={1}>
+                <Divider light />
+              </Spacing>
+            </>
+          );
+        }
+      }
+
       if (displayName && kicker && renderIcon) {
         arr.unshift(
-          <Spacing p={PADDING_UNITS}>
+          <Spacing
+            key={`${displayName}-${kicker}`}
+            p={PADDING_UNITS}
+          >
             <CardStyle inline>
               <FlexContainer alignItems="flex-start">
                 <Flex flex={1}>
@@ -343,12 +491,25 @@ function ComputeManagement({
               </FlexContainer>
 
               <Spacing mt={PADDING_UNITS}>
-                <Text default monospace>
-                  {kicker}
-                </Text>
-                <Headline level={5}>
-                  {displayName}
-                </Headline>
+                <FlexContainer alignItems="flex-start">
+                  <Flex flex={1} flexDirection="column">
+                    <Text default monospace>
+                      {kicker}
+                    </Text>
+                    <Headline level={5}>
+                      {displayName}
+                    </Headline>
+                  </Flex>
+
+                  <Spacing mr={PADDING_UNITS} />
+
+                  {computeService?.setup_steps && !stepsCompleted && (
+                    <AlertTriangle
+                      danger
+                      size={3 * UNIT}
+                    />
+                  )}
+                </FlexContainer>
               </Spacing>
             </CardStyle>
           </Spacing>
@@ -358,6 +519,7 @@ function ComputeManagement({
 
     return arr;
   }, [
+    computeService,
     selectedComputeService,
     selectedTab,
     setSelectedTab,
@@ -380,6 +542,7 @@ function ComputeManagement({
   const connectionMemo = useMemo(() => (
     <ConnectionSettings
       attributesTouched={attributesTouched || {}}
+      computeService={computeService}
       isLoading={isLoadingUpdateProject}
       mutateObject={updateProject}
       objectAttributes={objectAttributes}
@@ -388,6 +551,7 @@ function ComputeManagement({
     />
   ), [
     attributesTouched,
+    computeService,
     isLoadingUpdateProject,
     objectAttributes,
     selectedComputeService,
@@ -510,6 +674,37 @@ function ComputeManagement({
     updateProject,
   ]);
 
+  const contentMemo = useMemo(() => {
+    if (!selectedComputeService && objectAttributes) {
+      return computeServicesMemo;
+    }
+
+    if (selectedComputeService && project) {
+      if (MainNavigationTabEnum.CONNECTION === selectedTab?.main) {
+        return connectionMemo;
+      }
+      if (MainNavigationTabEnum.RESOURCES === selectedTab?.main) {
+        return resourcesMemo;
+      }
+      if (MainNavigationTabEnum.MONITORING === selectedTab?.main) {
+        return monitoringMemo;
+      }
+      if (MainNavigationTabEnum.SYSTEM === selectedTab?.main) {
+        return systemMemo;
+      }
+    }
+  }, [
+    computeServicesMemo,
+    connectionMemo,
+    monitoringMemo,
+    objectAttributes,
+    project,
+    resourcesMemo,
+    selectedComputeService,
+    selectedTab,
+    systemMemo,
+  ]);
+
   return (
     <TripleLayout
       after={after}
@@ -535,15 +730,7 @@ function ComputeManagement({
       setBeforeWidth={setBeforeWidth}
       uuid={componentUUID}
     >
-      {!selectedComputeService && objectAttributes && computeServicesMemo}
-      {selectedComputeService && project && (
-        <>
-          {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
-          {MainNavigationTabEnum.RESOURCES === selectedTab?.main && resourcesMemo}
-          {MainNavigationTabEnum.MONITORING === selectedTab?.main && monitoringMemo}
-          {MainNavigationTabEnum.SYSTEM === selectedTab?.main && systemMemo}
-        </>
-      )}
+      {contentMemo}
     </TripleLayout>
   );
 }
