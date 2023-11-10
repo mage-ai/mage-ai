@@ -74,12 +74,9 @@ FROM dev_base AS dev_spark
 RUN echo 'deb http://deb.debian.org/debian bullseye main' > /etc/apt/sources.list.d/bullseye.list
 
 # Install OpenJDK 11
-RUN apt-get update -y && \
-    apt-get install -y openjdk-11-jdk
+RUN apt-get install -y openjdk-11-jdk --no-install-recommends
 
 # Remove Debian Bullseye repository
-RUN rm /etc/apt/sources.list.d/bullseye.list
-
-RUN ${PIP} install pyspark
+RUN rm /etc/apt/sources.list.d/bullseye.list && ${PIP} install pyspark
 
 ENV MAGE_DATA_DIR=
