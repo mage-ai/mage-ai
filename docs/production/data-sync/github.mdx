@@ -30,6 +30,47 @@ The URL could look something like this: http://localhost:6789/version-control.
 
 ### Authenticate with GitHub
 
+<Note>
+
+If you need to connect to a GitHub Enterprise repository, you will need to first authorize
+Mage to connect to your GHE host.
+
+<Accordion title="Configure Mage to authenticate with GHE">
+
+<Steps>
+
+<Step title="Register Mage in GHE">
+
+In order for Mage to authenticate with your GHE host, you will need to add Mage as an
+authorized oauth application. You can follow the steps [here](https://docs.github.com/en/enterprise-cloud@latest/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+to set it up.
+
+Make sure you copy the client id and client secret after the app is created.
+
+</Step>
+
+<Step title="Update environment variables">
+
+You will need to set the following environment variables in your Mage environment:
+
+1. GHE_HOSTNAME: the hostname of your GHE instance. If you’re using GitHub Enterprise Cloud, you should set this to `github.com`
+2. GHE_CLIENT_ID: the client id you retrieved in the previous step
+3. GHE_CLIENT_SECRET: the client secret you retrieved in the previous step
+
+</Step>
+
+<Step title="Authenticate with GHE">
+
+You should now be able to authenticate with GHE and follow the rest of the steps in this document.
+
+</Step>
+
+</Steps>
+
+</Accordion>
+
+</Note>
+
 Click the button labeled <b>Authenticate with GitHub</b> to authenticate with GitHub.
 
 After authorizing Mage, you’ll be redirected back to the initial page and an access token will
