@@ -1,15 +1,22 @@
 import os
+import re
 from logging import Logger
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import pandas as pd
 import simplejson
 from jinja2 import Template
 
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
+from mage_ai.data_preparation.models.block.dbt.utils import (
+    get_source_name,
+    get_source_table_name_for_block,
+)
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
@@ -305,6 +312,15 @@ class DBTBlockSQL(DBTBlock):
         Returns:
             List: The list of outputs.
         """
+        # Create upstream tables
+        self.__create_upstream_tables(
+            execution_partition=execution_partition,
+            global_vars=global_vars,
+            logger=logger,
+            outputs_from_input_vars=outputs_from_input_vars,
+            runtime_arguments=runtime_arguments,
+        )
+
         # Which dbt task should be executed
         task = self.__task(from_notebook, run_settings)
 
@@ -400,6 +416,69 @@ class DBTBlockSQL(DBTBlock):
 
         return [df]
 
+    def __create_upstream_tables(
+        self,
+        execution_partition: Optional[str] = None,
+        global_vars: Dict = None,
+        logger: Logger = None,
+        outputs_from_input_vars: List = None,
+        runtime_arguments: Optional[Dict[str, Any]] = None,
+    ):
+        if outputs_from_input_vars is None:
+            outputs_from_input_vars = []
+
+        upstream_blocks = self.__upstream_blocks_from_sources(global_vars=global_vars)
+
+        for ublock in upstream_blocks:
+
+            output = None
+            if ublock.uuid in outputs_from_input_vars:
+                output = outputs_from_input_vars[ublock.uuid]
+            else:
+                output = self.pipeline.variable_manager.get_variable(
+                    self.pipeline.uuid,
+                    ublock.uuid,
+                    'output_0',
+                    partition=execution_partition,
+                )
+
+            # normalize output
+            if isinstance(output, pd.DataFrame):
+                df = output
+            elif isinstance(output, dict):
+                df = pd.DataFrame([output])
+            elif isinstance(output, list):
+                df = pd.DataFrame(output)
+            else:
+                df = pd.DataFrame()
+
+            if df.empty:
+                if logger:
+                    logger.info('No data for dbt to materialize.')
+            else:
+                DBTBlock.materialize_df(
+                    df=df,
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=ublock.uuid,
+                    targets=list(set(
+                        (block.project_path, block.target(variables=global_vars))
+                        for _uuid, block in self.pipeline.blocks_by_uuid.items()
+                        if isinstance(block, DBTBlock)
+                    )),
+                    logger=logger,
+                    global_vars=global_vars,
+                    runtime_arguments=runtime_arguments,
+                )
+
+    def __extract_sources(self) -> List[Tuple[str, str]]:
+        return re.findall(
+            r"{}[ ]*source\(['\"]+([\w]+)['\"]+[,]+[ ]*['\"]+([\w]+)['\"]+\)[ ]*{}".format(
+                r'\{\{',
+                r'\}\}',
+            ),
+            self.content,
+        )
+
     def __task(
         self,
         from_notebook: bool,
@@ -452,3 +531,22 @@ class DBTBlockSQL(DBTBlock):
             else:
                 return 'run'
         return 'build'
+
+    def __upstream_blocks_from_sources(self, global_vars: Dict = None) -> List[Block]:
+        mapping = {}
+        sources = self.__extract_sources()
+        for tup in sources:
+            source_name, table_name = tup
+            if source_name not in mapping:
+                mapping[source_name] = {}
+            mapping[source_name][table_name] = True
+
+        source_name = get_source_name(Path(self.project_path).stem)
+
+        arr = []
+        for b in self.upstream_blocks:
+            table_name = get_source_table_name_for_block(b)
+            if mapping.get(source_name, {}).get(table_name):
+                arr.append(b)
+
+        return arr
