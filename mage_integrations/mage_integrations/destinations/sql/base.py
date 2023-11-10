@@ -9,10 +9,8 @@ from mage_integrations.destinations.constants import (
     REPLICATION_METHOD_INCREMENTAL,
     REPLICATION_METHOD_LOG_BASED,
 )
-from mage_integrations.destinations.utils import (
-    clean_column_name,
-    update_record_with_internal_columns,
-)
+from mage_integrations.destinations.sql.utils import clean_column_name
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
 
