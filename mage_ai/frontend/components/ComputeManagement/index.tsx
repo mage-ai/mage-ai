@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import Clusters from './Clusters';
 import ComputeServiceType, {
   SetupStepStatusEnum,
   SetupStepType,
@@ -24,12 +25,8 @@ import api from '@api';
 import { CardStyle } from './index.style';
 import {
   AlertTriangle,
-  BlockCubePolygon,
   Check,
   Info,
-  Monitor,
-  PowerOnOffButton,
-  WorkspacesUsersIcon,
 } from '@oracle/icons';
 import {
   COMPUTE_SERVICES,
@@ -40,6 +37,7 @@ import {
   MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING,
   MainNavigationTabEnum,
   ObjectAttributesType,
+  buildTabs,
 } from './constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NavigationStyle } from '@components/DataIntegrationModal/index.style';
@@ -62,24 +60,6 @@ import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 const QUERY_PARAM_TAB = 'tab';
-const TABS = [
-  {
-    Icon: PowerOnOffButton,
-    uuid: MainNavigationTabEnum.CONNECTION,
-  },
-  {
-    Icon: WorkspacesUsersIcon,
-    uuid: MainNavigationTabEnum.RESOURCES,
-  },
-  {
-    Icon: Monitor,
-    uuid: MainNavigationTabEnum.MONITORING,
-  },
-  {
-    Icon: BlockCubePolygon,
-    uuid: MainNavigationTabEnum.SYSTEM,
-  },
-];
 
 type ComputeManagementProps = {
   contained?: boolean;
@@ -386,7 +366,7 @@ function ComputeManagement({
   }
 
   const before = useMemo(() => {
-    const arr = TABS.map(({
+    const arr = buildTabs(computeService).map(({
       Icon,
       uuid,
     }: {
@@ -674,26 +654,44 @@ function ComputeManagement({
     updateProject,
   ]);
 
+  const clustersMemo = useMemo(() => (
+    <Clusters
+      computeService={computeService}
+    />
+  ), [
+    computeService,
+  ]);
+
   const contentMemo = useMemo(() => {
     if (!selectedComputeService && objectAttributes) {
       return computeServicesMemo;
     }
 
-    if (selectedComputeService && project) {
-      if (MainNavigationTabEnum.CONNECTION === selectedTab?.main) {
+    if (selectedComputeService && project && selectedTab?.main) {
+      const uuid = selectedTab?.main;
+
+      if (MainNavigationTabEnum.CONNECTION === uuid) {
         return connectionMemo;
       }
-      if (MainNavigationTabEnum.RESOURCES === selectedTab?.main) {
+
+      if (MainNavigationTabEnum.RESOURCES === uuid) {
         return resourcesMemo;
       }
-      if (MainNavigationTabEnum.MONITORING === selectedTab?.main) {
+
+      if (MainNavigationTabEnum.MONITORING === uuid) {
         return monitoringMemo;
       }
-      if (MainNavigationTabEnum.SYSTEM === selectedTab?.main) {
+
+      if (MainNavigationTabEnum.SYSTEM === uuid) {
         return systemMemo;
+      }
+
+      if (MainNavigationTabEnum.CLUSTERS === uuid) {
+        return clustersMemo;
       }
     }
   }, [
+    clustersMemo,
     computeServicesMemo,
     connectionMemo,
     monitoringMemo,

@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Dict, List
 
 from mage_ai.services.aws.emr.emr import list_clusters
@@ -19,23 +20,62 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
 
+class ClusterStatusState(str, Enum):
+    BOOTSTRAPPING = 'BOOTSTRAPPING'
+    RUNNING = 'RUNNING'
+    STARTING = 'STARTING'
+    TERMINATED = 'TERMINATED'
+    TERMINATED_WITH_ERRORS = 'TERMINATED_WITH_ERRORS'
+    TERMINATING = 'TERMINATING'
+    WAITING = 'WAITING'
+
+
+@dataclass
+class StateChangeReason(BaseDataClass):
+    code: str = None
+    message: str = None
+
+
 @dataclass
 class ClusterStatusTimeline(BaseDataClass):
     creation_date_time: str = None  # 2023-11-10T20:38:47.350000+00:00
+    end_date_time: str = None  # 2023-11-10T20:38:47.350000+00:00
+    ready_date_time: str = None  # 2023-11-10T20:38:47.350000+00:00
+
+
+@dataclass
+class ErrorDetails(BaseDataClass):
+    error_code: str = None
+    error_data: List[Dict] = field(default_factory=list)
+    error_message: str = None
 
 
 @dataclass
 class ClusterStatus(BaseDataClass):
-    state: str = None  # STARTING
-    state_change_reason: Dict = field(default_factory=dict)
+    error_details: ErrorDetails = None
+    state: ClusterStatusState = None
+    state_change_reason: StateChangeReason = None
     timeline: ClusterStatusTimeline = None
 
     def __post_init__(self):
+        if self.error_details and isinstance(self.error_details, dict):
+            self.error_details = ErrorDetails.load(**self.error_details)
+
+        if self.state and isinstance(self.state, str):
+            self.state = ClusterStatusState(self.state)
+
+        if self.state_change_reason and isinstance(self.state_change_reason, dict):
+            self.state_change_reason = StateChangeReason.load(**self.state_change_reason)
+
         if self.timeline and isinstance(self.timeline, dict):
             self.timeline = ClusterStatusTimeline.load(**self.timeline)
 
     def to_dict(self) -> Dict:
         return merge_dict(super().to_dict(), dict(
+            error_details=self.error_details.to_dict() if self.error_details else None,
+            state_change_reason=(
+                self.state_change_reason.to_dict() if self.state_change_reason else None
+            ),
             timeline=self.timeline.to_dict() if self.timeline else None,
         ))
 

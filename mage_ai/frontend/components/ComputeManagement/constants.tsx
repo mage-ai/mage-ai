@@ -1,10 +1,24 @@
 import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
+import ComputeServiceType from '@interfaces/ComputeServiceType';
+import {
+  BlockCubePolygon,
+  BlocksStacked,
+  Monitor,
+  PowerOnOffButton,
+  WorkspacesUsersIcon,
+} from '@oracle/icons';
 import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import { TripleBoxes } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { pushAtIndex } from '@utils/array';
 
 const ICON_SIZE = 8 * UNIT;
+
+export interface TabType {
+  Icon: any;
+  uuid: string;
+}
 
 export type ObjectAttributesType = {
   emr_config?: EMRConfigType
@@ -16,10 +30,11 @@ export const ComputeServiceEnum = { ...ComputeServiceUUIDEnum };
 export type ComputeServiceEnum = typeof ComputeServiceEnum;
 
 export enum MainNavigationTabEnum {
-  CONNECTION = 'CONNECTION',
-  RESOURCES = 'RESOURCES',
-  MONITORING = 'MONITORING',
-  SYSTEM = 'SYSTEM',
+  CONNECTION = 'connection',
+  CLUSTERS = 'clusters',
+  RESOURCES = 'resources',
+  MONITORING = 'monitoring',
+  SYSTEM = 'system',
 }
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
@@ -101,3 +116,33 @@ export const SHARED_TEXT_PROPS: {
   preWrap: true,
   small: true,
 };
+
+export function buildTabs(computeService: ComputeServiceType): TabType[] {
+  let arr = [
+    {
+      Icon: PowerOnOffButton,
+      uuid: MainNavigationTabEnum.CONNECTION,
+    },
+    {
+      Icon: WorkspacesUsersIcon,
+      uuid: MainNavigationTabEnum.RESOURCES,
+    },
+    {
+      Icon: Monitor,
+      uuid: MainNavigationTabEnum.MONITORING,
+    },
+    {
+      Icon: BlockCubePolygon,
+      uuid: MainNavigationTabEnum.SYSTEM,
+    },
+  ];
+
+  if (ComputeServiceUUIDEnum.AWS_EMR === computeService?.uuid) {
+    arr = pushAtIndex({
+      Icon: BlocksStacked,
+      uuid: MainNavigationTabEnum.CLUSTERS,
+    }, 2, arr);
+  }
+
+  return arr;
+}

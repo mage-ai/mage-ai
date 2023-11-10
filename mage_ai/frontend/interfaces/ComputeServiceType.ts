@@ -1,3 +1,5 @@
+import AWSEMRClusterType, { AWSEMRMetadataType } from './AWSEMRClusterType';
+
 export enum ComputeServiceUUIDEnum {
   AWS_EMR = 'AWS_EMR',
   STANDALONE_CLUSTER = 'STANDALONE_CLUSTER',
@@ -35,6 +37,10 @@ export interface SetupStepType {
 
 export default interface ComputeServiceType {
   connection_credentials: ConnectionCredentialType[];
+  clusters?: {
+    clusters: AWSEMRClusterType[];
+    metadata?: AWSEMRMetadataType;
+  };
   setup_steps: SetupStepType[];
   uuid: ComputeServiceUUIDEnum;
 }
