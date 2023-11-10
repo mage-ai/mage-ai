@@ -55,7 +55,7 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
-  pip3 install pyspark
+  pip3 install --no-cache-dir pyspark
 COPY mage_integrations /tmp/mage_integrations
 RUN \
   pip3 install --no-cache-dir /tmp/mage_integrations && \
