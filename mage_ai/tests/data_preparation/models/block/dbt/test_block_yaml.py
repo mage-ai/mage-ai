@@ -1,4 +1,6 @@
 import asyncio
+import os
+import secrets
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -131,6 +133,10 @@ class DBTBlockYAMLTest(TestCase):
         DBTCli.return_value.invoke.return_value = (None, True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
 
+        key = secrets.token_urlsafe()
+        value = secrets.token_urlsafe()
+        os.environ[key] = value
+
         dbt_block = build_block(
             self.pipeline,
             ' '.join([
@@ -155,7 +161,7 @@ class DBTBlockYAMLTest(TestCase):
                 )[0].format(
                     '{',
                     '{' + '{',
-                    'env_var("ENV")',
+                    f'env_var("{key}")',
                     '}' + '}',
                     '{' + '{',
                     "variables('model1')",
@@ -217,7 +223,7 @@ class DBTBlockYAMLTest(TestCase):
             'models/example/my_second_dbt_model.sql',
             '--vars',
             '{"foo": "bar", "model1": "my_first_dbt_model", '
-            '"test1": "dev", "test2": "my_first_dbt_model", '
+            f'"test1": "{value}", "test2": "my_first_dbt_model", '
             '"test3": "[1, 2, 3]", "test4": "3"}',
             '--project-dir',
             str(Path('test_repo_path/dbt/test_project_name')),
