@@ -1408,9 +1408,11 @@ class Block(DataIntegrationMixin, SparkBlock):
             )
 
         decorated_functions = []
+        preprocesser_functions = []
         test_functions = []
 
         results = merge_dict({
+            'preprocesser': self._block_decorator(preprocesser_functions),
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
         }, outputs_from_input_vars)
@@ -1426,16 +1428,37 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         outputs = None
 
+        if preprocesser_functions:
+            for preprocesser_function in preprocesser_functions:
+                self.execute_block_function(
+                    preprocesser_function,
+                    input_vars,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                )
+
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
             if logger and 'logger' not in global_vars:
                 global_vars['logger'] = logger
+
+            track_spark = from_notebook and self.is_using_spark() and \
+                self.compute_management_enabled()
+
+            if track_spark:
+                self.clear_spark_jobs_cache()
+                self.cache_spark_application()
+                self.set_spark_job_execution_start()
+
             outputs = self.execute_block_function(
                 block_function,
                 input_vars,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
             )
+
+            if track_spark:
+                self.set_spark_job_execution_end()
 
         self.test_functions = test_functions
 
@@ -1465,19 +1488,10 @@ class Block(DataIntegrationMixin, SparkBlock):
         sig = signature(block_function)
         has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
 
-        track_spark = from_notebook and self.is_using_spark() and self.compute_management_enabled()
-        if track_spark:
-            self.clear_spark_jobs_cache()
-            self.cache_spark_application()
-            self.set_spark_job_execution_start()
-
         if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
-
-        if track_spark:
-            self.set_spark_job_execution_end()
 
         return output
 

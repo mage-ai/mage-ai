@@ -40,7 +40,7 @@ class BaseAPI(ABC):
             spark_config = SparkConfig.load(config=repo_config.spark_config)
             self.spark_session = get_spark_session(spark_config)
 
-            if not self.application_id:
+            if not self.application_id and self.spark_session:
                 spark_confs = self.spark_session.sparkContext.getConf().getAll()
                 value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
                 if value_tup:
@@ -150,6 +150,9 @@ class BaseAPI(ABC):
         pass
 
     async def get(self, path: str, host: str = None, query: Dict = None):
+        if not self.spark_session:
+            return {}
+
         url = f'{self.endpoint(host=host)}{path}'
         response = await self.__build_request(
             'get',
@@ -164,6 +167,9 @@ class BaseAPI(ABC):
         return {}
 
     def get_sync(self, path: str, host: str = None, query: Dict = None):
+        if not self.spark_session:
+            return {}
+
         url = f'{self.endpoint(host=host)}{path}'
         response = self.__build_request_sync('get', url, query=query)
         if response.status_code == 200:
