@@ -104,7 +104,7 @@ export function sortByKey(arr, sort, opts: any = {}) {
     ? val => absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort)
     : val => absoluteValue ? Math.abs(sort(val)) : sort(val);
 
-  return arr.sort((a, b) => {
+  return [...arr].sort((a, b) => {
     let sortingOrder = 0;
 
     if (sortingFunc(a) > sortingFunc(b)) {
