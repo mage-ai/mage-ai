@@ -32,19 +32,24 @@ class BaseAPI(ABC):
         spark_session=None,
     ):
         self.application_id = application_id
+        self.spark_session = None
 
         if spark_session:
             self.spark_session = spark_session
         else:
             repo_config = RepoConfig(repo_path=get_repo_path())
             spark_config = SparkConfig.load(config=repo_config.spark_config)
-            self.spark_session = get_spark_session(spark_config)
 
-            if not self.application_id and self.spark_session:
-                spark_confs = self.spark_session.sparkContext.getConf().getAll()
-                value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
-                if value_tup:
-                    self.application_id = value_tup[1]
+            try:
+                self.spark_session = get_spark_session(spark_config)
+
+                if not self.application_id and self.spark_session:
+                    spark_confs = self.spark_session.sparkContext.getConf().getAll()
+                    value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
+                    if value_tup:
+                        self.application_id = value_tup[1]
+            except ImportError:
+                pass
 
         self.all_applications = all_applications
         self.application_spark_ui_url = application_spark_ui_url
