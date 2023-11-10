@@ -37,8 +37,11 @@ ProjectPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 ProjectPolicy.allow_write([
+    'emr_config',
     'features',
     'openai_api_key',
+    'remote_variables_dir',
+    'spark_config',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
