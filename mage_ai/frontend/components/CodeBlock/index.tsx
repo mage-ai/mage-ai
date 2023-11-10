@@ -132,6 +132,7 @@ import {
   SUBHEADER_TAB_CODE,
   SUBHEADER_TAB_INTERACTIONS,
   TABS_DBT,
+  TABS_SPARK,
   TAB_DBT_LINEAGE_UUID,
   TAB_DBT_LOGS_UUID,
   TAB_DBT_SQL_UUID,
@@ -151,13 +152,6 @@ import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/c
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
-import {
-  TABS_DBT,
-  TABS_SPARK,
-  TAB_DBT_LINEAGE_UUID,
-  TAB_DBT_LOGS_UUID,
-  TAB_DBT_SQL_UUID,
-} from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
