@@ -34,6 +34,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import ZoomControls, { DEFAULT_ZOOM_LEVEL } from './ZoomControls';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import {
   EdgeType,
   NodeType,
@@ -254,6 +255,7 @@ function DependencyGraph({
   treeRef,
   zoomable = true,
 }: DependencyGraphProps) {
+  const { featureEnabled, featureUUIDs } = useProject();
   const themeContext: ThemeType = useContext(ThemeContext);
   const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
 
@@ -563,6 +565,7 @@ function DependencyGraph({
     blockRefs,
     setSelectedBlock,
   ]);
+
   const onClickWhenEditingUpstreamBlocks = useCallback((block: BlockType) => {
     setEdgeSelections([]);
     // @ts-ignore
@@ -1448,6 +1451,11 @@ function DependencyGraph({
     updateBlockByDragAndDrop,
   ]);
 
+  const interactionsEnabled: boolean = useMemo(() => featureEnabled?.(featureUUIDs.INTERACTIONS), [
+    featureEnabled,
+    featureUUIDs,
+  ]);
+
   const contextMenuMemo = useMemo(() => {
     if (!contextMenuData) {
       return;
@@ -1530,7 +1538,9 @@ function DependencyGraph({
             addNewBlockAtIndex?.(
               {
                 downstream_blocks: block ? [block?.uuid] : null,
-                language: block?.language,
+                language: BlockLanguageEnum.YAML === block?.language
+                  ? BlockLanguageEnum.PYTHON
+                  : block?.language,
                 type: BlockTypeEnum.CUSTOM,
               },
               Math.max(0, idx - 1),
@@ -1542,7 +1552,9 @@ function DependencyGraph({
           onClick: () => {
             addNewBlockAtIndex?.(
               {
-                language: block?.language,
+                language: BlockLanguageEnum.YAML === block?.language
+                  ? BlockLanguageEnum.PYTHON
+                  : block?.language,
                 type: BlockTypeEnum.CUSTOM,
                 upstream_blocks: block ? [block?.uuid] : null,
               },
@@ -1574,6 +1586,16 @@ function DependencyGraph({
       ]);
     }
 
+    if (interactionsEnabled) {
+      menuItems.push({
+        onClick: () => {
+          onClick?.(block);
+          setActiveSidekickView?.(ViewKeyEnum.INTERACTIONS);
+        },
+        uuid: 'Add / Edit interactions',
+      });
+    }
+
     menuItems.push(...[
       {
         onClick: () => {
@@ -1592,8 +1614,8 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          setSelectedBlock?.(block);
-          setActiveSidekickView(ViewKeyEnum.FILE_VERSIONS);
+          onClick?.(block);
+          setActiveSidekickView?.(ViewKeyEnum.FILE_VERSIONS);
         },
         uuid: 'View file versions',
       },
@@ -1643,6 +1665,8 @@ function DependencyGraph({
     contentByBlockUUID,
     contextMenuData,
     deleteBlock,
+    interactionsEnabled,
+    onClick,
     pipeline,
     runBlock,
     setActiveSidekickView,
@@ -1744,10 +1768,10 @@ function DependencyGraph({
       <GraphContainerStyle
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
-      > 
-        <ZoomControls 
-          canvasRef={canvasRef} 
-          containerRef={containerRef} 
+      >
+        <ZoomControls
+          canvasRef={canvasRef}
+          containerRef={containerRef}
           zoomLevel={zoomLevel}
         />
         <Canvas
