@@ -928,14 +928,12 @@ class Block(DataIntegrationMixin, SparkBlock):
             for callback_block in callback_arr:
                 callback_block.execute_callback(
                     'on_failure',
+                    callback_kwargs=dict(__error=error),
+                    from_notebook=from_notebook,
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
                     parent_block=self,
-                    from_notebook=from_notebook,
-                    callback_kwargs=dict(
-                        __error=error,
-                    )
                 )
             raise
 

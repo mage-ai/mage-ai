@@ -557,14 +557,12 @@ class BlockExecutor:
                         )
                     self._execute_callback(
                         'on_failure',
+                        callback_kwargs=dict(__error=error),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         global_vars=global_vars,
                         logging_tags=tags,
                         pipeline_run=pipeline_run,
-                        callback_kwargs=dict(
-                            __error=error,
-                        )
                     )
                     raise error
 
