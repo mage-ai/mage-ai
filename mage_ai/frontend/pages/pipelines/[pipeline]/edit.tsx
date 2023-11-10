@@ -154,6 +154,7 @@ function PipelineDetailPage({
     featureUUIDs,
     fetchProjects,
     project,
+    sparkEnabled,
   } = useProject();
 
   const router = useRouter();
@@ -182,6 +183,7 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
+  const [includeSparkOutputs, setIncludeSparkOutputs] = useState<boolean>(true);
 
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
@@ -272,6 +274,12 @@ function PipelineDetailPage({
         || typeof pipeline?.blocks === 'undefined'
         || pipeline?.blocks === null
         || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
+      ...(includeSparkOutputs
+        ? {
+          includes_outputs_spark: true,
+        }
+        : {}
+      ),
     },
     {
       refreshInterval: 60000,
@@ -340,17 +348,31 @@ function PipelineDetailPage({
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
   pipeline = useMemo(() => data?.pipeline, [data]);
-  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
+  const isDataIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
+  useEffect(() => {
+    if (pipeline && includeSparkOutputs && sparkEnabled) {
+      setIncludeSparkOutputs(false);
+    }
+  }, [
+    includeSparkOutputs,
+    pipeline,
+    setIncludeSparkOutputs,
+    sparkEnabled,
+  ]);
 
   const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
   );
-  const sideBySideEnabled = useMemo(() => !isIntegration
+  const sideBySideEnabled = useMemo(() => {
+    return !isDataIntegration
       && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && sideBySideEnabledState, [
+      && sideBySideEnabledState;
+  }, [
     featureEnabled,
     featureUUIDs,
-    isIntegration,
+    isDataIntegration,
     sideBySideEnabledState,
   ]);
   const [scrollTogetherState, setScrollTogetherState] = useState<boolean>(
@@ -694,7 +716,7 @@ function PipelineDetailPage({
   );
   const blockSampleData = useMemo(() => blockOutputData?.block_output, [blockOutputData]);
   const sampleData: SampleDataType = useMemo(() => {
-    if (isIntegration) {
+    if (isDataIntegration) {
       return find(
         blockSampleData?.outputs,
         ({ variable_uuid }) => variable_uuid === `output_sample_data_${cleanName(selectedStream)}`,
@@ -702,7 +724,7 @@ function PipelineDetailPage({
     } else {
       return blockSampleData?.outputs?.[0]?.sample_data;
     }
-  }, [blockSampleData, isIntegration, selectedStream]);
+  }, [blockSampleData, isDataIntegration, selectedStream]);
   const {
     data: blockAnalysis,
     mutate: fetchAnalysis,
@@ -815,7 +837,7 @@ function PipelineDetailPage({
                 const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
                 const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
 
-                if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
+                if (!equals(blockUUIDsPrevious || [], blockUUIDsServer || [])) {
                   setTimeout(() => {
                     resetColumnScroller();
                   }, 1);
@@ -894,7 +916,7 @@ function PipelineDetailPage({
       const messagesForBlock = messages[uuid]?.filter(m => !!m);
       const hasError = messagesForBlock?.find(({ error }) => error);
 
-      if (messagesForBlock) {
+      if (messagesForBlock && (!sparkEnabled || !runningBlocks?.length)) {
         const arr2 = [];
         let plainTextLineCount = 0;
 
@@ -1103,7 +1125,9 @@ function PipelineDetailPage({
     pipeline,
     pipelineLastSaved,
     pipelineLastSavedState,
+    runningBlocks,
     showStalePipelineMessageModal,
+    sparkEnabled,
     updatePipeline,
     widgets,
   ]);
@@ -1614,7 +1638,7 @@ function PipelineDetailPage({
       type: blockType,
     } = block;
 
-    if (isIntegration) {
+    if (isDataIntegration) {
       const blocksByType = indexBy(pipeline?.blocks || [], ({ type }) => type);
       const dataExporterBlock = blocksByType[BlockTypeEnum.DATA_EXPORTER];
       const dataLoaderBlock = blocksByType[BlockTypeEnum.DATA_LOADER];
@@ -1765,7 +1789,7 @@ function PipelineDetailPage({
     createBlock,
     fetchFileTree,
     fetchPipeline,
-    isIntegration,
+    isDataIntegration,
     openFile,
     pipeline,
     savePipelineContent,
@@ -3140,7 +3164,7 @@ function PipelineDetailPage({
             fullHeight
             fullWidth
           >
-            {!isIntegration && outputBlocks.map(block => {
+            {!isDataIntegration && outputBlocks.map(block => {
               const { uuid: outputBlockUUID } = block;
               const selected = selectedOutputBlock?.uuid === outputBlockUUID;
 
@@ -3176,7 +3200,7 @@ function PipelineDetailPage({
                 </Spacing>
               );
             })}
-            {isIntegration && integrationOutputsMemo}
+            {isDataIntegration && integrationOutputsMemo}
           </FlexContainer>
         )}
         before={beforeToShow}

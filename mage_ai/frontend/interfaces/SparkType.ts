@@ -1,9 +1,12 @@
 export enum SparkJobStatusEnum {
+  FAILED = 'FAILED',
+  RUNNING = 'RUNNING',
   SUCCEEDED = 'SUCCEEDED',
 }
 
 export enum SparkStageStatusEnum {
   COMPLETE = 'COMPLETE',
+  SKIPPED = 'SKIPPED',
 }
 
 export enum SparkTaskLocalityEnum {
@@ -34,9 +37,11 @@ export interface SparkApplicationType {
   }[];
   id: string;
   name: string;
+  spark_ui_url: string;
 }
 
 export interface SparkJobType {
+  application: SparkApplicationType;
   completion_time: string;
   job_id: number;
   job_tags: string[];
@@ -210,6 +215,7 @@ export interface SparkTaskType {
 }
 
 export interface SparkStageAttemptType {
+  application: SparkApplicationType;
   attempt_id: number;
   executor_metrics_distributions: {
     disk_bytes_spilled: number[];
@@ -262,6 +268,7 @@ export interface SparkStageType extends SparkStageAttemptType {
   attempt_id: number;
   completion_time: string;
   details: string;
+  failure_reason: string;
   first_task_launched_time: string;
   input_bytes: number;
   input_records: number;
@@ -416,6 +423,7 @@ export interface SparkSQLNodeType {
 }
 
 export interface SparkSQLType {
+  application: SparkApplicationType;
   description: string;
   duration: number;
   edges: SparkSQLEdgeType[];

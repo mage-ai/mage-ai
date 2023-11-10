@@ -6,20 +6,30 @@ from mage_ai.services.spark.api.local import LocalAPI
 class SparkJobResource(GenericResource, SparkApplicationChild):
     @classmethod
     async def collection(self, _query, _meta, user, **kwargs):
-        application_id = await self.get_application_id(**kwargs)
-
         return self.build_result_set(
-            await LocalAPI().jobs(application_id=application_id),
+            await LocalAPI().jobs(),
             user,
             **kwargs,
         )
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        application_id = await self.get_application_id(**kwargs)
+        query_arg = kwargs.get('query')
+
+        application_id = query_arg.get('application_id', [])
+        if application_id:
+            application_id = application_id[0]
+
+        application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
+        if application_spark_ui_url:
+            application_spark_ui_url = application_spark_ui_url[0]
 
         return self(
-            await LocalAPI().job(application_id=application_id, job_id=pk),
+            await LocalAPI().job(
+                job_id=pk,
+                application_id=application_id,
+                application_spark_ui_url=application_spark_ui_url,
+            ),
             user,
             **kwargs,
         )

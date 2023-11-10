@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Ansi from 'ansi-to-react';
 import InnerHTML from 'dangerously-set-html-content';
 import { useMutation } from 'react-query';
@@ -74,10 +74,12 @@ type CodeOutputProps = {
   };
   buttonTabs?: any;
   children?: any;
+  childrenBelowTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
   hasOutput?: boolean;
   hideExtraInfo?: boolean;
+  hideOutput?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
@@ -121,6 +123,7 @@ function CodeOutput({
   blockMetadata,
   buttonTabs,
   children,
+  childrenBelowTabs,
   collapsed,
   contained = true,
   dynamicBlock,
@@ -128,6 +131,7 @@ function CodeOutput({
   hasError,
   hasOutput,
   hideExtraInfo,
+  hideOutput,
   isInProgress,
   mainContainerWidth,
   messages,
@@ -163,9 +167,7 @@ function CodeOutput({
       },
     });
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(evt);
-    }
+    window.dispatchEvent(evt);
   }, [
     blockIndex,
   ]);
@@ -670,14 +672,19 @@ function CodeOutput({
     return (
       <>
         {buttonTabs}
-        {el}
+
+        {childrenBelowTabs}
+
+        {!hideOutput && el}
       </>
     );
   }, [
     blockMetadata,
     buttonTabs,
+    childrenBelowTabs,
     content,
     hasError,
+    hideOutput,
     isDBT,
     isInProgress,
     pipeline,

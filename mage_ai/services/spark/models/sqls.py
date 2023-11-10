@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List
 
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.stages import StageAttempt
@@ -41,6 +42,7 @@ class Node(BaseSparkModel):
 
 @dataclass
 class Sql(BaseSparkModel):
+    application: Application = None
     description: str = None  # "collect at /home/src/default_repo/data_loaders/misty_thunder.py:39"
     duration: int = None  # 672
     edges: List[Edge] = field(default_factory=list)
@@ -94,11 +96,15 @@ class Sql(BaseSparkModel):
     success_job_ids: List[int] = field(default_factory=list)  # [3, 4, 5, 6]
 
     def __post_init__(self):
+
+        if self.application and isinstance(self.application, dict):
+            self.application = Application.load(**self.application)
+
         if self.edges:
             self.edges = [Edge.load(**edge) for edge in self.edges]
 
         if self.jobs:
-            self.jobs = [StageAttempt.load(**m) for m in self.jobs]
+            self.jobs = [Job.load(**m) for m in self.jobs]
 
         if self.nodes:
             self.nodes = [Node.load(**node) for node in self.nodes]

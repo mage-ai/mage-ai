@@ -29,6 +29,8 @@ from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
@@ -82,6 +84,7 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
     ENABLE_PROMETHEUS,
@@ -551,6 +554,13 @@ def start_server(
     init_project_uuid(overwrite_uuid=project_uuid)
 
     asyncio.run(UsageStatisticLogger().project_impression())
+
+    project_model = Project()
+    if project_model and \
+            project_model.spark_config and \
+            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+
+        Application.clear_cache()
 
     if dbt_docs:
         run_docs_server()

@@ -162,12 +162,12 @@ type PipelineDetailProps = {
   setAnyInputFocused: (value: boolean) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  setIntegrationStreams: (streams: string[]) => void;
   setHiddenBlocks: ((opts: {
     [uuid: string]: BlockType;
   }) => {
     [uuid: string]: BlockType;
   });
+  setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setSelectedBlock: (block: BlockType) => void;

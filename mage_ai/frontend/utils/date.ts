@@ -29,6 +29,7 @@ export const TIME_PERIOD_INTERVAL_MAPPING = {
 };
 
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
+export const DATE_FORMAT_LONG_MS = 'YYYY-MM-DD HH:mm:ss.SSS';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET = 'YYYY-MM-DD HH:mmZ';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
@@ -97,8 +98,8 @@ export function datetimeInLocalTimezone(
   return datetime;
 }
 
-/** 
- * Given start and end UTC datetime strings, find the time difference between them 
+/**
+ * Given start and end UTC datetime strings, find the time difference between them
  * and return it in the first matching format:
  *   - >= 1 week: > 1 week
      - >= 1 day: d,HH:mm:ss.SS
@@ -106,11 +107,11 @@ export function datetimeInLocalTimezone(
  * If `showFullFormat` is true, we'll return it in a specific, human-readable format.
  */
 export function timeDifference({
-  startDatetime, 
+  startDatetime,
   endDatetime,
   showFullFormat = false,
 }: {
-  startDatetime: string; 
+  startDatetime: string;
   endDatetime: string;
   showFullFormat?: boolean;
 }) {
@@ -190,10 +191,10 @@ export function utcNowDate(opts?: { dateObj?: boolean }): any {
 }
 
 // Return a map of the current time in the different provided timezones
-export function currentTimes({ 
-  timeZones, 
+export function currentTimes({
+  timeZones,
   includeSeconds = false,
-}: { 
+}: {
   timeZones: TimeZoneEnum[];
   includeSeconds?: boolean;
 }) {
@@ -209,7 +210,7 @@ export function currentTimes({
       }
 
       return [
-        timeZone, 
+        timeZone,
         moment.format(includeSeconds ? TIME_FORMAT : TIME_FORMAT_NO_SEC),
       ];
     }),

@@ -2,15 +2,19 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 
 
 class JobStatus(str, Enum):
+    FAILED = 'FAILED'
+    RUNNING = 'RUNNING'
     SUCCEEDED = 'SUCCEEDED'
 
 
 @dataclass
 class Job(BaseSparkModel):
+    application: Application = None
     completion_time: str = None  # 2023-10-15T10:17:00.772GMT
     job_id: str = None  # 54
     job_tags: List[str] = field(default_factory=list)
@@ -32,7 +36,10 @@ class Job(BaseSparkModel):
     submission_time: str = None  # 2023-10-15T10:17:00.758GMT
 
     def __post_init__(self):
-        if self.status:
+        if self.application and isinstance(self.application, dict):
+            self.application = Application.load(**self.application)
+
+        if self.status and isinstance(self.status, str):
             try:
                 self.status = JobStatus(self.status)
             except ValueError as err:

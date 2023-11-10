@@ -1,4 +1,6 @@
-FROM python:3.10-bookworm
+# syntax=docker/dockerfile:1
+
+FROM python:3.10-bookworm AS dev_base
 LABEL description="Mage data management platform"
 ARG PIP=pip3
 USER root
@@ -65,3 +67,16 @@ RUN yarn install && yarn cache clean
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
+
+FROM dev_base AS dev_spark
+
+# Add Debian Bullseye repository
+RUN echo 'deb http://deb.debian.org/debian bullseye main' > /etc/apt/sources.list.d/bullseye.list \
+  # Install OpenJDK 11
+  apt-get -y update \
+  apt-get install -y openjdk-11-jdk --no-install-recommends \
+  # Remove Debian Bullseye repository
+  rm /etc/apt/sources.list.d/bullseye.list && \
+  ${PIP} install pyspark
+
+ENV MAGE_DATA_DIR=

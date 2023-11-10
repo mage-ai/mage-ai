@@ -44,10 +44,33 @@ import {
 } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { getComputeServiceFromProject } from './utils';
+import { goToWithQuery } from '@utils/routing';
+import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { queryFromUrl } from '@utils/url';
 import { selectKeys } from '@utils/hash';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
+
+const QUERY_PARAM_TAB = 'tab';
+const TABS = [
+  {
+    Icon: PowerOnOffButton,
+    uuid: MainNavigationTabEnum.CONNECTION,
+  },
+  {
+    Icon: WorkspacesUsersIcon,
+    uuid: MainNavigationTabEnum.RESOURCES,
+  },
+  {
+    Icon: Monitor,
+    uuid: MainNavigationTabEnum.MONITORING,
+  },
+  {
+    Icon: BlockCubePolygon,
+    uuid: MainNavigationTabEnum.SYSTEM,
+  },
+];
 
 type ComputeManagementProps = {
   contained?: boolean;
@@ -145,11 +168,23 @@ function ComputeManagement({
     main?: MainNavigationTabEnum;
   }>(null);
   const setSelectedTab = useCallback((prev) => {
+    goToWithQuery({
+      [QUERY_PARAM_TAB]: (typeof prev === 'function' ? prev?.() : prev)?.main,
+    });
     setSelectedSql(() => null);
-    setSelectedTabState(prev);
   }, [
     setSelectedSql,
-    setSelectedTabState,
+  ]);
+
+  const queryURL = queryFromUrl();
+  useEffect(() => {
+    const uuid = queryURL?.[QUERY_PARAM_TAB];
+    if (selectedTab?.main !== uuid) {
+      setSelectedTabState(uuid ? { main: uuid } : null);
+    }
+  }, [
+    selectedTab,
+    queryURL,
   ]);
 
   const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
@@ -244,24 +279,7 @@ function ComputeManagement({
   ]);
 
   const before = useMemo(() => {
-    const arr = [
-      {
-        Icon: PowerOnOffButton,
-        uuid: MainNavigationTabEnum.CONNECTION,
-      },
-      {
-        Icon: WorkspacesUsersIcon,
-        uuid: MainNavigationTabEnum.RESOURCES,
-      },
-      {
-        Icon: Monitor,
-        uuid: MainNavigationTabEnum.MONITORING,
-      },
-      {
-        Icon: BlockCubePolygon,
-        uuid: MainNavigationTabEnum.SYSTEM,
-      },
-    ].map(({
+    const arr = TABS.map(({
       Icon,
       uuid,
     }: {

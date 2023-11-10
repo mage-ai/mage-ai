@@ -1,13 +1,50 @@
-from typing import List
+import json
+import os
+from datetime import datetime
+from typing import Dict, List
 
+import dateutil.parser
+
+from mage_ai.data_preparation.models.block.spark.constants import (
+    SPARK_DIR_NAME,
+    SPARK_JOBS_FILENAME,
+)
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.services.spark.api.service import API
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.jobs import Job
+from mage_ai.services.spark.models.sqls import Sql
+from mage_ai.services.spark.models.stages import Stage
 from mage_ai.services.spark.utils import get_compute_service
+from mage_ai.shared.array import find
 
 
 class SparkBlock:
+    @property
+    def spark_session(self):
+        if self._spark_session_current:
+            return self._spark_session_current
+
+        self._spark_session_current = self.get_spark_session()
+
+        return self._spark_session_current
+
+    def spark_session_application(self) -> Application:
+        if not self.spark_session:
+            return
+
+        spark_confs = self.spark_session.sparkContext.getConf().getAll()
+        value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
+
+        if value_tup:
+            application_id = value_tup[1]
+
+            return Application(
+                id=application_id,
+                spark_ui_url=self.spark_session.sparkContext.uiWebUrl,
+            )
+
     def compute_management_enabled(self) -> bool:
         return Project(self.pipeline.repo_config if self.pipeline else None).is_feature_enabled(
             FeatureUUID.COMPUTE_MANAGEMENT,
@@ -16,30 +53,278 @@ class SparkBlock:
     def is_using_spark(self) -> bool:
         return get_compute_service()
 
-    def set_spark_job_before_execution(self) -> None:
-        jobs = self.__get_jobs()
-        if jobs:
-            self.spark_job_before_execution = jobs[0]
+    def execution_states(self, cache: bool = False) -> Dict:
+        jobs_cache = self.__load_cache()
 
-    def set_spark_job_after_execution(self) -> None:
-        jobs = self.__get_jobs()
-        if jobs:
-            self.spark_job_after_execution = jobs[0]
+        if 'execution_states' in jobs_cache:
+            return jobs_cache.get('execution_states')
 
-    def __get_jobs(self) -> List[Job]:
-        api = API.build()
+        execution_states = {}
+        jobs = self.jobs_during_execution()
+        if jobs:
+            sqls = self.sqls_during_execution(jobs=jobs)
+            stages = self.stages_during_execution(jobs=jobs)
+
+            execution_states = dict(
+                jobs=[m.to_dict() for m in jobs],
+                sqls=[m.to_dict() for m in sqls],
+                stages=[m.to_dict() for m in stages],
+            )
+
+            if cache:
+                self.__update_spark_jobs_cache(
+                    execution_states,
+                    'execution_states',
+                )
+
+        return execution_states
+
+    def jobs_during_execution(self) -> List[Job]:
+        self.__load_spark_job_submission_timestamps()
+
+        if self.execution_timestamp_start:
+            jobs = self.__get_jobs(application=self.execution_start_application)
+
+            def _filter(
+                job: Job,
+                execution_timestamp_start: float = self.execution_timestamp_start,
+                execution_timestamp_end: float = self.execution_timestamp_end,
+            ) -> bool:
+                if not job.submission_time:
+                    return False
+
+                if isinstance(job.submission_time, str):
+                    submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
+                elif isinstance(job.submission_time, float) or isinstance(job.submission_time, int):
+                    submission_timestamp = datetime.fromtimestamp(job.submission_time)
+
+                return execution_timestamp_start and \
+                    execution_timestamp_end and \
+                    submission_timestamp >= execution_timestamp_start and \
+                    (
+                        not execution_timestamp_end or
+                        submission_timestamp <= execution_timestamp_end
+                    )
+
+            return list(filter(_filter, jobs))
+
+        return []
+
+    def stages_during_execution(self, jobs: List[Job]):
+        if not jobs:
+            self.__load_spark_jobs_during_execution()
+
+        def _filter(
+            stage: Stage,
+            jobs=jobs,
+        ) -> bool:
+            return any([job.stage_ids and stage.id in job.stage_ids for job in jobs])
+
+        stages = self.__get_stages(application=self.execution_start_application)
+
+        return list(filter(_filter, stages))
+
+    def sqls_during_execution(self, jobs: List[Job]):
+        if not jobs:
+            self.__load_spark_jobs_during_execution()
+
+        def _filter(
+            sql: Sql,
+            jobs=jobs,
+        ) -> bool:
+            return any([(
+                job.id in sql.failed_job_ids or
+                job.id in sql.running_job_ids or
+                job.id in sql.success_job_ids
+            ) for job in jobs])
+
+        sqls = self.__get_sqls(application=self.execution_start_application)
+
+        return list(filter(_filter, sqls))
+
+    def clear_spark_jobs_cache(self) -> None:
+        if os.path.exists(self.spark_jobs_full_path):
+            os.remove(self.spark_jobs_full_path)
+
+    def cache_spark_application(self) -> None:
+        api = API.build(all_applications=False, spark_session=self.spark_session)
+        applications = api.applications_sync()
+        for application in applications:
+            Application.cache_application(application)
+
+    def set_spark_job_execution_start(self) -> None:
+        self.execution_timestamp_start = datetime.utcnow().timestamp()
+        application = self.spark_session_application()
+
+        self.__update_spark_jobs_cache(
+            dict(
+                application=application.to_dict() if application else None,
+                submission_timestamp=self.execution_timestamp_start,
+            ),
+            'before',
+            overwrite=True,
+        )
+
+    def set_spark_job_execution_end(self) -> None:
+        # Need a slight buffer of 10 seconds because stages are still being submitted even after
+        # the end of the block function execution.
+        self.execution_timestamp_end = datetime.utcnow().timestamp() + 10
+        application = self.spark_session_application()
+
+        self.__update_spark_jobs_cache(
+            dict(
+                application=application.to_dict() if application else None,
+                submission_timestamp=self.execution_timestamp_end,
+            ),
+            'after',
+        )
+
+    def __build_api(self, application: Application = None) -> API:
+        build_options = {}
+
+        if application:
+            build_options.update(dict(
+                application_id=application.id,
+                application_spark_ui_url=application.spark_ui_url,
+            ))
+        else:
+            build_options.update(dict(all_applications=True))
+
+        return API.build(**build_options)
+
+    def __get_jobs(self, application: Application = None) -> List[Job]:
+        api = self.__build_api(application=application)
 
         if not api:
             return
 
-        applications = api.applications_sync()
-
         jobs = []
-        if applications:
-            jobs = api.jobs_sync(applications[0].id)
+        if application:
+            jobs = api.jobs_sync()
+        else:
+            applications = api.applications_sync()
+            if applications:
+                jobs = api.jobs_sync(applications[0].id)
 
         return sorted(
             jobs,
             key=lambda job: job.id,
             reverse=True,
         )
+
+    def __get_stages(self, application: Application = None) -> List[Stage]:
+        api = self.__build_api(application=application)
+
+        if not api:
+            return
+
+        stages = []
+        if application:
+            stages = api.stages_sync(dict(
+                quantiles='0.01,0.25,0.5,0.75,0.99',
+                withSummaries=True,
+            ))
+        else:
+            applications = api.applications_sync()
+
+            if applications:
+                stages = api.stages_sync(applications[0].id, dict(
+                    quantiles='0.01,0.25,0.5,0.75,0.99',
+                    withSummaries=True,
+                ))
+
+        return stages
+
+    def __get_sqls(self, application: Application = None) -> List[Sql]:
+        api = self.__build_api(application=application)
+
+        if not api:
+            return
+
+        if application:
+            sqls = api.sqls_sync(dict(
+                length=9999,
+            ))
+        else:
+            applications = api.applications_sync()
+
+            sqls = []
+            if applications:
+                sqls = api.sqls_sync(applications[0].id, dict(
+                    length=9999,
+                ))
+
+        return sqls
+
+    @property
+    def spark_dir(self) -> str:
+        if self.pipeline:
+            return os.path.join(self.pipeline.pipeline_variables_dir, SPARK_DIR_NAME, self.uuid)
+
+    @property
+    def spark_jobs_full_path(self) -> str:
+        if self.pipeline:
+            return os.path.join(self.spark_dir, SPARK_JOBS_FILENAME)
+
+    def __load_cache(self) -> List[Job]:
+        jobs = {}
+
+        if not os.path.exists(self.spark_jobs_full_path):
+            return jobs
+
+        with open(self.spark_jobs_full_path) as f:
+            content = f.read()
+            if content:
+                return json.loads(content)
+
+    def __update_spark_jobs_cache(
+        self,
+        data_to_cache: Dict,
+        key: str,
+        overwrite: bool = False,
+    ) -> None:
+        os.makedirs(self.spark_dir, exist_ok=True)
+
+        data = {}
+        if not overwrite:
+            if os.path.exists(self.spark_jobs_full_path):
+                with open(self.spark_jobs_full_path) as f:
+                    content = f.read()
+                    if content:
+                        data.update(json.loads(content) or {})
+
+        data.update({
+            key: data_to_cache,
+        })
+
+        with open(self.spark_jobs_full_path, 'w') as f:
+            f.write(json.dumps(data))
+
+    def __load_spark_job_submission_timestamps(self) -> None:
+        jobs_cache = self.__load_cache()
+        if jobs_cache:
+            before = jobs_cache.get('before')
+            if before:
+                self.execution_timestamp_start = (before or {}).get(
+                    'submission_timestamp',
+                )
+                self.execution_start_application = (before or {}).get(
+                    'application',
+                )
+                if self.execution_start_application:
+                    self.execution_start_application = Application.load(
+                        **self.execution_start_application,
+                    )
+
+            after = jobs_cache.get('after')
+            if after:
+                self.execution_timestamp_end = (after or {}).get(
+                    'submission_timestamp',
+                )
+                self.execution_end_application = (after or {}).get(
+                    'application',
+                )
+                if self.execution_end_application:
+                    self.execution_end_application = Application.load(
+                        **self.execution_end_application,
+                    )
