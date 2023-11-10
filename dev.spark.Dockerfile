@@ -5,6 +5,9 @@ USER root
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Add Debian Bullseye repository
+RUN echo 'deb http://deb.debian.org/debian bullseye main' > /etc/apt/sources.list.d/bullseye.list
+
 ## System Packages
 RUN \
   curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
@@ -20,11 +23,15 @@ RUN \
     nfs-common \
     # odbc dependencies
     msodbcsql18 \
+    # Install OpenJDK 11
+    openjdk-11-jdk \
     unixodbc-dev && \
     # R
     # r-base=4.2.2.20221110-2 && \
   apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+  rm -rf /var/lib/apt/lists/* && \
+  # Remove Debian Bullseye repository
+  rm /etc/apt/sources.list.d/bullseye.list
 
 ## R Packages
 # RUN \
@@ -47,7 +54,8 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse"
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
+  pip3 install --no-cache-dir pyspark
 COPY mage_integrations /tmp/mage_integrations
 RUN \
   pip3 install --no-cache-dir /tmp/mage_integrations && \
@@ -63,5 +71,6 @@ COPY ./mage_ai /home/src/mage_ai
 WORKDIR /home/src/mage_ai/frontend
 RUN yarn install && yarn cache clean
 
+ENV MAGE_DATA_DIR=
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src

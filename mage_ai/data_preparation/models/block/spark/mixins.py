@@ -148,6 +148,9 @@ class SparkBlock:
 
     def cache_spark_application(self) -> None:
         api = API.build(all_applications=False, spark_session=self.spark_session)
+        if not api:
+            return
+
         applications = api.applications_sync()
         for application in applications:
             Application.cache_application(application)

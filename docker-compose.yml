@@ -4,7 +4,6 @@ x-server_settings: &server_settings
   build:
     context: .
     dockerfile: ./dev.Dockerfile
-    target: dev_base
   command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
   environment:
     - AUTHENTICATION_MODE=$AUTHENTICATION_MODE
@@ -85,13 +84,17 @@ services:
     <<: *server_settings
   server_spark:
     <<: *server_settings
+    image: mage/data_spark
     build:
       context: .
-      dockerfile: ./dev.Dockerfile
-      target: dev_spark
+      dockerfile: ./dev.spark.Dockerfile
   app:
     <<: *app_settings
   app_spark:
     <<: *app_settings
+    image: mage/data_spark
+    build:
+      context: .
+      dockerfile: ./dev.spark.Dockerfile
     depends_on:
       - server_spark
