@@ -934,7 +934,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                     parent_block=self,
                     from_notebook=from_notebook,
                     callback_kwargs=dict(
-                        error=error,
+                        __error=error,
                     )
                 )
             raise

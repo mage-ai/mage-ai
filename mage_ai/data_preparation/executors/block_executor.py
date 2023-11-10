@@ -563,7 +563,7 @@ class BlockExecutor:
                         logging_tags=tags,
                         pipeline_run=pipeline_run,
                         callback_kwargs=dict(
-                            error=error,
+                            __error=error,
                         )
                     )
                     raise error
