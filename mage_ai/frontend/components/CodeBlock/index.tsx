@@ -2280,217 +2280,25 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 {!hideExtraConfiguration && BlockTypeEnum.DBT === blockType
                   && !codeCollapsed
                   && (
-                  <CodeHelperStyle normalPadding>
-                    <FlexContainer
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Flex alignItems="center">
-                        {BlockLanguageEnum.YAML === blockLanguage && (
-                          <Select
-                            compact
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DBT_PROFILE_TARGET]: '',
-                                [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onClick={pauseEvent}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            placeholder="Project"
-                            small
-                            value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME] || ''}
-                          >
-                            {Object.keys(dbtProjects || {}).map((projectName: string) => (
-                              <option key={projectName} value={projectName}>
-                                {projectName}
-                              </option>
-                            ))}
-                          </Select>
-                        )}
-
-                        {BlockLanguageEnum.YAML !== blockLanguage && (
-                          <Text monospace small>
-                            {dbtProjectName}
-                          </Text>
-                        )}
-
-                        <Spacing mr={2} />
-
-                        <Text monospace muted small>
-                          Target
-                        </Text>
-
-                        <span>&nbsp;</span>
-
-                        {!manuallyEnterTarget && (
-                          <Select
-                            compact
-                            disabled={!dbtProjectName}
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onClick={pauseEvent}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            placeholder={dbtProfileTargetSelectPlaceholder}
-                            small
-                            value={dbtProfileTarget || ''}
-                          >
-                            {dbtProfileTargets?.map((target: string) => (
-                              <option key={target} value={target}>
-                                {target}
-                              </option>
-                            ))}
-                          </Select>
-                        )}
-
-                        {manuallyEnterTarget && (
-                          <TextInput
-                            compact
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onClick={pauseEvent}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            placeholder={dbtProjectName
-                              ? (dbtProfileData?.target || 'Enter target')
-                              : 'Select project first'
-                            }
-                            small
-                            value={dbtProfileTarget || ''}
-                            width={UNIT * 21}
-                          />
-                        )}
-
-                        <Spacing mr={1} />
-
-                        <FlexContainer alignItems="center">
-                          <Tooltip
-                            block
-                            description={
-                              <Text default inline>
-                                Manually type the name of the target you want to use in the profile.
-                                <br />
-                                Interpolate environment variables and
-                                global variables using the following syntax:
-                                <br />
-                                <Text default inline monospace>
-                                  {'{{ env_var(\'NAME\') }}'}
-                                </Text> or <Text default inline monospace>
-                                  {'{{ variables(\'NAME\') }}'}
-                                </Text>
-                              </Text>
-                            }
-                            size={null}
-                            widthFitContent
-                          >
-                            <FlexContainer alignItems="center">
-                              <Checkbox
-                                checked={manuallyEnterTarget}
-                                label={
-                                  <Text muted small>
-                                    Manually enter target
-                                  </Text>
-                                }
-                                onClick={(e) => {
-                                  pauseEvent(e);
-                                  setManuallyEnterTarget(!manuallyEnterTarget);
-                                  if (manuallyEnterTarget) {
-                                    updateDataProviderConfig({
-                                      [CONFIG_KEY_DBT_PROFILE_TARGET]: null,
-                                    });
-                                  }
-                                }}
-                              />
-                              <span>&nbsp;</span>
-                              <Info muted />
-                            </FlexContainer>
-                          </Tooltip>
-                        </FlexContainer>
-                      </Flex>
-
-                      {BlockLanguageEnum.YAML !== blockLanguage && !dbtMetadata?.block?.snapshot && (
-                        <FlexContainer alignItems="center">
-                          <Tooltip
-                            appearBefore
-                            block
-                            description={
-                              <Text default inline>
-                                Limit the number of results that are returned
-                                <br />
-                                when running this block in the notebook.
-                                <br />
-                                This limit won’t affect the number of results
-                                <br />
-                                returned when running the pipeline end-to-end.
-                              </Text>
-                            }
-                            size={null}
-                            widthFitContent
-                          >
-                            <FlexContainer alignItems="center">
-                              <Info muted />
-                              <span>&nbsp;</span>
-                              <Text monospace muted small>
-                                Sample limit
-                              </Text>
-                              <span>&nbsp;</span>
-                            </FlexContainer>
-                          </Tooltip>
-                          {limitInputEl}
-                          <Spacing mr={1} />
-                        </FlexContainer>
-                      )}
-                    </FlexContainer>
-
-                    {BlockLanguageEnum.YAML === blockLanguage && (
-                      <Spacing mt={1}>
-                        <FlexContainer alignItems="center">
-                          <Flex alignItems="center" flex={1}>
-                            <Text default monospace small>
-                              dbt
-                            </Text>
-
-                            <Spacing mr={1} />
-
-                            <TextInput
+                  <>
+                    <Spacing mt={1} />
+                    <CodeHelperStyle normalPadding>
+                      <FlexContainer
+                        alignItems="center"
+                        justifyContent="space-between"
+                      >
+                        <Flex alignItems="center">
+                          {BlockLanguageEnum.YAML === blockLanguage && (
+                            <Select
                               compact
                               monospace
                               onBlur={() => setTimeout(() => {
                                 setAnyInputFocused(false);
                               }, 300)}
                               onChange={(e) => {
-                                // @ts-ignore
                                 updateDataProviderConfig({
-                                  [CONFIG_KEY_DBT]: {
-                                    ...dataProviderConfig?.[CONFIG_KEY_DBT],
-                                    [CONFIG_KEY_DBT_COMMAND]: e.target.value,
-                                  },
+                                  [CONFIG_KEY_DBT_PROFILE_TARGET]: '',
+                                  [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
                                 });
                                 e.preventDefault();
                               }}
@@ -2498,45 +2306,240 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                               onFocus={() => {
                                 setAnyInputFocused(true);
                               }}
-                              placeholder="command"
+                              placeholder="Project"
                               small
-                              value={dataProviderConfig?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND] || ''}
-                              width={UNIT * 10}
-                            />
-
-                            <Spacing mr={1} />
-
-                            <Text
-                              monospace
-                              small
+                              value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME] || ''}
                             >
-                              [type your --select and --exclude syntax below]
+                              {Object.keys(dbtProjects || {}).map((projectName: string) => (
+                                <option key={projectName} value={projectName}>
+                                  {projectName}
+                                </option>
+                              ))}
+                            </Select>
+                          )}
+
+                          {BlockLanguageEnum.YAML !== blockLanguage && (
+                            <Text monospace small>
+                              {dbtProjectName}
                             </Text>
+                          )}
 
-                            <Spacing mr={1} />
+                          <Spacing mr={2} />
 
-                            <Text monospace muted small>
-                              (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
-                            </Text>
-                          </Flex>
-
-                          <Spacing mr={1} />
-
-                          <Text muted small>
-                            <Link
-                              href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
-                              openNewWindow
-                              small
-                            >
-                              Examples
-                            </Link>
+                          <Text monospace muted small>
+                            Target
                           </Text>
 
+                          <span>&nbsp;</span>
+
+                          {!manuallyEnterTarget && (
+                            <Select
+                              compact
+                              disabled={!dbtProjectName}
+                              monospace
+                              onBlur={() => setTimeout(() => {
+                                setAnyInputFocused(false);
+                              }, 300)}
+                              onChange={(e) => {
+                                updateDataProviderConfig({
+                                  [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                                });
+                                e.preventDefault();
+                              }}
+                              onClick={pauseEvent}
+                              onFocus={() => {
+                                setAnyInputFocused(true);
+                              }}
+                              placeholder={dbtProfileTargetSelectPlaceholder}
+                              small
+                              value={dbtProfileTarget || ''}
+                            >
+                              {dbtProfileTargets?.map((target: string) => (
+                                <option key={target} value={target}>
+                                  {target}
+                                </option>
+                              ))}
+                            </Select>
+                          )}
+
+                          {manuallyEnterTarget && (
+                            <TextInput
+                              compact
+                              monospace
+                              onBlur={() => setTimeout(() => {
+                                setAnyInputFocused(false);
+                              }, 300)}
+                              onChange={(e) => {
+                                updateDataProviderConfig({
+                                  [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                                });
+                                e.preventDefault();
+                              }}
+                              onClick={pauseEvent}
+                              onFocus={() => {
+                                setAnyInputFocused(true);
+                              }}
+                              placeholder={dbtProjectName
+                                ? (dbtProfileData?.target || 'Enter target')
+                                : 'Select project first'
+                              }
+                              small
+                              value={dbtProfileTarget || ''}
+                              width={UNIT * 21}
+                            />
+                          )}
+
                           <Spacing mr={1} />
-                        </FlexContainer>
-                      </Spacing>
-                    )}
-                  </CodeHelperStyle>
+
+                          <FlexContainer alignItems="center">
+                            <Tooltip
+                              block
+                              description={
+                                <Text default inline>
+                                  Manually type the name of the target you want to use in the profile.
+                                  <br />
+                                  Interpolate environment variables and
+                                  global variables using the following syntax:
+                                  <br />
+                                  <Text default inline monospace>
+                                    {'{{ env_var(\'NAME\') }}'}
+                                  </Text> or <Text default inline monospace>
+                                    {'{{ variables(\'NAME\') }}'}
+                                  </Text>
+                                </Text>
+                              }
+                              size={null}
+                              widthFitContent
+                            >
+                              <FlexContainer alignItems="center">
+                                <Checkbox
+                                  checked={manuallyEnterTarget}
+                                  label={
+                                    <Text muted small>
+                                      Manually enter target
+                                    </Text>
+                                  }
+                                  onClick={(e) => {
+                                    pauseEvent(e);
+                                    setManuallyEnterTarget(!manuallyEnterTarget);
+                                    if (manuallyEnterTarget) {
+                                      updateDataProviderConfig({
+                                        [CONFIG_KEY_DBT_PROFILE_TARGET]: null,
+                                      });
+                                    }
+                                  }}
+                                />
+                                <span>&nbsp;</span>
+                                <Info muted />
+                              </FlexContainer>
+                            </Tooltip>
+                          </FlexContainer>
+                        </Flex>
+
+                        {BlockLanguageEnum.YAML !== blockLanguage && !dbtMetadata?.block?.snapshot && (
+                          <FlexContainer alignItems="center">
+                            <Tooltip
+                              appearBefore
+                              block
+                              description={
+                                <Text default inline>
+                                  Limit the number of results that are returned
+                                  <br />
+                                  when running this block in the notebook.
+                                  <br />
+                                  This limit won’t affect the number of results
+                                  <br />
+                                  returned when running the pipeline end-to-end.
+                                </Text>
+                              }
+                              size={null}
+                              widthFitContent
+                            >
+                              <FlexContainer alignItems="center">
+                                <Info muted />
+                                <span>&nbsp;</span>
+                                <Text monospace muted small>
+                                  Sample limit
+                                </Text>
+                                <span>&nbsp;</span>
+                              </FlexContainer>
+                            </Tooltip>
+                            {limitInputEl}
+                            <Spacing mr={1} />
+                          </FlexContainer>
+                        )}
+                      </FlexContainer>
+
+                      {BlockLanguageEnum.YAML === blockLanguage && (
+                        <Spacing mt={1}>
+                          <FlexContainer alignItems="center">
+                            <Flex alignItems="center" flex={1}>
+                              <Text default monospace small>
+                                dbt
+                              </Text>
+
+                              <Spacing mr={1} />
+
+                              <TextInput
+                                compact
+                                monospace
+                                onBlur={() => setTimeout(() => {
+                                  setAnyInputFocused(false);
+                                }, 300)}
+                                onChange={(e) => {
+                                  // @ts-ignore
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DBT]: {
+                                      ...dataProviderConfig?.[CONFIG_KEY_DBT],
+                                      [CONFIG_KEY_DBT_COMMAND]: e.target.value,
+                                    },
+                                  });
+                                  e.preventDefault();
+                                }}
+                                onClick={pauseEvent}
+                                onFocus={() => {
+                                  setAnyInputFocused(true);
+                                }}
+                                placeholder="command"
+                                small
+                                value={dataProviderConfig?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND] || ''}
+                                width={UNIT * 10}
+                              />
+
+                              <Spacing mr={1} />
+
+                              <Text
+                                monospace
+                                small
+                              >
+                                [type your --select and --exclude syntax below]
+                              </Text>
+
+                              <Spacing mr={1} />
+
+                              <Text monospace muted small>
+                                (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                              </Text>
+                            </Flex>
+
+                            <Spacing mr={1} />
+
+                            <Text muted small>
+                              <Link
+                                href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
+                                openNewWindow
+                                small
+                              >
+                                Examples
+                              </Link>
+                            </Text>
+
+                            <Spacing mr={1} />
+                          </FlexContainer>
+                        </Spacing>
+                      )}
+                    </CodeHelperStyle>
+                  </>
                 )}
 
                 {!hideExtraConfiguration && isSQLBlock
