@@ -1504,7 +1504,7 @@ function CodeBlock({
     let buttonEl;
 
     if (isDBT) {
-      buttonEl (
+      buttonEl = (
         <ButtonTabs
           onClickTab={(tab: TabType) => {
             setSelectedTab(tab);
