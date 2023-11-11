@@ -9,7 +9,7 @@ from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class ConnectionCredentialError(BaseDataClass):
+class ErrorMessage(BaseDataClass):
     message: str
     variables: Dict = field(default_factory=dict)
 
@@ -18,7 +18,7 @@ class ConnectionCredentialError(BaseDataClass):
 class ConnectionCredential(BaseDataClass):
     uuid: str
     description: str = None
-    error: ConnectionCredentialError = None
+    error: ErrorMessage = None
     name: str = None
     required: bool = False
     valid: bool = False
@@ -26,7 +26,7 @@ class ConnectionCredential(BaseDataClass):
 
     def __post_init__(self):
         if self.error and isinstance(self.error, dict):
-            self.error = ConnectionCredentialError.load(**self.error)
+            self.error = ErrorMessage.load(**self.error)
 
 
 class SetupStepStatus(str, Enum):
@@ -38,11 +38,17 @@ class SetupStepStatus(str, Enum):
 @dataclass
 class SetupStep(BaseDataClass):
     name: str
+    uuid: str
     description: str = None
+    error: ErrorMessage = None
     status: SetupStepStatus = SetupStepStatus.INCOMPLETE
     steps: List[SetupStepStatus] = field(default_factory=list)
+    tab: str = None
 
     def __post_init__(self):
+        if self.error and isinstance(self.error, dict):
+            self.error = ErrorMessage.load(**self.error)
+
         if self.status and isinstance(self.status, str):
             self.status = SetupStepStatus(self.status)
 

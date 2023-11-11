@@ -9,6 +9,7 @@ import ComputeServiceType, {
 } from '@interfaces/ComputeServiceType';
 import ConnectionSettings from './ConnectionSettings';
 import Divider from '@oracle/elements/Divider';
+import ErrorMessage from './ErrorMessage';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -20,13 +21,16 @@ import Spacing from '@oracle/elements/Spacing';
 import SparkGraph from './SparkGraph';
 import System from './System';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { CardStyle } from './index.style';
+import { CardStyle, SetupStepRowStyle } from './index.style';
 import {
+  AlertCircle,
   AlertTriangle,
   Check,
   Info,
+  PowerOnOffButton,
 } from '@oracle/icons';
 import {
   COMPUTE_SERVICES,
@@ -280,8 +284,10 @@ function ComputeManagement({
     {
       name,
       description,
+      error,
       status,
       steps,
+      tab,
     }: SetupStepType,
     idx: number,
     stepsCount: number,
@@ -291,6 +297,7 @@ function ComputeManagement({
   ) {
     const level = opts?.level || 0;
     const substepsCount = steps?.length || 0;
+    const completed = SetupStepStatusEnum.COMPLETED === status;
 
     let stepNumber = level === 0
       ? String(idx + 1)
@@ -301,67 +308,83 @@ function ComputeManagement({
     }
 
     return (
-      <Spacing
+      <SetupStepRowStyle
+        clickable={!!tab && !completed}
         key={name}
-        mt={level >= 1 ? 1 : 0}
-        px={level === 0 ? PADDING_UNITS : 0}
-        py={level === 0 ? 1 : 0}
+        onClick={tab && !completed
+          ? () => {
+            setSelectedTab(() => ({
+              main: tab,
+            }));
+          }
+          : null
+        }
       >
-        <FlexContainer>
-          <Text monospace muted>
-            {stepNumber}.
-          </Text>
+        <Spacing
+          mt={level >= 1 ? 1 : 0}
+          px={level === 0 ? PADDING_UNITS : 0}
+          py={level === 0 ? 1 : 0}
+        >
+          <FlexContainer>
+            <Text monospace muted>
+              {stepNumber}.
+            </Text>
 
-          <Spacing mr={1} />
+            <Spacing mr={1} />
 
-          <Flex flex={1} flexDirection="column">
-            <FlexContainer>
-              <Flex flex={1}>
-                <Text default={SetupStepStatusEnum.COMPLETED === status}>
-                  {name}
+            <Flex flex={1} flexDirection="column">
+              <FlexContainer>
+                <Flex flex={1}>
+                  <Text default={completed}>
+                    {name}
+                  </Text>
+                </Flex>
+
+                <Spacing mr={1} />
+
+                {SetupStepStatusEnum.COMPLETED === status && (
+                  <Check
+                    size={2 * UNIT}
+                    success
+                  />
+                )}
+
+                {SetupStepStatusEnum.INCOMPLETE === status && (
+                  <Info
+                    muted
+                    size={2 * UNIT}
+                  />
+                )}
+
+                {SetupStepStatusEnum.ERROR === status && (
+                  <AlertTriangle
+                    danger
+                    size={2 * UNIT}
+                  />
+                )}
+              </FlexContainer>
+
+              {description && !completed && (
+                <Text muted small>
+                  {description}
                 </Text>
-              </Flex>
-
-              <Spacing mr={1} />
-
-              {SetupStepStatusEnum.COMPLETED === status && (
-                <Check
-                  size={2 * UNIT}
-                  success
-                />
               )}
 
-              {SetupStepStatusEnum.INCOMPLETE === status && (
-                <Info
-                  muted
-                  size={2 * UNIT}
-                />
+              {error && (
+                <ErrorMessage error={error} small warning />
               )}
 
-              {SetupStepStatusEnum.ERROR === status && (
-                <AlertTriangle
-                  danger
-                  size={2 * UNIT}
-                />
-              )}
-            </FlexContainer>
-
-            {description && (
-              <Text muted small>
-                {description}
-              </Text>
-            )}
-
-            {substepsCount >= 1 && steps?.map((substep, idx2) => buildStep(
-              substep,
-              idx2,
-              substepsCount, {
-                level: 1,
-              },
-            ))}
-          </Flex>
-        </FlexContainer>
-      </Spacing>
+              {substepsCount >= 1 && steps?.map((substep, idx2) => buildStep(
+                substep,
+                idx2,
+                substepsCount, {
+                  level: 1,
+                },
+              ))}
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+      </SetupStepRowStyle>
     );
   }
 
@@ -416,10 +439,7 @@ function ComputeManagement({
 
         computeService?.setup_steps?.forEach((step, idx: number) => {
           const {
-            name,
-            description,
             status,
-            steps,
           } = step;
 
           statuses.push(status);
@@ -431,8 +451,12 @@ function ComputeManagement({
         if (!stepsCompleted) {
           arr.unshift(
             <>
-              <Spacing mb={1}>
-                <Divider light />
+              <Divider light />
+
+              <Spacing mb={1} px={PADDING_UNITS} pt={PADDING_UNITS}>
+                <Headline level={5}>
+                  Setup steps
+                </Headline>
               </Spacing>
 
               {stepsEls}
@@ -446,6 +470,15 @@ function ComputeManagement({
       }
 
       if (displayName && kicker && renderIcon) {
+        let setupStepsTooltipMessage;
+        if (computeService?.setup_steps) {
+          if (stepsCompleted) {
+            setupStepsTooltipMessage = 'Setup complete but no clusters connected.';
+          } else {
+            setupStepsTooltipMessage = 'All setup steps have not been completed yet.';
+          }
+        }
+
         arr.unshift(
           <Spacing
             key={`${displayName}-${kicker}`}
@@ -457,21 +490,31 @@ function ComputeManagement({
                   {renderIcon()}
                 </Flex>
 
-                <Button
-                  compact
-                  onClick={() => {
-                    setSelectedComputeService(null)
-                    setSelectedTab(null);
-                  }}
-                  secondary
-                  small
-                >
-                  Change
-                </Button>
+                {computeService?.setup_steps && (
+                  <Tooltip
+                    appearBefore
+                    block
+                    description={setupStepsTooltipMessage}
+                    size={null}
+                  >
+                    {stepsCompleted && (
+                      <PowerOnOffButton
+                        size={3 * UNIT}
+                        warning={stepsCompleted}
+                      />
+                    )}
+                    {!stepsCompleted && (
+                      <AlertCircle
+                        danger
+                        size={3 * UNIT}
+                      />
+                    )}
+                  </Tooltip>
+                )}
               </FlexContainer>
 
               <Spacing mt={PADDING_UNITS}>
-                <FlexContainer alignItems="flex-start">
+                <FlexContainer alignItems="flex-end">
                   <Flex flex={1} flexDirection="column">
                     <Text default monospace>
                       {kicker}
@@ -483,12 +526,17 @@ function ComputeManagement({
 
                   <Spacing mr={PADDING_UNITS} />
 
-                  {computeService?.setup_steps && !stepsCompleted && (
-                    <AlertTriangle
-                      danger
-                      size={3 * UNIT}
-                    />
-                  )}
+                  <Button
+                    compact
+                    onClick={() => {
+                      setSelectedComputeService(null)
+                      setSelectedTab(null);
+                    }}
+                    secondary
+                    small
+                  >
+                    Change
+                  </Button>
                 </FlexContainer>
               </Spacing>
             </CardStyle>

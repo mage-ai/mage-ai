@@ -11,16 +11,18 @@ export enum SetupStepStatusEnum {
   INCOMPLETE = 'incomplete',
 };
 
-export interface ConnectionCredentialType {
-  description?: string;
-  error: {
-    message: string;
-    variables?: {
-      [key: string]: {
-        monospace?: boolean;
-      };
+interface ErrorMessageType {
+  message: string;
+  variables?: {
+    [key: string]: {
+      monospace?: boolean;
     };
   };
+}
+
+export interface ConnectionCredentialType {
+  description?: string;
+  error: ErrorMessageType;
   name?: string;
   required?: boolean;
   valid?: boolean;
@@ -31,8 +33,10 @@ export interface ConnectionCredentialType {
 export interface SetupStepType {
   name: string;
   description?: string;
+  error?: ErrorMessageType;
   status?: SetupStepStatusEnum;
   steps?: SetupStepType[];
+  tab?: string;
 }
 
 export default interface ComputeServiceType {

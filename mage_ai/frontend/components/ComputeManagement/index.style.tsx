@@ -25,3 +25,16 @@ export const CardStyle = styled.div<{
     margin: ${(PADDING_UNITS / 2) * UNIT}px;
   `}
 `;
+
+export const SetupStepRowStyle = styled.div<{
+  clickable?: boolean;
+}>`
+  ${transition()}
+
+  ${props => props.clickable && `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverOverlay};
+      cursor: pointer;
+    }
+  `}
+`;

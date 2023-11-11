@@ -11,7 +11,7 @@ from mage_ai.services.compute.aws.constants import (
 from mage_ai.services.compute.models import (
     ComputeService,
     ConnectionCredential,
-    ConnectionCredentialError,
+    ErrorMessage,
     SetupStep,
     SetupStepStatus,
 )
@@ -113,6 +113,31 @@ class Metadata(BaseDataClass):
     retry_attempts: int = None  # 0
 
 
+ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
+    message='Environment variable '
+            f'{{{{{CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}}}}} '
+            'is missing',
+    variables={
+        CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID: dict(
+            monospace=True,
+            muted=True,
+        ),
+    },
+)
+
+ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
+    message='Environment variable '
+            f'{{{{{CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}}}}} '
+            'is missing',
+    variables={
+        CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY: dict(
+            monospace=True,
+            muted=True,
+        ),
+    },
+)
+
+
 class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
@@ -129,43 +154,27 @@ class AWSEMRComputeService(ComputeService):
         )
 
     def connection_credentials(self) -> List[ConnectionCredential]:
-        valid_key = True if os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID) else False
+        key = os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID)
+        valid_key = True if key else False
         key = ConnectionCredential.load(
             description=f'Environment variable {CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}',
             name='Access key ID',
-            error=ConnectionCredentialError.load(
-                message='Environment variable '
-                        f'{{{{{CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}}}}} '
-                        'is missing',
-                variables={
-                    CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID: dict(
-                        monospace=True,
-                        muted=True,
-                    ),
-                },
-            ) if not valid_key else None,
+            error=ERROR_MESSAGE_ACCESS_KEY_ID if not valid_key else None,
             required=True,
             valid=valid_key,
+            value='*' * len(key) if key else None,
             uuid=CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
         )
 
-        valid_secret = True if os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY) else False
+        secret = os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY)
+        valid_secret = True if secret else False
         secret = ConnectionCredential.load(
             description=f'Environment variable {CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}',
             name='Secret access key',
-            error=ConnectionCredentialError.load(
-                message='Environment variable '
-                        f'{{{{{CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}}}}} '
-                        'is missing',
-                variables={
-                    CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY: dict(
-                        monospace=True,
-                        muted=True,
-                    ),
-                },
-            ) if not valid_secret else None,
+            error=ERROR_MESSAGE_SECRET_ACCESS_KEY if not valid_secret else None,
             required=True,
             valid=valid_secret,
+            value='*' * len(secret) if secret else None,
             uuid=CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
         )
 
@@ -187,36 +196,55 @@ class AWSEMRComputeService(ComputeService):
             steps=[
                 SetupStep.load(
                     name='Access key ID',
+                    error=ERROR_MESSAGE_ACCESS_KEY_ID if not valid_key else None,
                     status=(
                         SetupStepStatus.COMPLETED if valid_key
                         else SetupStepStatus.INCOMPLETE
                     ),
+                    uuid=CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
                 ),
                 SetupStep.load(
                     name='Secret access key',
+                    error=ERROR_MESSAGE_SECRET_ACCESS_KEY if not valid_secret else None,
                     status=(
                         SetupStepStatus.COMPLETED if valid_secret
                         else SetupStepStatus.INCOMPLETE
                     ),
+                    uuid=CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
                 ),
             ],
             status=(
                 SetupStepStatus.COMPLETED if valid_key and
                 valid_secret else SetupStepStatus.INCOMPLETE
             ),
+            tab='connection',
+            uuid='credentials',
         ))
 
+        error_message = None
         remote_variables_dir_status = SetupStepStatus.INCOMPLETE
         if self.project.remote_variables_dir:
             if self.project.remote_variables_dir.startswith('s3://'):
                 remote_variables_dir_status = SetupStepStatus.COMPLETED
             else:
                 remote_variables_dir_status = SetupStepStatus.ERROR
+                error_message = ErrorMessage.load(
+                    message='Remote variables directory must begin with: {{s3://}}',
+                    variables={
+                        's3://': dict(
+                            monospace=True,
+                            muted=True,
+                        ),
+                    },
+                )
 
         arr.append(SetupStep.load(
             description='Set the Amazon S3 bucket.',
+            error=error_message,
             name='Remote variables directory',
             status=remote_variables_dir_status,
+            tab='connection',
+            uuid='remote_variables_dir',
         ))
 
         return arr

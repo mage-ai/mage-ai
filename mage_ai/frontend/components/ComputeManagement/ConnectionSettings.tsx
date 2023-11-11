@@ -5,6 +5,7 @@ import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
 import ComputeServiceType from '@interfaces/ComputeServiceType';
 import Divider from '@oracle/elements/Divider';
+import ErrorMessage from './ErrorMessage';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -269,6 +270,79 @@ function ConnectionSettings({
     setObjectAttributesSparkConfig,
   ]);
 
+  const awsEMRSetupMemo = useMemo(() => {
+    const remoteVariablesDirKey = 'remote_variables_dir';
+    const steps = computeService?.setup_steps;
+    const remoteVariablesDirStep = steps?.find(({ uuid }) => uuid === remoteVariablesDirKey);
+
+    return (
+      <>
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="flex-start">
+            <FlexContainer flexDirection="column">
+              <Text
+                danger={!objectAttributes?.[remoteVariablesDirKey]
+                  || remoteVariablesDirStep?.error
+                }
+                default
+                large
+              >
+                Remote variables directory {!objectAttributes?.[remoteVariablesDirKey] && (
+                  <Text danger inline large>
+                    is required
+                  </Text>
+                )}
+              </Text>
+
+              <Text muted small>
+                This S3 bucket will be used by Spark.
+              </Text>
+            </FlexContainer>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1} flexDirection="column">
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                large
+                monospace
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  remote_variables_dir: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="e.g. s3://magically-powerful-bucket"
+                value={objectAttributes?.remote_variables_dir || ''}
+              />
+
+              {remoteVariablesDirStep?.error && (
+                <FlexContainer justifyContent="flex-end">
+                  <Spacing mt={1}>
+                    <ErrorMessage error={remoteVariablesDirStep?.error} />
+                  </Spacing>
+                </FlexContainer>
+              )}
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+      </>
+    );
+  }, [
+    computeService,
+    objectAttributes,
+    setObjectAttributes,
+  ]);
+
   return (
     <ContainerStyle>
       <Panel noPadding>
@@ -413,58 +487,7 @@ function ConnectionSettings({
           </FlexContainer>
         </Spacing>
 
-        {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
-          <>
-            <Divider light />
-
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="flex-start">
-                <FlexContainer flexDirection="column">
-                  <Text
-                    danger={!objectAttributes?.remote_variables_dir}
-                    default
-                    large
-                  >
-                    Remote variables directory {!objectAttributes?.remote_variables_dir && (
-                      <Text danger inline large>
-                        is required
-                      </Text>
-                    )}
-                  </Text>
-
-                  <Text muted small>
-                    This S3 bucket will be used by Spark.
-                  </Text>
-                </FlexContainer>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <Flex flex={1}>
-                  <TextInput
-                    afterIcon={<Edit />}
-                    afterIconClick={(_, inputRef) => {
-                      inputRef?.current?.focus();
-                    }}
-                    afterIconSize={ICON_SIZE}
-                    alignRight
-                    large
-                    monospace
-                    noBackground
-                    noBorder
-                    fullWidth
-                    onChange={e => setObjectAttributes({
-                      remote_variables_dir: e.target.value,
-                    })}
-                    paddingHorizontal={0}
-                    paddingVertical={0}
-                    placeholder="e.g. s3://magically-powerful-bucket"
-                    value={objectAttributes?.remote_variables_dir || ''}
-                  />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
-          </>
-        )}
+        {ComputeServiceEnum.AWS_EMR === selectedComputeService && awsEMRSetupMemo}
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -487,45 +510,6 @@ function ConnectionSettings({
               valid,
               value,
             }) => {
-              let errorEl;
-
-              if (error) {
-                const {
-                  message: messageInit,
-                  variables,
-                } = error;
-
-                let errorHTML = messageInit;
-
-                if (variables) {
-                  Object.entries(variables || {}).forEach(([key, value]) => {
-                    errorHTML = errorHTML.replace(
-                      `{{${key}}}`,
-                      renderToString(
-                        <Text
-                          inline
-                          large
-                          muted
-                          {...(value || {})}
-                        >
-                          {key}
-                        </Text>
-                      ),
-                    )
-                  });
-                }
-
-                errorEl = (
-                  <Text
-                    dangerouslySetInnerHTML={{
-                      __html: errorHTML,
-                    }}
-                    muted
-                    large
-                  />
-                );
-              }
-
               return (
                 <div key={uuid}>
                   <Divider light />
@@ -568,7 +552,7 @@ function ConnectionSettings({
                                 Invalid
                               </Text>
                             )}
-                            {error && errorEl}
+                            {error && <ErrorMessage error={error} large />}
                           </>
                         )}
 

@@ -2,8 +2,10 @@ import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
 import ComputeServiceType from '@interfaces/ComputeServiceType';
 import {
   BlockCubePolygon,
-  BlocksStacked,
+  CubesThreeSeparated,
+  DiamondGem,
   Monitor,
+  PlugAPI,
   PowerOnOffButton,
   WorkspacesUsersIcon,
 } from '@oracle/icons';
@@ -121,11 +123,11 @@ export const SHARED_TEXT_PROPS: {
 export function buildTabs(computeService: ComputeServiceType): TabType[] {
   let arr = [
     {
-      Icon: PowerOnOffButton,
+      Icon: PlugAPI,
       uuid: MainNavigationTabEnum.CONNECTION,
     },
     {
-      Icon: WorkspacesUsersIcon,
+      Icon: DiamondGem,
       uuid: MainNavigationTabEnum.RESOURCES,
     },
     {
@@ -140,7 +142,7 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
 
   if (ComputeServiceUUIDEnum.AWS_EMR === computeService?.uuid) {
     arr = pushAtIndex({
-      Icon: BlocksStacked,
+      Icon: CubesThreeSeparated,
       uuid: MainNavigationTabEnum.CLUSTERS,
     }, 2, arr);
   }
