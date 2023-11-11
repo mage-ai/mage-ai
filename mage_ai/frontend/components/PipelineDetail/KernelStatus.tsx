@@ -13,6 +13,7 @@ import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ClusterSelection from './ClusterSelection';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -35,9 +36,16 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import useComputeService from '@utils/models/computeService/useComputeService'
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
-import { Check, LayoutSplit, LayoutStacked, PowerOnOffButton } from '@oracle/icons';
+import {
+  AlertTriangle,
+  Check,
+  LayoutSplit,
+  LayoutStacked,
+  PowerOnOffButton,
+} from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
@@ -60,6 +68,8 @@ import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
+import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 
@@ -104,9 +114,17 @@ function KernelStatus({
   const {
     featureEnabled,
     featureUUIDs,
+    sparkEnabled,
   } = useProject();
-
-  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
+  const {
+    activeCluster,
+    clusters,
+    clustersLoading,
+    computeService,
+    computeServiceUUIDs,
+    fetchComputeClusters,
+    setupComplete,
+  } = useComputeService();
 
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
@@ -119,6 +137,7 @@ function KernelStatus({
     useState(CloudProviderSparkClusterEnum.EMR);
   const [showSelectCluster, setShowSelectCluster] = useState(false);
   const [showSelectKernel, setShowSelectKernel] = useState(false);
+  const [clusterSelectionVisible, setClusterSelectionVisible] = useState(false);
 
   const refSelectKernel = useRef(null);
 
@@ -127,16 +146,16 @@ function KernelStatus({
     data: dataClusters,
     mutate: fetchClusters,
   } = api.clusters.detail(selectedSparkClusterType, {}, { revalidateOnFocus: false });
-  const clusters: ClusterType[] = useMemo(
+  const clustersOld: ClusterType[] = useMemo(
     () => dataClusters?.cluster?.clusters || [],
     [dataClusters],
   );
   const selectedCluster = useMemo(
-    () => find(clusters, ({ is_active: isActive }) => isActive),
-    [clusters],
+    () => find(clustersOld, ({ is_active: isActive }) => isActive),
+    [clustersOld],
   );
 
-  const [updateCluster] = useMutation(
+  const [updateClusterOld] = useMutation(
     api.clusters.useUpdate(selectedSparkClusterType),
     {
       onSuccess: (response: any) => onSuccess(
@@ -156,7 +175,7 @@ function KernelStatus({
   const {
     data: dataSparkApplications,
   } = api.spark_applications.list({}, {}, {
-    pauseFetch: !computeManagementEnabled,
+    pauseFetch: !sparkEnabled,
   });
   const sparkApplications: SparkApplicationType[] =
     useMemo(() => dataSparkApplications?.spark_applications, [
@@ -281,75 +300,176 @@ function KernelStatus({
     themeContext,
   ]);
 
-  const pipelineDisplayName = useMemo(() => {
-    if (computeManagementEnabled && validComputePipelineType) {
-      if (!dataSparkApplications) {
-        return 'Loading compute';
-      } else if (!sparkApplications?.length) {
-        return 'Compute unavailable';
-      } else if (sparkApplications?.length >= 1) {
-        const sparkApplication = sparkApplications?.[0];
-
-        return [
-          sparkApplication?.name,
-          sparkApplication?.attempts?.[0]?.app_spark_version,
-        ].filter(value => value).join(' ');
-      }
-    }
-  }, [
-    computeManagementEnabled,
-    dataSparkApplications,
-    pipeline,
-    sparkApplications,
-    validComputePipelineType,
-  ]);
+  const [updateCluster, { isLoading: isLoadingUpdateCluster }] = useMutation(
+    (cluster: AWSEMRClusterType) => api.compute_clusters.compute_services.useUpdate(
+      computeService?.uuid,
+      cluster?.id,
+    )({
+      compute_cluster: selectKeys(cluster, [
+        'active',
+      ]),
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchComputeClusters();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              errors?.error || exception || message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+          },
+        },
+      ),
+    },
+  );
 
   const computeStatusMemo = useMemo(() => {
-    if (!computeManagementEnabled || !validComputePipelineType) {
+    if (!sparkEnabled || !validComputePipelineType) {
       return null;
     }
 
+    let menuEl;
+    let onClick;
+    let pipelineDisplayName;
     let statusIconEl;
+    const buttonProps: {
+      muted?: boolean;
+      warning?: boolean;
+    } = {
+      muted: false,
+      warning: false,
+    };
 
-    if (!dataSparkApplications) {
-      statusIconEl = (
-        <Spinner
-          inverted
-          small
-        />
-      );
-    } else if (!sparkApplications?.length) {
-      statusIconEl = (
-        <PowerOnOffButton
-          danger
-        />
-      );
+    if (computeServiceUUIDs.AWS_EMR === computeService?.uuid) {
+      if (activeCluster) {
+        pipelineDisplayName = (
+          <Text monospace>
+            {activeCluster?.id}
+          </Text>
+        );
+        statusIconEl = (
+          <PowerOnOffButton
+            success
+          />
+        );
+      } else if (setupComplete) {
+        if (!clusters?.length) {
+          pipelineDisplayName = 'Launch a new cluster';
+        } else {
+          pipelineDisplayName = 'Select a compute cluster';
+        }
+
+        statusIconEl = (
+          <PowerOnOffButton warning />
+        );
+      } else {
+        // Show the incomplete steps
+        // Take user to compute management application
+        pipelineDisplayName = 'Compute setup incomplete';
+        statusIconEl = (
+          <AlertTriangle
+            danger
+          />
+        );
+      }
+
+      if (activeCluster || setupComplete) {
+        menuEl = (
+          <ClickOutside
+            onClickOutside={(e) => {
+              pauseEvent(e);
+              setClusterSelectionVisible(false);
+            }}
+            open={clusterSelectionVisible}
+          >
+            <ClusterSelection />
+          </ClickOutside>
+        );
+        onClick = (e) => {
+          pauseEvent(e);
+          if (!clusterSelectionVisible) {
+            setClusterSelectionVisible(true);
+          }
+        };
+      }
+    } else if (computeServiceUUIDs.STANDALONE_CLUSTER === computeService?.uuid) {
+      if (!dataSparkApplications) {
+        pipelineDisplayName = 'Loading compute';
+        statusIconEl = (
+          <Spinner
+            inverted
+            small
+          />
+        );
+      } else if (!sparkApplications?.length) {
+        onClick = () => router.push('/compute');
+        pipelineDisplayName = 'Compute unavailable';
+        statusIconEl = (
+          <PowerOnOffButton
+            danger
+          />
+        );
+      } else if (sparkApplications?.length >= 1) {
+        const sparkApplication = sparkApplications?.[0];
+
+        pipelineDisplayName = [
+          sparkApplication?.name,
+          sparkApplication?.attempts?.[0]?.app_spark_version,
+        ].filter(value => value).join(' ');
+
+        statusIconEl = (
+          <PowerOnOffButton
+            success
+          />
+        );
+      }
     }
 
     return (
-      <KeyboardShortcutButton
-        beforeElement={statusIconEl}
-        blackBorder
-        compact
-        inline
-        noHover={!dataSparkApplications || sparkApplications?.length >= 1}
-        onClick={dataSparkApplications && !sparkApplications?.length
-          ? () => router.push('/compute')
-          : null
-        }
-        uuid="Pipeline/KernelStatus/kernel"
-      >
-        {pipelineDisplayName}
-      </KeyboardShortcutButton>
+      <div style={{ position: 'relative' }}>
+        <KeyboardShortcutButton
+          beforeElement={statusIconEl}
+          blackBorder
+          compact
+          inline
+          noHover={!dataSparkApplications || sparkApplications?.length >= 1}
+          onClick={onClick}
+          uuid="Pipeline/KernelStatus/kernel"
+          {...buttonProps}
+        >
+          {pipelineDisplayName}
+        </KeyboardShortcutButton>
+
+        {menuEl}
+      </div>
     );
 
     return null;
   }, [
-    computeManagementEnabled,
+    activeCluster,
+    clusterSelectionVisible,
+    clusters,
+    computeService,
+    computeServiceUUIDs,
     dataSparkApplications,
-    pipelineDisplayName,
     router,
+    setClusterSelectionVisible,
+    setupComplete,
     sparkApplications,
+    sparkEnabled,
     validComputePipelineType,
   ]);
 
@@ -386,7 +506,7 @@ function KernelStatus({
                     label: () => 'Select cluster',
                     uuid: 'select_cluster',
                   },
-                  ...clusters.map(({
+                  ...clustersOld.map(({
                     id,
                     is_active: isActive,
                     status,
@@ -422,7 +542,7 @@ function KernelStatus({
                       onClick: isActive || ClusterStatusEnum.WAITING !== status
                         ? null
                         // @ts-ignore
-                        : () => updateCluster({
+                        : () => updateClusterOld({
                             cluster: {
                               id,
                             },
@@ -483,7 +603,7 @@ function KernelStatus({
     </div>
   ), [
     alive,
-    clusters,
+    clustersOld,
     isBusy,
     pipeline,
     selectedCluster,
@@ -494,6 +614,7 @@ function KernelStatus({
     statusIconMemo,
     themeContext,
     updateCluster,
+    updateClusterOld,
     updatePipelineMetadata,
   ]);
 

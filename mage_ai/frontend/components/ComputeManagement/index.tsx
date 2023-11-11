@@ -24,9 +24,9 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import useComputeService from '@utils/models/computeService/useComputeService'
 import { CardStyle, SetupStepRowStyle } from './index.style';
 import {
-  AlertCircle,
   AlertTriangle,
   Check,
   Info,
@@ -215,27 +215,15 @@ function ComputeManagement({
   const projectName = useMemo(() => project?.name, [project]);
 
   const {
-    data: dataComputeService,
-    mutate: fetchComputeService,
-  } = api.compute_services.detail('compute-service');
-  const computeService: ComputeServiceType = useMemo(() => dataComputeService?.compute_service, [
-    dataComputeService,
-  ]);
-
-  const {
-    data: dataComputeClusters,
-    mutate: fetchComputeClusters,
-  } = api.compute_clusters.compute_services.list(computeService?.uuid);
-
-  const computeClusters: ComputeClusterType[] =
-    useMemo(() => dataComputeClusters?.compute_clusters || [], [
-      dataComputeClusters,
-    ]);
-
-  const clusters: AWSEMRClusterType[] =
-    useMemo(() => computeClusters?.map(({ cluster }) => cluster), [
-      computeClusters,
-    ]);
+    activeCluster,
+    clusters,
+    clustersLoading,
+    computeService,
+    fetchComputeClusters,
+    setupComplete,
+  }: ComputeServiceType = useComputeService({
+    clustersRefreshInterval: 10000,
+  });
 
   useEffect(() => {
     if (project) {
@@ -349,10 +337,20 @@ function ComputeManagement({
 
             <Flex flex={1} flexDirection="column">
               <FlexContainer>
-                <Flex flex={1}>
+                <Flex flex={1} flexDirection="column">
                   <Text default={completed}>
                     {name}
                   </Text>
+
+                  {description && !completed && (
+                    <Text muted small>
+                      {description}
+                    </Text>
+                  )}
+
+                  {error && (
+                    <ErrorMessage error={error} small warning />
+                  )}
                 </Flex>
 
                 <Spacing mr={1} />
@@ -378,16 +376,6 @@ function ComputeManagement({
                   />
                 )}
               </FlexContainer>
-
-              {description && !completed && (
-                <Text muted small>
-                  {description}
-                </Text>
-              )}
-
-              {error && (
-                <ErrorMessage error={error} small warning />
-              )}
 
               {substepsCount >= 1 && steps?.map((substep, idx2) => buildStep(
                 substep,
@@ -445,25 +433,19 @@ function ComputeManagement({
       const kicker = COMPUTE_SERVICE_KICKER[selectedComputeService];
       const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
 
-      let stepsCompleted = false;
-
       if (computeService?.setup_steps) {
         const stepsEls = [];
         const stepsCount = computeService?.setup_steps?.length || 0;
-        const statuses = [];
 
         computeService?.setup_steps?.forEach((step, idx: number) => {
           const {
             status,
           } = step;
 
-          statuses.push(status);
           stepsEls.push(buildStep(step, idx, stepsCount));
         });
 
-        stepsCompleted = statuses.every(status => SetupStepStatusEnum.COMPLETED === status);
-
-        if (!stepsCompleted) {
+        if (!setupComplete) {
           arr.unshift(
             <>
               <Divider light />
@@ -485,12 +467,10 @@ function ComputeManagement({
       }
 
       if (displayName && kicker && renderIcon) {
-        const clusterActive = clusters?.find(({ active }) => active);
-
         let setupStepsTooltipMessage;
         if (computeService?.setup_steps) {
-          if (stepsCompleted) {
-            if (clusterActive) {
+          if (setupComplete) {
+            if (activeCluster) {
               setupStepsTooltipMessage = 'Cluster activated, commence coding.';
             } else {
               setupStepsTooltipMessage = 'Setup complete but no clusters activated.';
@@ -519,15 +499,15 @@ function ComputeManagement({
                     maxWidth={30 * UNIT}
                     size={null}
                   >
-                    {stepsCompleted && (
+                    {setupComplete && (
                       <PowerOnOffButton
-                        muted={!clusterActive}
+                        muted={!activeCluster}
                         size={3 * UNIT}
-                        success={clusterActive}
+                        success={activeCluster}
                       />
                     )}
-                    {!stepsCompleted && (
-                      <AlertCircle
+                    {!setupComplete && (
+                      <AlertTriangle
                         danger
                         size={3 * UNIT}
                       />
@@ -570,11 +550,13 @@ function ComputeManagement({
 
     return arr;
   }, [
+    activeCluster,
     clusters,
     computeService,
     selectedComputeService,
     selectedTab,
     setSelectedTab,
+    setupComplete,
   ]);
 
   const after = useMemo(() => {
@@ -731,12 +713,12 @@ function ComputeManagement({
       clusters={clusters}
       computeService={computeService}
       fetchComputeClusters={fetchComputeClusters}
-      loading={!dataComputeClusters}
+      loading={clustersLoading}
     />
   ), [
     clusters,
+    clustersLoading,
     computeService,
-    dataComputeClusters,
     fetchComputeClusters,
   ]);
 

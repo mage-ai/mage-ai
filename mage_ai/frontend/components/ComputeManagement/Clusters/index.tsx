@@ -66,8 +66,6 @@ function Clusters({
     uuid: componentUUID,
   });
 
-
-
   const [createCluster, { isLoading: isLoadingCreateCluster }] = useMutation(
     api.compute_clusters.compute_services.useCreate(computeService?.uuid),
     {
