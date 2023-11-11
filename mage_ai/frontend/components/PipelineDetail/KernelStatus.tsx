@@ -357,6 +357,10 @@ function KernelStatus({
     };
 
     if (computeServiceUUIDs.AWS_EMR === computeService?.uuid) {
+      if (PipelineTypeEnum.PYSPARK !== pipeline?.type) {
+        return null;
+      }
+
       if (activeCluster) {
         pipelineDisplayName = (
           <Text monospace>
@@ -412,7 +416,6 @@ function KernelStatus({
             setClusterSelectionVisible(true);
           }
         };
-        // Take user to compute management application
         pipelineDisplayName = 'Compute setup incomplete';
         statusIconEl = (
           <AlertTriangle
@@ -491,8 +494,6 @@ function KernelStatus({
         {menuEl}
       </div>
     );
-
-    return null;
   }, [
     activeCluster,
     clusterSelectionVisible,
@@ -500,6 +501,7 @@ function KernelStatus({
     computeService,
     computeServiceUUIDs,
     dataSparkApplications,
+    pipeline,
     router,
     setClusterSelectionVisible,
     setupComplete,
