@@ -518,7 +518,7 @@ function KernelStatus({
       }}
     >
       <FlexContainer alignItems="center">
-        {pipeline?.type === PipelineTypeEnum.PYSPARK && (
+        {pipeline?.type === PipelineTypeEnum.PYSPARK && !sparkEnabled && (
           <Spacing mr={PADDING_UNITS}>
             <Link
               muted={!!selectedCluster}
