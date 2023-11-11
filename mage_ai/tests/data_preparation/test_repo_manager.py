@@ -1,7 +1,6 @@
 import os
 import shutil
 import uuid
-from pathlib import Path
 from unittest.mock import patch
 
 import yaml
@@ -13,10 +12,7 @@ from mage_ai.data_preparation.repo_manager import (
     init_project_uuid,
     set_project_uuid_from_metadata,
 )
-from mage_ai.orchestration.db import db_connection
-from mage_ai.orchestration.db.database_manager import database_manager
-from mage_ai.settings.repo import MAGE_DATA_DIR_ENV_VAR, set_repo_path
-from mage_ai.shared.logger import LoggingLevel
+from mage_ai.settings.repo import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.tests.base_test import DBTestCase
 
 
@@ -25,16 +21,6 @@ def mock_uuid_value():
 
 
 class RepoManagerTest(DBTestCase):
-    @classmethod
-    def setUpClass(self):
-        # Not set project uuid so that we can write test methods for project uuid
-        self.repo_path = os.path.join(os.getcwd(), 'test')
-        set_repo_path(self.repo_path)
-        if not Path(self.repo_path).exists():
-            Path(self.repo_path).mkdir()
-        database_manager.run_migrations(log_level=LoggingLevel.ERROR)
-        db_connection.start_session()
-
     def test_variables_dir(self):
         if os.getenv(MAGE_DATA_DIR_ENV_VAR):
             del os.environ[MAGE_DATA_DIR_ENV_VAR]
@@ -113,6 +99,10 @@ class RepoManagerTest(DBTestCase):
     @patch('uuid.uuid4')
     def test_init_project_uuid(self, mock_uuid):
         mock_uuid.return_value = mock_uuid_value()
+        # Reset the project metadata.yaml
+        with open(os.path.join(self.repo_path, 'metadata.yaml'), 'w', encoding='utf-8') as f:
+            yaml.dump(dict(), f)
+            set_project_uuid_from_metadata()
 
         init_project_uuid()
         self.assertEqual(get_project_uuid(), mock_uuid_value().hex)
