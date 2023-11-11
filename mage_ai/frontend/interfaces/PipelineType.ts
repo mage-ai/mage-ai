@@ -124,5 +124,6 @@ export default interface PipelineType {
   type?: PipelineTypeEnum;
   updated_at?: string;
   uuid: string;
+  variables?: { [keyof: string]: string };
   widgets?: BlockType[];
 }

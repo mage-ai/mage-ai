@@ -21,6 +21,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import OverwriteVariables from '@components/Triggers/OverwriteVariables';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
@@ -34,6 +35,7 @@ import {
   Alphabet,
   CalendarDate,
   Schedule,
+  Variables as VariablesIcon,
 } from '@oracle/icons';
 import { BACKFILL_TYPES } from './constants';
 import { CardStyle } from '../../Triggers/Edit/index.style';
@@ -45,9 +47,13 @@ import {
 import { capitalize } from '@utils/string';
 import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar/utils';
 import { getDatetimeFromDateAndTime } from '@components//Triggers/utils';
+import {
+  getFormattedGlobalVariables,
+  getFormattedVariable,
+  parseVariables,
+} from '@components/Sidekick/utils';
+import { isEmptyObject, mapObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { parseVariables } from '@components/Sidekick/utils';
-import { selectKeys } from '@utils/hash';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type BackfillEditProps = {
@@ -80,8 +86,20 @@ function BackfillEdit({
   const {
     uuid: pipelineUUID,
   } = pipeline;
+  const runtimeVariablesInit = useMemo(() => (
+    isEmptyObject(modelProp?.variables || {})
+      ? (getFormattedGlobalVariables(variables) || {})
+      : mapObject(modelProp.variables, val => getFormattedVariable(val))
+  ),
+  [
+    modelProp?.variables,
+    variables,
+  ]);
 
-  const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
+  const [enableVariablesOverwrite, setEnableVariablesOverwrite] = useState<boolean>(false);
+  const [runtimeVariables, setRuntimeVariables] = useState<{
+    [ variable: string ]: string
+  }>(runtimeVariablesInit);
   const [setupType, setSetupType] = useState<string>(
     blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME,
   );
@@ -127,7 +145,7 @@ function BackfillEdit({
           alignItems="center"
           key="model_name_detail"
         >
-          <Alphabet default size={1.5 * UNIT} />
+          <Alphabet default />
           <Spacing mr={1} />
           <Text default>
             Backfill name
@@ -156,7 +174,7 @@ function BackfillEdit({
             alignItems="center"
             key="start_time"
           >
-            <CalendarDate default size={1.5 * UNIT} />
+            <CalendarDate default />
             <Spacing mr={1} />
             <Text default>
               Start date and time
@@ -205,7 +223,7 @@ function BackfillEdit({
             alignItems="center"
             key="end_time"
           >
-            <CalendarDate default size={1.5 * UNIT} />
+            <CalendarDate default />
             <Spacing mr={1} />
             <Text default>
               End date and time
@@ -254,7 +272,7 @@ function BackfillEdit({
             alignItems="center"
             key="interval_type"
           >
-            <Schedule default size={1.5 * UNIT} />
+            <Schedule default />
             <Spacing mr={1} />
             <Text default>
               Interval type
@@ -285,7 +303,7 @@ function BackfillEdit({
             alignItems="center"
             key="interval_units"
           >
-            <Schedule default size={1.5 * UNIT} />
+            <Schedule default />
             <Spacing mr={1} />
             <Text default>
               Interval units
@@ -313,6 +331,30 @@ function BackfillEdit({
       ]);
     }
 
+    if (!isEmptyObject(runtimeVariablesInit)) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="overwrite_runtime_variables"
+        >
+          <VariablesIcon default />
+          <Spacing mr={1} />
+          <Text default>
+            Runtime variables
+          </Text>
+        </FlexContainer>,
+        <OverwriteVariables
+          borderless
+          compact
+          enableVariablesOverwrite={enableVariablesOverwrite}
+          key="overwrite_runtime_variables_table"
+          runtimeVariables={runtimeVariables}
+          setEnableVariablesOverwrite={setEnableVariablesOverwrite}
+          setRuntimeVariables={setRuntimeVariables}
+        />,
+      ]);
+    }
+
     return (
       <>
         <Spacing mb={2} px={PADDING_UNITS}>
@@ -333,9 +375,12 @@ function BackfillEdit({
     dateEnd,
     dateStart,
     displayLocalTimezone,
+    enableVariablesOverwrite,
     intervalType,
     intervalUnits,
     name,
+    runtimeVariables,
+    runtimeVariablesInit,
     setupType,
     showCalendarStart,
     showCalendarEnd,
@@ -373,7 +418,7 @@ function BackfillEdit({
       interval_type: null,
       interval_units: null,
       start_datetime: null,
-      variables: parseVariables(runtimeVariables),
+      variables: enableVariablesOverwrite ? parseVariables(runtimeVariables) : {},
     };
 
     if (BACKFILL_TYPE_CODE === setupType) {
@@ -409,6 +454,7 @@ function BackfillEdit({
     dateEnd,
     dateStart,
     displayLocalTimezone,
+    enableVariablesOverwrite,
     intervalType,
     intervalUnits,
     model,
