@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { toast } from 'react-toastify';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -90,6 +91,39 @@ function Clusters({
     },
   );
 
+  const [deleteCluster, { isLoading: isLoadingDeleteCluster }] = useMutation(
+    (cluster: AWSEMRClusterType) => api.compute_clusters.compute_services.useDelete(
+      computeService?.uuid,
+      cluster?.id,
+    )(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchComputeClusters();
+            setSelectedRowIndexInternal(undefined);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              errors?.error || exception || message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <>
       <SubheaderStyle>
@@ -145,15 +179,17 @@ function Clusters({
           },
         ]}
         onClickRow={(index: number, event?: any) => {
-          if (typeof selectedRowIndexInternal !== 'undefined' && selectedRowIndexInternal !== null) {
-            setSelectedRowIndexInternal(null);
-          }
+          setSelectedRowIndexInternal(prev => prev === index ? null : index);
         }}
         renderExpandedRowWithObject={(rowIndex: number, object: any) => {
           const cluster = object?.compute_cluster?.cluster;
 
           if (!cluster) {
-            return null;
+            return (
+              <Spacing p={PADDING_UNITS}>
+                <Spinner inverted />
+              </Spacing>
+            );
           }
 
           const {
@@ -207,6 +243,8 @@ function Clusters({
                             <Spacing mr={PADDING_UNITS} />
 
                             <Button
+                              loading={isLoadingDeleteCluster}
+                              onClick={() => deleteCluster(cluster)}
                               secondary
                             >
                               Terminate cluster

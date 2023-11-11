@@ -201,6 +201,9 @@ ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
 class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
+    def terminate_clusters(self, cluster_ids: List[str]) -> None:
+        pass
+
     def create_cluster(self, **kwargs) -> Cluster:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
 

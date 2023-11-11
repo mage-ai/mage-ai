@@ -118,3 +118,7 @@ class ComputeService:
     @abstractmethod
     def setup_steps(self) -> List[SetupStep]:
         pass
+
+    @abstractmethod
+    def terminate_clusters(self, cluster_ids: List[str]) -> None:
+        pass

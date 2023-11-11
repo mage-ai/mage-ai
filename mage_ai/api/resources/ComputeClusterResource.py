@@ -1,4 +1,5 @@
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
 
@@ -50,3 +51,18 @@ class ComputeClusterResource(GenericResource):
         return self(dict(
             cluster=cluster,
         ), user, **kwargs)
+
+    async def delete(self, **kwargs):
+        from mage_ai.services.aws.emr.emr import terminate_clusters
+
+        if 'cluster' in self.model:
+            cluster = self.model.get('cluster')
+            if cluster:
+                cluster_id = None
+                if isinstance(cluster, Cluster):
+                    cluster_id = cluster.id
+                elif isinstance(cluster, dict):
+                    cluster_id = cluster.get('id')
+
+                if cluster_id:
+                    terminate_clusters([cluster_id])

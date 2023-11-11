@@ -160,9 +160,7 @@ function Table({
   const [selectedRowIndexInternalState, setSelectedRowIndexInternal] = useState<number>(null);
   const selectedRowIndexInternal =
     useMemo(() => {
-      if (typeof selectedRowIndexInternalProp !== 'undefined'
-        && selectedRowIndexInternalProp !== null
-      ) {
+      if (typeof selectedRowIndexInternalProp !== 'undefined') {
         return selectedRowIndexInternalProp;
       }
 
