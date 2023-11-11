@@ -28,7 +28,7 @@ else:
             set_repo_path(self.repo_path)
             if not Path(self.repo_path).exists():
                 Path(self.repo_path).mkdir()
-            init_project_uuid('test_uuid')
+            init_project_uuid()
             database_manager.run_migrations(log_level=LoggingLevel.ERROR)
             db_connection.start_session()
 
@@ -58,7 +58,7 @@ class DBTestCase(unittest.TestCase):
         set_repo_path(self.repo_path)
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
-        init_project_uuid('test_uuid')
+        init_project_uuid()
         database_manager.run_migrations(log_level=LoggingLevel.ERROR)
         db_connection.start_session()
 
@@ -91,7 +91,7 @@ class TestCase(unittest.TestCase):
         set_repo_path(self.repo_path)
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
-        init_project_uuid('test_uuid')
+        init_project_uuid()
 
     @classmethod
     def tearDownClass(self):
