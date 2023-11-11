@@ -17,10 +17,10 @@ function Clusters({
     key: `compute_services/${computeServiceProp?.uuid}/with_clusters`,
   });
 
-  const computeService: ComputeServiceType = useMemo(() => {
+  const computeService: ComputeServiceType = useMemo(() => ({
     ...computeServiceProp,
     ...(dataComputeService?.compute_service || {}),
-  }, [
+  }), [
     computeServiceProp,
     dataComputeService,
   ]);

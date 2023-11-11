@@ -38,6 +38,7 @@ export enum MainNavigationTabEnum {
 }
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
+  [MainNavigationTabEnum.CLUSTERS]: 'Clusters',
   [MainNavigationTabEnum.CONNECTION]: 'Connection',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
   [MainNavigationTabEnum.MONITORING]: 'Monitoring',
