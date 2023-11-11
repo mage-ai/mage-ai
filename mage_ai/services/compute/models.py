@@ -100,7 +100,15 @@ class ComputeService:
         return self.__class__.uuid
 
     @abstractmethod
-    def clusters_and_metadata(self) -> Dict:
+    def create_cluster(self, **kwargs) -> Dict:
+        pass
+
+    @abstractmethod
+    def clusters_and_metadata(self, **kwargs) -> Dict:
+        pass
+
+    @abstractmethod
+    def get_cluster_details(self, **kwargs) -> Dict:
         pass
 
     @abstractmethod

@@ -41,13 +41,25 @@ ComputeClusterPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.CREATE,
-        OperationType.DELETE,
         OperationType.DETAIL,
         OperationType.LIST,
-        OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
+    override_permission_condition=lambda _policy: True,
+)
+
+
+ComputeClusterPolicy.allow_read(
+    ComputeClusterPresenter.default_attributes,
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.CREATE,
+        OperationType.DELETE,
+        OperationType.UPDATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role(),
     override_permission_condition=lambda _policy: True,
 )
 

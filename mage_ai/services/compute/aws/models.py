@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from mage_ai.services.aws.emr.emr import list_clusters
 from mage_ai.services.compute.aws.constants import (
@@ -123,6 +123,7 @@ class PlacementGroups(BaseDataClass):
 
 @dataclass
 class Cluster(BaseDataClass):
+    active: bool = False
     applications: List[ClusterApplication] = field(default_factory=list)
     auto_terminate: bool = None
     # arn:aws:elasticmapreduce:us-west-2:679849156117:cluster/j-1MR4C0R54EUHY
@@ -200,7 +201,33 @@ ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
 class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
-    def clusters_and_metadata(self) -> Dict:
+    def create_cluster(self, **kwargs) -> Cluster:
+        from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+
+        result = emr_cluster_manager.create_cluster()
+
+        if result and 'cluster_id' in result:
+            cluster_id = result.get('cluster_id')
+
+            return self.get_cluster_details(cluster_id)
+
+    def get_cluster_details(self, cluster_id, **kwargs) -> Union[Cluster, Dict]:
+        from mage_ai.services.aws.emr.emr import describe_cluster
+
+        cluster = describe_cluster(cluster_id)
+        if cluster:
+            from mage_ai.cluster_manager.aws.emr_cluster_manager import (
+                emr_cluster_manager,
+            )
+
+            cluster = Cluster.load(**cluster)
+            cluster.active = emr_cluster_manager.active_cluster_id == cluster.id
+
+        return cluster
+
+    def clusters_and_metadata(self, **kwargs) -> Dict:
+        from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+
         response = list_clusters(cluster_states=[
             ClusterStatusState.BOOTSTRAPPING,
             ClusterStatusState.RUNNING,
@@ -211,7 +238,12 @@ class AWSEMRComputeService(ComputeService):
             ClusterStatusState.WAITING,
         ])
 
-        clusters = [Cluster.load(**m) for m in response.get('Clusters') or []]
+        clusters = []
+        for model in response.get('Clusters') or []:
+            cluster = Cluster.load(**model)
+            cluster.active = emr_cluster_manager.active_cluster_id == cluster.id
+            clusters.append(cluster)
+
         metadata = response.get('ResponseMetadata')
         metadata = Metadata.load(**metadata) if metadata else None
 

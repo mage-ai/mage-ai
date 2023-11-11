@@ -44,6 +44,7 @@ export interface AWSEMRMetadataType {
 }
 
 export default interface AWSEMRClusterType {
+  active?: boolean;
   applications?: {
     name: string;
     version: string;

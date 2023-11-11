@@ -1,5 +1,6 @@
 import moment from 'moment';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import AWSEMRClusterType, { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import Button from '@oracle/elements/Button';
@@ -16,19 +17,23 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
-  PowerOnOffButton,
   Check,
   ChevronDown,
   Close,
+  PowerOnOffButton,
+  WorkspacesUsersIcon,
 } from '@oracle/icons';
 import {
   DATE_FORMAT_LONG_MS,
   datetimeInLocalTimezone,
 } from '@utils/date';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SubheaderStyle } from './index.style';
 import { buildTable } from './utils';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { useError } from '@context/Error';
 
 const ICON_SIZE = 2 * UNIT;
 
@@ -44,7 +49,14 @@ const TEXT_PROPS_SHARED = {
 function Clusters({
   computeService,
 }: ClustersType) {
+  const componentUUID = useMemo(() => `${computeService?.uuid}/clusters`, [computeService]);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+
+  const [selectedRowIndexInternal, setSelectedRowIndexInternal] = useState<number>(null);
+
+  const [showError] = useError(null, {}, [], {
+    uuid: componentUUID,
+  });
 
   const {
     data: dataComputeClusters,
@@ -55,13 +67,57 @@ function Clusters({
     useMemo(() => dataComputeClusters?.compute_clusters || [], [
       dataComputeClusters,
     ]);
+
   const clusters: AWSEMRClusterType[] =
     useMemo(() => computeClusters?.map(({ cluster }) => cluster), [
       computeClusters,
     ]);
 
+  const [createCluster, { isLoading: isLoadingCreateCluster }] = useMutation(
+    api.compute_clusters.compute_services.useCreate(computeService?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchComputeClusters().then(() => setSelectedRowIndexInternal(0));
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   return (
     <>
+      <SubheaderStyle>
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Headline level={4}>
+              {pluralize('cluster', clusters?.length || 0, true)}
+            </Headline>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Button
+              beforeIcon={<WorkspacesUsersIcon size={ICON_SIZE} />}
+              loading={isLoadingCreateCluster}
+              onClick={() => createCluster()}
+              primary
+            >
+              Launch new cluster
+            </Button>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+      </SubheaderStyle>
+
       <Table
         apiForFetchingAfterAction={api.compute_clusters.compute_services.detail}
         buildApiOptionsFromObject={(object: any) => [computeService?.uuid, object?.id]}
@@ -88,6 +144,11 @@ function Clusters({
             uuid: 'Details',
           },
         ]}
+        onClickRow={(index: number, event?: any) => {
+          if (typeof selectedRowIndexInternal !== 'undefined' && selectedRowIndexInternal !== null) {
+            setSelectedRowIndexInternal(null);
+          }
+        }}
         renderExpandedRowWithObject={(rowIndex: number, object: any) => {
           const cluster = object?.compute_cluster?.cluster;
 
@@ -96,6 +157,7 @@ function Clusters({
           }
 
           const {
+            active,
             applications,
             name,
             status,
@@ -103,46 +165,81 @@ function Clusters({
           } = cluster;
           const state = status?.state;
 
+          const terminated = [
+            ClusterStatusStateEnum.TERMINATED,
+            ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
+            ClusterStatusStateEnum.TERMINATING,
+          ].includes(state);
+
+          const ready = [
+            ClusterStatusStateEnum.RUNNING,
+            ClusterStatusStateEnum.WAITING,
+          ].includes(state);
+
           return (
             <Spacing p={PADDING_UNITS}>
+              {!terminated && (
+                <>
+                  <Panel noPadding>
+                    <Spacing p={PADDING_UNITS}>
+                      <Headline level={4}>
+                        Actions
+                      </Headline>
+                    </Spacing>
+
+                    <Divider light />
+
+                    <Spacing p={PADDING_UNITS}>
+                      <FlexContainer>
+                        {ready && (
+                          <>
+                            <Button
+                              beforeIcon={<PowerOnOffButton size={ICON_SIZE} />}
+                              disabled={active}
+                              primary={!active}
+                            >
+                              {active
+                                ? 'Already activated'
+                                : 'Activate cluster for compute'
+                              }
+                            </Button>
+
+                            <Spacing mr={PADDING_UNITS} />
+
+                            <Button
+                              secondary
+                            >
+                              Terminate cluster
+                            </Button>
+                          </>
+                        )}
+
+                        {!ready && (
+                          <FlexContainer alignItems="center">
+                            <Spinner inverted small />
+
+                            <Spacing mr={PADDING_UNITS} />
+
+                            <Text large muted>
+                              Cluster is still launching.
+                            </Text>
+                          </FlexContainer>
+                        )}
+                      </FlexContainer>
+                    </Spacing>
+                  </Panel>
+
+                  <Spacing mb={PADDING_UNITS} />
+                </>
+              )}
+
               <Panel noPadding>
                 <Spacing p={PADDING_UNITS}>
                   <Headline level={4}>
-                    Actions
+                    Details
                   </Headline>
                 </Spacing>
 
-                <Divider light />
-
-                <Spacing p={PADDING_UNITS}>
-                  <FlexContainer>
-                    <Button
-                      beforeIcon={<PowerOnOffButton size={ICON_SIZE} />}
-                      primary
-                    >
-                      Activate cluster for compute
-                    </Button>
-
-                    <Spacing mr={PADDING_UNITS} />
-
-                    {![
-                      ClusterStatusStateEnum.TERMINATED,
-                      ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
-                      ClusterStatusStateEnum.TERMINATING,
-                    ].includes(state) && (
-                      <Button
-                        secondary
-                      >
-                        Terminate cluster
-                      </Button>
-                    )}
-                  </FlexContainer>
-                </Spacing>
-              </Panel>
-
-              <Spacing mb={PADDING_UNITS} />
-
-              <Panel noPadding>
                 {[
                   {
                     key: 'Name',
@@ -283,6 +380,7 @@ function Clusters({
         }}
         getObjectAtRowIndex={(rowIndex: number) => clusters?.[rowIndex]}
         rows={clusters?.map(({
+          active,
           id,
           name,
           status,
@@ -328,10 +426,7 @@ function Clusters({
               justifyContent="center"
               key="active"
             >
-              <Check
-                size={ICON_SIZE}
-                success
-              />
+              <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
             </FlexContainer>,
             <FlexContainer
               justifyContent="flex-end"
@@ -342,6 +437,7 @@ function Clusters({
                 iconOnly
                 noBackground
                 noPadding
+                onClick={() => true}
               >
                 <ChevronDown
                   muted
@@ -351,7 +447,8 @@ function Clusters({
             </FlexContainer>,
           ];
         })}
-        uuid={`${computeService?.uuid}/clusters`}
+        selectedRowIndexInternal={selectedRowIndexInternal}
+        uuid={componentUUID}
       />
 
       {!dataComputeClusters && (

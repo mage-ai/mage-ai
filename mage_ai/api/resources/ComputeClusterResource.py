@@ -1,5 +1,4 @@
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
 
@@ -28,15 +27,25 @@ class ComputeClusterResource(GenericResource):
     async def member(self, pk, user, **kwargs):
         parent_model = kwargs.get('parent_model')
 
-        cluster = {}
+        cluster = None
 
         if isinstance(parent_model, ComputeService):
             if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
-                from mage_ai.services.aws.emr.emr import describe_cluster
+                cluster = parent_model.get_cluster_details(pk)
 
-                cluster = describe_cluster(pk)
-                if cluster:
-                    cluster = Cluster.load(**cluster)
+        return self(dict(
+            cluster=cluster,
+        ), user, **kwargs)
+
+    @classmethod
+    def create(self, payload, user, **kwargs):
+        parent_model = kwargs.get('parent_model')
+
+        cluster = None
+
+        if isinstance(parent_model, ComputeService):
+            if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
+                cluster = parent_model.create_cluster()
 
         return self(dict(
             cluster=cluster,
