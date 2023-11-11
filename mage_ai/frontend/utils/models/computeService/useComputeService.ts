@@ -25,6 +25,7 @@ function useComputeService({
     [key: string]: ComputeServiceUUIDEnum;
   };
   fetchComputeClusters?: () => void;
+  fetchComputeService?: () => void;
   setupComplete?: boolean;
 } {
   const {
@@ -88,6 +89,7 @@ function useComputeService({
       [k]: v,
     }), {}),
     fetchComputeClusters,
+    fetchComputeService,
     setupComplete,
   };
 }

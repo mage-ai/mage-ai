@@ -9,7 +9,6 @@ import ComputeServiceType, {
 } from '@interfaces/ComputeServiceType';
 import ConnectionSettings from './ConnectionSettings';
 import Divider from '@oracle/elements/Divider';
-import ErrorMessage from './ErrorMessage';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -17,6 +16,7 @@ import Link from '@oracle/elements/Link';
 import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
+import SetupSteps from './Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import SparkGraph from './SparkGraph';
 import System from './System';
@@ -25,7 +25,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import useComputeService from '@utils/models/computeService/useComputeService'
-import { CardStyle, SetupStepRowStyle } from './index.style';
+import { CardStyle } from './index.style';
 import {
   AlertTriangle,
   Check,
@@ -52,7 +52,6 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { alphabet } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getComputeServiceFromProject } from './utils';
 import { goToWithQuery } from '@utils/routing';
@@ -220,6 +219,7 @@ function ComputeManagement({
     clustersLoading,
     computeService,
     fetchComputeClusters,
+    fetchComputeService,
     setupComplete,
   }: ComputeServiceType = useComputeService({
     clustersRefreshInterval: 10000,
@@ -283,114 +283,6 @@ function ComputeManagement({
     updateProjectBase,
   ]);
 
-  function buildStep(
-    {
-      name,
-      description,
-      error,
-      status,
-      steps,
-      tab,
-    }: SetupStepType,
-    idx: number,
-    stepsCount: number,
-    opts?: {
-      level?: number;
-    },
-  ) {
-    const level = opts?.level || 0;
-    const substepsCount = steps?.length || 0;
-    const completed = SetupStepStatusEnum.COMPLETED === status;
-
-    let stepNumber = level === 0
-      ? String(idx + 1)
-      : alphabet()[idx].toLowerCase();
-
-    if (level === 0 && stepsCount >= 10 && stepNumber <= 9 && 0) {
-      stepNumber = `0${stepNumber}`;
-    }
-
-    return (
-      <SetupStepRowStyle
-        clickable={!!tab && !completed}
-        key={name}
-        onClick={tab && !completed
-          ? () => {
-            setSelectedTab(() => ({
-              main: tab,
-            }));
-          }
-          : null
-        }
-      >
-        <Spacing
-          mt={level >= 1 ? 1 : 0}
-          px={level === 0 ? PADDING_UNITS : 0}
-          py={level === 0 ? 1 : 0}
-        >
-          <FlexContainer>
-            <Text monospace muted>
-              {stepNumber}.
-            </Text>
-
-            <Spacing mr={1} />
-
-            <Flex flex={1} flexDirection="column">
-              <FlexContainer>
-                <Flex flex={1} flexDirection="column">
-                  <Text default={completed}>
-                    {name}
-                  </Text>
-
-                  {description && !completed && (
-                    <Text muted small>
-                      {description}
-                    </Text>
-                  )}
-
-                  {error && (
-                    <ErrorMessage error={error} small warning />
-                  )}
-                </Flex>
-
-                <Spacing mr={1} />
-
-                {SetupStepStatusEnum.COMPLETED === status && (
-                  <Check
-                    size={2 * UNIT}
-                    success
-                  />
-                )}
-
-                {SetupStepStatusEnum.INCOMPLETE === status && (
-                  <Info
-                    muted
-                    size={2 * UNIT}
-                  />
-                )}
-
-                {SetupStepStatusEnum.ERROR === status && (
-                  <AlertTriangle
-                    danger
-                    size={2 * UNIT}
-                  />
-                )}
-              </FlexContainer>
-
-              {substepsCount >= 1 && steps?.map((substep, idx2) => buildStep(
-                substep,
-                idx2,
-                substepsCount, {
-                  level: 1,
-                },
-              ))}
-            </Flex>
-          </FlexContainer>
-        </Spacing>
-      </SetupStepRowStyle>
-    );
-  }
-
   const before = useMemo(() => {
     const arr = buildTabs(computeService).map(({
       Icon,
@@ -434,17 +326,6 @@ function ComputeManagement({
       const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
 
       if (computeService?.setup_steps) {
-        const stepsEls = [];
-        const stepsCount = computeService?.setup_steps?.length || 0;
-
-        computeService?.setup_steps?.forEach((step, idx: number) => {
-          const {
-            status,
-          } = step;
-
-          stepsEls.push(buildStep(step, idx, stepsCount));
-        });
-
         if (!setupComplete) {
           arr.unshift(
             <>
@@ -456,7 +337,13 @@ function ComputeManagement({
                 </Headline>
               </Spacing>
 
-              {stepsEls}
+              <SetupSteps
+                computeService={computeService}
+                onClickStep={(tab: string) => setSelectedTab(() => ({
+                  // @ts-ignore
+                  main: tab,
+                }))}
+              />
 
               <Spacing mt={1}>
                 <Divider light />

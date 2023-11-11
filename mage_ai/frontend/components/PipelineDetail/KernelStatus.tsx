@@ -15,6 +15,7 @@ import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterSelection from './ClusterSelection';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
+import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -30,6 +31,7 @@ import PipelineType, {
   PIPELINE_TYPE_TO_KERNEL_NAME,
 } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
+import SetupSteps from '@components/ComputeManagement/Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -60,6 +62,7 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { MenuStyle } from './ClusterSelection/index.style'
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SparkApplicationType } from '@interfaces/SparkType';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -377,6 +380,38 @@ function KernelStatus({
         );
       } else {
         // Show the incomplete steps
+        menuEl = (
+          <ClickOutside
+            onClickOutside={(e) => {
+              pauseEvent(e);
+              setClusterSelectionVisible(false);
+            }}
+            open={clusterSelectionVisible}
+          >
+            <MenuStyle>
+              <Spacing p={PADDING_UNITS}>
+                <Text bold large>
+                  Setup steps
+                </Text>
+              </Spacing>
+
+              <Divider light />
+
+              <SetupSteps
+                computeService={computeService}
+                onClickStep={(tab: string) => {
+                  router.push(`/compute?tab=${tab}`);
+                }}
+              />
+            </MenuStyle>
+          </ClickOutside>
+        );
+        onClick = (e) => {
+          pauseEvent(e);
+          if (!clusterSelectionVisible) {
+            setClusterSelectionVisible(true);
+          }
+        };
         // Take user to compute management application
         pipelineDisplayName = 'Compute setup incomplete';
         statusIconEl = (
