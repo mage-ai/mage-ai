@@ -6,9 +6,6 @@ api: "PUT /api/pipelines/:pipeline_uuid/backfills/:backfill_id"
 
 All default attributes for a backfill may be updated in addittion to the following:
 
-<ParamField query="add_upstream_for_block_uuid" type="string">
-  The uuid for a block upstream of the pipeline.
-</ParamField>
 <ParamField query="start_datetime" type="string">
   A datetime formatted string representing the start time of the backfill, e.g. `"2023-09-05 23:56:05"`.
 </ParamField>
