@@ -62,6 +62,7 @@ export type ButtonProps = {
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noHover?: boolean;
   noHoverUnderline?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;

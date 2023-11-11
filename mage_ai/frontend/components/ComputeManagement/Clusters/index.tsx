@@ -160,6 +160,22 @@ function Clusters({
     },
   );
 
+  const launchClusterButton = useMemo(() => (
+    <Button
+      beforeIcon={<WorkspacesUsersIcon size={ICON_SIZE} />}
+      loading={isLoadingCreateCluster}
+      onClick={() => createCluster()}
+      primary
+    >
+      Launch new cluster
+    </Button>
+  ), [
+    createCluster,
+    isLoadingCreateCluster,
+  ]);
+
+  const clustersCount = useMemo(() => clusters?.length || 0, [clusters]);
+
   return (
     <>
       <SubheaderStyle>
@@ -169,19 +185,12 @@ function Clusters({
             justifyContent="space-between"
           >
             <Headline level={4}>
-              {pluralize('cluster', clusters?.length || 0, true)}
+              {pluralize('cluster', clustersCount, true)}
             </Headline>
 
             <Spacing mr={PADDING_UNITS} />
 
-            <Button
-              beforeIcon={<WorkspacesUsersIcon size={ICON_SIZE} />}
-              loading={isLoadingCreateCluster}
-              onClick={() => createCluster()}
-              primary
-            >
-              Launch new cluster
-            </Button>
+            {clustersCount >= 1 && launchClusterButton}
           </FlexContainer>
         </Spacing>
 
@@ -269,13 +278,16 @@ function Clusters({
                         {ready && (
                           <>
                             <Button
-                              beforeIcon={<PowerOnOffButton size={ICON_SIZE} />}
-                              disabled={active}
+                              beforeIcon={<PowerOnOffButton size={ICON_SIZE} success={active} />}
                               loading={isLoadingUpdateCluster}
-                              onClick={() => updateCluster({
-                                ...cluster,
-                                active: true,
-                              })}
+                              notClickable={active}
+                              onClick={!active
+                                ? () => updateCluster({
+                                  ...cluster,
+                                  active: true,
+                                })
+                                : null
+                              }
                               primary={!active}
                             >
                               {active
@@ -536,6 +548,12 @@ function Clusters({
       {!dataComputeClusters && (
         <Spacing p={PADDING_UNITS}>
           <Spinner inverted />
+        </Spacing>
+      )}
+
+      {dataComputeClusters && !clustersCount && (
+        <Spacing p={PADDING_UNITS}>
+          {launchClusterButton}
         </Spacing>
       )}
     </>
