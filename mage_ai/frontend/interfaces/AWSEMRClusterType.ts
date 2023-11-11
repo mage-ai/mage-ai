@@ -44,9 +44,25 @@ export interface AWSEMRMetadataType {
 }
 
 export default interface AWSEMRClusterType {
+  applications?: {
+    name: string;
+    version: string;
+  }[];
+  auto_terminate?: boolean;
   cluster_arn: string;
+  ebs_root_volume_size?: number;
   id: string;
   name: string;
   normalized_instance_hours: number;
+  release_label?: string;
+  scale_down_behavior?: string;
+  service_role?: string;
   status: AWSEMRClusterStatusType;
+  step_concurrency_level?: number;
+  tags?: {
+    key: string;
+    value: string;
+  }[];
+  termination_protected?: boolean;
+  visible_to_all_users?: boolean;
 }

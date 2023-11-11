@@ -4,12 +4,14 @@ import random
 import sys
 import time
 from datetime import datetime
+from typing import List
 
 from botocore.exceptions import ClientError
 
 from mage_ai.services.aws import get_aws_boto3_client
 from mage_ai.services.aws.emr import emr_basics
 from mage_ai.services.aws.emr.config import EmrConfig
+from mage_ai.services.compute.aws.constants import ClusterStatusState
 
 MAX_STEPS_IN_CLUSTER = 255 - 55
 MAX_RUNNING_OR_PENDING_STEPS = 15
@@ -123,16 +125,19 @@ def describe_cluster(cluster_id):
     return emr_basics.describe_cluster(cluster_id, emr_client)
 
 
-def list_clusters():
+def list_clusters(cluster_states: List[ClusterStatusState] = None):
     emr_client = get_aws_boto3_client('emr')
 
+    if cluster_states is None:
+        cluster_states = [
+            ClusterStatusState.BOOTSTRAPPING,
+            ClusterStatusState.RUNNING,
+            ClusterStatusState.STARTING,
+            ClusterStatusState.WAITING,
+        ]
+
     clusters = emr_client.list_clusters(
-        ClusterStates=[
-            'BOOTSTRAPPING',
-            'RUNNING',
-            'STARTING',
-            'WAITING',
-        ],
+        ClusterStates=cluster_states,
     )
     return clusters
 

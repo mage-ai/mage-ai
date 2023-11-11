@@ -35,6 +35,7 @@ export const BLOCK_TEMPLATES = 'block_templates';
 export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
+export const COMPUTE_CLUSTERS: 'compute_clusters' = 'compute_clusters';
 export const COMPUTE_SERVICES: 'compute_services' = 'compute_services';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
@@ -119,6 +120,7 @@ const RESOURCES: any[][] = [
   [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
+  [COMPUTE_CLUSTERS, COMPUTE_SERVICES],
   [COMPUTE_SERVICES],
   [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],

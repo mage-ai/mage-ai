@@ -1,12 +1,12 @@
 import os
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List
 
 from mage_ai.services.aws.emr.emr import list_clusters
 from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
     CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
+    ClusterStatusState,
 )
 from mage_ai.services.compute.models import (
     ComputeService,
@@ -18,16 +18,6 @@ from mage_ai.services.compute.models import (
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
-
-
-class ClusterStatusState(str, Enum):
-    BOOTSTRAPPING = 'BOOTSTRAPPING'
-    RUNNING = 'RUNNING'
-    STARTING = 'STARTING'
-    TERMINATED = 'TERMINATED'
-    TERMINATED_WITH_ERRORS = 'TERMINATED_WITH_ERRORS'
-    TERMINATING = 'TERMINATING'
-    WAITING = 'WAITING'
 
 
 @dataclass
@@ -81,22 +71,91 @@ class ClusterStatus(BaseDataClass):
 
 
 @dataclass
+class Ec2InstanceAttributes(BaseDataClass):
+    additional_master_security_groups: List[str] = field(default_factory=list)
+    additional_slave_security_groups: List[str] = field(default_factory=list)
+    ec2_availability_zone: str = None
+    ec2_subnet_id: str = None
+    emr_managed_master_security_group: str = None
+    emr_managed_slave_security_group: str = None
+    iam_instance_profile: str = None
+    requested_ec2_availability_zones: List[str] = field(default_factory=list)
+    requested_ec2_subnet_ids: List[str] = field(default_factory=list)
+    service_access_security_group: str = None
+
+
+@dataclass
+class ClusterApplication(BaseDataClass):
+    name: str = None
+    version: str = None
+
+
+@dataclass
+class ClusterTag(BaseDataClass):
+    key: str = None
+    value: str = None
+
+
+@dataclass
+class ClusterConfiguration(BaseDataClass):
+    classification: str = None
+    configurations: Dict = field(default_factory=dict)
+    properties: Dict = field(default_factory=dict)
+
+    # def __post_init__(self):
+    #     self.serialize_attribute_class('configurations', self.__class__)
+
+
+@dataclass
+class KerberosAttributes(BaseDataClass):
+    a_d_domain_join_password: str = None
+    a_d_domain_join_user: str = None
+    cross_realm_trust_principal_password: str = None
+    kdc_admin_password: str = None
+    realm: str = None
+
+
+@dataclass
+class PlacementGroups(BaseDataClass):
+    instance_role: str = None
+    placement_strategy: str = None
+
+
+@dataclass
 class Cluster(BaseDataClass):
+    applications: List[ClusterApplication] = field(default_factory=list)
+    auto_terminate: bool = None
     # arn:aws:elasticmapreduce:us-west-2:679849156117:cluster/j-1MR4C0R54EUHY
     cluster_arn: str = None
+    configurations: List[ClusterConfiguration] = field(default_factory=list)
+    ebs_root_volume_size: int = None
+    ec2_instance_attributes: Dict = None
     id: str = None  # j-1MR4C0R54EUHY
+    instance_collection_type: str = None
+    kerberos_attributes: Dict = None
+    log_uri: str = None
+    master_public_dns_name: str = None
     name: str = None  # 2023-11-09T07:23:39.142404-mage-data-preparation
     normalized_instance_hours: int = None  # 0
+    o_s_release_label: str = None
+    placement_groups: List[PlacementGroups] = field(default_factory=list)
+    release_label: str = None
+    scale_down_behavior: str = None
+    service_role: str = None
     status: ClusterStatus = None
+    step_concurrency_level: int = None
+    tags: List[ClusterTag] = field(default_factory=list)
+    termination_protected: bool = None
+    visible_to_all_users: bool = None
 
     def __post_init__(self):
-        if self.status and isinstance(self.status, dict):
-            self.status = ClusterStatus.load(**self.status)
-
-    def to_dict(self) -> Dict:
-        return merge_dict(super().to_dict(), dict(
-            status=self.status.to_dict() if self.status else None,
-        ))
+        self.serialize_attribute_class('ec2_instance_attributes', Ec2InstanceAttributes)
+        self.serialize_attribute_class('kerberos_attributes', KerberosAttributes)
+        self.serialize_attribute_class('status', ClusterStatus)
+        self.serialize_attribute_classes('applications', ClusterApplication)
+        self.serialize_attribute_classes('configurations', ClusterConfiguration)
+        self.serialize_attribute_classes('placement_groups', PlacementGroups)
+        self.serialize_attribute_classes('tags', ClusterTag)
 
 
 @dataclass
@@ -142,7 +201,15 @@ class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
     def clusters_and_metadata(self) -> Dict:
-        response = list_clusters()
+        response = list_clusters(cluster_states=[
+            ClusterStatusState.BOOTSTRAPPING,
+            ClusterStatusState.RUNNING,
+            ClusterStatusState.STARTING,
+            ClusterStatusState.TERMINATED,
+            ClusterStatusState.TERMINATED_WITH_ERRORS,
+            ClusterStatusState.TERMINATING,
+            ClusterStatusState.WAITING,
+        ])
 
         clusters = [Cluster.load(**m) for m in response.get('Clusters') or []]
         metadata = response.get('ResponseMetadata')
