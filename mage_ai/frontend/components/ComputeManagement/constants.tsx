@@ -13,7 +13,6 @@ import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import { TripleBoxes } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { pushAtIndex } from '@utils/array';
 
 const ICON_SIZE = 8 * UNIT;
 
@@ -130,21 +129,26 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
       Icon: DiamondGem,
       uuid: MainNavigationTabEnum.RESOURCES,
     },
-    {
-      Icon: Monitor,
-      uuid: MainNavigationTabEnum.MONITORING,
-    },
-    {
-      Icon: BlockCubePolygon,
-      uuid: MainNavigationTabEnum.SYSTEM,
-    },
   ];
 
   if (ComputeServiceUUIDEnum.AWS_EMR === computeService?.uuid) {
-    arr = pushAtIndex({
+    arr.push({
       Icon: CubesThreeSeparated,
       uuid: MainNavigationTabEnum.CLUSTERS,
-    }, 2, arr);
+    });
+  }
+
+  if (ComputeServiceUUIDEnum.STANDALONE_CLUSTER === computeService?.uuid) {
+    arr.push(...[
+      {
+        Icon: Monitor,
+        uuid: MainNavigationTabEnum.MONITORING,
+      },
+      {
+        Icon: BlockCubePolygon,
+        uuid: MainNavigationTabEnum.SYSTEM,
+      },
+    ]);
   }
 
   return arr;

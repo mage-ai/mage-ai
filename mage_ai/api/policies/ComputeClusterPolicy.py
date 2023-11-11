@@ -79,3 +79,18 @@ ComputeClusterPolicy.allow_write(
     condition=lambda policy: policy.has_at_least_editor_role(),
     override_permission_condition=lambda _policy: True,
 )
+
+
+ComputeClusterPolicy.allow_query(
+    [
+        'include_all_states',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+    override_permission_condition=lambda _policy: True,
+)

@@ -6,14 +6,18 @@ from mage_ai.services.spark.constants import ComputeServiceUUID
 
 class ComputeClusterResource(GenericResource):
     @classmethod
-    async def collection(self, _query, _meta, user, **kwargs):
+    async def collection(self, query_arg, _meta, user, **kwargs):
         parent_model = kwargs.get('parent_model')
+
+        include_all_states = query_arg.get('include_all_states', [None])
+        if include_all_states:
+            include_all_states = include_all_states[0]
 
         clusters = []
 
         if isinstance(parent_model, ComputeService):
             if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
-                result = parent_model.clusters_and_metadata()
+                result = parent_model.clusters_and_metadata(include_all_states=include_all_states)
                 clusters = [dict(
                     cluster=cluster,
                 ) for cluster in result.get('clusters') or []]

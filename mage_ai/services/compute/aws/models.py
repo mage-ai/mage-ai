@@ -240,18 +240,24 @@ class AWSEMRComputeService(ComputeService):
 
         return cluster
 
-    def clusters_and_metadata(self, **kwargs) -> Dict:
+    def clusters_and_metadata(self, include_all_states: bool = False, **kwargs) -> Dict:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
 
-        response = list_clusters(cluster_states=[
+        cluster_states = [
             ClusterStatusState.BOOTSTRAPPING,
             ClusterStatusState.RUNNING,
             ClusterStatusState.STARTING,
-            ClusterStatusState.TERMINATED,
-            ClusterStatusState.TERMINATED_WITH_ERRORS,
-            ClusterStatusState.TERMINATING,
             ClusterStatusState.WAITING,
-        ])
+        ]
+
+        if include_all_states:
+            cluster_states.extend([
+                ClusterStatusState.TERMINATED,
+                ClusterStatusState.TERMINATED_WITH_ERRORS,
+                ClusterStatusState.TERMINATING,
+            ])
+
+        response = list_clusters(cluster_states=cluster_states)
 
         clusters = []
         for model in response.get('Clusters') or []:

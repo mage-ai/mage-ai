@@ -16,6 +16,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import {
   Check,
@@ -48,14 +49,18 @@ type ClustersType = {
   clusters: AWSEMRClusterType[];
   computeService: ComputeServiceType;
   fetchComputeClusters: () => void;
+  includeAllStates?: boolean;
   loading?: boolean;
+  setIncludeAllStates?: (value: boolean) => void;
 }
 
 function Clusters({
   clusters,
   computeService,
   fetchComputeClusters,
+  includeAllStates,
   loading,
+  setIncludeAllStates,
 }: ClustersType) {
   const componentUUID = useMemo(() => `${computeService?.uuid}/clusters`, [computeService]);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -151,21 +156,24 @@ function Clusters({
     },
   );
 
+  const clustersCount = useMemo(() => clusters?.length || 0, [clusters]);
+
   const launchClusterButton = useMemo(() => (
     <Button
       beforeIcon={<WorkspacesUsersIcon size={ICON_SIZE} />}
+      compact={clustersCount >= 1}
       loading={isLoadingCreateCluster}
       onClick={() => createCluster()}
       primary
+      small={clustersCount >= 1}
     >
       Launch new cluster
     </Button>
   ), [
+    clustersCount,
     createCluster,
     isLoadingCreateCluster,
   ]);
-
-  const clustersCount = useMemo(() => clusters?.length || 0, [clusters]);
 
   return (
     <>
@@ -175,9 +183,34 @@ function Clusters({
             alignItems="center"
             justifyContent="space-between"
           >
-            <Headline level={4}>
-              {pluralize('cluster', clustersCount, true)}
-            </Headline>
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Headline level={4}>
+                {pluralize('cluster', clustersCount, true)}
+              </Headline>
+
+              {setIncludeAllStates && (
+                <>
+                  <Spacing mr={PADDING_UNITS} />
+
+                  <ToggleSwitch
+                    checked={includeAllStates as boolean}
+                    compact
+                    onCheck={(valFunc: (val: boolean) => boolean) => setIncludeAllStates(
+                      valFunc(includeAllStates),
+                    )}
+                  />
+
+                  <Spacing mr={1} />
+
+                  <Text default={includeAllStates} muted={!includeAllStates} small>
+                    Include terminated clusters
+                  </Text>
+                </>
+              )}
+            </FlexContainer>
 
             <Spacing mr={PADDING_UNITS} />
 

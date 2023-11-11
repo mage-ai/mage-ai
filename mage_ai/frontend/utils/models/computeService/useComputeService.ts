@@ -12,9 +12,11 @@ import useProject from '@utils/models/project/useProject';
 function useComputeService({
   clustersRefreshInterval,
   computeServiceRefreshInterval,
+  includeAllStates,
 }: {
   clustersRefreshInterval?: number;
   computeServiceRefreshInterval?: number;
+  includeAllStates?: boolean;
 } = {}): {
   activeCluster?: AWSEMRClusterType;
   clusters?: AWSEMRClusterType[];
@@ -44,10 +46,18 @@ function useComputeService({
     dataComputeService,
   ]);
 
+  const computeClustersQuery: {
+    include_all_states?: boolean;
+  } = {};
+
+  if (includeAllStates) {
+    computeClustersQuery.include_all_states = true;
+  }
+
   const {
     data: dataComputeClusters,
     mutate: fetchComputeClusters,
-  } = api.compute_clusters.compute_services.list(computeService?.uuid, {}, {
+  } = api.compute_clusters.compute_services.list(computeService?.uuid, computeClustersQuery, {
     refreshInterval: clustersRefreshInterval,
   }, {
     pauseFetch: !sparkEnabled,

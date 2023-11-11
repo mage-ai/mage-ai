@@ -179,6 +179,7 @@ function ComputeManagement({
     queryURL,
   ]);
 
+  const [includeAllStates, setIncludeAllStates] = useState(false);
   const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
@@ -223,6 +224,7 @@ function ComputeManagement({
     setupComplete,
   }: ComputeServiceType = useComputeService({
     clustersRefreshInterval: 10000,
+    includeAllStates,
   });
 
   useEffect(() => {
@@ -600,13 +602,17 @@ function ComputeManagement({
       clusters={clusters}
       computeService={computeService}
       fetchComputeClusters={fetchComputeClusters}
+      includeAllStates={includeAllStates}
       loading={clustersLoading}
+      setIncludeAllStates={setIncludeAllStates}
     />
   ), [
     clusters,
     clustersLoading,
     computeService,
     fetchComputeClusters,
+    includeAllStates,
+    setIncludeAllStates,
   ]);
 
   const contentMemo = useMemo(() => {
