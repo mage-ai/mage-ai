@@ -39,17 +39,23 @@ import { useError } from '@context/Error';
 
 const ICON_SIZE = 2 * UNIT;
 
-type ClustersType = {
-  computeService: ComputeServiceType;
-}
-
 const TEXT_PROPS_SHARED = {
   default: true,
   monospace: true,
 };
 
+type ClustersType = {
+  clusters: AWSEMRClusterType[];
+  computeService: ComputeServiceType;
+  fetchComputeClusters: () => void;
+  loading?: boolean;
+}
+
 function Clusters({
+  clusters,
   computeService,
+  fetchComputeClusters,
+  loading,
 }: ClustersType) {
   const componentUUID = useMemo(() => `${computeService?.uuid}/clusters`, [computeService]);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -60,20 +66,7 @@ function Clusters({
     uuid: componentUUID,
   });
 
-  const {
-    data: dataComputeClusters,
-    mutate: fetchComputeClusters,
-  } = api.compute_clusters.compute_services.list(computeService?.uuid);
 
-  const computeClusters: ComputeClusterType[] =
-    useMemo(() => dataComputeClusters?.compute_clusters || [], [
-      dataComputeClusters,
-    ]);
-
-  const clusters: AWSEMRClusterType[] =
-    useMemo(() => computeClusters?.map(({ cluster }) => cluster), [
-      computeClusters,
-    ]);
 
   const [createCluster, { isLoading: isLoadingCreateCluster }] = useMutation(
     api.compute_clusters.compute_services.useCreate(computeService?.uuid),
@@ -545,13 +538,13 @@ function Clusters({
         uuid={componentUUID}
       />
 
-      {!dataComputeClusters && (
+      {loading && (
         <Spacing p={PADDING_UNITS}>
           <Spinner inverted />
         </Spacing>
       )}
 
-      {dataComputeClusters && !clustersCount && (
+      {!loading && !clustersCount && (
         <Spacing p={PADDING_UNITS}>
           {launchClusterButton}
         </Spacing>

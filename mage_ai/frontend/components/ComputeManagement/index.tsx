@@ -222,6 +222,21 @@ function ComputeManagement({
     dataComputeService,
   ]);
 
+  const {
+    data: dataComputeClusters,
+    mutate: fetchComputeClusters,
+  } = api.compute_clusters.compute_services.list(computeService?.uuid);
+
+  const computeClusters: ComputeClusterType[] =
+    useMemo(() => dataComputeClusters?.compute_clusters || [], [
+      dataComputeClusters,
+    ]);
+
+  const clusters: AWSEMRClusterType[] =
+    useMemo(() => computeClusters?.map(({ cluster }) => cluster), [
+      computeClusters,
+    ]);
+
   useEffect(() => {
     if (project) {
       setObjectAttributesState(project);
@@ -470,10 +485,16 @@ function ComputeManagement({
       }
 
       if (displayName && kicker && renderIcon) {
+        const clusterActive = clusters?.find(({ active }) => active);
+
         let setupStepsTooltipMessage;
         if (computeService?.setup_steps) {
           if (stepsCompleted) {
-            setupStepsTooltipMessage = 'Setup complete but no clusters connected.';
+            if (clusterActive) {
+              setupStepsTooltipMessage = 'Cluster activated, commence coding.';
+            } else {
+              setupStepsTooltipMessage = 'Setup complete but no clusters activated.';
+            }
           } else {
             setupStepsTooltipMessage = 'All setup steps have not been completed yet.';
           }
@@ -495,12 +516,14 @@ function ComputeManagement({
                     appearBefore
                     block
                     description={setupStepsTooltipMessage}
+                    maxWidth={30 * UNIT}
                     size={null}
                   >
                     {stepsCompleted && (
                       <PowerOnOffButton
+                        muted={!clusterActive}
                         size={3 * UNIT}
-                        warning={stepsCompleted}
+                        success={clusterActive}
                       />
                     )}
                     {!stepsCompleted && (
@@ -547,6 +570,7 @@ function ComputeManagement({
 
     return arr;
   }, [
+    clusters,
     computeService,
     selectedComputeService,
     selectedTab,
@@ -704,10 +728,16 @@ function ComputeManagement({
 
   const clustersMemo = useMemo(() => (
     <Clusters
+      clusters={clusters}
       computeService={computeService}
+      fetchComputeClusters={fetchComputeClusters}
+      loading={!dataComputeClusters}
     />
   ), [
+    clusters,
     computeService,
+    dataComputeClusters,
+    fetchComputeClusters,
   ]);
 
   const contentMemo = useMemo(() => {
