@@ -70,6 +70,7 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeDividerContrast?: boolean;
   beforeFooter?: any;
   beforeHeader?: any;
   beforeHeaderOffset?: number;
@@ -114,6 +115,7 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeDividerContrast,
   beforeFooter,
   beforeHeader,
   beforeHeaderOffset,
@@ -543,6 +545,7 @@ function TripleLayout({
           <DraggableStyle
             active={beforeMousedownActive}
             disabled={beforeHidden}
+            contrast={beforeDividerContrast}
             ref={refBeforeInnerDraggable}
             right={0}
             top={contained ? 0 : ASIDE_HEADER_HEIGHT}
@@ -675,6 +678,7 @@ function TripleLayout({
     afterNavigationItems,
     afterWidthFinal,
     beforeContent,
+    beforeDividerContrast,
     beforeHeightOffset,
     beforeHidden,
     beforeMousedownActive,

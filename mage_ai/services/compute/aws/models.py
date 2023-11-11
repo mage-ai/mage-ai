@@ -202,7 +202,19 @@ class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
     def terminate_clusters(self, cluster_ids: List[str]) -> None:
-        pass
+        from mage_ai.services.aws.emr.emr import terminate_clusters
+
+        terminate_clusters(cluster_ids)
+
+    def update_cluster(self, cluster_id: str, payload: Dict) -> Cluster:
+        if payload.get('active'):
+            from mage_ai.cluster_manager.aws.emr_cluster_manager import (
+                emr_cluster_manager,
+            )
+
+            emr_cluster_manager.set_active_cluster(cluster_id)
+
+            return self.get_cluster_details(cluster_id)
 
     def create_cluster(self, **kwargs) -> Cluster:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
@@ -231,15 +243,18 @@ class AWSEMRComputeService(ComputeService):
     def clusters_and_metadata(self, **kwargs) -> Dict:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
 
-        response = list_clusters(cluster_states=[
-            ClusterStatusState.BOOTSTRAPPING,
-            ClusterStatusState.RUNNING,
-            ClusterStatusState.STARTING,
-            ClusterStatusState.TERMINATED,
-            ClusterStatusState.TERMINATED_WITH_ERRORS,
-            ClusterStatusState.TERMINATING,
-            ClusterStatusState.WAITING,
-        ])
+        # For testing only
+        # response = list_clusters(cluster_states=[
+        #     ClusterStatusState.BOOTSTRAPPING,
+        #     ClusterStatusState.RUNNING,
+        #     ClusterStatusState.STARTING,
+        #     ClusterStatusState.TERMINATED,
+        #     ClusterStatusState.TERMINATED_WITH_ERRORS,
+        #     ClusterStatusState.TERMINATING,
+        #     ClusterStatusState.WAITING,
+        # ])
+
+        response = list_clusters()
 
         clusters = []
         for model in response.get('Clusters') or []:

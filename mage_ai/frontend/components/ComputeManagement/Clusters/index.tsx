@@ -32,6 +32,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SubheaderStyle } from './index.style';
 import { buildTable } from './utils';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
+import { selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
@@ -100,8 +101,43 @@ function Clusters({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
+            fetchComputeClusters().then(() => setSelectedRowIndexInternal(null));
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              errors?.error || exception || message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+          },
+        },
+      ),
+    },
+  );
+
+  const [updateCluster, { isLoading: isLoadingUpdateCluster }] = useMutation(
+    (cluster: AWSEMRClusterType) => api.compute_clusters.compute_services.useUpdate(
+      computeService?.uuid,
+      cluster?.id,
+    )({
+      compute_cluster: selectKeys(cluster, [
+        'active',
+      ]),
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
             fetchComputeClusters();
-            setSelectedRowIndexInternal(undefined);
           },
           onErrorCallback: ({
             error: {
@@ -154,7 +190,10 @@ function Clusters({
 
       <Table
         apiForFetchingAfterAction={api.compute_clusters.compute_services.detail}
-        buildApiOptionsFromObject={(object: any) => [computeService?.uuid, object?.id]}
+        buildApiOptionsFromObject={(object: any) => [computeService?.uuid, object?.id, {}, {
+          refreshInterval: 3000,
+          revalidateOnFocus: true,
+        }]}
         columnFlex={[null, null, null, null, null, null]}
         columns={[
           {
@@ -232,10 +271,15 @@ function Clusters({
                             <Button
                               beforeIcon={<PowerOnOffButton size={ICON_SIZE} />}
                               disabled={active}
+                              loading={isLoadingUpdateCluster}
+                              onClick={() => updateCluster({
+                                ...cluster,
+                                active: true,
+                              })}
                               primary={!active}
                             >
                               {active
-                                ? 'Already activated'
+                                ? 'Activated'
                                 : 'Activate cluster for compute'
                               }
                             </Button>

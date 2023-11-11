@@ -55,6 +55,7 @@ class EmrClusterManager(ClusterManager):
         cluster_id=None,
         emr_config: Dict = None,
     ):
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFF0', cluster_id)
         if cluster_id is None and auto_selection:
             clusters = self.list_clusters()
             if len(clusters) > 0:
@@ -65,6 +66,8 @@ class EmrClusterManager(ClusterManager):
             return
 
         self.active_cluster_id = cluster_id
+
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFF1', self.active_cluster_id)
         emr_config = EmrConfig.load(
             config=merge_dict(get_repo_config().emr_config or dict(), emr_config or dict()))
 

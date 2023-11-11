@@ -53,7 +53,27 @@ class ComputeClusterResource(GenericResource):
         ), user, **kwargs)
 
     async def delete(self, **kwargs):
-        from mage_ai.services.aws.emr.emr import terminate_clusters
+        parent_model = kwargs.get('parent_model')
+
+        if isinstance(parent_model, ComputeService):
+            if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
+                cluster_id = self.get_cluster_id()
+                if cluster_id:
+                    parent_model.terminate_clusters([cluster_id])
+
+    async def update(self, payload, **kwargs):
+        parent_model = kwargs.get('parent_model')
+
+        if isinstance(parent_model, ComputeService):
+            if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
+                cluster_id = self.get_cluster_id()
+                if cluster_id:
+                    cluster = parent_model.update_cluster(cluster_id, payload)
+                    if cluster:
+                        self.model = dict(cluster=cluster)
+
+    def get_cluster_id(self) -> str:
+        cluster_id = None
 
         if 'cluster' in self.model:
             cluster = self.model.get('cluster')
@@ -64,5 +84,4 @@ class ComputeClusterResource(GenericResource):
                 elif isinstance(cluster, dict):
                     cluster_id = cluster.get('id')
 
-                if cluster_id:
-                    terminate_clusters([cluster_id])
+        return cluster_id

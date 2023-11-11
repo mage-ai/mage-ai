@@ -66,7 +66,7 @@ ComputeClusterPolicy.allow_read(
 
 ComputeClusterPolicy.allow_write(
     [
-
+        'active',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

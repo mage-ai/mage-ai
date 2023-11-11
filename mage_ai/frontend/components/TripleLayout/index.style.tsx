@@ -271,6 +271,7 @@ export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
 
 export const DraggableStyle = styled.div<{
   active?: boolean;
+  contrast?: boolean;
   disabled?: boolean;
   left?: number;
   right?: number;
@@ -279,13 +280,23 @@ export const DraggableStyle = styled.div<{
   ${ASIDE_DRAGGABLE_STYLE}
 
   ${props => typeof props.left !== 'undefined' && `
-    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
+    border-left-style: solid;
+    border-left-width: 1px;
     left: ${props.left}px;
   `}
 
   ${props => typeof props.right !== 'undefined' && `
-    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
+    border-right-style: solid;
+    border-right-width: 1px;
     right: ${props.right}px;
+  `}
+
+  ${props => !props.contrast && `
+    border-color: ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  ${props => props.contrast && `
+    border-color: ${(props.theme.borders || dark.borders).light};
   `}
 `;
 

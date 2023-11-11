@@ -122,3 +122,7 @@ class ComputeService:
     @abstractmethod
     def terminate_clusters(self, cluster_ids: List[str]) -> None:
         pass
+
+    @abstractmethod
+    def update_cluster(self, cluster_id: str, payload: Dict) -> Dict:
+        pass

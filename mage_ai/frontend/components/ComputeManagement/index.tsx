@@ -759,6 +759,7 @@ function ComputeManagement({
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeDividerContrast
       beforeHeightOffset={0}
       beforeHidden={!selectedComputeService}
       beforeMousedownActive={beforeMousedownActive}
