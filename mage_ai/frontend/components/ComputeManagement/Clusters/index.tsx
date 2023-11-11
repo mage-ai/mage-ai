@@ -227,27 +227,28 @@ function Clusters({
           refreshInterval: 3000,
           revalidateOnFocus: true,
         }]}
-        columnFlex={[null, null, null, null, null, null]}
+        columnFlex={[null, null, null, null, null]}
         columns={[
           {
-            uuid: 'ID',
+            uuid: 'Cluster ID',
           },
           {
-            uuid: 'Name',
+            uuid: 'Cluster Name',
           },
           {
-            uuid: 'State',
+            uuid: 'Status',
           },
           {
             uuid: 'Created',
           },
           {
             center: true,
-            uuid: 'Active',
+            uuid: 'Hours',
           },
           {
             label: () => '',
-            uuid: 'Details',
+            rightAligned: true,
+            uuid: 'Active',
           },
         ]}
         onClickRow={(index: number, event?: any) => {
@@ -501,37 +502,47 @@ function Clusters({
           active,
           id,
           name,
+          normalized_instance_hours: normalizedInstanceHours,
           status,
         }) => {
           const createdAt = status?.timeline?.creation_date_time;
           const state = status?.state;
-
-          let displayName = name;
-          if (displayName?.length > 30) {
-            displayName = `${displayName.slice(0, 30)}...`;
-          }
+          const stateChangeReasonMessage = status?.state_change_reason?.message;
 
           return [
             <Text {...TEXT_PROPS_SHARED} key="id">
               {id}
             </Text>,
-            <Text {...TEXT_PROPS_SHARED} key="name" monospace={false} title={name}>
-              {displayName}
-            </Text>,
             <Text
               {...TEXT_PROPS_SHARED}
-              danger={[
-                ClusterStatusStateEnum.TERMINATED,
-                ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
-                ClusterStatusStateEnum.TERMINATING,
-              ].includes(state)}
-              success={ClusterStatusStateEnum.WAITING === state}
-              warning={ClusterStatusStateEnum.RUNNING === state}
-              key="state"
+              key="name"
+              monospace={false}
+              preWrap
             >
-              {status?.state ? capitalizeRemoveUnderscoreLower(status?.state) : status?.state}
+              {name}
             </Text>,
-            <Text {...TEXT_PROPS_SHARED} key="created">
+            <div key="state">
+              <Text
+                {...TEXT_PROPS_SHARED}
+                danger={[
+                  ClusterStatusStateEnum.TERMINATED,
+                  ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
+                  ClusterStatusStateEnum.TERMINATING,
+                ].includes(state)}
+                success={ClusterStatusStateEnum.WAITING === state}
+                warning={ClusterStatusStateEnum.RUNNING === state}
+
+              >
+                {status?.state ? capitalizeRemoveUnderscoreLower(status?.state) : status?.state}
+              </Text>
+
+              {stateChangeReasonMessage && (
+                <Text muted preWrap small>
+                  {stateChangeReasonMessage}
+                </Text>
+              )}
+            </div>,
+            <Text {...TEXT_PROPS_SHARED} key="created" preWrap>
               {createdAt
                 ? datetimeInLocalTimezone(
                   moment(createdAt).format(DATE_FORMAT_LONG_MS),
@@ -540,28 +551,18 @@ function Clusters({
                 : '-'
                }
             </Text>,
+            <Text
+              {...TEXT_PROPS_SHARED}
+              center
+              key="normalizedInstanceHours"
+            >
+              {normalizedInstanceHours || 0}
+            </Text>,
             <FlexContainer
-              justifyContent="center"
+              justifyContent="flex-end"
               key="active"
             >
               <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
-            </FlexContainer>,
-            <FlexContainer
-              justifyContent="flex-end"
-              key="details"
-            >
-              <Button
-                basic
-                iconOnly
-                noBackground
-                noPadding
-                onClick={() => true}
-              >
-                <ChevronDown
-                  muted
-                  size={ICON_SIZE}
-                />
-              </Button>
             </FlexContainer>,
           ];
         })}
