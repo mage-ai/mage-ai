@@ -525,13 +525,21 @@ function Clusters({
               <Text
                 {...TEXT_PROPS_SHARED}
                 danger={[
-                  ClusterStatusStateEnum.TERMINATED,
                   ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
+                ].includes(state)}
+                default={[
+                    ClusterStatusStateEnum.STARTING,
+                  ].includes(state)}
+                muted={[
+                  ClusterStatusStateEnum.TERMINATED,
+                ].includes(state)}
+                success={[
+                  ClusterStatusStateEnum.RUNNING,
+                  ClusterStatusStateEnum.WAITING,
+                ].includes(state)}
+                warning={[
                   ClusterStatusStateEnum.TERMINATING,
                 ].includes(state)}
-                success={ClusterStatusStateEnum.WAITING === state}
-                warning={ClusterStatusStateEnum.RUNNING === state}
-
               >
                 {status?.state ? capitalizeRemoveUnderscoreLower(status?.state) : status?.state}
               </Text>

@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
+from mage_ai.server.active_kernel import restart_kernel, start_kernel
 from mage_ai.services.aws.emr.emr import list_clusters
 from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
@@ -213,6 +214,15 @@ class AWSEMRComputeService(ComputeService):
             )
 
             emr_cluster_manager.set_active_cluster(cluster_id)
+
+            # If the kernel isn’t restarted after setting a cluster as active,
+            # the notebook won’t be able to connect to the remote cluster.
+            try:
+                restart_kernel()
+            except RuntimeError as e:
+                # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
+                if 'start_kernel' in str(e):
+                    start_kernel()
 
             return self.get_cluster_details(cluster_id)
 

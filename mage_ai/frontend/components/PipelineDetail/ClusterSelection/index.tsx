@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import { toast } from 'react-toastify';
 import { useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -7,17 +8,20 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import useComputeService from '@utils/models/computeService/useComputeService'
 import { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
+import { ExpandOpenUpRight, PowerOnOffButton, WorkspacesUsersIcon } from '@oracle/icons';
+import { MainNavigationTabEnum } from '@components/ComputeManagement/constants';
 import { MenuStyle } from './index.style'
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { PowerOnOffButton, WorkspacesUsersIcon } from '@oracle/icons';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { selectKeys } from '@utils/hash';
@@ -37,6 +41,8 @@ function ClusterSelection() {
     uuid: 'ClusterSelection',
   });
 
+  const [includeAllStates, setIncludeAllStates] = useState(false);
+
   const {
     activeCluster,
     clusters,
@@ -45,6 +51,7 @@ function ClusterSelection() {
     fetchComputeClusters,
   } = useComputeService({
     clustersRefreshInterval: 5000,
+    includeAllStates,
   });
 
   const [popupSettings, setPopupSettings] = useState<{
@@ -191,22 +198,70 @@ function ClusterSelection() {
             <FlexContainer
               flexDirection="column"
             >
-              <Text bold large>
-                {clustersLoading
-                  ? 'Clusters'
-                  : pluralize('cluster', clustersCount, true)
-                }
-              </Text>
+              <FlexContainer alignItems="center">
+                <Text bold large>
+                  {clustersLoading
+                    ? 'Clusters'
+                    : pluralize('cluster', clustersCount, true)
+                  }
+                </Text>
 
-              <Text default small>
-                {clustersCount >= 1 && 'Click a cluster to activate and use it for compute.'}
-                {!clustersCount && 'Launch a new cluster to use for compute.'}
-              </Text>
+                <FlexContainer alignItems="center">
+                  <Spacing mr={PADDING_UNITS} />
+
+                  <ToggleSwitch
+                    checked={includeAllStates as boolean}
+                    compact
+                    onCheck={(valFunc: (val: boolean) => boolean) => setIncludeAllStates(
+                      valFunc(includeAllStates),
+                    )}
+                  />
+
+                  <Spacing mr={1} />
+
+                  <Text default={includeAllStates} muted={!includeAllStates} small>
+                    Include terminated clusters
+                  </Text>
+                </FlexContainer>
+              </FlexContainer>
+
+              <Spacing mt={1}>
+                <Text default small>
+                  {clustersCount >= 1 && 'Click a cluster to activate and use it for compute.'}
+                  {!clustersCount && 'Launch a new cluster to use for compute.'}
+                </Text>
+              </Spacing>
+
+              <Spacing mt={1}>
+                <FlexContainer alignItems="center">
+                  <Button
+                    beforeIcon={<ExpandOpenUpRight default />}
+                    default
+                    linkProps={{
+                      href: `/compute`,
+                      as: `/compute?tab=${MainNavigationTabEnum.CLUSTERS}`,
+                    }}
+                    noBackground
+                    noBold
+                    noBorder
+                    target="_blank"
+                    noPadding
+                    openNewWindow
+                    small
+                  >
+                    Open compute mangement
+                  </Button>
+                </FlexContainer>
+              </Spacing>
             </FlexContainer>
 
             <Spacing mr={PADDING_UNITS} />
 
-            {clustersCount >= 1 && launchClusterButton}
+            {clustersCount >= 1 && (
+              <FlexContainer flexDirection="column">
+                {launchClusterButton}
+              </FlexContainer>
+            )}
           </FlexContainer>
         </Spacing>
 
@@ -284,13 +339,21 @@ function ClusterSelection() {
                 <Text
                   {...TEXT_PROPS_SHARED}
                   danger={[
-                    ClusterStatusStateEnum.TERMINATED,
                     ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
+                  ].includes(state)}
+                  default={[
+                      ClusterStatusStateEnum.STARTING,
+                    ].includes(state)}
+                  muted={[
+                    ClusterStatusStateEnum.TERMINATED,
+                  ].includes(state)}
+                  success={[
+                    ClusterStatusStateEnum.RUNNING,
+                    ClusterStatusStateEnum.WAITING,
+                  ].includes(state)}
+                  warning={[
                     ClusterStatusStateEnum.TERMINATING,
                   ].includes(state)}
-                  success={ClusterStatusStateEnum.WAITING === state}
-                  warning={ClusterStatusStateEnum.RUNNING === state}
-                  key="state"
                 >
                   {status?.state ? capitalizeRemoveUnderscoreLower(status?.state) : status?.state}
                 </Text>,

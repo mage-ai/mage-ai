@@ -10,7 +10,7 @@ export const MenuStyle = styled.div`
 
   border-radius: ${BORDER_RADIUS}px;
   max-height: ${40 * UNIT}px;
-  min-width: ${60 * UNIT}px;
+  min-width: ${70 * UNIT}px;
   overflow: auto;
   position: absolute;
   right: 0;
