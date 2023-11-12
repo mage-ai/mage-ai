@@ -257,6 +257,7 @@ class AWSEMRComputeService(ComputeService):
             ClusterStatusState.BOOTSTRAPPING,
             ClusterStatusState.RUNNING,
             ClusterStatusState.STARTING,
+            ClusterStatusState.TERMINATING,
             ClusterStatusState.WAITING,
         ]
 
@@ -264,7 +265,6 @@ class AWSEMRComputeService(ComputeService):
             cluster_states.extend([
                 ClusterStatusState.TERMINATED,
                 ClusterStatusState.TERMINATED_WITH_ERRORS,
-                ClusterStatusState.TERMINATING,
             ])
 
         response = list_clusters(cluster_states=cluster_states)
@@ -316,10 +316,34 @@ class AWSEMRComputeService(ComputeService):
     def setup_steps(self) -> List[SetupStep]:
         arr = []
 
+        arr.append(SetupStep.load(
+            name='Security group permissions',
+            description='Add inbound rules to the security group named “ElasticMapReduce-master” '
+                        'in order to connect to the AWS EMR Master Node '
+                        'from your current IP address.',
+            steps=[
+                SetupStep.load(
+                    name='Custom TCP port 8998',
+                    description='Add an inbound rule for Custom TCP port 8998 '
+                                'from your current IP address (e.g. My IP) '
+                                'to the security group named “ElasticMapReduce-master”.',
+                    uuid='custom_tcp_8998',
+                ),
+                SetupStep.load(
+                    name='SSH port 22',
+                    description='Add an inbound rule for SSH port 22 '
+                                'from your current IP address (e.g. My IP) '
+                                'to the security group named “ElasticMapReduce-master”.',
+                    required=False,
+                    uuid='ssh_22',
+                ),
+            ],
+            uuid='security',
+        ))
+
         valid_key = True if os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID) else False
         valid_secret = True if os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY) else False
 
-        # How do we let the client know clicking a step will take them to the right place?
         arr.append(SetupStep.load(
             description='Setup connection credentials.',
             name='Credentials',

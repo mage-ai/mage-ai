@@ -41,7 +41,8 @@ class SetupStep(BaseDataClass):
     uuid: str
     description: str = None
     error: ErrorMessage = None
-    status: SetupStepStatus = SetupStepStatus.INCOMPLETE
+    required: bool = True
+    status: SetupStepStatus = None
     steps: List[SetupStepStatus] = field(default_factory=list)
     tab: str = None
 

@@ -34,6 +34,7 @@ export interface SetupStepType {
   name: string;
   description?: string;
   error?: ErrorMessageType;
+  required?: boolean;
   status?: SetupStepStatusEnum;
   steps?: SetupStepType[];
   tab?: string;

@@ -21,6 +21,7 @@ active_kernel = ActiveKernel()
 def switch_active_kernel(
     kernel_name: KernelName,
     emr_config: Dict = None,
+    auto_creation: bool = True,
 ) -> None:
     """
     Switches the active kernel to the specified kernel name, handling its startup and
@@ -70,6 +71,7 @@ def switch_active_kernel(
             )
             emr_cluster_manager.set_active_cluster(
                 auto_selection=True,
+                auto_creation=auto_creation,
                 emr_config=emr_config,
             )
     except NoSuchKernel as e:

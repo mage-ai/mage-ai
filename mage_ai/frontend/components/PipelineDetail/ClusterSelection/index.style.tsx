@@ -9,7 +9,7 @@ export const MenuStyle = styled.div`
   ${ScrollbarStyledCss};
 
   border-radius: ${BORDER_RADIUS}px;
-  max-height: ${40 * UNIT}px;
+  max-height: ${60 * UNIT}px;
   min-width: ${70 * UNIT}px;
   overflow: auto;
   position: absolute;

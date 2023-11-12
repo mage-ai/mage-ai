@@ -32,6 +32,7 @@ function SetupSteps({
       name,
       description,
       error,
+      required,
       status,
       steps,
       tab,
@@ -78,9 +79,23 @@ function SetupSteps({
             <Flex flex={1} flexDirection="column">
               <FlexContainer>
                 <Flex flex={1} flexDirection="column">
-                  <Text default={completed}>
-                    {name}
-                  </Text>
+                  <FlexContainer
+                    alignItems="center"
+                  >
+                    <Text default={completed || !status}>
+                      {name}
+                    </Text>
+
+                    {!required && (
+                      <>
+                        <Spacing mr={1} />
+
+                        <Text muted uppercase xsmall>
+                          optional
+                        </Text>
+                      </>
+                    )}
+                  </FlexContainer>
 
                   {description && !completed && (
                     <Text muted small>
