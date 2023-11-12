@@ -101,6 +101,10 @@ class ComputeService:
         return self.__class__.uuid
 
     @abstractmethod
+    def active_cluster(self, **kwargs) -> Dict:
+        pass
+
+    @abstractmethod
     def create_cluster(self, **kwargs) -> Dict:
         pass
 

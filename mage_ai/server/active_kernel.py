@@ -3,6 +3,8 @@ from typing import Dict
 from jupyter_client import KernelClient, KernelManager
 from jupyter_client.kernelspec import NoSuchKernel
 
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
 from mage_ai.server.logger import Logger
 
@@ -21,7 +23,6 @@ active_kernel = ActiveKernel()
 def switch_active_kernel(
     kernel_name: KernelName,
     emr_config: Dict = None,
-    auto_creation: bool = True,
 ) -> None:
     """
     Switches the active kernel to the specified kernel name, handling its startup and
@@ -71,7 +72,7 @@ def switch_active_kernel(
             )
             emr_cluster_manager.set_active_cluster(
                 auto_selection=True,
-                auto_creation=auto_creation,
+                auto_creation=not Project().is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT),
                 emr_config=emr_config,
             )
     except NoSuchKernel as e:

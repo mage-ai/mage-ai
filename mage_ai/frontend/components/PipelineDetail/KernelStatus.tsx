@@ -49,6 +49,7 @@ import {
   PowerOnOffButton,
 } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
+import { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
@@ -66,7 +67,7 @@ import { MenuStyle } from './ClusterSelection/index.style'
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SparkApplicationType } from '@interfaces/SparkType';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { roundNumber } from '@utils/string';
+import { removeUnderscore, roundNumber } from '@utils/string';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
@@ -362,14 +363,34 @@ function KernelStatus({
       }
 
       if (activeCluster) {
+        const state = activeCluster?.status?.state;
+
         pipelineDisplayName = (
           <Text monospace>
-            {activeCluster?.id}
+            {activeCluster?.id} {state && ![
+              ClusterStatusStateEnum.RUNNING,
+              ClusterStatusStateEnum.WAITING,
+            ].includes(state) && removeUnderscore(state)}
           </Text>
         );
         statusIconEl = (
           <PowerOnOffButton
-            success
+            danger={[
+              ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
+            ].includes(state)}
+            default={[
+                ClusterStatusStateEnum.STARTING,
+              ].includes(state)}
+            muted={[
+              ClusterStatusStateEnum.TERMINATED,
+            ].includes(state)}
+            success={[
+              ClusterStatusStateEnum.RUNNING,
+              ClusterStatusStateEnum.WAITING,
+            ].includes(state)}
+            warning={[
+              ClusterStatusStateEnum.TERMINATING,
+            ].includes(state)}
           />
         );
       } else if (setupComplete) {

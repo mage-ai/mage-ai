@@ -203,6 +203,15 @@ ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
 class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
+    def active_cluster(self, **kwargs) -> Cluster:
+        from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+
+        active_cluster_id = emr_cluster_manager.active_cluster_id
+        if not active_cluster_id:
+            return
+
+        return self.get_cluster_details(active_cluster_id)
+
     def terminate_clusters(self, cluster_ids: List[str]) -> None:
         from mage_ai.services.aws.emr.emr import terminate_clusters
 
@@ -317,36 +326,6 @@ class AWSEMRComputeService(ComputeService):
     def setup_steps(self) -> List[SetupStep]:
         arr = []
 
-        master_security_group_name = SECURITY_GROUP_NAME_MASTER_DEFAULT
-        if self.project.emr_config and self.project.emr_config.get('master_security_group'):
-            master_security_group_name = self.project.emr_config.get('master_security_group')
-
-        arr.append(SetupStep.load(
-            name='Security group permissions',
-            description='Add inbound rules to the '
-                        f'security group named “{master_security_group_name}” '
-                        'in order to connect to the AWS EMR Master Node '
-                        'from your current IP address.',
-            steps=[
-                SetupStep.load(
-                    name='Custom TCP port 8998',
-                    description='Add an inbound rule for Custom TCP port 8998 '
-                                'from your current IP address (e.g. My IP) '
-                                f'to the security group named “{master_security_group_name}”.',
-                    uuid='custom_tcp_8998',
-                ),
-                SetupStep.load(
-                    name='SSH port 22',
-                    description='Add an inbound rule for SSH port 22 '
-                                'from your current IP address (e.g. My IP) '
-                                f'to the security group named “{master_security_group_name}”.',
-                    required=False,
-                    uuid='ssh_22',
-                ),
-            ],
-            uuid='security',
-        ))
-
         valid_key = True if os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID) else False
         valid_secret = True if os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY) else False
 
@@ -405,6 +384,36 @@ class AWSEMRComputeService(ComputeService):
             status=remote_variables_dir_status,
             tab='connection',
             uuid='remote_variables_dir',
+        ))
+
+        master_security_group_name = SECURITY_GROUP_NAME_MASTER_DEFAULT
+        if self.project.emr_config and self.project.emr_config.get('master_security_group'):
+            master_security_group_name = self.project.emr_config.get('master_security_group')
+
+        arr.append(SetupStep.load(
+            name='Security group permissions',
+            description='Add inbound rules to the '
+                        f'security group named “{master_security_group_name}” '
+                        'in order to connect to the AWS EMR Master Node '
+                        'from your current IP address.',
+            steps=[
+                SetupStep.load(
+                    name='Custom TCP port 8998',
+                    description='Add an inbound rule for Custom TCP port 8998 '
+                                'from your current IP address (e.g. My IP) '
+                                f'to the security group named “{master_security_group_name}”.',
+                    uuid='custom_tcp_8998',
+                ),
+                SetupStep.load(
+                    name='SSH port 22',
+                    description='Add an inbound rule for SSH port 22 '
+                                'from your current IP address (e.g. My IP) '
+                                f'to the security group named “{master_security_group_name}”.',
+                    required=False,
+                    uuid='ssh_22',
+                ),
+            ],
+            uuid='security',
         ))
 
         return arr

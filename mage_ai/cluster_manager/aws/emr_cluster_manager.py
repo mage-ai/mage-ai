@@ -72,7 +72,14 @@ class EmrClusterManager(ClusterManager):
 
         # Fetch cluster master instance public DNS
         cluster_info = describe_cluster(cluster_id)
-        emr_dns = cluster_info['MasterPublicDnsName']
+        emr_dns = cluster_info.get('MasterPublicDnsName')
+
+        if not emr_dns:
+            print(
+                '[WARNING] EmrClusterManager.set_active_cluster: '
+                f'cannot get Master Public DNS name from cluster {cluster_id}.'
+            )
+            return
 
         # Get cluster information and update cluster url in sparkmagic config
         home_dir = str(Path.home())

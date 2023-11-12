@@ -309,9 +309,6 @@ class PipelineResource(BaseResource):
             switch_active_kernel(
                 kernel_name,
                 emr_config=pipeline.executor_config if kernel_name == KernelName.PYSPARK else None,
-                auto_creation=not Project(pipeline.repo_config).is_feature_enabled(
-                    FeatureUUID.COMPUTE_MANAGEMENT,
-                ),
             )
 
         if api_operation_action == DETAIL:

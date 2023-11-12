@@ -2,6 +2,7 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.services.ssh.aws.emr.utils import tunnel
 
 
 class ComputeClusterResource(GenericResource):
@@ -75,6 +76,12 @@ class ComputeClusterResource(GenericResource):
                     cluster = parent_model.update_cluster(cluster_id, payload)
                     if cluster:
                         self.model = dict(cluster=cluster)
+
+                        if cluster.active:
+                            def _callback(*args, **kwargs):
+                                tunnel(reconnect=True)
+
+                            self.on_update_callback = _callback
 
     def get_cluster_id(self) -> str:
         cluster_id = None

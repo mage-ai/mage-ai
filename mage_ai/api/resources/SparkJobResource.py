@@ -1,13 +1,12 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.mixins.spark import SparkApplicationChild
-from mage_ai.services.spark.api.local import LocalAPI
 
 
 class SparkJobResource(GenericResource, SparkApplicationChild):
     @classmethod
     async def collection(self, _query, _meta, user, **kwargs):
         return self.build_result_set(
-            await LocalAPI().jobs(),
+            await self.build_api().jobs(),
             user,
             **kwargs,
         )
@@ -25,7 +24,7 @@ class SparkJobResource(GenericResource, SparkApplicationChild):
             application_spark_ui_url = application_spark_ui_url[0]
 
         return self(
-            await LocalAPI().job(
+            await self.build_api().job(
                 job_id=pk,
                 application_id=application_id,
                 application_spark_ui_url=application_spark_ui_url,

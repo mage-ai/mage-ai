@@ -501,7 +501,10 @@ function ComputeManagement({
   ]);
 
   const monitoringMemo = useMemo(() => {
-    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+    if ([
+      ComputeServiceEnum.AWS_EMR,
+      ComputeServiceEnum.STANDALONE_CLUSTER,
+    ].includes(selectedComputeService)) {
       return (
         <Monitoring
           objectAttributes={objectAttributes}
@@ -520,7 +523,10 @@ function ComputeManagement({
   ]);
 
   const systemMemo = useMemo(() => {
-    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+    if ([
+      ComputeServiceEnum.AWS_EMR,
+      ComputeServiceEnum.STANDALONE_CLUSTER,
+    ].includes(selectedComputeService)) {
       return (
         <System
           objectAttributes={objectAttributes}

@@ -1,7 +1,6 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.mixins.spark import SparkApplicationChild
-from mage_ai.services.spark.api.local import LocalAPI
 
 
 class SparkStageAttemptTaskResource(GenericResource, SparkApplicationChild):
@@ -18,7 +17,7 @@ class SparkStageAttemptTaskResource(GenericResource, SparkApplicationChild):
             raise error
 
         return self.build_result_set(
-            await LocalAPI().stage_attempt_tasks(
+            await self.build_api().stage_attempt_tasks(
                 attempt_id=attempt_id,
                 stage_id=parent_model.id,
             ),

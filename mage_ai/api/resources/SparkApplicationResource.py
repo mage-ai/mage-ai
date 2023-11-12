@@ -1,17 +1,17 @@
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.services.spark.api.local import LocalAPI
+from mage_ai.api.resources.mixins.spark import SparkApplicationChild
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.shared.hash import index_by
 
 
-class SparkApplicationResource(GenericResource):
+class SparkApplicationResource(GenericResource, SparkApplicationChild):
     @classmethod
     async def get_model(self, pk):
         return Application.load(id=pk)
 
     @classmethod
     async def collection(self, _query, _meta, user, **kwargs):
-        applications = await LocalAPI().applications()
+        applications = await self.build_api().applications()
         mapping = index_by(lambda x: x.id, applications)
 
         applications_cache = Application.get_applications_from_cache()

@@ -138,7 +138,10 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
     });
   }
 
-  if (ComputeServiceUUIDEnum.STANDALONE_CLUSTER === computeService?.uuid) {
+  if ([
+    ComputeServiceUUIDEnum.AWS_EMR,
+    ComputeServiceUUIDEnum.STANDALONE_CLUSTER,
+  ].includes(computeService?.uuid)) {
     arr.push(...[
       {
         Icon: Monitor,

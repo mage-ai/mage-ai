@@ -2,7 +2,6 @@ from functools import reduce
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.mixins.spark import SparkApplicationChild
-from mage_ai.services.spark.api.local import LocalAPI
 
 
 class SparkSqlResource(GenericResource, SparkApplicationChild):
@@ -25,7 +24,7 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
             application_spark_ui_url = application_spark_ui_url[0]
 
         return self.build_result_set(
-            await LocalAPI().sqls(
+            await self.build_api().sqls(
                 application_id=application_id,
                 application_spark_ui_url=application_spark_ui_url,
                 query=query,
@@ -50,7 +49,7 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
         if application_spark_ui_url:
             application_spark_ui_url = application_spark_ui_url[0]
 
-        model = await LocalAPI().sql(
+        model = await self.build_api().sql(
             application_id=application_id,
             application_spark_ui_url=application_spark_ui_url,
             sql_id=pk,
@@ -59,14 +58,14 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
         if include_jobs_and_stages:
             job_ids = (model.failed_job_ids or []) + (
                 model.running_job_ids or []) + (model.success_job_ids or [])
-            model.jobs = [await LocalAPI().job(
+            model.jobs = [await self.build_api().job(
                 application_id=application_id,
                 application_spark_ui_url=application_spark_ui_url,
                 job_id=job_id,
             ) for job_id in job_ids]
 
             stage_ids = reduce(lambda acc, job: acc + (job.stage_ids or []), model.jobs, [])
-            model.stages = [await LocalAPI().stage(
+            model.stages = [await self.build_api().stage(
                 application_id=application_id,
                 application_spark_ui_url=application_spark_ui_url,
                 stage_id=stage_id,
