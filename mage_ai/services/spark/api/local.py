@@ -1,6 +1,11 @@
 from typing import Dict, List
 
 from mage_ai.services.spark.api.base import BaseAPI
+from mage_ai.services.spark.api.constants import (
+    SPARK_UI_API_VERSION,
+    SPARK_UI_HOST,
+    SPARK_UI_PORT,
+)
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.environments import Environment
 from mage_ai.services.spark.models.executors import Executor
@@ -14,10 +19,6 @@ from mage_ai.services.spark.models.stages import (
 )
 from mage_ai.services.spark.models.threads import Thread
 from mage_ai.shared.hash import index_by
-
-API_VERSION = 'v1'
-SPARK_UI_HOST = 'localhost'
-SPARK_UI_PORT = '4040'
 
 
 class LocalAPI(BaseAPI):
@@ -33,7 +34,7 @@ class LocalAPI(BaseAPI):
         return url
 
     def endpoint(self, host: str = None, **kwargs) -> str:
-        return f'{host or self.spark_ui_url}/api/{API_VERSION}'
+        return f'{host or self.spark_ui_url}/api/{SPARK_UI_API_VERSION}'
 
     def applications_sync(self, **kwargs) -> List[Application]:
         models = self.get_sync('/applications')

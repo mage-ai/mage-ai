@@ -18,6 +18,8 @@ from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.instrumentation.tornado import TornadoInstrumentor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+# from sshtunnel import SSHTunnelForwarder
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -84,6 +86,12 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
+
+# from mage_ai.services.spark.api.constants import (
+#     SPARK_UI_HOST,
+#     SPARK_UI_PORT,
+#     SPARK_UI_PORT_AWS_EMR,
+# )
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
@@ -403,7 +411,8 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
-    url = f'http://{host or "localhost"}:{port}'
+    host = host or 'localhost'
+    url = f'http://{host}:{port}'
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
     webbrowser.open_new_tab(url)
@@ -498,6 +507,53 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
+    # ssh_tunnel = None
+    project_model = Project()
+    if project_model and \
+            project_model.spark_config and \
+            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+
+        Application.clear_cache()
+
+        # if project_model.emr_config and 'ec2_key_path' in project_model.emr_config:
+        #     ec2_key_path = project_model.emr_config.get('ec2_key_path')
+
+        #     if not os.path.exists(ec2_key_path):
+        #         raise Exception(f'Public key {ec2_key_path} doesn’t exist.')
+
+        #     local_port = SPARK_UI_PORT_AWS_EMR
+        #     max_local_port = local_port + 100
+
+        #     while is_port_in_use(local_port):
+        #         if local_port > max_local_port:
+        #             raise Exception(
+        #                 'Cannot find an open port for SSH tunnel. '
+        #                 'Please clear running processes to free up available ports.',
+        #             )
+        #         local_port += 1
+
+        #     # ssh
+        #     # -i ~/.ssh/mage-emr-2023.pem
+        #   # -L localhost:18080:localhost:18080
+        #   # hadoop@ec2-34-217-92-37.us-west-2.compute.amazonaws.com
+        #     ssh_tunnel = SSHTunnelForwarder(
+        #         'ec2-34-217-92-37.us-west-2.compute.amazonaws.com',
+        #         ssh_username='hadoop',
+        #         remote_bind_address=(
+        #             SPARK_UI_HOST,
+        #             SPARK_UI_PORT_AWS_EMR,
+        #         ),
+        #         local_bind_address=(
+        #             host,
+        #             local_port,
+        #         ),
+        #         ssh_pkey=ec2_key_path,
+        #     )
+        #     ssh_tunnel.start()
+        #     ssh_tunnel._check_is_started()
+
+        #     print(f'SSH tunnel local bind port: {ssh_tunnel.local_bind_port}')
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
@@ -520,6 +576,10 @@ async def main(
     )
 
     await asyncio.Event().wait()
+
+    # if ssh_tunnel is not None:
+    #     # ssh_tunnel.stop()
+    #     pass
 
 
 def start_server(
@@ -554,13 +614,6 @@ def start_server(
     init_project_uuid(overwrite_uuid=project_uuid)
 
     asyncio.run(UsageStatisticLogger().project_impression())
-
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
-
-        Application.clear_cache()
 
     if dbt_docs:
         run_docs_server()
