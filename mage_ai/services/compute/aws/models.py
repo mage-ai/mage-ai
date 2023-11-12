@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
 from mage_ai.server.active_kernel import restart_kernel, start_kernel
+from mage_ai.services.aws.emr.constants import SECURITY_GROUP_NAME_MASTER_DEFAULT
 from mage_ai.services.aws.emr.emr import list_clusters
 from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
@@ -316,9 +317,14 @@ class AWSEMRComputeService(ComputeService):
     def setup_steps(self) -> List[SetupStep]:
         arr = []
 
+        master_security_group_name = SECURITY_GROUP_NAME_MASTER_DEFAULT
+        if self.project.emr_config and self.project.emr_config.get('master_security_group'):
+            master_security_group_name = self.project.emr_config.get('master_security_group')
+
         arr.append(SetupStep.load(
             name='Security group permissions',
-            description='Add inbound rules to the security group named “ElasticMapReduce-master” '
+            description='Add inbound rules to the '
+                        f'security group named “{master_security_group_name}” '
                         'in order to connect to the AWS EMR Master Node '
                         'from your current IP address.',
             steps=[
@@ -326,14 +332,14 @@ class AWSEMRComputeService(ComputeService):
                     name='Custom TCP port 8998',
                     description='Add an inbound rule for Custom TCP port 8998 '
                                 'from your current IP address (e.g. My IP) '
-                                'to the security group named “ElasticMapReduce-master”.',
+                                f'to the security group named “{master_security_group_name}”.',
                     uuid='custom_tcp_8998',
                 ),
                 SetupStep.load(
                     name='SSH port 22',
                     description='Add an inbound rule for SSH port 22 '
                                 'from your current IP address (e.g. My IP) '
-                                'to the security group named “ElasticMapReduce-master”.',
+                                f'to the security group named “{master_security_group_name}”.',
                     required=False,
                     uuid='ssh_22',
                 ),
