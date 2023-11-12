@@ -79,8 +79,9 @@ function useComputeService({
     }
 
     return computeService?.setup_steps?.every(({
+      required,
       status,
-    }) => SetupStepStatusEnum.COMPLETED === status);
+    }) => !required || !status || SetupStepStatusEnum.COMPLETED === status);
   }, [
     computeService,
   ]);
