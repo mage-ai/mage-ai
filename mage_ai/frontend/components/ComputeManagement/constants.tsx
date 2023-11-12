@@ -1,5 +1,10 @@
 import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
+import Circle from '@oracle/elements/Circle';
+import ComputeConnectionType from '@interfaces/ComputeConnectionType';
 import ComputeServiceType from '@interfaces/ComputeServiceType';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
+import Tooltip from '@oracle/components/Tooltip';
 import {
   BlockCubePolygon,
   CubesThreeSeparated,
@@ -7,6 +12,7 @@ import {
   Monitor,
   PlugAPI,
   PowerOnOffButton,
+  Settings,
   WorkspacesUsersIcon,
 } from '@oracle/icons';
 import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
@@ -18,6 +24,10 @@ const ICON_SIZE = 8 * UNIT;
 
 export interface TabType {
   Icon: any;
+  renderStatus?: (opts?: {
+    computeConnections?: ComputeConnectionType[];
+    computeService: ComputeServiceType;
+  }) => any;
   uuid: string;
 }
 
@@ -31,10 +41,11 @@ export const ComputeServiceEnum = { ...ComputeServiceUUIDEnum };
 export type ComputeServiceEnum = typeof ComputeServiceEnum;
 
 export enum MainNavigationTabEnum {
-  CONNECTION = 'connection',
   CLUSTERS = 'clusters',
-  RESOURCES = 'resources',
+  CONNECTION = 'connection',
   MONITORING = 'monitoring',
+  RESOURCES = 'resources',
+  SETUP = 'setup',
   SYSTEM = 'system',
 }
 
@@ -43,6 +54,7 @@ export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
   [MainNavigationTabEnum.CONNECTION]: 'Connection',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
   [MainNavigationTabEnum.MONITORING]: 'Monitoring',
+  [MainNavigationTabEnum.SETUP]: 'Setup',
   [MainNavigationTabEnum.SYSTEM]: 'System',
 };
 
@@ -122,8 +134,8 @@ export const SHARED_TEXT_PROPS: {
 export function buildTabs(computeService: ComputeServiceType): TabType[] {
   let arr = [
     {
-      Icon: PlugAPI,
-      uuid: MainNavigationTabEnum.CONNECTION,
+      Icon: Settings,
+      uuid: MainNavigationTabEnum.SETUP,
     },
     {
       Icon: DiamondGem,
@@ -132,10 +144,16 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
   ];
 
   if (ComputeServiceUUIDEnum.AWS_EMR === computeService?.uuid) {
-    arr.push({
-      Icon: CubesThreeSeparated,
-      uuid: MainNavigationTabEnum.CLUSTERS,
-    });
+    arr.push(...[
+      {
+        Icon: CubesThreeSeparated,
+        uuid: MainNavigationTabEnum.CLUSTERS,
+      },
+      {
+        Icon: PlugAPI,
+        uuid: MainNavigationTabEnum.CONNECTION,
+      },
+    ]);
   }
 
   if ([

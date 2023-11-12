@@ -11,7 +11,6 @@ class AwsEmrAPI(LocalAPI):
         tunnel = SSHTunnel()
         if tunnel:
             connection_details = tunnel.connection_details()
-            print('WTFFFFFFFFFFFFFFFFFFFFF', connection_details)
             url = connection_details.get('address')
 
         if self.application_spark_ui_url:

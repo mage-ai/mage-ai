@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import AWSEMRClusterType from './AWSEMRClusterType';
 import ComputeClusterType from '@interfaces/ComputeClusterType';
+import ComputeConnectionType from '@interfaces/ComputeConnectionType';
 import ComputeServiceType, {
   ComputeServiceUUIDEnum,
   SetupStepStatusEnum,
@@ -12,10 +13,12 @@ import useProject from '@utils/models/project/useProject';
 function useComputeService({
   clustersRefreshInterval,
   computeServiceRefreshInterval,
+  connectionsRefreshInterval,
   includeAllStates,
 }: {
   clustersRefreshInterval?: number;
   computeServiceRefreshInterval?: number;
+  connectionsRefreshInterval?: number;
   includeAllStates?: boolean;
 } = {}): {
   activeCluster?: AWSEMRClusterType;
@@ -26,7 +29,9 @@ function useComputeService({
   computeServiceUUIDs: {
     [key: string]: ComputeServiceUUIDEnum;
   };
+  connections?: ComputeConnectionType[];
   fetchComputeClusters?: () => void;
+  fetchComputeConnections?: () => void;
   fetchComputeService?: () => void;
   setupComplete?: boolean;
 } {
@@ -90,6 +95,19 @@ function useComputeService({
     clusters,
   ]);
 
+  const {
+    data: dataComputeConnections,
+    mutate: fetchComputeConnections,
+  } = api.compute_connections.compute_services.list(computeService?.uuid, {}, {
+    refreshInterval: connectionsRefreshInterval,
+  }, {
+    pauseFetch: !sparkEnabled,
+  });
+  const computeConnections: ComputeConnectionType[] =
+    useMemo(() => dataComputeConnections?.compute_connections || [], [
+      dataComputeConnections,
+    ]);
+
   return {
     activeCluster: clusters?.find(({ active }) => active),
     clusters,
@@ -99,7 +117,9 @@ function useComputeService({
       ...acc,
       [k]: v,
     }), {}),
+    connections: computeConnections,
     fetchComputeClusters,
+    fetchComputeConnections,
     fetchComputeService,
     setupComplete,
   };

@@ -55,6 +55,7 @@ export default interface AWSEMRClusterType {
   id: string;
   name: string;
   normalized_instance_hours: number;
+  ready: boolean;
   release_label?: string;
   scale_down_behavior?: string;
   service_role?: string;

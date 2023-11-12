@@ -45,7 +45,7 @@ const TEXT_PROPS_SHARED = {
   monospace: true,
 };
 
-type ClustersType = {
+type ClustersProp = {
   clusters: AWSEMRClusterType[];
   computeService: ComputeServiceType;
   fetchComputeClusters: () => void;
@@ -61,7 +61,7 @@ function Clusters({
   includeAllStates,
   loading,
   setIncludeAllStates,
-}: ClustersType) {
+}: ClustersProp) {
   const componentUUID = useMemo(() => `${computeService?.uuid}/clusters`, [computeService]);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 

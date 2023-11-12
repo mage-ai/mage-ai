@@ -14,6 +14,7 @@ from mage_ai.services.spark.api.constants import (
     SPARK_UI_PORT_AWS_EMR,
 )
 from mage_ai.services.ssh.aws.emr.utils import file_path, should_tunnel
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import is_port_in_use
 
 SSH_USERNAME_DEFAULT = 'hadoop'
@@ -79,6 +80,13 @@ class SSHTunnel:
 
         return self.is_active()
 
+    def stop(self) -> None:
+        if self.tunnel:
+            try:
+                self.tunnel.stop()
+            except Exception as err:
+                print(f'[WARNING] AWS EMR SSHTunnel: {err}')
+
     def close(self) -> None:
         if self.tunnel:
             self.tunnel.stop()
@@ -86,17 +94,15 @@ class SSHTunnel:
 
     def connection_details(self) -> Dict:
         return dict(
-            address=self.tunnel.local_bind_address,
-            host=self.tunnel.local_bind_host,
-            port=self.tunnel.local_bind_port,
+            address=self.tunnel.local_bind_address if self.tunnel else None,
+            host=self.tunnel.local_bind_host if self.tunnel else None,
+            port=self.tunnel.local_bind_port if self.tunnel else None,
         )
 
-    def stop(self) -> None:
-        if self.tunnel:
-            try:
-                self.tunnel.stop()
-            except Exception as err:
-                print(f'[WARNING] AWS EMR SSHTunnel: {err}')
+    def to_dict(self) -> Dict:
+        return merge_dict(self.connection_details(), dict(
+            active=self.is_active(),
+        ))
 
     def is_active(self, raise_error: bool = False) -> bool:
         if not self.tunnel:

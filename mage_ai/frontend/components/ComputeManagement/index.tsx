@@ -16,6 +16,7 @@ import Link from '@oracle/elements/Link';
 import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
+import SetupSettings from './SetupSettings';
 import SetupSteps from './Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import SparkGraph from './SparkGraph';
@@ -41,6 +42,7 @@ import {
   MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING,
   MainNavigationTabEnum,
   ObjectAttributesType,
+  TabType,
   buildTabs,
 } from './constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
@@ -52,6 +54,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getComputeServiceFromProject } from './utils';
 import { goToWithQuery } from '@utils/routing';
@@ -219,7 +222,9 @@ function ComputeManagement({
     clusters,
     clustersLoading,
     computeService,
+    connections,
     fetchComputeClusters,
+    fetchComputeConnections,
     fetchComputeService,
     setupComplete,
   }: ComputeServiceType = useComputeService({
@@ -242,7 +247,7 @@ function ComputeManagement({
   useEffect(() => {
     if (!selectedTab && selectedComputeService) {
       setSelectedTab({
-        main: MainNavigationTabEnum.CONNECTION,
+        main: MainNavigationTabEnum.SETUP,
       });
     }
   }, [
@@ -288,39 +293,58 @@ function ComputeManagement({
   const before = useMemo(() => {
     const arr = buildTabs(computeService).map(({
       Icon,
+      renderStatus,
       uuid,
-    }: {
-      Icon: any;
-      uuid: MainNavigationTabEnum;
-    }) => (
-      <NavigationStyle
-        key={uuid}
-        selected={selectedTab?.main === uuid}
-      >
-        <Link
-          block
-          disabled={!selectedComputeService}
-          noHoverUnderline
-          noOutline
-          onClick={() => setSelectedTab(() => ({
-            main: uuid,
-          }))}
-          preventDefault
+    }: TabType) => {
+      let statusEl;
+
+      if (renderStatus) {
+        statusEl = renderStatus?.({
+          computeConnections: connections,
+          computeService,
+        });
+      }
+
+      return (
+        <NavigationStyle
+          key={uuid}
+          selected={selectedTab?.main === uuid}
         >
-          <Spacing p={PADDING_UNITS}>
-            <FlexContainer alignItems="center">
-              <Icon size={UNIT * 2} />
+          <Link
+            block
+            disabled={!selectedComputeService}
+            noHoverUnderline
+            noOutline
+            onClick={() => setSelectedTab(() => ({
+              main: uuid,
+            }))}
+            preventDefault
+          >
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center" justifyContent="space-between">
+                <Flex alignItems="center" flex={1}>
+                  <Icon size={UNIT * 2} />
 
-              <Spacing mr={2} />
+                  <Spacing mr={2} />
 
-              <Text bold large>
-                {MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[uuid]}
-              </Text>
-            </FlexContainer>
-          </Spacing>
-        </Link>
-      </NavigationStyle>
-    ));
+                  <Text bold large>
+                    {MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[uuid]}
+                  </Text>
+                </Flex>
+
+                {statusEl && (
+                  <>
+                    <Spacing mr={PADDING_UNITS} />
+
+                    {statusEl}
+                  </>
+                )}
+              </FlexContainer>
+            </Spacing>
+          </Link>
+        </NavigationStyle>
+      );
+    });
 
     if (selectedComputeService) {
       const displayName = COMPUTE_SERVICE_DISPLAY_NAME[selectedComputeService];
@@ -369,6 +393,86 @@ function ComputeManagement({
           }
         }
 
+        const connectionStatusesEl = [];
+
+        if (computeService?.setup_steps) {
+          connectionStatusesEl.push(
+            <Spacing key="compute-service-setup-steps" py={1}>
+              <FlexContainer
+                alignItems="center"
+              >
+                {setupComplete && (
+                  <PowerOnOffButton
+                    muted={!activeCluster}
+                    size={1.5 * UNIT}
+                    success={activeCluster}
+                  />
+                )}
+                {!setupComplete && (
+                  <AlertTriangle
+                    danger
+                    size={1.5 * UNIT}
+                  />
+                )}
+
+                <Spacing mr={1} />
+
+                <Flex flex={1} flexDirection="column">
+                  <Text default={!setupComplete || !activeCluster} small>
+                    {setupComplete && activeCluster
+                      ? 'Compute service connected'
+                      : 'Compute service unconnected'
+                    }
+                  </Text>
+
+                  {setupStepsTooltipMessage && (
+                    <Text muted xsmall>
+                      {setupStepsTooltipMessage}
+                    </Text>
+                  )}
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          );
+        }
+
+        if (connections?.length) {
+          connections?.forEach(({
+            active,
+            description,
+            id,
+            name,
+          }, idx: number) => {
+            connectionStatusesEl.push(
+              <Spacing key={id} py={1}>
+                <FlexContainer
+                  alignItems="center"
+                >
+                  <PowerOnOffButton
+                    muted={!active}
+                    size={1.5 * UNIT}
+                    success={active}
+                  />
+
+                  <Spacing mr={1} />
+
+                  <Flex flex={1} flexDirection="column">
+                    <Text default={!active} small>
+                      {name || capitalizeRemoveUnderscoreLower(id || '')}
+                    </Text>
+
+                    {description && (
+                      <Text muted xsmall>
+                        {description}
+                      </Text>
+                    )}
+                  </Flex>
+                </FlexContainer>
+              </Spacing>
+            );
+          });
+        }
+
         arr.unshift(
           <Spacing
             key={`${displayName}-${kicker}`}
@@ -380,29 +484,17 @@ function ComputeManagement({
                   {renderIcon()}
                 </Flex>
 
-                {computeService?.setup_steps && (
-                  <Tooltip
-                    appearBefore
-                    block
-                    description={setupStepsTooltipMessage}
-                    maxWidth={30 * UNIT}
-                    size={null}
-                  >
-                    {setupComplete && (
-                      <PowerOnOffButton
-                        muted={!activeCluster}
-                        size={3 * UNIT}
-                        success={activeCluster}
-                      />
-                    )}
-                    {!setupComplete && (
-                      <AlertTriangle
-                        danger
-                        size={3 * UNIT}
-                      />
-                    )}
-                  </Tooltip>
-                )}
+                <Button
+                  compact
+                  onClick={() => {
+                    setSelectedComputeService(null)
+                    setSelectedTab(null);
+                  }}
+                  secondary
+                  small
+                >
+                  Change
+                </Button>
               </FlexContainer>
 
               <Spacing mt={PADDING_UNITS}>
@@ -415,22 +507,14 @@ function ComputeManagement({
                       {displayName}
                     </Headline>
                   </Flex>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <Button
-                    compact
-                    onClick={() => {
-                      setSelectedComputeService(null)
-                      setSelectedTab(null);
-                    }}
-                    secondary
-                    small
-                  >
-                    Change
-                  </Button>
                 </FlexContainer>
               </Spacing>
+
+              {connectionStatusesEl?.length >= 1 && (
+                <Spacing mt={PADDING_UNITS}>
+                  {connectionStatusesEl}
+                </Spacing>
+              )}
             </CardStyle>
           </Spacing>
         );
@@ -442,6 +526,7 @@ function ComputeManagement({
     activeCluster,
     clusters,
     computeService,
+    connections,
     selectedComputeService,
     selectedTab,
     setSelectedTab,
@@ -462,8 +547,8 @@ function ComputeManagement({
     selectedSql,
   ]);
 
-  const connectionMemo = useMemo(() => (
-    <ConnectionSettings
+  const setupMemo = useMemo(() => (
+    <SetupSettings
       attributesTouched={attributesTouched || {}}
       computeService={computeService}
       isLoading={isLoadingUpdateProject}
@@ -498,6 +583,18 @@ function ComputeManagement({
     selectedComputeService,
     setObjectAttributes,
     updateProject,
+  ]);
+
+  const connectionMemo = useMemo(() => (
+    <ConnectionSettings
+      computeService={computeService}
+      connections={connections}
+      fetchComputeConnections={fetchComputeConnections}
+    />
+  ), [
+    computeService,
+    connections,
+    fetchComputeConnections,
   ]);
 
   const monitoringMemo = useMemo(() => {
@@ -629,8 +726,8 @@ function ComputeManagement({
     if (selectedComputeService && project && selectedTab?.main) {
       const uuid = selectedTab?.main;
 
-      if (MainNavigationTabEnum.CONNECTION === uuid) {
-        return connectionMemo;
+      if (MainNavigationTabEnum.SETUP === uuid) {
+        return setupMemo;
       }
 
       if (MainNavigationTabEnum.RESOURCES === uuid) {
@@ -648,6 +745,10 @@ function ComputeManagement({
       if (MainNavigationTabEnum.CLUSTERS === uuid) {
         return clustersMemo;
       }
+
+      if (MainNavigationTabEnum.CONNECTION === uuid) {
+        return connectionMemo;
+      }
     }
   }, [
     clustersMemo,
@@ -659,6 +760,7 @@ function ComputeManagement({
     resourcesMemo,
     selectedComputeService,
     selectedTab,
+    setupMemo,
     systemMemo,
   ]);
 

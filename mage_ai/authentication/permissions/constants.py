@@ -18,6 +18,7 @@ class EntityName(str, Enum):
     ClientPage = 'ClientPage'
     Cluster = 'Cluster'
     ComputeCluster = 'ComputeCluster'
+    ComputeConnection = 'ComputeConnection'
     ComputeService = 'ComputeService'
     CustomTemplate = 'CustomTemplate'
     DataProvider = 'DataProvider'

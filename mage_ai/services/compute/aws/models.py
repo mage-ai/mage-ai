@@ -10,6 +10,7 @@ from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
     ClusterStatusState,
 )
+from mage_ai.services.compute.constants import ComputeManagementApplicationTab
 from mage_ai.services.compute.models import (
     ComputeService,
     ConnectionCredential,
@@ -159,6 +160,23 @@ class Cluster(BaseDataClass):
         self.serialize_attribute_classes('configurations', ClusterConfiguration)
         self.serialize_attribute_classes('placement_groups', PlacementGroups)
         self.serialize_attribute_classes('tags', ClusterTag)
+
+    @property
+    def ready(self) -> bool:
+        return self.state and [
+            ClusterStatusState.RUNNING,
+            ClusterStatusState.WAITING,
+        ].includes(self.state)
+
+    @property
+    def state(self) -> ClusterStatusState:
+        if self.status:
+            return self.status.state
+
+    def to_dict(self) -> Dict:
+        return merge_dict(super().to_dict(), dict(
+            ready=self.ready,
+        ))
 
 
 @dataclass
@@ -356,7 +374,7 @@ class AWSEMRComputeService(ComputeService):
                 SetupStepStatus.COMPLETED if valid_key and
                 valid_secret else SetupStepStatus.INCOMPLETE
             ),
-            tab='connection',
+            tab=ComputeManagementApplicationTab.SETUP,
             uuid='credentials',
         ))
 
@@ -382,7 +400,7 @@ class AWSEMRComputeService(ComputeService):
             error=error_message,
             name='Remote variables directory',
             status=remote_variables_dir_status,
-            tab='connection',
+            tab=ComputeManagementApplicationTab.SETUP,
             uuid='remote_variables_dir',
         ))
 
