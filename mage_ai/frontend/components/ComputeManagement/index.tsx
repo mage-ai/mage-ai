@@ -384,7 +384,11 @@ function ComputeManagement({
         if (computeService?.setup_steps) {
           if (setupComplete) {
             if (activeCluster) {
-              setupStepsTooltipMessage = 'Cluster activated, commence coding.';
+              if (activeCluster?.ready) {
+                setupStepsTooltipMessage = 'Cluster is ready, commence coding.';
+              } else {
+                setupStepsTooltipMessage = 'Cluster activated and initializing.';
+              }
             } else {
               setupStepsTooltipMessage = 'Setup complete but no clusters activated.';
             }
@@ -403,9 +407,9 @@ function ComputeManagement({
               >
                 {setupComplete && (
                   <PowerOnOffButton
-                    muted={!activeCluster}
+                    muted={!activeCluster?.ready}
                     size={1.5 * UNIT}
-                    success={activeCluster}
+                    success={activeCluster?.ready}
                   />
                 )}
                 {!setupComplete && (

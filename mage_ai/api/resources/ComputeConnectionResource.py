@@ -6,6 +6,7 @@ from mage_ai.services.compute.constants import (
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.ssh.aws.emr.models import SSHTunnel
+from mage_ai.services.ssh.aws.emr.utils import tunnel
 
 
 class ComputeConnectionResource(GenericResource):
@@ -18,10 +19,10 @@ class ComputeConnectionResource(GenericResource):
         if parent_model and isinstance(parent_model, ComputeService):
             if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
                 cluster = parent_model.active_cluster()
-                tunnel = SSHTunnel()
+                ssh_tunnel = SSHTunnel()
 
-                active_cluster = cluster.active and cluster.ready if cluster else False
-                active_tunnel = tunnel.is_active() if tunnel else False
+                active_cluster = (cluster.active and cluster.ready) if cluster else False
+                active_tunnel = ssh_tunnel.is_active() if ssh_tunnel else False
 
                 description_cluster = 'No cluster has been activated for compute.'
                 if cluster and cluster.active:
@@ -36,7 +37,7 @@ class ComputeConnectionResource(GenericResource):
 
                 actions_cluster = []
                 if cluster:
-                    active_cluster.extend([
+                    actions_cluster.extend([
                         dict(
                             name='Terminate',
                             uuid=ComputeConnectionAction.DELETE,
@@ -59,7 +60,7 @@ class ComputeConnectionResource(GenericResource):
                             uuid=ComputeConnectionAction.UPDATE,
                         ),
                     ])
-                else:
+                elif cluster and cluster.active:
                     actions_tunnel.append(dict(
                         name='Connect',
                         uuid=ComputeConnectionAction.CREATE,
@@ -77,7 +78,7 @@ class ComputeConnectionResource(GenericResource):
                     dict(
                         actions=actions_tunnel,
                         active=active_tunnel,
-                        connection=tunnel.to_dict() if tunnel else None,
+                        connection=ssh_tunnel.to_dict() if ssh_tunnel else None,
                         description=description_tunnel,
                         id=ComputeConnectionUUID.SSH_TUNNEL,
                         name='SSH tunnel',
@@ -116,15 +117,20 @@ class ComputeConnectionResource(GenericResource):
                     if ComputeConnectionAction.DELETE == action_uuid:
                         parent_model.terminate_clusters([connection.get('id')])
                 elif ComputeConnectionUUID.SSH_TUNNEL == model_id:
-                    tunnel = SSHTunnel()
-                    if not tunnel:
-                        return
+                    def _callback(action_uuid=action_uuid, *args, **kwargs):
+                        ssh_tunnel = SSHTunnel()
 
-                    if ComputeConnectionAction.CREATE:
-                        tunnel.connect()
-                    elif ComputeConnectionAction.DELETE:
-                        tunnel.close()
-                    elif ComputeConnectionAction.DESELECT:
-                        tunnel.stop()
-                    elif ComputeConnectionAction.UPDATE:
-                        tunnel.reconnect()
+                        if ComputeConnectionAction.CREATE == action_uuid:
+                            if ssh_tunnel:
+                                ssh_tunnel.connect()
+                            else:
+                                print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF callback')
+                                tunnel(ignore_active_kernel=True)
+                        elif ComputeConnectionAction.DELETE == action_uuid:
+                            ssh_tunnel.close()
+                        elif ComputeConnectionAction.DESELECT == action_uuid:
+                            ssh_tunnel.stop()
+                        elif ComputeConnectionAction.UPDATE == action_uuid:
+                            ssh_tunnel.reconnect()
+
+                    self.on_update_callback = _callback

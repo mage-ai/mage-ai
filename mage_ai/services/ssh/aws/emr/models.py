@@ -8,11 +8,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.services.compute.aws.constants import ClusterStatusState
 from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
-from mage_ai.services.spark.api.constants import (
-    SPARK_UI_HOST,
-    SPARK_UI_PORT,
-    SPARK_UI_PORT_AWS_EMR,
-)
+from mage_ai.services.spark.api.constants import SPARK_UI_HOST, SPARK_UI_PORT_AWS_EMR
 from mage_ai.services.ssh.aws.emr.utils import file_path, should_tunnel
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import is_port_in_use
@@ -49,7 +45,7 @@ class SSHTunnel:
                     master_public_dns_name,
                     local_bind_address=(
                         spark_ui_host_local or SPARK_UI_HOST,
-                        get_port(spark_ui_port_local or SPARK_UI_PORT),
+                        get_port(spark_ui_port_local or SPARK_UI_PORT_AWS_EMR),
                     ),
                     remote_bind_address=(
                         spark_ui_host_remote or SPARK_UI_HOST,
@@ -95,7 +91,7 @@ class SSHTunnel:
     def connection_details(self) -> Dict:
         return dict(
             address=self.tunnel.local_bind_address if self.tunnel else None,
-            host=self.tunnel.local_bind_host if self.tunnel else None,
+            host=SPARK_UI_HOST if self.tunnel else None,
             port=self.tunnel.local_bind_port if self.tunnel else None,
         )
 

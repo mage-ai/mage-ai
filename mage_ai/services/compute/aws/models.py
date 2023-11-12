@@ -163,10 +163,10 @@ class Cluster(BaseDataClass):
 
     @property
     def ready(self) -> bool:
-        return self.state and [
+        return self.state and self.state in [
             ClusterStatusState.RUNNING,
             ClusterStatusState.WAITING,
-        ].include(self.state)
+        ]
 
     @property
     def state(self) -> ClusterStatusState:

@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import os
 import shutil
 import stat
@@ -355,7 +356,13 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         updated_routes = routes
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
-    autoreload.watch(file_path_aws_emr())
+
+    file_path = file_path_aws_emr()
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            f.write(json.dumps({}))
+
+    autoreload.watch(file_path)
 
     return tornado.web.Application(
         updated_routes,

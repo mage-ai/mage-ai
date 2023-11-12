@@ -162,11 +162,13 @@ class BaseAPI(ABC):
             return {}
 
         url = f'{self.endpoint(host=host)}{path}'
+        print('WTFFFFFFFFFFFFFFFFFFFFF--------------------', url)
         response = await self.__build_request(
             'get',
             url,
             query=query,
         )
+        print('WTFFFFFFFFFFFFFFFFFFFFF--------------------', response)
         if response.status_code == 200:
             return response.json()
         else:

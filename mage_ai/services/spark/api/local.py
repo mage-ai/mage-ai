@@ -154,6 +154,7 @@ class LocalAPI(BaseAPI):
             **model,
             spark_ui_url=self.spark_ui_url,
         ) for model in models]
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFF applications', applications)
         mapping = index_by(lambda x: x.id, applications)
 
         applications_cache = Application.get_applications_from_cache()
