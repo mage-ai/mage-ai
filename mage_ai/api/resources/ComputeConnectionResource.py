@@ -34,12 +34,40 @@ class ComputeConnectionResource(GenericResource):
                 if active_tunnel:
                     description_tunnel = 'SSH tunnel is active.'
 
+                actions_cluster = []
+                if cluster:
+                    active_cluster.extend([
+                        dict(
+                            name='Terminate',
+                            uuid=ComputeConnectionAction.DELETE,
+                        ),
+                    ])
+
+                actions_tunnel = []
+                if active_tunnel:
+                    actions_tunnel.extend([
+                        dict(
+                            name='Close',
+                            uuid=ComputeConnectionAction.DELETE,
+                        ),
+                        dict(
+                            name='Stop',
+                            uuid=ComputeConnectionAction.DESELECT,
+                        ),
+                        dict(
+                            name='Reconnect',
+                            uuid=ComputeConnectionAction.UPDATE,
+                        ),
+                    ])
+                else:
+                    actions_tunnel.append(dict(
+                        name='Connect',
+                        uuid=ComputeConnectionAction.CREATE,
+                    ))
+
                 arr.extend([
                     dict(
-                        actions=[
-                            ComputeConnectionAction.DELETE,  # terminate
-                            ComputeConnectionAction.DESELECT,  # deactivate
-                        ],
+                        actions=actions_cluster,
                         active=active_cluster,
                         connection=cluster.to_dict() if cluster else None,
                         description=description_cluster,
@@ -47,12 +75,7 @@ class ComputeConnectionResource(GenericResource):
                         name='Activated cluster'
                     ),
                     dict(
-                        actions=[
-                            ComputeConnectionAction.CREATE,  # connect
-                            ComputeConnectionAction.DELETE,  # close
-                            ComputeConnectionAction.DESELECT,  # stop
-                            ComputeConnectionAction.UPDATE,  # reconnect
-                        ],
+                        actions=actions_tunnel,
                         active=active_tunnel,
                         connection=tunnel.to_dict() if tunnel else None,
                         description=description_tunnel,
@@ -66,3 +89,42 @@ class ComputeConnectionResource(GenericResource):
             user,
             **kwargs,
         )
+
+    @classmethod
+    async def member(self, pk, user, **kwargs):
+        return self(dict(
+            id=pk,
+        ), user, **kwargs)
+
+    async def update(self, payload, **kwargs):
+        parent_model = kwargs.get('parent_model')
+
+        action_uuid = payload.get('action')
+        connection = payload.get('connection')
+        model_id = self.model.get('id')
+
+        if not action_uuid:
+            return
+
+        if parent_model and isinstance(parent_model, ComputeService):
+            if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
+                if ComputeConnectionUUID.CLUSTER == model_id:
+                    cluster = parent_model.active_cluster()
+                    if not cluster:
+                        return
+
+                    if ComputeConnectionAction.DELETE == action_uuid:
+                        parent_model.terminate_clusters([connection.get('id')])
+                elif ComputeConnectionUUID.SSH_TUNNEL == model_id:
+                    tunnel = SSHTunnel()
+                    if not tunnel:
+                        return
+
+                    if ComputeConnectionAction.CREATE:
+                        tunnel.connect()
+                    elif ComputeConnectionAction.DELETE:
+                        tunnel.close()
+                    elif ComputeConnectionAction.DESELECT:
+                        tunnel.stop()
+                    elif ComputeConnectionAction.UPDATE:
+                        tunnel.reconnect()

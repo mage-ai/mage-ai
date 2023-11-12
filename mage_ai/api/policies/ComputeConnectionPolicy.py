@@ -10,7 +10,6 @@ class ComputeConnectionPolicy(BasePolicy):
 
 ComputeConnectionPolicy.allow_actions(
     [
-        OperationType.DETAIL,
         OperationType.LIST,
     ],
     scopes=[
@@ -23,8 +22,6 @@ ComputeConnectionPolicy.allow_actions(
 
 ComputeConnectionPolicy.allow_actions(
     [
-        OperationType.CREATE,
-        OperationType.DELETE,
         OperationType.UPDATE,
     ],
     scopes=[
@@ -41,7 +38,6 @@ ComputeConnectionPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.DETAIL,
         OperationType.LIST,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
@@ -55,8 +51,6 @@ ComputeConnectionPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.CREATE,
-        OperationType.DELETE,
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
@@ -67,13 +61,12 @@ ComputeConnectionPolicy.allow_read(
 ComputeConnectionPolicy.allow_write(
     [
         'action',
+        'connection',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.CREATE,
-        OperationType.DELETE,
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),

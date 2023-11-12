@@ -166,7 +166,7 @@ class Cluster(BaseDataClass):
         return self.state and [
             ClusterStatusState.RUNNING,
             ClusterStatusState.WAITING,
-        ].includes(self.state)
+        ].include(self.state)
 
     @property
     def state(self) -> ClusterStatusState:

@@ -590,11 +590,13 @@ function ComputeManagement({
       computeService={computeService}
       connections={connections}
       fetchComputeConnections={fetchComputeConnections}
+      fetchComputeService={fetchComputeService}
     />
   ), [
     computeService,
     connections,
     fetchComputeConnections,
+    fetchComputeService,
   ]);
 
   const monitoringMemo = useMemo(() => {

@@ -1,6 +1,6 @@
 import AWSEMRClusterType from './AWSEMRClusterType';
 
-export enum ComputeConnectionActionEnum {
+export enum ComputeConnectionActionUUIDEnum {
   CREATE = 'CREATE',
   DELETE = 'DELETE',
   DESELECT = 'DESELECT',
@@ -12,6 +12,11 @@ export enum ComputeConnectionUUIDEnum {
   SSH_TUNNEL = 'SSH_TUNNEL',
 }
 
+export interface ComputeConnectionActionType {
+  name: string;
+  uuid: ComputeConnectionActionUUIDEnum;
+}
+
 export interface SSHTunnelType {
   active: boolean;
   address: string;
@@ -20,7 +25,7 @@ export interface SSHTunnelType {
 }
 
 export default interface ComputeConnectionType {
-  actions: ComputeConnectionActionEnum[];
+  actions: ComputeConnectionActionType[];
   active: boolean;
   connection?: AWSEMRClusterType | SSHTunnelType;
   description?: string;
