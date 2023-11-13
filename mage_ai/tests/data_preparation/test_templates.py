@@ -240,6 +240,7 @@ bootstrap_server: "localhost:9092"
 topic: topic_name
 consumer_group: unique_consumer_group
 include_metadata: false
+api_version: 0.10.2
 
 # Uncomment the config below to use SSL config
 # security_protocol: "SSL"
