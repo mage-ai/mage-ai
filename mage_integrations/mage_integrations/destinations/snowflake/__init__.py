@@ -440,7 +440,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
             self.logger.info(f'Columns: {df.columns}')
 
             # Clean dataframe column names and values
-            df = self._clean_df(df)
+            df = self._clean_df(df, stream)
 
             database = self.config.get(self.DATABASE_CONFIG_KEY)
             schema = self.config.get(self.SCHEMA_CONFIG_KEY)
