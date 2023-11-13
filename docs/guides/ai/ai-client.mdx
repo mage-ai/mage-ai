@@ -66,8 +66,7 @@ This is an [example PR](https://github.com/mage-ai/mage-ai/pull/3850).
 
 ### Create new AI config
 
-Create a dedicated configuration to save the params required to connect to LLM in the [config.py]
-(https://github.com/mage-ai/mage-ai/blob/92c372b24e08148863d799d9afcdd44483c11c89/mage_ai/orchestration/ai/config.py#L19).
+Create a dedicated configuration to save the params required to connect to LLM in the [config.py](https://github.com/mage-ai/mage-ai/blob/92c372b24e08148863d799d9afcdd44483c11c89/mage_ai/orchestration/ai/config.py#L19).
 For instance, when using the Hugging Face client, the LLM is hosted within the 
 inference endpoint, mandating both the API and Token for invoking the service 
 for inference. In the OpenAI client, the OpenAI key is required to facilitate model inference.
@@ -89,6 +88,5 @@ to talk to your service.
 
 ### Enable in llm_pipeline_wizard
 
-The last action to take is modifying the Setup function within "[mage_ai/ai/llm_pipeline_wizard.py]
-(https://github.com/mage-ai/mage-ai/blob/92c372b24e08148863d799d9afcdd44483c11c89/mage_ai/ai/llm_pipeline_wizard.py#L195)" 
+The last action to take is modifying the Setup function within "[mage_ai/ai/llm_pipeline_wizard.py](https://github.com/mage-ai/mage-ai/blob/92c372b24e08148863d799d9afcdd44483c11c89/mage_ai/ai/llm_pipeline_wizard.py#L195)" 
 to introduce a new mode of your client and initialize your AI client.
