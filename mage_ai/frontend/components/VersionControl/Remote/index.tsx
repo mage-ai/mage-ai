@@ -84,6 +84,8 @@ function Remote({
 
   const gitInitialized = useMemo(() => !!branch?.name, [branch]);
 
+  const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
+
   useEffect(() => {
     if (branch?.sync_config?.repo_path && repoPath === null) {
       setRepoPath(branch?.sync_config?.repo_path);
@@ -417,6 +419,21 @@ function Remote({
           )}
           {!oauth?.authenticated && oauth?.url && (
             <>
+              {accessTokenExists && (
+                <Spacing mb={2}>
+                  <Button
+                    disabled
+                  >
+                    Using access token from Git Settings
+                  </Button>
+                  <Spacing mt={1}>
+                    <Text muted>
+                      Some features may not work unless you authenticate with GitHub.
+                    </Text>
+                  </Spacing>
+                </Spacing>
+              )}
+
               <Button
                 beforeIcon={<GitHubIcon size={UNIT * 2} />}
                 loading={isLoadingCreateOauth}

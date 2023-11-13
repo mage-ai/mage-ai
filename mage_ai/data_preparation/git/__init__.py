@@ -59,7 +59,7 @@ class Git:
             if self.remote_repo_link:
                 url = urlsplit(self.remote_repo_link)
 
-            token = self.__get_access_token()
+            token = self.get_access_token()
 
             if self.git_config and url:
                 user = self.git_config.username
@@ -299,7 +299,7 @@ class Git:
                     url = urlsplit(submodule_url)
                     if self.auth_type == AuthType.HTTPS:
                         user = self.git_config.username
-                        token = self.__get_access_token()
+                        token = self.get_access_token()
                         url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
                         url = urlunsplit(url)
                         # Overwrite the submodule URL with git credentials.
@@ -780,7 +780,7 @@ class Git:
             proc.kill()
             raise TimeoutError
 
-    def __get_access_token(self) -> str:
+    def get_access_token(self) -> str:
         token = None
         if os.getenv(GIT_ACCESS_TOKEN_VAR):
             token = os.getenv(GIT_ACCESS_TOKEN_VAR)

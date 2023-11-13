@@ -109,6 +109,15 @@ class GitBranchResource(GenericResource):
         message = payload.get('message', None)
         remote = payload.get('remote', None)
 
+        access_token = api.get_access_token_for_user(self.current_user)
+        http_access_token = git_manager.get_access_token()
+
+        token = None
+        if access_token:
+            token = access_token.token
+        elif http_access_token:
+            token = http_access_token
+
         if action_type == 'status':
             status = git_manager.status()
             untracked_files = await git_manager.untracked_files()
@@ -134,14 +143,15 @@ class GitBranchResource(GenericResource):
                 from git.exc import GitCommandError
 
                 try:
-                    access_token = api.get_access_token_for_user(self.current_user)
-                    if access_token:
-                        remote = git_manager.repo.remotes[push['remote']]
+                    remote = git_manager.repo.remotes[push['remote']]
+                    url = list(remote.urls)[0]
+
+                    if token:
                         custom_progress = api.push(
                             remote.name,
-                            [url for url in remote.urls][0],
+                            url,
                             push['branch'],
-                            access_token.token,
+                            token,
                         )
                         if custom_progress.other_lines:
                             lines = custom_progress.other_lines
@@ -161,25 +171,24 @@ class GitBranchResource(GenericResource):
                 from git.exc import GitCommandError
 
                 try:
-                    access_token = api.get_access_token_for_user(self.current_user)
-                    if access_token:
-                        branch_name = pull.get('branch')
-                        remote = git_manager.repo.remotes[pull['remote']]
-                        url = list(remote.urls)[0]
+                    branch_name = pull.get('branch')
+                    remote = git_manager.repo.remotes[pull['remote']]
+                    url = list(remote.urls)[0]
 
+                    if token:
                         custom_progress = None
                         if branch_name:
                             custom_progress = api.pull(
                                 remote.name,
                                 url,
                                 pull.get('branch'),
-                                access_token.token,
+                                token,
                             )
                         else:
                             custom_progress = api.fetch(
                                 remote.name,
                                 url,
-                                access_token.token,
+                                token,
                             )
 
                         if custom_progress and custom_progress.other_lines:
@@ -200,15 +209,14 @@ class GitBranchResource(GenericResource):
                 from git.exc import GitCommandError
 
                 try:
-                    access_token = api.get_access_token_for_user(self.current_user)
-                    if access_token:
-                        remote = git_manager.repo.remotes[fetch['remote']]
-                        url = list(remote.urls)[0]
+                    remote = git_manager.repo.remotes[fetch['remote']]
+                    url = list(remote.urls)[0]
 
+                    if token:
                         custom_progress = api.fetch(
                             remote.name,
                             url,
-                            access_token.token,
+                            token,
                         )
 
                         if custom_progress and custom_progress.other_lines:
@@ -218,7 +226,7 @@ class GitBranchResource(GenericResource):
                             self.model['progress'] = lines
                     else:
                         self.model['error'] = \
-                            'Please authenticate with GitHub before trying to pull.'
+                            'Please authenticate with GitHub before trying to fetch.'
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
@@ -233,17 +241,16 @@ class GitBranchResource(GenericResource):
                     from git.exc import GitCommandError
 
                     try:
-                        access_token = api.get_access_token_for_user(self.current_user)
-                        if access_token:
-                            branch_name = reset.get('branch')
-                            remote = git_manager.repo.remotes[reset['remote']]
-                            url = list(remote.urls)[0]
+                        branch_name = reset.get('branch')
+                        remote = git_manager.repo.remotes[reset['remote']]
+                        url = list(remote.urls)[0]
 
+                        if token:
                             api.reset_hard(
                                 remote.name,
                                 url,
                                 branch_name,
-                                access_token.token,
+                                token,
                             )
                         else:
                             self.model['error'] = \
@@ -255,15 +262,14 @@ class GitBranchResource(GenericResource):
             if clone and 'remote' in clone:
                 from git.exc import GitCommandError
                 try:
-                    access_token = api.get_access_token_for_user(self.current_user)
-                    if access_token:
-                        remote = git_manager.repo.remotes[clone['remote']]
-                        url = list(remote.urls)[0]
+                    remote = git_manager.repo.remotes[clone['remote']]
+                    url = list(remote.urls)[0]
 
+                    if token:
                         api.clone(
                             remote.name,
                             url,
-                            access_token.token,
+                            token,
                         )
                     else:
                         self.model['error'] = \
