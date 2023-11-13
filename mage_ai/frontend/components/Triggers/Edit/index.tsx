@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import React, {
   useCallback,
   useEffect,
@@ -12,7 +13,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
-import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import ButtonTabs from '@oracle/components/Tabs/ButtonTabs';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
 import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -149,11 +150,11 @@ function Edit({
   const {
     data: dataClientPage,
   } = api.client_pages.detail('pipeline_schedule:create', {
-    'pipelines[]': [pipelineUUID],
     'pipeline_schedules[]': [pipelineScheduleID],
+    'pipelines[]': [pipelineUUID],
   }, {}, {
-    pauseFetch: !pipelineUUID || !pipelineScheduleID,
     key: `Triggers/Edit/${pipelineUUID}/${pipelineScheduleID}`,
+    pauseFetch: !pipelineUUID || !pipelineScheduleID,
   });
   const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
 
@@ -172,7 +173,6 @@ function Edit({
 
   const {
     data: dataPipelineInteraction,
-    mutate: fetchPipelineInteraction,
   } = api.pipeline_interactions.detail(
     isInteractionsEnabled && pipelineUUID,
     {
@@ -182,10 +182,7 @@ function Edit({
 
   const {
     data: dataInteractions,
-    mutate: fetchInteractions,
   } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
-
-  const { data: dataPipeline } = api.pipelines.detail(isInteractionsEnabled && pipelineUUID);
 
   const pipelineInteraction: PipelineInteractionType =
     useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
@@ -245,7 +242,6 @@ function Edit({
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
     settings: settingsInit = {},
-    sla,
     start_time: startTime,
     tags,
     variables: scheduleVariablesInit = {},
@@ -865,7 +861,7 @@ function Edit({
               return acc.concat(
                 <option key={value} value={value}>
                   {value.substring(1)}
-                </option>
+                </option>,
               );
             }, [])}
             {!creatingWithLimitation && (
@@ -878,7 +874,7 @@ function Edit({
           {!creatingWithLimitation && (
             <Spacing mt={1} p={1}>
               <Text muted small>
-                If you don’t see the frequency option you need, select <Text inline monospace small>
+                If you don&#39;t see the frequency option you need, select <Text inline monospace small>
                   custom
                 </Text> and enter CRON syntax.
               </Text>
@@ -1658,71 +1654,88 @@ function Edit({
         <Headline>
           Runtime variables
         </Headline>
-
-        {!isEmptyObject(formattedVariables) && (
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <FlexContainer alignItems="center">
-              <Spacing mr={2}>
-                <ToggleSwitch
-                  checked={overwriteVariables}
-                  onCheck={setOverwriteVariables}
-                />
-              </Spacing>
-              <Text monospace muted>
-                Overwrite global variables
-              </Text>
-            </FlexContainer>
-
-            {overwriteVariables
-              && runtimeVariables
-              && Object.entries(runtimeVariables).length > 0
-              && (
-              <Spacing mt={1}>
-                <Table
-                  columnFlex={[null, 1]}
-                  columns={[
-                    {
-                      uuid: 'Variable',
-                    },
-                    {
-                      uuid: 'Value',
-                    },
-                  ]}
-                  rows={Object.entries(runtimeVariables).reduce((acc, [uuid, value]) => {
-                    if (MAGE_VARIABLES_KEY === uuid) {
-                      return acc;
-                    }
-
-                    return acc.concat([[
-                      <Text
-                        default
-                        key={`variable_${uuid}`}
-                        monospace
-                      >
-                        {uuid}
-                      </Text>,
-                      <TextInput
-                        borderless
-                        key={`variable_uuid_input_${uuid}`}
-                        monospace
-                        onChange={(e) => {
-                          e.preventDefault();
-                          setRuntimeVariables(vars => ({
-                            ...vars,
-                            [uuid]: e.target.value,
-                          }));
-                        }}
-                        paddingHorizontal={0}
-                        placeholder="Variable value"
-                        value={value}
-                      />,
-                    ]]);
-                  }, [])}
-                />
-              </Spacing>
-            )}
+        {isEmptyObject(formattedVariables) && (
+          <Spacing mt={1}>
+            <Text default>
+              This pipeline has no runtime variables.
+            </Text>
+            <NextLink
+              as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
+              href={'/pipelines/[pipeline]/edit'}
+              passHref
+            >
+              <Link primary>
+                Click here
+              </Link>
+            </NextLink> <Text default inline>
+              to add variables to this pipeline.
+            </Text>
           </Spacing>
         )}
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <Spacing mr={2}>
+              <ToggleSwitch
+                checked={overwriteVariables}
+                disabled={isEmptyObject(formattedVariables)}
+                onCheck={setOverwriteVariables}
+              />
+            </Spacing>
+            <Text monospace muted>
+              Overwrite global variables
+            </Text>
+          </FlexContainer>
+
+          {overwriteVariables
+            && runtimeVariables
+            && Object.entries(runtimeVariables).length > 0
+            && (
+            <Spacing mt={1}>
+              <Table
+                columnFlex={[null, 1]}
+                columns={[
+                  {
+                    uuid: 'Variable',
+                  },
+                  {
+                    uuid: 'Value',
+                  },
+                ]}
+                rows={Object.entries(runtimeVariables).reduce((acc, [uuid, value]) => {
+                  if (MAGE_VARIABLES_KEY === uuid) {
+                    return acc;
+                  }
+
+                  return acc.concat([[
+                    <Text
+                      default
+                      key={`variable_${uuid}`}
+                      monospace
+                    >
+                      {uuid}
+                    </Text>,
+                    <TextInput
+                      borderless
+                      key={`variable_uuid_input_${uuid}`}
+                      monospace
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setRuntimeVariables(vars => ({
+                          ...vars,
+                          [uuid]: e.target.value,
+                        }));
+                      }}
+                      paddingHorizontal={0}
+                      placeholder="Variable value"
+                      value={value}
+                    />,
+                  ]]);
+                }, [])}
+              />
+            </Spacing>
+          )}
+        </Spacing>
       </Spacing>
 
       {dbtBlocks?.length >= 1 && (
@@ -1745,6 +1758,7 @@ function Edit({
     formattedVariables,
     isStreamingPipeline,
     overwriteVariables,
+    pipelineUUID,
     runtimeVariables,
     schedule,
     scheduleType,
@@ -1766,66 +1780,64 @@ function Edit({
     isStreamingPipeline,
   ]);
 
-  const triggerInteractionsMemo = useMemo(() => {
-    return (
-      <TriggerInteractions
-        containerRef={containerRef}
-        date={date}
-        interactions={interactions}
-        pipeline={pipeline}
-        pipelineInteraction={pipelineInteraction}
-        pipelineSchedule={schedule}
-        setVariables={(prev1) => {
-          setSchedule(prev2 => {
-            const variables = {
-              ...prev1(prev2?.variables || {}),
-            };
+  const triggerInteractionsMemo = useMemo(() => (
+    <TriggerInteractions
+      containerRef={containerRef}
+      date={date}
+      interactions={interactions}
+      pipeline={pipeline}
+      pipelineInteraction={pipelineInteraction}
+      pipelineSchedule={schedule}
+      setVariables={(prev1) => {
+        setSchedule(prev2 => {
+          const variables = {
+            ...prev1(prev2?.variables || {}),
+          };
 
-            const variablesToUse = { ...variables };
+          const variablesToUse = { ...variables };
 
-            interactions?.forEach((interaction) => {
-              Object.entries(interaction?.variables || {}).forEach(([
-                variableUUID,
-                {
-                  types
-                },
-              ]) => {
-                if (variablesToUse && variableUUID in variablesToUse) {
-                  variablesToUse[variableUUID] = convertValueToVariableDataType(
-                    variablesToUse[variableUUID],
-                    types,
-                  );
-                }
-              });
+          interactions?.forEach((interaction) => {
+            Object.entries(interaction?.variables || {}).forEach(([
+              variableUUID,
+              {
+                types
+              },
+            ]) => {
+              if (variablesToUse && variableUUID in variablesToUse) {
+                variablesToUse[variableUUID] = convertValueToVariableDataType(
+                  variablesToUse[variableUUID],
+                  types,
+                );
+              }
             });
-
-            setVariablesFromInteractions(variablesToUse);
-
-            return {
-              ...prev2,
-              variables,
-            };
           });
-        }}
-        showSummary={SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID}
-        time={time}
-        triggerTypes={triggerTypesForPipeline}
-        variables={schedule?.variables}
-      />
-    );
-  }, [
-    containerRef,
-    date,
-    interactions,
-    pipeline,
-    pipelineInteraction,
-    schedule,
-    selectedSubheaderTabUUID,
-    setSchedule,
-    setVariablesFromInteractions,
-    time,
-    triggerTypesForPipeline,
-  ]);
+
+          setVariablesFromInteractions(variablesToUse);
+
+          return {
+            ...prev2,
+            variables,
+          };
+        });
+      }}
+      showSummary={SUBHEADER_TAB_REVIEW.uuid === selectedSubheaderTabUUID}
+      time={time}
+      triggerTypes={triggerTypesForPipeline}
+      variables={schedule?.variables}
+    />
+  ), [
+  containerRef,
+  date,
+  interactions,
+  pipeline,
+  pipelineInteraction,
+  schedule,
+  selectedSubheaderTabUUID,
+  setSchedule,
+  setVariablesFromInteractions,
+  time,
+  triggerTypesForPipeline,
+]);
 
   const isScheduleActive: boolean = useMemo(() => ScheduleStatusEnum.ACTIVE === schedule?.status, [
     schedule,
