@@ -520,6 +520,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
             if COLUMN_TYPE_STRING == col_type \
                     and COLUMN_FORMAT_DATETIME != col_settings.get('format'):
                 df[clean_col_name] = df[clean_col_name].apply(lambda x: serialize_obj(x))
+        return df
 
 
 if __name__ == '__main__':
