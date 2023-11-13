@@ -54,8 +54,21 @@ class EmrClusterManager(ClusterManager):
         auto_selection: bool = False,
         auto_creation: bool = True,
         cluster_id=None,
+        cluster_info: Dict = None,
         emr_config: Dict = None,
+        remove_active_cluster: bool = False,
     ):
+        home_dir = str(Path.home())
+        sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic', 'config.json')
+
+        if remove_active_cluster:
+            if os.path.exists(sparkmagic_config_path):
+                os.remove(sparkmagic_config_path)
+            return
+
+        if cluster_info:
+            cluster_id = cluster_info.get('id')
+
         if cluster_id is None and auto_selection:
             clusters = self.list_clusters()
             if len(clusters) > 0:
@@ -71,7 +84,9 @@ class EmrClusterManager(ClusterManager):
             config=merge_dict(get_repo_config().emr_config or dict(), emr_config or dict()))
 
         # Fetch cluster master instance public DNS
-        cluster_info = describe_cluster(cluster_id)
+        if not cluster_info:
+            cluster_info = describe_cluster(cluster_id)
+
         emr_dns = cluster_info.get('MasterPublicDnsName')
 
         if not emr_dns:
@@ -82,8 +97,6 @@ class EmrClusterManager(ClusterManager):
             return
 
         # Get cluster information and update cluster url in sparkmagic config
-        home_dir = str(Path.home())
-        sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic', 'config.json')
         with open(sparkmagic_config_path) as f:
             fcontent = f.read()
 

@@ -300,6 +300,8 @@ function ComputeManagement({
 
       if (renderStatus) {
         statusEl = renderStatus?.({
+          clusters,
+          clustersLoading,
           computeConnections: connections,
           computeService,
         });
@@ -350,34 +352,6 @@ function ComputeManagement({
       const displayName = COMPUTE_SERVICE_DISPLAY_NAME[selectedComputeService];
       const kicker = COMPUTE_SERVICE_KICKER[selectedComputeService];
       const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
-
-      if (computeService?.setup_steps) {
-        if (!setupComplete) {
-          arr.unshift(
-            <>
-              <Divider light />
-
-              <Spacing mb={1} px={PADDING_UNITS} pt={PADDING_UNITS}>
-                <Headline level={5}>
-                  Setup steps
-                </Headline>
-              </Spacing>
-
-              <SetupSteps
-                computeService={computeService}
-                onClickStep={(tab: string) => setSelectedTab(() => ({
-                  // @ts-ignore
-                  main: tab,
-                }))}
-              />
-
-              <Spacing mt={1}>
-                <Divider light />
-              </Spacing>
-            </>
-          );
-        }
-      }
 
       if (displayName && kicker && renderIcon) {
         let setupStepsTooltipMessage;
@@ -529,6 +503,7 @@ function ComputeManagement({
   }, [
     activeCluster,
     clusters,
+    clustersLoading,
     computeService,
     connections,
     selectedComputeService,
@@ -546,10 +521,26 @@ function ComputeManagement({
         />
       );
     }
+
+    if (computeService?.setup_steps?.length >= 1 && !setupComplete) {
+      return (
+        <SetupSteps
+          computeService={computeService}
+          onClickStep={(tab: string) => setSelectedTab(() => ({
+            // @ts-ignore
+            main: tab,
+          }))}
+        />
+      );
+    }
   }, [
+    computeService,
     containerHeight,
     selectedSql,
+    setupComplete,
   ]);
+
+  console.log(computeService?.setup_steps?.length >= 1, !setupComplete)
 
   const setupMemo = useMemo(() => (
     <SetupSettings
@@ -785,7 +776,7 @@ function ComputeManagement({
       beforeWidth={beforeWidth}
       contained
       height={containerHeight}
-      hideAfterCompletely
+      hideAfterCompletely={setupComplete}
       hideBeforeCompletely={!selectedComputeService}
       inline
       mainContainerRef={mainContainerRef}

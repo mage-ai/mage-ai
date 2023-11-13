@@ -16,6 +16,7 @@ import {
   datetimeInLocalTimezone,
 } from '@utils/date';
 import {
+  QUANTILES,
   SparkStageAttemptType,
   SparkStageStatusEnum,
   SparkStageType,
@@ -130,7 +131,7 @@ function StagesTable({
           application_spark_ui_url: object?.application?.spark_ui_url
             ? encodeURIComponent(object?.application?.spark_ui_url)
             : '',
-          quantiles: '0.01,0.25,0.5,0.75,0.99',
+          quantiles: QUANTILES.map(i => i).join(','),
           withSummaries: true,
         }]
         : null
@@ -215,10 +216,12 @@ function StagesTable({
                 const {
                   input_metrics: inputMetrics,
                   output_metrics: outputMetrics,
-                  quantiles: quantiles,
+                  quantiles: quantiles = QUANTILES,
                   shuffle_read_metrics: shuffleReadMetrics,
                   shuffle_write_metrics: shuffleWriteMetrics,
                 } = taskMetricsDistributions || {};
+
+                console.log('wtf', stageAttempt)
 
                 const tasksTable = (
                   <Table

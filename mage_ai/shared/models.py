@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from functools import reduce
 from typing import Dict, _BaseGenericAlias
 
 import inflection
@@ -65,12 +66,22 @@ class BaseDataClass:
         if not annotation:
             annotation = type(value)
 
+        is_dict_class = isinstance(value, dict)
+
+        def _build_dict(acc, kv, cls=self):
+            key, value = kv
+            acc[key] = cls.convert_value(value)
+            return acc
+
         if issubclass(annotation.__class__, _BaseGenericAlias):
-            return value
+            if is_dict_class:
+                return reduce(_build_dict, value.items(), {})
+            else:
+                return value
 
         is_data_class = issubclass(annotation, BaseDataClass)
         if is_data_class:
-            if isinstance(value, dict):
+            if is_dict_class:
                 return annotation.load(**value)
             elif isinstance(value, BaseDataClass):
                 return value.to_dict()
@@ -124,7 +135,11 @@ class BaseDataClass:
             except AttributeError:
                 pass
 
+            print('-------------------------')
+            print(key)
             value = self.convert_value(value, annotation)
+            print(value)
+            print('\n')
             data[key] = encode_complex(value)
 
         return data

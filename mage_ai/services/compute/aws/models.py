@@ -8,6 +8,7 @@ from mage_ai.services.aws.emr.emr import list_clusters
 from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
     CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
+    INVALID_STATES,
     ClusterStatusState,
 )
 from mage_ai.services.compute.constants import ComputeManagementApplicationTab
@@ -169,6 +170,10 @@ class Cluster(BaseDataClass):
         ]
 
     @property
+    def invalid(self) -> bool:
+        return self.state in INVALID_STATES
+
+    @property
     def state(self) -> ClusterStatusState:
         if self.status:
             return self.status.state
@@ -228,12 +233,19 @@ class AWSEMRComputeService(ComputeService):
         if not active_cluster_id:
             return
 
-        return self.get_cluster_details(active_cluster_id)
+        cluster = self.get_cluster_details(active_cluster_id)
+
+        if not cluster.invalid:
+            return cluster
 
     def terminate_clusters(self, cluster_ids: List[str]) -> None:
+        from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
         from mage_ai.services.aws.emr.emr import terminate_clusters
 
         terminate_clusters(cluster_ids)
+
+        if emr_cluster_manager.active_cluster_id in cluster_ids:
+            emr_cluster_manager.set_active_cluster(remove_active_cluster=True)
 
     def update_cluster(self, cluster_id: str, payload: Dict) -> Cluster:
         if payload.get('active'):
@@ -241,7 +253,11 @@ class AWSEMRComputeService(ComputeService):
                 emr_cluster_manager,
             )
 
-            emr_cluster_manager.set_active_cluster(cluster_id)
+            cluster_info = self.get_cluster_details(cluster_id)
+            if cluster_info:
+                cluster = Cluster.load(**cluster_info)
+                if not cluster.invalid:
+                    emr_cluster_manager.set_active_cluster(cluster_info=cluster_info)
 
             # If the kernel isn’t restarted after setting a cluster as active,
             # the notebook won’t be able to connect to the remote cluster.

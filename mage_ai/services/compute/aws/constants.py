@@ -12,3 +12,10 @@ class ClusterStatusState(str, Enum):
     TERMINATED_WITH_ERRORS = 'TERMINATED_WITH_ERRORS'
     TERMINATING = 'TERMINATING'
     WAITING = 'WAITING'
+
+
+INVALID_STATES = [
+    ClusterStatusState.TERMINATED,
+    ClusterStatusState.TERMINATED_WITH_ERRORS,
+    ClusterStatusState.TERMINATING,
+]

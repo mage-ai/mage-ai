@@ -268,6 +268,14 @@ export interface SparkStageAttemptType {
   };
 }
 
+export const QUANTILES = [
+  0.01,
+  0.25,
+  0.5,
+  0.75,
+  0.99,
+];
+
 export interface SparkStageType extends SparkStageAttemptType {
   attempt_id: number;
   completion_time: string;

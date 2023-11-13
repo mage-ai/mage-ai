@@ -1,9 +1,11 @@
 import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
 import Circle from '@oracle/elements/Circle';
+import ComputeClusterType from '@interfaces/ComputeClusterType';
 import ComputeConnectionType from '@interfaces/ComputeConnectionType';
 import ComputeServiceType from '@interfaces/ComputeServiceType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
   BlockCubePolygon,
@@ -25,6 +27,8 @@ const ICON_SIZE = 8 * UNIT;
 export interface TabType {
   Icon: any;
   renderStatus?: (opts?: {
+    clusters?: ComputeClusterType[];
+    clustersLoading?: boolean;
     computeConnections?: ComputeConnectionType[];
     computeService: ComputeServiceType;
   }) => any;
@@ -147,6 +151,20 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
     arr.push(...[
       {
         Icon: CubesThreeSeparated,
+        renderStatus: ({
+          clusters,
+          clustersLoading,
+        }) => {
+          if (clustersLoading) {
+            return null;
+          }
+
+          return (
+            <Text default large monospace>
+              {clusters?.length}
+            </Text>
+          );
+        },
         uuid: MainNavigationTabEnum.CLUSTERS,
       },
       {
