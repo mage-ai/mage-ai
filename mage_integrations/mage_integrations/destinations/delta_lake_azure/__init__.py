@@ -8,16 +8,12 @@ from mage_integrations.destinations.delta_lake.base import main
 
 
 class DeltaLakeAzure(BaseDeltaLake):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def build_client(self):
         return ContainerClient(
             f"https://{self.config['account_name']}.blob.core.windows.net",
             re.search(r'//(.*?)@', self.config['table_uri'])[1],
-            credential={"account_name": self.config['account_name'],
-                        "account_key": self.config['access_key']}
-
+            credential={'account_name': self.config['account_name'],
+                        'account_key': self.config['access_key']}
         )
 
     def test_connection(self) -> None:
