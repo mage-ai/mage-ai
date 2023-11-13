@@ -1539,7 +1539,7 @@ def schedule_all():
             pipeline_quota = None
 
         quota_filtered_runs = pipeline_runs_to_start
-        if pipeline_quota is not None:
+        if pipeline_quota is not None and pipeline_quota >= 0:
             pipeline_runs_to_start.sort(key=lambda x: x.execution_date)
             quota_filtered_runs = pipeline_runs_to_start[:pipeline_quota]
             pipeline_runs_excluded_by_limit.extend(
@@ -1547,8 +1547,6 @@ def schedule_all():
             )
 
         for r in quota_filtered_runs:
-            if r.block_runs_count == 0 and r.pipeline_uuid is not None:
-                r.create_block_runs()
             PipelineScheduler(r).start()
 
         # If on_pipeline_run_limit_reached is set as SKIP, cancel the pipeline runs that
