@@ -48,16 +48,16 @@ class ComputeConnectionResource(GenericResource):
                 if active_tunnel:
                     actions_tunnel.extend([
                         dict(
-                            name='Close',
-                            uuid=ComputeConnectionAction.DELETE,
+                            name='Reconnect',
+                            uuid=ComputeConnectionAction.UPDATE,
                         ),
                         dict(
                             name='Stop',
                             uuid=ComputeConnectionAction.DESELECT,
                         ),
                         dict(
-                            name='Reconnect',
-                            uuid=ComputeConnectionAction.UPDATE,
+                            name='Close',
+                            uuid=ComputeConnectionAction.DELETE,
                         ),
                     ])
                 elif cluster and cluster.active:
@@ -124,7 +124,6 @@ class ComputeConnectionResource(GenericResource):
                             if ssh_tunnel:
                                 ssh_tunnel.connect()
                             else:
-                                print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF callback')
                                 tunnel(ignore_active_kernel=True)
                         elif ComputeConnectionAction.DELETE == action_uuid:
                             ssh_tunnel.close()

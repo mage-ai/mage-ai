@@ -145,11 +145,9 @@ def list_clusters(cluster_states: List[ClusterStatusState] = None):
 def terminate_clusters(cluster_ids: List[str]) -> None:
     emr_client = get_aws_boto3_client('emr')
 
-    response = emr_client.terminate_job_flows(
+    return emr_client.terminate_job_flows(
         JobFlowIds=cluster_ids,
     )
-
-    print('WTFFFFFFFFFFFFFFFF', response)
 
 
 def submit_spark_job(

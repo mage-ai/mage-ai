@@ -4,6 +4,16 @@ from mage_ai.services.ssh.aws.emr.models import SSHTunnel
 
 
 class AwsEmrAPI(LocalAPI):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        if not self.application_id:
+            applications = self.applications_sync()
+            if applications:
+                applications = sorted(applications, key=lambda x: x.id, reverse=True)
+                application = applications[0]
+                self.application_id = application.calculated_id()
+
     @property
     def spark_ui_url(self) -> str:
         url = f'http://{SPARK_UI_HOST}:{SPARK_UI_PORT_AWS_EMR}'
@@ -14,7 +24,6 @@ class AwsEmrAPI(LocalAPI):
             host = connection_details.get('host')
             port = connection_details.get('port')
             url = f'http://{host or SPARK_UI_HOST}:{port or SPARK_UI_PORT_AWS_EMR}'
-            print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', url)
 
         if self.application_spark_ui_url:
             url = self.application_spark_ui_url

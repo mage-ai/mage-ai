@@ -6,12 +6,14 @@ export enum SparkJobStatusEnum {
 
 export enum SparkStageStatusEnum {
   COMPLETE = 'COMPLETE',
+  PENDING = 'PENDING',
   SKIPPED = 'SKIPPED',
 }
 
 export enum SparkTaskLocalityEnum {
   NODE_LOCAL = 'NODE_LOCAL',
   PROCESS_LOCAL = 'PROCESS_LOCAL',
+  RACK_LOCAL = 'RACK_LOCAL',
 }
 
 export enum SparkTaskStatusEnum {
@@ -35,6 +37,8 @@ export interface SparkApplicationType {
     start_time: string;
     start_time_epoch: number
   }[];
+  attempts_count?: number;
+  calculated_id?: string;
   id: string;
   name: string;
   spark_ui_url: string;

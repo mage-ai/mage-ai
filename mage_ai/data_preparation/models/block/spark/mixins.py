@@ -187,7 +187,7 @@ class SparkBlock:
 
         if application:
             build_options.update(dict(
-                application_id=application.id,
+                application_id=application.calculated_id(),
                 application_spark_ui_url=application.spark_ui_url,
             ))
         else:

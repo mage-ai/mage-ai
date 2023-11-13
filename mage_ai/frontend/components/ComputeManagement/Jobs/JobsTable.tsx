@@ -57,10 +57,24 @@ function JobsTable({
     <Table
       apiForFetchingAfterAction={!disableJobExpansion ? api.spark_jobs.detail : null}
       buildApiOptionsFromObject={!disableJobExpansion
-        ? (object: any) => [object?.job_id, {
-          application_id: object?.application?.id,
-          application_spark_ui_url: encodeURIComponent(object?.application?.spark_ui_url),
+        ? (object: any) => {
+          console.log('wtf', object, [object?.job_id, {
+          application_id: object?.application?.calculated_id
+            ? encodeURIComponent(object?.application?.calculated_id)
+            : '',
+          application_spark_ui_url: object?.application?.spark_ui_url
+            ? encodeURIComponent(object?.application?.spark_ui_url)
+            : '',
+        }])
+          return [object?.job_id, {
+          application_id: object?.application?.calculated_id
+            ? encodeURIComponent(object?.application?.calculated_id)
+            : '',
+          application_spark_ui_url: object?.application?.spark_ui_url
+            ? encodeURIComponent(object?.application?.spark_ui_url)
+            : '',
         }]
+        }
         : null
       }
       columnFlex={[
@@ -115,7 +129,7 @@ function JobsTable({
             const stages: SparkStageType[] = sortByKey(stageIds, stageId => stageId, {
               ascending: false,
             }).reduce((acc, stageId: number) => {
-              const stage = stagesMapping?.[job?.application?.id]?.[stageId];
+              const stage = stagesMapping?.[job?.application?.calculated_id]?.[stageId];
               if (stage){
                 return acc.concat(stage);
               }

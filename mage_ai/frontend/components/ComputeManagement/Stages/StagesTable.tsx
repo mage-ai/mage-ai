@@ -124,8 +124,12 @@ function StagesTable({
       getObjectAtRowIndex={(rowIndex: number) => stages?.[rowIndex]}
       buildApiOptionsFromObject={!disableStageExpansion
         ? (object: any) => [object?.stage_id, {
-          application_id: object?.application?.id,
-          application_spark_ui_url: encodeURIComponent(object?.application?.spark_ui_url),
+          application_id: object?.application?.calculated_id
+            ? encodeURIComponent(object?.application?.calculated_id)
+            : '',
+          application_spark_ui_url: object?.application?.spark_ui_url
+            ? encodeURIComponent(object?.application?.spark_ui_url)
+            : '',
           quantiles: '0.01,0.25,0.5,0.75,0.99',
           withSummaries: true,
         }]

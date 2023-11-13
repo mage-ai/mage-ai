@@ -133,7 +133,7 @@ class Cluster(BaseDataClass):
     cluster_arn: str = None
     configurations: List[ClusterConfiguration] = field(default_factory=list)
     ebs_root_volume_size: int = None
-    ec2_instance_attributes: Dict = None
+    ec2_instance_attributes: Ec2InstanceAttributes = None
     id: str = None  # j-1MR4C0R54EUHY
     instance_collection_type: str = None
     kerberos_attributes: Dict = None

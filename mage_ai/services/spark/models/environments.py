@@ -19,11 +19,11 @@ class ExecutorResources(BaseSparkModel):
     off_heap: Resource = None
 
     def __post_init__(self):
-        if self.cores:
+        if self.cores and isinstance(self.cores, dict):
             self.cores = Resource.load(**self.cores)
-        if self.memory:
+        if self.memory and isinstance(self.memory, dict):
             self.memory = Resource.load(**self.memory)
-        if self.off_heap:
+        if self.off_heap and isinstance(self.off_heap, dict):
             self.off_heap = Resource.load(**self.off_heap)
 
 
@@ -32,7 +32,7 @@ class TaskResources(BaseSparkModel):
     cpus: Resource = None
 
     def __post_init__(self):
-        if self.cpus:
+        if self.cpus and isinstance(self.cpus, dict):
             self.cpus = Resource.load(**self.cpus)
 
 
@@ -43,9 +43,9 @@ class ResourceProfiles(BaseSparkModel):
     task_resources: TaskResources = None
 
     def __post_init__(self):
-        if self.executor_resources:
+        if self.executor_resources and isinstance(self.executor_resources, dict):
             self.executor_resources = ExecutorResources.load(**self.executor_resources)
-        if self.task_resources:
+        if self.task_resources and isinstance(self.task_resources, dict):
             self.task_resources = TaskResources.load(**self.task_resources)
 
 
@@ -117,9 +117,14 @@ class Environment(BaseSparkModel):
     system_properties: List[List[str]] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.resource_profiles:
-            self.resource_profiles = \
-                [ResourceProfiles.load(**model) for model in self.resource_profiles]
+        if self.resource_profiles and isinstance(self.resource_profiles, list):
+            arr = []
+            for model in self.resource_profiles:
+                if model and isinstance(model, dict):
+                    arr.append(ResourceProfiles.load(**model))
+                else:
+                    arr.append(model)
+            self.resource_profiles = arr
 
-        if self.runtime:
+        if self.runtime and isinstance(self.runtime, dict):
             self.runtime = Runtime.load(**self.runtime)

@@ -15,9 +15,7 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
             if length:
                 query['length'] = length
 
-        application_id = query_arg.get('application_id', [])
-        if application_id:
-            application_id = application_id[0]
+        application_id = self.application_calculated_id_from_query(query_arg)
 
         application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
         if application_spark_ui_url:
@@ -41,9 +39,7 @@ class SparkSqlResource(GenericResource, SparkApplicationChild):
         if include_jobs_and_stages:
             include_jobs_and_stages = include_jobs_and_stages[0]
 
-        application_id = query_arg.get('application_id', [])
-        if application_id:
-            application_id = application_id[0]
+        application_id = self.application_calculated_id_from_query(query_arg)
 
         application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
         if application_spark_ui_url:

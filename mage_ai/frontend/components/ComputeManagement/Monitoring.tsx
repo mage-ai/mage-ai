@@ -88,11 +88,11 @@ function Monitoring({
   } = useMemo(() => (dataStages?.spark_stages || []).reduce((acc, stage) => {
     const application = stage?.application;
 
-    if (!(application?.id in acc)) {
-      acc[application?.id] = {};
+    if (!(application?.calculated_id in acc)) {
+      acc[application?.calculated_id] = {};
     }
 
-    acc[application?.id][stage?.stage_id] = stage;
+    acc[application?.calculated_id][stage?.stage_id] = stage;
 
     return acc;
   }, {}),
@@ -200,14 +200,14 @@ function Monitoring({
 
     jobs?.forEach((job) => {
       const application = job?.application;
-      if (!(application?.id in groups)) {
-        groups[application?.id] = {
+      if (!(application?.calculated_id in groups)) {
+        groups[application?.calculated_id] = {
           application: application,
           jobs: [],
         };
       }
 
-      groups[application?.id]?.jobs?.push(job);
+      groups[application?.calculated_id]?.jobs?.push(job);
     });
 
     return Object.values(groups).map(({
@@ -215,10 +215,10 @@ function Monitoring({
       jobs: jobsArr,
     }) => {
       return (
-        <div key={application?.id}>
+        <div key={application?.calculated_id}>
           <Spacing p={PADDING_UNITS}>
             <Text default bold>
-              Application {application?.id}
+              Application {application?.calculated_id}
             </Text>
           </Spacing>
 

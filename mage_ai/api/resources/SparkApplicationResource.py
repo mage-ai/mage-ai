@@ -17,10 +17,10 @@ class SparkApplicationResource(GenericResource, SparkApplicationChild):
         applications_cache = Application.get_applications_from_cache()
         if applications_cache:
             for application in applications_cache.values():
-                if application.id in mapping:
+                if application.calculated_id() in mapping:
                     continue
                 applications.append(application)
-                mapping[application.id] = application
+                mapping[application.calculated_id()] = application
 
         return self.build_result_set(
             applications,

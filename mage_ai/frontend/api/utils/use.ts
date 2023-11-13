@@ -94,7 +94,7 @@ export function useDetail(
     pauseFetch,
   } = customOptions || {};
 
-  const url = id ? buildUrl(resource, id) : null;
+  const url = (typeof id !== 'undefined' && id !== null) ? buildUrl(resource, id) : null;
   const key = url && keyInit ? keyInit : url;
 
   const {
@@ -135,7 +135,7 @@ export function useDetailWithParent(
     key: keyInit,
   } = customOptions || {};
 
-  const url = id && (parentId ? buildUrl(
+  const url = (typeof id !== 'undefined' && id !== null) && ((typeof parentId !== 'undefined' && parentId !== null) ? buildUrl(
     parentResource,
     parentId,
     resource,

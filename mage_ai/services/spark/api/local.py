@@ -47,10 +47,10 @@ class LocalAPI(BaseAPI):
         applications_cache = Application.get_applications_from_cache()
         if applications_cache:
             for application in applications_cache.values():
-                if application.id in mapping:
+                if application.calculated_id() in mapping:
                     continue
                 applications.append(application)
-                mapping[application.id] = application
+                mapping[application.calculated_id()] = application
 
         return applications
 
@@ -65,11 +65,11 @@ class LocalAPI(BaseAPI):
             applications = [self.application]
 
         for application in applications:
-            if application.id == application_id:
+            if application.calculated_id() == application_id:
                 arr.extend([Job.load(application=application, **model) for model in models])
             else:
                 jobs = self.get_sync(
-                    f'/applications/{application.id}/jobs',
+                    f'/applications/{application.calculated_id()}/jobs',
                     host=application.spark_ui_url,
                 )
                 arr.extend([Job.load(application=application, **model) for model in jobs])
@@ -90,7 +90,7 @@ class LocalAPI(BaseAPI):
             applications = [self.application]
 
         for application in applications:
-            if application.id == application_id:
+            if application.calculated_id() == application_id:
                 arr.extend(sorted(
                     [Sql.load(
                         application=application,
@@ -101,7 +101,7 @@ class LocalAPI(BaseAPI):
                 ))
             else:
                 models2 = self.get_sync(
-                    f'/applications/{application.id}/sql',
+                    f'/applications/{application.calculated_id()}/sql',
                     host=application.spark_ui_url,
                     query=query,
                 )
@@ -130,14 +130,14 @@ class LocalAPI(BaseAPI):
             applications = [self.application]
 
         for application in applications:
-            if application.id == application_id:
+            if application.calculated_id() == application_id:
                 arr.extend([model_class.load(
                     application=application,
                     **model,
                 ) for model in models])
             else:
                 models2 = self.get_sync(
-                    f'/applications/{application.id}/stages',
+                    f'/applications/{application.calculated_id()}/stages',
                     host=application.spark_ui_url,
                     query=query,
                 )
@@ -154,16 +154,15 @@ class LocalAPI(BaseAPI):
             **model,
             spark_ui_url=self.spark_ui_url,
         ) for model in models]
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFF applications', applications)
         mapping = index_by(lambda x: x.id, applications)
 
         applications_cache = Application.get_applications_from_cache()
         if applications_cache:
             for application in applications_cache.values():
-                if application.id in mapping:
+                if application.calculated_id() in mapping:
                     continue
                 applications.append(application)
-                mapping[application.id] = application
+                mapping[application.calculated_id()] = application
 
         return applications
 
@@ -178,11 +177,11 @@ class LocalAPI(BaseAPI):
             applications = [self.application]
 
         for application in applications:
-            if application.id == application_id:
+            if application.calculated_id() == application_id:
                 arr.extend([Job.load(application=application, **model) for model in models])
             else:
                 jobs = await self.get(
-                    f'/applications/{application.id}/jobs',
+                    f'/applications/{application.calculated_id()}/jobs',
                     host=application.spark_ui_url,
                 )
                 arr.extend([Job.load(application=application, **model) for model in jobs])
@@ -202,7 +201,7 @@ class LocalAPI(BaseAPI):
             host=application_spark_ui_url,
         )
         return Job.load(
-            application=Application(
+            application=Application.load(
                 id=application_id,
                 spark_ui_url=application_spark_ui_url,
             ),
@@ -223,14 +222,14 @@ class LocalAPI(BaseAPI):
             applications = [self.application]
 
         for application in applications:
-            if application.id == application_id:
+            if application.calculated_id() == application_id:
                 arr.extend([model_class.load(
                     application=application,
                     **model,
                 ) for model in models])
             else:
                 models2 = await self.get(
-                    f'/applications/{application.id}/stages',
+                    f'/applications/{application.calculated_id()}/stages',
                     host=application.spark_ui_url,
                     query=query,
                 )
@@ -256,7 +255,7 @@ class LocalAPI(BaseAPI):
             query=query,
         )
         return Stage.load(
-            application=Application(
+            application=Application.load(
                 id=application_id,
                 spark_ui_url=application_spark_ui_url,
             ),
@@ -346,7 +345,7 @@ class LocalAPI(BaseAPI):
             applications = [self.application]
 
         for application in applications:
-            if application.id == application_id:
+            if application.calculated_id() == application_id:
                 arr.extend(sorted(
                     [Sql.load(
                         application=application,
@@ -357,7 +356,7 @@ class LocalAPI(BaseAPI):
                 ))
             else:
                 models2 = await self.get(
-                    f'/applications/{application.id}/sql',
+                    f'/applications/{application.calculated_id()}/sql',
                     host=application.spark_ui_url,
                     query=query,
                 )
@@ -385,7 +384,7 @@ class LocalAPI(BaseAPI):
             host=application_spark_ui_url,
         )
         return Sql.load(
-            application=Application(
+            application=Application.load(
                 id=application_id,
                 spark_ui_url=application_spark_ui_url,
             ),

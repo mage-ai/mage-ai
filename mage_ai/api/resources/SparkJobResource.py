@@ -15,9 +15,7 @@ class SparkJobResource(GenericResource, SparkApplicationChild):
     async def member(self, pk, user, **kwargs):
         query_arg = kwargs.get('query')
 
-        application_id = query_arg.get('application_id', [])
-        if application_id:
-            application_id = application_id[0]
+        application_id = self.application_calculated_id_from_query(query_arg)
 
         application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
         if application_spark_ui_url:
