@@ -1,19 +1,13 @@
 import json
-import os
 import urllib.parse
-import uuid
 from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
-
-import aiohttp
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth2 import generate_access_token
 from mage_ai.authentication.oauth.constants import (
     ACTIVE_DIRECTORY_CLIENT_ID,
-    GHE_CLIENT_ID_ENV_VAR,
-    GHE_CLIENT_SECRET_ENV_VAR,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
     OAUTH_PROVIDER_ACTIVE_DIRECTORY,
@@ -26,10 +20,11 @@ from mage_ai.authentication.oauth.utils import (
     access_tokens_for_client,
     add_access_token_to_query,
 )
+from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
 from mage_ai.data_preparation.git.api import get_oauth_client_id
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
-from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID, ROUTES_BASE_PATH
+from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
 
 
 class OauthResource(GenericResource):
@@ -107,6 +102,12 @@ class OauthResource(GenericResource):
             provider = OAUTH_PROVIDER_GHE
         else:
             provider = pk
+
+        provider_class = NAME_TO_PROVIDER.get(provider)
+        provider_instance = None
+        if provider_class is not None:
+            provider_instance = provider_class()
+
         access_tokens = access_tokens_for_client(
             get_oauth_client_id(provider),
             user=user,
@@ -121,38 +122,22 @@ class OauthResource(GenericResource):
         # If an oauth code is provided, we need to exchange it for an access token for
         # the provider and return the redirect uri.
         elif code:
-            if OAUTH_PROVIDER_GHE == pk:
-                # Fetch access token for GitHub Enterprise and add it to the redirect URI.
-
-                # 1. Get GHE client credentials from environment variables.
-                # 2. Obtain an access token from the GitHub Enterprise OAuth service.
-                # 3. Update uri query parameters with provider and access token from GHE API.
-                # 4. Recreate and return the uri to include the access token and provider.
+            if provider_instance is not None:
+                # 1. Obtain an access token from the Oauth provider.
+                # 2. Update uri query parameters with provider and access token from response.
+                # 3. Recreate and return the uri to include the access token and provider.
                 parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
                 parsed_url_query = parse_qs(parsed_url.query)
 
-                query = {'provider': pk}
+                query = {'provider': provider}
                 for k, v in parsed_url_query.items():
-                    if type(v) is list:
+                    if isinstance(v, list):
                         v = ','.join(v)
                     query[k] = v
 
-                data = dict()
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
-                        f'{ghe_hostname}/login/oauth/access_token',
-                        headers={
-                            'Accept': 'application/json',
-                        },
-                        data=dict(
-                            client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
-                            client_secret=os.getenv(GHE_CLIENT_SECRET_ENV_VAR),
-                            code=code,
-                        ),
-                        timeout=20,
-                    ) as response:
-                        data = await response.json()
-
+                data = await provider_instance.get_access_token_response(
+                    code, redirect_uri=redirect_uri
+                )
                 query = add_access_token_to_query(data, query)
 
                 parts = redirect_uri.split('?')
@@ -168,47 +153,25 @@ class OauthResource(GenericResource):
                 model['url'] = redirect_uri_final
         # Otherwise, return the authorization url to start the oauth flow.
         else:
-            if OAUTH_PROVIDER_GITHUB == pk:
-                if ghe_hostname:
-                    parsed_url = urlparse(urllib.parse.unquote(redirect_uri))
-                    base_url = parsed_url.scheme + '://' + parsed_url.netloc
-                    if ROUTES_BASE_PATH:
-                        base_url += f'/{ROUTES_BASE_PATH}'
-                    redirect_uri_query = urllib.parse.urlencode(
-                        dict(
-                            provider=OAUTH_PROVIDER_GHE,
-                            redirect_uri=redirect_uri,
+            if OAUTH_PROVIDER_GITHUB == provider:
+                query = dict(
+                    client_id=GITHUB_CLIENT_ID,
+                    redirect_uri=urllib.parse.quote_plus(
+                        '?'.join(
+                            [
+                                f'https://api.mage.ai/v1/oauth/{pk}',
+                                f'redirect_uri={urllib.parse.unquote(redirect_uri)}',
+                            ]
                         )
-                    )
-                    query = dict(
-                        client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
-                        redirect_uri=urllib.parse.quote_plus(
-                            f'{base_url}/oauth?{redirect_uri_query}',
-                        ),
-                        scope='repo',
-                        state=uuid.uuid4().hex,
-                    )
-                    host = ghe_hostname
-                else:
-                    query = dict(
-                        client_id=GITHUB_CLIENT_ID,
-                        redirect_uri=urllib.parse.quote_plus(
-                            '?'.join(
-                                [
-                                    f'https://api.mage.ai/v1/oauth/{pk}',
-                                    f'redirect_uri={urllib.parse.unquote(redirect_uri)}',
-                                ]
-                            )
-                        ),
-                        scope='repo',
-                        state=GITHUB_STATE,
-                    )
-                    host = 'https://github.com'
+                    ),
+                    scope='repo',
+                    state=GITHUB_STATE,
+                )
                 query_strings = []
                 for k, v in query.items():
                     query_strings.append(f'{k}={v}')
 
-                model['url'] = f"{host}/login/oauth/authorize?{'&'.join(query_strings)}"
+                model['url'] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
             elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
                 ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
                 if ad_directory_id:
@@ -236,6 +199,10 @@ class OauthResource(GenericResource):
                     model[
                         'url'
                     ] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
+            elif provider_instance is not None:
+                resp = provider_instance.get_auth_url_response(redirect_uri=redirect_uri)
+                if resp:
+                    model.update(resp)
 
         return self(model, user, **kwargs)
 

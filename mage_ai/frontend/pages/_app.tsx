@@ -178,11 +178,12 @@ function MyApp(props: MyAppProps & AppProps) {
 
     const loggedIn = AuthToken.isLoggedIn();
     if ((requireUserAuthentication && !loggedIn) || dataProjects?.error?.code === 401) {
-      const currentPath = windowIsDefined ? window.location.pathname : null;
-      if ('/sign-in' !== currentPath) {
+      const path = windowIsDefined ? window.location.pathname : null;
+      const currentPath = path && path.split('/').pop();
+      if ('sign-in' !== currentPath && 'oauth' !== currentPath) {
         const query = {
           ...queryFromUrl(),
-          redirect_url: currentPath,
+          redirect_url: path,
         };
         redirectToUrl(`/sign-in?${queryString(query)}`);
       }
