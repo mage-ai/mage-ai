@@ -431,7 +431,9 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 self.logger.info(f'Skip executing empty query_strings: {query_strings}')
 
             df = pd.DataFrame([d['record'] for d in record_data])
-            df.columns = df.columns.str.lower()
+            # Clean column names in the dataframe
+            col_mapping = {col: self.clean_column_name(col) for col in df.columns}
+            df = df.rename(columns=col_mapping)
             self.logger.info(f'Batch upload to Snowflake: {df.shape[0]} rows.')
             self.logger.info(f'Columns: {df.columns}')
             database = self.config.get(self.DATABASE_CONFIG_KEY)
