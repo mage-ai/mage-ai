@@ -1,12 +1,15 @@
 from typing import Dict, List, Tuple
 
 import pandas as pd
+import simplejson
 from snowflake.connector.pandas_tools import write_pandas
 
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
+    COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.snowflake.utils import (
@@ -22,6 +25,7 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.utils.array import batch
+from mage_integrations.utils.parsers import encode_complex
 
 
 class Snowflake(Destination):
@@ -431,11 +435,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 self.logger.info(f'Skip executing empty query_strings: {query_strings}')
 
             df = pd.DataFrame([d['record'] for d in record_data])
-            # Clean column names in the dataframe
-            col_mapping = {col: self.clean_column_name(col) for col in df.columns}
-            df = df.rename(columns=col_mapping)
+
             self.logger.info(f'Batch upload to Snowflake: {df.shape[0]} rows.')
             self.logger.info(f'Columns: {df.columns}')
+
+            # Clean dataframe column names and values
+            df = self._clean_df(df, stream)
+
             database = self.config.get(self.DATABASE_CONFIG_KEY)
             schema = self.config.get(self.SCHEMA_CONFIG_KEY)
             table = self.config.get(self.TABLE_CONFIG_KEY)
@@ -482,6 +488,39 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 self.logger.info(f'write_dataframe_to_table completed to {full_table_name}')
 
             return results
+
+    def _clean_df(self, df: pd.DataFrame, stream: str):
+        # Clean column names in the dataframe
+        col_mapping = {col: self.clean_column_name(col) for col in df.columns}
+        df = df.rename(columns=col_mapping)
+
+        # Serialize the dict or list to string
+        def serialize_obj(val):
+            if isinstance(val, dict) or isinstance(val, list):
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
+
+        mapping = column_type_mapping(
+            self.schemas[stream],
+            convert_column_type,
+            lambda item_type_converted: 'ARRAY',
+        )
+
+        for col in col_mapping.keys():
+            clean_col_name = col_mapping[col]
+            df_col_dropna = df[clean_col_name].dropna()
+            if df_col_dropna.count() == 0:
+                continue
+            col_type = mapping[col].get('type')
+            col_settings = mapping[col].get('column_settings')
+            if COLUMN_TYPE_STRING == col_type \
+                    and COLUMN_FORMAT_DATETIME != col_settings.get('format'):
+                df[clean_col_name] = df[clean_col_name].apply(lambda x: serialize_obj(x))
+        return df
 
 
 if __name__ == '__main__':
