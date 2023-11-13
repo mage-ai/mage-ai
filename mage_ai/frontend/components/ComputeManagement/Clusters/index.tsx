@@ -343,8 +343,8 @@ function Clusters({
 
                             <Spacing mr={PADDING_UNITS} />
 
-                            <Text large muted>
-                              Cluster is still launching.
+                            <Text default large>
+                              {status?.state_change_reason?.message || 'Cluster is still launching.'}
                             </Text>
                           </FlexContainer>
                         )}
@@ -378,7 +378,7 @@ function Clusters({
                     },
                     {
                       key: 'Master public DNS name',
-                      value: cluster?.master_public_dns_name,
+                      value: cluster?.master_public_dns_name || 'Available after cluster starts.',
                     },
                     {
                       key: 'Created at',
@@ -394,7 +394,7 @@ function Clusters({
                     },
                     {
                       key: 'Status message',
-                      value: status?.state_change_reason?.message,
+                      value: status?.state_change_reason?.message || 'None',
                     },
                     {
                       key: 'Release label',
@@ -545,6 +545,10 @@ function Clusters({
           const createdAt = status?.timeline?.creation_date_time;
           const state = status?.state;
           const stateChangeReasonMessage = status?.state_change_reason?.message;
+          const ready = [
+            ClusterStatusStateEnum.RUNNING,
+            ClusterStatusStateEnum.WAITING,
+          ].includes(state);
 
           return [
             <Text {...TEXT_PROPS_SHARED} key="id">
@@ -607,7 +611,10 @@ function Clusters({
               justifyContent="flex-end"
               key="active"
             >
-              <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
+              {ready
+                ? <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
+                : <Spinner inverted small />
+              }
             </FlexContainer>,
           ];
         })}

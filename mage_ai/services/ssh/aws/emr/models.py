@@ -2,8 +2,6 @@ import json
 import os
 from typing import Dict
 
-from sshtunnel import SSHTunnelForwarder
-
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
@@ -39,6 +37,7 @@ class SSHTunnel:
                     -L [local host]:[local port]:[remote host]:[remote port] \
                     hadoop@ec2-34-217-92-37.us-west-2.compute.amazonaws.com
                 """
+                from sshtunnel import SSHTunnelForwarder
 
                 cls._instance._tunnel = SSHTunnelForwarder(
                     master_public_dns_name,
@@ -57,7 +56,7 @@ class SSHTunnel:
         return cls._instance
 
     @property
-    def tunnel(self) -> SSHTunnelForwarder:
+    def tunnel(self):
         if self._instance:
             return self._instance._tunnel
 

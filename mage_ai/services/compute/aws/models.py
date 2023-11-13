@@ -327,6 +327,12 @@ class AWSEMRComputeService(ComputeService):
 
         terminate_clusters(cluster_ids)
 
+        cluster_info = cluster_info_from_tunnel()
+        if cluster_info and cluster_info.get('id') in cluster_ids:
+            from mage_ai.services.ssh.aws.emr.models import close_tunnel
+
+            close_tunnel()
+
         # if emr_cluster_manager.active_cluster_id in cluster_ids:
         #     emr_cluster_manager.set_active_cluster(remove_active_cluster=True)
 
