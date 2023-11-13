@@ -2,7 +2,7 @@ import moment from 'moment';
 
 import BlockRunType from '@interfaces/BlockRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
-import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, dateFormatLong } from '@utils/date';
+import { DATE_FORMAT_LONG_NO_SEC, DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, dateFormatLong } from '@utils/date';
 import { DEFAULT_PORT } from '@api/utils/url';
 import {
   PipelineScheduleFilterQueryEnum,
@@ -177,16 +177,18 @@ export function getDatetimeFromDateAndTime(
     includeSeconds?: boolean,
   },
 ): string {
-  let datetimeString = `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`;
+  let datetimeString;
+
+  const momentObj = moment(date);
+  momentObj.set('hour', +time?.hour || 0);
+  momentObj.set('minute', +time?.minute || 0);
+  momentObj.set('second', 0);
+  datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC);
 
   if (opts?.includeSeconds) {
     datetimeString = datetimeString.concat(':00');
   }
   if (opts?.localTimezone) {
-    const momentObj = moment(date);
-    momentObj.set('hour', +time?.hour || 0);
-    momentObj.set('minute', +time?.minute || 0);
-    momentObj.set('second', 0);
     datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
     if (opts?.convertToUtc) {
       datetimeString = dateFormatLong(
