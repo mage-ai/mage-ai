@@ -96,10 +96,10 @@ def switch_active_kernel(
                         compute_service = ComputeService(project=project)
                         cluster = compute_service.get_cluster_details(cluster_id=cluster_id)
 
-                        should_set_active = cluster.has_dns_name
+                        should_set_active = cluster.has_dns_name if cluster else False
                         print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! cluster')
                         print(cluster)
-                        print(should_set_active, cluster.has_dns_name)
+                        print(should_set_active)
                         print('\n')
 
             if should_set_active:

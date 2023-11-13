@@ -1,7 +1,8 @@
+import typing
 from dataclasses import dataclass
 from enum import Enum
 from functools import reduce
-from typing import Dict, _BaseGenericAlias
+from typing import Dict
 
 import inflection
 
@@ -73,7 +74,13 @@ class BaseDataClass:
             acc[key] = cls.convert_value(value)
             return acc
 
-        if issubclass(annotation.__class__, _BaseGenericAlias):
+        is_typing_class = False
+        if hasattr(typing, '_BaseGenericAlias'):
+            is_typing_class = issubclass(annotation.__class__, typing._BaseGenericAlias)
+        elif hasattr(typing, '_GenericAlias'):
+            is_typing_class = issubclass(annotation.__class__, typing._GenericAlias)
+
+        if is_typing_class:
             if is_dict_class:
                 return reduce(_build_dict, value.items(), {})
             else:
