@@ -19,18 +19,24 @@ import {
 } from '@oracle/icons';
 import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
+import { SparkApplicationType, SparkJobType } from '@interfaces/SparkType'
 import { TripleBoxes } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { pluralize } from '@utils/string';
 
 const ICON_SIZE = 8 * UNIT;
 
 export interface TabType {
   Icon: any;
   renderStatus?: (opts?: {
+    applications?: SparkApplicationType[];
+    applicationsLoading?: boolean;
     clusters?: ComputeClusterType[];
     clustersLoading?: boolean;
     computeConnections?: ComputeConnectionType[];
     computeService: ComputeServiceType;
+    jobs?: SparkJobType[];
+    jobsLoading?: boolean;
   }) => any;
   uuid: string;
 }
@@ -182,17 +188,27 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
       {
         Icon: Monitor,
         renderStatus: ({
-          clusters,
-          clustersLoading,
+          applications,
+          applicationsLoading,
+          jobs,
+          jobsLoading,
         }) => {
-          if (clustersLoading) {
+          if (applicationsLoading) {
             return null;
           }
 
           return (
-            <Text default large monospace>
-              {clusters?.length}
-            </Text>
+            <FlexContainer flexDirection="column" justifyContent="flex-end">
+              <Text default monospace rightAligned xsmall>
+                {pluralize('application', applications?.length || 0)}
+              </Text>
+
+              <div style={{ marginBottom: UNIT / 2 }} />
+
+              <Text default monospace rightAligned xsmall>
+                {pluralize('job', jobs?.length || 0)}
+              </Text>
+            </FlexContainer>
           );
         },
         uuid: MainNavigationTabEnum.MONITORING,

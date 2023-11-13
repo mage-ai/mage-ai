@@ -26,7 +26,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import useComputeService from '@utils/models/computeService/useComputeService'
-import { CardStyle } from './index.style';
+import { CardStyle, NavigationStyle } from './index.style';
 import {
   AlertTriangle,
   Check,
@@ -46,9 +46,9 @@ import {
   buildTabs,
 } from './constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { NavigationStyle } from '@components/DataIntegrationModal/index.style';
 import {
   SparkApplicationType,
+  SparkJobType,
   SparkSQLType,
 } from '@interfaces/SparkType';
 import {
@@ -224,6 +224,10 @@ function ComputeManagement({
   const applications: SparkApplicationType[] =
     useMemo(() => dataApplications?.spark_applications, [dataApplications]);
 
+  const { data: dataJobs } = api.spark_jobs.list();
+  const jobs: SparkJobType[] =
+    useMemo(() => dataJobs?.spark_jobs, [dataJobs]);
+
   const {
     activeCluster,
     clusters,
@@ -307,51 +311,51 @@ function ComputeManagement({
 
       if (renderStatus) {
         statusEl = renderStatus?.({
+          applications,
+          applicationsLoading: !dataApplications,
           clusters,
           clustersLoading,
           computeConnections: connections,
           computeService,
+          jobs,
+          jobsLoading: !dataJobs,
         });
       }
 
       return (
-        <NavigationStyle
+        <Link
+          block
+          disabled={!selectedComputeService}
           key={uuid}
-          selected={selectedTab?.main === uuid}
+          noHoverUnderline
+          noOutline
+          onClick={() => setSelectedTab(() => ({
+            main: uuid,
+          }))}
+          preventDefault
         >
-          <Link
-            block
-            disabled={!selectedComputeService}
-            noHoverUnderline
-            noOutline
-            onClick={() => setSelectedTab(() => ({
-              main: uuid,
-            }))}
-            preventDefault
-          >
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="center" justifyContent="space-between">
-                <Flex alignItems="center" flex={1}>
-                  <Icon size={UNIT * 2} />
+          <NavigationStyle selected={selectedTab?.main === uuid}>
+            <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
+              <Flex alignItems="center" flex={1}>
+                <Icon size={UNIT * 2} />
 
-                  <Spacing mr={2} />
+                <Spacing mr={2} />
 
-                  <Text bold large>
-                    {MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[uuid]}
-                  </Text>
-                </Flex>
+                <Text bold large>
+                  {MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[uuid]}
+                </Text>
+              </Flex>
 
-                {statusEl && (
-                  <>
-                    <Spacing mr={PADDING_UNITS} />
+              {statusEl && (
+                <>
+                  <Spacing mr={PADDING_UNITS} />
 
-                    {statusEl}
-                  </>
-                )}
-              </FlexContainer>
-            </Spacing>
-          </Link>
-        </NavigationStyle>
+                  {statusEl}
+                </>
+              )}
+            </FlexContainer>
+          </NavigationStyle>
+        </Link>
       );
     });
 
@@ -509,10 +513,14 @@ function ComputeManagement({
     return arr;
   }, [
     activeCluster,
+    applications,
     clusters,
     clustersLoading,
     computeService,
     connections,
+    dataApplications,
+    dataJobs,
+    jobs,
     selectedComputeService,
     selectedTab,
     setSelectedTab,
@@ -607,7 +615,9 @@ function ComputeManagement({
       return (
         <Monitoring
           applications={applications}
+          jobs={jobs}
           loadingApplications={!dataApplications}
+          loadingJobs={!dataJobs}
           objectAttributes={objectAttributes}
           refButtonTabs={refButtonTabs}
           selectedComputeService={selectedComputeService}
@@ -619,6 +629,8 @@ function ComputeManagement({
   }, [
     applications,
     dataApplications,
+    dataJobs,
+    jobs,
     objectAttributes,
     refButtonTabs,
     selectedComputeService,
