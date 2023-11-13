@@ -6,6 +6,7 @@ class SparkApplicationPresenter(BasePresenter):
         'attempts',
         'id',
         'name',
+        'spark_ui_url',
     ]
 
     async def prepare_present(self, **kwargs):

@@ -5,6 +5,9 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
+import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -48,7 +51,7 @@ function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
   const [sync, setSync] = useState<SyncType>(null);
   const [userGitSettings, setUserGitSettings] = useState<UserGitSettingsType>(null);
-  const [error, setError] = useState<string>(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const [showSyncSettings, setShowSyncSettings] = useState<boolean>(null);
 
@@ -87,11 +90,10 @@ function SyncData() {
               );
             }
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => setError(exception),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -113,11 +115,10 @@ function SyncData() {
               );
             }
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => setError(exception),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -498,12 +499,17 @@ function SyncData() {
           </Button>
         </Spacing>
 
-        {error && (
-          <Spacing mt={1}>
-            <Text danger>
-              {error}
-            </Text>
-          </Spacing>
+        {errors && (
+          <ClickOutside
+            disableClickOutside
+            isOpen
+            onClickOutside={() => setErrors?.(null)}
+          >
+            <ErrorPopup
+              {...errors}
+              onClose={() => setErrors?.(null)}
+            />
+          </ClickOutside>
         )}
         
         {showSyncOperations && (

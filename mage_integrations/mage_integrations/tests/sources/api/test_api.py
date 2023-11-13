@@ -231,7 +231,7 @@ class ApiTest(unittest.TestCase):
             source.test_connection()
 
             catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            self.assertEqual(catalog.to_dict(), csv_catalog_example())
             mock_build_connection.assert_called()
 
     def test_api_tsv(self):
@@ -249,7 +249,7 @@ class ApiTest(unittest.TestCase):
             source.test_connection()
 
             catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            self.assertEqual(catalog.to_dict(), csv_catalog_example())
             mock_build_connection.assert_called()
 
     def test_api_xlsx(self):
@@ -267,7 +267,7 @@ class ApiTest(unittest.TestCase):
             source.test_connection()
 
             catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == csv_catalog_example())
+            self.assertEqual(catalog.to_dict(), csv_catalog_example())
             mock_build_connection.assert_called()
 
     def test_api_json(self):
@@ -286,4 +286,4 @@ class ApiTest(unittest.TestCase):
             mock_build_connection.assert_called_once()
 
             catalog = source.discover()
-            self.assertTrue(catalog.to_dict() == json_catalog_example())
+            self.assertEqual(catalog.to_dict(), json_catalog_example())

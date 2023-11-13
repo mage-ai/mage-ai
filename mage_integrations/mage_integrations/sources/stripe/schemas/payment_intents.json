@@ -46,22 +46,12 @@
               "string"
             ]
         },
-        "charges": {
-            "anyOf": [
-              {
-                "type": [
-                  "null",
-                  "array"
-                ],
-                "items": {
-                  "$ref": "shared/charge.json#/"
-                }
-              },
-              {
-                "$ref": "shared/charge.json#/"
-              }
-            ]
-        },
+        "latest_charge": {
+          "type": [
+            "null",
+            "string"
+          ]
+      },
         "currency": {
             "type": [
               "null",
@@ -764,19 +754,24 @@
                             "available_plans": {
                               "type": [
                                 "null",
-                                "object"
+                                "array"
                               ],
-                              "properties": {
+                              "items": {
+                                "type": [
+                                  "null",
+                                  "object"
+                                ],
+                                "properties": {
                                   "count": {
-                                      "type": [
-                                        "null",
-                                        "integer"
-                                      ]
+                                    "type": [
+                                      "null",
+                                      "integer"
+                                    ]
                                   },
                                   "interval": {
-                                      "type": [
-                                        "null",
-                                        "string"
+                                    "type": [
+                                      "null",
+                                      "string"
                                       ]
                                   },
                                   "type": {
@@ -784,6 +779,7 @@
                                       "null",
                                       "string"
                                     ]
+                                  }
                                 }
                               }
                             },

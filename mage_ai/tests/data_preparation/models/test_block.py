@@ -92,6 +92,62 @@ def remove_duplicate_rows(df):
         # self.assertTrue(len(analysis['statistics']) > 0)
         # self.assertTrue(len(analysis['insights']) > 0)
 
+    def test_execute_with_preprocessers(self):
+        pipeline = Pipeline.create(
+            'test pipeline preprocessers',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+        block2 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline=pipeline,
+            upstream_block_uuids=['test_data_loader'],
+        )
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@preprocesser
+def preprocesser0(*args, **kwargs):
+    kwargs['context']['count'] = 1
+
+
+@preprocesser
+def preprocesser1(*args, **kwargs):
+    kwargs['context']['count'] = kwargs['context']['count'] + 1
+
+
+@data_loader
+def load_data(**kwargs):
+    count = kwargs['context']['count']
+
+    data = {'col1': [i * count for i in [1, 1, 3]], 'col2': [i * count for i in [2, 2, 4]]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block2.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@transformer
+def remove_duplicate_rows(df):
+    df_transformed = df.drop_duplicates()
+    return [df_transformed]
+            ''')
+        asyncio.run(block1.execute())
+        asyncio.run(block2.execute())
+
+        variable_manager = VariableManager(
+            variables_dir=get_repo_config(self.repo_path).variables_dir,
+        )
+        data = variable_manager.get_variable(
+            pipeline.uuid,
+            block2.uuid,
+            'output_0',
+            variable_type='dataframe'
+        )
+
+        df_final = pd.DataFrame({'col1': [2, 2, 6], 'col2': [4, 4, 8]}).drop_duplicates()
+        assert_frame_equal(data, df_final)
+
     def test_execute_dicts_and_lists(self):
         pipeline = Pipeline.create(
             'test_pipeline_execute_dicts_and_lists',

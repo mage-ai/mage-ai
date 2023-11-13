@@ -177,7 +177,7 @@ function RetryButton({
             </>
           )
         }
-        borderRadius={BORDER_RADIUS_XXXLARGE}
+        borderRadius={`${BORDER_RADIUS_XXXLARGE}px`}
         danger={RunStatus.FAILED === status && !isViewerRole}
         default={RunStatus.INITIAL === status}
         disabled={disabled || isViewerRole}
@@ -572,7 +572,7 @@ function PipelineRunsTable({
                     <FlexContainer alignItems="center">
                       <Subitem size={ICON_SIZE_SMALL} useStroke/>
                       <Button
-                        borderRadius={BORDER_RADIUS_XXXLARGE}
+                        borderRadius={`${BORDER_RADIUS_XXXLARGE}px`}
                         notClickable
                         padding="6px"
                       >

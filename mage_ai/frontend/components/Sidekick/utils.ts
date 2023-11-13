@@ -1,3 +1,4 @@
+import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 
 export function getFormattedVariable(variable) {
@@ -15,6 +16,16 @@ export function getFormattedVariables(variables, filterBlock) {
         value: getFormattedVariable(variableValue),
       };
     });
+}
+
+export function getFormattedGlobalVariables(variables: PipelineVariableType[]) {
+  return getFormattedVariables(
+    variables,
+    block => block.uuid === GLOBAL_VARIABLES_UUID,
+  )?.reduce((acc, { uuid, value }) => ({
+    ...acc,
+    [uuid]: value,
+  }), {});
 }
 
 export function addTriggerVariables(variablesArr, scheduleType) {

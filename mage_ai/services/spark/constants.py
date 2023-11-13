@@ -1,5 +1,7 @@
 from enum import Enum
 
+SPARK_DIRECTORY_NAME = '.spark'
+
 
 class ComputeService(str, Enum):
     AWS_EMR = 'AWS_EMR'

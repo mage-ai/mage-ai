@@ -59,6 +59,14 @@ export function isEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+export function mapObject(obj, func) {
+  return Object.fromEntries(
+    Object.entries(obj).map(
+      ([k, v], i) => [k, func(v, k, i)],
+    ),
+  );
+}
+
 export function pickKey(obj) {
   const keys = Object.keys(obj);
   return keys.filter(k => obj[k]);

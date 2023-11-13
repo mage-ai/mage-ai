@@ -1,6 +1,6 @@
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockCubeGradient from '@oracle/icons/custom/BlockCubeGradient';
@@ -90,6 +90,30 @@ function ConfigureBlock({
     name: defaultName,
     type: block?.type,
   });
+
+  const handleOnSave = useCallback(() => {
+    onSave({
+      ...blockAttributes,
+      name: blockAttributes?.name || defaultName,
+    });
+  }, [blockAttributes, defaultName, onSave]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        onClose();
+      } else if (event.key === 'Enter') {
+        handleOnSave();
+      }
+    };
+
+    document?.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document?.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleOnSave, onClose]);
 
   useEffect(() => {
     refTextInput?.current?.focus();
@@ -523,10 +547,7 @@ function ConfigureBlock({
             bold
             centerText
             disabled={isLoadingCreateLLM}
-            onClick={() => onSave({
-              ...blockAttributes,
-              name: blockAttributes?.name || defaultName,
-            })}
+            onClick={handleOnSave}
             primary
             tabIndex={0}
             uuid="ConfigureBlock/SaveAndAddBlock"

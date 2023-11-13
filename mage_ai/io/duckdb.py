@@ -83,7 +83,6 @@ class DuckDB(BaseSQL):
         cursor.execute(sql)
 
     def get_type(self, column: Series, dtype: str) -> str:
-        print(f"Type: {dtype}")
         if dtype in (
             PandasTypes.MIXED,
             PandasTypes.UNKNOWN_ARRAY,

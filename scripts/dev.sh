@@ -37,6 +37,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --enable_prometheus)
+    ENABLE_PROMETHEUS=1
+    shift # past argument
+    shift # past value
+    ;;
     --huggingface_api)
     HUGGINGFACE_API="$3"
     shift # past argument
@@ -107,6 +112,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --spark)
+    SPARK=1
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -127,6 +137,7 @@ export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
 export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
+export ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
 
 export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
@@ -142,6 +153,12 @@ export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
 export DEBUG=$DEBUG
 
+UP_SERVICES="server app"
+
+if [[ "$SPARK" == "1" ]]; then
+    UP_SERVICES="server_spark app_spark"
+fi
+
 if command -v docker-compose &> /dev/null
 then
     # docker-compose exists
@@ -149,12 +166,12 @@ then
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker-compose -f docker-compose.yml up
+    docker-compose -f docker-compose.yml up $UP_SERVICES
 else
     # docker-compose does not exist
     HOST=$HOST \
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker compose -f docker-compose.yml up
+    docker compose -f docker-compose.yml up $UP_SERVICES
 fi

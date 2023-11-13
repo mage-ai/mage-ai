@@ -68,8 +68,8 @@ default:
   # Pinot
   PINOT_HOST: hostname
   PINOT_PASSWORD: password
-  PINOT_PATH: /query
-  PINOT_PORT: 9000
+  PINOT_PATH: /query/sql
+  PINOT_PORT: 8000
   PINOT_SCHEME: http
   PINOT_USER: user
   # PostgresSQL

@@ -41,7 +41,7 @@ import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
-import { getFormattedVariables } from '@components/Sidekick/utils';
+import { getFormattedGlobalVariables, getFormattedVariables } from '@components/Sidekick/utils';
 import { getPipelineScheduleApiFilterQuery } from '@components/Triggers/utils';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
@@ -157,15 +157,9 @@ function PipelineSchedules({
   const [createOnceSchedule, { isLoading: isLoadingCreateOnceSchedule }]: any =
     useCreateScheduleMutation(fetchPipelineSchedules);
 
-  const variablesOrig = useMemo(() => (
-    getFormattedVariables(
-      globalVariables,
-      block => block.uuid === GLOBAL_VARIABLES_UUID,
-    )?.reduce((acc, { uuid, value }) => ({
-      ...acc,
-      [uuid]: value,
-    }), {})
-  ), [globalVariables]);
+  const variablesOrig = useMemo(() => getFormattedGlobalVariables(globalVariables), [
+    globalVariables,
+  ]);
 
   const randomTriggerName = randomNameGenerator();
   const pipelineOnceSchedulePayload = useMemo(() => ({
@@ -450,7 +444,7 @@ function PipelineSchedules({
 
   if (isCreatingTrigger) {
     return (
-       <TriggerEdit
+      <TriggerEdit
         creatingWithLimitation
         errors={errors}
         onCancel={() => setIsCreatingTrigger(false)}

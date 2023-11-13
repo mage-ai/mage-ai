@@ -1,6 +1,5 @@
 import UserType from '@interfaces/UserType';
 import { File, Settings, WorkspacesIcon, WorkspacesUsersIcon } from '@oracle/icons';
-import { ProjectTypeEnum } from '@interfaces/ProjectType';
 
 export const SECTION_UUID_WORKSPACE = 'Workspace';
 
@@ -40,8 +39,8 @@ export function buildNavigationItems(
     });
   }
 
-  if (projectType == ProjectTypeEnum.MAIN) {
-    workspaceItems.push({
+  workspaceItems.push(...[
+    {
       Icon: Settings,
       id: WorkspacesPageNameEnum.SETTINGS,
       isSelected: () => WorkspacesPageNameEnum.SETTINGS === pageName,
@@ -49,18 +48,17 @@ export function buildNavigationItems(
       linkProps: {
         href: '/manage/settings',
       },
-    });
-  }
-
-  workspaceItems.push({
-    Icon: File,
-    id: WorkspacesPageNameEnum.FILE_BROWSER,
-    isSelected: () => WorkspacesPageNameEnum.FILE_BROWSER === pageName,
-    label: () => 'File browser',
-    linkProps: {
-      href: '/manage/files',
     },
-  });
+    {
+      Icon: File,
+      id: WorkspacesPageNameEnum.FILE_BROWSER,
+      isSelected: () => WorkspacesPageNameEnum.FILE_BROWSER === pageName,
+      label: () => 'File browser',
+      linkProps: {
+        href: '/manage/files',
+      },
+    },
+  ]);
 
   return workspaceItems;
 }

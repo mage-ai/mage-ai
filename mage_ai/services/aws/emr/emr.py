@@ -147,6 +147,10 @@ def submit_spark_job(
 ):
     if emr_config is None:
         emr_config = dict()
+
+    if isinstance(emr_config, dict):
+        emr_config = EmrConfig.load(config=emr_config)
+
     emr_client = get_aws_boto3_client('emr')
 
     clusters = emr_client.list_clusters(
@@ -204,7 +208,7 @@ def submit_spark_job(
         cluster_id = create_a_new_cluster(
             cluster_name,
             steps,
-            EmrConfig.load(config=emr_config),
+            emr_config,
             bootstrap_script_path=bootstrap_script_path,
             idle_timeout=idle_timeout,
             log_uri=log_uri,

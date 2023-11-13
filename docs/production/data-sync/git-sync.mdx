@@ -32,18 +32,18 @@ use the same credentials that are provided for the main repository to update the
 You can choose to pass in Git settings as environment variables. Mage will read from these environment
 variables to configure your Git repo.
 
-| Setting                              | Variable                     | Description                                                                                                                                            | Required |
-| ------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| Git settings                         | `GIT_REPO_LINK`              | Corresponds to `Remote repo url`                                                                                                                       | ✅       |
-| Git settings                         | `GIT_REPO_PATH`              | Corresponds to `Local directory path`                                                                                                                  | ✅       |
-| Git settings                         | `GIT_USERNAME`               | Corresponds to `Username`                                                                                                                              | ✅       |
-| Git settings                         | `GIT_EMAIL`                  | Corresponds to `Email`                                                                                                                                 | ✅       |
-| Git settings                         | `GIT_AUTH_TYPE`              | The method of authentication. See enum values [here](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/data_preparation/sync/__init__.py#L13-L16) | ✅       |
-| Git sync settings                    | `GIT_BRANCH`                 | Corresponds to `Branch name`                                                                                                                           | 🚫       |
-| Git sync settings                    | `GIT_SYNC_ON_PIPELINE_RUN`   | Corresponds to `Sync before each trigger run`, options                                                                                                 | 🚫       |
-| Git sync settings                    | `GIT_SYNC_ON_START`          | Corresponds to `Sync on server start up`, options                                                                                                      | 🚫       |
-| Git sync settings                    | `GIT_SYNC_ON_EXECUTOR_START` | If set to "1", Mage will attempt to run a git sync every time an executor is started, options                                                          | 🚫       |
-| Git sync settings                    | `GIT_SYNC_SUBMODULES`        | Corresponds to `Include submodules`, options                                                                                                           | 🚫       |
-| Authentication environment variables | `GIT_SSH_PUBLIC_KEY`         | SSH public key encoded in base64, used for ssh auth type                                                                                               | 🚫       |
-| Authentication environment variables | `GIT_SSH_PRIVATE_KEY`        | SSH private key encoded in base64, used for ssh auth type                                                                                              | 🚫       |
-| Authentication environment variables | `GIT_ACCESS_TOKEN`           | Git access token, used for https auth type                                                                                                             | 🚫       |
+| Setting                              | Variable                       | Description                                                                                    | Required |
+|--------------------------------------|--------------------------------|------------------------------------------------------------------------------------------------|----------|
+| Git settings                         | `GIT_REPO_LINK`                |  Corresponds to `Remote repo url`                                                              | ✅       |
+| Git settings                         | `GIT_REPO_PATH`                |  Corresponds to `Local directory path`                                                         | ✅       |
+| Git settings                         | `GIT_USERNAME`                 |  Corresponds to `Username`                                                                     | ✅       |
+| Git settings                         | `GIT_EMAIL`                    |  Corresponds to `Email`                                                                        | ✅       |
+| Git settings                         | `GIT_AUTH_TYPE`                |  The method of authentication. See enum values [here](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/data_preparation/sync/__init__.py#L13-L16)                                                                  | ✅       |
+| Git sync settings                    | `GIT_BRANCH`                   |  Corresponds to `Branch name`                                                                  | 🚫       |
+| Git sync settings                    | `GIT_SYNC_ON_PIPELINE_RUN`     |  Corresponds to `Sync before each trigger run`, options                                        | 🚫       |
+| Git sync settings                    | `GIT_SYNC_ON_START`            |  Corresponds to `Sync on server start up`, options                                             | 🚫       |
+| Git sync settings                    | `GIT_SYNC_ON_EXECUTOR_START`   |  If set to "1", Mage will attempt to run a git sync every time an executor is started, options | 🚫       |
+| Git sync settings                    | `GIT_SYNC_SUBMODULES`          |  Corresponds to `Include submodules`, options                                                  | 🚫       |
+| Authentication environment variables | `GIT_SSH_PUBLIC_KEY`           |  SSH public key encoded in base64, used for ssh auth type                                      | 🚫       |
+| Authentication environment variables | `GIT_SSH_PRIVATE_KEY`          |  SSH private key encoded in base64, used for ssh auth type                                     | 🚫       |
+| Authentication environment variables | `GIT_ACCESS_TOKEN`             |  Git access token, used for https auth type                                                    | 🚫       |
