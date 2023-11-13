@@ -223,7 +223,13 @@ export function abbreviatedTimezone(timezone: TimeZoneEnum) {
   return tzMoment.tz(TIME_ZONE_NAMES[timezone]).zoneAbbr();
 }
 
-export function dateFromFromUnixTimestamp(timestamp: number) {
+export function dateFromFromUnixTimestamp(timestamp: number, opts?: {
+  withMilliseconds?: boolean;
+}) {
+  if (opts?.withMilliseconds) {
+    return moment.unix(timestamp / 1000);
+  }
+
   return moment.unix(timestamp);
 }
 

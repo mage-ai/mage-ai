@@ -9,7 +9,7 @@ class API:
     @classmethod
     def build(
         self,
-        all_applications: bool = False,
+        all_applications: bool = True,
         application_id: str = None,
         application_spark_ui_url: str = None,
         repo_config=None,

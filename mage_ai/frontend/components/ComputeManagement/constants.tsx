@@ -181,6 +181,20 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
     arr.push(...[
       {
         Icon: Monitor,
+        renderStatus: ({
+          clusters,
+          clustersLoading,
+        }) => {
+          if (clustersLoading) {
+            return null;
+          }
+
+          return (
+            <Text default large monospace>
+              {clusters?.length}
+            </Text>
+          );
+        },
         uuid: MainNavigationTabEnum.MONITORING,
       },
       {
