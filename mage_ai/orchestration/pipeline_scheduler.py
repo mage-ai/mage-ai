@@ -1539,7 +1539,8 @@ def schedule_all():
             pipeline_quota = None
 
         quota_filtered_runs = pipeline_runs_to_start
-        if pipeline_quota is not None and pipeline_quota >= 0:
+        if pipeline_quota is not None:
+            pipeline_quota = pipeline_quota if pipeline_quota > 0 else 0
             pipeline_runs_to_start.sort(key=lambda x: x.execution_date)
             quota_filtered_runs = pipeline_runs_to_start[:pipeline_quota]
             pipeline_runs_excluded_by_limit.extend(
