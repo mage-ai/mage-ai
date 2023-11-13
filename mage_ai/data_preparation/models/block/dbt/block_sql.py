@@ -460,7 +460,7 @@ class DBTBlockSQL(DBTBlock):
                     df=df,
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=ublock.uuid,
-                    targets=[self.project_path, self.target(variables=global_vars)],
+                    targets=[(self.project_path, self.target(variables=global_vars))],
                     logger=logger,
                     global_vars=global_vars,
                     runtime_arguments=runtime_arguments,
