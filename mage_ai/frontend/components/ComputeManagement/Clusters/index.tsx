@@ -11,6 +11,7 @@ import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import InformationTable from './InformationTable';
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -268,6 +269,7 @@ function Clusters({
           const {
             active,
             applications,
+            ec2_instance_attributes: ec2InstanceAttributes,
             name,
             status,
             tags,
@@ -284,6 +286,8 @@ function Clusters({
             ClusterStatusStateEnum.RUNNING,
             ClusterStatusStateEnum.WAITING,
           ].includes(state);
+
+          const createdAt = status?.timeline?.creation_date_time;
 
           return (
             <Spacing p={PADDING_UNITS}>
@@ -359,110 +363,143 @@ function Clusters({
                   </Headline>
                 </Spacing>
 
-                {[
-                  {
-                    key: 'Name',
-                    value: name,
-                  },
-                  {
-                    key: 'Status message',
-                    value: status?.state_change_reason?.message,
-                  },
-                  {
-                    key: 'Release label',
-                    textProps: {
-                      monospace: true,
+                <InformationTable
+                  rows={[
+                    {
+                      key: 'ID',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: cluster?.id,
                     },
-                    value: cluster?.release_label,
-                  },
-                  {
-                    key: 'Service role',
-                    textProps: {
-                      monospace: true,
+                    {
+                      key: 'Name',
+                      value: name,
                     },
-                    value: cluster?.service_role,
-                  },
-                  {
-                    key: 'Scale down behavior',
-                    value: cluster?.scale_down_behavior
-                      ? capitalizeRemoveUnderscoreLower(cluster?.scale_down_behavior)
-                      : cluster?.scale_down_behavior,
-                  },
-                  {
-                    key: 'Auto terminate',
-                    value: cluster?.auto_terminate
-                      ? <Check size={ICON_SIZE} success />
-                      : <Close danger size={ICON_SIZE} />,
-                  },
-                  {
-                    key: 'Termination protected',
-                    value: cluster?.termination_protected
-                      ? <Check size={ICON_SIZE} success />
-                      : <Close danger size={ICON_SIZE} />,
-                  },
-                  {
-                    key: 'Visible to all users',
-                    value: cluster?.visible_to_all_users
-                      ? <Check size={ICON_SIZE} success />
-                      : <Close danger size={ICON_SIZE} />,
-                  },
-                  {
-                    key: 'EBS root volume size',
-                    textProps: {
-                      monospace: true,
+                    {
+                      key: 'Master public DNS name',
+                      value: cluster?.master_public_dns_name,
                     },
-                    value: cluster?.ebs_root_volume_size,
-                  },
-                  {
-                    key: 'Normalized instance hours',
-                    textProps: {
-                      monospace: true,
+                    {
+                      key: 'Created at',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: createdAt
+                        ? datetimeInLocalTimezone(
+                          moment(createdAt).format(DATE_FORMAT_LONG_MS),
+                          displayLocalTimezone,
+                        )
+                        : '-',
                     },
-                    value: cluster?.normalized_instance_hours,
-                  },
-                  {
-                    key: 'Step concurrency level',
-                    textProps: {
-                      monospace: true,
+                    {
+                      key: 'Status message',
+                      value: status?.state_change_reason?.message,
                     },
-                    value: cluster?.step_concurrency_level,
-                  },
-                ].map(({
-                  key,
-                  textProps,
-                  value,
-                }: {
-                  key: string;
-                  textProps?: {
-                    monospace?: boolean;
-                  };
-                  value: any;
-                }) => (
-                  <div key="">
-                    <Divider light />
+                    {
+                      key: 'Release label',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: cluster?.release_label,
+                    },
+                    {
+                      key: 'Service role',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: cluster?.service_role,
+                    },
+                    {
+                      key: 'Scale down behavior',
+                      value: cluster?.scale_down_behavior
+                        ? capitalizeRemoveUnderscoreLower(cluster?.scale_down_behavior)
+                        : cluster?.scale_down_behavior,
+                    },
+                    {
+                      key: 'Auto terminate',
+                      value: cluster?.auto_terminate
+                        ? <Check size={ICON_SIZE} success />
+                        : <Close danger size={ICON_SIZE} />,
+                    },
+                    {
+                      key: 'Termination protected',
+                      value: cluster?.termination_protected
+                        ? <Check size={ICON_SIZE} success />
+                        : <Close danger size={ICON_SIZE} />,
+                    },
+                    {
+                      key: 'Visible to all users',
+                      value: cluster?.visible_to_all_users
+                        ? <Check size={ICON_SIZE} success />
+                        : <Close danger size={ICON_SIZE} />,
+                    },
+                    {
+                      key: 'EBS root volume size',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: cluster?.ebs_root_volume_size,
+                    },
+                    {
+                      key: 'Normalized instance hours',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: cluster?.normalized_instance_hours,
+                    },
+                    {
+                      key: 'Step concurrency level',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: cluster?.step_concurrency_level,
+                    },
+                  ]}
+                />
+              </Panel>
 
-                    <Spacing p={PADDING_UNITS}>
-                      <FlexContainer alignItems="center">
-                        <FlexContainer flexDirection="column">
-                          <Text
-                            default
-                            large
-                          >
-                            {key}
-                          </Text>
-                        </FlexContainer>
+              <Spacing mb={PADDING_UNITS} />
 
-                        <Spacing mr={PADDING_UNITS} />
+              <Panel noPadding>
+                <Spacing p={PADDING_UNITS}>
+                  <Headline level={4}>
+                    EC2 instance attributes
+                  </Headline>
+                </Spacing>
 
-                        <Flex flex={1} justifyContent="flex-end">
-                          <Text default large {...textProps}>
-                            {value}
-                          </Text>
-                        </Flex>
-                      </FlexContainer>
-                    </Spacing>
-                  </div>
-                ))}
+                <InformationTable
+                  rows={[
+                    {
+                      key: 'Availability zone',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: ec2InstanceAttributes?.ec2_availability_zone,
+                    },
+                    {
+                      key: 'Master security group',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: ec2InstanceAttributes?.emr_managed_master_security_group,
+                    },
+                    {
+                      key: 'Slave security group',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: ec2InstanceAttributes?.emr_managed_slave_security_group,
+                    },
+                    {
+                      key: 'IAM profile',
+                      textProps: {
+                        monospace: true,
+                      },
+                      value: ec2InstanceAttributes?.iam_instance_profile,
+                    },
+                  ]}
+                />
               </Panel>
 
               <Spacing mb={PADDING_UNITS} />

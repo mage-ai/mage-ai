@@ -172,6 +172,12 @@ class Cluster(BaseDataClass):
         ]
 
     @property
+    def has_dns_name(self) -> bool:
+        return self.ready or self.state in [
+            ClusterStatusState.BOOTSTRAPING,
+        ]
+
+    @property
     def connection_value_score(self) -> int:
         if ClusterStatusState.WAITING == self.state:
             return 3

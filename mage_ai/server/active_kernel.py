@@ -74,6 +74,7 @@ def switch_active_kernel(
                 emr_cluster_manager,
             )
 
+            should_set_active = True
             auto_creation = True
             cluster_id = None
             project = Project()
@@ -81,16 +82,33 @@ def switch_active_kernel(
             if project.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
                 if ComputeServiceUUID.AWS_EMR == get_compute_service(kernel_name=kernel_name):
                     auto_creation = False
-                    clust_info = cluster_info_from_tunnel()
-                    if clust_info:
-                        cluster_id = clust_info.get('id') or None
+                    should_set_active = False
 
-            emr_cluster_manager.set_active_cluster(
-                auto_creation=auto_creation,
-                auto_selection=True,
-                cluster_id=cluster_id,
-                emr_config=emr_config,
-            )
+                    cluster_info = cluster_info_from_tunnel()
+
+                    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! cluster_info')
+                    print(cluster_info)
+                    print('\n')
+                    if cluster_info:
+                        from mage_ai.services.compute.models import ComputeService
+
+                        cluster_id = cluster_info.get('id') or None
+                        compute_service = ComputeService(project=project)
+                        cluster = compute_service.get_cluster_details(cluster_id=cluster_id)
+
+                        should_set_active = cluster.has_dns_name
+                        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! cluster')
+                        print(cluster)
+                        print(should_set_active, cluster.has_dns_name)
+                        print('\n')
+
+            if should_set_active:
+                emr_cluster_manager.set_active_cluster(
+                    auto_creation=auto_creation,
+                    auto_selection=True,
+                    cluster_id=cluster_id,
+                    emr_config=emr_config,
+                )
     except NoSuchKernel as e:
         if kernel_name == KernelName.PYSPARK:
             raise Exception(
