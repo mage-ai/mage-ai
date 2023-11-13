@@ -831,8 +831,8 @@ function CodeBlock({
   ]);
 
   const { data: dataExecutionStates, mutate: fetchExecutionStates } = api.execution_states.list({
-    block_uuid: blockUUID,
-    pipeline_uuid: pipelineUUID,
+    block_uuid: typeof blockUUID !== 'undefined' ? blockUUID : null,
+    pipeline_uuid: typeof pipelineUUID !== 'undefined' ? pipelineUUID : null,
   }, {
     refreshInterval: selected && isInProgress ? 1000 : 5000,
     revalidateOnFocus: true,

@@ -334,17 +334,16 @@ class AWSEMRComputeService(ComputeService):
             if not cluster:
                 return
 
-            if not cluster.invalid:
-                emr_cluster_manager.set_active_cluster(cluster_info=cluster.to_dict())
+            emr_cluster_manager.set_active_cluster(cluster_id=cluster_id)
 
-                # If the kernel isn’t restarted after setting a cluster as active,
-                # the notebook won’t be able to connect to the remote cluster.
-                try:
-                    restart_kernel()
-                except RuntimeError as e:
-                    # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
-                    if 'start_kernel' in str(e):
-                        start_kernel()
+            # If the kernel isn’t restarted after setting a cluster as active,
+            # the notebook won’t be able to connect to the remote cluster.
+            try:
+                restart_kernel()
+            except RuntimeError as e:
+                # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
+                if 'start_kernel' in str(e):
+                    start_kernel()
 
             return cluster
 

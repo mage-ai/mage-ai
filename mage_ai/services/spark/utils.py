@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.server.active_kernel import get_active_kernel_name
 from mage_ai.server.kernels import KernelName
 from mage_ai.services.spark.constants import ComputeServiceUUID, SparkMaster
 from mage_ai.shared.utils import is_spark_env
@@ -17,6 +16,8 @@ def get_compute_service(
         return None
 
     if not kernel_name:
+        from mage_ai.server.active_kernel import get_active_kernel_name
+
         kernel_name = get_active_kernel_name()
 
     if repo_config.emr_config and (KernelName.PYSPARK == kernel_name or ignore_active_kernel):

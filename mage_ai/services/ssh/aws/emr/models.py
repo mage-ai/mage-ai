@@ -5,7 +5,6 @@ from typing import Dict
 from sshtunnel import SSHTunnelForwarder
 
 from mage_ai.data_preparation.models.project import Project
-from mage_ai.services.compute.aws.constants import ClusterStatusState
 from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.api.constants import SPARK_UI_HOST, SPARK_UI_PORT_AWS_EMR
@@ -188,16 +187,12 @@ def create_tunnel(
         return close_tunnel()
 
     if cluster_from_cache:
-        cluster = compute_service.get_cluster_details(cluster.id)
-        if not cluster or \
-                not cluster.status or \
-                not cluster.status.state or \
-                cluster.status.state in [
-                    ClusterStatusState.TERMINATED,
-                    ClusterStatusState.TERMINATED_WITH_ERRORS,
-                    ClusterStatusState.TERMINATING,
-                ]:
+        cluster_server = compute_service.get_cluster_details(cluster.id)
+        if not cluster_server or cluster_server.invalid:
             return
+        active = cluster.active
+        cluster = Cluster.load(**cluster_server.to_dict())
+        cluster.active = active
 
     tunnel = SSHTunnel(
         project.emr_config.get('ec2_key_path'),
