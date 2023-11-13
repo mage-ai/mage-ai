@@ -1445,6 +1445,8 @@ class Block(DataIntegrationMixin, SparkBlock):
             track_spark = from_notebook and self.is_using_spark() and \
                 self.compute_management_enabled()
 
+            print('############################################### track_spark', track_spark)
+            print(from_notebook, self.is_using_spark(), self.compute_management_enabled())
             if track_spark:
                 self.clear_spark_jobs_cache()
                 self.cache_spark_application()

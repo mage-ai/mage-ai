@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.block.spark.constants import (
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.services.spark.api.service import API
+from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.sqls import Sql
@@ -30,6 +31,16 @@ class SparkBlock:
 
         return self._spark_session_current
 
+    @property
+    def compute_service_uuid(self) -> ComputeServiceUUID:
+        try:
+            if self._compute_service_uuid:
+                return self._compute_service_uuid
+        except AttributeError:
+            self._compute_service_uuid = get_compute_service(ignore_active_kernel=True)
+
+        return self._compute_service_uuid
+
     def spark_session_application(self) -> Application:
         if not self.spark_session:
             return
@@ -40,7 +51,7 @@ class SparkBlock:
         if value_tup:
             application_id = value_tup[1]
 
-            return Application(
+            return Application.load(
                 id=application_id,
                 spark_ui_url=self.spark_session.sparkContext.uiWebUrl,
             )
@@ -51,10 +62,14 @@ class SparkBlock:
         )
 
     def is_using_spark(self) -> bool:
-        return get_compute_service()
+        return self.compute_service_uuid
 
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
+
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print(jobs_cache)
+        print('\n')
 
         if 'execution_states' in jobs_cache:
             return jobs_cache.get('execution_states')
@@ -82,16 +97,24 @@ class SparkBlock:
     def jobs_during_execution(self) -> List[Job]:
         self.__load_spark_job_submission_timestamps()
 
-        if self.execution_timestamp_start:
-            jobs = self.__get_jobs(application=self.execution_start_application)
+        print('---------------------------------------------------- jobs_during_execution')
+        print(self.compute_service_uuid)
+        print(self.execution_timestamp_start)
+        print(self.execution_start_application)
+        print('\n')
 
+        if self.execution_timestamp_start:
             def _filter(
                 job: Job,
+                compute_service_uuid=self.compute_service_uuid,
                 execution_timestamp_start: float = self.execution_timestamp_start,
                 execution_timestamp_end: float = self.execution_timestamp_end,
             ) -> bool:
                 if not job.submission_time:
                     return False
+
+                if ComputeServiceUUID.AWS_EMR == compute_service_uuid:
+                    return job.name == f'{self.uuid}:{self.execution_timestamp_start}'
 
                 if isinstance(job.submission_time, str):
                     submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
@@ -105,6 +128,8 @@ class SparkBlock:
                         not execution_timestamp_end or
                         submission_timestamp <= execution_timestamp_end
                     )
+
+            jobs = self.__get_jobs(application=self.execution_start_application)
 
             return list(filter(_filter, jobs or []))
 
@@ -156,8 +181,25 @@ class SparkBlock:
             Application.cache_application(application)
 
     def set_spark_job_execution_start(self) -> None:
+        print('************************************** set_spark_job_execution_start')
         self.execution_timestamp_start = datetime.utcnow().timestamp()
         application = self.spark_session_application()
+
+        print(self.execution_timestamp_start)
+        print(application)
+        print('\n')
+
+        if self.spark_session and self.spark_session.sparkContext:
+            print('SparkSession')
+            print(self.spark_session)
+            print('SparkContext')
+            print(self.spark_session.sparkContext)
+            print('\n')
+            key = f'{self.uuid}:{self.execution_timestamp_start}'
+            # For jobs
+            self.spark_session.sparkContext.setLocalProperty('callSite.short', key)
+            # For stages
+            self.spark_session.sparkContext.setLocalProperty('callSite.long', key)
 
         self.__update_spark_jobs_cache(
             dict(
@@ -304,6 +346,13 @@ class SparkBlock:
             f.write(json.dumps(data))
 
     def __load_spark_job_submission_timestamps(self) -> None:
+        self.execution_end_application = None
+        self.execution_end_application = None
+        self.execution_start_application = None
+        self.execution_start_application = None
+        self.execution_timestamp_end = None
+        self.execution_timestamp_start = None
+
         jobs_cache = self.__load_cache()
         if jobs_cache:
             before = jobs_cache.get('before')
