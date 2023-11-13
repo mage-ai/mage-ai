@@ -13,6 +13,14 @@ import {
 } from './fetcher';
 import { buildUrl } from './url';
 
+function validateID(value: number | string): number | string {
+  if (typeof value !== 'undefined' && value !== null && value !== false) {
+    return value;
+  }
+
+  return null;
+}
+
 export function fetchCreate(resource: string, body: object, opts: any = {}) {
   return buildFetchV2(buildUrl(resource), { ...opts, body, method: POST });
 }
@@ -94,7 +102,7 @@ export function useDetail(
     pauseFetch,
   } = customOptions || {};
 
-  const url = (typeof id !== 'undefined' && id !== null) ? buildUrl(resource, id) : null;
+  const url = validateID(id) ? buildUrl(resource, id) : null;
   const key = url && keyInit ? keyInit : url;
 
   const {
@@ -135,7 +143,7 @@ export function useDetailWithParent(
     key: keyInit,
   } = customOptions || {};
 
-  const url = (typeof id !== 'undefined' && id !== null) && ((typeof parentId !== 'undefined' && parentId !== null) ? buildUrl(
+  const url = validateID(id) && (validateID(parentId) ? buildUrl(
     parentResource,
     parentId,
     resource,

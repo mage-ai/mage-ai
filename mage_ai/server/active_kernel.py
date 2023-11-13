@@ -7,6 +7,8 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
 from mage_ai.server.logger import Logger
+from mage_ai.services.compute.models import ComputeService
+from mage_ai.services.spark.constants import ComputeServiceUUID
 
 logger = Logger().new_server_logger(__name__)
 
@@ -60,7 +62,6 @@ def switch_active_kernel(
         if kernel.is_alive():
             logger.info(f'Shut down current kernel {kernel}.')
             kernel.request_shutdown()
-
     try:
         new_kernel = kernel_managers[kernel_name]
         new_kernel.start_kernel()
@@ -70,11 +71,17 @@ def switch_active_kernel(
             from mage_ai.cluster_manager.aws.emr_cluster_manager import (
                 emr_cluster_manager,
             )
-            emr_cluster_manager.set_active_cluster(
-                auto_selection=True,
-                auto_creation=not Project().is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT),
-                emr_config=emr_config,
-            )
+
+            project = Project()
+            if project.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+                compute_service = ComputeService.build(project)
+                if compute_service and ComputeServiceUUID.AWS_EMR == compute_service.uuid:
+                    compute_service.activate_cluster(discover=True)
+            else:
+                emr_cluster_manager.set_active_cluster(
+                    auto_selection=True,
+                    emr_config=emr_config,
+                )
     except NoSuchKernel as e:
         if kernel_name == KernelName.PYSPARK:
             raise Exception(

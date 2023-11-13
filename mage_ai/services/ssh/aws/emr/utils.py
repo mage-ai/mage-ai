@@ -1,4 +1,6 @@
+import json
 import os
+from typing import Dict
 
 import simplejson
 
@@ -107,3 +109,17 @@ def tunnel(
             default=encode_complex,
             ignore_nan=True,
         ))
+
+
+def cluster_info_from_tunnel() -> Dict:
+    cluster = None
+
+    absolute_file_path = file_path()
+    if os.path.exists(absolute_file_path):
+        with open(absolute_file_path, 'r') as f:
+            text = f.read()
+            if text:
+                commands = json.loads(text) or {}
+                cluster = commands.get('cluster')
+
+    return cluster

@@ -221,8 +221,6 @@ function StagesTable({
                   shuffle_write_metrics: shuffleWriteMetrics,
                 } = taskMetricsDistributions || {};
 
-                console.log('wtf', stageAttempt)
-
                 const tasksTable = (
                   <Table
                     columnFlex={[null, null, null, null, null, null, null, null, null]}

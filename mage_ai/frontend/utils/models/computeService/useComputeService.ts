@@ -83,8 +83,6 @@ function useComputeService({
       return null;
     }
 
-    console.log('wtf', computeService?.setup_steps)
-
     return computeService?.setup_steps?.every(({
       required,
       status,

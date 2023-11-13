@@ -105,6 +105,10 @@ class ComputeService:
         pass
 
     @abstractmethod
+    def activate_cluster(self, **kwargs) -> Dict:
+        pass
+
+    @abstractmethod
     def create_cluster(self, **kwargs) -> Dict:
         pass
 

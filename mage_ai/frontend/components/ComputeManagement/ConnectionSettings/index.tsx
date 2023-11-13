@@ -41,8 +41,8 @@ function ConnectionSettings({
   });
 
   const [connectionActionUpdating, setConnectionActionUpdating] = useState<{
-    computeConnection: ComputeConnectionType;
-    computeConnectionAction: ComputeConnectionActionType;
+    action: ComputeConnectionActionType;
+    connection: ComputeConnectionType;
   }>(null);
   const [updateComputeConnection, { isLoading: isLoadingComputeConnection }]: any = useMutation(
     ({
@@ -88,7 +88,7 @@ function ConnectionSettings({
         const {
           actions,
           active,
-          // connection,
+          connection: connectionModel,
           description,
           id,
           name,
@@ -143,11 +143,17 @@ function ConnectionSettings({
                               && connectionActionUpdating?.computeConnectionAction?.uuid === uuid
                             }
                             onClick={() => {
-                              setConnectionActionUpdating(connection);
+                              setConnectionActionUpdating({
+                                action: {
+                                  name,
+                                  uuid,
+                                },
+                                connection: connectionModel,
+                              });
 
                               updateComputeConnection({
                                 action: uuid,
-                                connection: connection,
+                                connection: connectionModel,
                                 id,
                               });
                             }}

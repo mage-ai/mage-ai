@@ -20,6 +20,8 @@ from mage_ai.services.compute.models import (
     SetupStepStatus,
 )
 from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.services.ssh.aws.emr.utils import cluster_info_from_tunnel
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
@@ -170,8 +172,29 @@ class Cluster(BaseDataClass):
         ]
 
     @property
+    def connection_value_score(self) -> int:
+        if ClusterStatusState.WAITING == self.state:
+            return 3
+        elif ClusterStatusState.RUNNING == self.state:
+            return 2
+        elif ClusterStatusState.STARTING == self.state:
+            return 1
+        elif ClusterStatusState.BOOTSTRAPPING == self.state:
+            return 0
+        return -1
+
+    @property
     def invalid(self) -> bool:
         return self.state in INVALID_STATES
+
+    @property
+    def valid(self) -> bool:
+        return not self.invalid
+
+    @property
+    def created_at(self) -> bool:
+        if self.status and self.status.timeline:
+            return self.status.timeline.creation_date_time
 
     @property
     def state(self) -> ClusterStatusState:
@@ -226,6 +249,60 @@ ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
 class AWSEMRComputeService(ComputeService):
     uuid = ComputeServiceUUID.AWS_EMR
 
+    def activate_cluster(self, cluster_id: str = None, discover: bool = False, **kwargs) -> Cluster:
+        from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+
+        cluster_to_activate = None
+
+        # Set active based on this priority:
+        # 1. Cluster that is being used in the SSH tunnel
+        # 2. EMR cluster manager’s active cluster ID
+        # 3. The most recently launched cluster.
+
+        if cluster_id is not None:
+            cluster = self.get_cluster_details(cluster_id)
+            if cluster.valid:
+                cluster_to_activate = cluster
+
+        if not cluster_to_activate:
+            cluster_info = cluster_info_from_tunnel()
+            if cluster_info:
+                cluster = Cluster.load(**cluster_info)
+                cluster = self.get_cluster_details(cluster.id)
+                if cluster.valid:
+                    cluster_to_activate = cluster
+
+        clusters = None
+        if discover:
+            result = self.clusters_and_metadata(deserialize=False)
+            clusters = result.get('clusters') if result else []
+
+        if clusters:
+            if not cluster_to_activate:
+                active_cluster_id = emr_cluster_manager.active_cluster_id
+                if active_cluster_id:
+                    cluster = find(
+                        lambda cluster, id_check=active_cluster_id: cluster.id == id_check,
+                        clusters,
+                    )
+                    if cluster.valid:
+                        cluster_to_activate = cluster
+
+            if not cluster_to_activate:
+                cluster = sorted(
+                    clusters,
+                    key=lambda cluster: (
+                        cluster.connection_value_score,
+                        cluster.created_at,
+                    ),
+                    reverse=True,
+                )[0]
+                if cluster.valid:
+                    cluster_to_activate = cluster
+
+        if cluster_to_activate:
+            return self.update_cluster(cluster_to_activate.id, payload=dict(active=True))
+
     def active_cluster(self, **kwargs) -> Cluster:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
 
@@ -239,13 +316,13 @@ class AWSEMRComputeService(ComputeService):
             return cluster
 
     def terminate_clusters(self, cluster_ids: List[str]) -> None:
-        from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+        # from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
         from mage_ai.services.aws.emr.emr import terminate_clusters
 
         terminate_clusters(cluster_ids)
 
-        if emr_cluster_manager.active_cluster_id in cluster_ids:
-            emr_cluster_manager.set_active_cluster(remove_active_cluster=True)
+        # if emr_cluster_manager.active_cluster_id in cluster_ids:
+        #     emr_cluster_manager.set_active_cluster(remove_active_cluster=True)
 
     def update_cluster(self, cluster_id: str, payload: Dict) -> Cluster:
         if payload.get('active'):
@@ -253,22 +330,23 @@ class AWSEMRComputeService(ComputeService):
                 emr_cluster_manager,
             )
 
-            cluster_info = self.get_cluster_details(cluster_id)
-            if cluster_info:
-                cluster = Cluster.load(**cluster_info)
-                if not cluster.invalid:
-                    emr_cluster_manager.set_active_cluster(cluster_info=cluster_info)
+            cluster = self.get_cluster_details(cluster_id)
+            if not cluster:
+                return
 
-            # If the kernel isn’t restarted after setting a cluster as active,
-            # the notebook won’t be able to connect to the remote cluster.
-            try:
-                restart_kernel()
-            except RuntimeError as e:
-                # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
-                if 'start_kernel' in str(e):
-                    start_kernel()
+            if not cluster.invalid:
+                emr_cluster_manager.set_active_cluster(cluster_info=cluster.to_dict())
 
-            return self.get_cluster_details(cluster_id)
+                # If the kernel isn’t restarted after setting a cluster as active,
+                # the notebook won’t be able to connect to the remote cluster.
+                try:
+                    restart_kernel()
+                except RuntimeError as e:
+                    # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
+                    if 'start_kernel' in str(e):
+                        start_kernel()
+
+            return cluster
 
     def create_cluster(self, **kwargs) -> Cluster:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
@@ -294,7 +372,12 @@ class AWSEMRComputeService(ComputeService):
 
         return cluster
 
-    def clusters_and_metadata(self, include_all_states: bool = False, **kwargs) -> Dict:
+    def clusters_and_metadata(
+        self,
+        deserialize: bool = True,
+        include_all_states: bool = False,
+        **kwargs,
+    ) -> Dict:
         from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
 
         cluster_states = [
@@ -319,11 +402,13 @@ class AWSEMRComputeService(ComputeService):
             cluster.active = emr_cluster_manager.active_cluster_id == cluster.id
             clusters.append(cluster)
 
+        clusters = sorted(clusters, key=lambda cluster: cluster.created_at, reverse=True)
+
         metadata = response.get('ResponseMetadata')
         metadata = Metadata.load(**metadata) if metadata else None
 
         return dict(
-            clusters=[m.to_dict() for m in clusters],
+            clusters=[m.to_dict() if deserialize else m for m in clusters],
             metadata=metadata.to_dict() if metadata else None,
         )
 

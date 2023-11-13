@@ -51,21 +51,12 @@ class EmrClusterManager(ClusterManager):
 
     def set_active_cluster(
         self,
-        auto_selection: bool = False,
         auto_creation: bool = True,
+        auto_selection: bool = False,
         cluster_id=None,
         cluster_info: Dict = None,
         emr_config: Dict = None,
-        remove_active_cluster: bool = False,
     ):
-        home_dir = str(Path.home())
-        sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic', 'config.json')
-
-        if remove_active_cluster:
-            if os.path.exists(sparkmagic_config_path):
-                os.remove(sparkmagic_config_path)
-            return
-
         if cluster_info:
             cluster_id = cluster_info.get('id')
 
@@ -97,6 +88,8 @@ class EmrClusterManager(ClusterManager):
             return
 
         # Get cluster information and update cluster url in sparkmagic config
+        home_dir = str(Path.home())
+        sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic', 'config.json')
         with open(sparkmagic_config_path) as f:
             fcontent = f.read()
 
@@ -108,6 +101,11 @@ class EmrClusterManager(ClusterManager):
         config['session_configs']['jars'] = emr_config.spark_jars
         with open(sparkmagic_config_path, 'w') as f:
             f.write(json.dumps(config))
+
+        with open(sparkmagic_config_path, 'r') as f:
+            print('-------------------------------------')
+            print(f.read())
+            print('\n')
 
         return merge_dict(cluster_info, dict(cluster_id=cluster_id))
 

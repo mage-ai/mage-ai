@@ -44,6 +44,8 @@ const TAB_JOBS = 'Jobs';
 const TAB_SQLS = 'SQLs';
 
 type MonitoringProps = {
+  applications: SparkApplicationType[];
+  loadingApplications?: boolean;
   objectAttributes: ObjectAttributesType;
   refButtonTabs?: any;
   selectedComputeService?: ComputeServiceEnum;
@@ -51,6 +53,8 @@ type MonitoringProps = {
 };
 
 function Monitoring({
+  applications,
+  loadingApplications,
   objectAttributes,
   refButtonTabs,
   selectedComputeService,
@@ -68,10 +72,6 @@ function Monitoring({
   ]);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-
-  const { data: dataApplications } = api.spark_applications.list();
-  const applications: SparkApplicationType[] =
-    useMemo(() => dataApplications?.spark_applications, [dataApplications]);
 
   const { data: dataJobs } = api.spark_jobs.list();
   const jobs: SparkJobType[] =
@@ -260,7 +260,7 @@ function Monitoring({
             {
               label: () => (
                 <>
-                  {TAB_APPLICATIONS}&nbsp;&nbsp;&nbsp;{dataApplications ? applications?.length || 0 : ''}
+                  {TAB_APPLICATIONS}&nbsp;&nbsp;&nbsp;{!loadingApplications ? applications?.length || 0 : ''}
                 </>
               ),
               uuid: TAB_APPLICATIONS,

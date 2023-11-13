@@ -47,7 +47,10 @@ import {
 } from './constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NavigationStyle } from '@components/DataIntegrationModal/index.style';
-import { SparkSQLType } from '@interfaces/SparkType';
+import {
+  SparkApplicationType,
+  SparkSQLType,
+} from '@interfaces/SparkType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -216,6 +219,10 @@ function ComputeManagement({
   });
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
   const projectName = useMemo(() => project?.name, [project]);
+
+  const { data: dataApplications } = api.spark_applications.list();
+  const applications: SparkApplicationType[] =
+    useMemo(() => dataApplications?.spark_applications, [dataApplications]);
 
   const {
     activeCluster,
@@ -540,8 +547,6 @@ function ComputeManagement({
     setupComplete,
   ]);
 
-  console.log(computeService?.setup_steps?.length >= 1, !setupComplete)
-
   const setupMemo = useMemo(() => (
     <SetupSettings
       attributesTouched={attributesTouched || {}}
@@ -601,6 +606,8 @@ function ComputeManagement({
     ].includes(selectedComputeService)) {
       return (
         <Monitoring
+          applications={applications}
+          loadingApplications={!dataApplications}
           objectAttributes={objectAttributes}
           refButtonTabs={refButtonTabs}
           selectedComputeService={selectedComputeService}
@@ -610,6 +617,8 @@ function ComputeManagement({
       );
     }
   }, [
+    applications,
+    dataApplications,
     objectAttributes,
     refButtonTabs,
     selectedComputeService,

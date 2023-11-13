@@ -135,11 +135,7 @@ class BaseDataClass:
             except AttributeError:
                 pass
 
-            print('-------------------------')
-            print(key)
             value = self.convert_value(value, annotation)
-            print(value)
-            print('\n')
             data[key] = encode_complex(value)
 
         return data

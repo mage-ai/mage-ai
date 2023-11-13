@@ -88,11 +88,17 @@ class SSHTunnel:
             self.tunnel.stop()
             self._instance = None
 
+            absolute_file_path = file_path()
+            if os.path.exists(absolute_file_path):
+                os.remove(absolute_file_path)
+
     def connection_details(self) -> Dict:
+        is_active = self.is_active()
+
         return dict(
-            address=self.tunnel.local_bind_address if self.tunnel else None,
-            host=SPARK_UI_HOST if self.tunnel else None,
-            port=self.tunnel.local_bind_port if self.tunnel else None,
+            address=self.tunnel.local_bind_address if is_active else None,
+            host=SPARK_UI_HOST if is_active else None,
+            port=self.tunnel.local_bind_port if is_active else None,
         )
 
     def to_dict(self) -> Dict:

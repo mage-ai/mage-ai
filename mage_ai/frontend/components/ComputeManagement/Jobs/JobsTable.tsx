@@ -57,16 +57,7 @@ function JobsTable({
     <Table
       apiForFetchingAfterAction={!disableJobExpansion ? api.spark_jobs.detail : null}
       buildApiOptionsFromObject={!disableJobExpansion
-        ? (object: any) => {
-          console.log('wtf', object, [object?.job_id, {
-          application_id: object?.application?.calculated_id
-            ? encodeURIComponent(object?.application?.calculated_id)
-            : '',
-          application_spark_ui_url: object?.application?.spark_ui_url
-            ? encodeURIComponent(object?.application?.spark_ui_url)
-            : '',
-        }])
-          return [object?.job_id, {
+        ? (object: any) => [object?.job_id, {
           application_id: object?.application?.calculated_id
             ? encodeURIComponent(object?.application?.calculated_id)
             : '',
@@ -74,7 +65,6 @@ function JobsTable({
             ? encodeURIComponent(object?.application?.spark_ui_url)
             : '',
         }]
-        }
         : null
       }
       columnFlex={[
