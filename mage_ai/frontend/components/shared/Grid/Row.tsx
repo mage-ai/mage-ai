@@ -20,6 +20,7 @@ function Row({
   ...props
 }: RowProps) {
   const style: {
+    gap?: string;
     height?: string | number;
     marginLeft?: number;
     marginRight?: number;

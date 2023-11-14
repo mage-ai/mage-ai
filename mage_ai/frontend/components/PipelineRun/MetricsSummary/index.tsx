@@ -6,18 +6,19 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tile from '@oracle/components/Tile';
 import Tooltip from '@oracle/components/Tooltip';
-import dark from '@oracle/styles/themes/dark';
-import { Col, Row } from '@components/shared/Grid';
 import { GroupedPipelineRunCountType } from '@interfaces/MonitorStatsType';
-import { MetricsSummaryContainerStyle } from './index.style';
+import {
+  MetricContainerStyle,
+  MetricsSummaryContainerStyle,
+} from './index.style';
 import {
   PIPELINE_TYPE_ICON_MAPPING,
   PIPELINE_TYPE_LABEL_MAPPING,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
+import { Row } from '@components/shared/Grid';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
-import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { capitalize } from '@utils/string';
 import { formatNumber } from '@utils/number';
 import { formatNumberLabel } from '@components/charts/utils/label';
@@ -78,27 +79,19 @@ function MetricsSummary({
 
       <Spacing mb={2} />
 
-      <Row>
+      <Row style={{ gap: '16px' }}>
         {pipelineRunCounts.map((
           [pipelineType, countsObj],
           idx: number,
         ) => (
-          <Flex
-            alignItems="center"
-            flex="1"
-            justifyContent="space-between"
+          <MetricContainerStyle
+            includeLeftBorder={idx !== 0}
             key={`${pipelineType}_metric`}
-            style={idx !== 0
-              ? { borderLeft: `1px solid ${dark.interactive.defaultBorder}` }
-              : null
-            }
           >
-            <Spacing pl={idx !== 0 ? 3 : 0}>
-              <Tile
-                Icon={PIPELINE_TYPE_ICON_MAPPING[pipelineType]}
-                label={PIPELINE_TYPE_LABEL_MAPPING[pipelineType]}
-              />
-            </Spacing>
+            <Tile
+              Icon={PIPELINE_TYPE_ICON_MAPPING[pipelineType]}
+              label={PIPELINE_TYPE_LABEL_MAPPING[pipelineType]}
+            />
 
             {sortTuplesArrayByFirstItem(Object.entries(countsObj))
               .map(([runStatus, count], idx: number) => (
@@ -126,7 +119,7 @@ function MetricsSummary({
             )}
 
             <Spacing pr={idx !== pipelineRunCounts.length - 1 ? 2 : 0} />
-          </Flex>
+          </MetricContainerStyle>
         ))}
       </Row>
     </MetricsSummaryContainerStyle>
