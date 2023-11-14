@@ -1668,6 +1668,7 @@ function CodeBlock({
         setSelectedTab={setSelectedTab}
         showBorderTop={sideBySideEnabled}
         sideBySideEnabled={sideBySideEnabled}
+        sparkEnabled={sparkEnabled}
       >
         {sideBySideEnabled && (
           <>

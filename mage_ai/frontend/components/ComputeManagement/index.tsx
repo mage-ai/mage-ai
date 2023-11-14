@@ -242,6 +242,14 @@ function ComputeManagement({
   });
 
   useEffect(() => {
+    if (!setupComplete) {
+      setAfterHidden(false);
+    }
+  }, [
+    setupComplete,
+  ]);
+
+  useEffect(() => {
     if (project) {
       setObjectAttributesState(project);
       setSelectedComputeService(getComputeServiceFromProject(project));
@@ -781,8 +789,9 @@ function ComputeManagement({
   return (
     <TripleLayout
       after={after}
+      afterDividerContrast
       afterHeightOffset={HEADER_HEIGHT}
-      afterHidden={afterHidden || !selectedSql}
+      afterHidden={afterHidden && !selectedSql}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}

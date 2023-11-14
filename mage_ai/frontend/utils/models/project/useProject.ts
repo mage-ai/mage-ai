@@ -23,8 +23,11 @@ function useProject(): {
     fetchProjects,
     project,
     sparkEnabled: computeManagementEnabled
-      && project.spark_config
-      && Object.keys(project.spark_config || {})?.length >= 1,
+      && (project.spark_config || project.emr_config)
+      && (
+        Object.keys(project.spark_config || {})?.length >= 1
+          || Object.keys(project.emr_config || {})?.length >= 1
+      ),
   };
 }
 

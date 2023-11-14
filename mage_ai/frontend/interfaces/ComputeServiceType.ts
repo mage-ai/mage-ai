@@ -38,6 +38,7 @@ export interface SetupStepType {
   status?: SetupStepStatusEnum;
   steps?: SetupStepType[];
   tab?: string;
+  uuid: string;
 }
 
 export default interface ComputeServiceType {

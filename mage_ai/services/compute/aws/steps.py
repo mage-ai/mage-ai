@@ -69,6 +69,7 @@ def build_credentials(compute_service: ComputeService) -> SetupStep:
                     SetupStepStatus.COMPLETED if valid_key
                     else SetupStepStatus.INCOMPLETE
                 ),
+                tab=ComputeManagementApplicationTab.SETUP,
                 uuid=SetupStepUUID.AWS_ACCESS_KEY_ID,
             ),
             SetupStep.load(
@@ -78,11 +79,12 @@ def build_credentials(compute_service: ComputeService) -> SetupStep:
                     SetupStepStatus.COMPLETED if valid_secret
                     else SetupStepStatus.INCOMPLETE
                 ),
+                tab=ComputeManagementApplicationTab.SETUP,
                 uuid=SetupStepUUID.AWS_SECRET_ACCESS_KEY,
             ),
             SetupStep.load(
                 name='IAM instance profile',
-                required=False,
+                tab=ComputeManagementApplicationTab.SETUP,
                 uuid=SetupStepUUID.IAM_PROFILE,
             ),
         ],

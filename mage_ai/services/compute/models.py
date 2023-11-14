@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.project import Project
+from mage_ai.services.compute.constants import ComputeManagementApplicationTab
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
@@ -45,7 +46,7 @@ class SetupStep(BaseDataClass):
     required: bool = True
     status: SetupStepStatus = None
     steps: List[SetupStepStatus] = field(default_factory=list)
-    tab: str = None
+    tab: ComputeManagementApplicationTab = None
 
     def __post_init__(self):
         if self.error and isinstance(self.error, dict):
@@ -64,6 +65,9 @@ class SetupStep(BaseDataClass):
                     steps.append(step)
 
             self.steps = steps
+
+        if self.tab and isinstance(self.tab, str):
+            self.tab = ComputeManagementApplicationTab(self.tab)
 
     def status_calculated(self) -> SetupStepStatus:
         if self.status:

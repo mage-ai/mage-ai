@@ -9,11 +9,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import {
-  AlertTriangle,
-  Check,
-  Info,
-} from '@oracle/icons';
+import { AlertTriangle, Check } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SetupStepRowStyle } from '../index.style';
 import { alphabet } from '@utils/string';
@@ -28,7 +24,15 @@ function SetupSteps({
   onClickStep,
 }: SetupStepsProps) {
   const buildStep = useCallback((
-    {
+    step: SetupStepType,
+    idx: number,
+    stepsCount: number,
+    opts?: {
+      level?: number;
+      numberEl?: any;
+    },
+  ) =>  {
+    const {
       name,
       description,
       error,
@@ -36,14 +40,15 @@ function SetupSteps({
       status,
       steps,
       tab,
-    }: SetupStepType,
-    idx: number,
-    stepsCount: number,
-    opts?: {
-      level?: number;
-    },
-  ) =>  {
-    const level = opts?.level || 0;
+      uuid,
+    } = step;
+    const {
+      level,
+      numberEl: numberElParent,
+    } = opts || {
+      level: 0,
+      numberEl: null,
+    };
     const substepsCount = steps?.length || 0;
     const completed = SetupStepStatusEnum.COMPLETED === status;
 
@@ -55,24 +60,40 @@ function SetupSteps({
       stepNumber = `0${stepNumber}`;
     }
 
+    const clickable = !!tab && onClickStep;
+    const numberEl = (
+      <Spacing pl={level === 0 ? PADDING_UNITS : 0}>
+        <Text large monospace muted>
+          {stepNumber}.
+        </Text>
+      </Spacing>
+    );
+
     return (
       <SetupStepRowStyle
-        clickable={!!tab && !completed && onClickStep}
-        key={name}
-        onClick={tab && !completed && onClickStep
+        clickable={clickable}
+        key={uuid}
+        onClick={clickable
           ? () => onClickStep?.(tab)
           : null
         }
       >
         <Spacing
-          mt={level >= 1 ? 1 : 0}
-          px={level === 0 ? PADDING_UNITS : 0}
-          py={level === 0 ? 1 : 0}
+          pt={1}
+          pb={level >= 1 ? 1 : 0}
         >
           <FlexContainer>
-            <Text monospace muted>
-              {stepNumber}.
-            </Text>
+            {numberElParent && (
+              <>
+                <div style={{ opacity: 0 }}>
+                  {numberElParent}
+                </div>
+
+                <Spacing mr={1} />
+              </>
+            )}
+
+            {numberEl}
 
             <Spacing mr={1} />
 
@@ -82,7 +103,7 @@ function SetupSteps({
                   <FlexContainer
                     alignItems="center"
                   >
-                    <Text default={completed || !status}>
+                    <Text large>
                       {name}
                     </Text>
 
@@ -97,10 +118,12 @@ function SetupSteps({
                     )}
                   </FlexContainer>
 
-                  {description && !completed && (
-                    <Text muted small>
-                      {description}
-                    </Text>
+                  {description && (
+                    <Spacing mt={1}>
+                      <Text default>
+                        {description}
+                      </Text>
+                    </Spacing>
                   )}
 
                   {error && (
@@ -108,7 +131,7 @@ function SetupSteps({
                   )}
                 </Flex>
 
-                <Spacing mr={1} />
+                <Spacing pr={PADDING_UNITS} />
 
                 {SetupStepStatusEnum.COMPLETED === status && (
                   <Check
@@ -118,7 +141,7 @@ function SetupSteps({
                 )}
 
                 {SetupStepStatusEnum.INCOMPLETE === status && (
-                  <Info
+                  <AlertTriangle
                     muted
                     size={2 * UNIT}
                   />
@@ -130,17 +153,25 @@ function SetupSteps({
                     size={2 * UNIT}
                   />
                 )}
-              </FlexContainer>
 
-              {substepsCount >= 1 && steps?.map((substep, idx2) => buildStep(
-                substep,
-                idx2,
-                substepsCount, {
-                  level: 1,
-                },
-              ))}
+                <Spacing pr={PADDING_UNITS * (status ? 1 : 2)} />
+              </FlexContainer>
             </Flex>
           </FlexContainer>
+
+          {substepsCount >= 1 && (
+            <Spacing mt={1}>
+              {steps?.map((substep, idx2) => buildStep(
+                substep,
+                idx2,
+                substepsCount,
+                {
+                  level: 1,
+                  numberEl,
+                },
+              ))}
+            </Spacing>
+          )}
         </Spacing>
       </SetupStepRowStyle>
     );
