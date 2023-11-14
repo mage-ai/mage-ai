@@ -234,9 +234,7 @@ function ComputeManagement({
     clustersLoading,
     computeService,
     connections,
-    fetchComputeClusters,
-    fetchComputeConnections,
-    fetchComputeService,
+    fetchAll,
     setupComplete,
   }: ComputeServiceType = useComputeService({
     clustersRefreshInterval: 10000,
@@ -277,7 +275,7 @@ function ComputeManagement({
           }) => {
             setAttributesTouched({});
             setObjectAttributesState(objectServer);
-            fetchComputeService();
+            fetchAll();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -597,14 +595,12 @@ function ComputeManagement({
     <ConnectionSettings
       computeService={computeService}
       connections={connections}
-      fetchComputeConnections={fetchComputeConnections}
-      fetchComputeService={fetchComputeService}
+      fetchAll={fetchAll}
     />
   ), [
     computeService,
     connections,
-    fetchComputeConnections,
-    fetchComputeService,
+    fetchAll,
   ]);
 
   const monitoringMemo = useMemo(() => {
@@ -722,7 +718,7 @@ function ComputeManagement({
     <Clusters
       clusters={clusters}
       computeService={computeService}
-      fetchComputeClusters={fetchComputeClusters}
+      fetchAll={fetchAll}
       includeAllStates={includeAllStates}
       loading={clustersLoading}
       setIncludeAllStates={setIncludeAllStates}
@@ -731,7 +727,7 @@ function ComputeManagement({
     clusters,
     clustersLoading,
     computeService,
-    fetchComputeClusters,
+    fetchAll,
     includeAllStates,
     setIncludeAllStates,
   ]);

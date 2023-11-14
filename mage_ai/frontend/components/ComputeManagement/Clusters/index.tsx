@@ -49,7 +49,7 @@ const TEXT_PROPS_SHARED = {
 type ClustersProp = {
   clusters: AWSEMRClusterType[];
   computeService: ComputeServiceType;
-  fetchComputeClusters: () => void;
+  fetchAll: () => void;
   includeAllStates?: boolean;
   loading?: boolean;
   setIncludeAllStates?: (value: boolean) => void;
@@ -58,7 +58,7 @@ type ClustersProp = {
 function Clusters({
   clusters,
   computeService,
-  fetchComputeClusters,
+  fetchAll,
   includeAllStates,
   loading,
   setIncludeAllStates,
@@ -78,7 +78,7 @@ function Clusters({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchComputeClusters().then(() => setSelectedRowIndexInternal(0));
+            fetchAll().then(() => setSelectedRowIndexInternal(0));
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -98,7 +98,7 @@ function Clusters({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchComputeClusters().then(() => setSelectedRowIndexInternal(null));
+            fetchAll().then(() => setSelectedRowIndexInternal(null));
           },
           onErrorCallback: ({
             error: {
@@ -134,7 +134,7 @@ function Clusters({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchComputeClusters();
+            fetchAll();
           },
           onErrorCallback: ({
             error: {

@@ -26,15 +26,13 @@ import { useError } from '@context/Error';
 type ConnectionSettingsProps = {
   computeService: ComputeServiceType;
   connections: ComputeConnectionType[];
-  fetchComputeConnections: () => void;
-  fetchComputeService: () => void;
+  fetchAll: () => void;
 }
 
 function ConnectionSettings({
   computeService,
   connections,
-  fetchComputeConnections,
-  fetchComputeService,
+  fetchAll,
 }: ConnectionSettingsProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'ConnectionSettings',
@@ -65,8 +63,7 @@ function ConnectionSettings({
           callback: ({
             project: objectServer,
           }) => {
-            fetchComputeService();
-            fetchComputeConnections();
+            fetchAll();
             setConnectionActionUpdating(null);
           },
           onErrorCallback: (response, errors) => {

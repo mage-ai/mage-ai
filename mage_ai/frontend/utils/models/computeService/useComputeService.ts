@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import AWSEMRClusterType from './AWSEMRClusterType';
 import ComputeClusterType from '@interfaces/ComputeClusterType';
@@ -30,6 +30,7 @@ function useComputeService({
     [key: string]: ComputeServiceUUIDEnum;
   };
   connections?: ComputeConnectionType[];
+  fetchAll?: () => void;
   fetchComputeClusters?: () => void;
   fetchComputeConnections?: () => void;
   fetchComputeService?: () => void;
@@ -108,6 +109,16 @@ function useComputeService({
       dataComputeConnections,
     ]);
 
+  const fetchAll = useCallback(() => {
+    fetchComputeClusters?.();
+    fetchComputeConnections?.();
+    fetchComputeService?.();
+  }, [
+    fetchComputeClusters,
+    fetchComputeConnections,
+    fetchComputeService,
+  ]);
+
   return {
     activeCluster: clusters?.find(({ active }) => active),
     clusters,
@@ -118,6 +129,7 @@ function useComputeService({
       [k]: v,
     }), {}),
     connections: computeConnections,
+    fetchAll,
     fetchComputeClusters,
     fetchComputeConnections,
     fetchComputeService,
