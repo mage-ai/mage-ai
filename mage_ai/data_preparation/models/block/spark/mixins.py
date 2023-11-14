@@ -33,11 +33,16 @@ class SparkBlock:
 
     @property
     def compute_service_uuid(self) -> ComputeServiceUUID:
+        if self._compute_service_uuid:
+            return self._compute_service_uuid
         print('################################################### compute_service_uuid')
-        value = get_compute_service(ignore_active_kernel=True)
-        print(value)
+        self._compute_service_uuid = get_compute_service(
+            ignore_active_kernel=True,
+            repo_config=self.repo_config,
+        )
+        print(self._compute_service_uuid)
         print('\n')
-        return value
+        return self._compute_service_uuid
 
     def spark_session_application(self) -> Application:
         if not self.spark_session:
@@ -102,11 +107,11 @@ class SparkBlock:
     def jobs_during_execution(self) -> List[Job]:
         self.__load_spark_job_submission_timestamps()
 
-        print('---------------------------------------------------- jobs_during_execution')
-        print(self.compute_service_uuid)
-        print(self.execution_timestamp_start)
-        print(self.execution_start_application)
-        print('\n')
+        # print('---------------------------------------------------- jobs_during_execution')
+        # print(self.compute_service_uuid)
+        # print(self.execution_timestamp_start)
+        # print(self.execution_start_application)
+        # print('\n')
 
         if self.execution_timestamp_start:
             def _filter(

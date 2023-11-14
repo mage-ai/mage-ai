@@ -290,6 +290,8 @@ def execute_custom_code():
         config={pipeline_config},
         repo_config={repo_config},
     )
+
+    print('WTFFFFFFFFFFFFFFFFFFFFFF add_execution_code repo_config', {repo_config})
     block = pipeline.get_block(block_uuid, extension_uuid={extension_uuid}, widget={widget})
 
     upstream_blocks = {upstream_blocks}
@@ -326,6 +328,7 @@ def execute_custom_code():
     logger.setLevel('INFO')
     if 'logger' not in global_vars:
         global_vars['logger'] = logger
+    print('_____________________________ output_display')
     block_output = block.execute_with_callback(
         custom_code=code,
         from_notebook=True,

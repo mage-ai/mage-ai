@@ -80,7 +80,10 @@ def switch_active_kernel(
             project = Project()
 
             if project.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
-                if ComputeServiceUUID.AWS_EMR == get_compute_service(kernel_name=kernel_name):
+                if ComputeServiceUUID.AWS_EMR == get_compute_service(
+                    emr_config=emr_config,
+                    kernel_name=kernel_name,
+                ):
                     auto_creation = False
                     should_set_active = False
 

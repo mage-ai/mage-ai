@@ -1,3 +1,5 @@
+from typing import Dict
+
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.kernels import KernelName
 from mage_ai.services.spark.constants import ComputeServiceUUID, SparkMaster
@@ -5,6 +7,7 @@ from mage_ai.shared.utils import is_spark_env
 
 
 def get_compute_service(
+    emr_config: Dict = None,
     repo_config=None,
     ignore_active_kernel: bool = False,
     kernel_name: KernelName = None,
@@ -16,6 +19,9 @@ def get_compute_service(
     print('kernel_name', kernel_name)
     if not repo_config:
         repo_config = get_repo_config()
+
+    if repo_config and emr_config:
+        repo_config.emr_config = emr_config
 
     print('repo_config', repo_config)
 
