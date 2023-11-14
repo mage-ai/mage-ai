@@ -33,13 +33,7 @@ class SparkBlock:
 
     @property
     def compute_service_uuid(self) -> ComputeServiceUUID:
-        try:
-            if self._compute_service_uuid:
-                return self._compute_service_uuid
-        except AttributeError:
-            self._compute_service_uuid = get_compute_service(ignore_active_kernel=True)
-
-        return self._compute_service_uuid
+        return get_compute_service(ignore_active_kernel=True)
 
     def spark_session_application(self) -> Application:
         if not self.spark_session:
@@ -62,7 +56,7 @@ class SparkBlock:
         )
 
     def is_using_spark(self) -> bool:
-        return self.compute_service_uuid
+        return self.compute_service_uuid is not None
 
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
