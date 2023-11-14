@@ -6,7 +6,6 @@ from typing import Dict
 
 import inflection
 
-from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 
 
@@ -14,11 +13,16 @@ from mage_ai.shared.parsers import encode_complex
 class BaseDataClass:
     @classmethod
     def all_annotations(self) -> Dict:
-        annotations = self.__annotations__
+        annotations = {}
+
+        for key, value in self.__dataclass_fields__.items():
+            annotations = value.type
 
         for parent_class in self.__bases__:
             if issubclass(parent_class, BaseDataClass):
-                annotations = merge_dict(parent_class.__annotations__, annotations)
+                for key, value in parent_class.__dataclass_fields__.items():
+                    if key not in annotations:
+                        annotations = value.type
 
         return annotations
 
