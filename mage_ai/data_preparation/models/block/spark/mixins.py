@@ -73,9 +73,6 @@ class SparkBlock:
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
 
-        print(jobs_cache)
-        print('\n')
-
         if 'execution_states' in jobs_cache:
             return jobs_cache.get('execution_states')
 
@@ -101,13 +98,6 @@ class SparkBlock:
 
     def jobs_during_execution(self) -> List[Job]:
         self.__load_spark_job_submission_timestamps()
-
-        print('---------------------------------------------------- jobs_during_execution')
-        print(self.compute_service_uuid)
-        print(self.execution_timestamp_start)
-        print(self.execution_uuid_start)
-        print(self.execution_start_application)
-        print('\n')
 
         if not self.execution_timestamp_start and self.execution_uuid_start:
             return []
