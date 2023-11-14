@@ -892,7 +892,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         from_notebook: bool = False,
         **kwargs
     ) -> Dict:
-        print('_____________________________ execute_with_callback')
         """
         This method will execute the block and run the callback functions if they exist
         for this block. This function should only be used when running a block from the
@@ -934,7 +933,6 @@ class Block(DataIntegrationMixin, SparkBlock):
             callback_arr += self.callback_blocks
 
         try:
-            print('_____________________________ execute_sync start')
             output = self.execute_sync(
                 global_vars=global_vars,
                 logger=logger,
@@ -942,7 +940,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                 from_notebook=from_notebook,
                 **kwargs
             )
-            print('_____________________________ execute_sync end')
         except Exception as e:
             for callback_block in callback_arr:
                 callback_block.execute_callback(
@@ -992,7 +989,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         data_integration_runtime_settings: Dict = None,
         **kwargs,
     ) -> Dict:
-        print('_____________________________ execute_sync.inner start')
         if logging_tags is None:
             logging_tags = dict()
 
@@ -1030,7 +1026,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                     pipeline_uuid=self.pipeline.uuid if self.pipeline else None,
                 )
 
-            print('_____________________________ execute_block.outer start')
             output = self.execute_block(
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
@@ -1047,7 +1042,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                 data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
-            print('_____________________________ execute_block.outer end')
 
             block_output = self.post_process_output(output)
             variable_mapping = dict()
@@ -1103,7 +1097,6 @@ class Block(DataIntegrationMixin, SparkBlock):
             if update_status:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)
 
-        print('_____________________________ execute_sync.inner end')
         return output
 
     def post_process_output(self, output: Dict) -> List:
@@ -1228,7 +1221,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         data_integration_runtime_settings: str = None,
         **kwargs,
     ) -> Dict:
-        print('_____________________________ execute_block.inner start')
         if logging_tags is None:
             logging_tags = dict()
 
@@ -1346,7 +1338,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                         runtime_arguments=runtime_arguments,
                     )
 
-        print('_____________________________ execute_block.inner end')
         return dict(output=outputs)
 
     @contextmanager
