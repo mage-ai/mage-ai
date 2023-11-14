@@ -176,37 +176,38 @@ class UserResource(DatabaseResource):
             payload['password_hash'] = create_bcrypt_hash(password, password_salt)
             payload['password_salt'] = password_salt
 
-        role_ids = [int(i) for i in payload.get('role_ids') or []]
-        # Need to call roles_new directly on the model or else the resource will
-        # cache the result because of the collective loader.
-        role_mapping = index_by(lambda x: x.id, self.model.roles_new or [])
+        if 'role_ids' in payload:
+            role_ids = [int(i) for i in payload.get('role_ids') or []]
+            # Need to call roles_new directly on the model or else the resource will
+            # cache the result because of the collective loader.
+            role_mapping = index_by(lambda x: x.id, self.model.roles_new or [])
 
-        role_ids_create = []
-        role_ids_delete = []
+            role_ids_create = []
+            role_ids_delete = []
 
-        for role_id in role_ids:
-            if role_id not in role_mapping:
-                role_ids_create.append(role_id)
+            for role_id in role_ids:
+                if role_id not in role_mapping:
+                    role_ids_create.append(role_id)
 
-        for role_id in role_mapping.keys():
-            if role_id not in role_ids:
-                role_ids_delete.append(role_id)
+            for role_id in role_mapping.keys():
+                if role_id not in role_ids:
+                    role_ids_delete.append(role_id)
 
-        if role_ids_create:
-            db_connection.session.bulk_save_objects(
-                [UserRole(
-                    role_id=role_id,
-                    user_id=self.id,
-                ) for role_id in role_ids_create],
-                return_defaults=True,
-            )
+            if role_ids_create:
+                db_connection.session.bulk_save_objects(
+                    [UserRole(
+                        role_id=role_id,
+                        user_id=self.id,
+                    ) for role_id in role_ids_create],
+                    return_defaults=True,
+                )
 
-        if role_ids_delete:
-            delete_statement = UserRole.__table__.delete().where(
-                UserRole.role_id.in_(role_ids_delete),
-                UserRole.user_id == self.id,
-            )
-            db_connection.session.execute(delete_statement)
+            if role_ids_delete:
+                delete_statement = UserRole.__table__.delete().where(
+                    UserRole.role_id.in_(role_ids_delete),
+                    UserRole.user_id == self.id,
+                )
+                db_connection.session.execute(delete_statement)
 
         return super().update(ignore_keys(payload, [
             'owner',
