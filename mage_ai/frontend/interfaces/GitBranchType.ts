@@ -31,6 +31,7 @@ export interface GitRemoteType {
 };
 
 export default interface GitBranchType {
+  access_token_exists?: boolean;
   action_type?: string;
   error?: string;
   files?: FileType[];

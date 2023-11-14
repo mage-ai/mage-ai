@@ -36,8 +36,8 @@ import {
   SparkTaskType,
 } from '@interfaces/SparkType';
 import { formatNumberToDuration, pluralize } from '@utils/string';
-import { indexBy, sortByKey } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { sortByKey } from '@utils/array';
 
 const TAB_APPLICATIONS = 'Applications';
 const TAB_JOBS = 'Jobs';
@@ -57,7 +57,7 @@ function Monitoring({
   setSelectedSql,
 }: MonitoringProps) {
   const themeContext = useContext(ThemeContext);
-  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState(TAB_JOBS);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState(TAB_APPLICATIONS);
 
   const setSelectedSubheaderTabUUID = useCallback((prev) => {
     setSelectedSql(() => null);
@@ -82,10 +82,23 @@ function Monitoring({
     _format: 'with_details',
   });
   const stagesMapping: {
-    [stageId: number]: SparkStageType;
-  } = useMemo(() => indexBy(dataStages?.spark_stages || [], ({ stage_id: stageId }) => stageId), [
-      dataStages,
-    ]);
+    [applicationID: string]: {
+      [stageID: number]: SparkStageType;
+    };
+  } = useMemo(() => (dataStages?.spark_stages || []).reduce((acc, stage) => {
+    const application = stage?.application;
+
+    if (!(application?.id in acc)) {
+      acc[application?.id] = {};
+    }
+
+    acc[application?.id][stage?.stage_id] = stage;
+
+    return acc;
+  }, {}),
+  [
+    dataStages,
+  ]);
 
   const applicationsMemo = useMemo(() => (
     <Table
@@ -96,10 +109,14 @@ function Monitoring({
         null,
         null,
         null,
+        null,
       ]}
       columns={[
         {
           uuid: 'ID',
+        },
+        {
+          uuid: 'URL',
         },
         {
           uuid: 'Name',
@@ -122,6 +139,7 @@ function Monitoring({
         attempts,
         id,
         name,
+        spark_ui_url: sparkUIURL,
       }) => {
         const {
           app_spark_version: version,
@@ -141,6 +159,9 @@ function Monitoring({
         return [
           <Text {...SHARED_TEXT_PROPS} key="id">
             {id}
+          </Text>,
+          <Text {...SHARED_TEXT_PROPS} key="sparkUIURL">
+            {sparkUIURL}
           </Text>,
           <Text {...SHARED_TEXT_PROPS} key="name">
             {name}
@@ -174,12 +195,43 @@ function Monitoring({
     displayLocalTimezone,
   ]);
 
-  const jobsMemo = useMemo(() => (
-    <JobsTable
-      jobs={jobs}
-      stagesMapping={stagesMapping}
-    />
-  ), [
+  const jobsMemo = useMemo(() => {
+    const groups = {};
+
+    jobs?.forEach((job) => {
+      const application = job?.application;
+      if (!(application?.id in groups)) {
+        groups[application?.id] = {
+          application: application,
+          jobs: [],
+        };
+      }
+
+      groups[application?.id]?.jobs?.push(job);
+    });
+
+    return Object.values(groups).map(({
+      application,
+      jobs: jobsArr,
+    }) => {
+      return (
+        <div key={application?.id}>
+          <Spacing p={PADDING_UNITS}>
+            <Text default bold>
+              Application {application?.id}
+            </Text>
+          </Spacing>
+
+          <Divider light />
+
+          <JobsTable
+            jobs={jobsArr}
+            stagesMapping={stagesMapping}
+          />
+        </div>
+      );
+    });
+  }, [
     jobs,
     stagesMapping,
   ]);

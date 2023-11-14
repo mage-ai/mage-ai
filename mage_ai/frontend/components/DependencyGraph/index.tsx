@@ -32,7 +32,9 @@ import Panel from '@oracle/components/Panel';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import ZoomControls, { DEFAULT_ZOOM_LEVEL } from './ZoomControls';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import {
   EdgeType,
   NodeType,
@@ -253,6 +255,7 @@ function DependencyGraph({
   treeRef,
   zoomable = true,
 }: DependencyGraphProps) {
+  const { featureEnabled, featureUUIDs } = useProject();
   const themeContext: ThemeType = useContext(ThemeContext);
   const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
 
@@ -262,6 +265,7 @@ function DependencyGraph({
   const timeoutDraggingRefs = useRef({});
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
+  const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM_LEVEL);
 
   const [activeEdge, setActiveEdge] = useState<{
     block: BlockType;
@@ -289,7 +293,7 @@ function DependencyGraph({
         setNodeDragging(prev => ({
           ...prev,
           event,
-        }))
+        }));
       }
     };
     const handleMouseUp = (event) => {
@@ -513,17 +517,17 @@ function DependencyGraph({
     downstreamBlocks?: string[];
     upstreamBlocks?: string[];
   }) => {
-    let blockPayload = {
+    const blockPayload = {
       ...blockToUpdate,
     };
 
     if (typeof downstreamBlocks !== 'undefined') {
       blockPayload.downstream_blocks = downstreamBlocks;
-    };
+    }
 
     if (typeof upstreamBlocks !== 'undefined') {
       blockPayload.upstream_blocks = upstreamBlocks;
-    };
+    }
 
     return api.blocks.pipelines.useUpdate(
       pipeline?.uuid,
@@ -561,6 +565,7 @@ function DependencyGraph({
     blockRefs,
     setSelectedBlock,
   ]);
+
   const onClickWhenEditingUpstreamBlocks = useCallback((block: BlockType) => {
     setEdgeSelections([]);
     // @ts-ignore
@@ -848,7 +853,7 @@ function DependencyGraph({
         event,
         node,
       });
-    }, 500)
+    }, 500);
   }, [
     contextMenuData,
     setActiveNodes,
@@ -1103,7 +1108,7 @@ function DependencyGraph({
             opacity={opacity}
             pipeline={pipeline}
             selected={selected}
-          />
+          />,
         );
       });
 
@@ -1199,12 +1204,12 @@ function DependencyGraph({
     noStatus,
     pipeline,
     runningBlocks,
-    runningBlocksMapping
+    runningBlocksMapping,
   ]);
 
   const nodeDraggingMemo = useMemo(() => {
     if (!isDragging || !nodeDragging) {
-      return
+      return;
     }
 
     const {
@@ -1319,14 +1324,14 @@ function DependencyGraph({
       infos = blocksWithDownstreamBlockSet?.[toBlock?.uuid];
     }
 
-    console.log(edge, infos)
+    console.log(edge, infos);
 
     let removeBlocks = () => {
       updateBlockByDragAndDrop({
         block: toBlock,
         upstreamBlocks: (toBlock?.upstream_blocks || []).filter(uuid => uuid !== fromBlock?.uuid),
       });
-    }
+    };
 
     if (infos?.length >= 1) {
       infos?.forEach(({
@@ -1446,6 +1451,11 @@ function DependencyGraph({
     updateBlockByDragAndDrop,
   ]);
 
+  const interactionsEnabled: boolean = useMemo(() => featureEnabled?.(featureUUIDs.INTERACTIONS), [
+    featureEnabled,
+    featureUUIDs,
+  ]);
+
   const contextMenuMemo = useMemo(() => {
     if (!contextMenuData) {
       return;
@@ -1528,7 +1538,9 @@ function DependencyGraph({
             addNewBlockAtIndex?.(
               {
                 downstream_blocks: block ? [block?.uuid] : null,
-                language: block?.language,
+                language: BlockLanguageEnum.YAML === block?.language
+                  ? BlockLanguageEnum.PYTHON
+                  : block?.language,
                 type: BlockTypeEnum.CUSTOM,
               },
               Math.max(0, idx - 1),
@@ -1540,7 +1552,9 @@ function DependencyGraph({
           onClick: () => {
             addNewBlockAtIndex?.(
               {
-                language: block?.language,
+                language: BlockLanguageEnum.YAML === block?.language
+                  ? BlockLanguageEnum.PYTHON
+                  : block?.language,
                 type: BlockTypeEnum.CUSTOM,
                 upstream_blocks: block ? [block?.uuid] : null,
               },
@@ -1572,6 +1586,16 @@ function DependencyGraph({
       ]);
     }
 
+    if (interactionsEnabled) {
+      menuItems.push({
+        onClick: () => {
+          onClick?.(block);
+          setActiveSidekickView?.(ViewKeyEnum.INTERACTIONS);
+        },
+        uuid: 'Add / Edit interactions',
+      });
+    }
+
     menuItems.push(...[
       {
         onClick: () => {
@@ -1590,8 +1614,8 @@ function DependencyGraph({
       },
       {
         onClick: () => {
-          setSelectedBlock?.(block);
-          setActiveSidekickView(ViewKeyEnum.FILE_VERSIONS);
+          onClick?.(block);
+          setActiveSidekickView?.(ViewKeyEnum.FILE_VERSIONS);
         },
         uuid: 'View file versions',
       },
@@ -1641,6 +1665,8 @@ function DependencyGraph({
     contentByBlockUUID,
     contextMenuData,
     deleteBlock,
+    interactionsEnabled,
+    onClick,
     pipeline,
     runBlock,
     setActiveSidekickView,
@@ -1743,6 +1769,11 @@ function DependencyGraph({
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
       >
+        <ZoomControls
+          canvasRef={canvasRef}
+          containerRef={containerRef}
+          zoomLevel={zoomLevel}
+        />
         <Canvas
           // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}
@@ -1793,10 +1824,8 @@ function DependencyGraph({
                   ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
                 );
               } else {
-                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => {
-                  return buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
-                    || getParentNodeID(blockUUID) === edge.target;
-                });
+                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
+                    || getParentNodeID(blockUUID) === edge.target);
                 const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
                 downstreamBlocks.push(downstreamBlock);
               }
@@ -1827,7 +1856,7 @@ function DependencyGraph({
                 if (status?.isQueued) {
                   isQueued = status?.isQueued;
                 }
-              };
+              }
             });
 
             const {
@@ -2061,6 +2090,13 @@ function DependencyGraph({
                         })
                         : null
                       }
+                      onMouseDown={dragEnabled
+                        ? (e) => onMouseDownNode(e, node, {
+                          nodeHeight,
+                          nodeWidth,
+                        })
+                        : null
+                      }
                       onMouseEnter={(e) => onMouseEnterNode(e, node, {
                         nodeHeight,
                         nodeWidth,
@@ -2069,13 +2105,6 @@ function DependencyGraph({
                         nodeHeight,
                         nodeWidth,
                       })}
-                      onMouseDown={dragEnabled
-                        ? (e) => onMouseDownNode(e, node, {
-                          nodeHeight,
-                          nodeWidth,
-                        })
-                        : null
-                      }
                       onMouseUp={dragEnabled
                         ? (e) => onMouseUpNode(e, node, {
                           nodeHeight,
@@ -2120,7 +2149,10 @@ function DependencyGraph({
           }}
           nodes={nodes}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
-          onZoomChange={z => setZoom?.(z)}
+          onZoomChange={z => {
+            setZoom?.(z);
+            setZoomLevel(z);
+          }}
           pannable={pannable}
           selections={edgeSelections}
           zoomable={zoomable}

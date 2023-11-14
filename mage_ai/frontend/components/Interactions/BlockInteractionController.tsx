@@ -85,7 +85,11 @@ function BlockInteractionController({
         </Spacing>
       )}
 
-      <Spacing pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} px={1}>
+      <Spacing
+        pb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
+        pt={blockInteractionName ? 0 : PADDING_UNITS}
+        px={1}
+      >
         <InteractionLayoutContainer
           containerRef={containerRef}
           containerWidth={containerWidth}

@@ -143,7 +143,6 @@ export type SidekickProps = {
   setBlockInteractionsMapping: (prev: any) => {
     [blockUUID: string]: BlockInteractionType[];
   };
-  setDepGraphZoom?: (zoom: number) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setHiddenBlocks: ((opts: {
     [uuid: string]: BlockType;
@@ -222,7 +221,6 @@ function Sidekick({
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
   setBlockInteractionsMapping,
-  setDepGraphZoom,
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
@@ -639,7 +637,6 @@ function Sidekick({
                     scrollToBlock(block);
                   }
                 }}
-                setZoom={setDepGraphZoom}
                 showUpdateBlockModal={showUpdateBlockModal}
                 treeRef={treeRef}
               />

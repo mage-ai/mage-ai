@@ -1,4 +1,3 @@
-import * as osPath from 'path';
 import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
@@ -97,16 +96,15 @@ import {
   get,
   set,
 } from '@storage/localStorage';
-import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
 import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
 import { RoleFromServerEnum } from '@interfaces/UserType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
@@ -156,6 +154,7 @@ function PipelineDetailPage({
     featureUUIDs,
     fetchProjects,
     project,
+    sparkEnabled,
   } = useProject();
 
   const router = useRouter();
@@ -184,7 +183,7 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
-  const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
+  const [includeSparkOutputs, setIncludeSparkOutputs] = useState<boolean>(true);
 
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
@@ -275,6 +274,12 @@ function PipelineDetailPage({
         || typeof pipeline?.blocks === 'undefined'
         || pipeline?.blocks === null
         || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
+      ...(includeSparkOutputs
+        ? {
+          includes_outputs_spark: true,
+        }
+        : {}
+      ),
     },
     {
       refreshInterval: 60000,
@@ -343,28 +348,38 @@ function PipelineDetailPage({
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
   pipeline = useMemo(() => data?.pipeline, [data]);
-  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
+  const isDataIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
+  useEffect(() => {
+    if (pipeline && includeSparkOutputs && sparkEnabled) {
+      setIncludeSparkOutputs(false);
+    }
+  }, [
+    includeSparkOutputs,
+    pipeline,
+    setIncludeSparkOutputs,
+    sparkEnabled,
+  ]);
 
   const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
   );
   const sideBySideEnabled = useMemo(() => {
-    return !isIntegration
+    return !isDataIntegration
       && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
       && sideBySideEnabledState;
   }, [
     featureEnabled,
     featureUUIDs,
-    isIntegration,
+    isDataIntegration,
     sideBySideEnabledState,
   ]);
   const [scrollTogetherState, setScrollTogetherState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_SCROLL_TOGETHER, false),
   );
-  const scrollTogether = useMemo(() => {
-    return featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && scrollTogetherState;
-  }, [
+  const scrollTogether = useMemo(() => featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+      && scrollTogetherState, [
     featureEnabled,
     featureUUIDs,
     scrollTogetherState,
@@ -701,7 +716,7 @@ function PipelineDetailPage({
   );
   const blockSampleData = useMemo(() => blockOutputData?.block_output, [blockOutputData]);
   const sampleData: SampleDataType = useMemo(() => {
-    if (isIntegration) {
+    if (isDataIntegration) {
       return find(
         blockSampleData?.outputs,
         ({ variable_uuid }) => variable_uuid === `output_sample_data_${cleanName(selectedStream)}`,
@@ -709,7 +724,7 @@ function PipelineDetailPage({
     } else {
       return blockSampleData?.outputs?.[0]?.sample_data;
     }
-  }, [blockSampleData, isIntegration, selectedStream]);
+  }, [blockSampleData, isDataIntegration, selectedStream]);
   const {
     data: blockAnalysis,
     mutate: fetchAnalysis,
@@ -822,7 +837,7 @@ function PipelineDetailPage({
                 const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
                 const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
 
-                if (!equals(blockUUIDsPrevious, blockUUIDsServer)) {
+                if (!equals(blockUUIDsPrevious || [], blockUUIDsServer || [])) {
                   setTimeout(() => {
                     resetColumnScroller();
                   }, 1);
@@ -901,7 +916,7 @@ function PipelineDetailPage({
       const messagesForBlock = messages[uuid]?.filter(m => !!m);
       const hasError = messagesForBlock?.find(({ error }) => error);
 
-      if (messagesForBlock) {
+      if (messagesForBlock && (!sparkEnabled || !runningBlocks?.length)) {
         const arr2 = [];
         let plainTextLineCount = 0;
 
@@ -1110,7 +1125,9 @@ function PipelineDetailPage({
     pipeline,
     pipelineLastSaved,
     pipelineLastSavedState,
+    runningBlocks,
     showStalePipelineMessageModal,
+    sparkEnabled,
     updatePipeline,
     widgets,
   ]);
@@ -1621,7 +1638,7 @@ function PipelineDetailPage({
       type: blockType,
     } = block;
 
-    if (isIntegration) {
+    if (isDataIntegration) {
       const blocksByType = indexBy(pipeline?.blocks || [], ({ type }) => type);
       const dataExporterBlock = blocksByType[BlockTypeEnum.DATA_EXPORTER];
       const dataLoaderBlock = blocksByType[BlockTypeEnum.DATA_LOADER];
@@ -1767,12 +1784,12 @@ function PipelineDetailPage({
       return savePipelineContent().then(() => func());
     }
 
-    return func()
+    return func();
   }, [
     createBlock,
     fetchFileTree,
     fetchPipeline,
-    isIntegration,
+    isDataIntegration,
     openFile,
     pipeline,
     savePipelineContent,
@@ -2599,7 +2616,6 @@ function PipelineDetailPage({
       setAnyInputFocused={setAnyInputFocused}
       // @ts-ignore
       setBlockInteractionsMapping={setBlockInteractionsMapping}
-      setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
@@ -2946,8 +2962,8 @@ function PipelineDetailPage({
             saveStatus={saveStatus}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
-            setSideBySideEnabled={setSideBySideEnabled}
             setRunningBlocks={setRunningBlocks}
+            setSideBySideEnabled={setSideBySideEnabled}
             sideBySideEnabled={sideBySideEnabled}
             updatePipelineMetadata={updatePipelineMetadata}
           >
@@ -3122,13 +3138,11 @@ function PipelineDetailPage({
         afterHeader={(
           <SidekickHeader
             activeView={activeSidekickView}
-            depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             project={project}
             secrets={secrets}
             selectedBlock={selectedBlock}
             setSelectedBlock={setSelectedBlock}
-            treeRef={treeRef}
             variables={globalVariables}
           />
         )}
@@ -3150,7 +3164,7 @@ function PipelineDetailPage({
             fullHeight
             fullWidth
           >
-            {!isIntegration && outputBlocks.map(block => {
+            {!isDataIntegration && outputBlocks.map(block => {
               const { uuid: outputBlockUUID } = block;
               const selected = selectedOutputBlock?.uuid === outputBlockUUID;
 
@@ -3186,13 +3200,13 @@ function PipelineDetailPage({
                 </Spacing>
               );
             })}
-            {isIntegration && integrationOutputsMemo}
+            {isDataIntegration && integrationOutputsMemo}
           </FlexContainer>
         )}
         before={beforeToShow}
-        beforeHidden={beforeHidden}
         beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
+        beforeHidden={beforeHidden}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={pipelineErrors || errors}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}

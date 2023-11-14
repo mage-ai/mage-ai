@@ -99,6 +99,10 @@ class RepoManagerTest(DBTestCase):
     @patch('uuid.uuid4')
     def test_init_project_uuid(self, mock_uuid):
         mock_uuid.return_value = mock_uuid_value()
+        # Reset the project metadata.yaml
+        with open(os.path.join(self.repo_path, 'metadata.yaml'), 'w', encoding='utf-8') as f:
+            yaml.dump(dict(), f)
+            set_project_uuid_from_metadata()
 
         init_project_uuid()
         self.assertEqual(get_project_uuid(), mock_uuid_value().hex)

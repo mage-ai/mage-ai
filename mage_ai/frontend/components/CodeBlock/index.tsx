@@ -46,6 +46,7 @@ import DataProviderType, {
 } from '@interfaces/DataProviderType';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
+import ExecutionStateType from '@interfaces/ExecutionStateType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -60,6 +61,10 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import SparkJobs from './SparkJobs';
+import SparkProgress from './SparkProgress';
+import SparkSqls from './SparkSqls';
+import SparkStages from './SparkStages';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -68,6 +73,8 @@ import UpstreamBlockSettings from './UpstreamBlockSettings';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
+import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import {
   ArrowDown,
   ChevronDown,
@@ -114,6 +121,7 @@ import {
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
+  CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED,
   CUSTOM_EVENT_CODE_BLOCK_CHANGED,
   CUSTOM_EVENT_COLUMN_SCROLLER_CURSOR_MOVED,
   CUSTOM_EVENT_SYNC_COLUMN_POSITIONS,
@@ -123,6 +131,16 @@ import {
   SUBHEADER_TABS,
   SUBHEADER_TAB_CODE,
   SUBHEADER_TAB_INTERACTIONS,
+  TABS_DBT,
+  TABS_SPARK,
+  TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
+  TAB_DBT_SQL_UUID,
+  TAB_SPARK_JOBS,
+  TAB_SPARK_OUTPUT,
+  TAB_SPARK_SQLS,
+  TAB_SPARK_STAGES,
+  TAB_SPARK_TASKS,
 } from './constants';
 import {
   KEY_CODE_CONTROL,
@@ -134,12 +152,6 @@ import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/c
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
-import {
-  TABS_DBT,
-  TAB_DBT_LINEAGE_UUID,
-  TAB_DBT_LOGS_UUID,
-  TAB_DBT_SQL_UUID,
-} from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
@@ -364,7 +376,17 @@ function CodeBlock({
   const themeContext = useContext(ThemeContext);
   const refColumn1 = useRef(null);
   const refColumn2 = useRef(null);
+  const childrenBelowTabsRef = useRef(null);
+  const timeoutRef = useRef(null);
 
+  const {
+    featureEnabled,
+    featureUUIDs,
+    sparkEnabled: sparkEnabledInit,
+  } = useProject();
+
+  const [sparkEnabled, setSparkEnabled] = useState(false);
+  const [executionStatesFetchedCount, setExecutionStatesFetched] = useState(0);
   const [mounted, setMounted] = useState(false);
   const dispatchEventChanged = useCallback(() => {
     const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
@@ -378,6 +400,53 @@ function CodeBlock({
     }
   }, [
     blockIdx,
+  ]);
+
+  const dispatchEventChangedOutput = useCallback(() => {
+    const evt = new CustomEvent(CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED, {
+      detail: {
+        blockIndex: blockIdx,
+      },
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(evt);
+    }
+  }, [
+    blockIdx,
+  ]);
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      const rect = childrenBelowTabsRef?.current?.getBoundingClientRect();
+
+      if (rect) {
+        if (event?.clientX >= rect?.x
+          && event?.clientX <= rect?.x + rect?.width
+          && event?.clientY >= rect?.y
+          && event?.clientY <= rect?.y + rect?.height
+        ) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current =
+            setTimeout(dispatchEventChangedOutput, ANIMATION_DURATION_CONTENT + 1);
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      if (sparkEnabled) {
+        window.addEventListener('click', handleClick);
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('click', handleClick);
+      }
+    };
+  }, [
+    dispatchEventChangedOutput,
+    sparkEnabled,
   ]);
 
   useEffect(() => {
@@ -560,7 +629,33 @@ function CodeBlock({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
-  const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT(block)[0]);
+  const [selectedTab, setSelectedTabState] = useState<TabType>(null);
+
+  const setSelectedTab = useCallback((tab) => {
+    dispatchEventChangedOutput();
+    setSelected?.(!!tab);
+    setSelectedTabState(tab);
+  }, [
+    dispatchEventChangedOutput,
+    setSelected,
+    setSelectedTabState,
+  ]);
+
+  useEffect(() => {
+    if (!selectedTab) {
+      if (sparkEnabled) {
+        setSelectedTab(TABS_SPARK(block)[0]);
+      } else if (isDBT) {
+        setSelectedTab(TABS_DBT(block)[0]);
+      }
+    }
+  }, [
+    block,
+    isDBT,
+    selectedTab,
+    setSelectedTab,
+    sparkEnabled,
+  ]);
 
   const setIsEditingBlock = useCallback((prev) => {
     setIsEditingBlockState(prev);
@@ -720,6 +815,31 @@ function CodeBlock({
     mainContainerRect,
   ]);
 
+  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
+    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
+  useEffect(() => {
+    setSparkEnabled(sparkEnabledInit
+      && !isStreamingPipeline
+      && !isDataIntegration
+      && BlockLanguageEnum.PYTHON === blockLanguage);
+  }, [
+    blockLanguage,
+    isDataIntegration,
+    isStreamingPipeline,
+    sparkEnabledInit,
+  ]);
+
+  const { data: dataExecutionStates, mutate: fetchExecutionStates } = api.execution_states.list({
+    block_uuid: blockUUID,
+    pipeline_uuid: pipelineUUID,
+  }, {
+    refreshInterval: selected && isInProgress ? 1000 : 5000,
+    revalidateOnFocus: true,
+  }, {
+    pauseFetch: (!selected && executionStatesFetchedCount >= 1) || !sparkEnabled,
+  });
+
   const runBlockAndTrack = useCallback((payload?: {
     block: BlockType;
     code?: string;
@@ -819,9 +939,14 @@ function CodeBlock({
       setRunEndTime(null);
       setOutputCollapsed(false);
     }
+
+    if (sparkEnabled) {
+      fetchExecutionStates();
+    }
   }, [
     blockInteractions,
     content,
+    fetchExecutionStates,
     hasDownstreamWidgets,
     interactionsMapping,
     isDBT,
@@ -835,11 +960,32 @@ function CodeBlock({
     setRunEndTime,
     setSelectedTab,
     sideBySideEnabled,
+    sparkEnabled,
     variables,
   ]);
 
-  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
-    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+  const [blockExecutionStates, setBlockExecutionStates] = useState<ExecutionStateType[]>(null);
+  useEffect(() => {
+    if (dataExecutionStates) {
+      setExecutionStatesFetched(prev => prev + 1);
+      setBlockExecutionStates(dataExecutionStates?.execution_states || []);
+    }
+  }, [
+    dataExecutionStates,
+    setBlockExecutionStates,
+    setExecutionStatesFetched,
+  ]);
+
+  useEffect(() => {
+    if (blockExecutionStates !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(dispatchEventChangedOutput, 1);
+    }
+  }, [
+    blockExecutionStates,
+    dispatchEventChangedOutput,
+    selectedTab,
+  ]);
 
   useEffect(() => {
     if (isInProgress) {
@@ -1354,9 +1500,11 @@ function CodeBlock({
     pipeline,
   ]);
 
-  const buttonTabs = useMemo(() => isDBT
-    ? (
-      <Spacing py={1}>
+  const buttonTabs = useMemo(() => {
+    let buttonEl;
+
+    if (isDBT) {
+      buttonEl = (
         <ButtonTabs
           onClickTab={(tab: TabType) => {
             setSelectedTab(tab);
@@ -1366,17 +1514,55 @@ function CodeBlock({
             }
           }}
           selectedTabUUID={selectedTab?.uuid}
-          small
           tabs={TABS_DBT(block)}
+          underlineColor={getColorsForBlockType(
+            BlockTypeEnum.DBT,
+            {
+              theme: themeContext,
+            },
+          ).accent}
+          underlineStyle
         />
-      </Spacing>
-    )
-    : null
-  , [
+      );
+    } else if (sparkEnabled && ![
+        BlockTypeEnum.CALLBACK,
+        BlockTypeEnum.CONDITIONAL,
+        BlockTypeEnum.EXTENSION,
+      ].includes(blockType)) {
+      buttonEl = (
+        <>
+          <ButtonTabs
+            onClickTab={(tab: TabType) => {
+              setSelectedTab(tab);
+            }}
+            selectedTabUUID={selectedTab?.uuid}
+            tabs={TABS_SPARK(block)}
+            underlineColor={color}
+            underlineStyle
+          />
+          <Divider medium />
+        </>
+      );
+    }
+
+    if (!buttonEl) {
+      return null;
+    }
+
+    return (
+      <SubheaderStyle>
+        {buttonEl}
+      </SubheaderStyle>
+    );
+  }, [
     block,
+    blockType,
+    color,
     fetchBlock,
     isDBT,
     selectedTab,
+    sparkEnabled,
+    themeContext,
   ]);
 
   const currentTimeTrackerMemo = useMemo(() => {
@@ -1432,22 +1618,33 @@ function CodeBlock({
       );
     }
 
-    return (
+    const outputEl = ({
+      childrenBelowTabs,
+      hideOutput,
+    }: {
+      childrenBelowTabs?: any;
+      hideOutput?: boolean;
+    } = {
+      childrenBelowTabs: null,
+      hideOutput: false,
+    }) => (
       <CodeOutput
         {...borderColorShareProps}
         block={block}
         blockIndex={blockIdx}
         blockMetadata={blockMetadata}
-        buttonTabs={buttonTabs}
+        buttonTabs={sparkEnabled ? null : buttonTabs}
+        childrenBelowTabs={childrenBelowTabs}
         collapsed={outputCollapsed}
         hasOutput={hasOutput}
+        hideOutput={hideOutput}
         isInProgress={isInProgress}
         mainContainerWidth={mainContainerWidth}
         messages={messagesWithType}
         messagesAll={messages}
         onClickSelectBlock={sideBySideEnabled ? onClickSelectBlock : null}
         openSidekickView={openSidekickView}
-        outputRowNormalPadding={sideBySideEnabled || isDataIntegration}
+        outputRowNormalPadding={sideBySideEnabled || isDataIntegration || sparkEnabled}
         pipeline={pipeline}
         ref={blockOutputRef}
         runCount={runCount}
@@ -1528,8 +1725,85 @@ function CodeBlock({
         )}
       </CodeOutput>
     );
+
+    const isOnOutputTab = TAB_SPARK_OUTPUT.uuid === selectedTab?.uuid;
+
+    let outputChildren;
+
+    if (sparkEnabled) {
+      if (isOnOutputTab) {
+        outputChildren = (
+          <SparkProgress
+            executionStates={blockExecutionStates}
+            isInProgress={isInProgress}
+          />
+
+        );
+      } else if (TAB_SPARK_JOBS.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkJobs
+            executionStates={blockExecutionStates}
+            isInProgress={isInProgress}
+          />
+        );
+      } else if (TAB_SPARK_STAGES.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkStages
+            executionStates={blockExecutionStates}
+          />
+        );
+      } else if (TAB_SPARK_SQLS.uuid === selectedTab?.uuid) {
+        outputChildren = (
+          <SparkSqls
+            disableGraph={!selected}
+            executionStates={blockExecutionStates}
+            overrideScrollForGraph={selected}
+          />
+        );
+      }
+
+      if (sideBySideEnabled) {
+        return outputEl({
+          childrenBelowTabs: (
+            <>
+              {buttonTabs}
+
+              <Divider medium />
+
+              <div ref={childrenBelowTabsRef}>
+                {outputChildren}
+              </div>
+            </>
+          ),
+          hideOutput: !isOnOutputTab,
+        });
+      }
+
+      return (
+        <>
+          <CodeContainerStyle
+            {...borderColorShareProps}
+            className={selected && textareaFocused ? 'selected' : null}
+            hideBorderBottom={isOnOutputTab && hasOutput}
+            lightBackground
+            noPadding
+          >
+            {buttonTabs}
+
+            <Divider light />
+
+            {outputChildren}
+          </CodeContainerStyle>
+
+          {isOnOutputTab && outputEl()}
+        </>
+      );
+    }
+
+    return outputEl();
   }, [
     block,
+    blockExecutionStates,
     blockIdx,
     blockMetadata,
     blockOutputRef,
@@ -1540,7 +1814,9 @@ function CodeBlock({
     executionState,
     hasOutput,
     isDataIntegration,
+    isEditingBlock,
     isInProgress,
+    isMarkdown,
     mainContainerWidth,
     messages,
     messagesWithType,
@@ -1563,6 +1839,8 @@ function CodeBlock({
     setOutputCollapsed,
     setSelectedOutputBlock,
     sideBySideEnabled,
+    sparkEnabled,
+    textareaFocused,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
@@ -2277,266 +2555,298 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
               >
                 <HeaderHorizontalBorder />
 
+                {tags.length >= 1 && (
+                  <SubheaderStyle>
+                    <Spacing p={1}>
+                      <FlexContainer>
+                        {tags.map(({
+                          description,
+                          title,
+                        }, idx) => (
+                          <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                            <Tooltip
+                              block
+                              description={description}
+                              size={null}
+                              widthFitContent
+                            >
+                              <Badge>
+                                {title}
+                              </Badge>
+                            </Tooltip>
+                          </Spacing>
+                        ))}
+                      </FlexContainer>
+                    </Spacing>
+                  </SubheaderStyle>
+                )}
+
                 {!hideExtraConfiguration && BlockTypeEnum.DBT === blockType
                   && !codeCollapsed
                   && (
-                  <CodeHelperStyle normalPadding>
-                    <FlexContainer
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <Flex alignItems="center">
-                        {BlockLanguageEnum.YAML === blockLanguage && (
-                          <Select
-                            compact
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DBT_PROFILE_TARGET]: '',
-                                [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onClick={pauseEvent}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            placeholder="Project"
-                            small
-                            value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME] || ''}
-                          >
-                            {Object.keys(dbtProjects || {}).map((projectName: string) => (
-                              <option key={projectName} value={projectName}>
-                                {projectName}
-                              </option>
-                            ))}
-                          </Select>
-                        )}
+                  <>
+                    <Spacing mt={1} />
 
-                        {BlockLanguageEnum.YAML !== blockLanguage && (
-                          <Text monospace small>
-                            {dbtProjectName}
-                          </Text>
-                        )}
-
-                        <Spacing mr={2} />
-
-                        <Text monospace muted small>
-                          Target
-                        </Text>
-
-                        <span>&nbsp;</span>
-
-                        {!manuallyEnterTarget && (
-                          <Select
-                            compact
-                            disabled={!dbtProjectName}
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onClick={pauseEvent}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            placeholder={dbtProfileTargetSelectPlaceholder}
-                            small
-                            value={dbtProfileTarget || ''}
-                          >
-                            {dbtProfileTargets?.map((target: string) => (
-                              <option key={target} value={target}>
-                                {target}
-                              </option>
-                            ))}
-                          </Select>
-                        )}
-
-                        {manuallyEnterTarget && (
-                          <TextInput
-                            compact
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onClick={pauseEvent}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            placeholder={dbtProjectName
-                              ? (dbtProfileData?.target || 'Enter target')
-                              : 'Select project first'
-                            }
-                            small
-                            value={dbtProfileTarget || ''}
-                            width={UNIT * 21}
-                          />
-                        )}
-
-                        <Spacing mr={1} />
-
-                        <FlexContainer alignItems="center">
-                          <Tooltip
-                            block
-                            description={
-                              <Text default inline>
-                                Manually type the name of the target you want to use in the profile.
-                                <br />
-                                Interpolate environment variables and
-                                global variables using the following syntax:
-                                <br />
-                                <Text default inline monospace>
-                                  {'{{ env_var(\'NAME\') }}'}
-                                </Text> or <Text default inline monospace>
-                                  {'{{ variables(\'NAME\') }}'}
-                                </Text>
-                              </Text>
-                            }
-                            size={null}
-                            widthFitContent
-                          >
-                            <FlexContainer alignItems="center">
-                              <Checkbox
-                                checked={manuallyEnterTarget}
-                                label={
-                                  <Text muted small>
-                                    Manually enter target
-                                  </Text>
-                                }
-                                onClick={(e) => {
-                                  pauseEvent(e);
-                                  setManuallyEnterTarget(!manuallyEnterTarget);
-                                  if (manuallyEnterTarget) {
-                                    updateDataProviderConfig({
-                                      [CONFIG_KEY_DBT_PROFILE_TARGET]: null,
-                                    });
-                                  }
+                    <CodeHelperStyle noMargin normalPadding>
+                      <Spacing pb={1}>
+                        <FlexContainer
+                          alignItems="center"
+                          justifyContent="space-between"
+                        >
+                          <Flex alignItems="center">
+                            {BlockLanguageEnum.YAML === blockLanguage && (
+                              <Select
+                                compact
+                                monospace
+                                onBlur={() => setTimeout(() => {
+                                  setAnyInputFocused(false);
+                                }, 300)}
+                                onChange={(e) => {
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DBT_PROFILE_TARGET]: '',
+                                    [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
+                                  });
+                                  e.preventDefault();
                                 }}
-                              />
-                              <span>&nbsp;</span>
-                              <Info muted />
-                            </FlexContainer>
-                          </Tooltip>
-                        </FlexContainer>
-                      </Flex>
+                                onClick={pauseEvent}
+                                onFocus={() => {
+                                  setAnyInputFocused(true);
+                                }}
+                                placeholder="Project"
+                                small
+                                value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME] || ''}
+                              >
+                                {Object.keys(dbtProjects || {}).map((projectName: string) => (
+                                  <option key={projectName} value={projectName}>
+                                    {projectName}
+                                  </option>
+                                ))}
+                              </Select>
+                            )}
 
-                      {BlockLanguageEnum.YAML !== blockLanguage && !dbtMetadata?.block?.snapshot && (
-                        <FlexContainer alignItems="center">
-                          <Tooltip
-                            appearBefore
-                            block
-                            description={
-                              <Text default inline>
-                                Limit the number of results that are returned
-                                <br />
-                                when running this block in the notebook.
-                                <br />
-                                This limit won’t affect the number of results
-                                <br />
-                                returned when running the pipeline end-to-end.
+                            {BlockLanguageEnum.YAML !== blockLanguage && (
+                              <Text monospace small>
+                                {dbtProjectName}
                               </Text>
-                            }
-                            size={null}
-                            widthFitContent
-                          >
-                            <FlexContainer alignItems="center">
-                              <Info muted />
-                              <span>&nbsp;</span>
-                              <Text monospace muted small>
-                                Sample limit
-                              </Text>
-                              <span>&nbsp;</span>
-                            </FlexContainer>
-                          </Tooltip>
-                          {limitInputEl}
-                          <Spacing mr={1} />
-                        </FlexContainer>
-                      )}
-                    </FlexContainer>
+                            )}
 
-                    {BlockLanguageEnum.YAML === blockLanguage && (
-                      <Spacing mt={1}>
-                        <FlexContainer alignItems="center">
-                          <Flex alignItems="center" flex={1}>
-                            <Text default monospace small>
-                              dbt
-                            </Text>
-
-                            <Spacing mr={1} />
-
-                            <TextInput
-                              compact
-                              monospace
-                              onBlur={() => setTimeout(() => {
-                                setAnyInputFocused(false);
-                              }, 300)}
-                              onChange={(e) => {
-                                // @ts-ignore
-                                updateDataProviderConfig({
-                                  [CONFIG_KEY_DBT]: {
-                                    ...dataProviderConfig?.[CONFIG_KEY_DBT],
-                                    [CONFIG_KEY_DBT_COMMAND]: e.target.value,
-                                  },
-                                });
-                                e.preventDefault();
-                              }}
-                              onClick={pauseEvent}
-                              onFocus={() => {
-                                setAnyInputFocused(true);
-                              }}
-                              placeholder="command"
-                              small
-                              value={dataProviderConfig?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND] || ''}
-                              width={UNIT * 10}
-                            />
-
-                            <Spacing mr={1} />
-
-                            <Text
-                              monospace
-                              small
-                            >
-                              [type your --select and --exclude syntax below]
-                            </Text>
-
-                            <Spacing mr={1} />
+                            <Spacing mr={2} />
 
                             <Text monospace muted small>
-                              (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                              Target
                             </Text>
+
+                            <span>&nbsp;</span>
+
+                            {!manuallyEnterTarget && (
+                              <Select
+                                compact
+                                disabled={!dbtProjectName}
+                                monospace
+                                onBlur={() => setTimeout(() => {
+                                  setAnyInputFocused(false);
+                                }, 300)}
+                                onChange={(e) => {
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                                  });
+                                  e.preventDefault();
+                                }}
+                                onClick={pauseEvent}
+                                onFocus={() => {
+                                  setAnyInputFocused(true);
+                                }}
+                                placeholder={dbtProfileTargetSelectPlaceholder}
+                                small
+                                value={dbtProfileTarget || ''}
+                              >
+                                {dbtProfileTargets?.map((target: string) => (
+                                  <option key={target} value={target}>
+                                    {target}
+                                  </option>
+                                ))}
+                              </Select>
+                            )}
+
+                            {manuallyEnterTarget && (
+                              <TextInput
+                                compact
+                                monospace
+                                onBlur={() => setTimeout(() => {
+                                  setAnyInputFocused(false);
+                                }, 300)}
+                                onChange={(e) => {
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                                  });
+                                  e.preventDefault();
+                                }}
+                                onClick={pauseEvent}
+                                onFocus={() => {
+                                  setAnyInputFocused(true);
+                                }}
+                                placeholder={dbtProjectName
+                                  ? (dbtProfileData?.target || 'Enter target')
+                                  : 'Select project first'
+                                }
+                                small
+                                value={dbtProfileTarget || ''}
+                                width={UNIT * 21}
+                              />
+                            )}
+
+                            <Spacing mr={1} />
+
+                            <FlexContainer alignItems="center">
+                              <Tooltip
+                                block
+                                description={
+                                  <Text default inline>
+                                    Manually type the name of the target you want to use in the profile.
+                                    <br />
+                                    Interpolate environment variables and
+                                    global variables using the following syntax:
+                                    <br />
+                                    <Text default inline monospace>
+                                      {'{{ env_var(\'NAME\') }}'}
+                                    </Text> or <Text default inline monospace>
+                                      {'{{ variables(\'NAME\') }}'}
+                                    </Text>
+                                  </Text>
+                                }
+                                size={null}
+                                widthFitContent
+                              >
+                                <FlexContainer alignItems="center">
+                                  <Checkbox
+                                    checked={manuallyEnterTarget}
+                                    label={
+                                      <Text muted small>
+                                        Manually enter target
+                                      </Text>
+                                    }
+                                    onClick={(e) => {
+                                      pauseEvent(e);
+                                      setManuallyEnterTarget(!manuallyEnterTarget);
+                                      if (manuallyEnterTarget) {
+                                        updateDataProviderConfig({
+                                          [CONFIG_KEY_DBT_PROFILE_TARGET]: null,
+                                        });
+                                      }
+                                    }}
+                                  />
+                                  <span>&nbsp;</span>
+                                  <Info muted />
+                                </FlexContainer>
+                              </Tooltip>
+                            </FlexContainer>
                           </Flex>
 
-                          <Spacing mr={1} />
-
-                          <Text muted small>
-                            <Link
-                              href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
-                              openNewWindow
-                              small
-                            >
-                              Examples
-                            </Link>
-                          </Text>
-
-                          <Spacing mr={1} />
+                          {BlockLanguageEnum.YAML !== blockLanguage && !dbtMetadata?.block?.snapshot && (
+                            <FlexContainer alignItems="center">
+                              <Tooltip
+                                appearBefore
+                                block
+                                description={
+                                  <Text default inline>
+                                    Limit the number of results that are returned
+                                    <br />
+                                    when running this block in the notebook.
+                                    <br />
+                                    This limit won’t affect the number of results
+                                    <br />
+                                    returned when running the pipeline end-to-end.
+                                  </Text>
+                                }
+                                size={null}
+                                widthFitContent
+                              >
+                                <FlexContainer alignItems="center">
+                                  <Info muted />
+                                  <span>&nbsp;</span>
+                                  <Text monospace muted small>
+                                    Sample limit
+                                  </Text>
+                                  <span>&nbsp;</span>
+                                </FlexContainer>
+                              </Tooltip>
+                              {limitInputEl}
+                              <Spacing mr={1} />
+                            </FlexContainer>
+                          )}
                         </FlexContainer>
+
+                        {BlockLanguageEnum.YAML === blockLanguage && (
+                          <Spacing mt={1}>
+                            <FlexContainer alignItems="center">
+                              <Flex alignItems="center" flex={1}>
+                                <Text default monospace small>
+                                  dbt
+                                </Text>
+
+                                <Spacing mr={1} />
+
+                                <TextInput
+                                  compact
+                                  monospace
+                                  onBlur={() => setTimeout(() => {
+                                    setAnyInputFocused(false);
+                                  }, 300)}
+                                  onChange={(e) => {
+                                    // @ts-ignore
+                                    updateDataProviderConfig({
+                                      [CONFIG_KEY_DBT]: {
+                                        ...dataProviderConfig?.[CONFIG_KEY_DBT],
+                                        [CONFIG_KEY_DBT_COMMAND]: e.target.value,
+                                      },
+                                    });
+                                    e.preventDefault();
+                                  }}
+                                  onClick={pauseEvent}
+                                  onFocus={() => {
+                                    setAnyInputFocused(true);
+                                  }}
+                                  placeholder="command"
+                                  small
+                                  value={dataProviderConfig?.[CONFIG_KEY_DBT]?.[CONFIG_KEY_DBT_COMMAND] || ''}
+                                  width={UNIT * 10}
+                                />
+
+                                <Spacing mr={1} />
+
+                                <Text
+                                  monospace
+                                  small
+                                >
+                                  [type your --select and --exclude syntax below]
+                                </Text>
+
+                                <Spacing mr={1} />
+
+                                <Text monospace muted small>
+                                  (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                                </Text>
+                              </Flex>
+
+                              <Spacing mr={1} />
+
+                              <Text muted small>
+                                <Link
+                                  href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
+                                  openNewWindow
+                                  small
+                                >
+                                  Examples
+                                </Link>
+                              </Text>
+
+                              <Spacing mr={1} />
+                            </FlexContainer>
+                          </Spacing>
+                        )}
                       </Spacing>
-                    )}
-                  </CodeHelperStyle>
+                    </CodeHelperStyle>
+                  </>
                 )}
 
                 {!hideExtraConfiguration && isSQLBlock
@@ -2889,143 +3199,186 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   </CodeHelperStyle>
                 )}
 
-                {tags.length >= 1 && (
-                  <SubheaderStyle>
-                    <Spacing p={1}>
-                      <FlexContainer>
-                        {tags.map(({
-                          description,
-                          title,
-                        }, idx) => (
-                          <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
-                            <Tooltip
-                              block
-                              description={description}
-                              size={null}
-                              widthFitContent
-                            >
-                              <Badge>
-                                {title}
-                              </Badge>
-                            </Tooltip>
-                          </Spacing>
-                        ))}
-                      </FlexContainer>
-                    </Spacing>
-                  </SubheaderStyle>
-                )}
-
                 {headerTabs}
 
                 {blockUpstreamBlocks.length >= 1
                   && !codeCollapsed
-                  && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
+                  && (
+                    BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
+                      || (BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage)
+                  )
                   && !isStreamingPipeline
                   && !replicatedBlockUUID
                   && !isDataIntegration
                   && (!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
                   && (
                   <CodeHelperStyle noMargin normalPadding>
-                    <Spacing mr={1} pt={1}>
-                      <Text muted small>
-                        {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
-                        {isSQLBlock && (
-                          <>
-                            The interpolated tables below are available in queries from upstream blocks.
-                            <br />
-                            Example: <Text inline monospace small>
-                              {'SELECT * FROM {{ df_1 }}'}
-                            </Text> to insert
-                            all rows from <Text inline monospace small>
-                              {blockUpstreamBlocks?.[0]}
-                            </Text> into a table.
-                          </>
-                        )}
-                      </Text>
-                    </Spacing>
+                    {BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage && (
+                      <Spacing py={1}>
+                        <Text muted small>
+                          Positional order of upstream block outputs for <Text
+                            inline
+                            monospace
+                            muted
+                            small
+                          >
+                            block_output
+                          </Text> function:
+                        </Text>
 
-                    <Spacing my={1}>
-                      {(!isSQLBlock && !isRBlock) && (
-                        <>
-                          <Text monospace muted small>
-                            {BlockTypeEnum.DATA_EXPORTER === blockType && '@data_exporter'}
-                            {BlockTypeEnum.DATA_LOADER === blockType && '@data_loader'}
-                            {BlockTypeEnum.TRANSFORMER === blockType && '@transformer'}
-                            {BlockTypeEnum.CUSTOM === blockType && '@custom'}
-                          </Text>
-                          <Text monospace muted small>
-                            def {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
-                              || (BlockTypeEnum.DATA_LOADER === blockType && 'load_data')
-                              || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')
-                              || (BlockTypeEnum.CUSTOM === blockType && 'transform_custom')}
-                            ({blockUpstreamBlocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
-                          </Text>
-                        </>
-                      )}
-                      {isRBlock && (
-                        <>
-                          <Text monospace muted small>
-                            {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
-                              || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')}
-                            &nbsp;← function({blockUpstreamBlocks.map((_,i) => `df_${i + 1}`).join(', ')}):
-                          </Text>
-                        </>
-                      )}
+                        <FlexContainer>
+                          {blockUpstreamBlocks.reduce((acc, blockUUID, i) => {
+                            const b = blocksMapping[blockUUID];
+                            const blockColor = getColorsForBlockType(
+                              b?.type,
+                              { blockColor: b?.color, theme: themeContext },
+                            ).accent;
 
-                      {isSQLBlock && blockUpstreamBlocks?.length >= 1 && (
-                        <UpstreamBlockSettings
-                          block={block}
-                          blockConfiguration={dataProviderConfig}
-                          blockRefs={blockRefs}
-                          blocks={blockUpstreamBlocks?.map(blockUUID => blocksMapping?.[blockUUID])}
-                          updateBlockConfiguration={updateDataProviderConfig}
-                        />
-                      )}
-
-                      {!isSQLBlock && blockUpstreamBlocks.map((blockUUID, i) => {
-                        const b = blocksMapping[blockUUID];
-                        const blockColor = getColorsForBlockType(
-                            b?.type,
-                            { blockColor: b?.color, theme: themeContext },
-                          ).accent;
-                        const sqlVariable = `{{ df_${i + 1} }}`;
-
-                        return (
-                          <div key={blockUUID}>
-                            {(!isSQLBlock && !isRBlock) && (
-                              <Text inline monospace muted small>
-                                &nbsp;&nbsp;&nbsp;&nbsp;data{i >= 1 ? `_${i + 1}` : null}
-                              </Text>
-                            )}{isSQLBlock && (
-                              <Text inline monospace muted small>
-                                {sqlVariable}
-                              </Text>
-                            )}{isRBlock && (
-                              <Text inline monospace muted small>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{`df${i + 1}`}
-                              </Text>
-                            )} <Text inline monospace muted small>→</Text> <Link
-                              color={blockColor}
-                              onClick={() => {
-                                const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
-                                refBlock?.current?.scrollIntoView();
-                              }}
-                              preventDefault
-                              small
-                            >
-                              <Text
+                            acc.push(
+                              <Link
                                 color={blockColor}
-                                inline
-                                monospace
+                                key={blockUUID}
+                                onClick={() => {
+                                  const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+                                  refBlock?.current?.scrollIntoView();
+                                }}
+                                preventDefault
                                 small
                               >
-                                {blockUUID}
+                                <Text
+                                  color={blockColor}
+                                  inline
+                                  monospace
+                                  small
+                                >
+                                  {blockUUID}
+                                </Text>
+                              </Link>
+                            );
+
+                            const count = blockUpstreamBlocks?.length || 0;
+                            if (count >= 2 && i < count - 1) {
+                              acc.push(
+                                <Text
+                                  inline
+                                  key={`${blockUUID}-comma`}
+                                  muted
+                                  small
+                                >
+                                  ,&nbsp;&nbsp;
+                                </Text>
+                              );
+                            }
+
+                            return acc;
+                          }, [])}
+                        </FlexContainer>
+                      </Spacing>
+                    )}
+
+                    {BlockTypeEnum.DBT !== blockType && (
+                      <>
+                        <Spacing mr={1} pt={1}>
+                          <Text muted small>
+                            {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
+                            {isSQLBlock && (
+                              <>
+                                The interpolated tables below are available in queries from upstream blocks.
+                                <br />
+                                Example: <Text inline monospace small>
+                                  {'SELECT * FROM {{ df_1 }}'}
+                                </Text> to insert
+                                all rows from <Text inline monospace small>
+                                  {blockUpstreamBlocks?.[0]}
+                                </Text> into a table.
+                              </>
+                            )}
+                          </Text>
+                        </Spacing>
+                        <Spacing my={1}>
+                          {(!isSQLBlock && !isRBlock) && (
+                            <>
+                              <Text monospace muted small>
+                                {BlockTypeEnum.DATA_EXPORTER === blockType && '@data_exporter'}
+                                {BlockTypeEnum.DATA_LOADER === blockType && '@data_loader'}
+                                {BlockTypeEnum.TRANSFORMER === blockType && '@transformer'}
+                                {BlockTypeEnum.CUSTOM === blockType && '@custom'}
                               </Text>
-                            </Link>
-                          </div>
-                        );
-                      })}
-                    </Spacing>
+                              <Text monospace muted small>
+                                def {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
+                                  || (BlockTypeEnum.DATA_LOADER === blockType && 'load_data')
+                                  || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')
+                                  || (BlockTypeEnum.CUSTOM === blockType && 'transform_custom')}
+                                ({blockUpstreamBlocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
+                              </Text>
+                            </>
+                          )}
+                          {isRBlock && (
+                            <>
+                              <Text monospace muted small>
+                                {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
+                                  || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')}
+                                &nbsp;← function({blockUpstreamBlocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                              </Text>
+                            </>
+                          )}
+
+                          {isSQLBlock && blockUpstreamBlocks?.length >= 1 && (
+                            <UpstreamBlockSettings
+                              block={block}
+                              blockConfiguration={dataProviderConfig}
+                              blockRefs={blockRefs}
+                              blocks={blockUpstreamBlocks?.map(blockUUID => blocksMapping?.[blockUUID])}
+                              updateBlockConfiguration={updateDataProviderConfig}
+                            />
+                          )}
+
+                          {!isSQLBlock && blockUpstreamBlocks.map((blockUUID, i) => {
+                            const b = blocksMapping[blockUUID];
+                            const blockColor = getColorsForBlockType(
+                                b?.type,
+                                { blockColor: b?.color, theme: themeContext },
+                              ).accent;
+                            const sqlVariable = `{{ df_${i + 1} }}`;
+
+                            return (
+                              <div key={blockUUID}>
+                                {(!isSQLBlock && !isRBlock) && (
+                                  <Text inline monospace muted small>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;data{i >= 1 ? `_${i + 1}` : null}
+                                  </Text>
+                                )}{isSQLBlock && (
+                                  <Text inline monospace muted small>
+                                    {sqlVariable}
+                                  </Text>
+                                )}{isRBlock && (
+                                  <Text inline monospace muted small>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;{`df${i + 1}`}
+                                  </Text>
+                                )} <Text inline monospace muted small>→</Text> <Link
+                                  color={blockColor}
+                                  onClick={() => {
+                                    const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+                                    refBlock?.current?.scrollIntoView();
+                                  }}
+                                  preventDefault
+                                  small
+                                >
+                                  <Text
+                                    color={blockColor}
+                                    inline
+                                    monospace
+                                    small
+                                  >
+                                    {blockUUID}
+                                  </Text>
+                                </Link>
+                              </div>
+                            );
+                          })}
+                        </Spacing>
+                      </>
+                    )}
                   </CodeHelperStyle>
                 )}
 
@@ -3108,13 +3461,9 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   </>
                 )}
 
-                {extraContent && (
-                  <Spacing mb={1}>
-                    {React.cloneElement(extraContent, {
-                      runBlockAndTrack,
-                    })}
-                  </Spacing>
-                )}
+                {extraContent && React.cloneElement(extraContent, {
+                  runBlockAndTrack,
+                })}
 
                 {blockError && (
                   <Spacing p={PADDING_UNITS}>

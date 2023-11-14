@@ -36,7 +36,6 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
-import { LOCAL_STORAGE_KEY_OAUTH_STATE, set } from '@storage/localStorage';
 import { OauthProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
@@ -48,6 +47,7 @@ import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 type RemoteProps = {
   actionRemoteName: string;
@@ -83,6 +83,8 @@ function Remote({
   const [repoPath, setRepoPath] = useState<string>(null);
 
   const gitInitialized = useMemo(() => !!branch?.name, [branch]);
+
+  const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
 
   useEffect(() => {
     if (branch?.sync_config?.repo_path && repoPath === null) {
@@ -417,6 +419,21 @@ function Remote({
           )}
           {!oauth?.authenticated && oauth?.url && (
             <>
+              {accessTokenExists && (
+                <Spacing mb={2}>
+                  <Button
+                    disabled
+                  >
+                    Using access token from Git Settings
+                  </Button>
+                  <Spacing mt={1}>
+                    <Text muted>
+                      Some features may not work unless you authenticate with GitHub.
+                    </Text>
+                  </Spacing>
+                </Spacing>
+              )}
+
               <Button
                 beforeIcon={<GitHubIcon size={UNIT * 2} />}
                 loading={isLoadingCreateOauth}
@@ -424,8 +441,8 @@ function Remote({
                   const url = oauth?.url;
                   const q = queryFromUrl(url);
                   const state = q.state;
-                  set(LOCAL_STORAGE_KEY_OAUTH_STATE, state);
-                  router.push(oauth?.url);
+                  set(state, oauth?.redirect_query_params || {});
+                  router.push(url);
                 }}
                 primary
               >

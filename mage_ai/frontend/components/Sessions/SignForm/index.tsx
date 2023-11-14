@@ -5,8 +5,10 @@ import { useRouter } from 'next/router';
 import ApiErrorType from '@interfaces/ApiErrorType';
 import AuthToken from '@api/utils/AuthToken';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GoogleSignIn from '../GoogleSignIn';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import OktaSignIn from '../OktaSignIn';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -220,6 +222,14 @@ function SignForm({
                     </KeyboardShortcutButton>
                   </Spacing>
                 )}
+
+                <Spacing mt={4}>
+                  <GoogleSignIn />
+                </Spacing>
+
+                <Spacing mt={4}>
+                  <OktaSignIn />
+                </Spacing>
               </form>
             </ContainerStyle>
           </Spacing>

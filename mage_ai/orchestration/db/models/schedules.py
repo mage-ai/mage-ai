@@ -3,6 +3,7 @@ import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
+from itertools import groupby
 from math import ceil
 from statistics import stdev
 from typing import Dict, List
@@ -127,6 +128,10 @@ class PipelineSchedule(BaseModel):
         return Pipeline.get(self.pipeline_uuid)
 
     @property
+    def pipeline_in_progress_runs_count(self) -> int:
+        return len(PipelineRun.in_progress_runs([self.id]))
+
+    @property
     def pipeline_runs_count(self) -> int:
         return len(self.fetch_pipeline_runs([self.id]))
 
@@ -242,8 +247,11 @@ class PipelineSchedule(BaseModel):
                     existing_trigger.status != kwargs.get('status'),
                     existing_trigger.variables != kwargs.get('variables'),
                 ]):
+                    if existing_trigger.token is None:
+                        kwargs['token'] = uuid.uuid4().hex
                     existing_trigger.update(**kwargs)
             else:
+                kwargs['token'] = uuid.uuid4().hex
                 triggers_to_create.append(kwargs)
 
         db_connection.session.bulk_save_objects(
@@ -850,6 +858,26 @@ class PipelineRun(BaseModel):
         if include_block_runs:
             query = query.options(joinedload(PipelineRun.block_runs))
         return query.all()
+
+    @classmethod
+    @safe_db_query
+    def active_runs_for_pipelines_grouped(
+        self,
+        pipeline_uuids: List[str],
+        include_block_runs: bool = False,
+    ) -> Dict[str, List['PipelineRun']]:
+        """
+        Get a dictionary of active pipeline runs grouped by pipeline uuid.
+        """
+
+        active_runs = self.active_runs_for_pipelines(
+            pipeline_uuids,
+            include_block_runs=include_block_runs,
+        )
+        grouped = {}
+        for key, runs in groupby(active_runs, key=lambda x: x.pipeline_uuid):
+            grouped[key] = list(runs)
+        return grouped
 
     @classmethod
     @safe_db_query

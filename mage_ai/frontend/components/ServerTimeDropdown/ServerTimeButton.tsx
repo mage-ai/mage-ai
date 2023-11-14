@@ -32,7 +32,7 @@ function ServerTimeButton({
       {...props}
       active={active}
       borderLess
-      borderRadius={BORDER_RADIUS_SMALL}
+      borderRadius={`${BORDER_RADIUS_SMALL}px`}
       compact
       highlightOnHoverAlt
       ref={buttonRef}

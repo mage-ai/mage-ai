@@ -340,7 +340,7 @@ class DataIntegrationMixin:
 
             text = Template(self.content).render(
                 block_output=_block_output,
-                variables=lambda x, p, v=global_vars: get_variable_for_template(
+                variables=lambda x, p=None, v=global_vars: get_variable_for_template(
                     x,
                     parse=p,
                     variables=v,

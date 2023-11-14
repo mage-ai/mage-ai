@@ -1,6 +1,7 @@
 from typing import Dict
 
 from mage_ai.data_preparation.repo_manager import RepoConfig
+from mage_ai.services.aws.emr.config import EmrConfig
 from mage_ai.services.aws.emr.emr import create_a_new_cluster
 from mage_ai.services.aws.emr.resource_manager import EmrResourceManager
 
@@ -9,6 +10,7 @@ def create_cluster(
     project_path: str,
     bootstrap_script_path: str = None,
     done_status: str = 'WAITING',
+    emr_config: EmrConfig = None,
     idle_timeout: int = 30 * 60,
     tags: Dict = None,
 ):
@@ -39,11 +41,14 @@ def create_cluster(
     )
     resource_manager.upload_bootstrap_script()
 
+    if emr_config is None:
+        emr_config = repo_config.emr_config
+
     # Create EMR cluster
     cluster_id = create_a_new_cluster(
         'mage-data-preparation',
         [],
-        repo_config.emr_config,
+        emr_config,
         bootstrap_script_path=resource_manager.bootstrap_script_path,
         done_status=done_status,
         idle_timeout=idle_timeout,

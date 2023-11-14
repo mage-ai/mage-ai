@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 from mage_ai.services.spark.models.metrics import Metrics
 
@@ -13,6 +14,7 @@ class Locality(str, Enum):
 
 class StageStatus(str, Enum):
     COMPLETE = 'COMPLETE'
+    SKIPPED = 'SKIPPED'
 
 
 class TaskStatus(str, Enum):
@@ -288,6 +290,7 @@ class Task(BaseSparkModel):
 @dataclass
 class StageBase(BaseSparkModel):
     accumulator_updates: List[str] = field(default_factory=list)  # []
+    application: Application = None
     attempt_id: int = None  # 0
     completion_time: str = None  # "2023-10-15T10:17:00.772GMT"
     # org.apache.spark.sql.Dataset.count(Dataset.scala:3625)
@@ -312,6 +315,7 @@ class StageBase(BaseSparkModel):
     executor_deserialize_cpu_time: int = None  # 988667
     executor_deserialize_time: int = None  # 0
     executor_run_time: int = None  # 8
+    failure_reason: str = None
     first_task_launched_time: str = None  # "2023-10-15T10:17:00.761GMT"
     input_bytes: int = None  # 0
     input_records: int = None  # 0
@@ -363,6 +367,9 @@ class StageBase(BaseSparkModel):
     task_metrics_distributions: TaskMetrics = None
 
     def __post_init__(self):
+        if self.application and isinstance(self.application, dict):
+            self.application = Application.load(**self.application)
+
         if self.executor_metrics_distributions:
             if 'quantiles' not in self.executor_metrics_distributions:
                 self.executor_metrics_distributions = ExecutorMetricsDistributions.load(

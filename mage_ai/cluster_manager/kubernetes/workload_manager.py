@@ -500,11 +500,15 @@ class WorkloadManager:
             except Exception:
                 pass
         if pod_name:
+            # Check for base path environment variable in case it exists
             exec_command = [
-                '/bin/sh',
+                '/bin/bash',
                 '-c',
+                '[[ -z "${MAGE_ROUTES_BASE_PATH:-${MAGE_BASE_PATH}}" ]] '
+                '&& BasePath="" '
+                '|| BasePath="/${MAGE_ROUTES_BASE_PATH:-${MAGE_BASE_PATH}}";'
                 'curl -s --request GET --url '
-                'http://localhost:6789/api/statuses?_format=with_activity_details '
+                'http://localhost:6789${BasePath}/api/statuses?_format=with_activity_details '
                 '--header "Content-Type: application/json"',
             ]
             resp = stream(
@@ -522,12 +526,12 @@ class WorkloadManager:
             return status
 
     def scale_down_workload(self, name: str) -> None:
-        self.apps_client.patch_namespaced_stateful_set_scale(
+        self.apps_client.patch_namespaced_stateful_set(
             name, namespace=self.namespace, body={'spec': {'replicas': 0}},
         )
 
     def restart_workload(self, name: str) -> None:
-        self.apps_client.patch_namespaced_stateful_set_scale(
+        self.apps_client.patch_namespaced_stateful_set(
             name, namespace=self.namespace, body={'spec': {'replicas': 1}},
         )
 

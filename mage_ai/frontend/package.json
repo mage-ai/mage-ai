@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@amplitude/react-amplitude": "^1.0.0",
-    "@monaco-editor/react": "^4.4.5",
+    "@monaco-editor/react": "^4.6.0",
     "@types/moment-duration-format": "^2.2.5",
     "@types/react-table": "^7.7.12",
     "@visx/axis": "2.14.0",
@@ -45,7 +45,8 @@
     "moment": "^2.29.4",
     "moment-duration-format": "^2.3.2",
     "moment-timezone": "^0.5.43",
-    "monaco-themes": "^0.4.2",
+    "monaco-editor": "^0.44.0",
+    "monaco-themes": "^0.4.4",
     "next": "12.3.4",
     "next-cookies": "^2.0.3",
     "next-remove-imports": "^1.0.12",

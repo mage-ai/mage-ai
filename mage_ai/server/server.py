@@ -9,9 +9,15 @@ from datetime import datetime
 from time import sleep
 from typing import Optional, Union
 
+import prometheus_client
 import pytz
 import tornado.ioloop
 import tornado.web
+from opentelemetry import metrics
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.instrumentation.tornado import TornadoInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -23,6 +29,8 @@ from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
@@ -76,8 +84,10 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
+from mage_ai.services.spark.models.applications import Application
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
+    ENABLE_PROMETHEUS,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
     REDIS_URL,
@@ -90,7 +100,7 @@ from mage_ai.settings import (
     USE_UNIQUE_TERMINAL,
 )
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
-from mage_ai.shared.constants import InstanceType
+from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -154,6 +164,12 @@ class ApiSchedulerHandler(BaseHandler):
         elif action_type == 'stop':
             scheduler_manager.stop_scheduler()
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
+
+
+class PrometheusMetricsHandler(BaseHandler):
+    def get(self):
+        self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
+        self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
 
 def replace_base_path(base_path: str) -> str:
@@ -241,6 +257,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             {'path': os.path.join(template_dir, 'images')},
         ),
         (
+            r'/monaco-editor/(.*)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(template_dir, 'monaco-editor')},
+        ),
+        (
             r'/(favicon.ico)',
             tornado.web.StaticFileHandler,
             {'path': template_dir},
@@ -308,6 +329,20 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/templates/(?P<uuid>\w+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
+
+    if ENABLE_PROMETHEUS:
+        TornadoInstrumentor().instrument()
+        # Service name is required for most backends
+        resource = Resource(attributes={
+            SERVICE_NAME: 'mage'
+        })
+
+        # Initialize PrometheusMetricReader which pulls metrics from the SDK
+        # on-demand to respond to scrape requests
+        reader = PrometheusMetricReader()
+        provider = MeterProvider(resource=resource, metric_readers=[reader])
+        metrics.set_meter_provider(provider)
+        routes += [(r'/metrics', PrometheusMetricsHandler)]
 
     if update_routes:
         updated_routes = []
@@ -520,6 +555,13 @@ def start_server(
 
     asyncio.run(UsageStatisticLogger().project_impression())
 
+    project_model = Project()
+    if project_model and \
+            project_model.spark_config and \
+            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+
+        Application.clear_cache()
+
     if dbt_docs:
         run_docs_server()
     else:
@@ -577,7 +619,7 @@ if __name__ == '__main__':
     project = args.project
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
-    instance_type = args.instance_type
+    instance_type = os.getenv(ENV_VAR_INSTANCE_TYPE, args.instance_type)
     project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
     cluster_type = os.getenv('CLUSTER_TYPE')
 

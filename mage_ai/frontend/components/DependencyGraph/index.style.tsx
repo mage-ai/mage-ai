@@ -23,8 +23,7 @@ export function inverseColorsMapping(themeContext: any = dark) {
   return mapping;
 }
 
-const colorStyles = Object.entries(inverseColorsMapping()).reduce((acc, [k, v]) => {
-  return acc.concat(`
+const colorStyles = Object.entries(inverseColorsMapping()).reduce((acc, [k, v]) => acc.concat(`
     .edge-rect-${v} {
       rect {
         fill: ${k};
@@ -36,12 +35,13 @@ const colorStyles = Object.entries(inverseColorsMapping()).reduce((acc, [k, v]) 
         stroke: ${k};
       }
     }
-  `);
-}, []);
+  `), []);
 
 export const GraphContainerStyle = styled.div<{
   height?: number;
 }>`
+  position: relative;
+  
   div {
     ${ScrollbarStyledCss}
   }

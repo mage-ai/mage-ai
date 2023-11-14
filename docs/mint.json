@@ -451,7 +451,6 @@
             "development/testing/unit-tests"
           ]
         },
-        "development/updating-mage",
         "development/ai/overview",
         {
           "group": "Visualizations",
@@ -521,7 +520,14 @@
           ]
         },
         "guides/dbt/developing-dbt-in-mage",
-        "guides/ai/overview",
+        {
+          "group": "Using AI",
+          "icon": "microchip-ai",
+          "pages": [
+            "guides/ai/overview",
+            "guides/ai/ai-client"
+          ]
+        },
         "guides/docker/connecting-a-database",
         "guides/community-examples",
         "guides/tips-and-tricks"
@@ -1091,3 +1097,4 @@
     }
   ]
 }
+

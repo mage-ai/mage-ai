@@ -43,7 +43,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     retry_pipeline_run,
 )
 from mage_ai.server.active_kernel import switch_active_kernel
-from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
+from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
@@ -305,7 +305,11 @@ class PipelineResource(BaseResource):
 
         api_operation_action = kwargs.get('api_operation_action', None)
         if api_operation_action != DELETE:
-            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
+            kernel_name = PIPELINE_TO_KERNEL_NAME[pipeline.type]
+            switch_active_kernel(
+                kernel_name,
+                emr_config=pipeline.executor_config if kernel_name == KernelName.PYSPARK else None,
+            )
 
         if api_operation_action == DETAIL:
             if Project(pipeline.repo_config).is_feature_enabled(
@@ -415,7 +419,12 @@ class PipelineResource(BaseResource):
             update_content=update_content,
         )
         try:
-            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
+            kernel_name = PIPELINE_TO_KERNEL_NAME[self.model.type]
+            switch_active_kernel(
+                kernel_name,
+                emr_config=self.model.executor_config
+                if kernel_name == KernelName.PYSPARK else None,
+            )
         except Exception as e:
             pipeline_type_updated = payload.get('type')
             if pipeline_type_updated is not None and pipeline_type_updated != pipeline_type:
@@ -448,6 +457,7 @@ class PipelineResource(BaseResource):
         @safe_db_query
         def cancel_pipeline_runs(
             pipeline_uuid: str = None,
+            pipeline_schedule_id: int = None,
             pipeline_runs: List[Dict] = None,
         ):
             if pipeline_runs is not None:
@@ -457,6 +467,8 @@ class PipelineResource(BaseResource):
                     query.
                     filter(PipelineRun.id.in_(pipeline_run_ids))
                 )
+            elif pipeline_schedule_id is not None:
+                pipeline_runs_to_cancel = PipelineRun.in_progress_runs([pipeline_schedule_id])
             else:
                 pipeline_runs_to_cancel = (
                     PipelineRun.
@@ -517,6 +529,7 @@ class PipelineResource(BaseResource):
 
         def _update_callback(resource):
             if status:
+                pipeline_schedule_id = payload.get('pipeline_schedule_id')
                 pipeline_runs = payload.get('pipeline_runs')
                 if status in [
                     ScheduleStatus.ACTIVE.value,
@@ -524,10 +537,12 @@ class PipelineResource(BaseResource):
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
-                    if pipeline_runs is None:
-                        cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
-                    else:
+                    if pipeline_runs is not None:
                         cancel_pipeline_runs(pipeline_runs=pipeline_runs)
+                    elif pipeline_schedule_id is not None:
+                        cancel_pipeline_runs(pipeline_schedule_id=pipeline_schedule_id)
+                    else:
+                        cancel_pipeline_runs(pipeline_uuid=pipeline_uuid)
                 elif status == 'retry' and pipeline_runs:
                     retry_pipeline_runs(pipeline_runs)
                 elif status == 'retry_incomplete_block_runs':

@@ -46,7 +46,7 @@ class TargetMongoDb(Target):
 
         return logger
 
-    def listen_override(self, file_input: t.IO[str] | None = None) -> None:
+    def listen_override(self, file_input: t.Optional[str] = None) -> None:
         if not file_input:
             file_input = sys.stdin
 

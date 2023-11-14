@@ -1,21 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import OverwriteVariables from '../OverwriteVariables';
 import Panel from '@oracle/components/Panel';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
-import Text from '@oracle/elements/Text';
-import TextArea from '@oracle/elements/Inputs/TextArea';
-import TextInput from '@oracle/elements/Inputs/TextInput';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import dark from '@oracle/styles/themes/dark';
-import { ToggleStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { isJsonString, randomNameGenerator } from '@utils/string';
 import { parseVariables } from '@components/Sidekick/utils';
+import { randomNameGenerator } from '@utils/string';
 
 type RunPipelinePopupProps = {
   initialPipelineSchedulePayload: PipelineScheduleType,
@@ -34,8 +29,7 @@ function RunPipelinePopup({
   onSuccess,
   variables,
 }: RunPipelinePopupProps) {
-  const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
-  const [textAreaElementMapping, setTextAreaElementMapping] = useState({});
+  const [enableVariablesOverwrite, setEnableVariablesOverwrite] = useState<boolean>(false);
   const [runtimeVariables, setRuntimeVariables] = useState<{
     [keyof: string]: string,
   }>(variables || {});
@@ -43,62 +37,12 @@ function RunPipelinePopup({
   const finalPipelineSchedulePayload = useMemo(() => ({
     ...initialPipelineSchedulePayload,
     name: randomNameGenerator(),
-    variables: overwriteVariables ? parseVariables(runtimeVariables) : null,
+    variables: enableVariablesOverwrite ? parseVariables(runtimeVariables) : null,
   }), [
     initialPipelineSchedulePayload,
-    overwriteVariables,
+    enableVariablesOverwrite,
     runtimeVariables,
   ]);
-
-  const buildValueRowEl = (uuid: string, value: string) => {
-    const sharedValueElProps = {
-      borderless: true,
-      key: `variable_uuid_input_${uuid}`,
-      monospace: true,
-      onChange: (e) => {
-        e.preventDefault();
-        setRuntimeVariables(vars => ({
-          ...vars,
-          [uuid]: e.target.value,
-        }));
-      },
-      paddingHorizontal: 0,
-      placeholder: 'Variable value',
-      value,
-    };
-
-    if (textAreaElementMapping[uuid]) {
-      return (
-        <TextArea
-          {...sharedValueElProps}
-          rows={1}
-          value={value}
-        />
-      );
-    }
-
-    return (
-      <TextInput {...sharedValueElProps} />
-    );
-  };
-
-  useEffect(() => {
-    const textAreaElementMappingInit = Object.entries(runtimeVariables)
-      .reduce((acc, keyValPair) => {
-        const [uuid, val] = keyValPair;
-        const isUsingTextAreaEl = isJsonString(val)
-          && typeof JSON.parse(val) === 'object'
-          && !Array.isArray(JSON.parse(val))
-          && JSON.parse(val) !== null;
-
-        return {
-          ...acc,
-          [uuid]: isUsingTextAreaEl,
-        };
-      }, {});
-
-    setTextAreaElementMapping(textAreaElementMappingInit);
-  }, []);
 
   return (
     <Panel
@@ -140,46 +84,12 @@ function RunPipelinePopup({
       minWidth={UNIT * 85}
       subtitle="Creates a new trigger and immediately runs the current pipeline once."
     >
-      <ToggleStyle>
-        <FlexContainer alignItems="center">
-          <Spacing mr={2}>
-            <ToggleSwitch
-              checked={overwriteVariables}
-              onCheck={setOverwriteVariables}
-            />
-          </Spacing>
-          <Text bold large>
-            Overwrite runtime variables
-          </Text>
-        </FlexContainer>
-      </ToggleStyle>
-
-      {overwriteVariables && runtimeVariables
-        && Object.entries(runtimeVariables).length > 0 && (
-        <Spacing mt={2}>
-          <Table
-            columnFlex={[null, 1]}
-            columns={[
-              {
-                uuid: 'Variable',
-              },
-              {
-                uuid: 'Value',
-              },
-            ]}
-            rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
-              <Text
-                default
-                key={`variable_${uuid}`}
-                monospace
-              >
-                {uuid}
-              </Text>,
-              buildValueRowEl(uuid, value),
-            ])}
-          />
-        </Spacing>
-      )}
+      <OverwriteVariables
+        enableVariablesOverwrite={enableVariablesOverwrite}
+        runtimeVariables={runtimeVariables}
+        setEnableVariablesOverwrite={setEnableVariablesOverwrite}
+        setRuntimeVariables={setRuntimeVariables}
+      />
     </Panel>
   );
 }

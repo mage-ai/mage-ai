@@ -645,6 +645,7 @@ class Pipeline:
         include_content: bool = False,
         include_extensions: bool = False,
         include_outputs: bool = False,
+        include_outputs_spark: bool = False,
         sample_count: int = None,
         exclude_data_integration: bool = False,
     ) -> Dict:
@@ -676,6 +677,7 @@ class Pipeline:
                         b.to_dict(
                             include_content=include_content,
                             include_outputs=include_outputs,
+                            include_outputs_spark=include_outputs_spark,
                             sample_count=sample_count,
                           ) for b in extension['blocks_by_uuid'].values()
                     ]
@@ -706,6 +708,7 @@ class Pipeline:
         include_content: bool = False,
         include_extensions: bool = False,
         include_outputs: bool = False,
+        include_outputs_spark: bool = False,
         sample_count: int = None,
     ):
         shared_kwargs = dict(
@@ -722,6 +725,7 @@ class Pipeline:
             *[b.to_dict_async(**merge_dict(shared_kwargs, dict(
                 include_block_catalog=include_block_catalog,
                 include_block_pipelines=include_block_pipelines,
+                include_outputs_spark=include_outputs_spark,
             ))) for b in self.blocks_by_uuid.values()]
         )
         callbacks_data = await asyncio.gather(

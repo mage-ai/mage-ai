@@ -116,6 +116,7 @@ import {
   PowerUps,
   PreviewHidden,
   PreviewOpen,
+  Recenter,
   Refresh,
   RoundedSquare,
   Save,
@@ -146,6 +147,8 @@ import {
   WeekDots,
   WorkspacesIcon,
   WorkspacesUsersIcon,
+  ZoomIn,
+  ZoomOut,
 } from '@oracle/icons';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
@@ -266,6 +269,7 @@ const ICONS = [
   PowerUps,
   PreviewHidden,
   PreviewOpen,
+  Recenter,
   Refresh,
   RoundedSquare,
   Save,
@@ -296,6 +300,8 @@ const ICONS = [
   WeekDots,
   WorkspacesIcon,
   WorkspacesUsersIcon,
+  ZoomIn,
+  ZoomOut,
 ];
 
 const Icons = () => (

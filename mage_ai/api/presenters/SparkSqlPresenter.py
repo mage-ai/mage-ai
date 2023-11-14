@@ -3,6 +3,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class SparkSqlPresenter(BasePresenter):
     default_attributes = [
+        'application',
         'description',
         'duration',
         'edges',

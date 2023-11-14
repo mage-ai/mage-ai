@@ -8,17 +8,23 @@ from mage_ai.services.aws.emr import emr
 from mage_ai.services.aws.emr.config import EmrConfig
 from mage_ai.services.aws.emr.resource_manager import EmrResourceManager
 from mage_ai.services.aws.s3 import s3
+from mage_ai.shared.hash import merge_dict
 
 
 class PySparkPipelineExecutor(PipelineExecutor):
     def __init__(self, pipeline: Pipeline, **kwargs):
         super().__init__(pipeline, **kwargs)
 
-        emr_config = EmrConfig.load(config=self.pipeline.repo_config.emr_config or dict())
+        self.emr_config = self.pipeline.repo_config.emr_config or dict()
+
+        if self.pipeline.executor_config is not None:
+            self.emr_config = merge_dict(self.emr_config, self.pipeline.executor_config)
+
+        self.emr_config = EmrConfig.load(config=self.emr_config)
         self.resource_manager = EmrResourceManager(
             pipeline.repo_config.s3_bucket,
             pipeline.repo_config.s3_path_prefix,
-            bootstrap_script_path=emr_config.bootstrap_script_path,
+            bootstrap_script_path=self.emr_config.bootstrap_script_path,
         )
         self.s3_bucket = pipeline.repo_config.s3_bucket
         self.s3_path_prefix = pipeline.repo_config.s3_path_prefix
@@ -74,6 +80,6 @@ class PySparkPipelineExecutor(PipelineExecutor):
             cluster_name=step['name'],
             steps=[step],
             bootstrap_script_path=self.resource_manager.bootstrap_script_path,
-            emr_config=self.pipeline.repo_config.emr_config,
+            emr_config=self.emr_config,
             log_uri=self.resource_manager.log_uri,
         )

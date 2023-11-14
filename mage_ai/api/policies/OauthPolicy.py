@@ -88,9 +88,6 @@ OauthPolicy.allow_write(
 
 
 OauthPolicy.allow_query(
-    [
-        'redirect_uri',
-    ],
     on_action=[
         constants.DETAIL,
     ],
