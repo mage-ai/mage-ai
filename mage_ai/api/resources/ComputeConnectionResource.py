@@ -119,15 +119,9 @@ class ComputeConnectionResource(GenericResource):
                 elif ComputeConnectionUUID.SSH_TUNNEL == model_id:
                     def _callback(action_uuid=action_uuid, *args, **kwargs):
                         ssh_tunnel = SSHTunnel()
-                        print('WTFFFFFFFFFFFFFFFFFFF ssh_tunnel', ssh_tunnel)
 
                         if ComputeConnectionAction.CREATE == action_uuid:
-                            if ssh_tunnel:
-                                print('WTFFFFFFFFFFFFFFFFFFF ssh_tunnel.connect')
-                                ssh_tunnel.connect()
-                            else:
-                                print('WTFFFFFFFFFFFFFFFFFFF tunnel')
-                                tunnel(ignore_active_kernel=True)
+                            tunnel(ignore_active_kernel=True)
                         elif ComputeConnectionAction.DELETE == action_uuid:
                             ssh_tunnel.close()
                         elif ComputeConnectionAction.DESELECT == action_uuid:

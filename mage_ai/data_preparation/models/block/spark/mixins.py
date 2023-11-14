@@ -213,6 +213,9 @@ class SparkBlock:
         print(self.spark_session.sparkContext if self.spark_session else None)
         print('\n')
 
+        if execution_uuid:
+            self.execution_uuid = execution_uuid
+
         if self.spark_session and self.spark_session.sparkContext:
             key = f'{self.uuid}:{self.execution_uuid or self.execution_timestamp_start}'
             # For jobs
@@ -223,7 +226,7 @@ class SparkBlock:
         self.__update_spark_jobs_cache(
             dict(
                 application=application.to_dict() if application else None,
-                execution_uuid=execution_uuid,
+                execution_uuid=self.execution_uuid,
                 submission_timestamp=self.execution_timestamp_start,
             ),
             'before',
