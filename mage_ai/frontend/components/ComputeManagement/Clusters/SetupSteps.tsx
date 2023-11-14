@@ -7,6 +7,7 @@ import ComputeServiceType, {
 import ErrorMessage from '../ErrorMessage';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { AlertTriangle, Check } from '@oracle/icons';
@@ -37,7 +38,7 @@ function SetupSteps({
       description,
       error,
       required,
-      status,
+      status_calculated: status,
       steps,
       tab,
       uuid,
@@ -69,6 +70,8 @@ function SetupSteps({
       </Spacing>
     );
 
+    const statusIconSize = level === 0 ? 2 * UNIT : 1.5 * UNIT;
+
     return (
       <SetupStepRowStyle
         clickable={clickable}
@@ -79,8 +82,7 @@ function SetupSteps({
         }
       >
         <Spacing
-          pt={1}
-          pb={level >= 1 ? 1 : 0}
+          py={level === 0 ? PADDING_UNITS : 1}
         >
           <FlexContainer>
             {numberElParent && (
@@ -98,14 +100,22 @@ function SetupSteps({
             <Spacing mr={1} />
 
             <Flex flex={1} flexDirection="column">
-              <FlexContainer>
-                <Flex flex={1} flexDirection="column">
-                  <FlexContainer
-                    alignItems="center"
-                  >
-                    <Text large>
-                      {name}
-                    </Text>
+              <FlexContainer flexDirection="column">
+                <FlexContainer
+                  alignItems="center"
+
+                >
+                  <Flex flex={1}>
+                    {level === 0 && (
+                      <Headline level={4}>
+                        {name}
+                      </Headline>
+                    )}
+                    {level >= 1 && (
+                      <Text bold large>
+                        {name}
+                      </Text>
+                    )}
 
                     {!required && (
                       <>
@@ -116,45 +126,45 @@ function SetupSteps({
                         </Text>
                       </>
                     )}
-                  </FlexContainer>
+                  </Flex>
 
-                  {description && (
-                    <Spacing mt={1}>
-                      <Text default>
-                        {description}
-                      </Text>
-                    </Spacing>
+                  <Spacing mr={PADDING_UNITS} />
+
+                  {SetupStepStatusEnum.COMPLETED === status && (
+                    <Check
+                      size={statusIconSize}
+                      success
+                    />
                   )}
 
-                  {error && (
-                    <ErrorMessage error={error} small warning />
+                  {SetupStepStatusEnum.INCOMPLETE === status && (
+                    <AlertTriangle
+                      muted
+                      size={statusIconSize}
+                    />
                   )}
-                </Flex>
 
-                <Spacing pr={PADDING_UNITS} />
+                  {SetupStepStatusEnum.ERROR === status && (
+                    <AlertTriangle
+                      danger
+                      size={statusIconSize}
+                    />
+                  )}
 
-                {SetupStepStatusEnum.COMPLETED === status && (
-                  <Check
-                    size={2 * UNIT}
-                    success
-                  />
+                  <Spacing pr={PADDING_UNITS * (status ? 1 : 2)} />
+                </FlexContainer>
+
+                {description && (
+                  <Spacing mt={1} pr={PADDING_UNITS * 3}>
+                    <Text default>
+                      {description}
+                    </Text>
+                  </Spacing>
                 )}
 
-                {SetupStepStatusEnum.INCOMPLETE === status && (
-                  <AlertTriangle
-                    muted
-                    size={2 * UNIT}
-                  />
+                {error && (
+                  <ErrorMessage error={error} small warning />
                 )}
-
-                {SetupStepStatusEnum.ERROR === status && (
-                  <AlertTriangle
-                    danger
-                    size={2 * UNIT}
-                  />
-                )}
-
-                <Spacing pr={PADDING_UNITS * (status ? 1 : 2)} />
               </FlexContainer>
             </Flex>
           </FlexContainer>

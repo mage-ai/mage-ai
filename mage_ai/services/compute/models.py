@@ -79,6 +79,16 @@ class SetupStep(BaseDataClass):
                 for step in self.steps
             ]):
                 return SetupStepStatus.COMPLETED
+            elif any([
+                not step.required or SetupStepStatus.ERROR == step.status
+                for step in self.steps
+            ]):
+                return SetupStepStatus.ERROR
+            elif any([
+                not step.required or SetupStepStatus.INCOMPLETE == step.status
+                for step in self.steps
+            ]):
+                return SetupStepStatus.INCOMPLETE
 
         return None
 

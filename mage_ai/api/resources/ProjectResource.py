@@ -6,7 +6,6 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.services.ssh.aws.emr.utils import tunnel
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -101,14 +100,8 @@ class ProjectResource(GenericResource):
         if should_log_project:
             await UsageStatisticLogger().project_impression()
 
-        if Project(repo_config=repo_config).is_feature_enabled(
-            FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
-        ):
+        project = Project(repo_config=repo_config)
+        if project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
             await BlockActionObjectCache.initialize_cache(replace=True)
-
-        def _callback(*args, **kwargs):
-            tunnel(reconnect=True)
-
-        self.on_update_callback = _callback
 
         return self

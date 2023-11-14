@@ -17,6 +17,7 @@ import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
 import SetupSettings from './SetupSettings';
+import SetupProgress from './SetupProgress';
 import SetupSteps from './Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import SparkGraph from './SparkGraph';
@@ -102,6 +103,22 @@ function ComputeManagement({
     heightWindow,
   ]);
 
+  const [includeAllStates, setIncludeAllStates] = useState(false);
+  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
+
+  const {
+    activeCluster,
+    clusters,
+    clustersLoading,
+    computeService,
+    connections,
+    fetchAll,
+    setupComplete,
+  }: ComputeServiceType = useComputeService({
+    clustersRefreshInterval: 10000,
+    includeAllStates,
+  });
+
   const [buttonTabsRect, setButtonTabsRect] = useState(null);
 
   useEffect(() => {
@@ -149,7 +166,7 @@ function ComputeManagement({
 
       if (val && afterHidden) {
         setAfterHidden(false);
-      } else if (!val && !afterHidden) {
+      } else if (!val && !afterHidden && setupComplete) {
         setAfterHidden(true);
       }
 
@@ -160,6 +177,7 @@ function ComputeManagement({
     afterHidden,
     setAfterHidden,
     setSelectedSqlState,
+    setupComplete,
   ]);
 
   const [selectedTab, setSelectedTabState] = useState<{
@@ -184,9 +202,6 @@ function ComputeManagement({
     selectedTab,
     queryURL,
   ]);
-
-  const [includeAllStates, setIncludeAllStates] = useState(false);
-  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
   const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
@@ -227,19 +242,6 @@ function ComputeManagement({
   const { data: dataJobs } = api.spark_jobs.list();
   const jobs: SparkJobType[] =
     useMemo(() => dataJobs?.spark_jobs, [dataJobs]);
-
-  const {
-    activeCluster,
-    clusters,
-    clustersLoading,
-    computeService,
-    connections,
-    fetchAll,
-    setupComplete,
-  }: ComputeServiceType = useComputeService({
-    clustersRefreshInterval: 10000,
-    includeAllStates,
-  });
 
   useEffect(() => {
     if (!setupComplete) {
@@ -468,6 +470,15 @@ function ComputeManagement({
           });
         }
 
+        if (computeService?.setup_steps?.length >= 1 && !setupComplete) {
+          arr.unshift(
+            <SetupProgress
+              computeService={computeService}
+              onClick={() => setAfterHidden(false)}
+            />
+          );
+        }
+
         arr.unshift(
           <Spacing
             key={`${displayName}-${kicker}`}
@@ -529,6 +540,7 @@ function ComputeManagement({
     jobs,
     selectedComputeService,
     selectedTab,
+    setAfterHidden,
     setSelectedTab,
     setupComplete,
   ]);

@@ -423,26 +423,26 @@ class AWSEMRComputeService(ComputeService):
 
     def connection_credentials(self) -> List[ConnectionCredential]:
         key = os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID)
-        valid_key = True if key else False
+        # valid_key = True if key else False
         key = ConnectionCredential.load(
             description=f'Environment variable {CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}',
             name='Access key ID',
-            error=ERROR_MESSAGE_ACCESS_KEY_ID if not valid_key else None,
-            required=True,
-            valid=valid_key,
-            value='*' * len(key) if key else None,
+            # error=ERROR_MESSAGE_ACCESS_KEY_ID if not valid_key else None,
+            required=False,
+            valid=True,
+            value='*' * len(key) if key else 'Empty',
             uuid=CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
         )
 
         secret = os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY)
-        valid_secret = True if secret else False
+        # valid_secret = True if secret else False
         secret = ConnectionCredential.load(
             description=f'Environment variable {CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}',
             name='Secret access key',
-            error=ERROR_MESSAGE_SECRET_ACCESS_KEY if not valid_secret else None,
-            required=True,
-            valid=valid_secret,
-            value='*' * len(secret) if secret else None,
+            # error=ERROR_MESSAGE_SECRET_ACCESS_KEY if not valid_secret else None,
+            required=False,
+            valid=True,
+            value='*' * len(secret) if secret else 'Empty',
             uuid=CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
         )
 

@@ -64,21 +64,15 @@ def build_credentials(compute_service: ComputeService) -> SetupStep:
         steps=[
             SetupStep.load(
                 name='Access key ID',
-                error=ERROR_MESSAGE_ACCESS_KEY_ID if not valid_key else None,
-                status=(
-                    SetupStepStatus.COMPLETED if valid_key
-                    else SetupStepStatus.INCOMPLETE
-                ),
+                # error=ERROR_MESSAGE_ACCESS_KEY_ID if not valid_key else None,
+                status=SetupStepStatus.COMPLETED if valid_key else None,
                 tab=ComputeManagementApplicationTab.SETUP,
                 uuid=SetupStepUUID.AWS_ACCESS_KEY_ID,
             ),
             SetupStep.load(
                 name='Secret access key',
-                error=ERROR_MESSAGE_SECRET_ACCESS_KEY if not valid_secret else None,
-                status=(
-                    SetupStepStatus.COMPLETED if valid_secret
-                    else SetupStepStatus.INCOMPLETE
-                ),
+                # error=ERROR_MESSAGE_SECRET_ACCESS_KEY if not valid_secret else None,
+                status=SetupStepStatus.COMPLETED if valid_secret else None,
                 tab=ComputeManagementApplicationTab.SETUP,
                 uuid=SetupStepUUID.AWS_SECRET_ACCESS_KEY,
             ),
