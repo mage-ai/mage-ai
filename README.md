@@ -64,7 +64,7 @@
     href="https://github.com/mage-ai/mage-ai"
     target="_blank"
   >
-    <img alt="Github Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
   </a>
   <a
     href="https://hub.docker.com/r/mageai/mageai"
