@@ -163,14 +163,10 @@ class PipelineSchedulerTests(DBTestCase):
 
         # No previous pipeline runs
         self.assertEqual(
-            len(
-                (
-                    PipelineRun.query.filter(
-                        PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-                        PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
-                    ).all()
-                )
-            ),
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
             0,
         )
 
@@ -178,14 +174,10 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_all()
 
         self.assertEqual(
-            len(
-                (
-                    PipelineRun.query.filter(
-                        PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-                        PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
-                    ).all()
-                )
-            ),
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
             1,
         )
 
@@ -218,14 +210,10 @@ class PipelineSchedulerTests(DBTestCase):
 
         # No previous pipeline runs
         self.assertEqual(
-            len(
-                (
-                    PipelineRun.query.filter(
-                        PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-                        PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
-                    ).all()
-                )
-            ),
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
             0,
         )
 
@@ -261,14 +249,10 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_all()
 
         self.assertEqual(
-            len(
-                (
-                    PipelineRun.query.filter(
-                        PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
-                        PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
-                    ).all()
-                )
-            ),
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
             1,
         )
 
