@@ -1075,6 +1075,10 @@
     {
       "source": "/data-integrations/destination/add-new-destination",
       "destination": "/contributing/data-integrations/add-new-destination"
+    },
+    {
+      "source": "/development/git/generate-an-ssh-token",
+      "destination": "/development/git/configure#generate-ssh-token"
     }
   ]
 }
