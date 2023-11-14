@@ -19,6 +19,7 @@ export enum DataSourceTypeEnum {
   GOOGLE_SHEETS = 'google_sheets',
   INFLUXDB = 'influxdb',
   KAFKA = 'kafka',
+  NATS = 'nats',
   KINESIS = 'kinesis',
   MONGODB = 'mongodb',
   MSSQL = 'mssql',
