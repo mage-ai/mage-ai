@@ -1,18 +1,21 @@
 import argparse
-from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.utils import update_record_with_internal_columns
-from mage_integrations.destinations.constants import KEY_RECORD
-from mage_integrations.utils.dictionary import merge_dict
-import sys
-from kafka import KafkaProducer
-import pandas as pd
 import json
+import sys
+from typing import Dict, List
 
-from typing import List, Dict
+import pandas as pd
+from kafka import KafkaProducer
+
+from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.constants import KEY_RECORD
+from mage_integrations.destinations.utils import update_record_with_internal_columns
+from mage_integrations.utils.dictionary import merge_dict
 
 MAXIMUM_BATCH_SIZE_MB = 1
 
+
 class Kafka(Destination):
+
     def test_connection(self) -> None:
         raise Exception('Not Implemented')
 
@@ -27,7 +30,7 @@ class Kafka(Destination):
         return producer
 
     def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
-        
+
         self.logger.info('Export data started.')
 
         for r in record_data:
