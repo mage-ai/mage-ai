@@ -545,10 +545,14 @@ function Clusters({
           const createdAt = status?.timeline?.creation_date_time;
           const state = status?.state;
           const stateChangeReasonMessage = status?.state_change_reason?.message;
-          const ready = [
-            ClusterStatusStateEnum.RUNNING,
-            ClusterStatusStateEnum.WAITING,
+          const settingUp = [
+            ClusterStatusStateEnum.BOOTSTRAPPING,
+            ClusterStatusStateEnum.STARTING,
           ].includes(state);
+          const tearingDown = [
+            ClusterStatusStateEnum.TERMINATING,
+          ].includes(state);
+
 
           return [
             <Text {...TEXT_PROPS_SHARED} key="id">
@@ -611,9 +615,9 @@ function Clusters({
               justifyContent="flex-end"
               key="active"
             >
-              {ready
-                ? <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
-                : <Spinner inverted small />
+              {(settingUp || tearingDown)
+                ? <Spinner inverted={settingUp} small />
+                : <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
               }
             </FlexContainer>,
           ];
