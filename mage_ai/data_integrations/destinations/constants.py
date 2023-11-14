@@ -5,6 +5,7 @@ DESTINATIONS = [
     dict(name='Delta Lake S3'),
     dict(name='Elasticsearch'),
     dict(name='Google Cloud Storage'),
+    dict(name='Kafka'),
     dict(name='MongoDB'),
     dict(
         module_name='MSSQL',
