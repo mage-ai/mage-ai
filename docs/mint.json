@@ -364,7 +364,7 @@
           "pages": [
             "development/project/setup",
             "getting-started/setting-up-git",
-            "development/git/generate-an-ssh-token",
+            "development/git/configure",
             "getting-started/file-versions",
             "development/text-editor"
           ]
@@ -736,8 +736,7 @@
           "icon": "code-branch",
           "pages": [
             "production/data-sync/git-sync",
-            "production/data-sync/github",
-            "production/data-sync/git-integration"
+            "production/data-sync/github"
           ]
         },
         {

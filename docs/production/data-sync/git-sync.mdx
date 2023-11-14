@@ -1,28 +1,16 @@
 ---
-title: "Git sync"
-description: "One way sync with a specified git repository."
+title: "One-way Git Sync"
+description: "Enabling one-way Git sync in Mage ensures data will be synced in one direction with a specified git repository."
 ---
-
-`Git sync` is a Git feature that allows you to tie your local project to a remote repo. When Git sync is enabled, you will only be able to pull in changes from the remote repository.
-Git sync is particularly useful for deployment— for example if you'd like a hosted Mage instance to stay up-to-date with a repo.
-
-<Warning>
-  Enabling Git sync limits Git to a _unidirectional_ sync. This means that
-  changes made to your local repo will be *overwritten* by the remote repo. To
-  sync both ways, use a different Git integration.
-</Warning>
+Git sync is a Git feature that allows you to tie your local project to a remote repo. When Git sync is enabled, you will only be able to pull in changes from the remote repository. Git sync is particularly useful for deployment— for example if you'd like a hosted Mage instance to stay up-to-date with a repo.
 
 Running a Git sync will **_overwrite all local changes_** and replace them with the code in the specified remote branch. Git syncs can be run either from the Git settings page, or before every trigger run if you selected the `Sync before each trigger run` field.
 
-To enable Git Sync, navigate to the settings page _after_ you've configured your Git settings and tick the `Git Sync` box. To configure git settings, see [this guide](/production/data-sync/git-integration).
+To enable Git Sync, first [configure Git in Mage](/development/git/configure), then navigate to the settings page and tick the `Git Sync` box. To configure git settings, see [this guide](/production/data-sync/git-integration).
 
 ### Syncing git submodules
 
-<Warning>
-  Repositories synced through Mage will only update 1 level of submodules. If
-  your submodule contains other submodules, you will need to manually update
-  them or reformat your submodules.
-</Warning>
+Repositories synced through Mage will only update 1 level of submodules. If your submodule contains other submodules, you will need to manually update them or reformat your submodules.
 
 If your repo contains git submodules, you can enable syncing for them by ticking the `Include submodules` box. Mage will
 use the same credentials that are provided for the main repository to update the submodules.
