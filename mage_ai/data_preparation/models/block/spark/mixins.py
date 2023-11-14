@@ -33,7 +33,11 @@ class SparkBlock:
 
     @property
     def compute_service_uuid(self) -> ComputeServiceUUID:
-        return get_compute_service(ignore_active_kernel=True)
+        print('################################################### compute_service_uuid')
+        value = get_compute_service(ignore_active_kernel=True)
+        print(value)
+        print('\n')
+        return value
 
     def spark_session_application(self) -> Application:
         if not self.spark_session:
@@ -56,8 +60,15 @@ class SparkBlock:
         )
 
     def is_using_spark(self) -> bool:
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ is_using_spark', self.compute_service_uuid)
-        return self.compute_service_uuid is not None
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ is_using_spark')
+        print(self.compute_service_uuid, self.compute_service_uuid in [
+            ComputeServiceUUID.AWS_EMR,
+            ComputeServiceUUID.STANDALONE_CLUSTER,
+        ])
+        return self.compute_service_uuid in [
+            ComputeServiceUUID.AWS_EMR,
+            ComputeServiceUUID.STANDALONE_CLUSTER,
+        ]
 
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
