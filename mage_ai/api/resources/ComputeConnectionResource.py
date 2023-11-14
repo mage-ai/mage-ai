@@ -123,8 +123,10 @@ class ComputeConnectionResource(GenericResource):
 
                         if ComputeConnectionAction.CREATE == action_uuid:
                             if ssh_tunnel:
+                                print('WTFFFFFFFFFFFFFFFFFFF ssh_tunnel.connect')
                                 ssh_tunnel.connect()
                             else:
+                                print('WTFFFFFFFFFFFFFFFFFFF tunnel')
                                 tunnel(ignore_active_kernel=True)
                         elif ComputeConnectionAction.DELETE == action_uuid:
                             ssh_tunnel.close()

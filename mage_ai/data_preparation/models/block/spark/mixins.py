@@ -80,6 +80,9 @@ class SparkBlock:
             ComputeServiceUUID.STANDALONE_CLUSTER,
         ]
 
+    def should_track_spark(self) -> bool:
+        return self.is_using_spark() and self.compute_management_enabled()
+
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
 
@@ -195,7 +198,7 @@ class SparkBlock:
         for application in applications:
             Application.cache_application(application)
 
-    def set_spark_job_execution_start(self) -> None:
+    def set_spark_job_execution_start(self, execution_uuid: str = None) -> None:
         print('************************************** set_spark_job_execution_start')
         self.execution_timestamp_start = datetime.utcnow().timestamp()
         application = self.spark_session_application()
@@ -211,7 +214,7 @@ class SparkBlock:
         print('\n')
 
         if self.spark_session and self.spark_session.sparkContext:
-            key = f'{self.uuid}:{self.execution_timestamp_start}'
+            key = f'{self.uuid}:{self.execution_uuid or self.execution_timestamp_start}'
             # For jobs
             self.spark_session.sparkContext.setLocalProperty('callSite.short', key)
             # For stages
@@ -220,6 +223,7 @@ class SparkBlock:
         self.__update_spark_jobs_cache(
             dict(
                 application=application.to_dict() if application else None,
+                execution_uuid=execution_uuid,
                 submission_timestamp=self.execution_timestamp_start,
             ),
             'before',

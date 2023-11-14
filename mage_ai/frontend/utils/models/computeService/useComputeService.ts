@@ -109,11 +109,13 @@ function useComputeService({
       dataComputeConnections,
     ]);
 
-  const fetchAll = useCallback(() => {
+  const fetchAll = useCallback(() => new Promise((resolve) => {
     fetchComputeClusters?.();
     fetchComputeConnections?.();
     fetchComputeService?.();
-  }, [
+
+    resolve?.();
+  }), [
     fetchComputeClusters,
     fetchComputeConnections,
     fetchComputeService,

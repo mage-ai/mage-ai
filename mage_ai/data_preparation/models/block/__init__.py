@@ -339,6 +339,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         self.execution_timestamp_start = None
         self.execution_timestamp_end = None
+        self.execution_uuid = None
         self._compute_service_uuid = None
         self._repo_config = repo_config
         self._spark_session_current = None
@@ -887,6 +888,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        execution_uuid: str = None,
         from_notebook: bool = False,
         **kwargs
     ) -> Dict:
@@ -897,6 +899,9 @@ class Block(DataIntegrationMixin, SparkBlock):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        if execution_uuid:
+            self.execution_uuid = execution_uuid
+
         if logging_tags is None:
             logging_tags = dict()
 
@@ -1465,8 +1470,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             if logger and 'logger' not in global_vars:
                 global_vars['logger'] = logger
 
-            track_spark = from_notebook and self.is_using_spark() and \
-                self.compute_management_enabled()
+            track_spark = from_notebook and self.should_track_spark()
 
             print('############################################### track_spark', track_spark)
             print(from_notebook, self.is_using_spark(), self.compute_management_enabled())
