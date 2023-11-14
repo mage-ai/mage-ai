@@ -26,10 +26,12 @@ app = typer.Typer(
 
 # Defaults
 
-INIT_PROJECT_PATH_DEFAULT = typer.Argument(..., help='path of the Mage project to be created.')
+INIT_PROJECT_PATH_DEFAULT = typer.Argument(
+    ..., help='path of the Mage project to be created.'
+)
 INIT_PROJECT_TYPE_DEFAULT = typer.Option(
     ProjectType.STANDALONE.value,
-    help='type of project to create, options are main, sub, or standalone'
+    help='type of project to create, options are main, sub, or standalone',
 )
 INIT_CLUSTER_TYPE_DEFAULT = typer.Option(
     None,
@@ -41,13 +43,15 @@ INIT_PROJECT_UUID_DEFAULT = typer.Option(
 )
 
 START_PROJECT_PATH_DEFAULT = typer.Argument(
-    os.getcwd(), help='path of the Mage project to be loaded.')
+    os.getcwd(), help='path of the Mage project to be loaded.'
+)
 START_HOST_DEFAULT = typer.Option('localhost', help='specify the host.')
 START_PORT_DEFAULT = typer.Option('6789', help='specify the port.')
 START_MANAGE_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_DBT_DOCS_INSTANCE_DEFAULT = typer.Option('0', help='')
 START_INSTANCE_TYPE_DEFAULT = typer.Option(
-    InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.')
+    InstanceType.SERVER_AND_SCHEDULER.value, help='specify the instance type.'
+)
 START_PROJECT_TYPE_DEFAULT = typer.Option(
     ProjectType.STANDALONE.value,
     help='create project of this type if does not exist, options are main, sub, or standalone',
@@ -64,32 +68,17 @@ START_PROJECT_UUID_DEFAULT = typer.Option(
 RUN_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project that contains the pipeline.'
 )
-RUN_PIPELINE_UUID_DEFAULT = typer.Argument(
-    ..., help='uuid of the pipeline to be run.'
-)
-RUN_TEST_DEFAULT = typer.Option(
-    False, help='specify if tests should be run.'
-)
-RUN_BLOCK_UUID_DEFAULT = typer.Option(
-    None, help='uuid of the block to be run.'
-)
-RUN_EXECUTION_PARTITION_DEFAULT = typer.Option(
-    None, help=''
-)
-RUN_EXECUTOR_TYPE_DEFAULT = typer.Option(
-    None, help=''
-)
-RUN_CALLBACK_URL_DEFAULT = typer.Option(
-    None, help=''
-)
-RUN_BLOCK_RUN_ID_DEFAULT = typer.Option(
-    None, help=''
-)
-RUN_PIPELINE_RUN_ID_DEFAULT = typer.Option(
-    None, help=''
-)
+RUN_PIPELINE_UUID_DEFAULT = typer.Argument(..., help='uuid of the pipeline to be run.')
+RUN_TEST_DEFAULT = typer.Option(False, help='specify if tests should be run.')
+RUN_BLOCK_UUID_DEFAULT = typer.Option(None, help='uuid of the block to be run.')
+RUN_EXECUTION_PARTITION_DEFAULT = typer.Option(None, help='')
+RUN_EXECUTOR_TYPE_DEFAULT = typer.Option(None, help='')
+RUN_CALLBACK_URL_DEFAULT = typer.Option(None, help='')
+RUN_BLOCK_RUN_ID_DEFAULT = typer.Option(None, help='')
+RUN_PIPELINE_RUN_ID_DEFAULT = typer.Option(None, help='')
 RUN_RUNTIME_VARS_DEFAULT = typer.Option(
-    None, help='specify runtime variables. These will overwrite the pipeline global variables.'
+    None,
+    help='specify runtime variables. These will overwrite the pipeline global variables.',
 )
 RUN_SKIP_SENSORS_DEFAULT = typer.Option(
     False, help='specify if the sensors should be skipped.'
@@ -112,6 +101,22 @@ CLEAN_VARIABLES_PIPELINE_UUID_DEFAULT = typer.Option(
 
 CREATE_SPARK_CLUSTER_PROJECT_PATH_DEFAULT = typer.Argument(
     ..., help='path of the Mage project that contains the EMR config.'
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SOURCES_FILE_DEFAULT = typer.Argument(
+    ..., help='path to the target dbt project sources.yml file'
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_CATALOG_FILE_DEFAULT = typer.Argument(
+    ..., help='path to the data_integration_catalog.json file'
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_TARGET_DIR_DEFAULT = typer.Argument(
+    ..., help='path to the target dbt project models directory'
+)
+
+CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SCHEMA_NAME_DEFAULT = typer.Argument(
+    ..., help="the integration's pipeline destination db schema name"
 )
 
 
@@ -186,7 +191,9 @@ def run(
     pipeline_run_id: Union[int, None] = RUN_PIPELINE_RUN_ID_DEFAULT,
     runtime_vars: Union[str, None] = RUN_RUNTIME_VARS_DEFAULT,
     skip_sensors: bool = RUN_SKIP_SENSORS_DEFAULT,
-    template_runtime_configuration: Union[str, None] = RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT,
+    template_runtime_configuration: Union[
+        str, None
+    ] = RUN_TEMPLATE_RUNTIME_CONFIGURATION_DEFAULT,
 ):
     """
     Run pipeline.
@@ -223,8 +230,9 @@ def run(
         )
     (enable_new_relic, application) = initialize_new_relic()
 
-    with newrelic.agent.BackgroundTask(application, name="mage-run", group='Task') \
-         if enable_new_relic else nullcontext():
+    with newrelic.agent.BackgroundTask(
+        application, name="mage-run", group='Task'
+    ) if enable_new_relic else nullcontext():
         sync_config = get_sync_config()
         if sync_config and sync_config.sync_on_executor_start:
             result = run_git_sync(sync_config=sync_config)
@@ -326,6 +334,30 @@ def create_spark_cluster(
 
     project_path = os.path.abspath(project_path)
     create_cluster(project_path)
+
+
+@app.command()
+def create_dbt_models_from_integration_pipeline(
+    sources_file: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SOURCES_FILE_DEFAULT,
+    catalog_file: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_CATALOG_FILE_DEFAULT,
+    target_dir: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_TARGET_DIR_DEFAULT,
+    schema_name: str = CREATE_DBT_MODELS_FROM_INTEGRATION_PIPELINE_SCHEMA_NAME_DEFAULT,
+):
+    """
+    Create dbt models from a Mage integration pipeline catalog and update the
+    dbt's sources.yaml file.
+    """
+    from mage_ai.data_preparation.models.block.dbt.utils import (
+        generate_dbt_models,
+        generate_models_sql,
+        load_json,
+        update_dbt_sources,
+    )
+
+    catalog_data = load_json(catalog_file)
+    sql_statements = generate_models_sql(catalog_data, schema_name)
+    generate_dbt_models(target_dir, sql_statements)
+    update_dbt_sources(catalog_data, sources_file, schema_name)
 
 
 if __name__ == '__main__':
