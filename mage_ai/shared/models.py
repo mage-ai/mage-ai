@@ -16,13 +16,13 @@ class BaseDataClass:
         annotations = {}
 
         for key, value in self.__dataclass_fields__.items():
-            annotations = value.type
+            annotations[key] = value.type
 
         for parent_class in self.__bases__:
             if issubclass(parent_class, BaseDataClass):
                 for key, value in parent_class.__dataclass_fields__.items():
                     if key not in annotations:
-                        annotations = value.type
+                        annotations[key] = value.type
 
         return annotations
 
