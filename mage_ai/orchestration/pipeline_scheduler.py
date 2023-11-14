@@ -1481,9 +1481,6 @@ def schedule_all():
                     if len(previous_runtimes) >= 1:
                         payload['metrics'] = dict(previous_runtimes=previous_runtimes)
 
-                    if PipelineType.INTEGRATION == pipeline.type:
-                        payload['create_block_runs'] = False
-
                     if (
                         pipeline_schedule.get_settings().skip_if_previous_running
                         and (initial_pipeline_runs or running_pipeline_runs)
@@ -1501,7 +1498,8 @@ def schedule_all():
                             message='Pipeline run limit reached... skipping this run',
                         )
                     else:
-                        pipeline_run = PipelineRun.create(**payload, create_block_runs=False)
+                        payload['create_block_runs'] = False
+                        pipeline_run = PipelineRun.create(**payload)
                         # Log Git sync status for new pipeline runs if a git sync result exists
                         if git_sync_result:
                             pipeline_scheduler = PipelineScheduler(pipeline_run)
