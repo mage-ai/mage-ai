@@ -5,6 +5,7 @@ from typing import Dict, List
 
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -63,6 +64,24 @@ class SetupStep(BaseDataClass):
                     steps.append(step)
 
             self.steps = steps
+
+    def status_calculated(self) -> SetupStepStatus:
+        if self.status:
+            return self.status
+
+        if self.steps:
+            if all([
+                not step.required or SetupStepStatus.COMPLETED == step.status
+                for step in self.steps
+            ]):
+                return SetupStepStatus.COMPLETED
+
+        return None
+
+    def to_dict(self) -> Dict:
+        return merge_dict(super().to_dict(), dict(
+            status_calculated=self.status_calculated(),
+        ))
 
 
 class ComputeService:
