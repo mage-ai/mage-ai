@@ -35,29 +35,21 @@ class SparkBlock:
     def compute_service_uuid(self) -> ComputeServiceUUID:
         if self._compute_service_uuid:
             return self._compute_service_uuid
-        print('################################################### compute_service_uuid')
         self._compute_service_uuid = get_compute_service(
             ignore_active_kernel=True,
             repo_config=self.repo_config,
         )
-        print(self._compute_service_uuid)
-        print('\n')
         return self._compute_service_uuid
 
     def spark_session_application(self) -> Application:
-        print('============================================ spark_session_application')
-        print('self.spark_session', self.spark_session)
         if not self.spark_session:
             return
 
         spark_confs = self.spark_session.sparkContext.getConf().getAll()
-        print('spark_confs', spark_confs)
         value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
-        print('value_tup', value_tup)
 
         if value_tup:
             application_id = value_tup[1]
-            print('application_id', application_id)
 
             return Application.load(
                 id=application_id,
@@ -70,11 +62,6 @@ class SparkBlock:
         )
 
     def is_using_spark(self) -> bool:
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ is_using_spark')
-        print(self.compute_service_uuid, self.compute_service_uuid in [
-            ComputeServiceUUID.AWS_EMR,
-            ComputeServiceUUID.STANDALONE_CLUSTER,
-        ])
         return self.compute_service_uuid in [
             ComputeServiceUUID.AWS_EMR,
             ComputeServiceUUID.STANDALONE_CLUSTER,
@@ -86,8 +73,8 @@ class SparkBlock:
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
 
-        # print(jobs_cache)
-        # print('\n')
+        print(jobs_cache)
+        print('\n')
 
         if 'execution_states' in jobs_cache:
             return jobs_cache.get('execution_states')
@@ -115,43 +102,47 @@ class SparkBlock:
     def jobs_during_execution(self) -> List[Job]:
         self.__load_spark_job_submission_timestamps()
 
-        # print('---------------------------------------------------- jobs_during_execution')
-        # print(self.compute_service_uuid)
-        # print(self.execution_timestamp_start)
-        # print(self.execution_start_application)
-        # print('\n')
+        print('---------------------------------------------------- jobs_during_execution')
+        print(self.compute_service_uuid)
+        print(self.execution_timestamp_start)
+        print(self.execution_uuid_start)
+        print(self.execution_start_application)
+        print('\n')
 
-        if self.execution_timestamp_start:
-            def _filter(
-                job: Job,
-                compute_service_uuid=self.compute_service_uuid,
-                execution_timestamp_start: float = self.execution_timestamp_start,
-                execution_timestamp_end: float = self.execution_timestamp_end,
-            ) -> bool:
-                if not job.submission_time:
-                    return False
+        if not self.execution_timestamp_start and self.execution_uuid_start:
+            return []
 
-                if ComputeServiceUUID.AWS_EMR == compute_service_uuid:
-                    return job.name == f'{self.uuid}:{self.execution_timestamp_start}'
+        def _filter(
+            job: Job,
+            block_uuid=self.uuid,
+            compute_service_uuid=self.compute_service_uuid,
+            execution_timestamp_end: float = self.execution_timestamp_end,
+            execution_timestamp_start: float = self.execution_timestamp_start,
+            execution_uuid_start=self.execution_uuid_start,
+        ) -> bool:
+            if ComputeServiceUUID.AWS_EMR == compute_service_uuid:
+                key = self.execution_uuid_start or self.execution_timestamp_start
+                return job.name == f'{block_uuid}:{key}'
 
-                if isinstance(job.submission_time, str):
-                    submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
-                elif isinstance(job.submission_time, float) or isinstance(job.submission_time, int):
-                    submission_timestamp = datetime.fromtimestamp(job.submission_time)
+            if not job.submission_time:
+                return False
 
-                return execution_timestamp_start and \
-                    execution_timestamp_end and \
-                    submission_timestamp >= execution_timestamp_start and \
-                    (
-                        not execution_timestamp_end or
-                        submission_timestamp <= execution_timestamp_end
-                    )
+            if isinstance(job.submission_time, str):
+                submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
+            elif isinstance(job.submission_time, float) or isinstance(job.submission_time, int):
+                submission_timestamp = datetime.fromtimestamp(job.submission_time)
 
-            jobs = self.__get_jobs(application=self.execution_start_application)
+            return execution_timestamp_start and \
+                execution_timestamp_end and \
+                submission_timestamp >= execution_timestamp_start and \
+                (
+                    not execution_timestamp_end or
+                    submission_timestamp <= execution_timestamp_end
+                )
 
-            return list(filter(_filter, jobs or []))
+        jobs = self.__get_jobs(application=self.execution_start_application)
 
-        return []
+        return list(filter(_filter, jobs or []))
 
     def stages_during_execution(self, jobs: List[Job]):
         if not jobs:
@@ -199,19 +190,8 @@ class SparkBlock:
             Application.cache_application(application)
 
     def set_spark_job_execution_start(self, execution_uuid: str = None) -> None:
-        print('************************************** set_spark_job_execution_start')
         self.execution_timestamp_start = datetime.utcnow().timestamp()
         application = self.spark_session_application()
-
-        print(self.execution_timestamp_start)
-        print(application)
-        print('\n')
-
-        print('SparkSession')
-        print(self.spark_session)
-        print('SparkContext')
-        print(self.spark_session.sparkContext if self.spark_session else None)
-        print('\n')
 
         if execution_uuid:
             self.execution_uuid = execution_uuid
@@ -370,11 +350,11 @@ class SparkBlock:
 
     def __load_spark_job_submission_timestamps(self) -> None:
         self.execution_end_application = None
-        self.execution_end_application = None
-        self.execution_start_application = None
         self.execution_start_application = None
         self.execution_timestamp_end = None
         self.execution_timestamp_start = None
+        self.execution_uuid_end = None
+        self.execution_uuid_start = None
 
         jobs_cache = self.__load_cache()
         if jobs_cache:
@@ -382,6 +362,9 @@ class SparkBlock:
             if before:
                 self.execution_timestamp_start = (before or {}).get(
                     'submission_timestamp',
+                )
+                self.execution_uuid_start = (before or {}).get(
+                    'execution_uuid',
                 )
                 self.execution_start_application = (before or {}).get(
                     'application',
@@ -395,6 +378,9 @@ class SparkBlock:
             if after:
                 self.execution_timestamp_end = (after or {}).get(
                     'submission_timestamp',
+                )
+                self.execution_uuid_end = (after or {}).get(
+                    'execution_uuid',
                 )
                 self.execution_end_application = (after or {}).get(
                     'application',
