@@ -7,6 +7,7 @@ import Text from '@oracle/elements/Text';
 import Tile from '@oracle/components/Tile';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
+import { Col, Row } from '@components/shared/Grid';
 import { GroupedPipelineRunCountType } from '@interfaces/MonitorStatsType';
 import { MetricsSummaryContainerStyle } from './index.style';
 import {
@@ -16,8 +17,10 @@ import {
 } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
+import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { capitalize } from '@utils/string';
 import { formatNumber } from '@utils/number';
+import { formatNumberLabel } from '@components/charts/utils/label';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortTuplesArrayByFirstItem } from '@utils/array';
 
@@ -75,7 +78,7 @@ function MetricsSummary({
 
       <Spacing mb={2} />
 
-      <FlexContainer alignItems="center" justifyContent="space-between">
+      <Row>
         {pipelineRunCounts.map((
           [pipelineType, countsObj],
           idx: number,
@@ -99,28 +102,33 @@ function MetricsSummary({
 
             {sortTuplesArrayByFirstItem(Object.entries(countsObj))
               .map(([runStatus, count], idx: number) => (
-                <Flex
-                  flexDirection="column"
-                  key={`${runStatus}_${idx}`}
-                >
-                  <Text>
-                    {capitalize(runStatus)}
-                  </Text>
-                  <Text
-                    bold
-                    danger={runStatus === RunStatusEnum.FAILED && count > 0}
-                    xlarge
+                <Spacing key={`${runStatus}_${idx}`} px={1}>
+                  <Flex
+                    flexDirection="column"
                   >
-                    {formatNumber(count)}
-                  </Text>
-                </Flex>
+                    <Text>
+                      {capitalize(runStatus)}
+                    </Text>
+                    <Text
+                      bold
+                      danger={runStatus === RunStatusEnum.FAILED && count > 0}
+                      title={formatNumber(count)}
+                      xlarge
+                    >
+                      {formatNumberLabel(
+                        count,
+                        { maxFractionDigits: 1, minAmount: 1000 },
+                      )}
+                    </Text>
+                  </Flex>
+                </Spacing>
               ),
             )}
 
             <Spacing pr={idx !== pipelineRunCounts.length - 1 ? 2 : 0} />
           </Flex>
         ))}
-      </FlexContainer>
+      </Row>
     </MetricsSummaryContainerStyle>
   );
 }
