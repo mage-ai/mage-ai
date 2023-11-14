@@ -119,6 +119,7 @@ class ComputeConnectionResource(GenericResource):
                 elif ComputeConnectionUUID.SSH_TUNNEL == model_id:
                     def _callback(action_uuid=action_uuid, *args, **kwargs):
                         ssh_tunnel = SSHTunnel()
+                        print('WTFFFFFFFFFFFFFFFFFFF get_compute_service', ssh_tunnel)
 
                         if ComputeConnectionAction.CREATE == action_uuid:
                             if ssh_tunnel:

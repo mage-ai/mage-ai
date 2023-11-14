@@ -45,14 +45,19 @@ class SparkBlock:
         return self._compute_service_uuid
 
     def spark_session_application(self) -> Application:
+        print('============================================ spark_session_application')
+        print('self.spark_session', self.spark_session)
         if not self.spark_session:
             return
 
         spark_confs = self.spark_session.sparkContext.getConf().getAll()
+        print('spark_confs', spark_confs)
         value_tup = find(lambda tup: tup[0] == 'spark.app.id', spark_confs)
+        print('value_tup', value_tup)
 
         if value_tup:
             application_id = value_tup[1]
+            print('application_id', application_id)
 
             return Application.load(
                 id=application_id,
@@ -199,12 +204,13 @@ class SparkBlock:
         print(application)
         print('\n')
 
+        print('SparkSession')
+        print(self.spark_session)
+        print('SparkContext')
+        print(self.spark_session.sparkContext if self.spark_session else None)
+        print('\n')
+
         if self.spark_session and self.spark_session.sparkContext:
-            print('SparkSession')
-            print(self.spark_session)
-            print('SparkContext')
-            print(self.spark_session.sparkContext)
-            print('\n')
             key = f'{self.uuid}:{self.execution_timestamp_start}'
             # For jobs
             self.spark_session.sparkContext.setLocalProperty('callSite.short', key)
