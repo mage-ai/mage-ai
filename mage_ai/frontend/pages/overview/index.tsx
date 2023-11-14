@@ -76,6 +76,7 @@ import {
   randomSimpleHashGenerator,
   randomNameGenerator,
 } from '@utils/string';
+import { formatNumber } from '@utils/number';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
@@ -639,7 +640,10 @@ def d(df):
               <Spacing ml={2}>
                 <FlexContainer alignItems="center">
                   <Text bold large>
-                    {isValidatingMonitorStats ? '--' : totalPipelineRunCount} total pipeline runs
+                    {isValidatingMonitorStats
+                      ? '--'
+                      : formatNumber(totalPipelineRunCount)
+                    } total pipeline runs
                   </Text>
                   {utcTooltipEl}
                 </FlexContainer>
