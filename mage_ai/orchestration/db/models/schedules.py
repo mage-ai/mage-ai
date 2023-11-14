@@ -3,6 +3,7 @@ import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
+from itertools import groupby
 from math import ceil
 from statistics import stdev
 from typing import Dict, List
@@ -857,6 +858,26 @@ class PipelineRun(BaseModel):
         if include_block_runs:
             query = query.options(joinedload(PipelineRun.block_runs))
         return query.all()
+
+    @classmethod
+    @safe_db_query
+    def active_runs_for_pipelines_grouped(
+        self,
+        pipeline_uuids: List[str],
+        include_block_runs: bool = False,
+    ) -> Dict[str, List['PipelineRun']]:
+        """
+        Get a dictionary of active pipeline runs grouped by pipeline uuid.
+        """
+
+        active_runs = self.active_runs_for_pipelines(
+            pipeline_uuids,
+            include_block_runs=include_block_runs,
+        )
+        grouped = {}
+        for key, runs in groupby(active_runs, key=lambda x: x.pipeline_uuid):
+            grouped[key] = list(runs)
+        return grouped
 
     @classmethod
     @safe_db_query
