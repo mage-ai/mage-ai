@@ -217,6 +217,7 @@ class BlockExecutorTest(TestCase):
         )
 
         expected_kwargs = dict(
+            callback_kwargs=None,
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
             execution_partition=self.execution_partition,

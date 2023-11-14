@@ -557,6 +557,7 @@ class BlockExecutor:
                         )
                     self._execute_callback(
                         'on_failure',
+                        callback_kwargs=dict(__error=error),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         global_vars=global_vars,
@@ -1043,6 +1044,7 @@ class BlockExecutor:
         global_vars: Dict,
         logging_tags: Dict,
         pipeline_run: PipelineRun,
+        callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
     ):
@@ -1068,6 +1070,7 @@ class BlockExecutor:
             try:
                 callback_block.execute_callback(
                     callback,
+                    callback_kwargs=callback_kwargs,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     execution_partition=self.execution_partition,

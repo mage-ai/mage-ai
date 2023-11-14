@@ -106,7 +106,7 @@ def index_by(func, arr):
     return obj
 
 
-def merge_dict(a, b):
+def merge_dict(a: Dict, b: Dict) -> Dict:
     if a:
         c = a.copy()
     else:
