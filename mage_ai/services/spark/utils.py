@@ -24,14 +24,18 @@ def get_compute_service(
     print(repo_config)
     print(ignore_active_kernel)
     print(kernel_name)
-    print('\n')
     print(repo_config.emr_config)
+    print(is_spark_env())
+    print(repo_config.spark_config)
 
     if repo_config.emr_config and (KernelName.PYSPARK == kernel_name or ignore_active_kernel):
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFF', ComputeServiceUUID.AWS_EMR)
         return ComputeServiceUUID.AWS_EMR
     elif is_spark_env() and repo_config.spark_config and \
             SparkMaster.LOCAL.value == repo_config.spark_config.get('spark_master'):
 
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFF', ComputeServiceUUID.STANDALONE_CLUSTER)
         return ComputeServiceUUID.STANDALONE_CLUSTER
 
+    print('WTFFFFFFFFFFFFFFFFFFFFFFFF None')
     return None

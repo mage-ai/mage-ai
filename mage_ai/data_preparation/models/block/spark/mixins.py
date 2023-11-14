@@ -56,14 +56,14 @@ class SparkBlock:
         )
 
     def is_using_spark(self) -> bool:
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ is_using_spark', self.compute_service_uuid)
         return self.compute_service_uuid is not None
 
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
 
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print(jobs_cache)
-        print('\n')
+        # print(jobs_cache)
+        # print('\n')
 
         if 'execution_states' in jobs_cache:
             return jobs_cache.get('execution_states')
