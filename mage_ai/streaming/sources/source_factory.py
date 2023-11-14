@@ -29,6 +29,10 @@ class SourceFactory:
             from mage_ai.streaming.sources.kafka import KafkaSource
 
             return KafkaSource(config, **kwargs)
+        elif connector_type == SourceType.NATS:
+            from mage_ai.streaming.sources.nats import NATSSource
+
+            return NATSSource(config, **kwargs)
         elif connector_type == SourceType.KINESIS:
             from mage_ai.streaming.sources.kinesis import KinesisSource
 
