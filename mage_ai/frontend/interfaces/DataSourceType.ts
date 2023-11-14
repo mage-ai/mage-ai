@@ -54,6 +54,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.GOOGLE_SHEETS]: 'Google Sheets',
   [DataSourceTypeEnum.INFLUXDB]: 'InfluxDB',
   [DataSourceTypeEnum.KAFKA]: 'Kafka',
+  [DataSourceTypeEnum.NATS]: 'NATS',
   [DataSourceTypeEnum.KINESIS]: 'Kinesis',
   [DataSourceTypeEnum.MONGODB]: 'MongoDB',
   [DataSourceTypeEnum.MSSQL]: 'Microsoft SQL Server',

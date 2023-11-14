@@ -15,6 +15,8 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.shared.hash import merge_dict
+from mage_ai.streaming.sources.base import SourceConsumeMethod
+from mage_ai.streaming.sources.source_factory import SourceFactory
 
 
 class StreamingPipelineExecutor(PipelineExecutor):
@@ -22,6 +24,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         super().__init__(pipeline, **kwargs)
         # TODO: Support custom log destination for streaming pipelines
         self.parse_and_validate_blocks()
+        self.sinks_by_uuid = {}
 
     def parse_and_validate_blocks(self):
         """
@@ -63,7 +66,14 @@ class StreamingPipelineExecutor(PipelineExecutor):
         self.source_block = source_blocks[0]
         self.sink_blocks = sink_blocks
 
-    def execute(
+    async def execute_source(self):
+        messages = []
+        async for batch in self.source.batch_read():
+            messages.extend(batch)
+
+        return messages
+
+    async def execute(
         self,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars: Dict = None,
@@ -72,6 +82,69 @@ class StreamingPipelineExecutor(PipelineExecutor):
         # TODOs:
         # 1. Support multiple sources and sinks
         # 2. Support flink pipeline
+
+        source_config = self.__interpolate_vars(
+            self.source_block.content,
+            global_vars=global_vars,
+        )
+        source = SourceFactory.get_source(
+            source_config,
+            checkpoint_path=os.path.join(
+                self.pipeline.pipeline_variables_dir,
+                'streaming_checkpoint',
+            ),
+        )
+
+        def handle_batch_events(self, messages: List[Union[Dict, str]], **kwargs):
+            for message in messages:
+                # Process each message. This could involve transforming the data,
+                # applying some logic, filtering, etc.
+                processed_message = self.process_message(message)
+
+                # Pass the processed message to downstream blocks.
+                # This is a placeholder function to represent whatever processing
+                # or routing logic you have for each message.
+                self.route_to_downstream_blocks(processed_message, **kwargs)
+
+        async def handle_batch_events_async(messages: List[Union[Dict, str]], **kwargs):
+            handle_batch_events(messages, **kwargs)
+
+        async def handle_event_async(message, **kwargs):
+            # Process the individual message. This could involve transforming the data,
+            # applying some logic, filtering, etc.
+            processed_message = self.process_message(message)
+
+            # Pass the processed message to downstream blocks.
+            # This is a placeholder function to represent whatever processing
+            # or routing logic you have for each message.
+            self.route_to_downstream_blocks(processed_message, **kwargs)
+
+        async def execute_async():
+            try:
+                if source.consume_method == SourceConsumeMethod.BATCH_READ:
+                    messages = await self.execute_source()
+                    await self.handle_batch_events_async(messages)
+                    # await source.batch_read(handler=handle_batch_events_async(messages))
+                elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
+                    await source.read_async(handler=handle_event_async)
+            finally:
+                source.destroy()
+                for sink in self.sinks_by_uuid.values():
+                    sink.destroy()
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # Schedule the coroutine for a running loop
+                asyncio.ensure_future(execute_async())
+            else:
+                # Run the coroutine in a new event loop
+                asyncio.run(execute_async())
+        except RuntimeError:
+            # Handle cases where get_event_loop() fails in environments without an event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(execute_async())
 
         tags = self.build_tags(**kwargs)
         if build_block_output_stdout:
@@ -96,7 +169,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     )
             raise e
 
-    def __execute_in_python(
+    async def __execute_in_python(
         self,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars: Dict = None
@@ -119,9 +192,9 @@ class StreamingPipelineExecutor(PipelineExecutor):
             ),
         )
 
-        sinks_by_uuid = dict()
+        # sinks_by_uuid = dict()
         for sink_block in self.sink_blocks:
-            sinks_by_uuid[sink_block.uuid] = SinkFactory.get_sink(
+            self.sinks_by_uuid[sink_block.uuid] = SinkFactory.get_sink(
                 self.__interpolate_vars(sink_block.content, global_vars=global_vars),
                 buffer_path=os.path.join(
                     self.pipeline.pipeline_variables_dir,
@@ -159,7 +232,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
                             **execute_block_kwargs,
                     )['output']
                 elif downstream_block.type == BlockType.DATA_EXPORTER:
-                    sinks_by_uuid[downstream_block.uuid].batch_write(
+                    self.sinks_by_uuid[downstream_block.uuid].batch_write(
                         __deepcopy(curr_block_output))
                 if downstream_block.downstream_blocks:
                     handle_batch_events_recursively(
@@ -190,10 +263,21 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 **merge_dict(global_vars, kwargs),
             )
 
+        async def handle_batch_events_async(messages: List[Union[Dict, str]], **kwargs):
+            handle_batch_events(messages, **kwargs)
+
         # Long running method
         try:
             if source.consume_method == SourceConsumeMethod.BATCH_READ:
-                source.batch_read(handler=handle_batch_events)
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # Handle the case where the loop is already running (e.g., Jupyter Notebook)
+                    messages = await self.execute_source()
+                    handle_batch_events_async(messages)  # Call the async handler directly
+                else:
+                    loop.run_until_complete(
+                        source.batch_read(handler=handle_batch_events_async)
+                    )
             elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
                 loop = asyncio.get_event_loop()
                 if loop is not None:
@@ -202,7 +286,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     asyncio.run(source.read_async(handler=handle_event_async))
         finally:
             source.destroy()
-            for sink in sinks_by_uuid.values():
+            for sink in self.sinks_by_uuid.values():
                 sink.destroy()
 
     def __execute_in_flink(self):

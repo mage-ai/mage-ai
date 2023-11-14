@@ -3,7 +3,7 @@ import ssl
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
-from nats.aio.client import Client as nats
+import nats
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
@@ -31,10 +31,6 @@ class NATSConfig(BaseConfig):
 class NATSSource(BaseSource):
     config_class = NATSConfig
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.client = nats.aio.client.Client()
-
     async def init_client(self):
         if not self.config.topic and not self.config.topics:
             raise Exception('Please specify a topic or topics to subscribe to in the NATS config.')
@@ -57,6 +53,8 @@ class NATSSource(BaseSource):
             connect_options['tls_hostname'] = self.config.tls_hostname
 
         self._print('Initializing NATS client.')
+        nc = await nats.connect(**connect_options)
+        js = await nc.jetstream()
         await self.client.connect(self.config.server_url, **connect_options)
         self._print('NATS client initialized.')
 
@@ -67,13 +65,39 @@ class NATSSource(BaseSource):
 
         # Subscribe to each subject
         for subject in subjects_to_subscribe:
-            await self.client.subscribe(subject, cb=self.message_handler)
-
-        self._print('Subscribed to NATS subjects.')
+            await js.add_stream(
+                subject=subject,
+                durable_name=self.config.consumer_name,
+                deliver_all=True,
+                callback=self.message_handler
+            )
 
     async def message_handler(self, msg, handler: Callable):
         data = self.__deserialize_json(msg.data)
         await handler(data)
+
+    def _convert_message(self, message):
+        if self.config.include_metadata:
+            message = {
+                'data': self.__deserialize_message(message.value),
+                'metadata': {
+                    'key': message.key.decode() if message.key else None,
+                    'partition': message.partition,
+                    'offset': message.offset,
+                    'time': int(message.timestamp),
+                    'topic': message.topic,
+                },
+            }
+        else:
+            message = self.__deserialize_message(message.value)
+        return message
+
+    def read(self, handler: Callable):
+        self._print('Start consuming messages synchronously.')
+        for message in self.consumer:
+            self.__print_message(message)
+            message = self._convert_message(message)
+            handler(message)
 
     async def read_async(self, handler: Callable):
         self._print('Start consuming messages asynchronously.')
