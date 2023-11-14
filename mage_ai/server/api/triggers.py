@@ -48,6 +48,7 @@ class ApiTriggerPipelineHandler(BaseHandler):
             pipeline,
             pipeline_schedule,
             payload,
+            should_schedule=False,
         )
 
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
