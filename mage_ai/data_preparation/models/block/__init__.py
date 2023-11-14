@@ -1463,8 +1463,6 @@ class Block(DataIntegrationMixin, SparkBlock):
 
             track_spark = from_notebook and self.should_track_spark()
 
-            print('############################################### track_spark', track_spark)
-            print(from_notebook, self.is_using_spark(), self.compute_management_enabled())
             if track_spark:
                 self.clear_spark_jobs_cache()
                 self.cache_spark_application()
@@ -2532,7 +2530,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None) -> Dict:
-        print('`````````````````````````````````````` __enrich_global_vars')
         if global_vars is None:
             global_vars = dict()
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
@@ -2550,17 +2547,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         self.global_vars = global_vars
 
-        print('self.global_vars', self.global_vars)
-        print('\n')
-
         return global_vars
 
     def get_spark_session(self):
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ get_spark_session')
-        print('self.spark_init', self.spark_init)
-        print('self.spark', self.spark)
-        print('self.pipeline', self.pipeline)
-        print('self.pipeline.spark_config', self.pipeline.spark_config if self.pipeline else None)
         if self.spark_init and (not self.pipeline or
                                 not self.pipeline.spark_config):
             return self.spark
@@ -2569,27 +2558,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.pipeline and self.pipeline.spark_config:
                 spark_config = SparkConfig.load(
                     config=self.pipeline.spark_config)
-                print('spark_config', spark_config)
             else:
                 repo_config = RepoConfig(repo_path=self.repo_path)
-                print('repo_config', repo_config)
                 spark_config = SparkConfig.load(
                     config=repo_config.spark_config)
-                print('spark_config', spark_config)
             self.spark = get_spark_session(spark_config)
-            print('self.spark', self.spark)
         except Exception:
             self.spark = None
 
-        print('self.spark', self.spark)
-        print('self.global_vars', self.global_vars)
-        print('self.global_vars.spark', self.global_vars.get('spark') if self.global_vars else None)
         if not self.spark and self.global_vars and self.global_vars.get('spark'):
             self.spark = self.global_vars.get('spark')
-
-        print('self.spark', self.spark)
-        print('\n')
-        print('\n')
 
         self.spark_init = True
         return self.spark

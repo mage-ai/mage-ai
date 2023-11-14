@@ -74,7 +74,6 @@ def tunnel(
         kernel_name=kernel_name,
         project=project,
     ):
-        print('WTFFFFFFFFFFFFFFFFFFF can’t tunnel')
         return
 
     data = dict(
@@ -87,8 +86,6 @@ def tunnel(
         ssh_username=ssh_username,
         stop=stop,
     )
-
-    print('WTFFFFFFFFFFFFFFFFFFF data')
 
     if project and \
             project.emr_config and \

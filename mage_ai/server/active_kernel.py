@@ -89,9 +89,6 @@ def switch_active_kernel(
 
                     cluster_info = cluster_info_from_tunnel()
 
-                    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! cluster_info')
-                    print(cluster_info)
-                    print('\n')
                     if cluster_info:
                         from mage_ai.services.compute.models import ComputeService
 
@@ -100,10 +97,6 @@ def switch_active_kernel(
                         cluster = compute_service.get_cluster_details(cluster_id=cluster_id)
 
                         should_set_active = cluster.has_dns_name if cluster else False
-                        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! cluster')
-                        print(cluster)
-                        print(should_set_active)
-                        print('\n')
 
             if should_set_active:
                 emr_cluster_manager.set_active_cluster(

@@ -331,7 +331,6 @@ def execute_custom_code():
     logger.setLevel('INFO')
     if 'logger' not in global_vars:
         global_vars['logger'] = logger
-    print('_____________________________ output_display')
     block_output = block.execute_with_callback(
         custom_code=code,
         execution_uuid={execution_uuid},
