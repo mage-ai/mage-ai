@@ -11,6 +11,8 @@ type ColProps = {
   hiddenMdUp?: boolean;
   hiddenSmDown?: boolean;
   hiddenSmUp?: boolean;
+  hiddenXlDown?: boolean;
+  hiddenXlUp?: boolean;
   hiddenXsDown?: boolean;
   hiddenXsUp?: boolean;
   lg?: number;

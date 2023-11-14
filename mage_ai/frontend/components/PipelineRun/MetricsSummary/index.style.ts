@@ -15,3 +15,19 @@ export const MetricsSummaryContainerStyle = styled.div`
   `}
 
 `;
+
+export const MetricContainerStyle = styled.div<{
+  includeLeftBorder?: boolean;
+}>`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+
+  ${props => props.includeLeftBorder && `
+    @media (min-width: 1200px) {
+      padding-left: 24px;
+      border-left: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBorder};
+    }
+  `}
+`;
