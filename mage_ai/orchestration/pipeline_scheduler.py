@@ -196,6 +196,14 @@ class PipelineScheduler:
                 self.pipeline_run.pipeline_schedule_id,
             )
             backfills = schedule.backfills if schedule else []
+            backfill = backfills[0] if len(backfills) >= 1 else None
+
+            if backfill is not None and \
+                backfill.status == Backfill.Status.INITIAL and \
+                    self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
+                backfill.update(
+                    status=Backfill.Status.RUNNING,
+                )
 
             if self.pipeline_run.all_blocks_completed(self.allow_blocks_to_fail):
                 if PipelineType.INTEGRATION == self.pipeline.type:
@@ -228,8 +236,7 @@ class PipelineScheduler:
 
                 if schedule:
                     # When all pipeline runs that are associated with backfill is done
-                    if len(backfills) >= 1:
-                        backfill = backfills[0]
+                    if backfill is not None:
                         latest_pipeline_runs = \
                             PipelineSchedule.fetch_latest_pipeline_runs_without_retries(
                                 [backfill.pipeline_schedule_id]
@@ -255,15 +262,13 @@ class PipelineScheduler:
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.FAILED)
 
-                if len(backfills) >= 1:
-                    backfill = backfills[0]
-                    if any(
-                        [PipelineRun.PipelineRunStatus.FAILED == pr.status
-                            for pr in backfill.pipeline_runs]
-                    ):
-                        backfill.update(
-                            status=Backfill.Status.FAILED,
-                        )
+                if backfill is not None and any(
+                    [PipelineRun.PipelineRunStatus.FAILED == pr.status
+                        for pr in backfill.pipeline_runs]
+                ):
+                    backfill.update(
+                        status=Backfill.Status.FAILED,
+                    )
 
                 asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
 
