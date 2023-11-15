@@ -9,15 +9,9 @@ from datetime import datetime
 from time import sleep
 from typing import Optional, Union
 
-import prometheus_client
 import pytz
 import tornado.ioloop
 import tornado.web
-from opentelemetry import metrics
-from opentelemetry.exporter.prometheus import PrometheusMetricReader
-from opentelemetry.instrumentation.tornado import TornadoInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -168,6 +162,8 @@ class ApiSchedulerHandler(BaseHandler):
 
 class PrometheusMetricsHandler(BaseHandler):
     def get(self):
+        import prometheus_client
+
         self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
@@ -331,6 +327,12 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     ]
 
     if ENABLE_PROMETHEUS:
+        from opentelemetry import metrics
+        from opentelemetry.exporter.prometheus import PrometheusMetricReader
+        from opentelemetry.instrumentation.tornado import TornadoInstrumentor
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
         TornadoInstrumentor().instrument()
         # Service name is required for most backends
         resource = Resource(attributes={
