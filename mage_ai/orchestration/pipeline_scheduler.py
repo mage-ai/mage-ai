@@ -235,8 +235,13 @@ class PipelineScheduler:
                 self.logger_manager.output_logs_to_destination()
 
                 if schedule:
-                    # When all pipeline runs that are associated with backfill is done
                     if backfill is not None:
+                        """
+                        Exclude old pipeline run retries associated with the backfill
+                        (if a backfill's runs had failed and the backfill was retried, those
+                        previous runs are no longer relevant) and check if the backfill's
+                        latest pipeline runs with different execution dates were successfull.
+                        """
                         latest_pipeline_runs = \
                             PipelineSchedule.fetch_latest_pipeline_runs_without_retries(
                                 [backfill.pipeline_schedule_id]
@@ -262,6 +267,7 @@ class PipelineScheduler:
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.FAILED)
 
+                # Backfill status updated to "failed" if at least 1 of its pipeline runs failed
                 if backfill is not None and any(
                     [PipelineRun.PipelineRunStatus.FAILED == pr.status
                         for pr in backfill.pipeline_runs]
