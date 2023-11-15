@@ -33,4 +33,6 @@ class AwsEmrAPI(LocalAPI):
         return url
 
     def ready_for_requests(self, **kwargs) -> bool:
-        return True if SSHTunnel() else False
+        tunnel = SSHTunnel()
+        ready = tunnel and tunnel.is_active()
+        return True if ready else False

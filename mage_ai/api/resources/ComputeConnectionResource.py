@@ -1,5 +1,8 @@
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.services.compute.constants import ComputeConnectionActionUUID
+from mage_ai.services.compute.constants import (
+    ComputeConnectionActionUUID,
+    ComputeConnectionState,
+)
 from mage_ai.services.compute.models import ComputeConnection, ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.ssh.aws.emr.models import SSHTunnel
@@ -60,4 +63,13 @@ class ComputeConnectionResource(GenericResource):
                         elif ComputeConnectionActionUUID.UPDATE == action_uuid:
                             ssh_tunnel.reconnect()
 
-                    self.on_update_callback = _callback
+                    action_valid = action_uuid in [
+                        ComputeConnectionActionUUID.CREATE,
+                        ComputeConnectionActionUUID.DELETE,
+                        ComputeConnectionActionUUID.DESELECT,
+                        ComputeConnectionActionUUID.UPDATE,
+                    ]
+
+                    if action_valid:
+                        self.model.state = ComputeConnectionState.PENDING
+                        self.on_update_callback = _callback

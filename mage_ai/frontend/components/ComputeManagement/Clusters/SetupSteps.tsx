@@ -18,12 +18,14 @@ type SetupStepsProps = {
   contained?: boolean;
   onClickStep?: (tab: string) => void;
   setupSteps: SetupStepType[];
+  small?: boolean;
 };
 
 function SetupSteps({
   contained = true,
   onClickStep,
   setupSteps,
+  small,
 }: SetupStepsProps) {
   const buildStep = useCallback((
     step: SetupStepType,
@@ -60,53 +62,62 @@ function SetupSteps({
     const statusIconSize = level === 0 ? 2 * UNIT : 1.5 * UNIT;
 
     if (group) {
-      return (
-        <Spacing key={uuid} mb={PADDING_UNITS}>
-          <Panel noPadding>
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer>
-                <Flex flex={1} flexDirection="column">
-                  <FlexContainer
-                    alignItems="center"
-                    justifyContent="space-between"
-                  >
-                    <Headline level={4}>
-                      {name}
-                    </Headline>
+      const groupEl = (
+        <>
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer>
+              <Flex flex={1} flexDirection="column">
+                <FlexContainer
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Headline level={small ? 5 : 4}>
+                    {name}
+                  </Headline>
 
-                    <Spacing mr={PADDING_UNITS} />
+                  <Spacing mr={PADDING_UNITS} />
 
-                    {SetupStepStatusEnum.COMPLETED === status && (
-                      <Check
-                        size={statusIconSize}
-                        success
-                      />
-                    )}
-                  </FlexContainer>
-
-                  {description && (
-                    <Spacing mt={1}>
-                      <Text default>
-                        {description}
-                      </Text>
-                    </Spacing>
+                  {SetupStepStatusEnum.COMPLETED === status && (
+                    <Check
+                      size={statusIconSize}
+                      success
+                    />
                   )}
-                </Flex>
-              </FlexContainer>
-            </Spacing>
+                </FlexContainer>
 
-            <Divider light />
+                {description && (
+                  <Spacing mt={1}>
+                    <Text default small={small}>
+                      {description}
+                    </Text>
+                  </Spacing>
+                )}
+              </Flex>
+            </FlexContainer>
+          </Spacing>
 
-            {steps?.map((substep, idx2) => buildStep(
-              substep,
-              idx2,
-              substepsCount,
-              {
-                completedGroup: SetupStepStatusEnum.COMPLETED === status,
-                level: 0,
-              },
-            ))}
-          </Panel>
+          <Divider light />
+
+          {steps?.map((substep, idx2) => buildStep(
+            substep,
+            idx2,
+            substepsCount,
+            {
+              completedGroup: SetupStepStatusEnum.COMPLETED === status,
+              level: 0,
+            },
+          ))}
+        </>
+      );
+
+      return (
+        <Spacing key={uuid} mb={small ? 0 : PADDING_UNITS}>
+          {contained && (
+            <Panel noPadding>
+              {groupEl}
+            </Panel>
+          )}
+          {!contained && groupEl}
         </Spacing>
       );
     }
@@ -124,7 +135,7 @@ function SetupSteps({
     const clickable = !!tab && onClickStep;
     const numberEl = (
       <Spacing pl={level === 0 ? PADDING_UNITS : 0}>
-        <Text large monospace muted>
+        <Text large={!small} monospace muted>
           {stepNumber}.
         </Text>
       </Spacing>
@@ -148,7 +159,7 @@ function SetupSteps({
         }
       >
         <Spacing
-          py={level === 0 ? PADDING_UNITS : 1}
+          py={(level === 0 && !small) ? PADDING_UNITS : 1}
         >
           <FlexContainer>
             {numberElParent && (
@@ -167,18 +178,20 @@ function SetupSteps({
 
             <Flex flex={1} flexDirection="column">
               <FlexContainer flexDirection="column">
-                <FlexContainer
-                  alignItems="center"
-
-                >
+                <FlexContainer alignItems="center">
                   <Flex flex={1}>
-                    {level === 0 && (
+                    {level === 0 && !small && (
                       <Headline level={5} {...completedTextProps}>
                         {name}
                       </Headline>
                     )}
-                    {level >= 1 && (
+                    {level === 0 && small && (
                       <Text bold large {...completedTextProps}>
+                        {name}
+                      </Text>
+                    )}
+                    {level >= 1 && (
+                      <Text bold large={!small} {...completedTextProps}>
                         {name}
                       </Text>
                     )}
@@ -222,7 +235,7 @@ function SetupSteps({
 
                 {description && (
                   <Spacing mt={1} pr={PADDING_UNITS * 3}>
-                    <Text default {...completedTextProps}>
+                    <Text default {...completedTextProps} small={small}>
                       {description}
                     </Text>
                   </Spacing>
@@ -253,7 +266,9 @@ function SetupSteps({
       </SetupStepRowStyle>
     );
   }, [
+    contained,
     onClickStep,
+    small,
   ]);
 
   const stepsEls = [];

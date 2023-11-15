@@ -6,6 +6,7 @@ from typing import Dict, List
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.services.compute.constants import (
     ComputeConnectionActionUUID,
+    ComputeConnectionState,
     ComputeManagementApplicationTab,
 )
 from mage_ai.services.spark.constants import ComputeServiceUUID
@@ -125,12 +126,14 @@ class ComputeConnection(SetupStep):
     attributes: Dict = field(default_factory=dict)
     connection: Dict = field(default_factory=dict)
     required: bool = False
+    state: ComputeConnectionState = None
     steps: List[SetupStep] = field(default_factory=list)
 
     def __post_init__(self):
         super().__post_init__()
         self.serialize_attribute_classes('actions', ComputeConnectionAction)
         self.serialize_attribute_classes('steps', SetupStep)
+        self.serialize_attribute_enum('state', ComputeConnectionState)
 
 
 class ComputeService:

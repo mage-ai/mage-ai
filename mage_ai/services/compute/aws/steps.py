@@ -14,6 +14,7 @@ from mage_ai.services.compute.constants import (
     CUSTOM_TCP_PORT,
     SSH_PORT,
     ComputeConnectionActionUUID,
+    ComputeConnectionState,
     ComputeManagementApplicationTab,
 )
 from mage_ai.services.compute.models import (
@@ -356,6 +357,7 @@ def build_connections(compute_service: ComputeService) -> List[ComputeConnection
         master_public_dns_name=None,
     ))
     error = None
+    state = None
     status = None
     ssh_tunnel_active = False
 
@@ -363,12 +365,15 @@ def build_connections(compute_service: ComputeService) -> List[ComputeConnection
         from mage_ai.services.ssh.aws.emr.models import SSHTunnel
 
         attributes['master_public_dns_name'] = active_cluster.master_public_dns_name
+        state = ComputeConnectionState.INACTIVE
 
         ssh_tunnel = SSHTunnel()
         try:
             if ssh_tunnel:
                 attributes.update(ssh_tunnel.to_dict())
                 ssh_tunnel_active = ssh_tunnel.is_active()
+                if ssh_tunnel_active:
+                    state = ComputeConnectionState.ACTIVE
         except Exception as err:
             error = ErrorMessage.load(
                 message=f'SSH tunnel failed to connect: {err}.',
@@ -431,8 +436,9 @@ def build_connections(compute_service: ComputeService) -> List[ComputeConnection
                     'view the status and progress of code execution.',
         error=error,
         group=True,
-        name='Spark observability',
+        name='Compute observability',
         required=True,
+        state=state,
         status=status,
         steps=[
             step1,

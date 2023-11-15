@@ -8,9 +8,10 @@ class ComputeConnectionActionUUID(str, Enum):
     UPDATE = 'UPDATE'
 
 
-class ComputeConnectionUUID(str, Enum):
-    CLUSTER = 'CLUSTER'
-    SSH_TUNNEL = 'SSH_TUNNEL'
+class ComputeConnectionState(str, Enum):
+    ACTIVE = 'ACTIVE'
+    INACTIVE = 'INACTIVE'
+    PENDING = 'PENDING'
 
 
 class ComputeManagementApplicationTab(str, Enum):

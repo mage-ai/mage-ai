@@ -24,7 +24,6 @@ function ErrorMessage({
   } = error;
 
   let errorHTML = messageInit;
-  console.log(variables)
 
   if (variables) {
     Object.entries(variables || {}).forEach(([key, value]) => {

@@ -11,6 +11,25 @@ export enum SetupStepStatusEnum {
   INCOMPLETE = 'incomplete',
 };
 
+export enum SetupStepUUIDEnum {
+  ACTIVATE_CLUSTER = 'activate_cluster',
+  AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID',
+  AWS_SECRET_ACCESS_KEY = 'AWS_SECRET_ACCESS_KEY',
+  CLUSTER_CONNECTION = 'cluster_connection',
+  CONFIGURE = 'configure',
+  CREDENTIALS = 'credentials',
+  EC2_KEY_NAME = 'ec2_key_name',
+  EC2_KEY_PAIR = 'ec2_key_pair',
+  EC2_KEY_PATH = 'ec2_key_path',
+  IAM_PROFILE = 'iam_instance_profile',
+  LAUNCH_CLUSTER = 'launch_cluster',
+  OBSERVABILITY = 'observability',
+  PERMISSIONS = 'permissions',
+  PERMISSIONS_SSH = 'permissions_ssh',
+  REMOTE_VARIABLES_DIR = 'remote_variables_dir',
+  SETUP = 'setup',
+};
+
 interface ErrorMessageType {
   message: string;
   variables?: {
@@ -40,7 +59,7 @@ export interface SetupStepType {
   status_calculated?: SetupStepStatusEnum;
   steps?: SetupStepType[];
   tab?: string;
-  uuid: string;
+  uuid: SetupStepUUIDEnum;
 }
 
 export default interface ComputeServiceType {

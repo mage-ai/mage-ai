@@ -15,6 +15,7 @@ import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterSelection from './ClusterSelection';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
+import ConnectionSettings from '@components/ComputeManagement/ConnectionSettings';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -50,6 +51,7 @@ import {
 } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
 import { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
+import { ComputeConnectionStateEnum } from '@interfaces/ComputeConnectionType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
@@ -65,6 +67,7 @@ import {
 } from '@storage/localStorage';
 import { MenuStyle } from './ClusterSelection/index.style'
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SetupStepStatusEnum, SetupStepUUIDEnum } from '@interfaces/ComputeServiceType';
 import { SparkApplicationType } from '@interfaces/SparkType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { removeUnderscore, roundNumber } from '@utils/string';
@@ -126,9 +129,16 @@ function KernelStatus({
     clustersLoading,
     computeService,
     computeServiceUUIDs,
+    connections,
+    connectionsLoading,
+    fetchAll,
     fetchComputeClusters,
     setupComplete,
-  } = useComputeService();
+  } = useComputeService({
+    clustersRefreshInterval: 5000,
+    computeServiceRefreshInterval: 5000,
+    connectionsRefreshInterval: 5000,
+  });
 
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
@@ -142,6 +152,7 @@ function KernelStatus({
   const [showSelectCluster, setShowSelectCluster] = useState(false);
   const [showSelectKernel, setShowSelectKernel] = useState(false);
   const [clusterSelectionVisible, setClusterSelectionVisible] = useState(false);
+  const [computeConnectionVisible, setComputeConnectionVisible] = useState(false);
 
   const refSelectKernel = useRef(null);
 
@@ -340,6 +351,126 @@ function KernelStatus({
     },
   );
 
+  const computeConnectionStatusMemo = useMemo(() => {
+    if (!sparkEnabled
+      || !validComputePipelineType
+      || computeServiceUUIDs.AWS_EMR !== computeService?.uuid
+    ) {
+      return null;
+    }
+
+    const connection = connections?.find(({ uuid }) => SetupStepUUIDEnum.OBSERVABILITY === uuid);
+    if (!connection) {
+      return null;
+    }
+
+    const {
+      name,
+      state,
+      status_calculated: status,
+      uuid,
+    } = connection;
+
+    const active = [
+      ComputeConnectionStateEnum.ACTIVE,
+    ].includes(state);
+    const inactive = [
+      ComputeConnectionStateEnum.INACTIVE,
+    ].includes(state);
+    const completed = [
+      SetupStepStatusEnum.COMPLETED,
+    ].includes(status);
+
+    const buttonProps: {
+      muted?: boolean;
+      warning?: boolean;
+    } = {
+      muted: true,
+      warning: false,
+    };
+
+    let displayText = name || uuid;
+    if (completed) {
+      if (active) {
+        displayText = 'Observability enabled';
+         buttonProps.muted = false;
+      } else {
+        displayText = 'SSH tunnel not connected';
+      }
+    }
+
+    const menuEl = (
+       <ClickOutside
+        onClickOutside={(e) => {
+          pauseEvent(e);
+          setClusterSelectionVisible(false);
+        }}
+        open={computeConnectionVisible}
+      >
+        <MenuStyle>
+          <ConnectionSettings
+            actionsOnly={completed}
+            computeService={computeService}
+            computeConnections={[connection]}
+            contained={false}
+            hideDetails
+            fetchAll={fetchAll}
+            onClickStep={(tab: string) => {
+              router.push(`/compute?tab=${tab}`);
+            }}
+            small
+          />
+        </MenuStyle>
+      </ClickOutside>
+    );
+
+    const statusIconEl = (
+      <PowerOnOffButton
+        danger={[
+          SetupStepStatusEnum.ERROR,
+        ].includes(status)}
+        muted={[
+          SetupStepStatusEnum.INCOMPLETE,
+        ].includes(status)}
+        success={completed && active}
+      />
+    );
+
+    return (
+      <div style={{ position: 'relative' }}>
+        <KeyboardShortcutButton
+          beforeElement={statusIconEl}
+          blackBorder
+          compact
+          inline
+          noHover={connectionsLoading}
+          onClick={(e) => {
+            pauseEvent(e);
+            if (!computeConnectionVisible) {
+              setComputeConnectionVisible(true);
+            }
+            setClusterSelectionVisible(false);
+          }}
+          uuid="Pipeline/ComputeConnectionStatus"
+          {...buttonProps}
+        >
+          {displayText}
+        </KeyboardShortcutButton>
+
+        {menuEl}
+      </div>
+    );
+  }, [
+    computeConnectionVisible,
+    computeService,
+    connections,
+    connectionsLoading,
+    fetchAll,
+    setClusterSelectionVisible,
+    setComputeConnectionVisible,
+    validComputePipelineType,
+  ]);
+
   const computeStatusMemo = useMemo(() => {
     if (!sparkEnabled || !validComputePipelineType) {
       return null;
@@ -358,6 +489,11 @@ function KernelStatus({
     };
 
     if (computeServiceUUIDs.AWS_EMR === computeService?.uuid) {
+      const step =
+        computeService?.setup_steps?.find(({ uuid }) => SetupStepUUIDEnum.SETUP === uuid);
+
+      const setupCompleteModified = step?.status_calculated;
+
       if (PipelineTypeEnum.PYSPARK !== pipeline?.type) {
         return null;
       }
@@ -393,7 +529,7 @@ function KernelStatus({
             ].includes(state)}
           />
         );
-      } else if (setupComplete) {
+      } else if (setupCompleteModified) {
         if (!clusters?.length) {
           pipelineDisplayName = 'Launch a new cluster';
         } else {
@@ -414,19 +550,14 @@ function KernelStatus({
             open={clusterSelectionVisible}
           >
             <MenuStyle>
-              <Spacing p={PADDING_UNITS}>
-                <Text bold large>
-                  Setup steps
-                </Text>
-              </Spacing>
-
-              <Divider light />
-
               <SetupSteps
                 computeService={computeService}
+                contained={false}
                 onClickStep={(tab: string) => {
                   router.push(`/compute?tab=${tab}`);
                 }}
+                setupSteps={computeService?.setup_steps}
+                small
               />
             </MenuStyle>
           </ClickOutside>
@@ -436,6 +567,7 @@ function KernelStatus({
           if (!clusterSelectionVisible) {
             setClusterSelectionVisible(true);
           }
+          setComputeConnectionVisible(false);
         };
         pipelineDisplayName = 'Compute setup incomplete';
         statusIconEl = (
@@ -445,7 +577,7 @@ function KernelStatus({
         );
       }
 
-      if (activeCluster || setupComplete) {
+      if (activeCluster || setupCompleteModified) {
         menuEl = (
           <ClickOutside
             onClickOutside={(e) => {
@@ -462,6 +594,8 @@ function KernelStatus({
           if (!clusterSelectionVisible) {
             setClusterSelectionVisible(true);
           }
+          setComputeConnectionVisible(false);
+          setComputeConnectionVisible(false);
         };
       }
     } else if (computeServiceUUIDs.STANDALONE_CLUSTER === computeService?.uuid) {
@@ -506,7 +640,7 @@ function KernelStatus({
           inline
           noHover={!dataSparkApplications || sparkApplications?.length >= 1}
           onClick={onClick}
-          uuid="Pipeline/KernelStatus/kernel"
+          uuid="Pipeline/ComputeStatus"
           {...buttonProps}
         >
           {pipelineDisplayName}
@@ -525,7 +659,7 @@ function KernelStatus({
     pipeline,
     router,
     setClusterSelectionVisible,
-    setupComplete,
+    setComputeConnectionVisible,
     sparkApplications,
     sparkEnabled,
     validComputePipelineType,
@@ -839,6 +973,12 @@ function KernelStatus({
 
             <FlexContainer alignItems="center">
               {kernelStatusMemo}
+
+              {computeConnectionStatusMemo && (
+                <Spacing ml={1}>
+                  {computeConnectionStatusMemo}
+                </Spacing>
+              )}
 
               {computeStatusMemo && (
                 <Spacing ml={1}>

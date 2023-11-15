@@ -1,5 +1,5 @@
 import AWSEMRClusterType from './AWSEMRClusterType';
-import { SetupStepType } from './ComputeServiceType';
+import { SetupStepType, SetupStepUUIDEnum } from './ComputeServiceType';
 
 export enum ComputeConnectionActionUUIDEnum {
   CREATE = 'CREATE',
@@ -8,9 +8,10 @@ export enum ComputeConnectionActionUUIDEnum {
   UPDATE = 'UPDATE',
 }
 
-export enum ComputeConnectionUUIDEnum {
-  CLUSTER = 'CLUSTER',
-  SSH_TUNNEL = 'SSH_TUNNEL',
+export enum ComputeConnectionStateEnum {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  PENDING = 'PENDING',
 }
 
 export interface ComputeConnectionActionType {
@@ -25,6 +26,7 @@ export default interface ComputeConnectionType extends SetupStepType {
     [key: string]: any;
   };
   connection: AWSEMRClusterType | SSHTunnelType;
+  state:ComputeConnectionStateEnum;
   steps: SetupStepType[];
-  uuid: ComputeConnectionUUIDEnum,
+  uuid: SetupStepUUIDEnum,
 }

@@ -156,6 +156,9 @@ class SSHTunnel:
         return self.tunnel.is_active
 
     def __precheck_access(self) -> bool:
+        if not self._instance:
+            return False
+
         try:
             test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             test_socket.settimeout(5)
