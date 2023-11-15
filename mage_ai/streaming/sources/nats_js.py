@@ -1,6 +1,7 @@
 import asyncio
 import json
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List
 
@@ -24,12 +25,12 @@ class SSLConfig:
 @dataclass
 class NATSConfig(BaseConfig):
     server_url: str
+    stream_name: str
     subject: str = None
     subjects: List = field(default_factory=list)
     use_tls: bool = False
     ssl_config: SSLConfig = None
     consumer_name: str = None
-    stream_name: str
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout: int = DEFAULT_TIMEOUT_MS / 1000  # Convert to seconds
 
@@ -111,6 +112,8 @@ class NATSSource(BaseSource):
     def batch_read(self, handler: Callable):
         self.init_client()
 
+        self._print("Starting batch read")
+
         try:
             while True:
                 messages = self.fetch_messages()
@@ -135,13 +138,16 @@ class NATSSource(BaseSource):
     def read(self, handler: Callable):
         self.init_client()
 
+        self._print("Starting read")
+
         try:
             while True:
                 messages = self.fetch_messages()
-                if not messages:
-                    break
-                for message in messages:
-                    handler(message)
+                if messages:
+                    for message in messages:
+                        handler(message)
+                else:
+                    time.sleep(1)  # Sleep for 1 second if no messages are available
         finally:
             self.close_client()
             self.stop_loop()
