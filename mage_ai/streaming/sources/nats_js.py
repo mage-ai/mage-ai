@@ -78,7 +78,8 @@ class NATSSource(BaseSource):
                 closed_cb=self.closed_cb,
             )
             self.js = self.nc.jetstream()
-            # Additional setup for JetStream, if necessary
+            await self.js.add_stream(name=self.config.consumer_name, subjects=[self.config.subject])
+            self.psub = await self.js.pull_subscribe(self.config.subject, "mage_psub")
         finally:
             self._print('Caught exception while connecting to NATS server.')
             pass
