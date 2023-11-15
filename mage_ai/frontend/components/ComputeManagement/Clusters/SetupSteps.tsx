@@ -187,34 +187,30 @@ function SetupSteps({
                     )}
                   </Flex>
 
-                  {!completedGroup && (
-                    <>
-                      <Spacing mr={PADDING_UNITS} />
+                  <Spacing mr={PADDING_UNITS} />
 
-                      {SetupStepStatusEnum.COMPLETED === status && (
-                        <Check
-                          size={statusIconSize}
-                          success
-                        />
-                      )}
-
-                      {SetupStepStatusEnum.INCOMPLETE === status && (
-                        <AlertTriangle
-                          muted
-                          size={statusIconSize}
-                        />
-                      )}
-
-                      {SetupStepStatusEnum.ERROR === status && (
-                        <AlertTriangle
-                          danger
-                          size={statusIconSize}
-                        />
-                      )}
-                    </>
+                  {SetupStepStatusEnum.COMPLETED === status && (
+                    <Check
+                      size={statusIconSize}
+                      success
+                    />
                   )}
 
-                  <Spacing pr={PADDING_UNITS * (!completedGroup && status ? 1 : 2)} />
+                  {SetupStepStatusEnum.INCOMPLETE === status && (
+                    <AlertTriangle
+                      muted
+                      size={statusIconSize}
+                    />
+                  )}
+
+                  {SetupStepStatusEnum.ERROR === status && (
+                    <AlertTriangle
+                      danger
+                      size={statusIconSize}
+                    />
+                  )}
+
+                  <Spacing pr={PADDING_UNITS * (status ? 1 : 2)} />
                 </FlexContainer>
 
                 {description && (
