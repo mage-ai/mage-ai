@@ -30,7 +30,7 @@ class NATSConfig(BaseConfig):
     ssl_config: SSLConfig = None
     consumer_name: str = None
     batch_size: int = DEFAULT_BATCH_SIZE
-    timeout_ms: int = DEFAULT_TIMEOUT_MS  # Timeout in seconds
+    timeout: int = DEFAULT_TIMEOUT_MS / 1000  # Convert to seconds
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -119,7 +119,7 @@ class NATSSource(BaseSource):
 
     async def afetch_messages(self):
         try:
-            msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout_ms)
+            msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout)
             return [json.loads(msg.data.decode()) for msg in msgs]
         except nats.errors.TimeoutError:
             return []
