@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List
 
 import nats
+
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from mage_ai.streaming.sources.base import BaseSource
@@ -64,11 +65,6 @@ class NATSSource(BaseSource):
         self.thread.join()
 
     async def ainit_client(self):
-        # self.nc = await nats.connect(self.config.server_url)
-        # self.js = self.nc.jetstream()
-        # use consumer_name to create a durable consumer
-        # await self.js.add_stream(name=self.config.consumer_name, subjects=[self.config.subject])
-        # self.psub = await self.js.pull_subscribe(self.config.subject, "mage_psub")
         try:
             self.nc = await nats.connect(
                 self.config.server_url,
@@ -80,9 +76,8 @@ class NATSSource(BaseSource):
             self.js = self.nc.jetstream()
             await self.js.add_stream(name=self.config.consumer_name, subjects=[self.config.subject])
             self.psub = await self.js.pull_subscribe(self.config.subject, "mage_psub")
-        finally:
-            self._print('Caught exception while connecting to NATS server.')
-            pass
+        except Exception as e:
+            self._print(f'Caught exception while connecting to NATS server: {e}')
         # except NoServersError as e:
         #    print(f"Failed to connect to NATS server: {e}")
 
@@ -110,10 +105,6 @@ class NATSSource(BaseSource):
     def close_client(self):
         asyncio.run_coroutine_threadsafe(self.aclose_client(), self.loop)
 
-    async def apublish_message(self, message):
-        ack = await self.js.publish(self.config.subject, json.dumps(message).encode())
-        return ack
-
     def batch_read(self, handler: Callable):
         self.init_client()
 
@@ -127,13 +118,9 @@ class NATSSource(BaseSource):
             self.close_client()
             self.stop_loop()
 
-    def publish_message(self, message):
-        future = asyncio.run_coroutine_threadsafe(self.apublish_message(message), self.loop)
-        return future.result()
-
     async def afetch_messages(self):
         try:
-            msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout)
+            msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout_ms)
             return [json.loads(msg.data.decode()) for msg in msgs]
         except nats.errors.TimeoutError:
             return []
