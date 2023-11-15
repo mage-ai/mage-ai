@@ -620,6 +620,7 @@ function ComputeManagement({
         <Monitoring
           applications={applications}
           computeConnections={connections}
+          computeService={computeService}
           connectionsLoading={connectionsLoading}
           fetchAll={fetchAll}
           jobs={jobs}
@@ -636,6 +637,7 @@ function ComputeManagement({
     }
   }, [
     applications,
+    computeService,
     connections,
     connectionsLoading,
     fetchAll,

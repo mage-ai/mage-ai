@@ -11,6 +11,8 @@ from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
 )
 from mage_ai.services.compute.constants import (
+    CUSTOM_TCP_PORT,
+    SSH_PORT,
     ComputeConnectionActionUUID,
     ComputeManagementApplicationTab,
 )
@@ -24,9 +26,6 @@ from mage_ai.services.compute.models import (
 )
 from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
 from mage_ai.shared.hash import extract, merge_dict
-
-CUSTOM_TCP_PORT = 8998
-SSH_PORT = 22
 
 ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
     message='Environment variable '

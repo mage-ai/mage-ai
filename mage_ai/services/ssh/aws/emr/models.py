@@ -1,11 +1,13 @@
 import json
 import os
+import socket
 from typing import Dict
 
 from sshtunnel import SSHTunnelForwarder
 
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.services.compute.aws.models import Cluster
+from mage_ai.services.compute.constants import SSH_PORT
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.api.constants import SPARK_UI_HOST
 from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
@@ -78,12 +80,18 @@ class SSHTunnel:
             return self._instance._tunnel
 
     def connect(self) -> bool:
+        if not self.__precheck_access():
+            return
+
         if not self.is_active():
             self.__start()
 
         return self.is_active()
 
     def reconnect(self) -> bool:
+        if not self.__precheck_access():
+            return False
+
         if self.is_active():
             self.__restart()
         else:
@@ -92,6 +100,9 @@ class SSHTunnel:
         return self.is_active()
 
     def stop(self) -> None:
+        if not self.__precheck_access():
+            return
+
         if self.tunnel:
             try:
                 self.tunnel.stop()
@@ -99,6 +110,9 @@ class SSHTunnel:
                 print(f'[WARNING] AWS EMR SSHTunnel: {err}')
 
     def close(self) -> None:
+        if not self.__precheck_access():
+            return
+
         if self.tunnel:
             self.tunnel.stop()
             self._instance = None
@@ -129,27 +143,43 @@ class SSHTunnel:
         ))
 
     def is_active(self, raise_error: bool = False) -> bool:
+        if not self.__precheck_access():
+            return False
+
         if not self.tunnel:
             return False
 
         if raise_error:
+
             self.tunnel._check_is_started()
 
         return self.tunnel.is_active
+
+    def __precheck_access(self) -> bool:
+        try:
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.settimeout(5)
+            test_socket.connect((self._instance.master_public_dns_name, SSH_PORT))
+
+            return True
+        except Exception as err:
+            print(f'[WARNING] AWS EMR SSHTunnel precheck access: {err}')
+
+        return False
 
     def __restart(self) -> None:
         if self.tunnel:
             try:
                 self.tunnel.restart()
             except Exception as err:
-                print(f'[WARNING] AWS EMR SSHTunnel: {err}')
+                print(f'[WARNING] AWS EMR SSHTunnel restart: {err}')
 
     def __start(self) -> None:
         if self.tunnel:
             try:
                 self.tunnel.start()
             except Exception as err:
-                print(f'[WARNING] AWS EMR SSHTunnel: {err}')
+                print(f'[WARNING] AWS EMR SSHTunnel start: {err}')
 
 
 def create_tunnel(

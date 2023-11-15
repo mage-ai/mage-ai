@@ -20,3 +20,7 @@ class ComputeManagementApplicationTab(str, Enum):
     RESOURCES = 'resources'
     SETUP = 'setup'
     SYSTEM = 'system'
+
+
+CUSTOM_TCP_PORT = 8998
+SSH_PORT = 22

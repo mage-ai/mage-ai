@@ -1,12 +1,10 @@
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.services.compute.constants import (
-    ComputeConnectionActionUUID,
-    ComputeConnectionUUID,
-)
-from mage_ai.services.compute.models import ComputeService
+from mage_ai.services.compute.constants import ComputeConnectionActionUUID
+from mage_ai.services.compute.models import ComputeConnection, ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.ssh.aws.emr.models import SSHTunnel
 from mage_ai.services.ssh.aws.emr.utils import tunnel
+from mage_ai.shared.array import find
 
 
 class ComputeConnectionResource(GenericResource):
@@ -28,22 +26,28 @@ class ComputeConnectionResource(GenericResource):
 
     @classmethod
     async def member(self, pk, user, **kwargs):
-        return self(dict(
-            uuid=pk,
-        ), user, **kwargs)
+        parent_model = kwargs.get('parent_model')
+
+        model = ComputeConnection.load(name=pk, uuid=pk)
+        if parent_model and isinstance(parent_model, ComputeService):
+            if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
+                model = find(lambda x: x.uuid == pk, parent_model.compute_connections())
+
+        return self(model, user, **kwargs)
 
     async def update(self, payload, **kwargs):
         parent_model = kwargs.get('parent_model')
 
         action_uuid = payload.get('action')
-        model_uuid = self.model.get('uuid')
 
         if not action_uuid:
             return
 
         if parent_model and isinstance(parent_model, ComputeService):
             if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
-                if ComputeConnectionUUID.SSH_TUNNEL == model_uuid:
+                from mage_ai.services.compute.aws.steps import SetupStepUUID
+
+                if SetupStepUUID.OBSERVABILITY == self.model.uuid:
                     def _callback(action_uuid=action_uuid, *args, **kwargs):
                         ssh_tunnel = SSHTunnel()
 
