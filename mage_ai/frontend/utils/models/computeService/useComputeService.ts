@@ -86,7 +86,7 @@ function useComputeService({
 
     return computeService?.setup_steps?.every(({
       required,
-      status,
+      status_calculated: status,
     }) => !required || !status || SetupStepStatusEnum.COMPLETED === status);
   }, [
     computeService,

@@ -244,9 +244,7 @@ function ComputeManagement({
     useMemo(() => dataJobs?.spark_jobs, [dataJobs]);
 
   useEffect(() => {
-    if (!setupComplete) {
-      setAfterHidden(false);
-    }
+    setAfterHidden(setupComplete);
   }, [
     setupComplete,
   ]);

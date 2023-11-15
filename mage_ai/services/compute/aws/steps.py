@@ -2,6 +2,8 @@ import os
 from enum import Enum
 from typing import List
 
+import requests
+
 from mage_ai.services.aws.emr.constants import SECURITY_GROUP_NAME_MASTER_DEFAULT
 from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
@@ -14,6 +16,8 @@ from mage_ai.services.compute.models import (
     SetupStep,
     SetupStepStatus,
 )
+
+CUSTOM_TCP_PORT = 8998
 
 ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
     message='Environment variable '
@@ -47,8 +51,8 @@ class SetupStepUUID(str, Enum):
     IAM_PROFILE = 'iam_instance_profile'
     PERMISSIONS = 'permissions'
     REMOTE_VARIABLES_DIR = 'remote_variables_dir'
+    SECURITY_GROUP_INBOUND_RULE_TCP = 'security_group_inbound_rule_tcp'
     SETUP = 'setup'
-    TCP_8998 = 'tcp_8998'
 
 
 def build_credentials(compute_service: ComputeService) -> SetupStep:
@@ -135,8 +139,19 @@ def build_permissions(compute_service: ComputeService) -> SetupStep:
 
         master_security_group_name = compute_service.project.emr_config.get('master_security_group')
 
-    # TODO: Check: use boto3 and ping Master Public DNS
     status = SetupStepStatus.INCOMPLETE
+    cluster = compute_service.active_cluster()
+    if cluster and cluster.master_public_dns_name:
+        try:
+            response = requests.get(
+                f'http://{cluster.master_public_dns_name}:{CUSTOM_TCP_PORT}',
+                timeout=3,
+            )
+            if response.status_code == 200:
+                status = SetupStepStatus.COMPLETED
+        except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout) as err:
+            print(f'[WARNING] AWS EMR create tunnel: {err}')
+            status = SetupStepStatus.ERROR
 
     return SetupStep.load(
         name=SetupStepUUID.PERMISSIONS.capitalize(),
@@ -146,12 +161,12 @@ def build_permissions(compute_service: ComputeService) -> SetupStep:
                     'from your current IP address.',
         steps=[
             SetupStep.load(
-                name='Custom TCP port 8998',
-                description='Add an inbound rule for Custom TCP port 8998 '
+                name=f'Custom TCP port {CUSTOM_TCP_PORT}',
+                description=f'Add an inbound rule for Custom TCP port {CUSTOM_TCP_PORT} '
                             'from your current IP address (e.g. My IP) '
                             f'to the security group named “{master_security_group_name}”.',
                 status=status,
-                uuid=SetupStepUUID.TCP_8998,
+                uuid=SetupStepUUID.SECURITY_GROUP_INBOUND_RULE_TCP,
             ),
             # SetupStep.load(
             #     name='SSH port 22',
