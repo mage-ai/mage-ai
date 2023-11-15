@@ -10,8 +10,9 @@ from mage_ai.services.compute.aws.constants import (
     INVALID_STATES,
     ClusterStatusState,
 )
-from mage_ai.services.compute.aws.steps import build_steps
+from mage_ai.services.compute.aws.steps import build_connections, build_steps
 from mage_ai.services.compute.models import (
+    ComputeConnection,
     ComputeService,
     ConnectionCredential,
     ErrorMessage,
@@ -450,6 +451,9 @@ class AWSEMRComputeService(ComputeService):
             key,
             secret,
         ]
+
+    def compute_connections(self) -> List[ComputeConnection]:
+        return build_connections(compute_service=self)
 
     def setup_steps(self) -> List[SetupStep]:
         return build_steps(compute_service=self)

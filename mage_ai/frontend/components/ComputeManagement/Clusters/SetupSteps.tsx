@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
 
-import ComputeServiceType, {
-  SetupStepStatusEnum,
-  SetupStepType,
-} from '@interfaces/ComputeServiceType';
 import Divider from '@oracle/elements/Divider';
 import ErrorMessage from '../ErrorMessage';
 import Flex from '@oracle/components/Flex';
@@ -15,16 +11,17 @@ import Text from '@oracle/elements/Text';
 import { AlertTriangle, Check } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SetupStepRowStyle } from '../index.style';
+import { SetupStepStatusEnum, SetupStepType } from '@interfaces/ComputeServiceType';
 import { alphabet } from '@utils/string';
 
 type SetupStepsProps = {
-  computeService: ComputeServiceType;
   onClickStep?: (tab: string) => void;
+  setupSteps: SetupStepType[];
 };
 
 function SetupSteps({
-  computeService,
   onClickStep,
+  setupSteps,
 }: SetupStepsProps) {
   const buildStep = useCallback((
     step: SetupStepType,
@@ -250,9 +247,9 @@ function SetupSteps({
   ]);
 
   const stepsEls = [];
-  const stepsCount = computeService?.setup_steps?.length || 0;
+  const stepsCount = setupSteps?.length || 0;
 
-  computeService?.setup_steps?.forEach((step, idx: number) => {
+  setupSteps?.forEach((step, idx: number) => {
     const {
       status,
     } = step;

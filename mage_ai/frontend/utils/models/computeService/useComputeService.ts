@@ -30,6 +30,7 @@ function useComputeService({
     [key: string]: ComputeServiceUUIDEnum;
   };
   connections?: ComputeConnectionType[];
+  connectionsLoading?: boolean;
   fetchAll?: () => void;
   fetchComputeClusters?: () => void;
   fetchComputeConnections?: () => void;
@@ -131,6 +132,7 @@ function useComputeService({
       [k]: v,
     }), {}),
     connections: computeConnections,
+    connectionsLoading: !dataComputeConnections,
     fetchAll,
     fetchComputeClusters,
     fetchComputeConnections,

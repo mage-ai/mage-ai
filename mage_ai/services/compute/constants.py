@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ComputeConnectionAction(str, Enum):
+class ComputeConnectionActionUUID(str, Enum):
     CREATE = 'CREATE'
     DELETE = 'DELETE'
     DESELECT = 'DESELECT'

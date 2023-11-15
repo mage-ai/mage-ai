@@ -1,4 +1,5 @@
 import AWSEMRClusterType from './AWSEMRClusterType';
+import { SetupStepType } from './ComputeServiceType';
 
 export enum ComputeConnectionActionUUIDEnum {
   CREATE = 'CREATE',
@@ -14,21 +15,16 @@ export enum ComputeConnectionUUIDEnum {
 
 export interface ComputeConnectionActionType {
   name: string;
+  description?: string;
   uuid: ComputeConnectionActionUUIDEnum;
 }
 
-export interface SSHTunnelType {
-  active: boolean;
-  address: string;
-  host: string
-  port: number;
-}
-
-export default interface ComputeConnectionType {
+export default interface ComputeConnectionType extends SetupStepType {
   actions: ComputeConnectionActionType[];
-  active: boolean;
-  connection?: AWSEMRClusterType | SSHTunnelType;
-  description?: string;
-  id: ComputeConnectionUUIDEnum;
-  name: string;
+  steps: SetupStepType[];
+  tags: {
+    [key: string]: any;
+  };
+  target: AWSEMRClusterType | SSHTunnelType;
+  uuid: ComputeConnectionUUIDEnum,
 }

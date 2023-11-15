@@ -15,6 +15,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
+import SetupSteps from '../Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -25,14 +26,16 @@ import { useError } from '@context/Error';
 
 type ConnectionSettingsProps = {
   computeService: ComputeServiceType;
-  connections: ComputeConnectionType[];
+  computeConnections: ComputeConnectionType[];
   fetchAll: () => void;
+  onClickStep?: (tab: string) => void;
 }
 
 function ConnectionSettings({
   computeService,
-  connections,
+  computeConnections,
   fetchAll,
+  onClickStep,
 }: ConnectionSettingsProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'ConnectionSettings',
@@ -40,21 +43,21 @@ function ConnectionSettings({
 
   const [connectionActionUpdating, setConnectionActionUpdating] = useState<{
     action: ComputeConnectionActionType;
-    connection: ComputeConnectionType;
+    target: AWSEMRClusterType | SSHTunnelType;
   }>(null);
   const [updateComputeConnection, { isLoading: isLoadingComputeConnection }]: any = useMutation(
     ({
       action,
-      connection,
+      target,
       id,
     }: {
       action: ComputeConnectionActionUUIDEnum;
-      connection: AWSEMRClusterType | SSHTunnelType;
-      id: ComputeConnectionUUIDEnum;
+      target: AWSEMRClusterType | SSHTunnelType;
+      uuid: ComputeConnectionUUIDEnum;
     }) => api.compute_connections.compute_services.useUpdate(computeService?.uuid, id)({
       compute_connection: {
         action,
-        connection,
+        target,
       },
     }),
     {
@@ -81,19 +84,32 @@ function ConnectionSettings({
 
   return (
     <Spacing mb={PADDING_UNITS}>
-      {connections?.map((connection) => {
+      <SetupSteps
+        setupSteps={computeConnections}
+        onClickStep={onClickStep}
+      />
+
+      {/*{computeConnections?.map((computeConnection) => {
         const {
           actions,
-          active,
-          connection: connectionModel,
           description,
-          id,
+          error,
+          group,
           name,
-        } = connection;
+          required,
+          status,
+          steps,
+          tab,
+          tags,
+          target,
+          uuid,
+        } = computeConnection;
+
+        console.log(computeConnection)
 
         return (
-          <Spacing key={id} mt={PADDING_UNITS} px={PADDING_UNITS}>
-            <Panel noPadding>
+          <Spacing key={uuid} mt={PADDING_UNITS} px={PADDING_UNITS}>
+            {<Panel noPadding>
               <Spacing p={PADDING_UNITS}>
                 <FlexContainer>
                   <Flex flex={1} flexDirection="column">
@@ -170,10 +186,14 @@ function ConnectionSettings({
                   </Spacing>
                 </>
               )}
-            </Panel>
+            </Panel>}
+
+            {steps?.length >= 1 && (
+
+            )}
           </Spacing>
         );
-      })}
+      })}*/}
     </Spacing>
   );
 }

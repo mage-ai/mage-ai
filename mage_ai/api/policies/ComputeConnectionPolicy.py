@@ -61,7 +61,7 @@ ComputeConnectionPolicy.allow_read(
 ComputeConnectionPolicy.allow_write(
     [
         'action',
-        'connection',
+        'target',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

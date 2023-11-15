@@ -136,6 +136,14 @@ class BaseDataClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_classes: {err}')
 
+    def serialize_attribute_enum(self, attribute_name: str, enum_class):
+        try:
+            value = getattr(self, attribute_name)
+            if value and isinstance(value, str):
+                setattr(self, attribute_name, enum_class(value))
+        except AttributeError as err:
+            print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enum: {err}')
+
     def to_dict(self) -> Dict:
         data = {}
 

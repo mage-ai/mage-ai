@@ -4,7 +4,10 @@ from enum import Enum
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.project import Project
-from mage_ai.services.compute.constants import ComputeManagementApplicationTab
+from mage_ai.services.compute.constants import (
+    ComputeConnectionActionUUID,
+    ComputeManagementApplicationTab,
+)
 from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
@@ -99,6 +102,30 @@ class SetupStep(BaseDataClass):
         ))
 
 
+@dataclass
+class ComputeConnectionAction(BaseDataClass):
+    name: str
+    uuid: ComputeConnectionActionUUID
+    description: str = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('uuid', ComputeConnectionActionUUID)
+
+
+@dataclass
+class ComputeConnection(SetupStep):
+    actions: List[ComputeConnectionAction] = field(default_factory=list)
+    required: bool = False
+    steps: List[SetupStep] = field(default_factory=list)
+    tags: Dict = field(default_factory=dict)
+    target: Dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.serialize_attribute_classes('actions', ComputeConnectionAction)
+        self.serialize_attribute_classes('steps', SetupStep)
+
+
 class ComputeService:
     uuid = ComputeServiceUUID.STANDALONE_CLUSTER
 
@@ -156,6 +183,10 @@ class ComputeService:
 
     @abstractmethod
     def connection_credentials(self) -> List[ConnectionCredential]:
+        pass
+
+    @abstractmethod
+    def compute_connections(self) -> List[ComputeConnection]:
         pass
 
     @abstractmethod

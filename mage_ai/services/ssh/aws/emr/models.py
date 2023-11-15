@@ -7,17 +7,23 @@ from sshtunnel import SSHTunnelForwarder
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
-from mage_ai.services.spark.api.constants import SPARK_UI_HOST, SPARK_UI_PORT_AWS_EMR
+from mage_ai.services.spark.api.constants import SPARK_UI_HOST
+from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
 from mage_ai.services.ssh.aws.emr.utils import file_path, should_tunnel
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import is_port_in_use
-
-SSH_USERNAME_DEFAULT = 'hadoop'
 
 
 class SSHTunnel:
     _instance = None
     _tunnel = None
+    ec2_key_path = None
+    master_public_dns_name = None
+    spark_ui_host_local = None
+    spark_ui_host_remote = None
+    spark_ui_port_local = None
+    spark_ui_port_remote = None
+    ssh_username = None
 
     def __new__(
         cls,
@@ -39,19 +45,29 @@ class SSHTunnel:
                     -L [local host]:[local port]:[remote host]:[remote port] \
                     hadoop@ec2-34-217-92-37.us-west-2.compute.amazonaws.com
                 """
+                cls._instance.ec2_key_path = ec2_key_path
+                cls._instance.master_public_dns_name = master_public_dns_name
+                cls._instance.spark_ui_host_local = spark_ui_host_local
+                cls._instance.spark_ui_host_remote = spark_ui_host_remote
+                cls._instance.spark_ui_port_local = spark_ui_port_local
+                cls._instance.spark_ui_port_remote = spark_ui_port_remote
+                cls._instance.ssh_username = ssh_username or SSH_DEFAULTS['ssh_username']
 
                 cls._instance._tunnel = SSHTunnelForwarder(
-                    master_public_dns_name,
+                    cls._instance.master_public_dns_name,
                     local_bind_address=(
-                        spark_ui_host_local or SPARK_UI_HOST,
-                        get_port(spark_ui_port_local or SPARK_UI_PORT_AWS_EMR),
+                        cls._instance.spark_ui_host_local or SSH_DEFAULTS['spark_ui_host_local'],
+                        get_port(
+                            cls._instance.spark_ui_port_local or
+                            SSH_DEFAULTS['spark_ui_port_local']
+                        ),
                     ),
                     remote_bind_address=(
-                        spark_ui_host_remote or SPARK_UI_HOST,
-                        spark_ui_port_remote or SPARK_UI_PORT_AWS_EMR,
+                        cls._instance.spark_ui_host_remote or SSH_DEFAULTS['spark_ui_host_remote'],
+                        cls._instance.spark_ui_port_remote or SSH_DEFAULTS['spark_ui_port_remote'],
                     ),
-                    ssh_pkey=ec2_key_path,
-                    ssh_username=ssh_username or SSH_USERNAME_DEFAULT,
+                    ssh_pkey=cls._instance.ec2_key_path,
+                    ssh_username=cls._instance.ssh_username,
                 )
 
         return cls._instance
@@ -103,6 +119,13 @@ class SSHTunnel:
     def to_dict(self) -> Dict:
         return merge_dict(self.connection_details(), dict(
             active=self.is_active(),
+            ec2_key_path=self.ec2_key_path,
+            master_public_dns_name=self.master_public_dns_name,
+            spark_ui_host_local=self.spark_ui_host_local,
+            spark_ui_host_remote=self.spark_ui_host_remote,
+            spark_ui_port_local=self.spark_ui_port_local,
+            spark_ui_port_remote=self.spark_ui_port_remote,
+            ssh_username=self.ssh_username,
         ))
 
     def is_active(self, raise_error: bool = False) -> bool:

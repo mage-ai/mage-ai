@@ -112,6 +112,7 @@ function ComputeManagement({
     clustersLoading,
     computeService,
     connections,
+    connectionsLoading,
     fetchAll,
     setupComplete,
   }: ComputeServiceType = useComputeService({
@@ -557,11 +558,11 @@ function ComputeManagement({
     if (computeService?.setup_steps?.length >= 1) {
       return (
         <SetupSteps
-          computeService={computeService}
           onClickStep={(tab: string) => setSelectedTab(() => ({
             // @ts-ignore
             main: tab,
           }))}
+          setupSteps={computeService?.setup_steps}
         />
       );
     }
@@ -610,18 +611,6 @@ function ComputeManagement({
     updateProject,
   ]);
 
-  const connectionMemo = useMemo(() => (
-    <ConnectionSettings
-      computeService={computeService}
-      connections={connections}
-      fetchAll={fetchAll}
-    />
-  ), [
-    computeService,
-    connections,
-    fetchAll,
-  ]);
-
   const monitoringMemo = useMemo(() => {
     if ([
       ComputeServiceEnum.AWS_EMR,
@@ -630,6 +619,9 @@ function ComputeManagement({
       return (
         <Monitoring
           applications={applications}
+          computeConnections={connections}
+          connectionsLoading={connectionsLoading}
+          fetchAll={fetchAll}
           jobs={jobs}
           loadingApplications={!dataApplications}
           loadingJobs={!dataJobs}
@@ -638,11 +630,15 @@ function ComputeManagement({
           selectedComputeService={selectedComputeService}
           // @ts-ignore
           setSelectedSql={setSelectedSql}
+          setSelectedTab={setSelectedTab}
         />
       );
     }
   }, [
     applications,
+    connections,
+    connectionsLoading,
+    fetchAll,
     dataApplications,
     dataJobs,
     jobs,
@@ -650,6 +646,7 @@ function ComputeManagement({
     refButtonTabs,
     selectedComputeService,
     setSelectedSql,
+    setSelectedTab,
   ]);
 
   const systemMemo = useMemo(() => {
@@ -778,15 +775,10 @@ function ComputeManagement({
       if (MainNavigationTabEnum.CLUSTERS === uuid) {
         return clustersMemo;
       }
-
-      if (MainNavigationTabEnum.CONNECTION === uuid) {
-        return connectionMemo;
-      }
     }
   }, [
     clustersMemo,
     computeServicesMemo,
-    connectionMemo,
     monitoringMemo,
     objectAttributes,
     project,

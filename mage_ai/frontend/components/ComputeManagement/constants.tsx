@@ -52,7 +52,6 @@ export type ComputeServiceEnum = typeof ComputeServiceEnum;
 
 export enum MainNavigationTabEnum {
   CLUSTERS = 'clusters',
-  CONNECTION = 'connection',
   MONITORING = 'monitoring',
   RESOURCES = 'resources',
   SETUP = 'setup',
@@ -61,7 +60,6 @@ export enum MainNavigationTabEnum {
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
   [MainNavigationTabEnum.CLUSTERS]: 'Clusters',
-  [MainNavigationTabEnum.CONNECTION]: 'Connection',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
   [MainNavigationTabEnum.MONITORING]: 'Monitoring',
   [MainNavigationTabEnum.SETUP]: 'Setup',
@@ -172,10 +170,6 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
           );
         },
         uuid: MainNavigationTabEnum.CLUSTERS,
-      },
-      {
-        Icon: PlugAPI,
-        uuid: MainNavigationTabEnum.CONNECTION,
       },
     ]);
   }

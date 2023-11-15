@@ -1,4 +1,5 @@
 import os
+import socket
 from enum import Enum
 from typing import List
 
@@ -9,15 +10,22 @@ from mage_ai.services.compute.aws.constants import (
     CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID,
     CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY,
 )
-from mage_ai.services.compute.constants import ComputeManagementApplicationTab
+from mage_ai.services.compute.constants import (
+    ComputeConnectionActionUUID,
+    ComputeManagementApplicationTab,
+)
 from mage_ai.services.compute.models import (
+    ComputeConnection,
     ComputeService,
     ErrorMessage,
     SetupStep,
     SetupStepStatus,
 )
+from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
+from mage_ai.shared.hash import merge_dict
 
 CUSTOM_TCP_PORT = 8998
+SSH_PORT = 22
 
 ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
     message='Environment variable '
@@ -51,9 +59,14 @@ class SetupStepUUID(str, Enum):
     CLUSTER_CONNECTION = 'cluster_connection'
     CONFIGURE = 'configure'
     CREDENTIALS = 'credentials'
+    EC2_KEY_NAME = 'ec2_key_name'
+    EC2_KEY_PAIR = 'ec2_key_pair'
+    EC2_KEY_PATH = 'ec2_key_path'
     IAM_PROFILE = 'iam_instance_profile'
     LAUNCH_CLUSTER = 'launch_cluster'
+    OBSERVABILITY = 'observability'
     PERMISSIONS = 'permissions'
+    PERMISSIONS_SSH = 'permissions_ssh'
     REMOTE_VARIABLES_DIR = 'remote_variables_dir'
     SETUP = 'setup'
 
@@ -195,14 +208,15 @@ def build_permissions(compute_service: ComputeService, active_cluster=None) -> S
     status = SetupStepStatus.INCOMPLETE
     if active_cluster and active_cluster.master_public_dns_name:
         try:
+            url = f'http://{active_cluster.master_public_dns_name}:{CUSTOM_TCP_PORT}'
             response = requests.get(
-                f'http://{active_cluster.master_public_dns_name}:{CUSTOM_TCP_PORT}',
+                url,
                 timeout=3,
             )
             if response.status_code == 200:
                 status = SetupStepStatus.COMPLETED
         except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout) as err:
-            print(f'[WARNING] AWS EMR create tunnel: {err}')
+            print(f'[WARNING] Cannot connect to {url}: {err}')
             status = SetupStepStatus.ERROR
 
     return SetupStep.load(
@@ -211,16 +225,6 @@ def build_permissions(compute_service: ComputeService, active_cluster=None) -> S
                     f'security group named “{master_security_group_name}” '
                     'in order to connect to the AWS EMR Master Node '
                     'from your current IP address.',
-        # steps=[
-        #     # SetupStep.load(
-        #     #     name='SSH port 22',
-        #     #     description='Add an inbound rule for SSH port 22 '
-        #     #                 'from your current IP address (e.g. My IP) '
-        #     #                 f'to the security group named “{master_security_group_name}”.',
-        #     #     required=False,
-        #     #     uuid='ssh_22',
-        #     # ),
-        # ],
         status=status,
         tab=ComputeManagementApplicationTab.RESOURCES,
         uuid=SetupStepUUID.PERMISSIONS,
@@ -275,5 +279,162 @@ def build_steps(compute_service: ComputeService) -> List[SetupStep]:
                 ),
             ],
             uuid=SetupStepUUID.CLUSTER_CONNECTION,
+        ),
+    ]
+
+
+def build_ssh_permissions(compute_service: ComputeService, active_cluster=None) -> SetupStep:
+    master_security_group_name = SECURITY_GROUP_NAME_MASTER_DEFAULT
+    if compute_service.project.emr_config and \
+            compute_service.project.emr_config.get('master_security_group'):
+
+        master_security_group_name = compute_service.project.emr_config.get('master_security_group')
+
+    status = SetupStepStatus.INCOMPLETE
+    if active_cluster and active_cluster.master_public_dns_name:
+        try:
+            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.connect((active_cluster.master_public_dns_name, SSH_PORT))
+            status = SetupStepStatus.COMPLETED
+        except Exception as err:
+            print(
+                f'[WARNING] No SSH access to {active_cluster.master_public_dns_name}:{SSH_PORT}: '
+                f'{err}',
+            )
+            status = SetupStepStatus.ERROR
+        else:
+            test_socket.close()
+
+    return SetupStep.load(
+        name='Security group inbound rule SSH port 22',
+        description=f'Add an inbound rule for SSH port {SSH_PORT} to the '
+                    f'security group named “{master_security_group_name}” '
+                    'in order to connect to create an SSH tunnel between the current machine and '
+                    'the master node.',
+        required=True,
+        status=status,
+        uuid=SetupStepUUID.PERMISSIONS_SSH,
+    )
+
+
+def build_connections(compute_service: ComputeService) -> List[ComputeConnection]:
+    ec2_key_name = None
+    ec2_key_name_display = ''
+    ec2_key_path = None
+    if compute_service.project.emr_config:
+        ec2_key_name = compute_service.project.emr_config.get('ec2_key_name')
+        ec2_key_path = compute_service.project.emr_config.get('ec2_key_path')
+        if ec2_key_name:
+            ec2_key_name_display = f'{ec2_key_name} '
+
+    active_cluster = None
+    active_cluster_error = None
+    try:
+        active_cluster = compute_service.active_cluster()
+    except Exception as err:
+        active_cluster_error = err
+
+    actions = [
+        dict(
+            name='Connect',
+            description='Start the SSH tunnel between the local machine and remote active cluster.',
+            uuid=ComputeConnectionActionUUID.CREATE,
+        ),
+    ]
+    error = None
+    status = SetupStepStatus.INCOMPLETE
+    tags = merge_dict(SSH_DEFAULTS, dict(
+        ec2_key_name=ec2_key_name,
+        ec2_key_path=ec2_key_path,
+        master_public_dns_name=None,
+    ))
+
+    if active_cluster:
+        from mage_ai.services.ssh.aws.emr.models import SSHTunnel
+
+        tags['master_public_dns_name'] = active_cluster.master_public_dns_name
+
+        ssh_tunnel = SSHTunnel()
+        try:
+            if ssh_tunnel and ssh_tunnel.is_active():
+                actions = [
+                    dict(
+                        name='Stop',
+                        description='Stop the current SSH tunnel for current active cluster.',
+                        uuid=ComputeConnectionActionUUID.DESELECT,
+                    ),
+                    dict(
+                        name='Close',
+                        description='Close current SSH tunnel and remove SSH tunnel settings '
+                                    'for current active cluster.',
+                        uuid=ComputeConnectionActionUUID.DELETE,
+                    ),
+                ]
+                status = SetupStepStatus.COMPLETED
+                tags.update(ssh_tunnel.to_dict())
+        except Exception as err:
+            error = ErrorMessage.load(
+                message=f'SSH tunnel failed to connect: {err}.',
+            )
+            status = SetupStepStatus.ERROR
+
+    return [
+        ComputeConnection.load(
+            actions=actions,
+            description='Enable access to Spark applications running on the master node and '
+                        'view the status and progress of code execution.',
+            error=error,
+            group=True,
+            name='Spark observability',
+            required=False,
+            status=status,
+            steps=[
+                SetupStep.load(
+                    name='EC2 key pair',
+                    description='Create and use an EC2 key pair when launching a cluster.',
+                    required=True,
+                    steps=[
+                        SetupStep.load(
+                            name='EC2 key name',
+                            description='The name of the EC2 key pair that is used when '
+                                        'launching a cluster.',
+                            required=True,
+                            status=(
+                                SetupStepStatus.COMPLETED if ec2_key_name
+                                else SetupStepStatus.INCOMPLETE
+                            ),
+                            tab=ComputeManagementApplicationTab.RESOURCES,
+                            uuid=SetupStepUUID.EC2_KEY_NAME,
+                        ),
+                        SetupStep.load(
+                            name='EC2 key path',
+                            description='The absolute file path to the EC2 key pair '
+                                        f'{ec2_key_name_display}stored on the current machine.',
+                            required=True,
+                            status=(
+                                SetupStepStatus.COMPLETED if ec2_key_path
+                                else SetupStepStatus.INCOMPLETE
+                            ),
+                            tab=ComputeManagementApplicationTab.RESOURCES,
+                            uuid=SetupStepUUID.EC2_KEY_PATH,
+                        ),
+                    ],
+                    tab=ComputeManagementApplicationTab.RESOURCES,
+                    uuid=SetupStepUUID.EC2_KEY_PAIR,
+                ),
+                build_activate_cluster(
+                    compute_service=compute_service,
+                    active_cluster=active_cluster,
+                    active_cluster_error=active_cluster_error,
+                ),
+                build_ssh_permissions(
+                    compute_service=compute_service,
+                    active_cluster=active_cluster,
+                ),
+            ],
+            tab=ComputeManagementApplicationTab.MONITORING,
+            tags=tags,
+            target=active_cluster.to_dict() if active_cluster else None,
+            uuid=SetupStepUUID.OBSERVABILITY,
         ),
     ]
