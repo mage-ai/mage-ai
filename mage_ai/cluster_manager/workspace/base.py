@@ -25,7 +25,7 @@ class Workspace(abc.ABC):
         self._config = None
 
     @classproperty
-    def project_folder(cls) -> str:
+    def project_folder(self) -> str:
         return os.path.join(get_repo_path(), 'projects')
 
     @property
@@ -48,7 +48,7 @@ class Workspace(abc.ABC):
 
     @property
     def project_uuid(self) -> Optional[str]:
-        self.config.get('project_uuid')
+        return self.config.project_uuid
 
     def get_access(self, user: User) -> int:
         return user.get_access(Entity.PROJECT, self.project_uuid)
