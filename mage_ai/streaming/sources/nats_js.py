@@ -82,16 +82,16 @@ class NATSSource(BaseSource):
 
     # Define callback methods
     async def disconnected_cb(self):
-        print('Got disconnected!')
+        self._print('Got disconnected!')
 
     async def reconnected_cb(self):
-        print(f'Got reconnected to {self.nc.connected_url.netloc}')
+        self._print(f'Got reconnected to {self.nc.connected_url.netloc}')
 
     async def error_cb(self, e):
-        print(f'There was an error: {e}')
+        self._print(f'There was an error: {e}')
 
     async def closed_cb(self):
-        print('Connection is closed')
+        self._print('Connection is closed')
 
     async def aclose_client(self):
         await self.nc.close()
