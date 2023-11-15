@@ -199,6 +199,12 @@ class Api(Source):
             df = self._deal_with_google_sheets(response, separator, header)
             yield df.to_dict(orient='records')
 
+        elif checked_type == 'application/gzip':
+            df = polars.read_csv(BytesIO(response.content),
+                                 sepr=separator,
+                                 has_header=header,).to_pandas()
+            yield df.to_dict(orient='records')
+
         elif checked_type == 'application/json':
             result = response.json()
 
