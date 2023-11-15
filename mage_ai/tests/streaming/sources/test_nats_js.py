@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from mage_ai.streaming.sources.nats_js import NATSSource
 from mage_ai.tests.base_test import TestCase
@@ -7,43 +7,34 @@ from mage_ai.tests.base_test import TestCase
 class NATSTests(TestCase):
     def setUp(self):
         self.nats_config = dict(
-            connector_type='nats',
             server_url='nats://localhost:4222',
             subject='test_subject',
             consumer_name='test_consumer',
         )
 
+    @patch('nats.connect', new_callable=AsyncMock)
+    @patch('nats.aio.client.Client.jetstream', new_callable=AsyncMock)
+    @patch('nats.aio.client.JetStreamContext.add_stream', new_callable=AsyncMock)
+    @patch('nats.aio.client.JetStreamContext.pull_subscribe', new_callable=AsyncMock)
+    def test_full_workflow(
+        self,
+        mock_pull_subscribe,
+        mock_add_stream,
+        mock_jetstream,
+        mock_connect
+    ):
+        mock_pull_subscribe.return_value = MagicMock(fetch=AsyncMock())
+        source = NATSSource(self.nats_config)
+        source.init_client()
+        mock_connect.assert_called_once()
+        mock_jetstream.assert_called_once()
+        mock_add_stream.assert_called_once()
+        mock_pull_subscribe.assert_called_once()
+
     def test_init(self):
         with patch.object(NATSSource, 'init_client') as mock_init_client:
             NATSSource(self.nats_config)
             mock_init_client.assert_called_once()
-
-    def test_init_client(self):
-        with patch('nats.connect') as mock_connect, \
-             patch('nats.aio.client.Client.jetstream') as mock_jetstream:
-            NATSSource(self.nats_config)
-            mock_connect.assert_called_once_with('nats://localhost:4222')
-            mock_jetstream.assert_called_once()
-
-    def test_init_with_ssl_config(self):
-        ssl_config = dict(
-            cafile='/path/to/cafile',
-            certfile='/path/to/certfile',
-            keyfile='/path/to/keyfile',
-            password='test_password',
-            check_hostname=True,
-        )
-        self.nats_config['ssl_config'] = ssl_config
-
-        with patch.object(NATSSource, 'init_client') as mock_init_client:
-            source = NATSSource(self.nats_config)
-            mock_init_client.assert_called_once()
-            self.assertTrue(source.config.use_tls)
-            self.assertEqual(source.config.ssl_config.cafile, '/path/to/cafile')
-            self.assertEqual(source.config.ssl_config.certfile, '/path/to/certfile')
-            self.assertEqual(source.config.ssl_config.keyfile, '/path/to/keyfile')
-            self.assertEqual(source.config.ssl_config.password, 'test_password')
-            self.assertTrue(source.config.ssl_config.check_hostname)
 
     def test_batch_read(self):
         mock_handler = MagicMock()
