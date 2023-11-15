@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import ComputeServiceType, {
   SetupStepStatusEnum,
   SetupStepType,
@@ -19,15 +21,59 @@ function SetupProgress({
   computeService,
   onClick,
 }: SetupProgressProps) {
-  const steps: SetupStepType[] = computeService?.setup_steps || [];
-  const stepsCompleted: SetupStepType[] =
-    steps?.filter(({
-      required,
-      status_calculated: status,
-    }) => !required || SetupStepStatusEnum.COMPLETED === status)?.length || 0;
+  const {
+    steps,
+    stepsCompleted,
+  }: {
+    steps: SetupStepType[];
+    stepsCompleted: SetupStepType[]
+  } = useMemo(() => {
+    const stepsInner = [];
+    let stepsCompletedInner = 0;
 
-  const stepsCount: number = steps?.length || 1;
-  const progress: number = stepsCompleted / stepsCount;
+    computeService?.setup_steps?.forEach((step) => {
+      const {
+        group,
+        required,
+        status_calculated: status,
+        steps: substeps,
+      } = step;
+
+      if (group) {
+        substeps?.forEach((step2) => {
+          stepsInner.push(step2);
+
+          const {
+            required: required2,
+            status_calculated: status2,
+          } = step2;
+
+          if (!required2 || SetupStepStatusEnum.COMPLETED === status2) {
+            stepsCompletedInner += 1;
+          }
+        });
+      } else {
+        stepsInner.push(step);
+
+        if (!required || SetupStepStatusEnum.COMPLETED === status) {
+          stepsCompletedInner += 1;
+        }
+      }
+    });
+
+    return {
+      steps: stepsInner,
+      stepsCompleted: stepsCompletedInner,
+    };
+  }, [
+    computeService,
+  ]);
+
+  const stepsCount: number = useMemo(() => steps?.length || 1, [steps]);
+  const progress: number = useMemo(() => stepsCompleted / stepsCount, [
+    stepsCompleted,
+    stepsCount,
+  ]);
 
   return (
     <Link

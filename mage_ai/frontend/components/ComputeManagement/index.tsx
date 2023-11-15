@@ -472,6 +472,7 @@ function ComputeManagement({
           arr.unshift(
             <SetupProgress
               computeService={computeService}
+              key="setupProgress"
               onClick={() => setAfterHidden(false)}
             />
           );
@@ -553,7 +554,7 @@ function ComputeManagement({
       );
     }
 
-    if (computeService?.setup_steps?.length >= 1 && !setupComplete) {
+    if (computeService?.setup_steps?.length >= 1) {
       return (
         <SetupSteps
           computeService={computeService}
@@ -812,7 +813,7 @@ function ComputeManagement({
       beforeWidth={beforeWidth}
       contained
       height={containerHeight}
-      hideAfterCompletely={setupComplete}
+      hideAfterCompletely={!computeService?.setup_steps?.length}
       hideBeforeCompletely={!selectedComputeService}
       inline
       mainContainerRef={mainContainerRef}

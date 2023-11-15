@@ -4,10 +4,12 @@ import ComputeServiceType, {
   SetupStepStatusEnum,
   SetupStepType,
 } from '@interfaces/ComputeServiceType';
+import Divider from '@oracle/elements/Divider';
 import ErrorMessage from '../ErrorMessage';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { AlertTriangle, Check } from '@oracle/icons';
@@ -29,6 +31,7 @@ function SetupSteps({
     idx: number,
     stepsCount: number,
     opts?: {
+      completedGroup?: boolean;
       level?: number;
       numberEl?: any;
     },
@@ -36,6 +39,7 @@ function SetupSteps({
     const {
       name,
       description,
+      group,
       error,
       required,
       status_calculated: status,
@@ -43,14 +47,71 @@ function SetupSteps({
       tab,
       uuid,
     } = step;
+
+    const substepsCount = steps?.length || 0;
     const {
+      completedGroup,
       level,
       numberEl: numberElParent,
     } = opts || {
+      completedGroup: false,
       level: 0,
       numberEl: null,
     };
-    const substepsCount = steps?.length || 0;
+    const statusIconSize = level === 0 ? 2 * UNIT : 1.5 * UNIT;
+
+    if (group) {
+      return (
+        <Spacing key={uuid} mb={PADDING_UNITS}>
+          <Panel noPadding>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer>
+                <Flex flex={1} flexDirection="column">
+                  <FlexContainer
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Headline level={4}>
+                      {name}
+                    </Headline>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    {SetupStepStatusEnum.COMPLETED === status && (
+                      <Check
+                        size={statusIconSize}
+                        success
+                      />
+                    )}
+                  </FlexContainer>
+
+                  {description && (
+                    <Spacing mt={1}>
+                      <Text default>
+                        {description}
+                      </Text>
+                    </Spacing>
+                  )}
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
+            {steps?.map((substep, idx2) => buildStep(
+              substep,
+              idx2,
+              substepsCount,
+              {
+                completedGroup: SetupStepStatusEnum.COMPLETED === status,
+                level: 0,
+              },
+            ))}
+          </Panel>
+        </Spacing>
+      );
+    }
+
     const completed = SetupStepStatusEnum.COMPLETED === status;
 
     let stepNumber = level === 0
@@ -69,8 +130,6 @@ function SetupSteps({
         </Text>
       </Spacing>
     );
-
-    const statusIconSize = level === 0 ? 2 * UNIT : 1.5 * UNIT;
 
     return (
       <SetupStepRowStyle
@@ -107,7 +166,7 @@ function SetupSteps({
                 >
                   <Flex flex={1}>
                     {level === 0 && (
-                      <Headline level={4}>
+                      <Headline level={5}>
                         {name}
                       </Headline>
                     )}
@@ -128,30 +187,34 @@ function SetupSteps({
                     )}
                   </Flex>
 
-                  <Spacing mr={PADDING_UNITS} />
+                  {!completedGroup && (
+                    <>
+                      <Spacing mr={PADDING_UNITS} />
 
-                  {SetupStepStatusEnum.COMPLETED === status && (
-                    <Check
-                      size={statusIconSize}
-                      success
-                    />
+                      {SetupStepStatusEnum.COMPLETED === status && (
+                        <Check
+                          size={statusIconSize}
+                          success
+                        />
+                      )}
+
+                      {SetupStepStatusEnum.INCOMPLETE === status && (
+                        <AlertTriangle
+                          muted
+                          size={statusIconSize}
+                        />
+                      )}
+
+                      {SetupStepStatusEnum.ERROR === status && (
+                        <AlertTriangle
+                          danger
+                          size={statusIconSize}
+                        />
+                      )}
+                    </>
                   )}
 
-                  {SetupStepStatusEnum.INCOMPLETE === status && (
-                    <AlertTriangle
-                      muted
-                      size={statusIconSize}
-                    />
-                  )}
-
-                  {SetupStepStatusEnum.ERROR === status && (
-                    <AlertTriangle
-                      danger
-                      size={statusIconSize}
-                    />
-                  )}
-
-                  <Spacing pr={PADDING_UNITS * (status ? 1 : 2)} />
+                  <Spacing pr={PADDING_UNITS * (!completedGroup && status ? 1 : 2)} />
                 </FlexContainer>
 
                 {description && (
@@ -176,6 +239,7 @@ function SetupSteps({
                 idx2,
                 substepsCount,
                 {
+                  completedGroup,
                   level: 1,
                   numberEl,
                 },
@@ -201,9 +265,9 @@ function SetupSteps({
   });
 
   return (
-    <>
+    <Spacing p={PADDING_UNITS}>
       {stepsEls}
-    </>
+    </Spacing>
   );
 }
 

@@ -1324,8 +1324,6 @@ function DependencyGraph({
       infos = blocksWithDownstreamBlockSet?.[toBlock?.uuid];
     }
 
-    console.log(edge, infos);
-
     let removeBlocks = () => {
       updateBlockByDragAndDrop({
         block: toBlock,

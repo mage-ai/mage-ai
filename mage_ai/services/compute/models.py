@@ -43,6 +43,7 @@ class SetupStep(BaseDataClass):
     uuid: str
     description: str = None
     error: ErrorMessage = None
+    group: bool = False
     required: bool = True
     status: SetupStepStatus = None
     steps: List[SetupStepStatus] = field(default_factory=list)
@@ -75,17 +76,17 @@ class SetupStep(BaseDataClass):
 
         if self.steps:
             if all([
-                not step.required or SetupStepStatus.COMPLETED == step.status
+                not step.required or SetupStepStatus.COMPLETED == step.status_calculated()
                 for step in self.steps
             ]):
                 return SetupStepStatus.COMPLETED
             elif any([
-                not step.required or SetupStepStatus.ERROR == step.status
+                not step.required or SetupStepStatus.ERROR == step.status_calculated()
                 for step in self.steps
             ]):
                 return SetupStepStatus.ERROR
             elif any([
-                not step.required or SetupStepStatus.INCOMPLETE == step.status
+                not step.required or SetupStepStatus.INCOMPLETE == step.status_calculated()
                 for step in self.steps
             ]):
                 return SetupStepStatus.INCOMPLETE

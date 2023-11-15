@@ -33,6 +33,7 @@ export interface ConnectionCredentialType {
 export interface SetupStepType {
   name: string;
   description?: string;
+  group?: boolean;
   error?: ErrorMessageType;
   required?: boolean;
   status?: SetupStepStatusEnum;
