@@ -10,6 +10,7 @@ from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.hash import merge_dict
 
 
 class classproperty(property):
@@ -114,8 +115,11 @@ class Workspace(abc.ABC):
             data['project_uuid'] = project_uuid
 
         workspace_class = cls.workspace_class_from_type(cluster_type)
+
         try:
-            return workspace_class.initialize(name, config_path, **payload, **data)
+            return workspace_class.initialize(
+                name, config_path, **merge_dict(payload, data)
+            )
         except Exception:
             if config_path and os.path.exists(config_path):
                 os.remove(config_path)

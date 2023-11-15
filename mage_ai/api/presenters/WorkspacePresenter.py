@@ -1,30 +1,30 @@
+from dataclasses import fields
+
 from mage_ai.api.presenters.BasePresenter import BasePresenter
+from mage_ai.cluster_manager.config import (
+    CloudRunWorkspaceConfig,
+    EcsWorkspaceConfig,
+    KubernetesWorkspaceConfig,
+)
 from mage_ai.shared.hash import merge_dict
 
 
 class WorkspacePresenter(BasePresenter):
-    default_attributes = [
-        'access',
-        'cluster_name',
-        'cluster_type',
-        'container_config',
-        'container_name',
-        'instance',
-        'lifecycle_config',
-        'name',
-        'namespace',
-        'path_to_credentials',
-        'project_uuid',
-        'project_id',
-        'region',
-        'repo_path',
-        'service_account_name',
-        'storage_class_name',
-        'storage_access_mode',
-        'storage_request_size',
-        'success',
-        'task_definition',
-    ]
+    default_attributes = list(
+        set(
+            [
+                'access',
+                'cluster_type',
+                'instance',
+                'name',
+                'repo_path',
+                'success',
+                *[f.name for f in fields(KubernetesWorkspaceConfig)],
+                *[f.name for f in fields(CloudRunWorkspaceConfig)],
+                *[f.name for f in fields(EcsWorkspaceConfig)],
+            ]
+        )
+    )
 
     async def present(self, **kwargs):
         workspace = self.model.pop('workspace', None)
