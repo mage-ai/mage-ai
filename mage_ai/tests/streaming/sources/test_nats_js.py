@@ -8,7 +8,7 @@ class NATSTests(TestCase):
     def setUp(self):
         self.nats_config = dict(
             connector_type='nats',
-            server_url='nats://test_server:4222',
+            server_url='nats://localhost:4222',
             subject='test_subject',
             consumer_name='test_consumer',
         )
@@ -22,7 +22,7 @@ class NATSTests(TestCase):
         with patch('nats.connect') as mock_connect, \
              patch('nats.aio.client.Client.jetstream') as mock_jetstream:
             NATSSource(self.nats_config)
-            mock_connect.assert_called_once_with('nats://test_server:4222')
+            mock_connect.assert_called_once_with('nats://localhost:4222')
             mock_jetstream.assert_called_once()
 
     def test_init_with_ssl_config(self):
