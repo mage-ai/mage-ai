@@ -307,7 +307,14 @@ export function buildNodesEdgesPorts({
       if (!(key in mappingUpstreamBlockSet)) {
         mappingUpstreamBlockSet[key] = {
           downstreamBlocks: [],
-          upstreamBlocks: arr?.map(uuid => blocksMapping?.[uuid]),
+          upstreamBlocks: arr?.reduce((acc, uuid) => {
+            const block2 = blocksMapping?.[uuid];
+            if (block2) {
+              return acc.concat(block2);
+            }
+
+            return acc;
+          }, []),
         };
       }
       mappingUpstreamBlockSet[key].downstreamBlocks.push(block);

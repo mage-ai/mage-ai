@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
     BlockType,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
@@ -62,6 +63,62 @@ class BlockResource(GenericResource):
             block_mapping = {}
 
             pipeline = parent_model.pipeline
+            is_data_integration_pipeline = pipeline and PipelineType.INTEGRATION == pipeline.type
+
+            if is_data_integration_pipeline:
+                original_blocks_mapping = {}
+
+                for block_run in parent_model.block_runs:
+                    block_run_block_uuid = block_run.block_uuid
+                    block = pipeline.get_block(block_run_block_uuid)
+                    if not block:
+                        continue
+
+                    if block.uuid not in original_blocks_mapping:
+                        original_blocks_mapping[block.uuid] = {}
+
+                    block_dict = block.to_dict()
+                    block_dicts_by_uuid[block_run_block_uuid] = block_dict
+                    original_blocks_mapping[block.uuid][block_run_block_uuid] = block_dict
+
+                for block_run_block_uuid, block_dict in block_dicts_by_uuid.items():
+                    block_uuid = block_dict.get('uuid')
+                    block_uuid_parts = block_run_block_uuid.split(':')
+                    group_parts = [part for part in block_uuid_parts if part != block_uuid]
+                    group_uuid = ':'.join(group_parts)
+
+                    for key in [
+                        'downstream_blocks',
+                        'upstream_blocks',
+                    ]:
+                        uuids = []
+                        for block_uuid2 in block_dict.get(key):
+                            mapping = original_blocks_mapping.get(block_uuid2)
+                            if mapping:
+                                for uuid2 in list(mapping.keys()):
+                                    if uuid2 == ':'.join([block_uuid2, group_uuid]):
+                                        uuids.append(uuid2)
+                            else:
+                                uuids.append(block_uuid2)
+
+                        block_dict[key] = uuids
+
+                    if len(group_parts) >= 1:
+                        block_dict['tags'] = [group_parts[0]]
+
+                    if len(group_parts) >= 2:
+                        block_dict['description'] = group_parts[1]
+
+                    block_dict['name'] = block_uuid
+                    block_dict['uuid'] = block_run_block_uuid
+                    block_dicts_by_uuid[block_run_block_uuid] = block_dict
+
+                return self.build_result_set(
+                    block_dicts_by_uuid.values(),
+                    user,
+                    **kwargs,
+                )
+
             for block_run in parent_model.block_runs:
                 block_run_block_uuid = block_run.block_uuid
                 if block_run_block_uuid not in block_mapping:
