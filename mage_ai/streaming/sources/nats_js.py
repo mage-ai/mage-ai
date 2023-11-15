@@ -29,6 +29,7 @@ class NATSConfig(BaseConfig):
     use_tls: bool = False
     ssl_config: SSLConfig = None
     consumer_name: str = None
+    stream_name: str
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout: int = DEFAULT_TIMEOUT_MS / 1000  # Convert to seconds
 
@@ -73,8 +74,12 @@ class NATSSource(BaseSource):
                 closed_cb=self.closed_cb,
             )
             self.js = self.nc.jetstream()
-            await self.js.add_stream(name=self.config.consumer_name, subjects=[self.config.subject])
-            self.psub = await self.js.pull_subscribe(self.config.subject, "mage_psub")
+
+            # Default consumer_name to stream_name if not provided
+            consumer_name = self.config.consumer_name or self.config.stream_name
+
+            await self.js.add_stream(name=self.config.stream_name, subjects=[self.config.subject])
+            self.psub = await self.js.pull_subscribe(self.config.subject, consumer_name)
         except NoServersError as e:
             self._print(f'Caught NoServersError while connecting to NATS server: {e}')
         except Exception as e:
@@ -97,7 +102,6 @@ class NATSSource(BaseSource):
         await self.nc.close()
 
     def init_client(self):
-        # asyncio.run_coroutine_threadsafe(self.ainit_client(), self.loop)
         future = asyncio.run_coroutine_threadsafe(self.ainit_client(), self.loop)
         future.result()
 
