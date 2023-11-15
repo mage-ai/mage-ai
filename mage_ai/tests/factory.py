@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from typing import Dict, Union
 
@@ -5,6 +6,7 @@ from faker import Faker
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
@@ -48,6 +50,63 @@ def create_pipeline_with_blocks(name: str, repo_path: str):
     return pipeline
 
 
+def create_integration_pipeline_with_blocks(name: str, repo_path: str):
+    pipeline = Pipeline.create(
+        name,
+        pipeline_type=PipelineType.INTEGRATION,
+        repo_path=repo_path,
+    )
+    with open(
+        os.path.join(os.path.dirname(__file__), 'test_data_integration_catalog.json'),
+        'r',
+    ) as f:
+        config = f.read()
+        with open(pipeline.catalog_config_path, 'w') as f:
+            f.write(config)
+    block1 = Block.create(
+        'test integration source',
+        'data_loader',
+        repo_path,
+        language='yaml',
+    )
+    with open(block1.file_path, 'w') as f:
+        f.write(
+            '''config:
+  host: host
+  port: 22
+source: sftp
+'''
+        )
+    block2 = Block.create(
+        'test integration transform',
+        'transformer',
+        repo_path,
+        language='python',
+    )
+    block3 = Block.create(
+        'test integration destination',
+        'data_exporter',
+        repo_path,
+        language='yaml',
+    )
+    with open(block3.file_path, 'w') as f:
+        f.write(
+            '''config:
+  database: postgres
+  schema: public
+  host: localhost
+  port: 5432
+  username: postgres
+  password: postgres
+destination: postgresql
+'''
+        )
+    pipeline.add_block(block1)
+    pipeline.add_block(block2, upstream_block_uuids=['block1'])
+    pipeline.add_block(block3, upstream_block_uuids=['block2'])
+    return pipeline
+
+
 def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
     pipeline = Pipeline.create(
         name,
@@ -60,10 +119,8 @@ def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
         language='python',
         configuration=dict(dynamic=True),
     )
-    block2 = Block.create(
-        'block2', 'transformer', repo_path, language='python')
-    block3 = Block.create(
-        'block3', 'data_exporter', repo_path, language='python')
+    block2 = Block.create('block2', 'transformer', repo_path, language='python')
+    block3 = Block.create('block3', 'data_exporter', repo_path, language='python')
     pipeline.add_block(block1)
     pipeline.add_block(block2, upstream_block_uuids=['block1'])
     pipeline.add_block(block3, upstream_block_uuids=['block2'])
@@ -110,10 +167,13 @@ def create_user(
     password = password or faker.password()
     password_salt = generate_salt()
     password_hash = create_bcrypt_hash(password, password_salt)
-    payload = merge_dict(dict(
-        email=faker.email(),
-        username=faker.name(),
-    ), kwargs)
+    payload = merge_dict(
+        dict(
+            email=faker.email(),
+            username=faker.name(),
+        ),
+        kwargs,
+    )
 
     if as_dict:
         payload.update(password=password)

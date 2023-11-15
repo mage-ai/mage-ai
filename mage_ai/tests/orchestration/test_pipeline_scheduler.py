@@ -30,6 +30,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
+    create_integration_pipeline_with_blocks,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
     create_pipeline_with_dynamic_blocks,
@@ -46,6 +47,10 @@ class PipelineSchedulerTests(DBTestCase):
         )
         self.dynamic_pipeline = create_pipeline_with_dynamic_blocks(
             'test dynamic pipeline',
+            self.repo_path,
+        )
+        self.integration_pipeline = create_integration_pipeline_with_blocks(
+            'test integration pipeline',
             self.repo_path,
         )
 
@@ -135,6 +140,38 @@ class PipelineSchedulerTests(DBTestCase):
                 pipeline=scheduler.pipeline,
                 pipeline_run=pipeline_run,
             )
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_with_integration_pipeline(self):
+        integration_pipeline_schedule = PipelineSchedule.create(
+            name='integration trigger',
+            pipeline_uuid='test_integration_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
+        )
+        pipeline_schedule = PipelineSchedule.create(
+            name='standard trigger',
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
+        )
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+
+        self.assertEqual(1, integration_pipeline_schedule.pipeline_runs_count)
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING,
+            integration_pipeline_schedule.pipeline_runs[0].status,
+        )
+        self.assertEqual(1, pipeline_schedule.pipeline_runs_count)
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING,
+            pipeline_schedule.pipeline_runs[0].status,
+        )
 
     @freeze_time('2023-10-11 12:13:14')
     def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
