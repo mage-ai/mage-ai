@@ -74,27 +74,34 @@ class SetupStep(BaseDataClass):
             self.tab = ComputeManagementApplicationTab(self.tab)
 
     def status_calculated(self) -> SetupStepStatus:
+        if not hasattr(self, '_status_calculated'):
+            self._status_calculated = None
+
+        if self._status_calculated:
+            return self._status_calculated
+
         if self.status:
-            return self.status
+            self._status_calculated = self.status
+            return self._status_calculated
 
         if self.steps:
             if all([
                 not step.required or SetupStepStatus.COMPLETED == step.status_calculated()
                 for step in self.steps
             ]):
-                return SetupStepStatus.COMPLETED
+                self._status_calculated = SetupStepStatus.COMPLETED
             elif any([
                 not step.required or SetupStepStatus.ERROR == step.status_calculated()
                 for step in self.steps
             ]):
-                return SetupStepStatus.ERROR
+                self._status_calculated = SetupStepStatus.ERROR
             elif any([
                 not step.required or SetupStepStatus.INCOMPLETE == step.status_calculated()
                 for step in self.steps
             ]):
-                return SetupStepStatus.INCOMPLETE
+                self._status_calculated = SetupStepStatus.INCOMPLETE
 
-        return None
+        return self._status_calculated
 
     def to_dict(self) -> Dict:
         return merge_dict(super().to_dict(), dict(
@@ -115,10 +122,10 @@ class ComputeConnectionAction(BaseDataClass):
 @dataclass
 class ComputeConnection(SetupStep):
     actions: List[ComputeConnectionAction] = field(default_factory=list)
+    attributes: Dict = field(default_factory=dict)
+    connection: Dict = field(default_factory=dict)
     required: bool = False
     steps: List[SetupStep] = field(default_factory=list)
-    tags: Dict = field(default_factory=dict)
-    target: Dict = field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()

@@ -9,7 +9,7 @@ import ComputeConnectionType, {
   ComputeConnectionUUIDEnum,
   SSHTunnelType,
 } from '@interfaces/ComputeConnectionType';
-import ComputeServiceType from '@interfaces/ComputeServiceType';
+import ComputeServiceType, { SetupStepStatusEnum } from '@interfaces/ComputeServiceType';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -21,6 +21,8 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PowerOnOffButton } from '@oracle/icons';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { buildTable } from '../utils';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -42,22 +44,19 @@ function ConnectionSettings({
   });
 
   const [connectionActionUpdating, setConnectionActionUpdating] = useState<{
-    action: ComputeConnectionActionType;
-    target: AWSEMRClusterType | SSHTunnelType;
+    actionUUID: ComputeConnectionActionType;
+    uuid: ComputeConnectionUUIDEnum;
   }>(null);
   const [updateComputeConnection, { isLoading: isLoadingComputeConnection }]: any = useMutation(
     ({
       action,
-      target,
-      id,
+      uuid,
     }: {
       action: ComputeConnectionActionUUIDEnum;
-      target: AWSEMRClusterType | SSHTunnelType;
       uuid: ComputeConnectionUUIDEnum;
-    }) => api.compute_connections.compute_services.useUpdate(computeService?.uuid, id)({
+    }) => api.compute_connections.compute_services.useUpdate(computeService?.uuid, uuid)({
       compute_connection: {
         action,
-        target,
       },
     }),
     {
@@ -83,39 +82,58 @@ function ConnectionSettings({
   );
 
   return (
-    <Spacing mb={PADDING_UNITS}>
-      <SetupSteps
-        setupSteps={computeConnections}
-        onClickStep={onClickStep}
-      />
-
-      {/*{computeConnections?.map((computeConnection) => {
+    <Spacing py={PADDING_UNITS}>
+      {computeConnections?.map((computeConnection) => {
         const {
           actions,
+          attributes,
+          connection,
           description,
-          error,
-          group,
           name,
           required,
           status,
           steps,
-          tab,
-          tags,
-          target,
           uuid,
         } = computeConnection;
 
-        console.log(computeConnection)
+        let attributesEl;
+        if (attributes && Object.keys(attributes || {})?.length >= 1) {
+          attributesEl = buildTable(Object.entries(attributes || {}).map(([k, v]) => [
+            capitalizeRemoveUnderscoreLower(k),
+            v,
+          ]));
+        }
+
+        let connectionEl;
+        if (connection && Object.keys(connection || {})?.length >= 1) {
+          connectionEl = buildTable(Object.entries(connection || {}).map(([k, v]) => [
+            capitalizeRemoveUnderscoreLower(k),
+            v,
+          ]));
+        }
 
         return (
-          <Spacing key={uuid} mt={PADDING_UNITS} px={PADDING_UNITS}>
-            {<Panel noPadding>
+          <Spacing key={uuid} mb={PADDING_UNITS} px={PADDING_UNITS}>
+            <Panel noPadding>
               <Spacing p={PADDING_UNITS}>
                 <FlexContainer>
                   <Flex flex={1} flexDirection="column">
-                    <Headline level={4}>
-                      {name}
-                    </Headline>
+                    <FlexContainer alignItems="center">
+                      <Flex flex={1}>
+                        <Headline level={4}>
+                          {name}
+                        </Headline>
+                      </Flex>
+
+                      <Spacing mr={PADDING_UNITS} />
+
+                      <PowerOnOffButton
+                        danger={SetupStepStatusEnum.ERROR === status}
+                        muted={required && SetupStepStatusEnum.INCOMPLETE === status}
+                        size={2 * UNIT}
+                        success={!required || SetupStepStatusEnum.COMPLETED === status}
+                      />
+                    </FlexContainer>
 
                     {description && (
                       <Spacing mt={1}>
@@ -125,75 +143,141 @@ function ConnectionSettings({
                       </Spacing>
                     )}
                   </Flex>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <PowerOnOffButton
-                    muted={!active}
-                    size={2.5 * UNIT}
-                    success={active}
-                  />
                 </FlexContainer>
               </Spacing>
 
-              {actions?.length >= 1 && (
+              {steps?.length >= 1 && (
                 <>
                   <Divider light />
 
-                  <Spacing p={PADDING_UNITS}>
-                    <FlexContainer alignItems="center">
-                      {actions?.map(({
-                        name,
-                        uuid,
-                      }) => (
-                        <Spacing key={uuid} mr={1}>
-                          <Button
-                            danger={[
-                              ComputeConnectionActionUUIDEnum.DELETE,
-                            ].includes(uuid)}
-                            loading={isLoadingComputeConnection
-                              && connectionActionUpdating?.computeConnection?.id === id
-                              && connectionActionUpdating?.computeConnectionAction?.uuid === uuid
-                            }
-                            onClick={() => {
-                              setConnectionActionUpdating({
-                                action: {
-                                  name,
-                                  uuid,
-                                },
-                                connection: connectionModel,
-                              });
-
-                              updateComputeConnection({
-                                action: uuid,
-                                connection: connectionModel,
-                                id,
-                              });
-                            }}
-                            primary={[
-                              ComputeConnectionActionUUIDEnum.CREATE,
-                              ComputeConnectionActionUUIDEnum.UPDATE,
-                            ].includes(uuid)}
-                            secondary={[
-                              ComputeConnectionActionUUIDEnum.DESELECT,
-                            ].includes(uuid)}
-                          >
-                            {name}
-                          </Button>
-                        </Spacing>
-                      ))}
-                    </FlexContainer>
-                  </Spacing>
+                  <SetupSteps
+                    contained={false}
+                    onClickStep={onClickStep}
+                    setupSteps={steps}
+                  />
                 </>
               )}
-            </Panel>}
 
-            {steps?.length >= 1 && (
+              {(attributesEl || connectionEl) && (
+                <Spacing p={PADDING_UNITS}>
+                  <FlexContainer>
+                    {attributesEl && (
+                      <Panel noPadding>
+                        <FlexContainer flexDirection="column">
+                          <Spacing p={PADDING_UNITS}>
+                            <Text bold large>
+                              Attributes
+                            </Text>
+                          </Spacing>
 
-            )}
+                          <Divider light />
+
+                          {attributesEl}
+
+                          <Spacing mb={PADDING_UNITS} />
+                        </FlexContainer>
+                      </Panel>
+                    )}
+
+                    {attributesEl && connectionEl && <Spacing pr={PADDING_UNITS} />}
+
+                    {connectionEl && (
+                      <Panel noPadding>
+                        <FlexContainer flexDirection="column">
+                          <Spacing p={PADDING_UNITS}>
+                            <Text bold large>
+                              Connection
+                            </Text>
+                          </Spacing>
+
+                          <Divider light />
+
+                          {connectionEl}
+
+                          <Spacing mb={PADDING_UNITS} />
+                        </FlexContainer>
+                      </Panel>
+                    )}
+                  </FlexContainer>
+                </Spacing>
+              )}
+
+              {actions?.length >= 1 && (
+                <>
+                  <Spacing p={PADDING_UNITS}>
+                    <FlexContainer>
+                      <Flex flex={1} flexDirection="column">
+                        <FlexContainer alignItems="center">
+                          <Flex flex={1}>
+                            <Headline level={4}>
+                              Actions
+                            </Headline>
+                          </Flex>
+                        </FlexContainer>
+                      </Flex>
+                    </FlexContainer>
+                  </Spacing>
+
+                  {actions?.map(({
+                    description,
+                    name,
+                    uuid: actionUUID,
+                  }) => (
+                    <div key={actionUUID}>
+                      <Divider light />
+
+                      <Spacing p={PADDING_UNITS}>
+                        <FlexContainer alignItems="center" justifyContent="space-between">
+                          <Flex flex={1} flexDirection="column">
+                            <Text
+                              default
+                              large
+                            >
+                              {description}
+                            </Text>
+
+                            <Spacing mt={PADDING_UNITS}>
+                              <Button
+                                danger={[
+                                  ComputeConnectionActionUUIDEnum.DELETE,
+                                ].includes(actionUUID)}
+                                loading={isLoadingComputeConnection
+                                  && connectionActionUpdating?.uuid === uuid
+                                  && connectionActionUpdating?.actionUUID === actionUUID
+                                }
+                                onClick={() => {
+                                  setConnectionActionUpdating({
+                                    actionUUID: actionUUID,
+                                    uuid,
+                                  });
+
+                                  updateComputeConnection({
+                                    action: actionUUID,
+                                    uuid,
+                                  });
+                                }}
+                                primary={[
+                                  ComputeConnectionActionUUIDEnum.CREATE,
+                                  ComputeConnectionActionUUIDEnum.UPDATE,
+                                ].includes(actionUUID)}
+                                secondary={[
+                                  ComputeConnectionActionUUIDEnum.DESELECT,
+                                ].includes(actionUUID)}
+                              >
+                                {name}
+                              </Button>
+                            </Spacing>
+                          </Flex>
+                        </FlexContainer>
+                      </Spacing>
+                    </div>
+                  ))}
+                </>
+              )}
+            </Panel>
           </Spacing>
         );
-      })}*/}
+      })}
     </Spacing>
   );
 }

@@ -16,13 +16,14 @@ from mage_ai.services.compute.constants import (
 )
 from mage_ai.services.compute.models import (
     ComputeConnection,
+    ComputeConnectionAction,
     ComputeService,
     ErrorMessage,
     SetupStep,
     SetupStepStatus,
 )
 from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, merge_dict
 
 CUSTOM_TCP_PORT = 8998
 SSH_PORT = 22
@@ -290,16 +291,30 @@ def build_ssh_permissions(compute_service: ComputeService, active_cluster=None) 
 
         master_security_group_name = compute_service.project.emr_config.get('master_security_group')
 
+    error = None
     status = SetupStepStatus.INCOMPLETE
     if active_cluster and active_cluster.master_public_dns_name:
+        timeout = 5
         try:
             test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_socket.settimeout(timeout)
             test_socket.connect((active_cluster.master_public_dns_name, SSH_PORT))
             status = SetupStepStatus.COMPLETED
         except Exception as err:
-            print(
-                f'[WARNING] No SSH access to {active_cluster.master_public_dns_name}:{SSH_PORT}: '
-                f'{err}',
+            url = f'{active_cluster.master_public_dns_name}:{SSH_PORT}'
+            error = ErrorMessage.load(
+                message=f'Cannot establish SSH access to {{{{{url}}}}} after {{{{{timeout}}}}} '
+                        f'seconds: {err}',
+                variables={
+                    timeout: dict(
+                        bold=True,
+                        monospace=True,
+                    ),
+                    url: dict(
+                        bold=True,
+                        monospace=True,
+                    ),
+                },
             )
             status = SetupStepStatus.ERROR
         else:
@@ -311,6 +326,7 @@ def build_ssh_permissions(compute_service: ComputeService, active_cluster=None) 
                     f'security group named “{master_security_group_name}” '
                     'in order to connect to create an SSH tunnel between the current machine and '
                     'the master node.',
+        error=error,
         required=True,
         status=status,
         uuid=SetupStepUUID.PERMISSIONS_SSH,
@@ -334,107 +350,125 @@ def build_connections(compute_service: ComputeService) -> List[ComputeConnection
     except Exception as err:
         active_cluster_error = err
 
-    actions = [
-        dict(
-            name='Connect',
-            description='Start the SSH tunnel between the local machine and remote active cluster.',
-            uuid=ComputeConnectionActionUUID.CREATE,
-        ),
-    ]
-    error = None
-    status = SetupStepStatus.INCOMPLETE
-    tags = merge_dict(SSH_DEFAULTS, dict(
+    actions = []
+    attributes = merge_dict(SSH_DEFAULTS, dict(
         ec2_key_name=ec2_key_name,
         ec2_key_path=ec2_key_path,
         master_public_dns_name=None,
     ))
+    error = None
+    status = None
+    ssh_tunnel_active = False
 
     if active_cluster:
         from mage_ai.services.ssh.aws.emr.models import SSHTunnel
 
-        tags['master_public_dns_name'] = active_cluster.master_public_dns_name
+        attributes['master_public_dns_name'] = active_cluster.master_public_dns_name
 
         ssh_tunnel = SSHTunnel()
         try:
-            if ssh_tunnel and ssh_tunnel.is_active():
-                actions = [
-                    dict(
-                        name='Stop',
-                        description='Stop the current SSH tunnel for current active cluster.',
-                        uuid=ComputeConnectionActionUUID.DESELECT,
-                    ),
-                    dict(
-                        name='Close',
-                        description='Close current SSH tunnel and remove SSH tunnel settings '
-                                    'for current active cluster.',
-                        uuid=ComputeConnectionActionUUID.DELETE,
-                    ),
-                ]
-                status = SetupStepStatus.COMPLETED
-                tags.update(ssh_tunnel.to_dict())
+            if ssh_tunnel:
+                attributes.update(ssh_tunnel.to_dict())
+                ssh_tunnel_active = ssh_tunnel.is_active()
         except Exception as err:
             error = ErrorMessage.load(
                 message=f'SSH tunnel failed to connect: {err}.',
             )
             status = SetupStepStatus.ERROR
 
+    step1 = SetupStep.load(
+        name='EC2 key pair',
+        description='Create and use an EC2 key pair when launching a cluster.',
+        required=True,
+        steps=[
+            SetupStep.load(
+                name='EC2 key name',
+                description='The name of the EC2 key pair that is used when '
+                            'launching a cluster.',
+                required=True,
+                status=(
+                    SetupStepStatus.COMPLETED if ec2_key_name
+                    else SetupStepStatus.INCOMPLETE
+                ),
+                tab=ComputeManagementApplicationTab.RESOURCES,
+                uuid=SetupStepUUID.EC2_KEY_NAME,
+            ),
+            SetupStep.load(
+                name='EC2 key path',
+                description='The absolute file path to the EC2 key pair '
+                            f'{ec2_key_name_display}stored on the current machine.',
+                required=True,
+                status=(
+                    SetupStepStatus.COMPLETED if ec2_key_path
+                    else SetupStepStatus.INCOMPLETE
+                ),
+                tab=ComputeManagementApplicationTab.RESOURCES,
+                uuid=SetupStepUUID.EC2_KEY_PATH,
+            ),
+        ],
+        tab=ComputeManagementApplicationTab.RESOURCES,
+        uuid=SetupStepUUID.EC2_KEY_PAIR,
+    )
+    step2 = build_activate_cluster(
+        compute_service=compute_service,
+        active_cluster=active_cluster,
+        active_cluster_error=active_cluster_error,
+    )
+    step3 = build_ssh_permissions(
+        compute_service=compute_service,
+        active_cluster=active_cluster,
+    )
+
+    step_final = ComputeConnection.load(
+        actions=actions,
+        attributes=attributes,
+        connection=extract(active_cluster.to_dict(), [
+            'id',
+            'name',
+            'normalized_instance_hours',
+            'state',
+        ]) if active_cluster else None,
+        description='Enable access to Spark applications running on the master node and '
+                    'view the status and progress of code execution.',
+        error=error,
+        group=True,
+        name='Spark observability',
+        required=True,
+        status=status,
+        steps=[
+            step1,
+            step2,
+            step3,
+        ],
+        tab=ComputeManagementApplicationTab.MONITORING,
+        uuid=SetupStepUUID.OBSERVABILITY,
+    )
+
+    if SetupStepStatus.COMPLETED == step_final.status_calculated():
+        if ssh_tunnel_active:
+            step_final.actions = [
+                ComputeConnectionAction.load(
+                    name='Stop SSH tunnel connection',
+                    description='Stop the current SSH tunnel for current active cluster.',
+                    uuid=ComputeConnectionActionUUID.DESELECT,
+                ),
+                ComputeConnectionAction.load(
+                    name='Close SSH tunnel',
+                    description='Close current SSH tunnel and remove SSH tunnel settings '
+                                'for current active cluster.',
+                    uuid=ComputeConnectionActionUUID.DELETE,
+                ),
+            ]
+        else:
+            step_final.actions = [
+                ComputeConnectionAction.load(
+                    name='Create SSH tunnel',
+                    description='Start the SSH tunnel between the local machine and '
+                                'remote active cluster.',
+                    uuid=ComputeConnectionActionUUID.CREATE,
+                ),
+            ]
+
     return [
-        ComputeConnection.load(
-            actions=actions,
-            description='Enable access to Spark applications running on the master node and '
-                        'view the status and progress of code execution.',
-            error=error,
-            group=True,
-            name='Spark observability',
-            required=False,
-            status=status,
-            steps=[
-                SetupStep.load(
-                    name='EC2 key pair',
-                    description='Create and use an EC2 key pair when launching a cluster.',
-                    required=True,
-                    steps=[
-                        SetupStep.load(
-                            name='EC2 key name',
-                            description='The name of the EC2 key pair that is used when '
-                                        'launching a cluster.',
-                            required=True,
-                            status=(
-                                SetupStepStatus.COMPLETED if ec2_key_name
-                                else SetupStepStatus.INCOMPLETE
-                            ),
-                            tab=ComputeManagementApplicationTab.RESOURCES,
-                            uuid=SetupStepUUID.EC2_KEY_NAME,
-                        ),
-                        SetupStep.load(
-                            name='EC2 key path',
-                            description='The absolute file path to the EC2 key pair '
-                                        f'{ec2_key_name_display}stored on the current machine.',
-                            required=True,
-                            status=(
-                                SetupStepStatus.COMPLETED if ec2_key_path
-                                else SetupStepStatus.INCOMPLETE
-                            ),
-                            tab=ComputeManagementApplicationTab.RESOURCES,
-                            uuid=SetupStepUUID.EC2_KEY_PATH,
-                        ),
-                    ],
-                    tab=ComputeManagementApplicationTab.RESOURCES,
-                    uuid=SetupStepUUID.EC2_KEY_PAIR,
-                ),
-                build_activate_cluster(
-                    compute_service=compute_service,
-                    active_cluster=active_cluster,
-                    active_cluster_error=active_cluster_error,
-                ),
-                build_ssh_permissions(
-                    compute_service=compute_service,
-                    active_cluster=active_cluster,
-                ),
-            ],
-            tab=ComputeManagementApplicationTab.MONITORING,
-            tags=tags,
-            target=active_cluster.to_dict() if active_cluster else None,
-            uuid=SetupStepUUID.OBSERVABILITY,
-        ),
+        step_final,
     ]

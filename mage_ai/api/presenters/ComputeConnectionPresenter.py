@@ -6,6 +6,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 class ComputeConnectionPresenter(BasePresenter):
     default_attributes = [
         'actions',
+        'attributes',
         'connection',
         'description',
         'error',
@@ -15,7 +16,6 @@ class ComputeConnectionPresenter(BasePresenter):
         'status',
         'steps',
         'tab',
-        'tags',
         'target',
         'uuid',
     ]

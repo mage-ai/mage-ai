@@ -67,6 +67,7 @@ export type TextProps = {
   secondary?: boolean;
   sky?: boolean;
   small?: boolean;
+  strikethrough?: boolean;
   success?: boolean;
   textOverflow?: boolean;
   textOverflowLines?: number;
@@ -194,6 +195,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.cursor && `
     cursor: ${props.cursor};
+  `}
+
+  ${props => props.strikethrough && `
+    text-decoration: line-through;
   `}
 `;
 

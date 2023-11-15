@@ -21,10 +21,10 @@ export interface ComputeConnectionActionType {
 
 export default interface ComputeConnectionType extends SetupStepType {
   actions: ComputeConnectionActionType[];
-  steps: SetupStepType[];
-  tags: {
+  attributes: {
     [key: string]: any;
   };
-  target: AWSEMRClusterType | SSHTunnelType;
+  connection: AWSEMRClusterType | SSHTunnelType;
+  steps: SetupStepType[];
   uuid: ComputeConnectionUUIDEnum,
 }

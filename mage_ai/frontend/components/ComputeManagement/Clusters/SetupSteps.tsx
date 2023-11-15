@@ -15,11 +15,13 @@ import { SetupStepStatusEnum, SetupStepType } from '@interfaces/ComputeServiceTy
 import { alphabet } from '@utils/string';
 
 type SetupStepsProps = {
+  contained?: boolean;
   onClickStep?: (tab: string) => void;
   setupSteps: SetupStepType[];
 };
 
 function SetupSteps({
+  contained = true,
   onClickStep,
   setupSteps,
 }: SetupStepsProps) {
@@ -128,6 +130,14 @@ function SetupSteps({
       </Spacing>
     );
 
+    const completedTextProps: {
+      muted?: boolean;
+      strikethrough?: boolean;
+    } = {
+      muted: completed || completedGroup,
+      strikethrough: completed || completedGroup,
+    };
+
     return (
       <SetupStepRowStyle
         clickable={clickable}
@@ -163,12 +173,12 @@ function SetupSteps({
                 >
                   <Flex flex={1}>
                     {level === 0 && (
-                      <Headline level={5}>
+                      <Headline level={5} {...completedTextProps}>
                         {name}
                       </Headline>
                     )}
                     {level >= 1 && (
-                      <Text bold large>
+                      <Text bold large {...completedTextProps}>
                         {name}
                       </Text>
                     )}
@@ -186,7 +196,7 @@ function SetupSteps({
 
                   <Spacing mr={PADDING_UNITS} />
 
-                  {SetupStepStatusEnum.COMPLETED === status && (
+                  {completed && (
                     <Check
                       size={statusIconSize}
                       success
@@ -212,7 +222,7 @@ function SetupSteps({
 
                 {description && (
                   <Spacing mt={1} pr={PADDING_UNITS * 3}>
-                    <Text default>
+                    <Text default {...completedTextProps}>
                       {description}
                     </Text>
                   </Spacing>
@@ -256,6 +266,10 @@ function SetupSteps({
 
     stepsEls.push(buildStep(step, idx, stepsCount));
   });
+
+  if (!contained) {
+    return stepsEls;
+  }
 
   return (
     <Spacing p={PADDING_UNITS}>
