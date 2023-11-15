@@ -268,13 +268,18 @@ class PipelineScheduler:
                     status=PipelineRun.PipelineRunStatus.FAILED)
 
                 # Backfill status updated to "failed" if at least 1 of its pipeline runs failed
-                if backfill is not None and any(
-                    [PipelineRun.PipelineRunStatus.FAILED == pr.status
-                        for pr in backfill.pipeline_runs]
-                ):
-                    backfill.update(
-                        status=Backfill.Status.FAILED,
-                    )
+                if backfill is not None:
+                    latest_pipeline_runs = \
+                        PipelineSchedule.fetch_latest_pipeline_runs_without_retries(
+                            [backfill.pipeline_schedule_id]
+                        )
+                    if any(
+                        [PipelineRun.PipelineRunStatus.FAILED == pr.status
+                            for pr in latest_pipeline_runs]
+                    ):
+                        backfill.update(
+                            status=Backfill.Status.FAILED,
+                        )
 
                 asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
 
