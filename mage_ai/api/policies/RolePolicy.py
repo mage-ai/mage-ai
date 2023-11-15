@@ -53,8 +53,8 @@ RolePolicy.allow_read(RolePresenter.default_attributes + [
 ], condition=lambda policy: policy.has_at_least_admin_role())
 
 
-# allow all logged in users to view roles on update and delete because they
-# can update their own profile
+# allow all logged in users to view roles on update because they can update
+# their own profile, and roles will be passed back in the response.
 RolePolicy.allow_read(RolePresenter.default_attributes + [
     'user_id',
     'users',
