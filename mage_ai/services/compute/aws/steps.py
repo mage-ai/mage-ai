@@ -55,8 +55,12 @@ def build_credentials(compute_service: ComputeService) -> SetupStep:
     valid_key = True if os.getenv(CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID) else False
     valid_secret = True if os.getenv(CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY) else False
 
-    # TODO: Check: use boto3 to make a request to EMR and list clusters.
     status = SetupStepStatus.INCOMPLETE
+    try:
+        compute_service.clusters_and_metadata()
+        status = SetupStepStatus.COMPLETED
+    except Exception:
+        status = SetupStepStatus.ERROR
 
     return SetupStep.load(
         name=SetupStepUUID.CREDENTIALS.capitalize(),
@@ -158,6 +162,7 @@ def build_permissions(compute_service: ComputeService) -> SetupStep:
             #     uuid='ssh_22',
             # ),
         ],
+        status=status,
         uuid=SetupStepUUID.PERMISSIONS,
     )
 

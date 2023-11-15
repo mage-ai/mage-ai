@@ -187,7 +187,12 @@ def create_tunnel(
         return close_tunnel()
 
     if cluster_from_cache:
-        cluster_server = compute_service.get_cluster_details(cluster.id)
+        try:
+            cluster_server = compute_service.get_cluster_details(cluster.id)
+        except Exception as err:
+            print(f'[WARNING] AWS EMR create tunnel: {err}')
+            return
+
         if not cluster_server or cluster_server.invalid:
             return
         active = cluster.active

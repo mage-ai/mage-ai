@@ -18,10 +18,15 @@ class ComputeClusterResource(GenericResource):
 
         if isinstance(parent_model, ComputeService):
             if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
-                result = parent_model.clusters_and_metadata(include_all_states=include_all_states)
-                clusters = [dict(
-                    cluster=cluster,
-                ) for cluster in result.get('clusters') or []]
+                try:
+                    result = parent_model.clusters_and_metadata(
+                        include_all_states=include_all_states,
+                    )
+                    clusters = [dict(
+                        cluster=cluster,
+                    ) for cluster in result.get('clusters') or []]
+                except Exception as err:
+                    print(f'[WARNING] ComputeClusterResource.collection: {err}')
 
         return self.build_result_set(
             clusters,
