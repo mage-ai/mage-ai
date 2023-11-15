@@ -685,6 +685,8 @@
           "icon": "passport",
           "pages": [
             "production/authentication/overview",
+            "production/authentication/google",
+            "production/authentication/okta",
             "production/authentication/microsoft"
           ]
         },
