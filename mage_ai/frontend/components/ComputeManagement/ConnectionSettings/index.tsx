@@ -55,12 +55,12 @@ function ConnectionSettings({
   });
 
   const [connectionActionUpdating, setConnectionActionUpdating] = useState<{
-    actionUUID: ComputeConnectionActionType;
+    actionUUID: ComputeConnectionActionUUIDEnum;
     uuid: SetupStepUUIDEnum;
   }>(null);
   const [recentlyUpdatedConnection, setRecentlyUpdatedConnection] =
     useState<{
-      actionUUID: ComputeConnectionActionType;
+      actionUUID: ComputeConnectionActionUUIDEnum;
       computeConnection: ComputeConnectionType,
       uuid: SetupStepUUIDEnum;
     }>(null);

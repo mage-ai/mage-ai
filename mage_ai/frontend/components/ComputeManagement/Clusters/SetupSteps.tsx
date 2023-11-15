@@ -128,7 +128,7 @@ function SetupSteps({
       ? String(idx + 1)
       : alphabet()[idx].toLowerCase();
 
-    if (level === 0 && stepsCount >= 10 && stepNumber <= 9 && 0) {
+    if (level === 0 && stepsCount >= 10 && idx + 1 <= 9 && 0) {
       stepNumber = `0${stepNumber}`;
     }
 
@@ -151,7 +151,7 @@ function SetupSteps({
 
     return (
       <SetupStepRowStyle
-        clickable={clickable}
+        clickable={!!clickable}
         key={uuid}
         onClick={clickable
           ? () => onClickStep?.(tab)
@@ -283,7 +283,11 @@ function SetupSteps({
   });
 
   if (!contained) {
-    return stepsEls;
+    return (
+      <>
+        {stepsEls}
+      </>
+    );
   }
 
   return (

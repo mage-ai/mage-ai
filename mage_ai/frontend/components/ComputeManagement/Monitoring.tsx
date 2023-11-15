@@ -127,6 +127,7 @@ function Monitoring({
         computeService={computeService}
         computeConnections={computeConnections}
         fetchAll={fetchAll}
+        // @ts-ignore
         onClickStep={(tab: string) => setSelectedTab(() => ({
           // @ts-ignore
           main: tab,

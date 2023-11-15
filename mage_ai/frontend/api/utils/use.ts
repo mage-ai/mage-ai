@@ -13,7 +13,7 @@ import {
 } from './fetcher';
 import { buildUrl } from './url';
 
-function validateID(value: number | string): number | string {
+function validateID(value: number | string | boolean): number | string | boolean {
   if (typeof value !== 'undefined' && value !== null && value !== false) {
     return value;
   }

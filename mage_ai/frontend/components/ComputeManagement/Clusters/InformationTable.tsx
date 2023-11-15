@@ -14,7 +14,7 @@ type RowType = {
   value: any;
 };
 
-type InformationTable = {
+type InformationTableProps = {
   rows: RowType[];
 };
 

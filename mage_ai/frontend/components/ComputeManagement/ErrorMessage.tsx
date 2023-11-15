@@ -49,6 +49,7 @@ function ErrorMessage({
   return (
     <Text
       danger={danger}
+      // @ts-ignore
       dangerouslySetInnerHTML={{
         __html: errorHTML,
       }}

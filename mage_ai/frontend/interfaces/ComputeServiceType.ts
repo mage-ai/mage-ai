@@ -30,7 +30,7 @@ export enum SetupStepUUIDEnum {
   SETUP = 'setup',
 };
 
-interface ErrorMessageType {
+export interface ErrorMessageType {
   message: string;
   variables?: {
     [key: string]: {

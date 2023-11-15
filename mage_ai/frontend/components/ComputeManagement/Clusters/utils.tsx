@@ -13,7 +13,7 @@ export function buildTable(rows) {
 
   return (
     <Table
-      columnFlex={columns?.map((column: string, idx: number) => idx === 0 ? null : 1)}
+      columnFlex={columns?.map((col, idx: number) => idx === 0 ? null : 1)}
       columns={columns}
       rows={rows?.map((row) => Object.entries(row || {}).map(([k, v]) => [
         <Text

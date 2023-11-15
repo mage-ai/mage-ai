@@ -49,7 +49,7 @@ const TEXT_PROPS_SHARED = {
 type ClustersProp = {
   clusters: AWSEMRClusterType[];
   computeService: ComputeServiceType;
-  fetchAll: () => void;
+  fetchAll: () => Promise<any>;
   includeAllStates?: boolean;
   loading?: boolean;
   setIncludeAllStates?: (value: boolean) => void;
