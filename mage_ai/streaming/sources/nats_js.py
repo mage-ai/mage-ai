@@ -1,12 +1,11 @@
 import asyncio
 import json
-
-# from nats.errors import NoServersError
 import threading
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List
 
 import nats
+from nats.errors import NoServersError
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
@@ -76,10 +75,10 @@ class NATSSource(BaseSource):
             self.js = self.nc.jetstream()
             await self.js.add_stream(name=self.config.consumer_name, subjects=[self.config.subject])
             self.psub = await self.js.pull_subscribe(self.config.subject, "mage_psub")
+        except NoServersError as e:
+            self._print(f'Caught NoServersError while connecting to NATS server: {e}')
         except Exception as e:
             self._print(f'Caught exception while connecting to NATS server: {e}')
-        # except NoServersError as e:
-        #    print(f"Failed to connect to NATS server: {e}")
 
     # Define callback methods
     async def disconnected_cb(self):
