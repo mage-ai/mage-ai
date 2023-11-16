@@ -260,7 +260,7 @@ type CodeBlockProps = {
   setAnyInputFocused?: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  setHiddenBlocks: ((opts: {
+  setHiddenBlocks?: ((opts: {
     [uuid: string]: BlockType;
   }) => {
     [uuid: string]: BlockType;
@@ -1673,7 +1673,7 @@ function CodeBlock({
         messages={messagesWithType}
         messagesAll={messages}
         onClickSelectBlock={sideBySideEnabled
-          ? isHidden
+          ? isHidden && setHiddenBlocks
             ? () => setHiddenBlocks(prev => ({
               ...prev,
               [blockUUID]: !isHidden,
@@ -1879,6 +1879,7 @@ function CodeBlock({
     selected,
     selectedTab,
     setErrors,
+  setHiddenBlocks,
     setOutputBlocks,
     setOutputCollapsed,
     setSelectedOutputBlock,

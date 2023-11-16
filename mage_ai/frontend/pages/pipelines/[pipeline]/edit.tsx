@@ -75,6 +75,7 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
+import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
