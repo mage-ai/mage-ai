@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   useContext,
   useEffect,
@@ -25,7 +26,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelType from '@interfaces/KernelType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import KeyboardText from '@oracle/elements/KeyboardText';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import PipelineType, {
@@ -74,7 +74,6 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { removeUnderscore, roundNumber } from '@utils/string';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
-import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { selectKeys } from '@utils/hash';
@@ -93,7 +92,6 @@ type KernelStatusProps = {
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
-  saveStatus?: string;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
@@ -111,7 +109,6 @@ function KernelStatus({
   pipeline,
   restartKernel,
   savePipelineContent,
-  saveStatus,
   selectedFilePath,
   setErrors,
   setRunningBlocks,
@@ -241,18 +238,7 @@ function KernelStatus({
   const kernelPid = useMemo(() => usage?.pid, [usage?.pid]);
   const kernelPidPrevious = usePrevious(kernelPid);
 
-  const kernelMemory = useMemo(() => {
-    if (usage?.kernel_memory) {
-      const memory = usage.kernel_memory;
-      const k = 1024;
-      const dm = 2;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
-      const i = Math.floor(Math.log(memory) / Math.log(k));
-
-      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))}${sizes[i]}`;
-    }
-  }, [usage?.kernel_memory]);
 
   const [showKernelWarning, hideKernelWarning] = useModal(() => (
     <PopupMenu
@@ -811,6 +797,7 @@ function KernelStatus({
     updatePipelineMetadata,
   ]);
 
+
   return (
     <PipelineHeaderStyle relativePosition>
       <FlexContainer
@@ -861,18 +848,7 @@ function KernelStatus({
             )}
           </Spacing>
 
-          {usage && (
-            <Spacing mr={PADDING_UNITS}>
-              <Flex flexDirection="column">
-                <Text monospace muted xsmall>
-                  CPU: {typeof usage?.kernel_cpu !== 'undefined' && roundNumber(usage?.kernel_cpu, 3)}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
-                </Text>
-                <Text monospace muted xsmall>
-                  Memory: {kernelMemory}
-                </Text>
-              </Flex>
-            </Spacing>
-          )}
+
         </FlexContainer>
 
         {PipelineTypeEnum.INTEGRATION !== pipeline?.type
@@ -935,43 +911,6 @@ function KernelStatus({
 
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">
-            <Tooltip
-              appearBefore
-              block
-              description={
-                <>
-                  <FlexContainer alignItems="center">
-                    <Text default inline>Press</Text>&nbsp;<KeyboardText
-                      inline
-                      keyText={isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL}
-                    />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
-                      inline
-                      keyText={KEY_SYMBOL_S}
-                    />&nbsp;<Text default inline>to save changes.</Text>
-                    <br />
-                  </FlexContainer>
-
-                  <Spacing mt={1}>
-                    <Text default>
-                      Or, go to <Text inline monospace>
-                        File
-                      </Text>{' › '}<Text inline monospace>
-                        Save pipeline
-                      </Text>.
-                    </Text>
-                  </Spacing>
-                </>
-              }
-              size={null}
-              widthFitContent
-            >
-              <Text muted>
-                {saveStatus}
-              </Text>
-            </Tooltip>
-
-            <Spacing ml={2}/>
-
             <FlexContainer alignItems="center">
               {kernelStatusMemo}
 

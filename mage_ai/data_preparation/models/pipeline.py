@@ -6,6 +6,7 @@ import shutil
 from typing import Any, Callable, Dict, List
 
 import aiofiles
+import dateutil.parser
 import pytz
 import yaml
 from jinja2 import Template
@@ -74,7 +75,7 @@ class Pipeline:
         self.schedules = []
         self.tags = []
         self.type = PipelineType.PYTHON
-        self.updated_at = datetime.datetime.now(tz=pytz.UTC)
+        self.updated_at = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
@@ -494,6 +495,8 @@ class Pipeline:
             pass
         self.created_at = config.get('created_at')
         self.updated_at = config.get('updated_at')
+        if self.updated_at and isinstance(self.updated_at, str):
+            self.updated_at = dateutil.parser.parse(self.updated_at).replace(tzinfo=pytz.UTC)
         self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks') or []
@@ -618,6 +621,10 @@ class Pipeline:
         return blocks_by_uuid
 
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
+        updated_at = self.updated_at
+        if updated_at and hasattr(updated_at, 'isoformat'):
+            updated_at = updated_at.isoformat()
+
         base = dict(
             concurrency_config=self.concurrency_config,
             created_at=self.created_at,
@@ -632,7 +639,7 @@ class Pipeline:
             run_pipeline_in_one_process=self.run_pipeline_in_one_process,
             tags=self.tags,
             type=self.type.value if type(self.type) is not str else self.type,
-            updated_at=self.updated_at,
+            updated_at=updated_at,
             uuid=self.uuid,
         )
 

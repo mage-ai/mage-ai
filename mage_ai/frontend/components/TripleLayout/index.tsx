@@ -82,6 +82,7 @@ type TripleLayoutProps = {
   beforeWidth?: number;
   children: any;
   contained?: boolean;
+  footerOffset?: number;
   header?: any;
   headerOffset?: number;
   height?: number;
@@ -89,6 +90,7 @@ type TripleLayoutProps = {
   hideBeforeCompletely?: boolean;
   inline?: boolean;
   leftOffset?: number;
+  mainContainerFooter?: any;
   mainContainerHeader?: any;
   mainContainerRef: any;
   navigationShowMore?: boolean;
@@ -128,6 +130,7 @@ function TripleLayout({
   beforeWidth = 0,
   children,
   contained,
+  footerOffset,
   header,
   headerOffset = 0,
   height: heightInlineContainer,
@@ -135,6 +138,7 @@ function TripleLayout({
   hideBeforeCompletely,
   inline,
   leftOffset = 0,
+  mainContainerFooter,
   mainContainerHeader,
   mainContainerRef,
   navigationShowMore,
@@ -604,6 +608,7 @@ function TripleLayout({
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
           }
+          footerOffset={footerOffset}
           inline={inline}
           style={{
             width: inline ? null : mainWidth,
@@ -616,6 +621,8 @@ function TripleLayout({
             {children}
           </MainContentInnerStyle>
         </MainContentStyle>
+
+        {mainContainerFooter}
       </MainWrapper>
 
       {after && !shouldHideAfterWrapper && (
@@ -690,12 +697,14 @@ function TripleLayout({
     beforeWidthFinal,
     children,
     contained,
+    footerOffset,
     hasAfterNavigationItems,
     hasBeforeNavigationItems,
     header,
     headerOffset,
     inline,
     leftOffset,
+    mainContainerFooter,
     mainContainerHeader,
     mainContainerRef,
     mainWidth,

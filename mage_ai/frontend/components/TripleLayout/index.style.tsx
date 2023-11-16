@@ -314,13 +314,14 @@ export const MainWrapper = styled.div<{
 
 export const MainContentStyle = styled.div<{
   beforeVisible?: boolean;
+  footerOffset?: number;
   headerOffset?: number;
   inline?: boolean;
 }>`
   z-index: 2;
 
   ${props => `
-    height: calc(100% - ${props.headerOffset || 0}px);
+    height: calc(100% - ${(props.headerOffset || 0) + (props.footerOffset || 0)}px);
     position: ${props.inline ? 'relative' : 'fixed'};
   `}
 

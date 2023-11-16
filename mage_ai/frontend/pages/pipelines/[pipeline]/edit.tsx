@@ -1,3 +1,4 @@
+import moment from 'moment';
 import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
@@ -70,6 +71,7 @@ import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
+import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
@@ -149,6 +151,7 @@ function PipelineDetailPage({
   page,
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
+  const mainContainerFooterRef = useRef(null);
   const {
     featureEnabled,
     featureUUIDs,
@@ -428,8 +431,8 @@ function PipelineDetailPage({
     pipeline,
   ]);
 
-  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
-  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<Date>(utcNowDate({ dateObj: true }));
+  const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
+  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(Number(utcNowDate({ dateObj: true })));
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
   const [showStalePipelineMessageModal, hideStalePipelineMessageModal] = useModal(() => (
@@ -448,10 +451,12 @@ function PipelineDetailPage({
 
   useEffect(() => {
     if (data?.pipeline?.updated_at
-      && pipelineLastSaved?.toISOString() !== new Date(data?.pipeline?.updated_at).toISOString()) {
-      setPipelineLastSaved(new Date(data.pipeline.updated_at));
+      && pipelineLastSaved !== moment().utc().unix()
+    ) {
+      // This assumes datetime is saved without a timezone offset e.g.'2023-11-16 10:37:35'
+      setPipelineLastSaved(moment(data.pipeline.updated_at).unix());
     }
-    if (pipelineLastSaved && Number(pipelineLastSaved) > Number(pipelineLastSavedState)) {
+    if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
       showStalePipelineMessageModal();
     }
   }, [
@@ -880,13 +885,13 @@ function PipelineDetailPage({
     } = payload || {};
     const { contentOnly } = opts || {};
 
-    if (pipelineLastSaved && Number(pipelineLastSaved) > Number(pipelineLastSavedState)) {
+    if (pipelineLastSaved && pipelineLastSaved > pipelineLastSavedState) {
       showStalePipelineMessageModal();
       return;
     }
     const utcNowDateObj = utcNowDate({ dateObj: true });
     const utcNowDateString = utcNowDate();
-    setPipelineLastSavedState(utcNowDateObj);
+    setPipelineLastSavedState(Number(utcNowDateObj));
 
     const blocksByExtensions = {};
     const blocksByUUID = {};
@@ -1135,6 +1140,7 @@ function PipelineDetailPage({
   const saveStatus: string = useMemo(() => displayPipelineLastSaved(
     pipeline,
     {
+      displayRelative: true,
       isPipelineUpdating,
       pipelineContentTouched,
       pipelineLastSaved,
@@ -2957,9 +2963,9 @@ function PipelineDetailPage({
             isBusy={runningBlocks.length >= 1}
             kernel={kernel}
             pipeline={pipeline}
+            pipelineLastSaved={pipelineLastSaved}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
-            saveStatus={saveStatus}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
             setRunningBlocks={setRunningBlocks}
@@ -2989,16 +2995,37 @@ function PipelineDetailPage({
     kernel,
     page,
     pipeline,
+    pipelineLastSaved,
     restartKernel,
     runningBlocks,
     savePipelineContent,
-    saveStatus,
     selectedFilePath,
     selectedFilePaths,
     setErrors,
     setSideBySideEnabled,
     sideBySideEnabled,
     updatePipelineMetadata,
+  ]);
+
+  const mainContainerFooterMemo = useMemo(() => {
+    if (page === PAGE_NAME_EDIT) {
+      return (
+        <StatusFooter
+          kernel={kernel}
+          pipelineContentTouched={pipelineContentTouched}
+          pipelineLastSaved={pipelineLastSaved}
+          ref={mainContainerFooterRef}
+          saveStatus={saveStatus}
+          width={mainContainerWidth}
+        />
+      );
+    }
+  }, [
+    mainContainerWidth,
+    page,
+    pipelineContentTouched,
+    pipelineLastSaved,
+    saveStatus,
   ]);
 
   const integrationOutputsMemo = useMemo(
@@ -3209,7 +3236,9 @@ function PipelineDetailPage({
         beforeHidden={beforeHidden}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={pipelineErrors || errors}
+        footerOffset={mainContainerFooterRef?.current?.getBoundingClientRect()?.height}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
+        mainContainerFooter={mainContainerFooterMemo}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
         page={page}
@@ -3277,7 +3306,7 @@ function PipelineDetailPage({
         ))}
 
         <Spacing
-          pb={filePathFromUrl
+          pb={(filePathFromUrl || sideBySideEnabled)
             ? 0
             : Math.max(
               Math.floor((heightWindow * (2 / 3)) / UNIT),

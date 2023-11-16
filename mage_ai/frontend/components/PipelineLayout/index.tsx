@@ -45,7 +45,9 @@ type PipelineLayoutProps = {
   beforeNavigationItems?: NavigationItem[];
   children: any;
   errors: any;
+  footerOffset?: number;
   headerOffset?: number;
+  mainContainerFooter?: any;
   mainContainerHeader?: any;
   mainContainerRef?: any;
   page: string;
@@ -74,7 +76,9 @@ function PipelineLayout({
   beforeNavigationItems,
   children,
   errors,
+  footerOffset,
   headerOffset,
+  mainContainerFooter,
   mainContainerHeader,
   mainContainerRef,
   page,
@@ -218,8 +222,10 @@ function PipelineLayout({
         beforeMousedownActive={beforeMousedownActive}
         beforeNavigationItems={beforeNavigationItems}
         beforeWidth={beforeWidth}
+        footerOffset={footerOffset}
         header={headerMemo}
         headerOffset={headerOffset}
+        mainContainerFooter={mainContainerFooter}
         mainContainerHeader={mainContainerHeader}
         mainContainerRef={mainContainerRef}
         navigationShowMore
