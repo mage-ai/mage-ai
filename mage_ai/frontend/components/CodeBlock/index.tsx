@@ -822,11 +822,15 @@ function CodeBlock({
     setSparkEnabled(sparkEnabledInit
       && !isStreamingPipeline
       && !isDataIntegration
-      && BlockLanguageEnum.PYTHON === blockLanguage);
+      && BlockLanguageEnum.PYTHON === blockLanguage
+      && (PipelineTypeEnum.PYSPARK === pipeline?.type || !project?.emr_config)
+    );
   }, [
     blockLanguage,
     isDataIntegration,
     isStreamingPipeline,
+    pipeline,
+    project,
     sparkEnabledInit,
   ]);
 
@@ -1525,10 +1529,10 @@ function CodeBlock({
         />
       );
     } else if (sparkEnabled && ![
-        BlockTypeEnum.CALLBACK,
-        BlockTypeEnum.CONDITIONAL,
-        BlockTypeEnum.EXTENSION,
-      ].includes(blockType)) {
+      BlockTypeEnum.CALLBACK,
+      BlockTypeEnum.CONDITIONAL,
+      BlockTypeEnum.EXTENSION,
+    ].includes(blockType)) {
       buttonEl = (
         <>
           <ButtonTabs
@@ -1731,7 +1735,11 @@ function CodeBlock({
 
     let outputChildren;
 
-    if (sparkEnabled) {
+    if (sparkEnabled && ![
+      BlockTypeEnum.CALLBACK,
+      BlockTypeEnum.CONDITIONAL,
+      BlockTypeEnum.EXTENSION,
+    ].includes(block?.type)) {
       if (isOnOutputTab) {
         outputChildren = (
           <SparkProgress

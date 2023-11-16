@@ -23,6 +23,8 @@ import { StatusFooterStyle } from './index.style';
 import { isMac } from '@utils/os';
 import { roundNumber } from '@utils/string';
 
+const ICON_SIZE = UNIT * 1.25;
+
 type StatusFooterProps = {
   kernel: KernelType;
   pipelineContentTouched?: boolean;
@@ -83,6 +85,7 @@ function StatusFooter({
                 <>
                   <Lightning
                     muted
+                    size={ICON_SIZE}
                   />
 
                   <Spacing mr={1} />
@@ -90,11 +93,13 @@ function StatusFooter({
                   <Text
                     monospace
                     muted
+                    small
                   >
                     CPU: <Text
                       inline
                       danger={cpu >= 90}
                       muted={cpu < 50}
+                      small
                       warning={cpu >= 50 && cpu < 90}
                     >
                       {cpu}%
@@ -110,6 +115,7 @@ function StatusFooter({
                   <Text
                     monospace
                     muted
+                    small
                   >
                     /
                   </Text>
@@ -120,11 +126,12 @@ function StatusFooter({
                 <>
                   <HexagonAll
                     muted
+                    size={ICON_SIZE}
                   />
 
                   <Spacing mr={1} />
 
-                  <Text monospace muted>
+                  <Text monospace muted small>
                     Memory: {kernelMemory}
                   </Text>
                 </>
@@ -169,18 +176,20 @@ function StatusFooter({
           <FlexContainer alignItems="center">
             {pipelineContentTouched && (
               <AlertTriangle
+                size={ICON_SIZE}
                 warning
               />
             )}
             {!pipelineContentTouched && (
               <FileIcon
+                size={ICON_SIZE}
                 muted
               />
             )}
 
             <Spacing mr={1} />
 
-            <Text monospace muted warning={pipelineContentTouched}>
+            <Text monospace muted small warning={pipelineContentTouched}>
               {saveStatus}
             </Text>
           </FlexContainer>
