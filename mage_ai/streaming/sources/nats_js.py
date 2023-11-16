@@ -165,8 +165,8 @@ class NATSSource(BaseSource):
             while True:
                 messages = self.fetch_messages()
                 if messages:
-                    for decoded_message, msg in messages:
-                        handler(decoded_message)  # Process each decoded message
+                    for data, msg in messages:
+                        handler(data)  # Process each decoded message
 
                         # Acknowledge the original message
                         asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
