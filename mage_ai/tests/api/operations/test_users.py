@@ -99,6 +99,7 @@ class UserOperationTests(BaseApiTestCase):
         await self.base_test_execute_list(
             None,
             UserPresenter.default_attributes,
+            skip_creation=True,
             user=admin,
         )
 
