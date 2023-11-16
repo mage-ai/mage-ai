@@ -40,11 +40,6 @@ class NATSConfig(BaseConfig):
             config['ssl_config'] = SSLConfig(**ssl_config)
         return config
 
-    @classmethod
-    def load(cls, config):
-        # Assuming config is a dictionary with keys corresponding to NATSConfig fields
-        return cls(**config)
-
 
 class NATSSource(BaseSource):
     config_class = NATSConfig

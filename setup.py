@@ -109,6 +109,7 @@ setuptools.setup(
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'opensearch-py==2.0.0',
+            'nats-py==2.6.0',
             'pika==1.3.1',
             'pymongo==4.3.3',
             'requests_aws4auth==1.1.2',
