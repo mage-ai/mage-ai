@@ -2865,7 +2865,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   <CodeHelperStyle normalPadding>
                     <FlexContainer
                       flexWrap="wrap"
-                      style={{ marginTop: '-8px' }}
                     >
                       <FlexContainer style={{ marginTop: '8px' }}>
                         <Select
