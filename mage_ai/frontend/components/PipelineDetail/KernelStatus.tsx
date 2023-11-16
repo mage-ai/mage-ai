@@ -405,7 +405,7 @@ function KernelStatus({
        <ClickOutside
         onClickOutside={(e) => {
           pauseEvent(e);
-          setClusterSelectionVisible(false);
+          setComputeConnectionVisible(false);
         }}
         open={computeConnectionVisible}
       >

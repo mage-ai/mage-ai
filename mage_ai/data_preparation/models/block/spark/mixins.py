@@ -242,7 +242,7 @@ class SparkBlock:
         else:
             applications = api.applications_sync()
             if applications:
-                jobs = api.jobs_sync(applications[0].id)
+                jobs = api.jobs_sync(applications[0].calculated_id())
 
         return sorted(
             jobs,
@@ -266,7 +266,7 @@ class SparkBlock:
             applications = api.applications_sync()
 
             if applications:
-                stages = api.stages_sync(applications[0].id, dict(
+                stages = api.stages_sync(applications[0].calculated_id(), dict(
                     quantiles='0.01,0.25,0.5,0.75,0.99',
                     withSummaries=True,
                 ))
@@ -288,7 +288,7 @@ class SparkBlock:
 
             sqls = []
             if applications:
-                sqls = api.sqls_sync(applications[0].id, dict(
+                sqls = api.sqls_sync(applications[0].calculated_id(), dict(
                     length=9999,
                 ))
 

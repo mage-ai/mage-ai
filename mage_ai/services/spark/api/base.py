@@ -170,7 +170,7 @@ class BaseAPI(ABC):
         if response.status_code == 200:
             return response.json()
         else:
-            print(f'[WARNING] {self.__class__.__name__} {url}: {response}')
+            print(f'[WARNING] {self.__class__.__name__} async {url}: {response}')
 
         return {}
 
