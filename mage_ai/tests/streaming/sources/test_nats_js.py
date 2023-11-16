@@ -27,6 +27,6 @@ class NATSTests(TestCase):
         with patch.object(NATSSource, 'init_client') as mock_init_client:
             with self.assertRaises(Exception) as context:
                 NATSSource(invalid_config)
-            error_msg = "missing 1 required positional argument: 'server_url'"
+            error_msg = "missing 2 required positional arguments: 'server_url' and 'stream_name'"
             self.assertIn(error_msg, str(context.exception))
             self.assertEqual(mock_init_client.call_count, 0)
