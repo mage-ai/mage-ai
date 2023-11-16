@@ -28,11 +28,8 @@ class SessionResource(BaseResource):
         if token and provider:
             roles = []
             provider_class = NAME_TO_PROVIDER.get(provider)
-            provider_instance = None
             if provider_class is not None:
                 provider_instance = provider_class()
-
-            if provider_instance is not None:
                 user_info = await provider_instance.get_user_info(access_token=token)
                 email = user_info.get('email')
                 username = user_info.get('username')

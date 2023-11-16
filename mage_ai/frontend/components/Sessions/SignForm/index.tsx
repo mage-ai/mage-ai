@@ -20,7 +20,7 @@ import {
   KEY_CODE_ENTER,
   KEY_SYMBOL_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { OauthProviderEnum } from '@interfaces/OauthType';
+import { OAUTH_PROVIDER_SIGN_IN_MAPPING, OauthProviderEnum } from '@interfaces/OauthType';
 import { PADDING_HORIZONTAL_UNITS } from '@oracle/styles/units/spacing';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -217,30 +217,18 @@ function SignForm({
                     Sign into Mage
                   </KeyboardShortcutButton>
                 </Spacing>
-                
-                {providerMapping?.[OauthProviderEnum.ACTIVE_DIRECTORY] && (
-                  <Spacing mt={4}>
-                    <MicrosoftSignIn
-                      oauthResponse={providerMapping?.[OauthProviderEnum.ACTIVE_DIRECTORY]}
-                    />
-                  </Spacing>
-                )}
 
-                {providerMapping?.[OauthProviderEnum.GOOGLE] && (
-                  <Spacing mt={4}>
-                    <GoogleSignIn
-                      oauthResponse={providerMapping?.[OauthProviderEnum.GOOGLE]}
-                    />
-                  </Spacing>
-                )}
-
-                {providerMapping?.[OauthProviderEnum.OKTA] && (
-                  <Spacing mt={4}>
-                    <OktaSignIn
-                      oauthResponse={providerMapping?.[OauthProviderEnum.OKTA]}
-                    />
-                  </Spacing>
-                )}
+                {Object.entries(OAUTH_PROVIDER_SIGN_IN_MAPPING).map(([provider, SignInComponent]) => (
+                  <>
+                    {providerMapping?.[provider] && (
+                      <Spacing mt={4}>
+                        <SignInComponent
+                          oauthResponse={providerMapping?.[provider]}
+                        />
+                      </Spacing>
+                    )}
+                  </>
+                ))}
               </form>
             </ContainerStyle>
           </Spacing>
