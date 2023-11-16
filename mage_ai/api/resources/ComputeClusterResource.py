@@ -2,6 +2,7 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.services.compute.aws.models import Cluster
 from mage_ai.services.compute.models import ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.services.ssh.aws.emr.models import close_tunnel
 from mage_ai.services.ssh.aws.emr.utils import tunnel
 
 
@@ -67,9 +68,11 @@ class ComputeClusterResource(GenericResource):
 
         if isinstance(parent_model, ComputeService):
             if ComputeServiceUUID.AWS_EMR == parent_model.uuid:
-                cluster_id = self.get_cluster_id()
-                if cluster_id:
-                    parent_model.terminate_clusters([cluster_id])
+                cluster = self.get_cluster()
+                parent_model.terminate_clusters([cluster.id])
+
+                if cluster.active:
+                    close_tunnel()
 
     async def update(self, payload, **kwargs):
         parent_model = kwargs.get('parent_model')
@@ -88,11 +91,14 @@ class ComputeClusterResource(GenericResource):
 
                             self.on_update_callback = _callback
 
+    def get_cluster(self) -> Cluster:
+        return self.model.get('cluster')
+
     def get_cluster_id(self) -> str:
         cluster_id = None
 
         if 'cluster' in self.model:
-            cluster = self.model.get('cluster')
+            cluster = self.get_cluster()
             if cluster:
                 cluster_id = None
                 if isinstance(cluster, Cluster):

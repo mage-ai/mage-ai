@@ -122,12 +122,9 @@ def tunnel(
 
         compute_service = ComputeService.build(project)
         if compute_service and ComputeServiceUUID.AWS_EMR == compute_service.uuid:
-            try:
-                cluster = compute_service.active_cluster()
-                if cluster:
-                    data['cluster'] = cluster.to_dict()
-            except Exception as err:
-                print(f'[WARNING] tunnel: {err}')
+            cluster = compute_service.active_cluster()
+            if cluster:
+                data['cluster'] = cluster.to_dict()
 
     absolute_file_path = file_path()
     os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)
