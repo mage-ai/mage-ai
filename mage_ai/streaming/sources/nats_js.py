@@ -3,7 +3,7 @@ import json
 import ssl
 import threading
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 import nats
 from nats.errors import NoServersError
@@ -27,6 +27,7 @@ class NATSConfig(BaseConfig):
     stream_name: str
     subject: str = None
     subjects: List = field(default_factory=list)
+    user_credentials: Optional[str] = None
     use_tls: bool = False
     ssl_config: SSLConfig = None
     consumer_name: str = None
@@ -60,6 +61,14 @@ class NATSSource(BaseSource):
 
     async def ainit_client(self):
         try:
+            connect_opts = {
+                "servers": [self.config.server_url],
+                "error_cb": self.error_cb,
+                "reconnected_cb": self.reconnected_cb,
+                "disconnected_cb": self.disconnected_cb,
+                "closed_cb": self.closed_cb,
+            }
+
             # Configure SSL context if use_tls is True
             if self.config.use_tls and self.config.ssl_config:
                 ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
@@ -70,27 +79,14 @@ class NATSSource(BaseSource):
                         certfile=self.config.ssl_config.certfile,
                         keyfile=self.config.ssl_config.keyfile
                     )
-                if self.config.ssl_config.password:
-                    ssl_ctx.password = self.config.ssl_config.password
-                if self.config.ssl_config.check_hostname:
-                    ssl_ctx.check_hostname = True
-                await nats.connect(
-                    self.config.server_url,
-                    tls=ssl_ctx,
-                    tls_hostname=self.config.tls_hostname,
-                    reconnected_cb=self.reconnected_cb,
-                    disconnected_cb=self.disconnected_cb,
-                    closed_cb=self.closed_cb,
-                )
+                connect_opts["tls"] = ssl_ctx
 
-            else:
-                self.nc = await nats.connect(
-                    self.config.server_url,
-                    error_cb=self.error_cb,
-                    reconnected_cb=self.reconnected_cb,
-                    disconnected_cb=self.disconnected_cb,
-                    closed_cb=self.closed_cb,
-                )
+            # Use NKEY if provided
+            if self.config.user_credentials:
+                connect_opts["user_credentials"] = self.config.user_credentials
+
+            # Establish connection with the configured options
+            self.nc = await nats.connect(**connect_opts)
             self.js = self.nc.jetstream()
 
             # Default consumer_name to stream_name if not provided
