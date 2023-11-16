@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
+from mage_ai.api.presenters.UserPresenter import UserPresenter
 from mage_ai.orchestration.db.models.oauth import Role, User
+from mage_ai.shared.array import find
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 
@@ -71,7 +73,7 @@ class UserOperationTests(BaseApiTestCase):
         email1 = self.faker.email()
         email2 = self.faker.email()
 
-        await self.base_test_execute_list(
+        response = await self.base_test_execute_list(
             [
                 dict(
                     email=email1,
@@ -83,13 +85,22 @@ class UserOperationTests(BaseApiTestCase):
                     email=email2,
                     password='water_lightning',
                     password_confirmation='water_lightning',
-                    roles_new=[Role.get_role('Editor').id],
+                    roles_new=[Role.get_role('Admin').id],
                 ),
             ],
             [
                 'id',
             ],
             user=owner,
+        )
+
+        admin = User.query.get(find(lambda x: x['email'] == email2, response['users'])['id'])
+
+        await self.base_test_execute_list(
+            None,
+            UserPresenter.default_attributes,
+            skip_creation=True,
+            user=admin,
         )
 
     async def test_execute_list_unauthorized(self):
