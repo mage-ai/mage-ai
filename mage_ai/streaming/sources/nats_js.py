@@ -130,14 +130,14 @@ class NATSSource(BaseSource):
         try:
             while True:
                 messages = self.fetch_messages()
-                if not messages:
-                    continue
-                decoded_messages = [json.loads(msg.data.decode()) for msg in messages]
-                handler(decoded_messages)  # Pass the entire batch to the handler
+                if messages:
+                    decoded_messages = [decoded for decoded, _ in messages]
+                    handler(decoded_messages)  # Process decoded messages
 
-                # Acknowledge all messages in the batch
-                for message in messages:
-                    asyncio.run_coroutine_threadsafe(message.ack(), self.loop)
+                    # Acknowledge all messages in the batch
+                    for _, original_msg in messages:
+                        asyncio.run_coroutine_threadsafe(original_msg.ack(), self.loop)
+
         finally:
             self.close_client()
             self.stop_loop()
@@ -145,8 +145,8 @@ class NATSSource(BaseSource):
     async def afetch_messages(self):
         try:
             msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout)
-            # return [json.loads(msg.data.decode()) for msg in msgs]
-            return msgs  # Return the message objects
+            # Return a tuple of (decoded_message, message)
+            return [(json.loads(msg.data.decode()), msg) for msg in msgs]
         except nats.errors.TimeoutError:
             return []
 
@@ -162,13 +162,11 @@ class NATSSource(BaseSource):
         try:
             while True:
                 messages = self.fetch_messages()
-                if messages:
-                    for msg in messages:
-                        decoded_message = json.loads(msg.data.decode())
-                        handler(decoded_message)
+                for decoded_message, msg in messages:
+                    handler(decoded_message)  # Process each decoded message
 
-                        # Acknowledge the message
-                        asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
+                    # Acknowledge the original message
+                    asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
 
         finally:
             self.close_client()
