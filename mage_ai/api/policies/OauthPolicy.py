@@ -91,6 +91,7 @@ OauthPolicy.allow_write(
 
 OauthPolicy.allow_query(
     on_action=[
+        constants.LIST,
         constants.DETAIL,
     ],
     scopes=[
