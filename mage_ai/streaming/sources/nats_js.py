@@ -1,7 +1,6 @@
 import asyncio
 import json
 import threading
-import time
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List
 
@@ -146,8 +145,7 @@ class NATSSource(BaseSource):
                 if messages:
                     for message in messages:
                         handler(message)
-                else:
-                    time.sleep(1)  # Sleep for 1 second if no messages are available
+
         finally:
             self.close_client()
             self.stop_loop()
