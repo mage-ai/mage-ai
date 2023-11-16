@@ -33,6 +33,7 @@ import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
 import { find } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
+import { initiateDownload } from '@utils/downloads';
 
 const MENU_WIDTH: number = UNIT * 20;
 const MENU_ITEM_HEIGHT = 36;
@@ -91,6 +92,24 @@ function FileBrowser({
 
   const { data: serverStatus } = api.statuses.list();
   const repoPath = useMemo(() => serverStatus?.statuses?.[0]?.repo_path, [serverStatus]);
+
+  const [downloadFile] = useMutation(
+    (fullPath: string) => api.downloads.files.useCreate(fullPath)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            const token = response.data.download.token;
+            initiateDownload(token);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        }
+      )
+    }
+  );
 
   const [deleteFile] = useMutation(
     (fullPath: string) => api.files.useDelete(fullPath)(),
@@ -476,6 +495,13 @@ function FileBrowser({
             showModalNewFile({ file: selectedFile, moveFile: true });
           },
           uuid: 'move_file',
+        }, {
+          label: () => 'Download file',
+          onClick: () => {
+            const fp = getFullPathWithoutRootFolder(selectedFile);
+            downloadFile(encodeURIComponent(fp));
+          },
+          uuid: 'download_file',
         },
       ]);
 
@@ -548,6 +574,7 @@ function FileBrowser({
     deleteFile,
     deleteFolder,
     deleteWidget,
+    downloadFile,
     ref,
     showModal,
     showModalNewFile,

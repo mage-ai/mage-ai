@@ -1,5 +1,7 @@
 import os
 
+from .secret_generation import generate_jwt_secret
+
 # If you add a new environment variable, make sure to check if it should be added to
 # the `MAGE_SETTINGS_ENVIRONMENT_VARIABLES` list at the bottom of this file. Also, update
 # the environment variable documentation at docs/development/variables/environment-variables.mdx
@@ -94,7 +96,10 @@ REQUESTS_BASE_PATH = os.getenv('MAGE_REQUESTS_BASE_PATH', BASE_PATH)
 # Routes base path is used to configure the base path for the backend routes. Defaults
 # to the MAGE_BASE_PATH environment variable.
 ROUTES_BASE_PATH = os.getenv('MAGE_ROUTES_BASE_PATH', BASE_PATH)
-
+# Used for OAUTH
+JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
+# Used for generating download tokens
+JWT_DOWNLOAD_SECRET = os.getenv('JWT_DOWNLOAD_SECRET', generate_jwt_secret())
 # Sets the trigger interval of the scheduler to a numeric value, in seconds
 # Determines how often the scheduler gets invoked
 try:

@@ -52,3 +52,5 @@ ATTRIBUTE_OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING = {
 
 META_KEY_LIMIT = '_limit'
 META_KEY_OFFSET = '_offset'
+
+DOWNLOAD_TOKEN_LIFESPAN = 60  # Lifespan of generated download token in seconds

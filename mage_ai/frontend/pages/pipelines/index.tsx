@@ -48,6 +48,7 @@ import {
   Pause,
   PipelineV3,
   PlayButtonFilled,
+  Save,
   Secrets,
   Schedule,
 } from '@oracle/icons';
@@ -97,6 +98,7 @@ import { pauseEvent } from '@utils/events';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
+import { initiateDownload } from '@utils/downloads';
 
 const TAB_RECENT = {
   Icon: Schedule,
@@ -291,6 +293,33 @@ function PipelineListPage() {
   const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
     q,
   ]);
+
+  const [downloadPipeline] = useMutation(
+    ({
+      pipelineUUID,
+      filesOnly = false,
+    }: {
+      pipelineUUID: string;
+      filesOnly?: boolean;
+    }) =>
+      api.downloads.pipelines.useCreate(pipelineUUID)({
+        download: { ignore_folder_structure: filesOnly },
+      }),
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: () => {
+            const token = response.data.download.token;
+            initiateDownload(token);
+          },
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
+    }
+  );
 
   useEffect(() => {
     let queryFinal = {};
@@ -1212,6 +1241,26 @@ function PipelineListPage() {
             uuid: 'clone',
           },
           {
+            label: () => 'Download (keep folder structure)',
+            onClick: () => {
+              downloadPipeline({
+                pipelineUUID: selectedPipeline?.uuid,
+                filesOnly: false
+              });
+            },
+            uuid: 'download_keep_folder_structure',
+          },
+          {
+            label: () => 'Download (without folder structure)',
+            onClick: () => {
+              downloadPipeline({
+                pipelineUUID: selectedPipeline?.uuid,
+                filesOnly: true
+              });
+            },
+            uuid: 'download_without_folder_structure',
+          },
+          {
             label: () => 'Add/Remove tags',
             onClick: () => {
               router.push(
@@ -1255,7 +1304,7 @@ function PipelineListPage() {
         ];
       }}
       rightClickMenuHeight={36 * 7}
-      rightClickMenuWidth={UNIT * 25}
+      rightClickMenuWidth={UNIT * 30}
       rowGroupHeaders={rowGroupHeadersInner}
       rows={pipelinesInner?.map((pipeline, idx) => {
         const {
@@ -1387,6 +1436,16 @@ function PipelineListPage() {
             <Button
               {...sharedOpenButtonProps}
               onClick={() => {
+                downloadPipeline({ pipelineUUID: uuid });
+              }}
+              title="Download (keep folder structure)"
+            >
+              <Save default size={2 * UNIT} />
+            </Button>
+            <Spacing mr={1} />
+            <Button
+              {...sharedOpenButtonProps}
+              onClick={() => {
                 router.push(
                   '/pipelines/[pipeline]',
                   `/pipelines/${uuid}`,
@@ -1421,6 +1480,7 @@ function PipelineListPage() {
   ), [
     clonePipeline,
     deletePipeline,
+    downloadPipeline,
     displayLocalTimezone,
     getUniqueRowIdentifier,
     pipelinesEditing,

@@ -47,7 +47,7 @@ from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
-from mage_ai.server.api.downloads import ApiDownloadHandler
+from mage_ai.server.api.downloads import ApiDownloadHandler, ApiResourceDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -294,6 +294,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
             r'(?P<block_uuid>[\w\-\%2f\.(/.*)?]+)/downloads',
             ApiDownloadHandler,
+        ),
+        # Download resource
+        (
+            r'/api/downloads/(?P<token>[\w/%.-]+)',
+            ApiResourceDownloadHandler
         ),
 
         # API v1 routes
