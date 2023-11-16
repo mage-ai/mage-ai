@@ -337,6 +337,7 @@ function KernelStatus({
     if (!sparkEnabled
       || !validComputePipelineType
       || computeServiceUUIDs.AWS_EMR !== computeService?.uuid
+      || PipelineTypeEnum.PYSPARK !== pipeline?.type
     ) {
       return null;
     }
@@ -448,6 +449,7 @@ function KernelStatus({
     connections,
     connectionsLoading,
     fetchAll,
+    pipeline,
     setClusterSelectionVisible,
     setComputeConnectionVisible,
     validComputePipelineType,
