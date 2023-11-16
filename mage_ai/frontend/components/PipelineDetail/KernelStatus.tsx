@@ -47,8 +47,6 @@ import useProject from '@utils/models/project/useProject';
 import {
   AlertTriangle,
   Check,
-  LayoutSplit,
-  LayoutStacked,
   PowerOnOffButton,
 } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
@@ -95,8 +93,6 @@ type KernelStatusProps = {
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
-  setSideBySideEnabled?: (value: boolean) => void;
-  sideBySideEnabled?: boolean;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -112,8 +108,6 @@ function KernelStatus({
   selectedFilePath,
   setErrors,
   setRunningBlocks,
-  setSideBySideEnabled,
-  sideBySideEnabled,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const router = useRouter();
@@ -850,64 +844,6 @@ function KernelStatus({
 
 
         </FlexContainer>
-
-        {PipelineTypeEnum.INTEGRATION !== pipeline?.type
-          && featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-          && (
-          <HeaderViewOptionsStyle>
-            <FlexContainer alignItems="center">
-              <Tooltip
-                block
-                center
-                description={(
-                  <Text>
-                    Display the output of a block underneath the block’s code.
-                  </Text>
-                )}
-                size={null}
-              >
-                <Button
-                  iconOnly
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => setSideBySideEnabled(false)}
-                  padding={`${1 * UNIT}px`}
-                >
-                  <LayoutStacked
-                    muted={sideBySideEnabled}
-                    size={2 * UNIT}
-                  />
-                </Button>
-              </Tooltip>
-
-              <Tooltip
-                block
-                center
-                description={(
-                  <Text>
-                    Display the output of a block on the right side of the block’s code.
-                  </Text>
-                )}
-                size={null}
-              >
-                <Button
-                  iconOnly
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => setSideBySideEnabled(true)}
-                  padding={`${1 * UNIT}px`}
-                >
-                  <LayoutSplit
-                    muted={!sideBySideEnabled}
-                    size={2 * UNIT}
-                  />
-                </Button>
-              </Tooltip>
-            </FlexContainer>
-          </HeaderViewOptionsStyle>
-        )}
 
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">

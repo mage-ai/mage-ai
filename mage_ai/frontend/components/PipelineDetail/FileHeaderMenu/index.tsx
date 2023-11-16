@@ -12,7 +12,11 @@ import PipelineType, {
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useProject from '@utils/models/project/useProject';
-import { Check } from '@oracle/icons';
+import {
+  Check,
+  LayoutSplit,
+  LayoutStacked,
+} from '@oracle/icons';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
@@ -226,7 +230,24 @@ function FileHeaderMenu({
     {
       label: () => (
         <FlexContainer alignItems="center">
-          {sideBySideEnabled ? <Check /> : <div style={{ width: ICON_SIZE}} />}
+          <LayoutStacked success={!sideBySideEnabled} />
+
+          <Spacing mr={1} />
+
+          <Text noWrapping>
+            Show output below block
+          </Text>
+        </FlexContainer>
+      ),
+      onClick: () => {
+        setSideBySideEnabled(false);
+      },
+      uuid: 'Show output next to code',
+    },
+    {
+      label: () => (
+        <FlexContainer alignItems="center">
+          <LayoutSplit success={sideBySideEnabled} />
 
           <Spacing mr={1} />
 
@@ -236,7 +257,7 @@ function FileHeaderMenu({
         </FlexContainer>
       ),
       onClick: () => {
-        setSideBySideEnabled(!sideBySideEnabled);
+        setSideBySideEnabled(true);
       },
       uuid: 'Show output next to code',
     },

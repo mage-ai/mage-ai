@@ -1,7 +1,9 @@
 import moment from 'moment';
 import useWebSocket from 'react-use-websocket';
+import { ThemeContext } from 'styled-components';
 import {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -75,8 +77,11 @@ import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
+import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import {
   BLOCK_EXISTS_ERROR,
+  CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED,
+  CUSTOM_EVENT_CODE_BLOCK_CHANGED,
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
@@ -152,6 +157,7 @@ function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
   const mainContainerFooterRef = useRef(null);
+  const timeoutRef = useRef(null);
   const {
     featureEnabled,
     featureUUIDs,
@@ -159,7 +165,7 @@ function PipelineDetailPage({
     project,
     sparkEnabled,
   } = useProject();
-
+  const themeContext = useContext(ThemeContext);
   const router = useRouter();
   const {
     height: heightWindow,
@@ -218,27 +224,6 @@ function PipelineDetailPage({
   const [hiddenBlocks, setHiddenBlocksState] = useState<{
     [uuid: string]: boolean;
   }>({});
-  const setHiddenBlocks = useCallback((callback) => {
-    setHiddenBlocksState((prev) => {
-      const data = callback(prev);
-      set(localStorageHiddenBlocksKey, JSON.stringify(data));
-
-      return data;
-    });
-  }, [
-    localStorageHiddenBlocksKey,
-    setHiddenBlocksState,
-  ]);
-
-  useEffect(() => {
-    const hiddenBlocksInitString = get(localStorageHiddenBlocksKey);
-    if (hiddenBlocksInitString && isJsonString(hiddenBlocksInitString)) {
-      setHiddenBlocksState(JSON.parse(hiddenBlocksInitString));
-    }
-  }, [
-    localStorageHiddenBlocksKey,
-    setHiddenBlocksState,
-  ]);
 
   const mainContainerRef = useRef(null);
 
@@ -411,6 +396,57 @@ function PipelineDetailPage({
   }, [
     setScrollTogether,
     setSideBySideEnabledState,
+  ]);
+
+  const dispatchEventChanged = useCallback(() => {
+    const evt = new CustomEvent(CUSTOM_EVENT_CODE_BLOCK_CHANGED, {
+      detail: {},
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(evt);
+    }
+  }, []);
+
+  const dispatchEventChangedOutput = useCallback(() => {
+    const evt = new CustomEvent(CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED, {
+      detail: {},
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(evt);
+    }
+  }, []);
+
+  const setHiddenBlocks = useCallback((callback) => {
+    setHiddenBlocksState((prev) => {
+      const data = callback(prev);
+      set(localStorageHiddenBlocksKey, JSON.stringify(data));
+
+      return data;
+    });
+
+    if (sideBySideEnabled) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        dispatchEventChangedOutput();
+        dispatchEventChanged();
+      }, ANIMATION_DURATION_CONTENT + 1);
+    }
+  }, [
+    localStorageHiddenBlocksKey,
+    setHiddenBlocksState,
+    sideBySideEnabled,
+  ]);
+
+  useEffect(() => {
+    const hiddenBlocksInitString = get(localStorageHiddenBlocksKey);
+    if (hiddenBlocksInitString && isJsonString(hiddenBlocksInitString)) {
+      setHiddenBlocksState(JSON.parse(hiddenBlocksInitString));
+    }
+  }, [
+    localStorageHiddenBlocksKey,
+    setHiddenBlocksState,
   ]);
 
   const {
@@ -2968,8 +3004,6 @@ function PipelineDetailPage({
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
             setRunningBlocks={setRunningBlocks}
-            setSideBySideEnabled={setSideBySideEnabled}
-            sideBySideEnabled={sideBySideEnabled}
             updatePipelineMetadata={updatePipelineMetadata}
           >
             {beforeHeader}
@@ -3000,8 +3034,6 @@ function PipelineDetailPage({
     selectedFilePath,
     selectedFilePaths,
     setErrors,
-    setSideBySideEnabled,
-    sideBySideEnabled,
     updatePipelineMetadata,
   ]);
 
@@ -3145,13 +3177,15 @@ function PipelineDetailPage({
           setSelectedTab(tab);
         }}
         selectedTabUUID={selectedTab?.uuid}
-        small
         tabs={EDIT_BEFORE_TABS}
+        underlineColor={(themeContext || dark).accent.purple}
+        underlineStyle
       />
     </Spacing>
   ), [
     setSelectedTab,
     selectedTab,
+    themeContext,
   ]);
 
   return (

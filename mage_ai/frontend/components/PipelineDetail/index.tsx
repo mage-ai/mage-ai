@@ -30,7 +30,6 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
-import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import InteractionType from '@interfaces/InteractionType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -829,132 +828,115 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         key = `${key}:${refreshTimestamp}`;
       }
 
-      if (isHidden) {
-        el = (
-          <HiddenBlock
-            block={block}
-            blocks={blocks}
-            key={key}
-            // @ts-ignore
-            onClick={() => setHiddenBlocks(prev => ({
-              ...prev,
-              [uuid]: !isHidden,
-            }))}
-            onDrop={onDrop}
-            ref={currentBlockRef}
-          />
-        );
-      } else {
-        el = (
-          <CodeBlock
-            addNewBlock={(
-              b: BlockRequestPayloadType,
-              downstreamBlocks?: BlockType[],
-            ) => {
-              setTextareaFocused(true);
-              const onCreateCallback = (block: BlockType) => {
-                if (downstreamBlocks?.length === 1) {
-                  const downstreamBlockUUID = downstreamBlocks[0]?.uuid;
-                  const upstreamsOfDownstreamBlock = downstreamBlocks[0]?.upstream_blocks || [];
-                  updateBlock({
-                    block: { uuid: downstreamBlockUUID },
-                    upstreamBlocks: [block.uuid, ...upstreamsOfDownstreamBlock],
-                  });
-                }
-                setSelectedBlock?.(block);
-              };
+      arr.push(
+        <CodeBlock
+          addNewBlock={(
+            b: BlockRequestPayloadType,
+            downstreamBlocks?: BlockType[],
+          ) => {
+            setTextareaFocused(true);
+            const onCreateCallback = (block: BlockType) => {
+              if (downstreamBlocks?.length === 1) {
+                const downstreamBlockUUID = downstreamBlocks[0]?.uuid;
+                const upstreamsOfDownstreamBlock = downstreamBlocks[0]?.upstream_blocks || [];
+                updateBlock({
+                  block: { uuid: downstreamBlockUUID },
+                  upstreamBlocks: [block.uuid, ...upstreamsOfDownstreamBlock],
+                });
+              }
+              setSelectedBlock?.(block);
+            };
 
-              return addNewBlockAtIndex(
-                b,
-                sideBySideEnabled ? idx : idx + 1,
-                onCreateCallback,
-              );
-            }}
-            addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
-            addWidget={addWidget}
-            allBlocks={allBlocks}
-            allowCodeBlockShortcuts={allowCodeBlockShortcuts}
-            autocompleteItems={autocompleteItems}
-            block={block}
-            blockIdx={idx}
-            blockInteractions={blockInteractionsMapping?.[uuid]}
-            blockOutputRef={currentBlockOutputRef}
-            blockRefs={blockRefs}
-            blockTemplates={blockTemplates}
-            blocks={blocks}
-            containerRef={containerRef}
-            cursorHeight1={cursorHeight1}
-            cursorHeight2={cursorHeight2}
-            cursorHeight3={cursorHeight3}
-            dataProviders={dataProviders}
-            defaultValue={block.content}
-            deleteBlock={(b: BlockType) => {
-              deleteBlock(b);
-              setAnyInputFocused(false);
-            }}
-            disableShortcuts={disableShortcuts}
-            executionState={executionState}
-            fetchFileTree={fetchFileTree}
-            fetchPipeline={fetchPipeline}
-            globalDataProducts={globalDataProducts}
-            hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
-            interactionsMapping={interactionsMapping}
-            interruptKernel={interruptKernel}
-            key={key}
-            mainContainerRect={mainContainerRect}
-            mainContainerRef={mainContainerRef}
-            mainContainerWidth={mainContainerWidth}
-            messages={messages[uuid]}
-            noDivider={noDivider}
-            onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
-            onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
-            onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-            onDrop={onDrop}
-            openSidekickView={openSidekickView}
-            pipeline={pipeline}
-            project={project}
-            ref={currentBlockRef}
-            runBlock={runBlock}
-            runningBlocks={runningBlocks}
-            savePipelineContent={savePipelineContent}
-            scrollTogether={scrollTogether}
-            selected={selected}
-            setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-            setAnyInputFocused={setAnyInputFocused}
-            setCreatingNewDBTModel={setCreatingNewDBTModel}
-            setEditingBlock={setEditingBlock}
-            setErrors={setErrors}
-            setMountedBlocks={setMountedBlocks}
-            setOutputBlocks={setOutputBlocks}
-            setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-            setSelectedBlock={setSelectedBlock}
-            setSelectedOutputBlock={setSelectedOutputBlock}
-            setTextareaFocused={setTextareaFocused}
-            showBrowseTemplates={showBrowseTemplates}
-            showConfigureProjectModal={showConfigureProjectModal}
-            showDataIntegrationModal={showDataIntegrationModal}
-            showGlobalDataProducts={showGlobalDataProducts}
-            showUpdateBlockModal={showUpdateBlockModal}
-            sideBySideEnabled={sideBySideEnabled}
-            textareaFocused={selected && textareaFocused}
-            widgets={widgets}
-            windowWidth={windowWidth}
-          >
-            {sideBySideEnabled && isLast && (
-              <div
-                style={{
-                  paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING,
-                  paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING,
-                }}
-              >
-                {addNewBlocksMemo}
-              </div>
-            )}
-          </CodeBlock>
-        );
-      }
-
-      arr.push(el);
+            return addNewBlockAtIndex(
+              b,
+              sideBySideEnabled ? idx : idx + 1,
+              onCreateCallback,
+            );
+          }}
+          addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
+          addWidget={addWidget}
+          allBlocks={allBlocks}
+          allowCodeBlockShortcuts={allowCodeBlockShortcuts}
+          autocompleteItems={autocompleteItems}
+          block={block}
+          blockIdx={idx}
+          blockInteractions={blockInteractionsMapping?.[uuid]}
+          blockOutputRef={currentBlockOutputRef}
+          blockRefs={blockRefs}
+          blockTemplates={blockTemplates}
+          blocks={blocks}
+          containerRef={containerRef}
+          cursorHeight1={cursorHeight1}
+          cursorHeight2={cursorHeight2}
+          cursorHeight3={cursorHeight3}
+          dataProviders={dataProviders}
+          defaultValue={block.content}
+          deleteBlock={(b: BlockType) => {
+            deleteBlock(b);
+            setAnyInputFocused(false);
+          }}
+          disableShortcuts={disableShortcuts}
+          executionState={executionState}
+          fetchFileTree={fetchFileTree}
+          fetchPipeline={fetchPipeline}
+          globalDataProducts={globalDataProducts}
+          hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
+          interactionsMapping={interactionsMapping}
+          interruptKernel={interruptKernel}
+          isHidden={isHidden}
+          key={key}
+          mainContainerRect={mainContainerRect}
+          mainContainerRef={mainContainerRef}
+          mainContainerWidth={mainContainerWidth}
+          messages={messages[uuid]}
+          noDivider={noDivider}
+          onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
+          onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
+          onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+          onDrop={onDrop}
+          openSidekickView={openSidekickView}
+          pipeline={pipeline}
+          project={project}
+          ref={currentBlockRef}
+          runBlock={runBlock}
+          runningBlocks={runningBlocks}
+          savePipelineContent={savePipelineContent}
+          scrollTogether={scrollTogether}
+          selected={selected}
+          setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+          setAnyInputFocused={setAnyInputFocused}
+          setCreatingNewDBTModel={setCreatingNewDBTModel}
+          setEditingBlock={setEditingBlock}
+          setErrors={setErrors}
+          setHiddenBlocks={setHiddenBlocks}
+          setMountedBlocks={setMountedBlocks}
+          setOutputBlocks={setOutputBlocks}
+          setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+          setSelectedBlock={setSelectedBlock}
+          setSelectedOutputBlock={setSelectedOutputBlock}
+          setTextareaFocused={setTextareaFocused}
+          showBrowseTemplates={showBrowseTemplates}
+          showConfigureProjectModal={showConfigureProjectModal}
+          showDataIntegrationModal={showDataIntegrationModal}
+          showGlobalDataProducts={showGlobalDataProducts}
+          showUpdateBlockModal={showUpdateBlockModal}
+          sideBySideEnabled={sideBySideEnabled}
+          textareaFocused={selected && textareaFocused}
+          widgets={widgets}
+          windowWidth={windowWidth}
+        >
+          {sideBySideEnabled && isLast && (
+            <div
+              style={{
+                paddingBottom: SIDE_BY_SIDE_VERTICAL_PADDING,
+                paddingTop: SIDE_BY_SIDE_VERTICAL_PADDING,
+              }}
+            >
+              {addNewBlocksMemo}
+            </div>
+          )}
+        </CodeBlock>
+      );
     });
 
     return arr;
