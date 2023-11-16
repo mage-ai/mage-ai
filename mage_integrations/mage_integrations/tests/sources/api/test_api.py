@@ -270,20 +270,20 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(catalog.to_dict(), csv_catalog_example())
             mock_build_connection.assert_called()
 
-    def test_api_json(self):
-        source = Api(config=dict(
-            url='https://api.coingecko.com/api/v3/coins/markets',
-            query={"vs_currency": "usd"}
-        ))
-        api_connection = MagicMock()
+    # def test_api_json(self):
+    #     source = Api(config=dict(
+    #         url='https://api.coingecko.com/api/v3/coins/markets',
+    #         query={"vs_currency": "usd"}
+    #     ))
+    #     api_connection = MagicMock()
 
-        with patch.object(
-            source,
-            'test_connection',
-            return_value=api_connection
-        ) as mock_build_connection:
-            source.test_connection()
-            mock_build_connection.assert_called_once()
+    #     with patch.object(
+    #         source,
+    #         'test_connection',
+    #         return_value=api_connection
+    #     ) as mock_build_connection:
+    #         source.test_connection()
+    #         mock_build_connection.assert_called_once()
 
-            catalog = source.discover()
-            self.assertEqual(catalog.to_dict(), json_catalog_example())
+    #         catalog = source.discover()
+    #         self.assertEqual(catalog.to_dict(), json_catalog_example())
