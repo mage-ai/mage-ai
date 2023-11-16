@@ -6,9 +6,11 @@ import {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
+import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import AWSEMRClusterType, { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
@@ -50,7 +52,6 @@ import {
   PowerOnOffButton,
 } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
-import { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import { ComputeConnectionStateEnum } from '@interfaces/ComputeConnectionType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
@@ -76,6 +77,7 @@ import { goToWithQuery } from '@utils/routing';
 import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { selectKeys } from '@utils/hash';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
@@ -551,7 +553,6 @@ function KernelStatus({
           >
             <MenuStyle>
               <SetupSteps
-                computeService={computeService}
                 contained={false}
                 onClickStep={(tab: string) => {
                   router.push(`/compute?tab=${tab}`);

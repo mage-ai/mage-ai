@@ -18,8 +18,9 @@ import {
   Trash,
 } from '@oracle/icons';
 import { CardStyle } from './index.style';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
-import { ComputeServiceEnum, ObjectAttributesType } from './constants';
+import { ObjectAttributesType } from './constants';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
@@ -39,7 +40,7 @@ type ResourceManagementProps = {
   mutateObject: (data?: ObjectAttributesType) => void;
   objectAttributes: ObjectAttributesType;
   onCancel?: () => void;
-  selectedComputeService?: ComputeServiceEnum;
+  selectedComputeService?: ComputeServiceUUIDEnum;
   setObjectAttributes: (objectAttributes: ObjectAttributesType) => void;
 }
 
@@ -126,7 +127,7 @@ function ResourceManagement({
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
 
-      {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+      {ComputeServiceUUIDEnum.AWS_EMR === selectedComputeService && (
         <>
           <Panel noPadding>
             <Spacing p={PADDING_UNITS}>

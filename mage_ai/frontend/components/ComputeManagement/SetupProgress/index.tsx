@@ -26,7 +26,7 @@ function SetupProgress({
     stepsCompleted,
   }: {
     steps: SetupStepType[];
-    stepsCompleted: SetupStepType[]
+    stepsCompleted: number;
   } = useMemo(() => {
     const stepsInner = [];
     let stepsCompletedInner = 0;

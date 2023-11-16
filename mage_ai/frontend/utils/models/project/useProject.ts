@@ -7,7 +7,15 @@ import { featureEnabled } from '.';
 function useProject(): {
   featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
   // @ts-ignore
-  featureUUIDs: FeatureUUIDEnum;
+  featureUUIDs: {
+    ADD_NEW_BLOCK_V2: FeatureUUIDEnum;
+    COMPUTE_MANAGEMENT: FeatureUUIDEnum;
+    DATA_INTEGRATION_IN_BATCH_PIPELINE: FeatureUUIDEnum;
+    INTERACTIONS: FeatureUUIDEnum;
+    NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW: FeatureUUIDEnum;
+    LOCAL_TIMEZONE: FeatureUUIDEnum;
+    OPERATION_HISTORY: FeatureUUIDEnum;
+  };
   fetchProjects: () => any;
   project: ProjectType;
   sparkEnabled: boolean;

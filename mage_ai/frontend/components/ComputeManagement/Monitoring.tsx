@@ -4,7 +4,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ComputeConnectionType from '@interfaces/ComputeConnectionType';
-import ComputeServiceType from '@interfaces/ComputeServiceType';
+import ComputeServiceType, { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import ConnectionSettings from './ConnectionSettings';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
@@ -20,7 +20,6 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import {
-  ComputeServiceEnum,
   MainNavigationTabEnum,
   ObjectAttributesType,
   SHARED_TEXT_PROPS,
@@ -63,7 +62,7 @@ type MonitoringProps = {
   loadingJobs?: boolean;
   objectAttributes: ObjectAttributesType;
   refButtonTabs?: any;
-  selectedComputeService?: ComputeServiceEnum;
+  selectedComputeService?: ComputeServiceUUIDEnum;
   setSelectedSql?: (prev: (sql: SparkSQLType) => SparkSQLType) => void;
   setSelectedTab?: (opts?: {
     main?: MainNavigationTabEnum;

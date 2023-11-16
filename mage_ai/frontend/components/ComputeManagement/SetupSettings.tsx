@@ -24,8 +24,9 @@ import {
   Trash,
 } from '@oracle/icons';
 import { CardStyle } from './index.style';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
-import { ComputeServiceEnum, ObjectAttributesType } from './constants';
+import { ObjectAttributesType } from './constants';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
@@ -46,7 +47,7 @@ type ConnectionSettingsProps = {
   mutateObject: (data?: ObjectAttributesType) => void;
   objectAttributes: ObjectAttributesType;
   onCancel?: () => void;
-  selectedComputeService?: ComputeServiceEnum;
+  selectedComputeService?: ComputeServiceUUIDEnum;
   setObjectAttributes: (objectAttributes: ObjectAttributesType) => void;
 }
 
@@ -284,7 +285,7 @@ function ConnectionSettings({
             <FlexContainer flexDirection="column">
               <Text
                 danger={!objectAttributes?.[remoteVariablesDirKey]
-                  || remoteVariablesDirStep?.error
+                  || !!remoteVariablesDirStep?.error
                 }
                 default
                 large
@@ -487,7 +488,7 @@ function ConnectionSettings({
           </FlexContainer>
         </Spacing>
 
-        {ComputeServiceEnum.AWS_EMR === selectedComputeService && awsEMRSetupMemo}
+        {ComputeServiceUUIDEnum.AWS_EMR === selectedComputeService && awsEMRSetupMemo}
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
@@ -693,7 +694,7 @@ function ConnectionSettings({
           </>
         )}
 
-        {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+        {ComputeServiceUUIDEnum.AWS_EMR === selectedComputeService && (
           <Spacing p={PADDING_UNITS}>
             <FlexContainer alignItems="center">
               <FlexContainer flexDirection="column">

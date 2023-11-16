@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import AWSEMRClusterType, { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
@@ -17,7 +18,6 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import useComputeService from '@utils/models/computeService/useComputeService'
-import { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import { ExpandOpenUpRight, PowerOnOffButton, WorkspacesUsersIcon } from '@oracle/icons';
 import { MainNavigationTabEnum } from '@components/ComputeManagement/constants';
 import { MenuStyle } from './index.style'
@@ -154,6 +154,7 @@ function ClusterSelection() {
       <div
         ref={popupRef}
         style={{
+          // @ts-ignore
           hidden: !popupSettings,
           left: x - (popupRef?.current?.getBoundingClientRect()?.width || 0),
           maxWidth: 30 * UNIT,
@@ -246,6 +247,7 @@ function ClusterSelection() {
                     noBorder
                     target="_blank"
                     noPadding
+                    // @ts-ignore
                     openNewWindow
                     small
                   >

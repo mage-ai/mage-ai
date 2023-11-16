@@ -1,6 +1,6 @@
+import AWSEMRClusterType from '@interfaces/AWSEMRClusterType';
 import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
 import Circle from '@oracle/elements/Circle';
-import ComputeClusterType from '@interfaces/ComputeClusterType';
 import ComputeConnectionType from '@interfaces/ComputeConnectionType';
 import ComputeServiceType from '@interfaces/ComputeServiceType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -31,7 +31,7 @@ export interface TabType {
   renderStatus?: (opts?: {
     applications?: SparkApplicationType[];
     applicationsLoading?: boolean;
-    clusters?: ComputeClusterType[];
+    clusters?: AWSEMRClusterType[];
     clustersLoading?: boolean;
     computeConnections?: ComputeConnectionType[];
     computeService: ComputeServiceType;
@@ -140,7 +140,7 @@ export const SHARED_TEXT_PROPS: {
 };
 
 export function buildTabs(computeService: ComputeServiceType): TabType[] {
-  let arr = [
+  let arr: TabType[] = [
     {
       Icon: Settings,
       uuid: MainNavigationTabEnum.SETUP,
@@ -152,6 +152,7 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
   ];
 
   if (ComputeServiceUUIDEnum.AWS_EMR === computeService?.uuid) {
+    // @ts-ignore
     arr.push(...[
       {
         Icon: CubesThreeSeparated,
@@ -178,6 +179,7 @@ export function buildTabs(computeService: ComputeServiceType): TabType[] {
     ComputeServiceUUIDEnum.AWS_EMR,
     ComputeServiceUUIDEnum.STANDALONE_CLUSTER,
   ].includes(computeService?.uuid)) {
+    // @ts-ignore
     arr.push(...[
       {
         Icon: Monitor,

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import AWSEMRClusterType from './AWSEMRClusterType';
+import AWSEMRClusterType from '@interfaces/AWSEMRClusterType';
 import ComputeClusterType from '@interfaces/ComputeClusterType';
 import ComputeConnectionType from '@interfaces/ComputeConnectionType';
 import ComputeServiceType, {
@@ -31,7 +31,7 @@ function useComputeService({
   };
   connections?: ComputeConnectionType[];
   connectionsLoading?: boolean;
-  fetchAll?: () => void;
+  fetchAll?: () => Promise<any>;
   fetchComputeClusters?: () => void;
   fetchComputeConnections?: () => void;
   fetchComputeService?: () => void;
@@ -110,12 +110,10 @@ function useComputeService({
       dataComputeConnections,
     ]);
 
-  const fetchAll = useCallback(() => new Promise((resolve) => {
+  const fetchAll = useCallback(() => new Promise(() => {
     fetchComputeClusters?.();
     fetchComputeConnections?.();
     fetchComputeService?.();
-
-    resolve?.();
   }), [
     fetchComputeClusters,
     fetchComputeConnections,

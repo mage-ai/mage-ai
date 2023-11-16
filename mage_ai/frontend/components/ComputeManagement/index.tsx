@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 import Button from '@oracle/elements/Button';
 import Clusters from './Clusters';
 import ComputeServiceType, {
+  ComputeServiceUUIDEnum,
   SetupStepStatusEnum,
   SetupStepType,
 } from '@interfaces/ComputeServiceType';
@@ -104,7 +105,7 @@ function ComputeManagement({
   ]);
 
   const [includeAllStates, setIncludeAllStates] = useState(false);
-  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
+  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceUUIDEnum>(null);
 
   const {
     activeCluster,
@@ -115,7 +116,7 @@ function ComputeManagement({
     connectionsLoading,
     fetchAll,
     setupComplete,
-  }: ComputeServiceType = useComputeService({
+  } = useComputeService({
     clustersRefreshInterval: 10000,
     includeAllStates,
   });
@@ -367,9 +368,10 @@ function ComputeManagement({
     });
 
     if (selectedComputeService) {
-      const displayName = COMPUTE_SERVICE_DISPLAY_NAME[selectedComputeService];
-      const kicker = COMPUTE_SERVICE_KICKER[selectedComputeService];
-      const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
+      const keyIdx = String(selectedComputeService);
+      const displayName = COMPUTE_SERVICE_DISPLAY_NAME[keyIdx];
+      const kicker = COMPUTE_SERVICE_KICKER[keyIdx];
+      const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[keyIdx];
 
       if (displayName && kicker && renderIcon) {
         let setupStepsTooltipMessage;
@@ -430,43 +432,6 @@ function ComputeManagement({
               </FlexContainer>
             </Spacing>
           );
-        }
-
-        if (connections?.length) {
-          connections?.forEach(({
-            active,
-            description,
-            id,
-            name,
-          }, idx: number) => {
-            connectionStatusesEl.push(
-              <Spacing key={id} py={1}>
-                <FlexContainer
-                  alignItems="center"
-                >
-                  <PowerOnOffButton
-                    muted={!active}
-                    size={1.5 * UNIT}
-                    success={active}
-                  />
-
-                  <Spacing mr={1} />
-
-                  <Flex flex={1} flexDirection="column">
-                    <Text default={!active} small>
-                      {name || capitalizeRemoveUnderscoreLower(id || '')}
-                    </Text>
-
-                    {description && (
-                      <Text muted xsmall>
-                        {description}
-                      </Text>
-                    )}
-                  </Flex>
-                </FlexContainer>
-              </Spacing>
-            );
-          });
         }
 
         if (computeService?.setup_steps?.length >= 1 && !setupComplete) {
@@ -701,7 +666,7 @@ function ComputeManagement({
                 <Button
                   loading={isLoadingUpdateProject && uuid === selectedComputeService}
                   onClick={() => {
-                    setSelectedComputeService(uuid as ComputeServiceEnum);
+                    setSelectedComputeService(uuid as ComputeServiceUUIDEnum);
                     updateProject(buildPayload(objectAttributes));
                   }}
                   primary
