@@ -1,3 +1,4 @@
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.services.compute.constants import (
     ComputeConnectionActionUUID,
@@ -5,8 +6,8 @@ from mage_ai.services.compute.constants import (
 )
 from mage_ai.services.compute.models import ComputeConnection, ComputeService
 from mage_ai.services.spark.constants import ComputeServiceUUID
-from mage_ai.services.ssh.aws.emr.models import SSHTunnel
-from mage_ai.services.ssh.aws.emr.utils import tunnel
+from mage_ai.services.ssh.aws.emr.models import SSHTunnel, create_tunnel
+from mage_ai.services.ssh.aws.emr.utils import should_tunnel, tunnel
 from mage_ai.shared.array import find
 
 
@@ -51,18 +52,6 @@ class ComputeConnectionResource(GenericResource):
                 from mage_ai.services.compute.aws.steps import SetupStepUUID
 
                 if SetupStepUUID.OBSERVABILITY == self.model.uuid:
-                    def _callback(action_uuid=action_uuid, *args, **kwargs):
-                        ssh_tunnel = SSHTunnel()
-
-                        if ComputeConnectionActionUUID.CREATE == action_uuid:
-                            tunnel(ignore_active_kernel=True)
-                        elif ComputeConnectionActionUUID.DELETE == action_uuid:
-                            ssh_tunnel.close()
-                        elif ComputeConnectionActionUUID.DESELECT == action_uuid:
-                            ssh_tunnel.stop()
-                        elif ComputeConnectionActionUUID.UPDATE == action_uuid:
-                            ssh_tunnel.reconnect()
-
                     action_valid = action_uuid in [
                         ComputeConnectionActionUUID.CREATE,
                         ComputeConnectionActionUUID.DELETE,
@@ -71,5 +60,44 @@ class ComputeConnectionResource(GenericResource):
                     ]
 
                     if action_valid:
+                        if ComputeConnectionActionUUID.CREATE == action_uuid:
+                            try:
+                                should_tunnel(
+                                    ignore_active_kernel=True,
+                                    raise_error=True,
+                                )
+
+                                ssh_tunnel = create_tunnel(
+                                    connect=False,
+                                    fresh=True,
+                                    reconnect=False,
+                                    stop=False,
+                                )
+                                if ssh_tunnel:
+                                    ssh_tunnel.precheck_access(raise_error=True)
+                                    ssh_tunnel.connect()
+                                else:
+                                    raise Exception('Cannot create SSH tunnel instance.')
+                            except Exception as err:
+                                error = ApiError.UNAUTHORIZED_ACCESS.copy()
+                                error.update(message=str(err))
+                                raise ApiError(error)
+
+                        def _callback(
+                            action_uuid=action_uuid,
+                            *args,
+                            **kwargs,
+                        ):
+                            ssh_tunnel = SSHTunnel()
+
+                            if ComputeConnectionActionUUID.CREATE == action_uuid:
+                                tunnel(ignore_active_kernel=True)
+                            elif ComputeConnectionActionUUID.DELETE == action_uuid:
+                                ssh_tunnel.close()
+                            elif ComputeConnectionActionUUID.DESELECT == action_uuid:
+                                ssh_tunnel.stop()
+                            elif ComputeConnectionActionUUID.UPDATE == action_uuid:
+                                ssh_tunnel.reconnect()
+
                         self.model.state = ComputeConnectionState.PENDING
                         self.on_update_callback = _callback

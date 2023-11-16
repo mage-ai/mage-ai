@@ -80,7 +80,7 @@ class SSHTunnel:
             return self._instance._tunnel
 
     def connect(self) -> bool:
-        if not self.__precheck_access():
+        if not self.precheck_access():
             return
 
         if not self.is_active():
@@ -89,7 +89,7 @@ class SSHTunnel:
         return self.is_active()
 
     def reconnect(self) -> bool:
-        if not self.__precheck_access():
+        if not self.precheck_access():
             return False
 
         if self.is_active():
@@ -100,7 +100,7 @@ class SSHTunnel:
         return self.is_active()
 
     def stop(self) -> None:
-        if not self.__precheck_access():
+        if not self.precheck_access():
             return
 
         if self.tunnel:
@@ -110,7 +110,7 @@ class SSHTunnel:
                 print(f'[WARNING] AWS EMR SSHTunnel: {err}')
 
     def close(self) -> None:
-        if not self.__precheck_access():
+        if not self.precheck_access():
             return
 
         if self.tunnel:
@@ -143,7 +143,7 @@ class SSHTunnel:
         ))
 
     def is_active(self, raise_error: bool = False) -> bool:
-        if not self.__precheck_access():
+        if not self.precheck_access():
             return False
 
         if not self.tunnel:
@@ -155,7 +155,7 @@ class SSHTunnel:
 
         return self.tunnel.is_active
 
-    def __precheck_access(self) -> bool:
+    def precheck_access(self, raise_error: bool = False) -> bool:
         if not self._instance:
             return False
 
@@ -166,6 +166,8 @@ class SSHTunnel:
 
             return True
         except Exception as err:
+            if raise_error:
+                raise err
             print(f'[WARNING] AWS EMR SSHTunnel precheck access: {err}')
 
         return False
@@ -186,9 +188,11 @@ class SSHTunnel:
 
 
 def create_tunnel(
+    clean_up_on_failure: bool = False,
     cluster: Cluster = None,
     compute_service: ComputeService = None,
     connect: bool = False,
+    fresh: bool = False,
     project: Project = None,
     reconnect: bool = False,
     spark_ui_host_local: str = None,
@@ -202,24 +206,35 @@ def create_tunnel(
 
     absolute_file_path = file_path()
     if os.path.exists(absolute_file_path):
-        with open(absolute_file_path, 'r') as f:
-            text = f.read()
-            if text:
-                commands = json.loads(text) or {}
+        if fresh:
+            os.remove(absolute_file_path)
+        else:
+            with open(absolute_file_path, 'r') as f:
+                text = f.read()
+                if text:
+                    commands = json.loads(text) or {}
 
-                cluster = cluster or commands.get('cluster')
-                if cluster and isinstance(cluster, dict):
-                    cluster = Cluster.load(**cluster)
-                    cluster_from_cache = True
+                    cluster = cluster or commands.get('cluster')
+                    if cluster and isinstance(cluster, dict):
+                        cluster = Cluster.load(**cluster)
+                        cluster_from_cache = True
 
-                connect = connect or commands.get('connect')
-                reconnect = reconnect or commands.get('reconnect')
-                spark_ui_host_local = spark_ui_host_local or commands.get('spark_ui_host_local')
-                spark_ui_host_remote = spark_ui_host_remote or commands.get('spark_ui_host_remote')
-                spark_ui_port_local = spark_ui_port_local or commands.get('spark_ui_port_local')
-                spark_ui_port_remote = spark_ui_port_remote or commands.get('spark_ui_port_remote')
-                ssh_username = ssh_username or commands.get('ssh_username')
-                stop = stop or commands.get('stop')
+                    connect = connect or commands.get('connect')
+                    reconnect = reconnect or commands.get('reconnect')
+                    spark_ui_host_local = spark_ui_host_local or commands.get(
+                        'spark_ui_host_local',
+                    )
+                    spark_ui_host_remote = spark_ui_host_remote or commands.get(
+                        'spark_ui_host_remote',
+                    )
+                    spark_ui_port_local = spark_ui_port_local or commands.get(
+                        'spark_ui_port_local',
+                    )
+                    spark_ui_port_remote = spark_ui_port_remote or commands.get(
+                        'spark_ui_port_remote',
+                    )
+                    ssh_username = ssh_username or commands.get('ssh_username')
+                    stop = stop or commands.get('stop')
 
     if not project:
         project = Project()
@@ -255,24 +270,30 @@ def create_tunnel(
         cluster = Cluster.load(**cluster_server.to_dict())
         cluster.active = active
 
-    tunnel = SSHTunnel(
-        project.emr_config.get('ec2_key_path'),
-        cluster.master_public_dns_name,
-        spark_ui_host_local=spark_ui_host_local,
-        spark_ui_host_remote=spark_ui_host_remote,
-        spark_ui_port_local=spark_ui_port_local,
-        spark_ui_port_remote=spark_ui_port_remote,
-        ssh_username=ssh_username,
-    )
+    try:
+        tunnel = SSHTunnel(
+            project.emr_config.get('ec2_key_path'),
+            cluster.master_public_dns_name,
+            spark_ui_host_local=spark_ui_host_local,
+            spark_ui_host_remote=spark_ui_host_remote,
+            spark_ui_port_local=spark_ui_port_local,
+            spark_ui_port_remote=spark_ui_port_remote,
+            ssh_username=ssh_username,
+        )
 
-    if connect:
-        tunnel.connect()
+        if connect:
+            tunnel.connect()
 
-    if reconnect:
-        tunnel.reconnect()
+        if reconnect:
+            tunnel.reconnect()
 
-    if stop:
-        tunnel.stop()
+        if stop:
+            tunnel.stop()
+    except Exception as err:
+        if clean_up_on_failure:
+            if os.path.exists(absolute_file_path):
+                os.remove(absolute_file_path)
+        raise err
 
     # This method is invoked when the server restarts.
     # When the server restarts, there is no active cluster set.

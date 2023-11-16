@@ -26,31 +26,60 @@ def should_tunnel(
     ignore_active_kernel: bool = False,
     kernel_name: KernelName = None,
     project: Project = None,
+    raise_error: bool = False,
 ) -> bool:
+    error_message = None
     if not project:
         project = Project()
 
     if not project.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
-        return False
+        error_message = 'Compute management feature isn’t enabled. '\
+            'Turn the feature on in the project’s settings.'
+
+        if raise_error:
+            raise Exception(error_message)
+        else:
+            return False
 
     if ComputeServiceUUID.AWS_EMR != get_compute_service(
         project.repo_config,
         ignore_active_kernel=ignore_active_kernel,
         kernel_name=kernel_name,
     ):
-        return False
+        error_message = 'SSH tunnel is only supported for the AWS EMR compute service.'
+
+        if raise_error:
+            raise Exception(error_message)
+        else:
+            return False
 
     if not project.emr_config:
-        return False
+        error_message = 'Project has incomplete configuration for AWS EMR.'
+
+        if raise_error:
+            raise Exception(error_message)
+        else:
+            return False
 
     ec2_key_name = project.emr_config.get('ec2_key_name')
     ec2_key_path = project.emr_config.get('ec2_key_path')
 
     if not ec2_key_name or not ec2_key_path:
-        return False
+        error_message = 'SSH tunnel requires an EC2 key name and EC2 key path ' \
+            'in the project’s settings.'
+
+        if raise_error:
+            raise Exception(error_message)
+        else:
+            return False
 
     if not os.path.exists(ec2_key_path):
-        raise Exception(f'Public key {ec2_key_path} doesn’t exist.')
+        error_message = f'EC2 key pair {ec2_key_path} doesn’t exist.'
+
+        if raise_error:
+            raise Exception(error_message)
+
+        return False
 
     return True
 

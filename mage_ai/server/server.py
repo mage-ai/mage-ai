@@ -520,9 +520,12 @@ async def main(
 
         Application.clear_cache()
 
-    tunnel = create_tunnel()
-    if tunnel:
-        print(f'SSH tunnel active: {tunnel.is_active()}')
+    try:
+        tunnel = create_tunnel(clean_up_on_failure=True)
+        if tunnel:
+            print(f'SSH tunnel active: {tunnel.is_active()}')
+    except Exception as err:
+        print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
 
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(

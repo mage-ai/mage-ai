@@ -469,7 +469,9 @@ def build_connections(compute_service: ComputeService) -> List[ComputeConnection
                 ComputeConnectionAction.load(
                     name='Create SSH tunnel',
                     description='Start the SSH tunnel between the local machine and '
-                                'remote active cluster.',
+                                'remote active cluster. '
+                                'This process can take up to 60 seconds to complete, '
+                                'please wait until the status updates or an error is raised.',
                     uuid=ComputeConnectionActionUUID.CREATE,
                 ),
             ]

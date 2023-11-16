@@ -34,8 +34,9 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SubheaderStyle } from './index.style';
 import { buildTable } from './utils';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
-import { selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
+import { selectKeys } from '@utils/hash';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 
@@ -329,7 +330,13 @@ function Clusters({
 
                             <Button
                               loading={isLoadingDeleteCluster}
-                              onClick={() => deleteCluster(cluster)}
+                              onClick={() => {
+                                if (typeof window !== 'undefined'
+                                  && window.confirm('Are you sure you want to terminate this cluster?')
+                                ) {
+                                  deleteCluster(cluster);
+                                }
+                              }}
                               secondary
                             >
                               Terminate cluster
@@ -535,13 +542,15 @@ function Clusters({
           );
         }}
         getObjectAtRowIndex={(rowIndex: number) => clusters?.[rowIndex]}
-        rows={clusters?.map(({
-          active,
-          id,
-          name,
-          normalized_instance_hours: normalizedInstanceHours,
-          status,
-        }) => {
+        rows={clusters?.map((cluster) => {
+          const {
+            active,
+            id,
+            name,
+            normalized_instance_hours: normalizedInstanceHours,
+            status,
+          } = cluster;
+
           const createdAt = status?.timeline?.creation_date_time;
           const state = status?.state;
           const stateChangeReasonMessage = status?.state_change_reason?.message;
@@ -553,9 +562,12 @@ function Clusters({
             ClusterStatusStateEnum.TERMINATING,
           ].includes(state);
 
-
           return [
-            <Text {...TEXT_PROPS_SHARED} key="id">
+            <Text
+              {...TEXT_PROPS_SHARED}
+              key="id"
+              success={active}
+            >
               {id}
             </Text>,
             <Text
@@ -617,7 +629,32 @@ function Clusters({
             >
               {(settingUp || tearingDown)
                 ? <Spinner inverted={settingUp} small />
-                : <PowerOnOffButton muted={!active} size={ICON_SIZE} success={active} />
+                : (
+                  <Button
+                    iconOnly
+                    loading={isLoadingUpdateCluster}
+                    noBackground
+                    noBorder
+                    noPadding
+                    notClickable={active}
+                    onClick={!active
+                      ? (e) => {
+                        pauseEvent(e);
+                        updateCluster({
+                          ...cluster,
+                          active: true,
+                        });
+                      }
+                      : null
+                    }
+                  >
+                    <PowerOnOffButton
+                      muted={!active}
+                      size={ICON_SIZE}
+                      success={active}
+                    />
+                  </Button>
+                )
               }
             </FlexContainer>,
           ];
