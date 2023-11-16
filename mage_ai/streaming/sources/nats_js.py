@@ -2,8 +2,8 @@ import asyncio
 import json
 import ssl
 import threading
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Callable, Dict, Optional
 
 import nats
 from nats.errors import NoServersError
@@ -26,11 +26,10 @@ class NATSConfig(BaseConfig):
     server_url: str
     stream_name: str
     subject: str = None
-    subjects: List = field(default_factory=list)
-    user_credentials: Optional[str] = None
+    nkeys_seed_str: Optional[str] = None
     use_tls: bool = False
-    ssl_config: SSLConfig = None
-    consumer_name: str = None
+    ssl_config: Optional[SSLConfig] = None
+    consumer_name: Optional[str] = None
     batch_size: int = DEFAULT_BATCH_SIZE
     timeout: int = DEFAULT_TIMEOUT_MS / 1000  # Convert to seconds
 
@@ -82,8 +81,8 @@ class NATSSource(BaseSource):
                 connect_opts["tls"] = ssl_ctx
 
             # Use NKEY if provided
-            if self.config.user_credentials:
-                connect_opts["user_credentials"] = self.config.user_credentials
+            if self.config.nkeys_seed_str:
+                connect_opts["nkeys_seed_str"] = self.config.nkeys_seed_str
 
             # Establish connection with the configured options
             self.nc = await nats.connect(**connect_opts)
