@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from faker import Faker
+
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
 from mage_ai.cluster_manager.workspace.base import Workspace
@@ -8,14 +10,15 @@ from mage_ai.tests.api.endpoints.mixins import BaseAPIEndpointTest
 
 
 class WorkspaceAPIEndpointTest(BaseAPIEndpointTest):
-    def setUp(self):
-        super().setUp()
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
         repo_config = get_repo_config()
         repo_config.save(cluster_type=ClusterType.K8S.value, project_type='main')
         with patch.object(WorkloadManager, 'create_workload') as _:
             self.workspace = Workspace.create(
                 ClusterType.K8S,
-                name=self.faker.unique.name(),
+                name=Faker().unique.name(),
                 payload=dict(
                     namespace='default',
                     service_account_name='mageai',
