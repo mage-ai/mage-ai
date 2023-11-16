@@ -157,6 +157,8 @@ setuptools.setup(
             'kubernetes==25.3.0',
             'langchain>=0.0.222',
             'ldap3==2.9.1',
+            'nats-py==2.6.0',
+            'nkeys',
             'openai>=0.27.8, <1.0.0',
             'opensearch-py==2.0.0',
             'oracledb==1.3.1',
