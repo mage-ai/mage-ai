@@ -2963,7 +2963,6 @@ function PipelineDetailPage({
             isBusy={runningBlocks.length >= 1}
             kernel={kernel}
             pipeline={pipeline}
-            pipelineLastSaved={pipelineLastSaved}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
             selectedFilePath={selectedFilePath}
@@ -2995,7 +2994,6 @@ function PipelineDetailPage({
     kernel,
     page,
     pipeline,
-    pipelineLastSaved,
     restartKernel,
     runningBlocks,
     savePipelineContent,

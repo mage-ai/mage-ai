@@ -58,7 +58,7 @@ function StatusFooter({
     return null;
   }, [usage?.kernel_memory]);
 
-  const cpu = useMemo(() => usage?.kernel_cpu !== 'undefined'
+  const cpu = useMemo(() => typeof usage?.kernel_cpu !== 'undefined'
     ? roundNumber(usage?.kernel_cpu, 3)
     : null
     ,
