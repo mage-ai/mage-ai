@@ -53,7 +53,7 @@ function TasksWaterfallChart({
       duration,
       launch_time: launchTime,
     }) => {
-      const timestamp = moment(launchTime, DATE_FORMAT_SPARK).unix();
+      const timestamp = moment(launchTime, DATE_FORMAT_SPARK).valueOf();
       if (!minLaunchTimestampInner || timestamp < minLaunchTimestampInner) {
         minLaunchTimestampInner = timestamp;
       }
@@ -110,7 +110,7 @@ function TasksWaterfallChart({
       },
       getting_result_time: gettingResultTime,
     }, idx: number) => {
-      const launchTimestamp = moment(launchTime, DATE_FORMAT_SPARK).unix();
+      const launchTimestamp = moment(launchTime, DATE_FORMAT_SPARK).valueOf();
       const endTimestamp = launchTimestamp + duration;
 
       const arr = [
@@ -197,7 +197,9 @@ function TasksWaterfallChart({
             <Flex flex={1}>
               <Text monospace muted>
                 {datetimeInLocalTimezone(
-                  dateFromFromUnixTimestamp(minLaunchTimestamp).format(DATE_FORMAT_LONG),
+                  dateFromFromUnixTimestamp(minLaunchTimestamp, {
+                    withMilliseconds: true,
+                  }).format(DATE_FORMAT_LONG),
                   displayLocalTimezone,
                 )}
               </Text>
@@ -206,7 +208,9 @@ function TasksWaterfallChart({
             <Flex flex={1} justifyContent="flex-end">
               <Text monospace muted>
                 {datetimeInLocalTimezone(
-                  dateFromFromUnixTimestamp(maxEndTimestamp).format(DATE_FORMAT_LONG),
+                  dateFromFromUnixTimestamp(maxEndTimestamp, {
+                    withMilliseconds: true,
+                  }).format(DATE_FORMAT_LONG),
                   displayLocalTimezone,
                 )}
               </Text>

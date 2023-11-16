@@ -34,6 +34,7 @@ export function buildNavigationItems({
   const vars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
   return SIDEKICK_VIEWS({
+    pipeline,
     project,
   }).map(({
     buildLabel,

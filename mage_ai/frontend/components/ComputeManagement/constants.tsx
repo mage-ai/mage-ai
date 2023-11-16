@@ -1,9 +1,45 @@
+import AWSEMRClusterType from '@interfaces/AWSEMRClusterType';
 import AmazonWebServicesEMR from '@oracle/icons/custom/AmazonWebServicesEMR';
+import Circle from '@oracle/elements/Circle';
+import ComputeConnectionType from '@interfaces/ComputeConnectionType';
+import ComputeServiceType from '@interfaces/ComputeServiceType';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
+import {
+  BlockCubePolygon,
+  CubesThreeSeparated,
+  DiamondGem,
+  Monitor,
+  PlugAPI,
+  PowerOnOffButton,
+  Settings,
+  WorkspacesUsersIcon,
+} from '@oracle/icons';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
+import { SparkApplicationType, SparkJobType } from '@interfaces/SparkType'
 import { TripleBoxes } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { pluralize } from '@utils/string';
 
 const ICON_SIZE = 8 * UNIT;
+
+export interface TabType {
+  Icon: any;
+  renderStatus?: (opts?: {
+    applications?: SparkApplicationType[];
+    applicationsLoading?: boolean;
+    clusters?: AWSEMRClusterType[];
+    clustersLoading?: boolean;
+    computeConnections?: ComputeConnectionType[];
+    computeService: ComputeServiceType;
+    jobs?: SparkJobType[];
+    jobsLoading?: boolean;
+  }) => any;
+  uuid: string;
+}
 
 export type ObjectAttributesType = {
   emr_config?: EMRConfigType
@@ -11,22 +47,22 @@ export type ObjectAttributesType = {
   spark_config?: SparkConfigType;
 };
 
-export enum ComputeServiceEnum {
-  AWS_EMR = 'AWS_EMR',
-  STANDALONE_CLUSTER = 'STANDALONE_CLUSTER',
-}
+export const ComputeServiceEnum = { ...ComputeServiceUUIDEnum };
+export type ComputeServiceEnum = typeof ComputeServiceEnum;
 
 export enum MainNavigationTabEnum {
-  CONNECTION = 'CONNECTION',
-  RESOURCES = 'RESOURCES',
-  MONITORING = 'MONITORING',
-  SYSTEM = 'SYSTEM',
+  CLUSTERS = 'clusters',
+  MONITORING = 'monitoring',
+  RESOURCES = 'resources',
+  SETUP = 'setup',
+  SYSTEM = 'system',
 }
 
 export const MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING = {
-  [MainNavigationTabEnum.CONNECTION]: 'Connection',
+  [MainNavigationTabEnum.CLUSTERS]: 'Clusters',
   [MainNavigationTabEnum.RESOURCES]: 'Resources',
   [MainNavigationTabEnum.MONITORING]: 'Monitoring',
+  [MainNavigationTabEnum.SETUP]: 'Setup',
   [MainNavigationTabEnum.SYSTEM]: 'System',
 };
 
@@ -102,3 +138,83 @@ export const SHARED_TEXT_PROPS: {
   preWrap: true,
   small: true,
 };
+
+export function buildTabs(computeService: ComputeServiceType): TabType[] {
+  let arr: TabType[] = [
+    {
+      Icon: Settings,
+      uuid: MainNavigationTabEnum.SETUP,
+    },
+    {
+      Icon: DiamondGem,
+      uuid: MainNavigationTabEnum.RESOURCES,
+    },
+  ];
+
+  if (ComputeServiceUUIDEnum.AWS_EMR === computeService?.uuid) {
+    // @ts-ignore
+    arr.push(...[
+      {
+        Icon: CubesThreeSeparated,
+        renderStatus: ({
+          clusters,
+          clustersLoading,
+        }) => {
+          if (clustersLoading) {
+            return null;
+          }
+
+          return (
+            <Text default large monospace>
+              {clusters?.length}
+            </Text>
+          );
+        },
+        uuid: MainNavigationTabEnum.CLUSTERS,
+      },
+    ]);
+  }
+
+  if ([
+    ComputeServiceUUIDEnum.AWS_EMR,
+    ComputeServiceUUIDEnum.STANDALONE_CLUSTER,
+  ].includes(computeService?.uuid)) {
+    // @ts-ignore
+    arr.push(...[
+      {
+        Icon: Monitor,
+        renderStatus: ({
+          applications,
+          applicationsLoading,
+          jobs,
+          jobsLoading,
+        }) => {
+          if (applicationsLoading) {
+            return null;
+          }
+
+          return (
+            <FlexContainer flexDirection="column" justifyContent="flex-end">
+              <Text default monospace rightAligned xsmall>
+                {pluralize('application', applications?.length || 0)}
+              </Text>
+
+              <div style={{ marginBottom: UNIT / 2 }} />
+
+              <Text default monospace rightAligned xsmall>
+                {pluralize('job', jobs?.length || 0)}
+              </Text>
+            </FlexContainer>
+          );
+        },
+        uuid: MainNavigationTabEnum.MONITORING,
+      },
+      {
+        Icon: BlockCubePolygon,
+        uuid: MainNavigationTabEnum.SYSTEM,
+      },
+    ]);
+  }
+
+  return arr;
+}

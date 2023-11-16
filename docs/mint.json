@@ -260,6 +260,7 @@
             {
               "group": "Sources",
               "pages": [
+                "streaming/sources/activemq",
                 "streaming/sources/amazon-sqs",
                 "streaming/sources/azure-event-hub",
                 "streaming/sources/google-cloud-pubsub",
@@ -345,6 +346,7 @@
                 "integrations/databases/ClickHouse",
                 "integrations/databases/Druid",
                 "integrations/databases/DuckDB",
+                "integrations/databases/GoogleSheets",
                 "integrations/databases/MicrosoftSQLServer",
                 "integrations/databases/MongoDB",
                 "integrations/databases/MySQL",
@@ -685,6 +687,8 @@
           "icon": "passport",
           "pages": [
             "production/authentication/overview",
+            "production/authentication/google",
+            "production/authentication/okta",
             "production/authentication/microsoft"
           ]
         },
@@ -759,7 +763,11 @@
       "group": "Get Started",
       "pages": [
         "contributing/overview",
-        "contributing/development-environment",
+        "contributing/development-environment"
+      ]
+    },{
+      "group": "Components",
+      "pages":[
         {
           "group": "Backend",
           "icon": "server",
@@ -771,6 +779,12 @@
                 "contributing/data-integrations/adapt-existing-source",
                 "contributing/data-integrations/add-new-source",
                 "contributing/data-integrations/add-new-destination"
+              ]
+            },
+            {
+              "group": "IO classes",
+              "pages": [
+                "contributing/backend/io/adding-a-class"
               ]
             },
             {
@@ -793,6 +807,13 @@
           "pages": [
             "contributing/frontend/overview",
             "contributing/charts/how-to-add"
+          ]
+        },
+        {
+          "group": "Documentation",
+          "icon": "book",
+          "pages": [
+            "contributing/documentation/overview"
           ]
         }
       ]

@@ -1,27 +1,14 @@
 import os
-from dataclasses import asdict, dataclass
-from typing import Dict
-
-import inflection
+from dataclasses import dataclass
 
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.services.spark.constants import SPARK_DIRECTORY_NAME
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class BaseSparkModel:
-    @classmethod
-    def load(self, **kwargs):
-        return self(**self.load_to_dict(**kwargs))
-
-    @classmethod
-    def load_to_dict(self, **kwargs) -> Dict:
-        data = {}
-        for key, value in kwargs.items():
-            data[inflection.underscore(key)] = value
-        return data
-
+class BaseSparkModel(BaseDataClass):
     @classmethod
     def cache_dir_path(self) -> str:
         repo_config = get_repo_config(repo_path=get_repo_path())
@@ -30,6 +17,3 @@ class BaseSparkModel:
             repo_config.variables_dir,
             SPARK_DIRECTORY_NAME,
         )
-
-    def to_dict(self) -> Dict:
-        return asdict(self)

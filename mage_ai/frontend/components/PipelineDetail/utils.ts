@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { NextRouter } from 'next/router';
 
 import BlockType, { OutputType } from '@interfaces/BlockType';
@@ -161,9 +162,10 @@ export const openSaveFileDialog = (blobResponse: any, filename: string) => {
 export function displayPipelineLastSaved(
   pipeline: PipelineType,
   opts?: {
+    displayRelative?: boolean;
     isPipelineUpdating?: boolean;
     pipelineContentTouched?: boolean;
-    pipelineLastSaved?: Date;
+    pipelineLastSaved?: number;
   },
 ): string {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -177,11 +179,18 @@ export function displayPipelineLastSaved(
   } else if (isPipelineUpdating) {
     saveStatus = 'Saving changes...';
   } else if (pipelineLastSaved) {
-    let lastSavedDate = dateFormatLongFromUnixTimestamp(Number(pipelineLastSaved) / 1000);
-    if (pipeline?.updated_at) {
-      lastSavedDate = datetimeInLocalTimezone(pipeline?.updated_at, displayLocalTimezone);
+    const now = moment().utc().unix();
+    if (opts?.displayRelative && now - pipelineLastSaved < 60 * 60) {
+      const ago = moment.unix(now - (now - pipelineLastSaved)).utc().fromNow();
+      saveStatus = `Saved ${ago}`;
+    } else {
+      let lastSavedDate = dateFormatLongFromUnixTimestamp(pipelineLastSaved / 1000);
+
+      if (pipeline?.updated_at) {
+        lastSavedDate = datetimeInLocalTimezone(pipeline?.updated_at, displayLocalTimezone);
+      }
+      saveStatus = `Last saved ${lastSavedDate}`;
     }
-    saveStatus = `Last saved ${lastSavedDate}`;
   } else {
     saveStatus = 'All changes saved';
   }

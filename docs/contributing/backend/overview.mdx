@@ -1,14 +1,27 @@
 ---
 title: "Contributing to the backend server"
 sidebarTitle: "Overview"
-description: "Guides on adding features to the backend server."
+description: "Mage backend code is written in Python 🐍 and our server uses the Tornado 🌪️ framework. Here are some guides on adding features to the Mage backend."
 ---
 
-| | |
-| --- | --- |
-| Language | Python |
-| Framework | Tornado |
-| Code directory | `mage_ai/server/` |
+## Guides
+
+### API
+
+- [Overview](/api-reference/overview)
+
+### Data integrations
+
+- [Add a new source to the data integration pipeline](/contributing/data-integrations/add-new-source)
+- [Add a new destination to the data integration pipeline](/contributing/data-integrations/add-new-destination)
+
+### Streaming pipelines
+
+- [Add a new source or destination to the streaming pipeline](/contributing/backend/streaming/sources-and-destinations)
+
+### IO classes
+
+- [Add a new IO class](/contributing/backend/io/adding-a-class)
 
 ## Style guide
 
@@ -55,17 +68,7 @@ b9d811e1e3e8   mage/data   "python mage_ai/serv…"   5 days ago   Up 38 minutes
 root@b9d811e1e3e8:/home/src# python3 -m unittest discover -s mage_ai.tests --failfast
 ```
 
-## Guides
+## Debugging
 
-### API
+<Snippet file="debugging-backend.mdx"/>
 
-- [Overview](/api-reference/overview)
-
-### Data integrations
-
-- [Add a new source to the data integration pipeline](/contributing/data-integrations/add-new-source)
-- [Add a new destination to the data integration pipeline](/contributing/data-integrations/add-new-destination)
-
-### Streaming pipelines
-
-- [Add a new source or destination to the streaming pipeline](/contributing/backend/streaming/sources-and-destinations)

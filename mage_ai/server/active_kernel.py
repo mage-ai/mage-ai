@@ -3,8 +3,13 @@ from typing import Dict
 from jupyter_client import KernelClient, KernelManager
 from jupyter_client.kernelspec import NoSuchKernel
 
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
 from mage_ai.server.logger import Logger
+from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.services.spark.utils import get_compute_service
+from mage_ai.services.ssh.aws.emr.utils import cluster_info_from_tunnel
 
 logger = Logger().new_server_logger(__name__)
 
@@ -68,10 +73,38 @@ def switch_active_kernel(
             from mage_ai.cluster_manager.aws.emr_cluster_manager import (
                 emr_cluster_manager,
             )
-            emr_cluster_manager.set_active_cluster(
-                auto_selection=True,
-                emr_config=emr_config,
-            )
+
+            should_set_active = True
+            auto_creation = True
+            cluster_id = None
+            project = Project()
+
+            if project.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+                if ComputeServiceUUID.AWS_EMR == get_compute_service(
+                    emr_config=emr_config,
+                    kernel_name=kernel_name,
+                ):
+                    auto_creation = False
+                    should_set_active = False
+
+                    cluster_info = cluster_info_from_tunnel()
+
+                    if cluster_info:
+                        from mage_ai.services.compute.models import ComputeService
+
+                        cluster_id = cluster_info.get('id') or None
+                        compute_service = ComputeService(project=project)
+                        cluster = compute_service.get_cluster_details(cluster_id=cluster_id)
+
+                        should_set_active = cluster.has_dns_name if cluster else False
+
+            if should_set_active:
+                emr_cluster_manager.set_active_cluster(
+                    auto_creation=auto_creation,
+                    auto_selection=True,
+                    cluster_id=cluster_id,
+                    emr_config=emr_config,
+                )
     except NoSuchKernel as e:
         if kernel_name == KernelName.PYSPARK:
             raise Exception(

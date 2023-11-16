@@ -154,7 +154,7 @@
 
 Mage is an open-source data pipeline tool for transforming and integrating data.
 
-1. [Quick start](#%EF%B8%8F-quick-start)
+1. [Install](#%EF%B8%8F-install)
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
 1. [Documentation](https://docs.mage.ai)
@@ -165,71 +165,26 @@ Mage is an open-source data pipeline tool for transforming and integrating data.
 
 <br />
 
-# 🏃‍♀️ Quick start
+# 🏃‍♀️ Install
 
-You can install and run Mage using Docker (recommended), `pip`, or `conda`.
+The recommended way to install the latest version of Mage is through Docker with the following command:
 
-### Install using Docker
+```bash
+docker pull mageai/mageai:latest
+```
 
-1. Create a new project and launch tool (change `demo_project` to any other name if you want):
-    ```bash
-    docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-      /app/run_app.sh mage start demo_project
-    ```
+You can also install Mage using pip or conda, though this may cause dependency issues without the proper environment.
 
-    - If you want to run Mage locally on a different port, change the first port after `-p`
-    in the command above. For example, to change the port to `6790`, run:
+```bash
+pip install mage-ai
+```
+```bash
+conda install -c conda-forge mage-ai
+```
 
-    ```bash
-    docker run -it -p 6790:6789 -v $(pwd):/home/src mageai/mageai \
-      /app/run_app.sh mage start demo_project
-    ```
+Looking for help? The _fastest_ way to get started is by checking out our documentation [here](https://docs.mage.ai/getting-started/setup).
 
-    <sub>Want to use Spark or other integrations? Read more about [integrations](https://docs.mage.ai/data-integrations/overview).</sub>
-
-1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
-  - If you changed the Docker port for running Mage locally, go to the url
-  `http://127.0.0.1:[port]` (e.g. http://127.0.0.1:6790) in your browser to
-  view the pipelines dashboard.
-
-
-### Using `pip` or `conda`
-
-1. Install Mage
-
-    #### (a) To the current virtual environment:
-    ```bash
-    pip install mage-ai
-    ```
-    or
-    ```bash
-    conda install -c conda-forge mage-ai
-    ```
-
-    #### (b) To a new virtual environment (e.g., `myenv`):
-    ```bash
-    python3 -m venv myenv
-    source myenv/bin/activate
-    pip install mage-ai
-    ```
-    or
-    ```bash
-    conda create -n myenv -c conda-forge mage-ai
-    conda activate myenv
-    ```
-
-    <sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](https://docs.mage.ai/getting-started/setup#installing-extra-packages).</sub>
-
-    <sub>If you run into errors, please see [Install errors](https://docs.mage.ai/getting-started/setup#errors).</sub>
-
-1. Create a new project and launch tool (change `demo_project` to any other name if you want):
-    ```bash
-    mage start demo_project
-    ```
-1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
-<br />
+Looking for quick examples? Open a [demo](https://demo.mage.ai/) project right in your browser or check out our [guides](https://docs.mage.ai/guides/overview).
 
 # 🎮 Demo
 

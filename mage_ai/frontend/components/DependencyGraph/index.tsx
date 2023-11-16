@@ -1324,8 +1324,6 @@ function DependencyGraph({
       infos = blocksWithDownstreamBlockSet?.[toBlock?.uuid];
     }
 
-    console.log(edge, infos);
-
     let removeBlocks = () => {
       updateBlockByDragAndDrop({
         block: toBlock,
@@ -1451,6 +1449,7 @@ function DependencyGraph({
     updateBlockByDragAndDrop,
   ]);
 
+  // @ts-ignore
   const interactionsEnabled: boolean = useMemo(() => featureEnabled?.(featureUUIDs.INTERACTIONS), [
     featureEnabled,
     featureUUIDs,
@@ -1905,15 +1904,18 @@ function DependencyGraph({
               <Edge
                 {...edge}
                 className={edgeClassNames.join(' ')}
-                onClick={(event, edge) => {
-                  // @ts-ignore
-                  setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {
-                    block,
-                    edge,
-                    event,
-                  });
-                  setContextMenuData(null);
-                }}
+                onClick={contextMenuEnabled
+                  ? (event, edge) => {
+                    // @ts-ignore
+                    setActiveEdge(prev => prev?.edge?.id === edge?.id ? null : {
+                      block,
+                      edge,
+                      event,
+                    });
+                    setContextMenuData(null);
+                  }
+                  : null
+                }
                 style={{
                   stroke: anotherBlockSelected && !selected
                     ? colorData?.accentLight

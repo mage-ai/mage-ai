@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.44',
+    version='0.9.45',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -114,6 +114,7 @@ setuptools.setup(
             'pika==1.3.1',
             'pymongo==4.3.3',
             'requests_aws4auth==1.1.2',
+            'stomp.py==8.1.0',
             'elasticsearch==8.9.0',
         ],
         'all': [
@@ -161,9 +162,12 @@ setuptools.setup(
             'nkeys',
             'openai>=0.27.8, <1.0.0',
             'opensearch-py==2.0.0',
+            'opentelemetry-exporter-prometheus>=1.12.0rc1',
+            'opentelemetry-instrumentation-tornado>=0.41b0',
             'oracledb==1.3.1',
             'pika==1.3.1',
             'pinotdb==5.1.0',
+            'prometheus_client>=0.18.0',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
             'pydruid==0.6.5',
@@ -173,6 +177,7 @@ setuptools.setup(
             'requests_aws4auth==1.1.2',
             'snowflake-connector-python==3.2.1',
             'sshtunnel==0.4.0',
+            'stomp.py==8.1.0',
             'thefuzz[speedup]==0.19.0',
         ],
     },

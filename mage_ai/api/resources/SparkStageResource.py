@@ -1,6 +1,5 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.mixins.spark import SparkApplicationChild
-from mage_ai.services.spark.api.local import LocalAPI
 from mage_ai.services.spark.models.stages import Stage
 
 
@@ -16,7 +15,7 @@ class SparkStageResource(GenericResource, SparkApplicationChild):
                 query['details'] = details
 
         return self.build_result_set(
-            await LocalAPI().stages(query=query),
+            await self.build_api().stages(query=query),
             user,
             **kwargs,
         )
@@ -42,15 +41,13 @@ class SparkStageResource(GenericResource, SparkApplicationChild):
             if quantiles:
                 query['withSummaries'] = with_summaries
 
-        application_id = query_arg.get('application_id', [])
-        if application_id:
-            application_id = application_id[0]
+        application_id = self.application_calculated_id_from_query(query_arg)
 
         application_spark_ui_url = query_arg.get('application_spark_ui_url', [])
         if application_spark_ui_url:
             application_spark_ui_url = application_spark_ui_url[0]
 
-        stage = await LocalAPI().stage(
+        stage = await self.build_api().stage(
             application_id=application_id,
             application_spark_ui_url=application_spark_ui_url,
             stage_id=pk,

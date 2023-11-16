@@ -41,6 +41,10 @@ class SourceFactory:
             from mage_ai.streaming.sources.rabbitmq import RabbitMQSource
 
             return RabbitMQSource(config, **kwargs)
+        elif connector_type == SourceType.ACTIVEMQ:
+            from mage_ai.streaming.sources.activemq import ActiveMQSource
+
+            return ActiveMQSource(config, **kwargs)
         elif connector_type == SourceType.MONGODB:
             from mage_ai.streaming.sources.mongodb import MongoSource
             return MongoSource(config, **kwargs)

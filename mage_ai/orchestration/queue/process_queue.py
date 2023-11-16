@@ -116,7 +116,15 @@ class ProcessQueue(Queue):
             if job_client_id != self.client_id and self.redis_client.get(job_client_id):
                 return True
         job = self.job_dict.get(job_id)
-        return job is not None and (job == JobStatus.QUEUED or isinstance(job, int))
+        return (
+            job is not None and
+            (
+                # In queue
+                (job == JobStatus.QUEUED and not self.queue.empty()) or
+                # Running
+                isinstance(job, int)
+            )
+        )
 
     def kill_job(self, job_id: str):
         """

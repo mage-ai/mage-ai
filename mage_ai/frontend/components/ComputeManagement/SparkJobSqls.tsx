@@ -67,14 +67,14 @@ function SparkJobSqls({
 
     sqlsArr?.forEach((sql) => {
       const application = sql?.application;
-      if (!(application?.id in groups)) {
-        groups[application?.id] = {
+      if (!(application?.calculated_id in groups)) {
+        groups[application?.calculated_id] = {
           application: application,
           sqls: [],
         };
       }
 
-      groups[application?.id]?.sqls?.push(sql);
+      groups[application?.calculated_id]?.sqls?.push(sql);
     });
 
     const groupsCount = Object.values(groups)?.length;
@@ -84,12 +84,12 @@ function SparkJobSqls({
       sqls,
     }) => {
       return (
-        <div key={application?.id}>
+        <div key={application?.calculated_id}>
           {groupsCount >= 2 && (
             <>
               <Spacing p={PADDING_UNITS}>
                 <Text default bold>
-                  Application {application?.id}
+                  Application {application?.calculated_id}
                 </Text>
               </Spacing>
 
@@ -100,8 +100,12 @@ function SparkJobSqls({
           <Table
             apiForFetchingAfterAction={api.spark_sqls.detail}
             buildApiOptionsFromObject={(object: any) => [object?.id, {
-              application_id: object?.application?.id,
-              application_spark_ui_url: encodeURIComponent(object?.application?.spark_ui_url),
+              application_id: object?.application?.calculated_id
+                ? encodeURIComponent(object?.application?.calculated_id)
+                : '',
+              application_spark_ui_url: object?.application?.spark_ui_url
+                ? encodeURIComponent(object?.application?.spark_ui_url)
+                : '',
               include_jobs_and_stages: 1,
               _format: 'with_jobs_and_stages',
             }]}

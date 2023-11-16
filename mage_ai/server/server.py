@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import os
 import shutil
 import stat
@@ -9,15 +10,9 @@ from datetime import datetime
 from time import sleep
 from typing import Optional, Union
 
-import prometheus_client
 import pytz
 import tornado.ioloop
 import tornado.web
-from opentelemetry import metrics
-from opentelemetry.exporter.prometheus import PrometheusMetricReader
-from opentelemetry.instrumentation.tornado import TornadoInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -85,6 +80,8 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.ssh.aws.emr.models import create_tunnel
+from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
     ENABLE_PROMETHEUS,
@@ -168,6 +165,8 @@ class ApiSchedulerHandler(BaseHandler):
 
 class PrometheusMetricsHandler(BaseHandler):
     def get(self):
+        import prometheus_client
+
         self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
         self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
@@ -331,6 +330,12 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     ]
 
     if ENABLE_PROMETHEUS:
+        from opentelemetry import metrics
+        from opentelemetry.exporter.prometheus import PrometheusMetricReader
+        from opentelemetry.instrumentation.tornado import TornadoInstrumentor
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
         TornadoInstrumentor().instrument()
         # Service name is required for most backends
         resource = Resource(attributes={
@@ -353,6 +358,15 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         updated_routes = routes
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
+
+    file_path = file_path_aws_emr()
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w') as f:
+            f.write(json.dumps({}))
+
+    autoreload.watch(file_path)
+
     return tornado.web.Application(
         updated_routes,
         autoreload=True,
@@ -403,7 +417,8 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
-    url = f'http://{host or "localhost"}:{port}'
+    host = host or 'localhost'
+    url = f'http://{host}:{port}'
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
     webbrowser.open_new_tab(url)
@@ -498,6 +513,20 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
+    project_model = Project()
+    if project_model and \
+            project_model.spark_config and \
+            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+
+        Application.clear_cache()
+
+    try:
+        tunnel = create_tunnel(clean_up_on_failure=True)
+        if tunnel:
+            print(f'SSH tunnel active: {tunnel.is_active()}')
+    except Exception as err:
+        print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
@@ -554,13 +583,6 @@ def start_server(
     init_project_uuid(overwrite_uuid=project_uuid)
 
     asyncio.run(UsageStatisticLogger().project_impression())
-
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
-
-        Application.clear_cache()
 
     if dbt_docs:
         run_docs_server()

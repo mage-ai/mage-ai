@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   useContext,
   useEffect,
@@ -6,21 +7,25 @@ import {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
+import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import AWSEMRClusterType, { ClusterStatusStateEnum } from '@interfaces/AWSEMRClusterType';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ClusterSelection from './ClusterSelection';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
+import ConnectionSettings from '@components/ComputeManagement/ConnectionSettings';
+import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelType from '@interfaces/KernelType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import KeyboardText from '@oracle/elements/KeyboardText';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
 import PipelineType, {
@@ -29,16 +34,25 @@ import PipelineType, {
   PIPELINE_TYPE_TO_KERNEL_NAME,
 } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
+import SetupSteps from '@components/ComputeManagement/Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import useComputeService from '@utils/models/computeService/useComputeService'
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
-import { Check, LayoutSplit, LayoutStacked, PowerOnOffButton } from '@oracle/icons';
+import {
+  AlertTriangle,
+  Check,
+  LayoutSplit,
+  LayoutStacked,
+  PowerOnOffButton,
+} from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
+import { ComputeConnectionStateEnum } from '@interfaces/ComputeConnectionType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
@@ -52,14 +66,18 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { MenuStyle } from './ClusterSelection/index.style'
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SetupStepStatusEnum, SetupStepUUIDEnum } from '@interfaces/ComputeServiceType';
 import { SparkApplicationType } from '@interfaces/SparkType';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { roundNumber } from '@utils/string';
+import { removeUnderscore, roundNumber } from '@utils/string';
 import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
-import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
+import { selectKeys } from '@utils/hash';
+import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useModal } from '@context/Modal';
 
@@ -74,7 +92,6 @@ type KernelStatusProps = {
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
-  saveStatus?: string;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
@@ -92,7 +109,6 @@ function KernelStatus({
   pipeline,
   restartKernel,
   savePipelineContent,
-  saveStatus,
   selectedFilePath,
   setErrors,
   setRunningBlocks,
@@ -104,9 +120,24 @@ function KernelStatus({
   const {
     featureEnabled,
     featureUUIDs,
+    sparkEnabled,
   } = useProject();
-
-  const computeManagementEnabled = featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT);
+  const {
+    activeCluster,
+    clusters,
+    clustersLoading,
+    computeService,
+    computeServiceUUIDs,
+    connections,
+    connectionsLoading,
+    fetchAll,
+    fetchComputeClusters,
+    setupComplete,
+  } = useComputeService({
+    clustersRefreshInterval: 5000,
+    computeServiceRefreshInterval: 5000,
+    connectionsRefreshInterval: 5000,
+  });
 
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
@@ -119,6 +150,8 @@ function KernelStatus({
     useState(CloudProviderSparkClusterEnum.EMR);
   const [showSelectCluster, setShowSelectCluster] = useState(false);
   const [showSelectKernel, setShowSelectKernel] = useState(false);
+  const [clusterSelectionVisible, setClusterSelectionVisible] = useState(false);
+  const [computeConnectionVisible, setComputeConnectionVisible] = useState(false);
 
   const refSelectKernel = useRef(null);
 
@@ -127,16 +160,16 @@ function KernelStatus({
     data: dataClusters,
     mutate: fetchClusters,
   } = api.clusters.detail(selectedSparkClusterType, {}, { revalidateOnFocus: false });
-  const clusters: ClusterType[] = useMemo(
+  const clustersOld: ClusterType[] = useMemo(
     () => dataClusters?.cluster?.clusters || [],
     [dataClusters],
   );
   const selectedCluster = useMemo(
-    () => find(clusters, ({ is_active: isActive }) => isActive),
-    [clusters],
+    () => find(clustersOld, ({ is_active: isActive }) => isActive),
+    [clustersOld],
   );
 
-  const [updateCluster] = useMutation(
+  const [updateClusterOld] = useMutation(
     api.clusters.useUpdate(selectedSparkClusterType),
     {
       onSuccess: (response: any) => onSuccess(
@@ -156,7 +189,7 @@ function KernelStatus({
   const {
     data: dataSparkApplications,
   } = api.spark_applications.list({}, {}, {
-    pauseFetch: !computeManagementEnabled,
+    pauseFetch: !sparkEnabled,
   });
   const sparkApplications: SparkApplicationType[] =
     useMemo(() => dataSparkApplications?.spark_applications, [
@@ -205,18 +238,7 @@ function KernelStatus({
   const kernelPid = useMemo(() => usage?.pid, [usage?.pid]);
   const kernelPidPrevious = usePrevious(kernelPid);
 
-  const kernelMemory = useMemo(() => {
-    if (usage?.kernel_memory) {
-      const memory = usage.kernel_memory;
-      const k = 1024;
-      const dm = 2;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
-      const i = Math.floor(Math.log(memory) / Math.log(k));
-
-      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))}${sizes[i]}`;
-    }
-  }, [usage?.kernel_memory]);
 
   const [showKernelWarning, hideKernelWarning] = useModal(() => (
     <PopupMenu
@@ -281,75 +303,352 @@ function KernelStatus({
     themeContext,
   ]);
 
-  const pipelineDisplayName = useMemo(() => {
-    if (computeManagementEnabled && validComputePipelineType) {
-      if (!dataSparkApplications) {
-        return 'Loading compute';
-      } else if (!sparkApplications?.length) {
-        return 'Compute unavailable';
-      } else if (sparkApplications?.length >= 1) {
-        const sparkApplication = sparkApplications?.[0];
+  const [updateCluster, { isLoading: isLoadingUpdateCluster }] = useMutation(
+    (cluster: AWSEMRClusterType) => api.compute_clusters.compute_services.useUpdate(
+      computeService?.uuid,
+      cluster?.id,
+    )({
+      compute_cluster: selectKeys(cluster, [
+        'active',
+      ]),
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchComputeClusters();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              errors?.error || exception || message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+          },
+        },
+      ),
+    },
+  );
 
-        return [
-          sparkApplication?.name,
-          sparkApplication?.attempts?.[0]?.app_spark_version,
-        ].filter(value => value).join(' ');
+  const computeConnectionStatusMemo = useMemo(() => {
+    if (!sparkEnabled
+      || !validComputePipelineType
+      || computeServiceUUIDs.AWS_EMR !== computeService?.uuid
+    ) {
+      return null;
+    }
+
+    const connection = connections?.find(({ uuid }) => SetupStepUUIDEnum.OBSERVABILITY === uuid);
+    if (!connection) {
+      return null;
+    }
+
+    const {
+      name,
+      state,
+      status_calculated: status,
+      uuid,
+    } = connection;
+
+    const active = [
+      ComputeConnectionStateEnum.ACTIVE,
+    ].includes(state);
+    const inactive = [
+      ComputeConnectionStateEnum.INACTIVE,
+    ].includes(state);
+    const completed = [
+      SetupStepStatusEnum.COMPLETED,
+    ].includes(status);
+
+    const buttonProps: {
+      muted?: boolean;
+      warning?: boolean;
+    } = {
+      muted: true,
+      warning: false,
+    };
+
+    let displayText = name || uuid;
+    if (completed) {
+      if (active) {
+        displayText = 'Observability enabled';
+         buttonProps.muted = false;
+      } else {
+        displayText = 'SSH tunnel not connected';
       }
     }
+
+    const menuEl = (
+       <ClickOutside
+        onClickOutside={(e) => {
+          pauseEvent(e);
+          setComputeConnectionVisible(false);
+        }}
+        open={computeConnectionVisible}
+      >
+        <MenuStyle>
+          <ConnectionSettings
+            actionsOnly={completed}
+            computeService={computeService}
+            computeConnections={[connection]}
+            contained={false}
+            hideDetails
+            fetchAll={fetchAll}
+            onClickStep={(tab: string) => {
+              router.push(`/compute?tab=${tab}`);
+            }}
+            small
+          />
+        </MenuStyle>
+      </ClickOutside>
+    );
+
+    const statusIconEl = (
+      <PowerOnOffButton
+        danger={[
+          SetupStepStatusEnum.ERROR,
+        ].includes(status)}
+        muted={[
+          SetupStepStatusEnum.INCOMPLETE,
+        ].includes(status)}
+        success={completed && active}
+      />
+    );
+
+    return (
+      <div style={{ position: 'relative' }}>
+        <KeyboardShortcutButton
+          beforeElement={statusIconEl}
+          blackBorder
+          compact
+          inline
+          noHover={connectionsLoading}
+          onClick={(e) => {
+            pauseEvent(e);
+            if (!computeConnectionVisible) {
+              setComputeConnectionVisible(true);
+            }
+            setClusterSelectionVisible(false);
+          }}
+          uuid="Pipeline/ComputeConnectionStatus"
+          {...buttonProps}
+        >
+          {displayText}
+        </KeyboardShortcutButton>
+
+        {menuEl}
+      </div>
+    );
   }, [
-    computeManagementEnabled,
-    dataSparkApplications,
-    pipeline,
-    sparkApplications,
+    computeConnectionVisible,
+    computeService,
+    connections,
+    connectionsLoading,
+    fetchAll,
+    setClusterSelectionVisible,
+    setComputeConnectionVisible,
     validComputePipelineType,
   ]);
 
   const computeStatusMemo = useMemo(() => {
-    if (!computeManagementEnabled || !validComputePipelineType) {
+    if (!sparkEnabled || !validComputePipelineType) {
       return null;
     }
 
+    let menuEl;
+    let onClick;
+    let pipelineDisplayName;
     let statusIconEl;
+    const buttonProps: {
+      muted?: boolean;
+      warning?: boolean;
+    } = {
+      muted: false,
+      warning: false,
+    };
 
-    if (!dataSparkApplications) {
-      statusIconEl = (
-        <Spinner
-          inverted
-          small
-        />
-      );
-    } else if (!sparkApplications?.length) {
-      statusIconEl = (
-        <PowerOnOffButton
-          danger
-        />
-      );
+    if (computeServiceUUIDs.AWS_EMR === computeService?.uuid) {
+      const step =
+        computeService?.setup_steps?.find(({ uuid }) => SetupStepUUIDEnum.SETUP === uuid);
+
+      const setupCompleteModified = step?.status_calculated;
+
+      if (PipelineTypeEnum.PYSPARK !== pipeline?.type) {
+        return null;
+      }
+
+      if (activeCluster) {
+        const state = activeCluster?.status?.state;
+
+        pipelineDisplayName = (
+          <Text monospace>
+            {activeCluster?.id} {state && ![
+              ClusterStatusStateEnum.RUNNING,
+              ClusterStatusStateEnum.WAITING,
+            ].includes(state) && removeUnderscore(state)}
+          </Text>
+        );
+        statusIconEl = (
+          <PowerOnOffButton
+            danger={[
+              ClusterStatusStateEnum.TERMINATED_WITH_ERRORS,
+            ].includes(state)}
+            default={[
+                ClusterStatusStateEnum.STARTING,
+              ].includes(state)}
+            muted={[
+              ClusterStatusStateEnum.TERMINATED,
+            ].includes(state)}
+            success={[
+              ClusterStatusStateEnum.RUNNING,
+              ClusterStatusStateEnum.WAITING,
+            ].includes(state)}
+            warning={[
+              ClusterStatusStateEnum.TERMINATING,
+            ].includes(state)}
+          />
+        );
+      } else if (setupCompleteModified) {
+        if (!clusters?.length) {
+          pipelineDisplayName = 'Launch a new cluster';
+        } else {
+          pipelineDisplayName = 'Select a compute cluster';
+        }
+
+        statusIconEl = (
+          <PowerOnOffButton warning />
+        );
+      } else {
+        // Show the incomplete steps
+        menuEl = (
+          <ClickOutside
+            onClickOutside={(e) => {
+              pauseEvent(e);
+              setClusterSelectionVisible(false);
+            }}
+            open={clusterSelectionVisible}
+          >
+            <MenuStyle>
+              <SetupSteps
+                contained={false}
+                onClickStep={(tab: string) => {
+                  router.push(`/compute?tab=${tab}`);
+                }}
+                setupSteps={computeService?.setup_steps}
+                small
+              />
+            </MenuStyle>
+          </ClickOutside>
+        );
+        onClick = (e) => {
+          pauseEvent(e);
+          if (!clusterSelectionVisible) {
+            setClusterSelectionVisible(true);
+          }
+          setComputeConnectionVisible(false);
+        };
+        pipelineDisplayName = 'Compute setup incomplete';
+        statusIconEl = (
+          <AlertTriangle
+            danger
+          />
+        );
+      }
+
+      if (activeCluster || setupCompleteModified) {
+        menuEl = (
+          <ClickOutside
+            onClickOutside={(e) => {
+              pauseEvent(e);
+              setClusterSelectionVisible(false);
+            }}
+            open={clusterSelectionVisible}
+          >
+            <ClusterSelection />
+          </ClickOutside>
+        );
+        onClick = (e) => {
+          pauseEvent(e);
+          if (!clusterSelectionVisible) {
+            setClusterSelectionVisible(true);
+          }
+          setComputeConnectionVisible(false);
+          setComputeConnectionVisible(false);
+        };
+      }
+    } else if (computeServiceUUIDs.STANDALONE_CLUSTER === computeService?.uuid) {
+      if (!dataSparkApplications) {
+        pipelineDisplayName = 'Loading compute';
+        statusIconEl = (
+          <Spinner
+            inverted
+            small
+          />
+        );
+      } else if (!sparkApplications?.length) {
+        onClick = () => router.push('/compute');
+        pipelineDisplayName = 'Compute unavailable';
+        statusIconEl = (
+          <PowerOnOffButton
+            danger
+          />
+        );
+      } else if (sparkApplications?.length >= 1) {
+        const sparkApplication = sparkApplications?.[0];
+
+        pipelineDisplayName = [
+          sparkApplication?.name,
+          sparkApplication?.attempts?.[0]?.app_spark_version,
+        ].filter(value => value).join(' ');
+
+        statusIconEl = (
+          <PowerOnOffButton
+            success
+          />
+        );
+      }
     }
 
     return (
-      <KeyboardShortcutButton
-        beforeElement={statusIconEl}
-        blackBorder
-        compact
-        inline
-        noHover={!dataSparkApplications || sparkApplications?.length >= 1}
-        onClick={dataSparkApplications && !sparkApplications?.length
-          ? () => router.push('/compute')
-          : null
-        }
-        uuid="Pipeline/KernelStatus/kernel"
-      >
-        {pipelineDisplayName}
-      </KeyboardShortcutButton>
-    );
+      <div style={{ position: 'relative' }}>
+        <KeyboardShortcutButton
+          beforeElement={statusIconEl}
+          blackBorder
+          compact
+          inline
+          noHover={!dataSparkApplications || sparkApplications?.length >= 1}
+          onClick={onClick}
+          uuid="Pipeline/ComputeStatus"
+          {...buttonProps}
+        >
+          {pipelineDisplayName}
+        </KeyboardShortcutButton>
 
-    return null;
+        {menuEl}
+      </div>
+    );
   }, [
-    computeManagementEnabled,
+    activeCluster,
+    clusterSelectionVisible,
+    clusters,
+    computeService,
+    computeServiceUUIDs,
     dataSparkApplications,
-    pipelineDisplayName,
+    pipeline,
     router,
+    setClusterSelectionVisible,
+    setComputeConnectionVisible,
     sparkApplications,
+    sparkEnabled,
     validComputePipelineType,
   ]);
 
@@ -361,7 +660,7 @@ function KernelStatus({
       }}
     >
       <FlexContainer alignItems="center">
-        {pipeline?.type === PipelineTypeEnum.PYSPARK && (
+        {pipeline?.type === PipelineTypeEnum.PYSPARK && !sparkEnabled && (
           <Spacing mr={PADDING_UNITS}>
             <Link
               muted={!!selectedCluster}
@@ -386,7 +685,7 @@ function KernelStatus({
                     label: () => 'Select cluster',
                     uuid: 'select_cluster',
                   },
-                  ...clusters.map(({
+                  ...clustersOld.map(({
                     id,
                     is_active: isActive,
                     status,
@@ -422,7 +721,7 @@ function KernelStatus({
                       onClick: isActive || ClusterStatusEnum.WAITING !== status
                         ? null
                         // @ts-ignore
-                        : () => updateCluster({
+                        : () => updateClusterOld({
                             cluster: {
                               id,
                             },
@@ -483,7 +782,7 @@ function KernelStatus({
     </div>
   ), [
     alive,
-    clusters,
+    clustersOld,
     isBusy,
     pipeline,
     selectedCluster,
@@ -494,8 +793,10 @@ function KernelStatus({
     statusIconMemo,
     themeContext,
     updateCluster,
+    updateClusterOld,
     updatePipelineMetadata,
   ]);
+
 
   return (
     <PipelineHeaderStyle relativePosition>
@@ -547,18 +848,7 @@ function KernelStatus({
             )}
           </Spacing>
 
-          {usage && (
-            <Spacing mr={PADDING_UNITS}>
-              <Flex flexDirection="column">
-                <Text monospace muted xsmall>
-                  CPU: {typeof usage?.kernel_cpu !== 'undefined' && roundNumber(usage?.kernel_cpu, 3)}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
-                </Text>
-                <Text monospace muted xsmall>
-                  Memory: {kernelMemory}
-                </Text>
-              </Flex>
-            </Spacing>
-          )}
+
         </FlexContainer>
 
         {PipelineTypeEnum.INTEGRATION !== pipeline?.type
@@ -621,45 +911,14 @@ function KernelStatus({
 
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">
-            <Tooltip
-              appearBefore
-              block
-              description={
-                <>
-                  <FlexContainer alignItems="center">
-                    <Text default inline>Press</Text>&nbsp;<KeyboardText
-                      inline
-                      keyText={isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL}
-                    />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
-                      inline
-                      keyText={KEY_SYMBOL_S}
-                    />&nbsp;<Text default inline>to save changes.</Text>
-                    <br />
-                  </FlexContainer>
-
-                  <Spacing mt={1}>
-                    <Text default>
-                      Or, go to <Text inline monospace>
-                        File
-                      </Text>{' › '}<Text inline monospace>
-                        Save pipeline
-                      </Text>.
-                    </Text>
-                  </Spacing>
-                </>
-              }
-              size={null}
-              widthFitContent
-            >
-              <Text muted>
-                {saveStatus}
-              </Text>
-            </Tooltip>
-
-            <Spacing ml={2}/>
-
             <FlexContainer alignItems="center">
               {kernelStatusMemo}
+
+              {computeConnectionStatusMemo && (
+                <Spacing ml={1}>
+                  {computeConnectionStatusMemo}
+                </Spacing>
+              )}
 
               {computeStatusMemo && (
                 <Spacing ml={1}>

@@ -5,6 +5,7 @@ DEFAULT_TIMEOUT_MS = 500
 
 
 class SourceType(str, Enum):
+    ACTIVEMQ = 'activemq'
     AMAZON_SQS = 'amazon_sqs'
     AZURE_EVENT_HUB = 'azure_event_hub'
     GOOGLE_CLOUD_PUBSUB = 'google_cloud_pubsub'

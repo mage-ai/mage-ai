@@ -75,7 +75,7 @@ def convert_dataframe_to_output(
             if log_message:
                 log_message(
                     f'Writing {len(records_in_batch)} records from stream {stream} to {file_path} '
-                    f'for batch index {index} ({index + 1 } out of {batches} batch(s)).',
+                    f'for batch index {index} ({index + 1} out of {batches} batch(s)).',
                 )
 
             output_file_paths.append(file_path)
