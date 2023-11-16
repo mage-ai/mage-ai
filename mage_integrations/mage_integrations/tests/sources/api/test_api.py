@@ -216,6 +216,7 @@ def json_catalog_example():
 
 
 class ApiTest(unittest.TestCase):
+
     def test_api_csv(self):
         source = Api(config=dict(
             url='https://docs.google.com/spreadsheets/d/e/2PACX-1vTLcLUBAJAWf-8NQSjlbB3E4LR6DWk5QIZC-KtRb1j2CXXcgY6mE6vOJAW8PoJ1BAOgjXYpE4tY1LAD/pub?gid=1322931542&single=true&output=csv', # noqa

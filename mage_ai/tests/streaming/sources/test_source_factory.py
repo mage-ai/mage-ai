@@ -1,10 +1,12 @@
+from unittest.mock import patch
+
+from mage_ai.streaming.sources.activemq import ActiveMQSource
 from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
 from mage_ai.streaming.sources.google_cloud_pubsub import GoogleCloudPubSubSource
 from mage_ai.streaming.sources.kafka import KafkaSource
 from mage_ai.streaming.sources.rabbitmq import RabbitMQSource
 from mage_ai.streaming.sources.source_factory import SourceFactory
 from mage_ai.tests.base_test import TestCase
-from unittest.mock import patch
 
 
 class SourceFactoryTests(TestCase):
@@ -50,6 +52,17 @@ class SourceFactoryTests(TestCase):
             )
             source = SourceFactory.get_source(config)
             self.assertIsInstance(source, RabbitMQSource)
+            mock_init.assert_called_once_with(config)
+
+    def test_get_source_activemq(self):
+        with patch.object(ActiveMQSource,
+                          '__init__',
+                          return_value=None) as mock_init:
+            config = dict(
+                connector_type='activemq',
+            )
+            source = SourceFactory.get_source(config)
+            self.assertIsInstance(source, ActiveMQSource)
             mock_init.assert_called_once_with(config)
 
     def test_get_source_other(self):

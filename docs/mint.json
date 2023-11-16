@@ -260,6 +260,7 @@
             {
               "group": "Sources",
               "pages": [
+                "streaming/sources/activemq",
                 "streaming/sources/amazon-sqs",
                 "streaming/sources/azure-event-hub",
                 "streaming/sources/google-cloud-pubsub",
