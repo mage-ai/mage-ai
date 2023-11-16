@@ -6,11 +6,11 @@ api: "DELETE /api/backfills/:backfill_id"
 
 <RequestExample>
 ```curl cURL
-curl -X DELETE 
+curl -X DELETE
 --url http://localhost:6789/api/backfills/1
--H 'Content-Type: application/json' 
--H 'Cookie: oauth_token=some_really_long_string' 
--H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' 
+-H 'Content-Type: application/json'
+-H 'Cookie: oauth_token=some_really_long_string'
+-H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
 ```
 ```python Python
 headers = {
@@ -19,7 +19,8 @@ headers = {
 "Cookie": "oauth_token=some_really_long_string"
 }
 
-r = requests.delete('http://localhost:6789/api/backfills/1', headers=headers)
+r = requests.delete('<http://localhost:6789/api/backfills/1>', headers=headers)
+
 ```
 
 </RequestExample>
@@ -48,4 +49,5 @@ r = requests.delete('http://localhost:6789/api/backfills/1', headers=headers)
     }
 }
 ```
+
 </ResponseExample>

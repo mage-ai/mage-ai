@@ -3,8 +3,8 @@ title: "Repository setup"
 description: "Setup your Mage project respository."
 ---
 
-1.  Create a parent folder for your Mage project (e.g. `my_team`).
-2.  Change directory (e.g. `cd my_team`) into the parent folder and start Mage
+1. Create a parent folder for your Mage project (e.g. `my_team`).
+2. Change directory (e.g. `cd my_team`) into the parent folder and start Mage
     locally: For example:
 
     ```bash
@@ -14,7 +14,7 @@ description: "Setup your Mage project respository."
 
     For more examples, read the [setup guide](/getting-started/setup).
 
-3.  Once you’re done developing, copy the contents of the this
+3. Once you’re done developing, copy the contents of the this
     [Dockerfile template](https://github.com/mage-ai/docker/blob/master/Dockerfile)
     and paste it into a new `Dockerfile` located in the parent folder of your
     Mage project (e.g. `my_team/Dockerfile`). Replace all instances of the
@@ -49,13 +49,15 @@ description: "Setup your Mage project respository."
     CMD ["/bin/sh", "-c", "/app/run_app.sh"]
     ```
 
-4.  Your current folder structure should look like this:
+4. Your current folder structure should look like this:
+
     ```
     my_team/
     |   demo_project/
     |   Dockerfile
     ```
-5.  Build a custom Docker image using `mageai/mageai:latest` as the base and
+
+5. Build a custom Docker image using `mageai/mageai:latest` as the base and
     using the newly created Dockerfile as the additional set of instructions:
 
     ```
@@ -67,16 +69,18 @@ description: "Setup your Mage project respository."
       deploying to production in the cloud.
     </Note>
 
-6.  To test the new image works, run the following command:
+6. To test the new image works, run the following command:
+
     ```bash
     docker run -it -p 6789:6789 mageprod:latest /app/run_app.sh mage start demo_project
     ```
-7.  Open your browser and go to http://localhost:6789/
+
+7. Open your browser and go to <http://localhost:6789/>
     1. You should see all your pipelines there.
     1. Changing the contents of files won’t change the contents on your local
        file system because all your code was packaged together within the Docker
        image (this is intentional).
-8.  The next steps depends on your deployment method. If you are using
+8. The next steps depends on your deployment method. If you are using
     [Terraform](/production/deploying-to-cloud/using-terraform), then you’ll need to use the previously
     tag name (e.g. `mageprod`) when pushing a Docker image to a remote Docker
     registry.

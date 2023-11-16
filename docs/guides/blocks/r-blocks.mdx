@@ -13,6 +13,7 @@ You can write R language to transform data in blocks.
 ## Example pipeline
 
 1. Data loader
+
     ```R
     load_data <- function() {
         # Specify your data loading logic here
@@ -21,8 +22,10 @@ You can write R language to transform data in blocks.
         df
     }
     ```
+
 1. Transformer
-    ```R 
+
+    ```R
     library("pacman")
     p_load(dplyr)
 
@@ -33,7 +36,9 @@ You can write R language to transform data in blocks.
         df_1
     }
     ```
+
 1. Data exporter
+
     ```R
     export_data <- function(df_1, ...) {
         # Specify your data exporting logic here
@@ -59,19 +64,21 @@ p_load(dplyr)
 
 > Note
 >
-> When you run the R block for the 1st time, the package will be installed. 
+> When you run the R block for the 1st time, the package will be installed.
 > The 2nd time you run the R block, the package won’t need to be installed again.
 
 ### What is `pacman`?
 
 `pacman` is an R package management tool. You can use `p_library()` to view all the available packages.
 
-Here is the documentation for `pacman` where you can find more useful methods: https://www.rdocumentation.org/packages/pacman/versions/0.5.1
+Here is the documentation for `pacman` where you can find more useful methods: <https://www.rdocumentation.org/packages/pacman/versions/0.5.1>
 
 ## Runtime variables
+
 Runtime variables can be accessed via `global_vars` vector, like `global_vars['execution_date']`.
 
 Example code:
+
 ```R
 load_data <- function() {
     df <- read.csv(file='titanic_clean.csv')

@@ -10,9 +10,12 @@ description: "Learn how to develop your favorite dbt models in Mage."
   [Docker](/getting-started/setup#using-docker).
 </Warning>
 
-<Frame>
-   <img alt="dbt" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
-</Frame>
+<img
+    noZoom
+    class="hero"
+    alt="dbt"
+    src="https://www.getdbt.com/ui/img/social/facebook.png"
+/>
 
 If you get stuck, run into problems, or just want someone to walk you through
 these steps, please join our [Slack](https://www.mage.ai/chat).
@@ -102,8 +105,8 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
     - Under the data loader block you just added, click the button **`dbt model`**,
     then click the option `Single model`.
     - In the file browser that pops up, click the file named
-    `my_second_dbt_model.sql` under the folders `demo/models/example/`. 
-    
+    `my_second_dbt_model.sql` under the folders `demo/models/example/`.
+
     - This will add 2 dbt blocks to your pipeline: 1 for the dbt model named
     `my_first_dbt_model` and the 2nd for the dbt model named `my_second_dbt_model`. 
     
@@ -183,38 +186,42 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 - On the right side of the screen, click the tab labeled **`Terminal`**.
 - Create a new dbt test file by running the following command:
+
    ```bash
    touch demo_project/dbt/demo/tests/test_my_second_dbt_model.sql
    ```
+
 - On the left side of the page in the file browser, expand the folder
    `demo_project/dbt/demo/tests/` and click the file named
    `test_my_second_dbt_model.sql`. If you don’t see it, refresh the page.
 - Paste the following SQL in the file:
+
    ```sql
    SELECT id
    FROM {{ ref('my_second_dbt_model') }}
    GROUP BY id
    HAVING (id = 0)
    ```
+
 - Read more about dbt tests in their
    [documentation](https://docs.getdbt.com/docs/build/tests).
 
 </Step>
 <Step title="Execute pipeline end-to-end">
 
--  Click the name of the pipeline in the header breadcrumbs to go back to the
+- Click the name of the pipeline in the header breadcrumbs to go back to the
     detail page.
--  Create a new trigger with a type `Schedule` and a Frequency `once`.
+- Create a new trigger with a type `Schedule` and a Frequency `once`.
     For more details, follow these
     [steps](/design/data-pipeline-management#create-trigger).
--  After your trigger is created, click the **`Start trigger`** button at the
+- After your trigger is created, click the **`Start trigger`** button at the
     top of the page.
--  The pipeline will eventually fail because a dbt test failed. This means
+- The pipeline will eventually fail because a dbt test failed. This means
     everything is working as expected.
--  Open the file `demo_project/dbt/demo/models/example/schema.yml` and remove
+- Open the file `demo_project/dbt/demo/models/example/schema.yml` and remove
     the tests named `unique` under both models. Your file should look like this:
 
-    ```yaml 
+    ```yaml
 
     version: 2
 
@@ -237,7 +244,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
     ```
 
--  Click on the **`Failed`** button next to the pipeline run and click
+- Click on the **`Failed`** button next to the pipeline run and click
     **`Retry run`**. It should complete running successfully after a few
     minutes.
 

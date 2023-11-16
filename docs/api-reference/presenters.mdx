@@ -23,6 +23,7 @@ By default, whenever a sword is being returned in an API response, it will retur
 JSON format with the `id`, `name`, and `strenght` keys.
 
 ## Register different formats for different actions
+
 If you want the resource to return different data, you can register unique formats and the
 attributes that format should return:
 
@@ -48,6 +49,7 @@ This will only return the `id` attribute when making an API call to collections 
 `/swords` to retrieve a list of sword resources.
 
 ## Register custom formats
+
 You may want to define a custom format that can return specific attributes when making an API
 call by including the `_format` URL parameter. For example, you can present specific fields by
 calling the `GET /swords?_format=all_attributes` endpoint.

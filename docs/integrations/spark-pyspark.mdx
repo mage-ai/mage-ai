@@ -9,7 +9,7 @@ description:
 Want to become a
 [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/front/0/3/030f4058-54e5-4333-bd6c-2789c334bf12.jpg)?
 
-![](https://user-images.githubusercontent.com/78053898/199308674-afd8860e-09de-4003-a7ed-9ab2db221b0c.png)
+<img noZoom src="https://user-images.githubusercontent.com/78053898/199308674-afd8860e-09de-4003-a7ed-9ab2db221b0c.png" alt="" />
 
 ## Kubernetes
 
@@ -20,29 +20,37 @@ cluster and execute PySpark code in Mage.
 Here is an overview of the steps required to use Mage with Spark in Kubernetes cluster.
 
 ### 1. Run Spark cluser in Kubernetes cluster
+
 You can use Helm command to run Spark cluster in the Kubernetes cluster:
+
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install my-release bitnami/spark
 ```
+
 Then follow the instructions from the output to get the Spark master WebUI URL:
+
 ```bash
 kubectl port-forward --namespace default svc/my-release-spark-master-svc 80:80
 echo "Visit http://127.0.0.1:80 to use your application"
 ```
-Find the Spark Master URL at the top of the web page. 
+
+Find the Spark Master URL at the top of the web page.
 
 ### 2. Build Mage docker image with Spark environment
+
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
 * Change the current directory to the directory that contains the `Dockerfile`. Build the docker image with the command `docker build -t mage_spark .`
 
 ### 3. Run Mage in Kubernetes cluster with the `SPARK_MASTER_HOST` environment variable
+
 * Use the docker image built from step 2 as the container image in your Kubernetes yaml file.
 * Add `SPARK_MASTER_HOST` environment variable with the Spark Master URL from step 1 to your the container spec
 in your Kubernetes yaml file.
 * Then deploy Mage to Kubernetes with the updated yaml file.
 
 Here is the example Pod config:
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -73,13 +81,16 @@ spec:
 ```
 
 Updates
+
 * In Mage version `0.8.83` and above, you don't need to specify the environment variable anymore.
 * You can specify the spark config in project's `metadata.yaml` file as stated in [Custom Spark Session](#custom-spark-session) section.
 
 ### 4. Run PySpark code in Mage
+
 When Mage pod is running, you can create a "Standard (batch)" pipeline (`python` kernel) and then write PySpark code in any blocks.
 
 In `Scratchpad` block, you'll need to manually create the Spark session with the code:
+
 ```python
 import os
 from pyspark.sql import SparkSession
@@ -89,34 +100,39 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 
 In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
 
----
-
 ## Standalone Spark cluster
 
 ### 1. Build Mage docker image with Spark environment
+
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
 * Change the current directory to the directory that contains the `Dockerfile`. Build the docker image with the command `docker build -t mage_spark .`
 
 ### 2. Start Mage with `SPARK_MASTER_HOST` environment variable
+
 Type this command in your terminal to start Mage using docker
 
 ```bash
 docker run -it --name mage_spark -e SPARK_MASTER_HOST='local' -p 6789:6789 -v $(pwd):/home/src mage_spark \
   /app/run_app.sh mage start demo_project
 ```
+
 Notes
+
 * `demo_project` is the name of your project, you can change it to anything you want
-* Set the Spark cluster's master node url as the value for environment variable `SPARK_MASTER_HOST`. If you 
+* Set the Spark cluster's master node url as the value for environment variable `SPARK_MASTER_HOST`. If you
   use local Spark, you can set the value of `SPARK_MASTER_HOST` to `local` or not set the environment variable.
 
 Updates
+
 * In Mage version `0.8.83` and above, you don't need to specify the environment variable anymore.
 * You can specify the spark config in project's `metadata.yaml` file as stated in [Custom Spark Session](#custom-spark-session) section.
 
 ### 3. Run PySpark code in Mage
+
 When Mage is running, you can create a "Standard (batch)" pipeline (`python` kernel) and then write PySpark code in any blocks.
 
 In `Scratchpad` block, you'll need to manually create the Spark session with the code:
+
 ```python
 import os
 from pyspark.sql import SparkSession
@@ -126,11 +142,10 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 
 In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
 
----
-
 ## Custom Spark Session at the Project Level
 
 ### 1. Build Mage docker image with Spark environment
+
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
 * Build the docker image with the command `docker build -t mage_spark .`
 
@@ -140,7 +155,9 @@ In other blocks, you can access the Spark session from the `kwargs` via `kwargs[
 docker run -it --name mage_spark -p 6789:6789 -v $(pwd):/home/src mage_spark \
   /app/run_app.sh mage start demo_project
 ```
+
 Notes
+
 * `demo_project` is the name of your project, you can change it to anything you want
 
 ### 3. Review the `spark_config` section in `metadata.yaml` under the project folder, and make necessary adjustments
@@ -167,6 +184,7 @@ spark_config:
 ```
 
 ### 4. Run PySpark code in Mage
+
 When Mage is running, you can create a "Standard (batch)" pipeline (`python` kernel), and add a block,
 then write PySpark code using the Spark session via `kwargs['spark']`, e.g.,
 
@@ -195,6 +213,7 @@ print(spark.sql('select 1'))
 It is also possible to use different Spark Sessions in different pipelines under the same project.
 
 ### 1. Build Mage docker image with Spark environment
+
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
 * Build the docker image with the command `docker build -t mage_spark .`
 
@@ -204,10 +223,12 @@ It is also possible to use different Spark Sessions in different pipelines under
 docker run -it --name mage_spark -p 6789:6789 -v $(pwd):/home/src mage_spark \
   /app/run_app.sh mage start demo_project
 ```
+
 Notes
+
 * `demo_project` is the name of your project, you can change it to anything you want
 
-### 3. Create a "Standard (batch)" pipeline (`python` kernel), and update the `spark_config` section in `metadata.yaml` under the pipeline folder:
+### 3. Create a "Standard (batch)" pipeline (`python` kernel), and update the `spark_config` section in `metadata.yaml` under the pipeline folder
 
 ```yaml
 spark_config:
@@ -231,6 +252,7 @@ spark_config:
 ```
 
 ### 4. Run PySpark code in Mage
+
 Add a block to the pipeline, then write PySpark code using the Spark session via `kwargs['spark']`, e.g.,
 
 ```python
@@ -244,12 +266,15 @@ It is also possible to create custom Spark ssesion using Python code. Here are t
 
 1. Set the `run_pipeline_in_one_process: true` in your pipeline's metadata.yaml
 2. In the `spark_config` of your project's metadata.yaml or pipeline's metadata.yaml, set `use_custom_session` to `true`. Example config:
+
     ```yaml
     spark_config:
       use_custom_session: true
       custom_session_var_name: 'spark'
     ```
+
 3. In the first block in your pipeline, write Python code to create the Spark session and set it in the `kwargs['context']['spark']`. Example code:
+
     ```python
     from pyspark.conf import SparkConf
     from pyspark.sql import SparkSession
@@ -268,17 +293,15 @@ It is also possible to create custom Spark ssesion using Python code. Here are t
         kwargs['context']['spark'] = spark
         ...
     ```
+
 4. Then, you can access the Spark session in the subsequent blocks via `kwargs['spark']`.
-
-
----
 
 ## Hadoop and Yarn cluster for Spark
 
 ### 1. Build Mage docker image with a Hadoop Yarn environment
+
 * Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/hadoop/Dockerfile) for Mage with Hadoop environment.
 * Build the docker image with the command `docker build -t mage_hadoop .`
-
 
 ### 2. Start Mage with the following command in your terminal using docker
 
@@ -286,12 +309,15 @@ It is also possible to create custom Spark ssesion using Python code. Here are t
 docker run -it --name mage_hadoop -p 6789:6789 -v $(pwd):/home/src mage_hadoop \
   /app/run_app_with_hadoop.sh mage start demo_project
 ```
+
 Notes
+
 * `demo_project` is the name of your project, you can change it to anything you want
 
 ### 3. Run PySpark code in Mage using Hadoop Yarn
 
 * Change the `metadata.yaml` file in the main pipeline folder to include the following Spark settings:
+
 ```yaml
 spark_config:
   # Application name
@@ -312,7 +338,9 @@ spark_config:
   # e.g., others: {'spark.executor.memory': '4g', 'spark.executor.cores': '2'}
   others: {}
 ```
+
 * Create a new `Standalone (batch)` pipeline and add a `Data loader`, then run it with the following code:
+
 ```python
 @data_loader
 def load_data(*args, **kwargs):
@@ -331,9 +359,8 @@ def load_data(*args, **kwargs):
     print(spark.sql('select 1'))
     return {}
 ```
-* Verify that the added Spark code is running through a Yarn master.
 
----
+* Verify that the added Spark code is running through a Yarn master.
 
 ## AWS
 
@@ -397,7 +424,6 @@ Change the values for the keys mentioned in the following steps.
   * `master_security_group`
   * `slave_security_group`
 
-
 Your final `metadata.yaml` file could look like this:
 
 ```yaml
@@ -411,6 +437,7 @@ emr_config:
 
 Additionally, you can customize the instance count and Spark properties in your EMR cluster. Here is
 an example config:
+
 ```yaml
 emr_config:
   bootstrap_script_path: /path/to/emr_bootstrap.sh  # Use a custom bootstrap script for EMR cluster
@@ -444,7 +471,6 @@ Once you’ve acquired those credentials, you can switch your kernel in your Mag
 to `pyspark` kernel. Mage will automatically creates the EMR cluster when you switch to `pyspark`
 kernel. The cluster is usually created and intialized within 8~10 minutes. Then you can select
 your EMR cluster in the dropdown of your `pyspark` kernel selector.
-
 
 ### 5. Allow EMR connection permissions
 

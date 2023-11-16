@@ -24,6 +24,7 @@ In this tutorial, we'll create a data pipeline with the following steps:
 If you haven't created a Mage project before, follow the [setup guide](/getting-started/setup) before starting this tutorial.
 
 ## Quickstart
+
 Want to dive in? Simply run the following command to clone a pre-built repo:
 
 <CodeGroup>
@@ -41,6 +42,7 @@ cp dev.env .env
 rm dev.env
 docker compose up
 ```
+
 </CodeGroup>
 
 Then navigate to `https://localhost:6789` in your browser to see the pipeline in action!
@@ -55,12 +57,10 @@ Then navigate to `https://localhost:6789` in your browser to see the pipeline in
 
         In the left vertical navigation, click the last link labeled *Pipeline settings*. Change the pipeline's name to `ETL demo`. Click the button labeled *Save pipeline settings*.
 
-        <Frame>
             <img
                 alt="Create new pipeline"
                 src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/create-new-pipeline.gif?raw=true"
             />
-        </Frame>
 
     </Accordion>
     <Accordion title="2️⃣ Load data from an API">
@@ -94,12 +94,10 @@ Then navigate to `https://localhost:6789` in your browser to see the pipeline in
 
         After you run the block (⌘ + Enter), you'll see a sample of the data that was loaded.
 
-            <Frame>
-                <img
-                    alt="Load data"
-                    src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/load-data.gif?raw=true"
-                />
-            </Frame>
+        <img
+            alt="Load data"
+            src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/load-data.gif?raw=true"
+        />
     </Accordion>
     <Accordion title="3️⃣ Transform data">
         Let's transform the data in 2 ways:
@@ -146,12 +144,10 @@ Then navigate to `https://localhost:6789` in your browser to see the pipeline in
 
         After you run the block (⌘ + Enter), you'll see a sample of the data that was transformed.
 
-        <Frame>
-            <img
-                alt="Transform data"
-                src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/transform-data.gif?raw=true"
-            />
-        </Frame>
+        <img
+            alt="Transform data"
+            src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/transform-data.gif?raw=true"
+        />
     </Accordion>
     <Accordion title="4️⃣ Export data to DuckDB">
         Let's export the data to a local DuckDB database! Create a new `Data Exporter` block and change the type to be `DuckDB`. 
@@ -166,12 +162,10 @@ Then navigate to `https://localhost:6789` in your browser to see the pipeline in
 
         After you run the block (⌘ + Enter), you'll see a sample of the data that was exported.
 
-        <Frame>
-            <img
-                alt="Export data"
-                src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/export-data.gif?raw=true"
-            />
-        </Frame>
+        <img
+            alt="Export data"
+            src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/export-data.gif?raw=true"
+        />
 
         You should also see some logs indicating the export was completed, e.g.
 

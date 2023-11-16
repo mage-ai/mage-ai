@@ -13,6 +13,7 @@ The `Markdown` button is visible at the bottom of the main section or when hover
 4. You can rearrange the blocks by clicking on the block header and dragging it to another position in the pipeline.
 
 ### Shortcuts
+
 - Edit mode: Double-click the markdown block's content area to open the content editor. You can
 also click the "Edit" icon in the block header to edit the content.
 - Exit edit mode: Press `Escape` on your keyboard while the content editor is active.
@@ -20,17 +21,18 @@ You may need to press `Escape` twice, once to exit the editor and another time t
 the block. When the block is deselected, the editor will automatically close.
 
 ### Directory
+
 The files associated with the markdown blocks are located in the `markdowns` directory
 in the File Browser.
 
 ### Deleting a markdown block
+
 When you delete a markdown block that is not used in any other pipeline,
 the file may also be deleted automatically as well.
 
 ## Supported syntax
 
 #### Horizontal breaks
----
 
 #### H1-H5 Headlines
 
@@ -43,11 +45,13 @@ Normal text
 > blockquote
 
 #### Ordered list
+
 1. First item
 2. Second item
 3. Third item
 
 #### Unordered list
+
 - First item
 - Second item
 - Third item
@@ -57,14 +61,15 @@ You can use inline `test_code` in your sentences.
 Links: [Mage homepage](https://www.mage.ai)
 
 #### Tables
+
 | Column1 | Column2 | Column3 |
 | --- | --- | --- |
 | Text1 | TextA | TextI |
 | Text2 | TextB | TextII |
 | Text3 | TextC | TextIII |
 
-
 #### Code blocks
+
 ```
 {
   "firstName": "John",
@@ -79,15 +84,18 @@ Links: [Mage homepage](https://www.mage.ai)
 - [ ] Todo 2 unchecked
 - [ ] Todo 3 unchecked
 
-
 #### Images
 
 Images are supported with the typical image markdown syntax:
+
 ```
-![](https://images.photowall.com/products/57215/golden-retriever-puppy.jpg?h=699&q=85)
+<img noZoom src="https://images.photowall.com/products/57215/golden-retriever-puppy.jpg?h=699&q=85" alt="" />
 ```
+
 or with the `<img>` HTML tag syntax:
+
 ```
-<img src="https://images.photowall.com/products/57215/golden-retriever-puppy.jpg?h=699&q=85" alt="drawing" width="200"/>
+<img noZoom src="https://images.photowall.com/products/57215/golden-retriever-puppy.jpg?h=699&q=85" alt="drawing" width="200"/>
 ```
+
 With the `<img>` syntax, you can create customizable image sizes with `width` and `height` attributes.

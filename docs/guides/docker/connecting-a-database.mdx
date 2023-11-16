@@ -9,13 +9,13 @@ description: "Here's how you can connect a local database to Mage in Docker for 
 
 When you develop in Docker, you can connect a database to your Mage container. This allows you to use the database in your data pipelines.
 
-A Docker Network is a virtual network that allows containers to communicate with each other. 
+A Docker Network is a virtual network that allows containers to communicate with each other.
 By creating a network, you can connect database containers to your Mage instances.
-Read more about Docker Networks [here](https://docs.docker.com/network/). 
+Read more about Docker Networks [here](https://docs.docker.com/network/).
 
-The following guides detail various methods for creating databases and connecting them to your Mage project. 
+The following guides detail various methods for creating databases and connecting them to your Mage project.
 
-We recommend starting with a [docker compose](https://docs.docker.com/compose/) file, as it affords the most flexibility and customizability. You might 
+We recommend starting with a [docker compose](https://docs.docker.com/compose/) file, as it affords the most flexibility and customizability. You might
 choose to use `docker run` instead, as it's a bit simpler.
 
 ## Guides
@@ -72,6 +72,7 @@ services:
     ports:
       - "${PG_HOST_PORT}:5432"
 ```
+
 </Accordion>
 <Accordion title="PostgreSQL - Docker run" icon="elephant">
 
@@ -107,6 +108,7 @@ The following steps will create a PostgreSQL database container and connect it t
       mageai/mageai \
       /app/run_app.sh mage start [project_name]
    ```
+
 </Step>
 </Steps>
 </Accordion>
@@ -134,14 +136,15 @@ The following steps will create a PostgreSQL database container and connect it t
    ```
    Here are the parameteres we're using in that command:
 
-   * `DRIVER={ODBC Driver 18 for SQL Server}`: a formatted string with a version number matching that of the SQL server
-   * `SERVER=database_server`: the name or IP address of the database server
-   * `DATABASE=database`: the name of the database
-   * `UID=user`: the user ID for the database
-   * `PWD=password`: the password for the user
-   * `ENCRYPT=yes`: whether to use encryption
-   * `TrustServerCertificate=yes`: whether to trust the server certificate
+- `DRIVER={ODBC Driver 18 for SQL Server}`: a formatted string with a version number matching that of the SQL server
+- `SERVER=database_server`: the name or IP address of the database server
+- `DATABASE=database`: the name of the database
+- `UID=user`: the user ID for the database
+- `PWD=password`: the password for the user
+- `ENCRYPT=yes`: whether to use encryption
+- `TrustServerCertificate=yes`: whether to trust the server certificate
 </Step>
+
 </Steps>
 </Accordion>
 </AccordionGroup>

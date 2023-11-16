@@ -11,9 +11,7 @@ sidebarTitle: "Run a model"
    profile (e.g. `dev`) that you want to use when running the selected dbt
    models.
 
-![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
-
----
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true" alt="" />
 
 ## Depending on upstream blocks
 
@@ -26,8 +24,6 @@ dependencies on other blocks.
 The dbt model won’t run until all upstream blocks have successfully been
 completed.
 
----
-
 ## Preview dbt model results
 
 You can run a dbt model block and see the results of the SQL query.
@@ -39,17 +35,13 @@ dbt project’s
 [connection profile](https://docs.getdbt.com/docs/get-started/connection-profiles)
 target.
 
-![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
-
----
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true" alt="" />
 
 ## Pipeline execution run
 
 When pipeline is triggered and executes, it’ll run each dbt model block using
 the [`dbt run`](https://docs.getdbt.com/reference/node-selection/syntax)
 command.
-
----
 
 ## Variable interpolation
 
@@ -102,6 +94,7 @@ string values. Single quotes surrounding the variables object are optional.
 variable name. See below for examples.
 
 Examples of YAML dbt code block content (note the syntax for the variables object):
+
 ```
 --select demo/models --vars '{"demo_key": "demo_value", "date": 20230101}'
 --select demo/models --vars {"demo_key":"demo_value","date":20230101}

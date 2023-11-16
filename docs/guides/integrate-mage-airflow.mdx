@@ -25,6 +25,7 @@ and add the `mage-ai` library:
 ```
 mage-ai
 ```
+
 </Step>
 <Step title=" Install Mage">
 
@@ -41,6 +42,7 @@ docker pull mageai/mageai:latest
 ```bash
 pip install mage-ai
 ```
+
 </Step>
 <Step title="Initialize Mage project">
 
@@ -77,6 +79,7 @@ airflow_root_directory/
 | -- dags/
 | -- | -- demo_project/
 ```
+
 </Step>
 <Step title="Create one-time DAG for pipelines">
 
@@ -105,6 +108,7 @@ create_dags(
     globals_dict=globals(),
 )
 ```
+
 </Step>
 
 <Step title="Create pipeline">
@@ -128,8 +132,6 @@ mage start demo_project
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
-
-
 
 </Step>
 <Step title="Add a block">

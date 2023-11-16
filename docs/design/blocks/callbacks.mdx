@@ -6,9 +6,7 @@ description: "A callback block is associated to another block. When the parent b
 
 <Note>Requires version `0.8.61` or greater.</Note>
 
-<Frame>
-  <img alt="Callbacks" src="https://i.imgflip.com/3s2icl.jpg" />
-</Frame>
+<img noZoom class="hero" alt="Callbacks" src="https://i.imgflip.com/3s2icl.jpg" />
 
 Callback blocks are part of your pipeline but don’t run as individual steps in your pipeline
 like data loader blocks, transformer blocks, etc.
@@ -17,8 +15,6 @@ However, callback blocks are associated to other blocks within the pipeline
 
 After those other blocks are executed,
 any associated callback blocks will also be executed depending on the status of the parent block.
-
----
 
 ## Example
 
@@ -51,8 +47,6 @@ It successfully completes. Then, the callback block will run and execute the fun
 1. Next, the pipeline will execute the `clean_column_names` (transformer) block.
 It fails due to some error. The callback block will run and execute the function `alert_me`.
 
----
-
 ## How to add callbacks to your pipeline
 
 1. Create a new pipeline or open an existing pipeline.
@@ -71,6 +65,7 @@ It fails due to some error. The callback block will run and execute the function
 ### Supported callbacks
 
 #### `success`
+
 Execute callback function when block runs successfully.
 
 ```python
@@ -80,6 +75,7 @@ def only_run_this_function_on_success(parent_block_data, **kwargs):
 ```
 
 #### `failure`
+
 Execute callback function when block fails.
 
 ```python
@@ -156,9 +152,9 @@ data integration pipelines:
 2. In the top right of the block, click the triple dot icon which should open up a menu
 with more options. Click "Add callback".
 3. You should now see another code editor under the main editor for your block.
-![Block callback](https://github.com/mage-ai/assets/blob/main/block-callback.png?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/block-callback.png?raw=True" alt="Block callback" />
 4. You can add an `on_success` callback and/or a `on_failure` callback. These callbacks
 will run after your block run completes or fails. When you run your block in the
 pipeline edit page, it will also run the callback depending on the status of the block.
-  1. The callback function will be passed your pipeline's runtime variables as keyword
+1. The callback function will be passed your pipeline's runtime variables as keyword
   arguments, so you can use the same `kwargs.get('<variable>')` syntax in your callback.

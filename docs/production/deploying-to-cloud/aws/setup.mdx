@@ -3,7 +3,7 @@ title: "Deploy to AWS with Terraform"
 sidebarTitle: "Setup"
 ---
 
-![](https://user-images.githubusercontent.com/78053898/198754745-9e462ffc-1214-47d2-8093-05c88949c08e.png)
+<img noZoom src="https://user-images.githubusercontent.com/78053898/198754745-9e462ffc-1214-47d2-8093-05c88949c08e.png" alt="" />
 
 ## Pre-requisites
 
@@ -21,14 +21,10 @@ In order to terminate and remove all the resources created from Terraform, you
 need the following
 [permissions](/production/deploying-to-cloud/aws/terraform-destroy-policy).
 
----
-
 ## Deploy to ECS cluster
 
 Use Terraform scripts in [aws](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/aws)
 folder to provision resources for AWS ECS cluster.
-
----
 
 ### Terraform plan
 
@@ -43,8 +39,6 @@ terraform plan
 By default, here are the **[resources](/production/deploying-to-cloud/aws/resources)** that will be
 created.
 
----
-
 ### 1. Environment variables
 
 If you don’t have the AWS CLI installed, you’ll need to create this file:
@@ -58,10 +52,8 @@ aws_access_key_id = XXX
 aws_secret_access_key = XXX
 ```
 
-Alternatively, you can install the AWS CLI by following 
+Alternatively, you can install the AWS CLI by following
 [Amazon’s instructions](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
-
----
 
 ### 2. Customize Terraform settings
 
@@ -141,8 +133,6 @@ Other variables defined in
 [./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf)
 can also be customized to your needs.
 
----
-
 ### 3. Configurable environment variables
 
 In the
@@ -169,28 +159,33 @@ the running container.
 > The values in your `env_vars.json` must be strings. Wrap each value in double
 > quotes.
 
----
-
 ### 4. Deploy
 
 **Using CLI**
 
 1. Change directory into scripts folder:
+
    ```bash
    cd aws
    ```
+
 2. Initialize Terraform:
+
    ```bash
    terraform init
    ```
+
    - If you run into errors like the following:
+
      ```
      │ Error: Failed to install provider
      │
      │ Error while installing hashicorp/template v2.2.0: the local package for registry.terraform.io/hashicorp/template 2.2.0 doesn't match any of the checksums previously recorded in the dependency lock file (this might be because the available checksums are for packages targeting different
      │ platforms); for more information: https://www.terraform.io/language/provider-checksum-verification
      ```
+
      then run the following commands to resolve this:
+
      ```
      brew install kreuzwerker/taps/m1-terraform-provider-helper
      m1-terraform-provider-helper activate
@@ -198,7 +193,9 @@ the running container.
      rm .terraform.lock.hcl
      terraform init --upgrade
      ```
+
 3. Deploy:
+
    ```bash
    terraform apply
    ```
@@ -210,8 +207,6 @@ Once it’s finished deploying, you can access Mage in your browser.
 3. Click on the load balancer with the name `mage-data-prep` in it (if you
    changed the app name, then find the load balancer with that app name).
 4. Find the public DNS name, copy that, and paste it in your browser.
-
----
 
 **Using Docker**
 
@@ -232,8 +227,6 @@ docker run -i -t -v $(pwd):/mage --workdir="/absolute_path_to/mage-ai-terraform-
   --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   hashicorp/terraform:latest apply
 ```
-
----
 
 ### Errors
 
@@ -259,8 +252,6 @@ If your cluster is running and the service launches a task that eventually
 stops, check the logs for the stopped task. If the logs contain the error above,
 try re-building your image with the platform flag `--platform linux/amd64`.
 
----
-
 ### Updating Mage versions
 
 After Mage is running in your cloud, you can update the Mage Docker image
@@ -280,8 +271,6 @@ aws ecs update-service --cluster [cluster_name] --service [service_name] --force
 >
 > This is the name of your AWS ECS service running in your AWS ECS cluster with
 > the name identified from above.
-
----
 
 ### Misc
 
@@ -323,7 +312,7 @@ After you get a certificate, add a HTTPS listener in your load balancer group.
     your HTTPS listener.
 
 The detailed instructions can be found in:
-https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
+<https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html>
 
 #### Terminate all resources
 
@@ -339,21 +328,19 @@ A sample output could look like this:
 ```
 Destroy complete! Resources: 10 destroyed.
 ```
+
 ### Authentication with ECS task execution role
+
 Mage creates an ECS task execution role with the format `{app_name}-execution-task-role`.
 You can grant the ECS task permissions to access other AWS services by attaching IAM policies to this ECS task execution role.
 
-
 For example, if you want to list the AWS events that can be used for event triggers, you can attach IAM Policy `CloudWatchEventsReadOnlyAccess`
 to your ECS task execution role.
-
----
 
 ## Deploy to EKS cluster
 
 Use Terraform scripts in [aws-eks](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/aws-eks)
 folder to provision resources for AWS EKS cluster.
-
 
 You can run the following command to see all the resources that will be created
 by Terraform:
@@ -365,8 +352,8 @@ terraform plan
 
 Similar with deploying to ECS cluster, you need to set up the [environment variables](/production/deploying-to-cloud/aws/setup#1-environment-variables) first, and you can customize the Terraform settings in [./aws-eks/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/variables.tf) file.
 
-
 Then, follow the steps below to set up EKS cluster and deploy Mage.
+
 1. Run `terraform apply` to provision the EKS cluster
 2. Configure `kubectl` with command `aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)`
 3. Update the `EFS_VOLUME_ID` in [kube/efs-pvc.yaml](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/kube/efs-pvc.yaml) to the efs id in terraform output

@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "react-dropzone": "^14.2.3"
+  },
+  "devDependencies": {
+    "eslint-plugin-mdx": "^2.2.0",
+    "markdownlint": "^0.32.1"
   }
 }

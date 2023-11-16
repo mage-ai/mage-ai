@@ -62,6 +62,7 @@ Change the values for each key under the `email_config` section.
 ## Customize message templates
 
 You can customize message templates in `notification_config`. Here is an example config:
+
 ```yaml
 notification_config:
   alert_on:
@@ -82,11 +83,12 @@ notification_config:
       title: ...
       details: ...
 ```
+
 You can customize the message template for `success`, `failure`, `passed_sla` scenarios. For each message template,
 you can specify `title` and either `summary` or `details`.
-* `title` is used in email subject
-* If you specify the `summary`, the email body will be your `summary` + the url of the pipeline run page
-* If you specify the `details`, the `details` will be used as your email body
+- `title` is used in email subject
+- If you specify the `summary`, the email body will be your `summary` + the url of the pipeline run page
+- If you specify the `details`, the `details` will be used as your email body
 
 To interpolate variables in the messaget template, you can use `{variable_name}` syntax.
 Hare are the supported variables: `error`, `execution_time`, `pipeline_run_url`, `pipeline_schedule_id`,
@@ -94,8 +96,6 @@ Hare are the supported variables: `error`, `execution_time`, `pipeline_run_url`,
 
 For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
 the host url you want to use in the notification messages.
-
----
 
 ## What next?
 
@@ -106,4 +106,4 @@ Here is an example of what an email could look like:
 
 |                                                                                                                                                                                                                                       |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Successfully ran Pipeline `example_pipeline` with Trigger 79 `hourly_trigger` at execution time `2022-09-28 19:00:00`.<br />Open http://localhost:6789/pipelines/example_pipeline/triggers/79 to check pipeline run results and logs. |
+| Successfully ran Pipeline `example_pipeline` with Trigger 79 `hourly_trigger` at execution time `2022-09-28 19:00:00`.<br />Open <http://localhost:6789/pipelines/example_pipeline/triggers/79> to check pipeline run results and logs. |

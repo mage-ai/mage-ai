@@ -35,7 +35,7 @@ env:
 
 Once your cluster and initial deployment is created, you will also need to give your
 Kubernetes service account some permissions in order to create the necessary resources.
-You can run the folliwng `kubectl` command to create the `ClusterRole` required for 
+You can run the folliwng `kubectl` command to create the `ClusterRole` required for
 managing the Kubernetes resources.
 
 ```bash
@@ -61,7 +61,7 @@ rules:
 EOF
 ```
 
-Once the cluster role is created, you will need to bind the role to the 
+Once the cluster role is created, you will need to bind the role to the
 service account. You will need to change the service account name if it is not `default`:
 
 ```bash
@@ -74,12 +74,10 @@ kubectl create clusterrolebinding manage-role-binding \
 
 When creating a new Kubernetes workspace, you can configure the following Kubernetes settings:
 
-<Frame>
-    <img
-        alt="Kubernetes configuration"
-        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/workspaces-k8s-settings.png?raw=true"
-		/>
-</Frame>
+<img
+    alt="Kubernetes configuration"
+    src="https://github.com/mage-ai/assets/blob/main/production/workspaces/workspaces-k8s-settings.png?raw=true"
+/>
 
 | Field | Description |
 | --- | --- |
@@ -110,12 +108,10 @@ When the workspace is stopped, Mage will scale down the stateful set to 0, but a
 workspace can be resumed after being stopped through the UI.
 </Note>
 
-<Frame>
-    <img
-        alt="Auto termination configuration"
-        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/lifecycle-auto-termination.png?raw=true"
-		/>
-</Frame>
+<img
+    alt="Auto termination configuration"
+    src="https://github.com/mage-ai/assets/blob/main/production/workspaces/lifecycle-auto-termination.png?raw=true"
+/>
 
 Mage will automatically stop the workspace after the specified amount of time (max idle time).
 
@@ -123,12 +119,10 @@ Mage will automatically stop the workspace after the specified amount of time (m
 
 <Accordion title="Pre start script">
 
-<Frame>
-    <img
-        alt="Auto termination configuration"
-        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/lifecycle-pre-start.png?raw=true"
-		/>
-</Frame>
+<img
+    alt="Auto termination configuration"
+    src="https://github.com/mage-ai/assets/blob/main/production/workspaces/lifecycle-pre-start.png?raw=true"
+/>
 
 You can select a Python pre start script that will be run before the container is started. The script must
 must be a valid Python script with a `get_custom_configs` method that returns a dictionary. The `get_custom_configs`
@@ -157,14 +151,12 @@ can find the schema for a container config [here](https://github.com/kubernetes-
 
 <Accordion title="Post start hook">
 
-<Frame>
-    <img
-        alt="Auto termination configuration"
-        src="https://github.com/mage-ai/assets/blob/main/production/workspaces/lifecycle-post-start.png?raw=true"
-		/>
-</Frame>
+<img
+    alt="Auto termination configuration"
+    src="https://github.com/mage-ai/assets/blob/main/production/workspaces/lifecycle-post-start.png?raw=true"
+/>
 
-You can also configure a post start hook that will be run after the container is started. This setting leverages the 
+You can also configure a post start hook that will be run after the container is started. This setting leverages the
 native Kubernetes container lifecycle [PostStart hook](https://kubernetes.io/docs/tasks/configure-pod-container/attach-handler-lifecycle-event/).
 Mage provides two configuration fields:
 
@@ -174,6 +166,7 @@ using a post start hook. This can be a string command or a list.
 post start `command` to perform more advanced operations. The path of this file will be `/app/<file_name>` in the container.
 
 Example:
+
 ```
 Command: ["/bin/sh", "-c", "/app/example_post_start.sh"]
 Path to hook: /home/src/my_mage_project/example_post_start.sh
@@ -185,7 +178,7 @@ Path to hook: /home/src/my_mage_project/example_post_start.sh
 
 ## Ingress
 
-When an ingress is provided, the `MAGE_BASE_PATH` environment variable will be set automatically 
+When an ingress is provided, the `MAGE_BASE_PATH` environment variable will be set automatically
 to the name of the workspace. Thus, the workspace will be accessible at the `/<workspace-name>` path.
 
 Providing an ingress name will add the workspace to the ingress rules like this:

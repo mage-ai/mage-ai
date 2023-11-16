@@ -109,7 +109,6 @@ team = Team.objects.get(id=1)
 swords = SwordResource.collection({}, {}, user, parent_model=team)
 ```
 
-
 ## Create
 
 This method is executed when you make a request to create a new instance of a resource.
@@ -256,6 +255,7 @@ You almost never have to override the `update` method.
 If you do, see `ModelVersionResource` for an example.
 
 ## Delete
+
 This method is executed when you want to delete a single resource using it’s ID.
 Example: `DELETE /swords/:id`.
 

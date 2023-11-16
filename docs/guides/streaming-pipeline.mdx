@@ -22,6 +22,7 @@ use Kafka locally:
    `git clone https://github.com/wurstmeister/kafka-docker.git`.
 2. Change directory into that repository: `cd kafka-docker`.
 3. Edit the `docker-compose.yml` file to match this:
+
    ```yaml
    version: "2"
    services:
@@ -45,25 +46,35 @@ use Kafka locally:
        volumes:
          - /var/run/docker.sock:/var/run/docker.sock
    ```
+
 4. Start Docker: `docker-compose up`
 5. Start a terminal session in the running container:
+
    ```bash
    docker exec -i -t -u root $(docker ps | grep docker_kafka | cut -d' ' -f1) /bin/bash
    ```
+
 6. Create a topic:
+
    ```bash
    $KAFKA_HOME/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test
    ```
+
 7. List all available topics in Kafka instance:
+
    ```bash
    $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
    ```
+
 8. Start a producer on topic named `test`:
+
    ```bash
    $KAFKA_HOME/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic=test
    ```
+
 9. Send messages to the topic named `test` by typing the following in the
    terminal:
+
    ```bash
    >hello
    >this is a test
@@ -71,6 +82,7 @@ use Kafka locally:
    >test 2
    >test 3
    ```
+
 10. Open another terminal and start a consumer on the topic named `test`:
 
 ```bash
@@ -92,8 +104,6 @@ test 2
   [source](https://towardsdatascience.com/introduction-to-kafka-stream-processing-in-python-e30d34bf3a12)
   of instructions.
 </sub>
-
----
 
 ## Build streaming pipeline
 
@@ -129,14 +139,13 @@ Check that it exists:
 docker network ls
 ```
 
----
-
 If you can’t connect to Kafka locally in a Docker container using Mage in a
 Docker container, do the following:
 
 1. Clone Mage: `git clone https://github.com/mage-ai/mage-ai.git`.
 2. Change directory into Mage: `cd mage-ai`.
 3. Edit the `docker-compose.yml` file to match this:
+
    ```yaml
    version: '3'
    services:
@@ -151,6 +160,7 @@ Docker container, do the following:
        name: kafka-docker_default
        external: true
    ```
+
 4. Run the following script in your terminal: `./scripts/dev.sh`.
 
 This will run Mage in development mode; which runs it in a Docker container
@@ -166,6 +176,7 @@ Start Mage using Docker. If you haven’t done this before, refer to the
 1. Open Mage in your browser.
 2. Click <b>`+ New pipeline`</b>, then select `Streaming`.
 3. Add a data loader block, select `Kafka`, and paste the following:
+
    ```yaml
    connector_type: kafka
    bootstrap_server: "localhost:9092"
@@ -173,6 +184,7 @@ Start Mage using Docker. If you haven’t done this before, refer to the
    consumer_group: unique_consumer_group
    batch_size: 100
    ```
+
    1. By default, the `bootstrap_server` is set to `localhost:9092`. If you’re
       running Mage in a container, the `bootstrap_server` should be
       `kafka:9093`.
@@ -196,15 +208,15 @@ Start Mage using Docker. If you haven’t done this before, refer to the
    ```
 
 5. Add a data exporter block, select `OpenSearch` and paste the following:
+
    ```yaml
    connector_type: opensearch
    host: https://search-something-abcdefg123456.us-west-1.es.amazonaws.com/
    index_name: python-test-index
    ```
+
    1. Change the `host` to match your OpenSearch domain’s endpoint.
    1. Change the `index_name` to match the index you want to export data into.
-
----
 
 ## Test pipeline
 
@@ -223,9 +235,11 @@ You should see an output like this:
 
 1. Open a terminal on your local workstation.
 2. Install `kafka-python`:
+
    ```bash
    pip install kafka-python
    ```
+
 3. Open a Python shell and write the following code to publish messages:
 
    ```python
@@ -293,8 +307,6 @@ consumer = KafkaConsumer(
 for message in consumer:
     print(f"{message.partition}:{message.offset}: v={message.value}, time={time.time()}")
 ```
-
----
 
 ## Run in production
 

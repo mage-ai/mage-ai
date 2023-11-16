@@ -23,21 +23,21 @@ service by updating the Terraform variables and then running `terraform apply`
 ## 2. Set executor type and customize the compute resource of the Mage executor
 
 Mage provides multiple executors to execute blocks. Here are the available executor types:
-* Block executor
-  * `local_python`
-  * `ecs`
-  * `gcp_cloud_run`
-  * `azure_container_instance`
-  * `k8s`
-* Pipeline executor
-  * `local_python`
-  * `ecs`
-  * `k8s`
+- Block executor
+  - `local_python`
+  - `ecs`
+  - `gcp_cloud_run`
+  - `azure_container_instance`
+  - `k8s`
+- Pipeline executor
+  - `local_python`
+  - `ecs`
+  - `k8s`
 
 Mage uses `local_python` executor type by default. If you want to specify another executor_type as the default executor type for blocks,
 you can set the environment variable `DEFAULT_EXECUTOR_TYPE` to one executor type mentioned above.
 
-If you want to use `local_python` executor when `DEFAULT_EXECUTOR_TYPE` is set to another executor type, you can set the `executor_type` to 
+If you want to use `local_python` executor when `DEFAULT_EXECUTOR_TYPE` is set to another executor type, you can set the `executor_type` to
 `local_python_force`.
 
 ### Local python executor
@@ -63,11 +63,13 @@ blocks:
   executor_type: k8s
   ...
 ```
+
 By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
 
 There're three ways to customize the Kubernetes executor config:
 
 1. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
+
     ```yaml
     blocks:
     - uuid: example_data_loader
@@ -84,8 +86,10 @@ There're three ways to customize the Kubernetes executor config:
           cpu: 500m
           memory: 1024Mi
     ```
+
 2. Add the `k8s_executor_config` to project's metadata.yaml. This `k8s_executor_config` will apply to all the blocks that use k8s executor
 in this project. Example config:
+
     ```yaml
     k8s_executor_config:
       job_name_prefix: data-prep
@@ -98,16 +102,19 @@ in this project. Example config:
         memory: 1024Mi
       service_account_name: default
     ```
-* The kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`. The default `job_name_prefix` is `data-prep`. You can customize it in the k8s executor config.
-* If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
+- The kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`. The default `job_name_prefix` is `data-prep`. You can customize it in the k8s executor config.
+- If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
+
   ```yaml
   k8s_executor_config:
     resource_limits:
       gpu-vendor.example/example-gpu: 1 # requesting 1 GPU
   ```
+
   Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
   is installed and run on your nodes to use the GPUs.
-* To futher customize the container config of the kubernetes executor, you can sepcify the `container_config` in the k8s executor config. Here is the example:
+- To futher customize the container config of the kubernetes executor, you can sepcify the `container_config` in the k8s executor config. Here is the example:
+
   ```yaml
   k8s_executor_config:
     container_config:
@@ -116,6 +123,7 @@ in this project. Example config:
       - name: USER_CODE_PATH
         value: /home/src/k8s_project
   ```
+
 3. You can configure the job template by using the `K8S_CONFIG_FILE` environment variable, which should point to the configuration file. Here is the format for the Kubernetes configuration template:
 
 ```yaml
@@ -172,13 +180,17 @@ You can choose to launch separate AWS ECS tasks to executor blocks by specifying
 block executor_type to be `ecs` in pipeline's metadata.yaml file.
 
 There're 2 ways to customize the compute resource of ECS executor,
+
 1. Update `cpu` and `memory` the `ecs_config` in project's metadata.yaml file. Example config:
+
     ```yaml
     ecs_config:
       cpu: 1024
       memory: 2048
     ```
+
 2. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
+
     ```yaml
     blocks:
     - uuid: example_data_loader
@@ -193,6 +205,7 @@ There're 2 ways to customize the compute resource of ECS executor,
 
 To run the whole pipeline in one ECS executor, you can set the `executor_type` at pipeline level and set `run_pipeline_in_one_process` to true.
 `executor_config` can also be set at pipeline level. Here is the example pipeline metadata.yaml:
+
 ```yaml
 blocks:
 - ...
@@ -204,6 +217,7 @@ name: example_pipeline
 ```
 
 The default wait timeout for the ECS task is 10 minutes. To customize the timeout, you can specify the `wait_timeout` (in seconds) field in `ecs_config`. Here is one example:
+
 ```yaml
 ecs_config:
   cpu: 1024
@@ -212,6 +226,7 @@ ecs_config:
 ```
 
 Required IAM permissions for using ECS executor:
+
 ```
 [
   "ecs:DescribeTasks",
@@ -220,13 +235,14 @@ Required IAM permissions for using ECS executor:
 ]
 ```
 
-
 ### GCP Cloud Run executor
 
 If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to execute blocks.
 
 How to configure pipeline to use GCP cloud run executor:
+
 1. Update Project's metadata.yaml
+
 ```yaml
 gcp_cloud_run_config:
   path_to_credentials_json_file: "/path/to/credentials_json_file"
@@ -245,6 +261,7 @@ blocks:
   executor_type: gcp_cloud_run
   ...
 ```
+
 Customizing compute resource for GCP Cloud Run executor is coming soon.
 
 ### Azure Container Instance executor
@@ -253,7 +270,9 @@ If your Mage app is deployed on Microsoft Azure with Mage's [terraform scripts](
 you can choose to launch separate Azure containce instances to execute blocks.
 
 How to configure pipeline to use Azure Container Instance executor:
+
 1. Update Project's metadata.yaml
+
 ```yaml
 azure_container_instance_config:
   cpu: 1

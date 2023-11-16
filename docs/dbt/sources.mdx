@@ -8,17 +8,13 @@ dbt model blocks can depend on other dbt models and other blocks:
 [SQL](/guides/blocks/sql-blocks),
 [R](/guides/blocks/r-blocks).
 
----
-
 ## dbt models depending on other dbt models
 
 When you add a dbt model block to your pipeline, if it contains any `ref`s,
 those dbt models will be added to the current pipeline as upstream dependencies
 to the dbt model you initially added.
 
-![](https://github.com/mage-ai/assets/blob/main/dbt-model-refs.gif?raw=true)
-
----
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/dbt-model-refs.gif?raw=true" alt="" />
 
 ## dbt models depending on other blocks
 

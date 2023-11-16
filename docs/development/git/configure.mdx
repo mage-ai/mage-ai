@@ -3,13 +3,15 @@ title: "Configure Git"
 description: "This page will walk you through the process of authenticating with SSH or HTTPS and configuring Git for use with Mage Git Sync."
 ---
 
+<img
+    noZoom
+    class="hero"
+    src="https://user-images.githubusercontent.com/78053898/198753409-c7c41a8d-c137-4273-bb3b-76ecc81f8ee2.png"
+/>
+
 If you're wondering which Git resource to use in Mage, see [this](docs/getting-started/setting-up-git) page for a high-level overview of Git functionality. If you'd like to use Mage's GitHub integration (recommended for GitHub users), there's a different method of configuration. See [this](/production/data-sync/github) page for more information.
 
 If you've decided on a method that uses HTTPS or SSH authentication (Git Sync or Git Integration), this page will walk you through configuring one of those methods.
-
-<div align="center">
-<img src="https://user-images.githubusercontent.com/78053898/198753409-c7c41a8d-c137-4273-bb3b-76ecc81f8ee2.png"/>
-</div>
 
 ## Configure Git settings
 
@@ -17,7 +19,7 @@ If you've decided on a method that uses HTTPS or SSH authentication (Git Sync or
     By using the Git integration through Mage, Mage will automatically set your local repo as a safe directory (i.e. `git config --global --add safe.directory <local repo path>`)
 </Note>
 
-To use the Mage Git integration, you will need to first configure Git settings. The following instructions are tailored to Github, but the Git integration can work with other Git providers as well, such as GitLab, BitBucket, or Azure DevOps: 
+To use the Mage Git integration, you will need to first configure Git settings. The following instructions are tailored to Github, but the Git integration can work with other Git providers as well, such as GitLab, BitBucket, or Azure DevOps:
 
 <AccordionGroup>
     <Accordion title="SSH" icon="terminal">
@@ -39,16 +41,12 @@ To use the Mage Git integration, you will need to first configure Git settings. 
             </Step>
             <Step title="Navigate to Git settings">
                 Navigate to the Wizard icon in the top right, then select _Settings_ to open your Mage settings.
-                <Frame>
-                <img src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True"/>
-                </Frame>
+                <img noZoom src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True"/>
                 There should be an option for _Git settings_ on the left side of the settings modal.
             </Step>
             <Step title="Select SSH as the authentication type.">
                 Change the authentication type to SSH. The interface will change for you to input a remote repo url. 
-                <Frame>
-                <img src="https://github.com/mage-ai/assets/blob/main/git-settings.png?raw=True"/>
-                </Frame>
+                <img noZoom src="https://github.com/mage-ai/assets/blob/main/git-settings.png?raw=True"/>
             </Step>
             <Step title="Set up your SSH key">
             If you haven't already, configure your SSH key— this will allow your instance to access GitHub. Our [instructions](/development/git/configure#generate-ssh-token#generate-ssh-token) can help if you're unfamiliar with the process.
@@ -78,9 +76,7 @@ To use the Mage Git integration, you will need to first configure Git settings. 
             </Step>
             <Step title="Navigate to Git settings">
                 Navigate to the Wizard icon in the top right, then select _Settings_ to open your Mage settings.
-                <Frame>
-                <img src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True"/>
-                </Frame>
+                <img noZoom src="https://github.com/mage-ai/assets/blob/main/mage-settings.png?raw=True"/>
                 There should be an option for _Git settings_ on the left side of the settings modal.
             </Step>
             <Step title="Create a Git access token and save it for later">
@@ -118,7 +114,7 @@ If you're using a method that requires an SSH token in Mage, this section will w
             </Step>
             <Step title="Generate a new SSH key">
                 If no key exists, generate a new key using this [guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
-                
+
                 You may skip this step if you already have a key.
             </Step>
             <Step title="Add SSH key to your Git provider">

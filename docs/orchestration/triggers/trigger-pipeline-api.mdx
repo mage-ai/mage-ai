@@ -9,14 +9,10 @@ description: "You can trigger a pipeline by making an API request."
 1. [Create a pipeline](/about/features#data-pipeline-management)
 2. [Create a trigger](/design/data-pipeline-management#create-trigger)
 
----
-
 ## Configuring trigger type
 
 When you create a new trigger or edit an existing one, choose the option `API`
 under trigger type.
-
----
 
 ## API endpoint
 
@@ -29,8 +25,6 @@ you just created has an ID of 3, then the API endpoint you’ll use is:
 ```
 POST http://localhost:6789/api/pipeline_schedules/3/pipeline_runs/abc123
 ```
-
----
 
 ## Request payload
 
@@ -79,8 +73,6 @@ def load_data(**kwargs) -> DataFrame:
 
 You can include as many key value pairs within the variables object in the
 request payload as you want.
-
----
 
 ## Sample cURL command
 

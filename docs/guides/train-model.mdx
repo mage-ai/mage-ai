@@ -5,9 +5,12 @@ description: "Build a machine learning pipeline to train a model on the Titanic 
 "og:image": "https://media.graphcms.com/TIobzTjRniW8wUAna6Ht"
 ---
 
-<Frame>
-    <img alt="Titanic" src="https://media.graphcms.com/TIobzTjRniW8wUAna6Ht" />
-</Frame>
+<img
+    noZoom
+    class="hero"
+    alt="Titanic"
+    src="https://media.graphcms.com/TIobzTjRniW8wUAna6Ht"
+/>
 
 In this tutorial, we’ll create a pipeline that does the following:
 
@@ -92,7 +95,7 @@ pip3 install -r demo_project/requirements.txt
 In the top left corner, click `File > New pipeline`. Then, click the name of the
 pipeline next to the green dot to rename it to `titanic survivors`.
 
-![create new pipeline](https://github.com/mage-ai/assets/blob/main/create-new-pipeline.gif?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/create-new-pipeline.gif?raw=True" alt="create new pipeline" />
 
 ## 3. Play around with scratchpad
 
@@ -124,7 +127,7 @@ the block:
 - Control + Enter
 - Shift + Enter (run code and add a new block)
 
-![](https://github.com/mage-ai/assets/blob/main/scratchpad.gif?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/scratchpad.gif?raw=True" alt="" />
 
 Now that we’re done with the scratchpad, we can leave it there or delete it. To
 delete a block, click the trash can icon on the right side or use the keyboard
@@ -143,7 +146,7 @@ shortcut by typing the letter D and then D again.
 After you run the block (⌘ + Enter), you can immediately see a sample of the
 data in the block’s output.
 
-![load data](https://github.com/mage-ai/assets/blob/main/load-data.gif?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/load-data.gif?raw=True" alt="load data" />
 
 Here is what the code should look like:
 
@@ -217,7 +220,7 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
 After you run the block (⌘ + Enter), you can immediately see a sample of the
 data in the block’s output.
 
-![Transform data](https://github.com/mage-ai/assets/blob/main/transform-data.gif?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/transform-data.gif?raw=True" alt="Transform data" />
 
 ## 6. Train model
 
@@ -292,7 +295,7 @@ def export_data(df: DataFrame) -> None:
 
 Run the block (⌘ + Enter).
 
-![Train model](https://github.com/mage-ai/assets/blob/main/train-model.gif?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/train-model.gif?raw=True" alt="Train model" />
 
 ## 7. Run pipeline
 
@@ -314,7 +317,7 @@ bash mage run demo_project titanic_survivors
 You can also run the pipeline from the UI. Click on the <b>Execute pipeline </b>
 from right bottom panel.
 
-![](https://github.com/mage-ai/assets/blob/main/execute-pipeline-button.png?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/execute-pipeline-button.png?raw=True" alt="" />
 
 Your output should look something like this:
 
@@ -329,7 +332,7 @@ DONE
 
 ---
 
-## Congratulations!
+## Congratulations
 
 You’ve successfully built an ML pipeline that consists of modular code blocks
 and is reproducible in any environment.

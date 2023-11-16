@@ -6,29 +6,23 @@ icon: "chart-tree-map"
 "og:image": "https://media.tenor.com/yybImiR2408AAAAd/iron-man-hologram.gif"
 ---
 
-<Frame>
-    <p align="center">
-    <img
-        alt="Customizable dashboards"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/demo.gif?raw=true"
-    />
-    </p>
-</Frame>
+<img
+    noZoom
+    class="hero"
+    alt="Customizable dashboards"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/demo.gif?raw=true"
+/>
 
 ## Pages with customizable dashboards
 
 1. Project overview page (`/overview?tab=Dashboard`)
 1. Pipeline dashboard page (`/pipelines/[:id]/dashboard`)
 
----
-
 ## Adding charts
 
 1. In the top right corner of the dashboard, click the button labeled
 <b>+ Add content</b>.
 1. Click the dropdown option labeled <b>Create new chart</b>.
-
----
 
 ## Configuring chart
 
@@ -41,75 +35,53 @@ Human readable name for your chart.
 Choose from a variety of visualizations.
 
 #### Bar chart
-<Frame>
-    <p align="center">
-    <img
-        alt="Bar chart"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/bar-chart.png?raw=true"
-    />
-    </p>
-</Frame>
+
+<img
+    alt="Bar chart"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/bar-chart.png?raw=true"
+/>
 
 #### Histogram
-<Frame>
-    <p align="center">
-    <img
-        alt="Histogram"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/histogram.png?raw=true"
-    />
-    </p>
-</Frame>
+
+<img
+    alt="Histogram"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/histogram.png?raw=true"
+/>
 
 #### Line chart
-<Frame>
-    <p align="center">
-    <img
-        alt="chart"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/line-chart.png?raw=true"
-    />
-    </p>
-</Frame>
+
+<img
+    alt="chart"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/line-chart.png?raw=true"
+/>
 
 #### Pie chart
-<Frame>
-    <p align="center">
-    <img
-        alt="chart"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/pie-chart.png?raw=true"
-    />
-    </p>
-</Frame>
+
+<img
+    alt="chart"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/pie-chart.png?raw=true"
+/>
 
 #### Table
-<Frame>
-    <p align="center">
-    <img
-        alt="Table"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/table.png?raw=true"
-    />
-    </p>
-</Frame>
+
+<img
+    alt="Table"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/table.png?raw=true"
+/>
 
 #### Time series bar chart
-<Frame>
-    <p align="center">
-    <img
-        alt="chart"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/time-series-bar-chart.png?raw=true"
-    />
-    </p>
-</Frame>
+
+<img
+    alt="chart"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/time-series-bar-chart.png?raw=true"
+/>
 
 #### Time series line chart
-<Frame>
-    <p align="center">
-    <img
-        alt="chart"
-        src="https://github.com/mage-ai/assets/blob/main/visualizations/time-series-line-chart.png?raw=true"
-    />
-    </p>
-</Frame>
 
+<img
+    alt="chart"
+    src="https://github.com/mage-ai/assets/blob/main/visualizations/time-series-line-chart.png?raw=true"
+/>
 
 ### Data source
 
@@ -197,8 +169,6 @@ value to group the data by.
 For the time series charts, you can choose how granular the interval is between each
 date or time values in the time column. For example, you can display your time series
 data on a daily basis or annual basis.
-
----
 
 ## Custom code for chart
 
@@ -430,16 +400,12 @@ def r(*args, **kwargs):
     return fig.to_html(full_html=False)
 ```
 
----
-
 ## Recommended charts
 
 Depending on which page you’re on, adding recommended charts will automatically configure
 and add a few charts to your dashboard with little effort.
 
 The added charts will show visualizations with different chart types and various data sources.
-
----
 
 ## Resize chart
 
@@ -467,15 +433,11 @@ expand to 50% of the row’s entire width.
 
 Set this value to the number of pixels you want your chart to have in height.
 
----
-
 ## Move chart
 
 Click and hold down on a chart to begin dragging it. Then, drag the chart to move it and
 then release the click while on top of another chart to insert the initial chart after the
 chart that you dropped it on.
-
----
 
 ## Remove chart
 

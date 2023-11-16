@@ -6,9 +6,12 @@ sidebarTitle: "Retrying block runs"
 <Note>Requires version `0.8.76` or greater.</Note>
 
 ## Automatic retry
+
 Mage supports configuring automatic retry for block runs with the following ways
+
 1. Add `retry_config` to project's `metadata.yaml`. This `retry_config` will be applied to all block runs.
    Here is an example:
+
     ```yaml
     retry_config:
       # Number of retry times
@@ -21,8 +24,10 @@ Mage supports configuring automatic retry for block runs with the following ways
       # Whether to use exponential backoff retry
       exponential_backoff: true
     ```
+
 2. Add `retry_config` to the block config in pipeline's `metadata.yaml`. The block level `retry_config` will
    override the global `retry_config`. Here is an example
+
     ```yaml
     blocks:
     - uuid: example_data_loader
@@ -36,6 +41,7 @@ Mage supports configuring automatic retry for block runs with the following ways
         exponential_backoff: false
       ...
     ```
+
 The retry logs show in the same block run log page.
 
 ## Retry incomplete blocks

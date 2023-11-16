@@ -28,7 +28,7 @@ All default attributes for a backfill may be updated in addittion to the followi
   An object containing Global Pipeline Variables to be overriden by the backfill. Any Global Variable may be overridden.
 </ParamField>
 
-![Global Pipeline Vars](https://github.com/mage-ai/assets/blob/main/pipeline-variables.png?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/pipeline-variables.png?raw=True" alt="Global Pipeline Vars" />
 
 <RequestExample>
   ```curl cURL
@@ -36,14 +36,14 @@ All default attributes for a backfill may be updated in addittion to the followi
   --url http://localhost:6789/api/pipelines/arwen_starlight/backfills/6
   -H 'Content-Type: application/json'
   -H 'Cookie: oauth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjoxNjkyMzE0ODM3LjE1MTkzOSwidG9rZW4iOiJieHlQajlVcHE5N2phTC1nTGtOQTVnM2draWZwRjJwSEZZZkNzLTJ2NmpnIn0.bWqUP7Xg9PmHBW703AGPOE270Cc73F4kb0IKHLppGbM'
-  -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' 
+  -H 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
   -d '{
     "backfill": {
       "start_datetime": "2023-07-17 23:56:05",
       "end_datetime": "2023-07-18 23:56:05",
       "name": "new_name"
     }
-  }' 
+  }'
 
   ```
   ```python Python
@@ -64,6 +64,7 @@ All default attributes for a backfill may be updated in addittion to the followi
 
   r = r.put('http://localhost:6789/api/pipelines/arwen_starlight/backfills/6', json=json_data, headers=headers)
   ```
+
 </RequestExample>
 <ResponseExample>
 ```json Response

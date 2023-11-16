@@ -9,6 +9,7 @@ The following procedure demonstrates how to run `dbt-spark` with a pySpark sessi
 [Build Mage docker image with Spark environment](/integrations/spark-pyspark#1-build-mage-docker-image-with-spark-environment).
 
 2. Run the following command in your terminal to start Mage using docker:
+
 ```bash
 docker run -it --name mage_spark -p 6789:6789 -v $(pwd):/home/src mage_spark \
   /app/run_app.sh mage start demo_project
@@ -16,6 +17,7 @@ docker run -it --name mage_spark -p 6789:6789 -v $(pwd):/home/src mage_spark \
 
 3. Create a new pipeline with a name `dbt_spark`, and add a `Scratchpad` to
 test out the connection with PySpark, with the following code:
+
 ```python
 from pyspark.sql import SparkSession
 import os
@@ -24,7 +26,9 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 
 spark.sql("show databases;")
 ```
+
 It should return results similar to the following when running:
+
 ```
 [Stage 0:>                                                          
 (0 + 1) / 1]
@@ -59,7 +63,7 @@ spark_demo:
       method: session
       schema: default
       host: local
-``` 
+```
 
 6. Save the `profiles.yml` file by pressing `Command (⌘) + S`, then close the file
 by pressing the X button on the right side of the file name `dbt/spark_demo/profiles.yml`.
@@ -72,6 +76,7 @@ choose `dev` in the dropdown list. You can also check `Manually enter target`,
 and enter `dev` in the input field.
 
 9. Paste the following SQL into the dbt block `model_1`:
+
 ```python
 {{ config(materialized='table') }}
 

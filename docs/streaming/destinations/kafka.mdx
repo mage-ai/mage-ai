@@ -13,7 +13,6 @@ batch_size: 100
 timeout_ms: 500
 ```
 
-
 ## SSL authentication
 
 ```yaml
@@ -54,15 +53,15 @@ message = {
 ```
 
 If the data contains no dictionary it will be written to the database as value with the current time value and no key.
-Otherwise, every dictionary message contains at least some data in a `data` field. 
+Otherwise, every dictionary message contains at least some data in a `data` field.
 The following messages are valid:
 
 ```python
 message = {'data': {'bees': 23, 'ants': 30}}
 ```
 
-Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data. 
-The Kafka data exporter can create these elements if the messages received contain a metadata dictionary: 
+Kafka supports [structuring and partitioning](https://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html#kafka.KafkaProducer.send) your data.
+The Kafka data exporter can create these elements if the messages received contain a metadata dictionary:
 
 ```python
 message['metadata'] = {

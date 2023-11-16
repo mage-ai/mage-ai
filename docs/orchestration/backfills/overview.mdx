@@ -31,8 +31,6 @@ Then the following pipeline runs will be created:
 | 1 | `2023-01-01T03:00:00` | `2023-01-01` | `03` |
 | 2 | `2023-01-03T03:00:00` | `2023-01-03` | `03` |
 
----
-
 ## Custom code
 
 The output of a backfill code will be used to generate the pipeline runs.
@@ -53,14 +51,11 @@ backfill_data
 
 Then the following pipeline runs will be created:
 
-
 | `id` | `execution_date` | `ds` | `hr` | `partition` | `power` |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `2023-01-01T00:00:00` | `2023-01-01` | `00` | `0` | `5` |
 | 2 | `2023-01-01T00:00:00` | `2023-01-01` | `00` | `1` | `5` |
 | 3 | `2023-01-01T00:00:00` | `2023-01-01` | `00` | `2` | `5` |
-
----
 
 ## Extra runtime variables from pipeline run
 

@@ -11,16 +11,12 @@ description:
 - [Amazon ECS](#amazon-ecs). For Amazon ECS, we recommend using Terraform. Here
   is the [guide](/production/deploying-to-cloud/using-terraform).
 
----
-
 # Amazon EC2
 
 Mage can be run in an Amazon EC2 instance, either by
 
 - using SSH to port forward localhost requests to your EC2 instance
 - opening port 6789 on your EC2 instance for access
-
----
 
 ## Prerequistes
 
@@ -32,8 +28,6 @@ When launching an EC2 instance, we suggest using the following AMI:
 | AMI ID                  | AMI name                                                         |
 | ----------------------- | ---------------------------------------------------------------- |
 | `ami-0d70546e43a941d70` | `ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20220609` |
-
----
 
 ## Quick Connection via SSH
 
@@ -110,8 +104,6 @@ To quit out of Mage, stop execution in your current terminal window (Ctrl+C).
 This will shutdown the Mage tool alongside closing the connection to your EC2
 instance.
 
----
-
 ## Manual connection via Open Port
 
 You can also connect to the Mage app running on your EC2 instance by editing
@@ -120,10 +112,12 @@ your security group to expose the port that Mage runs on.
 1. When creating your EC2 instance, edit your security group rules to allow a
    Custom TCP connection to port 6789 (the port that Mage runs on).
 2. Connect to your EC2 instance via SSH and install Mage if you haven't already:
+
    ```bash
    ssh -i path/to/key/pair.pem ec2_username@ec2_public_dns_name
    pip install mage-ai
    ```
+
 3. Start Mage on your EC2 instance:
 
    ```bash
@@ -179,9 +173,11 @@ instance. This process involves opening two separate SSH connections:
    _your_ computer back to the EC2 instance. This means that as you interact the
    user interface on your computer, the data will be forwarded to the EC2
    instance for execution. Open another terminal window and run
+
    ```bash
    ssh -i path/to/key/pair.pem -N -L 6789:localhost:6789 ec2_username@ec2_public_dns_name
    ```
+
    which opens up a SSH connection to your EC2 instance which forwards requests
    to your localhost.
    - The `-N` option tells your SSH client to not send user commands to the EC2
@@ -190,8 +186,6 @@ instance. This process involves opening two separate SSH connections:
 
 Now you can access the Mage tool at [localhost:6789](http://localhost:6789) on
 your computer, and all executions will be processed on your EC2 instance!
-
----
 
 # Amazon ECS
 

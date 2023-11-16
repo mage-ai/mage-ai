@@ -6,12 +6,13 @@ icon: "globe"
 "og:image": "https://j.gifs.com/0grLrN.gif"
 ---
 
-<Frame>
-    <img
-        alt="Global data products"
-        src="https://j.gifs.com/0grLrN.gif"
-    />
-</Frame>
+
+<img
+    noZoom
+    class="hero"
+    alt="Global data products"
+    src="https://j.gifs.com/0grLrN.gif"
+/>
 
 ## Overview
 
@@ -64,15 +65,13 @@ blocks depend on it.
 A global data product can be added as a block in any pipeline.
 Once added, any other blocks in that pipeline can depend on it or it can depend on other blocks.
 
----
-
 ## Register global data product
 
 <Note>
     You must have at least 1 pipeline already created.
 </Note>
 
-1. Go to the global data products list page (e.g. http://localhost:6789/global-data-products)
+1. Go to the global data products list page (e.g. <http://localhost:6789/global-data-products>)
     and click the button labeled <b>+ New global data product</b>.
 
     You must enter a unique ID (UUID) that is unique across your entire project.
@@ -84,8 +83,6 @@ Once added, any other blocks in that pipeline can depend on it or it can depend 
     **`Block` object type coming soon.**
 1. From the Object UUID dropdown, select the pipeline you want to register as a global data product.
 1. Click the button labeled <b>Create global data product</b>.
-
----
 
 ## Configure settings
 
@@ -122,8 +119,6 @@ You can override this by adding a value in the partitions setting.
 For example, if you set the partitions value to 5,
 then the selected block will return data from its 5 most recent partitions.
 If you set the partitions value to 0, then all the partitions will be returned.
-
----
 
 ## Add to a pipeline
 

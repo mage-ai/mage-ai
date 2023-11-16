@@ -5,14 +5,12 @@ description: "Create granular permissions for CRUD operations on any API endpoin
 "og:image": "https://media.tenor.com/NFeV9svhtREAAAAC/community-ken-jeong.gif"
 ---
 
-<Frame>
-    <p align="center">
-    <img
-        alt="User defined permissions"
-        src="https://media.tenor.com/NFeV9svhtREAAAAC/community-ken-jeong.gif"
-    />
-    </p>
-</Frame>
+<img
+    class="hero"
+    noZoom
+    alt="User defined permissions"
+    src="https://media.tenor.com/NFeV9svhtREAAAAC/community-ken-jeong.gif"
+/>
 
 ## Overview
 
@@ -22,7 +20,7 @@ description: "Create granular permissions for CRUD operations on any API endpoin
 - Each operation and attribute operation has an access level that denies access
     to a specific entity for that particular operation or attribute operation.
 
-    - When denying an attribute operation,
+  - When denying an attribute operation,
         define the set of attributes that the permission forbids the user from
         querying, reading, or writing.
 
@@ -92,8 +90,6 @@ allows the user to read.
 When granting `Write` access, you must define the set of attributes this permission
 allows the user to write.
 
----
-
 ## Groups
 
 The following access levels contain logic that grants access to multiple operations
@@ -157,8 +153,6 @@ and attribute operations.
     </Accordion>
 </AccordionGroup>
 
----
-
 ## Special conditions
 
 <AccordionGroup>
@@ -182,8 +176,6 @@ and attribute operations.
         </Warning>
     </Accordion>
 </AccordionGroup>
-
----
 
 ## Entity names
 

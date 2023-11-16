@@ -26,6 +26,7 @@ description: "Mage backend code is written in Python 🐍 and our server uses th
 ## Style guide
 
 ### Linter
+
 Install `flake8` in your IDE to lint the Python code.
 
 To run the linter locally, execute this script:
@@ -50,6 +51,7 @@ To run the tests locally, execute this script:
 It is also possible to run unit tests directly in a live docker instance, as given in the following steps.
 
 1. Find out the backend server container name, with the command `docker container ls` in a terminal:
+
 ```bash
  % docker container ls
 
@@ -59,11 +61,13 @@ b9d811e1e3e8   mage/data   "python mage_ai/serv…"   5 days ago   Up 38 minutes
 ```
 
 2. Start an interactive `bash` session with the backend server container:
+
 ```bash
 % docker exec -it mage-ai-server-1 /bin/bash
 ```
 
 3. Run unit tests with the following command:
+
 ```bash
 root@b9d811e1e3e8:/home/src# python3 -m unittest discover -s mage_ai.tests --failfast
 ```
@@ -71,4 +75,3 @@ root@b9d811e1e3e8:/home/src# python3 -m unittest discover -s mage_ai.tests --fai
 ## Debugging
 
 <Snippet file="debugging-backend.mdx"/>
-

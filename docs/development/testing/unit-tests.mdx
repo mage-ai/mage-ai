@@ -9,6 +9,7 @@ You can create a `tests` folder in your project folder and put unit tests in thi
 
 In your CI/CD pipeline, you can `cd` into the project's folder and run the following command
 to run unit tests.
+
 ```bash
 python3 -m unittest discover -s tests --failfast
 ```
@@ -29,5 +30,6 @@ class ExamplePipelineTest(TestCase):
 ```
 
 ## Test environment
+
 When running unit tests, the `env` variable's value in the method's `kwargs` is `test`.
 You can leverage this variable to change the code logic or config used in the unit tests.

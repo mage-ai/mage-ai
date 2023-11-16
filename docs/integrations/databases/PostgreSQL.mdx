@@ -2,7 +2,7 @@
 title: "PostgreSQL"
 ---
 
-![](https://user-images.githubusercontent.com/78053898/198754399-3b594af0-cf84-41d3-8faf-e1f6e4c5182d.png)
+<img noZoom src="https://user-images.githubusercontent.com/78053898/198754399-3b594af0-cf84-41d3-8faf-e1f6e4c5182d.png" alt="" />
 
 ## Add credentials
 
@@ -27,7 +27,9 @@ default:
   POSTGRES_SSH_PASSWORD:
   POSTGRES_SSH_PKEY:
 ```
+
 ### SSH tunneling
+
 If you want to connect to Postgres cluster with ssh tunnel, update the value of `POSTGRES_CONNECTION_METHOD` to `ssh_tunnel`, and enter the values for keys with prefix `POSTGRES_SSH`.
 
 | Key | Description | Sample value
@@ -89,7 +91,6 @@ def load_data_from_postgres(**kwargs) -> DataFrame:
 ```
 
 5. Run the block.
-
 
 ### Export a dataframe
 

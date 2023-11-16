@@ -28,6 +28,7 @@ message = {
     'metadata': <Optional[Dict]>
 }
 ```
+
 Every message contains at least some data in a `data` field. The following messages are valid:
 
 ```python
@@ -36,8 +37,8 @@ message_2 = {'data': 23}  # implicit for {'_value': 23}
 message_3 = {'data': [23, 30]}  # implicit for {'_value': 23} and {'_value': 30}
 ```
 
-InfluxDB supports [data elements](https://docs.influxdata.com/influxdb/v2.7/reference/key-concepts/data-elements/) for structuring your data. 
-The influxdb data exporter can create these elements if the messages received contain a metadata dictionary: 
+InfluxDB supports [data elements](https://docs.influxdata.com/influxdb/v2.7/reference/key-concepts/data-elements/) for structuring your data.
+The influxdb data exporter can create these elements if the messages received contain a metadata dictionary:
 
 ```python
 message['metadata'] = {
@@ -76,7 +77,7 @@ measurement: "default"
 - The default time timestamp is the current time of execution.
 - The default tags are none.
 
-The `data` part of the message is taken for the fields elements. 
+The `data` part of the message is taken for the fields elements.
 If the data is a scalar value or a list type it will be written to the database with the field name `_value`.
 
 ## Advanced config

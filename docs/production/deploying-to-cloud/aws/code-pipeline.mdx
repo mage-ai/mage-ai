@@ -11,6 +11,7 @@ This document assumes you're using Terraform to modify and deploy your AWS instr
 not using Terraform yet, you can set it up by reading [this document](production/deploying-to-cloud/using-terraform).
 
 This document also assumes that you have already set up your ECS cluster, services, and tasks.
+
 * If you are not using ECS to run Mage, then this document will not apply for you.
   You can submit a feature request in our [Slack channel](https://www.mage.ai/chat) if you want Mage to
   support deploying to your infrastructure through AWS CodePipeline.
@@ -60,8 +61,6 @@ AWS ECR repo. Make sure you have already created your AWS ECR repository.
 Use Terraform scripts in [aws-code-pipeline](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/aws-code-pipeline)
 folder to provision resources for AWS CodePipeline.
 
----
-
 ### Terraform plan
 
 You can run the following command to see all the resources that will be created
@@ -71,8 +70,6 @@ by Terraform:
 cd aws
 terraform plan
 ```
-
----
 
 ### 1. Environment variables
 
@@ -87,10 +84,8 @@ aws_access_key_id = XXX
 aws_secret_access_key = XXX
 ```
 
-Alternatively, you can install the AWS CLI by following 
+Alternatively, you can install the AWS CLI by following
 [Amazon’s instructions](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
-
----
 
 ### 2. Customize Terraform variables
 
@@ -206,7 +201,7 @@ variable "codecommit_branch" {
 
 ### 3. IAM Permissions
 
-The IAM permissions are defined in the `aws-code-pipeline/iam.tf` file. Make adjustments to the 
+The IAM permissions are defined in the `aws-code-pipeline/iam.tf` file. Make adjustments to the
 permissions as needed.
 
 ### 4. Apply Terraform
@@ -214,21 +209,28 @@ permissions as needed.
 **Using CLI**
 
 1. Change directory into scripts folder:
+
    ```bash
    cd aws-code-pipeline
    ```
+
 2. Initialize Terraform:
+
    ```bash
    terraform init
    ```
-   - If you run into errors like the following:
+
+   * If you run into errors like the following:
+
      ```
      │ Error: Failed to install provider
      │
      │ Error while installing hashicorp/template v2.2.0: the local package for registry.terraform.io/hashicorp/template 2.2.0 doesn't match any of the checksums previously recorded in the dependency lock file (this might be because the available checksums are for packages targeting different
      │ platforms); for more information: https://www.terraform.io/language/provider-checksum-verification
      ```
+
      then run the following commands to resolve this:
+
      ```
      brew install kreuzwerker/taps/m1-terraform-provider-helper
      m1-terraform-provider-helper activate
@@ -236,7 +238,9 @@ permissions as needed.
      rm .terraform.lock.hcl
      terraform init --upgrade
      ```
+
 3. Deploy:
+
    ```bash
    terraform apply
    ```
@@ -246,8 +250,8 @@ permissions as needed.
 After running the Terraform script, you should see two AWS CodePipeline pipelines created, `mage-codepipeline`
 and `mage-codepipeline-ecr` (unless you changed the `code_pipeline_name` variable). The `mage-codepipeline` pipeline
 will be triggered every time a change is detected in the AWS CodeCommit repo. The `mage-codepipeline-ecr` pipeline
-will be triggered every time a new image is pushed with into the AWS ECR repo. 
+will be triggered every time a new image is pushed with into the AWS ECR repo.
 
-![mage-codepipeline](https://github.com/mage-ai/assets/blob/main/mage-codepipeline.png?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/mage-codepipeline.png?raw=True" alt="mage-codepipeline" />
 
-![mage-codepipeline-ecr](https://github.com/mage-ai/assets/blob/main/mage-codepipeline-ecr.png?raw=True)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/mage-codepipeline-ecr.png?raw=True" alt="mage-codepipeline-ecr" />

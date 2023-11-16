@@ -7,6 +7,7 @@ description: "Create a pipeline with dynamic blocks."
 
 1. Add a new data loader block.
 1. Paste in the following code:
+
     ```python
     from typing import Dict, List
 
@@ -26,17 +27,21 @@ description: "Create a pipeline with dynamic blocks."
             metadata,
         ]
     ```
+
 1. Run the data loader block and the output will be:
+
     ```python
     [{'id': 1, 'name': 'user_1'},
      {'id': 2, 'name': 'user_2'},
      {'id': 3, 'name': 'user_3'}]
     ```
+
 1. In the top right corner of the block, click on the triple dot button (`...`) and click the
 dropdown selection labeled `Set block as dynamic`.
     ![Dynamic data loader block](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-data-loader.png?raw=true)
 1. Add a new transformer block.
 1. Paste in the following code:
+
     ```python
     from typing import Dict, List
 
@@ -46,7 +51,9 @@ dropdown selection labeled `Set block as dynamic`.
         data['id'] = int(data['id']) * 100
         return [data]
     ```
+
 1. Run the transformer block and the output will be:
+
     ```python
     {'id': 100, 'name': 'user_1'}
     ```
@@ -54,6 +61,7 @@ dropdown selection labeled `Set block as dynamic`.
     ![Dynamic child transformer block 1](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-transformer1.png?raw=true)
 1. Add another transformer block.
 1. Paste in the following code:
+
     ```python
     from typing import Dict, List
     import uuid
@@ -64,6 +72,7 @@ dropdown selection labeled `Set block as dynamic`.
         data['token'] = uuid.uuid4().hex
         return [data]
     ```
+
 1. Change the 2nd transformer block’s upstream parent block to only be the data loader.
 This will require you to remove the existing upstream parent block which is currently pointing to
 the 1st transformer block.
@@ -71,6 +80,7 @@ the 1st transformer block.
 click on the triple dot button (`...`) and click the
 dropdown selection labeled `Reduce output`.
 1. Run the transformer block and the output should look something like this:
+
     ```python
     {'id': 1, 'name': 'user_1', 'token': '0ea0f28c2de647d997e5c341a857c92f'}
     ```
@@ -78,6 +88,7 @@ dropdown selection labeled `Reduce output`.
     ![Dynamic child transformer block 2](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-transformer2.png?raw=true)
 1. Add a new data exporter block.
 1. Paste in the following code:
+
     ```python
     from typing import Dict, List
 
@@ -86,7 +97,9 @@ dropdown selection labeled `Reduce output`.
     def export_data(users: List[Dict], **kwargs):
         print(users)
     ```
+
 1. Run the data exporter block and the output should look something like this:
+
     ```python
     [{'id': 1, 'name': 'user_1', 'token': 'bc35e36ecfc24d77a2d910f4b1d6611d'}]
     ```
@@ -97,7 +110,7 @@ dropdown selection labeled `Reduce output`.
 
 The pipeline’s final dependency graph should look like this:
 
-![Dynamic block dependency graph](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-graph.jpg?raw=true)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-graph.jpg?raw=true" alt="Dynamic block dependency graph" />
 
 ## Run pipeline
 
@@ -110,4 +123,4 @@ or create a trigger to run once.
 
 The block runs should look like this:
 
-![Dynamic block runs](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-runs.png?raw=true)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-runs.png?raw=true" alt="Dynamic block runs" />

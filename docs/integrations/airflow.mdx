@@ -8,21 +8,20 @@ Need help integrating Mage into an existing Airflow project?
 Check out this [tutorial](/guides/integrate-mage-airflow) or
 get instant help from us in [Slack](https://www.mage.ai/chat).
 
----
-
 We support running the pipeline in Airflow DAGs.
+
 * You need to firstly install `mage_ai` library by adding `mage_ai` to your requirements.txt file.
 * Then you need to download the mage pipeline code into your Airflow directory. You can achieve it by using a git submodule in your Airflow directory.
 * In your Mage project's metadata.yaml file, please specify a variables_dir that you want to store the output of each block execution (You need to have write permission to the variables_dir). Example: `variables_dir: /tmp`.
 
 We provide multiple ways to run mage pipelines in Airflow.
-- [Create DAGs for all the pipelines in Mage project](#create-dags-for-all-the-pipelines-in-mage-project)
-- [Run pipeline in a BashOperator](#run-pipeline-in-a-bashoperator)
-- [Run pipeline in a PythonOperator](#run-pipeline-in-a-pythonoperator)
-- [Run pipeline as an Airflow DAG](#run-pipeline-as-an-airflow-dag)
-
+* [Create DAGs for all the pipelines in Mage project](#create-dags-for-all-the-pipelines-in-mage-project)
+* [Run pipeline in a BashOperator](#run-pipeline-in-a-bashoperator)
+* [Run pipeline in a PythonOperator](#run-pipeline-in-a-pythonoperator)
+* [Run pipeline as an Airflow DAG](#run-pipeline-as-an-airflow-dag)
 
 ## Create DAGs for all the pipelines in Mage project
+
 ```python
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
@@ -43,10 +42,10 @@ create_dags(
 )
 ```
 
-
 ## Run pipeline in a BashOperator
 
 Example code:
+
 ```python
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -103,6 +102,7 @@ task = PythonOperator(
 ## Run pipeline as an Airflow DAG
 
 Example code:
+
 ```python
 from airflow import DAG
 from airflow.operators.python import PythonOperator

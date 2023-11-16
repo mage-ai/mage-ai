@@ -14,18 +14,17 @@ Mage supports GitHub Actions for CI/CD workflows. We have templates for deployin
 4. Create separate staging and production GitHub environments in the **Environments** section.
     1. You can also choose to require approval before running jobs in your production environment.
     More information [here](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#required-reviewers).
-    2. You may need to change the `environment` variable in the jobs section of the GitHub Actions below
+    2. You may need to change the `environment` variable in the jobs section of the Github Actions below
     based on the name of your GitHub environments.
 5. Click the link labeled **Actions**.
 6. Click the button labeled **New repository secret** in the top right corner.
 7. Follow the instructions below for your specific cloud provider:
 
----
-
 ## AWS
 
 1. If you haven’t already, create a new AWS ECR repository.
 2. You’ll need AWS credentials with the following policy permissions:
+
     ```json
     {
       "Version": "2012-10-17",
@@ -52,6 +51,7 @@ Mage supports GitHub Actions for CI/CD workflows. We have templates for deployin
       ]
     }
     ```
+
 3. In the field labeled **Name**, enter the value `AWS_ACCESS_KEY_ID`.
 4. In the field labeled **Secret**, enter your AWS Access Key ID.
 5. Click the button labeled **Add secret** to save.

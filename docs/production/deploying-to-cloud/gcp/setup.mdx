@@ -3,7 +3,7 @@ title: "Deploy to GCP with Terraform"
 sidebarTitle: "Setup"
 ---
 
-![](https://user-images.githubusercontent.com/78053898/198754786-3c4618dd-d648-4af7-b288-5ff18371335b.png)
+<img noZoom src="https://user-images.githubusercontent.com/78053898/198754786-3c4618dd-d648-4af7-b288-5ff18371335b.png" alt="" />
 
 ## Pre-requisites
 
@@ -23,8 +23,6 @@ account you just logged into, and then add these roles to that service account
 4. Cloud SQL
 5. Service Account Token Creator
 
----
-
 ## Terraform plan
 
 You can run the following command to see all the resources that will be created
@@ -41,8 +39,6 @@ terraform plan
 By default, here are the **[resources](/production/deploying-to-cloud/gcp/resources)** that will be
 created.
 
----
-
 ## 1. Install `gcloud` CLI
 
 Follow these [instructions](https://cloud.google.com/sdk/docs/install) to
@@ -53,8 +49,6 @@ For macOS and Homebrew, you can do the following:
 ```bash
 brew install --cask google-cloud-sdk
 ```
-
----
 
 ## 2. Log into GCP from CLI
 
@@ -161,10 +155,10 @@ See our [docs](/production/deploying-to-cloud/secrets/GCP) for configuring secre
 
 #### Method A: Terraform configurations
 
-1.  Once you save a secret in Google Secret Manager, click on the
+1. Once you save a secret in Google Secret Manager, click on the
     **PERMISSIONS** tab.
-2.  Click the button **`+ GRANT ACCESS`**.
-3.  Under the field labeled **New principles**, add the service account that is
+2. Click the button **`+ GRANT ACCESS`**.
+3. Under the field labeled **New principles**, add the service account that is
     associated to your Google Cloud Run. If you can’t find this, try deploying
     GCP with Terraform and you’ll receive an error that looks like this:
 
@@ -201,12 +195,13 @@ See our [docs](/production/deploying-to-cloud/secrets/GCP) for configuring secre
         }
       }
       ```
+
     </Note>
 
-4.  Under the field labeled **Select a role**, enter the value
+4. Under the field labeled **Select a role**, enter the value
     `Secret Manager Secret Accessor`.
-5.  Click the button **SAVE**.
-6.  Mount secrets to Google Cloud Run via Terraform in the file
+5. Click the button **SAVE**.
+6. Mount secrets to Google Cloud Run via Terraform in the file
     [./gcp/main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/main.tf):
 
     ```
@@ -241,16 +236,16 @@ See our [docs](/production/deploying-to-cloud/secrets/GCP) for configuring secre
     }
     ```
 
-7.  In your Python code or in any field that support variable interpolation,
+7. In your Python code or in any field that support variable interpolation,
     enter the following to get the value from the secret: 1
 
     <CodeGroup>
     ```python Python
     import os
 
-
     with open(os.getenv('path_to_keyfile'), 'r') as f:
         print(f.read())
+
     ```
 
     ```yaml YAML
@@ -302,9 +297,11 @@ can also be customized to your needs.
 ## 4. Deploy
 
 1. Change directory into scripts folder:
+
    ```bash
    cd gcp
    ```
+
 1. Initialize Terraform:
 
    ```bash
@@ -385,7 +382,7 @@ If you still get 403, check to see if you’re using `http://` and NOT `https://
 
 #### Container can’t start
 
-If Cloud Run is deployed but the service failed because the container could’t start, 
+If Cloud Run is deployed but the service failed because the container could’t start,
 it is usually caused by the Docker image not being built using the correct platform tag.
 
 Pull the Mage Docker image using this command:
@@ -395,8 +392,6 @@ docker pull --platform linux/amd64 mageai/mageai:latest
 ```
 
 Once pulled, tag your image and push to GCP Artifact Registry again.
-
----
 
 ## Updating Mage versions
 
@@ -412,8 +407,6 @@ gcloud run deploy [app_name] --image [docker_image]
 > This is the value you changed when editing the
 > [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
 > file.
-
----
 
 ## Misc
 
@@ -449,7 +442,7 @@ have a domain. Then follow the steps below to set up HTTPS:
 3. Get the `service_ip` from the output of terraform command.
 4. Update the DNS A and AAAA records to point the domain url to the load
    balancer's IP address:
-   https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#update-dns
+   <https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#update-dns>
 5. Visit the domain url to access your Mage app.
 
 ### Terminate all resources

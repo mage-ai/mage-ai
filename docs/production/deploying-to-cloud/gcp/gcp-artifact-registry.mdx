@@ -4,7 +4,7 @@ title: "Push Docker Image to GCP Artifact Registry"
 
 While you may pull an image directly from Docker Hub, here are our legacy instructions for pushing a Docker image to GCP Artifact Registry:
 
-1.  Create a repository on
+1. Create a repository on
     [GCP Artifact Registry](https://console.cloud.google.com/artifacts) by
     clicking the **`+ CREATE REPOSITORY`** button.
 
@@ -14,7 +14,7 @@ While you may pull an image directly from Docker Hub, here are our legacy instru
     - Choose any **Encryption**
     - Click **`CREATE`**
 
-2.  Click on the newly created repository (e.g. `mage-docker`).
+2. Click on the newly created repository (e.g. `mage-docker`).
 3. Near the top of the page, click the link **`SETUP INSTRUCTIONS`** or read these
     [instructions](https://cloud.google.com/artifact-registry/docs/docker/authentication)
     to set up authentication for Docker.
@@ -44,7 +44,7 @@ While you may pull an image directly from Docker Hub, here are our legacy instru
         docker pull --platform linux/amd64 mageai/mageai:latest
         ```
 
-5.  Tag the pulled Mage docker image or use a previously tagged Docker image you
+5. Tag the pulled Mage docker image or use a previously tagged Docker image you
     built when following this [CI/CD guide](/production/ci-cd):
 
     - Sample commands if using vanilla Mage Docker image:
@@ -71,7 +71,7 @@ While you may pull an image directly from Docker Hub, here are our legacy instru
             docker tag mageprod:latest us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
             ```
 
-6.  Push the local Docker image to GCP Artifact Registry:
+6. Push the local Docker image to GCP Artifact Registry:
 
     ```bash
     docker push [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest

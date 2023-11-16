@@ -3,28 +3,24 @@ title: "Deploy to Azure with Terraform"
 sidebarTitle: "Setup"
 ---
 
-![](https://user-images.githubusercontent.com/78053898/198754758-13aed127-73cd-4582-8556-f4f7f84012f9.png)
+<img noZoom src="https://user-images.githubusercontent.com/78053898/198754758-13aed127-73cd-4582-8556-f4f7f84012f9.png" alt="" />
 
 ## Overview
 
 Here is a high level diagram of how Mage interacts with various Azure resources deployed using
 this Terraform template.
 
-![Mage Azure architecture](https://github.com/mage-ai/assets/blob/main/production/deployment/azure/architecture.png?raw=true)
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/production/deployment/azure/architecture.png?raw=true" alt="Mage Azure architecture" />
 
 ## Pre-requisites
 
 - Download Mage maintained [Terraform templates](/production/deploying-to-cloud/using-terraform).
-
----
 
 ## 1. Install Azure CLI
 
 Follow these
 [instructions](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to
 install the Azure CLI on your workstation.
-
----
 
 ## 2. Log into Azure from CLI
 
@@ -59,8 +55,6 @@ completed, your terminal will output something like this:
   }
 ]
 ```
-
----
 
 ## 3. Customize Terraform settings
 
@@ -170,8 +164,6 @@ resource "azurerm_container_group" "container_group" {
 }
 ```
 
----
-
 ## 4. Deploy
 
 1. Change directory into scripts folder:
@@ -215,7 +207,7 @@ resource "azurerm_container_group" "container_group" {
     commands will detect it and remind you to do so if necessary.
     ```
 
-    ### Terraform plan
+### Terraform plan
 
         You can run the following command to see all the resources that will be created
         by Terraform: `terraform plan`
@@ -247,8 +239,6 @@ resource "azurerm_container_group" "container_group" {
       after successfully running `terraform apply`.
     </Note>
 
----
-
 ## Updating Mage versions
 
 After Mage is running in your cloud, you can update the Mage Docker image
@@ -257,8 +247,6 @@ version by running the following command in your CLI tool:
 ```bash
 az container restart --name mage-data-prep-production --resource-group mage-data-prep-production
 ```
-
----
 
 ## Misc
 
@@ -295,5 +283,3 @@ A sample output could look like this:
 ```
 Destroy complete! Resources: 10 destroyed.
 ```
-
----

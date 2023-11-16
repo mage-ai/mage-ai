@@ -5,6 +5,7 @@ title: "Overview"
 ## Introduction
 
 Each streaming pipeline has three components:
+
 - Source: The data stream source to consume message from.
 - Transformer: Write python code to transform the message before writing to destination.
 - Sink (destination): The data stream destination to write message to.
@@ -15,9 +16,10 @@ Check out this [tutorial](/guides/streaming-pipeline#create-a-new-pipeline) to s
 
 You can build a streaming pipeline with one source, multiple transformers, and multiple sinks. Here is an example streaming
 pipeline:
-![Complex streaming pipeline](https://media.graphassets.com/4ZWHyLpgTESu0rB1sXnP)
+<img noZoom src="https://media.graphassets.com/4ZWHyLpgTESu0rB1sXnP" alt="Complex streaming pipeline" />
 
 ## Supported sources
+
 - [Amazon SQS](/streaming/sources/amazon-sqs)
 - [Azure Event Hub](/streaming/sources/azure-event-hub)
 - [Google Cloud PubSub](/streaming/sources/google-cloud-pubsub)
@@ -45,14 +47,18 @@ pipeline:
 - [Trino](/streaming/destinations/trino)
 
 ## Test pipeline execution
+
 After finishing configuring the streaming pipeline, you can click the button `Execution pipeline` to test streaming pipeline execution.
 
 ## Run pipeline in production
+
 Create the trigger in [triggers page](/design/data-pipeline-management#create-trigger) to run streaming pipelines in production.
 
 ### Executor count
+
 If you want to run multiple executors at the same time to scale the streaming pipeline execution, you can set the `executor_count` variable
 in the pipeline's metadata.yaml file. Here is an example:
+
 ```yaml
 blocks:
 - ...
@@ -64,10 +70,12 @@ uuid: test_streaming_pipeline
 ```
 
 ### Executor type
+
 When running Mage on Kubernetes cluster, you can also configure streaming pipeline to be run on separate k8s pods by setting `executor_type`
 field in the pipeline's metadata.yaml to `k8s`.
 
 Example config:
+
 ```yaml
 blocks:
 - ...

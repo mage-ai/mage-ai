@@ -4,9 +4,11 @@ sidebarTitle: "Overview"
 description: "Like every other part of Mage, our documentation is open-source. Read on to learn how to make edits or even write entirely new docs for Mage!"
 ---
 
-<div align="center">
-<img src="https://github.com/mage-ai/mage-ai/assets/59450879/769a5faf-37ea-453c-8bd6-83270366fe00" width="65%"/>
-</div>
+<img
+  class="hero"
+  noZoom
+  src="https://github.com/mage-ai/mage-ai/assets/59450879/769a5faf-37ea-453c-8bd6-83270366fe00"
+/>
 
 ## Overview
 
@@ -20,9 +22,7 @@ The very simplest way to contribute to the Mage docs is directly in the browser,
 
 To make edits, simply click on the "Suggest Edit" button at the bottom of every page. This will open a new tab with the file you're editing. Make your changes, then click "Commit changes." This will open a new pull request with your changes. Be sure to add appropriate details to your pull request & tag `@wangxiaoyou1993` or `@mattppal`. Once the pull request is merged, your changes will be live on the site!
 
-<Frame>
-  <img src="https://github.com/mage-ai/assets/blob/main/contributing-docs.png?raw=True" />
-</Frame>
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/contributing-docs.png?raw=True" />
 
 ## Level 2: Add complex components 💪
 
@@ -48,7 +48,7 @@ Each page is an MDX file that should begin with the following metadata syntax wi
 2. [Headers and text](https://mintlify.com/docs/content/text)
 3. [Images and embeds](https://mintlify.com/docs/content/image-embeds)
 
-Once you add a new page in the appropriate folder in our `docs` directory, you'll need to add it to our site navigation. That is accomplished through the `mint.json` file in the root of our `docs` directory. 
+Once you add a new page in the appropriate folder in our `docs` directory, you'll need to add it to our site navigation. That is accomplished through the `mint.json` file in the root of our `docs` directory.
 
 You'll need to add a new entry to the `pages` array in that file. The `path` should be the relative path to your new page, and the `title` should be the title of your page. Paths in `mint.json` should _not_ include file extensions.
 
@@ -64,8 +64,8 @@ Simply `cd mage-ai/docs` + `mintlify dev` and you'll be able to navigate to a li
 
 ### Adding icons
 
-Some elements in Mintlify have icons. Those are sourced from [fontawesome](https://fontawesome.com/). Any icon you find there can be added as an icon to the Mage docs, where appropriate. We only add icons to top-levl items in our sidebar. 
+Some elements in Mintlify have icons. Those are sourced from [fontawesome](https://fontawesome.com/). Any icon you find there can be added as an icon to the Mage docs, where appropriate. We only add icons to top-levl items in our sidebar.
 
 ## Level 4: Adding entirely new sections 🧙🏻‍♂️
 
-If you'd like to contribute a larger, more structured section of our documentation, please reach out to a member of our team via Slack. They'll be able to guide you through the process of making sweeping changes. 
+If you'd like to contribute a larger, more structured section of our documentation, please reach out to a member of our team via Slack. They'll be able to guide you through the process of making sweeping changes.

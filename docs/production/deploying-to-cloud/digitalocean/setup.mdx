@@ -19,22 +19,16 @@ cd
 terraform plan
 ```
 
----
-
 ## 1. Configure access token
 
-Generate DigitalOcean access token by following the guide: https://developer.hashicorp.com/terraform/tutorials/applications/digitalocean-provider#generate-digitalocean-access-token
+Generate DigitalOcean access token by following the guide: <https://developer.hashicorp.com/terraform/tutorials/applications/digitalocean-provider#generate-digitalocean-access-token>
 
-Set the token in `DIGITALOCEAN_ACCESS_TOKEN` environment variable 
-
----
+Set the token in `DIGITALOCEAN_ACCESS_TOKEN` environment variable
 
 ## 2. Create ssh key
 
 Create ssh key with command: `ssh-keygen`. In the file
 [./digitalocean/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/digitalocean/variables.tf), update the value of `ssh_pub_key` to your path of public key.
-
----
 
 ## 3. Customize Terraform settings
 
@@ -72,21 +66,24 @@ Other variables defined in
 [./digitalocean/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/digitalocean/variables.tf)
 can also be customized to your needs.
 
----
-
 ## 4. Provision resources
 
 **Using CLI**
 
 1. Change directory into scripts folder:
+
    ```bash
    cd digitalocean
    ```
+
 2. Initialize Terraform:
+
    ```bash
    terraform init
    ```
+
 3. Deploy:
+
    ```bash
    terraform apply
    ```
@@ -98,6 +95,7 @@ Once it’s finished deploying, you can get the IP from the output.
 SSH into the instance: `ssh -i [path_to_private_key] root@[ip]`
 
 Run command to start Mage app in :
+
 ```bash
 docker run -d -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start default_repo
 ```
@@ -105,9 +103,11 @@ docker run -d -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mag
 <br />
 
 To update Mage to latest version, you can pull latest docker image with command:
+
 ```bash
 docker pull mageai/mageai:latest
 ```
+
 Then, just restart the Mage app with the same `docker run` command above.
 
 ## 6. Open browser with Mage
@@ -117,8 +117,6 @@ Once you’ve launched the Droplet and started Mage, you can access Mage from yo
 `http://[ip]:[port]`
 
 Change the IP to match the IP of your Droplet and the port that you’re using for Mage.
-
----
 
 ## Misc
 

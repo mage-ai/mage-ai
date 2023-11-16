@@ -2,8 +2,7 @@
 title: "StrongDM"
 ---
 
-![StrongDM](https://www.strongdm.com/docs/images/logos/strongdm.svg)
-
+<img noZoom src="https://www.strongdm.com/docs/images/logos/strongdm.svg" alt="StrongDM" />
 
 ## Setup Docker enviroment
 
@@ -21,23 +20,27 @@ To effectively connect on a StrongDM Resource inside Mage's docker, you may need
                 .....
                 extra_hosts:
                     - "host.docker.internal:host-gateway"
-        ```
+```
 
 ## Install StrongDM CLI tool
 
 To install StrongDM CLI tool, first access Mage's docker bash and execute the installation script:
+
 ```bash
 ./scripts/strongdm/install.sh
 ```
+
 (In case you receive a "Permission denied" error, executing ```
 chmod u+x scripts/strongdm/install.sh ``` should fix this issue)
 
 Now, login in your StrongDM account using:
+
 ```bash
 sdm login
 ```
 
 And connect to the desired Resources using:
+
 ```bash
 sdm connect RESOURCE-NAME
 ```

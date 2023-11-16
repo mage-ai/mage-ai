@@ -17,9 +17,7 @@ config:
 Another option to stream data into Redshift is to stream data to Kinesis.
 You can configure streaming ingestion for your Amazon Redshift cluster and create a materialized view using SQL statements.
 
-
 You can follow [the guide from AWS](https://docs.aws.amazon.com/redshift/latest/dg/materialized-view-streaming-ingestion-getting-started.html) to set it up.
-
 
 Or you can follow the steps below to set up the materialized view.
 
@@ -54,7 +52,7 @@ FROM redshift_stream_test."kinesis-stream-name"
 
 You can change the materialized view name to the name you want to use.
 
-### 4. Query data in the materialized view.
+### 4. Query data in the materialized view
 
 Execute the command to query the data:
 

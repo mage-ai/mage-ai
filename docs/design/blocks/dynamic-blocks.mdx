@@ -4,9 +4,12 @@ description: "Use the output of a block to dynamically create more blocks."
 "og:image": "https://giffiles.alphacoders.com/126/126373.gif"
 ---
 
-<Frame>
-  <img alt="Dynamic blocks" src="https://giffiles.alphacoders.com/126/126373.gif" />
-</Frame>
+<img
+  noZoom
+  class="img-hero"
+  alt="Dynamic blocks"
+  src="https://giffiles.alphacoders.com/126/126373.gif"
+/>
 
 A dynamic block will create multiple downstream blocks at runtime.
 
@@ -240,18 +243,21 @@ For example, if the transformer block `anonymize_user_data` has 2 downstream blo
 dynamically created:
 
 1. `anonymize_user_data:for_user_1`
+
 ```
 → clean_column_names:for_user_1
 → compute_engagement_score:for_user_1
 ```
 
 2. `anonymize_user_data:for_user_2`
+
 ```
 → clean_column_names:for_user_2
 → compute_engagement_score:for_user_2
 ```
 
 3. `anonymize_user_data:for_user_3`
+
 ```
 → clean_column_names:for_user_3
 → compute_engagement_score:for_user_3
@@ -303,8 +309,6 @@ The input data to each of these 2 downstream blocks will be:
 ]
 ```
 
----
-
 ## Dynamic SQL blocks
 
 SQL blocks can be dynamic or be a child of a dynamic block.
@@ -352,8 +356,6 @@ When this pipeline is triggered, the following block runs will be created:
                 ↓                ↓         ↓                ↓
  [transformer:0:0]  [transformer:0:1]   [transformer:1:0]  [transformer:1:1]
 ```
-
----
 
 ## Tutorial guide
 

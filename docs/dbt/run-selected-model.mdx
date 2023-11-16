@@ -4,27 +4,23 @@ sidebarTitle: "Run multiple models"
 description: "(and optionally exclude others)"
 ---
 
-<Frame>
-    <p align="center">
-    <img
-        alt="dbt models"
-        src="https://raw.githubusercontent.com/mage-ai/assets/main/dbt/add-dbt-models.gif"
-    />
-    </p>
-</Frame>
+<img
+    alt="dbt models"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/dbt/add-dbt-models.gif"
+/>
 
 <br />
 
 ## Run
 
-1.  Under the data loader block you just added, click the button
+1. Under the data loader block you just added, click the button
     <b>`dbt model`</b>, then click the option `All models`.
-2.  In the `dbt project name` input field, enter the name of the dbt project
+2. In the `dbt project name` input field, enter the name of the dbt project
     that contains the models you want to build and run (e.g. `demo`).
-3.  In the `dbt profile target` input field, enter the name of the dbt
+3. In the `dbt profile target` input field, enter the name of the dbt
     connection profile (e.g. `dev`) that you want to use when running the
     selected dbt models.
-4.  In the text area of the code block, write the models you want to select or
+4. In the text area of the code block, write the models you want to select or
     exclude using dbt’s `--select` and `--exclude` flags and syntax.
 
         For more information on the `--select` and `--exclude` syntax,
@@ -104,6 +100,7 @@ will be interpolated as is.
 | Example | `lambda data, variables: data['runtime'] * variables['tries']` |
 
 <b>Arguments</b>
+
 - `data`
 
     If the `block_uuid` argument isn’t present, then the 1st argument in the lambda function is

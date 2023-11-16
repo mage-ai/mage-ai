@@ -28,6 +28,7 @@ def export_data(*args, **kwargs):
 
 Block variables are currently only supported for Python blocks with the
 following block types:
+
   1. `data_loader`
   2. `transformer`
   3. `data_exporter`
@@ -57,7 +58,7 @@ key to exit a variable's edit mode.
 
 You can also create or edit block variables by going to a pipeline's `metadata.yaml` file
 (located in the `pipelines/[pipeline_uuid]` directory) and adding them to a block's
-`configuration` property. 
+`configuration` property.
 
 ```yaml
 blocks:

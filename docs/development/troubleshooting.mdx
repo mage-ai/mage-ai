@@ -18,23 +18,23 @@ rm -rf mage_data/[project_name]/pipelines/[pipeline_name]/.variables
 
 The above command will remove the data output files for each block in your pipeline.
 
----
-
 ## Can’t connect to local database from within Mage via Docker
 
 If you’re running Mage via Docker and you’re trying to connect to a local database outside of
 Docker, you must use the following `host` or `IP` value when trying to connect to it:
 `host.docker.internal`.
 
----
-
 ## Unpredictable Columns in an Upstream Dataframe
 
 Sometimes, upstream data is out of our contol. If we're expecting a column in a dataframe and writing SQL against it, we might see a `SQL compilation` error: `invalid identifier.`
 
-<Frame><img alt="Oh no" src="https://media0.giphy.com/media/t1RCtCTlFUhby/200w.gif" /></Frame>
+<img
+  noZoom
+  alt="Oh no"
+  src="https://media0.giphy.com/media/t1RCtCTlFUhby/200w.gif"
+/>
 
-Thankfully, [Mage Community](https://www.mage.ai/chat) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
+Thankfully, [Mage Community](https://www.mage.ai/chat) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution.
 
 Say you have an upstream block that looks like:
 
@@ -58,10 +58,8 @@ for head in headers:
   if head not in df.columns:
        df[head] = None
 ```
+
 This is especially helpful in databases like Snowflake, which don't have an `iferror()` function to check for missing columns.
-
-
----
 
 ## `InvalidToken` error when accessing data in S3
 

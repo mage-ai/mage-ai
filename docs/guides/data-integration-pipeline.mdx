@@ -10,21 +10,15 @@ description: "Here are the high level steps to build a data integration pipeline
 
 <video controls className="w-full aspect-video" src="https://user-images.githubusercontent.com/1066980/196870752-6d1b0219-8fc0-419c-99d7-677bdcf3fc0a.mp4"></video>
 
----
-
 ## Requirements
 
 You must run Mage using [Docker](/getting-started/setup#using-docker) because there are a lot of
 dependencies required for data integrations that can be challenging to install using `pip` or `conda`.
 
----
-
 ## Add new data integration pipeline
 
 1. Open Mage in your browser and click the **`[+ New pipeline]`** button.
 2. Click the dropdown menu option **Data integration**.
-
----
 
 ## Configure source
 
@@ -59,7 +53,6 @@ dependencies required for data integrations that can be challenging to install u
    _patterns:
      destination_table: MY_PREFIX_{{ variables('stream') }}
    ```
-   
 
 3. After you enter in all the credentials, click the button
    **`[Fetch list of streams]`** under the section labeled **Select stream**.
@@ -110,18 +103,17 @@ in parallel if there are enough worker resources available. This may speed up th
 sync process if you have a large number of streams.
 
 ### Editing bookmark property values
-   - You can edit the bookmark values for your next sync by editing them
+
+- You can edit the bookmark values for your next sync by editing them
    in the `Bookmark property values` table under the
    **Manually edit bookmark property values** setting in the **Settings** section.
-   - The **Manually edit bookmark property values** setting will not appear until
+- The **Manually edit bookmark property values** setting will not appear until
    at least one column is selected as a bookmark field.
-   - In order to enable the toggle that displays the `Bookmark property values`
+- In order to enable the toggle that displays the `Bookmark property values`
    table, you need to select a destination first.
-   - Click the toggle and enter the new value for your bookmark property, and then
+- Click the toggle and enter the new value for your bookmark property, and then
    click `Save`. You MUST click the `Save` button in order for the bookmark value
    to be updated.
-
----
 
 ## Configure destination
 
@@ -149,8 +141,6 @@ sync process if you have a large number of streams.
    2. `"{{ variables('PASSWORD') }}"`: this will extract the value from the
       `PASSWORD` key in your runtime variables.
 
----
-
 ## Run pipeline and start sync
 
 Once you’re done configuring your pipeline, go back to the pipeline’s trigger
@@ -172,9 +162,7 @@ the top of the page. You’ll see a new pipeline run appear shortly on the scree
 You can [click the logs](/development/observability/logging) for that pipeline
 run to view the progress of your synchronization. Any string config values over
 8 characters long in the logs will be redacted for security purposes. You'll see
-these values hidden as `********` in the logs. 
-
----
+these values hidden as `********` in the logs.
 
 ## Support
 

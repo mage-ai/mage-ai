@@ -3,7 +3,7 @@ title: "Great Expectations"
 description: "Test the data produced by pipeline blocks using Great Expectations."
 ---
 
-![Great Expectations](https://images.ctfassets.net/ycwst8v1r2x5/22OiZltRmxCktJkYGUR2Su/c6da39d7884a9ec2d8b2d451cd81db6c/GX_Dark_BG_2x.png)
+<img noZoom src="https://images.ctfassets.net/ycwst8v1r2x5/22OiZltRmxCktJkYGUR2Su/c6da39d7884a9ec2d8b2d451cd81db6c/GX_Dark_BG_2x.png" alt="Great Expectations" />
 
 ## Setup
 
@@ -32,8 +32,6 @@ They must be Python blocks (SQL block support coming soon).
 1. In the list of available power ups, click the option for <b>Great Expectations</b>.
     ![Power ups](https://github.com/mage-ai/assets/blob/main/notebook/extensions/power-ups.jpg?raw=true)
 
----
-
 ## Adding expectations to your pipeline
 
 1. Once you’re on the Great Expectations power up detail page, you can add extension blocks to
@@ -42,6 +40,7 @@ the current pipeline by clicking the button labeled <b>[+ Extension block]</b>.
 1. A popup dialog may appear asking you to enter a name for the new extension block.
 If it appears, fill in `test number of rows` as the name and click the button labeled <b>[Save and add block]</b>.
 1. Paste the following code in the extension block named `test number of rows`:
+
     ```python
     @extension('great_expectations')
     def validate(validator, *args, **kwargs):
@@ -67,6 +66,7 @@ then a button labeled <b>load_api_data_demo</b> will appear.
     ![Great Expectations extension block](https://github.com/mage-ai/assets/blob/main/notebook/extensions/great-expectation-extension-block.jpeg?raw=true)
 1. Click that button to run your extension block for the block `load_api_data_demo`.
 1. The output should look something like this:
+
     ```
     Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
     Calculating Metrics:   0%|          | 0/1 [00:00<?, ?it/s]
@@ -139,8 +139,6 @@ any associated Great Expectations extension blocks will also be ran.
 
 If any expectations fail, the block output will display an error message with the failure results.
 
----
-
 ## Defining expectations
 
 ### Code
@@ -201,8 +199,6 @@ def validate(validator, *args, **kwargs):
         max_value=10000,
     )
 ```
-
----
 
 ## Running expectations end-to-end
 

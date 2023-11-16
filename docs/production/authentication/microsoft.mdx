@@ -12,32 +12,31 @@ this in the [Overview page](/production/authentication/overview).
 ### Enable Microsoft sign in
 
 By default, users will not see the "Sign in with Microsft" option in their sign in page. To
-enable this, you will need to get your organization's Tenant ID. You can find this in the 
+enable this, you will need to get your organization's Tenant ID. You can find this in the
 Azure Portal:
 
 1. Log into your Azure Portal
 2. Click into the Azure Active Directory service
-    <Frame>
-        <img
-            alt="Azure Active Directory"
-            src="https://github.com/mage-ai/assets/blob/main/production/authentication/ad.png?raw=true"
-        />
-    </Frame>
+
+    <img
+        alt="Azure Active Directory"
+        src="https://github.com/mage-ai/assets/blob/main/production/authentication/ad.png?raw=true"
+    />
+
 3. Navigate to the directory you want users to sign into
 4. Click "Properties" in the left sidebar
-    <Frame>
-        <img
-            alt="Active Directory Properties"
-            src="https://github.com/mage-ai/assets/blob/main/production/authentication/ad-properties.png?raw=true"
-        />
-    </Frame>
+
+    <img
+        alt="Active Directory Properties"
+        src="https://github.com/mage-ai/assets/blob/main/production/authentication/ad-properties.png?raw=true"
+    />
+
 5. Copy the value under "Tenant ID"
-    <Frame>
-        <img
-            alt="Active Directory Tenant ID"
-            src="https://github.com/mage-ai/assets/blob/main/production/authentication/ad-tenant-id.png?raw=true"
-        />
-    </Frame>
+
+    <img
+        alt="Active Directory Tenant ID"
+        src="https://github.com/mage-ai/assets/blob/main/production/authentication/ad-tenant-id.png?raw=true"
+    />
 
 Once you have found your tenant ID, you will need to set the following environment variable
 in your Mage setup.
@@ -49,9 +48,7 @@ in your Mage setup.
 
 You should now see the "Sign in with Microsoft" button when you start Mage and attempt to sign in.
 
-<Frame>
-    <img
-        alt="Sign in with Microsoft"
-        src="https://github.com/mage-ai/assets/blob/main/production/authentication/sign-in-with-microsoft.png?raw=true"
-    />
-</Frame>
+<img
+    alt="Sign in with Microsoft"
+    src="https://github.com/mage-ai/assets/blob/main/production/authentication/sign-in-with-microsoft.png?raw=true"
+/>

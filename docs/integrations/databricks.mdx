@@ -24,6 +24,7 @@ these steps, please join our [Slack](https://www.mage.ai/chat)
 ### 1. Set up Databricks cluster
 
 Set up a Databricks workspace and cluster following the docs:
+
 * [Create a workspace using the account console](https://docs.databricks.com/administration-guide/account-settings-e2/workspaces.html)
 * [Create a cluster](https://docs.databricks.com/clusters/create-cluster.html)
 
@@ -48,20 +49,17 @@ docker run -it --name mage_databricks -p 6789:6789 -v $(pwd):/home/src mage_data
 
 SSH into the docker container and configure `databricks-connect` following the [guide](https://docs.databricks.com/dev-tools/databricks-connect.html#step-2-configure-connection-properties).
 
-
 ### 4. Configure project’s metadata settings
 
 Open your project’s `metadata.yaml` file located at the root of your project’s
 directory: `demo_project/metadata.yaml` (presuming your project is named
 `demo_project`).
 
-
 Change the value for key `variables_dir` to be a S3 bucket that
 you want to use to store intermediate block output.
 
 For example, if your S3 bucket is named `my-awesome-bucket`, then the value for
 the key `variables_dir` should be `s3://my-awesome-bucket`.
-
 
 ### 5. Sample pipeline with PySpark code
 
@@ -150,4 +148,3 @@ def load_data(**kwargs) -> DataFrame:
 
     return df
 ```
-
