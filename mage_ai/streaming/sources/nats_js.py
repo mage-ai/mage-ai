@@ -132,7 +132,12 @@ class NATSSource(BaseSource):
                 messages = self.fetch_messages()
                 if not messages:
                     continue
-                handler(messages)  # Pass the entire batch to the handler
+                decoded_messages = [json.loads(msg.data.decode()) for msg in messages]
+                handler(decoded_messages)  # Pass the entire batch to the handler
+
+                # Acknowledge all messages in the batch
+                for message in messages:
+                    asyncio.run_coroutine_threadsafe(message.ack(), self.loop)
         finally:
             self.close_client()
             self.stop_loop()
@@ -140,7 +145,8 @@ class NATSSource(BaseSource):
     async def afetch_messages(self):
         try:
             msgs = await self.psub.fetch(self.config.batch_size, timeout=self.config.timeout)
-            return [json.loads(msg.data.decode()) for msg in msgs]
+            # return [json.loads(msg.data.decode()) for msg in msgs]
+            return msgs  # Return the message objects
         except nats.errors.TimeoutError:
             return []
 
@@ -157,8 +163,12 @@ class NATSSource(BaseSource):
             while True:
                 messages = self.fetch_messages()
                 if messages:
-                    for message in messages:
-                        handler(message)
+                    for msg in messages:
+                        decoded_message = json.loads(msg.data.decode())
+                        handler(decoded_message)
+
+                        # Acknowledge the message
+                        asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
 
         finally:
             self.close_client()
