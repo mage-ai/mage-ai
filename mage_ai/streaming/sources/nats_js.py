@@ -79,7 +79,10 @@ class NATSSource(BaseSource):
                 await nats.connect(
                     self.config.server_url,
                     tls=ssl_ctx,
-                    tls_hostname=self.config.tls_hostname
+                    tls_hostname=self.config.tls_hostname,
+                    reconnected_cb=self.reconnected_cb,
+                    disconnected_cb=self.disconnected_cb,
+                    closed_cb=self.closed_cb,
                 )
 
             else:
