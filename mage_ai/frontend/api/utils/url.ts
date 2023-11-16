@@ -84,13 +84,13 @@ export function buildUrl(
 ): string {
   let path: string =`${getHost()}/${resource}`;
 
-  if (id) {
+  if (typeof id !== 'undefined' && id !== null) {
     path = `${path}/${id}`;
   }
   if (childResource) {
     path = `${path}/${childResource}`;
   }
-  if (childId) {
+  if (typeof childId !== 'undefined' && childId !== null) {
     path = `${path}/${childId}`;
   }
   if (grandchildResource) {

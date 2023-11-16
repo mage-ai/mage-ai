@@ -14,7 +14,7 @@ import {
   OUTLINE_OFFSET,
   OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
+import { FONT_FAMILY_BOLD, FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -60,8 +60,10 @@ export type ButtonProps = {
   loading?: boolean;
   minWidth?: number;
   noBackground?: boolean;
+  noBold?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noHover?: boolean;
   noHoverUnderline?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;
@@ -116,10 +118,17 @@ const SHARED_STYLES = css<{
 
   border: none;
   display: block;
-  font-family: ${FONT_FAMILY_BOLD};
   padding: ${1 * UNIT}px ${1.5 * UNIT}px;
   position: relative;
   z-index: 0;
+
+  ${props => !props.noBold && `
+    font-family: ${FONT_FAMILY_BOLD};
+  `}
+
+  ${props => props.noBold && `
+    font-family: ${FONT_FAMILY_REGULAR};
+  `}
 
   ${props => !props.hasOnClick && `
     &:hover {

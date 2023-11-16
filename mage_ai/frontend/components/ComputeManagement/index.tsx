@@ -2,7 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import Clusters from './Clusters';
+import ComputeServiceType, {
+  ComputeServiceUUIDEnum,
+  SetupStepStatusEnum,
+  SetupStepType,
+} from '@interfaces/ComputeServiceType';
 import ConnectionSettings from './ConnectionSettings';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -10,18 +17,23 @@ import Link from '@oracle/elements/Link';
 import Monitoring from './Monitoring';
 import ProjectType, { SparkConfigType } from '@interfaces/ProjectType';
 import ResourceManagement from './ResourceManagement';
+import SetupSettings from './SetupSettings';
+import SetupProgress from './SetupProgress';
+import SetupSteps from './Clusters/SetupSteps';
 import Spacing from '@oracle/elements/Spacing';
 import SparkGraph from './SparkGraph';
 import System from './System';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { CardStyle } from './index.style';
+import useComputeService from '@utils/models/computeService/useComputeService'
+import { CardStyle, NavigationStyle } from './index.style';
 import {
-  BlockCubePolygon,
-  Monitor,
+  AlertTriangle,
+  Check,
+  Info,
   PowerOnOffButton,
-  WorkspacesUsersIcon,
 } from '@oracle/icons';
 import {
   COMPUTE_SERVICES,
@@ -32,16 +44,22 @@ import {
   MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING,
   MainNavigationTabEnum,
   ObjectAttributesType,
+  TabType,
+  buildTabs,
 } from './constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { NavigationStyle } from '@components/DataIntegrationModal/index.style';
-import { SparkSQLType } from '@interfaces/SparkType';
+import {
+  SparkApplicationType,
+  SparkJobType,
+  SparkSQLType,
+} from '@interfaces/SparkType';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getComputeServiceFromProject } from './utils';
 import { goToWithQuery } from '@utils/routing';
@@ -53,24 +71,6 @@ import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 const QUERY_PARAM_TAB = 'tab';
-const TABS = [
-  {
-    Icon: PowerOnOffButton,
-    uuid: MainNavigationTabEnum.CONNECTION,
-  },
-  {
-    Icon: WorkspacesUsersIcon,
-    uuid: MainNavigationTabEnum.RESOURCES,
-  },
-  {
-    Icon: Monitor,
-    uuid: MainNavigationTabEnum.MONITORING,
-  },
-  {
-    Icon: BlockCubePolygon,
-    uuid: MainNavigationTabEnum.SYSTEM,
-  },
-];
 
 type ComputeManagementProps = {
   contained?: boolean;
@@ -103,6 +103,23 @@ function ComputeManagement({
     heightOffset,
     heightWindow,
   ]);
+
+  const [includeAllStates, setIncludeAllStates] = useState(false);
+  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceUUIDEnum>(null);
+
+  const {
+    activeCluster,
+    clusters,
+    clustersLoading,
+    computeService,
+    connections,
+    connectionsLoading,
+    fetchAll,
+    setupComplete,
+  } = useComputeService({
+    clustersRefreshInterval: 10000,
+    includeAllStates,
+  });
 
   const [buttonTabsRect, setButtonTabsRect] = useState(null);
 
@@ -151,7 +168,7 @@ function ComputeManagement({
 
       if (val && afterHidden) {
         setAfterHidden(false);
-      } else if (!val && !afterHidden) {
+      } else if (!val && !afterHidden && setupComplete) {
         setAfterHidden(true);
       }
 
@@ -162,6 +179,7 @@ function ComputeManagement({
     afterHidden,
     setAfterHidden,
     setSelectedSqlState,
+    setupComplete,
   ]);
 
   const [selectedTab, setSelectedTabState] = useState<{
@@ -186,8 +204,6 @@ function ComputeManagement({
     selectedTab,
     queryURL,
   ]);
-
-  const [selectedComputeService, setSelectedComputeService] = useState<ComputeServiceEnum>(null);
 
   const [objectAttributes, setObjectAttributesState] = useState<ObjectAttributesType>(null);
   const [attributesTouched, setAttributesTouched] = useState<ObjectAttributesType>({});
@@ -221,6 +237,20 @@ function ComputeManagement({
   const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
   const projectName = useMemo(() => project?.name, [project]);
 
+  const { data: dataApplications } = api.spark_applications.list();
+  const applications: SparkApplicationType[] =
+    useMemo(() => dataApplications?.spark_applications, [dataApplications]);
+
+  const { data: dataJobs } = api.spark_jobs.list();
+  const jobs: SparkJobType[] =
+    useMemo(() => dataJobs?.spark_jobs, [dataJobs]);
+
+  useEffect(() => {
+    setAfterHidden(setupComplete);
+  }, [
+    setupComplete,
+  ]);
+
   useEffect(() => {
     if (project) {
       setObjectAttributesState(project);
@@ -236,7 +266,7 @@ function ComputeManagement({
   useEffect(() => {
     if (!selectedTab && selectedComputeService) {
       setSelectedTab({
-        main: MainNavigationTabEnum.CONNECTION,
+        main: MainNavigationTabEnum.SETUP,
       });
     }
   }, [
@@ -255,6 +285,7 @@ function ComputeManagement({
           }) => {
             setAttributesTouched({});
             setObjectAttributesState(objectServer);
+            fetchAll();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -279,20 +310,31 @@ function ComputeManagement({
   ]);
 
   const before = useMemo(() => {
-    const arr = TABS.map(({
+    const arr = buildTabs(computeService).map(({
       Icon,
+      renderStatus,
       uuid,
-    }: {
-      Icon: any;
-      uuid: MainNavigationTabEnum;
-    }) => (
-      <NavigationStyle
-        key={uuid}
-        selected={selectedTab?.main === uuid}
-      >
+    }: TabType) => {
+      let statusEl;
+
+      if (renderStatus) {
+        statusEl = renderStatus?.({
+          applications,
+          applicationsLoading: !dataApplications,
+          clusters,
+          clustersLoading,
+          computeConnections: connections,
+          computeService,
+          jobs,
+          jobsLoading: !dataJobs,
+        });
+      }
+
+      return (
         <Link
           block
           disabled={!selectedComputeService}
+          key={uuid}
           noHoverUnderline
           noOutline
           onClick={() => setSelectedTab(() => ({
@@ -300,29 +342,113 @@ function ComputeManagement({
           }))}
           preventDefault
         >
-          <Spacing p={PADDING_UNITS}>
-            <FlexContainer alignItems="center">
-              <Icon size={UNIT * 2} />
+          <NavigationStyle selected={selectedTab?.main === uuid}>
+            <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
+              <Flex alignItems="center" flex={1}>
+                <Icon size={UNIT * 2} />
 
-              <Spacing mr={2} />
+                <Spacing mr={2} />
 
-              <Text bold large>
-                {MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[uuid]}
-              </Text>
+                <Text bold large>
+                  {MAIN_NAVIGATION_TAB_DISPLAY_NAME_MAPPING[uuid]}
+                </Text>
+              </Flex>
+
+              {statusEl && (
+                <>
+                  <Spacing mr={PADDING_UNITS} />
+
+                  {statusEl}
+                </>
+              )}
             </FlexContainer>
-          </Spacing>
+          </NavigationStyle>
         </Link>
-      </NavigationStyle>
-    ));
+      );
+    });
 
     if (selectedComputeService) {
-      const displayName = COMPUTE_SERVICE_DISPLAY_NAME[selectedComputeService];
-      const kicker = COMPUTE_SERVICE_KICKER[selectedComputeService];
-      const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[selectedComputeService];
+      const keyIdx = String(selectedComputeService);
+      const displayName = COMPUTE_SERVICE_DISPLAY_NAME[keyIdx];
+      const kicker = COMPUTE_SERVICE_KICKER[keyIdx];
+      const renderIcon = COMPUTE_SERVICE_RENDER_ICON_MAPPING[keyIdx];
 
       if (displayName && kicker && renderIcon) {
+        let setupStepsTooltipMessage;
+        if (computeService?.setup_steps) {
+          if (setupComplete) {
+            if (activeCluster) {
+              if (activeCluster?.ready) {
+                setupStepsTooltipMessage = 'Cluster is ready, commence coding.';
+              } else {
+                setupStepsTooltipMessage = 'Cluster activated and initializing.';
+              }
+            } else {
+              setupStepsTooltipMessage = 'Setup complete but no clusters activated.';
+            }
+          } else {
+            setupStepsTooltipMessage = 'All setup steps have not been completed yet.';
+          }
+        }
+
+        const connectionStatusesEl = [];
+
+        if (computeService?.setup_steps) {
+          connectionStatusesEl.push(
+            <Spacing key="compute-service-setup-steps" py={1}>
+              <FlexContainer
+                alignItems="center"
+              >
+                {setupComplete && (
+                  <PowerOnOffButton
+                    muted={!activeCluster?.ready}
+                    size={1.5 * UNIT}
+                    success={activeCluster?.ready}
+                  />
+                )}
+                {!setupComplete && (
+                  <AlertTriangle
+                    danger
+                    size={1.5 * UNIT}
+                  />
+                )}
+
+                <Spacing mr={1} />
+
+                <Flex flex={1} flexDirection="column">
+                  <Text default={!setupComplete || !activeCluster} small>
+                    {setupComplete && activeCluster
+                      ? 'Compute service connected'
+                      : 'Compute service unconnected'
+                    }
+                  </Text>
+
+                  {setupStepsTooltipMessage && (
+                    <Text muted xsmall>
+                      {setupStepsTooltipMessage}
+                    </Text>
+                  )}
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          );
+        }
+
+        if (computeService?.setup_steps?.length >= 1 && !setupComplete) {
+          arr.unshift(
+            <SetupProgress
+              computeService={computeService}
+              key="setupProgress"
+              onClick={() => setAfterHidden(false)}
+            />
+          );
+        }
+
         arr.unshift(
-          <Spacing p={PADDING_UNITS}>
+          <Spacing
+            key={`${displayName}-${kicker}`}
+            p={PADDING_UNITS}
+          >
             <CardStyle inline>
               <FlexContainer alignItems="flex-start">
                 <Flex flex={1}>
@@ -343,13 +469,23 @@ function ComputeManagement({
               </FlexContainer>
 
               <Spacing mt={PADDING_UNITS}>
-                <Text default monospace>
-                  {kicker}
-                </Text>
-                <Headline level={5}>
-                  {displayName}
-                </Headline>
+                <FlexContainer alignItems="flex-end">
+                  <Flex flex={1} flexDirection="column">
+                    <Text default monospace>
+                      {kicker}
+                    </Text>
+                    <Headline level={5}>
+                      {displayName}
+                    </Headline>
+                  </Flex>
+                </FlexContainer>
               </Spacing>
+
+              {connectionStatusesEl?.length >= 1 && (
+                <Spacing mt={PADDING_UNITS}>
+                  {connectionStatusesEl}
+                </Spacing>
+              )}
             </CardStyle>
           </Spacing>
         );
@@ -358,9 +494,20 @@ function ComputeManagement({
 
     return arr;
   }, [
+    activeCluster,
+    applications,
+    clusters,
+    clustersLoading,
+    computeService,
+    connections,
+    dataApplications,
+    dataJobs,
+    jobs,
     selectedComputeService,
     selectedTab,
+    setAfterHidden,
     setSelectedTab,
+    setupComplete,
   ]);
 
   const after = useMemo(() => {
@@ -372,14 +519,29 @@ function ComputeManagement({
         />
       );
     }
+
+    if (computeService?.setup_steps?.length >= 1) {
+      return (
+        <SetupSteps
+          onClickStep={(tab: string) => setSelectedTab(() => ({
+            // @ts-ignore
+            main: tab,
+          }))}
+          setupSteps={computeService?.setup_steps}
+        />
+      );
+    }
   }, [
+    computeService,
     containerHeight,
     selectedSql,
+    setupComplete,
   ]);
 
-  const connectionMemo = useMemo(() => (
-    <ConnectionSettings
+  const setupMemo = useMemo(() => (
+    <SetupSettings
       attributesTouched={attributesTouched || {}}
+      computeService={computeService}
       isLoading={isLoadingUpdateProject}
       mutateObject={updateProject}
       objectAttributes={objectAttributes}
@@ -388,6 +550,7 @@ function ComputeManagement({
     />
   ), [
     attributesTouched,
+    computeService,
     isLoadingUpdateProject,
     objectAttributes,
     selectedComputeService,
@@ -414,26 +577,50 @@ function ComputeManagement({
   ]);
 
   const monitoringMemo = useMemo(() => {
-    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+    if ([
+      ComputeServiceEnum.AWS_EMR,
+      ComputeServiceEnum.STANDALONE_CLUSTER,
+    ].includes(selectedComputeService)) {
       return (
         <Monitoring
+          applications={applications}
+          computeConnections={connections}
+          computeService={computeService}
+          connectionsLoading={connectionsLoading}
+          fetchAll={fetchAll}
+          jobs={jobs}
+          loadingApplications={!dataApplications}
+          loadingJobs={!dataJobs}
           objectAttributes={objectAttributes}
           refButtonTabs={refButtonTabs}
           selectedComputeService={selectedComputeService}
           // @ts-ignore
           setSelectedSql={setSelectedSql}
+          setSelectedTab={setSelectedTab}
         />
       );
     }
   }, [
+    applications,
+    computeService,
+    connections,
+    connectionsLoading,
+    fetchAll,
+    dataApplications,
+    dataJobs,
+    jobs,
     objectAttributes,
     refButtonTabs,
     selectedComputeService,
     setSelectedSql,
+    setSelectedTab,
   ]);
 
   const systemMemo = useMemo(() => {
-    if (ComputeServiceEnum.STANDALONE_CLUSTER === selectedComputeService) {
+    if ([
+      ComputeServiceEnum.AWS_EMR,
+      ComputeServiceEnum.STANDALONE_CLUSTER,
+    ].includes(selectedComputeService)) {
       return (
         <System
           objectAttributes={objectAttributes}
@@ -479,7 +666,7 @@ function ComputeManagement({
                 <Button
                   loading={isLoadingUpdateProject && uuid === selectedComputeService}
                   onClick={() => {
-                    setSelectedComputeService(uuid as ComputeServiceEnum);
+                    setSelectedComputeService(uuid as ComputeServiceUUIDEnum);
                     updateProject(buildPayload(objectAttributes));
                   }}
                   primary
@@ -510,21 +697,82 @@ function ComputeManagement({
     updateProject,
   ]);
 
+  const clustersMemo = useMemo(() => (
+    <Clusters
+      clusters={clusters}
+      computeService={computeService}
+      fetchAll={fetchAll}
+      includeAllStates={includeAllStates}
+      loading={clustersLoading}
+      setIncludeAllStates={setIncludeAllStates}
+    />
+  ), [
+    clusters,
+    clustersLoading,
+    computeService,
+    fetchAll,
+    includeAllStates,
+    setIncludeAllStates,
+  ]);
+
+  const contentMemo = useMemo(() => {
+    if (!selectedComputeService && objectAttributes) {
+      return computeServicesMemo;
+    }
+
+    if (selectedComputeService && project && selectedTab?.main) {
+      const uuid = selectedTab?.main;
+
+      if (MainNavigationTabEnum.SETUP === uuid) {
+        return setupMemo;
+      }
+
+      if (MainNavigationTabEnum.RESOURCES === uuid) {
+        return resourcesMemo;
+      }
+
+      if (MainNavigationTabEnum.MONITORING === uuid) {
+        return monitoringMemo;
+      }
+
+      if (MainNavigationTabEnum.SYSTEM === uuid) {
+        return systemMemo;
+      }
+
+      if (MainNavigationTabEnum.CLUSTERS === uuid) {
+        return clustersMemo;
+      }
+    }
+  }, [
+    clustersMemo,
+    computeServicesMemo,
+    monitoringMemo,
+    objectAttributes,
+    project,
+    resourcesMemo,
+    selectedComputeService,
+    selectedTab,
+    setupMemo,
+    systemMemo,
+  ]);
+
   return (
     <TripleLayout
       after={after}
+      afterDividerContrast
       afterHeightOffset={HEADER_HEIGHT}
-      afterHidden={afterHidden || !selectedSql}
+      afterHidden={afterHidden && !selectedSql}
       afterMousedownActive={afterMousedownActive}
       afterWidth={afterWidth}
       before={before}
+      beforeDividerContrast
       beforeHeightOffset={0}
       beforeHidden={!selectedComputeService}
       beforeMousedownActive={beforeMousedownActive}
       beforeWidth={beforeWidth}
       contained
       height={containerHeight}
-      hideAfterCompletely
+      hideAfterCompletely={!computeService?.setup_steps?.length}
       hideBeforeCompletely={!selectedComputeService}
       inline
       mainContainerRef={mainContainerRef}
@@ -535,15 +783,7 @@ function ComputeManagement({
       setBeforeWidth={setBeforeWidth}
       uuid={componentUUID}
     >
-      {!selectedComputeService && objectAttributes && computeServicesMemo}
-      {selectedComputeService && project && (
-        <>
-          {MainNavigationTabEnum.CONNECTION === selectedTab?.main && connectionMemo}
-          {MainNavigationTabEnum.RESOURCES === selectedTab?.main && resourcesMemo}
-          {MainNavigationTabEnum.MONITORING === selectedTab?.main && monitoringMemo}
-          {MainNavigationTabEnum.SYSTEM === selectedTab?.main && systemMemo}
-        </>
-      )}
+      {contentMemo}
     </TripleLayout>
   );
 }

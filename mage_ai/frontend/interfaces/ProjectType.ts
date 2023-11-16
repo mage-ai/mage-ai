@@ -17,6 +17,7 @@ export enum ProjectTypeEnum {
 export interface EMRConfigType {
   bootstrap_script_path?: string;
   ec2_key_name?: string;
+  ec2_key_path?: string;
   master_instance_type?: string;
   master_security_group?: string;
   master_spark_properties?: {

@@ -60,7 +60,7 @@ class BaseAPI(ABC):
         if self._application:
             return self._application
 
-        self._application = Application(
+        self._application = Application.load(
             id=self.application_id,
             spark_ui_url=self.application_spark_ui_url,
         )
@@ -154,8 +154,11 @@ class BaseAPI(ABC):
     async def environment(self, application_id: str = None, **kwargs) -> Environment:
         pass
 
+    def ready_for_requests(self, **kwargs) -> bool:
+        return True if self.spark_session else False
+
     async def get(self, path: str, host: str = None, query: Dict = None):
-        if not self.spark_session:
+        if not self.ready_for_requests():
             return {}
 
         url = f'{self.endpoint(host=host)}{path}'
@@ -167,12 +170,12 @@ class BaseAPI(ABC):
         if response.status_code == 200:
             return response.json()
         else:
-            print(f'[WARNING] {self.__class__.__name__} {url}: {response}')
+            print(f'[WARNING] {self.__class__.__name__} async {url}: {response}')
 
         return {}
 
     def get_sync(self, path: str, host: str = None, query: Dict = None):
-        if not self.spark_session:
+        if not self.ready_for_requests():
             return {}
 
         url = f'{self.endpoint(host=host)}{path}'

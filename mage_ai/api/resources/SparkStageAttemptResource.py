@@ -1,6 +1,5 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.mixins.spark import SparkApplicationChild
-from mage_ai.services.spark.api.local import LocalAPI
 
 
 class SparkStageAttemptResource(GenericResource, SparkApplicationChild):
@@ -9,7 +8,7 @@ class SparkStageAttemptResource(GenericResource, SparkApplicationChild):
         parent_model = kwargs.get('parent_model')
 
         return self.build_result_set(
-            await LocalAPI().stage_attempts(
+            await self.build_api().stage_attempts(
                 stage_id=parent_model.id,
             ),
             user,
@@ -21,7 +20,7 @@ class SparkStageAttemptResource(GenericResource, SparkApplicationChild):
         parent_model = kwargs.get('parent_model')
 
         return self(
-            await LocalAPI().stage_attempt(
+            await self.build_api().stage_attempt(
                 attempt_id=pk,
                 stage_id=parent_model.id,
             ),

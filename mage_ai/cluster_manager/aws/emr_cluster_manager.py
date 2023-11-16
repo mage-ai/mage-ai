@@ -51,6 +51,7 @@ class EmrClusterManager(ClusterManager):
 
     def set_active_cluster(
         self,
+        auto_creation: bool = True,
         auto_selection: bool = False,
         cluster_id=None,
         emr_config: Dict = None,
@@ -59,7 +60,7 @@ class EmrClusterManager(ClusterManager):
             clusters = self.list_clusters()
             if len(clusters) > 0:
                 cluster_id = clusters[0]['id']
-            else:
+            elif auto_creation:
                 self.create_cluster(emr_config=emr_config)
         if cluster_id is None:
             return

@@ -57,6 +57,7 @@ import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
+  afterDividerContrast?: boolean;
   afterFooter?: any;
   afterFooterBottomOffset?: number;
   afterHeader?: any;
@@ -70,6 +71,7 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeDividerContrast?: boolean;
   beforeFooter?: any;
   beforeHeader?: any;
   beforeHeaderOffset?: number;
@@ -80,6 +82,7 @@ type TripleLayoutProps = {
   beforeWidth?: number;
   children: any;
   contained?: boolean;
+  footerOffset?: number;
   header?: any;
   headerOffset?: number;
   height?: number;
@@ -87,6 +90,7 @@ type TripleLayoutProps = {
   hideBeforeCompletely?: boolean;
   inline?: boolean;
   leftOffset?: number;
+  mainContainerFooter?: any;
   mainContainerHeader?: any;
   mainContainerRef: any;
   navigationShowMore?: boolean;
@@ -101,6 +105,7 @@ type TripleLayoutProps = {
 
 function TripleLayout({
   after,
+  afterDividerContrast,
   afterFooter,
   afterFooterBottomOffset,
   afterHeader,
@@ -114,6 +119,7 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeDividerContrast,
   beforeFooter,
   beforeHeader,
   beforeHeaderOffset,
@@ -124,6 +130,7 @@ function TripleLayout({
   beforeWidth = 0,
   children,
   contained,
+  footerOffset,
   header,
   headerOffset = 0,
   height: heightInlineContainer,
@@ -131,6 +138,7 @@ function TripleLayout({
   hideBeforeCompletely,
   inline,
   leftOffset = 0,
+  mainContainerFooter,
   mainContainerHeader,
   mainContainerRef,
   navigationShowMore,
@@ -543,6 +551,7 @@ function TripleLayout({
           <DraggableStyle
             active={beforeMousedownActive}
             disabled={beforeHidden}
+            contrast={beforeDividerContrast}
             ref={refBeforeInnerDraggable}
             right={0}
             top={contained ? 0 : ASIDE_HEADER_HEIGHT}
@@ -599,6 +608,7 @@ function TripleLayout({
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
           }
+          footerOffset={footerOffset}
           inline={inline}
           style={{
             width: inline ? null : mainWidth,
@@ -611,6 +621,8 @@ function TripleLayout({
             {children}
           </MainContentInnerStyle>
         </MainContentStyle>
+
+        {mainContainerFooter}
       </MainWrapper>
 
       {after && !shouldHideAfterWrapper && (
@@ -623,6 +635,7 @@ function TripleLayout({
         >
           <DraggableStyle
             active={afterMousedownActive}
+            contrast={afterDividerContrast}
             disabled={afterHidden}
             left={0}
             ref={refAfterInnerDraggable}
@@ -669,12 +682,14 @@ function TripleLayout({
   ), [
     after,
     afterContent,
+    afterDividerContrast,
     afterHeightOffset,
     afterHidden,
     afterMousedownActive,
     afterNavigationItems,
     afterWidthFinal,
     beforeContent,
+    beforeDividerContrast,
     beforeHeightOffset,
     beforeHidden,
     beforeMousedownActive,
@@ -682,12 +697,14 @@ function TripleLayout({
     beforeWidthFinal,
     children,
     contained,
+    footerOffset,
     hasAfterNavigationItems,
     hasBeforeNavigationItems,
     header,
     headerOffset,
     inline,
     leftOffset,
+    mainContainerFooter,
     mainContainerHeader,
     mainContainerRef,
     mainWidth,

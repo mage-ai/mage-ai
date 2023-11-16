@@ -18,8 +18,9 @@ import {
   Trash,
 } from '@oracle/icons';
 import { CardStyle } from './index.style';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
-import { ComputeServiceEnum, ObjectAttributesType } from './constants';
+import { ObjectAttributesType } from './constants';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
@@ -39,7 +40,7 @@ type ResourceManagementProps = {
   mutateObject: (data?: ObjectAttributesType) => void;
   objectAttributes: ObjectAttributesType;
   onCancel?: () => void;
-  selectedComputeService?: ComputeServiceEnum;
+  selectedComputeService?: ComputeServiceUUIDEnum;
   setObjectAttributes: (objectAttributes: ObjectAttributesType) => void;
 }
 
@@ -126,8 +127,162 @@ function ResourceManagement({
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
 
-      {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+      {ComputeServiceUUIDEnum.AWS_EMR === selectedComputeService && (
         <>
+          <Panel noPadding>
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Flex flex={1} flexDirection="column">
+                  <Headline
+                    level={4}
+                    warning={!objectAttributesEMRConfig?.ec2_key_name || !objectAttributesEMRConfig?.ec2_key_path}
+                  >
+                    Spark observability
+                  </Headline>
+
+                  {(!objectAttributesEMRConfig?.ec2_key_name || !objectAttributesEMRConfig?.ec2_key_path)
+                    && 'ec2_key_name' in (attributesTouched?.emr_config || {})
+                    && 'ec2_key_path' in (attributesTouched?.emr_config || {})
+                    && (
+                    <>
+                      <Spacing mt={1}>
+                        <Text warning>
+                          Without all the fields in this section present and valid,
+                          Mage won’t automatically create the SSH tunnel.
+
+                          <br />
+
+                          You must manually create the SSH tunnel in order for Mage to retrieve
+                          and display the Spark jobs, statuses, metrics, and system information.
+                        </Text>
+                      </Spacing>
+                    </>
+                  )}
+
+                  <Spacing mt={1}>
+                    <Text muted>
+                      In order to see the Spark jobs, statuses, metrics, and system information,
+                      an SSH tunnel to the AWS EMR Master Node must be created.
+
+                      <br />
+
+                      Mage can automatically create the SSH tunnel for you
+                      if every field in this section is present and valid.
+                    </Text>
+                  </Spacing>
+
+                  <Spacing mt={1}>
+                    <Text muted>
+                    </Text>
+                  </Spacing>
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <FlexContainer flexDirection="column">
+                  <Text
+                    default
+                    large
+                  >
+                    EC2 key name
+                  </Text>
+
+                  <Text muted small>
+                    SSH tunnel into the EMR cluster using
+                    a key pair created from the <Link
+                      href="https://console.aws.amazon.com/ec2/home#KeyPairs"
+                      inline
+                      openNewWindow
+                      small
+                    >
+                      AWS guide
+                    </Link>.
+                  </Text>
+                </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    autoComplete="off"
+                    large
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributesEMRConfig({
+                      ec2_key_name: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="e.g. ec2_key_pair_name"
+                    value={objectAttributesEMRConfig?.ec2_key_name || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+
+            <Divider light />
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center">
+                <FlexContainer flexDirection="column">
+                  <Text
+                    default
+                    large
+                  >
+                    EC2 key path
+                  </Text>
+
+                  <Text muted small>
+                    The absolute file path to the EC2 public key that was used when
+                    creating a cluster.
+                  </Text>
+                </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  <TextInput
+                    afterIcon={<Edit />}
+                    afterIconClick={(_, inputRef) => {
+                      inputRef?.current?.focus();
+                    }}
+                    afterIconSize={ICON_SIZE}
+                    alignRight
+                    autoComplete="off"
+                    large
+                    monospace
+                    noBackground
+                    noBorder
+                    fullWidth
+                    onChange={e => setObjectAttributesEMRConfig({
+                      ec2_key_path: e.target.value,
+                    })}
+                    paddingHorizontal={0}
+                    paddingVertical={0}
+                    placeholder="e.g. ec2_key_pair_name"
+                    value={objectAttributesEMRConfig?.ec2_key_path || ''}
+                  />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          </Panel>
+
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} />
+
           <Panel noPadding>
             <Spacing p={PADDING_UNITS}>
               <FlexContainer
@@ -476,58 +631,6 @@ function ResourceManagement({
                     paddingVertical={0}
                     placeholder="e.g. sg-yyyyyyyyyyyy"
                     value={objectAttributesEMRConfig?.slave_security_group || ''}
-                  />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
-
-            <Divider light />
-
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="center">
-                <FlexContainer flexDirection="column">
-                  <Text
-                    default
-                    large
-                  >
-                    EC2 key name
-                  </Text>
-
-                  <Text muted small>
-                    SSH tunnel into the EMR cluster using
-                    a key pair created from the <Link
-                      href="https://console.aws.amazon.com/ec2/home#KeyPairs"
-                      inline
-                      openNewWindow
-                      small
-                    >
-                      AWS guide
-                    </Link>.
-                  </Text>
-                </FlexContainer>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <Flex flex={1}>
-                  <TextInput
-                    afterIcon={<Edit />}
-                    afterIconClick={(_, inputRef) => {
-                      inputRef?.current?.focus();
-                    }}
-                    afterIconSize={ICON_SIZE}
-                    alignRight
-                    autoComplete="off"
-                    large
-                    noBackground
-                    noBorder
-                    fullWidth
-                    onChange={e => setObjectAttributesEMRConfig({
-                      ec2_key_name: e.target.value,
-                    })}
-                    paddingHorizontal={0}
-                    paddingVertical={0}
-                    placeholder="e.g. ec2_key_pair_name"
-                    value={objectAttributesEMRConfig?.ec2_key_name || ''}
                   />
                 </Flex>
               </FlexContainer>

@@ -41,7 +41,7 @@ class ClusterResource(GenericResource):
                 error['message'] = 'Please include cluster_id in the request payload.'
                 raise ApiError(error)
 
-            emr_cluster_manager.set_active_cluster(cluster_id)
+            emr_cluster_manager.set_active_cluster(cluster_id=cluster_id)
             success = True
 
             self.model.update(
