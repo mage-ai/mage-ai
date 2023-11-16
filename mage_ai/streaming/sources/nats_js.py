@@ -127,23 +127,34 @@ class NATSSource(BaseSource):
 
         try:
             while True:
+                self._print("Fetching messages...")
                 message_tuples = self.fetch_messages()
-                if message_tuples:
-                    batch = []
-                    successfully_processed = []
+                self._print(f"Fetched {len(message_tuples)} messages")
+
+                if not message_tuples:
+                    self._print("No messages fetched, continuing to next iteration")
+                    continue
+
+                # Accumulate all messages in a batch
+                batch = [json.loads(msg.data.decode()) for _, msg in message_tuples]
+
+                self._print(f"Processing batch with {len(batch)} messages")
+
+                # Process the entire batch if it's not empty
+                if batch:
                     try:
-                        for decoded_message, msg in message_tuples:
-                            batch.append(decoded_message)  # Add decoded message to the batch
-                            successfully_processed.append(msg)
+                        handler(batch)
+                        self._print("Batch processed successfully, acknowledging messages")
 
-                        handler(batch)  # Process the entire batch
-
-                        # Acknowledge successfully processed messages
-                        for msg in successfully_processed:
+                        # Acknowledge all messages in the batch
+                        for _, msg in message_tuples:
                             asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
                     except Exception as e:
                         self._print(f"Error processing batch: {e}")
-                        continue
+                        # Acknowledge only the messages processed successfully
+                        for _, msg in message_tuples[:len(batch)]:
+                            asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
+
         finally:
             self.close_client()
             self.stop_loop()
