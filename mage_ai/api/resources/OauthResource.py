@@ -39,12 +39,8 @@ class OauthResource(GenericResource):
                     redirect_uri=redirect_uri
                 )
                 if auth_url_response:
-                    oauths.append(
-                        dict(
-                            provider=provider,
-                            **auth_url_response,
-                        )
-                    )
+                    auth_url_response['provider'] = provider
+                    oauths.append(auth_url_response)
             except Exception:
                 continue
 
