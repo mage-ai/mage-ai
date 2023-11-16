@@ -13,6 +13,7 @@ class NATSTests(TestCase):
                     server_url='nats://localhost:4222',
                     subject='test_subject',
                     consumer_name='test_consumer',
+                    stream_name='test_stream',
                 )
             )
             mock_init_client.assert_called_once()
