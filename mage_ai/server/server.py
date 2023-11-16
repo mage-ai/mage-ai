@@ -361,6 +361,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
 
     file_path = file_path_aws_emr()
     if not os.path.exists(file_path):
+        os.makedirs(os.dirname(file_path), exist_ok=True)
         with open(file_path, 'w') as f:
             f.write(json.dumps({}))
 
