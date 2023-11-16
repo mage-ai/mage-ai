@@ -16,9 +16,6 @@ class UserOperationTests(BaseApiTestCase):
         super().setUpClass()
         Role.create_default_roles()
 
-    def tearDown(self):
-        User.query.delete()
-
     async def test_execute_create(self):
         email = self.faker.email()
         response = await self.base_test_execute_create(dict(
@@ -131,6 +128,8 @@ class UserOperationTests(BaseApiTestCase):
             UserPresenter.default_attributes,
             user=admin,
         )
+
+        admin.delete()
 
     async def test_execute_list_unauthorized(self):
         async def _func():
