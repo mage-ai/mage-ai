@@ -125,19 +125,41 @@ class NATSSource(BaseSource):
     def batch_read(self, handler: Callable):
         self.init_client()
 
-        self._print("Starting batch read")
+        try:
+            while True:
+                message_tuples = self.fetch_messages()
+                if message_tuples:
+                    batch = []
+                    successfully_processed = []
+                    try:
+                        for decoded_message, msg in message_tuples:
+                            batch.append(decoded_message)  # Add decoded message to the batch
+                            successfully_processed.append(msg)
+
+                        handler(batch)  # Process the entire batch
+
+                        # Acknowledge successfully processed messages
+                        for msg in successfully_processed:
+                            asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
+                    except Exception as e:
+                        self._print(f"Error processing batch: {e}")
+                        continue
+        finally:
+            self.close_client()
+            self.stop_loop()
+
+    def read(self, handler: Callable):
+        self.init_client()
 
         try:
             while True:
                 messages = self.fetch_messages()
                 if messages:
-                    decoded_messages = [decoded for decoded, _ in messages]
-                    handler(decoded_messages)  # Process decoded messages
+                    for decoded_message, msg in messages:
+                        handler(decoded_message)  # Process each decoded message
 
-                    # Acknowledge all messages in the batch
-                    for _, original_msg in messages:
-                        asyncio.run_coroutine_threadsafe(original_msg.ack(), self.loop)
-
+                        # Acknowledge the original message
+                        asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
         finally:
             self.close_client()
             self.stop_loop()
@@ -153,21 +175,3 @@ class NATSSource(BaseSource):
     def fetch_messages(self):
         future = asyncio.run_coroutine_threadsafe(self.afetch_messages(), self.loop)
         return future.result()
-
-    def read(self, handler: Callable):
-        self.init_client()
-
-        self._print("Starting read")
-
-        try:
-            while True:
-                messages = self.fetch_messages()
-                for decoded_message, msg in messages:
-                    handler(decoded_message)  # Process each decoded message
-
-                    # Acknowledge the original message
-                    asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
-
-        finally:
-            self.close_client()
-            self.stop_loop()
