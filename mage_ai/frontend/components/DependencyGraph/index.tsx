@@ -1449,6 +1449,7 @@ function DependencyGraph({
     updateBlockByDragAndDrop,
   ]);
 
+  // @ts-ignore
   const interactionsEnabled: boolean = useMemo(() => featureEnabled?.(featureUUIDs.INTERACTIONS), [
     featureEnabled,
     featureUUIDs,

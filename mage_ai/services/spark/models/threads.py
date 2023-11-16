@@ -30,10 +30,10 @@ class Thread(BaseSparkModel):
     thread_state: ThreadState = None  # "TIMED_WAITING"
 
     def __post_init__(self):
-        if self.stack_trace:
+        if self.stack_trace and isinstance(self.stack_trace, dict):
             self.stack_trace = StackTrace.load(**self.stack_trace)
 
-        if self.thread_state:
+        if self.thread_state and isinstance(self.thread_state, str):
             try:
                 self.thread_state = ThreadState(self.thread_state)
             except ValueError as err:

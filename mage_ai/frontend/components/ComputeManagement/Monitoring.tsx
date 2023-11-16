@@ -3,6 +3,9 @@ import { ThemeContext } from 'styled-components';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import ComputeConnectionType from '@interfaces/ComputeConnectionType';
+import ComputeServiceType, { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
+import ConnectionSettings from './ConnectionSettings';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -16,7 +19,11 @@ import TasksWaterfallChart from './TasksWaterfallChart';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { ComputeServiceEnum, ObjectAttributesType, SHARED_TEXT_PROPS } from './constants';
+import {
+  MainNavigationTabEnum,
+  ObjectAttributesType,
+  SHARED_TEXT_PROPS,
+} from './constants';
 import {
   DATE_FORMAT_LONG,
   DATE_FORMAT_SPARK,
@@ -40,24 +47,45 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { sortByKey } from '@utils/array';
 
 const TAB_APPLICATIONS = 'Applications';
+const TAB_CONNECTIONS = 'Connections';
 const TAB_JOBS = 'Jobs';
 const TAB_SQLS = 'SQLs';
 
 type MonitoringProps = {
+  applications: SparkApplicationType[];
+  computeConnections?: ComputeConnectionType[];
+  computeService?: ComputeServiceType;
+  connectionsLoading?: boolean;
+  fetchAll?: () => void;
+  jobs?: SparkJobType[];
+  loadingApplications?: boolean;
+  loadingJobs?: boolean;
   objectAttributes: ObjectAttributesType;
   refButtonTabs?: any;
-  selectedComputeService?: ComputeServiceEnum;
+  selectedComputeService?: ComputeServiceUUIDEnum;
   setSelectedSql?: (prev: (sql: SparkSQLType) => SparkSQLType) => void;
+  setSelectedTab?: (opts?: {
+    main?: MainNavigationTabEnum;
+  }) => void;
 };
 
 function Monitoring({
+  applications,
+  computeConnections,
+  computeService,
+  connectionsLoading,
+  fetchAll,
+  jobs,
+  loadingApplications,
+  loadingJobs,
   objectAttributes,
   refButtonTabs,
   selectedComputeService,
   setSelectedSql,
+  setSelectedTab,
 }: MonitoringProps) {
   const themeContext = useContext(ThemeContext);
-  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState(TAB_APPLICATIONS);
+  const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUIDState] = useState();
 
   const setSelectedSubheaderTabUUID = useCallback((prev) => {
     setSelectedSql(() => null);
@@ -68,14 +96,6 @@ function Monitoring({
   ]);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-
-  const { data: dataApplications } = api.spark_applications.list();
-  const applications: SparkApplicationType[] =
-    useMemo(() => dataApplications?.spark_applications, [dataApplications]);
-
-  const { data: dataJobs } = api.spark_jobs.list();
-  const jobs: SparkJobType[] =
-    useMemo(() => dataJobs?.spark_jobs, [dataJobs]);
 
   const { data: dataStages } = api.spark_stages.list({
     details: true,
@@ -88,16 +108,36 @@ function Monitoring({
   } = useMemo(() => (dataStages?.spark_stages || []).reduce((acc, stage) => {
     const application = stage?.application;
 
-    if (!(application?.id in acc)) {
-      acc[application?.id] = {};
+    if (!(application?.calculated_id in acc)) {
+      acc[application?.calculated_id] = {};
     }
 
-    acc[application?.id][stage?.stage_id] = stage;
+    acc[application?.calculated_id][stage?.stage_id] = stage;
 
     return acc;
   }, {}),
   [
     dataStages,
+  ]);
+
+  const connectionsMemo = useMemo(() => {
+    return (
+      <ConnectionSettings
+        computeService={computeService}
+        computeConnections={computeConnections}
+        fetchAll={fetchAll}
+        // @ts-ignore
+        onClickStep={(tab: string) => setSelectedTab(() => ({
+          // @ts-ignore
+          main: tab,
+        }))}
+      />
+    );
+  }, [
+    computeConnections,
+    computeService,
+    fetchAll,
+    setSelectedTab,
   ]);
 
   const applicationsMemo = useMemo(() => (
@@ -200,14 +240,14 @@ function Monitoring({
 
     jobs?.forEach((job) => {
       const application = job?.application;
-      if (!(application?.id in groups)) {
-        groups[application?.id] = {
+      if (!(application?.calculated_id in groups)) {
+        groups[application?.calculated_id] = {
           application: application,
           jobs: [],
         };
       }
 
-      groups[application?.id]?.jobs?.push(job);
+      groups[application?.calculated_id]?.jobs?.push(job);
     });
 
     return Object.values(groups).map(({
@@ -215,10 +255,10 @@ function Monitoring({
       jobs: jobsArr,
     }) => {
       return (
-        <div key={application?.id}>
+        <div key={application?.calculated_id}>
           <Spacing p={PADDING_UNITS}>
             <Text default bold>
-              Application {application?.id}
+              Application {application?.calculated_id}
             </Text>
           </Spacing>
 
@@ -247,6 +287,58 @@ function Monitoring({
     stagesMapping,
   ]);
 
+  const tabs = useMemo(() => {
+    const arr = [
+      {
+        label: () => (
+          <>
+            {TAB_APPLICATIONS}&nbsp;&nbsp;&nbsp;{!loadingApplications ? applications?.length || 0 : ''}
+          </>
+        ),
+        uuid: TAB_APPLICATIONS,
+      },
+      {
+        label: () => (
+          <>
+            {TAB_JOBS}&nbsp;&nbsp;&nbsp;{!loadingJobs ? jobs?.length || 0 : ''}
+          </>
+        ),
+        uuid: TAB_JOBS,
+      },
+      {
+        label: () => TAB_SQLS,
+        uuid: TAB_SQLS,
+      },
+    ];
+
+    if (computeConnections?.length >= 1) {
+      arr.unshift({
+        label: () => TAB_CONNECTIONS,
+        uuid: TAB_CONNECTIONS,
+      });
+    }
+
+    return arr;
+  }, [
+    computeConnections,
+    fetchAll,
+  ]);
+
+  useEffect(() => {
+    if (!selectedSubheaderTabUUID && !connectionsLoading) {
+      if (computeConnections?.length >= 1) {
+        setSelectedSubheaderTabUUID(TAB_CONNECTIONS);
+      } else {
+        setSelectedSubheaderTabUUID(TAB_APPLICATIONS);
+      }
+    }
+  }, [
+    computeConnections,
+    connectionsLoading,
+    selectedSubheaderTabUUID,
+    setSelectedSubheaderTabUUID,
+  ]);
+
   return (
     <>
       <Spacing px={PADDING_UNITS}>
@@ -256,34 +348,15 @@ function Monitoring({
           ref={refButtonTabs}
           regularSizeText
           selectedTabUUID={selectedSubheaderTabUUID}
-          tabs={[
-            {
-              label: () => (
-                <>
-                  {TAB_APPLICATIONS}&nbsp;&nbsp;&nbsp;{dataApplications ? applications?.length || 0 : ''}
-                </>
-              ),
-              uuid: TAB_APPLICATIONS,
-            },
-            {
-              label: () => (
-                <>
-                  {TAB_JOBS}&nbsp;&nbsp;&nbsp;{dataJobs ? jobs?.length || 0 : ''}
-                </>
-              ),
-              uuid: TAB_JOBS,
-            },
-            {
-              label: () => TAB_SQLS,
-              uuid: TAB_SQLS,
-            },
-          ]}
+          tabs={tabs}
           underlineColor={themeContext?.accent?.blue}
           underlineStyle
         />
       </Spacing>
 
       <Divider light />
+
+      {TAB_CONNECTIONS === selectedSubheaderTabUUID && connectionsMemo}
 
       {TAB_APPLICATIONS === selectedSubheaderTabUUID && applicationsMemo}
 

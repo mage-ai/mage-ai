@@ -26,6 +26,7 @@ class EmrScalingPocliy(BaseConfig):
 class EmrConfig(BaseConfig):
     bootstrap_script_path: str = None
     ec2_key_name: str = None
+    ec2_key_path: str = None
     master_security_group: str = None
     slave_security_group: str = None
     master_instance_type: str = DEFAULT_INSTANCE_TYPE

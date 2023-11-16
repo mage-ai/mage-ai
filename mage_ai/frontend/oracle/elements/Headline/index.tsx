@@ -46,6 +46,7 @@ export type HeadlineProps = {
   muted?: boolean;
   primary?: boolean;
   spacingBelow?: boolean;
+  strikethrough?: boolean;
   warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wind?: boolean;
@@ -107,6 +108,10 @@ const SHARED_STYLES = css<TextProps & HeadlineProps>`
 
   ${props => props.lineHeightAuto && `
     line-height: normal !important;
+  `}
+
+  ${props => props.strikethrough && `
+    text-decoration: line-through;
   `}
 `;
 

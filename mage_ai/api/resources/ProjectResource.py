@@ -100,9 +100,8 @@ class ProjectResource(GenericResource):
         if should_log_project:
             await UsageStatisticLogger().project_impression()
 
-        if Project(repo_config=repo_config).is_feature_enabled(
-            FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
-        ):
+        project = Project(repo_config=repo_config)
+        if project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
             await BlockActionObjectCache.initialize_cache(replace=True)
 
         return self

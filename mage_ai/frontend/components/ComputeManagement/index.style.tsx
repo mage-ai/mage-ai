@@ -25,3 +25,36 @@ export const CardStyle = styled.div<{
     margin: ${(PADDING_UNITS / 2) * UNIT}px;
   `}
 `;
+
+export const SetupStepRowStyle = styled.div<{
+  clickable?: boolean;
+}>`
+  ${transition()}
+
+  ${props => props.clickable && `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverOverlay};
+      cursor: pointer;
+    }
+  `}
+`;
+
+export const NavigationStyle = styled.div<{
+  selected?: boolean;
+}>`
+  ${transition()}
+
+  height: ${7 * UNIT}px;
+  padding-left: ${PADDING_UNITS * UNIT}px;
+  padding-right: ${PADDING_UNITS * UNIT}px;
+
+  ${props => !props.selected && `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
+    }
+  `}
+
+  ${props => props.selected && `
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+`;

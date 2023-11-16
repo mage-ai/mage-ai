@@ -1,8 +1,11 @@
+import { renderToString } from 'react-dom/server';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
+import ComputeServiceType from '@interfaces/ComputeServiceType';
 import Divider from '@oracle/elements/Divider';
+import ErrorMessage from './ErrorMessage';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -13,6 +16,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import api from '@api';
 import {
   Add,
   Edit,
@@ -20,8 +24,9 @@ import {
   Trash,
 } from '@oracle/icons';
 import { CardStyle } from './index.style';
+import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
-import { ComputeServiceEnum, ObjectAttributesType } from './constants';
+import { ObjectAttributesType } from './constants';
 import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
@@ -37,16 +42,18 @@ type ConnectionSettingsProps = {
   attributesTouched: {
     [key: string]: any;
   }
+  computeService?: ComputeServiceType;
   isLoading?: boolean;
   mutateObject: (data?: ObjectAttributesType) => void;
   objectAttributes: ObjectAttributesType;
   onCancel?: () => void;
-  selectedComputeService?: ComputeServiceEnum;
+  selectedComputeService?: ComputeServiceUUIDEnum;
   setObjectAttributes: (objectAttributes: ObjectAttributesType) => void;
 }
 
 function ConnectionSettings({
   attributesTouched,
+  computeService,
   isLoading,
   mutateObject,
   objectAttributes,
@@ -264,6 +271,79 @@ function ConnectionSettings({
     setObjectAttributesSparkConfig,
   ]);
 
+  const awsEMRSetupMemo = useMemo(() => {
+    const remoteVariablesDirKey = 'remote_variables_dir';
+    const steps = computeService?.setup_steps;
+    const remoteVariablesDirStep = steps?.find(({ uuid }) => uuid === remoteVariablesDirKey);
+
+    return (
+      <>
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="flex-start">
+            <FlexContainer flexDirection="column">
+              <Text
+                danger={!objectAttributes?.[remoteVariablesDirKey]
+                  || !!remoteVariablesDirStep?.error
+                }
+                default
+                large
+              >
+                Remote variables directory {!objectAttributes?.[remoteVariablesDirKey] && (
+                  <Text danger inline large>
+                    is required
+                  </Text>
+                )}
+              </Text>
+
+              <Text muted small>
+                This S3 bucket will be used by Spark.
+              </Text>
+            </FlexContainer>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1} flexDirection="column">
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                large
+                monospace
+                noBackground
+                noBorder
+                fullWidth
+                onChange={e => setObjectAttributes({
+                  remote_variables_dir: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="e.g. s3://magically-powerful-bucket"
+                value={objectAttributes?.remote_variables_dir || ''}
+              />
+
+              {remoteVariablesDirStep?.error && (
+                <FlexContainer justifyContent="flex-end">
+                  <Spacing mt={1}>
+                    <ErrorMessage error={remoteVariablesDirStep?.error} />
+                  </Spacing>
+                </FlexContainer>
+              )}
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+      </>
+    );
+  }, [
+    computeService,
+    objectAttributes,
+    setObjectAttributes,
+  ]);
+
   return (
     <ContainerStyle>
       <Panel noPadding>
@@ -408,56 +488,91 @@ function ConnectionSettings({
           </FlexContainer>
         </Spacing>
 
-        {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
-          <>
-            <Divider light />
-
-            <Spacing p={PADDING_UNITS}>
-              <FlexContainer alignItems="flex-start">
-                <FlexContainer flexDirection="column">
-                  <Text
-                    default
-                    large
-                  >
-                    Remote variables directory
-                  </Text>
-
-                  <Text muted small>
-                    This S3 bucket will be used by Spark.
-                  </Text>
-                </FlexContainer>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <Flex flex={1}>
-                  <TextInput
-                    afterIcon={<Edit />}
-                    afterIconClick={(_, inputRef) => {
-                      inputRef?.current?.focus();
-                    }}
-                    afterIconSize={ICON_SIZE}
-                    alignRight
-                    large
-                    monospace
-                    noBackground
-                    noBorder
-                    fullWidth
-                    onChange={e => setObjectAttributes({
-                      remote_variables_dir: e.target.value,
-                    })}
-                    paddingHorizontal={0}
-                    paddingVertical={0}
-                    placeholder="e.g. s3://magically-powerful-bucket"
-                    value={objectAttributes?.remote_variables_dir || ''}
-                  />
-                </Flex>
-              </FlexContainer>
-            </Spacing>
-          </>
-        )}
+        {ComputeServiceUUIDEnum.AWS_EMR === selectedComputeService && awsEMRSetupMemo}
       </Panel>
 
       <Spacing mb={UNITS_BETWEEN_SECTIONS} />
+
+      {computeService?.connection_credentials && (
+        <>
+          <Panel noPadding>
+            <Spacing p={PADDING_UNITS}>
+              <Headline level={4}>
+                Credentials
+              </Headline>
+            </Spacing>
+
+            {computeService?.connection_credentials?.map(({
+              description,
+              error,
+              name,
+              required,
+              uuid,
+              valid,
+              value,
+            }) => {
+              return (
+                <div key={uuid}>
+                  <Divider light />
+
+                  <Spacing p={PADDING_UNITS}>
+                    <FlexContainer alignItems="center">
+                      <FlexContainer flexDirection="column">
+                        <Text
+                          danger={!valid}
+                          default
+                          large
+                          monospace={!name}
+                        >
+                          {name || uuid} {!valid && (
+                            <Text danger inline large>
+                              is invalid
+                            </Text>
+                          )}
+                        </Text>
+
+                        {description && (
+                          <Text muted small>
+                            {description}
+                          </Text>
+                        )}
+                      </FlexContainer>
+
+                      <Spacing mr={PADDING_UNITS} />
+
+                      <Flex flex={1} justifyContent="flex-end">
+                        {!valid && (
+                          <>
+                            {!error && required && (
+                              <Text muted large>
+                                Required but missing
+                              </Text>
+                            )}
+                            {!error && !required && (
+                              <Text muted large>
+                                Invalid
+                              </Text>
+                            )}
+                            {error && <ErrorMessage error={error} large />}
+                          </>
+                        )}
+
+                        {valid && value && (
+                          <Text default large>
+                            {value}
+                          </Text>
+                        )}
+                      </Flex>
+                    </FlexContainer>
+                  </Spacing>
+                </div>
+              );
+            })}
+          </Panel>
+
+          <Spacing mb={UNITS_BETWEEN_SECTIONS} />
+        </>
+      )}
 
       <Panel noPadding>
         <Spacing p={PADDING_UNITS}>
@@ -579,7 +694,7 @@ function ConnectionSettings({
           </>
         )}
 
-        {ComputeServiceEnum.AWS_EMR === selectedComputeService && (
+        {ComputeServiceUUIDEnum.AWS_EMR === selectedComputeService && (
           <Spacing p={PADDING_UNITS}>
             <FlexContainer alignItems="center">
               <FlexContainer flexDirection="column">

@@ -278,6 +278,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
+        repo_config=None,
         timeout: int = None,
     ) -> None:
         if configuration is None:
@@ -339,11 +340,25 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         self.execution_timestamp_start = None
         self.execution_timestamp_end = None
+        self.execution_uuid = None
+        self._compute_service_uuid = None
+        self._repo_config = repo_config
         self._spark_session_current = None
+        self.global_vars = None
 
     @property
     def uuid(self) -> str:
         return self._uuid
+
+    @property
+    def repo_config(self):
+        if self._repo_config:
+            return self._repo_config
+
+        if self.pipeline:
+            self._repo_config = self.pipeline.repo_config
+
+        return self._repo_config
 
     @property
     def uuid_replicated(self) -> str:
@@ -874,6 +889,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        execution_uuid: str = None,
         from_notebook: bool = False,
         **kwargs
     ) -> Dict:
@@ -883,6 +899,9 @@ class Block(DataIntegrationMixin, SparkBlock):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        if execution_uuid:
+            self.execution_uuid = execution_uuid
+
         if logging_tags is None:
             logging_tags = dict()
 
@@ -1406,8 +1425,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             if logger and 'logger' not in global_vars:
                 global_vars['logger'] = logger
 
-            track_spark = from_notebook and self.is_using_spark() and \
-                self.compute_management_enabled()
+            track_spark = from_notebook and self.should_track_spark()
 
             if track_spark:
                 self.clear_spark_jobs_cache()
@@ -1490,7 +1508,8 @@ class Block(DataIntegrationMixin, SparkBlock):
             self.module = module
 
             return block_function_updated
-        except Exception:
+        except Exception as err:
+            print(f'[WARNING] Block.initialize_decorator_modules: {err}')
             print('Falling back to default block execution...')
 
         return block_function
@@ -2489,12 +2508,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             global_vars['configuration'] = self.configuration
         if 'context' not in global_vars:
             global_vars['context'] = dict()
+
+        self.global_vars = global_vars
+
         return global_vars
 
     def get_spark_session(self):
         if self.spark_init and (not self.pipeline or
                                 not self.pipeline.spark_config):
             return self.spark
+
         try:
             if self.pipeline and self.pipeline.spark_config:
                 spark_config = SparkConfig.load(
@@ -2506,6 +2529,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.spark = get_spark_session(spark_config)
         except Exception:
             self.spark = None
+
+        if not self.spark and self.global_vars and self.global_vars.get('spark'):
+            self.spark = self.global_vars.get('spark')
 
         self.spark_init = True
         return self.spark

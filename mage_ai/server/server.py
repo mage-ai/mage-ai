@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import os
 import shutil
 import stat
@@ -79,6 +80,8 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.ssh.aws.emr.models import create_tunnel
+from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
     ENABLE_PROMETHEUS,
@@ -355,6 +358,14 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         updated_routes = routes
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
+
+    file_path = file_path_aws_emr()
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            f.write(json.dumps({}))
+
+    autoreload.watch(file_path)
+
     return tornado.web.Application(
         updated_routes,
         autoreload=True,
@@ -405,7 +416,8 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
-    url = f'http://{host or "localhost"}:{port}'
+    host = host or 'localhost'
+    url = f'http://{host}:{port}'
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
     webbrowser.open_new_tab(url)
@@ -500,6 +512,17 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
+    project_model = Project()
+    if project_model and \
+            project_model.spark_config and \
+            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+
+        Application.clear_cache()
+
+    tunnel = create_tunnel()
+    if tunnel:
+        print(f'SSH tunnel active: {tunnel.is_active()}')
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
@@ -556,13 +579,6 @@ def start_server(
     init_project_uuid(overwrite_uuid=project_uuid)
 
     asyncio.run(UsageStatisticLogger().project_impression())
-
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
-
-        Application.clear_cache()
 
     if dbt_docs:
         run_docs_server()

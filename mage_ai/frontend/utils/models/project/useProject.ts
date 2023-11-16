@@ -6,7 +6,16 @@ import { featureEnabled } from '.';
 
 function useProject(): {
   featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
-  featureUUIDs: any;
+  // @ts-ignore
+  featureUUIDs: {
+    ADD_NEW_BLOCK_V2: FeatureUUIDEnum;
+    COMPUTE_MANAGEMENT: FeatureUUIDEnum;
+    DATA_INTEGRATION_IN_BATCH_PIPELINE: FeatureUUIDEnum;
+    INTERACTIONS: FeatureUUIDEnum;
+    NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW: FeatureUUIDEnum;
+    LOCAL_TIMEZONE: FeatureUUIDEnum;
+    OPERATION_HISTORY: FeatureUUIDEnum;
+  };
   fetchProjects: () => any;
   project: ProjectType;
   sparkEnabled: boolean;
@@ -18,16 +27,15 @@ function useProject(): {
 
   return {
     featureEnabled: (featureUUID: FeatureUUIDEnum): boolean => featureEnabled(project, featureUUID),
-    // featureUUIDs: Object.keys(FeatureUUIDEnum).reduce((acc, key) => ({
-    //   ...acc,
-    //   [key]: FeatureUUIDEnum[key],
-    // }), {}),
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
     project,
     sparkEnabled: computeManagementEnabled
-      && project.spark_config
-      && Object.keys(project.spark_config || {})?.length >= 1,
+      && (project.spark_config || project.emr_config)
+      && (
+        Object.keys(project.spark_config || {})?.length >= 1
+          || Object.keys(project.emr_config || {})?.length >= 1
+      ),
   };
 }
 

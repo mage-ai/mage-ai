@@ -100,6 +100,7 @@ type CodeOutputProps = {
   setSelectedTab?: (tab: TabType) => void;
   showBorderTop?: boolean;
   sideBySideEnabled?: boolean;
+  sparkEnabled?: boolean;
 } & BorderColorShareProps;
 
 const SHARED_TOOLTIP_PROPS = {
@@ -153,6 +154,7 @@ function CodeOutput({
   setSelectedTab,
   showBorderTop,
   sideBySideEnabled,
+  sparkEnabled,
 }: CodeOutputProps, ref) {
   const [mounted, setMounted] = useState(false);
 
@@ -556,7 +558,7 @@ function CodeOutput({
       }
     });
 
-    if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK) {
+    if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK && !sparkEnabled) {
       arrContent.unshift([
         <OutputRowStyle
           contained
@@ -585,6 +587,7 @@ function CodeOutput({
     progressBar,
     renderMessagesRaw,
     selected,
+    sparkEnabled,
   ]);
 
   const columnCount = dataFrameShape?.[1] || 0;

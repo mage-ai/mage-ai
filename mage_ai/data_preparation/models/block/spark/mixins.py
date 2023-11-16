@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.block.spark.constants import (
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.services.spark.api.service import API
+from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.sqls import Sql
@@ -30,6 +31,16 @@ class SparkBlock:
 
         return self._spark_session_current
 
+    @property
+    def compute_service_uuid(self) -> ComputeServiceUUID:
+        if self._compute_service_uuid:
+            return self._compute_service_uuid
+        self._compute_service_uuid = get_compute_service(
+            ignore_active_kernel=True,
+            repo_config=self.repo_config,
+        )
+        return self._compute_service_uuid
+
     def spark_session_application(self) -> Application:
         if not self.spark_session:
             return
@@ -40,7 +51,7 @@ class SparkBlock:
         if value_tup:
             application_id = value_tup[1]
 
-            return Application(
+            return Application.load(
                 id=application_id,
                 spark_ui_url=self.spark_session.sparkContext.uiWebUrl,
             )
@@ -51,7 +62,13 @@ class SparkBlock:
         )
 
     def is_using_spark(self) -> bool:
-        return get_compute_service()
+        return self.compute_service_uuid in [
+            ComputeServiceUUID.AWS_EMR,
+            ComputeServiceUUID.STANDALONE_CLUSTER,
+        ]
+
+    def should_track_spark(self) -> bool:
+        return self.is_using_spark() and self.compute_management_enabled()
 
     def execution_states(self, cache: bool = False) -> Dict:
         jobs_cache = self.__load_cache()
@@ -82,33 +99,40 @@ class SparkBlock:
     def jobs_during_execution(self) -> List[Job]:
         self.__load_spark_job_submission_timestamps()
 
-        if self.execution_timestamp_start:
-            jobs = self.__get_jobs(application=self.execution_start_application)
+        if not self.execution_timestamp_start and self.execution_uuid_start:
+            return []
 
-            def _filter(
-                job: Job,
-                execution_timestamp_start: float = self.execution_timestamp_start,
-                execution_timestamp_end: float = self.execution_timestamp_end,
-            ) -> bool:
-                if not job.submission_time:
-                    return False
+        def _filter(
+            job: Job,
+            block_uuid=self.uuid,
+            compute_service_uuid=self.compute_service_uuid,
+            execution_timestamp_end: float = self.execution_timestamp_end,
+            execution_timestamp_start: float = self.execution_timestamp_start,
+            execution_uuid_start=self.execution_uuid_start,
+        ) -> bool:
+            if ComputeServiceUUID.AWS_EMR == compute_service_uuid:
+                key = self.execution_uuid_start or self.execution_timestamp_start
+                return job.name == f'{block_uuid}:{key}'
 
-                if isinstance(job.submission_time, str):
-                    submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
-                elif isinstance(job.submission_time, float) or isinstance(job.submission_time, int):
-                    submission_timestamp = datetime.fromtimestamp(job.submission_time)
+            if not job.submission_time:
+                return False
 
-                return execution_timestamp_start and \
-                    execution_timestamp_end and \
-                    submission_timestamp >= execution_timestamp_start and \
-                    (
-                        not execution_timestamp_end or
-                        submission_timestamp <= execution_timestamp_end
-                    )
+            if isinstance(job.submission_time, str):
+                submission_timestamp = dateutil.parser.parse(job.submission_time).timestamp()
+            elif isinstance(job.submission_time, float) or isinstance(job.submission_time, int):
+                submission_timestamp = datetime.fromtimestamp(job.submission_time)
 
-            return list(filter(_filter, jobs))
+            return execution_timestamp_start and \
+                execution_timestamp_end and \
+                submission_timestamp >= execution_timestamp_start and \
+                (
+                    not execution_timestamp_end or
+                    submission_timestamp <= execution_timestamp_end
+                )
 
-        return []
+        jobs = self.__get_jobs(application=self.execution_start_application)
+
+        return list(filter(_filter, jobs or []))
 
     def stages_during_execution(self, jobs: List[Job]):
         if not jobs:
@@ -122,7 +146,7 @@ class SparkBlock:
 
         stages = self.__get_stages(application=self.execution_start_application)
 
-        return list(filter(_filter, stages))
+        return list(filter(_filter, stages or []))
 
     def sqls_during_execution(self, jobs: List[Job]):
         if not jobs:
@@ -140,7 +164,7 @@ class SparkBlock:
 
         sqls = self.__get_sqls(application=self.execution_start_application)
 
-        return list(filter(_filter, sqls))
+        return list(filter(_filter, sqls or []))
 
     def clear_spark_jobs_cache(self) -> None:
         if os.path.exists(self.spark_jobs_full_path):
@@ -155,13 +179,24 @@ class SparkBlock:
         for application in applications:
             Application.cache_application(application)
 
-    def set_spark_job_execution_start(self) -> None:
+    def set_spark_job_execution_start(self, execution_uuid: str = None) -> None:
         self.execution_timestamp_start = datetime.utcnow().timestamp()
         application = self.spark_session_application()
+
+        if execution_uuid:
+            self.execution_uuid = execution_uuid
+
+        if self.spark_session and self.spark_session.sparkContext:
+            key = f'{self.uuid}:{self.execution_uuid or self.execution_timestamp_start}'
+            # For jobs
+            self.spark_session.sparkContext.setLocalProperty('callSite.short', key)
+            # For stages
+            self.spark_session.sparkContext.setLocalProperty('callSite.long', key)
 
         self.__update_spark_jobs_cache(
             dict(
                 application=application.to_dict() if application else None,
+                execution_uuid=self.execution_uuid,
                 submission_timestamp=self.execution_timestamp_start,
             ),
             'before',
@@ -187,7 +222,7 @@ class SparkBlock:
 
         if application:
             build_options.update(dict(
-                application_id=application.id,
+                application_id=application.calculated_id(),
                 application_spark_ui_url=application.spark_ui_url,
             ))
         else:
@@ -304,12 +339,22 @@ class SparkBlock:
             f.write(json.dumps(data))
 
     def __load_spark_job_submission_timestamps(self) -> None:
+        self.execution_end_application = None
+        self.execution_start_application = None
+        self.execution_timestamp_end = None
+        self.execution_timestamp_start = None
+        self.execution_uuid_end = None
+        self.execution_uuid_start = None
+
         jobs_cache = self.__load_cache()
         if jobs_cache:
             before = jobs_cache.get('before')
             if before:
                 self.execution_timestamp_start = (before or {}).get(
                     'submission_timestamp',
+                )
+                self.execution_uuid_start = (before or {}).get(
+                    'execution_uuid',
                 )
                 self.execution_start_application = (before or {}).get(
                     'application',
@@ -323,6 +368,9 @@ class SparkBlock:
             if after:
                 self.execution_timestamp_end = (after or {}).get(
                     'submission_timestamp',
+                )
+                self.execution_uuid_end = (after or {}).get(
+                    'execution_uuid',
                 )
                 self.execution_end_application = (after or {}).get(
                     'application',

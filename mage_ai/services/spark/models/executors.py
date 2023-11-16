@@ -38,8 +38,8 @@ class Executor(BaseSparkModel):
     total_tasks: int = None  # 28
 
     def __post_init__(self):
-        if self.memory_metrics:
+        if self.memory_metrics and isinstance(self.memory_metrics, dict):
             self.memory_metrics = MemoryMetrics.load(**self.memory_metrics)
 
-        if self.peak_memory_metrics:
+        if self.peak_memory_metrics and isinstance(self.peak_memory_metrics, dict):
             self.peak_memory_metrics = Metrics.load(**self.peak_memory_metrics)

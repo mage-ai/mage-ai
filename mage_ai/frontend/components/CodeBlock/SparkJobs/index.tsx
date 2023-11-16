@@ -30,11 +30,11 @@ function SparkJobs({
   } = useMemo(() => (stages || []).reduce((acc, stage) => {
     const application = stage?.application;
 
-    if (!(application?.id in acc)) {
-      acc[application?.id] = {};
+    if (!(application?.calculated_id in acc)) {
+      acc[application?.calculated_id] = {};
     }
 
-    acc[application?.id][stage?.stage_id] = stage;
+    acc[application?.calculated_id][stage?.stage_id] = stage;
 
     return acc;
   }, {}),

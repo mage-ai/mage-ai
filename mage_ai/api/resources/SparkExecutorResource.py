@@ -1,6 +1,5 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.mixins.spark import SparkApplicationChild
-from mage_ai.services.spark.api.local import LocalAPI
 from mage_ai.services.spark.models.executors import Executor
 
 
@@ -10,7 +9,7 @@ class SparkExecutorResource(GenericResource, SparkApplicationChild):
         application_id = await self.get_application_id(**kwargs)
 
         return self.build_result_set(
-            await LocalAPI().executors(application_id=application_id),
+            await self.build_api().executors(application_id=application_id),
             user,
             **kwargs,
         )

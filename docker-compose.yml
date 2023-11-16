@@ -82,14 +82,14 @@ x-app_settings: &app_settings
 services:
   server:
     <<: *server_settings
+  app:
+    <<: *app_settings
   server_spark:
     <<: *server_settings
     image: mage/data_spark
     build:
       context: .
       dockerfile: ./dev.spark.Dockerfile
-  app:
-    <<: *app_settings
   app_spark:
     <<: *app_settings
     image: mage/data_spark

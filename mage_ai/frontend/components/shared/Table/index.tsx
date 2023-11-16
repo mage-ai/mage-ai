@@ -100,6 +100,7 @@ type TableProps = {
   rowVerticalPadding?: number;
   rows: any[][];
   rowsGroupedByIndex?: number[][] | string[][];
+  selectedRowIndexInternal?: number;
   setRowsSorted?: (rows: React.ReactElement[][]) => void;
   sortableColumnIndexes?: number[];
   sortedColumn?: SortedColumnType;
@@ -146,6 +147,7 @@ function Table({
   rowVerticalPadding,
   rows,
   rowsGroupedByIndex,
+  selectedRowIndexInternal: selectedRowIndexInternalProp,
   setRowsSorted,
   sortableColumnIndexes,
   sortedColumn: sortedColumnInit,
@@ -155,7 +157,19 @@ function Table({
   uuidColumnIndex,
   wrapColumns,
 }: TableProps, ref) {
-  const [selectedRowIndexInternal, setSelectedRowIndexInternal] = useState<number>(null);
+  const [selectedRowIndexInternalState, setSelectedRowIndexInternal] = useState<number>(null);
+  const selectedRowIndexInternal =
+    useMemo(() => {
+      if (typeof selectedRowIndexInternalProp !== 'undefined') {
+        return selectedRowIndexInternalProp;
+      }
+
+      return selectedRowIndexInternalState;
+    }, [
+      selectedRowIndexInternalProp,
+      selectedRowIndexInternalState,
+    ]);
+
   const onClickRowInternal = useCallback((rowIndex: number, event: any) => {
     setSelectedRowIndexInternal(prev => prev === rowIndex ? null : rowIndex);
   }, [

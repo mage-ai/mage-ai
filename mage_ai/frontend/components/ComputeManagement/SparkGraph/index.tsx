@@ -46,8 +46,12 @@ function SparkGraph({
   const themeContext = useContext(ThemeContext);
 
   const { data } = api.spark_sqls.detail(model?.id, {
-    application_id: model?.application?.id,
-    application_spark_ui_url: encodeURIComponent(model?.application?.spark_ui_url),
+    application_id: model?.application?.calculated_id
+      ? encodeURIComponent(model?.application?.calculated_id)
+      : '',
+    application_spark_ui_url: model?.application?.spark_ui_url
+      ? encodeURIComponent(model?.application?.spark_ui_url)
+      : '',
     include_jobs_and_stages: 1,
     _format: 'with_jobs_and_stages',
   });

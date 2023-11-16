@@ -10,10 +10,12 @@ from mage_ai.services.spark.models.metrics import Metrics
 class Locality(str, Enum):
     NODE_LOCAL = 'NODE_LOCAL'
     PROCESS_LOCAL = 'PROCESS_LOCAL'
+    RACK_LOCAL = 'RACK_LOCAL'
 
 
 class StageStatus(str, Enum):
     COMPLETE = 'COMPLETE'
+    PENDING = 'PENDING'
     SKIPPED = 'SKIPPED'
 
 
@@ -42,7 +44,7 @@ class Driver(BaseSparkModel):
     task_time: int = None  # 11
 
     def __post_init__(self):
-        if self.peak_memory_metrics:
+        if self.peak_memory_metrics and isinstance(self.peak_memory_metrics, dict):
             self.peak_memory_metrics = Metrics.load(**self.peak_memory_metrics)
 
 
@@ -51,7 +53,7 @@ class ExecutorSummary(BaseSparkModel):
     driver: Driver = None
 
     def __post_init__(self):
-        if self.driver:
+        if self.driver and isinstance(self.driver, dict):
             self.driver = Driver.load(**self.driver)
 
 
@@ -100,7 +102,10 @@ class ShuffleReadMetricsQuantile(BaseSparkModel):
     total_blocks_fetched: List[int] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.shuffle_push_read_metrics_dist:
+        if self.shuffle_push_read_metrics_dist and isinstance(
+            self.shuffle_push_read_metrics_dist,
+            dict,
+        ):
             self.shuffle_push_read_metrics_dist = ShufflePushReadMetricsDistQuantile.load(
                 **self.shuffle_push_read_metrics_dist,
             )
@@ -145,7 +150,7 @@ class ShuffleReadMetrics(BaseSparkModel):
     shuffle_push_read_metrics: PushReadMetrics = None
 
     def __post_init__(self):
-        if self.shuffle_push_read_metrics:
+        if self.shuffle_push_read_metrics and isinstance(self.shuffle_push_read_metrics, dict):
             self.shuffle_push_read_metrics = PushReadMetrics.load(**self.shuffle_push_read_metrics)
 
 
@@ -178,16 +183,16 @@ class TaskMetricsQuantiles(BaseSparkModel):
     shuffle_write_metrics: ShuffleWriteMetricsQuantile = None
 
     def __post_init__(self):
-        if self.input_metrics:
+        if self.input_metrics and isinstance(self.input_metrics, dict):
             self.input_metrics = InputMetricsQuantile.load(**self.input_metrics)
 
-        if self.output_metrics:
+        if self.output_metrics and isinstance(self.output_metrics, dict):
             self.output_metrics = OutputMetricsQuantile.load(**self.output_metrics)
 
-        if self.shuffle_read_metrics:
+        if self.shuffle_read_metrics and isinstance(self.shuffle_read_metrics, dict):
             self.shuffle_read_metrics = ShuffleReadMetricsQuantile.load(**self.shuffle_read_metrics)
 
-        if self.shuffle_write_metrics:
+        if self.shuffle_write_metrics and isinstance(self.shuffle_write_metrics, dict):
             self.shuffle_write_metrics = ShuffleWriteMetricsQuantile.load(
                 **self.shuffle_write_metrics,
             )
@@ -211,13 +216,13 @@ class TaskMetrics(BaseSparkModel):
     shuffle_write_metrics: ShuffleWriteMetrics = None
 
     def __post_init__(self):
-        if self.input_metrics:
+        if self.input_metrics and isinstance(self.input_metrics, dict):
             self.input_metrics = InputMetrics.load(**self.input_metrics)
-        if self.output_metrics:
+        if self.output_metrics and isinstance(self.output_metrics, dict):
             self.output_metrics = OutputMetrics.load(**self.output_metrics)
-        if self.shuffle_read_metrics:
+        if self.shuffle_read_metrics and isinstance(self.shuffle_read_metrics, dict):
             self.shuffle_read_metrics = ShuffleReadMetrics.load(**self.shuffle_read_metrics)
-        if self.shuffle_write_metrics:
+        if self.shuffle_write_metrics and isinstance(self.shuffle_write_metrics, dict):
             self.shuffle_write_metrics = ShuffleWriteMetrics.load(**self.shuffle_write_metrics)
 
 
@@ -241,8 +246,8 @@ class ExecutorMetricsDistributions(BaseSparkModel):
     task_time: List[int] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.peak_memory_metrics:
-            self.peak_memory_metrics = Metrics(**self.peak_memory_metrics)
+        if self.peak_memory_metrics and isinstance(self.peak_memory_metrics, dict):
+            self.peak_memory_metrics = Metrics.load(**self.peak_memory_metrics)
 
 
 @dataclass
@@ -265,21 +270,21 @@ class Task(BaseSparkModel):
     task_metrics: TaskMetrics = None  # {}
 
     def __post_init__(self):
-        if self.status:
+        if self.status and isinstance(self.status, str):
             try:
                 self.status = TaskStatus(self.status)
             except ValueError as err:
                 print(f'[WARNING] Task: {err}')
                 self.status = self.status
 
-        if self.task_locality:
+        if self.task_locality and isinstance(self.task_locality, str):
             try:
                 self.task_locality = Locality(self.task_locality)
             except ValueError as err:
                 print(f'[WARNING] Task: {err}')
                 self.task_locality = self.task_locality
 
-        if self.task_metrics:
+        if self.task_metrics and isinstance(self.task_metrics, dict):
             self.task_metrics = TaskMetrics.load(**self.task_metrics)
 
     @property
@@ -370,16 +375,19 @@ class StageBase(BaseSparkModel):
         if self.application and isinstance(self.application, dict):
             self.application = Application.load(**self.application)
 
-        if self.executor_metrics_distributions:
+        if self.executor_metrics_distributions and isinstance(
+            self.executor_metrics_distributions,
+            dict,
+        ):
             if 'quantiles' not in self.executor_metrics_distributions:
                 self.executor_metrics_distributions = ExecutorMetricsDistributions.load(
                     **self.executor_metrics_distributions,
                 )
 
-        if self.peak_executor_metrics:
+        if self.peak_executor_metrics and isinstance(self.peak_executor_metrics, dict):
             self.peak_executor_metrics = Metrics.load(**self.peak_executor_metrics)
 
-        if self.task_metrics_distributions:
+        if self.task_metrics_distributions and isinstance(self.task_metrics_distributions, dict):
             if 'quantiles' in self.task_metrics_distributions:
                 self.task_metrics_distributions = TaskMetricsQuantiles.load(
                     **self.task_metrics_distributions,
@@ -389,7 +397,7 @@ class StageBase(BaseSparkModel):
                     **self.task_metrics_distributions,
                 )
 
-        if self.status:
+        if self.status and isinstance(self.status, str):
             try:
                 self.status = StageStatus(self.status)
             except ValueError as err:
@@ -481,13 +489,16 @@ class StageAttempt(StageBase):
     def __post_init__(self):
         super().__post_init__()
 
-        if self.executor_summary:
+        if self.executor_summary and isinstance(self.executor_summary, dict):
             self.executor_summary = ExecutorSummary.load(**self.executor_summary)
 
-        if self.tasks:
+        if self.tasks and isinstance(self.tasks, dict):
             tasks = {}
             for k, v in self.tasks.items():
-                tasks[k] = Task.load(**v)
+                if v and isinstance(v, dict):
+                    tasks[k] = Task.load(**v)
+                else:
+                    tasks[k] = v
             self.tasks = tasks
 
     @property
@@ -497,13 +508,22 @@ class StageAttempt(StageBase):
 
 @dataclass
 class Stage(StageBase):
-    stage_attempts: List[Dict] = field(default_factory=list)
+    stage_attempts: List[StageAttempt] = field(default_factory=list)
 
     def __post_init__(self):
         super().__post_init__()
 
-        if self.stage_attempts:
-            self.stage_attempts = [StageAttempt.load(**m) for m in self.stage_attempts]
+        if self.stage_attempts and isinstance(self.stage_attempts, list):
+            arr = []
+            for m in self.stage_attempts:
+                if m and isinstance(m, dict):
+                    m_updated = m.copy()
+                    if not m_updated.get('application'):
+                        m_updated['application'] = self.application
+                    arr.append(StageAttempt.load(**m_updated))
+                else:
+                    arr.append(m)
+            self.stage_attempts = arr
 
 
 @dataclass
@@ -557,7 +577,10 @@ class ShuffleReadMetricsSummary(BaseSparkModel):
     total_blocks_fetched: List[float] = field(default_factory=list)  # [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
 
     def __post_init__(self):
-        if self.shuffle_push_read_metrics_dist:
+        if self.shuffle_push_read_metrics_dist and isinstance(
+            self.shuffle_push_read_metrics_dist,
+            dict,
+        ):
             self.shuffle_push_read_metrics_dist = PushReadMetricsDistSummary(
                 **self.shuffle_push_read_metrics_dist,
             )
@@ -597,13 +620,13 @@ class StageAttemptTaskSummary(BaseSparkModel):
     shuffle_write_metrics: ShuffleWriteMetricsSummary = None
 
     def __post_init__(self):
-        if self.input_metrics:
+        if self.input_metrics and isinstance(self.input_metrics, dict):
             self.input_metrics = InputMetricsSummary.load(**self.input_metrics)
-        if self.output_metrics:
+        if self.output_metrics and isinstance(self.output_metrics, dict):
             self.output_metrics = OutputMetricsSummary.load(**self.output_metrics)
-        if self.shuffle_read_metrics:
+        if self.shuffle_read_metrics and isinstance(self.shuffle_read_metrics, dict):
             self.shuffle_read_metrics = ShuffleReadMetricsSummary.load(**self.shuffle_read_metrics)
-        if self.shuffle_write_metrics:
+        if self.shuffle_write_metrics and isinstance(self.shuffle_write_metrics, dict):
             self.shuffle_write_metrics = ShuffleWriteMetricsSummary.load(
                 **self.shuffle_write_metrics,
             )

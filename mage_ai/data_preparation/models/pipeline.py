@@ -78,16 +78,14 @@ class Pipeline:
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
-        if config is None:
-            self.load_config_from_yaml()
-        else:
-            self.load_config(config, catalog=catalog)
+
         if repo_config is None:
             self.repo_config = get_repo_config(repo_path=self.repo_path)
         elif type(repo_config) is dict:
             self.repo_config = RepoConfig.from_dict(repo_config)
         else:
             self.repo_config = repo_config
+
         self.variable_manager = VariableManager.get_manager(
             self.repo_path,
             self.remote_variables_dir or self.variables_dir,
@@ -95,6 +93,11 @@ class Pipeline:
 
         # Used for showing the operation history. For example: recently viewed pipelines.
         self.history = []
+
+        if config is None:
+            self.load_config_from_yaml()
+        else:
+            self.load_config(config, catalog=catalog)
 
     @property
     def config_path(self):
@@ -525,6 +528,7 @@ class Pipeline:
                 language=c.get('language'),
                 pipeline=self,
                 replicated_block=c.get('replicated_block'),
+                repo_config=self.repo_config,
                 retry_config=c.get('retry_config'),
                 status=c.get('status'),
                 timeout=c.get('timeout'),
