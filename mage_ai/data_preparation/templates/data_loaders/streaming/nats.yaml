@@ -1,0 +1,20 @@
+connector_type: nats
+server_url: "nats://localhost:4222"
+subject: subject_name
+stream_name: stream_name
+
+# Optional: Batch size and timeout for reading messages
+batch_size: 100
+timeout: 5
+
+# Optional: TLS configuration
+use_tls: false
+# cafile: "path/to/ca.pem"
+# certfile: "path/to/client-cert.pem"
+# keyfile: "path/to/client-key.pem"
+
+# Optional: NKEY seed string
+# nkeys_seed_str: "SUAPAEYJQOQHJ4"
+
+# Optional: Consumer name for pull-based subscription
+consumer_name: "my_consumer"
