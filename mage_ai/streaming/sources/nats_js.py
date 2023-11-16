@@ -18,7 +18,6 @@ class SSLConfig:
     cafile: str = None
     certfile: str = None
     keyfile: str = None
-    password: str = None
     check_hostname: bool = False
 
 
@@ -49,7 +48,6 @@ class NATSSource(BaseSource):
         self.loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self.start_loop, daemon=True)
         self.thread.start()
-        self.checkpoint_path = kwargs.get('checkpoint_path')
         super().__init__(config)
 
     def start_loop(self):
