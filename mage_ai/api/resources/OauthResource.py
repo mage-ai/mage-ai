@@ -1,4 +1,3 @@
-import json
 import urllib.parse
 from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
@@ -7,10 +6,8 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.oauth2 import generate_access_token
 from mage_ai.authentication.oauth.constants import (
-    ACTIVE_DIRECTORY_CLIENT_ID,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
-    OAUTH_PROVIDER_ACTIVE_DIRECTORY,
     OAUTH_PROVIDER_GHE,
     OAUTH_PROVIDER_GITHUB,
     VALID_OAUTH_PROVIDERS,
@@ -24,10 +21,35 @@ from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
 from mage_ai.data_preparation.git.api import get_oauth_client_id
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application
-from mage_ai.settings import ACTIVE_DIRECTORY_DIRECTORY_ID
 
 
 class OauthResource(GenericResource):
+    @classmethod
+    @safe_db_query
+    async def collection(self, query, meta, user, **kwargs):
+        redirect_uri = query.get('redirect_uri', [None])
+        if redirect_uri:
+            redirect_uri = redirect_uri[0]
+
+        oauths = []
+        for provider, provider_class in NAME_TO_PROVIDER.items():
+            try:
+                provider_instance = provider_class()
+                auth_url_response = provider_instance.get_auth_url_response(
+                    redirect_uri=redirect_uri
+                )
+                if auth_url_response:
+                    oauths.append(
+                        dict(
+                            provider=provider,
+                            **auth_url_response,
+                        )
+                    )
+            except Exception:
+                continue
+
+        return self.build_result_set(oauths, user, **kwargs)
+
     @classmethod
     @safe_db_query
     def create(self, payload, user, **kwargs):
@@ -171,36 +193,13 @@ class OauthResource(GenericResource):
                 for k, v in query.items():
                     query_strings.append(f'{k}={v}')
 
-                model['url'] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
-            elif OAUTH_PROVIDER_ACTIVE_DIRECTORY == pk:
-                ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
-                if ad_directory_id:
-                    from requests.models import PreparedRequest
-
-                    req = PreparedRequest()
-                    req.prepare_url(redirect_uri, dict(provider=pk))
-                    query = dict(
-                        client_id=ACTIVE_DIRECTORY_CLIENT_ID,
-                        redirect_uri=f'https://api.mage.ai/v1/oauth/{pk}',
-                        response_type='code',
-                        scope='User.Read',
-                        state=urllib.parse.quote_plus(
-                            json.dumps(
-                                dict(
-                                    redirect_uri=req.url,
-                                    tenant_id=ad_directory_id,
-                                )
-                            )
-                        ),
-                    )
-                    query_strings = []
-                    for k, v in query.items():
-                        query_strings.append(f'{k}={v}')
-                    model[
-                        'url'
-                    ] = f"https://login.microsoftonline.com/{ad_directory_id}/oauth2/v2.0/authorize?{'&'.join(query_strings)}"  # noqa: E501
+                model[
+                    'url'
+                ] = f"https://github.com/login/oauth/authorize?{'&'.join(query_strings)}"
             elif provider_instance is not None:
-                resp = provider_instance.get_auth_url_response(redirect_uri=redirect_uri)
+                resp = provider_instance.get_auth_url_response(
+                    redirect_uri=redirect_uri
+                )
                 if resp:
                     model.update(resp)
 

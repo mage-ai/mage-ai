@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 import uuid
-from typing import Dict
+from typing import Awaitable, Dict
 
 import aiohttp
 
@@ -39,30 +39,29 @@ class GHEProvider(OauthProvider):
                 'Make sure the GHE_CLIENT_SECRET environment variable is set.')
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
-        if self.hostname:
-            base_url = get_base_url(redirect_uri)
-            redirect_uri_query = dict(
-                provider=self.provider,
-                redirect_uri=redirect_uri,
-            )
-            query = dict(
-                client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
-                redirect_uri=urllib.parse.quote_plus(
-                    f'{base_url}/oauth',
-                ),
-                scope='repo',
-                state=uuid.uuid4().hex,
-            )
-            query_strings = []
-            for k, v in query.items():
-                query_strings.append(f'{k}={v}')
+        base_url = get_base_url(redirect_uri)
+        redirect_uri_query = dict(
+            provider=self.provider,
+            redirect_uri=redirect_uri,
+        )
+        query = dict(
+            client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
+            redirect_uri=urllib.parse.quote_plus(
+                f'{base_url}/oauth',
+            ),
+            scope='repo',
+            state=uuid.uuid4().hex,
+        )
+        query_strings = []
+        for k, v in query.items():
+            query_strings.append(f'{k}={v}')
 
-            return dict(
-                url=f"{self.hostname}/login/oauth/authorize?{'&'.join(query_strings)}",
-                redirect_query_params=redirect_uri_query,
-            )
+        return dict(
+            url=f"{self.hostname}/login/oauth/authorize?{'&'.join(query_strings)}",
+            redirect_query_params=redirect_uri_query,
+        )
 
-    async def get_access_token_response(self, code: str, **kwargs) -> Dict:
+    async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
         data = dict()
         async with aiohttp.ClientSession() as session:
             async with session.post(

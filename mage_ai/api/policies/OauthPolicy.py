@@ -23,6 +23,7 @@ OauthPolicy.allow_actions(
 OauthPolicy.allow_actions(
     [
         constants.DETAIL,
+        constants.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -52,6 +53,7 @@ OauthPolicy.allow_read(
         OauthScope.CLIENT_PUBLIC,
     ],
     on_action=[
+        constants.LIST,
         constants.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),

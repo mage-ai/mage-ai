@@ -2,43 +2,45 @@ import React, { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import { GoogleIcon } from '@oracle/icons';
+import { MicrosoftIcon } from '@oracle/icons';
 import { SignInProps } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { queryFromUrl } from '@utils/url';
 import { set } from '@storage/localStorage';
 
-type GoogleSignInProps = {} & SignInProps;
+type MicrosoftSignInProps = {} & SignInProps;
 
-function GoogleSignIn({
+function MicrosoftSignIn({
   oauthResponse,
-}: GoogleSignInProps) {
+}: MicrosoftSignInProps) {
   const router = useRouter();
   const {
-    url: googleOauthUrl,
+    url,
     redirect_query_params: redirectQueryParams = {},
   } = useMemo(() => oauthResponse || {}, [oauthResponse]);
 
   return (
     <>
-      {googleOauthUrl && (
+      {url && (
         <KeyboardShortcutButton
-          beforeElement={<GoogleIcon size={UNIT * 2} />}
+          beforeElement={<MicrosoftIcon size={UNIT * 2} />}
           bold
           inline
           onClick={() => {
-            const q = queryFromUrl(googleOauthUrl);
+            const q = queryFromUrl(url);
             const state = q.state;
-            set(state, redirectQueryParams);
-            router.push(googleOauthUrl);
+            if (redirectQueryParams) {
+              set(state, redirectQueryParams);
+            }
+            router.push(url);
           }}
-          uuid="SignForm/google"
+          uuid="SignForm/active_directory"
         >
-          Sign in with Google
+          Sign in with Microsoft
         </KeyboardShortcutButton>
       )}
     </>
   );
 }
 
-export default GoogleSignIn;
+export default MicrosoftSignIn;
