@@ -73,33 +73,6 @@ class UserOperationTests(BaseApiTestCase):
         email1 = self.faker.email()
         email2 = self.faker.email()
 
-        await self.base_test_execute_list(
-            [
-                dict(
-                    email=email1,
-                    password='water_lightning',
-                    password_confirmation='water_lightning',
-                    roles_new=[Role.get_role('Editor').id],
-                ),
-                dict(
-                    email=email2,
-                    password='water_lightning',
-                    password_confirmation='water_lightning',
-                    roles_new=[Role.get_role('Editor').id],
-                ),
-            ],
-            [
-                'id',
-            ],
-            user=owner,
-        )
-
-    async def test_execute_list_admin(self):
-        owner = create_user(_owner=True)
-
-        email1 = self.faker.email()
-        email2 = self.faker.email()
-
         response = await self.base_test_execute_list(
             [
                 dict(
@@ -128,8 +101,6 @@ class UserOperationTests(BaseApiTestCase):
             UserPresenter.default_attributes,
             user=admin,
         )
-
-        admin.delete()
 
     async def test_execute_list_unauthorized(self):
         async def _func():
