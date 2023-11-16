@@ -112,7 +112,7 @@ class NATSSource(BaseSource):
             while True:
                 messages = self.fetch_messages()
                 if not messages:
-                    break
+                    continue
                 handler(messages)  # Pass the entire batch to the handler
         finally:
             self.close_client()
