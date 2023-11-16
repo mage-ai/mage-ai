@@ -1,5 +1,6 @@
 import asyncio
 import json
+import ssl
 import threading
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List
@@ -61,13 +62,34 @@ class NATSSource(BaseSource):
 
     async def ainit_client(self):
         try:
-            self.nc = await nats.connect(
-                self.config.server_url,
-                error_cb=self.error_cb,
-                reconnected_cb=self.reconnected_cb,
-                disconnected_cb=self.disconnected_cb,
-                closed_cb=self.closed_cb,
-            )
+            # Configure SSL context if use_tls is True
+            if self.config.use_tls and self.config.ssl_config:
+                ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+                if self.config.ssl_config.cafile:
+                    ssl_ctx.load_verify_locations(self.config.ssl_config.cafile)
+                if self.config.ssl_config.certfile and self.config.ssl_config.keyfile:
+                    ssl_ctx.load_cert_chain(
+                        certfile=self.config.ssl_config.certfile,
+                        keyfile=self.config.ssl_config.keyfile
+                    )
+                if self.config.ssl_config.password:
+                    ssl_ctx.password = self.config.ssl_config.password
+                if self.config.ssl_config.check_hostname:
+                    ssl_ctx.check_hostname = True
+                await nats.connect(
+                    self.config.server_url,
+                    tls=ssl_ctx,
+                    tls_hostname=self.config.tls_hostname
+                )
+
+            else:
+                self.nc = await nats.connect(
+                    self.config.server_url,
+                    error_cb=self.error_cb,
+                    reconnected_cb=self.reconnected_cb,
+                    disconnected_cb=self.disconnected_cb,
+                    closed_cb=self.closed_cb,
+                )
             self.js = self.nc.jetstream()
 
             # Default consumer_name to stream_name if not provided
