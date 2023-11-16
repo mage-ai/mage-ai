@@ -144,16 +144,16 @@ class BaseApiTestCase(AsyncDBTestCase):
         model_fields_to_check: List[str] = None,
         **kwargs,
     ) -> Dict:
-        if create_payloads is None:
-            create_payloads = [{}]
         if model_fields_to_check is None:
             model_fields_to_check = []
         models = []
-        for payload in create_payloads:
-            response = await self.build_create_operation(payload, **kwargs).execute()
-            if 'error' in response:
-                raise Exception(response['error'])
-            models.append(response[self.model_class_name])
+
+        if create_payloads:
+            for payload in create_payloads:
+                response = await self.build_create_operation(payload, **kwargs).execute()
+                if 'error' in response:
+                    raise Exception(response['error'])
+                models.append(response[self.model_class_name])
 
         operation = self.build_list_operation(**kwargs)
         response = await operation.execute()
