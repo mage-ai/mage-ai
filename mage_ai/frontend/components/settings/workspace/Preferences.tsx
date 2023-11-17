@@ -10,7 +10,7 @@ import FlexContainer, {
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
-import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum, ProjectPipelinesType } from '@interfaces/ProjectType';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -96,6 +96,7 @@ function Preferences({
     };
     help_improve_mage?: boolean;
     openai_api_key?: string;
+    pipelines?: ProjectPipelinesType;
   }) => updateProjectBase({
     project: payload,
   }), [updateProjectBase]);

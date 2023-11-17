@@ -49,7 +49,7 @@ export interface SparkConfigType {
   use_custom_session?: boolean;
 }
 
-interface ProjectPipelinesType {
+export interface ProjectPipelinesType {
   settings?: PipelineSettingsType;
 }
 
