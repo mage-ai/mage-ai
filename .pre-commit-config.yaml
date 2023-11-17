@@ -42,7 +42,7 @@ repos:
     name: Markdownlint Docker
     description: Run markdown lint on your Markdown files using the project docker image
     language: docker_image
-    files: \.(md|mdown|markdown)$
+    files: \.(md|mdown|markdown|mdx)$
     entry: markdownlint/markdownlint
   # - id: black
   #   name: black
