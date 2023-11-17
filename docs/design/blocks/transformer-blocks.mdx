@@ -722,7 +722,7 @@ Clauses can be connected using the `and` and `or` operators and grouped with par
 - If column names contain only alphanumeric characters and the special character '_', then the raw column name can used to filter code.
     Example: `age != null and price_of_item >= 50.23`
 - If columns contain whitespace, newlines, and some of the following special characters: `+=-*&^%$! ?~|<>(){}[],.`, then the quoted column name can be used to filter code. Any quote character can be used.
-    Example: `("+= -*&^%$! ?~ |<>" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial")`
+    Example: `("+= -*&^%$! ?~ |<" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial")`
 - If columns contain any other special characters apart from those listed above, the column cannot be filtered. This is a fundamental limitation of pandas, see [here](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html?highlight=query#pandas.DataFrame.query:~:text=During%20parsing%20a,not%20be%20escaped) for more information.
 
 # Appendix: Column Types

@@ -36,7 +36,7 @@ Run this block to load the Titanic Survival dataset into your pipeline.
 
 You'll notice that there are three columns that have missing values: "Cabin", "Age", "Embarked". Let's perform imputation to fill in these missing values using the Transformer Action Library. Create a new transformer block below, and select the "Fill in missing values" template.
 
-<img noZoom src="<https://github.com/mage-ai/assets/blob/main/blocks/transformers/transformer_actions_impute.png?raw=true>" alt="Image of transformer block template drop down highlighting "Fill in missing values"" />
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/blocks/transformers/transformer_actions_impute.png?raw=true" alt="Image of transformer block template drop down highlighting "Fill in missing values"" />
 
 You should see the following code in your new transformer block:
 
@@ -107,7 +107,7 @@ Execute this transformer - you should notice that all null values are now filled
 
 Suppose then you're interested in computing the average fare and age by each location of embarkation - Southampton (S), Cherbourg (C), and Queenstown (Q). Transformer Actions can help us here as well - create a new transformer using the "Aggregate/Aggregate by average value" template.
 
-<img noZoom src="<https://github.com/mage-ai/assets/blob/main/transformer_actions_agg.png?raw=True>" alt="Image of transformer block template drop down highlighting "Aggregate/Aggregate by average value"" />
+<img noZoom src="https://github.com/mage-ai/assets/blob/main/transformer_actions_agg.png?raw=True" alt="Image of transformer block template drop down highlighting "Aggregate/Aggregate by average value"" />
 
 You should see the following code in your new transformer block.
 
@@ -911,7 +911,7 @@ Clauses can be connected using the `and` and `or` operators and grouped with par
 - If column names contain only alphanumeric characters and the special character '_', then the raw column name can used to filter code.
     Example: `age != null and price_of_item >= 50.23`
 - If columns contain whitespace, newlines, and some of the following special characters: `+=-*&^%$! ?~|<>(){}[],.`, then the quoted column name can be used to filter code. Any quote character can be used.
-    Example: `("+= -*&^%$! ?~ |<>" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial")`
+    Example: `("+= -*&^%$! ?~ |<" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial")`
 - If columns contain any other special characters apart from those listed above, the column cannot be filtered. This is a fundamental limitation of pandas, see [here](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html?highlight=query#pandas.DataFrame.query:~:text=During%20parsing%20a,not%20be%20escaped) for more information.
 
 # Appendix: Column Types

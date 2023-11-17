@@ -104,7 +104,7 @@ The following steps will create a PostgreSQL database container and connect it t
 
    ```bash
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
-      -e MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database>?options=-c%%20search_path%%3D<schema_name>" \
+      -e MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database>?options=-c%%20search_path%%3D<schema_name" \
       mageai/mageai \
       /app/run_app.sh mage start [project_name]
    ```
