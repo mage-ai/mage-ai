@@ -26,6 +26,14 @@ from mage_ai.api.operations.constants import (
 from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
 from mage_ai.api.result_set import ResultSet
+from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.global_hooks.models import (  # HookCondition,; HookStrategy,
+    GlobalHooks,
+    HookOperation,
+    HookStage,
+)
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.settings import REQUIRE_USER_PERMISSIONS
@@ -48,7 +56,8 @@ class BaseOperation():
         self.oauth_client = kwargs.get('oauth_client')
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
-        self.payload = kwargs.get('payload') or {}
+        self._payload = None
+        self._payload_init = kwargs.get('payload') or {}
         self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
@@ -189,6 +198,37 @@ class BaseOperation():
         db_connection.stop_cache()
 
         return response
+
+    @property
+    def payload(self) -> Dict:
+        if self._payload:
+            return self._payload
+
+        self._payload = self._payload_init
+
+        project = Project()
+        if project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+            global_hooks = GlobalHooks.load_from_file()
+            try:
+                resource_type = self.__classified_class()
+                operation_type = self.action
+                hooks = global_hooks.get_hooks(
+                    operation_type=HookOperation(operation_type),
+                    resource_type=EntityName(resource_type),
+                    stages=[HookStage.BEFORE],
+                )
+                if hooks:
+                    results = global_hooks.run_hooks(hooks, payload=self._payload_init)
+                    if results and not self._payload:
+                        self._payload = {}
+
+                    for result in results:
+                        self._payload.update(result.get('output'))
+            except Exception as err:
+                print(f'[WARNING] BaseOperation.payload: {err}')
+                raise err
+
+        return self._payload
 
     @property
     def query(self) -> Dict:

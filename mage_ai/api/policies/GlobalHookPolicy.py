@@ -102,8 +102,8 @@ GlobalHookPolicy.allow_query(
 
 GlobalHookPolicy.allow_query(
     [
-        'operation',
-        'resource',
+        'operation_type',
+        'resource_type',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -112,6 +112,7 @@ GlobalHookPolicy.allow_query(
         OperationType.CREATE,
         OperationType.DELETE,
         OperationType.DETAIL,
+        OperationType.LIST,
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_admin_role(),
