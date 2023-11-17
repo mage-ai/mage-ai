@@ -48,8 +48,8 @@ class BaseDataClass:
             try:
                 if not callable(getattr(model, key)):
                     model.set_value(key, value)
-            except AttributeError:
-                pass
+            except AttributeError as err:
+                print(f'[WARNING] {self.__name__}.load: {err}')
 
         return model
 
@@ -63,7 +63,7 @@ class BaseDataClass:
             pass
 
     @classmethod
-    def convert_value(self, value, annotation=None):
+    def convert_value(self, value, annotation=None, ignore_empty: bool = False):
         is_list = isinstance(value, list)
         if is_list:
             return [self.convert_value(v) for v in value]
@@ -95,7 +95,7 @@ class BaseDataClass:
             if is_dict_class:
                 return annotation.load(**value)
             elif isinstance(value, BaseDataClass):
-                return value.to_dict()
+                return value.to_dict(ignore_empty=ignore_empty)
 
         is_enum_class = issubclass(annotation, Enum)
         is_enum = isinstance(value, Enum)
@@ -144,17 +144,32 @@ class BaseDataClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enum: {err}')
 
-    def to_dict(self) -> Dict:
+    def serialize_attribute_enums(self, attribute_name: str, enum_class):
+        try:
+            values = getattr(self, attribute_name)
+            if values and isinstance(values, list):
+                arr = []
+                for value in values:
+                    if isinstance(value, str):
+                        arr.append(enum_class(value))
+                    else:
+                        arr.append(value)
+                setattr(self, attribute_name, arr)
+        except AttributeError as err:
+            print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enums: {err}')
+
+    def to_dict(self, ignore_empty: bool = False, **kwargs) -> Dict:
         data = {}
 
         for key, annotation in self.all_annotations().items():
             value = None
             try:
                 value = getattr(self, key)
-            except AttributeError:
-                pass
+            except AttributeError as err:
+                print(f'[WARNING] {self.__class__.__name__}.to_dict: {err}')
 
-            value = self.convert_value(value, annotation)
-            data[key] = encode_complex(value)
+            value = self.convert_value(value, annotation, ignore_empty=ignore_empty)
+            if not ignore_empty or value is not None:
+                data[key] = encode_complex(value)
 
         return data
