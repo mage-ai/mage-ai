@@ -33,6 +33,7 @@ build_list_endpoint_tests(
         'latest_version',
         'name',
         'openai_api_key',
+        'pipelines',
         'project_uuid',
         'version',
     ],
