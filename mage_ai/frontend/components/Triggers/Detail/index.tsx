@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
@@ -34,6 +35,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
+import useProject from '@utils/models/project/useProject';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
@@ -99,6 +101,9 @@ function TriggerDetail({
   setErrors,
   variables,
 }: TriggerDetailProps) {
+  const {
+    project,
+  } = useProject();
   const router = useRouter();
   const isViewerRole = isViewer();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -447,7 +452,7 @@ function TriggerDetail({
         </CopyToClipboard>,
       ]);
     }
-    
+
     if (settings?.timeout) {
       const { time, unit } = convertSeconds(settings?.timeout);
       const finalUnit = time === 1 ? unit : `${unit}s`;
@@ -708,6 +713,15 @@ function TriggerDetail({
     />
   ), [eventMatchers]);
 
+  const saveInCodeAutomaticallyToggled =
+    useMemo(() => typeof pipeline?.settings?.triggers?.save_in_code_automatically === 'undefined'
+      ? project?.pipelines?.settings?.triggers?.save_in_code_automatically
+      : pipeline?.settings?.triggers?.save_in_code_automatically,
+    [
+      pipeline,
+      project,
+    ]);
+
   return (
     <PipelineDetailPage
       afterHidden={!selectedRun}
@@ -806,7 +820,7 @@ function TriggerDetail({
                 />
               </Spacing>
             </Spacing>
-          )}
+          )}\
 
           <Spacing my={UNITS_BETWEEN_SECTIONS}>
             <Spacing px={PADDING_UNITS}>
@@ -816,39 +830,61 @@ function TriggerDetail({
               </Headline>
 
               <Spacing mt={1}>
-                <Text default>
-                  Save or update the trigger and its settings in the
-                  pipeline’s metadata and version control the trigger using Git.
-                  For more information, please read the <Link
-                    href="https://docs.mage.ai/guides/triggers/configure-triggers-in-code"
-                    openNewWindow
-                  >
-                    documentation
-                  </Link>.
-                </Text>
-              </Spacing>
-
-              <Spacing mt={PADDING_UNITS}>
-                {!dataPipelineTriggers && <Spinner inverted />}
-                {dataPipelineTriggers && (
-                  <Button
-                    disabled={!pipelineSchedule?.id}
-                    loading={isLoadingCreatePipelineTrigger}
-                    onClick={() => {
-                      // @ts-ignore
-                      createPipelineTrigger({
-                        pipeline_trigger: {
-                          pipeline_schedule_id: pipelineSchedule?.id,
-                        },
-                      });
-                    }}
-                    secondary
-                  >
-                    {triggerExistsInCode && 'Update trigger in code'}
-                    {!triggerExistsInCode && 'Save trigger in code'}
-                  </Button>
+                {saveInCodeAutomaticallyToggled && (
+                  <Text default>
+                    This trigger will automatically be persisted in code.
+                    To change this behavior, update the <NextLink
+                      as={`/pipelines/${pipelineUUID}/settings`}
+                      href={'/pipelines/[pipeline]/settings'}
+                      passHref
+                    >
+                      <Link openNewWindow>pipeline’s settings</Link>
+                    </NextLink> or <NextLink
+                      as="/settings/workspace/preferences"
+                      href="/settings/workspace/preferences"
+                      passHref
+                    >
+                      <Link openNewWindow>project settings</Link>
+                    </NextLink>.
+                  </Text>
+                )}
+                {!saveInCodeAutomaticallyToggled && (
+                  <Text default>
+                    Save or update the trigger and its settings in the
+                    pipeline’s metadata and version control the trigger using Git.
+                    For more information, please read the <Link
+                      href="https://docs.mage.ai/guides/triggers/configure-triggers-in-code"
+                      openNewWindow
+                    >
+                      documentation
+                    </Link>.
+                  </Text>
                 )}
               </Spacing>
+
+              {!saveInCodeAutomaticallyToggled && (
+                <Spacing mt={PADDING_UNITS}>
+                  {!dataPipelineTriggers && <Spinner inverted />}
+                  {dataPipelineTriggers && (
+                    <Button
+                      disabled={!pipelineSchedule?.id}
+                      loading={isLoadingCreatePipelineTrigger}
+                      onClick={() => {
+                        // @ts-ignore
+                        createPipelineTrigger({
+                          pipeline_trigger: {
+                            pipeline_schedule_id: pipelineSchedule?.id,
+                          },
+                        });
+                      }}
+                      secondary
+                    >
+                      {triggerExistsInCode && 'Update trigger in code'}
+                      {!triggerExistsInCode && 'Save trigger in code'}
+                    </Button>
+                  )}
+                </Spacing>
+              )}
             </Spacing>
           </Spacing>
         </BeforeStyle>

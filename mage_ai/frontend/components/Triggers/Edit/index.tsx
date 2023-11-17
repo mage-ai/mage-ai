@@ -51,6 +51,7 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import TriggerInteractions from './TriggerInteractions';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import {
   Add,
   Alphabet,
@@ -107,7 +108,6 @@ type EditProps = {
   onCancel?: () => void;
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
-  project?: ProjectType;
   setErrors: (errors: ErrorsType) => void;
   useCreateScheduleMutation?: any;
   variables?: PipelineVariableType[];
@@ -120,11 +120,13 @@ function Edit({
   onCancel,
   pipeline,
   pipelineSchedule,
-  project,
   setErrors,
   variables,
   useCreateScheduleMutation,
 }: EditProps) {
+  const {
+    project,
+  } = useProject();
   const containerRef = useRef(null);
 
   const router = useRouter();
@@ -1362,7 +1364,7 @@ function Edit({
               withCopyIcon
             />
           </Spacing>
-          
+
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
             <FlexContainer alignItems="center">
               <Spacing mr={1}>
@@ -1377,7 +1379,7 @@ function Edit({
             </FlexContainer>
           </Spacing>
         </Spacing>
-        
+
         {useHeaderUrl && (
           <Spacing mb={2} mt={5} px={PADDING_UNITS}>
             <Headline>
@@ -2007,6 +2009,15 @@ function Edit({
     setSelectedSubheaderTabUUID,
   ]);
 
+  const saveInCodeAutomaticallyToggled =
+    useMemo(() => typeof pipeline?.settings?.triggers?.save_in_code_automatically === 'undefined'
+      ? project?.pipelines?.settings?.triggers?.save_in_code_automatically
+      : pipeline?.settings?.triggers?.save_in_code_automatically,
+    [
+      pipeline,
+      project,
+    ]);
+
   return (
     <>
       <PipelineDetailPage
@@ -2060,7 +2071,7 @@ function Edit({
                 Save changes
               </Button>
 
-              <Spacing mr={1} />
+              <Spacing mr={PADDING_UNITS} />
 
               <Button
                 linkProps={{
@@ -2073,6 +2084,30 @@ function Edit({
               >
                 Cancel
               </Button>
+
+              {saveInCodeAutomaticallyToggled && (
+                <>
+                  <Spacing mr={PADDING_UNITS} />
+
+                  <Text default xsmall>
+                    This trigger will automatically be persisted in code.
+                    <br />
+                    To change this behavior, update the <NextLink
+                      as={`/pipelines/${pipelineUUID}/settings`}
+                      href={'/pipelines/[pipeline]/settings'}
+                      passHref
+                    >
+                      <Link openNewWindow xsmall>pipeline’s settings</Link>
+                    </NextLink> or <NextLink
+                      as="/settings/workspace/preferences"
+                      href="/settings/workspace/preferences"
+                      passHref
+                    >
+                      <Link openNewWindow xsmall>project settings</Link>
+                    </NextLink>.
+                  </Text>
+                </>
+              )}
             </FlexContainer>
           )
         }
