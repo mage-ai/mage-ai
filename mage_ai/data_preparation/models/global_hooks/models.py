@@ -104,6 +104,8 @@ class Hook(BaseDataClass):
     def run(self, **kwargs):
         try:
             payload = kwargs.get('payload') or {}
+            # resources = kwargs.get('resources') or []
+            resource = kwargs.get('resource') or {}
 
             self.output = dict(
                 payload=merge_dict(payload, dict(
@@ -114,8 +116,12 @@ class Hook(BaseDataClass):
                 )),
                 query={
                     'includes_content': [False],
-                    # 'type[]': ['python'],
+                    'type[]': ['pyspark'],
                 },
+                resource=merge_dict(resource, dict(
+                    uuid='YOOOOOOOOOOOOOOOOOOOO',
+                )),
+                # resources=resources[:1],
             )
         except Exception as err:
             # TODO: handle the strategy

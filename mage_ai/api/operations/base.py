@@ -2,7 +2,7 @@ import importlib
 import importlib.util
 import inspect
 from collections import UserList
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Union
 
 import dateutil.parser
 import inflection
@@ -29,6 +29,7 @@ from mage_ai.api.result_set import ResultSet
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
+    Hook,
     HookOperation,
     HookStage,
 )
@@ -75,7 +76,22 @@ class BaseOperation():
             already_validated = False
 
             result = await self.__executed_result()
-            presented = await self.__present_results(result)
+            presented_init = await self.__present_results(result)
+
+            metadata = None
+            if isinstance(result, ResultSet):
+                metadata = result.metadata
+
+            key = 'resource'
+            if LIST == self.action:
+                key = 'resources'
+            results_altered = self.__run_hooks_after(**{
+                'metadata': metadata,
+                key: presented_init,
+            })
+
+            metadata = results_altered['metadata']
+            presented = results_altered[key]
 
             if isinstance(presented, CustomDict) or isinstance(presented, CustomList):
                 already_validated = presented.already_validated
@@ -154,8 +170,7 @@ class BaseOperation():
                     presented_results_parsed,
                 ) >= 1 else presented_results_parsed
 
-            if isinstance(result, ResultSet):
-                response['metadata'] = result.metadata
+            response['metadata'] = metadata
 
             if settings.DEBUG:
                 debug_payload = {}
@@ -233,10 +248,10 @@ class BaseOperation():
         operation_type: HookOperation,
         stage: HookStage,
         **kwargs,
-    ):
+    ) -> List[Hook]:
         project = Project()
         if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
-            return
+            return None
 
         try:
             global_hooks = GlobalHooks.load_from_file()
@@ -251,13 +266,50 @@ class BaseOperation():
         except Exception as err:
             raise err
 
-    def __run_hooks_and_update(
+    def __run_hooks_after(
         self,
-        operation_type: HookOperation,
-        stage: HookStage,
-        payload: Dict = None,
-        **kwargs,
-    ) -> Dict:
+        metadata: Dict = None,
+        resource: Dict = None,
+        resources: List[Dict] = None,
+    ) -> Union[Dict, List[Dict]]:
+        hooks = self.__run_hooks(
+            operation_type=HookOperation(self.action),
+            stage=HookStage.AFTER,
+            meta=self.meta,
+            metadata=metadata,
+            query=self.query,
+            resource=resource,
+            resources=resources,
+        )
+
+        if not hooks:
+            return dict(
+                metadata=metadata,
+                resource=resource,
+                resources=resources,
+            )
+
+        for hook in (hooks or []):
+            output = hook.output
+            if not output:
+                continue
+
+            if output.get('metadata'):
+                metadata = merge_dict(metadata, output.get('metadata') or {})
+
+            if output.get('resource'):
+                output_resource = output.get('resource')
+                if isinstance(output_resource, dict):
+                    resource = CustomDict(merge_dict(resource or {}, output_resource or {}))
+                    resource.already_validated = False
+
+        return dict(
+            metadata=metadata,
+            resource=resource,
+            resources=resources,
+        )
+
+    def __run_hooks_before(self, payload: Dict = None, **kwargs) -> Dict:
         if not payload:
             payload = {}
 
@@ -298,11 +350,7 @@ class BaseOperation():
         payload = None
         if CREATE == self.action:
             payload = self.__payload_for_resource()
-        payload = self.__run_hooks_and_update(
-            operation_type=HookOperation(self.action),
-            stage=HookStage.BEFORE,
-            payload=payload,
-        )
+        payload = self.__run_hooks_before(payload=payload)
 
         updated_options = await self.__updated_options()
 
@@ -384,11 +432,7 @@ class BaseOperation():
         payload = None
         if UPDATE == self.action:
             payload = self.__payload_for_resource()
-        payload = self.__run_hooks_and_update(
-            operation_type=HookOperation(self.action),
-            stage=HookStage.BEFORE,
-            payload=payload,
-        )
+        payload = self.__run_hooks_before(payload=payload)
 
         updated_options = await self.__updated_options()
 
