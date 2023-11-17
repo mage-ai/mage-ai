@@ -102,20 +102,34 @@ class Hook(BaseDataClass):
         return extract(data, arr)
 
     def run(self, **kwargs):
-        payload = kwargs.get('payload') or {}
+        try:
+            payload = kwargs.get('payload') or {}
 
-        self.output = dict(
-            payload=merge_dict(payload, dict(
-                output_block_uuids=[
-                    'mage',
-                    'fire',
-                ],
-            )),
-            query={
-                'includes_content': [False],
-                # 'type[]': ['python'],
-            },
-        )
+            self.output = dict(
+                payload=merge_dict(payload, dict(
+                    output_block_uuids=[
+                        'mage',
+                        'fire',
+                    ],
+                )),
+                query={
+                    'includes_content': [False],
+                    # 'type[]': ['python'],
+                },
+            )
+        except Exception as err:
+            # TODO: handle the strategy
+            self.status = dict(error=err)
+
+            if self.strategies:
+                if HookStrategy.RAISE in self.strategies:
+                    self.status['strategy'] = HookStrategy.RAISE
+                elif HookStrategy.BREAK in self.strategies and \
+                        HookOperation.EXECUTION == self.operation_type:
+
+                    self.status['strategy'] = HookStrategy.BREAK
+                elif HookStrategy.CONTINUE in self.strategies:
+                    self.status['strategy'] = HookStrategy.CONTINUE
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
