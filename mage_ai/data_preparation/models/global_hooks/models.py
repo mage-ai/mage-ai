@@ -104,12 +104,18 @@ class Hook(BaseDataClass):
     def run(self, **kwargs):
         payload = kwargs.get('payload') or {}
 
-        self.output = dict(payload=merge_dict(payload, dict(
-            output_block_uuids=[
-                'mage',
-                'fire',
-            ],
-        )))
+        self.output = dict(
+            payload=merge_dict(payload, dict(
+                output_block_uuids=[
+                    'mage',
+                    'fire',
+                ],
+            )),
+            query={
+                'includes_content': [False],
+                # 'type[]': ['python'],
+            },
+        )
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:

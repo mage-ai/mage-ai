@@ -251,6 +251,43 @@ class BaseOperation():
         except Exception as err:
             raise err
 
+    def __run_hooks_and_update(
+        self,
+        operation_type: HookOperation,
+        stage: HookStage,
+        payload: Dict = None,
+        **kwargs,
+    ) -> Dict:
+        if not payload:
+            payload = {}
+
+        hooks = self.__run_hooks(
+            operation_type=HookOperation(self.action),
+            stage=HookStage.BEFORE,
+            meta=self.meta,
+            payload=payload,
+            query=self.query,
+        )
+
+        if not hooks:
+            return payload
+
+        for hook in (hooks or []):
+            output = hook.output
+            if not output:
+                continue
+
+            if output.get('meta'):
+                self.meta = merge_dict(self.meta, output.get('meta') or {})
+
+            if output.get('payload'):
+                payload = merge_dict(payload, output.get('payload') or {})
+
+            if output.get('query'):
+                self.query = merge_dict(self.query, output.get('query') or {})
+
+        return payload
+
     async def __executed_result(self):
         if self.action in [CREATE, LIST]:
             return await self.__create_or_index()
@@ -258,6 +295,15 @@ class BaseOperation():
             return await self.__delete_show_or_update()
 
     async def __create_or_index(self):
+        payload = None
+        if CREATE == self.action:
+            payload = self.__payload_for_resource()
+        payload = self.__run_hooks_and_update(
+            operation_type=HookOperation(self.action),
+            stage=HookStage.BEFORE,
+            payload=payload,
+        )
+
         updated_options = await self.__updated_options()
 
         policy = self.__policy_class()(None, self.user, **updated_options)
@@ -281,7 +327,6 @@ class BaseOperation():
                     **parsed_value,
                 )
 
-            payload = self.__payload_for_resource()
             if parser:
                 payload = await parser.parse_write_attributes_and_authorize(
                     payload,
@@ -293,16 +338,6 @@ class BaseOperation():
 
             options = updated_options.copy()
             options.pop('payload', None)
-
-            hooks = self.__run_hooks(
-                operation_type=HookOperation(self.action),
-                stage=HookStage.BEFORE,
-                payload=payload,
-            )
-            if hooks:
-                for hook in (hooks or []):
-                    if hook.output:
-                        payload.update(hook.output.get('payload') or {})
 
             result = await self.__resource_class().process_create(
                 payload,
@@ -346,6 +381,15 @@ class BaseOperation():
             )
 
     async def __delete_show_or_update(self):
+        payload = None
+        if UPDATE == self.action:
+            payload = self.__payload_for_resource()
+        payload = self.__run_hooks_and_update(
+            operation_type=HookOperation(self.action),
+            stage=HookStage.BEFORE,
+            payload=payload,
+        )
+
         updated_options = await self.__updated_options()
 
         res = await self.__resource_class().process_member(
@@ -413,7 +457,6 @@ class BaseOperation():
                     **parsed_value,
                 )
 
-            payload = self.__payload_for_resource()
             if parser:
                 payload = await parser.parse_write_attributes_and_authorize(
                     payload,
@@ -445,16 +488,6 @@ class BaseOperation():
 
             options = merge_dict(updated_options.copy(), dict(query=self.query))
             options.pop('payload', None)
-
-            hooks = self.__run_hooks(
-                operation_type=HookOperation(self.action),
-                stage=HookStage.BEFORE,
-                payload=payload,
-            )
-            if hooks:
-                for hook in (hooks or []):
-                    if hook.output:
-                        payload.update(hook.output.get('payload') or {})
 
             await res.process_update(payload, **options)
 
