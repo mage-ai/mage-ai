@@ -1696,6 +1696,22 @@ class Pipeline:
             file_version_only=True,
         )
 
+    def should_save_trigger_in_code_automatically(self) -> bool:
+        from mage_ai.data_preparation.models.project import Project
+
+        if self.settings and \
+                self.settings.triggers and \
+                self.settings.triggers.save_in_code_automatically is not None:
+
+            return self.settings.triggers.save_in_code_automatically
+
+        project = Project(self.repo_config)
+
+        return project.pipelines and \
+            project.pipelines.settings and \
+            project.pipelines.settings.triggers and \
+            project.pipelines.settings.triggers.save_in_code_automatically
+
     async def save_async(
         self,
         block_type: str = None,

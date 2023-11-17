@@ -5,7 +5,7 @@ from mage_ai.shared.models import BaseDataClass
 
 @dataclass
 class PipelineSettingsTriggers(BaseDataClass):
-    save_in_code_automatically: bool = False
+    save_in_code_automatically: bool = None
 
 
 @dataclass
