@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { getHost } from '@api/utils/url';
 
 /*
  * In order to load the Monaco Editor locally and avoid fetching it from a CDN
@@ -19,7 +20,7 @@ import React, {
 loader.config({
   paths: {
     // Load Monaco Editor from "public" directory
-    vs: '/monaco-editor/min/vs',
+    vs: `${getHost()}/monaco-editor/min/vs`,
     // Load Monaco Editor from different CDN
     // vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs',
   },
