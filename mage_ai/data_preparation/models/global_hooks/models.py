@@ -8,8 +8,8 @@ import yaml
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find
-from mage_ai.shared.hash import ignore_keys
+from mage_ai.shared.array import find, find_index
+from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 
@@ -92,9 +92,18 @@ GlobalHookResourceBase = make_dataclass(
 
 @dataclass
 class GlobalHookResource(GlobalHookResourceBase):
+    resource_type = EntityName = None
+
     def __post_init__(self):
+        self.serialize_attribute_enum('resource_type', EntityName)
+
         for operation in OperationType:
-            self.serialize_attribute_classes(operation.value, Hook)
+            self.serialize_attribute_classes(
+                operation.value,
+                Hook,
+                operation_type=operation,
+                resource_type=self.resource_type,
+            )
 
 
 def __build_global_hook_resources_fields() -> List[Tuple]:
@@ -123,7 +132,11 @@ class GlobalHookResources(GlobalHookResourcesBase):
 
     def __post_init__(self):
         for entity_name in EntityName:
-            self.serialize_attribute_class(entity_name.value, GlobalHookResource)
+            self.serialize_attribute_class(
+                entity_name.value,
+                GlobalHookResource,
+                resource_type=entity_name,
+            )
 
 
 @dataclass
@@ -150,7 +163,17 @@ class GlobalHooks(BaseDataClass):
 
         return self.load(**yaml_config)
 
-    def add_hook(self, hook: Hook) -> Hook:
+    def add_hook(self, hook: Hook, payload: Dict = None, update: bool = False) -> Hook:
+        if not update and self.get_hook(
+            operation_type=hook.operation_type,
+            resource_type=hook.resource_type,
+            uuid=hook.uuid,
+        ):
+            raise Exception(
+                f'Hook {hook.uuid} already exist for resource '
+                f'{hook.resource_type} and operation {hook.operation_type}.',
+            )
+
         if not self.resources:
             self.resources = GlobalHookResources.load()
 
@@ -162,24 +185,50 @@ class GlobalHooks(BaseDataClass):
         if not hooks:
             hooks = []
 
-        hooks.append(hook)
-        setattr(resource, hook.operation_type.value, hooks)
-        setattr(self.resources, hook.resource_type.value, resource)
+        if update:
+            index = find_index(
+                lambda x: (
+                    x.uuid == hook.uuid and
+                    x.operation_type == hook.operation_type and
+                    x.resource_type == hook.resource_type
+                ),
+                hooks,
+            )
+            if index >= 0:
+                hook_updated = Hook.load(**merge_dict(hook.to_dict(include_all=True), payload))
+                if hook.resource_type == hook_updated.resource_type and \
+                        hook.operation_type == hook_updated.operation_type:
+
+                    hooks[index] = hook_updated
+                else:
+                    # Move the hook
+                    self.add_hook(hook_updated)
+                    self.remove_hook(hook)
+            else:
+                raise Exception(
+                    f'Hook {hook.uuid} doesn’t exist for resource '
+                    f'{hook.resource_type} and operation {hook.operation_type}.',
+                )
+        else:
+            hooks.append(hook)
+            setattr(resource, hook.operation_type.value, hooks)
+            setattr(self.resources, hook.resource_type.value, resource)
 
     def remove_hook(self, hook: Hook) -> Hook:
         if self.resources:
             resource = getattr(self.resources, hook.resource_type.value)
             if resource:
-                hooks = getattr(resource, hook.operation_type)
+                hooks = getattr(resource, hook.operation_type.value)
                 if hooks:
-                    setattr(resource, hook.operation_type.value, list(filter(
-                        lambda x: (
-                            x.uuid != hook.uuid and
-                            x.operation_type != hook.operation_type and
+                    arr = []
+                    for x in hooks:
+                        val = x.uuid != hook.uuid or \
+                            x.operation_type != hook.operation_type or \
                             x.resource_type != hook.resource_type
-                        ),
-                        hooks,
-                    )))
+                        if val:
+                            arr.append(x)
+
+                    setattr(resource, hook.operation_type.value, arr)
                     setattr(self.resources, hook.resource_type.value, resource)
 
     def hooks(self) -> List[Hook]:
@@ -188,6 +237,7 @@ class GlobalHooks(BaseDataClass):
             for entity_name in EntityName:
                 resource = getattr(self.resources, entity_name.value)
                 if resource:
+                    resource.resource_type = entity_name
                     for operation in OperationType:
                         hooks = getattr(resource, operation.value)
                         if hooks:

@@ -84,7 +84,9 @@ class GlobalHookResource(GenericResource):
         return self(hook, user, **kwargs)
 
     async def update(self, payload: Dict, **kwargs):
-        pass
+        global_hooks = GlobalHooks.load_from_file()
+        global_hooks.add_hook(self.model, payload=payload, update=True)
+        global_hooks.save()
 
     async def delete(self, **kwargs):
         global_hooks = GlobalHooks.load_from_file()

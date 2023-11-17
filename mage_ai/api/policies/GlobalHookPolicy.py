@@ -57,9 +57,26 @@ GlobalHookPolicy.allow_write(
     ],
     on_action=[
         OperationType.CREATE,
-        OperationType.DELETE,
-        OperationType.DETAIL,
-        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_admin_role(),
+    override_permission_condition=lambda _policy: True,
+)
+
+
+GlobalHookPolicy.allow_write(
+    [
+        'conditions',
+        'operation_type',
+        'output_block_uuids',
+        'pipeline_uuid',
+        'resource_type',
+        'stages',
+        'strategies',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_admin_role(),
