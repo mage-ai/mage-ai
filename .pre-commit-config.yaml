@@ -38,6 +38,12 @@ repos:
     language: system
     types: [python]
     exclude: "mage_integrations\/mage_integrations\/sources\/.*\/tap_.*\/*|mage_integrations\/mage_integrations\/destinations\/.*\/target_.*\/*"
+  - id: markdownlint_docker
+    name: Markdownlint Docker
+    description: Run markdown lint on your Markdown files using the project docker image
+    language: docker_image
+    files: \.(md|mdown|markdown)$
+    entry: markdownlint/markdownlint
   # - id: black
   #   name: black
   #   entry: black
