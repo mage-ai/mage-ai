@@ -86,6 +86,9 @@ class ProjectResource(GenericResource):
         if 'emr_config' in payload:
             data['emr_config'] = payload['emr_config']
 
+        if 'pipelines' in payload:
+            data['pipelines'] = payload['pipelines']
+
         if 'spark_config' in payload:
             data['spark_config'] = payload['spark_config']
 

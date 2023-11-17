@@ -66,6 +66,17 @@ class RepoManagerTest(DBTestCase):
         )
         shutil.rmtree(test.variables_dir)
 
+    def test_pipelines(self):
+        test = RepoConfig(repo_path=os.path.join(self.repo_path, 'non_existing_path'))
+        test.pipelines = dict(
+            settings=dict(
+                triggers=dict(
+                    save_in_code_automatically=True,
+                ),
+            ),
+        )
+        self.assertTrue(test.pipelines.settings.triggers.save_in_code_automatically)
+
     def test_variables_dir_expanduser(self):
         dir_name = uuid.uuid4().hex
         metadata_dict = dict(

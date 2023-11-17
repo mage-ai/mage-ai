@@ -10,7 +10,8 @@ import FlexContainer, {
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
-import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum, ProjectPipelinesType } from '@interfaces/ProjectType';
+import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -95,6 +96,7 @@ function Preferences({
     };
     help_improve_mage?: boolean;
     openai_api_key?: string;
+    pipelines?: ProjectPipelinesType;
   }) => updateProjectBase({
     project: payload,
   }), [updateProjectBase]);
@@ -189,6 +191,36 @@ function Preferences({
           </FlexContainer>
         </Spacing>*/}
       </Panel>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS} />
+
+      <SetupSection
+        description="Global settings that are applied to all pipelines in this project."
+        title="Pipeline settings"
+      >
+        <SetupSectionRow
+          description="Every time a trigger is created or updated in this pipeline, automatically persist it in code."
+          title="Save triggers in code automatically"
+          toggleSwitch={{
+            checked: !!projectAttributes?.pipelines?.settings?.triggers?.save_in_code_automatically,
+            onCheck: (valFunc: (val: boolean) => boolean) => setProjectAttributes(prev => ({
+              ...prev,
+              pipelines: {
+                ...prev?.pipelines,
+                settings: {
+                  ...prev?.pipelines?.settings,
+                  triggers: {
+                    ...prev?.pipelines?.settings?.triggers,
+                    save_in_code_automatically: valFunc(
+                      prev?.pipelines?.settings?.triggers?.save_in_code_automatically,
+                    ),
+                  },
+                },
+              },
+            })),
+          }}
+        />
+      </SetupSection>
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS} />
 
@@ -300,6 +332,7 @@ function Preferences({
               features: projectAttributes?.features,
               help_improve_mage: projectAttributes?.help_improve_mage,
               openai_api_key: projectAttributes?.openai_api_key,
+              pipelines: projectAttributes?.pipelines,
             });
           }}
           primary

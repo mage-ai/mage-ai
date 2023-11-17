@@ -449,7 +449,6 @@ function PipelineSchedules({
         errors={errors}
         onCancel={() => setIsCreatingTrigger(false)}
         pipeline={dataPipeline?.pipeline}
-        project={project}
         setErrors={setErrors}
         useCreateScheduleMutation={useCreateScheduleMutation}
       />

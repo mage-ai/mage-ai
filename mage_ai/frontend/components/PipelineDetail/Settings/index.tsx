@@ -13,6 +13,7 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
+import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import TagType from '@interfaces/TagType';
 import TagsAutocompleteInputField from '@components/Tags/TagsAutocompleteInputField';
@@ -20,6 +21,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
 import { EXECUTOR_TYPES } from '@interfaces/ExecutorType';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BLOCK_OUTPUT_LOGS,
@@ -46,6 +48,9 @@ function PipelineSettings({
   pipeline,
   updatePipeline,
 }: PipelineSettingsProps) {
+  const {
+    project,
+  } = useProject();
   const refExecutorTypeSelect = useRef(null);
   const refExecutorTypeTextInput = useRef(null);
 
@@ -158,37 +163,76 @@ function PipelineSettings({
       pipelineTags,
     ]);
 
+  const projectPipelineSettings = useMemo(() => project?.pipelines?.settings, [project]);
+  const saveInCodeAutomaticallyToggled =
+    useMemo(() => projectPipelineSettings?.triggers?.save_in_code_automatically
+      && typeof pipelineAttributes?.settings?.triggers?.save_in_code_automatically === 'undefined',
+    [
+      pipelineAttributes,
+      projectPipelineSettings,
+    ]);
+
   return (
     <Spacing p={PADDING_UNITS}>
-      <TextInput
-        label="Pipeline name"
-        onChange={e => setPipelineAttributes(prev => ({
-          ...prev,
-          name: e.target.value,
-        }))}
-        primary
-        required
-        setContentOnMount
-        value={pipelineAttributes?.name || ''}
-      />
-
-      <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-        <Checkbox
-          checked={!!pipelineAttributes?.run_pipeline_in_one_process}
-          label="Run pipeline in a single process"
-          onClick={() => setPipelineAttributes(prev => ({
-            ...prev,
-            run_pipeline_in_one_process: !prev?.run_pipeline_in_one_process,
-          }))}
+      <SetupSection title="Details">
+        <SetupSectionRow
+          invalid={pipelineAttributesTouched && !pipelineAttributes?.name}
+          textInput={{
+            onChange: e => setPipelineAttributes(prev => ({
+              ...prev,
+              name: e.target.value,
+            })),
+            value: pipelineAttributes?.name,
+          }}
+          title="Pipeline name"
         />
 
-        <Spacing mt={1}>
-          <Text muted small>
-            When enabled, this setting allows sharing of objects and memory space across blocks
-            within a single pipeline.
-          </Text>
-        </Spacing>
-      </Spacing>
+        <SetupSectionRow
+          description="When enabled, this setting allows sharing of objects and memory space across blocks within a single pipeline."
+          title="Run pipeline in a single process"
+          toggleSwitch={{
+            checked: !!pipelineAttributes?.run_pipeline_in_one_process,
+            onCheck: (valFunc: (val: boolean) => boolean) => setPipelineAttributes(prev => ({
+              ...prev,
+              run_pipeline_in_one_process: valFunc(prev?.run_pipeline_in_one_process),
+            })),
+          }}
+        />
+
+        <SetupSectionRow
+          description={(
+            <>
+              <Text muted small>
+                Every time a trigger is created or updated in this pipeline,
+                it’ll be automatically be persisted it in code.
+              </Text>
+
+              {projectPipelineSettings?.triggers?.save_in_code_automatically && (
+                <Text small warning>
+                  This settings is enabled at the project level.
+                  Changing the value here will only affect this pipeline.
+                </Text>
+              )}
+            </>
+          )}
+          title="Save triggers in code automatically"
+          toggleSwitch={{
+            checked: saveInCodeAutomaticallyToggled || !!pipelineAttributes?.settings?.triggers?.save_in_code_automatically,
+            onCheck: (valFunc: (val: boolean) => boolean) => setPipelineAttributes(prev => ({
+              ...prev,
+              settings: {
+                ...prev?.settings,
+                triggers: {
+                  ...prev?.settings?.triggers,
+                  save_in_code_automatically: valFunc(
+                    saveInCodeAutomaticallyToggled ||  prev?.settings?.triggers?.save_in_code_automatically,
+                  ),
+                },
+              },
+            })),
+          }}
+        />
+      </SetupSection>
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
         <Headline>
@@ -390,6 +434,7 @@ function PipelineSettings({
               name: pipelineAttributes?.name,
               retry_config: pipelineAttributes?.retry_config,
               run_pipeline_in_one_process: pipelineAttributes?.run_pipeline_in_one_process,
+              settings: pipelineAttributes?.settings,
               tags: pipelineAttributes?.tags,
               // @ts-ignore
             }).then(() => setPipelineAttributesTouched(false))}

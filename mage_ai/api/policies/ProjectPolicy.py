@@ -40,6 +40,7 @@ ProjectPolicy.allow_write([
     'emr_config',
     'features',
     'openai_api_key',
+    'pipelines',
     'remote_variables_dir',
     'spark_config',
 ], scopes=[

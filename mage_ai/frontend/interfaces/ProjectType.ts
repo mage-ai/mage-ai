@@ -1,3 +1,5 @@
+import { PipelineSettingsType } from './PipelineType';
+
 export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
   COMPUTE_MANAGEMENT = 'compute_management',
@@ -47,6 +49,10 @@ export interface SparkConfigType {
   use_custom_session?: boolean;
 }
 
+export interface ProjectPipelinesType {
+  settings?: PipelineSettingsType;
+}
+
 export default interface ProjectType {
   emr_config?: EMRConfigType;
   features?: {
@@ -56,6 +62,7 @@ export default interface ProjectType {
   latest_version?: string;
   name?: string;
   openai_api_key?: string;
+  pipelines?: ProjectPipelinesType;
   project_uuid?: string;
   remote_variables_dir?: string;
   spark_config?: SparkConfigType;
