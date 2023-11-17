@@ -9,6 +9,7 @@ class ProjectPresenter(BasePresenter):
         'latest_version',
         'name',
         'openai_api_key',
+        'pipelines',
         'project_uuid',
         'remote_variables_dir',
         'spark_config',

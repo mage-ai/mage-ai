@@ -57,6 +57,7 @@ class RepoConfig:
         self.queue_config = None
         self.help_improve_mage = None
         self.openai_api_key = None
+        self._pipelines = None
         self.retry_config = None
         self.ldap_config = None
         self.s3_bucket = None
@@ -117,6 +118,7 @@ class RepoConfig:
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.openai_api_key = repo_config.get('openai_api_key')
+            self.pipelines = repo_config.get('pipelines')
             self.retry_config = repo_config.get('retry_config')
 
             self.ldap_config = repo_config.get('ldap_config')
@@ -149,6 +151,22 @@ class RepoConfig:
         else:
             return get_metadata_path()
 
+    @property
+    def pipelines(self):
+        if isinstance(self._pipelines, dict):
+            self.pipelines = self._pipelines
+
+        return self._pipelines
+
+    @pipelines.setter
+    def pipelines(self, pipelines: Dict = None) -> None:
+        from mage_ai.data_preparation.models.project.models import ProjectPipelines
+
+        if isinstance(pipelines, dict):
+            self._pipelines = ProjectPipelines.load(**(pipelines or {}))
+        else:
+            self._pipelines = pipelines
+
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
             ai_config=self.ai_config,
@@ -160,6 +178,7 @@ class RepoConfig:
             help_improve_mage=self.help_improve_mage,
             notification_config=self.notification_config,
             openai_api_key=self.openai_api_key,
+            pipelines=self.pipelines.to_dict() if self.pipelines else self.pipelines,
             project_type=self.project_type,
             project_uuid=self.project_uuid,
             queue_config=self.queue_config,
@@ -179,7 +198,10 @@ class RepoConfig:
 
         for key, value in kwargs.items():
             data[key] = value
-            if hasattr(self, key):
+
+            if 'pipelines' == key:
+                self.pipelines = value
+            elif hasattr(self, key):
                 setattr(self, key, value)
 
         with open(self.metadata_path, 'w') as f:

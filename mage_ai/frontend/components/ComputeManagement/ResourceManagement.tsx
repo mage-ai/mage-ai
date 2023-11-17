@@ -21,7 +21,8 @@ import { CardStyle } from './index.style';
 import { ComputeServiceUUIDEnum } from '@interfaces/ComputeServiceType';
 import { ContainerStyle, ICON_SIZE } from '@components/shared/index.style';
 import { ObjectAttributesType } from './constants';
-import { EMRConfigType, SparkConfigType } from '@interfaces/ProjectType';
+import { EMRConfigType,
+  ConfigType } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
   UNIT,

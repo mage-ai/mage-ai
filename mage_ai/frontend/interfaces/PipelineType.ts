@@ -101,6 +101,14 @@ export interface PipelineRetryConfigType {
   retries?: number;
 }
 
+interface PipelineSettingsTriggersType {
+  save_in_code_automatically?: boolean;
+}
+
+export interface PipelineSettingsType {
+  triggers?: PipelineSettingsTriggersType;
+}
+
 export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
@@ -120,6 +128,7 @@ export default interface PipelineType {
   retry_config?: PipelineRetryConfigType;
   run_pipeline_in_one_process?: boolean;
   schedules?: PipelineScheduleType[];
+  settings?: PipelineSettingsType;
   tags?: string[];
   type?: PipelineTypeEnum;
   updated_at?: string;
