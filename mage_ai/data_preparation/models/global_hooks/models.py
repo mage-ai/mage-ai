@@ -106,6 +106,7 @@ class Hook(BaseDataClass):
             payload = kwargs.get('payload') or {}
             # resources = kwargs.get('resources') or []
             resource = kwargs.get('resource') or {}
+            error = kwargs.get('error') or {}
 
             self.output = dict(
                 payload=merge_dict(payload, dict(
@@ -118,6 +119,9 @@ class Hook(BaseDataClass):
                     'includes_content': [False],
                     'type[]': ['pyspark'],
                 },
+                error=merge_dict(error, dict(
+                    blah='!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+                )),
                 resource=merge_dict(resource, dict(
                     uuid='YOOOOOOOOOOOOOOOOOOOO',
                 )),
@@ -393,7 +397,9 @@ class GlobalHooks(BaseDataClass):
                 x.resource_type == resource_type and
                 (not x.stages or stage in (x.stages or [])) and
                 (
+                    # If hook has no conditions, then run it for all conditions.
                     not x.conditions or
+                    # If argument is not present, then include hooks with any condition
                     not conditions or
                     any([condition in (x.conditions or []) for condition in conditions])
                 )

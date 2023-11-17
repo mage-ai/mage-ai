@@ -30,6 +30,7 @@ from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     Hook,
+    HookCondition,
     HookOperation,
     HookStage,
 )
@@ -71,6 +72,12 @@ class BaseOperation():
     async def execute(self):
         db_connection.start_cache()
 
+        presented_init = None
+        metadata = None
+        resource_key = 'resource'
+        if LIST == self.action:
+            resource_key = 'resources'
+
         response = {}
         try:
             already_validated = False
@@ -78,20 +85,19 @@ class BaseOperation():
             result = await self.__executed_result()
             presented_init = await self.__present_results(result)
 
-            metadata = None
             if isinstance(result, ResultSet):
                 metadata = result.metadata
 
-            key = 'resource'
-            if LIST == self.action:
-                key = 'resources'
-            results_altered = self.__run_hooks_after(**{
-                'metadata': metadata,
-                key: presented_init,
-            })
+            results_altered = self.__run_hooks_after(
+                condition=HookCondition.SUCCESS,
+                metadata=metadata,
+                **{
+                    resource_key: presented_init,
+                },
+            )
 
             metadata = results_altered['metadata']
-            presented = results_altered[key]
+            presented = results_altered[resource_key]
 
             if isinstance(presented, CustomDict) or isinstance(presented, CustomList):
                 already_validated = presented.already_validated
@@ -204,10 +210,19 @@ class BaseOperation():
                 if not REQUIRE_USER_PERMISSIONS:
                     err.message = 'You don’t have access to this project. ' + \
                         'Please ask an admin or owner for permissions.'
+
+            results_altered = self.__run_hooks_after(
+                condition=HookCondition.FAILURE,
+                error=self.__present_error(err),
+                metadata=metadata,
+                **{
+                    resource_key: presented_init,
+                },
+            )
+            response['errors'] = results_altered['error']
+
             if settings.DEBUG:
                 raise err
-            else:
-                response['error'] = self.__present_error(err)
 
         db_connection.stop_cache()
 
@@ -247,6 +262,7 @@ class BaseOperation():
         self,
         operation_type: HookOperation,
         stage: HookStage,
+        condition: HookCondition = None,
         **kwargs,
     ) -> List[Hook]:
         project = Project()
@@ -256,6 +272,7 @@ class BaseOperation():
         try:
             global_hooks = GlobalHooks.load_from_file()
             hooks = global_hooks.get_and_run_hooks(
+                conditions=[condition] if condition else None,
                 operation_type=operation_type,
                 resource_type=EntityName(self.__classified_class()),
                 stage=stage,
@@ -268,22 +285,27 @@ class BaseOperation():
 
     def __run_hooks_after(
         self,
+        condition: HookCondition = None,
+        error: Dict = None,
         metadata: Dict = None,
         resource: Dict = None,
         resources: List[Dict] = None,
     ) -> Union[Dict, List[Dict]]:
         hooks = self.__run_hooks(
-            operation_type=HookOperation(self.action),
-            stage=HookStage.AFTER,
+            condition=condition,
+            error=error,
             meta=self.meta,
             metadata=metadata,
+            operation_type=HookOperation(self.action),
             query=self.query,
             resource=resource,
             resources=resources,
+            stage=HookStage.AFTER,
         )
 
         if not hooks:
             return dict(
+                error=error,
                 metadata=metadata,
                 resource=resource,
                 resources=resources,
@@ -291,8 +313,12 @@ class BaseOperation():
 
         for hook in (hooks or []):
             output = hook.output
+
             if not output:
                 continue
+
+            if output.get('error'):
+                error = merge_dict(error, output.get('error') or {})
 
             if output.get('metadata'):
                 metadata = merge_dict(metadata, output.get('metadata') or {})
@@ -304,6 +330,7 @@ class BaseOperation():
                     resource.already_validated = False
 
         return dict(
+            error=error,
             metadata=metadata,
             resource=resource,
             resources=resources,
