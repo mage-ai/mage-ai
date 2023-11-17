@@ -21,8 +21,6 @@ def export_to_google_sheet(df: DataFrame, **kwargs) -> None:
     Worksheet position or name may also be specified
     worksheet_position = 0
     worksheet_name = "your_worksheet_name"
-
-    Docs: [TODO]
     """
 
     config_path = path.join(get_repo_path(), 'io_config.yaml')

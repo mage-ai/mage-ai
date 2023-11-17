@@ -22,8 +22,6 @@ def load_from_google_sheet(*args, **kwargs):
     Worksheet position or name may also be specified
     worksheet_position = 0
     worksheet_name = "your_worksheet_name"
-
-    Docs: [TODO]
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
