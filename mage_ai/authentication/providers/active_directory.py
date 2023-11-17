@@ -30,8 +30,18 @@ class ADProvider(SsoProvider, OauthProvider):
             raise Exception(
                 'AD directory id is empty. '
                 'Make sure the ACTIVE_DIRECTORY_DIRECTORY_ID environment variable is set.')
+        if ACTIVE_DIRECTORY_CLIENT_ID and not ACTIVE_DIRECTORY_CLIENT_SECRET:
+            raise Exception(
+                'AD client secret is empty. '
+                'Make sure the ACTIVE_DIRECTORY_CLIENT_SECRET environment variable is set.')
 
     def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
+        """
+        For active directory, the user can set up the Oauth provider in two different ways. They
+        can either just set the ACTIVE_DIRECTORY_DIRECTORY_ID which will use the Mage application we
+        set up in Azure. They can additionally set the ACTIVE_DIRECTORY_CLIENT_ID and
+        ACTIVE_DIRECTORY_CLIENT_SECRET which will use their own Mage application in Azure.
+        """
         ad_directory_id = ACTIVE_DIRECTORY_DIRECTORY_ID
         if ACTIVE_DIRECTORY_CLIENT_ID:
             base_url = get_base_url(redirect_uri)
