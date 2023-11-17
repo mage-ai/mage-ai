@@ -103,30 +103,31 @@ class Hook(BaseDataClass):
 
     def run(self, **kwargs):
         try:
-            payload = kwargs.get('payload') or {}
+            # payload = kwargs.get('payload') or {}
             # resources = kwargs.get('resources') or []
-            resource = kwargs.get('resource') or {}
-            error = kwargs.get('error') or {}
+            # resource = kwargs.get('resource') or {}
+            # error = kwargs.get('error') or {}
 
-            self.output = dict(
-                payload=merge_dict(payload, dict(
-                    output_block_uuids=[
-                        'mage',
-                        'fire',
-                    ],
-                )),
-                query={
-                    'includes_content': [False],
-                    'type[]': ['pyspark'],
-                },
-                error=merge_dict(error, dict(
-                    blah='!!!!!!!!!!!!!!!!!!!!!!!!!!!',
-                )),
-                resource=merge_dict(resource, dict(
-                    uuid='YOOOOOOOOOOOOOOOOOOOO',
-                )),
-                # resources=resources[:1],
-            )
+            # self.output = dict(
+            #     payload=merge_dict(payload, dict(
+            #         output_block_uuids=[
+            #             'mage',
+            #             'fire',
+            #         ],
+            #     )),
+            #     query={
+            #         'includes_content': [False],
+            #         'type[]': ['pyspark'],
+            #     },
+            #     error=merge_dict(error, dict(
+            #         blah='!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+            #     )),
+            #     resource=merge_dict(resource, dict(
+            #         uuid='YOOOOOOOOOOOOOOOOOOOO',
+            #     )),
+            #     # resources=resources[:1],
+            # )
+            return
         except Exception as err:
             # TODO: handle the strategy
             self.status = dict(error=err)
