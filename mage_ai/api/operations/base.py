@@ -27,7 +27,7 @@ from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
 from mage_ai.api.result_set import ResultSet
 from mage_ai.authentication.permissions.constants import EntityName
-from mage_ai.data_preparation.models.global_hooks.models import (  # HookCondition,; HookStrategy,
+from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     HookOperation,
     HookStage,
@@ -56,8 +56,7 @@ class BaseOperation():
         self.oauth_client = kwargs.get('oauth_client')
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
-        self._payload = None
-        self._payload_init = kwargs.get('payload') or {}
+        self.payload = kwargs.get('payload') or {}
         self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
@@ -200,37 +199,6 @@ class BaseOperation():
         return response
 
     @property
-    def payload(self) -> Dict:
-        if self._payload:
-            return self._payload
-
-        self._payload = self._payload_init
-
-        project = Project()
-        if project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
-            global_hooks = GlobalHooks.load_from_file()
-            try:
-                resource_type = self.__classified_class()
-                operation_type = self.action
-                hooks = global_hooks.get_hooks(
-                    operation_type=HookOperation(operation_type),
-                    resource_type=EntityName(resource_type),
-                    stages=[HookStage.BEFORE],
-                )
-                if hooks:
-                    results = global_hooks.run_hooks(hooks, payload=self._payload_init)
-                    if results and not self._payload:
-                        self._payload = {}
-
-                    for result in results:
-                        self._payload.update(result.get('output'))
-            except Exception as err:
-                print(f'[WARNING] BaseOperation.payload: {err}')
-                raise err
-
-        return self._payload
-
-    @property
     def query(self) -> Dict:
         if not self._query:
             return {}
@@ -259,6 +227,29 @@ class BaseOperation():
     @query.setter
     def query(self, value):
         self._query = value
+
+    def __run_hooks(
+        self,
+        operation_type: HookOperation,
+        stage: HookStage,
+        **kwargs,
+    ):
+        project = Project()
+        if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+            return
+
+        try:
+            global_hooks = GlobalHooks.load_from_file()
+            hooks = global_hooks.get_and_run_hooks(
+                operation_type=operation_type,
+                resource_type=EntityName(self.__classified_class()),
+                stage=stage,
+                **kwargs
+
+            )
+            return hooks
+        except Exception as err:
+            raise err
 
     async def __executed_result(self):
         if self.action in [CREATE, LIST]:
@@ -303,12 +294,24 @@ class BaseOperation():
             options = updated_options.copy()
             options.pop('payload', None)
 
-            return await self.__resource_class().process_create(
+            hooks = self.__run_hooks(
+                operation_type=HookOperation(self.action),
+                stage=HookStage.BEFORE,
+                payload=payload,
+            )
+            if hooks:
+                for hook in (hooks or []):
+                    if hook.output:
+                        payload.update(hook.output.get('payload') or {})
+
+            result = await self.__resource_class().process_create(
                 payload,
                 self.user,
                 result_set_from_external=policy.result_set(),
                 **options,
             )
+
+            return result
         elif LIST == self.action:
             def _build_authorize_query(
                 parsed_value: Any,
@@ -442,6 +445,16 @@ class BaseOperation():
 
             options = merge_dict(updated_options.copy(), dict(query=self.query))
             options.pop('payload', None)
+
+            hooks = self.__run_hooks(
+                operation_type=HookOperation(self.action),
+                stage=HookStage.BEFORE,
+                payload=payload,
+            )
+            if hooks:
+                for hook in (hooks or []):
+                    if hook.output:
+                        payload.update(hook.output.get('payload') or {})
 
             await res.process_update(payload, **options)
 

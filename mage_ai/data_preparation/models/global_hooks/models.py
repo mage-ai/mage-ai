@@ -1,16 +1,15 @@
 import os
 from dataclasses import dataclass, field, make_dataclass
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
-import inflection
 import yaml
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.multi import run_parallel_multiple_args
@@ -103,16 +102,14 @@ class Hook(BaseDataClass):
         return extract(data, arr)
 
     def run(self, **kwargs):
-        import random
+        payload = kwargs.get('payload') or {}
 
-        key = inflection.underscore(self.resource_type.value)
-
-        payload = (kwargs.get('payload') or {}).get(key) or {}
-
-        self.output = {
-            key: merge_dict(payload, dict(uuid=str(random.randint(1, 9999)))),
-        }
-        self.status = dict(ok=1)
+        self.output = dict(payload=merge_dict(payload, dict(
+            output_block_uuids=[
+                'mage',
+                'fire',
+            ],
+        )))
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
@@ -152,6 +149,22 @@ class GlobalHookResource(GlobalHookResourceBase):
 
         if self.resource_type:
             self.update_attributes(resource_type=self.resource_type)
+
+    def to_dict(
+        self,
+        include_all: bool = False,
+        **kwargs,
+    ):
+        arr = []
+
+        if not include_all:
+            arr.extend([
+                'resource_type',
+            ])
+
+        data = super().to_dict(**kwargs)
+
+        return ignore_keys(data, arr)
 
     def update_attributes(self, **kwargs):
         super().update_attributes(**kwargs)
@@ -362,11 +375,32 @@ class GlobalHooks(BaseDataClass):
             self.hooks(),
         ))
 
-    def run_hooks(self, hooks: List[Hook], **kwargs) -> Any:
-        return run_parallel_multiple_args(run_hook, [(hook.to_dict(
+    def run_hooks(self, hooks: List[Hook], **kwargs) -> List[Hook]:
+        hook_dicts = run_parallel_multiple_args(run_hook, [(hook.to_dict(
             include_all=True,
             include_output=True,
         ), kwargs) for hook in hooks])
+
+        return [Hook.load(**m) for m in hook_dicts]
+
+    def get_and_run_hooks(
+        self,
+        operation_type: HookOperation,
+        resource_type: EntityName,
+        stage: HookStage,
+        conditions: List[HookCondition] = None,
+        **kwargs,
+    ) -> List[Hook]:
+        hooks = self.get_hooks(
+            operation_type=operation_type,
+            resource_type=resource_type,
+            stage=stage,
+            conditions=conditions,
+        )
+        if not hooks:
+            return None
+
+        return self.run_hooks(hooks, **kwargs)
 
     def save(self, file_path: str = None) -> None:
         with open(self.file_path(), 'w'):
