@@ -2,21 +2,20 @@ import React, { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import api from '@api';
-import { OauthProviderEnum } from '@interfaces/OauthType';
+import { SignInProps } from './constants';
 import { queryFromUrl } from '@utils/url';
 import { set } from '@storage/localStorage';
 
+type OktaSignInProps = {} & SignInProps;
 
-function OktaSignIn() {
+function OktaSignIn({
+  oauthResponse,
+}: OktaSignInProps) {
   const router = useRouter();
-  const { data } = api.oauths.detail(OauthProviderEnum.OKTA, {
-    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
-  });
   const {
     url: oauthUrl,
     redirect_query_params: redirectQueryParams = {},
-  } = useMemo(() => data?.oauth || {}, [data]);
+  } = useMemo(() => oauthResponse || {}, [oauthResponse]);
 
   return (
     <>

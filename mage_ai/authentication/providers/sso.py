@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Awaitable, Dict
 
 
 class SsoProvider(ABC):
@@ -7,7 +7,7 @@ class SsoProvider(ABC):
     Base class for single sign on providers. Can be used in conjunction with OauthProvider.
     """
     @abstractmethod
-    async def get_user_info(self, **kwargs) -> Dict:
+    async def get_user_info(self, **kwargs) -> Awaitable[Dict]:
         """
         This method should return a dictionary containing the user's information.
 
