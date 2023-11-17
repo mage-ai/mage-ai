@@ -134,25 +134,20 @@ class NATSSource(BaseSource):
                     self._print("No messages fetched, continuing to next iteration")
                     continue
 
-                # Accumulate all messages in a batch
-                batch = [json.loads(msg.data.decode()) for _, msg in message_tuples]
+                processed_messages = []  # List to store successfully processed messages
 
-                self._print(f"Processing batch with {len(batch)} messages")
-
-                # Process the entire batch if it's not empty
-                if batch:
+                for decoded_message, msg in message_tuples:
                     try:
-                        handler(batch)
-                        self._print("Batch processed successfully, acknowledging messages")
-
-                        # Acknowledge all messages in the batch
-                        for _, msg in message_tuples:
-                            asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
+                        # Attempt to process the message
+                        processed_messages.append(decoded_message)
+                        asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
                     except Exception as e:
-                        self._print(f"Error processing batch: {e}")
-                        # Acknowledge only the messages processed successfully
-                        for _, msg in message_tuples[:len(batch)]:
-                            asyncio.run_coroutine_threadsafe(msg.ack(), self.loop)
+                        self._print(f"Error processing message: {e}")
+
+                # Once all messages in the batch have been attempted,
+                # pass the successfully processed messages to the handler
+                if processed_messages:
+                    handler(processed_messages)
 
         finally:
             self.close_client()
