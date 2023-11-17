@@ -17,10 +17,10 @@ class OktaProvider(SsoProvider, OauthProvider):
 
     def __init__(self):
         self.hostname = OKTA_DOMAIN_URL
+        self.__validate()
+
         if not self.hostname.startswith('https'):
             self.hostname = f'https://{self.hostname}'
-
-        self.__validate()
 
     def __validate(self):
         if not self.hostname:

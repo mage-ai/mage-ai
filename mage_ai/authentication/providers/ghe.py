@@ -45,7 +45,7 @@ class GHEProvider(OauthProvider):
             redirect_uri=redirect_uri,
         )
         query = dict(
-            client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
+            client_id=self.client_id,
             redirect_uri=urllib.parse.quote_plus(
                 f'{base_url}/oauth',
             ),
@@ -70,8 +70,8 @@ class GHEProvider(OauthProvider):
                     'Accept': 'application/json',
                 },
                 data=dict(
-                    client_id=os.getenv(GHE_CLIENT_ID_ENV_VAR),
-                    client_secret=os.getenv(GHE_CLIENT_SECRET_ENV_VAR),
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
                     code=code,
                 ),
                 timeout=20,
