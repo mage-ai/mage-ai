@@ -87,4 +87,6 @@ class GlobalHookResource(GenericResource):
         pass
 
     async def delete(self, **kwargs):
-        pass
+        global_hooks = GlobalHooks.load_from_file()
+        global_hooks.remove_hook(self.model)
+        global_hooks.save()

@@ -16,4 +16,4 @@ class GlobalHookPresenter(BasePresenter):
     ]
 
     async def prepare_present(self, **kwargs) -> Dict:
-        return self.resource.model.to_dict()
+        return self.resource.model.to_dict(include_all=True)

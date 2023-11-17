@@ -125,7 +125,7 @@ class BaseDataClass:
                 pass
 
         if convert_enum and is_enum:
-            return str(value)
+            return value.value
 
         return value
 

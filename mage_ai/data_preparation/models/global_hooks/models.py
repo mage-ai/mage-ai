@@ -9,6 +9,7 @@ from mage_ai.api.operations.constants import OperationType
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import ignore_keys
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 
@@ -58,6 +59,16 @@ class Hook(BaseDataClass):
         self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_enums('stages', HookStage)
 
+    def to_dict(self, include_all: bool = False, **kwargs):
+        data = super().to_dict(**kwargs)
+        if include_all:
+            return data
+
+        return ignore_keys(data, [
+            'operation_type',
+            'resource_type',
+        ])
+
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
     arr = []
@@ -72,20 +83,18 @@ def __build_global_hook_resource_fields() -> List[Tuple]:
     return arr
 
 
-def __global_hook_resource_post_init(self):
-    for operation in OperationType:
-        self.serialize_attribute_classes(operation.value, Hook)
-
-
-GlobalHookResource = make_dataclass(
-    'GlobalHookResource',
+GlobalHookResourceBase = make_dataclass(
+    'GlobalHookResourceBase',
     bases=(BaseDataClass,),
     fields=__build_global_hook_resource_fields(),
 )
 
 
-GlobalHookResource.__post_init__ = __global_hook_resource_post_init
-GlobalHookResource.disable_attribute_snake_case = True
+@dataclass
+class GlobalHookResource(GlobalHookResourceBase):
+    def __post_init__(self):
+        for operation in OperationType:
+            self.serialize_attribute_classes(operation.value, Hook)
 
 
 def __build_global_hook_resources_fields() -> List[Tuple]:
@@ -101,19 +110,20 @@ def __build_global_hook_resources_fields() -> List[Tuple]:
     return arr
 
 
-def __global_hook_resources_post_init(self):
-    for entity_name in EntityName:
-        self.serialize_attribute_class(entity_name.value, GlobalHookResource)
-
-
-GlobalHookResources = make_dataclass(
-    'GlobalHookResources',
+GlobalHookResourcesBase = make_dataclass(
+    'GlobalHookResourcesBase',
     bases=(BaseDataClass,),
     fields=__build_global_hook_resources_fields(),
 )
 
 
-GlobalHookResources.__post_init__ = __global_hook_resources_post_init
+@dataclass
+class GlobalHookResources(GlobalHookResourcesBase):
+    disable_attribute_snake_case = True
+
+    def __post_init__(self):
+        for entity_name in EntityName:
+            self.serialize_attribute_class(entity_name.value, GlobalHookResource)
 
 
 @dataclass
@@ -142,11 +152,11 @@ class GlobalHooks(BaseDataClass):
 
     def add_hook(self, hook: Hook) -> Hook:
         if not self.resources:
-            self.resources = GlobalHookResources()
+            self.resources = GlobalHookResources.load()
 
         resource = getattr(self.resources, hook.resource_type.value)
         if not resource:
-            resource = GlobalHookResource()
+            resource = GlobalHookResource.load()
 
         hooks = getattr(resource, hook.operation_type)
         if not hooks:
@@ -155,6 +165,22 @@ class GlobalHooks(BaseDataClass):
         hooks.append(hook)
         setattr(resource, hook.operation_type.value, hooks)
         setattr(self.resources, hook.resource_type.value, resource)
+
+    def remove_hook(self, hook: Hook) -> Hook:
+        if self.resources:
+            resource = getattr(self.resources, hook.resource_type.value)
+            if resource:
+                hooks = getattr(resource, hook.operation_type)
+                if hooks:
+                    setattr(resource, hook.operation_type.value, list(filter(
+                        lambda x: (
+                            x.uuid != hook.uuid and
+                            x.operation_type != hook.operation_type and
+                            x.resource_type != hook.resource_type
+                        ),
+                        hooks,
+                    )))
+                    setattr(self.resources, hook.resource_type.value, resource)
 
     def hooks(self) -> List[Hook]:
         arr = []
@@ -175,8 +201,8 @@ class GlobalHooks(BaseDataClass):
         return find(
             lambda x: (
                 x.uuid == uuid and
-                x.operation_type.value == operation_type and
-                x.resource_type.value == resource_type
+                x.operation_type == operation_type and
+                x.resource_type == resource_type
             ),
             self.hooks(),
         )
