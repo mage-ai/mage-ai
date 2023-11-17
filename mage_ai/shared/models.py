@@ -11,6 +11,8 @@ from mage_ai.shared.parsers import encode_complex
 
 @dataclass
 class BaseDataClass:
+    disable_attribute_snake_case = False
+
     @classmethod
     def all_annotations(self) -> Dict:
         annotations = {}
@@ -63,10 +65,20 @@ class BaseDataClass:
             pass
 
     @classmethod
-    def convert_value(self, value, annotation=None, ignore_empty: bool = False):
+    def convert_value(
+        self,
+        value,
+        annotation=None,
+        convert_enum: bool = False,
+        ignore_empty: bool = False,
+    ):
         is_list = isinstance(value, list)
         if is_list:
-            return [self.convert_value(v) for v in value]
+            return [self.convert_value(
+                v,
+                convert_enum=convert_enum,
+                ignore_empty=ignore_empty,
+            ) for v in value]
 
         if not annotation:
             annotation = type(value)
@@ -75,7 +87,11 @@ class BaseDataClass:
 
         def _build_dict(acc, kv, cls=self):
             key, value = kv
-            acc[key] = cls.convert_value(value)
+            acc[key] = cls.convert_value(
+                value,
+                convert_enum=convert_enum,
+                ignore_empty=ignore_empty,
+            )
             return acc
 
         is_typing_class = False
@@ -95,7 +111,10 @@ class BaseDataClass:
             if is_dict_class:
                 return annotation.load(**value)
             elif isinstance(value, BaseDataClass):
-                return value.to_dict(ignore_empty=ignore_empty)
+                return value.to_dict(
+                    convert_enum=convert_enum,
+                    ignore_empty=ignore_empty,
+                )
 
         is_enum_class = issubclass(annotation, Enum)
         is_enum = isinstance(value, Enum)
@@ -105,13 +124,18 @@ class BaseDataClass:
             except ValueError:
                 pass
 
+        if convert_enum and is_enum:
+            return str(value)
+
         return value
 
     @classmethod
     def load_to_dict(self, **kwargs) -> Dict:
         data = {}
         for key, value in kwargs.items():
-            data[inflection.underscore(key)] = value
+            if not self.disable_attribute_snake_case:
+                key = inflection.underscore(key)
+            data[key] = value
         return data
 
     def serialize_attribute_class(self, attribute_name: str, attribute_class):
@@ -158,7 +182,7 @@ class BaseDataClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enums: {err}')
 
-    def to_dict(self, ignore_empty: bool = False, **kwargs) -> Dict:
+    def to_dict(self, convert_enum: bool = False, ignore_empty: bool = False, **kwargs) -> Dict:
         data = {}
 
         for key, annotation in self.all_annotations().items():
@@ -168,7 +192,12 @@ class BaseDataClass:
             except AttributeError as err:
                 print(f'[WARNING] {self.__class__.__name__}.to_dict: {err}')
 
-            value = self.convert_value(value, annotation, ignore_empty=ignore_empty)
+            value = self.convert_value(
+                value,
+                annotation,
+                convert_enum=convert_enum,
+                ignore_empty=ignore_empty,
+            )
             if not ignore_empty or value is not None:
                 data[key] = encode_complex(value)
 

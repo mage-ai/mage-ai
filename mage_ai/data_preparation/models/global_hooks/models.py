@@ -3,12 +3,12 @@ from dataclasses import dataclass, field, make_dataclass
 from enum import Enum
 from typing import Dict, List, Tuple
 
-import inflection
 import yaml
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.array import find
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 
@@ -43,15 +43,19 @@ class HookStrategies(BaseDataClass):
 @dataclass
 class Hook(BaseDataClass):
     conditions: List[HookCondition] = None
+    operation_type: OperationType = None
     output_block_uuids: List[str] = field(default=None)
     pipeline_uuid: str = None
+    resource_type: EntityName = None
     stages: List[HookStage] = None
     strategies: List[HookStrategy] = None
     uuid: str = None
 
     def __post_init__(self):
-        self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_class('strategies', HookStrategies)
+        self.serialize_attribute_enum('operation_type', OperationType)
+        self.serialize_attribute_enum('resource_type', EntityName)
+        self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_enums('stages', HookStage)
 
 
@@ -81,6 +85,7 @@ GlobalHookResource = make_dataclass(
 
 
 GlobalHookResource.__post_init__ = __global_hook_resource_post_init
+GlobalHookResource.disable_attribute_snake_case = True
 
 
 def __build_global_hook_resources_fields() -> List[Tuple]:
@@ -88,7 +93,7 @@ def __build_global_hook_resources_fields() -> List[Tuple]:
 
     for entity_name in EntityName:
         arr.append((
-            inflection.underscore(entity_name.value),
+            entity_name.value,
             GlobalHookResource,
             field(default=None),
         ))
@@ -98,7 +103,7 @@ def __build_global_hook_resources_fields() -> List[Tuple]:
 
 def __global_hook_resources_post_init(self):
     for entity_name in EntityName:
-        self.serialize_attribute_class(inflection.underscore(entity_name.value), GlobalHookResource)
+        self.serialize_attribute_class(entity_name.value, GlobalHookResource)
 
 
 GlobalHookResources = make_dataclass(
@@ -124,18 +129,57 @@ class GlobalHooks(BaseDataClass):
 
     @classmethod
     def load_from_file(self, file_path: str = None) -> 'GlobalHooks':
+        yaml_config = {}
+
         file_path_to_use = file_path or self.file_path()
+        if os.path.exists(file_path_to_use):
+            with open(file_path_to_use, 'r') as fp:
+                content = fp.read()
+                if content:
+                    yaml_config = yaml.safe_load(content) or {}
 
-        print('wtf', file_path_to_use, os.path.exists(file_path_to_use))
-        if not os.path.exists(file_path_to_use):
-            return None
+        return self.load(**yaml_config)
 
-        with open(file_path_to_use, 'r') as fp:
-            content = fp.read()
-            if content:
-                yaml_config = yaml.safe_load(content) or {}
-                print('omg', yaml_config)
-                return self.load(**yaml_config)
+    def add_hook(self, hook: Hook) -> Hook:
+        if not self.resources:
+            self.resources = GlobalHookResources()
+
+        resource = getattr(self.resources, hook.resource_type.value)
+        if not resource:
+            resource = GlobalHookResource()
+
+        hooks = getattr(resource, hook.operation_type)
+        if not hooks:
+            hooks = []
+
+        hooks.append(hook)
+        setattr(resource, hook.operation_type.value, hooks)
+        setattr(self.resources, hook.resource_type.value, resource)
+
+    def hooks(self) -> List[Hook]:
+        arr = []
+        if self.resources:
+            for entity_name in EntityName:
+                resource = getattr(self.resources, entity_name.value)
+                if resource:
+                    for operation in OperationType:
+                        hooks = getattr(resource, operation.value)
+                        if hooks:
+                            for hook in hooks:
+                                hook.operation_type = operation
+                                hook.resource_type = entity_name
+                                arr.append(hook)
+        return arr
+
+    def get_hook(self, resource_type: EntityName, operation_type: OperationType, uuid: str) -> Hook:
+        return find(
+            lambda x: (
+                x.uuid == uuid and
+                x.operation_type.value == operation_type and
+                x.resource_type.value == resource_type
+            ),
+            self.hooks(),
+        )
 
     def save(self, file_path: str = None) -> None:
         with open(self.file_path(), 'w'):
@@ -143,4 +187,4 @@ class GlobalHooks(BaseDataClass):
             safe_write(file_path or self.file_path(), content)
 
     def to_dict(self, **kwargs) -> Dict:
-        return super().to_dict(ignore_empty=True)
+        return super().to_dict(convert_enum=True, ignore_empty=True)
