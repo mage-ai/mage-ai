@@ -423,6 +423,14 @@ emr_config:
   slave_spark_properties:
     spark.driver.memory: 400M
     spark.executor.cores: '8'
+  scaling_policy:             # Set up auto scaling of the EMR cluster
+    unit_type: 'Instances'    # 'InstanceFleetUnits'|'Instances'|'VCPU'
+    minimum_capacity_units: 1
+    maximum_capacity_units: 4
+    maximum_on_demand_capacity_units: 4
+    maximum_core_capacity_units: 3
+  spark_jars:                 # External Jar libraries
+  - s3://bucket/mysql-connector-java-8.0.28.jar
 ```
 
 <Note>
