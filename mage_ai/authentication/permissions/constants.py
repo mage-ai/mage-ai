@@ -36,6 +36,7 @@ class EntityName(str, Enum):
     GitCustomBranch = 'GitCustomBranch'
     GitFile = 'GitFile'
     GlobalDataProduct = 'GlobalDataProduct'
+    GlobalHook = 'GlobalHook'
     IntegrationDestination = 'IntegrationDestination'
     IntegrationSource = 'IntegrationSource'
     IntegrationSourceStream = 'IntegrationSourceStream'

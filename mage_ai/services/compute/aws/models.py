@@ -65,7 +65,7 @@ class ClusterStatus(BaseDataClass):
         if self.timeline and isinstance(self.timeline, dict):
             self.timeline = ClusterStatusTimeline.load(**self.timeline)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return merge_dict(super().to_dict(), dict(
             error_details=self.error_details.to_dict() if self.error_details else None,
             state_change_reason=(
@@ -206,7 +206,7 @@ class Cluster(BaseDataClass):
         if self.status:
             return self.status.state
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return merge_dict(super().to_dict(), dict(
             ready=self.ready,
         ))

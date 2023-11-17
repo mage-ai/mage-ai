@@ -6,11 +6,14 @@ from typing import Dict
 
 import inflection
 
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 
 
 @dataclass
 class BaseDataClass:
+    disable_attribute_snake_case = False
+
     @classmethod
     def all_annotations(self) -> Dict:
         annotations = {}
@@ -38,7 +41,7 @@ class BaseDataClass:
             for key, value in props_init.items():
                 annotation = annotations.get(key)
                 if annotation:
-                    props[key] = self.convert_value(value, annotation)
+                    props[key] = self.convert_value(value, annotation, ignore_dataclass=True)
                 else:
                     props_not_set[key] = value
 
@@ -48,8 +51,8 @@ class BaseDataClass:
             try:
                 if not callable(getattr(model, key)):
                     model.set_value(key, value)
-            except AttributeError:
-                pass
+            except AttributeError as err:
+                print(f'[WARNING] {self.__name__}.load: {err}')
 
         return model
 
@@ -63,10 +66,22 @@ class BaseDataClass:
             pass
 
     @classmethod
-    def convert_value(self, value, annotation=None):
+    def convert_value(
+        self,
+        value,
+        annotation=None,
+        convert_enum: bool = False,
+        ignore_dataclass: bool = False,
+        ignore_empty: bool = False,
+    ):
         is_list = isinstance(value, list)
         if is_list:
-            return [self.convert_value(v) for v in value]
+            return [self.convert_value(
+                v,
+                convert_enum=convert_enum,
+                ignore_dataclass=ignore_dataclass,
+                ignore_empty=ignore_empty,
+            ) for v in value]
 
         if not annotation:
             annotation = type(value)
@@ -75,7 +90,12 @@ class BaseDataClass:
 
         def _build_dict(acc, kv, cls=self):
             key, value = kv
-            acc[key] = cls.convert_value(value)
+            acc[key] = cls.convert_value(
+                value,
+                convert_enum=convert_enum,
+                ignore_dataclass=ignore_dataclass,
+                ignore_empty=ignore_empty,
+            )
             return acc
 
         is_typing_class = False
@@ -91,11 +111,15 @@ class BaseDataClass:
                 return value
 
         is_data_class = issubclass(annotation, BaseDataClass)
-        if is_data_class:
+        if is_data_class and not ignore_dataclass:
             if is_dict_class:
                 return annotation.load(**value)
             elif isinstance(value, BaseDataClass):
-                return value.to_dict()
+                return value.to_dict(
+                    convert_enum=convert_enum,
+                    ignore_dataclass=ignore_dataclass,
+                    ignore_empty=ignore_empty,
+                )
 
         is_enum_class = issubclass(annotation, Enum)
         is_enum = isinstance(value, Enum)
@@ -105,31 +129,36 @@ class BaseDataClass:
             except ValueError:
                 pass
 
+        if convert_enum and is_enum:
+            return value.value
+
         return value
 
     @classmethod
     def load_to_dict(self, **kwargs) -> Dict:
         data = {}
         for key, value in kwargs.items():
-            data[inflection.underscore(key)] = value
+            if not self.disable_attribute_snake_case:
+                key = inflection.underscore(key)
+            data[key] = value
         return data
 
-    def serialize_attribute_class(self, attribute_name: str, attribute_class):
+    def serialize_attribute_class(self, attribute_name: str, attribute_class, **kwargs):
         try:
             value = getattr(self, attribute_name)
             if value and isinstance(value, dict):
-                setattr(self, attribute_name, attribute_class.load(**value))
+                setattr(self, attribute_name, attribute_class.load(**merge_dict(value, kwargs)))
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_class: {err}')
 
-    def serialize_attribute_classes(self, attribute_name: str, attribute_class):
+    def serialize_attribute_classes(self, attribute_name: str, attribute_class, **kwargs):
         try:
             value = getattr(self, attribute_name)
             if value and isinstance(value, list):
                 arr = []
                 for model in value:
                     if isinstance(model, dict):
-                        arr.append(attribute_class.load(**model))
+                        arr.append(attribute_class.load(**merge_dict(model, kwargs)))
                     else:
                         arr.append(model)
                 setattr(self, attribute_name, arr)
@@ -144,17 +173,37 @@ class BaseDataClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enum: {err}')
 
-    def to_dict(self) -> Dict:
+    def serialize_attribute_enums(self, attribute_name: str, enum_class):
+        try:
+            values = getattr(self, attribute_name)
+            if values and isinstance(values, list):
+                arr = []
+                for value in values:
+                    if isinstance(value, str):
+                        arr.append(enum_class(value))
+                    else:
+                        arr.append(value)
+                setattr(self, attribute_name, arr)
+        except AttributeError as err:
+            print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enums: {err}')
+
+    def to_dict(self, convert_enum: bool = False, ignore_empty: bool = False, **kwargs) -> Dict:
         data = {}
 
         for key, annotation in self.all_annotations().items():
             value = None
             try:
                 value = getattr(self, key)
-            except AttributeError:
-                pass
+            except AttributeError as err:
+                print(f'[WARNING] {self.__class__.__name__}.to_dict: {err}')
 
-            value = self.convert_value(value, annotation)
-            data[key] = encode_complex(value)
+            value = self.convert_value(
+                value,
+                annotation,
+                convert_enum=convert_enum,
+                ignore_empty=ignore_empty,
+            )
+            if not ignore_empty or value is not None:
+                data[key] = encode_complex(value)
 
         return data

@@ -104,7 +104,7 @@ class SetupStep(BaseDataClass):
 
         return self._status_calculated
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return merge_dict(super().to_dict(), dict(
             status_calculated=self.status_calculated(),
         ))
@@ -155,7 +155,7 @@ class ComputeService:
 
         return service_class(project=project, with_clusters=with_clusters)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         result = dict(
             connection_credentials=[m.to_dict() for m in self.connection_credentials()],
             setup_steps=[m.to_dict() for m in self.setup_steps()],

@@ -108,8 +108,8 @@ class Application(BaseSparkModel):
 
         return self.id
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return merge_dict(
-            super().to_dict(),
+            super().to_dict(**kwargs),
             dict(calculated_id=self.calculated_id()),
         )
