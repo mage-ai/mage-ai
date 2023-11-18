@@ -5,6 +5,7 @@ from unittest.mock import patch
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
+    Hook,
     HookCondition,
     HookOperation,
     HookStage,
@@ -50,12 +51,22 @@ class BaseOperationWithHooksTest(BaseApiTestCase):
 
     async def test_list(self):
         global_hooks = GlobalHooks.load_from_file()
-        # global_hooks.add_hook(Hook.load(
-        #     operation_type=HookOperation.LIST,
-        #     resource_type=EntityName.Pipeline,
-        #     stages=[HookStage.BEFORE],
-        #     uuid=self.faker.unique.name(),
-        # ))
+        global_hooks.add_hook(Hook.load(
+            operation_type=HookOperation.LIST,
+            resource_type=EntityName.Pipeline,
+            stages=[HookStage.BEFORE],
+            uuid=self.faker.unique.name(),
+        ))
+        global_hooks.add_hook(Hook.load(
+            operation_type=HookOperation.LIST,
+            resource_type=EntityName.Pipeline,
+            stages=[HookStage.AFTER],
+            uuid=self.faker.unique.name(),
+        ))
+        global_hooks.save()
+
+        response = await self.build_list_operation().execute()
+        self.assertIsNone(response.get('error'))
 
         with patch.object(GlobalHooks, 'load_from_file', lambda: global_hooks):
             with patch.object(global_hooks, 'get_and_run_hooks') as mock_get_and_run_hooks:
