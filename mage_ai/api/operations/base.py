@@ -219,7 +219,7 @@ class BaseOperation():
                     resource_key: presented_init,
                 },
             )
-            response['errors'] = results_altered['error']
+            response['error'] = results_altered['error']
 
             if settings.DEBUG:
                 raise err
