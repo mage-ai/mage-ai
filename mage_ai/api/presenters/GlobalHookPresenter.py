@@ -7,8 +7,8 @@ class GlobalHookPresenter(BasePresenter):
     default_attributes = [
         'conditions',
         'operation_type',
-        'output_block_uuids',
-        'pipeline_uuid',
+        'outputs',
+        'pipeline',
         'resource_type',
         'stages',
         'strategies',

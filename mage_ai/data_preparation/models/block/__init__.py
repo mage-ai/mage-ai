@@ -1708,7 +1708,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
             data = variable_object.read_data(
                 sample=sample,
-                sample_count=sample_count,
+                sample_count=None if sample_count == -1 else sample_count,
                 spark=self.get_spark_session(),
             )
             if type(data) is pd.DataFrame:

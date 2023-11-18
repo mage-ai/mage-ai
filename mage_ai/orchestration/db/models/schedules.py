@@ -1206,7 +1206,9 @@ class BlockRun(BaseModel):
                             variable_name=stream,
                             partition=self.pipeline_run.execution_partition,
                             index=index,
-                            sample_count=sample_count or DATAFRAME_SAMPLE_COUNT,
+                            sample_count=None if sample_count == -1 else (
+                                sample_count or DATAFRAME_SAMPLE_COUNT
+                            ),
                         )
                         if data:
                             columns = data.get('columns')
