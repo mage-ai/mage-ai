@@ -208,8 +208,14 @@ class Api(Source):
         elif checked_type == 'application/json':
             result = response.json()
 
+            if result is None:
+                raise Exception('API response is None.')
+
             if response_parser:
                 result = dig(result, response_parser)
+
+                if result is None:
+                    raise Exception(f'API response with parser {response_parser} is None.')
 
             sample = None
             requires_columns = False
