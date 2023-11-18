@@ -268,7 +268,8 @@ class GlobalHooks(BaseDataClass):
 
     def __post_init__(self):
         self.serialize_attribute_class('resources', GlobalHookResources)
-        self.resources.update_attributes()
+        if self.resources:
+            self.resources.update_attributes()
 
     @classmethod
     def file_path(self) -> str:
