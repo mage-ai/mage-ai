@@ -41,7 +41,7 @@ class BaseDataClass:
             for key, value in props_init.items():
                 annotation = annotations.get(key)
                 if annotation:
-                    props[key] = self.convert_value(value, annotation, ignore_dataclass=True)
+                    props[key] = self.convert_value(value, annotation)
                 else:
                     props_not_set[key] = value
 
@@ -56,7 +56,6 @@ class BaseDataClass:
 
         return model
 
-    @classmethod
     def set_value(self, key, value):
         value = self.convert_value(value)
 
@@ -71,7 +70,6 @@ class BaseDataClass:
         value,
         annotation=None,
         convert_enum: bool = False,
-        ignore_dataclass: bool = False,
         ignore_empty: bool = False,
     ):
         is_list = isinstance(value, list)
@@ -79,7 +77,6 @@ class BaseDataClass:
             return [self.convert_value(
                 v,
                 convert_enum=convert_enum,
-                ignore_dataclass=ignore_dataclass,
                 ignore_empty=ignore_empty,
             ) for v in value]
 
@@ -93,7 +90,6 @@ class BaseDataClass:
             acc[key] = cls.convert_value(
                 value,
                 convert_enum=convert_enum,
-                ignore_dataclass=ignore_dataclass,
                 ignore_empty=ignore_empty,
             )
             return acc
@@ -111,13 +107,12 @@ class BaseDataClass:
                 return value
 
         is_data_class = issubclass(annotation, BaseDataClass)
-        if is_data_class and not ignore_dataclass:
+        if is_data_class:
             if is_dict_class:
                 return annotation.load(**value)
             elif isinstance(value, BaseDataClass):
                 return value.to_dict(
                     convert_enum=convert_enum,
-                    ignore_dataclass=ignore_dataclass,
                     ignore_empty=ignore_empty,
                 )
 
@@ -207,3 +202,7 @@ class BaseDataClass:
                 data[key] = encode_complex(value)
 
         return data
+
+    def update_attributes(self, **kwargs):
+        for key, value in kwargs.items():
+            self.set_value(key, value)

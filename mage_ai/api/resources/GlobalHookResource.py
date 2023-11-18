@@ -2,7 +2,12 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.models.global_hooks.models import GlobalHooks, Hook
+from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.global_hooks.models import (
+    GlobalHooks,
+    Hook,
+    HookOperation,
+)
 from mage_ai.orchestration.db.models.oauth import User
 
 
@@ -63,18 +68,18 @@ class GlobalHookResource(GenericResource):
     async def member(self, pk: str, user: User, **kwargs):
         query = kwargs.get('query') or {}
 
-        resource = query.get('resource', [None])
-        if resource:
-            resource = resource[0]
+        resource_type = query.get('resource_type', [None])
+        if resource_type:
+            resource_type = resource_type[0]
 
-        operation = query.get('operation', [None])
-        if operation:
-            operation = operation[0]
+        operation_type = query.get('operation_type', [None])
+        if operation_type:
+            operation_type = operation_type[0]
 
         global_hooks = GlobalHooks.load_from_file()
         hook = global_hooks.get_hook(
-            operation_type=operation,
-            resource_type=resource,
+            operation_type=HookOperation(operation_type) if operation_type else operation_type,
+            resource_type=EntityName(resource_type) if resource_type else resource_type,
             uuid=pk,
         )
 
@@ -85,7 +90,7 @@ class GlobalHookResource(GenericResource):
 
     async def update(self, payload: Dict, **kwargs):
         global_hooks = GlobalHooks.load_from_file()
-        global_hooks.add_hook(self.model, payload=payload, update=True)
+        self.model = global_hooks.add_hook(self.model, payload=payload, update=True)
         global_hooks.save()
 
     async def delete(self, **kwargs):
