@@ -1273,7 +1273,7 @@ class Pipeline:
 
         return variable
 
-    def get_blocks(self, block_uuids: List[str] = None, widget=False):
+    def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
         if not block_uuids:
             block_uuids = mapping.keys()

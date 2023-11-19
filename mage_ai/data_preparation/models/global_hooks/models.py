@@ -202,7 +202,7 @@ class Hook(BaseDataClass):
                 if block_uuid not in outputs_mapping:
                     outputs_mapping[block_uuid] = []
 
-                outputs_mapping[block_uuid].append(block_run.get_outputs(sample_count=-1))
+                outputs_mapping[block_uuid].append(block_run.get_outputs(sample=False))
         else:
             for block_uuid in block_uuids.keys():
                 input_vars, _kwargs_vars, _upstream_block_uuids_final = fetch_input_variables(
