@@ -1275,9 +1275,6 @@ class Pipeline:
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
-        if not block_uuids:
-            block_uuids = mapping.keys()
-
         return [mapping[uuid] for uuid in block_uuids if uuid in mapping]
 
     def get_executable_blocks(self):
