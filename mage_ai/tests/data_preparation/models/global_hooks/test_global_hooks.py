@@ -242,7 +242,7 @@ class GlobalHooksTest(BaseApiTestCase):
 
         for hook_uuid in [SEED_DATA_HOOK_UUID] + [hook.uuid for hook in hooks_new]:
             self.assertIsNotNone(find(
-                lambda x: x.uuid == hook_uuid,
+                lambda x, hook_uuid=hook_uuid: x.uuid == hook_uuid,
                 hooks,
             ))
 
@@ -255,7 +255,7 @@ class GlobalHooksTest(BaseApiTestCase):
         self.assertEqual(len(hooks), 2)
         for hook in [hook2, hook3]:
             self.assertIsNotNone(find(
-                lambda x: x.uuid == hook.uuid,
+                lambda x, hook=hook: x.uuid == hook.uuid,
                 hooks,
             ))
 
@@ -265,7 +265,7 @@ class GlobalHooksTest(BaseApiTestCase):
         self.assertEqual(len(hooks), 2)
         for hook in [hook1, hook3]:
             self.assertIsNotNone(find(
-                lambda x: x.uuid == hook.uuid,
+                lambda x, hook=hook: x.uuid == hook.uuid,
                 hooks,
             ))
 
@@ -276,7 +276,7 @@ class GlobalHooksTest(BaseApiTestCase):
         self.assertEqual(len(hooks), 1)
         for hook in [hook2]:
             self.assertIsNotNone(find(
-                lambda x: x.uuid == hook.uuid,
+                lambda x, hook=hook: x.uuid == hook.uuid,
                 hooks,
             ))
 
@@ -303,7 +303,7 @@ class GlobalHooksTest(BaseApiTestCase):
         self.assertEqual(len(hooks), 2)
         for hook in [hook1, hook3]:
             self.assertIsNotNone(find(
-                lambda x: x.uuid == hook.uuid,
+                lambda x, hook=hook: x.uuid == hook.uuid,
                 hooks,
             ))
 
