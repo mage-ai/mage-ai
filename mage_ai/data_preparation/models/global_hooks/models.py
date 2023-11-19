@@ -16,7 +16,7 @@ from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find, find_index
+from mage_ai.shared.array import find, find_index, flatten
 from mage_ai.shared.hash import (
     dig,
     extract,
@@ -37,7 +37,7 @@ class HookOperation(str, Enum):
     EXECUTE = 'execute'
     LIST = OperationType.LIST.value
     UPDATE = OperationType.UPDATE.value
-    UPDATE_SPECIAL = 'update_special'
+    UPDATE_ANYWHERE = 'update_anywhere'
 
 
 class HookCondition(str, Enum):
@@ -367,13 +367,13 @@ class Hook(BaseDataClass):
 
     def should_run(
         self,
-        operation_type: HookOperation,
+        operation_types: List[HookOperation],
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
     ) -> bool:
-        if self.operation_type != operation_type:
+        if self.operation_type not in operation_types:
             return False
 
         if self.resource_type != resource_type:
@@ -555,12 +555,16 @@ class GlobalHookResources(GlobalHookResourcesBase):
                 setattr(self, entity_name.value, resource)
 
 
-def run_hook(args_array: List):
-    hook_dict, kwargs = args_array
-    hook = Hook.load(**hook_dict)
-    hook.run(**kwargs)
+def run_hooks(args_arrays: List[List]) -> List[Dict]:
+    arr = []
 
-    return hook.to_dict(include_run_data=True)
+    for args_array in args_arrays:
+        hook_dict, kwargs = args_array
+        hook = Hook.load(**hook_dict)
+        hook.run(**kwargs)
+        arr.append(hook.to_dict(include_run_data=True))
+
+    return arr
 
 
 @dataclass
@@ -705,7 +709,7 @@ class GlobalHooks(BaseDataClass):
 
     def get_hooks(
         self,
-        operation_type: HookOperation,
+        operation_types: List[HookOperation],
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
@@ -715,14 +719,14 @@ class GlobalHooks(BaseDataClass):
             hook: Hook,
             conditions=conditions,
             operation_resource=operation_resource,
-            operation_type=operation_type,
+            operation_types=operation_types,
             resource_type=resource_type,
             stage=stage,
         ) -> bool:
             return hook.should_run(
                 conditions=conditions,
                 operation_resource=operation_resource,
-                operation_type=operation_type,
+                operation_types=operation_types,
                 resource_type=resource_type,
                 stage=stage,
             )
@@ -733,16 +737,30 @@ class GlobalHooks(BaseDataClass):
         ))
 
     def run_hooks(self, hooks: List[Hook], **kwargs) -> List[Hook]:
-        hook_dicts = run_parallel_multiple_args(run_hook, [(hook.to_dict(
-            include_all=True,
-            include_output=True,
-        ), kwargs) for hook in hooks])
+        hooks_by_pipeline = {}
+        for hook in hooks:
+            if not hook.pipeline_settings or not hook.pipeline_settings.get('uuid'):
+                continue
 
-        return [Hook.load(**m) for m in hook_dicts]
+            pipeline_uuid = hook.pipeline_settings.get('uuid')
+            if pipeline_uuid not in hooks_by_pipeline:
+                hooks_by_pipeline[pipeline_uuid] = []
+
+            hooks_by_pipeline[pipeline_uuid].append((
+                hook.to_dict(
+                    include_all=True,
+                    include_output=True,
+                ),
+                kwargs,
+            ))
+
+        hook_dicts_arr = run_parallel_multiple_args(run_hooks, list(hooks_by_pipeline.values()))
+
+        return [Hook.load(**m) for m in flatten(hook_dicts_arr)]
 
     def get_and_run_hooks(
         self,
-        operation_type: HookOperation,
+        operation_types: List[HookOperation],
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
@@ -750,7 +768,7 @@ class GlobalHooks(BaseDataClass):
         **kwargs,
     ) -> List[Hook]:
         hooks = self.get_hooks(
-            operation_type=operation_type,
+            operation_types=operation_types,
             resource_type=resource_type,
             stage=stage,
             conditions=conditions,
