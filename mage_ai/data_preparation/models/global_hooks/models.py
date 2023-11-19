@@ -11,6 +11,7 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.utils import fetch_input_variables
+from mage_ai.data_preparation.models.global_hooks.constants import RESOURCE_TYPES
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.triggers.api import trigger_pipeline
@@ -516,7 +517,7 @@ class GlobalHookResource(GlobalHookResourceBase):
 def __build_global_hook_resources_fields() -> List[Tuple]:
     arr = []
 
-    for entity_name in EntityName:
+    for entity_name in RESOURCE_TYPES:
         arr.append((
             entity_name.value,
             GlobalHookResource,
@@ -538,7 +539,7 @@ class GlobalHookResources(GlobalHookResourcesBase):
     disable_attribute_snake_case = True
 
     def __post_init__(self):
-        for entity_name in EntityName:
+        for entity_name in RESOURCE_TYPES:
             self.serialize_attribute_class(
                 entity_name.value,
                 GlobalHookResource,
@@ -548,7 +549,7 @@ class GlobalHookResources(GlobalHookResourcesBase):
     def update_attributes(self, **kwargs):
         super().update_attributes(**kwargs)
 
-        for entity_name in EntityName:
+        for entity_name in RESOURCE_TYPES:
             resource = getattr(self, entity_name.value)
             if resource:
                 resource.update_attributes(resource_type=entity_name)
@@ -672,7 +673,7 @@ class GlobalHooks(BaseDataClass):
     ) -> List[Hook]:
         arr = []
         if self.resources:
-            for entity_name in EntityName:
+            for entity_name in RESOURCE_TYPES:
                 resource = getattr(self.resources, entity_name.value)
                 if not resource:
                     continue
