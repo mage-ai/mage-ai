@@ -14,25 +14,15 @@ from mage_ai.orchestration.db.models.oauth import User
 class GlobalHookResource(GenericResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
-        operation_types = query.get('operation_type[]', [])
-        if operation_types:
-            operation_types = operation_types[0]
-        if isinstance(operation_types, str):
-            operation_types = [HookOperation(m) for m in operation_types.split(',') if m]
+        # query = kwargs.get('query') or {}
 
-        resource_types = query.get('resource_type[]', [])
-        if resource_types:
-            resource_types = resource_types[0]
-        if isinstance(resource_types, str):
-            resource_types = [EntityName(m) for m in resource_types.split(',') if m]
+        # resources = query.get('resources[]', [])
+        # operations = query.get('operations[]', [])
 
         global_hooks = GlobalHooks.load_from_file()
 
         return self.build_result_set(
-            global_hooks.hooks(
-                operation_types=operation_types,
-                resource_types=resource_types,
-            ),
+            global_hooks.hooks(),
             user,
             **kwargs,
         )
