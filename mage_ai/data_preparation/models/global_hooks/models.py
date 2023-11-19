@@ -258,8 +258,8 @@ class Hook(BaseDataClass):
                 input_vars, _kwargs_vars, _upstream_block_uuids_final = fetch_input_variables(
                     self.pipeline,
                     input_args=None,
-                    upstream_block_uuids=[block_uuid],
                     global_vars=self.pipeline_settings.get('variables'),
+                    upstream_block_uuids=[block_uuid],
                 )
                 output = input_vars
                 if isinstance(output, list) and len(output) >= 1:
