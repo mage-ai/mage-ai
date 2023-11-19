@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -16,19 +16,12 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookPredicate,
     HookStage,
 )
+from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
 
 
-def build_update_metadata_content(query: Dict) -> str:
-    return f"""
-@data_loader
-def load_data(*args, **kwargs):
-    return {json.dumps(query)}
-"""
-
-
-def build_update_query_content(query: Dict) -> str:
+def build_content(query: Dict) -> str:
     return f"""
 @data_loader
 def load_data(*args, **kwargs):
@@ -52,24 +45,25 @@ def build_hooks(
     if not global_hooks:
         global_hooks = GlobalHooks.load_from_file()
 
-    if not matching_predicate_resource:
+    if matching_predicate_resource is None:
         matching_predicate_resource = dict(
             name=pipeline.name,
             type=pipeline.type,
         )
 
-    if not predicates_match:
-        predicates_match = [
+    if predicates_match is None:
+        predicates_match = [[
             HookPredicate.load(resource=matching_predicate_resource),
-        ]
+        ]]
 
-    if not predicates_miss:
-        predicates_miss = [
+    if predicates_miss is None:
+        predicates_miss = [[
             HookPredicate.load(resource=dict(
                 name=uuid.uuid4().hex,
                 type=pipeline.type,
             )),
-        ] + predicates_match
+            predicates_match[0][0],
+        ]]
 
     if not operation_type:
         operation_type = HookOperation.DETAIL
@@ -104,10 +98,7 @@ def build_hooks(
 
         hook = Hook.load(
             operation_type=operation_type,
-            predicates=[
-                predicates_match,
-                predicates_miss,
-            ],
+            predicates=predicates_match + predicates_miss,
             resource_type=resource_type,
             uuid=f'hook{idx}_{test_case.faker.unique.name()}',
             **hook_payload,
@@ -119,9 +110,7 @@ def build_hooks(
             **hook.to_dict(),
         )
         hook_miss.uuid = test_case.faker.unique.name()
-        hook_miss.predicates = [
-            predicates_miss,
-        ]
+        hook_miss.predicates = predicates_miss
 
         hooks.append(hook)
         hooks.append(hook_miss)
@@ -137,79 +126,105 @@ def build_hooks(
 
 
 class GlobalHooksMixin(BaseApiTestCase):
-    async def setUpAsync(self):
-        block_settings = {
-            0: dict(content=build_update_query_content({
+    async def setUpAsync(
+        self,
+        block_settings: Dict = None,
+        hook_settings: Callable = None,
+        matching_predicate_resource: Dict = None,
+        operation_type: HookOperation = None,
+        pipeline_type: PipelineType = None,
+        predicates_match: List[HookPredicate] = None,
+        predicates_miss: List[HookPredicate] = None,
+    ):
+        block_settings_init = {
+            0: dict(content=build_content({
                 'type[]': [PipelineType.STREAMING.value],
             })),
-            1: dict(content=build_update_query_content({
+            1: dict(content=build_content({
                 'type[]': [PipelineType.PYSPARK.value],
             })),
-            2: dict(content=build_update_metadata_content(dict(powers=dict(fire=1)))),
-            3: dict(content=build_update_metadata_content(dict(level=2))),
+            2: dict(content=build_content(dict(powers=dict(fire=1)))),
+            3: dict(content=build_content(dict(level=2))),
         }
+
+        if block_settings:
+            block_settings = merge_dict(block_settings_init, block_settings)
+        else:
+            block_settings = block_settings_init
 
         pipeline1, blocks1 = await build_pipeline_with_blocks_and_content(
             self,
             block_settings=block_settings,
-            pipeline_type=PipelineType.PYTHON,
+            pipeline_type=pipeline_type or PipelineType.PYTHON,
         )
         pipeline2, blocks2 = await build_pipeline_with_blocks_and_content(
             self,
             block_settings=block_settings,
-            pipeline_type=PipelineType.PYTHON,
+            pipeline_type=pipeline_type or PipelineType.PYTHON,
         )
         block11, block12, block13, block14 = blocks1
         block21, block22, block23, block24 = blocks2
 
+        hook_settings_use = {
+            0: dict(
+                outputs=[
+                    HookOutputSettings.load(
+                        block=HookOutputBlock.load(uuid=block11.uuid),
+                        key=HookOutputKey.QUERY,
+                    ),
+                    HookOutputSettings.load(
+                        block=HookOutputBlock.load(uuid=block12.uuid),
+                        key=HookOutputKey.QUERY,
+                    ),
+                ],
+                pipeline=dict(
+                    uuid=pipeline1.uuid,
+                ),
+            ),
+            1: dict(
+                pipeline=dict(
+                    uuid=pipeline1.uuid,
+                ),
+            ),
+            2: dict(
+                outputs=[
+                    HookOutputSettings.load(
+                        block=HookOutputBlock.load(uuid=block13.uuid),
+                        key=HookOutputKey.METADATA,
+                    ),
+                ],
+                pipeline=dict(
+                    uuid=pipeline1.uuid,
+                ),
+            ),
+            3: dict(
+                outputs=[
+                    HookOutputSettings.load(
+                        block=HookOutputBlock.load(uuid=block24.uuid),
+                        key=HookOutputKey.METADATA,
+                        keys=['water'],
+                    ),
+                ],
+                pipeline=dict(
+                    uuid=pipeline2.uuid,
+                ),
+            ),
+        }
+
+        if hook_settings:
+            hook_settings_use = merge_dict(hook_settings_use, hook_settings(dict(
+                blocks1=blocks1,
+                pipeline1=pipeline1,
+            )))
+
         global_hooks, hooks, hooks_match, hooks_miss = build_hooks(
             self,
-            hook_settings={
-                0: dict(
-                    outputs=[
-                        HookOutputSettings.load(
-                            block=HookOutputBlock.load(uuid=block11.uuid),
-                            key=HookOutputKey.QUERY,
-                        ),
-                        HookOutputSettings.load(
-                            block=HookOutputBlock.load(uuid=block12.uuid),
-                            key=HookOutputKey.QUERY,
-                        ),
-                    ],
-                    pipeline=dict(
-                        uuid=pipeline1.uuid,
-                    ),
-                ),
-                1: dict(
-                    pipeline=dict(
-                        uuid=pipeline1.uuid,
-                    ),
-                ),
-                2: dict(
-                    outputs=[
-                        HookOutputSettings.load(
-                            block=HookOutputBlock.load(uuid=block13.uuid),
-                            key=HookOutputKey.METADATA,
-                        ),
-                    ],
-                    pipeline=dict(
-                        uuid=pipeline1.uuid,
-                    ),
-                ),
-                3: dict(
-                    outputs=[
-                        HookOutputSettings.load(
-                            block=HookOutputBlock.load(uuid=block24.uuid),
-                            key=HookOutputKey.METADATA,
-                            keys=['water'],
-                        ),
-                    ],
-                    pipeline=dict(
-                        uuid=pipeline2.uuid,
-                    ),
-                ),
-            },
+            hook_settings=hook_settings_use,
+            matching_predicate_resource=matching_predicate_resource,
+            operation_type=operation_type,
             pipeline=pipeline1,
+            predicates_match=predicates_match,
+            predicates_miss=predicates_miss,
         )
 
         self.blocks1 = blocks1
