@@ -25,6 +25,7 @@ from mage_ai.api.operations.constants import (
 )
 from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
+from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.result_set import ResultSet
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.global_hooks.models import (
@@ -75,6 +76,8 @@ class BaseOperation():
 
         presented_init = None
         metadata = None
+        result = None
+
         resource_key = 'resource'
         if LIST == self.action:
             resource_key = 'resources'
@@ -92,6 +95,7 @@ class BaseOperation():
             results_altered = self.__run_hooks_after(
                 condition=HookCondition.SUCCESS,
                 metadata=metadata,
+                operation_resource=result,
                 **{
                     resource_key: presented_init,
                 },
@@ -216,6 +220,7 @@ class BaseOperation():
                 condition=HookCondition.FAILURE,
                 error=self.__present_error(err),
                 metadata=metadata,
+                operation_resource=result,
                 **{
                     resource_key: presented_init,
                 },
@@ -264,6 +269,7 @@ class BaseOperation():
         operation_type: HookOperation,
         stage: HookStage,
         condition: HookCondition = None,
+        operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
         **kwargs,
     ) -> List[Hook]:
         project = Project()
@@ -274,10 +280,11 @@ class BaseOperation():
             global_hooks = GlobalHooks.load_from_file()
             hooks = global_hooks.get_and_run_hooks(
                 conditions=[condition] if condition else None,
+                operation_resource=operation_resource,
                 operation_type=operation_type,
                 resource_type=EntityName(self.__classified_class()),
                 stage=stage,
-                **kwargs
+                **kwargs,
             )
 
             if hooks:
@@ -294,6 +301,7 @@ class BaseOperation():
         condition: HookCondition = None,
         error: Dict = None,
         metadata: Dict = None,
+        operation_resource: Union[BaseResource, List[BaseResource]] = None,
         resource: Dict = None,
         resources: List[Dict] = None,
     ) -> Union[Dict, List[Dict]]:
@@ -302,6 +310,7 @@ class BaseOperation():
             error=error,
             meta=self.meta,
             metadata=metadata,
+            operation_resource=operation_resource,
             operation_type=HookOperation(self.action),
             query=self.query,
             resource=resource,
@@ -342,7 +351,12 @@ class BaseOperation():
             resources=resources,
         )
 
-    def __run_hooks_before(self, payload: Dict = None, **kwargs) -> Dict:
+    def __run_hooks_before(
+        self,
+        operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
+        payload: Dict = None,
+        **kwargs,
+    ) -> Dict:
         if not payload:
             payload = {}
 
@@ -350,6 +364,7 @@ class BaseOperation():
             operation_type=HookOperation(self.action),
             stage=HookStage.BEFORE,
             meta=self.meta,
+            operation_resource=operation_resource,
             payload=payload,
             query=self.query,
         )
@@ -379,17 +394,19 @@ class BaseOperation():
 
         return payload
 
-    async def __executed_result(self):
+    async def __executed_result(self) -> Union[BaseResource, Dict, List[BaseResource]]:
         if self.action in [CREATE, LIST]:
             return await self.__create_or_index()
         elif self.action in [DELETE, DETAIL, UPDATE]:
             return await self.__delete_show_or_update()
 
-    async def __create_or_index(self):
+    async def __create_or_index(self) -> Union[BaseResource, Dict, List[BaseResource]]:
+        operation_resource = None,
         payload = None
         if CREATE == self.action:
             payload = self.__payload_for_resource()
-        payload = self.__run_hooks_before(payload=payload)
+            operation_resource = payload
+        payload = self.__run_hooks_before(operation_resource=operation_resource, payload=payload)
 
         updated_options = await self.__updated_options()
 
@@ -467,18 +484,21 @@ class BaseOperation():
                 **options,
             )
 
-    async def __delete_show_or_update(self):
-        payload = None
-        if UPDATE == self.action:
-            payload = self.__payload_for_resource()
-        payload = self.__run_hooks_before(payload=payload)
-
+    async def __delete_show_or_update(self) -> BaseResource:
         updated_options = await self.__updated_options()
 
         res = await self.__resource_class().process_member(
             self.pk,
             self.user,
             **updated_options,
+        )
+
+        payload = None
+        if UPDATE == self.action:
+            payload = self.__payload_for_resource()
+        payload = self.__run_hooks_before(
+            payload=payload,
+            operation_resource=res,
         )
 
         policy = self.__policy_class()(res, self.user, **updated_options)
