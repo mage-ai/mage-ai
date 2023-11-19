@@ -134,7 +134,7 @@ def get_safe_value(data: Dict, key: str, default_value):
 
 def set_value(obj: Dict, keys: List[str], value) -> Dict:
     if len(keys) >= 2:
-        for idx, key in enumerate(keys):
+        for idx in range(len(keys)):
             keys_init = keys[:idx]
             if len(keys_init) >= 1:
                 set_value(obj, keys_init, dig(obj, keys_init) or {})
