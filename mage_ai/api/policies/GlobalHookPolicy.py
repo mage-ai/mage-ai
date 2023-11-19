@@ -45,8 +45,8 @@ GlobalHookPolicy.allow_write(
     [
         'conditions',
         'operation_type',
-        'outputs',
-        'pipeline',
+        'output_block_uuids',
+        'pipeline_uuid',
         'resource_type',
         'stages',
         'strategies',
@@ -67,8 +67,8 @@ GlobalHookPolicy.allow_write(
     [
         'conditions',
         'operation_type',
-        'outputs',
-        'pipeline',
+        'output_block_uuids',
+        'pipeline_uuid',
         'resource_type',
         'stages',
         'strategies',
@@ -86,8 +86,8 @@ GlobalHookPolicy.allow_write(
 
 GlobalHookPolicy.allow_query(
     [
-        'operation_type[]',
-        'resource_type[]',
+        'operations[]',
+        'resources[]',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -112,6 +112,7 @@ GlobalHookPolicy.allow_query(
         OperationType.CREATE,
         OperationType.DELETE,
         OperationType.DETAIL,
+        OperationType.LIST,
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_admin_role(),
