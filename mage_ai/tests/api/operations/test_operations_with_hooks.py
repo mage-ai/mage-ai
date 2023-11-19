@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     Hook,
     HookCondition,
     HookOperation,
+    HookPredicate,
     HookStage,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -39,7 +40,12 @@ def build_hooks(test_case, operation_type: HookOperation) -> List[Hook]:
     return global_hooks, [hook1, hook2]
 
 
-async def run_test_for_operation(test_case, operation_type: HookOperation, build_operation):
+async def run_test_for_operation(
+    test_case,
+    operation_type: HookOperation,
+    build_operation,
+    test_predicate: bool = True,
+):
     global_hooks, hooks = build_hooks(test_case, operation_type)
 
     response = await test_case.build_list_operation().execute()
@@ -62,6 +68,25 @@ async def run_test_for_operation(test_case, operation_type: HookOperation, build
                 ],
                 [m.to_dict() for m in mock_run_hooks.mock_calls[7][1][0]],
             )
+
+        if test_predicate:
+            with patch.object(global_hooks, 'run_hooks') as mock_run_hooks:
+                hook2 = hooks[1]
+                hook2.predicates = [[HookPredicate.load(resource=dict(
+                    resource_type=EntityName.Block,
+                ))]]
+                global_hooks.add_hook(hook2, update=True)
+
+                response = await build_operation().execute()
+
+                test_case.assertEqual(
+                    [
+                        hooks[0].to_dict(),
+                    ],
+                    [m.to_dict() for m in mock_run_hooks.mock_calls[0][1][0]],
+                )
+
+                mock_run_hooks.assert_called_once()
 
 
 class BaseOperationWithHooksTest(BaseApiTestCase):
@@ -122,4 +147,5 @@ class BaseOperationWithHooksTest(BaseApiTestCase):
             self,
             HookOperation.DELETE,
             lambda: self.build_delete_operation(pipeline.uuid),
+            test_predicate=False,
         )
