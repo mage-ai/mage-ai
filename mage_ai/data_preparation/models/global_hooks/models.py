@@ -14,7 +14,7 @@ from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index
-from mage_ai.shared.hash import dig, extract, ignore_keys, merge_dict, set_value
+from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.multi import run_parallel_multiple_args
@@ -89,7 +89,6 @@ class HookOutputBlock(BaseDataClass):
 class HookOutputSettings(BaseDataClass):
     block: HookOutputBlock
     key: HookOutputKey = None
-    keys: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         self.serialize_attribute_class('block', HookOutputBlock)
@@ -156,7 +155,7 @@ class Hook(BaseDataClass):
         data = super().to_dict(**kwargs)
 
         return merge_dict(extract(data, arr), dict(
-            outputs=[m.to_dict() for m in (self.output_settings or [])],
+            outputs=self.output_settings,
             pipeline=self.pipeline_settings,
         ))
 
@@ -230,38 +229,21 @@ class Hook(BaseDataClass):
                 continue
 
             for output in output_arr:
-                if output is None:
-                    continue
-
                 if HookOperation.EXECUTION == self.operation_type:
                     # TODO: implement
                     pass
-                elif hook_output_setting.key:
-                    keys = [hook_output_setting.key.value]
-                    if hook_output_setting.keys:
-                        keys.extend(hook_output_setting.keys)
+                elif isinstance(output, dict):
+                    if not hook_output_setting.key:
+                        continue
 
-                    output_acc = dig(self.output, keys)
+                    key = hook_output_setting.key.value
+                    prev = self.output.get(key)
+                    if prev is not None:
+                        prev.update(output)
 
-                    if isinstance(output, dict):
-                        if output_acc is None or len(output_acc) == 0:
-                            output_acc = {}
-
-                        output_acc = merge_dict(output_acc, output)
-                    elif isinstance(output, list):
-                        if output_acc is None or len(output_acc) == 0:
-                            output_acc = []
-
-                        output_acc = output_acc + output
-                    elif str(output).isnumeric():
-                        if output_acc is None:
-                            output_acc = 0
-
-                        output_acc = output_acc + output
-                    else:
-                        output_acc = output
-
-                    self.output = set_value(self.output, keys, output_acc)
+                    self.output.update({
+                        key: prev,
+                    })
 
         return self.output
 
