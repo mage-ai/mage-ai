@@ -559,8 +559,12 @@ class GlobalHooks(BaseDataClass):
         if self.resources:
             for entity_name in EntityName:
                 resource = getattr(self.resources, entity_name.value)
-                if not resource or \
-                        (resource_types and resource.resource_type not in resource_types):
+                if not resource:
+                    continue
+
+                resource.resource_type = resource.resource_type or entity_name
+
+                if resource_types and resource.resource_type not in resource_types:
                     continue
 
                 for operation in HookOperation:
