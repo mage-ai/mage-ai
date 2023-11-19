@@ -3,6 +3,9 @@ from typing import Dict
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.global_hooks.constants import (
+    DISABLED_RESOURCE_TYPES,
+)
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     Hook,
@@ -53,6 +56,13 @@ class GlobalHookResource(GenericResource):
             error = ApiError.RESOURCE_INVALID.copy()
             error.update(
                 message=f'Hook is missing the following required attributes: {", ".join(missing)}.',
+            )
+            raise ApiError(error)
+
+        if hook.resource_type and hook.resource_type in DISABLED_RESOURCE_TYPES:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error.update(
+                message=f'Hooks cannot be created for resource type {hook.resource_type.value}.',
             )
             raise ApiError(error)
 

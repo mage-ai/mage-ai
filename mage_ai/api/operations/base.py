@@ -276,12 +276,16 @@ class BaseOperation():
         if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
             return None
 
+        operation_types = [operation_type]
+        if HookOperation.UPDATE == operation_type:
+            operation_types.append(HookOperation.UPDATE_ANYWHERE)
+
         try:
             global_hooks = GlobalHooks.load_from_file()
             hooks = global_hooks.get_and_run_hooks(
                 conditions=[condition] if condition else None,
                 operation_resource=operation_resource,
-                operation_type=operation_type,
+                operation_types=operation_types,
                 resource_type=EntityName(self.__classified_class()),
                 stage=stage,
                 **kwargs,

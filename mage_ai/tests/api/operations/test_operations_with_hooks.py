@@ -236,6 +236,22 @@ class BaseOperationWithHooksTest(BaseApiTestCase):
             test_predicate_before=True,
         )
 
+    async def test_update_anywhere(self):
+        await run_test_for_operation(
+            self,
+            HookOperation.UPDATE_ANYWHERE,
+            lambda: self.build_update_operation(self.pipeline.uuid, {}),
+        )
+
+    async def test_update_anywhere_with_predicates(self):
+        await run_test_for_operation(
+            self,
+            HookOperation.UPDATE_ANYWHERE,
+            lambda: self.build_update_operation(self.pipeline.uuid, {}),
+            test_predicate_after=True,
+            test_predicate_before=True,
+        )
+
     async def test_delete(self):
         pipeline = create_pipeline_with_blocks(
             self.faker.unique.name(),
