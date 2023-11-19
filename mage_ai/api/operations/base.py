@@ -363,19 +363,13 @@ class BaseOperation():
                 continue
 
             if output.get('meta'):
-                value = output.get('meta') or {}
-                if isinstance(value, dict):
-                    self.meta = merge_dict(self.meta, value)
+                self.meta = merge_dict(self.meta, output.get('meta') or {})
 
             if output.get('payload'):
-                value = output.get('payload') or {}
-                if isinstance(value, dict):
-                    payload = merge_dict(payload, value)
+                payload = merge_dict(payload, output.get('payload') or {})
 
             if output.get('query'):
-                value = output.get('query') or {}
-                if isinstance(value, dict):
-                    self.query = merge_dict(self.query, value)
+                self.query = merge_dict(self.query, output.get('query') or {})
 
         return payload
 

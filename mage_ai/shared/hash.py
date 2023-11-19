@@ -130,19 +130,3 @@ def replace_dict_nan_value(d):
 
 def get_safe_value(data: Dict, key: str, default_value):
     return data.get(key, default_value) if data else default_value
-
-
-def set_value(obj: Dict, keys: List[str], value) -> Dict:
-    if len(keys) >= 2:
-        for idx, key in enumerate(keys):
-            keys_init = keys[:idx]
-            if len(keys_init) >= 1:
-                set_value(obj, keys_init, dig(obj, keys_init) or {})
-
-    results = dict(__obj_to_set_value=obj, __value=value)
-
-    key = ''.join(f"['{key}']" for key in keys)
-    expression = f'__obj_to_set_value{key} = __value'
-    exec(expression, results)
-
-    return results['__obj_to_set_value']
