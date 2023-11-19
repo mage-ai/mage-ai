@@ -33,6 +33,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookCondition,
     HookOperation,
     HookStage,
+    HookStrategy,
 )
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -277,8 +278,13 @@ class BaseOperation():
                 resource_type=EntityName(self.__classified_class()),
                 stage=stage,
                 **kwargs
-
             )
+
+            if hooks:
+                for hook in (hooks or []):
+                    if hook.status and HookStrategy.RAISE == hook.status.strategy:
+                        raise Exception(hook.status.error)
+
             return hooks
         except Exception as err:
             raise err
