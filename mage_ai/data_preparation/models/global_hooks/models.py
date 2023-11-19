@@ -31,7 +31,7 @@ class HookOperation(str, Enum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
-    EXECUTION = 'execution'
+    EXECUTE = 'execute'
     LIST = OperationType.LIST.value
     UPDATE = OperationType.UPDATE.value
     UPDATE_SPECIAL = 'update_special'
@@ -249,7 +249,7 @@ class Hook(BaseDataClass):
                 if output is None:
                     continue
 
-                if HookOperation.EXECUTION == self.operation_type:
+                if HookOperation.EXECUTE == self.operation_type:
                     # TODO: implement
                     pass
                 elif hook_output_setting.key:
@@ -326,7 +326,7 @@ class Hook(BaseDataClass):
                 if HookStrategy.RAISE in self.strategies:
                     self.status.strategy = HookStrategy.RAISE
                 elif HookStrategy.BREAK in self.strategies and \
-                        HookOperation.EXECUTION == self.operation_type:
+                        HookOperation.EXECUTE == self.operation_type:
 
                     self.status.strategy = HookStrategy.BREAK
                 elif HookStrategy.CONTINUE in self.strategies:
