@@ -269,7 +269,7 @@ class BaseOperation():
         operation_type: HookOperation,
         stage: HookStage,
         condition: HookCondition = None,
-        operation_resource: Union[BaseResource, List[BaseResource]] = None,
+        operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
         **kwargs,
     ) -> List[Hook]:
         project = Project()
@@ -353,7 +353,7 @@ class BaseOperation():
 
     def __run_hooks_before(
         self,
-        operation_resource: Union[BaseResource, List[BaseResource]] = None,
+        operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
         payload: Dict = None,
         **kwargs,
     ) -> Dict:
@@ -394,17 +394,19 @@ class BaseOperation():
 
         return payload
 
-    async def __executed_result(self) -> Union[BaseResource, List[BaseResource]]:
+    async def __executed_result(self) -> Union[BaseResource, Dict, List[BaseResource]]:
         if self.action in [CREATE, LIST]:
             return await self.__create_or_index()
         elif self.action in [DELETE, DETAIL, UPDATE]:
             return await self.__delete_show_or_update()
 
-    async def __create_or_index(self) -> Union[BaseResource, List[BaseResource]]:
+    async def __create_or_index(self) -> Union[BaseResource, Dict, List[BaseResource]]:
+        operation_resource = None,
         payload = None
         if CREATE == self.action:
             payload = self.__payload_for_resource()
-        payload = self.__run_hooks_before(payload=payload)
+            operation_resource = payload
+        payload = self.__run_hooks_before(operation_resource=operation_resource, payload=payload)
 
         updated_options = await self.__updated_options()
 

@@ -24,7 +24,7 @@ def create_pipeline(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_with_blocks(name: str, repo_path: str):
+def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: PipelineType = None):
     """
     Creates a pipeline with blocks for data processing and transformation.
 
@@ -38,6 +38,7 @@ def create_pipeline_with_blocks(name: str, repo_path: str):
     pipeline = Pipeline.create(
         name,
         repo_path=repo_path,
+        pipeline_type=pipeline_type,
     )
     block1 = Block.create('block1', 'data_loader', repo_path, language='python')
     block2 = Block.create('block2', 'transformer', repo_path, language='python')

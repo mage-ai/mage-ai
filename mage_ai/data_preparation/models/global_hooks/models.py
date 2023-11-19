@@ -2,7 +2,7 @@ import os
 from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
 from enum import Enum
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import yaml
 
@@ -371,7 +371,7 @@ class Hook(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
-        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline] = None,
+        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
     ) -> bool:
         if self.operation_type != operation_type:
             return False
@@ -398,7 +398,7 @@ class Hook(BaseDataClass):
 
     def __matches_any_predicate(
         self,
-        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline],
+        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
     ) -> bool:
         if not operation_resource or not self.predicates:
             return True
@@ -411,30 +411,34 @@ class Hook(BaseDataClass):
     def __validate_predicate(
         self,
         predicate: HookPredicate,
-        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline],
+        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
     ) -> bool:
         if not predicate.resource or len(predicate.resource) == 0:
             return True
 
         def _validate_resource(
-            resource: Union[BaseResource, Block, Pipeline],
+            resource: Union[BaseResource, Block, Dict, Pipeline],
             predicate=predicate,
         ) -> bool:
             model = resource
             if isinstance(resource, BaseResource):
                 model = resource.model
 
-            check = all([hasattr(
-                model,
-                key,
-            ) and getattr(
-                model,
-                key,
-            ) == value for key, value in predicate.resource.items()])
+            def _equals(
+                key: str,
+                value: Any,
+                model=model,
+            ) -> bool:
+                if isinstance(model, dict):
+                    return model.get(key) == value
+
+                return hasattr(model, key) and getattr(model, key) == value
+
+            check = all([_equals(key, value) for key, value in predicate.resource.items()])
 
             return check
 
-        if isinstance(operation_resource, Iterable):
+        if isinstance(operation_resource, Iterable) and not isinstance(operation_resource, dict):
             return all([_validate_resource(res) for res in operation_resource])
 
         return _validate_resource(operation_resource)
@@ -705,7 +709,7 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
-        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline] = None,
+        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
     ) -> List[Hook]:
         def _filter(
             hook: Hook,
@@ -742,7 +746,7 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
-        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline] = None,
+        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
         **kwargs,
     ) -> List[Hook]:
         hooks = self.get_hooks(
