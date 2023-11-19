@@ -348,11 +348,8 @@ class Hook(BaseDataClass):
             else:
                 self.pipeline.execute_sync(global_vars=variables, update_status=False)
 
-            self.get_and_set_output(pipeline_run=pipeline_run)
+            return pipeline_run
         except Exception as err:
-            # TODO: remove this when development for this feature is complete.
-            raise err
-
             # TODO: handle the strategy
             self.status = HookStatus.load(error=err)
 
@@ -562,7 +559,8 @@ def run_hooks(args_arrays: List[List]) -> List[Dict]:
     for args_array in args_arrays:
         hook_dict, kwargs = args_array
         hook = Hook.load(**hook_dict)
-        hook.run(**kwargs)
+        pipeline_run = hook.run(**kwargs)
+        hook.get_and_set_output(pipeline_run=pipeline_run)
         arr.append(hook.to_dict(include_run_data=True))
 
     return arr

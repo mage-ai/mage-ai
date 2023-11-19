@@ -6,7 +6,7 @@ from faker import Faker
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
@@ -189,3 +189,59 @@ def create_user(
         user.save()
 
     return user
+
+
+async def build_pipeline_with_blocks_and_content(
+    test_case,
+    block_settings: Dict = None,
+    name: str = None,
+    pipeline_type: PipelineType = None,
+) -> Pipeline:
+    repo_path = test_case.repo_path
+
+    pipeline = Pipeline.create(
+        name or test_case.faker.unique.name(),
+        repo_path=repo_path,
+        pipeline_type=pipeline_type or PipelineType.PYTHON,
+    )
+
+    block1 = Block.create(
+        test_case.faker.unique.name(),
+        BlockType.DATA_LOADER,
+        repo_path,
+    )
+    block2 = Block.create(
+        test_case.faker.unique.name(),
+        BlockType.DATA_LOADER,
+        repo_path,
+    )
+    block3 = Block.create(
+        test_case.faker.unique.name(),
+        BlockType.DATA_LOADER,
+        repo_path,
+    )
+    block4 = Block.create(
+        test_case.faker.unique.name(),
+        BlockType.DATA_LOADER,
+        repo_path,
+    )
+
+    blocks = [
+        block1,
+        block2,
+        block3,
+        block4,
+    ]
+
+    for block in blocks:
+        pipeline.add_block(block)
+
+    pipeline.save()
+    await pipeline.update(dict(
+        blocks=[merge_dict(
+            block.to_dict(include_content=True),
+            (block_settings[idx] if block_settings and idx in block_settings else {}),
+        ) for idx, block in enumerate(blocks)],
+    ), update_content=True)
+
+    return pipeline, [block1, block2, block3, block4]
