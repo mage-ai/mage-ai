@@ -60,7 +60,7 @@ async def run_test_for_operation(test_case, operation_type: HookOperation, build
                 [
                     hooks[1].to_dict(),
                 ],
-                [m.to_dict() for m in mock_run_hooks.mock_calls[4][1][0]],
+                [m.to_dict() for m in mock_run_hooks.mock_calls[7][1][0]],
             )
 
 

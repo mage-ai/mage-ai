@@ -33,6 +33,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookCondition,
     HookOperation,
     HookStage,
+    HookStrategy,
 )
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -277,8 +278,13 @@ class BaseOperation():
                 resource_type=EntityName(self.__classified_class()),
                 stage=stage,
                 **kwargs
-
             )
+
+            if hooks:
+                for hook in (hooks or []):
+                    if hook.status and HookStrategy.RAISE == hook.status.strategy:
+                        raise Exception(hook.status.error)
+
             return hooks
         except Exception as err:
             raise err
@@ -357,13 +363,19 @@ class BaseOperation():
                 continue
 
             if output.get('meta'):
-                self.meta = merge_dict(self.meta, output.get('meta') or {})
+                value = output.get('meta') or {}
+                if isinstance(value, dict):
+                    self.meta = merge_dict(self.meta, value)
 
             if output.get('payload'):
-                payload = merge_dict(payload, output.get('payload') or {})
+                value = output.get('payload') or {}
+                if isinstance(value, dict):
+                    payload = merge_dict(payload, value)
 
             if output.get('query'):
-                self.query = merge_dict(self.query, output.get('query') or {})
+                value = output.get('query') or {}
+                if isinstance(value, dict):
+                    self.query = merge_dict(self.query, value)
 
         return payload
 

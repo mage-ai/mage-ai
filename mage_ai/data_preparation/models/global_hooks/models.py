@@ -7,9 +7,21 @@ import yaml
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.block.utils import fetch_input_variables
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.orchestration.db.models.schedules import PipelineRun
+from mage_ai.orchestration.triggers.api import trigger_pipeline
+from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index
-from mage_ai.shared.hash import extract, ignore_keys, merge_dict
+from mage_ai.shared.hash import (
+    dig,
+    extract,
+    ignore_keys,
+    ignore_keys_with_blank_values,
+    merge_dict,
+    set_value,
+)
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.multi import run_parallel_multiple_args
@@ -19,9 +31,10 @@ class HookOperation(str, Enum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
-    EXECUTION = 'execution'
+    EXECUTE = 'execute'
     LIST = OperationType.LIST.value
     UPDATE = OperationType.UPDATE.value
+    UPDATE_SPECIAL = 'update_special'
 
 
 class HookCondition(str, Enum):
@@ -40,6 +53,16 @@ class HookStage(str, Enum):
     BEFORE = 'before'
 
 
+class HookOutputKey(str, Enum):
+    ERROR = 'error'
+    META = 'meta'
+    METADATA = 'metadata'
+    PAYLOAD = 'payload'
+    QUERY = 'query'
+    RESOURCE = 'resource'
+    RESOURCES = 'resources'
+
+
 @dataclass
 class HookStrategies(BaseDataClass):
     failure: List[HookStrategy] = field(default=None)
@@ -51,20 +74,67 @@ class HookStrategies(BaseDataClass):
 
 
 @dataclass
+class HookRunSettings(BaseDataClass):
+    with_trigger: bool = False
+
+
+@dataclass
+class HookStatus(BaseDataClass):
+    error: str = None
+    strategy: HookStrategy = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('strategy', HookStrategy)
+
+
+@dataclass
+class HookOutputBlock(BaseDataClass):
+    uuid: str
+
+
+@dataclass
+class HookOutputSettings(BaseDataClass):
+    block: HookOutputBlock
+    key: HookOutputKey = None
+    keys: List[str] = field(default=None)
+
+    def __post_init__(self):
+        self.serialize_attribute_class('block', HookOutputBlock)
+        self.serialize_attribute_enum('key', HookOutputKey)
+
+    def to_dict(self, **kwargs) -> Dict:
+        data = {}
+        if self.key and isinstance(self.key, HookOutputKey):
+            data['key'] = self.key.value
+        return merge_dict(ignore_keys_with_blank_values(super().to_dict(**kwargs)), data)
+
+
+@dataclass
 class Hook(BaseDataClass):
+    attribute_aliases = dict(
+        outputs='output_settings',
+        pipeline='pipeline_settings',
+    )
+
     conditions: List[HookCondition] = None
     operation_type: HookOperation = None
-    output: Dict = field(default_factory=dict)
-    output_block_uuids: List[str] = field(default=None)
-    pipeline_uuid: str = None
+    output: Dict = field(default=None)
+    output_settings: List[HookOutputSettings] = None
+    pipeline_settings: Dict = field(default=None)
     resource_type: EntityName = None
+    run_settings: HookRunSettings = None
     stages: List[HookStage] = None
-    status: Dict = field(default_factory=dict)
+    status: HookStatus = None
     strategies: List[HookStrategy] = None
     uuid: str = None
 
     def __post_init__(self):
+        self._pipeline = None
+
+        self.serialize_attribute_class('run_settings', HookRunSettings)
+        self.serialize_attribute_class('status', HookStatus)
         self.serialize_attribute_class('strategies', HookStrategies)
+        self.serialize_attribute_classes('output_settings', HookOutputSettings)
         self.serialize_attribute_enum('operation_type', HookOperation)
         self.serialize_attribute_enum('resource_type', EntityName)
         self.serialize_attribute_enums('conditions', HookCondition)
@@ -78,8 +148,7 @@ class Hook(BaseDataClass):
     ):
         arr = [
             'conditions',
-            'output_block_uuids',
-            'pipeline_uuid',
+            'run_settings',
             'stages',
             'strategies',
             'uuid',
@@ -98,49 +167,170 @@ class Hook(BaseDataClass):
             ])
 
         data = super().to_dict(**kwargs)
+        data_extra = {}
+        if self.output_settings:
+            data_extra['outputs'] = [m.to_dict() for m in (self.output_settings or [])]
 
-        return extract(data, arr)
+        if self.pipeline_settings:
+            data_extra['pipeline'] = self.pipeline_settings
 
-    def run(self, **kwargs):
-        try:
-            # payload = kwargs.get('payload') or {}
-            # resources = kwargs.get('resources') or []
-            # resource = kwargs.get('resource') or {}
-            # error = kwargs.get('error') or {}
+        return merge_dict(extract(data, arr), data_extra)
 
-            # self.output = dict(
-            #     payload=merge_dict(payload, dict(
-            #         output_block_uuids=[
-            #             'mage',
-            #             'fire',
-            #         ],
-            #     )),
-            #     query={
-            #         'includes_content': [False],
-            #         'type[]': ['pyspark'],
-            #     },
-            #     error=merge_dict(error, dict(
-            #         blah='!!!!!!!!!!!!!!!!!!!!!!!!!!!',
-            #     )),
-            #     resource=merge_dict(resource, dict(
-            #         uuid='YOOOOOOOOOOOOOOOOOOOO',
-            #     )),
-            #     # resources=resources[:1],
-            # )
+    @property
+    def pipeline(self):
+        if self._pipeline:
+            return self._pipeline
+
+        if self.pipeline_settings:
+            try:
+                self._pipeline = Pipeline.get(self.pipeline_settings.get('uuid'))
+                self._pipeline.run_pipeline_in_one_process = True
+            except Exception as err:
+                print(f'[WARNING] Hook.pipeline {self.uuid}: {err}')
+
+        return self._pipeline
+
+    def get_and_set_output(self, pipeline_run: PipelineRun = None) -> Dict:
+        self.output = {}
+
+        if not self.pipeline or not self.output_settings:
+            return self.output
+
+        block_uuids = {}
+        for hook_output_setting in self.output_settings:
+            if not hook_output_setting.block or not hook_output_setting.block.uuid:
+                continue
+
+            block_uuids[hook_output_setting.block.uuid] = hook_output_setting
+
+        if len(block_uuids) == 0:
+            return self.output
+
+        outputs_mapping = {}
+
+        if pipeline_run:
+            for block_run in pipeline_run.block_runs:
+                block = Pipeline.get_block(block_run.block_uuid)
+                block_uuid = block.uuid
+                if block_uuid not in block_uuids:
+                    continue
+
+                if block_uuid not in outputs_mapping:
+                    outputs_mapping[block_uuid] = []
+
+                outputs_mapping[block_uuid].append(block_run.get_outputs(sample=False))
+        else:
+            for block_uuid in block_uuids.keys():
+                input_vars, _kwargs_vars, _upstream_block_uuids_final = fetch_input_variables(
+                    self.pipeline,
+                    input_args=None,
+                    upstream_block_uuids=[block_uuid],
+                    global_vars=self.pipeline_settings.get('variables'),
+                )
+                output = input_vars
+                if isinstance(output, list) and len(output) >= 1:
+                    output = output[0]
+
+                if block_uuid not in outputs_mapping:
+                    outputs_mapping[block_uuid] = []
+
+                outputs_mapping[block_uuid].append(output)
+
+        for hook_output_setting in self.output_settings:
+            if not hook_output_setting.block or not hook_output_setting.block.uuid:
+                continue
+
+            block_uuid = hook_output_setting.block.uuid
+            output_arr = outputs_mapping.get(block_uuid)
+            if output_arr is None or len(output_arr) == 0:
+                continue
+
+            for output in output_arr:
+                if output is None:
+                    continue
+
+                if HookOperation.EXECUTE == self.operation_type:
+                    # TODO: implement
+                    pass
+                elif hook_output_setting.key:
+                    keys = [hook_output_setting.key.value]
+                    if hook_output_setting.keys:
+                        keys.extend(hook_output_setting.keys)
+
+                    output_acc = dig(self.output, keys)
+
+                    if isinstance(output, dict):
+                        if output_acc is None or len(output_acc) == 0:
+                            output_acc = {}
+
+                        output_acc = merge_dict(output_acc, output)
+                    elif isinstance(output, list):
+                        if output_acc is None or len(output_acc) == 0:
+                            output_acc = []
+
+                        output_acc = output_acc + output
+                    elif str(output).isnumeric():
+                        if output_acc is None:
+                            output_acc = 0
+
+                        output_acc = output_acc + output
+                    else:
+                        output_acc = output
+
+                    self.output = set_value(self.output, keys, output_acc)
+
+        return self.output
+
+    def run(self, with_trigger: bool = False, **kwargs) -> None:
+        if not self.pipeline:
             return
+
+        try:
+            variables = merge_dict(
+                self.pipeline_settings.get('variables') or {},
+                dict(
+                    error=kwargs.get('error'),
+                    hook=self.to_dict(include_all=True),
+                    meta=kwargs.get('meta'),
+                    metadata=kwargs.get('metadata'),
+                    query=kwargs.get('query'),
+                    resource=kwargs.get('resource'),
+                    resources=kwargs.get('resources'),
+                ),
+            )
+
+            pipeline_run = None
+            if with_trigger or (self.run_settings and self.run_settings.with_trigger):
+                pipeline_run = trigger_pipeline(
+                    self.pipeline.uuid,
+                    variables=variables,
+                    check_status=True,
+                    error_on_failure=True,
+                    poll_interval=1,
+                    poll_timeout=None,
+                    schedule_name=TRIGGER_NAME_FOR_GLOBAL_HOOK,
+                    verbose=True,
+                )
+            else:
+                self.pipeline.execute_sync(global_vars=variables, update_status=False)
+
+            self.get_and_set_output(pipeline_run=pipeline_run)
         except Exception as err:
+            # TODO: remove this when development for this feature is complete.
+            raise err
+
             # TODO: handle the strategy
-            self.status = dict(error=err)
+            self.status = HookStatus.load(error=err)
 
             if self.strategies:
                 if HookStrategy.RAISE in self.strategies:
-                    self.status['strategy'] = HookStrategy.RAISE
+                    self.status.strategy = HookStrategy.RAISE
                 elif HookStrategy.BREAK in self.strategies and \
-                        HookOperation.EXECUTION == self.operation_type:
+                        HookOperation.EXECUTE == self.operation_type:
 
-                    self.status['strategy'] = HookStrategy.BREAK
+                    self.status.strategy = HookStrategy.BREAK
                 elif HookStrategy.CONTINUE in self.strategies:
-                    self.status['strategy'] = HookStrategy.CONTINUE
+                    self.status.strategy = HookStrategy.CONTINUE
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
@@ -360,20 +550,35 @@ class GlobalHooks(BaseDataClass):
                     setattr(resource, hook.operation_type.value, arr)
                     setattr(self.resources, hook.resource_type.value, resource)
 
-    def hooks(self) -> List[Hook]:
+    def hooks(
+        self,
+        operation_types: List[HookOperation] = None,
+        resource_types: List[EntityName] = None,
+    ) -> List[Hook]:
         arr = []
         if self.resources:
             for entity_name in EntityName:
                 resource = getattr(self.resources, entity_name.value)
-                if resource:
-                    resource.resource_type = entity_name
-                    for operation in HookOperation:
-                        hooks = getattr(resource, operation.value)
-                        if hooks:
-                            for hook in hooks:
-                                hook.operation_type = operation
-                                hook.resource_type = entity_name
-                                arr.append(hook)
+                if not resource:
+                    continue
+
+                resource.resource_type = resource.resource_type or entity_name
+
+                if resource_types and resource.resource_type not in resource_types:
+                    continue
+
+                for operation in HookOperation:
+                    if operation_types and operation not in operation_types:
+                        continue
+
+                    hooks = getattr(resource, operation.value)
+                    if not hooks:
+                        continue
+
+                    for hook in hooks:
+                        hook.operation_type = operation
+                        hook.resource_type = resource.resource_type
+                        arr.append(hook)
         return arr
 
     def get_hook(self, resource_type: EntityName, operation_type: HookOperation, uuid: str) -> Hook:
@@ -437,9 +642,23 @@ class GlobalHooks(BaseDataClass):
         return self.run_hooks(hooks, **kwargs)
 
     def save(self, file_path: str = None) -> None:
+        if not file_path:
+            file_path = self.file_path()
+
+        content_original = None
+        if os.path.exists(file_path):
+            with open(file_path) as f:
+                content_original = f.read()
+
         with open(self.file_path(), 'w'):
-            content = yaml.safe_dump(self.to_dict())
-            safe_write(file_path or self.file_path(), content)
+            try:
+                data = self.to_dict()
+                content = yaml.safe_dump(data)
+                safe_write(file_path, content)
+            except Exception as err:
+                if content_original:
+                    safe_write(file_path, content_original)
+                raise err
 
     def to_dict(self, **kwargs) -> Dict:
         return super().to_dict(convert_enum=True, ignore_empty=True)
