@@ -24,6 +24,7 @@ def trigger_pipeline(
     poll_timeout: Optional[float] = None,
     schedule_name: str = None,
     verbose: bool = True,
+    _should_schedule: bool = False,  # For internal use only (e.g. running hooks from notebook).
 ) -> PipelineRun:
     if variables is None:
         variables = {}
@@ -35,6 +36,7 @@ def trigger_pipeline(
         pipeline,
         pipeline_schedule,
         dict(variables=variables),
+        should_schedule=_should_schedule,
     )
 
     if check_status:

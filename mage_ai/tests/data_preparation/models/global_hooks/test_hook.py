@@ -1,11 +1,16 @@
 import uuid
+from typing import List
 from unittest.mock import patch
 
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.global_hooks.models import (
     Hook,
     HookCondition,
     HookOperation,
+    HookOutputBlock,
+    HookOutputKey,
+    HookOutputSettings,
     HookRunSettings,
     HookStage,
     HookStatus,
@@ -255,6 +260,7 @@ class HookTest(GlobalHooksMixin):
                 poll_timeout=None,
                 schedule_name=TRIGGER_NAME_FOR_GLOBAL_HOOK,
                 verbose=True,
+                _should_schedule=False,
             )
             mock_execute_sync.assert_not_called()
 
@@ -345,3 +351,168 @@ class HookTest(GlobalHooksMixin):
                                                 mock_func.assert_called_once_with(
                                                     pipeline_run=pipeline_run,
                                                 )
+
+    async def test_get_and_set_output_with_no_pipeline_or_output_settings(self):
+        await self.setUpAsync()
+
+        hook = self.hooks_match[0]
+        hook._pipeline = None
+        hook.pipeline_settings = None
+        hook.output_settings = None
+
+        self.assertEqual({}, hook.get_and_set_output())
+        self.assertEqual(hook.output, {})
+
+    async def test_get_and_set_output_without_pipeline_run(self):
+        await self.setUpAsync()
+
+        hook, _hook2, hook3, hook4 = self.hooks_match
+
+        variables = dict(mage=self.faker.unique.name())
+        hook.pipeline_settings['variables'] = variables
+
+        output_setting = hook4.output_settings[0]
+        output_setting.block.uuid = self.blocks1[3].uuid
+
+        hook.output_settings += hook3.output_settings + [
+            output_setting,
+            HookOutputSettings.load(
+                block=HookOutputBlock.load(uuid=output_setting.block.uuid),
+                key=HookOutputKey.METADATA,
+                keys=['powers'],
+            ),
+        ]
+
+        kwargs = dict(
+            error=uuid.uuid4().hex,
+            hook=hook.to_dict(include_all=True),
+            meta=uuid.uuid4().hex,
+            metadata=uuid.uuid4().hex,
+            query=uuid.uuid4().hex,
+            resource=uuid.uuid4().hex,
+            resources=uuid.uuid4().hex,
+        )
+
+        output = hook.get_and_set_output(hook.run(**kwargs))
+
+        self.assertEqual(output, hook.output)
+        self.assertEqual(output, dict(
+            query={
+                'type[]': [
+                    'streaming',
+                    'pyspark',
+                ],
+            },
+            metadata=dict(
+                powers=dict(
+                    fire=1,
+                    level=2,
+                ),
+                water=dict(
+                    level=2,
+                ),
+            ),
+        ))
+
+    async def test_get_and_set_output_with_pipeline_run(self):
+        await self.setUpAsync()
+
+        hook, _hook2, hook3, hook4 = self.hooks_match
+
+        variables = dict(mage=self.faker.unique.name())
+        hook.pipeline_settings['variables'] = variables
+        hook.run_settings = HookRunSettings.load(with_trigger=True)
+
+        output_setting = hook4.output_settings[0]
+        output_setting.block.uuid = self.blocks1[3].uuid
+
+        hook.output_settings += hook3.output_settings + [
+            output_setting,
+            HookOutputSettings.load(
+                block=HookOutputBlock.load(uuid=output_setting.block.uuid),
+                key=HookOutputKey.METADATA,
+                keys=['powers'],
+            ),
+        ]
+
+        kwargs = dict(
+            error=uuid.uuid4().hex,
+            hook=hook.to_dict(include_all=True),
+            meta=uuid.uuid4().hex,
+            metadata=uuid.uuid4().hex,
+            query=uuid.uuid4().hex,
+            resource=uuid.uuid4().hex,
+            resources=uuid.uuid4().hex,
+        )
+
+        pipeline_run = hook.run(
+            check_status=False,
+            error_on_failure=False,
+            poll_timeout=10,
+            should_schedule=False,
+            **kwargs,
+        )
+
+        block1, block2, block3, block4 = self.blocks1
+
+        def _build_get_outputs(
+            block_run,
+            block1=block1,
+            block2=block2,
+            block3=block3,
+            block4=block4,
+        ):
+            mapping = {
+                block1.uuid: {
+                    'type[]': [PipelineType.STREAMING.value],
+                },
+                block2.uuid: {
+                    'type[]': [PipelineType.PYSPARK.value],
+                },
+                block3.uuid: dict(powers=dict(fire=1)),
+                block4.uuid: dict(level=2),
+            }
+
+            def _get_outputs(
+                block_run=block_run,
+                mapping=mapping,
+                *args,
+                **kwargs,
+            ):
+                return mapping[block_run.block_uuid]
+
+            return _get_outputs
+
+        br1, br2, br3, br4 = list(pipeline_run.block_runs)
+
+        class PipelineRunFake(object):
+            @property
+            def block_runs(self) -> List:
+                return [br1, br2, br3, br4]
+
+        pipeline_run_mock = PipelineRunFake()
+
+        with patch.object(br1, 'get_outputs', _build_get_outputs(br1)):
+            with patch.object(br2, 'get_outputs', _build_get_outputs(br2)):
+                with patch.object(br3, 'get_outputs', _build_get_outputs(br3)):
+                    with patch.object(br4, 'get_outputs', _build_get_outputs(br4)):
+                        output = hook.get_and_set_output(pipeline_run_mock)
+
+                        self.assertEqual(output, hook.output)
+                        self.assertEqual(output, dict(
+                            query={
+                                'type[]': [
+                                    'streaming',
+                                    'pyspark',
+                                ],
+                            },
+                            metadata=dict(
+                                powers=dict(
+                                    fire=1,
+                                    level=2,
+                                ),
+                                water=dict(
+                                    level=2,
+                                ),
+                            ),
+                        ))

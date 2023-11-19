@@ -244,7 +244,7 @@ class Hook(BaseDataClass):
 
         if pipeline_run:
             for block_run in pipeline_run.block_runs:
-                block = Pipeline.get_block(block_run.block_uuid)
+                block = self.pipeline.get_block(block_run.block_uuid)
                 block_uuid = block.uuid
                 if block_uuid not in block_uuids:
                     continue
@@ -297,7 +297,19 @@ class Hook(BaseDataClass):
                         if output_acc is None or len(output_acc) == 0:
                             output_acc = {}
 
-                        output_acc = merge_dict(output_acc, output)
+                        if output:
+                            for key, value in output.items():
+                                value_prev = output_acc.get(key)
+                                if value_prev and \
+                                        isinstance(value_prev, list) and \
+                                        isinstance(value, list):
+                                    output_acc[key] = value_prev + value
+                                elif value_prev and \
+                                        isinstance(value_prev, dict) and \
+                                        isinstance(value, dict):
+                                    output_acc[key] = merge_dict(value_prev, value)
+                                else:
+                                    output_acc[key] = value
                     elif isinstance(output, list):
                         if output_acc is None or len(output_acc) == 0:
                             output_acc = []
@@ -315,7 +327,15 @@ class Hook(BaseDataClass):
 
         return self.output
 
-    def run(self, with_trigger: bool = False, **kwargs) -> None:
+    def run(
+        self,
+        check_status: bool = True,
+        error_on_failure: bool = True,
+        poll_timeout: int = None,
+        should_schedule: bool = False,
+        with_trigger: bool = False,
+        **kwargs,
+    ) -> None:
         if not self.pipeline:
             return
 
@@ -338,12 +358,13 @@ class Hook(BaseDataClass):
                 pipeline_run = trigger_pipeline(
                     self.pipeline.uuid,
                     variables=variables,
-                    check_status=True,
-                    error_on_failure=True,
+                    check_status=check_status,
+                    error_on_failure=error_on_failure,
                     poll_interval=1,
-                    poll_timeout=None,
+                    poll_timeout=poll_timeout,
                     schedule_name=TRIGGER_NAME_FOR_GLOBAL_HOOK,
                     verbose=True,
+                    _should_schedule=should_schedule,
                 )
             else:
                 self.pipeline.execute_sync(global_vars=variables, update_status=False)

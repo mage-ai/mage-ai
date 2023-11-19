@@ -146,18 +146,18 @@ class GlobalHooksMixin(BaseApiTestCase):
                 'type[]': [PipelineType.PYSPARK.value],
             })),
             2: dict(content=build_update_metadata_content(dict(powers=dict(fire=1)))),
-            3: dict(content=build_update_metadata_content(dict(water=2))),
+            3: dict(content=build_update_metadata_content(dict(level=2))),
         }
 
         pipeline1, blocks1 = await build_pipeline_with_blocks_and_content(
             self,
             block_settings=block_settings,
-            pipeline_type=PipelineType.STREAMING,
+            pipeline_type=PipelineType.PYTHON,
         )
         pipeline2, blocks2 = await build_pipeline_with_blocks_and_content(
             self,
             block_settings=block_settings,
-            pipeline_type=PipelineType.PYSPARK,
+            pipeline_type=PipelineType.PYTHON,
         )
         block11, block12, block13, block14 = blocks1
         block21, block22, block23, block24 = blocks2
