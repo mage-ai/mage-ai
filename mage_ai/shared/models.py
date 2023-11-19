@@ -80,6 +80,9 @@ class BaseClass:
     ):
         is_list = isinstance(value, list)
         if is_list:
+            if ignore_empty and len(value) == 0:
+                return None
+
             return [self.convert_value(
                 v,
                 convert_enum=convert_enum,
@@ -108,6 +111,9 @@ class BaseClass:
 
         if is_typing_class:
             if is_dict_class:
+                if ignore_empty and len(value) == 0:
+                    return None
+
                 return reduce(_build_dict, value.items(), {})
             else:
                 return value
@@ -115,6 +121,9 @@ class BaseClass:
         is_data_class = issubclass(annotation, BaseDataClass)
         if is_data_class:
             if is_dict_class:
+                if ignore_empty and len(value) == 0:
+                    return None
+
                 return annotation.load(**value)
             elif isinstance(value, BaseDataClass):
                 return value.to_dict(
@@ -207,6 +216,12 @@ class BaseClass:
             if not ignore_empty or value is not None:
                 if self.attribute_aliases and key in self.attribute_aliases:
                     key = self.attribute_aliases[key]
+
+                if ignore_empty and \
+                        (isinstance(value, list) or isinstance(value, dict)) and \
+                        len(value) == 0:
+
+                    continue
 
                 data[key] = encode_complex(value)
 

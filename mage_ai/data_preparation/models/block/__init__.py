@@ -189,6 +189,7 @@ def run_blocks_sync(
     run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
+    update_status: bool = True,
 ) -> None:
     tries_by_block_uuid = {}
     tasks = dict()
@@ -243,6 +244,7 @@ def run_blocks_sync(
                 from_notebook=not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=True,
+                update_status=update_status,
             )
 
             if run_tests:

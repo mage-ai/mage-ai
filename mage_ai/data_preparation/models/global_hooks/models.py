@@ -14,7 +14,14 @@ from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index
-from mage_ai.shared.hash import dig, extract, ignore_keys, merge_dict, set_value
+from mage_ai.shared.hash import (
+    dig,
+    extract,
+    ignore_keys,
+    ignore_keys_with_blank_values,
+    merge_dict,
+    set_value,
+)
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.multi import run_parallel_multiple_args
@@ -89,11 +96,17 @@ class HookOutputBlock(BaseDataClass):
 class HookOutputSettings(BaseDataClass):
     block: HookOutputBlock
     key: HookOutputKey = None
-    keys: List[str] = field(default_factory=list)
+    keys: List[str] = field(default=None)
 
     def __post_init__(self):
         self.serialize_attribute_class('block', HookOutputBlock)
         self.serialize_attribute_enum('key', HookOutputKey)
+
+    def to_dict(self, **kwargs) -> Dict:
+        data = {}
+        if self.key and isinstance(self.key, HookOutputKey):
+            data['key'] = self.key.value
+        return merge_dict(ignore_keys_with_blank_values(super().to_dict(**kwargs)), data)
 
 
 @dataclass
@@ -105,9 +118,9 @@ class Hook(BaseDataClass):
 
     conditions: List[HookCondition] = None
     operation_type: HookOperation = None
-    output: Dict = field(default_factory=dict)
+    output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
-    pipeline_settings: Dict = field(default_factory=dict)
+    pipeline_settings: Dict = field(default=None)
     resource_type: EntityName = None
     run_settings: HookRunSettings = None
     stages: List[HookStage] = None
@@ -154,11 +167,14 @@ class Hook(BaseDataClass):
             ])
 
         data = super().to_dict(**kwargs)
+        data_extra = {}
+        if self.output_settings:
+            data_extra['outputs'] = [m.to_dict() for m in (self.output_settings or [])]
 
-        return merge_dict(extract(data, arr), dict(
-            outputs=[m.to_dict() for m in (self.output_settings or [])],
-            pipeline=self.pipeline_settings,
-        ))
+        if self.pipeline_settings:
+            data_extra['pipeline'] = self.pipeline_settings
+
+        return merge_dict(extract(data, arr), data_extra)
 
     @property
     def pipeline(self):
@@ -296,7 +312,7 @@ class Hook(BaseDataClass):
                     verbose=True,
                 )
             else:
-                self.pipeline.execute_sync(global_vars=variables)
+                self.pipeline.execute_sync(global_vars=variables, update_status=False)
 
             self.get_and_set_output(pipeline_run=pipeline_run)
         except Exception as err:
@@ -595,8 +611,6 @@ class GlobalHooks(BaseDataClass):
         ))
 
     def run_hooks(self, hooks: List[Hook], **kwargs) -> List[Hook]:
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFF', hooks)
-        print('\n')
         hook_dicts = run_parallel_multiple_args(run_hook, [(hook.to_dict(
             include_all=True,
             include_output=True,
@@ -624,9 +638,23 @@ class GlobalHooks(BaseDataClass):
         return self.run_hooks(hooks, **kwargs)
 
     def save(self, file_path: str = None) -> None:
+        if not file_path:
+            file_path = self.file_path()
+
+        content_original = None
+        if os.path.exists(file_path):
+            with open(file_path) as f:
+                content_original = f.read()
+
         with open(self.file_path(), 'w'):
-            content = yaml.safe_dump(self.to_dict())
-            safe_write(file_path or self.file_path(), content)
+            try:
+                data = self.to_dict()
+                content = yaml.safe_dump(data)
+                safe_write(file_path, content)
+            except Exception as err:
+                if content_original:
+                    safe_write(file_path, content_original)
+                raise err
 
     def to_dict(self, **kwargs) -> Dict:
         return super().to_dict(convert_enum=True, ignore_empty=True)

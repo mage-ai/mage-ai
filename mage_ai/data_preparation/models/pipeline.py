@@ -427,6 +427,7 @@ class Pipeline:
         global_vars=None,
         run_sensors: bool = True,
         run_tests: bool = True,
+        update_status: bool = True,
     ) -> None:
         """
         Function for synchronous block processing.
@@ -460,6 +461,7 @@ class Pipeline:
                 global_vars=global_vars,
                 run_sensors=run_sensors,
                 run_tests=run_tests,
+                update_status=update_status,
             )
 
     def get_config_from_yaml(self):
