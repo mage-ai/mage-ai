@@ -1,12 +1,15 @@
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
 from enum import Enum
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import yaml
 
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.utils import fetch_input_variables
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
@@ -110,6 +113,11 @@ class HookOutputSettings(BaseDataClass):
 
 
 @dataclass
+class HookPredicate(BaseDataClass):
+    resource: Dict = field(default_factory=dict)
+
+
+@dataclass
 class Hook(BaseDataClass):
     attribute_aliases = dict(
         outputs='output_settings',
@@ -121,6 +129,7 @@ class Hook(BaseDataClass):
     output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
     pipeline_settings: Dict = field(default=None)
+    predicates: List[List[HookPredicate]] = None
     resource_type: EntityName = None
     run_settings: HookRunSettings = None
     stages: List[HookStage] = None
@@ -139,6 +148,16 @@ class Hook(BaseDataClass):
         self.serialize_attribute_enum('resource_type', EntityName)
         self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_enums('stages', HookStage)
+
+        if self.predicates and isinstance(self.predicates, list):
+            rows = []
+            for predicates in self.predicates:
+                row = []
+                if predicates and isinstance(predicates, list):
+                    for predicate in predicates:
+                        row.append(HookPredicate.load(**predicate))
+                rows.append(row)
+            self.predicates = rows
 
     def to_dict(
         self,
@@ -166,15 +185,29 @@ class Hook(BaseDataClass):
                 'status',
             ])
 
-        data = super().to_dict(**kwargs)
-        data_extra = {}
+        data = extract(super().to_dict(**kwargs), arr)
+
         if self.output_settings:
-            data_extra['outputs'] = [m.to_dict() for m in (self.output_settings or [])]
+            data['outputs'] = [m.to_dict() for m in (self.output_settings or [])]
 
         if self.pipeline_settings:
-            data_extra['pipeline'] = self.pipeline_settings
+            data['pipeline'] = self.pipeline_settings
 
-        return merge_dict(extract(data, arr), data_extra)
+        if self.predicates:
+            rows = []
+            for predicates in self.predicates:
+                if predicates:
+                    row = []
+                    for predicate in predicates:
+                        row.append(predicate.to_dict())
+
+                    if len(row) >= 1:
+                        rows.append(row)
+
+            if len(rows) >= 1:
+                data['predicates'] = rows
+
+        return data
 
     @property
     def pipeline(self):
@@ -331,6 +364,80 @@ class Hook(BaseDataClass):
                     self.status.strategy = HookStrategy.BREAK
                 elif HookStrategy.CONTINUE in self.strategies:
                     self.status.strategy = HookStrategy.CONTINUE
+
+    def should_run(
+        self,
+        operation_type: HookOperation,
+        resource_type: EntityName,
+        stage: HookStage,
+        conditions: List[HookCondition] = None,
+        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline] = None,
+    ) -> bool:
+        if self.operation_type != operation_type:
+            return False
+
+        if self.resource_type != resource_type:
+            return False
+
+        if self.stages and stage not in (self.stages or []):
+            return False
+
+        if not self.__matches_any_condition(conditions):
+            return False
+
+        if not self.__matches_any_predicate(operation_resource):
+            return False
+
+        return True
+
+    def __matches_any_condition(self, conditions: List[HookCondition]) -> bool:
+        if not conditions or not self.conditions:
+            return True
+
+        return any([condition in (self.conditions or []) for condition in conditions])
+
+    def __matches_any_predicate(
+        self,
+        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline],
+    ) -> bool:
+        if not operation_resource or not self.predicates:
+            return True
+
+        return any([all([self.__validate_predicate(
+            predicate,
+            operation_resource,
+        ) for predicate in predicates]) for predicates in self.predicates])
+
+    def __validate_predicate(
+        self,
+        predicate: HookPredicate,
+        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline],
+    ) -> bool:
+        if not predicate.resource or len(predicate.resource) == 0:
+            return True
+
+        def _validate_resource(
+            resource: Union[BaseResource, Block, Pipeline],
+            predicate=predicate,
+        ) -> bool:
+            model = resource
+            if isinstance(resource, BaseResource):
+                model = resource.model
+
+            check = all([hasattr(
+                model,
+                key,
+            ) and getattr(
+                model,
+                key,
+            ) == value for key, value in predicate.resource.items()])
+
+            return check
+
+        if isinstance(operation_resource, Iterable):
+            return all([_validate_resource(res) for res in operation_resource])
+
+        return _validate_resource(operation_resource)
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
@@ -579,6 +686,7 @@ class GlobalHooks(BaseDataClass):
                         hook.operation_type = operation
                         hook.resource_type = resource.resource_type
                         arr.append(hook)
+
         return arr
 
     def get_hook(self, resource_type: EntityName, operation_type: HookOperation, uuid: str) -> Hook:
@@ -597,20 +705,26 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline] = None,
     ) -> List[Hook]:
+        def _filter(
+            hook: Hook,
+            conditions=conditions,
+            operation_resource=operation_resource,
+            operation_type=operation_type,
+            resource_type=resource_type,
+            stage=stage,
+        ) -> bool:
+            return hook.should_run(
+                conditions=conditions,
+                operation_resource=operation_resource,
+                operation_type=operation_type,
+                resource_type=resource_type,
+                stage=stage,
+            )
+
         return list(filter(
-            lambda x: (
-                x.operation_type == operation_type and
-                x.resource_type == resource_type and
-                (not x.stages or stage in (x.stages or [])) and
-                (
-                    # If hook has no conditions, then run it for all conditions.
-                    not x.conditions or
-                    # If argument is not present, then include hooks with any condition
-                    not conditions or
-                    any([condition in (x.conditions or []) for condition in conditions])
-                )
-            ),
+            _filter,
             self.hooks(),
         ))
 
@@ -628,6 +742,7 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        operation_resource: Union[BaseResource, Block, List[BaseResource], Pipeline] = None,
         **kwargs,
     ) -> List[Hook]:
         hooks = self.get_hooks(
@@ -635,7 +750,9 @@ class GlobalHooks(BaseDataClass):
             resource_type=resource_type,
             stage=stage,
             conditions=conditions,
+            operation_resource=operation_resource,
         )
+
         if not hooks:
             return None
 

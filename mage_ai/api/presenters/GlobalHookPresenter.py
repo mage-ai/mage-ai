@@ -9,6 +9,7 @@ class GlobalHookPresenter(BasePresenter):
         'operation_type',
         'outputs',
         'pipeline',
+        'predicates',
         'resource_type',
         'stages',
         'strategies',
