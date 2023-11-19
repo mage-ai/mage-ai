@@ -516,3 +516,87 @@ class HookTest(GlobalHooksMixin):
                                 ),
                             ),
                         ))
+
+    async def test_to_dict(self):
+        await self.setUpAsync()
+
+        hook = self.hooks_match[0]
+        hook.conditions = [HookCondition.SUCCESS]
+        hook.pipeline_settings['variables'] = dict(mage=1)
+        hook.run_settings = HookRunSettings.load(with_trigger=True)
+        hook.strategies = [HookStrategy.BREAK]
+
+        self.assertEqual(
+            hook.to_dict(convert_enum=True, ignore_empty=True),
+            dict(
+                conditions=[m.value for m in hook.conditions],
+                outputs=[m.to_dict() for m in hook.output_settings],
+                pipeline=dict(
+                    uuid=self.pipeline1.uuid,
+                    variables=dict(mage=1),
+                ),
+                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                run_settings=dict(with_trigger=True),
+                stages=[m.value for m in hook.stages],
+                strategies=[m.value for m in hook.strategies],
+                uuid=hook.uuid,
+            ),
+        )
+
+    async def test_to_dict_include_all(self):
+        await self.setUpAsync()
+
+        hook = self.hooks_match[0]
+        hook.conditions = [HookCondition.SUCCESS]
+        hook.pipeline_settings['variables'] = dict(mage=1)
+        hook.run_settings = HookRunSettings.load(with_trigger=True)
+        hook.strategies = [HookStrategy.BREAK]
+
+        self.assertEqual(
+            hook.to_dict(convert_enum=True, ignore_empty=True, include_all=True),
+            dict(
+                conditions=[m.value for m in hook.conditions],
+                operation_type=hook.operation_type.value,
+                outputs=[m.to_dict() for m in hook.output_settings],
+                pipeline=dict(
+                    uuid=self.pipeline1.uuid,
+                    variables=dict(mage=1),
+                ),
+                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                resource_type=hook.resource_type.value,
+                run_settings=dict(with_trigger=True),
+                stages=[m.value for m in hook.stages],
+                strategies=[m.value for m in hook.strategies],
+                uuid=hook.uuid,
+            ),
+        )
+
+    async def test_to_dict_include_run_data(self):
+        await self.setUpAsync()
+
+        hook = self.hooks_match[0]
+        hook.conditions = [HookCondition.SUCCESS]
+        hook.output = dict(fire=2)
+        hook.pipeline_settings['variables'] = dict(mage=1)
+        hook.run_settings = HookRunSettings.load(with_trigger=True)
+        hook.status = HookStatus.load(error=500, strategy=HookStrategy.BREAK)
+        hook.strategies = [HookStrategy.BREAK]
+
+        self.assertEqual(
+            hook.to_dict(convert_enum=True, ignore_empty=True, include_run_data=True),
+            dict(
+                conditions=[m.value for m in hook.conditions],
+                output=dict(fire=2),
+                outputs=[m.to_dict() for m in hook.output_settings],
+                pipeline=dict(
+                    uuid=self.pipeline1.uuid,
+                    variables=dict(mage=1),
+                ),
+                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                run_settings=dict(with_trigger=True),
+                stages=[m.value for m in hook.stages],
+                status=dict(error=500, strategy=HookStrategy.BREAK.value),
+                strategies=[m.value for m in hook.strategies],
+                uuid=hook.uuid,
+            ),
+        )
