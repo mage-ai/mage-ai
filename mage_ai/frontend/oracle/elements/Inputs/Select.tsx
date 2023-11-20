@@ -28,15 +28,18 @@ const ArrowDownElString = `
 
 const SelectStyle = styled.select<SelectProps>`
   ${SHARED_INPUT_STYLES}
-  background-image: url("data:image/svg+xml;utf8,${ArrowDownElString}");
-  background-repeat: no-repeat;
-  background-position: -webkit-calc(100% - ${UNIT}px) center;
-  background-position: calc(100% - ${UNIT}px) center;
   padding-right: ${UNIT * 3}px;
 
   &:hover {
     cursor: pointer;
   }
+
+  ${props => !props.afterIcon && `
+    background-image: url("data:image/svg+xml;utf8,${ArrowDownElString}");
+    background-repeat: no-repeat;
+    background-position: -webkit-calc(100% - ${UNIT}px) center;
+    background-position: calc(100% - ${UNIT}px) center;
+  `}
 
   ${(props) => !props.hasContent && !props.showPlaceholder && `
     color: ${(props.theme.content || light.content).muted};

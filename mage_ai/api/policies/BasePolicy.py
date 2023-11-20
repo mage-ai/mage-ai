@@ -616,17 +616,17 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     async def __validate_condition(
         self,
         action,
-        conditions: List[Callable[['BasePolicy'], None]],
+        conditions_functions: List[Callable[['BasePolicy'], None]],
         attribute_operation: AttributeOperationType = None,
         operation: OperationType = None,
         override_permission_conditions: List[Callable[['BasePolicy'], None]] = None,
         **kwargs,
     ):
-        if not conditions or len(conditions) == 0:
+        if not conditions_functions or len(conditions_functions) == 0:
             return
 
         validation = False
-        for condition in conditions:
+        for condition in conditions_functions:
             validation = condition(self)
             if validation is not None and inspect.isawaitable(validation):
                 validation = await validation

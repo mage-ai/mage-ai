@@ -4,8 +4,6 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
-from mage_ai.authentication.oauth.active_directory import get_user_info
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_ACTIVE_DIRECTORY
 from mage_ai.authentication.passwords import verify_password
 from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
 from mage_ai.orchestration.db import safe_db_query
@@ -30,15 +28,8 @@ class SessionResource(BaseResource):
         if token and provider:
             roles = []
             provider_class = NAME_TO_PROVIDER.get(provider)
-            provider_instance = None
             if provider_class is not None:
                 provider_instance = provider_class()
-
-            if provider == OAUTH_PROVIDER_ACTIVE_DIRECTORY:
-                user_info = get_user_info(token)
-                username = user_info.get('userPrincipalName')
-                email = user_info.get('userPrincipalName')
-            elif provider_instance is not None:
                 user_info = await provider_instance.get_user_info(access_token=token)
                 email = user_info.get('email')
                 username = user_info.get('username')

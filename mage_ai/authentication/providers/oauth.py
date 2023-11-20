@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Awaitable, Dict
 
 
 class OauthProvider(ABC):
@@ -38,7 +38,7 @@ class OauthProvider(ABC):
         pass
 
     @abstractmethod
-    async def get_access_token_response(self, code: str, **kwargs) -> Dict:
+    async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
         """
         This method should call the oauth provider with the authorization code and return
         a dictionary containing an access token for the user.

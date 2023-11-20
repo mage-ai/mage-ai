@@ -2,7 +2,7 @@ import importlib
 import importlib.util
 import inspect
 from collections import UserList
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Union
 
 import dateutil.parser
 import inflection
@@ -25,7 +25,19 @@ from mage_ai.api.operations.constants import (
 )
 from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
+from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.result_set import ResultSet
+from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.global_hooks.models import (
+    GlobalHooks,
+    Hook,
+    HookCondition,
+    HookOperation,
+    HookStage,
+    HookStrategy,
+)
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.settings import REQUIRE_USER_PERMISSIONS
@@ -62,12 +74,35 @@ class BaseOperation():
     async def execute(self):
         db_connection.start_cache()
 
+        presented_init = None
+        metadata = None
+        result = None
+
+        resource_key = 'resource'
+        if LIST == self.action:
+            resource_key = 'resources'
+
         response = {}
         try:
             already_validated = False
 
             result = await self.__executed_result()
-            presented = await self.__present_results(result)
+            presented_init = await self.__present_results(result)
+
+            if isinstance(result, ResultSet):
+                metadata = result.metadata
+
+            results_altered = self.__run_hooks_after(
+                condition=HookCondition.SUCCESS,
+                metadata=metadata,
+                operation_resource=result,
+                **{
+                    resource_key: presented_init,
+                },
+            )
+
+            metadata = results_altered['metadata']
+            presented = results_altered[resource_key]
 
             if isinstance(presented, CustomDict) or isinstance(presented, CustomList):
                 already_validated = presented.already_validated
@@ -146,8 +181,7 @@ class BaseOperation():
                     presented_results_parsed,
                 ) >= 1 else presented_results_parsed
 
-            if isinstance(result, ResultSet):
-                response['metadata'] = result.metadata
+            response['metadata'] = metadata
 
             if settings.DEBUG:
                 debug_payload = {}
@@ -181,10 +215,20 @@ class BaseOperation():
                 if not REQUIRE_USER_PERMISSIONS:
                     err.message = 'You don’t have access to this project. ' + \
                         'Please ask an admin or owner for permissions.'
+
+            results_altered = self.__run_hooks_after(
+                condition=HookCondition.FAILURE,
+                error=self.__present_error(err),
+                metadata=metadata,
+                operation_resource=result,
+                **{
+                    resource_key: presented_init,
+                },
+            )
+            response['error'] = results_altered['error']
+
             if settings.DEBUG:
                 raise err
-            else:
-                response['error'] = self.__present_error(err)
 
         db_connection.stop_cache()
 
@@ -220,13 +264,154 @@ class BaseOperation():
     def query(self, value):
         self._query = value
 
-    async def __executed_result(self):
+    def __run_hooks(
+        self,
+        operation_type: HookOperation,
+        stage: HookStage,
+        condition: HookCondition = None,
+        operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
+        **kwargs,
+    ) -> List[Hook]:
+        project = Project()
+        if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+            return None
+
+        operation_types = [operation_type]
+        if HookOperation.UPDATE == operation_type:
+            operation_types.append(HookOperation.UPDATE_ANYWHERE)
+
+        try:
+            global_hooks = GlobalHooks.load_from_file()
+            hooks = global_hooks.get_and_run_hooks(
+                conditions=[condition] if condition else None,
+                operation_resource=operation_resource,
+                operation_types=operation_types,
+                resource_type=EntityName(self.__classified_class()),
+                stage=stage,
+                **kwargs,
+            )
+
+            if hooks:
+                for hook in (hooks or []):
+                    if hook.status and HookStrategy.RAISE == hook.status.strategy:
+                        raise Exception(hook.status.error)
+
+            return hooks
+        except Exception as err:
+            raise err
+
+    def __run_hooks_after(
+        self,
+        condition: HookCondition = None,
+        error: Dict = None,
+        metadata: Dict = None,
+        operation_resource: Union[BaseResource, List[BaseResource]] = None,
+        resource: Dict = None,
+        resources: List[Dict] = None,
+    ) -> Union[Dict, List[Dict]]:
+        hooks = self.__run_hooks(
+            condition=condition,
+            error=error,
+            meta=self.meta,
+            metadata=metadata,
+            operation_resource=operation_resource,
+            operation_type=HookOperation(self.action),
+            query=self.query,
+            resource=resource,
+            resources=resources,
+            stage=HookStage.AFTER,
+        )
+
+        if not hooks:
+            return dict(
+                error=error,
+                metadata=metadata,
+                resource=resource,
+                resources=resources,
+            )
+
+        for hook in (hooks or []):
+            output = hook.output
+
+            if not output:
+                continue
+
+            if output.get('error'):
+                error = merge_dict(error, output.get('error') or {})
+
+            if output.get('metadata'):
+                metadata = merge_dict(metadata, output.get('metadata') or {})
+
+            if output.get('resource'):
+                output_resource = output.get('resource')
+                if isinstance(output_resource, dict):
+                    resource = CustomDict(merge_dict(resource or {}, output_resource or {}))
+                    resource.already_validated = False
+
+        return dict(
+            error=error,
+            metadata=metadata,
+            resource=resource,
+            resources=resources,
+        )
+
+    def __run_hooks_before(
+        self,
+        operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
+        payload: Dict = None,
+        **kwargs,
+    ) -> Dict:
+        if not payload:
+            payload = {}
+
+        hooks = self.__run_hooks(
+            operation_type=HookOperation(self.action),
+            stage=HookStage.BEFORE,
+            meta=self.meta,
+            operation_resource=operation_resource,
+            payload=payload,
+            query=self.query,
+        )
+
+        if not hooks:
+            return payload
+
+        for hook in (hooks or []):
+            output = hook.output
+            if not output:
+                continue
+
+            if output.get('meta'):
+                value = output.get('meta') or {}
+                if isinstance(value, dict):
+                    self.meta = merge_dict(self.meta, value)
+
+            if output.get('payload'):
+                value = output.get('payload') or {}
+                if isinstance(value, dict):
+                    payload = merge_dict(payload, value)
+
+            if output.get('query'):
+                value = output.get('query') or {}
+                if isinstance(value, dict):
+                    self.query = merge_dict(self.query, value)
+
+        return payload
+
+    async def __executed_result(self) -> Union[BaseResource, Dict, List[BaseResource]]:
         if self.action in [CREATE, LIST]:
             return await self.__create_or_index()
         elif self.action in [DELETE, DETAIL, UPDATE]:
             return await self.__delete_show_or_update()
 
-    async def __create_or_index(self):
+    async def __create_or_index(self) -> Union[BaseResource, Dict, List[BaseResource]]:
+        operation_resource = None,
+        payload = None
+        if CREATE == self.action:
+            payload = self.__payload_for_resource()
+            operation_resource = payload
+        payload = self.__run_hooks_before(operation_resource=operation_resource, payload=payload)
+
         updated_options = await self.__updated_options()
 
         policy = self.__policy_class()(None, self.user, **updated_options)
@@ -250,7 +435,6 @@ class BaseOperation():
                     **parsed_value,
                 )
 
-            payload = self.__payload_for_resource()
             if parser:
                 payload = await parser.parse_write_attributes_and_authorize(
                     payload,
@@ -263,12 +447,14 @@ class BaseOperation():
             options = updated_options.copy()
             options.pop('payload', None)
 
-            return await self.__resource_class().process_create(
+            result = await self.__resource_class().process_create(
                 payload,
                 self.user,
                 result_set_from_external=policy.result_set(),
                 **options,
             )
+
+            return result
         elif LIST == self.action:
             def _build_authorize_query(
                 parsed_value: Any,
@@ -302,13 +488,21 @@ class BaseOperation():
                 **options,
             )
 
-    async def __delete_show_or_update(self):
+    async def __delete_show_or_update(self) -> BaseResource:
         updated_options = await self.__updated_options()
 
         res = await self.__resource_class().process_member(
             self.pk,
             self.user,
             **updated_options,
+        )
+
+        payload = None
+        if UPDATE == self.action:
+            payload = self.__payload_for_resource()
+        payload = self.__run_hooks_before(
+            payload=payload,
+            operation_resource=res,
         )
 
         policy = self.__policy_class()(res, self.user, **updated_options)
@@ -370,7 +564,6 @@ class BaseOperation():
                     **parsed_value,
                 )
 
-            payload = self.__payload_for_resource()
             if parser:
                 payload = await parser.parse_write_attributes_and_authorize(
                     payload,

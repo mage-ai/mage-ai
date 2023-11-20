@@ -24,7 +24,9 @@
     "prompt": "✨ Make magic..."
   },
   "metadata": {
-    "og:image": "/og.png",
+    "og:image": "https://github.com/mage-ai/mage-ai/blob/master/docs/og.png?raw=True",
+    "og:description": "Mage is an open-source, hybrid framework for transforming and integrating data. Our docs are the best place to learn about making magical data pipelines.",
+    "og:site_name": "Mage Docs",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {

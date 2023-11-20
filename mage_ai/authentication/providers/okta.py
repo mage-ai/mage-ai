@@ -1,6 +1,6 @@
 import urllib.parse
 import uuid
-from typing import Dict, Optional
+from typing import Awaitable, Dict
 
 import aiohttp
 from aiohttp import BasicAuth
@@ -17,10 +17,10 @@ class OktaProvider(SsoProvider, OauthProvider):
 
     def __init__(self):
         self.hostname = OKTA_DOMAIN_URL
+        self.__validate()
+
         if not self.hostname.startswith('https'):
             self.hostname = f'https://{self.hostname}'
-
-        self.__validate()
 
     def __validate(self):
         if not self.hostname:
@@ -36,33 +36,32 @@ class OktaProvider(SsoProvider, OauthProvider):
                 'Okta client secret is empty. '
                 'Make sure the OKTA_CLIENT_SECRET environment variable is set.')
 
-    def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Optional[Dict]:
-        if OKTA_CLIENT_ID:
-            base_url = get_base_url(redirect_uri)
-            redirect_uri_query = dict(
-                provider=self.provider,
-                redirect_uri=redirect_uri,
-            )
-            query = dict(
-                client_id=OKTA_CLIENT_ID,
-                redirect_uri=urllib.parse.quote_plus(
-                    f'{base_url}/oauth',
-                ),
-                response_mode='query',
-                response_type='code',
-                scope='openid email profile',
-                state=uuid.uuid4().hex,
-            )
-            query_strings = []
-            for k, v in query.items():
-                query_strings.append(f'{k}={v}')
+    def get_auth_url_response(self, redirect_uri: str = None, **kwargs) -> Dict:
+        base_url = get_base_url(redirect_uri)
+        redirect_uri_query = dict(
+            provider=self.provider,
+            redirect_uri=redirect_uri,
+        )
+        query = dict(
+            client_id=OKTA_CLIENT_ID,
+            redirect_uri=urllib.parse.quote_plus(
+                f'{base_url}/oauth',
+            ),
+            response_mode='query',
+            response_type='code',
+            scope='openid email profile',
+            state=uuid.uuid4().hex,
+        )
+        query_strings = []
+        for k, v in query.items():
+            query_strings.append(f'{k}={v}')
 
-            return dict(
-                url=f"{self.hostname}/oauth2/default/v1/authorize?{'&'.join(query_strings)}",
-                redirect_query_params=redirect_uri_query,
-            )
+        return dict(
+            url=f"{self.hostname}/oauth2/default/v1/authorize?{'&'.join(query_strings)}",
+            redirect_query_params=redirect_uri_query,
+        )
 
-    async def get_access_token_response(self, code: str, **kwargs) -> Dict:
+    async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
         base_url = get_base_url(kwargs.get('redirect_uri'))
         data = dict()
         async with aiohttp.ClientSession() as session:
@@ -83,7 +82,7 @@ class OktaProvider(SsoProvider, OauthProvider):
 
         return data
 
-    async def get_user_info(self, access_token: str = None, **kwargs) -> Dict:
+    async def get_user_info(self, access_token: str = None, **kwargs) -> Awaitable[Dict]:
         if access_token is None:
             raise Exception('Access token is required to fetch user info.')
         async with aiohttp.ClientSession() as session:

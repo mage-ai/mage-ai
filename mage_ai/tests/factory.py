@@ -6,12 +6,12 @@ from faker import Faker
 
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 
 faker = Faker()
 
@@ -24,7 +24,7 @@ def create_pipeline(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_with_blocks(name: str, repo_path: str):
+def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: PipelineType = None):
     """
     Creates a pipeline with blocks for data processing and transformation.
 
@@ -38,6 +38,7 @@ def create_pipeline_with_blocks(name: str, repo_path: str):
     pipeline = Pipeline.create(
         name,
         repo_path=repo_path,
+        pipeline_type=pipeline_type,
     )
     block1 = Block.create('block1', 'data_loader', repo_path, language='python')
     block2 = Block.create('block2', 'transformer', repo_path, language='python')
@@ -188,3 +189,64 @@ def create_user(
         user.save()
 
     return user
+
+
+async def build_pipeline_with_blocks_and_content(
+    test_case,
+    block_settings: Dict = None,
+    name: str = None,
+    pipeline_type: PipelineType = None,
+) -> Pipeline:
+    repo_path = test_case.repo_path
+
+    pipeline = Pipeline.create(
+        name or test_case.faker.unique.name(),
+        repo_path=repo_path,
+        pipeline_type=pipeline_type or PipelineType.PYTHON,
+    )
+
+    blocks = []
+    for idx, block_dict in enumerate([
+        {},
+        {},
+        {},
+        {},
+    ]):
+        block = Block.create(
+            f'block{idx}_{test_case.faker.unique.name()}',
+            **merge_dict(
+                merge_dict(dict(
+                    block_type=BlockType.DATA_LOADER,
+                    repo_path=repo_path,
+                ), block_dict or {}),
+                ignore_keys(
+                    block_settings[idx] if block_settings and idx in block_settings else {},
+                    [
+                        'content',
+                    ],
+                ),
+            ),
+        )
+
+        pipeline.add_block(block)
+        blocks.append(block)
+
+    pipeline.save()
+    await pipeline.update(dict(
+        blocks=[merge_dict(
+            block.to_dict(include_content=True),
+            extract(
+                block_settings[idx] if block_settings and idx in block_settings else {},
+                [
+                    'content',
+                ],
+            ),
+        ) for idx, block in enumerate(blocks)],
+    ), update_content=True)
+
+    if hasattr(test_case, 'pipelines_created_for_testing'):
+        if not test_case.pipelines_created_for_testing:
+            test_case.pipelines_created_for_testing = []
+        test_case.pipelines_created_for_testing.append(pipeline)
+
+    return pipeline, blocks

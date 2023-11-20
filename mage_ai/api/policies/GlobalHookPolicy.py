@@ -25,7 +25,11 @@ GlobalHookPolicy.allow_actions(
 
 
 GlobalHookPolicy.allow_read(
-    GlobalHookPresenter.default_attributes,
+    GlobalHookPresenter.default_attributes + [
+        'operation_types',
+        'pipeline_details',
+        'resource_types',
+    ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
@@ -45,9 +49,11 @@ GlobalHookPolicy.allow_write(
     [
         'conditions',
         'operation_type',
-        'output_block_uuids',
-        'pipeline_uuid',
+        'outputs',
+        'pipeline',
+        'predicates',
         'resource_type',
+        'run_settings',
         'stages',
         'strategies',
         'uuid',
@@ -67,9 +73,11 @@ GlobalHookPolicy.allow_write(
     [
         'conditions',
         'operation_type',
-        'output_block_uuids',
-        'pipeline_uuid',
+        'outputs',
+        'pipeline',
+        'predicates',
         'resource_type',
+        'run_settings',
         'stages',
         'strategies',
     ],
@@ -86,8 +94,8 @@ GlobalHookPolicy.allow_write(
 
 GlobalHookPolicy.allow_query(
     [
-        'operations[]',
-        'resources[]',
+        'operation_type[]',
+        'resource_type[]',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -102,8 +110,10 @@ GlobalHookPolicy.allow_query(
 
 GlobalHookPolicy.allow_query(
     [
-        'operation',
-        'resource',
+        'include_operation_types',
+        'include_resource_types',
+        'operation_type',
+        'resource_type',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

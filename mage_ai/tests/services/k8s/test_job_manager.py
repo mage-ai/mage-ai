@@ -2,7 +2,14 @@ import os
 from unittest.mock import MagicMock, patch
 
 from kubernetes import client
-from kubernetes.client import V1Container, V1EnvVar, V1Pod, V1PodSpec
+from kubernetes.client import (
+    V1Container,
+    V1EnvFromSource,
+    V1EnvVar,
+    V1Pod,
+    V1PodSpec,
+    V1SecretEnvSource,
+)
 
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.job_manager import (
@@ -21,6 +28,13 @@ MOCK_POD_CONFIG = V1Pod(
             env=[
                 V1EnvVar(name='VAR1', value='VALUE1'),
                 V1EnvVar(name='VAR2', value='VALUE2'),
+            ],
+            env_from=[
+                V1EnvFromSource(
+                    config_map_ref=None,
+                    prefix=None,
+                    secret_ref=V1SecretEnvSource(name='mysecret', optional=None),
+                ),
             ],
             volume_mounts=[],
             resources=[],
@@ -167,6 +181,13 @@ class JobManagerTests(TestCase):
         self.assertEqual(pod_config.containers[0].image_pull_policy, 'IfNotPresent')
         self.assertEqual(pod_config.containers[0].image, 'test_image')
         self.assertEqual(pod_config.containers[0].resources, mock_v1_resource_requirements)
+        self.assertEqual(pod_config.containers[0].env_from, [
+                V1EnvFromSource(
+                    config_map_ref=None,
+                    prefix=None,
+                    secret_ref=V1SecretEnvSource(name='mysecret', optional=None),
+                ),
+        ])
 
         mock_client.V1ResourceRequirements.assert_called_once_with(
             limits=dict(

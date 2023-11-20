@@ -22,7 +22,6 @@ class OperationTests(BaseApiTestCase):
             user=None,
         )
         response = await operation.execute()
-        print(response)
 
         self.assertIsNotNone(response['error'])
 

@@ -11,6 +11,7 @@ import pytz
 import yaml
 from jinja2 import Template
 
+from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
@@ -32,6 +33,8 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.errors import SerializationError
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.models import PipelineSettings
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.utils import is_yaml_serializable
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import (
@@ -427,6 +430,7 @@ class Pipeline:
         global_vars=None,
         run_sensors: bool = True,
         run_tests: bool = True,
+        update_status: bool = True,
     ) -> None:
         """
         Function for synchronous block processing.
@@ -460,6 +464,7 @@ class Pipeline:
                 global_vars=global_vars,
                 run_sensors=run_sensors,
                 run_tests=run_tests,
+                update_status=update_status,
             )
 
     def get_config_from_yaml(self):
@@ -907,6 +912,16 @@ class Pipeline:
                             self.extensions.get(extension_uuid, {}).get('blocks_by_uuid', {}),
                         ))
 
+            global_hooks = None
+            if len(arr) >= 1:
+                project = Project(self.repo_config)
+                if project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+                    from mage_ai.data_preparation.models.global_hooks.models import (
+                        GlobalHooks,
+                    )
+
+                    global_hooks = GlobalHooks.load_from_file()
+
             for tup in arr:
                 key, blocks_arr, mapping = tup
                 widget = key == 'widgets'
@@ -920,6 +935,32 @@ class Pipeline:
                     block = mapping.get(block_data['uuid'])
                     if block is None:
                         continue
+
+                    if global_hooks:
+                        from mage_ai.data_preparation.models.global_hooks.models import (
+                            HookOperation,
+                            HookStage,
+                        )
+
+                        hooks = global_hooks.get_and_run_hooks(
+                            operation_resource=block,
+                            operation_types=[HookOperation.UPDATE_ANYWHERE],
+                            resource_type=EntityName.Block,
+                            stage=HookStage.BEFORE,
+                            payload=block_data,
+                        )
+
+                        if hooks:
+                            for hook in (hooks or []):
+                                output = hook.output
+                                if not output:
+                                    continue
+
+                                if output.get('payload'):
+                                    value = output.get('payload') or {}
+                                    if isinstance(value, dict):
+                                        block_data = merge_dict(block_data, value)
+
                     if 'content' in block_data:
                         from mage_ai.cache.block_action_object import (
                             BlockActionObjectCache,
