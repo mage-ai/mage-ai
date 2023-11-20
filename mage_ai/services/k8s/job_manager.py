@@ -173,6 +173,9 @@ class JobManager():
         mage_server_container_spec = self.get_mage_server_container()
         container_spec.env = container_spec.env + \
             [item for item in mage_server_container_spec.env if item not in container_spec.env]
+        container_spec.env_from = (container_spec.env_from or []) + \
+            [item for item in (mage_server_container_spec.env_from or [])
+             if item not in (container_spec.env_from or [])]
         container_spec.volume_mounts = container_spec.volume_mounts + \
             [item for item in mage_server_container_spec.volume_mounts
                 if item not in container_spec.volume_mounts]
