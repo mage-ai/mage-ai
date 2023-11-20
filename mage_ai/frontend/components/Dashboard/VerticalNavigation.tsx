@@ -13,8 +13,10 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api'
+import useProject from '@utils/models/project/useProject';
 import {
   BranchAlt,
+  Insights,
   DocumentIcon,
   Lightning,
   NavDashboard,
@@ -32,13 +34,14 @@ import {
 } from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { featureEnabled } from '@utils/models/project';
 import { pushAtIndex } from '@utils/array';
 
 const ICON_SIZE = 3 * UNIT;
 const DEFAULT_NAV_ITEMS = ({
+  featureEnabled,
   project,
 }: {
+  featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
   project?: ProjectType;
 }) => {
   let miscItems = [
@@ -84,7 +87,7 @@ const DEFAULT_NAV_ITEMS = ({
     },
   ];
 
-  if (featureEnabled(project, FeatureUUIDEnum.COMPUTE_MANAGEMENT)) {
+  if (featureEnabled(FeatureUUIDEnum.COMPUTE_MANAGEMENT)) {
     miscItems = pushAtIndex({
       Icon: TripleBoxes,
       id: 'compute',
@@ -95,6 +98,16 @@ const DEFAULT_NAV_ITEMS = ({
     }, 4, miscItems);
   }
 
+  if (featureEnabled(FeatureUUIDEnum.GLOBAL_HOOKS)) {
+    miscItems = pushAtIndex({
+      Icon: Insights,
+      id: 'global-hooks',
+      label: () => 'Global hooks (beta)',
+      linkProps: {
+        href: '/global-hooks',
+      },
+    }, 4, miscItems);
+  }
 
   return [
     {
@@ -180,9 +193,14 @@ function VerticalNavigation({
   const router = useRouter();
   const { pathname } = router;
 
-  const { data } = api.projects.list();
-  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
-  const defaultNavItems = useMemo(() => DEFAULT_NAV_ITEMS({ project }), [
+  const {
+    project,
+    featureEnabled,
+  } = useProject();
+  const defaultNavItems = useMemo(() => DEFAULT_NAV_ITEMS({
+    project,
+    featureEnabled,
+  }), [
     project,
   ]);
 

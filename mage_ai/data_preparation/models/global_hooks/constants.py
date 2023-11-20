@@ -1,6 +1,8 @@
 from mage_ai.authentication.permissions.constants import EntityName
 
 DISABLED_RESOURCE_TYPES = [
+  EntityName.ALL,
+  EntityName.ALL_EXCEPT_RESERVED,
   EntityName.File,
   EntityName.FileContent,
   EntityName.Folder,

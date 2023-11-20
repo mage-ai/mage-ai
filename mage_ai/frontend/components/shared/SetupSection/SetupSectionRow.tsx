@@ -2,23 +2,34 @@ import React, { Dispatch, SetStateAction } from 'react';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { Edit } from '@oracle/icons';
+import { ChevronDown, Edit } from '@oracle/icons';
 import { ICON_SIZE } from '@components/shared/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+
+interface InputType {
+  fullWidth?: boolean;
+  monospace?: boolean;
+  onChange?: (event: any) => void;
+  placeholder?: string;
+  value?: string;
+}
 
 type SetupSectionRowProps = {
   children?: any;
   description?: any | string;
   invalid?: boolean;
-  textInput?: {
-    onChange?: (event: any) => void;
-    placeholder?: string;
-    value?: string;
+  selectInput?: InputType & {
+    options: {
+      label?: string;
+      value: any;
+    }[];
   };
+  textInput?: InputType;
   title: string;
   toggleSwitch?: {
     checked?: boolean;
@@ -30,6 +41,7 @@ function SetupSectionRow({
   children,
   description,
   invalid,
+  selectInput,
   textInput,
   title,
   toggleSwitch,
@@ -76,13 +88,36 @@ function SetupSectionRow({
               noBackground
               noBorder
               fullWidth
-              onChange={textInput?.onChange}
               paddingHorizontal={0}
               paddingVertical={0}
-              placeholder={textInput?.placeholder}
               setContentOnMount
-              value={textInput?.value || ''}
+              {...textInput}
             />
+          )}
+
+          {selectInput && (
+            <Select
+              {...selectInput}
+              afterIcon={<ChevronDown />}
+              afterIconSize={ICON_SIZE}
+              alignRight
+              autoComplete="off"
+              large
+              noBackground
+              noBorder
+              paddingHorizontal={0}
+              paddingVertical={0}
+              setContentOnMount
+            >
+              {selectInput?.options?.map(({
+                label,
+                value,
+              }) => (
+                <option key={value} value={value}>
+                  {label || value}
+                </option>
+              ))}
+            </Select>
           )}
 
           {toggleSwitch && (
