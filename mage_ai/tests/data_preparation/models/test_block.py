@@ -13,6 +13,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
+from mage_ai.tests.factory import create_integration_pipeline_with_blocks
 
 
 class BlockTest(DBTestCase):
@@ -707,3 +708,28 @@ def test_output(output, *args) -> None:
             block3.upstream_block_uuids[1],
             'test_data_loader_1',
         )
+
+    def test_output_variables_for_integration_pipeline_blocks(self):
+        pipeline = create_integration_pipeline_with_blocks(
+            'test integration pipeline',
+            repo_path=self.repo_path,
+        )
+        block = pipeline.get_block('test_integration_source')
+
+        df = pd.DataFrame(
+            [
+                [1, 'abc@xyz.com', '32132'],
+                [2, 'abc2@xyz.com', '12345'],
+                [3, 'test', '1234'],
+                [4, 'abc@test.net', 'abcde'],
+                [5, 'abc12345@', '54321'],
+                [6, 'abcdef@123.com', '56789'],
+            ],
+            columns=['id', 'email', 'zip_code'],
+        )
+
+        block.store_variables({
+            'output_sample_data_stream1': df
+        })
+        output_variables = block.output_variables()
+        self.assertTrue('output_sample_data_stream1' in output_variables)
