@@ -45,6 +45,12 @@ import { pluralize } from '@utils/string';
 const SPACING_BOTTOM_UNITS = 5;
 const TOOLTIP_LEFT_SPACING = '4px';
 
+const SHARED_TOOLTIP_PROPS = {
+  lightBackground: true,
+  muted: true,
+  relativePosition: true,
+};
+
 export type SchemaTableProps = {
   bookmarkValues?: { [key: string]: any };
   destination: IntegrationDestinationEnum;
@@ -625,6 +631,7 @@ function SchemaTable({
             </Text>
             <Spacing ml={TOOLTIP_LEFT_SPACING} />
             <Tooltip
+              {...SHARED_TOOLTIP_PROPS}
               label={(
                 <Text>
                   By default, this stream will be saved to your destination under the
@@ -633,8 +640,6 @@ function SchemaTable({
                   </Text>. To change the table name, enter in a different value.
                 </Text>
               )}
-              lightBackground
-              primary
             />
             <Spacing ml={1} />
             <TextInput
@@ -671,6 +676,7 @@ function SchemaTable({
               </Text>
               <Spacing ml={TOOLTIP_LEFT_SPACING} />
               <Tooltip
+                {...SHARED_TOOLTIP_PROPS}
                 label={(
                   <Text>
                     Do you want to synchronize the entire stream (<Text bold inline monospace>
@@ -690,8 +696,6 @@ function SchemaTable({
                     }
                   </Text>
                 )}
-                lightBackground
-                primary
               />
               <Spacing ml={1} />
               <Select
@@ -724,6 +728,7 @@ function SchemaTable({
               </Text>
               <Spacing ml={TOOLTIP_LEFT_SPACING} />
               <Tooltip
+                {...SHARED_TOOLTIP_PROPS}
                 label={(
                   <Text wordBreak>
                     If a new record has the same value as an existing record in
@@ -751,8 +756,6 @@ function SchemaTable({
                     with the new record’s properties.
                   </Text>
                 )}
-                lightBackground
-                primary
               />
               <Spacing ml={1} />
               <Select
@@ -784,6 +787,7 @@ function SchemaTable({
                 </Text>
                 <Spacing ml={TOOLTIP_LEFT_SPACING} />
                 <Tooltip
+                  {...SHARED_TOOLTIP_PROPS}
                   appearBefore
                   label={(
                     <Text>
@@ -791,8 +795,6 @@ function SchemaTable({
                       unique conflict method settings to all selected streams.
                     </Text>
                   )}
-                  lightBackground
-                  primary
                 />
                 <Spacing ml={1} />
                 <Button

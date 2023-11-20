@@ -31,6 +31,7 @@ export type TooltipWrapperProps = {
   minWidth?: number;
   muted?: boolean;
   noHoverOutline?: boolean;
+  relativePosition?: boolean;
   rightPosition?: boolean;
   size?: number;
   topOffset?: number;
@@ -41,6 +42,10 @@ export type TooltipWrapperProps = {
 
 const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
   position: static;
+
+  ${({ relativePosition }) => relativePosition && `
+    position: relative;
+  `}
 
   ${props => props.height && `
     height: ${props.height}px;
@@ -178,6 +183,7 @@ function TooltipWrapper({
   lightBackground,
   minWidth,
   noHoverOutline,
+  relativePosition,
   size = UNIT * 2,
   topOffset,
   visibleDelay = 1000,
@@ -236,6 +242,7 @@ function TooltipWrapper({
         setVisibleInterval(false);
         setVisible(false);
       }}
+      relativePosition={relativePosition}
       size={size}
     >
       {elRendered}
