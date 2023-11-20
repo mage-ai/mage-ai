@@ -1,7 +1,11 @@
 import uuid
+from itertools import groupby
 
-from sqlalchemy.orm import selectinload
+from sqlalchemy import case
+from sqlalchemy.orm import aliased, selectinload
+from sqlalchemy.sql.expression import func
 
+from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
@@ -12,6 +16,7 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
+    PipelineRun,
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
@@ -118,23 +123,111 @@ class PipelineScheduleResource(DatabaseResource):
                     PipelineSchedule.pipeline_uuid == pipeline.uuid,
                 )
 
-            return query.order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
+            query.order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
 
-        order_by = query_arg.get('order_by', [None])
-        if order_by[0]:
-            order_by = order_by[0]
-            if order_by == 'created_at':
-                query = query.order_by(PipelineSchedule.created_at.desc())
-            elif order_by == 'name':
-                query = query.order_by(PipelineSchedule.name.asc())
-            elif order_by == 'pipeline_uuid':
-                query = query.order_by(PipelineSchedule.pipeline_uuid.asc())
-            elif order_by == 'status':
-                query = query.order_by(PipelineSchedule.status.asc())
-            elif order_by == 'schedule_type':
-                query = query.order_by(PipelineSchedule.schedule_type.asc())
+        else:
+            order_by = query_arg.get('order_by', [None])
+            if order_by[0]:
+                order_by = order_by[0]
+                if order_by == 'created_at':
+                    query = query.order_by(PipelineSchedule.created_at.desc())
+                elif order_by == 'name':
+                    query = query.order_by(PipelineSchedule.name.asc())
+                elif order_by == 'pipeline_uuid':
+                    query = query.order_by(PipelineSchedule.pipeline_uuid.asc())
+                elif order_by == 'status':
+                    query = query.order_by(PipelineSchedule.status.asc())
+                elif order_by == 'schedule_type':
+                    query = query.order_by(PipelineSchedule.schedule_type.asc())
 
-        return query.all()
+        schedules = query.all()
+        schedule_ids = [schedule.id for schedule in schedules]
+
+        counts_query = (
+            PipelineRun.select(
+                PipelineRun.pipeline_schedule_id,
+                func.count(PipelineRun.pipeline_schedule_id).label('pipeline_runs_count'),
+                func.sum(
+                    case(
+                        [
+                            (
+                                PipelineRun.status.in_(
+                                    [
+                                        PipelineRun.PipelineRunStatus.INITIAL,
+                                        PipelineRun.PipelineRunStatus.RUNNING,
+                                    ]
+                                ),
+                                1,
+                            )
+                        ],
+                        else_=0,
+                    )
+                ).label('in_progress_runs_count'),
+            )
+            .where(
+                PipelineRun.pipeline_schedule_id.in_(schedule_ids),
+            )
+            .group_by(PipelineRun.pipeline_schedule_id)
+        )
+        pipeline_run_counts = counts_query.all()
+        run_counts_by_pipeline_schedule = {
+            count.pipeline_schedule_id: dict(
+                pipeline_runs_count=count.pipeline_runs_count,
+                pipeline_in_progress_runs_count=count.in_progress_runs_count,
+            )
+            for count in pipeline_run_counts
+        }
+
+        tags = (
+            TagAssociation.select(
+                TagAssociation.id,
+                TagAssociation.tag_id,
+                TagAssociation.taggable_id,
+                TagAssociation.taggable_type,
+                Tag.name,
+            )
+            .join(
+                Tag,
+                Tag.id == TagAssociation.tag_id,
+            )
+            .filter(
+                TagAssociation.taggable_id.in_(schedule_ids),
+                TagAssociation.taggable_type == self.model_class.__name__,
+            )
+            .all()
+        )
+
+        tags_by_pipeline_schedule = {
+            key: [tag.name for tag in schedule_tags]
+            for key, schedule_tags in groupby(tags, key=lambda x: x.taggable_id)
+        }
+
+        results = []
+        for s in schedules:
+            additional_fields = merge_dict(
+                run_counts_by_pipeline_schedule.get(s.id, {}),
+                dict(
+                    next_pipeline_run_date=s.next_execution_date(),
+                    tags=tags_by_pipeline_schedule.get(s.id, []),
+                ),
+            )
+            results.append(
+                merge_dict(
+                    s.to_dict(
+                        include_attributes=[
+                            'event_matchers',
+                            'last_pipeline_run_status',
+                        ]
+                    ),
+                    additional_fields,
+                )
+            )
+
+        return self.build_result_set(
+            results,
+            user,
+            **kwargs,
+        )
 
     @classmethod
     @safe_db_query
