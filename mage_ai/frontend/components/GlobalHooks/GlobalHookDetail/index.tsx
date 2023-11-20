@@ -10,6 +10,7 @@ import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from '@oracle/elements/Button';
 import Chip from '@oracle/components/Chip';
 import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalHookType, {
   HookConditionEnum,
@@ -122,6 +123,48 @@ function GlobalHookDetail({
                 toastId: `global-hooks-success-${objectServer.uuid}`,
               },
             );
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              errors?.error || exception || message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+
+            return showError({
+              errors,
+              response,
+            });
+          },
+        },
+      ),
+    },
+  );
+  const [deleteGlobalHook, { isLoading: isLoadingDelete }] = useMutation(
+    api.global_hooks.useDelete(globalHook?.uuid, query),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            global_hook: objectServer,
+          }) => {
+            toast.success(
+              'Global hook changes successfully saved.',
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: `global-hooks-success-${objectServer.uuid}`,
+              },
+            );
+            router.replace('/global-hooks');
           },
           onErrorCallback: ({
             error: {
@@ -440,7 +483,7 @@ function GlobalHookDetail({
   ]), [attributes])
 
   return (
-    <Spacing p={PADDING_UNITS}>
+    <Spacing mb={8} p={PADDING_UNITS}>
       <SetupSection title="What to run hook for">
         <SetupSectionRow
           description="This hook’s UUID must be unique across all hooks for the same resource type and operation type."
@@ -698,36 +741,61 @@ function GlobalHookDetail({
       )}
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS}>
-        <FlexContainer>
-          <Button
-            beforeIcon={<Save />}
-            loading={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook}
-            // @ts-ignore
-            onClick={() => (isNew ? createGlobalHook : updateGlobalHook)({
-              global_hook: {
-                ...payload,
-                ...(isNew
-                  ? {
-                    uuid: attributes?.uuid,
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          {!isNew && (
+            <>
+              <Button
+                compact
+                danger
+                loading={isLoadingDelete}
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.confirm(
+                    'Are you sure you wantt to delete this hook?',
+                  )) {
+                    deleteGlobalHook();
                   }
-                  : {}
-                )
-              },
-            })}
-            primary
-          >
-            {isNew ? 'Create new global hook' : 'Save changes'}
-          </Button>
+                }}
+                small
+              >
+                Delete global hook
+              </Button>
 
-          <Spacing mr={PADDING_UNITS} />
+              <Spacing mr={PADDING_UNITS} />
+            </>
+          )}
 
-          <Button
-            disabled={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook}
-            onClick={() => router.push('/global-hooks')}
-            secondary
-          >
-            Cancel changes & go back
-          </Button>
+          <Flex flex={1} justifyContent="flex-end">
+            <Button
+              disabled={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook || isLoadingDelete}
+              onClick={() => router.push('/global-hooks')}
+              secondary
+            >
+              Cancel changes & go back
+            </Button>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Button
+              beforeIcon={<Save />}
+              disabled={isLoadingDelete}
+              loading={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook}
+              // @ts-ignore
+              onClick={() => (isNew ? createGlobalHook : updateGlobalHook)({
+                global_hook: {
+                  ...payload,
+                  ...(isNew
+                    ? {
+                      uuid: attributes?.uuid,
+                    }
+                    : {}
+                  )
+                },
+              })}
+              primary
+            >
+              {isNew ? 'Create new global hook' : 'Save changes'}
+            </Button>
+          </Flex>
         </FlexContainer>
       </Spacing>
     </Spacing>
