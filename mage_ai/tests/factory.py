@@ -206,22 +206,22 @@ async def build_pipeline_with_blocks_and_content(
     )
 
     block1 = Block.create(
-        test_case.faker.unique.name(),
+        f'block1_{test_case.faker.unique.name()}',
         BlockType.DATA_LOADER,
         repo_path,
     )
     block2 = Block.create(
-        test_case.faker.unique.name(),
+        f'block2_{test_case.faker.unique.name()}',
         BlockType.DATA_LOADER,
         repo_path,
     )
     block3 = Block.create(
-        test_case.faker.unique.name(),
+        f'block3_{test_case.faker.unique.name()}',
         BlockType.DATA_LOADER,
         repo_path,
     )
     block4 = Block.create(
-        test_case.faker.unique.name(),
+        f'block4_{test_case.faker.unique.name()}',
         BlockType.DATA_LOADER,
         repo_path,
     )

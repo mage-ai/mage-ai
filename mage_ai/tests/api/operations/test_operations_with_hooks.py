@@ -42,20 +42,25 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
 
     async def test_list(self):
         await self.setUpAsync(
+            block_settings={
+                0: dict(content=build_content({
+                    'type[]': [PipelineType.PYTHON],
+                })),
+            },
             operation_type=HookOperation.LIST,
-            pipeline_type=PipelineType.PYSPARK,
+            pipeline_type=PipelineType.PYTHON,
             predicates_match=[],
             predicates_miss=[],
         )
 
         pipeline3, _blocks = await build_pipeline_with_blocks_and_content(
             self,
-            pipeline_type=PipelineType.STREAMING,
+            pipeline_type=PipelineType.PYSPARK,
         )
 
         await build_pipeline_with_blocks_and_content(
             self,
-            pipeline_type=PipelineType.PYTHON,
+            pipeline_type=PipelineType.STREAMING,
         )
 
         response = await self.build_list_operation().execute()
@@ -139,36 +144,74 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
             ),
         )
 
-    # async def test_create_with_predicates(self):
-    #     payload = dict(
-    #         name=self.faker.unique.name(),
-    #         type=self.pipeline.type,
-    #     )
+    async def test_detail(self):
+        name_final = self.faker.unique.name()
 
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.CREATE,
-    #         lambda: self.build_create_operation(payload),
-    #         test_predicate_after=True,
-    #         test_predicate_before=True,
-    #         matching_predicate_resource=payload,
-    #     )
+        await self.setUpAsync(
+            block_settings={
+                0: dict(content=build_content(dict())),
+                1: dict(content=build_content(dict())),
+                2: dict(content=build_content(dict(
+                    name=name_final,
+                    type=PipelineType.PYSPARK,
+                ))),
+            },
+            hook_settings=lambda data: {
+                2: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][2].uuid),
+                            key=HookOutputKey.RESOURCE,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                3: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks2'][3].uuid),
+                            key=HookOutputKey.METADATA,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline2'].uuid,
+                    ),
+                ),
+            },
+            operation_type=HookOperation.DETAIL,
+            pipeline_type=PipelineType.PYTHON.value,
+            predicates_match=[
+                [
+                    HookPredicate.load(resource=dict(
+                        type=PipelineType.PYTHON.value,
+                    )),
+                ],
+                [
+                    HookPredicate.load(resource=dict(
+                        name=PipelineType.PYSPARK.value,
+                    )),
+                ],
+            ],
+            predicates_miss=[
+                [
+                    HookPredicate.load(resource=dict(
+                        name=uuid.uuid4().hex,
+                    )),
+                ],
+            ],
+        )
 
-    # async def test_detail(self):
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.DETAIL,
-    #         lambda: self.build_detail_operation(self.pipeline.uuid),
-    #     )
+        response = await self.build_detail_operation(self.pipeline2.uuid).execute()
+        pipeline = response['pipeline']
+        self.assertEqual(pipeline['name'], name_final)
+        self.assertEqual(pipeline['type'], PipelineType.PYSPARK.value)
 
-    # async def test_detail_with_predicates(self):
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.DETAIL,
-    #         lambda: self.build_detail_operation(self.pipeline.uuid),
-    #         test_predicate_after=True,
-    #         test_predicate_before=True,
-    #     )
+        self.assertEqual(
+            response['metadata'],
+            dict(level=2),
+        )
 
     # async def test_update(self):
     #     await run_test_for_operation(

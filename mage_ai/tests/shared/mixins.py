@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookOutputSettings,
     HookPredicate,
     HookStage,
+    HookStrategy,
 )
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
@@ -100,6 +101,7 @@ def build_hooks(
             operation_type=operation_type,
             predicates=predicates_match + predicates_miss,
             resource_type=resource_type,
+            strategies=[HookStrategy.RAISE],
             uuid=f'hook{idx}_{test_case.faker.unique.name()}',
             **hook_payload,
         )
@@ -214,7 +216,9 @@ class GlobalHooksMixin(BaseApiTestCase):
         if hook_settings:
             hook_settings_use = merge_dict(hook_settings_use, hook_settings(dict(
                 blocks1=blocks1,
+                blocks2=blocks2,
                 pipeline1=pipeline1,
+                pipeline2=pipeline2,
             )))
 
         global_hooks, hooks, hooks_match, hooks_miss = build_hooks(
