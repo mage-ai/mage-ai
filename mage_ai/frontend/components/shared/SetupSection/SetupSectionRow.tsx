@@ -12,6 +12,8 @@ import { ICON_SIZE } from '@components/shared/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 interface InputType {
+  fullWidth?: boolean;
+  monospace?: boolean;
   onChange?: (event: any) => void;
   placeholder?: string;
   value?: string;

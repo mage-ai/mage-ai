@@ -9,15 +9,3 @@ export const TEXT_PROPS_SHARED = {
   default: true,
   monospace: true,
 };
-
-export const SubheaderStyle = styled.div`
-  position: sticky;
-  top: 0;
-  z-index: 1;
-
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).codeArea};
-  `}
-`;
-
-

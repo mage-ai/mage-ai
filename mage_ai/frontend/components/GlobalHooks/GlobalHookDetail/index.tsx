@@ -19,7 +19,7 @@ import GlobalHookType, {
   HookStrategyEnum,
 } from '@interfaces/GlobalHookType';
 import Link from '@oracle/elements/Link';
-import PupelineType from '@interfaces/PupelineType';
+import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
@@ -28,6 +28,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Add, ChevronDown, PaginateArrowRight, Save } from '@oracle/icons';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import {
   camelCaseToNormalWithSpaces,
   capitalizeRemoveUnderscoreLower,
@@ -40,10 +41,10 @@ import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
 type GlobalHookDetailProps = {
-  globalHookUUID?: string;
   isNew?: boolean;
   operationType?: string;
   resourceType?: string;
+  uuid?: string;
 };
 
 function GlobalHookDetail({
@@ -118,13 +119,20 @@ function GlobalHookDetail({
               'Global hook changes successfully saved.',
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: `seed-create-success`,
+                toastId: `global-hooks-success-${objectServer.uuid}`,
               },
             );
           },
-          onErrorCallback: (response, errors) => {
+          onErrorCallback: ({
+            error: {
+              errors,
+              exception,
+              message,
+              type,
+            },
+          }) => {
             toast.error(
-              errors?.error,
+              errors?.error || exception || message,
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
                 toastId: type,
@@ -694,6 +702,7 @@ function GlobalHookDetail({
           <Button
             beforeIcon={<Save />}
             loading={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook}
+            // @ts-ignore
             onClick={() => (isNew ? createGlobalHook : updateGlobalHook)({
               global_hook: {
                 ...payload,

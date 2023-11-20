@@ -44,7 +44,6 @@ function GlobalHooksPage() {
         <>
           <Button
             beforeIcon={<Add size={UNIT * 2.5} />}
-            inline
             linkProps={{
               as: '/global-hooks?new=1',
               href: '/global-hooks',

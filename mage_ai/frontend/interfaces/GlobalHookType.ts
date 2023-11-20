@@ -51,11 +51,13 @@ interface HookPredicateType {
   };
 }
 
-interface HookOutputSettingsType {
+export interface HookOutputSettingsType {
   block: {
     uuid: string;
   };
   key: HookOutputKeyEnum;
+  // Internal use only
+  keyMore?: string;
   keys?: string[];
 }
 
@@ -79,13 +81,13 @@ export default interface GlobalHookType {
 
 interface GlobalHookResourceType {
   resource_type: string;
-  create?: HookType[];
-  delete?: HookType[];
-  detail?: HookType[];
-  execute?: HookType[];
-  list?: HookType[];
-  update?: HookType[];
-  update_anywhere?: HookType[];
+  create?: GlobalHookType[];
+  delete?: GlobalHookType[];
+  detail?: GlobalHookType[];
+  execute?: GlobalHookType[];
+  list?: GlobalHookType[];
+  update?: GlobalHookType[];
+  update_anywhere?: GlobalHookType[];
 }
 
 // The keys for this object map to the enum EntityName on the server.
