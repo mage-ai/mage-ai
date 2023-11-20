@@ -52,6 +52,7 @@ export type ButtonProps = {
   fullWidth?: boolean;
   iconOnly?: boolean;
   id?: string;
+  inline?: boolean;
   large?: boolean;
   linkProps?: {
     as?: string;
