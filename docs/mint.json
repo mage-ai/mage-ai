@@ -815,7 +815,8 @@
           "group": "Documentation",
           "icon": "book",
           "pages": [
-            "contributing/documentation/overview"
+            "contributing/documentation/overview",
+            "contributing/documentation/style-guide"
           ]
         }
       ]

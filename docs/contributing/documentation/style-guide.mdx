@@ -1,0 +1,57 @@
+---
+title: "Style Guide"
+sidebarTitle: "Style Guide"
+description: "Mage Docs are written in Markdown and deployed via Mintlify. This page is a style guide for contributing new documentation."
+---
+
+To understand more about Minlify, including what's supported and what's not, check out the [Minlify Quickstart](https://mintlify.com/docs/quickstart). This guide assumes you've configured your environment to [develop locally in Minflity](/contributing/documentation/overview#developing-locally-in-mintlify).
+
+## Frontmatter
+
+Each document should have a frontmatter section, denoted by the characters `---`, for example:
+
+```md
+---
+title: "Style Guide"
+sidebarTitle: "Style Guide"
+description: "Mage Docs are written in Markdown and deployed via Mintlify. This page is a style guide for contributing new documentation."
+---
+```
+
+Frontmatter _must_ include `title`, `sidebarTitle`, and `description`
+
+## Sidebar
+
+To add your new documentation to the sidenav, you'll need to edit `mint.json` in `docs/`. The nested `json` serves to organize high-level pages. You'll need to find the "Group" your page corresponds to, then add the page as a new item in that group's `pages` array, as follows:
+
+```json
+{
+    "group": "Documentation",
+    "icon": "book",
+    "pages": [
+    "contributing/documentation/overview",
+    "contributing/documentation/style-guide",
+    "YOUR_NEW_PAGE"
+    ]
+}
+```
+
+Note that pages should be paths relative to the `docs/` directory and _should not_ contain an extension.
+
+## Images
+
+Images should be inserted using an `<img>` tag with a `<Frame>` component. This is Mintlify functionality that helps keep our images consistent & pretty. Each image should have an `alt` [property](https://www.w3schools.com/tags/att_img_alt.asp) and a `src`.
+
+```html
+<Frame>
+    <img alt="Something super interesting" src="https://github.com/mage-ai/mage-ai/assets/59450879/6e04feeb-684a-4594-ba93-54acda76a623">
+</Frame>
+```
+
+Images _should not_ link to external urls and should be hosted in our [assets repo](https://github.com/mage-ai/assets/tree/main), or on GitHub through their [image upload service](https://stackoverflow.com/a/20959426).
+
+## Code blocks
+
+All code should be formatted using code blocks. Use Mintlify's [fenced code blocks](https://mintlify.com/docs/content/code) for simple examples. Multi-language blocks should use [Code Groups](https://mintlify.com/docs/content/components/code-group).
+
+## Collapsable and numbered content
