@@ -515,7 +515,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         block21, block22, block23, block24 = self.blocks2
         for block in [block21, block22, block24]:
             block_from_response = find(
-                lambda x: x['uuid'] == block.uuid,
+                lambda x, block=block: x['uuid'] == block.uuid,
                 blocks_from_response,
             )
             self.assertEqual(block_from_response['color'], color)
