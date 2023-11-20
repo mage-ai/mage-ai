@@ -213,64 +213,98 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
             dict(level=2),
         )
 
-    # async def test_update(self):
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.UPDATE,
-    #         lambda: self.build_update_operation(self.pipeline.uuid, {}),
-    #     )
+    async def test_update(self):
+        description_init = self.faker.unique.name()
+        description_final = self.faker.unique.name()
+        tags_init = ['fire']
+        tags_final = ['water']
+        uuid_final = self.faker.unique.name()
 
-    # async def test_update_with_predicates(self):
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.UPDATE,
-    #         lambda: self.build_update_operation(self.pipeline.uuid, {}),
-    #         test_predicate_after=True,
-    #         test_predicate_before=True,
-    #     )
+        payload = dict(description=description_init, tags=tags_init)
 
-    # async def test_update_anywhere(self):
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.UPDATE_ANYWHERE,
-    #         lambda: self.build_update_operation(self.pipeline.uuid, {}),
-    #     )
+        await self.setUpAsync(
+            block_settings={
+                0: dict(content=build_content(dict(
+                    description=description_final,
+                ))),
+                1: dict(content=build_content(dict(
+                    tags=tags_final,
+                ))),
+                2: dict(content=build_content(dict(
+                    uuid=uuid_final,
+                ))),
+            },
+            hook_settings=lambda data: {
+                0: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][0].uuid),
+                            key=HookOutputKey.PAYLOAD,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                1: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][1].uuid),
+                            key=HookOutputKey.PAYLOAD,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                2: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][2].uuid),
+                            key=HookOutputKey.RESOURCE,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                3: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks2'][3].uuid),
+                            key=HookOutputKey.METADATA,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline2'].uuid,
+                    ),
+                ),
+            },
+            operation_type=HookOperation.UPDATE,
+            pipeline_type=PipelineType.PYTHON.value,
+            predicates_match=[
+                [
+                    HookPredicate.load(resource=dict(
+                        type=PipelineType.PYTHON.value,
+                    )),
+                ],
+            ],
+            predicates_miss=[
+                [
+                    HookPredicate.load(resource=dict(
+                        name=uuid.uuid4().hex,
+                    )),
+                ],
+            ],
+        )
 
-    # async def test_update_anywhere_with_predicates(self):
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.UPDATE_ANYWHERE,
-    #         lambda: self.build_update_operation(self.pipeline.uuid, {}),
-    #         test_predicate_after=True,
-    #         test_predicate_before=True,
-    #     )
+        response = await self.build_update_operation(self.pipeline2.uuid, payload).execute()
+        pipeline = response['pipeline']
+        self.assertEqual(pipeline['description'], description_final)
+        self.assertEqual(pipeline['tags'], ['water'])
+        self.assertEqual(pipeline['uuid'], uuid_final)
 
-    # async def test_delete(self):
-    #     pipeline = create_pipeline_with_blocks(
-    #         self.faker.unique.name(),
-    #         self.repo_path,
-    #     )
-
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.DELETE,
-    #         lambda: self.build_delete_operation(pipeline.uuid),
-    #     )
-
-    # async def test_delete_with_predicates(self):
-    #     pipeline = create_pipeline_with_blocks(
-    #         self.faker.unique.name(),
-    #         self.repo_path,
-    #         pipeline_type=self.pipeline.type,
-    #     )
-
-    #     await run_test_for_operation(
-    #         self,
-    #         HookOperation.DELETE,
-    #         lambda: self.build_delete_operation(pipeline.uuid),
-    #         test_predicate_after=True,
-    #         test_predicate_before=True,
-    #         matching_predicate_resource=dict(
-    #             name=pipeline.name,
-    #         ),
-    #     )
+        self.assertEqual(
+            response['metadata'],
+            dict(level=2),
+        )
