@@ -16,7 +16,6 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
 from mage_ai.tests.shared.mixins import GlobalHooksMixin, build_content
@@ -38,10 +37,6 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         file_path = GlobalHooks.file_path()
         if os.path.exists(file_path):
             os.remove(file_path)
-
-        pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
-        for pipeline_uuid in pipeline_uuids:
-            Pipeline.get(pipeline_uuid).delete()
 
     async def test_list(self):
         await self.setUpAsync(
