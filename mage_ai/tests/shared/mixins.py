@@ -24,8 +24,30 @@ from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
 
 def build_content(query: Dict) -> str:
     return f"""
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
 @data_loader
 def load_data(*args, **kwargs):
+    return {json.dumps(query)}
+
+
+@transformer
+def transform(*args, **kwargs):
+    return {json.dumps(query)}
+
+
+@data_exporter
+def export_data(*args, **kwargs):
     return {json.dumps(query)}
 """
 
@@ -137,6 +159,7 @@ class GlobalHooksMixin(BaseApiTestCase):
         pipeline_type: PipelineType = None,
         predicates_match: List[HookPredicate] = None,
         predicates_miss: List[HookPredicate] = None,
+        resource_type: EntityName = None,
     ):
         block_settings_init = {
             0: dict(content=build_content({
@@ -229,6 +252,7 @@ class GlobalHooksMixin(BaseApiTestCase):
             pipeline=pipeline1,
             predicates_match=predicates_match,
             predicates_miss=predicates_miss,
+            resource_type=resource_type,
         )
 
         self.blocks1 = blocks1

@@ -1,7 +1,8 @@
 import os
 import uuid
 
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     HookCondition,
@@ -300,7 +301,10 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
             ],
         )
 
-        response = await self.build_update_operation(self.pipeline2.uuid, payload).execute()
+        response = await self.build_update_operation(
+            self.pipeline2.uuid,
+            payload=dict(pipeline=payload),
+        ).execute()
         pipeline = response['pipeline']
         self.assertEqual(pipeline['description'], description_final)
         self.assertEqual(pipeline['tags'], ['water'])
@@ -411,3 +415,115 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         except Exception:
             error = True
         self.assertTrue(error)
+
+    async def test_update_pipeline_blocks(self):
+        color = uuid.uuid4().hex
+        configuration = dict(power=uuid.uuid4().hex)
+
+        await self.setUpAsync(
+            block_settings={
+                0: dict(content=build_content(dict(
+                    color=color,
+                ))),
+                1: dict(content=build_content(dict(
+                    configuration=configuration,
+                ))),
+                2: dict(
+                    content=build_content(dict()),
+                    block_type=BlockType.DATA_EXPORTER.value,
+                ),
+            },
+            hook_settings=lambda data: {
+                0: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][0].uuid),
+                            key=HookOutputKey.PAYLOAD,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                1: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][1].uuid),
+                            key=HookOutputKey.PAYLOAD,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                2: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][2].uuid),
+                            key=HookOutputKey.PAYLOAD,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                    stages=[HookStage.BEFORE],
+                ),
+            },
+            operation_type=HookOperation.UPDATE_ANYWHERE,
+            pipeline_type=PipelineType.PYTHON.value,
+            predicates_match=[
+                [
+                    HookPredicate.load(resource=dict(
+                        type=BlockType.DATA_LOADER.value,
+                    )),
+                ],
+                [
+                    HookPredicate.load(resource=dict(
+                        type=BlockType.TRANSFORMER.value,
+                    )),
+                ],
+            ],
+            predicates_miss=[
+                [
+                    HookPredicate.load(resource=dict(
+                        type=BlockType.MARKDOWN.value,
+                    )),
+                ],
+            ],
+            resource_type=EntityName.Block,
+        )
+
+        blocks = []
+        for block in self.pipeline2.blocks_by_uuid.values():
+            data = block.to_dict()
+            data['color'] = 'should not be this unless data exporter'
+            data['configuration'] = dict(power='should not be this unless data exporter')
+            blocks.append(data)
+
+        payload = dict(blocks=blocks)
+
+        response = await self.build_update_operation(
+            self.pipeline2.uuid,
+            payload=dict(pipeline=payload),
+            query=dict(
+                update_content=[True],
+            ),
+        ).execute()
+        pipeline = response['pipeline']
+        blocks_from_response = pipeline['blocks']
+
+        block21, block22, block23, block24 = self.blocks2
+        for block in [block21, block22, block24]:
+            block_from_response = find(
+                lambda x: x['uuid'] == block.uuid,
+                blocks_from_response,
+            )
+            self.assertEqual(block_from_response['color'], color)
+            self.assertEqual(block_from_response['configuration'], configuration)
+
+        block_from_response = find(
+            lambda x: x['uuid'] == block23.uuid,
+            blocks_from_response,
+        )
+        self.assertEqual(block_from_response['color'], blocks[2]['color'])
+        self.assertEqual(block_from_response['configuration'], blocks[2]['configuration'])

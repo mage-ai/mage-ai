@@ -949,6 +949,7 @@ class Pipeline:
                             stage=HookStage.BEFORE,
                             payload=block_data,
                         )
+
                         if hooks:
                             for hook in (hooks or []):
                                 output = hook.output
