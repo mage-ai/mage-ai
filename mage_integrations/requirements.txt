@@ -35,6 +35,7 @@ snowflake-connector-python==3.2.1
 sshtunnel==0.4.0
 stripe==4.2.0
 terminaltables==3.1.10
+teradatasql==16.20.0.34
 trino==0.321.0
 twitter-ads==11.0.0
 tzlocal==4.2
