@@ -1020,32 +1020,34 @@ function SchemaTable({
                 }
               </>
             }
-
-            <Spacing my={2}>
-              <Text bold large>
-                Valid replication keys
-              </Text>
-              <Text default inline>
-                If a stream&#39;s feature is not a valid replication key, it will not
-                be set as a bookmark property when applying the feature (from a different
-                stream) as a bookmark to all streams.&nbsp;
-              </Text>
-              {validReplicationKeys.length > 0 && (
-                <>
-                  <Text default inline>
-                    These are the valid replication keys for this stream:
-                  </Text>&nbsp;
-                  <Text inline monospace small>{validReplicationKeys.join(', ')}.</Text>
-                </>
-              )}
-              {validReplicationKeys.length === 0 &&
-                <Text default inline>
-                  This stream has no valid replication keys.
-                </Text>
-              }
-            </Spacing>
           </Spacing>
         )}
+
+        {(hasMultipleStreams && bookmarkProperties?.length > 0) &&
+          <Spacing mb={SPACING_BOTTOM_UNITS}>
+            <Text bold large>
+              Valid replication keys
+            </Text>
+            <Text default inline>
+              If a stream&#39;s feature is not a valid replication key, it will not
+              be set as a bookmark property when applying the feature (from a different
+              stream) as a bookmark to all streams.&nbsp;
+            </Text>
+            {validReplicationKeys.length > 0 && (
+              <>
+                <Text default inline>
+                  These are the valid replication keys for this stream:
+                </Text>&nbsp;
+                <Text inline monospace small>{validReplicationKeys.join(', ')}.</Text>
+              </>
+            )}
+            {validReplicationKeys.length === 0 &&
+              <Text default inline>
+                This stream has no valid replication keys.
+              </Text>
+            }
+          </Spacing>
+        }
 
         <Spacing mb={SPACING_BOTTOM_UNITS}>
           <Spacing mb={1}>
