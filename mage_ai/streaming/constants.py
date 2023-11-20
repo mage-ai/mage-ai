@@ -11,6 +11,7 @@ class SourceType(str, Enum):
     GOOGLE_CLOUD_PUBSUB = 'google_cloud_pubsub'
     INFLUXDB = 'influxdb'
     KAFKA = 'kafka'
+    NATS = 'nats'
     KINESIS = 'kinesis'
     RABBITMQ = 'rabbitmq'
     MONGODB = 'mongodb'

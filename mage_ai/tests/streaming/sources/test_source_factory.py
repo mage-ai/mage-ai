@@ -4,12 +4,24 @@ from mage_ai.streaming.sources.activemq import ActiveMQSource
 from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
 from mage_ai.streaming.sources.google_cloud_pubsub import GoogleCloudPubSubSource
 from mage_ai.streaming.sources.kafka import KafkaSource
+from mage_ai.streaming.sources.nats_js import NATSSource
 from mage_ai.streaming.sources.rabbitmq import RabbitMQSource
 from mage_ai.streaming.sources.source_factory import SourceFactory
 from mage_ai.tests.base_test import TestCase
 
 
 class SourceFactoryTests(TestCase):
+    def test_get_source_nats(self):
+        with patch.object(NATSSource,
+                          '__init__',
+                          return_value=None) as mock_init:
+            config = dict(
+                connector_type='nats',
+            )
+            source = SourceFactory.get_source(config)
+            self.assertIsInstance(source, NATSSource)
+            mock_init.assert_called_once_with(config)
+
     def test_get_source_kafka(self):
         with patch.object(KafkaSource,
                           '__init__',

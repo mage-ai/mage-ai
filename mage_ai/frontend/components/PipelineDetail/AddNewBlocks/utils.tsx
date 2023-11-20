@@ -37,6 +37,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
         DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.KAFKA,
+        DataSourceTypeEnum.NATS,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,
         DataSourceTypeEnum.MONGODB

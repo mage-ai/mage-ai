@@ -268,7 +268,8 @@
                 "streaming/sources/google-cloud-pubsub",
                 "streaming/sources/influxdb",
                 "streaming/sources/kafka",
-                "streaming/sources/kinesis"
+                "streaming/sources/kinesis",
+                "streaming/sources/nats"
               ]
             },
             {

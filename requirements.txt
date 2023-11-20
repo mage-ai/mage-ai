@@ -93,6 +93,8 @@ azure-storage-blob==12.14.1
 confluent-avro
 influxdb_client==1.36.1
 kafka-python==2.0.2
+nats-py==2.6.0
+nkeys
 opensearch-py==2.0.0
 requests_aws4auth==1.1.2
 pika==1.3.1
