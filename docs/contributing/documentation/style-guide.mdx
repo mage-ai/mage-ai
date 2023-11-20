@@ -20,6 +20,16 @@ description: "Mage Docs are written in Markdown and deployed via Mintlify. This 
 
 Frontmatter _must_ include `title`, `sidebarTitle`, and `description`
 
+## Content
+
+Markdown content should use h2 headers (`##`) for top-level sections, h3 headers (`###`) for sub-sections, and h4 headers (`####`) for sub-sub-sections.
+
+If you're looking for resources on how to write better documentation, we recommend:
+1. The [Google Developer Documentation Style Guide](https://developers.google.com/style)
+2. The [Apple Style Guide](https://support.apple.com/guide/applestyleguide/welcome/web)
+3. The [Red Hat Guide](https://redhat-documentation.github.io/supplementary-style-guide/)
+4. [Docs for Developers](https://docsfordevelopers.com/)
+
 ## Sidebar
 
 To add your new documentation to the sidenav, you'll need to edit `mint.json` in `docs/`. The nested `json` serves to organize high-level pages. You'll need to find the "Group" your page corresponds to, then add the page as a new item in that group's `pages` array, as follows:
@@ -52,6 +62,17 @@ Images _should not_ link to external urls and should be hosted in our [assets re
 
 ## Code blocks
 
-All code should be formatted using code blocks. Use Mintlify's [fenced code blocks](https://mintlify.com/docs/content/code) for simple examples. Multi-language blocks should use [Code Groups](https://mintlify.com/docs/content/components/code-group).
+All code should be formatted using code blocks. Use Mintlify's [fenced code blocks](https://mintlify.com/docs/content/code) for simple examples. Multi-language blocks should use [Code Groups](https://mintlify.com/docs/content/components/code-group). Responses and requests, especially those living in our API docs, should use the Response Field and Request Field, respectively. Details can be found [here](https://mintlify.com/docs/api-playground/components/api/sticky-examples).
 
 ## Collapsable and numbered content
+
+To create beautiful, collapsable or numbered content, check out the following resources in Mintlify:
+
+- [Accordions](https://mintlify.com/docs/content/components/accordion)
+- [Accordion Groups](https://mintlify.com/docs/content/components/accordion-group)
+- [Steps](https://mintlify.com/docs/content/components/steps)
+- [Tabs](https://mintlify.com/docs/content/components/tabs)
+
+Here are a few examples from our docs: 
+- [Run dbt](/guides/setup-dbt)
+- [Quickstart](/getting-started/setup)
