@@ -404,3 +404,10 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
             response['metadata'],
             dict(level=2),
         )
+
+        error = False
+        try:
+            Pipeline.get(self.pipeline2.uuid)
+        except Exception:
+            error = True
+        self.assertTrue(error)
