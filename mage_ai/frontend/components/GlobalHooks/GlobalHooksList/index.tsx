@@ -3,16 +3,16 @@ import { ThemeContext } from 'styled-components';
 import { useContext, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
-import api from '@api';
 import GlobalHookType from '@interfaces/GlobalHookType';
 import Link from '@oracle/elements/Link';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import api from '@api';
+import { TEXT_PROPS_SHARED } from './index.style';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { capitalizeRemoveUnderscoreLower, camelCaseToNormalWithSpaces } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
-import { TEXT_PROPS_SHARED } from './index.style';
-import { ThemeType } from '@oracle/styles/themes/constants';
 
 function GlobalHooksList() {
   const themeContext: ThemeType = useContext(ThemeContext);

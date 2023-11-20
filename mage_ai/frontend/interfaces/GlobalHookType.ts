@@ -10,18 +10,18 @@ enum HookOperationEnum {
   UPDATE_ANYWHERE = 'update_anywhere',
 }
 
-enum HookStrategyEnum {
+export enum HookStrategyEnum {
   BREAK = 'break',
   CONTINUE = 'continue',
   RAISE = 'raise',
 }
 
-enum HookStageEnum {
+export enum HookStageEnum {
   AFTER = 'after',
   BEFORE = 'before',
 }
 
-enum HookOutputKeyEnum {
+export enum HookOutputKeyEnum {
   ERROR = 'error',
   META = 'meta',
   METADATA = 'metadata',
@@ -31,7 +31,7 @@ enum HookOutputKeyEnum {
   RESOURCES = 'resources',
 }
 
-enum HookConditionEnum {
+export enum HookConditionEnum {
   FAILURE = 'failure',
   SUCCESS = 'success',
 }
@@ -62,6 +62,7 @@ interface HookOutputSettingsType {
 export default interface GlobalHookType {
   conditions?: HookConditionEnum[];
   operation_type: HookOperationEnum;
+  operation_types?: HookOperationEnum[];
   outputs?: HookOutputSettingsType[];
   pipeline?: {
     uuid: string;
@@ -69,6 +70,7 @@ export default interface GlobalHookType {
   pipeline_details?: PipelineType;
   predicates?: HookPredicateType[][]
   resource_type: string;
+  resource_types?: string[];
   run_settings?: HookRunSettingsType;
   stages?: HookStageEnum[];
   strategies?: HookStrategyEnum[];

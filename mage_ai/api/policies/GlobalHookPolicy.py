@@ -26,7 +26,9 @@ GlobalHookPolicy.allow_actions(
 
 GlobalHookPolicy.allow_read(
     GlobalHookPresenter.default_attributes + [
+        'operation_types',
         'pipeline_details',
+        'resource_types',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -108,6 +110,8 @@ GlobalHookPolicy.allow_query(
 
 GlobalHookPolicy.allow_query(
     [
+        'include_operation_types',
+        'include_resource_types',
         'operation_type',
         'resource_type',
     ],

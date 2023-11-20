@@ -114,6 +114,7 @@ type InputWrapperInternalProps = {
 
 type IconContainerProps = {
   compact?: boolean;
+  noPointerEvents?: boolean;
   right?: boolean;
   top?: boolean;
 };
@@ -187,12 +188,16 @@ const LabelContainerStyle = styled.div<{
 `;
 
 const IconContainerStyle = styled.div<IconContainerProps>`
-  position: absolute;
-  height: 100%;
-  display: flex;
   align-items: center;
+  display: flex;
+  height: 100%;
+  position: absolute;
 
   top: ${({ top }) => top ? 0 : BORDER_WIDTH}px;
+
+  ${props => props.noPointerEvents && `
+    pointer-events: none;
+  `}
 
   ${props => !props.compact && `
     padding: ${UNIT}px;
@@ -676,7 +681,11 @@ const InputWrapper = ({
     size: UNIT * (compact ? 2.5 : 3),
   };
   const AfterIconEl = afterIcon && (
-    <IconContainerStyle compact={compact} right>
+    <IconContainerStyle
+      compact={compact}
+      noPointerEvents={!afterIconClick}
+      right
+    >
       {React.cloneElement(
         afterIcon,
         afterIconSize ? { ...iconProps, size: afterIconSize } : iconProps,

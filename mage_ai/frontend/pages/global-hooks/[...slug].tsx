@@ -19,14 +19,18 @@ function GlobalHookDetailPage({
   resourceType,
   slug,
 }: GlobalHookDetailPageProps) {
+  const { data: dataPipelines } = api.pipelines.list();
   const { data: dataGlobalHook } = api.global_hooks.detail(slug, {
-    _format: 'with_pipeline_details',
+    include_operation_types: 1,
+    include_resource_types: 1,
     operation_type: operationType,
     resource_type: resourceType,
   });
+
   const globalHook =  useMemo(() => dataGlobalHook?.global_hook, [
     dataGlobalHook,
   ]);
+  const pipelines = useMemo(() => dataPipelines?.pipelines || [], [dataPipelines]);
 
   const label = useMemo(() => {
     if (slug?.length >= 21) {
@@ -62,6 +66,7 @@ function GlobalHookDetailPage({
       {globalHook && (
         <GlobalHookDetail
           globalHook={globalHook}
+          pipelines={pipelines}
         />
       )}
     </Dashboard>
