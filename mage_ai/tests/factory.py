@@ -244,4 +244,9 @@ async def build_pipeline_with_blocks_and_content(
         ) for idx, block in enumerate(blocks)],
     ), update_content=True)
 
+    if hasattr(test_case, 'pipelines_created_for_testing'):
+        if not test_case.pipelines_created_for_testing:
+            test_case.pipelines_created_for_testing = []
+        test_case.pipelines_created_for_testing.append(pipeline)
+
     return pipeline, blocks

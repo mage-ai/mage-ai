@@ -38,6 +38,14 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         if os.path.exists(file_path):
             os.remove(file_path)
 
+        print(self.pipelines_created_for_testing)
+        if self.pipelines_created_for_testing:
+            for pipeline in self.pipelines_created_for_testing:
+                try:
+                    pipeline.delete()
+                except FileNotFoundError as err:
+                    print(err)
+
     async def test_list(self):
         await self.setUpAsync(
             block_settings={
@@ -141,6 +149,8 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
                 water=dict(level=2),
             ),
         )
+
+        Pipeline.get(pipeline['uuid']).delete()
 
     async def test_detail(self):
         name_final = self.faker.unique.name()

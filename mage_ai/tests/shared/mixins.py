@@ -150,6 +150,9 @@ def build_hooks(
 
 
 class GlobalHooksMixin(BaseApiTestCase):
+    def setUp(self):
+        self.pipelines_created_for_testing = []
+
     async def setUpAsync(
         self,
         block_settings: Dict = None,
