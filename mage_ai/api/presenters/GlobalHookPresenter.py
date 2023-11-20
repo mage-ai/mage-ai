@@ -22,7 +22,10 @@ class GlobalHookPresenter(BasePresenter):
 
     async def prepare_present(self, **kwargs) -> Dict:
         query = kwargs.get('query') or {}
-        data = self.resource.model.to_dict(include_all=True)
+
+        data = {}
+        if self.resource.model:
+            data = self.resource.model.to_dict(include_all=True)
 
         display_format = kwargs.get('format')
         if 'with_pipeline_details' == display_format:

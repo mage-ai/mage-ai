@@ -100,6 +100,14 @@ class GlobalHookResource(AsyncBaseResource):
         if operation_type:
             operation_type = operation_type[0]
 
+        include_operation_types = query.get('include_operation_types', [None])
+        if include_operation_types:
+            include_operation_types = include_operation_types[0]
+
+        include_resource_types = query.get('include_resource_types', [None])
+        if include_resource_types:
+            include_resource_types = include_resource_types[0]
+
         global_hooks = GlobalHooks.load_from_file()
         hook = global_hooks.get_hook(
             operation_type=HookOperation(operation_type) if operation_type else operation_type,
@@ -107,7 +115,7 @@ class GlobalHookResource(AsyncBaseResource):
             uuid=pk,
         )
 
-        if not hook:
+        if not hook and not include_operation_types and not include_resource_types:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
         return self(hook, user, **kwargs)

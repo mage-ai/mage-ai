@@ -4,9 +4,11 @@ import Dashboard from '@components/Dashboard';
 import GlobalHookDetail from '@components/GlobalHooks/GlobalHookDetail';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
-import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  camelCaseToNormalWithSpaces,
+  capitalizeRemoveUnderscoreLower,
+} from '@utils/string';
 
 type GlobalHookDetailPageProps = {
   operationType: string;
@@ -19,26 +21,22 @@ function GlobalHookDetailPage({
   resourceType,
   slug,
 }: GlobalHookDetailPageProps) {
-  const { data: dataPipelines } = api.pipelines.list();
-  const { data: dataGlobalHook } = api.global_hooks.detail(slug, {
-    include_operation_types: 1,
-    include_resource_types: 1,
-    operation_type: operationType,
-    resource_type: resourceType,
-  });
-
-  const globalHook =  useMemo(() => dataGlobalHook?.global_hook, [
-    dataGlobalHook,
-  ]);
-  const pipelines = useMemo(() => dataPipelines?.pipelines || [], [dataPipelines]);
-
   const label = useMemo(() => {
-    if (slug?.length >= 21) {
-      return `${slug?.slice(0, 21)}...`;
+    const text = [
+      slug,
+      resourceType ? camelCaseToNormalWithSpaces(resourceType) : resourceType,
+      operationType ? capitalizeRemoveUnderscoreLower(operationType) : operationType,
+    ].filter(s => s?.length >= 1).join(' ');
+    if (text?.length >= 40) {
+      return `${text?.slice(0, 40)}...`;
     }
 
-    return slug;
-  }, [slug]);
+    return text;
+  }, [
+    operationType,
+    resourceType,
+    slug,
+  ]);
 
   return (
     <Dashboard
@@ -58,17 +56,11 @@ function GlobalHookDetailPage({
       title={slug}
       uuid="GlobalHookDetail/index"
     >
-      {!dataGlobalHook && (
-        <Spacing p={PADDING_UNITS}>
-          <Spinner inverted />
-        </Spacing>
-      )}
-      {globalHook && (
-        <GlobalHookDetail
-          globalHook={globalHook}
-          pipelines={pipelines}
-        />
-      )}
+      <GlobalHookDetail
+        operationType={operationType}
+        resourceType={resourceType}
+        uuid={slug}
+      />
     </Dashboard>
   );
 }
