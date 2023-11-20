@@ -4,7 +4,7 @@ export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
   COMPUTE_MANAGEMENT = 'compute_management',
   DATA_INTEGRATION_IN_BATCH_PIPELINE = 'data_integration_in_batch_pipeline',
-  // GLOBAL_HOOKS = 'global_hooks',
+  GLOBAL_HOOKS = 'global_hooks',
   INTERACTIONS = 'interactions',
   NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view',
   LOCAL_TIMEZONE = 'display_local_timezone',

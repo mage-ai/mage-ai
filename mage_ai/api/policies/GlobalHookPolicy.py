@@ -25,7 +25,9 @@ GlobalHookPolicy.allow_actions(
 
 
 GlobalHookPolicy.allow_read(
-    GlobalHookPresenter.default_attributes,
+    GlobalHookPresenter.default_attributes + [
+        'pipeline_details',
+    ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
@@ -49,6 +51,7 @@ GlobalHookPolicy.allow_write(
         'pipeline',
         'predicates',
         'resource_type',
+        'run_settings',
         'stages',
         'strategies',
         'uuid',
@@ -72,6 +75,7 @@ GlobalHookPolicy.allow_write(
         'pipeline',
         'predicates',
         'resource_type',
+        'run_settings',
         'stages',
         'strategies',
     ],

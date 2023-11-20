@@ -56,6 +56,7 @@ export const GIT_BRANCHES: 'git_branches' = 'git_branches';
 export const GIT_CUSTOM_BRANCHES: 'git_custom_branches' = 'git_custom_branches';
 export const GIT_FILES: 'git_files' = 'git_files';
 export const GLOBAL_DATA_PRODUCTS: 'global_data_products' = 'global_data_products';
+export const GLOBAL_HOOKS: 'global_hooks' = 'global_hooks';
 export const INSTANCES: 'instances' = 'instances';
 export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration_destinations';
 export const INTEGRATION_SAMPLES = 'integration_samples';
@@ -143,6 +144,7 @@ const RESOURCES: any[][] = [
   [GIT_CUSTOM_BRANCHES],
   [GIT_FILES],
   [GLOBAL_DATA_PRODUCTS],
+  [GLOBAL_HOOKS],
   [INSTANCES, CLUSTERS],
   [INTEGRATION_DESTINATIONS],
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],

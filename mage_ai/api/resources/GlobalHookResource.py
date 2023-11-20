@@ -1,7 +1,9 @@
-from typing import Dict
+import asyncio
+from typing import Dict, List
 
 from mage_ai.api.errors import ApiError
-from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
+from mage_ai.api.resources.PipelineResource import PipelineResource
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.global_hooks.constants import (
     DISABLED_RESOURCE_TYPES,
@@ -11,10 +13,12 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     Hook,
     HookOperation,
 )
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.shared.array import find
 
 
-class GlobalHookResource(GenericResource):
+class GlobalHookResource(AsyncBaseResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
         operation_types = query.get('operation_type[]', [])
@@ -117,3 +121,51 @@ class GlobalHookResource(GenericResource):
         global_hooks = GlobalHooks.load_from_file()
         global_hooks.remove_hook(self.model)
         global_hooks.save()
+
+
+async def __load_pipelines(resource: GlobalHookResource):
+    pipeline_uuids = []
+    for res in resource.result_set():
+        if res.model.pipeline_settings and res.model.pipeline_settings.get('uuid'):
+            pipeline_uuid = res.model.pipeline_settings.get('uuid')
+            if pipeline_uuid:
+                pipeline_uuids.append(pipeline_uuid)
+
+    async def get_pipeline(uuid):
+        try:
+            return await Pipeline.get_async(uuid)
+        except Exception as err:
+            err_message = f'Error loading pipeline {uuid}: {err}.'
+            if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
+                raise Exception(err_message)
+            else:
+                print(err_message)
+                return None
+
+    pipelines = await asyncio.gather(
+        *[get_pipeline(uuid) for uuid in pipeline_uuids]
+    )
+    pipelines = [p for p in pipelines if p is not None]
+
+    return PipelineResource.build_result_set(pipelines, resource.current_user)
+
+
+async def __find_pipeline(resource: GlobalHookResource, arr: List[PipelineResource]):
+    pipeline_uuid = resource.model.pipeline_settings and resource.model.pipeline_settings.get(
+        'uuid',
+    )
+
+    if not pipeline_uuid:
+        return
+
+    return find(
+        lambda x, pipeline_uuid=pipeline_uuid: x.uuid == pipeline_uuid,
+        arr,
+    )
+
+
+GlobalHookResource.register_collective_loader(
+    'pipeline_details',
+    load=__load_pipelines,
+    select=__find_pipeline,
+)
