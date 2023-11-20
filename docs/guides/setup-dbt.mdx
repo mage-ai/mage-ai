@@ -6,7 +6,7 @@ description: "⏰ Run dbt models in Mage in under a minute."
 ---
 
 <Frame>
-   <img alt="dbt" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
+   <img alt="dbt" src="https://www.getdbt.com/ui/img/social/facebook.png"/>
 </Frame>
 
 ## About
@@ -41,7 +41,12 @@ docker compose up
 
 After running the above command, you'll see the Mage overview page. Click the pipelines icon on the left to enter the pipelines overview.
 
-![Open Pipelines](https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/go-to-pipelines.gif?raw=True)
+<Frame>
+  <img 
+      alt="Open Pipelines" 
+      src="https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/go-to-pipelines.gif?raw=True" 
+  />
+</Frame>
 
 ## Tutorial
 
@@ -53,7 +58,12 @@ then select the "code" icon from the side nav.
 
 Scroll to the bottom-most cell and click _Execute with all upstream blocks_.
 
-![Run simple pipeline](https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/simple-pipeline.png?raw=True)
+<Frame>
+  <img 
+      alt="Run simple pipeline" 
+      src="https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/simple-pipeline.png?raw=True" 
+  />
+</Frame>
 
 You just:
 
@@ -84,7 +94,12 @@ Select the `dynamic_dbt_pipeline` by double-clicking the row from the list of pi
 
 Scroll to the bottom-most cell and click _Execute and run all upstream blocks_.
 
-![Compile external pipeline](https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/external-pipeline.png?raw=True)
+<Frame>
+  <img 
+      alt="Compile external pipeline" 
+      src="https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/external-pipeline.png?raw=True" 
+  />
+</Frame>
 
 You just:
 
@@ -94,7 +109,12 @@ You just:
 
 To run this pipeline, click the name of the pipeline to open the _Triggers_ page and select _Run @once_ to trigger a pipeline run. Select the _logs_ icon to see the run in realtime!
 
-![Trigger dbt](https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/trigger-dbt.gif?raw=True)
+<Frame>
+  <img 
+      alt="Trigger dbt" 
+      src="https://github.com/mage-ai/assets/blob/main/dbt/setup-dbt/trigger-dbt.gif?raw=True" 
+  />
+</Frame>
 
 Now, in addition to pulling the external Jaffle Shop demo and writing the necessary profiles, you'll perform [`dbt build`](https://docs.getdbt.com/reference/commands/build), which will: run models, test tests, snapshot snapshots, and seed seeds. 🥳
 

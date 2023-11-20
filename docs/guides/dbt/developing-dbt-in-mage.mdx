@@ -11,7 +11,7 @@ description: "Learn how to develop your favorite dbt models in Mage."
 </Warning>
 
 <Frame>
-   <img alt="dbt" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
+   <img alt="dbt" src="https://www.getdbt.com/ui/img/social/facebook.png" />
 </Frame>
 
 If you get stuck, run into problems, or just want someone to walk you through
@@ -110,7 +110,12 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
     - The model named `my_first_dbt_model` was added to
     the pipeline because `my_second_dbt_model` references it.
 
-    ![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
+  <Frame>
+    <img 
+        alt="" 
+        src="https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true" 
+    />
+  </Frame>
 </Step>
 <Step title="Edit my_first_dbt_model">
 
@@ -135,14 +140,24 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
     - You should see a preview of the query execution logs. To see the query results,
     click the `Expand table` link at the bottom right corner.
 
-    ![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
+    <Frame>
+    <img 
+        alt="" 
+        src="https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true" 
+    />
+    </Frame> 
 
     - After previewing the results, in the top right corner of the block,
     click on the triple dots to reveal a dropdown menu.
     - Under the dropdown menu, click the option <b>Run model</b>. This command
     will execute the `dbt run` command and create the table in your data source.
 
-    ![](https://github.com/mage-ai/assets/blob/main/dbt/run-model.png?raw=true)
+    <Frame>
+      <img 
+          alt="" 
+          src="https://github.com/mage-ai/assets/blob/main/dbt/run-model.png?raw=true" 
+      />
+    </Frame>
 
 </Step>
 <Step title="Edit my_second_dbt_model">

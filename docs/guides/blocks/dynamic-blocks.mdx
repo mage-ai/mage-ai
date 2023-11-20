@@ -34,7 +34,12 @@ description: "Create a pipeline with dynamic blocks."
     ```
 1. In the top right corner of the block, click on the triple dot button (`...`) and click the
 dropdown selection labeled `Set block as dynamic`.
-    ![Dynamic data loader block](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-data-loader.png?raw=true)
+<Frame>
+  <img 
+      alt="Dynamic data loader block" 
+      src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-data-loader.png?raw=true" 
+  />
+</Frame>
 1. Add a new transformer block.
 1. Paste in the following code:
     ```python
@@ -51,7 +56,12 @@ dropdown selection labeled `Set block as dynamic`.
     {'id': 100, 'name': 'user_1'}
     ```
 
-    ![Dynamic child transformer block 1](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-transformer1.png?raw=true)
+<Frame>
+  <img 
+      alt="Dynamic child transformer block 1" 
+      src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-transformer1.png?raw=true" 
+  />
+</Frame>
 1. Add another transformer block.
 1. Paste in the following code:
     ```python
@@ -75,7 +85,12 @@ dropdown selection labeled `Reduce output`.
     {'id': 1, 'name': 'user_1', 'token': '0ea0f28c2de647d997e5c341a857c92f'}
     ```
 
-    ![Dynamic child transformer block 2](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-transformer2.png?raw=true)
+<Frame>
+  <img 
+      alt="Dynamic child transformer block 2" 
+      src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-transformer2.png?raw=true" 
+  />
+</Frame>
 1. Add a new data exporter block.
 1. Paste in the following code:
     ```python
@@ -93,11 +108,21 @@ dropdown selection labeled `Reduce output`.
 
     When executing the entire pipeline, this output will contain 3 items in this list.
 
-    ![Data exporter block from dynamically created block with reduce output](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-data-exporter.png?raw=true)
+<Frame>
+  <img 
+      alt="Data exporter block from dynamically created block with reduce output" 
+      src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-data-exporter.png?raw=true" 
+  />
+</Frame>
 
 The pipeline’s final dependency graph should look like this:
 
-![Dynamic block dependency graph](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-graph.jpg?raw=true)
+<Frame>
+  <img 
+      alt="Dynamic block dependency graph" 
+      src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-graph.jpg?raw=true" 
+  />
+</Frame>
 
 ## Run pipeline
 
@@ -110,4 +135,9 @@ or create a trigger to run once.
 
 The block runs should look like this:
 
-![Dynamic block runs](https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-runs.png?raw=true)
+<Frame>
+  <img 
+      alt="Dynamic block runs" 
+      src="https://github.com/mage-ai/assets/blob/main/blocks/dynamic-block-runs.png?raw=true" 
+  />
+</Frame>
