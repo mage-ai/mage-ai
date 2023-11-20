@@ -4,11 +4,13 @@ import uuid
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
+    HookCondition,
     HookOperation,
     HookOutputBlock,
     HookOutputKey,
     HookOutputSettings,
     HookPredicate,
+    HookStage,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -302,6 +304,100 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         pipeline = response['pipeline']
         self.assertEqual(pipeline['description'], description_final)
         self.assertEqual(pipeline['tags'], ['water'])
+        self.assertEqual(pipeline['uuid'], uuid_final)
+
+        self.assertEqual(
+            response['metadata'],
+            dict(level=2),
+        )
+
+    async def test_delete(self):
+        name_final = uuid.uuid4().hex
+        uuid_final = uuid.uuid4().hex
+
+        await self.setUpAsync(
+            block_settings={
+                0: dict(content=build_content(dict(
+                    name=name_final,
+                ))),
+                1: dict(content=build_content(dict(
+                    name='should not be this value because hook1 only runs on failure condition',
+                ))),
+                2: dict(content=build_content(dict(
+                    uuid=uuid_final,
+                ))),
+            },
+            hook_settings=lambda data: {
+                0: dict(
+                    conditions=[HookCondition.SUCCESS, HookCondition.FAILURE],
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][0].uuid),
+                            key=HookOutputKey.RESOURCE,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                    stages=[HookStage.BEFORE, HookStage.AFTER],
+                ),
+                1: dict(
+                    conditions=[HookCondition.FAILURE],
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][1].uuid),
+                            key=HookOutputKey.RESOURCE,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                    stages=[HookStage.BEFORE, HookStage.AFTER],
+                ),
+                2: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][2].uuid),
+                            key=HookOutputKey.RESOURCE,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+                3: dict(
+                    outputs=[
+                        HookOutputSettings.load(
+                            block=HookOutputBlock.load(uuid=data['blocks1'][3].uuid),
+                            key=HookOutputKey.METADATA,
+                        ),
+                    ],
+                    pipeline=dict(
+                        uuid=data['pipeline1'].uuid,
+                    ),
+                ),
+            },
+            operation_type=HookOperation.DELETE,
+            pipeline_type=PipelineType.PYTHON.value,
+            predicates_match=[
+                [
+                    HookPredicate.load(resource=dict(
+                        type=PipelineType.PYTHON.value,
+                    )),
+                ],
+            ],
+            predicates_miss=[
+                [
+                    HookPredicate.load(resource=dict(
+                        name=uuid.uuid4().hex,
+                    )),
+                ],
+            ],
+        )
+
+        response = await self.build_delete_operation(self.pipeline2.uuid).execute()
+        pipeline = response['pipeline']
+        self.assertEqual(pipeline['name'], name_final)
         self.assertEqual(pipeline['uuid'], uuid_final)
 
         self.assertEqual(
