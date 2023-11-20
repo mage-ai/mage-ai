@@ -67,15 +67,15 @@ class PipelineResource(BaseResource):
             tags = new_tags
 
         pipeline_types = query.get('type[]', [])
-        if pipeline_types:
+        if pipeline_types and len(pipeline_types) == 1:
             pipeline_types = pipeline_types[0]
-        if pipeline_types:
+        if pipeline_types and isinstance(pipeline_types, str):
             pipeline_types = pipeline_types.split(',')
 
         pipeline_statuses = query.get('status[]', [])
-        if pipeline_statuses:
+        if pipeline_statuses and len(pipeline_statuses) == 1:
             pipeline_statuses = pipeline_statuses[0]
-        if pipeline_statuses:
+        if pipeline_statuses and isinstance(pipeline_statuses, str):
             pipeline_statuses = pipeline_statuses.split(',')
 
         from_history_days = query.get('from_history_days', [None])

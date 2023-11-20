@@ -11,7 +11,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 
 faker = Faker()
 
@@ -205,43 +205,48 @@ async def build_pipeline_with_blocks_and_content(
         pipeline_type=pipeline_type or PipelineType.PYTHON,
     )
 
-    block1 = Block.create(
-        test_case.faker.unique.name(),
-        BlockType.DATA_LOADER,
-        repo_path,
-    )
-    block2 = Block.create(
-        test_case.faker.unique.name(),
-        BlockType.DATA_LOADER,
-        repo_path,
-    )
-    block3 = Block.create(
-        test_case.faker.unique.name(),
-        BlockType.DATA_LOADER,
-        repo_path,
-    )
-    block4 = Block.create(
-        test_case.faker.unique.name(),
-        BlockType.DATA_LOADER,
-        repo_path,
-    )
+    blocks = []
+    for idx, block_dict in enumerate([
+        {},
+        {},
+        {},
+        {},
+    ]):
+        block = Block.create(
+            f'block{idx}_{test_case.faker.unique.name()}',
+            **merge_dict(
+                merge_dict(dict(
+                    block_type=BlockType.DATA_LOADER,
+                    repo_path=repo_path,
+                ), block_dict or {}),
+                ignore_keys(
+                    block_settings[idx] if block_settings and idx in block_settings else {},
+                    [
+                        'content',
+                    ],
+                ),
+            ),
+        )
 
-    blocks = [
-        block1,
-        block2,
-        block3,
-        block4,
-    ]
-
-    for block in blocks:
         pipeline.add_block(block)
+        blocks.append(block)
 
     pipeline.save()
     await pipeline.update(dict(
         blocks=[merge_dict(
             block.to_dict(include_content=True),
-            (block_settings[idx] if block_settings and idx in block_settings else {}),
+            extract(
+                block_settings[idx] if block_settings and idx in block_settings else {},
+                [
+                    'content',
+                ],
+            ),
         ) for idx, block in enumerate(blocks)],
     ), update_content=True)
 
-    return pipeline, [block1, block2, block3, block4]
+    if hasattr(test_case, 'pipelines_created_for_testing'):
+        if not test_case.pipelines_created_for_testing:
+            test_case.pipelines_created_for_testing = []
+        test_case.pipelines_created_for_testing.append(pipeline)
+
+    return pipeline, blocks
