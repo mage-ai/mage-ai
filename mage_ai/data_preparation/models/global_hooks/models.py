@@ -371,8 +371,6 @@ class Hook(BaseDataClass):
 
             return pipeline_run
         except Exception as err:
-            raise err
-            # TODO: handle the strategy
             self.status = HookStatus.load(error=err)
 
             if self.strategies:
