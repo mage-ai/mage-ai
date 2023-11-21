@@ -35,6 +35,8 @@ class Project():
         features = self.repo_config.features
 
         for uuid in FeatureUUID:
+            if FeatureUUID.GLOBAL_HOOKS == uuid:
+                continue
             key = uuid.value
             data[key] = features.get(key) if features else None
 
