@@ -60,7 +60,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
 
         pipeline3, _blocks = await build_pipeline_with_blocks_and_content(
             self,
-            pipeline_type=PipelineType.PYSPARK,
+            pipeline_type=PipelineType.INTEGRATION,
         )
 
         await build_pipeline_with_blocks_and_content(
@@ -104,7 +104,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
 
         pipeline3, _blocks = await build_pipeline_with_blocks_and_content(
             self,
-            pipeline_type=PipelineType.PYSPARK,
+            pipeline_type=PipelineType.INTEGRATION,
         )
 
         await build_pipeline_with_blocks_and_content(
@@ -138,7 +138,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
 
         await self.setUpAsync(
             block_settings={
-                0: dict(content=build_content(dict(type=PipelineType.PYSPARK))),
+                0: dict(content=build_content(dict(type=PipelineType.INTEGRATION))),
                 1: dict(content=build_content(dict(name=name_final))),
             },
             hook_settings=lambda data: {
@@ -183,7 +183,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         response = await self.build_create_operation(payload=payload).execute()
         pipeline = response['pipeline']
         self.assertEqual(pipeline['name'], name_final)
-        self.assertEqual(pipeline['type'], PipelineType.PYSPARK.value)
+        self.assertEqual(pipeline['type'], PipelineType.INTEGRATION.value)
 
         self.assertEqual(
             response['metadata'],
@@ -204,7 +204,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
                 1: dict(content=build_content(dict())),
                 2: dict(content=build_content(dict(
                     name=name_final,
-                    type=PipelineType.PYSPARK,
+                    type=PipelineType.INTEGRATION,
                 ))),
             },
             hook_settings=lambda data: {
@@ -241,7 +241,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
                 ],
                 [
                     HookPredicate.load(resource=dict(
-                        name=PipelineType.PYSPARK.value,
+                        name=PipelineType.INTEGRATION.value,
                     )),
                 ],
             ],
@@ -257,7 +257,7 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
         response = await self.build_detail_operation(self.pipeline2.uuid).execute()
         pipeline = response['pipeline']
         self.assertEqual(pipeline['name'], name_final)
-        self.assertEqual(pipeline['type'], PipelineType.PYSPARK.value)
+        self.assertEqual(pipeline['type'], PipelineType.INTEGRATION.value)
 
         self.assertEqual(
             response['metadata'],
