@@ -88,6 +88,50 @@ class BaseOperationWithHooksTest(GlobalHooksMixin):
             ),
         )
 
+    async def test_list_without_hook_snapshot(self):
+        await self.setUpAsync(
+            block_settings={
+                0: dict(content=build_content({
+                    'type[]': [PipelineType.PYTHON],
+                })),
+            },
+            operation_type=HookOperation.LIST,
+            pipeline_type=PipelineType.PYTHON,
+            predicates_match=[],
+            predicates_miss=[],
+            snapshot=False,
+        )
+
+        pipeline3, _blocks = await build_pipeline_with_blocks_and_content(
+            self,
+            pipeline_type=PipelineType.PYSPARK,
+        )
+
+        await build_pipeline_with_blocks_and_content(
+            self,
+            pipeline_type=PipelineType.STREAMING,
+        )
+
+        response = await self.build_list_operation().execute()
+
+        pipelines = response['pipelines']
+
+        self.assertEqual(len(pipelines), 4)
+
+        for pipeline in [self.pipeline1, self.pipeline2, pipeline3]:
+            self.assertIsNotNone(find(
+                lambda x, pipeline=pipeline: x['uuid'] == pipeline.uuid,
+                pipelines,
+            ))
+
+        self.assertNotEqual(
+            response['metadata'],
+            dict(
+                powers=dict(fire=1),
+                water=dict(level=2),
+            ),
+        )
+
     async def test_create(self):
         payload = dict(name=self.faker.unique.name(), type=PipelineType.STREAMING)
         name_final = self.faker.unique.name()
