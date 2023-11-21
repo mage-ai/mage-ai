@@ -2507,9 +2507,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         Returns:
             Dict: The enriched global variables dictionary.
 
-        Raises:
-            (Optional): Any specific exceptions that may be raised during the execution.
-
         This method checks if the pipeline type is DATABRICKS or if the environment is a Spark
         environment. If true, it adds the Spark session to the global variables if not already
         present.
