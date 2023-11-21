@@ -21,6 +21,7 @@ from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payl
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
+    create_pipeline,
     create_pipeline_run,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
@@ -34,6 +35,62 @@ class PipelineScheduleTests(DBTestCase):
         self.pipeline = create_pipeline_with_blocks(
             'test pipeline',
             self.repo_path,
+        )
+
+    def test_fetch_latest_pipeline_runs_without_retries(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name='test pipeline',
+            pipeline_uuid='test_pipeline',
+        )
+        for i in range(1, 5):
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                execution_date=datetime(2023, 10, 1),
+                pipeline_schedule_id=pipeline_schedule.id,
+                started_at=datetime(2023, 10, 1, i, 0, 0),
+            )
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                execution_date=datetime(2023, 10, 15),
+                pipeline_schedule_id=pipeline_schedule.id,
+                started_at=datetime(2023, 10, 15, 0, i * 10, 0),
+            )
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                execution_date=datetime(2023, 11, 1),
+                pipeline_schedule_id=pipeline_schedule.id,
+                started_at=datetime(2023, 11, 1, 12, 30, i),
+            )
+        latest_pipeline_runs = pipeline_schedule.fetch_latest_pipeline_runs_without_retries(
+            [pipeline_schedule.id],
+        )
+        self.assertEqual(len(latest_pipeline_runs), 3)
+        latest_pipeline_runs.sort(
+            key=lambda r: r.execution_date,
+        )
+        self.assertEqual(
+            latest_pipeline_runs[0].execution_date,
+            datetime(2023, 10, 1),
+        )
+        self.assertEqual(
+            latest_pipeline_runs[0].started_at,
+            datetime(2023, 10, 1, 4, 0, 0)
+        )
+        self.assertEqual(
+            latest_pipeline_runs[1].execution_date,
+            datetime(2023, 10, 15),
+        )
+        self.assertEqual(
+            latest_pipeline_runs[1].started_at,
+            datetime(2023, 10, 15, 0, 40, 0)
+        )
+        self.assertEqual(
+            latest_pipeline_runs[2].execution_date,
+            datetime(2023, 11, 1),
+        )
+        self.assertEqual(
+            latest_pipeline_runs[2].started_at,
+            datetime(2023, 11, 1, 12, 30, 4)
         )
 
     def test_pipeline_runs_count(self):
