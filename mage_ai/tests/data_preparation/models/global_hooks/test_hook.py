@@ -639,7 +639,7 @@ class HookTest(GlobalHooksMixin):
 
     @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict(self):
-        await self.setUpAsync()
+        await self.setUpAsync(snapshot=False)
 
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
@@ -670,7 +670,7 @@ class HookTest(GlobalHooksMixin):
 
     @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict_include_all(self):
-        await self.setUpAsync()
+        await self.setUpAsync(snapshot=False)
 
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
@@ -703,7 +703,7 @@ class HookTest(GlobalHooksMixin):
 
     @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict_include_run_data(self):
-        await self.setUpAsync()
+        await self.setUpAsync(snapshot=False)
 
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
