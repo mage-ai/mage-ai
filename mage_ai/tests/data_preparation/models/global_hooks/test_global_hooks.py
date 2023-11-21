@@ -15,11 +15,11 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     Hook,
     HookCondition,
     HookOperation,
-    HookPredicate,
     HookRunSettings,
     HookStage,
     HookStrategy,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.shared.array import find
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
@@ -491,6 +491,9 @@ class GlobalHooksTest(BaseApiTestCase):
                     stage=HookStage.BEFORE,
                     conditions=[HookCondition.SUCCESS, HookCondition.FAILURE],
                     operation_resource=dict(mage=1),
+                    resource_id=1,
+                    resource_parent_id=3,
+                    user=dict(id=7),
                 )
 
                 self.global_hooks.get_and_run_hooks(
@@ -504,6 +507,9 @@ class GlobalHooksTest(BaseApiTestCase):
                     hooks,
                     fire=2,
                     water=3,
+                    resource_id=1,
+                    resource_parent_id=3,
+                    user=dict(id=7),
                 )
 
     def test_save(self):

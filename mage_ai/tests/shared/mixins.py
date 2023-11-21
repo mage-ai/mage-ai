@@ -13,10 +13,10 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookOperation,
     HookOutputBlock,
     HookOutputSettings,
-    HookPredicate,
     HookStage,
     HookStrategy,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import build_pipeline_with_blocks_and_content

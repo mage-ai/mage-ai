@@ -10,9 +10,9 @@
 #     HookOperation,
 #     HookOutputBlock,
 #     HookOutputSettings,
-#     HookPredicate,
 #     HookStage,
 # )
+# from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 # from mage_ai.data_preparation.models.pipeline import Pipeline
 # from mage_ai.data_preparation.models.project.constants import FeatureUUID
 # from mage_ai.data_preparation.repo_manager import get_repo_config

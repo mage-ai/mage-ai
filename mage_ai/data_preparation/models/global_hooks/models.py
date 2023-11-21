@@ -1,10 +1,9 @@
 import hashlib
 import os
-from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import yaml
 
@@ -17,6 +16,7 @@ from mage_ai.data_preparation.models.global_hooks.constants import (
     RESOURCE_TYPES,
     HookOutputKey,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.data_preparation.models.global_hooks.utils import extract_valid_data
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
@@ -24,6 +24,7 @@ from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index, flatten
+from mage_ai.shared.environments import is_debug, is_test
 from mage_ai.shared.hash import (
     dig,
     extract,
@@ -107,11 +108,6 @@ class HookOutputSettings(BaseDataClass):
         if self.key and isinstance(self.key, HookOutputKey):
             data['key'] = self.key.value
         return merge_dict(ignore_keys_with_blank_values(super().to_dict(**kwargs)), data)
-
-
-@dataclass
-class HookPredicate(BaseDataClass):
-    resource: Dict = field(default_factory=dict)
 
 
 @dataclass
@@ -360,7 +356,10 @@ class Hook(BaseDataClass):
         check_status: bool = True,
         error_on_failure: bool = True,
         poll_timeout: int = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
         should_schedule: bool = False,
+        user: Dict = None,
         with_trigger: bool = False,
         **kwargs,
     ) -> None:
@@ -375,7 +374,10 @@ class Hook(BaseDataClass):
                 payload=kwargs.get('payload'),
                 query=kwargs.get('query'),
                 resource=kwargs.get('resource'),
+                resource_id=resource_id,
+                resource_parent_id=resource_parent_id,
                 resources=kwargs.get('resources'),
+                user=user,
             ))
             variables = merge_dict(
                 self.pipeline_settings.get('variables') or {},
@@ -417,6 +419,9 @@ class Hook(BaseDataClass):
                 elif HookStrategy.CONTINUE in self.strategies:
                     self.status.strategy = HookStrategy.CONTINUE
 
+            if is_debug() or is_test():
+                print(f'[ERROR] Hook.run: {err}')
+
     def should_run(
         self,
         operation_types: List[HookOperation],
@@ -424,6 +429,9 @@ class Hook(BaseDataClass):
         stage: HookStage,
         conditions: List[HookCondition] = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        user: Dict = None,
     ) -> bool:
         if self.operation_type not in operation_types:
             return False
@@ -440,7 +448,12 @@ class Hook(BaseDataClass):
         if not self.__validate_snapshot():
             return False
 
-        if not self.__matches_any_predicate(operation_resource):
+        if not self.__matches_any_predicate(
+            operation_resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            user=user,
+        ):
             return False
 
         return True
@@ -493,49 +506,21 @@ class Hook(BaseDataClass):
     def __matches_any_predicate(
         self,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        user: Dict = None,
     ) -> bool:
         if not operation_resource or not self.predicates:
             return True
 
-        return any([all([self.__validate_predicate(
-            predicate,
+        return HookPredicate.valid_predicates(
+            self.predicates,
             operation_resource,
-        ) for predicate in predicates]) for predicates in self.predicates])
-
-    def __validate_predicate(
-        self,
-        predicate: HookPredicate,
-        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
-    ) -> bool:
-        if not predicate.resource or len(predicate.resource) == 0:
-            return True
-
-        def _validate_resource(
-            resource: Union[BaseResource, Block, Dict, Pipeline],
-            predicate=predicate,
-        ) -> bool:
-            model = resource
-            if isinstance(resource, BaseResource):
-                model = resource.model
-
-            def _equals(
-                key: str,
-                value: Any,
-                model=model,
-            ) -> bool:
-                if isinstance(model, dict):
-                    return model.get(key) == value
-
-                return hasattr(model, key) and getattr(model, key) == value
-
-            check = all([_equals(key, value) for key, value in predicate.resource.items()])
-
-            return check
-
-        if isinstance(operation_resource, Iterable) and not isinstance(operation_resource, dict):
-            return all([_validate_resource(res) for res in operation_resource])
-
-        return _validate_resource(operation_resource)
+            hook=self,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            user=user,
+        )
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
@@ -839,6 +824,9 @@ class GlobalHooks(BaseDataClass):
         stage: HookStage,
         conditions: List[HookCondition] = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        user: Dict = None,
     ) -> List[Hook]:
         def _filter(
             hook: Hook,
@@ -847,6 +835,9 @@ class GlobalHooks(BaseDataClass):
             operation_types=operation_types,
             resource_type=resource_type,
             stage=stage,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            user=user,
         ) -> bool:
             return hook.should_run(
                 conditions=conditions,
@@ -854,6 +845,9 @@ class GlobalHooks(BaseDataClass):
                 operation_types=operation_types,
                 resource_type=resource_type,
                 stage=stage,
+                resource_id=resource_id,
+                resource_parent_id=resource_parent_id,
+                user=user,
             )
 
         return list(filter(
@@ -861,7 +855,11 @@ class GlobalHooks(BaseDataClass):
             self.hooks(),
         ))
 
-    def run_hooks(self, hooks: List[Hook], **kwargs) -> List[Hook]:
+    def run_hooks(
+        self,
+        hooks: List[Hook],
+        **kwargs,
+    ) -> List[Hook]:
         hooks_by_pipeline = {}
         for hook in hooks:
             if not hook.pipeline_settings or not hook.pipeline_settings.get('uuid'):
@@ -890,6 +888,9 @@ class GlobalHooks(BaseDataClass):
         stage: HookStage,
         conditions: List[HookCondition] = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        user: Dict = None,
         **kwargs,
     ) -> List[Hook]:
         hooks = self.get_hooks(
@@ -898,12 +899,21 @@ class GlobalHooks(BaseDataClass):
             stage=stage,
             conditions=conditions,
             operation_resource=operation_resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            user=user,
         )
 
         if not hooks:
             return None
 
-        return self.run_hooks(hooks, **kwargs)
+        return self.run_hooks(
+            hooks,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            user=user,
+            **kwargs,
+        )
 
     def save(self, file_path: str = None) -> None:
         if not file_path:

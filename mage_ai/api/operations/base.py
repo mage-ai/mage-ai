@@ -286,8 +286,11 @@ class BaseOperation():
                 conditions=[condition] if condition else None,
                 operation_resource=operation_resource,
                 operation_types=operation_types,
+                resource_id=self.pk,
+                resource_parent_id=self.resource_parent_id,
                 resource_type=EntityName(self.__classified_class()),
                 stage=stage,
+                user=dict(id=self.user.id) if self.user else None,
                 **kwargs,
             )
 
