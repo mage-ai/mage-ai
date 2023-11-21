@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.global_hooks.models import HookOperation
 class GlobalHookPresenter(BasePresenter):
     default_attributes = [
         'conditions',
+        'metadata',
         'operation_type',
         'outputs',
         'pipeline',

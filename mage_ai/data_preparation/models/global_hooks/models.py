@@ -1,6 +1,7 @@
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Tuple, Union
 
@@ -113,6 +114,23 @@ class HookPredicate(BaseDataClass):
 
 
 @dataclass
+class MetadataUser(BaseDataClass):
+    id: int = None
+
+
+@dataclass
+class HookMetadata(BaseDataClass):
+    created_at: str = None
+    shapshot_hash: str = None
+    snapshotted_at: str = None
+    updated_at: str = None
+    user: MetadataUser = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('user', MetadataUser)
+
+
+@dataclass
 class Hook(BaseDataClass):
     attribute_aliases = dict(
         outputs='output_settings',
@@ -120,6 +138,7 @@ class Hook(BaseDataClass):
     )
 
     conditions: List[HookCondition] = None
+    metadata: HookMetadata = None
     operation_type: HookOperation = None
     output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
@@ -135,6 +154,7 @@ class Hook(BaseDataClass):
     def __post_init__(self):
         self._pipeline = None
 
+        self.serialize_attribute_class('metadata', HookMetadata)
         self.serialize_attribute_class('run_settings', HookRunSettings)
         self.serialize_attribute_class('status', HookStatus)
         self.serialize_attribute_class('strategies', HookStrategies)
@@ -162,6 +182,7 @@ class Hook(BaseDataClass):
     ):
         arr = [
             'conditions',
+            'metadata',
             'run_settings',
             'stages',
             'strategies',
@@ -410,6 +431,9 @@ class Hook(BaseDataClass):
 
         return True
 
+    def snapshot(self):
+        pass
+
     def __matches_any_condition(self, conditions: List[HookCondition]) -> bool:
         if not conditions or not self.conditions:
             return True
@@ -614,7 +638,15 @@ class GlobalHooks(BaseDataClass):
 
         return self.load(**yaml_config)
 
-    def add_hook(self, hook: Hook, payload: Dict = None, update: bool = False) -> Hook:
+    def add_hook(
+        self,
+        hook: Hook,
+        payload: Dict = None,
+        snapshot: bool = False,
+        update: bool = False,
+    ) -> Hook:
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+
         if not update and self.get_hook(
             operation_type=hook.operation_type,
             resource_type=hook.resource_type,
@@ -646,7 +678,17 @@ class GlobalHooks(BaseDataClass):
                 hooks,
             )
             if index >= 0:
-                hook_updated = Hook.load(**merge_dict(hook.to_dict(include_all=True), payload))
+                hook_updated = Hook.load(
+                    **merge_dict(
+                        hook.to_dict(include_all=True),
+                        payload,
+                    ),
+                )
+
+                if not hook_updated.metadata:
+                    hook_updated.metadata = HookMetadata.load()
+                hook_updated.metadata.updated_at = now
+
                 if hook.resource_type == hook_updated.resource_type and \
                         hook.operation_type == hook_updated.operation_type:
 
@@ -656,6 +698,9 @@ class GlobalHooks(BaseDataClass):
                     self.add_hook(hook_updated)
                     self.remove_hook(hook)
 
+                if snapshot:
+                    hook_updated.snapshot()
+
                 return hook_updated
             else:
                 raise Exception(
@@ -663,6 +708,15 @@ class GlobalHooks(BaseDataClass):
                     f'{hook.resource_type} and operation {hook.operation_type}.',
                 )
         else:
+            if not hook.metadata:
+                hook.metadata = HookMetadata.load()
+
+            hook.metadata.created_at = now
+            hook.metadata.updated_at = now
+
+            if snapshot:
+                hook.snapshot()
+
             hooks.append(hook)
             setattr(resource, hook.operation_type.value, hooks)
             setattr(self.resources, hook.resource_type.value, resource)

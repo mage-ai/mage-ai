@@ -61,8 +61,19 @@ export interface HookOutputSettingsType {
   keys?: string[];
 }
 
+interface HookMetadataType {
+  created_at: string;
+  shapshot_hash?: string;
+  snapshotted_at?: string;
+  updated_at: string;
+  user: {
+    id: number;
+  };
+}
+
 export default interface GlobalHookType {
   conditions?: HookConditionEnum[];
+  metadata?: HookMetadataType;
   operation_type: HookOperationEnum;
   operation_types?: HookOperationEnum[];
   outputs?: HookOutputSettingsType[];

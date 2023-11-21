@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import ignore_keys
 
 
 class GlobalHookResource(AsyncBaseResource):
@@ -46,6 +47,13 @@ class GlobalHookResource(AsyncBaseResource):
 
     @classmethod
     async def create(self, payload: Dict, user: User, **kwargs) -> 'GlobalHookResource':
+        if user and user.id:
+            payload['metadata'] = dict(
+                user=dict(
+                    id=user.id,
+                ),
+            )
+
         hook = Hook.load(**payload)
 
         if not hook.uuid or not hook.resource_type or not hook.operation_type:
@@ -83,7 +91,7 @@ class GlobalHookResource(AsyncBaseResource):
             )
             raise ApiError(error)
 
-        global_hooks.add_hook(hook)
+        global_hooks.add_hook(hook, snapshot=True)
         global_hooks.save()
 
         return self(hook, user, **kwargs)
@@ -122,7 +130,12 @@ class GlobalHookResource(AsyncBaseResource):
 
     async def update(self, payload: Dict, **kwargs):
         global_hooks = GlobalHooks.load_from_file()
-        self.model = global_hooks.add_hook(self.model, payload=payload, update=True)
+        self.model = global_hooks.add_hook(
+            self.model,
+            payload=ignore_keys(payload, ['snapshot']),
+            snapshot=payload.get('snapshot') or False,
+            update=True,
+        )
         global_hooks.save()
 
     async def delete(self, **kwargs):

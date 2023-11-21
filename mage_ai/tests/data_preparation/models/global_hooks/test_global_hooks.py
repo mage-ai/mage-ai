@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 from typing import Dict, List
 from unittest.mock import patch
 
 import yaml
+from freezegun import freeze_time
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.global_hooks.constants import (
@@ -25,6 +27,7 @@ from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 SEED_DATA_HOOK_UUID = 'laser'
 
 
+@freeze_time(datetime(3000, 1, 1))
 def build_seed_data(test_case: BaseApiTestCase) -> Dict:
     return dict(
         resources={
@@ -32,6 +35,10 @@ def build_seed_data(test_case: BaseApiTestCase) -> Dict:
                 HookOperation.LIST.value: [
                     dict(
                         uuid=SEED_DATA_HOOK_UUID,
+                        metadata=dict(
+                            created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                            updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                        ),
                     ),
                 ],
             },
@@ -100,6 +107,7 @@ class GlobalHooksTest(BaseApiTestCase):
         global_hooks = GlobalHooks.load_from_file()
         self.assertEqual(global_hooks.to_dict(), build_seed_data(self))
 
+    @freeze_time(datetime(3000, 1, 1))
     def test_add_hook(self):
         hook = build_hook(self)
         self.global_hooks.add_hook(hook)
@@ -107,19 +115,20 @@ class GlobalHooksTest(BaseApiTestCase):
         data = build_seed_data(self)
         data['resources'][hook.resource_type.value] = {
             hook.operation_type.value: [
-                hook.to_dict(),
+                hook.to_dict(ignore_empty=True),
             ],
         }
 
         self.assertEqual(data, self.global_hooks.to_dict())
 
+    @freeze_time(datetime(3000, 1, 1))
     def test_add_hook_update_in_place(self):
         hook = build_hook(self)
         self.global_hooks.add_hook(hook)
 
         data = build_seed_data(self)
 
-        hook_dict_init = hook.to_dict()
+        hook_dict_init = hook.to_dict(ignore_empty=True)
         data['resources'][hook.resource_type.value] = {
             hook.operation_type.value: [
                 hook_dict_init,
@@ -415,6 +424,7 @@ class GlobalHooksTest(BaseApiTestCase):
                 ],
             )
 
+    @freeze_time(datetime(3000, 1, 1))
     def test_to_dict(self):
         hook1, hook2, hook3 = build_and_add_hooks(self, self.global_hooks)
         hook4 = build_hook(self)
@@ -428,25 +438,29 @@ class GlobalHooksTest(BaseApiTestCase):
                         HookOperation.LIST.value: [
                             dict(
                                 uuid=SEED_DATA_HOOK_UUID,
+                                metadata=dict(
+                                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                                ),
                             ),
                         ],
                     },
                     EntityName.Chart.value: {
                         HookOperation.DELETE.value: [
-                            hook3.to_dict(),
+                            hook3.to_dict(ignore_empty=True),
                         ],
                         HookOperation.DETAIL.value: [
-                            hook1.to_dict(),
+                            hook1.to_dict(ignore_empty=True),
                         ],
                     },
                     EntityName.Pipeline.value: {
                         HookOperation.DETAIL.value: [
-                            hook4.to_dict(),
+                            hook4.to_dict(ignore_empty=True),
                         ],
                     },
                     EntityName.Tag.value: {
                         HookOperation.DELETE.value: [
-                            hook2.to_dict(),
+                            hook2.to_dict(ignore_empty=True),
                         ],
                     },
                 },

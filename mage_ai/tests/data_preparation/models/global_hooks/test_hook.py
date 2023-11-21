@@ -1,6 +1,9 @@
 import uuid
+from datetime import datetime
 from typing import List
 from unittest.mock import patch
+
+from freezegun import freeze_time
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -591,6 +594,7 @@ class HookTest(GlobalHooksMixin):
                             ),
                         ))
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict(self):
         await self.setUpAsync()
 
@@ -604,6 +608,10 @@ class HookTest(GlobalHooksMixin):
             hook.to_dict(convert_enum=True, ignore_empty=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
+                metadata=dict(
+                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                ),
                 outputs=[m.to_dict() for m in hook.output_settings],
                 pipeline=dict(
                     uuid=self.pipeline1.uuid,
@@ -617,6 +625,7 @@ class HookTest(GlobalHooksMixin):
             ),
         )
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict_include_all(self):
         await self.setUpAsync()
 
@@ -630,6 +639,10 @@ class HookTest(GlobalHooksMixin):
             hook.to_dict(convert_enum=True, ignore_empty=True, include_all=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
+                metadata=dict(
+                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                ),
                 operation_type=hook.operation_type.value,
                 outputs=[m.to_dict() for m in hook.output_settings],
                 pipeline=dict(
@@ -645,6 +658,7 @@ class HookTest(GlobalHooksMixin):
             ),
         )
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict_include_run_data(self):
         await self.setUpAsync()
 
@@ -660,6 +674,10 @@ class HookTest(GlobalHooksMixin):
             hook.to_dict(convert_enum=True, ignore_empty=True, include_run_data=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
+                metadata=dict(
+                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                ),
                 output=dict(fire=2),
                 outputs=[m.to_dict() for m in hook.output_settings],
                 pipeline=dict(
