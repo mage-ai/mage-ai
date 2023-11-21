@@ -23,6 +23,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 from mage_ai.shared.array import find
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
+from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
 
 SEED_DATA_HOOK_UUID = 'laser'
 
@@ -73,16 +74,33 @@ def build_hook(
     )
 
 
-def build_and_add_hooks(test_case, global_hooks: GlobalHooks) -> List[Hook]:
-    hook1 = build_hook(test_case, resource_type=EntityName.Chart)
-    hook2 = build_hook(test_case, operation_type=HookOperation.DELETE, resource_type=EntityName.Tag)
+def build_and_add_hooks(
+    test_case,
+    global_hooks: GlobalHooks,
+    pipeline: Dict = None,
+    snapshot: bool = False,
+) -> List[Hook]:
+    hook1 = build_hook(
+        test_case,
+        pipeline=pipeline,
+        resource_type=EntityName.Chart,
+    )
+    hook2 = build_hook(
+        test_case,
+        operation_type=HookOperation.DELETE,
+        pipeline=pipeline,
+        resource_type=EntityName.Tag,
+    )
     hook3 = build_hook(
         test_case,
         operation_type=HookOperation.DELETE,
+        pipeline=pipeline,
         resource_type=EntityName.Chart,
     )
     hooks = [hook1, hook2, hook3]
     for hook in hooks:
+        if snapshot:
+            hook.snapshot()
         global_hooks.add_hook(hook)
 
     return hooks
@@ -107,24 +125,55 @@ class GlobalHooksTest(BaseApiTestCase):
         global_hooks = GlobalHooks.load_from_file()
         self.assertEqual(global_hooks.to_dict(), build_seed_data(self))
 
-    @freeze_time(datetime(3000, 1, 1))
     def test_add_hook(self):
+        now = datetime(3000, 1, 1)
         hook = build_hook(self)
-        self.global_hooks.add_hook(hook)
 
-        data = build_seed_data(self)
-        data['resources'][hook.resource_type.value] = {
-            hook.operation_type.value: [
-                hook.to_dict(ignore_empty=True),
-            ],
-        }
+        with patch.object(hook, 'snapshot') as mock_snapshot:
+            with freeze_time(now):
+                self.global_hooks.add_hook(hook)
 
-        self.assertEqual(data, self.global_hooks.to_dict())
+            data = build_seed_data(self)
+            data['resources'][hook.resource_type.value] = {
+                hook.operation_type.value: [
+                    hook.to_dict(ignore_empty=True),
+                ],
+            }
 
-    @freeze_time(datetime(3000, 1, 1))
+            self.assertEqual(data, self.global_hooks.to_dict())
+            mock_snapshot.assert_not_called()
+
+            hook2 = self.global_hooks.get_hook(
+                operation_type=hook.operation_type,
+                resource_type=hook.resource_type,
+                uuid=hook.uuid,
+            )
+            self.assertEqual(hook2.metadata.created_at, now.isoformat(' ', 'seconds'))
+            self.assertEqual(hook2.metadata.updated_at, now.isoformat(' ', 'seconds'))
+
+    def test_add_hook_and_snapshot(self):
+        hook = build_hook(self)
+        with patch.object(hook, 'snapshot') as mock_snapshot:
+            self.global_hooks.add_hook(hook, snapshot=True)
+
+            data = build_seed_data(self)
+            data['resources'][hook.resource_type.value] = {
+                hook.operation_type.value: [
+                    hook.to_dict(ignore_empty=True),
+                ],
+            }
+
+            self.assertEqual(data, self.global_hooks.to_dict())
+            mock_snapshot.assert_called_once()
+
     def test_add_hook_update_in_place(self):
+        past = datetime(2000, 1, 1)
+        now = datetime(3000, 1, 1)
+
         hook = build_hook(self)
-        self.global_hooks.add_hook(hook)
+        with freeze_time(past):
+            self.global_hooks.add_hook(hook)
+        updated_at_past = hook.metadata.updated_at
 
         data = build_seed_data(self)
 
@@ -139,14 +188,40 @@ class GlobalHooksTest(BaseApiTestCase):
 
         uuid_new = self.faker.unique.name()
         hook.uuid = uuid_new
-        self.global_hooks.add_hook(hook, dict(uuid=uuid_new), update=True)
 
-        data['resources'][hook.resource_type.value][hook.operation_type.value][0]['uuid'] = uuid_new
-        self.assertEqual(data, self.global_hooks.to_dict())
+        with patch.object(hook, 'snapshot') as mock_snapshot:
+            updated_at_now = now.isoformat(' ', 'seconds')
 
-    def test_add_hook_update_new_resource_type(self):
+            with freeze_time(now):
+                self.global_hooks.add_hook(hook, dict(uuid=uuid_new), update=True)
+
+            data['resources'][hook.resource_type.value][hook.operation_type.value][0]['uuid'] = \
+                uuid_new
+            data['resources'][hook.resource_type.value][hook.operation_type.value][0][
+                'metadata'
+            ]['updated_at'] = updated_at_now
+            self.assertEqual(data, self.global_hooks.to_dict())
+            mock_snapshot.assert_not_called()
+
+            hook2 = self.global_hooks.get_hook(
+                operation_type=hook.operation_type,
+                resource_type=hook.resource_type,
+                uuid=hook.uuid,
+            )
+            self.assertNotEqual(updated_at_past, hook2.metadata.updated_at)
+            self.assertEqual(updated_at_now, hook2.metadata.updated_at)
+
+    async def test_add_hook_update_new_resource_type(self):
         resource_type_init = EntityName.Chart
-        hook = build_hook(self, operation_type=HookOperation.LIST, resource_type=resource_type_init)
+        pipeline, _blocks = await build_pipeline_with_blocks_and_content(self)
+
+        hook = build_hook(
+            self,
+            operation_type=HookOperation.LIST,
+            pipeline=dict(uuid=pipeline.uuid),
+            resource_type=resource_type_init,
+        )
+
         self.global_hooks.add_hook(hook)
 
         self.assertTrue(resource_type_init.value in self.global_hooks.to_dict()['resources'])
@@ -154,10 +229,16 @@ class GlobalHooksTest(BaseApiTestCase):
         resource_type = EntityName.Block
         uuid_new = self.faker.unique.name()
         hook.uuid = uuid_new
-        self.global_hooks.add_hook(hook, dict(
+
+        hook_updated = self.global_hooks.add_hook(hook, dict(
             resource_type=resource_type,
             uuid=uuid_new,
-        ), update=True)
+        ), snapshot=True, update=True)
+
+        self.assertIsNotNone(hook_updated.metadata.snapshot_hash)
+        self.assertIsNotNone(hook_updated.metadata.snapshotted_at)
+        self.assertNotEqual(hook.metadata.snapshot_hash, hook_updated.metadata.snapshot_hash)
+        self.assertNotEqual(hook.metadata.snapshotted_at, hook_updated.metadata.snapshotted_at)
 
         data = self.global_hooks.to_dict()
 
@@ -297,8 +378,15 @@ class GlobalHooksTest(BaseApiTestCase):
                 uuid=hook.uuid,
             ))
 
-    def test_get_hooks(self):
-        hook1, hook2, hook3 = build_and_add_hooks(self, self.global_hooks)
+    async def test_get_hooks(self):
+        pipeline, _blocks = await build_pipeline_with_blocks_and_content(self)
+
+        hook1, hook2, hook3 = build_and_add_hooks(
+            self,
+            self.global_hooks,
+            pipeline=dict(uuid=pipeline.uuid),
+            snapshot=True,
+        )
 
         hooks = self.global_hooks.get_hooks(
             operation_types=[
@@ -315,6 +403,25 @@ class GlobalHooksTest(BaseApiTestCase):
                 lambda x, hook=hook: x.uuid == hook.uuid,
                 hooks,
             ))
+
+    async def test_get_hooks_no_snapshot(self):
+        pipeline, _blocks = await build_pipeline_with_blocks_and_content(self)
+
+        hook1, hook2, hook3 = build_and_add_hooks(
+            self,
+            self.global_hooks,
+        )
+
+        hooks = self.global_hooks.get_hooks(
+            operation_types=[
+                HookOperation.DETAIL,
+                HookOperation.DELETE,
+            ],
+            resource_type=EntityName.Chart,
+            stage=HookStage.BEFORE,
+        )
+
+        self.assertEqual(len(hooks), 0)
 
     @patch('mage_ai.data_preparation.models.global_hooks.models.run_hooks')
     def test_run_hooks(self, mock_run_hooks):

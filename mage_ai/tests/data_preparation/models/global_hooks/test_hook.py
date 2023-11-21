@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from datetime import datetime
 from typing import List
@@ -36,8 +37,12 @@ class HookTest(GlobalHooksMixin):
             self.assertEqual(hook.pipeline.uuid, self.pipeline1.uuid)
         self.assertEqual(self.hooks_match[3].pipeline.uuid, self.pipeline2.uuid)
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_should_run(self):
         await self.setUpAsync()
+
+        for hook in self.hooks_match + self.hooks_miss:
+            hook.snapshot()
 
         operation_types = [HookOperation.DETAIL]
         resource_type = EntityName.Pipeline
@@ -100,8 +105,37 @@ class HookTest(GlobalHooksMixin):
             stage=HookStage.AFTER,
         ) for hook in self.hooks_match[2:]]))
 
+    @freeze_time(datetime(3000, 1, 1))
+    async def test_should_run_with_different_snapshot(self):
+        await self.setUpAsync()
+
+        operation_types = [HookOperation.DETAIL]
+        resource_type = EntityName.Pipeline
+
+        hook = self.hooks_match[0]
+        hook.snapshot()
+
+        self.assertTrue(hook.should_run(
+            conditions=[HookCondition.FAILURE],
+            operation_types=operation_types,
+            resource_type=resource_type,
+            stage=HookStage.BEFORE,
+        ))
+
+        hook.metadata.snapshot_hash = uuid.uuid4().hex
+        self.assertFalse(hook.should_run(
+            conditions=[HookCondition.FAILURE],
+            operation_types=operation_types,
+            resource_type=resource_type,
+            stage=HookStage.BEFORE,
+        ))
+
+    @freeze_time(datetime(3000, 1, 1))
     async def test_should_run_with_predicates(self):
         await self.setUpAsync()
+
+        for hook in self.hooks_match + self.hooks_miss:
+            hook.snapshot()
 
         operation_resource = dict(
             name=self.pipeline1.name,
@@ -144,6 +178,7 @@ class HookTest(GlobalHooksMixin):
         await self.setUpAsync()
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         with patch.object(hook.pipeline, 'execute_sync') as mock_execute_sync:
             hook._pipeline = None
             hook.pipeline_settings = None
@@ -159,6 +194,7 @@ class HookTest(GlobalHooksMixin):
             raise error
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.strategies = [
             HookStrategy.BREAK,
             HookStrategy.CONTINUE,
@@ -178,6 +214,7 @@ class HookTest(GlobalHooksMixin):
             raise error
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.strategies = [
             HookStrategy.CONTINUE,
         ]
@@ -195,6 +232,7 @@ class HookTest(GlobalHooksMixin):
             raise error
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.operation_type = HookOperation.EXECUTE
         hook.strategies = [
             HookStrategy.BREAK,
@@ -210,6 +248,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
 
         kwargs = dict(
@@ -235,6 +274,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
         hook.resource_type = RESTRICTED_RESOURCE_TYPES[-1]
 
@@ -262,6 +302,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
         hook.run_settings = HookRunSettings.load(with_trigger=True)
 
@@ -304,6 +345,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
         hook.resource_type = RESTRICTED_RESOURCE_TYPES[0]
         hook.run_settings = HookRunSettings.load(with_trigger=True)
@@ -346,6 +388,7 @@ class HookTest(GlobalHooksMixin):
 
         hooks = self.hooks_match
         for hook in hooks:
+            hook.snapshot()
             hook.output = dict(payload=dict(water=uuid.uuid4().hex))
             hook.status = HookStatus.load(error=None, strategy=HookStrategy.CONTINUE)
 
@@ -692,3 +735,26 @@ class HookTest(GlobalHooksMixin):
                 uuid=hook.uuid,
             ),
         )
+
+    @freeze_time(datetime(3000, 1, 1))
+    async def test_snapshot(self):
+        await self.setUpAsync()
+
+        hook = self.hooks_match[0]
+        hook.snapshot()
+
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+        hashes = []
+
+        for block in self.pipeline1.blocks_by_uuid.values():
+            hashes.append(
+                hashlib.md5(f'{now}{block.content}'.encode()).hexdigest()
+            )
+
+        hashes_combined = ''.join(hashes)
+        snapshot_hash = hashlib.md5(
+            f'{now}{hashes_combined}'.encode(),
+        ).hexdigest()
+
+        self.assertEqual(now, hook.metadata.snapshotted_at)
+        self.assertEqual(snapshot_hash, hook.metadata.snapshot_hash)

@@ -1,3 +1,4 @@
+import hashlib
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
@@ -121,7 +122,7 @@ class MetadataUser(BaseDataClass):
 @dataclass
 class HookMetadata(BaseDataClass):
     created_at: str = None
-    shapshot_hash: str = None
+    snapshot_hash: str = None
     snapshotted_at: str = None
     updated_at: str = None
     user: MetadataUser = None
@@ -426,13 +427,47 @@ class Hook(BaseDataClass):
         if not self.__matches_any_condition(conditions):
             return False
 
+        if not self.metadata or \
+                not self.metadata.snapshot_hash or \
+                not self.metadata.snapshotted_at or \
+                self.metadata.snapshot_hash != self.__generate_snapshot_hash(
+                    self.metadata.snapshotted_at,
+                ):
+
+            return False
+
         if not self.__matches_any_predicate(operation_resource):
             return False
 
         return True
 
-    def snapshot(self):
-        pass
+    def snapshot(self) -> str:
+        if not self.pipeline:
+            return
+
+        if not self.metadata:
+            self.metadata = HookMetadata.load()
+
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+        self.metadata.snapshot_hash = self.__generate_snapshot_hash(prefix=now)
+        self.metadata.snapshotted_at = now
+
+        return self.metadata.snapshot_hash
+
+    def __generate_snapshot_hash(self, prefix: str = None) -> str:
+        hashes = []
+
+        for block in self.pipeline.blocks_by_uuid.values():
+            content = block.content or ''
+            hashes.append(
+                hashlib.md5(f'{prefix or ""}{content}'.encode()).hexdigest()
+            )
+
+        hashes_combined = ''.join(hashes)
+
+        return hashlib.md5(
+            f'{prefix or ""}{hashes_combined}'.encode(),
+        ).hexdigest()
 
     def __matches_any_condition(self, conditions: List[HookCondition]) -> bool:
         if not conditions or not self.conditions:
