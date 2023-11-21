@@ -4,12 +4,15 @@ from unittest.mock import patch
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.global_hooks.constants import (
+    RESTRICTED_RESOURCE_TYPES,
+    HookOutputKey,
+)
 from mage_ai.data_preparation.models.global_hooks.models import (
     Hook,
     HookCondition,
     HookOperation,
     HookOutputBlock,
-    HookOutputKey,
     HookOutputSettings,
     HookRunSettings,
     HookStage,
@@ -212,6 +215,7 @@ class HookTest(GlobalHooksMixin):
             meta=uuid.uuid4().hex,
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
+            payload=uuid.uuid4().hex,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -220,6 +224,32 @@ class HookTest(GlobalHooksMixin):
             hook.run(**kwargs)
             mock_execute_sync.assert_called_once_with(
                 global_vars=merge_dict(variables, kwargs),
+                update_status=False,
+            )
+
+    async def test_run_without_trigger_for_restricted_resource_type(self):
+        await self.setUpAsync()
+
+        variables = dict(mage=self.faker.unique.name())
+        hook = self.hooks_match[0]
+        hook.pipeline_settings['variables'] = variables
+        hook.resource_type = RESTRICTED_RESOURCE_TYPES[-1]
+
+        kwargs = dict(
+            error=uuid.uuid4().hex,
+            hook=hook.to_dict(include_all=True),
+            meta=uuid.uuid4().hex,
+            metadata=uuid.uuid4().hex,
+            query=uuid.uuid4().hex,
+            payload=uuid.uuid4().hex,
+            resource=uuid.uuid4().hex,
+            resources=uuid.uuid4().hex,
+        )
+
+        with patch.object(hook.pipeline, 'execute_sync') as mock_execute_sync:
+            hook.run(**kwargs)
+            mock_execute_sync.assert_called_once_with(
+                global_vars=merge_dict(variables, dict(hook=kwargs['hook'])),
                 update_status=False,
             )
 
@@ -238,6 +268,7 @@ class HookTest(GlobalHooksMixin):
             meta=uuid.uuid4().hex,
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
+            payload=uuid.uuid4().hex,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -254,6 +285,49 @@ class HookTest(GlobalHooksMixin):
             mock_trigger_pipeline.assert_called_once_with(
                 hook.pipeline.uuid,
                 variables=merge_dict(variables, kwargs),
+                check_status=True,
+                error_on_failure=True,
+                poll_interval=1,
+                poll_timeout=None,
+                schedule_name=TRIGGER_NAME_FOR_GLOBAL_HOOK,
+                verbose=True,
+                _should_schedule=False,
+            )
+            mock_execute_sync.assert_not_called()
+
+    @patch('mage_ai.data_preparation.models.global_hooks.models.trigger_pipeline')
+    async def test_run_with_trigger_for_restricted_resource_type(self, mock_trigger_pipeline):
+        await self.setUpAsync()
+
+        variables = dict(mage=self.faker.unique.name())
+        hook = self.hooks_match[0]
+        hook.pipeline_settings['variables'] = variables
+        hook.resource_type = RESTRICTED_RESOURCE_TYPES[0]
+        hook.run_settings = HookRunSettings.load(with_trigger=True)
+
+        kwargs = dict(
+            error=uuid.uuid4().hex,
+            hook=hook.to_dict(include_all=True),
+            meta=uuid.uuid4().hex,
+            metadata=uuid.uuid4().hex,
+            query=uuid.uuid4().hex,
+            payload=uuid.uuid4().hex,
+            resource=uuid.uuid4().hex,
+            resources=uuid.uuid4().hex,
+        )
+
+        class PipelineRunFake(object):
+            pass
+
+        pipeline_run = PipelineRunFake()
+        mock_trigger_pipeline.return_value = pipeline_run
+
+        with patch.object(hook.pipeline, 'execute_sync') as mock_execute_sync:
+            hook.run(**kwargs)
+
+            mock_trigger_pipeline.assert_called_once_with(
+                hook.pipeline.uuid,
+                variables=merge_dict(variables, dict(hook=kwargs['hook'])),
                 check_status=True,
                 error_on_failure=True,
                 poll_interval=1,
