@@ -32,6 +32,7 @@ import {
   AlertTriangle,
   Check,
   ChevronDown,
+  PaginateArrowLeft,
   PaginateArrowRight,
   Save,
   Schedule,
@@ -1043,11 +1044,15 @@ function GlobalHookDetail({
 
           <Flex flex={1} justifyContent="flex-end">
             <Button
+              beforeIcon={<PaginateArrowLeft />}
               disabled={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook || isLoadingDelete}
               onClick={() => router.push('/global-hooks')}
               secondary
             >
-              Cancel changes & go back
+              {attributesTouched
+                ? 'Cancel changes & go back'
+                : 'Go back to all hooks'
+              }
             </Button>
 
             <Spacing mr={PADDING_UNITS} />
