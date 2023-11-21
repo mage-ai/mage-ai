@@ -44,7 +44,7 @@ class Kafka(Destination):
 
         producer = self.build_client()
 
-        if self.key_properties.get(stream) is not None and len(self.key_properties[stream]) > 1:
+        if self.key_properties.get(stream) is not None and len(self.key_properties[stream]) >= 1:
             key_properties = self.key_properties[stream][0]
         else:
             key_properties = None
