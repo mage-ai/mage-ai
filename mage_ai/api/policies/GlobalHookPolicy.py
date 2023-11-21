@@ -8,7 +8,7 @@ WRITEABLE_ATTRIBUTES = [
     'operation_type',
     'outputs',
     'pipeline',
-    'predicates',
+    'predicate',
     'resource_type',
     'run_settings',
     'stages',

@@ -269,8 +269,14 @@ class BaseOperation():
         operation_type: HookOperation,
         stage: HookStage,
         condition: HookCondition = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
-        **kwargs,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resources: List[Dict] = None,
     ) -> List[Hook]:
         project = Project()
         if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
@@ -283,15 +289,21 @@ class BaseOperation():
         try:
             global_hooks = GlobalHooks.load_from_file()
             hooks = global_hooks.get_and_run_hooks(
+                operation_types,
+                EntityName(self.__classified_class()),
+                stage,
                 conditions=[condition] if condition else None,
+                error=error,
+                meta=meta,
+                metadata=metadata,
                 operation_resource=operation_resource,
-                operation_types=operation_types,
+                payload=payload,
+                query=query,
+                resource=resource,
                 resource_id=self.pk,
                 resource_parent_id=self.resource_parent_id,
-                resource_type=EntityName(self.__classified_class()),
-                stage=stage,
+                resources=resources,
                 user=dict(id=self.user.id) if self.user else None,
-                **kwargs,
             )
 
             if hooks:

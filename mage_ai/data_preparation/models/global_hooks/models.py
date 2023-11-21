@@ -140,7 +140,7 @@ class Hook(BaseDataClass):
     output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
     pipeline_settings: Dict = field(default=None)
-    predicates: List[List[HookPredicate]] = None
+    predicate: HookPredicate = None
     resource_type: EntityName = None
     run_settings: HookRunSettings = None
     stages: List[HookStage] = None
@@ -152,6 +152,7 @@ class Hook(BaseDataClass):
         self._pipeline = None
 
         self.serialize_attribute_class('metadata', HookMetadata)
+        self.serialize_attribute_class('predicate', HookPredicate)
         self.serialize_attribute_class('run_settings', HookRunSettings)
         self.serialize_attribute_class('status', HookStatus)
         self.serialize_attribute_class('strategies', HookStrategies)
@@ -160,16 +161,6 @@ class Hook(BaseDataClass):
         self.serialize_attribute_enum('resource_type', EntityName)
         self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_enums('stages', HookStage)
-
-        if self.predicates and isinstance(self.predicates, list):
-            rows = []
-            for predicates in self.predicates:
-                row = []
-                if predicates and isinstance(predicates, list):
-                    for predicate in predicates:
-                        row.append(HookPredicate.load(**predicate))
-                rows.append(row)
-            self.predicates = rows
 
     def to_dict(
         self,
@@ -181,6 +172,7 @@ class Hook(BaseDataClass):
         arr = [
             'conditions',
             'metadata',
+            'predicate',
             'run_settings',
             'stages',
             'strategies',
@@ -206,20 +198,6 @@ class Hook(BaseDataClass):
 
         if self.pipeline_settings:
             data['pipeline'] = self.pipeline_settings
-
-        if self.predicates:
-            rows = []
-            for predicates in self.predicates:
-                if predicates:
-                    row = []
-                    for predicate in predicates:
-                        row.append(predicate.to_dict())
-
-                    if len(row) >= 1:
-                        rows.append(row)
-
-            if len(rows) >= 1:
-                data['predicates'] = rows
 
         if include_snapshot_validation:
             key = 'snapshot_valid'
@@ -428,9 +406,16 @@ class Hook(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
         resource_id: Union[int, str] = None,
         resource_parent_id: Union[int, str] = None,
+        resources: Dict = None,
         user: Dict = None,
     ) -> bool:
         if self.operation_type not in operation_types:
@@ -448,10 +433,17 @@ class Hook(BaseDataClass):
         if not self.__validate_snapshot():
             return False
 
-        if not self.__matches_any_predicate(
+        if not self.__matches_predicate(
             operation_resource,
+            error=error,
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
             resource_id=resource_id,
             resource_parent_id=resource_parent_id,
+            resources=resources,
             user=user,
         ):
             return False
@@ -503,22 +495,35 @@ class Hook(BaseDataClass):
 
         return any([condition in (self.conditions or []) for condition in conditions])
 
-    def __matches_any_predicate(
+    def __matches_predicate(
         self,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
         resource_id: Union[int, str] = None,
         resource_parent_id: Union[int, str] = None,
+        resources: Dict = None,
         user: Dict = None,
     ) -> bool:
-        if not operation_resource or not self.predicates:
+        if not operation_resource or not self.predicate:
             return True
 
-        return HookPredicate.valid_predicates(
-            self.predicates,
+        return self.predicate.validate(
             operation_resource,
-            hook=self,
+            error=error,
+            hook=self.to_dict(include_all=True),
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
             resource_id=resource_id,
             resource_parent_id=resource_parent_id,
+            resources=resources,
             user=user,
         )
 
@@ -823,30 +828,51 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
         resource_id: Union[int, str] = None,
         resource_parent_id: Union[int, str] = None,
+        resources: List[Dict] = None,
         user: Dict = None,
     ) -> List[Hook]:
         def _filter(
-            hook: Hook,
+            hook,
             conditions=conditions,
+            error=error,
+            meta=meta,
+            metadata=metadata,
             operation_resource=operation_resource,
             operation_types=operation_types,
-            resource_type=resource_type,
-            stage=stage,
+            payload=payload,
+            query=query,
+            resource=resource,
             resource_id=resource_id,
             resource_parent_id=resource_parent_id,
+            resource_type=resource_type,
+            resources=resources,
+            stage=stage,
             user=user,
         ) -> bool:
             return hook.should_run(
+                operation_types,
+                resource_type,
+                stage,
                 conditions=conditions,
+                error=error,
+                meta=meta,
+                metadata=metadata,
                 operation_resource=operation_resource,
-                operation_types=operation_types,
-                resource_type=resource_type,
-                stage=stage,
+                payload=payload,
+                query=query,
+                resource=resource,
                 resource_id=resource_id,
                 resource_parent_id=resource_parent_id,
+                resources=resources,
                 user=user,
             )
 
@@ -887,20 +913,33 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
         resource_id: Union[int, str] = None,
         resource_parent_id: Union[int, str] = None,
+        resources: List[Dict] = None,
         user: Dict = None,
-        **kwargs,
     ) -> List[Hook]:
         hooks = self.get_hooks(
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=stage,
+            operation_types,
+            resource_type,
+            stage,
             conditions=conditions,
+            error=error,
+            meta=meta,
+            metadata=metadata,
             operation_resource=operation_resource,
+            payload=payload,
+            query=query,
+            resource=resource,
             resource_id=resource_id,
             resource_parent_id=resource_parent_id,
+            resources=resources,
             user=user,
         )
 
@@ -909,10 +948,16 @@ class GlobalHooks(BaseDataClass):
 
         return self.run_hooks(
             hooks,
+            error=error,
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
             resource_id=resource_id,
             resource_parent_id=resource_parent_id,
+            resources=resources,
             user=user,
-            **kwargs,
         )
 
     def save(self, file_path: str = None) -> None:
