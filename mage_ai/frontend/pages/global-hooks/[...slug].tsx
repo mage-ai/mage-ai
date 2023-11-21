@@ -76,8 +76,6 @@ GlobalHookDetailPage.getInitialProps = async (ctx) => {
     slug: string[],
   } = ctx.query;
 
-  console.log(ctx.query)
-
   return {
     operationType,
     resourceType,

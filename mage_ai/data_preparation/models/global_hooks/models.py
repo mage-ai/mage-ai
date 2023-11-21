@@ -1,6 +1,8 @@
+import hashlib
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Tuple, Union
 
@@ -113,6 +115,23 @@ class HookPredicate(BaseDataClass):
 
 
 @dataclass
+class MetadataUser(BaseDataClass):
+    id: int = None
+
+
+@dataclass
+class HookMetadata(BaseDataClass):
+    created_at: str = None
+    snapshot_hash: str = None
+    snapshotted_at: str = None
+    updated_at: str = None
+    user: MetadataUser = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('user', MetadataUser)
+
+
+@dataclass
 class Hook(BaseDataClass):
     attribute_aliases = dict(
         outputs='output_settings',
@@ -120,6 +139,7 @@ class Hook(BaseDataClass):
     )
 
     conditions: List[HookCondition] = None
+    metadata: HookMetadata = None
     operation_type: HookOperation = None
     output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
@@ -135,6 +155,7 @@ class Hook(BaseDataClass):
     def __post_init__(self):
         self._pipeline = None
 
+        self.serialize_attribute_class('metadata', HookMetadata)
         self.serialize_attribute_class('run_settings', HookRunSettings)
         self.serialize_attribute_class('status', HookStatus)
         self.serialize_attribute_class('strategies', HookStrategies)
@@ -158,10 +179,12 @@ class Hook(BaseDataClass):
         self,
         include_all: bool = False,
         include_run_data: bool = False,
+        include_snapshot_validation: bool = False,
         **kwargs,
     ):
         arr = [
             'conditions',
+            'metadata',
             'run_settings',
             'stages',
             'strategies',
@@ -201,6 +224,15 @@ class Hook(BaseDataClass):
 
             if len(rows) >= 1:
                 data['predicates'] = rows
+
+        if include_snapshot_validation:
+            key = 'snapshot_valid'
+            if data.get('metadata'):
+                data['metadata'][key] = self.__validate_snapshot()
+            else:
+                data['metadata'] = {
+                    key: False,
+                }
 
         return data
 
@@ -405,10 +437,52 @@ class Hook(BaseDataClass):
         if not self.__matches_any_condition(conditions):
             return False
 
+        if not self.__validate_snapshot():
+            return False
+
         if not self.__matches_any_predicate(operation_resource):
             return False
 
         return True
+
+    def snapshot(self) -> str:
+        if not self.pipeline:
+            return
+
+        if not self.metadata:
+            self.metadata = HookMetadata.load()
+
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+        self.metadata.snapshot_hash = self.__generate_snapshot_hash(prefix=now)
+        self.metadata.snapshotted_at = now
+
+        return self.metadata.snapshot_hash
+
+    def __validate_snapshot(self) -> bool:
+        return self.metadata and \
+                self.metadata.snapshot_hash and \
+                self.metadata.snapshotted_at and \
+                self.metadata.snapshot_hash == self.__generate_snapshot_hash(
+                    self.metadata.snapshotted_at,
+                )
+
+    def __generate_snapshot_hash(self, prefix: str = None) -> str:
+        if not self.pipeline:
+            return None
+
+        hashes = []
+
+        for block in self.pipeline.blocks_by_uuid.values():
+            content = block.content or ''
+            hashes.append(
+                hashlib.md5(f'{prefix or ""}{content}'.encode()).hexdigest()
+            )
+
+        hashes_combined = ''.join(hashes)
+
+        return hashlib.md5(
+            f'{prefix or ""}{hashes_combined}'.encode(),
+        ).hexdigest()
 
     def __matches_any_condition(self, conditions: List[HookCondition]) -> bool:
         if not conditions or not self.conditions:
@@ -614,7 +688,15 @@ class GlobalHooks(BaseDataClass):
 
         return self.load(**yaml_config)
 
-    def add_hook(self, hook: Hook, payload: Dict = None, update: bool = False) -> Hook:
+    def add_hook(
+        self,
+        hook: Hook,
+        payload: Dict = None,
+        snapshot: bool = False,
+        update: bool = False,
+    ) -> Hook:
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+
         if not update and self.get_hook(
             operation_type=hook.operation_type,
             resource_type=hook.resource_type,
@@ -646,7 +728,17 @@ class GlobalHooks(BaseDataClass):
                 hooks,
             )
             if index >= 0:
-                hook_updated = Hook.load(**merge_dict(hook.to_dict(include_all=True), payload))
+                hook_updated = Hook.load(
+                    **merge_dict(
+                        hook.to_dict(include_all=True),
+                        payload,
+                    ),
+                )
+
+                if not hook_updated.metadata:
+                    hook_updated.metadata = HookMetadata.load()
+                hook_updated.metadata.updated_at = now
+
                 if hook.resource_type == hook_updated.resource_type and \
                         hook.operation_type == hook_updated.operation_type:
 
@@ -656,6 +748,9 @@ class GlobalHooks(BaseDataClass):
                     self.add_hook(hook_updated)
                     self.remove_hook(hook)
 
+                if snapshot:
+                    hook_updated.snapshot()
+
                 return hook_updated
             else:
                 raise Exception(
@@ -663,6 +758,15 @@ class GlobalHooks(BaseDataClass):
                     f'{hook.resource_type} and operation {hook.operation_type}.',
                 )
         else:
+            if not hook.metadata:
+                hook.metadata = HookMetadata.load()
+
+            hook.metadata.created_at = now
+            hook.metadata.updated_at = now
+
+            if snapshot:
+                hook.snapshot()
+
             hooks.append(hook)
             setattr(resource, hook.operation_type.value, hooks)
             setattr(self.resources, hook.resource_type.value, resource)

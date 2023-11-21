@@ -64,6 +64,7 @@ def build_hooks(
     test_predicate_before: bool = False,
     predicates_match: List[HookPredicate] = None,
     predicates_miss: List[HookPredicate] = None,
+    snapshot: bool = True,
 ) -> List[Hook]:
     if not global_hooks:
         global_hooks = GlobalHooks.load_from_file()
@@ -136,6 +137,10 @@ def build_hooks(
         hook_miss.uuid = test_case.faker.unique.name()
         hook_miss.predicates = predicates_miss
 
+        if snapshot:
+            hook.snapshot()
+            hook_miss.snapshot()
+
         hooks.append(hook)
         hooks.append(hook_miss)
         hooks_match.append(hook)
@@ -163,13 +168,14 @@ class GlobalHooksMixin(BaseApiTestCase):
         predicates_match: List[HookPredicate] = None,
         predicates_miss: List[HookPredicate] = None,
         resource_type: EntityName = None,
+        snapshot: bool = True,
     ):
         block_settings_init = {
             0: dict(content=build_content({
                 'type[]': [PipelineType.STREAMING.value],
             })),
             1: dict(content=build_content({
-                'type[]': [PipelineType.PYSPARK.value],
+                'type[]': [PipelineType.INTEGRATION.value],
             })),
             2: dict(content=build_content(dict(powers=dict(fire=1)))),
             3: dict(content=build_content(dict(level=2))),
@@ -256,6 +262,7 @@ class GlobalHooksMixin(BaseApiTestCase):
             predicates_match=predicates_match,
             predicates_miss=predicates_miss,
             resource_type=resource_type,
+            snapshot=snapshot,
         )
 
         self.blocks1 = blocks1
