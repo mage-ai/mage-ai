@@ -35,6 +35,7 @@ type SetupSectionRowProps = {
     checked?: boolean;
     onCheck?: Dispatch<SetStateAction<boolean>>;
   };
+  warning?: boolean;
 };
 
 function SetupSectionRow({
@@ -45,6 +46,7 @@ function SetupSectionRow({
   textInput,
   title,
   toggleSwitch,
+  warning,
 }: SetupSectionRowProps) {
   return (
     <Spacing p={PADDING_UNITS}>
@@ -54,6 +56,7 @@ function SetupSectionRow({
             danger={invalid}
             default
             large
+            warning={warning}
           >
             {title} {invalid && (
               <Text danger inline large>

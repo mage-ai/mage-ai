@@ -89,6 +89,7 @@ GlobalHookPolicy.allow_write(
 
 GlobalHookPolicy.allow_query(
     [
+        'include_snapshot_validation',
         'operation_type[]',
         'resource_type[]',
     ],
@@ -107,6 +108,7 @@ GlobalHookPolicy.allow_query(
     [
         'include_operation_types',
         'include_resource_types',
+        'include_snapshot_validation',
         'operation_type',
         'resource_type',
     ],

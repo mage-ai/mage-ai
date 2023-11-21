@@ -64,6 +64,7 @@ export interface HookOutputSettingsType {
 interface HookMetadataType {
   created_at: string;
   shapshot_hash?: string;
+  shapshot_valid?: boolean;
   snapshotted_at?: string;
   updated_at: string;
   user: {

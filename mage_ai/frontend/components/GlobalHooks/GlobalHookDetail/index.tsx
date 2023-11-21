@@ -27,7 +27,17 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { Add, ChevronDown, PaginateArrowRight, Save } from '@oracle/icons';
+import {
+  Add,
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  PaginateArrowRight,
+  Save,
+  Schedule,
+  UserSmileyFace,
+} from '@oracle/icons';
+import { ICON_SIZE } from '@components/shared/index.style';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import {
@@ -35,10 +45,13 @@ import {
   capitalizeRemoveUnderscoreLower,
   pluralize,
 } from '@utils/string';
+import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getUser } from '@utils/session';
 import { selectKeys, selectEntriesWithValues } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 
 type GlobalHookDetailProps = {
@@ -54,6 +67,8 @@ function GlobalHookDetail({
   resourceType: resourceTypeProp,
   uuid: globalHookUUID,
 }: GlobalHookDetailProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const currentUser = getUser();
   const router = useRouter();
   const componentUUID = `GlobalHookDetail/${globalHookUUID}`;
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -71,6 +86,7 @@ function GlobalHookDetail({
   const query = useMemo(() => selectEntriesWithValues({
     include_operation_types: 1,
     include_resource_types: 1,
+    include_snapshot_validation: 1,
     operation_type: typeof operationType === 'undefined' ? null : operationType,
     resource_type: typeof resourceType === 'undefined' ? null : resourceType,
   }), [
@@ -82,6 +98,30 @@ function GlobalHookDetail({
   const globalHook =  useMemo(() => dataGlobalHook?.global_hook, [
     dataGlobalHook,
   ]);
+
+  const onSuccessProps = useMemo(() => ({
+    onErrorCallback: ({
+      error: {
+        errors,
+        exception,
+        message,
+        type,
+      },
+    }) => {
+      toast.error(
+        errors?.error || exception || message,
+        {
+          position: toast.POSITION.BOTTOM_RIGHT,
+          toastId: type,
+        },
+      );
+
+      return showError({
+        errors,
+        response,
+      });
+    },
+  }), []);
 
   const [createGlobalHook, { isLoading: isLoadingCreateGlobalHook }] = useMutation(
     api.global_hooks.useCreate(),
@@ -95,14 +135,12 @@ function GlobalHookDetail({
               `/global-hooks/${objectServer.uuid}?operation_type=${objectServer.operation_type}&resource_type=${objectServer.resource_type}`,
             );
           },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
+          ...onSuccessProps,
         },
       ),
     },
   );
+
   const [updateGlobalHook, { isLoading: isLoadingUpdateGlobalHook }] = useMutation(
     api.global_hooks.useUpdate(globalHook?.uuid, query),
     {
@@ -124,31 +162,53 @@ function GlobalHookDetail({
               },
             );
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              exception,
-              message,
-              type,
-            },
-          }) => {
-            toast.error(
-              errors?.error || exception || message,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: type,
-              },
-            );
-
-            return showError({
-              errors,
-              response,
-            });
-          },
+          ...onSuccessProps,
         },
       ),
     },
   );
+
+  const [updateSnapshot, { isLoading: isLoadingUpdateSnapshot }] = useMutation(
+    ({
+      pipeline,
+    }) => api.global_hooks.useUpdate(globalHook?.uuid, query)({
+      global_hook: {
+        pipeline,
+        snapshot: 1,
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            global_hook: objectServer,
+          }) => {
+            setAttributes(prev => ({
+              ...prev,
+              metadata: {
+                ...prev?.metadata,
+                ...objectServer?.metadata,
+              },
+              pipeline: {
+                ...prev?.pipeline,
+                ...objectServer?.pipeline,
+              },
+            }));
+
+            toast.success(
+              'Snapshot successfully created.',
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: `global-hooks-snapshot-success-${objectServer.uuid}`,
+              },
+            );
+          },
+          ...onSuccessProps,
+        },
+      ),
+    },
+  );
+
   const [deleteGlobalHook, { isLoading: isLoadingDelete }] = useMutation(
     api.global_hooks.useDelete(globalHook?.uuid, query),
     {
@@ -166,27 +226,7 @@ function GlobalHookDetail({
             );
             router.replace('/global-hooks');
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              exception,
-              message,
-              type,
-            },
-          }) => {
-            toast.error(
-              errors?.error || exception || message,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: type,
-              },
-            );
-
-            return showError({
-              errors,
-              response,
-            });
-          },
+          ...onSuccessProps,
         },
       ),
     },
@@ -480,7 +520,9 @@ function GlobalHookDetail({
     'run_settings',
     'stages',
     'strategies',
-  ]), [attributes])
+  ]), [attributes]);
+
+  const metadata = useMemo(() => attributes?.metadata || {}, [attributes]);
 
   return (
     <Spacing mb={8} p={PADDING_UNITS}>
@@ -636,7 +678,10 @@ function GlobalHookDetail({
 
           <Spacing mb={PADDING_UNITS} />
 
-          <SetupSection title="How to run hook">
+          <SetupSection
+            title="Code to run"
+            description="When the current hook gets triggered, it will execute the associated pipeline."
+          >
             <SetupSectionRow
               title="Pipeline to execute"
               description="Select a pipeline that will be executed every time this hook is triggered."
@@ -662,6 +707,103 @@ function GlobalHookDetail({
               }}
             />
 
+            <SetupSectionRow
+              title={attributes?.pipeline?.uuid && !metadata?.snapshot_hash && !metadata?.snapshot_valid
+                ? 'Code snapshot hasn’t been created yet'
+                : 'Valid code snapshot'
+              }
+              description={(
+                <>
+                  <Text muted small>
+                    Take a snapshot of {!attributes?.pipeline?.uuid
+                      ? 'the associated pipeline'
+                      : <Text default inline monospace small>{attributes?.pipeline?.uuid}</Text>
+                    }’s code. The snapshot is used to validate the hook before it runs.
+
+                    <br />
+
+                    A hook cannot run if {!attributes?.pipeline?.uuid
+                      ? 'the associated pipeline'
+                      : <Text default inline monospace small>{attributes?.pipeline?.uuid}</Text>
+                    }’s code has changed after the most recent snapshot has been made.
+                    <br />
+
+                    If the code changes, a new snapshot must be created.
+                  </Text>
+                </>
+              )}
+              invalid={attributes?.pipeline?.uuid && metadata?.snapshot_hash && !metadata?.snapshot_valid}
+              warning={attributes?.pipeline?.uuid && !metadata?.snapshot_hash && !metadata?.snapshot_valid}
+            >
+              {!metadata?.snapshot_hash && (
+                <Text default large>
+                  {!attributes?.pipeline?.uuid
+                    ? 'Select a pipeline before taking a snapshot'
+                    : 'No snapshot has been created'
+                  }
+                </Text>
+              )}
+              {metadata?.snapshot_hash && (
+                <FlexContainer flexDirection="column">
+                  <Text
+                    danger={!metadata?.snapshot_valid}
+                    large
+                    rightAligned
+                    success={metadata?.snapshot_valid}
+                  >
+                    {metadata?.snapshot_valid
+                      ? 'Snapshot valid'
+                      : 'Snapshot outdated'
+                    }
+                  </Text>
+                </FlexContainer>
+              )}
+            </SetupSectionRow>
+
+            <Spacing p={PADDING_UNITS}>
+              <FlexContainer alignItems="center" justifyContent="flex-end">
+                <FlexContainer alignItems="center">
+                  {metadata?.snapshotted_at && (
+                    <>
+                      <Text muted rightAligned small>
+                        Last snapshot at <Text
+                          inline
+                          muted
+                          small
+                          monospace
+                        >
+                          {metadata?.snapshotted_at}
+                        </Text>
+                      </Text>
+
+                      <Spacing mr={PADDING_UNITS} />
+                    </>
+                  )}
+
+                  <Button
+                    disabled={!attributes?.pipeline?.uuid}
+                    loading={isLoadingUpdateSnapshot}
+                    onClick={() => updateSnapshot({
+                      pipeline: attributes?.pipeline,
+                    })}
+                    primary={!metadata?.snapshot_valid}
+                    secondary={metadata?.snapshot_valid}
+                  >
+                    {!metadata?.snapshot_hash
+                      ? 'Create snapshot of code'
+                      : metadata?.snapshot_valid
+                        ? 'Update snapshot even though it’s valid'
+                        : 'Update snapshot to make it valid'
+                    }
+                  </Button>
+                </FlexContainer>
+              </FlexContainer>
+            </Spacing>
+          </SetupSection>
+
+          <Spacing mb={PADDING_UNITS} />
+
+          <SetupSection title="How to run hook">
             <SetupSectionRow
               title="Stop operation if hook fails"
               description={`If enabled, the ${resourceOperation} will be cancelled and an error will be raised.`}
@@ -736,6 +878,141 @@ function GlobalHookDetail({
                 {outputsMemo}
               </Accordion>
             )}
+          </SetupSection>
+
+          <Spacing mb={PADDING_UNITS} />
+
+          <SetupSection title="Metadata">
+            <SetupSectionRow
+              title="Last updated"
+            >
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text large monospace muted>
+                  {metadata?.updated_at
+                    ? datetimeInLocalTimezone(
+                      metadata?.updated_at,
+                      displayLocalTimezone,
+                    )
+                    : '-'
+                  }
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Schedule muted size={ICON_SIZE} />
+
+                <Spacing mr={1} />
+              </Flex>
+            </SetupSectionRow>
+
+            <SetupSectionRow
+              title="Created at"
+            >
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text large monospace muted>
+                  {metadata?.created_at
+                    ? datetimeInLocalTimezone(
+                      metadata?.created_at,
+                      displayLocalTimezone,
+                    )
+                    : '-'
+                  }
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Schedule muted size={ICON_SIZE} />
+
+                <Spacing mr={1} />
+              </Flex>
+            </SetupSectionRow>
+
+            <SetupSectionRow
+              title="Snapshotted at"
+            >
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text large monospace muted>
+                  {metadata?.snapshotted_at
+                    ? datetimeInLocalTimezone(
+                      metadata?.snapshotted_at,
+                      displayLocalTimezone,
+                    )
+                    : '-'
+                  }
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <Schedule muted size={ICON_SIZE} />
+
+                <Spacing mr={1} />
+              </Flex>
+            </SetupSectionRow>
+
+            <SetupSectionRow
+              title="Snapshot valid"
+            >
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text
+                  large
+                  danger={!metadata?.snapshot_valid}
+                  muted={metadata?.snapshot_valid}
+                >
+                  {metadata?.snapshot_valid
+                    ? 'Valid'
+                    : 'Hook won’t run until snapshot is valid'
+                  }
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                {metadata?.snapshot_valid
+                  ? <Check size={ICON_SIZE} success />
+                  : <AlertTriangle danger size={ICON_SIZE} />
+                }
+
+                <Spacing mr={1} />
+              </Flex>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Created by">
+              <Flex
+                alignItems="center"
+                flex={1}
+                justifyContent="flex-end"
+              >
+                <Text large monospace muted>
+                  {metadata?.user?.id
+                    ? metadata?.user?.id === currentUser?.id
+                      ? 'You created this hook'
+                      : `User ID ${metadata?.user?.id }`
+                    : '-'
+                  }
+                </Text>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <UserSmileyFace muted size={ICON_SIZE} />
+
+                <Spacing mr={1} />
+              </Flex>
+            </SetupSectionRow>
           </SetupSection>
         </>
       )}

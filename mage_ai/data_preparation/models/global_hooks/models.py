@@ -179,6 +179,7 @@ class Hook(BaseDataClass):
         self,
         include_all: bool = False,
         include_run_data: bool = False,
+        include_snapshot_validation: bool = False,
         **kwargs,
     ):
         arr = [
@@ -223,6 +224,15 @@ class Hook(BaseDataClass):
 
             if len(rows) >= 1:
                 data['predicates'] = rows
+
+        if include_snapshot_validation:
+            key = 'snapshot_valid'
+            if data.get('metadata'):
+                data['metadata'][key] = self.__validate_snapshot()
+            else:
+                data['metadata'] = {
+                    key: False,
+                }
 
         return data
 
@@ -427,13 +437,7 @@ class Hook(BaseDataClass):
         if not self.__matches_any_condition(conditions):
             return False
 
-        if not self.metadata or \
-                not self.metadata.snapshot_hash or \
-                not self.metadata.snapshotted_at or \
-                self.metadata.snapshot_hash != self.__generate_snapshot_hash(
-                    self.metadata.snapshotted_at,
-                ):
-
+        if not self.__validate_snapshot():
             return False
 
         if not self.__matches_any_predicate(operation_resource):
@@ -454,7 +458,18 @@ class Hook(BaseDataClass):
 
         return self.metadata.snapshot_hash
 
+    def __validate_snapshot(self) -> bool:
+        return self.metadata and \
+                self.metadata.snapshot_hash and \
+                self.metadata.snapshotted_at and \
+                self.metadata.snapshot_hash == self.__generate_snapshot_hash(
+                    self.metadata.snapshotted_at,
+                )
+
     def __generate_snapshot_hash(self, prefix: str = None) -> str:
+        if not self.pipeline:
+            return None
+
         hashes = []
 
         for block in self.pipeline.blocks_by_uuid.values():

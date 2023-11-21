@@ -26,7 +26,14 @@ class GlobalHookPresenter(BasePresenter):
 
         data = {}
         if self.resource.model:
-            data = self.resource.model.to_dict(include_all=True)
+            include_snapshot_validation = False
+            if 'include_snapshot_validation' in query:
+                include_snapshot_validation = True
+
+            data = self.resource.model.to_dict(
+                include_all=True,
+                include_snapshot_validation=include_snapshot_validation,
+            )
 
         display_format = kwargs.get('format')
         if 'with_pipeline_details' == display_format:
