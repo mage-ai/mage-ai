@@ -175,7 +175,7 @@ class GlobalHooksMixin(BaseApiTestCase):
                 'type[]': [PipelineType.STREAMING.value],
             })),
             1: dict(content=build_content({
-                'type[]': [PipelineType.PYSPARK.value],
+                'type[]': [PipelineType.INTEGRATION.value],
             })),
             2: dict(content=build_content(dict(powers=dict(fire=1)))),
             3: dict(content=build_content(dict(level=2))),
