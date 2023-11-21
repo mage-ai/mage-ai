@@ -290,6 +290,7 @@
                 "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
                 "streaming/destinations/postgres",
+                "streaming/destinations/rabbitmq",
                 "streaming/destinations/redshift",
                 "streaming/destinations/snowflake",
                 "streaming/destinations/trino"
