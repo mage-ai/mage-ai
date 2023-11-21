@@ -520,7 +520,7 @@ class HookTest(GlobalHooksMixin):
             query={
                 'type[]': [
                     'streaming',
-                    'pyspark',
+                    'integration',
                 ],
             },
             metadata=dict(
