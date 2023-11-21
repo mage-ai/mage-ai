@@ -108,6 +108,7 @@ function GlobalHookDetail({
         message,
         type,
       },
+      response,
     }) => {
       toast.error(
         errors?.error || exception || message,
@@ -172,6 +173,10 @@ function GlobalHookDetail({
   const [updateSnapshot, { isLoading: isLoadingUpdateSnapshot }] = useMutation(
     ({
       pipeline,
+    }: {
+      pipeline: {
+        uuid: string;
+      };
     }) => api.global_hooks.useUpdate(globalHook?.uuid, query)({
       global_hook: {
         pipeline,
@@ -523,7 +528,16 @@ function GlobalHookDetail({
     'strategies',
   ]), [attributes]);
 
-  const metadata = useMemo(() => attributes?.metadata || {}, [attributes]);
+  const metadata = useMemo(() => attributes?.metadata || {
+    created_at: null,
+    snapshot_hash: null,
+    snapshot_valid: false,
+    snapshotted_at: null,
+    updated_at: null,
+    user: {
+      id: null,
+    },
+  }, [attributes]);
 
   return (
     <Spacing mb={8} p={PADDING_UNITS}>
@@ -1000,7 +1014,7 @@ function GlobalHookDetail({
               >
                 <Text large monospace muted>
                   {metadata?.user?.id
-                    ? metadata?.user?.id === currentUser?.id
+                    ? String(metadata?.user?.id) === String(currentUser?.id)
                       ? 'You created this hook'
                       : `User ID ${metadata?.user?.id }`
                     : '-'
