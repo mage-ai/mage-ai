@@ -1,15 +1,14 @@
 import argparse
+import ast
 import json
 import sys
 from typing import Dict, List
 
-import pandas as pd
-from kafka import KafkaProducer
+from kafka import KafkaConsumer, KafkaProducer
 
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.constants import KEY_RECORD
 from mage_integrations.destinations.utils import update_record_with_internal_columns
-from mage_integrations.utils.dictionary import merge_dict
 
 MAXIMUM_BATCH_SIZE_MB = 1
 
@@ -17,12 +16,22 @@ MAXIMUM_BATCH_SIZE_MB = 1
 class Kafka(Destination):
 
     def test_connection(self) -> None:
-        raise Exception('Not Implemented')
+        consumer = KafkaConsumer(bootstrap_servers=self.config['bootstrap_server'],
+                                 api_version=ast.literal_eval(self.config.get('api_version',
+                                                                              '(0, 10, 2)')))
+        topics = consumer.topics()
+
+        if not topics:
+            consumer.close()
+            raise Exception('Kafka was not able to connect to BootStrap Server')
+        elif topics:
+            consumer.close()
+            return True
 
     def build_client(self):
         kwargs = dict(
             bootstrap_servers=self.config['bootstrap_server'],
-            api_version=self.config.get('api_version', None),
+            api_version=ast.literal_eval(self.config.get('api_version', '(0, 10, 2)')),
             value_serializer=lambda x: json.dumps(x).encode('utf-8'),
             key_serializer=lambda x: x.encode('utf-8') if x else None,
         )
@@ -33,29 +42,20 @@ class Kafka(Destination):
 
         self.logger.info('Export data started.')
 
-        for r in record_data:
-            r['record'] = update_record_with_internal_columns(r['record'])
-
-        df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
-        df_count = len(df.index)
-
-        idx = 0
-        total_byte_size = int(df.memory_usage(deep=True).sum())
-        tags2 = merge_dict(tags, dict(
-            total_byte_size=total_byte_size,
-        ))
-
-        self.logger.info(f'Inserting records for batch {idx} started.', tags=tags2)
-
-        value = df.to_json()
-
         producer = self.build_client()
-        producer.send(self.config['topic'], value, key=self.config.get('key', None))
-        self.logger.info('Message Sent')
 
-        tags.update(records_inserted=df_count)
+        if self.key_properties is not None:
+            key_properties = self.key_properties[stream][0]
+        else:
+            key_properties = None
 
-        self.logger.info('Export data completed.', tags=tags)
+        self.logger.info('Inserting records started.')
+
+        for r in record_data:
+            r[KEY_RECORD] = update_record_with_internal_columns(r[KEY_RECORD])
+            producer.send(self.config['topic'], r[KEY_RECORD], key=key_properties)
+
+        self.logger.info('Export data completed')
 
 
 if __name__ == '__main__':

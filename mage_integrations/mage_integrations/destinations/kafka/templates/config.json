@@ -1,5 +1,5 @@
 {
     "bootstrap_server": "",
     "topic": "",
-    "key": null
+    "api_version": "(0, 10, 1)"
 }
