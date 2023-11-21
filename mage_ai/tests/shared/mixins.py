@@ -5,13 +5,13 @@ from typing import Callable, Dict, List
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.global_hooks.constants import HookOutputKey
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     Hook,
     HookCondition,
     HookOperation,
     HookOutputBlock,
-    HookOutputKey,
     HookOutputSettings,
     HookPredicate,
     HookStage,

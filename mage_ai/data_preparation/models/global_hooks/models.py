@@ -11,7 +11,11 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.utils import fetch_input_variables
-from mage_ai.data_preparation.models.global_hooks.constants import RESOURCE_TYPES
+from mage_ai.data_preparation.models.global_hooks.constants import (
+    RESOURCE_TYPES,
+    HookOutputKey,
+)
+from mage_ai.data_preparation.models.global_hooks.utils import extract_valid_data
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.triggers.api import trigger_pipeline
@@ -55,16 +59,6 @@ class HookStrategy(str, Enum):
 class HookStage(str, Enum):
     AFTER = 'after'
     BEFORE = 'before'
-
-
-class HookOutputKey(str, Enum):
-    ERROR = 'error'
-    META = 'meta'
-    METADATA = 'metadata'
-    PAYLOAD = 'payload'
-    QUERY = 'query'
-    RESOURCE = 'resource'
-    RESOURCES = 'resources'
 
 
 @dataclass
@@ -325,6 +319,8 @@ class Hook(BaseDataClass):
 
                     self.output = set_value(self.output, keys, output_acc)
 
+        self.output = extract_valid_data(self.resource_type, self.output or {})
+
         return self.output
 
     def run(
@@ -340,16 +336,22 @@ class Hook(BaseDataClass):
             return
 
         try:
+            variables_from_operation = extract_valid_data(self.resource_type, dict(
+                error=kwargs.get('error'),
+                meta=kwargs.get('meta'),
+                metadata=kwargs.get('metadata'),
+                payload=kwargs.get('payload'),
+                query=kwargs.get('query'),
+                resource=kwargs.get('resource'),
+                resources=kwargs.get('resources'),
+            ))
             variables = merge_dict(
                 self.pipeline_settings.get('variables') or {},
-                dict(
-                    error=kwargs.get('error'),
-                    hook=self.to_dict(include_all=True),
-                    meta=kwargs.get('meta'),
-                    metadata=kwargs.get('metadata'),
-                    query=kwargs.get('query'),
-                    resource=kwargs.get('resource'),
-                    resources=kwargs.get('resources'),
+                merge_dict(
+                    variables_from_operation,
+                    dict(
+                        hook=self.to_dict(include_all=True),
+                    ),
                 ),
             )
 
