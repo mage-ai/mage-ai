@@ -35,11 +35,11 @@ RUN \
 # Mage integrations and other related packages
 RUN \
   pip3 install --no-cache-dir "git+https://github.com/wbond/oscrypto.git@d5f3437ed24257895ae1edd9e503cfb352e635a8" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
-  pip3 install --no-cache-dir "git+https://github.com/theGeekGoddessofCode/mage-ai-abz@TeradataIntegration.git#egg=mage-integrations&subdirectory=mage_integrations"
+  pip3 install --no-cache-dir "git+https://github.com/theGeekGoddessofCode/mage-ai-abz/singer-python.git@TeradataIntegration#egg=singer-python" && \
+  pip3 install --no-cache-dir "git+https://github.com/theGeekGoddessofCode/mage-ai-abz/google-ads-python.git@TeradataIntegration#egg=google-ads" && \
+  pip3 install --no-cache-dir "git+https://github.com/theGeekGoddessofCode/mage-ai-abz/dbt-mysql.git@TeradataIntegration#egg=dbt-mysql" && \
+  pip3 install --no-cache-dir "git+https://github.com/theGeekGoddessofCode/mage-ai-abz/dbt-synapse.git@TeradataIntegration#egg=dbt-synapse" && \
+  pip3 install --no-cache-dir "git+https://github.com/theGeekGoddessofCode/mage-ai-abz.git@TeradataIntegration#egg=mage-integrations&subdirectory=mage_integrations"
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
 RUN \
