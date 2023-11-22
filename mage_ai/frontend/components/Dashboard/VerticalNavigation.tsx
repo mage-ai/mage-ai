@@ -160,7 +160,7 @@ const DEFAULT_NAV_ITEMS = ({
       items: miscItems,
     },
   ];
-}
+};
 
 export type NavigationItem = {
   Icon?: any;
