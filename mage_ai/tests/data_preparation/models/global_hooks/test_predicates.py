@@ -18,7 +18,7 @@ from mage_ai.data_preparation.models.global_hooks.predicates import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import ignore_keys, merge_dict, set_value
+from mage_ai.shared.hash import dig, ignore_keys, merge_dict, set_value
 
 # from mage_ai.shared.models import BaseDataClass
 from mage_ai.tests.base_test import AsyncDBTestCase
@@ -106,6 +106,8 @@ class PredicatesTest(AsyncDBTestCase):
             PredicateObjectType.PAYLOAD,
             PredicateObjectType.QUERY,
             PredicateObjectType.RESOURCE,
+            PredicateObjectType.RESOURCE_ID,
+            PredicateObjectType.RESOURCE_PARENT_ID,
             PredicateObjectType.USER,
         ]
         for left_object_type in object_types:
@@ -118,31 +120,53 @@ class PredicatesTest(AsyncDBTestCase):
                 (value, self.assertTrue),
                 (value + value, self.assertFalse),
             ]:
+                right_object_use = set_value(
+                    right_object,
+                    right_object_keys,
+                    right_value_use,
+                )
+
+                left_object_keys_use = left_object_keys
+                left_object_use = left_object
+                right_object_keys_use = right_object_keys
+                right_object_use = right_object
+
+                if left_object_type in [
+                    PredicateObjectType.RESOURCE_ID,
+                    PredicateObjectType.RESOURCE_PARENT_ID,
+                ]:
+                    left_object_use = dig(left_object_use, left_object_keys)
+                    left_object_keys_use = None
+
+                if right_object_type in [
+                    PredicateObjectType.RESOURCE_ID,
+                    PredicateObjectType.RESOURCE_PARENT_ID,
+                ]:
+                    right_object_use = dig(right_object_use, right_object_keys)
+                    right_object_keys_use = None
+
                 predicate = HookPredicate.load(
-                    left_object_keys=left_object_keys,
+                    left_object_keys=left_object_keys_use,
                     left_object_type=left_object_type,
                     left_value_type=left_value_type,
                     operator=operator,
-                    right_object_keys=right_object_keys,
+                    right_object_keys=right_object_keys_use,
                     right_object_type=right_object_type,
                     right_value_type=right_value_type,
                 )
 
                 settings = {
-                    left_object_type.value: left_object,
-                    right_object_type.value: set_value(
-                        right_object,
-                        right_object_keys,
-                        right_value_use,
-                    ),
+                    left_object_type.value: left_object_use,
+                    right_object_type.value: right_object_use,
                 }
 
                 assertion_func(predicate.validate(None, **settings))
 
+    def test_validate_using_operation_resource(self):
+        pass
+
         # OPERATION_RESOURCE
         # RESOURCES
-        # RESOURCE_ID
-        # RESOURCE_PARENT_ID
 
 
 class CustomTestError(Exception):
