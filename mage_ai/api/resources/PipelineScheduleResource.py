@@ -2,10 +2,9 @@ import uuid
 from itertools import groupby
 
 from sqlalchemy import case
-from sqlalchemy.orm import aliased, selectinload
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.expression import func
 
-from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
@@ -71,23 +70,26 @@ class PipelineScheduleResource(DatabaseResource):
 
         query = PipelineSchedule.repo_query
 
+        tag_query = (
+            TagAssociation
+            .select(
+                Tag.name,
+                TagAssociation.taggable_id,
+                TagAssociation.taggable_type,
+            )
+            .join(
+                Tag,
+                Tag.id == TagAssociation.tag_id,
+            )
+        )
         if len(tag_names) >= 1:
             tag_associations = (
-                TagAssociation.
-                select(
-                    Tag.name,
-                    TagAssociation.taggable_id,
-                    TagAssociation.taggable_type,
-                ).
-                join(
-                    Tag,
-                    Tag.id == TagAssociation.tag_id,
-                ).
-                filter(
+                tag_query
+                .filter(
                     Tag.name.in_(tag_names),
                     TagAssociation.taggable_type == self.model_class.__name__,
-                ).
-                all()
+                )
+                .all()
             )
             query = query.filter(
                 PipelineSchedule.id.in_([ta.taggable_id for ta in tag_associations]),
@@ -179,17 +181,7 @@ class PipelineScheduleResource(DatabaseResource):
         }
 
         tags = (
-            TagAssociation.select(
-                TagAssociation.id,
-                TagAssociation.tag_id,
-                TagAssociation.taggable_id,
-                TagAssociation.taggable_type,
-                Tag.name,
-            )
-            .join(
-                Tag,
-                Tag.id == TagAssociation.tag_id,
-            )
+            tag_query
             .filter(
                 TagAssociation.taggable_id.in_(schedule_ids),
                 TagAssociation.taggable_type == self.model_class.__name__,
