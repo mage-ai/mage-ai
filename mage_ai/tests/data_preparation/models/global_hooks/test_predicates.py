@@ -1,4 +1,5 @@
 import json
+import random
 import uuid
 from typing import Any, Dict, List, Tuple, Union
 
@@ -7,6 +8,7 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_hooks.constants import (
+    PredicateAndOrOperator,
     PredicateObjectType,
     PredicateOperator,
     PredicateValueDataType,
@@ -83,9 +85,6 @@ def build_operation_resource_settings(
 
 
 class PredicatesTest(AsyncDBTestCase):
-    def test_valid_predicates(self):
-        pass
-
     def test_validate_operator_includes(self):
         value = uuid.uuid4().hex
 
@@ -283,6 +282,76 @@ class PredicatesTest(AsyncDBTestCase):
             )
 
             assertion_func(predicate.validate(operation_resources))
+
+    def test_validate_with_nested_predicates(self):
+        (
+            operation_resource,
+            predicate,
+            predicates_level_1,
+            predicates_level_2,
+            predicates_level_3,
+        ) = build_nested_predicates()
+
+        for pred_dicts in [
+            predicates_level_1,
+            predicates_level_2,
+            predicates_level_3,
+        ]:
+            for key, arr in pred_dicts.items():
+                for predicate_inner in arr:
+                    assertion_func = self.assertTrue if 'succeed' == key else self.assertFalse
+
+                    for predicate_inner in arr:
+                        assertion_func(predicate_inner.validate(operation_resource))
+
+        self.assertTrue(predicate.validate(operation_resource))
+
+    def test_validate_with_nested_predicates_other_combinations(self):
+        (
+            operation_resource,
+            predicate,
+            predicates_level_1,
+            predicates_level_2,
+            predicates_level_3,
+        ) = build_nested_predicates()
+
+        predicates_failed = []
+        predicates_succeed = [predicate]
+
+        for pred_dict in [
+            predicates_level_1,
+            predicates_level_2,
+            predicates_level_3,
+        ]:
+            predicates_failed.extend(pred_dict['failed'])
+            predicates_succeed.extend(pred_dict['succeed'])
+
+        predicates_failed_count = len(predicates_failed)
+        predicates_succeed_count = len(predicates_succeed)
+        # predicates_count = predicates_failed_count + predicates_succeed_count
+
+        def _get_and_or_operator() -> PredicateAndOrOperator:
+            return random.choice([v for v in PredicateAndOrOperator])
+
+        def _get_predicates(
+            operator: PredicateAndOrOperator,
+            predicates_failed=predicates_failed,
+            predicates_succeed=predicates_succeed,
+            predicates_succeed_count=predicates_succeed_count,
+        ) -> List[HookPredicate]:
+            failed_sample = 0
+            succeed_sample = random.randint(1, predicates_succeed_count)
+
+            if PredicateAndOrOperator.OR == operator:
+                failed_sample = random.randint(1, predicates_failed_count)
+
+            arr_failed = random.sample(predicates_failed, failed_sample)
+            arr_succeed = random.sample(predicates_succeed, succeed_sample)
+
+            return arr_failed + arr_succeed
+
+        # operator = _get_and_or_operator()
+        # predicates = _get_predicates(operator)
 
 
 class CustomTestError(Exception):
@@ -496,3 +565,187 @@ for object_type in PredicateObjectType:
                         settings=settings,
                     ),
                 )
+
+
+def build_nested_predicates() -> Tuple[Dict, HookPredicate, Dict, Dict, Dict]:
+    operation_resource = dict(
+        earth=1,
+        fire=2,
+        ice=[3],
+        laser=4,
+        lightning=5,
+        power=6,
+        water=7,
+        wind=8,
+    )
+
+    def _build_settings(**kwargs) -> Dict:
+        left_value_type = PredicateValueType.load(
+            value_data_type=PredicateValueDataType.INTEGER,
+        )
+
+        return merge_dict(dict(
+            left_object_type=PredicateObjectType.OPERATION_RESOURCE,
+            left_value_type=left_value_type,
+            operator=PredicateOperator.EQUALS,
+            right_value_type=left_value_type,
+        ), kwargs)
+
+    predicate2_3_or_or_terminal_failed = HookPredicate.load(**_build_settings(
+        left_object_type=None,
+        left_value_type=None,
+        operator=PredicateOperator.PRESENT,
+        right_value=None,
+        right_value_type=None,
+    ))
+
+    predicate2_3_and_and_and_terminal_failed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.AND,
+        left_object_keys=['ice'],
+        left_value_type=PredicateValueType.load(
+            value_data_type=PredicateValueDataType.LIST,
+            value_type=PredicateValueType.load(
+                value_data_type=PredicateValueDataType.INTEGER,
+            ),
+        ),
+        operator=PredicateOperator.NOT_INCLUDES,
+        right_value=3,
+    ))
+
+    predicate2_3_or_or_terminal_succeed = HookPredicate.load(**_build_settings(
+        left_object_keys=['power'],
+        operator=PredicateOperator.GREATER_THAN_OR_EQUALS,
+        right_value=6
+    ))
+
+    predicate2_3_and_and_or_terminal_succeed = HookPredicate.load(**_build_settings(
+        left_object_keys=['water'],
+        operator=PredicateOperator.LESS_THAN_OR_EQUALS,
+        right_value=6,
+    ))
+
+    predicate2_and_and_succeed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.AND,
+        left_object_keys=['wind'],
+        operator=PredicateOperator.LESS_THAN_OR_EQUALS,
+        predicates=[
+            predicate2_3_and_and_or_terminal_succeed,
+            predicate2_3_or_or_terminal_succeed,
+        ],
+        right_value=8,
+    ))
+
+    predicate2_and_or_succeed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.OR,
+        left_object_keys=['water'],
+        operator=PredicateOperator.NOT_EQUALS,
+        predicates=[
+            predicate2_3_and_and_or_terminal_succeed,
+        ],
+        right_value=8,
+    ))
+
+    predicate2_or_and_failed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.AND,
+        left_object_keys=['ice'],
+        left_value_type=PredicateValueType.load(
+            value_data_type=PredicateValueDataType.LIST,
+            value_type=PredicateValueType.load(
+                value_data_type=PredicateValueDataType.INTEGER,
+            ),
+        ),
+        operator=PredicateOperator.INCLUDES,
+        predicates=[
+            predicate2_3_and_and_and_terminal_failed,
+            predicate2_3_and_and_or_terminal_succeed,
+        ],
+        right_value=3,
+    ))
+
+    predicate2_or_or_succeed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.OR,
+        left_value_type=None,
+        operator=PredicateOperator.NOT_PRESENT,
+        predicates=[
+            predicate2_3_or_or_terminal_failed,
+            predicate2_3_or_or_terminal_succeed,
+        ],
+        right_value=None,
+        right_value_type=None,
+    ))
+
+    predicate1_and_succeed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.AND,
+        left_object_keys=['ice'],
+        left_value_type=PredicateValueType.load(
+            value_data_type=PredicateValueDataType.LIST,
+            value_type=PredicateValueType.load(
+                value_data_type=PredicateValueDataType.INTEGER,
+            ),
+        ),
+        operator=PredicateOperator.INCLUDES,
+        predicates=[
+            predicate2_and_and_succeed,
+            predicate2_and_or_succeed,
+        ],
+        right_value=3,
+    ))
+
+    predicate1_or_succeed = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.OR,
+        left_object_keys=['fire'],
+        operator=PredicateOperator.GREATER_THAN,
+        predicates=[
+            predicate2_or_and_failed,
+            predicate2_or_or_succeed,
+        ],
+        right_value=3,
+    ))
+
+    predicates_level_3 = dict(
+        failed=[
+            predicate2_3_and_and_and_terminal_failed,
+            predicate2_3_or_or_terminal_failed,
+        ],
+        succeed=[
+            predicate2_3_and_and_or_terminal_succeed,
+            predicate2_3_or_or_terminal_succeed,
+        ],
+    )
+
+    predicates_level_2 = dict(
+        failed=[
+            predicate2_or_and_failed,
+        ],
+        succeed=[
+            predicate2_and_and_succeed,
+            predicate2_and_or_succeed,
+            predicate2_or_or_succeed,
+        ],
+    )
+
+    predicates_level_1 = dict(
+        failed=[],
+        succeed=[
+            predicate1_and_succeed,
+            predicate1_or_succeed,
+        ],
+    )
+
+    predicate = HookPredicate.load(**_build_settings(
+        and_or_operator=PredicateAndOrOperator.AND,
+        left_object_keys=['earth'],
+        predicates=[
+            predicate1_and_succeed,
+            predicate1_or_succeed,
+        ],
+        right_value=1,
+    ))
+
+    return (
+        operation_resource,
+        predicate,
+        predicates_level_1,
+        predicates_level_2,
+        predicates_level_3,
+    )
