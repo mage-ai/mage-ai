@@ -290,7 +290,10 @@ class BaseOperation():
                 stage=stage,
                 **kwargs,
             )
+        except Exception:
+            hooks = []
 
+        try:
             if hooks:
                 for hook in (hooks or []):
                     if hook.status and HookStrategy.RAISE == hook.status.strategy:

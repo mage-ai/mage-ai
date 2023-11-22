@@ -657,7 +657,7 @@ class PipelineRun(BaseModel):
     def pipeline_type(self) -> PipelineType:
         pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
 
-        return self.pipeline.type if pipeline is not None else None
+        return pipeline.type if pipeline is not None else None
 
     @property
     def logs(self):
@@ -690,7 +690,7 @@ class PipelineRun(BaseModel):
     def pipeline_tags(self):
         pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
 
-        return self.pipeline.tags if pipeline is not None else []
+        return pipeline.tags if pipeline is not None else []
 
     def executable_block_runs(
         self,

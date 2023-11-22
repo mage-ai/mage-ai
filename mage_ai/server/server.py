@@ -80,7 +80,6 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.services.spark.models.applications import Application
-from mage_ai.services.ssh.aws.emr.models import create_tunnel
 from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
@@ -526,6 +525,8 @@ async def main(
         Application.clear_cache()
 
     try:
+        from mage_ai.services.ssh.aws.emr.models import create_tunnel
+
         tunnel = create_tunnel(clean_up_on_failure=True)
         if tunnel:
             print(f'SSH tunnel active: {tunnel.is_active()}')
