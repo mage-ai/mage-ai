@@ -2,7 +2,7 @@ import json
 from abc import abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.data_preparation.models.block import Block
@@ -18,21 +18,23 @@ from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class BasePredicateValueType(BaseDataClass):
-    value_data_type = PredicateValueDataType
+class PredicateValueType(BaseDataClass):
+    value_data_type: PredicateValueDataType = None
     value_type: Dict = None
 
     def __post_init__(self):
         self.serialize_attribute_enum('value_data_type', PredicateValueDataType)
 
+        if self.value_type and isinstance(self.value_type, dict):
+            self.value_type = self.__class__.load(**self.value_type)
 
-@dataclass
-class PredicateValueType(BasePredicateValueType):
-    value_type: BasePredicateValueType = None
+    def to_dict(self, **kwargs) -> Dict:
+        data = super().to_dict(**kwargs)
 
-    def __post_init__(self):
-        super().__post_init__()
-        self.serialize_attribute_class('value_type', self.__class__)
+        if self.value_type and issubclass(self.value_type.__class__, BaseDataClass):
+            data['value_type'] = self.value_type.to_dict(**kwargs)
+
+        return data
 
 
 @dataclass
@@ -40,21 +42,14 @@ class BasePredicate(BaseDataClass):
     and_or_operator: PredicateAndOrOperator = None
     left_object_keys: List[str] = None
     left_object_type: PredicateObjectType = None
+    left_value: Union[bool, Dict, float, int, List, str] = None
     left_value_type: PredicateValueType = None
     operator: PredicateOperator = None
     predicates: List = None
     right_object_keys: List[str] = None
     right_object_type: PredicateObjectType = None
+    right_value: Union[bool, Dict, float, int, List, str] = None
     right_value_type: PredicateValueType = None
-    value: Any = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('left_value_type', PredicateValueType)
-        self.serialize_attribute_class('right_value_type', PredicateValueType)
-        self.serialize_attribute_enum('and_or_operator', PredicateAndOrOperator)
-        self.serialize_attribute_enum('left_object_type', PredicateObjectType)
-        self.serialize_attribute_enum('operator', PredicateOperator)
-        self.serialize_attribute_enum('right_object_type', PredicateObjectType)
 
     @abstractmethod
     def validate(
@@ -80,8 +75,13 @@ class HookPredicate(BasePredicate):
     predicates: List[BasePredicate] = None
 
     def __post_init__(self):
-        super().__post_init__()
         self.serialize_attribute_classes('predicates', self.__class__)
+        self.serialize_attribute_class('left_value_type', PredicateValueType)
+        self.serialize_attribute_class('right_value_type', PredicateValueType)
+        self.serialize_attribute_enum('and_or_operator', PredicateAndOrOperator)
+        self.serialize_attribute_enum('left_object_type', PredicateObjectType)
+        self.serialize_attribute_enum('operator', PredicateOperator)
+        self.serialize_attribute_enum('right_object_type', PredicateObjectType)
 
     def validate(
         self,
@@ -106,7 +106,6 @@ class HookPredicate(BasePredicate):
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
         **kwargs,
     ) -> bool:
-
         if isinstance(operation_resource, Iterable) and not isinstance(operation_resource, dict):
             return all([self.__validate(
                 operation_resource=res,
@@ -116,6 +115,7 @@ class HookPredicate(BasePredicate):
         return self.__validate(operation_resource=operation_resource, **kwargs)
 
     def __validate(self, **kwargs) -> bool:
+
         left_object = None
         right_object = None
 
@@ -133,22 +133,30 @@ class HookPredicate(BasePredicate):
             if key in kwargs:
                 right_object = kwargs[key]
 
-        # Get right value from object using keys
-        if left_object and self.left_object_keys:
-            left_value_to_compare = get_value(left_object, self.left_object_keys)
+        # Get value from object using keys if self.right_value is not None
+        if self.left_value is not None:
+            left_value_to_compare = self.left_value
+        elif left_object:
+            if self.left_object_keys:
+                left_value_to_compare = get_value(left_object, self.left_object_keys)
+            else:
+                left_value_to_compare = left_object
 
         # Convert left value to the specified data type
-        if self.left_value_type:
+        if self.left_value_type and INTERNAL_DEFAULT_PREDICATE_VALUE != left_value_to_compare:
             left_value_to_compare = convert_value(left_value_to_compare, self.left_value_type)
 
-        # Get right value from object using keys if self.value is not None
-        if right_object and self.right_object_keys:
-            right_value_to_compare = get_value(right_object, self.right_object_keys)
-        else:
-            right_value_to_compare = self.value
+        # Get value from object using keys if self.right_value is not None
+        if self.right_value is not None:
+            right_value_to_compare = self.right_value
+        elif right_object:
+            if self.right_object_keys:
+                right_value_to_compare = get_value(right_object, self.right_object_keys)
+            else:
+                right_value_to_compare = right_object
 
-        # Convert right value to the specified data type
-        if self.right_value_type:
+        # Convert value to the specified data type
+        if self.right_value_type and INTERNAL_DEFAULT_PREDICATE_VALUE != right_value_to_compare:
             right_value_to_compare = convert_value(right_value_to_compare, self.right_value_type)
 
         if self.operator:
@@ -167,24 +175,42 @@ def get_value(
 ) -> Union[bool, Dict, float, int, List, str]:
     value_temp = None
 
+    print('WTFFFFFFFFFFFFFFFFFFFFFF get value',)
+    print(keys)
+    print(object_arg, issubclass(object_arg.__class__, BaseResource))
+    print('\n')
+
     if keys:
+        print('-------------------------------------------------------- inside get_value')
         if not isinstance(object_arg, Iterable) and (
-            isinstance(object_arg, BaseResource) or
+            issubclass(object_arg.__class__, BaseResource) or
             isinstance(object_arg, Block) or
             isinstance(object_arg, Pipeline)
         ):
+            for idx, key in enumerate(keys):
+                if idx == 0:
+                    print('KEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYy', key, type(key), object_arg)
+                    value_temp = getattr(object_arg, key)
+                else:
+                    value_temp = get_value(value_temp, [key])
 
-            value_temp = object_arg
-            for key in keys:
-                value_temp = get_value(object_arg, [key])
+            # value_temp = object_arg
+
+            # for key in keys:
+                # print(key, get_value(object_arg, [key]))
+
+                # value_temp = get_value(object_arg, [key])
+
+                print('VALUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE', value_temp)
         elif isinstance(object_arg, Iterable) and not isinstance(object_arg, dict):
             value_temp = list(object_arg)
             for key in keys:
                 value_temp = get_value(value_temp, [key])
         elif isinstance(object_arg, dict):
-            value_temp = object_arg.get(key)
-            if len(keys) >= 2:
-                for key in keys[1:]:
+            for idx, key in enumerate(keys):
+                if idx == 0:
+                    value_temp = object_arg.get(key)
+                else:
                     value_temp = get_value(value_temp, [key])
 
     if callable(value_temp):
@@ -200,28 +226,28 @@ def convert_value(
     value_data_type = value_type.value_data_type
     value_type_sub = value_type.value_type
 
-    if PredicateValueType.BOOLEAN == value_data_type:
+    if PredicateValueDataType.BOOLEAN == value_data_type:
         value = bool(value)
-    elif PredicateValueType.DICTIONARY == value_data_type:
+    elif PredicateValueDataType.DICTIONARY == value_data_type:
         if value is not None:
             if isinstance(value, str):
                 value = json.loads(value)
             if value_type_sub:
                 for k, v in value.items():
                     value[k] = convert_value(v, value_type_sub)
-    elif PredicateValueType.FLOAT == value_data_type:
+    elif PredicateValueDataType.FLOAT == value_data_type:
         if value is not None:
             value = float(value)
-    elif PredicateValueType.INTEGER == value_data_type:
+    elif PredicateValueDataType.INTEGER == value_data_type:
         if value is not None:
             value = int(value)
-    elif PredicateValueType.LIST == value_data_type:
+    elif PredicateValueDataType.LIST == value_data_type:
         if value is not None:
             if isinstance(value, str):
                 value = json.loads(value)
             if value_type_sub:
                 value = [convert_value(v, value_type_sub) for v in value]
-    elif PredicateValueType.STRING == value_data_type:
+    elif PredicateValueDataType.STRING == value_data_type:
         if value is None:
             value = ''
         value = str(value)
