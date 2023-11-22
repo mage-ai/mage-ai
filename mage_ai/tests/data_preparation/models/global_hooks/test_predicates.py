@@ -27,6 +27,62 @@ class PredicatesTest(AsyncDBTestCase):
     def test_valid_predicates(self):
         pass
 
+    def test_validate_operator_includes(self):
+        value = uuid.uuid4().hex
+
+        for right_value_data_type, right_value, right_value_not_included in [
+            (
+                PredicateValueDataType.BOOLEAN,
+                True,
+                False,
+            ),
+            (
+                PredicateValueDataType.DICTIONARY,
+                dict(mage=value),
+                dict(mage=value, more=value),
+            ),
+            (
+                PredicateValueDataType.FLOAT,
+                1.0,
+                3.0,
+            ),
+            (
+                PredicateValueDataType.INTEGER,
+                3,
+                7,
+            ),
+            (
+                PredicateValueDataType.LIST,
+                [value],
+                [value, value],
+            ),
+            (
+                PredicateValueDataType.STRING,
+                value,
+                value + value,
+            ),
+        ]:
+            for right_value_use, assertion_func in [
+                (right_value, self.assertTrue),
+                (right_value_not_included, self.assertFalse),
+            ]:
+                predicate = HookPredicate.load(
+                    left_value=[right_value],
+                    left_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.LIST,
+                        value_type=PredicateValueType.load(
+                            value_data_type=right_value_data_type,
+                        ),
+                    ),
+                    operator=PredicateOperator.INCLUDES,
+                    right_value=right_value_use,
+                    right_value_type=PredicateValueType.load(
+                        value_data_type=right_value_data_type,
+                    ),
+                )
+
+                assertion_func(predicate.validate(None))
+
 
 class CustomTestError(Exception):
     pass
