@@ -328,13 +328,14 @@ class PredicatesTest(AsyncDBTestCase):
 
         predicates_failed_count = len(predicates_failed)
         predicates_succeed_count = len(predicates_succeed)
-        # predicates_count = predicates_failed_count + predicates_succeed_count
+        predicates_count = predicates_failed_count + predicates_succeed_count
 
         def _get_and_or_operator() -> PredicateAndOrOperator:
             return random.choice([v for v in PredicateAndOrOperator])
 
         def _get_predicates(
             operator: PredicateAndOrOperator,
+            force_failure: bool = False,
             predicates_failed=predicates_failed,
             predicates_succeed=predicates_succeed,
             predicates_succeed_count=predicates_succeed_count,
@@ -342,16 +343,67 @@ class PredicatesTest(AsyncDBTestCase):
             failed_sample = 0
             succeed_sample = random.randint(1, predicates_succeed_count)
 
-            if PredicateAndOrOperator.OR == operator:
+            if PredicateAndOrOperator.OR == operator or force_failure:
                 failed_sample = random.randint(1, predicates_failed_count)
 
             arr_failed = random.sample(predicates_failed, failed_sample)
             arr_succeed = random.sample(predicates_succeed, succeed_sample)
 
+            if force_failure:
+                return arr_failed
+
             return arr_failed + arr_succeed
 
-        # operator = _get_and_or_operator()
-        # predicates = _get_predicates(operator)
+        levels = 10
+
+        def _build_all(
+            # force_failure_at_level: int = None,
+            levels=levels,
+            predicates_count=predicates_count,
+            get_and_or_operator=_get_and_or_operator,
+            get_predicates=_get_predicates,
+        ) -> List[List[HookPredicate]]:
+            predicates_in_reverse_level_order = []
+            for i1 in range(levels):
+                row = []
+                predicates_to_create_at_this_level = random.randint(
+                    predicates_count - i1, predicates_count,
+                )
+                for i2 in range(predicates_to_create_at_this_level):
+                    operator = get_and_or_operator()
+                    predicates = get_predicates(
+                        operator,
+                        # force_failure=(
+                        #     force_failure_at_level is not None and
+                        #     force_failure_at_level == levels - i1
+                        # ),
+                    )
+
+                    pred = HookPredicate.load(
+                        and_or_operator=operator,
+                        predicates=predicates,
+                    )
+                    row.append(pred)
+
+                if i1 >= 1:
+                    previous_row = predicates_in_reverse_level_order[i1 - 1]
+                    batch_count = round(len(previous_row) / len(row))
+
+                    for idx, pred in enumerate(row):
+                        start_index = idx * batch_count
+                        end_index = (idx + 1) * batch_count
+                        pred.predicates += previous_row[start_index:end_index]
+
+                predicates_in_reverse_level_order.append(row)
+
+            return predicates_in_reverse_level_order
+
+        all_succeed = _build_all()
+
+        for i in range(levels):
+            level_to_run = levels - (i + 1)
+            for predicate0 in all_succeed[level_to_run]:
+                self.assertTrue(predicate0.validate(operation_resource))
 
 
 class CustomTestError(Exception):
