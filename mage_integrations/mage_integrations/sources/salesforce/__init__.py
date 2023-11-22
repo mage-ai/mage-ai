@@ -1,16 +1,17 @@
-from datetime import datetime
 from typing import Dict, Generator, List
 
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.salesforce.client.tap_salesforce import (
     build_state,
-    discover_objects,
     do_discover,
     do_sync,
 )
 from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce import (
     Salesforce as SalesforceConnection,
+)
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.credentials import (
+    parse_credentials,
 )
 
 
@@ -24,24 +25,14 @@ class Salesforce(Source):
         if self._client:
             return self._client
 
-        lookback_window = self.config.get('lookback_window')
-        lookback_window = int(lookback_window) if lookback_window else None
-
-        start_date = self.config.get('start_date')
-        if type(start_date) is datetime:
-            start_date = start_date.isoformat()
-
         self._client = SalesforceConnection(
-            api_type=self.config.get('api_type'),
-            default_start_date=start_date,
-            is_sandbox=self.config.get('is_sandbox'),
-            lookback_window=lookback_window,
-            quota_percent_per_run=self.config.get('quota_percent_per_run'),
+            credentials=parse_credentials(self.config.get('credentials')),
             quota_percent_total=self.config.get('quota_percent_total'),
-            refresh_token=self.config['refresh_token'],
+            quota_percent_per_run=self.config.get('quota_percent_per_run'),
+            is_sandbox=self.config.get('domain'),
             select_fields_by_default=self.config.get('select_fields_by_default'),
-            sf_client_id=self.config['client_id'],
-            sf_client_secret=self.config['client_secret'],
+            default_start_date=self.config.get('start_date'),
+            api_type=self.config.get('api_type')
         )
         self._client.login()
 
@@ -54,21 +45,16 @@ class Salesforce(Source):
             self.client,
             catalog_dict,
             state,
+            threshold=self.config.get('threshold'),
             logger=self.logger
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
-        try:
-            if streams:
-                return Catalog(
-                    do_discover(self.client, streams=streams, logger=self.logger)['streams'])
-        finally:
-            self.__finally_clean_up()
-
-        return Catalog([])
-
-    def get_stream_ids(self) -> List[str]:
-        return discover_objects(self.client, self.selected_streams)
+        catalog = Catalog(do_discover(self.client,
+                                      streams=self.config.get('streams', None),
+                                      logger=self.logger)['streams'])
+        self.__finally_clean_up()
+        return catalog
 
     def __finally_clean_up(self):
         if self.client:
@@ -84,7 +70,10 @@ class Salesforce(Source):
                 self.client.login_timer.cancel()
 
     def test_connection(self):
-        self.client
+        try:
+            self.client
+        except Exception as e:
+            raise e
 
     def load_data(
         self,

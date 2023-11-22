@@ -1,10 +1,8 @@
 {
-  "api_type": "BULK",
-  "client_id": "",
-  "client_secret": "",
-  "is_sandbox": false,
-  "lookback_window": 10,
-  "refresh_token": "",
+  "api_type": "REST",
+  "credentials": "",
+  "domain": "login",
   "select_fields_by_default": true,
+  "threshold": 1000,
   "start_date": ""
 }

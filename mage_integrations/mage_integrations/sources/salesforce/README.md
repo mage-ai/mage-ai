@@ -11,13 +11,35 @@ You must enter the following settings when configuring this source:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `api_type` | The `api_type` is used to switch the behavior of the tap between using Salesforce's "REST" and "BULK" APIs. When new fields are discovered in Salesforce objects, the `select_fields_by_default` key describes whether or not the tap will select those fields by default. | `REST`, `BULK` |
-| `client_id` | OAuth Salesforce App secrets. | `ABC1...` |
-| `client_secret` | OAuth Salesforce App secrets. | `ABC1...` |
-| `is_sandbox` | If `true`, then the sandbox account will be used to load dat from. | `true`, `false` |
-| `lookback_window` | The `lookback_window` (in seconds) subtracts the desired amount of seconds from the bookmark to sync past data. Recommended value: 10 seconds. | `10` |
-| `refresh_token` | The `refresh_token` is a secret created during the OAuth flow | `ABC1...` |
+| `credentials` | Dict containing simple-salesforce login data, can be either `OAUTH` or `PASSWORD`, please check below for detailed info.
+| `domain` | If `test`, then sandbox account configuration/endpoints will be used.  | `login`, `test` |
 | `select_fields_by_default` | If `true`, the fields in a schema of a stream will all be selected by default when setting up a synchronization. | `true`, `false` |
-| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be this exact format `YYYY-mm-ddTHH:MM:SS.000000Z`. | `2022-11-30T21:31:20.000000Z` |
+| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be this exact format `YYYY-mm-ddTHH:MM:SSZ`. | `2022-11-30T21:31:20Z` |
+
+Optional settings:
+| Key | Description | Sample value
+| --- | --- | --- |
+| `threshold` | When running `INCREMENTAL` sync runs, threshold is used to throttle how often STATE messages are generated (in `REST` api_type).This can be useful to minimize the amount of `STATE` messages being generated. | Defaults to 1000
+| `streams` | List of stream names to be discovered inside the salesforce tap. if none is given, the tap will search for all avaliable streams, which can take several minutes. | ["Account"]
+
+### Credentials
+
+#### OAuth based authentication
+
+```yaml
+credentials:
+  client_id: secret_client_id
+  client_secret: secret_client_secret
+  refresh_token: abc123
+```
+#### Password based authentication
+
+```yaml
+credentials:
+  username: your_username
+  password: your_password
+  security_token: your_security_token
+```
 
 <br />
 
