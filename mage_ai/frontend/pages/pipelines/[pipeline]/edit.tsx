@@ -833,6 +833,8 @@ function PipelineDetailPage({
     setSelectedFilePath(filePathFromUrl);
   }, [
     filePathFromUrl,
+    // This dependency is required or else the effect will not trigger on updated query parameters.
+    qUrl,
   ]);
   useEffect(() => {
     if (!equals(filePathsFromUrl, selectedFilePaths)) {
@@ -841,6 +843,8 @@ function PipelineDetailPage({
   }, [
     filePathsFromUrl,
     selectedFilePaths,
+    // This dependency is required or else the effect will not trigger on updated query parameters.
+    qUrl,
   ]);
 
   const [createPipeline] = useMutation(
