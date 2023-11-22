@@ -2496,6 +2496,31 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None) -> Dict:
+        """
+        Enriches the provided global variables dictionary with additional context, Spark session,
+        environment, configuration, and an empty context dictionary.
+
+        Args:
+            global_vars (Optional[Dict]): A dictionary of global variables to be enriched.
+                If not provided, an empty dictionary is created.
+
+        Returns:
+            Dict: The enriched global variables dictionary.
+
+        This method checks if the pipeline type is DATABRICKS or if the environment is a Spark
+        environment. If true, it adds the Spark session to the global variables if not already
+        present.
+
+        If 'env' is not in the global variables, it adds the environment information using the
+        'get_env()' function.
+
+        Adds the block configuration to the global variables.
+
+        If 'context' is not in global_vars, it adds an empty context dictionary.
+
+        The final enriched global variables dictionary is assigned to the object's 'global_vars'
+        attribute and returned.
+        """
         if global_vars is None:
             global_vars = dict()
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
@@ -2506,8 +2531,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     global_vars['spark'] = spark
         if 'env' not in global_vars:
             global_vars['env'] = get_env()
-        if 'configuration' not in global_vars:
-            global_vars['configuration'] = self.configuration
+        global_vars['configuration'] = self.configuration
         if 'context' not in global_vars:
             global_vars['context'] = dict()
 

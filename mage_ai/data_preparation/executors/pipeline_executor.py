@@ -1,5 +1,8 @@
 import asyncio
+from datetime import datetime
 from typing import Dict, List
+
+import pytz
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -93,6 +96,12 @@ class PipelineExecutor:
                     block_uuid=block_run.block_uuid,
                     execution_partition=self.execution_partition,
                 )
+                block_run_data = dict(status=BlockRun.BlockRunStatus.RUNNING)
+                if not block_run.started_at or \
+                        (block_run.metrics and not block_run.metrics.get('controller')):
+                    block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
+
+                block_run.update(**block_run_data)
                 BlockExecutor(**executor_kwargs).execute(
                     block_run_id=block_run.id,
                     global_vars=global_vars,
