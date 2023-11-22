@@ -253,8 +253,36 @@ class PredicatesTest(AsyncDBTestCase):
 
                 assertion_func(predicate.validate(operation_resource))
 
-        # OPERATION_RESOURCE
-        # RESOURCES
+    def test_validate_multiple_operation_resources(self):
+        value = uuid.uuid4().hex
+        resource = dict(fire=value)
+
+        operation_resources_groups = [
+            (
+                self.assertTrue,
+                [resource, resource],
+            ),
+            (
+                self.assertFalse,
+                [resource, dict(fire=value + value)],
+            ),
+        ]
+
+        for assertion_func, operation_resources in operation_resources_groups:
+            predicate = HookPredicate.load(
+                left_object_keys=['fire'],
+                left_object_type=PredicateObjectType.OPERATION_RESOURCE,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
+                operator=PredicateOperator.EQUALS,
+                right_value=value,
+                right_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
+            )
+
+            assertion_func(predicate.validate(operation_resources))
 
 
 class CustomTestError(Exception):

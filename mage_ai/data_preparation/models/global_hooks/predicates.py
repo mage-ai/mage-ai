@@ -196,9 +196,17 @@ def get_value(
                 not isinstance(object_arg, dict) and \
                 not isinstance(object_arg, str):
 
-            value_temp = list(object_arg)
-            for key in keys:
-                value_temp = get_value(value_temp, [key])
+            for idx, key in enumerate(keys):
+                if idx == 0:
+                    if isinstance(key, str) and hasattr(object_arg, key):
+                        value_temp = getattr(object_arg, key)
+                    elif isinstance(key, int) or isinstance(key, float):
+                        index_inner = int(key)
+
+                        if object_arg and index_inner < len(object_arg):
+                            value_temp = object_arg[index_inner]
+                else:
+                    value_temp = get_value(value_temp, [key])
         elif isinstance(object_arg, dict):
             for idx, key in enumerate(keys):
                 if idx == 0:
