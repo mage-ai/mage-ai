@@ -1050,10 +1050,14 @@ def run_integration_stream(
                         index=index,
                         stream=tap_stream_id,
                     ))
+                    # Skip pipeline run metrics because they will be calculated after
+                    # the pipeline run is completed.
                     calculate_metrics(
                         pipeline_run,
+                        streams=[tap_stream_id],
                         logger=pipeline_scheduler.logger,
                         logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
+                        skip_pipeline_run_metrics=True,
                     )
 
 
