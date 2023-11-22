@@ -14,12 +14,14 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.orchestration.backfills.service import start_backfill
 from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
     BlockRun,
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.job_manager import JobType
+from mage_ai.orchestration.job_manager import JobManager, JobType
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
@@ -30,6 +32,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
+    create_backfill,
     create_integration_pipeline_with_blocks,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
@@ -140,6 +143,84 @@ class PipelineSchedulerTests(DBTestCase):
                 pipeline=scheduler.pipeline,
                 pipeline_run=pipeline_run,
             )
+
+    @freeze_time('2023-11-11 12:30:00')
+    def test_backfill_status_with_completed_pipeline_run(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_pipeline_trigger',
+            pipeline_uuid='test_pipeline',
+        )
+        backfill = create_backfill(
+            'test_pipeline',
+            end_datetime=datetime.today(),
+            pipeline_schedule_id=pipeline_schedule.id,
+            start_datetime=datetime.today(),
+        )
+        pipeline_runs = start_backfill(backfill)
+        pipeline_run = pipeline_runs[0]
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(JobManager, 'add_job') as mock_add_br_job:
+            scheduler.schedule()
+            self.assertEqual(
+                backfill.status,
+                Backfill.Status.RUNNING,
+            )
+            mock_add_br_job.assert_called()
+
+            for b in pipeline_run.block_runs:
+                b.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            scheduler.schedule()
+            self.assertEqual(
+                backfill.status,
+                Backfill.Status.COMPLETED,
+            )
+
+    @freeze_time('2023-11-11 12:30:00')
+    def test_backfill_status_with_failed_pipeline_run(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_pipeline_trigger',
+            pipeline_uuid='test_pipeline',
+        )
+        backfill = create_backfill(
+            'test_pipeline',
+            end_datetime=datetime.today(),
+            pipeline_schedule_id=pipeline_schedule.id,
+            start_datetime=datetime.today(),
+        )
+        pipeline_runs = start_backfill(backfill)
+        pipeline_run = pipeline_runs[0]
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+
+        for b in pipeline_run.block_runs:
+            b.update(status=BlockRun.BlockRunStatus.FAILED)
+        scheduler.schedule()
+        # Backfill with 1 pipeline run that fails
+        self.assertEqual(
+            backfill.status,
+            Backfill.Status.FAILED,
+        )
+
+        # Retry failed pipeline run that was associated with the existing backfill
+        retried_pipeline_run = create_pipeline_run_with_schedule(
+            'test_pipeline',
+            execution_date=pipeline_run.execution_date,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        scheduler2 = PipelineScheduler(pipeline_run=retried_pipeline_run)
+        backfill.update(status=Backfill.Status.INITIAL)
+        self.assertEqual(
+            backfill.status,
+            Backfill.Status.INITIAL,
+        )
+        # Retried pipeline run successfully completes, so backfill status updates to "completed"
+        for b in retried_pipeline_run.block_runs:
+            b.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        scheduler2.schedule()
+        self.assertEqual(
+            backfill.status,
+            Backfill.Status.COMPLETED,
+        )
 
     @freeze_time('2023-10-11 12:13:14')
     def test_schedule_all_with_integration_pipeline(self):

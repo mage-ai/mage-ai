@@ -119,6 +119,18 @@ class PipelineSchedule(BaseModel):
         query = query.filter(PipelineRun.pipeline_schedule_id.in_(ids))
         return query.all()
 
+    @classmethod
+    def fetch_latest_pipeline_runs_without_retries(self, ids: List[int]) -> List:
+        query = PipelineRun.query
+        query.cache = True
+        query = (
+            query.
+            filter(PipelineRun.pipeline_schedule_id.in_(ids)).
+            group_by(PipelineRun.execution_date).
+            order_by(func.max(PipelineRun.started_at))
+        )
+        return query.all()
+
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
         return SettingsConfig.load(config=settings)

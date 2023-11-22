@@ -56,6 +56,7 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
+import { getRunStatusTextProps } from '@components/shared/Table/constants';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
@@ -271,12 +272,8 @@ function BackfillDetail({
           </Text>
         </FlexContainer>,
         <Text
-          danger={BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED == status}
-          default={BackfillStatusEnum.INITIAL === status}
+          {...getRunStatusTextProps(status)}
           key="backfill_status"
-          monospace
-          muted={!status}
-          success={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.COMPLETED === status}
         >
           {status || 'inactive'}
         </Text>,

@@ -3,7 +3,6 @@ import NextLink from 'next/link';
 import BackfillType, {
   BACKFILL_TYPE_DATETIME,
   BACKFILL_TYPE_CODE,
-  BackfillStatusEnum,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
 import Link from '@oracle/elements/Link';
