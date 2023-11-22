@@ -17,10 +17,10 @@ KEY_SOURCE = 'sources'
 
 def calculate_metrics(
     pipeline_run: PipelineRun,
-    streams: List[str] = None,
     logger=None,
     logging_tags: Dict = None,
     skip_pipeline_run_metrics: bool = False,
+    streams: List[str] = None,
 ) -> Dict:
     if not pipeline_run:
         return
@@ -53,18 +53,32 @@ def calculate_metrics(
 
 def __calculate_metrics(
     pipeline_run: PipelineRun,
-    streams: List[str] = None,
     skip_pipeline_run_metrics: bool = False,
+    streams: List[str] = None,
 ) -> Dict:
+    """
+    Calculate metrics for an integration pipeline run. If `streams` is passed in, the
+    metrics will be calculated only for the specific streams. If `skip_pipeline_run_metrics`
+    is True, only the block run metrics will be calculated.
+
+    Args:
+        pipeline_run (PipelineRun): The pipeline run to calculate metrics for. Metrics will also
+            be calculated for each block run in the pipeline run.
+        skip_pipeline_run_metrics (bool): Whether to skip calculating pipeline run metrics.
+        streams (List[str]): The list of streams to calculate metrics for. If None, metrics
+            will be calculated for all streams for the pipeline.
+
+    Returns:
+        Dict: The calculated metrics.
+    """
     pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
     if PipelineType.INTEGRATION != pipeline.type:
         return
-
-    stream_ors = []
     if not streams:
         streams = [s['tap_stream_id'] for s in pipeline.streams()]
 
+    stream_ors = []
     for stream in streams:
         stream_ors += [
             BlockRun.block_uuid.contains(f'{pipeline.data_loader.uuid}:{stream}'),
