@@ -1030,7 +1030,7 @@ function SchemaTable({
             </Text>
             <Text default inline>
               If a stream&#39;s schema specifies its valid replication keys and a feature
-              is not a valid replication key, it will not be set as a bookmark property
+              is not a valid replication key, that feature will not be set as a bookmark property
               when applying the feature (from a different stream) as a bookmark to all
               streams.&nbsp;
             </Text>
