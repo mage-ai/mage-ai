@@ -474,7 +474,7 @@ function SchemaTable({
 
                   if (bookmarkProperties?.includes(columnName)
                     && !stream?.bookmark_properties?.includes(columnName)
-                    && currStreamReplicationKeys.includes(columnName)
+                    && (currStreamReplicationKeys.includes(columnName) || currStreamReplicationKeys.length === 0)
                   ) {
                     stream.bookmark_properties = [columnName].concat(stream.bookmark_properties || []);
                   } else if (!bookmarkProperties?.includes(columnName)
@@ -1029,9 +1029,10 @@ function SchemaTable({
               Valid replication keys
             </Text>
             <Text default inline>
-              If a stream&#39;s feature is not a valid replication key, it will not
-              be set as a bookmark property when applying the feature (from a different
-              stream) as a bookmark to all streams.&nbsp;
+              If a stream&#39;s schema specifies its valid replication keys and a feature
+              is not a valid replication key, it will not be set as a bookmark property
+              when applying the feature (from a different stream) as a bookmark to all
+              streams.&nbsp;
             </Text>
             {validReplicationKeys.length > 0 && (
               <>
@@ -1043,7 +1044,8 @@ function SchemaTable({
             )}
             {validReplicationKeys.length === 0 &&
               <Text default inline>
-                This stream has no valid replication keys.
+                This stream did not specify any valid replication keys, so all features
+                can be used as bookmark properties.
               </Text>
             }
           </Spacing>
