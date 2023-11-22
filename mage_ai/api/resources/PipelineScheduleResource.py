@@ -39,6 +39,10 @@ class PipelineScheduleResource(DatabaseResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
+        """
+        The result of this method will be a ResultSet of dictionaries. Each dict will already
+        contain the additional fields that are needed for the pipeline schedule LIST endpoint.
+        """
         pipeline = kwargs.get('parent_model')
 
         global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
@@ -145,6 +149,9 @@ class PipelineScheduleResource(DatabaseResource):
         schedules = query.all()
         schedule_ids = [schedule.id for schedule in schedules]
 
+        # Get the number of pipeline runs and in progress pipeline runs for each pipeline schedule
+        # in a single query. The result of this query will be a record of
+        # (pipeline_schedule_id, pipeline_runs_count, in_progress_runs_count).
         counts_query = (
             PipelineRun.select(
                 PipelineRun.pipeline_schedule_id,
@@ -172,6 +179,7 @@ class PipelineScheduleResource(DatabaseResource):
             .group_by(PipelineRun.pipeline_schedule_id)
         )
         pipeline_run_counts = counts_query.all()
+
         run_counts_by_pipeline_schedule = {
             count.pipeline_schedule_id: dict(
                 pipeline_runs_count=count.pipeline_runs_count,
@@ -180,6 +188,8 @@ class PipelineScheduleResource(DatabaseResource):
             for count in pipeline_run_counts
         }
 
+        # Get tags for each pipeline schedule in a single query. The result of this query will be
+        # a record of (taggable_id, taggable_type, tag_id, tag_name).
         tags = (
             tag_query
             .filter(
