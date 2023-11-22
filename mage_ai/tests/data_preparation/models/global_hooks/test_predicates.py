@@ -4,9 +4,8 @@ from typing import Any, Dict, List, Tuple, Union
 
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.GenericResource import GenericResource
-
-# from mage_ai.data_preparation.models.block import Block
-# from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_hooks.constants import (
     PredicateObjectType,
     PredicateOperator,
@@ -19,9 +18,68 @@ from mage_ai.data_preparation.models.global_hooks.predicates import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig, ignore_keys, merge_dict, set_value
-
-# from mage_ai.shared.models import BaseDataClass
 from mage_ai.tests.base_test import AsyncDBTestCase
+
+first_object_key = 'first_object_key'
+model = dict(power=100)
+data_type_to_value_mapping = {
+    PredicateValueDataType.BOOLEAN: True,
+    PredicateValueDataType.DICTIONARY: model,
+    PredicateValueDataType.FLOAT: 1.0,
+    PredicateValueDataType.INTEGER: 3,
+    PredicateValueDataType.LIST: [model],
+    PredicateValueDataType.STRING: json.dumps(model),
+}
+
+
+def build_operation_resource_settings(
+    left_value: Union[bool, Dict, float, int, List, str],
+    first_object_key=first_object_key,
+    repo_path: str = None,
+) -> Dict:
+    settings = {
+        BaseResource.__name__: dict(
+            left_object_keys=[first_object_key],
+            operation_resource=GenericResource({
+                first_object_key: left_value,
+            }, None),
+        ),
+        dict.__name__: dict(
+            left_object_keys=[first_object_key],
+            operation_resource={
+                first_object_key: left_value,
+            },
+        ),
+        list.__name__: dict(
+            left_object_keys=[0, first_object_key],
+            operation_resource=[
+                GenericResource({
+                    first_object_key: left_value,
+                }, None),
+            ],
+        ),
+        Pipeline.__name__: dict(
+            left_object_keys=['variables', first_object_key],
+            operation_resource=Pipeline(uuid.uuid4().hex, config=dict(variables={
+                first_object_key: left_value,
+            })),
+        ),
+    }
+
+    if repo_path:
+        settings[Block.__name__] = dict(
+            left_object_keys=['configuration', first_object_key],
+            operation_resource=Block.create(
+                uuid.uuid4().hex,
+                BlockType.DATA_LOADER,
+                repo_path,
+                configuration={
+                    first_object_key: left_value,
+                },
+            ),
+        )
+
+    return settings
 
 
 class PredicatesTest(AsyncDBTestCase):
@@ -163,7 +221,37 @@ class PredicatesTest(AsyncDBTestCase):
                 assertion_func(predicate.validate(None, **settings))
 
     def test_validate_using_operation_resource(self):
-        pass
+        left_value = uuid.uuid4().hex
+
+        for operation_resource_class_name, settings in build_operation_resource_settings(
+            left_value,
+            repo_path=self.repo_path,
+        ).items():
+            left_object_keys = settings['left_object_keys']
+            operation_resource = settings['operation_resource']
+
+            for right_value_use, assertion_func in [
+                (left_value, self.assertTrue),
+                (left_value + left_value, self.assertFalse),
+            ]:
+                left_object_keys_use = left_object_keys
+                if list.__name__ == operation_resource_class_name:
+                    left_object_keys_use = left_object_keys[1:]
+
+                predicate = HookPredicate.load(
+                    left_object_keys=left_object_keys_use,
+                    left_object_type=PredicateObjectType.OPERATION_RESOURCE,
+                    left_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                    ),
+                    operator=PredicateOperator.EQUALS,
+                    right_value=right_value_use,
+                    right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                    ),
+                )
+
+                assertion_func(predicate.validate(operation_resource))
 
         # OPERATION_RESOURCE
         # RESOURCES
@@ -272,63 +360,6 @@ def get_left_right_value(
     return (left_value, left_value)
 
 
-first_object_key = 'first_object_key'
-model = dict(power=100)
-data_type_to_value_mapping = {
-    PredicateValueDataType.BOOLEAN: True,
-    PredicateValueDataType.DICTIONARY: model,
-    PredicateValueDataType.FLOAT: 1.0,
-    PredicateValueDataType.INTEGER: 3,
-    PredicateValueDataType.LIST: [model],
-    PredicateValueDataType.STRING: json.dumps(model),
-}
-
-
-def _build_operation_resource_settings(
-    left_value: Union[bool, Dict, float, int, List, str],
-    first_object_key=first_object_key,
-) -> Dict:
-    return {
-        BaseResource.__name__: dict(
-            left_object_keys=[first_object_key],
-            operation_resource=GenericResource({
-                first_object_key: left_value,
-            }, None),
-        ),
-        # Block.__name__: dict(
-        #     left_object_keys=['configuration', first_object_key],
-        #     operation_resource=Block.create(
-        #         uuid.uuid4().hex,
-        #         BlockType.DATA_LOADER,
-        #         self.repo_path,
-        #         configuration={
-        #             first_object_key: left_value,
-        #         },
-        #     ),
-        # ),
-        dict.__name__: dict(
-            left_object_keys=[first_object_key],
-            operation_resource={
-                first_object_key: left_value,
-            },
-        ),
-        list.__name__: dict(
-            left_object_keys=[0, first_object_key],
-            operation_resource=[
-                GenericResource({
-                    first_object_key: left_value,
-                }, None),
-            ],
-        ),
-        Pipeline.__name__: dict(
-            left_object_keys=['variables', first_object_key],
-            operation_resource=Pipeline(uuid.uuid4().hex, config=dict(variables={
-                first_object_key: left_value,
-            })),
-        ),
-    }
-
-
 def build_test_validate(
     data_type: PredicateValueDataType,
     left_value: Any,
@@ -387,7 +418,7 @@ for object_type in PredicateObjectType:
                 continue
 
             operation_resource_settings = {}
-            for tup in _build_operation_resource_settings(left_value).items():
+            for tup in build_operation_resource_settings(left_value).items():
                 operation_resource_class_name, settings_init = tup
                 settings = settings_init.copy()
 

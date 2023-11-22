@@ -192,7 +192,10 @@ def get_value(
                     value_temp = getattr(object_arg, key)
                 else:
                     value_temp = get_value(value_temp, [key])
-        elif isinstance(object_arg, Iterable) and not isinstance(object_arg, dict):
+        elif isinstance(object_arg, Iterable) and \
+                not isinstance(object_arg, dict) and \
+                not isinstance(object_arg, str):
+
             value_temp = list(object_arg)
             for key in keys:
                 value_temp = get_value(value_temp, [key])
