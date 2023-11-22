@@ -181,13 +181,7 @@ def get_value(
 ) -> Union[bool, Dict, float, int, List, str]:
     value_temp = None
 
-    print('WTFFFFFFFFFFFFFFFFFFFFFF get value',)
-    print(keys)
-    print(object_arg, issubclass(object_arg.__class__, BaseResource))
-    print('\n')
-
     if keys:
-        print('-------------------------------------------------------- inside get_value')
         if not isinstance(object_arg, Iterable) and (
             issubclass(object_arg.__class__, BaseResource) or
             isinstance(object_arg, Block) or
@@ -195,19 +189,9 @@ def get_value(
         ):
             for idx, key in enumerate(keys):
                 if idx == 0:
-                    print('KEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYy', key, type(key), object_arg)
                     value_temp = getattr(object_arg, key)
                 else:
                     value_temp = get_value(value_temp, [key])
-
-            # value_temp = object_arg
-
-            # for key in keys:
-                # print(key, get_value(object_arg, [key]))
-
-                # value_temp = get_value(object_arg, [key])
-
-                print('VALUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE', value_temp)
         elif isinstance(object_arg, Iterable) and not isinstance(object_arg, dict):
             value_temp = list(object_arg)
             for key in keys:

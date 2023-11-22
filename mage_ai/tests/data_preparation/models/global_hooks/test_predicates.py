@@ -17,7 +17,8 @@ from mage_ai.data_preparation.models.global_hooks.predicates import (
     PredicateValueType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.shared.hash import ignore_keys, merge_dict
+from mage_ai.shared.array import find
+from mage_ai.shared.hash import ignore_keys, merge_dict, set_value
 
 # from mage_ai.shared.models import BaseDataClass
 from mage_ai.tests.base_test import AsyncDBTestCase
@@ -82,6 +83,66 @@ class PredicatesTest(AsyncDBTestCase):
                 )
 
                 assertion_func(predicate.validate(None))
+
+    def test_validate_using_object_types(self):
+        value = uuid.uuid4().hex
+
+        left_object_keys = ['fire']
+        left_value_type = PredicateValueType.load(
+            value_data_type=PredicateValueDataType.STRING,
+        )
+        left_object = set_value({}, left_object_keys, value)
+
+        operator = PredicateOperator.EQUALS
+        right_object_keys = ['wind', 'level']
+        right_value_type = left_value_type
+        right_object = set_value({}, right_object_keys, value)
+
+        object_types = [
+            PredicateObjectType.ERROR,
+            PredicateObjectType.HOOK,
+            PredicateObjectType.META,
+            PredicateObjectType.METADATA,
+            PredicateObjectType.PAYLOAD,
+            PredicateObjectType.QUERY,
+            PredicateObjectType.RESOURCE,
+            PredicateObjectType.USER,
+        ]
+        for left_object_type in object_types:
+            right_object_type = find(
+                lambda x, left_object_type=left_object_type: x != left_object_type,
+                object_types,
+            )
+
+            for right_value_use, assertion_func in [
+                (value, self.assertTrue),
+                (value + value, self.assertFalse),
+            ]:
+                predicate = HookPredicate.load(
+                    left_object_keys=left_object_keys,
+                    left_object_type=left_object_type,
+                    left_value_type=left_value_type,
+                    operator=operator,
+                    right_object_keys=right_object_keys,
+                    right_object_type=right_object_type,
+                    right_value_type=right_value_type,
+                )
+
+                settings = {
+                    left_object_type.value: left_object,
+                    right_object_type.value: set_value(
+                        right_object,
+                        right_object_keys,
+                        right_value_use,
+                    ),
+                }
+
+                assertion_func(predicate.validate(None, **settings))
+
+        # OPERATION_RESOURCE
+        # RESOURCES
+        # RESOURCE_ID
+        # RESOURCE_PARENT_ID
 
 
 class CustomTestError(Exception):
