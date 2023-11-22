@@ -159,6 +159,12 @@ class HookPredicate(BasePredicate):
         if self.right_value_type and INTERNAL_DEFAULT_PREDICATE_VALUE != right_value_to_compare:
             right_value_to_compare = convert_value(right_value_to_compare, self.right_value_type)
 
+        if INTERNAL_DEFAULT_PREDICATE_VALUE == left_value_to_compare:
+            left_value_to_compare = None
+
+        if INTERNAL_DEFAULT_PREDICATE_VALUE == right_value_to_compare:
+            right_value_to_compare = None
+
         if self.operator:
             return compare_using_operator(
                 self.operator,
@@ -261,6 +267,31 @@ def compare_using_operator(
     right_value: Union[bool, Dict, float, int, List, str],
 ) -> bool:
     try:
+        if operator in [
+            PredicateOperator.GREATER_THAN,
+            PredicateOperator.GREATER_THAN_OR_EQUALS,
+            PredicateOperator.LESS_THAN,
+            PredicateOperator.LESS_THAN_OR_EQUALS,
+        ]:
+            if (
+                left_value is not None and
+                not isinstance(left_value, str) and
+                (isinstance(left_value, dict) or isinstance(left_value, Iterable))
+            ) or (
+                right_value is not None and
+                not isinstance(right_value, str) and
+                (isinstance(right_value, dict) or isinstance(right_value, Iterable))
+            ):
+                if left_value is None:
+                    left_value = 0
+                else:
+                    left_value = len(left_value)
+
+                if right_value is None:
+                    right_value = 0
+                else:
+                    right_value = len(right_value)
+
         if PredicateOperator.EQUALS == operator:
             return right_value == left_value
         if PredicateOperator.GREATER_THAN == operator:
