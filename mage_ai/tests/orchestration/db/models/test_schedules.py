@@ -21,7 +21,6 @@ from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payl
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
-    create_pipeline,
     create_pipeline_run,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
