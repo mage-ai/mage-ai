@@ -42,6 +42,7 @@ interface HookStatusType {
 }
 
 interface HookRunSettingsType {
+  asynchronous?: boolean;
   with_trigger?: boolean;
 }
 

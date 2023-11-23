@@ -702,6 +702,7 @@ function GlobalHookDetail({
               description="Select a pipeline that will be executed every time this hook is triggered."
               invalid={attributesTouched && !attributes?.pipeline?.uuid}
               selectInput={{
+                fullWidth: false,
                 monospace: true,
                 onChange: e => setAttributes(prev => ({
                   ...prev,
@@ -720,7 +721,24 @@ function GlobalHookDetail({
                 placeholder: 'Select a pipeline',
                 value: attributes?.pipeline?.uuid,
               }}
-            />
+            >
+              {attributes?.pipeline?.uuid && (
+                <div>
+                  <NextLink
+                    as={`/pipelines/${attributes?.pipeline?.uuid}/edit`}
+                    href={'/pipelines/[pipeline]/edit'}
+                    passHref
+                  >
+                    <Link
+                      block
+                      openNewWindow
+                    >
+                      View pipeline
+                    </Link>
+                  </NextLink>
+                </div>
+              )}
+            </SetupSectionRow>
 
             <SetupSectionRow
               title={attributes?.pipeline?.uuid && !metadata?.snapshot_hash && !metadata?.snapshot_valid
@@ -854,6 +872,42 @@ function GlobalHookDetail({
                   run_settings: {
                     ...prev?.run_settings,
                     with_trigger: valFunc(prev?.run_settings?.with_trigger),
+                  },
+                })),
+              }}
+            />
+
+            <SetupSectionRow
+              title="Run hook asynchronously"
+              description={(
+                <Text muted small>
+                  Hooks will execute the associated pipeline synchronously and
+                  prevent the current resource operation (e.g. API request) from resolving
+                  until all associated hooks for that resource operation are completed.
+
+                  <br />
+
+                  Hooks running synchronously can mutate the input data and output data.
+                  However, it can slow down the user experience in the application.
+
+                  <br />
+
+                  Enable this setting to run hooks asynchronously and
+                  not block the current resource operation from resolving.
+
+                  <br />
+
+                  However, asynchronous hooks cannot mutate the input data or output data.
+                  Use this asynchronous setting when hooks don’t need to mutate data.
+                </Text>
+              )}
+              toggleSwitch={{
+                checked: !!attributes?.run_settings?.asynchronous,
+                onCheck: (valFunc: (val: boolean) => boolean) => setAttributes(prev => ({
+                  ...prev,
+                  run_settings: {
+                    ...prev?.run_settings,
+                    asynchronous: valFunc(prev?.run_settings?.asynchronous),
                   },
                 })),
               }}

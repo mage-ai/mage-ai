@@ -386,6 +386,8 @@ class Hook(BaseDataClass):
                     _should_schedule=should_schedule,
                 )
             elif asynchronous:
+                # TODO: invoking the below method will still block the current
+                # operation from completing
                 PipelineExecutor(self.pipeline).execute(global_vars=variables, update_status=False)
             else:
                 self.pipeline.execute_sync(global_vars=variables, update_status=False)
