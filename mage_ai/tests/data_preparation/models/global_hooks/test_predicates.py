@@ -369,7 +369,7 @@ class PredicatesTest(AsyncDBTestCase):
                 predicates_to_create_at_this_level = random.randint(
                     predicates_count - i1, predicates_count,
                 )
-                for i2 in range(predicates_to_create_at_this_level):
+                for _i2 in range(predicates_to_create_at_this_level):
                     operator = get_and_or_operator()
                     predicates = get_predicates(
                         operator,
