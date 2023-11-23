@@ -61,6 +61,7 @@ class BaseOperation():
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
         self.payload = kwargs.get('payload') or {}
+        self.payload_mutated = None
         self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
@@ -96,6 +97,7 @@ class BaseOperation():
                 condition=HookCondition.SUCCESS,
                 metadata=metadata,
                 operation_resource=result,
+                payload=self.payload_mutated,
                 **{
                     resource_key: presented_init,
                 },
@@ -221,6 +223,7 @@ class BaseOperation():
                 error=self.__present_error(err),
                 metadata=metadata,
                 operation_resource=result,
+                payload=self.payload_mutated,
                 **{
                     resource_key: presented_init,
                 },
@@ -321,6 +324,7 @@ class BaseOperation():
         error: Dict = None,
         metadata: Dict = None,
         operation_resource: Union[BaseResource, List[BaseResource]] = None,
+        payload: Dict = None,
         resource: Dict = None,
         resources: List[Dict] = None,
     ) -> Union[Dict, List[Dict]]:
@@ -331,6 +335,7 @@ class BaseOperation():
             metadata=metadata,
             operation_resource=operation_resource,
             operation_type=HookOperation(self.action),
+            payload=payload,
             query=self.query,
             resource=resource,
             resources=resources,
@@ -410,6 +415,8 @@ class BaseOperation():
                 value = output.get('query') or {}
                 if isinstance(value, dict):
                     self.query = merge_dict(self.query, value)
+
+        self.payload_mutated = payload
 
         return payload
 

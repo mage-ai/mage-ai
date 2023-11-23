@@ -20,7 +20,10 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookStage,
     HookStrategy,
 )
-from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
+from mage_ai.data_preparation.models.global_hooks.predicates import (
+    HookPredicate,
+    PredicateValueType,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
@@ -67,6 +70,8 @@ def build_hooks(
     test_predicate_after: bool = False,
     test_predicate_before: bool = False,
     predicate_match: HookPredicate = None,
+    predicate_match_after: HookPredicate = None,
+    predicate_match_before: HookPredicate = None,
     predicate_miss: HookPredicate = None,
     snapshot: bool = True,
 ) -> List[Hook]:
@@ -79,15 +84,19 @@ def build_hooks(
             type=pipeline.type,
         )
 
-    if predicate_match is None:
+    if predicate_match is None and predicate_match_after is None and predicate_match_before is None:
         predicate_match = HookPredicate.load(
             and_or_operator=PredicateAndOrOperator.AND,
             predicates=[HookPredicate.load(
                 left_value=v,
-                left_value_type=PredicateValueDataType.STRING,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
                 operator=PredicateOperator.EQUALS,
                 right_value=v,
-                right_value_type=PredicateValueDataType.STRING,
+                right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                ),
             ) for v in matching_predicate_resource.values()],
         )
 
@@ -96,13 +105,15 @@ def build_hooks(
             and_or_operator=PredicateAndOrOperator.AND,
             predicates=[HookPredicate.load(
                 left_value=v,
-                left_value_type=PredicateValueDataType.STRING,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
                 operator=PredicateOperator.EQUALS,
                 right_value=None,
-                right_value_type=PredicateValueDataType.STRING,
-            ) for v in matching_predicate_resource.values()] + [
-                predicate_match,
-            ],
+                right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                ),
+            ) for v in matching_predicate_resource.values()],
         )
 
     if not operation_type:
@@ -136,9 +147,15 @@ def build_hooks(
             hook_setting = hook_settings[idx]
             hook_payload.update(hook_setting)
 
+        predicate_use = predicate_match
+        if predicate_match_after and HookStage.AFTER in hook_dict['stages']:
+            predicate_use = predicate_match_after
+        elif predicate_match_before and HookStage.BEFORE in hook_dict['stages']:
+            predicate_use = predicate_match_before
+
         hook = Hook.load(
             operation_type=operation_type,
-            predicate=predicate_match,
+            predicate=predicate_use,
             resource_type=resource_type,
             strategies=[HookStrategy.RAISE],
             uuid=f'hook{idx}_{test_case.faker.unique.name()}',
@@ -181,8 +198,10 @@ class GlobalHooksMixin(BaseApiTestCase):
         matching_predicate_resource: Dict = None,
         operation_type: HookOperation = None,
         pipeline_type: PipelineType = None,
-        predicate_match: List[HookPredicate] = None,
-        predicate_miss: List[HookPredicate] = None,
+        predicate_match: HookPredicate = None,
+        predicate_match_after: HookPredicate = None,
+        predicate_match_before: HookPredicate = None,
+        predicate_miss: HookPredicate = None,
         resource_type: EntityName = None,
         snapshot: bool = True,
     ):
@@ -276,6 +295,8 @@ class GlobalHooksMixin(BaseApiTestCase):
             operation_type=operation_type,
             pipeline=pipeline1,
             predicate_match=predicate_match,
+            predicate_match_after=predicate_match_after,
+            predicate_match_before=predicate_match_before,
             predicate_miss=predicate_miss,
             resource_type=resource_type,
             snapshot=snapshot,

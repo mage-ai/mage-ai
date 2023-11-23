@@ -2,6 +2,7 @@ import json
 from abc import abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
+from enum import Enum
 from typing import Dict, List, Union
 
 from mage_ai.api.resources.BaseResource import BaseResource
@@ -251,6 +252,8 @@ def convert_value(
     elif PredicateValueDataType.STRING == value_data_type:
         if value is None:
             value = ''
+        if isinstance(value, Enum):
+            value = value.value
         value = str(value)
 
     return value
