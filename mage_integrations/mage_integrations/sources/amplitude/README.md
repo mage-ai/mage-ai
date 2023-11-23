@@ -17,7 +17,13 @@ You must enter the following settings when configuring this source:
 >
 > See Amplitude’s [documentation](https://www.docs.developers.amplitude.com/analytics/find-api-credentials/).
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `host` | The Amplitude host. Standard server: `https://amplitude.com`. EU Residency Server: `https://analytics.eu.amplitude.com`.| Default value is `https://amplitude.com` |
 <br />
+
 
 ## Query
 
