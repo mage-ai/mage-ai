@@ -10,6 +10,7 @@ import yaml
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.utils import fetch_input_variables
 from mage_ai.data_preparation.models.global_hooks.constants import (
@@ -76,6 +77,7 @@ class HookStrategies(BaseDataClass):
 
 @dataclass
 class HookRunSettings(BaseDataClass):
+    asynchronous: bool = False
     with_trigger: bool = False
 
 
@@ -368,11 +370,14 @@ class Hook(BaseDataClass):
             )
 
             pipeline_run = None
+
+            asynchronous = self.run_settings.asynchronous if self.run_settings else False
+
             if with_trigger or (self.run_settings and self.run_settings.with_trigger):
                 pipeline_run = trigger_pipeline(
                     self.pipeline.uuid,
                     variables=variables,
-                    check_status=check_status,
+                    check_status=check_status and not asynchronous,
                     error_on_failure=error_on_failure,
                     poll_interval=1,
                     poll_timeout=poll_timeout,
@@ -380,6 +385,8 @@ class Hook(BaseDataClass):
                     verbose=True,
                     _should_schedule=should_schedule,
                 )
+            elif asynchronous:
+                PipelineExecutor(self.pipeline).execute(global_vars=variables, update_status=False)
             else:
                 self.pipeline.execute_sync(global_vars=variables, update_status=False)
 
