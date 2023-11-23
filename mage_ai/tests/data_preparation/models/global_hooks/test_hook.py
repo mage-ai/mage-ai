@@ -24,6 +24,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookStrategy,
     run_hooks,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.shared.mixins import GlobalHooksMixin
@@ -137,6 +138,9 @@ class HookTest(GlobalHooksMixin):
         for hook in self.hooks_match + self.hooks_miss:
             hook.snapshot()
 
+        hook = self.hooks_match[0]
+        hook.predicate = HookPredicate.load()
+
         operation_resource = dict(
             name=self.pipeline1.name,
             type=self.pipeline1.type,
@@ -144,35 +148,29 @@ class HookTest(GlobalHooksMixin):
         operation_types = [HookOperation.DETAIL]
         resource_type = EntityName.Pipeline
 
-        self.assertFalse(any([hook.should_run(
-            conditions=[HookCondition.FAILURE],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.BEFORE,
-        ) for hook in self.hooks_miss[:2]]))
-        self.assertFalse(any([hook.should_run(
-            conditions=[HookCondition.SUCCESS],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.AFTER,
-        ) for hook in self.hooks_miss[2:]]))
+        with patch.object(hook.predicate, 'validate') as mock_validate:
+            self.assertTrue(hook.should_run(
+                conditions=[HookCondition.FAILURE],
+                operation_resource=operation_resource,
+                operation_types=operation_types,
+                resource_type=resource_type,
+                stage=HookStage.BEFORE,
+            ))
 
-        self.assertTrue(all([hook.should_run(
-            conditions=[HookCondition.FAILURE],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.BEFORE,
-        ) for hook in self.hooks_match[:2]]))
-        self.assertTrue(all([hook.should_run(
-            conditions=[HookCondition.SUCCESS],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.AFTER,
-        ) for hook in self.hooks_match[2:]]))
+            mock_validate.assert_called_once_with(
+                operation_resource,
+                error=None,
+                hook=hook.to_dict(include_all=True),
+                meta=None,
+                metadata=None,
+                payload=None,
+                query=None,
+                resource=None,
+                resource_id=None,
+                resource_parent_id=None,
+                resources=None,
+                user=None,
+            )
 
     async def test_run_no_pipeline(self):
         await self.setUpAsync()
@@ -660,7 +658,7 @@ class HookTest(GlobalHooksMixin):
                     uuid=self.pipeline1.uuid,
                     variables=dict(mage=1),
                 ),
-                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
                 run_settings=dict(with_trigger=True),
                 stages=[m.value for m in hook.stages],
                 strategies=[m.value for m in hook.strategies],
@@ -692,7 +690,7 @@ class HookTest(GlobalHooksMixin):
                     uuid=self.pipeline1.uuid,
                     variables=dict(mage=1),
                 ),
-                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
                 resource_type=hook.resource_type.value,
                 run_settings=dict(with_trigger=True),
                 stages=[m.value for m in hook.stages],
@@ -727,7 +725,7 @@ class HookTest(GlobalHooksMixin):
                     uuid=self.pipeline1.uuid,
                     variables=dict(mage=1),
                 ),
-                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
                 run_settings=dict(with_trigger=True),
                 stages=[m.value for m in hook.stages],
                 status=dict(error=500, strategy=HookStrategy.BREAK.value),
