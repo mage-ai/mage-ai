@@ -15,37 +15,71 @@ KEY_DESTINATION = 'destinations'
 KEY_SOURCE = 'sources'
 
 
-def calculate_metrics(
+def calculate_pipeline_run_metrics(
     pipeline_run: PipelineRun,
     logger=None,
     logging_tags: Dict = None,
-    skip_pipeline_run_metrics: bool = False,
+) -> Dict:
+    if pipeline_run:
+        return __calculate_and_log_metrics(
+            pipeline_run,
+            logger=logger,
+            logging_tags=logging_tags,
+            update_pipeline_run_metrics=True,
+        )
+
+
+def calculate_block_metrics(
+    pipeline_run: PipelineRun,
+    logger=None,
+    logging_tags: Dict = None,
     streams: List[str] = None,
 ) -> Dict:
-    if not pipeline_run:
-        return
+    if pipeline_run:
+        return __calculate_and_log_metrics(
+            pipeline_run,
+            logger=logger,
+            logging_tags=logging_tags,
+            streams=streams,
+            update_block_run_metrics=True,
+        )
+
+
+def __calculate_and_log_metrics(
+    pipeline_run: PipelineRun,
+    logger=None,
+    logging_tags: Dict = None,
+    streams: List[str] = None,
+    update_block_run_metrics: bool = False,
+    update_pipeline_run_metrics: bool = False,
+) -> Dict:
+    logging_value = f'pipeline run {pipeline_run.id}'
+    if update_block_run_metrics:
+        logging_value = f'streams {streams}' if streams else 'all streams'
+
     if logging_tags is None:
         logging_tags = dict()
     if logger:
         logger.info(
-            f'Calculate metrics for pipeline run {pipeline_run.id} started.',
+            f'Calculate metrics for {logging_value} started.',
             **logging_tags,
         )
     try:
         __calculate_metrics(
             pipeline_run,
             streams=streams,
-            skip_pipeline_run_metrics=skip_pipeline_run_metrics,
+            update_block_run_metrics=update_block_run_metrics,
+            update_pipeline_run_metrics=update_pipeline_run_metrics,
         )
         if logger:
             logger.info(
-                f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+                f'Calculate metrics for {logging_value} completed.',
                 **merge_dict(logging_tags, dict(metrics=pipeline_run.metrics)),
             )
     except Exception as e:
         if logger:
             logger.error(
-                f'Failed to calculate metrics for pipeline run {pipeline_run.id}.',
+                f'Failed to calculate metrics for {logging_value}.',
                 **logging_tags,
                 error=e,
             )
@@ -53,20 +87,23 @@ def calculate_metrics(
 
 def __calculate_metrics(
     pipeline_run: PipelineRun,
-    skip_pipeline_run_metrics: bool = False,
     streams: List[str] = None,
+    update_block_run_metrics: bool = False,
+    update_pipeline_run_metrics: bool = False,
 ) -> Dict:
     """
     Calculate metrics for an integration pipeline run. If `streams` is passed in, the
-    metrics will be calculated only for the specific streams. If `skip_pipeline_run_metrics`
-    is True, only the block run metrics will be calculated.
+    metrics will be calculated only for the specific streams. If `update_block_run_metrics`
+    is True, only the block run metrics will be calculated. If `update_pipeline_run_metrics`
+    is True, only the pipeline run metrics will be calculated.
 
     Args:
         pipeline_run (PipelineRun): The pipeline run to calculate metrics for. Metrics will also
             be calculated for each block run in the pipeline run.
-        skip_pipeline_run_metrics (bool): Whether to skip calculating pipeline run metrics.
         streams (List[str]): The list of streams to calculate metrics for. If None, metrics
             will be calculated for all streams for the pipeline.
+        update_block_run_metrics (bool): Whether to calculate block run metrics.
+        update_pipeline_run_metrics (bool): Whether to only calculate pipeline run metrics.
 
     Returns:
         Dict: The calculated metrics.
@@ -90,56 +127,58 @@ def __calculate_metrics(
     ).all()
 
     block_runs_by_stream = {}
-    for br in all_block_runs:
-        block_uuid = br.block_uuid
-        parts = block_uuid.split(':')
-        stream = parts[1]
-        if stream not in block_runs_by_stream:
-            block_runs_by_stream[stream] = []
-        block_runs_by_stream[stream].append(br)
 
-    for stream in streams:
-        destinations = []
-        sources = []
+    if update_block_run_metrics:
+        for br in all_block_runs:
+            block_uuid = br.block_uuid
+            parts = block_uuid.split(':')
+            stream = parts[1]
+            if stream not in block_runs_by_stream:
+                block_runs_by_stream[stream] = []
+            block_runs_by_stream[stream].append(br)
 
-        block_runs = block_runs_by_stream.get(stream, [])
-        for br in block_runs:
-            logs_arr = br.logs['content'].split('\n')
+        for stream in streams:
+            destinations = []
+            sources = []
 
-            if f'{pipeline.data_loader.uuid}:{stream}' in br.block_uuid:
-                sources.append(logs_arr)
-            elif f'{pipeline.data_exporter.uuid}:{stream}' in br.block_uuid:
-                destinations.append(logs_arr)
+            block_runs = block_runs_by_stream.get(stream, [])
+            for br in block_runs:
+                logs_arr = br.logs['content'].split('\n')
 
-        block_runs_by_stream[stream] = dict(
-            destinations=destinations,
-            sources=sources,
-        )
+                if f'{pipeline.data_loader.uuid}:{stream}' in br.block_uuid:
+                    sources.append(logs_arr)
+                elif f'{pipeline.data_exporter.uuid}:{stream}' in br.block_uuid:
+                    destinations.append(logs_arr)
 
-    shared_metric_keys = [
-        'block_tags',
-        'error',
-        'errors',
-        'message',
-    ]
+            block_runs_by_stream[stream] = dict(
+                destinations=destinations,
+                sources=sources,
+            )
 
-    block_metrics_by_stream = get_metrics(block_runs_by_stream, [
-        (KEY_SOURCE, shared_metric_keys + [
-            'record',
-            'records',
-        ]),
-        (KEY_DESTINATION, shared_metric_keys + [
-            'record',
-            'records',
-            'records_affected',
-            'records_inserted',
-            'records_updated',
-            'state',
-        ]),
-    ])
+        shared_metric_keys = [
+            'block_tags',
+            'error',
+            'errors',
+            'message',
+        ]
+
+        block_metrics_by_stream = get_metrics(block_runs_by_stream, [
+            (KEY_SOURCE, shared_metric_keys + [
+                'record',
+                'records',
+            ]),
+            (KEY_DESTINATION, shared_metric_keys + [
+                'record',
+                'records',
+                'records_affected',
+                'records_inserted',
+                'records_updated',
+                'state',
+            ]),
+        ])
 
     pipeline_metrics_by_stream = {}
-    if not skip_pipeline_run_metrics:
+    if update_pipeline_run_metrics:
         pipeline_logs_by_stream = {}
         pipeline_logs = pipeline_run.logs['content'].split('\n')
         for pipeline_log in pipeline_logs:
