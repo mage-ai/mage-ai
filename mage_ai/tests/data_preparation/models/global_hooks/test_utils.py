@@ -28,6 +28,11 @@ class GlobalHookUtilsTest(AsyncDBTestCase):
             extracted_data = extract_valid_data(entity_name, data)
 
             if entity_name in types:
-                self.assertEqual(extracted_data, dict(hook=data['hook']))
+                self.assertEqual(extracted_data, dict(
+                    hook=data['hook'],
+                    resource_id=data['resource_id'],
+                    resource_parent_id=data['resource_parent_id'],
+                    user=data['user'],
+                ))
             else:
                 self.assertEqual(extracted_data, ignore_keys(data, ['mage']))

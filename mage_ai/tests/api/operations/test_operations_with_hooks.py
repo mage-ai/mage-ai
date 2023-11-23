@@ -3,15 +3,24 @@
 
 # from mage_ai.authentication.permissions.constants import EntityName
 # from mage_ai.data_preparation.models.constants import BlockType, PipelineType
-# from mage_ai.data_preparation.models.global_hooks.constants import HookOutputKey
+# from mage_ai.data_preparation.models.global_hooks.constants import (
+#     HookOutputKey,
+#     PredicateAndOrOperator,
+#     PredicateObjectType,
+#     PredicateOperator,
+#     PredicateValueDataType,
+# )
 # from mage_ai.data_preparation.models.global_hooks.models import (
 #     GlobalHooks,
 #     HookCondition,
 #     HookOperation,
 #     HookOutputBlock,
 #     HookOutputSettings,
-#     HookPredicate,
 #     HookStage,
+# )
+# from mage_ai.data_preparation.models.global_hooks.predicates import (
+#     HookPredicate,
+#     PredicateValueType,
 # )
 # from mage_ai.data_preparation.models.pipeline import Pipeline
 # from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -45,6 +54,62 @@
 #                 except FileNotFoundError as err:
 #                     print(err)
 
+#     def build_predicates(self,
+#         before_values,
+#         after_values,
+#         and_or_operator: PredicateAndOrOperator = None,
+#     ):
+#         predicate_match_before = HookPredicate.load(
+#             and_or_operator=and_or_operator or PredicateAndOrOperator.AND,
+#             predicates=[HookPredicate.load(
+#                 left_object_keys=left_object_keys,
+#                 left_object_type=left_object_type,
+#                 left_value_type=PredicateValueType.load(
+#                     value_data_type=PredicateValueDataType.STRING,
+#                 ),
+#                 operator=PredicateOperator.EQUALS,
+#                 right_value=value,
+#                 right_value_type=PredicateValueType.load(
+#                     value_data_type=PredicateValueDataType.STRING,
+#                 ),
+#             ) for left_object_keys, left_object_type, value in before_values],
+#         )
+
+#         predicate_match_after = HookPredicate.load(
+#             and_or_operator=and_or_operator or PredicateAndOrOperator.AND,
+#             predicates=[HookPredicate.load(
+#                 left_object_keys=left_object_keys,
+#                 left_object_type=left_object_type,
+#                 left_value_type=PredicateValueType.load(
+#                     value_data_type=PredicateValueDataType.STRING,
+#                 ),
+#                 operator=PredicateOperator.EQUALS,
+#                 right_value=value,
+#                 right_value_type=PredicateValueType.load(
+#                     value_data_type=PredicateValueDataType.STRING,
+#                 ),
+#             ) for left_object_keys, left_object_type, value in after_values],
+#         )
+
+#         predicate_miss = HookPredicate.load(
+#             and_or_operator=and_or_operator or PredicateAndOrOperator.AND,
+#             predicates=[
+#                 HookPredicate.load(
+#                     left_value=uuid.uuid4().hex,
+#                     left_value_type=PredicateValueType.load(
+#                         value_data_type=PredicateValueDataType.STRING,
+#                     ),
+#                     operator=PredicateOperator.EQUALS,
+#                     right_value=uuid.uuid4().hex,
+#                     right_value_type=PredicateValueType.load(
+#                         value_data_type=PredicateValueDataType.STRING,
+#                     ),
+#                 ),
+#             ],
+#         )
+
+#         return predicate_match_before, predicate_match_after, predicate_miss
+
 #     async def test_list(self):
 #         await self.setUpAsync(
 #             block_settings={
@@ -54,8 +119,8 @@
 #             },
 #             operation_type=HookOperation.LIST,
 #             pipeline_type=PipelineType.PYTHON,
-#             predicates_match=[],
-#             predicates_miss=[],
+#             predicate_match=None,
+#             predicate_miss=None,
 #         )
 
 #         pipeline3, _blocks = await build_pipeline_with_blocks_and_content(
@@ -97,8 +162,8 @@
 #             },
 #             operation_type=HookOperation.LIST,
 #             pipeline_type=PipelineType.PYTHON,
-#             predicates_match=[],
-#             predicates_miss=[],
+#             predicate_match=None,
+#             predicate_miss=None,
 #             snapshot=False,
 #         )
 
@@ -136,6 +201,17 @@
 #         payload = dict(name=self.faker.unique.name(), type=PipelineType.STREAMING)
 #         name_final = self.faker.unique.name()
 
+#         predicate_match_before, predicate_match_after, predicate_miss = self.build_predicates(
+#             before_values=[
+#                 (['type'], PredicateObjectType.PAYLOAD, payload['type'].value),
+#                 (['name'], PredicateObjectType.PAYLOAD, payload['name']),
+#             ],
+#             after_values=[
+#                 (['type'], PredicateObjectType.RESOURCE, PipelineType.INTEGRATION.value),
+#                 (['name'], PredicateObjectType.RESOURCE, name_final),
+#             ],
+#         )
+
 #         await self.setUpAsync(
 #             block_settings={
 #                 0: dict(content=build_content(dict(type=PipelineType.INTEGRATION))),
@@ -159,25 +235,9 @@
 #                 ),
 #             },
 #             operation_type=HookOperation.CREATE,
-#             predicates_match=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=PipelineType.STREAMING.value,
-#                     )),
-#                 ],
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         name=name_final,
-#                     )),
-#                 ],
-#             ],
-#             predicates_miss=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         name=uuid.uuid4().hex,
-#                     )),
-#                 ],
-#             ],
+#             predicate_match_before=predicate_match_before,
+#             predicate_match_after=predicate_match_after,
+#             predicate_miss=predicate_miss,
 #         )
 
 #         response = await self.build_create_operation(payload=payload).execute()
@@ -197,6 +257,15 @@
 
 #     async def test_detail(self):
 #         name_final = self.faker.unique.name()
+
+#         predicate_match_before, predicate_match_after, predicate_miss = self.build_predicates(
+#             before_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, PipelineType.PYTHON.value),
+#             ],
+#             after_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, PipelineType.PYTHON.value),
+#             ],
+#         )
 
 #         await self.setUpAsync(
 #             block_settings={
@@ -233,25 +302,9 @@
 #             },
 #             operation_type=HookOperation.DETAIL,
 #             pipeline_type=PipelineType.PYTHON.value,
-#             predicates_match=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=PipelineType.PYTHON.value,
-#                     )),
-#                 ],
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         name=PipelineType.INTEGRATION.value,
-#                     )),
-#                 ],
-#             ],
-#             predicates_miss=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         name=uuid.uuid4().hex,
-#                     )),
-#                 ],
-#             ],
+#             predicate_match_before=predicate_match_before,
+#             predicate_match_after=predicate_match_after,
+#             predicate_miss=predicate_miss,
 #         )
 
 #         response = await self.build_detail_operation(self.pipeline2.uuid).execute()
@@ -272,6 +325,15 @@
 #         uuid_final = self.faker.unique.name()
 
 #         payload = dict(description=description_init, tags=tags_init)
+
+#         predicate_match_before, predicate_match_after, predicate_miss = self.build_predicates(
+#             before_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, PipelineType.PYTHON.value),
+#             ],
+#             after_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, PipelineType.PYTHON.value),
+#             ],
+#         )
 
 #         await self.setUpAsync(
 #             block_settings={
@@ -333,20 +395,9 @@
 #             },
 #             operation_type=HookOperation.UPDATE,
 #             pipeline_type=PipelineType.PYTHON.value,
-#             predicates_match=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=PipelineType.PYTHON.value,
-#                     )),
-#                 ],
-#             ],
-#             predicates_miss=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         name=uuid.uuid4().hex,
-#                     )),
-#                 ],
-#             ],
+#             predicate_match_before=predicate_match_before,
+#             predicate_match_after=predicate_match_after,
+#             predicate_miss=predicate_miss,
 #         )
 
 #         response = await self.build_update_operation(
@@ -366,6 +417,15 @@
 #     async def test_delete(self):
 #         name_final = uuid.uuid4().hex
 #         uuid_final = uuid.uuid4().hex
+
+#         predicate_match_before, predicate_match_after, predicate_miss = self.build_predicates(
+#             before_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, PipelineType.PYTHON.value),
+#             ],
+#             after_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, PipelineType.PYTHON.value),
+#             ],
+#         )
 
 #         await self.setUpAsync(
 #             block_settings={
@@ -431,20 +491,9 @@
 #             },
 #             operation_type=HookOperation.DELETE,
 #             pipeline_type=PipelineType.PYTHON.value,
-#             predicates_match=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=PipelineType.PYTHON.value,
-#                     )),
-#                 ],
-#             ],
-#             predicates_miss=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         name=uuid.uuid4().hex,
-#                     )),
-#                 ],
-#             ],
+#             predicate_match_before=predicate_match_before,
+#             predicate_match_after=predicate_match_after,
+#             predicate_miss=predicate_miss,
 #         )
 
 #         response = await self.build_delete_operation(self.pipeline2.uuid).execute()
@@ -467,6 +516,18 @@
 #     async def test_update_pipeline_blocks(self):
 #         color = uuid.uuid4().hex
 #         configuration = dict(power=uuid.uuid4().hex)
+
+#         predicate_match_before, predicate_match_after, predicate_miss = self.build_predicates(
+#             before_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, BlockType.DATA_LOADER.value),
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, BlockType.TRANSFORMER.value),
+#             ],
+#             after_values=[
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, BlockType.DATA_LOADER.value),
+#                 (['type'], PredicateObjectType.OPERATION_RESOURCE, BlockType.TRANSFORMER.value),
+#             ],
+#             and_or_operator=PredicateAndOrOperator.OR,
+#         )
 
 #         await self.setUpAsync(
 #             block_settings={
@@ -519,25 +580,9 @@
 #             },
 #             operation_type=HookOperation.UPDATE_ANYWHERE,
 #             pipeline_type=PipelineType.PYTHON.value,
-#             predicates_match=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=BlockType.DATA_LOADER.value,
-#                     )),
-#                 ],
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=BlockType.TRANSFORMER.value,
-#                     )),
-#                 ],
-#             ],
-#             predicates_miss=[
-#                 [
-#                     HookPredicate.load(resource=dict(
-#                         type=BlockType.MARKDOWN.value,
-#                     )),
-#                 ],
-#             ],
+#             predicate_match_before=predicate_match_before,
+#             predicate_match_after=predicate_match_after,
+#             predicate_miss=predicate_miss,
 #             resource_type=EntityName.Block,
 #         )
 

@@ -15,11 +15,11 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     Hook,
     HookCondition,
     HookOperation,
-    HookPredicate,
     HookRunSettings,
     HookStage,
     HookStrategy,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.shared.array import find
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
@@ -53,7 +53,7 @@ def build_hook(
     operation_type: HookOperation = None,
     output: Dict = None,
     pipeline: Dict = None,
-    predicates: List[List[HookPredicate]] = None,
+    predicate: HookPredicate = None,
     resource_type: EntityName = None,
     run_settings: HookRunSettings = None,
     stages: List[HookStage] = None,
@@ -65,7 +65,7 @@ def build_hook(
         operation_type=operation_type or HookOperation.DETAIL,
         output=output,
         pipeline=pipeline,
-        predicates=predicates,
+        predicate=predicate,
         resource_type=resource_type or EntityName.Pipeline,
         run_settings=run_settings,
         stages=stages or [HookStage.BEFORE],
@@ -491,19 +491,44 @@ class GlobalHooksTest(BaseApiTestCase):
                     stage=HookStage.BEFORE,
                     conditions=[HookCondition.SUCCESS, HookCondition.FAILURE],
                     operation_resource=dict(mage=1),
+                    resource_id=1,
+                    resource_parent_id=3,
+                    user=dict(id=7),
                 )
 
                 self.global_hooks.get_and_run_hooks(
-                    fire=2,
-                    water=3,
                     **options,
                 )
 
-                mock_get_hooks.assert_called_once_with(**options)
+                mock_get_hooks.assert_called_once_with(
+                    [HookOperation.LIST, HookOperation.CREATE],
+                    EntityName.Tag,
+                    HookStage.BEFORE,
+                    conditions=[HookCondition.SUCCESS, HookCondition.FAILURE],
+                    error=None,
+                    meta=None,
+                    metadata=None,
+                    operation_resource=dict(mage=1),
+                    payload=None,
+                    query=None,
+                    resource=None,
+                    resource_id=1,
+                    resource_parent_id=3,
+                    resources=None,
+                    user=dict(id=7),
+                )
                 mock_run_hooks.assert_called_once_with(
                     hooks,
-                    fire=2,
-                    water=3,
+                    error=None,
+                    meta=None,
+                    metadata=None,
+                    payload=None,
+                    query=None,
+                    resource=None,
+                    resource_id=1,
+                    resource_parent_id=3,
+                    resources=None,
+                    user=dict(id=7),
                 )
 
     def test_save(self):

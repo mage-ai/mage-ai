@@ -61,6 +61,7 @@ class BaseOperation():
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
         self.payload = kwargs.get('payload') or {}
+        self.payload_mutated = None
         self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
@@ -96,6 +97,7 @@ class BaseOperation():
                 condition=HookCondition.SUCCESS,
                 metadata=metadata,
                 operation_resource=result,
+                payload=self.payload_mutated,
                 **{
                     resource_key: presented_init,
                 },
@@ -221,6 +223,7 @@ class BaseOperation():
                 error=self.__present_error(err),
                 metadata=metadata,
                 operation_resource=result,
+                payload=self.payload_mutated,
                 **{
                     resource_key: presented_init,
                 },
@@ -269,8 +272,14 @@ class BaseOperation():
         operation_type: HookOperation,
         stage: HookStage,
         condition: HookCondition = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
-        **kwargs,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resources: List[Dict] = None,
     ) -> List[Hook]:
         project = Project()
         if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
@@ -283,12 +292,21 @@ class BaseOperation():
         try:
             global_hooks = GlobalHooks.load_from_file()
             hooks = global_hooks.get_and_run_hooks(
+                operation_types,
+                EntityName(self.__classified_class()),
+                stage,
                 conditions=[condition] if condition else None,
+                error=error,
+                meta=meta,
+                metadata=metadata,
                 operation_resource=operation_resource,
-                operation_types=operation_types,
-                resource_type=EntityName(self.__classified_class()),
-                stage=stage,
-                **kwargs,
+                payload=payload,
+                query=query,
+                resource=resource,
+                resource_id=self.pk,
+                resource_parent_id=self.resource_parent_id,
+                resources=resources,
+                user=dict(id=self.user.id) if self.user else None,
             )
         except Exception:
             hooks = []
@@ -309,6 +327,7 @@ class BaseOperation():
         error: Dict = None,
         metadata: Dict = None,
         operation_resource: Union[BaseResource, List[BaseResource]] = None,
+        payload: Dict = None,
         resource: Dict = None,
         resources: List[Dict] = None,
     ) -> Union[Dict, List[Dict]]:
@@ -319,6 +338,7 @@ class BaseOperation():
             metadata=metadata,
             operation_resource=operation_resource,
             operation_type=HookOperation(self.action),
+            payload=payload,
             query=self.query,
             resource=resource,
             resources=resources,
@@ -398,6 +418,8 @@ class BaseOperation():
                 value = output.get('query') or {}
                 if isinstance(value, dict):
                     self.query = merge_dict(self.query, value)
+
+        self.payload_mutated = payload
 
         return payload
 

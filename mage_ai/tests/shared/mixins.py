@@ -1,11 +1,15 @@
 import json
 import os
-import uuid
 from typing import Callable, Dict, List
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.global_hooks.constants import HookOutputKey
+from mage_ai.data_preparation.models.global_hooks.constants import (
+    HookOutputKey,
+    PredicateAndOrOperator,
+    PredicateOperator,
+    PredicateValueDataType,
+)
 from mage_ai.data_preparation.models.global_hooks.models import (
     GlobalHooks,
     Hook,
@@ -13,9 +17,12 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookOperation,
     HookOutputBlock,
     HookOutputSettings,
-    HookPredicate,
     HookStage,
     HookStrategy,
+)
+from mage_ai.data_preparation.models.global_hooks.predicates import (
+    HookPredicate,
+    PredicateValueType,
 )
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
@@ -62,8 +69,10 @@ def build_hooks(
     resource_type: EntityName = None,
     test_predicate_after: bool = False,
     test_predicate_before: bool = False,
-    predicates_match: List[HookPredicate] = None,
-    predicates_miss: List[HookPredicate] = None,
+    predicate_match: HookPredicate = None,
+    predicate_match_after: HookPredicate = None,
+    predicate_match_before: HookPredicate = None,
+    predicate_miss: HookPredicate = None,
     snapshot: bool = True,
 ) -> List[Hook]:
     if not global_hooks:
@@ -75,19 +84,37 @@ def build_hooks(
             type=pipeline.type,
         )
 
-    if predicates_match is None:
-        predicates_match = [[
-            HookPredicate.load(resource=matching_predicate_resource),
-        ]]
+    if predicate_match is None and predicate_match_after is None and predicate_match_before is None:
+        predicate_match = HookPredicate.load(
+            and_or_operator=PredicateAndOrOperator.AND,
+            predicates=[HookPredicate.load(
+                left_value=v,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
+                operator=PredicateOperator.EQUALS,
+                right_value=v,
+                right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                ),
+            ) for v in matching_predicate_resource.values()],
+        )
 
-    if predicates_miss is None:
-        predicates_miss = [[
-            HookPredicate.load(resource=dict(
-                name=uuid.uuid4().hex,
-                type=pipeline.type,
-            )),
-            predicates_match[0][0],
-        ]]
+    if predicate_miss is None:
+        predicate_miss = HookPredicate.load(
+            and_or_operator=PredicateAndOrOperator.AND,
+            predicates=[HookPredicate.load(
+                left_value=v,
+                left_value_type=PredicateValueType.load(
+                    value_data_type=PredicateValueDataType.STRING,
+                ),
+                operator=PredicateOperator.EQUALS,
+                right_value=None,
+                right_value_type=PredicateValueType.load(
+                        value_data_type=PredicateValueDataType.STRING,
+                ),
+            ) for v in matching_predicate_resource.values()],
+        )
 
     if not operation_type:
         operation_type = HookOperation.DETAIL
@@ -120,9 +147,15 @@ def build_hooks(
             hook_setting = hook_settings[idx]
             hook_payload.update(hook_setting)
 
+        predicate_use = predicate_match
+        if predicate_match_after and HookStage.AFTER in hook_dict['stages']:
+            predicate_use = predicate_match_after
+        elif predicate_match_before and HookStage.BEFORE in hook_dict['stages']:
+            predicate_use = predicate_match_before
+
         hook = Hook.load(
             operation_type=operation_type,
-            predicates=predicates_match + predicates_miss,
+            predicate=predicate_use,
             resource_type=resource_type,
             strategies=[HookStrategy.RAISE],
             uuid=f'hook{idx}_{test_case.faker.unique.name()}',
@@ -135,7 +168,7 @@ def build_hooks(
             **hook.to_dict(),
         )
         hook_miss.uuid = test_case.faker.unique.name()
-        hook_miss.predicates = predicates_miss
+        hook_miss.predicate = predicate_miss
 
         if snapshot:
             hook.snapshot()
@@ -165,8 +198,10 @@ class GlobalHooksMixin(BaseApiTestCase):
         matching_predicate_resource: Dict = None,
         operation_type: HookOperation = None,
         pipeline_type: PipelineType = None,
-        predicates_match: List[HookPredicate] = None,
-        predicates_miss: List[HookPredicate] = None,
+        predicate_match: HookPredicate = None,
+        predicate_match_after: HookPredicate = None,
+        predicate_match_before: HookPredicate = None,
+        predicate_miss: HookPredicate = None,
         resource_type: EntityName = None,
         snapshot: bool = True,
     ):
@@ -259,8 +294,10 @@ class GlobalHooksMixin(BaseApiTestCase):
             matching_predicate_resource=matching_predicate_resource,
             operation_type=operation_type,
             pipeline=pipeline1,
-            predicates_match=predicates_match,
-            predicates_miss=predicates_miss,
+            predicate_match=predicate_match,
+            predicate_match_after=predicate_match_after,
+            predicate_match_before=predicate_match_before,
+            predicate_miss=predicate_miss,
             resource_type=resource_type,
             snapshot=snapshot,
         )

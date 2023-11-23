@@ -59,6 +59,7 @@ class BaseClass:
                     model.set_value(key, value)
             except AttributeError as err:
                 print(f'[WARNING] {self.__name__}.load: {err}')
+                raise err
 
         return model
 
