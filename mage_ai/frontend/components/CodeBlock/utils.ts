@@ -296,12 +296,12 @@ export const getMoreActionsItems = (
         });
       }
 
-      if (blocksMapping) {
+      if (blocksMapping || block?.tags) {
         const dynamicChildBlock = upstreamBlocks?.find(
           (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
         );
 
-        if (dynamicChildBlock) {
+        if (dynamicChildBlock || block?.tags?.includes(String(TagEnum.DYNAMIC_CHILD))) {
           items.push({
             label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
             onClick: () => savePipelineContent({
