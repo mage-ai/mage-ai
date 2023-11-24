@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
 import PredicateGroup from './PredicateGroup';
 import Spacing from '@oracle/elements/Spacing';
 import {
@@ -15,7 +16,9 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { removeAtIndex } from '@utils/array';
 
 type PredicateBuilderProps = {
+  level: number;
   predicate: HookPredicateType;
+  renderPredicate: (opts?: any) => void;
   setPredicate: (predicate: HookPredicateType) => void;
 }
 
@@ -31,7 +34,9 @@ const DEFAULT_PREDICATE = {
 };
 
 function PredicateBuilder({
+  level,
   predicate: predicateProp,
+  renderPredicate,
   setPredicate,
 }: PredicateBuilderProps) {
   const predicates: HookPredicateType[] = useMemo(() => predicateProp?.predicates || [], [
@@ -71,33 +76,51 @@ function PredicateBuilder({
 
   return (
     <>
-      {predicates?.map((predicate: HookPredicateType, idx: number) => (
-        <PredicateGroup
-          andOrOperator={idx < predicatesCount - 1 ? predicateProp?.and_or_operator : null}
-          index={idx}
-          key={`predicate-${idx}`}
-          last={idx === predicatesCount - 1}
-          predicate={predicate}
-          removePredicate={() => {
-            setPredicate({
-              ...predicate,
-              predicates: removeAtIndex(predicates, idx),
-            });
-          }}
-          updatePredicate={(data: HookPredicateType) => updatePredicate({
-            ...predicate,
-            ...data,
-          }, idx)}
-        />
-      ))}
+      {predicates?.map((predicate: HookPredicateType, idx: number) => {
+        const updatePredicateInner = (data: HookPredicateType) => updatePredicate({
+          ...predicate,
+          ...data,
+        }, idx);
 
-      <Spacing p={PADDING_UNITS}>
+        return (
+          <PredicateGroup
+            andOrOperator={idx < predicatesCount - 1 ? predicateProp?.and_or_operator : null}
+            first={idx === 0}
+            index={idx}
+            key={`predicate-${idx}`}
+            last={idx === predicatesCount - 1}
+            level={level + 1}
+            predicate={predicate}
+            renderPredicate={renderPredicate}
+            removePredicate={() => {
+              setPredicate({
+                ...predicate,
+                predicates: removeAtIndex(predicates, idx),
+              });
+            }}
+            updatePredicate={updatePredicateInner}
+          >
+            <Spacing mt={predicate?.predicates?.length >= 1 ? PADDING_UNITS : 0}>
+              {renderPredicate({
+                level: level + 1,
+                predicate,
+                renderPredicate,
+                setPredicate: updatePredicateInner,
+              })}
+            </Spacing>
+          </PredicateGroup>
+        );
+      })}
+
+      <Spacing mt={PADDING_UNITS}>
         <Button
+          compact={level >= 0}
           beforeIcon={<Add />}
           onClick={() => addPredicate()}
           secondary
+          small={level >= 0}
         >
-          Add predicate group
+          Add predicate
         </Button>
       </Spacing>
     </>

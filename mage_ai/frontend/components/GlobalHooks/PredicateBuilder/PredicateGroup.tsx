@@ -24,8 +24,11 @@ import { alphabet } from '@utils/string';
 
 type PredicateGroupProps = {
   andOrOperator?: PredicateAndOrOperatorEnum;
+  children?: any;
+  first?: boolean;
   index: number,
   last?: boolean;
+  level: number;
   predicate: HookPredicateType;
   removePredicate: () => void;
   updatePredicate: (predicate: HookPredicateType) => void;
@@ -33,8 +36,11 @@ type PredicateGroupProps = {
 
 function PredicateGroup({
   andOrOperator: andOrOperatorParent,
+  children,
+  first,
   index,
   last,
+  level,
   predicate,
   removePredicate,
   updatePredicate,
@@ -75,12 +81,29 @@ function PredicateGroup({
     rightObjectType,
   ]);
 
-  const titleMemo = useMemo(() => alphabet()[index], [index]);
+  const titleMemo = useMemo(() => {
+    let letter = alphabet()[index];
+
+    if (level === 0) {
+      return letter;
+    }
+
+    letter = letter.toLowerCase();
+
+    if (level >= 2) {
+      letter = `${letter}${level - 1}`;
+    }
+
+    return letter;
+  }, [
+    index,
+    level,
+  ]);
 
   return (
     <FlexContainer>
       <FlexContainer alignItems="flex-end" flexDirection="column">
-        {last && (
+        {!first && last && (
           <VerticalLineStyle last />
         )}
 
@@ -118,7 +141,7 @@ function PredicateGroup({
 
       <Flex flex={1}>
         <FlexContainer flexDirection="column" fullWidth ref={refForm}>
-          <Panel>
+          <Panel dark={!!(level % 2)}>
             <FlexContainer>
               <Flex flex={1} flexDirection="column">
                 <FlexContainer justifyContent="center">
@@ -266,16 +289,19 @@ function PredicateGroup({
 
               <div>
                 <Button
-                  iconOnly
-                  noBackground
-                  noBorder
-                  noPadding
+                  beforeIcon={<Trash muted size={1.25 * UNIT} />}
+                  compact
                   onClick={() => removePredicate()}
+                  small
                 >
-                  <Trash default />
+                  <Text default monospace small>
+                    Delete {titleMemo}
+                  </Text>
                 </Button>
               </div>
             </FlexContainer>
+
+            {children}
           </Panel>
 
           {!last && <Spacing mb={PADDING_UNITS} />}

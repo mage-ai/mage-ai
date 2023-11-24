@@ -22,7 +22,6 @@ import GlobalHookType, {
 } from '@interfaces/GlobalHookType';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
-import PredicateBuilder from '../PredicateBuilder';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
@@ -51,9 +50,10 @@ import {
 import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getUser } from '@utils/session';
-import { selectKeys, selectEntriesWithValues } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { renderPredicate } from '../utils';
+import { selectKeys, selectEntriesWithValues } from '@utils/hash';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 
@@ -544,16 +544,20 @@ function GlobalHookDetail({
   const predicate = useMemo(() => attributes?.predicate, [attributes]);
 
   const predicatesMemo = useMemo(() => (
-    <PredicateBuilder
-      predicate={predicate}
-      setPredicate={predicate => setAttributes(prev => ({
-        ...prev,
-        predicate: {
-          ...predicate,
-          and_or_operator: PredicateAndOrOperatorEnum.OR,
-        },
-      }))}
-    />
+    <Spacing p={PADDING_UNITS}>
+      {renderPredicate({
+        level: -1,
+        predicate,
+        renderPredicate,
+        setPredicate: predicate => setAttributes(prev => ({
+          ...prev,
+          predicate: {
+            ...predicate,
+            and_or_operator: PredicateAndOrOperatorEnum.OR,
+          },
+        })),
+      })}
+    </Spacing>
   ), [
     predicate,
     setAttributes,
