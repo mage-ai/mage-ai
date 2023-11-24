@@ -35,48 +35,48 @@ data_type_to_value_mapping = {
 
 
 def build_operation_resource_settings(
-    left_value: Union[bool, Dict, float, int, List, str],
+    right_value: Union[bool, Dict, float, int, List, str],
     first_object_key=first_object_key,
     repo_path: str = None,
 ) -> Dict:
     settings = {
         BaseResource.__name__: dict(
-            left_object_keys=[first_object_key],
+            right_object_keys=[first_object_key],
             operation_resource=GenericResource({
-                first_object_key: left_value,
+                first_object_key: right_value,
             }, None),
         ),
         dict.__name__: dict(
-            left_object_keys=[first_object_key],
+            right_object_keys=[first_object_key],
             operation_resource={
-                first_object_key: left_value,
+                first_object_key: right_value,
             },
         ),
         list.__name__: dict(
-            left_object_keys=[0, first_object_key],
+            right_object_keys=[0, first_object_key],
             operation_resource=[
                 GenericResource({
-                    first_object_key: left_value,
+                    first_object_key: right_value,
                 }, None),
             ],
         ),
         Pipeline.__name__: dict(
-            left_object_keys=['variables', first_object_key],
+            right_object_keys=['variables', first_object_key],
             operation_resource=Pipeline(uuid.uuid4().hex, config=dict(variables={
-                first_object_key: left_value,
+                first_object_key: right_value,
             })),
         ),
     }
 
     if repo_path:
         settings[Block.__name__] = dict(
-            left_object_keys=['configuration', first_object_key],
+            right_object_keys=['configuration', first_object_key],
             operation_resource=Block.create(
                 uuid.uuid4().hex,
                 BlockType.DATA_LOADER,
                 repo_path,
                 configuration={
-                    first_object_key: left_value,
+                    first_object_key: right_value,
                 },
             ),
         )
@@ -88,7 +88,7 @@ class PredicatesTest(AsyncDBTestCase):
     def test_validate_operator_includes(self):
         value = uuid.uuid4().hex
 
-        for right_value_data_type, right_value, right_value_not_included in [
+        for left_value_data_type, left_value, left_value_not_included in [
             (
                 PredicateValueDataType.BOOLEAN,
                 True,
@@ -120,22 +120,22 @@ class PredicatesTest(AsyncDBTestCase):
                 value + value,
             ),
         ]:
-            for right_value_use, assertion_func in [
-                (right_value, self.assertTrue),
-                (right_value_not_included, self.assertFalse),
+            for left_value_use, assertion_func in [
+                (left_value, self.assertTrue),
+                (left_value_not_included, self.assertFalse),
             ]:
                 predicate = HookPredicate.load(
-                    left_value=[right_value],
-                    left_value_type=PredicateValueType.load(
+                    right_value=[left_value],
+                    right_value_type=PredicateValueType.load(
                         value_data_type=PredicateValueDataType.LIST,
                         value_type=PredicateValueType.load(
-                            value_data_type=right_value_data_type,
+                            value_data_type=left_value_data_type,
                         ),
                     ),
                     operator=PredicateOperator.INCLUDES,
-                    right_value=right_value_use,
-                    right_value_type=PredicateValueType.load(
-                        value_data_type=right_value_data_type,
+                    left_value=left_value_use,
+                    left_value_type=PredicateValueType.load(
+                        value_data_type=left_value_data_type,
                     ),
                 )
 
@@ -144,16 +144,16 @@ class PredicatesTest(AsyncDBTestCase):
     def test_validate_using_object_types(self):
         value = uuid.uuid4().hex
 
-        left_object_keys = ['fire']
-        left_value_type = PredicateValueType.load(
+        right_object_keys = ['fire']
+        right_value_type = PredicateValueType.load(
             value_data_type=PredicateValueDataType.STRING,
         )
-        left_object = set_value({}, left_object_keys, value)
+        right_object = set_value({}, right_object_keys, value)
 
         operator = PredicateOperator.EQUALS
-        right_object_keys = ['wind', 'level']
-        right_value_type = left_value_type
-        right_object = set_value({}, right_object_keys, value)
+        left_object_keys = ['wind', 'level']
+        left_value_type = right_value_type
+        left_object = set_value({}, left_object_keys, value)
 
         object_types = [
             PredicateObjectType.ERROR,
@@ -167,33 +167,26 @@ class PredicatesTest(AsyncDBTestCase):
             PredicateObjectType.RESOURCE_PARENT_ID,
             PredicateObjectType.USER,
         ]
-        for left_object_type in object_types:
-            right_object_type = find(
-                lambda x, left_object_type=left_object_type: x != left_object_type,
+        for right_object_type in object_types:
+            left_object_type = find(
+                lambda x, right_object_type=right_object_type: x != right_object_type,
                 object_types,
             )
 
-            for right_value_use, assertion_func in [
+            for left_value_use, assertion_func in [
                 (value, self.assertTrue),
                 (value + value, self.assertFalse),
             ]:
-                right_object_use = set_value(
-                    right_object,
-                    right_object_keys,
-                    right_value_use,
+                left_object_use = set_value(
+                    left_object,
+                    left_object_keys,
+                    left_value_use,
                 )
 
-                left_object_keys_use = left_object_keys
-                left_object_use = left_object
                 right_object_keys_use = right_object_keys
                 right_object_use = right_object
-
-                if left_object_type in [
-                    PredicateObjectType.RESOURCE_ID,
-                    PredicateObjectType.RESOURCE_PARENT_ID,
-                ]:
-                    left_object_use = dig(left_object_use, left_object_keys)
-                    left_object_keys_use = None
+                left_object_keys_use = left_object_keys
+                left_object_use = left_object
 
                 if right_object_type in [
                     PredicateObjectType.RESOURCE_ID,
@@ -202,50 +195,57 @@ class PredicatesTest(AsyncDBTestCase):
                     right_object_use = dig(right_object_use, right_object_keys)
                     right_object_keys_use = None
 
+                if left_object_type in [
+                    PredicateObjectType.RESOURCE_ID,
+                    PredicateObjectType.RESOURCE_PARENT_ID,
+                ]:
+                    left_object_use = dig(left_object_use, left_object_keys)
+                    left_object_keys_use = None
+
                 predicate = HookPredicate.load(
-                    left_object_keys=left_object_keys_use,
-                    left_object_type=left_object_type,
-                    left_value_type=left_value_type,
-                    operator=operator,
                     right_object_keys=right_object_keys_use,
                     right_object_type=right_object_type,
                     right_value_type=right_value_type,
+                    operator=operator,
+                    left_object_keys=left_object_keys_use,
+                    left_object_type=left_object_type,
+                    left_value_type=left_value_type,
                 )
 
                 settings = {
-                    left_object_type.value: left_object_use,
                     right_object_type.value: right_object_use,
+                    left_object_type.value: left_object_use,
                 }
 
                 assertion_func(predicate.validate(None, **settings))
 
     def test_validate_using_operation_resource(self):
-        left_value = uuid.uuid4().hex
+        right_value = uuid.uuid4().hex
 
         for operation_resource_class_name, settings in build_operation_resource_settings(
-            left_value,
+            right_value,
             repo_path=self.repo_path,
         ).items():
-            left_object_keys = settings['left_object_keys']
+            right_object_keys = settings['right_object_keys']
             operation_resource = settings['operation_resource']
 
-            for right_value_use, assertion_func in [
-                (left_value, self.assertTrue),
-                (left_value + left_value, self.assertFalse),
+            for left_value_use, assertion_func in [
+                (right_value, self.assertTrue),
+                (right_value + right_value, self.assertFalse),
             ]:
-                left_object_keys_use = left_object_keys
+                right_object_keys_use = right_object_keys
                 if list.__name__ == operation_resource_class_name:
-                    left_object_keys_use = left_object_keys[1:]
+                    right_object_keys_use = right_object_keys[1:]
 
                 predicate = HookPredicate.load(
-                    left_object_keys=left_object_keys_use,
-                    left_object_type=PredicateObjectType.OPERATION_RESOURCE,
-                    left_value_type=PredicateValueType.load(
+                    right_object_keys=right_object_keys_use,
+                    right_object_type=PredicateObjectType.OPERATION_RESOURCE,
+                    right_value_type=PredicateValueType.load(
                         value_data_type=PredicateValueDataType.STRING,
                     ),
                     operator=PredicateOperator.EQUALS,
-                    right_value=right_value_use,
-                    right_value_type=PredicateValueType.load(
+                    left_value=left_value_use,
+                    left_value_type=PredicateValueType.load(
                         value_data_type=PredicateValueDataType.STRING,
                     ),
                 )
@@ -269,14 +269,14 @@ class PredicatesTest(AsyncDBTestCase):
 
         for assertion_func, operation_resources in operation_resources_groups:
             predicate = HookPredicate.load(
-                left_object_keys=['fire'],
-                left_object_type=PredicateObjectType.OPERATION_RESOURCE,
-                left_value_type=PredicateValueType.load(
+                right_object_keys=['fire'],
+                right_object_type=PredicateObjectType.OPERATION_RESOURCE,
+                right_value_type=PredicateValueType.load(
                     value_data_type=PredicateValueDataType.STRING,
                 ),
                 operator=PredicateOperator.EQUALS,
-                right_value=value,
-                right_value_type=PredicateValueType.load(
+                left_value=value,
+                left_value_type=PredicateValueType.load(
                     value_data_type=PredicateValueDataType.STRING,
                 ),
             )
@@ -410,8 +410,8 @@ class CustomTestError(Exception):
     pass
 
 
-def get_left_right_value(
-    left_value: Union[bool, Dict, float, int, List, str],
+def get_right_left_value(
+    right_value: Union[bool, Dict, float, int, List, str],
     data_type: PredicateValueDataType,
     object_type: PredicateObjectType,
     operator: PredicateOperator,
@@ -426,11 +426,11 @@ def get_left_right_value(
         elif PredicateOperator.LESS_THAN == operator:
             return (True, False)
         elif PredicateOperator.NOT_EQUALS == operator:
-            return (left_value, not left_value)
+            return (right_value, not right_value)
         elif PredicateOperator.NOT_INCLUDES == operator:
             raise CustomTestError
         elif PredicateOperator.NOT_PRESENT == operator:
-            return (left_value, '')
+            return (right_value, '')
 
     if PredicateValueDataType.DICTIONARY == data_type:
         if operator in [
@@ -440,36 +440,36 @@ def get_left_right_value(
             raise CustomTestError
 
         if PredicateOperator.NOT_EQUALS == operator:
-            return [left_value, merge_dict(left_value, dict(
+            return [right_value, merge_dict(right_value, dict(
                 random=uuid.uuid4().hex,
             ))]
 
         if PredicateOperator.GREATER_THAN == operator:
-            return (left_value, merge_dict(left_value, dict(
+            return (right_value, merge_dict(right_value, dict(
                 random=uuid.uuid4().hex,
             )))
 
         if PredicateOperator.LESS_THAN == operator:
-            return (merge_dict(left_value, dict(
+            return (merge_dict(right_value, dict(
                 random=uuid.uuid4().hex,
-            )), left_value)
+            )), right_value)
 
         if PredicateOperator.NOT_PRESENT == operator:
-            return (left_value, None)
+            return (right_value, None)
 
     if data_type in [PredicateValueDataType.FLOAT, PredicateValueDataType.INTEGER]:
         if PredicateOperator.GREATER_THAN == operator:
-            return (left_value, left_value + 1)
+            return (right_value, right_value + 1)
         elif PredicateOperator.INCLUDES == operator:
             raise CustomTestError
         elif PredicateOperator.LESS_THAN == operator:
-            return (left_value + 1, left_value)
+            return (right_value + 1, right_value)
         elif PredicateOperator.NOT_EQUALS == operator:
-            return (left_value, left_value - left_value)
+            return (right_value, right_value - right_value)
         elif PredicateOperator.NOT_INCLUDES == operator:
             raise CustomTestError
         elif PredicateOperator.NOT_PRESENT == operator:
-            return (left_value, None)
+            return (right_value, None)
 
     if PredicateValueDataType.LIST == data_type:
         if operator in [
@@ -479,20 +479,20 @@ def get_left_right_value(
             raise CustomTestError
 
         if PredicateOperator.NOT_EQUALS == operator:
-            return (left_value, left_value + left_value)
+            return (right_value, right_value + right_value)
 
         if PredicateOperator.GREATER_THAN == operator:
-            return (left_value, left_value + left_value)
+            return (right_value, right_value + right_value)
 
         if PredicateOperator.LESS_THAN == operator:
-            return (left_value + left_value, left_value)
+            return (right_value + right_value, right_value)
 
         if PredicateOperator.NOT_PRESENT == operator:
-            return (left_value, None)
+            return (right_value, None)
 
     if PredicateValueDataType.STRING == data_type:
         if PredicateOperator.NOT_EQUALS == operator:
-            return (left_value, left_value + left_value)
+            return (right_value, right_value + right_value)
 
         if PredicateOperator.GREATER_THAN == operator:
             return ('A', 'a')
@@ -501,44 +501,44 @@ def get_left_right_value(
             return ('a', 'A')
 
         if PredicateOperator.NOT_INCLUDES == operator:
-            return (left_value, left_value + left_value)
+            return (right_value, right_value + right_value)
 
         if PredicateOperator.NOT_PRESENT == operator:
-            return (left_value, None)
+            return (right_value, None)
 
-    return (left_value, left_value)
+    return (right_value, right_value)
 
 
 def build_test_validate(
     data_type: PredicateValueDataType,
-    left_value: Any,
+    right_value: Any,
     object_type: PredicateObjectType,
     operator: PredicateOperator,
-    right_value: Any,
+    left_value: Any,
     settings: Dict,
 ):
     async def _test_validate(
         self,
         data_type=data_type,
-        left_value=left_value,
+        right_value=right_value,
         object_type=object_type,
         operator=operator,
-        right_value=right_value,
+        left_value=left_value,
         settings=settings,
     ):
         predicate = HookPredicate.load(
-            left_object_keys=settings.get('left_object_keys'),
-            left_object_type=object_type,
-            left_value=left_value,
-            left_value_type=PredicateValueType.load(
+            right_object_keys=settings.get('right_object_keys'),
+            right_object_type=object_type,
+            right_value=right_value,
+            right_value_type=PredicateValueType.load(
                 value_data_type=data_type,
             ),
             operator=operator,
-            right_value=right_value,
+            left_value=left_value,
         )
 
         options = ignore_keys(settings, [
-            'left_object_keys',
+            'right_object_keys',
             'operation_resource',
         ])
 
@@ -553,12 +553,12 @@ def build_test_validate(
 for object_type in PredicateObjectType:
     for data_type in PredicateValueDataType:
         for operator in PredicateOperator:
-            left_value = data_type_to_value_mapping[data_type]
-            right_value = None
+            right_value = data_type_to_value_mapping[data_type]
+            left_value = None
 
             try:
-                left_value, right_value = get_left_right_value(
-                    left_value,
+                right_value, left_value = get_right_left_value(
+                    right_value,
                     data_type=data_type,
                     object_type=object_type,
                     operator=operator,
@@ -567,7 +567,7 @@ for object_type in PredicateObjectType:
                 continue
 
             operation_resource_settings = {}
-            for tup in build_operation_resource_settings(left_value).items():
+            for tup in build_operation_resource_settings(right_value).items():
                 operation_resource_class_name, settings_init = tup
                 settings = settings_init.copy()
 
@@ -576,20 +576,20 @@ for object_type in PredicateObjectType:
                     PredicateObjectType.RESOURCE_PARENT_ID,
                 ]:
                     settings.update({
-                        'left_object_keys': None,
-                        object_type.value: left_value,
+                        'right_object_keys': None,
+                        object_type.value: right_value,
                     })
                 elif PredicateObjectType.OPERATION_RESOURCE != object_type:
                     settings.update({
-                        'left_object_keys': [first_object_key],
+                        'right_object_keys': [first_object_key],
                         object_type.value: {
-                            first_object_key: left_value,
+                            first_object_key: right_value,
                         },
                     })
                 elif list.__name__ == operation_resource_class_name and \
                         PredicateObjectType.OPERATION_RESOURCE == object_type:
 
-                    settings.update(dict(left_object_keys=[first_object_key]))
+                    settings.update(dict(right_object_keys=[first_object_key]))
 
                 operation_resource_settings[operation_resource_class_name] = settings
 
@@ -610,10 +610,10 @@ for object_type in PredicateObjectType:
                     method_name,
                     build_test_validate(
                         data_type=data_type,
-                        left_value=left_value,
+                        right_value=right_value,
                         object_type=object_type,
                         operator=operator,
-                        right_value=right_value,
+                        left_value=left_value,
                         settings=settings,
                     ),
                 )
@@ -632,75 +632,75 @@ def build_nested_predicates() -> Tuple[Dict, HookPredicate, Dict, Dict, Dict]:
     )
 
     def _build_settings(**kwargs) -> Dict:
-        left_value_type = PredicateValueType.load(
+        right_value_type = PredicateValueType.load(
             value_data_type=PredicateValueDataType.INTEGER,
         )
 
         return merge_dict(dict(
-            left_object_type=PredicateObjectType.OPERATION_RESOURCE,
-            left_value_type=left_value_type,
+            right_object_type=PredicateObjectType.OPERATION_RESOURCE,
+            right_value_type=right_value_type,
             operator=PredicateOperator.EQUALS,
-            right_value_type=left_value_type,
+            left_value_type=right_value_type,
         ), kwargs)
 
     predicate2_3_or_or_terminal_failed = HookPredicate.load(**_build_settings(
-        left_object_type=None,
-        left_value_type=None,
-        operator=PredicateOperator.PRESENT,
-        right_value=None,
+        right_object_type=None,
         right_value_type=None,
+        operator=PredicateOperator.PRESENT,
+        left_value=None,
+        left_value_type=None,
     ))
 
     predicate2_3_and_and_and_terminal_failed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.AND,
-        left_object_keys=['ice'],
-        left_value_type=PredicateValueType.load(
+        right_object_keys=['ice'],
+        right_value_type=PredicateValueType.load(
             value_data_type=PredicateValueDataType.LIST,
             value_type=PredicateValueType.load(
                 value_data_type=PredicateValueDataType.INTEGER,
             ),
         ),
         operator=PredicateOperator.NOT_INCLUDES,
-        right_value=3,
+        left_value=3,
     ))
 
     predicate2_3_or_or_terminal_succeed = HookPredicate.load(**_build_settings(
-        left_object_keys=['power'],
+        right_object_keys=['power'],
         operator=PredicateOperator.GREATER_THAN_OR_EQUALS,
-        right_value=6
+        left_value=6
     ))
 
     predicate2_3_and_and_or_terminal_succeed = HookPredicate.load(**_build_settings(
-        left_object_keys=['water'],
+        right_object_keys=['water'],
         operator=PredicateOperator.LESS_THAN_OR_EQUALS,
-        right_value=6,
+        left_value=6,
     ))
 
     predicate2_and_and_succeed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.AND,
-        left_object_keys=['wind'],
+        right_object_keys=['wind'],
         operator=PredicateOperator.LESS_THAN_OR_EQUALS,
         predicates=[
             predicate2_3_and_and_or_terminal_succeed,
             predicate2_3_or_or_terminal_succeed,
         ],
-        right_value=8,
+        left_value=8,
     ))
 
     predicate2_and_or_succeed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.OR,
-        left_object_keys=['water'],
+        right_object_keys=['water'],
         operator=PredicateOperator.NOT_EQUALS,
         predicates=[
             predicate2_3_and_and_or_terminal_succeed,
         ],
-        right_value=8,
+        left_value=8,
     ))
 
     predicate2_or_and_failed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.AND,
-        left_object_keys=['ice'],
-        left_value_type=PredicateValueType.load(
+        right_object_keys=['ice'],
+        right_value_type=PredicateValueType.load(
             value_data_type=PredicateValueDataType.LIST,
             value_type=PredicateValueType.load(
                 value_data_type=PredicateValueDataType.INTEGER,
@@ -711,25 +711,25 @@ def build_nested_predicates() -> Tuple[Dict, HookPredicate, Dict, Dict, Dict]:
             predicate2_3_and_and_and_terminal_failed,
             predicate2_3_and_and_or_terminal_succeed,
         ],
-        right_value=3,
+        left_value=3,
     ))
 
     predicate2_or_or_succeed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.OR,
-        left_value_type=None,
+        right_value_type=None,
         operator=PredicateOperator.NOT_PRESENT,
         predicates=[
             predicate2_3_or_or_terminal_failed,
             predicate2_3_or_or_terminal_succeed,
         ],
-        right_value=None,
-        right_value_type=None,
+        left_value=None,
+        left_value_type=None,
     ))
 
     predicate1_and_succeed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.AND,
-        left_object_keys=['ice'],
-        left_value_type=PredicateValueType.load(
+        right_object_keys=['ice'],
+        right_value_type=PredicateValueType.load(
             value_data_type=PredicateValueDataType.LIST,
             value_type=PredicateValueType.load(
                 value_data_type=PredicateValueDataType.INTEGER,
@@ -740,18 +740,18 @@ def build_nested_predicates() -> Tuple[Dict, HookPredicate, Dict, Dict, Dict]:
             predicate2_and_and_succeed,
             predicate2_and_or_succeed,
         ],
-        right_value=3,
+        left_value=3,
     ))
 
     predicate1_or_succeed = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.OR,
-        left_object_keys=['fire'],
+        right_object_keys=['fire'],
         operator=PredicateOperator.GREATER_THAN,
         predicates=[
             predicate2_or_and_failed,
             predicate2_or_or_succeed,
         ],
-        right_value=3,
+        left_value=3,
     ))
 
     predicates_level_3 = dict(
@@ -786,12 +786,12 @@ def build_nested_predicates() -> Tuple[Dict, HookPredicate, Dict, Dict, Dict]:
 
     predicate = HookPredicate.load(**_build_settings(
         and_or_operator=PredicateAndOrOperator.AND,
-        left_object_keys=['earth'],
+        right_object_keys=['earth'],
         predicates=[
             predicate1_and_succeed,
             predicate1_or_succeed,
         ],
-        right_value=1,
+        left_value=1,
     ))
 
     return (
