@@ -18,6 +18,7 @@ import GlobalHookType, {
   HookOutputSettingsType,
   HookStageEnum,
   HookStrategyEnum,
+  PredicateAndOrOperatorEnum,
 } from '@interfaces/GlobalHookType';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
@@ -49,9 +50,10 @@ import {
 import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getUser } from '@utils/session';
-import { selectKeys, selectEntriesWithValues } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { renderPredicate } from '../utils';
+import { selectKeys, selectEntriesWithValues } from '@utils/hash';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 
@@ -521,7 +523,7 @@ function GlobalHookDetail({
     'operation_type',
     'outputs',
     'pipeline',
-    'predicates',
+    'predicate',
     'resource_type',
     'run_settings',
     'stages',
@@ -538,6 +540,28 @@ function GlobalHookDetail({
       id: null,
     },
   }, [attributes]);
+
+  const predicate = useMemo(() => attributes?.predicate, [attributes]);
+
+  const predicatesMemo = useMemo(() => (
+    <Spacing p={PADDING_UNITS}>
+      {renderPredicate({
+        level: -1,
+        predicate,
+        renderPredicate,
+        setPredicate: predicate => setAttributes(prev => ({
+          ...prev,
+          predicate: {
+            ...predicate,
+            and_or_operator: PredicateAndOrOperatorEnum.OR,
+          },
+        })),
+      })}
+    </Spacing>
+  ), [
+    predicate,
+    setAttributes,
+  ]);
 
   return (
     <Spacing mb={8} p={PADDING_UNITS}>
@@ -606,9 +630,12 @@ function GlobalHookDetail({
           title="Operation type"
         />
 
-        {/*<Accordion
+        <Accordion
           noBorder
           noBoxShadow
+          visibleMappingForced={{
+            0: true,
+          }}
         >
           <AccordionPanel
             noBorderRadius
@@ -625,8 +652,10 @@ function GlobalHookDetail({
                 } this hook should run for.
               </Text>
             </Spacing>
+
+            {predicatesMemo}
           </AccordionPanel>
-        </Accordion>*/}
+        </Accordion>
       </SetupSection>
 
       {!isNew && (

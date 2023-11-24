@@ -291,26 +291,26 @@ def compare_using_operator(
                     right_value = len(right_value)
 
         if PredicateOperator.EQUALS == operator:
-            return right_value == left_value
+            return left_value == right_value
         if PredicateOperator.GREATER_THAN == operator:
-            return right_value > left_value
+            return left_value > right_value
         if PredicateOperator.GREATER_THAN_OR_EQUALS == operator:
-            return right_value >= left_value
+            return left_value >= right_value
         if PredicateOperator.INCLUDES == operator:
-            return right_value in left_value
+            return left_value in right_value
         if PredicateOperator.LESS_THAN == operator:
-            return right_value < left_value
+            return left_value < right_value
         if PredicateOperator.LESS_THAN_OR_EQUALS == operator:
-            return right_value <= left_value
+            return left_value <= right_value
         if PredicateOperator.NOT_EQUALS == operator:
-            return right_value != left_value
+            return left_value != right_value
         if PredicateOperator.NOT_INCLUDES == operator:
-            return right_value not in left_value
+            return left_value not in right_value
         if PredicateOperator.NOT_PRESENT == operator:
-            return False if right_value else True
+            return False if left_value else True
         if PredicateOperator.PRESENT == operator:
-            return True if right_value else False
+            return True if left_value else False
     except TypeError as err:
-        print(f'[ERROR] Predicate error comparing {right_value} {operator} {left_value}: {err}.')
+        print(f'[ERROR] Predicate error comparing {left_value} {operator} {right_value}: {err}.')
 
     return False

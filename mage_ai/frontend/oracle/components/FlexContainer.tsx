@@ -121,14 +121,15 @@ const FlexContainer = ({
   fullHeight,
   verticalHeightOffset = 0,
   ...props
-}: FlexContainerProps) => (
+}: FlexContainerProps, ref) => (
   <FlexContainerStyle
     {...props}
     fullHeight={fullHeight}
+    ref={ref}
     verticalHeightOffset={verticalHeightOffset}
   >
     {children}
   </FlexContainerStyle>
 );
 
-export default FlexContainer;
+export default React.forwardRef(FlexContainer);
