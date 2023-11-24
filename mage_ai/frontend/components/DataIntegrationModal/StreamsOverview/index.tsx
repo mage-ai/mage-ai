@@ -111,8 +111,8 @@ function StreamsOverview({
     columnFlex: number[];
     columns: ColumnType[];
   } = useMemo(() => {
-    const cf = [null, 1, 3, 2, 2, null]
-    const c = [
+    const cf = [null, 1, 3, 2, 2, null];
+    const c: ColumnType[] = [
       {
         label: ({
           groupIndex,
