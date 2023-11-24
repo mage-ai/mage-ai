@@ -13,7 +13,7 @@ const LINE_WIDTH = 0.75 * UNIT;
 const OPERATOR_PADDING_HORIZONTAL = UNIT / 2;
 
 type SharedBackgroundProps = {
-
+  default?: boolean;
 };
 
 const SHARED_BACKGROUND_STYLES = css<SharedBackgroundProps>`

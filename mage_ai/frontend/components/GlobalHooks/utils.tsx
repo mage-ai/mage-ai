@@ -12,7 +12,7 @@ export function renderPredicate({
   level: number;
   predicate: HookPredicateType;
   renderPredicate: (opts?: any) => void;
-  setPredicate: (predicate: HookPredicate) => void;
+  setPredicate: (predicate: HookPredicateType) => void;
 }) {
   return (
     <PredicateBuilder

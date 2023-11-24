@@ -27,12 +27,12 @@ type LeftRightFormProps = {
   leftKey?: string;
   leftObjectKeys?: string[];
   leftObjectType?: PredicateObjectTypeEnum;
-  leftObjectTypeState?: PredicateObjectTypeEnum;
+  leftObjectTypeState?: string;
   leftValue?: any;
   leftValueType?: PredicateValueType;
   rightAligned?: boolean;
   setLeftKey?: (key: string) => void;
-  setLeftObjectTypeState?: (value: PredicateObjectTypeEnum) => void;
+  setLeftObjectTypeState?: (value: string) => void;
   updatePredicate?: (value: any) => void;
 };
 
@@ -132,7 +132,7 @@ function LeftRightForm({
           }
         }}
         placeholder="required"
-        value={CUSTOM_VALUE_TYPE === leftObjectTypeState ? CUSTOM_VALUE_TYPE : leftObjectType}
+        value={CUSTOM_VALUE_TYPE === String(leftObjectTypeState) ? CUSTOM_VALUE_TYPE : leftObjectType}
       >
         <option value={CUSTOM_VALUE_TYPE}>
           Custom value
@@ -145,7 +145,7 @@ function LeftRightForm({
       </Select>
     );
 
-    const el3 = CUSTOM_VALUE_TYPE === leftObjectTypeState && (
+    const el3 = CUSTOM_VALUE_TYPE === String(leftObjectTypeState) && (
       <>
         {!rightAligned && <Spacing mr={1} />}
 
@@ -227,9 +227,15 @@ function LeftRightForm({
       <TextInput
         {...SHARED_INPUT_PROPS}
         buttonAfter={!rightAligned && buttonEl}
-        buttonAfterWidth={!rightAligned && buttonAfterWidth + 10}
+        buttonAfterWidth={(!rightAligned && typeof buttonAfterWidth !== 'undefined')
+          ? buttonAfterWidth + 10
+          : null
+        }
         buttonBefore={rightAligned && buttonEl}
-        buttonBeforeWidth={rightAligned && buttonAfterWidth + 10}
+        buttonBeforeWidth={(rightAligned && typeof buttonAfterWidth !== 'undefined')
+          ? buttonAfterWidth + 10
+          : null
+        }
         onChange={e => {
           setLeftKey(e.target.value);
         }}
@@ -325,7 +331,7 @@ function LeftRightForm({
 
       <Spacing mt={1} />
 
-      {leftObjectType && CUSTOM_VALUE_TYPE !== leftObjectTypeState && keysMemo}
+      {leftObjectType && CUSTOM_VALUE_TYPE !== String(leftObjectTypeState) && keysMemo}
     </>
   );
 }

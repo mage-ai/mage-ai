@@ -110,7 +110,7 @@ interface PredicateValueBaseType {
   value_data_type: PredicateValueDataTypeEnum;
   value_type?: {
     value_data_type: PredicateValueDataTypeEnum;
-    value_type: any;
+    value_type?: any;
   };
 }
 

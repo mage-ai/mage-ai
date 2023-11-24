@@ -120,7 +120,6 @@ function PredicateBuilder({
             last={idx === predicatesCount - 1}
             level={level + 1}
             predicate={predicate}
-            renderPredicate={renderPredicate}
             removePredicate={() => {
               setPredicate({
                 ...predicate,
