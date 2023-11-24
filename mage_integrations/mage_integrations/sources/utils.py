@@ -1,3 +1,12 @@
+import argparse
+import json
+import os
+from typing import Dict, List
+
+import yaml
+from singer.metadata import to_list, write
+from singer.utils import check_config, load_json
+
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
     INCLUSION_AUTOMATIC,
@@ -6,13 +15,6 @@ from mage_integrations.sources.constants import (
     METADATA_KEY_SELECTED,
 )
 from mage_integrations.utils.array import find
-from singer.metadata import to_list, write
-from singer.utils import check_config, load_json
-from typing import Dict, List
-import argparse
-import json
-import os
-import yaml
 
 
 def get_standard_metadata(
@@ -177,6 +179,11 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--state_json',
+        help='Bookmark state from a JSON string',
+    )
+
+    parser.add_argument(
         '-p', '--properties',
         help='Property selections: DEPRECATED, Please use --catalog instead',
     )
@@ -233,7 +240,8 @@ def parse_args(required_config_keys):
 
     parser.add_argument(
         '--log_to_stdout',
-        help='Sources will log using Singer logger by default. Set his flag to True to log to sys.stdout.',
+        help='Sources will log using Singer logger by default. '
+             'Set his flag to True to log to sys.stdout.',
     )
 
     parser.add_argument(
@@ -253,6 +261,8 @@ def parse_args(required_config_keys):
     if args.state:
         setattr(args, 'state_path', args.state)
         args.state = load_json(args.state)
+    elif args.state_json:
+        args.state = json.loads(args.state_json)
     else:
         args.state = {}
 

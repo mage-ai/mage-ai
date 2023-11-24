@@ -33,6 +33,7 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_UNIQUE_CONSTRAINTS,
     MAX_QUERY_STRING_SIZE,
     OUTPUT_TYPE_SCHEMA,
+    OUTPUT_TYPE_STATE,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
     IngestMode,
@@ -48,6 +49,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.shared.array import find
+from mage_ai.shared.files import reverse_readline
 from mage_ai.shared.hash import dig, extract, merge_dict
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from mage_ai.shared.security import filter_out_config_values
@@ -278,21 +280,61 @@ def get_streams_from_output_directory(
             # or
             # ../[block_uuid]/[data_integration_uuid]
             dir_full_path1 = os.path.join(output_directory_path, dir_name1)
-            for dir_name2 in os.listdir(dir_full_path1):
-                if not data_integration_uuid:
-                    mapping[dir_name2] = []
-                # ../[block_uuid]/[data_integration_uuid]/[stream]/00000000000000000000
-                # or
-                # ../[block_uuid]/[data_integration_uuid]/[stream]
-                dir_full_path2 = os.path.join(dir_full_path1, dir_name2)
-                if data_integration_uuid:
-                    mapping[dir_name1].append(dir_full_path2)
-                else:
-                    for dir_name3 in os.listdir(dir_full_path2):
-                        dir_full_path3 = os.path.join(dir_full_path2, dir_name3)
-                        mapping[dir_name2].append(dir_full_path3)
+            if os.path.isdir(dir_full_path1):
+                for dir_name2 in os.listdir(dir_full_path1):
+                    if not data_integration_uuid:
+                        mapping[dir_name2] = []
+                    # ../[block_uuid]/[data_integration_uuid]/[stream]/00000000000000000000
+                    # or
+                    # ../[block_uuid]/[data_integration_uuid]/[stream]
+                    dir_full_path2 = os.path.join(dir_full_path1, dir_name2)
+                    if data_integration_uuid:
+                        mapping[dir_name1].append(dir_full_path2)
+                    elif os.path.isdir(dir_full_path2):
+                        for dir_name3 in os.listdir(dir_full_path2):
+                            dir_full_path3 = os.path.join(dir_full_path2, dir_name3)
+                            mapping[dir_name2].append(dir_full_path3)
 
     return mapping
+
+
+def get_state_data(
+    block,
+    catalog: Dict,
+    from_notebook: bool = False,
+    index: int = None,
+    partition: str = None,
+    data_integration_uuid: str = None,
+    stream_id: str = None,
+) -> Dict:
+    output_file_paths = get_output_file_paths(
+        block,
+        catalog,
+        from_notebook=from_notebook,
+        index=index,
+        partition=partition,
+        data_integration_uuid=data_integration_uuid,
+        stream_id=stream_id,
+    )
+
+    output_file_paths.sort()
+
+    state_data = None
+
+    if output_file_paths:
+        output_file_path = output_file_paths[-1]
+
+        for line in reverse_readline(output_file_path):
+            if line:
+                try:
+                    row = json.loads(line)
+                    if OUTPUT_TYPE_STATE == row.get('type') and 'value' in row:
+                        state_data = row['value']
+                        break
+                except json.JSONDecodeError:
+                    pass
+
+        return state_data
 
 
 def execute_data_integration(
@@ -303,6 +345,7 @@ def execute_data_integration(
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
     execution_partition: str = None,
+    execution_partition_previous: str = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
     input_from_output: Dict = None,
@@ -382,17 +425,24 @@ def execute_data_integration(
             return []
 
         # Handle incremental sync
-        state_file_path = None
+        state_data = None
         if index is not None:
             batch_fetch_limit = get_batch_fetch_limit(config)
-            state_file_path = get_state_file_path(block, data_integration_uuid, stream)
             stream_catalogs = get_streams_from_catalog(catalog, [stream]) or []
 
             if len(stream_catalogs) == 1 and \
                     REPLICATION_METHOD_INCREMENTAL == stream_catalogs[0].get('replication_method'):
-                # Use the state to adjust the query
-                # How do we write to the state when the source syncs can run in parallel?
-                pass
+
+                if execution_partition_previous:
+                    state_data = get_state_data(
+                        block,
+                        catalog,
+                        data_integration_uuid=data_integration_uuid,
+                        from_notebook=from_notebook,
+                        index=index,
+                        partition=execution_partition_previous,
+                        stream_id=stream,
+                    )
             else:
                 query_data['_offset'] = batch_fetch_limit * index
 
@@ -436,10 +486,14 @@ def execute_data_integration(
                 block.get_catalog_file_path(),
             ]
 
-        if state_file_path:
+        if state_data:
             args += [
-                '--state',
-                state_file_path,
+                '--state_json',
+                simplejson.dumps(
+                    state_data,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
             ]
 
         if len(selected_streams) >= 1:
@@ -953,7 +1007,7 @@ def __execute_destination(
     return proc
 
 
-def convert_outputs_to_data(
+def get_output_file_paths(
     block,
     catalog: Dict,
     from_notebook: bool = False,
@@ -961,8 +1015,7 @@ def convert_outputs_to_data(
     partition: str = None,
     data_integration_uuid: str = None,
     stream_id: str = None,
-    sample_count: int = None,
-) -> Dict:
+) -> List[str]:
     variable = build_variable(
         block,
         data_integration_uuid=data_integration_uuid,
@@ -986,6 +1039,29 @@ def convert_outputs_to_data(
     else:
         output_file_paths.append(output_file_path)
     output_file_paths.sort()
+
+    return output_file_paths
+
+
+def convert_outputs_to_data(
+    block,
+    catalog: Dict,
+    from_notebook: bool = False,
+    index: int = None,
+    partition: str = None,
+    data_integration_uuid: str = None,
+    stream_id: str = None,
+    sample_count: int = None,
+) -> Dict:
+    output_file_paths = get_output_file_paths(
+        block,
+        catalog,
+        from_notebook=from_notebook,
+        index=index,
+        partition=partition,
+        data_integration_uuid=data_integration_uuid,
+        stream_id=stream_id,
+    )
 
     columns_to_select = []
     rows = []
@@ -1011,19 +1087,20 @@ def convert_outputs_to_data(
         columns_to_select = [d.get('column') for d in columns]
 
         for output_file_path in output_file_paths:
-            with open(output_file_path) as f:
-                for line in f:
-                    try:
-                        if sample_count is not None and row_count >= sample_count:
-                            break
+            if os.path.exists(output_file_path):
+                with open(output_file_path) as f:
+                    for line in f:
+                        try:
+                            if sample_count is not None and row_count >= sample_count:
+                                break
 
-                        row = json.loads(line)
-                        record = row.get('record')
-                        if record and stream_id == row.get('stream'):
-                            rows.append([record.get(col) for col in columns_to_select])
-                            row_count += 1
-                    except json.JSONDecodeError:
-                        pass
+                            row = json.loads(line)
+                            record = row.get('record')
+                            if record and stream_id == row.get('stream'):
+                                rows.append([record.get(col) for col in columns_to_select])
+                                row_count += 1
+                        except json.JSONDecodeError:
+                            pass
 
     if sample_count is not None:
         rows = rows[:sample_count]
@@ -1113,8 +1190,11 @@ def count_records(
     config: Dict,
     source_uuid: str,
     streams: List[str],
+    block=None,
     catalog: Dict = None,
     catalog_file_path: str = None,
+    from_notebook: bool = False,
+    partition: str = None,
 ) -> List[Dict]:
     arr = []
 
@@ -1134,6 +1214,18 @@ def count_records(
                 default=encode_complex,
                 ignore_nan=True,
             ),
+            # '--state_json',
+            # simplejson.dumps(
+            #     dict(
+            #         bookmarks=dict(
+            #             titanic=dict(
+            #                 passengerid=891,
+            #             ),
+            #         ),
+            #     ),
+            #     default=encode_complex,
+            #     ignore_nan=True,
+            # ),
             '--count_records',
         ]
 
@@ -1150,6 +1242,40 @@ def count_records(
             args += [
                 '--catalog',
                 catalog_file_path,
+            ]
+
+        state_data = None
+        # Make sure replication method is INCREMENTAL
+        if block:
+            stream_dicts = catalog.get('streams')
+            if stream_dicts:
+                stream_dict = find(lambda x, stream=stream: x['stream'] == stream, stream_dicts)
+                if not stream_dict:
+                    raise Exception(
+                        f'No stream settings found for stream {stream} in source {source_uuid}, '
+                        'this is unexpected.',
+                    )
+
+                if stream_dict and \
+                        REPLICATION_METHOD_INCREMENTAL == stream_dict.get(KEY_REPLICATION_METHOD):
+
+                    state_data = get_state_data(
+                        block,
+                        catalog,
+                        data_integration_uuid=source_uuid,
+                        from_notebook=from_notebook,
+                        partition=partition,
+                        stream_id=stream,
+                    )
+
+        if state_data:
+            args += [
+                '--state_json',
+                simplejson.dumps(
+                    state_data,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ),
             ]
 
         arr += json.loads(__run_in_subprocess(args, config=config))
