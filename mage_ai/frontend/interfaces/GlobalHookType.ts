@@ -114,7 +114,7 @@ interface PredicateValueBaseType {
   };
 }
 
-interface PredicateValueType extends PredicateValueBaseType {
+export interface PredicateValueType extends PredicateValueBaseType {
   value_type?: PredicateValueBaseType;
 }
 

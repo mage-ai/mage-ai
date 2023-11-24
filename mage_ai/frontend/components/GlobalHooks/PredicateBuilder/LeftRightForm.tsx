@@ -11,6 +11,7 @@ import {
   PredicateAndOrOperatorEnum,
   PredicateObjectTypeEnum,
   PredicateValueDataTypeEnum,
+  PredicateValueType,
 } from '@interfaces/GlobalHookType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
@@ -23,7 +24,16 @@ const SHARED_INPUT_PROPS = {
 };
 
 type LeftRightFormProps = {
+  leftKey?: string;
+  leftObjectKeys?: string[];
+  leftObjectType?: PredicateObjectTypeEnum;
+  leftObjectTypeState?: PredicateObjectTypeEnum;
+  leftValue?: any;
+  leftValueType?: PredicateValueType;
   rightAligned?: boolean;
+  setLeftKey?: (key: string) => void;
+  setLeftObjectTypeState?: (value: PredicateObjectTypeEnum) => void;
+  updatePredicate?: (value: any) => void;
 };
 
 function LeftRightForm({
@@ -44,6 +54,12 @@ function LeftRightForm({
   useEffect(() => {
     setButtonAfterWidth(buttonRef?.current?.getBoundingClientRect()?.width);
   }, []);
+  useEffect(() => {
+    setButtonAfterWidth(buttonRef?.current?.getBoundingClientRect()?.width);
+  }, [
+    leftObjectType,
+    leftObjectTypeState,
+  ]);
 
   const sharedFlexContainerProps = useMemo(() => ({
     alignItems: 'center',
