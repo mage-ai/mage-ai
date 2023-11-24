@@ -114,7 +114,7 @@ function PredicateBuilder({
 
         return (
           <PredicateGroup
-            andOrOperator={idx < predicatesCount - 1 ? predicateProp?.and_or_operator : null}
+            andOrOperator={predicateProp?.and_or_operator}
             first={idx === 0}
             key={`predicate-${idx}`}
             last={idx === predicatesCount - 1}
@@ -155,7 +155,7 @@ function PredicateBuilder({
                   and_or_operator: e.target.value,
                 })}
                 small
-                paddingVertical={UNIT / 4}
+                paddingVertical={3}
                 value={predicateProp?.and_or_operator}
               >
                 {Object.values(PredicateAndOrOperatorEnum).map((value: string) => (

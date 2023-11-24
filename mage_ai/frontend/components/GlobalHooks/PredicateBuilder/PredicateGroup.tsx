@@ -92,7 +92,7 @@ function PredicateGroup({
     );
 
     return (
-      <OperatorStyle>
+      <OperatorStyle default={PredicateAndOrOperatorEnum.OR === andOrOperatorParent}>
         {el}
       </OperatorStyle>
     );
@@ -105,7 +105,10 @@ function PredicateGroup({
     <FlexContainer>
       <FlexContainer alignItems="flex-end" flexDirection="column">
         {!first && last && (
-          <VerticalLineStyle last />
+          <VerticalLineStyle
+            default={PredicateAndOrOperatorEnum.OR === andOrOperatorParent}
+            last
+          />
         )}
 
         <LabelStyle>
@@ -116,17 +119,17 @@ function PredicateGroup({
 
             <Spacing mr={1} />
 
-            <CircleStyle />
+            <CircleStyle default={PredicateAndOrOperatorEnum.OR === andOrOperatorParent} />
           </FlexContainer>
         </LabelStyle>
 
         {!last && (
           <>
-            <VerticalLineStyle />
+            <VerticalLineStyle default={PredicateAndOrOperatorEnum.OR === andOrOperatorParent} />
 
             {andOrOperatorMemo}
 
-            <VerticalLineStyle />
+            <VerticalLineStyle default={PredicateAndOrOperatorEnum.OR === andOrOperatorParent} />
           </>
         )}
 
