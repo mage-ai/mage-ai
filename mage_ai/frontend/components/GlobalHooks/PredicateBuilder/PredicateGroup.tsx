@@ -8,7 +8,7 @@ import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { Close, Trash } from '@oracle/icons';
+import { Close, Edit, Trash } from '@oracle/icons';
 import {
   HookPredicateType,
   OPERATOR_LABEL_MAPPING,
@@ -20,17 +20,16 @@ import {
 } from '@interfaces/GlobalHookType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { CircleStyle, LabelStyle, OperatorStyle, VerticalLineStyle } from './index.style';
-import { alphabet } from '@utils/string';
 
 type PredicateGroupProps = {
   andOrOperator?: PredicateAndOrOperatorEnum;
   children?: any;
   first?: boolean;
-  index: number,
   last?: boolean;
   level: number;
   predicate: HookPredicateType;
   removePredicate: () => void;
+  title: string;
   updatePredicate: (predicate: HookPredicateType) => void;
 };
 
@@ -38,11 +37,11 @@ function PredicateGroup({
   andOrOperator: andOrOperatorParent,
   children,
   first,
-  index,
   last,
   level,
   predicate,
   removePredicate,
+  title,
   updatePredicate,
 }: PredicateGroupProps) {
   const refForm = useRef(null);
@@ -81,22 +80,24 @@ function PredicateGroup({
     rightObjectType,
   ]);
 
-  const titleMemo = useMemo(() => {
-    let letter = alphabet()[index];
-
-    if (level === 0) {
-      return letter;
+  const andOrOperatorMemo = useMemo(() => {
+    if (!andOrOperatorParent) {
+      return null;
     }
 
-    letter = letter.toLowerCase();
+    const el = (
+      <Text bold center monospace uppercase>
+        {andOrOperatorParent}
+      </Text>
+    );
 
-    if (level >= 2) {
-      letter = `${letter}${level - 1}`;
-    }
-
-    return letter;
+    return (
+      <OperatorStyle>
+        {el}
+      </OperatorStyle>
+    );
   }, [
-    index,
+    andOrOperatorParent,
     level,
   ]);
 
@@ -110,7 +111,7 @@ function PredicateGroup({
         <LabelStyle>
           <FlexContainer alignItems="center">
             <Text monospace>
-              {titleMemo}
+              {title}
             </Text>
 
             <Spacing mr={1} />
@@ -121,17 +122,11 @@ function PredicateGroup({
 
         {!last && (
           <>
-            <VerticalLineStyle  />
+            <VerticalLineStyle />
 
-            {andOrOperatorParent && (
-              <OperatorStyle>
-                <Text bold center monospace uppercase>
-                  {andOrOperatorParent}
-                </Text>
-              </OperatorStyle>
-            )}
+            {andOrOperatorMemo}
 
-            <VerticalLineStyle  />
+            <VerticalLineStyle />
           </>
         )}
 
@@ -295,7 +290,7 @@ function PredicateGroup({
                   small
                 >
                   <Text default monospace small>
-                    Delete {titleMemo}
+                    Delete {title}
                   </Text>
                 </Button>
               </div>

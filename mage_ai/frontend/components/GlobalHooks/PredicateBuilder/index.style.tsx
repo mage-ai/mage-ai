@@ -11,6 +11,7 @@ const LABEL_BORDER_WIDTH = 1;
 const LABEL_PADDING_HORIZONTAL = 1.5 * UNIT;
 const LABEL_PADDING_VERTICAL = UNIT / 4;
 const LINE_WIDTH = 0.75 * UNIT;
+const OPERATOR_PADDING_HORIZONTAL = UNIT / 2;
 
 export const LabelStyle = styled.div`
   border-radius: 100px;
@@ -34,8 +35,8 @@ export const CircleStyle = styled.div`
 `;
 
 export const OperatorStyle = styled.div`
-  padding: ${UNIT / 4}px 0;
-  width: ${CIRCLE_WIDTH + ((LABEL_BORDER_WIDTH + LABEL_PADDING_HORIZONTAL) * 2)}px;
+  min-width: ${CIRCLE_WIDTH + ((LABEL_BORDER_WIDTH + LABEL_PADDING_HORIZONTAL) * 2)}px;
+  padding: ${UNIT / 4}px ${OPERATOR_PADDING_HORIZONTAL}px;
 
   ${props => `
     background-color: ${(props.theme.accent || dark.accent).purple};

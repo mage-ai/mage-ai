@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PredicateGroup from './PredicateGroup';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import {
   HookPredicateType,
@@ -12,10 +13,12 @@ import {
   PredicateValueDataTypeEnum,
 } from '@interfaces/GlobalHookType';
 import { Add } from '@oracle/icons';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { alphabet } from '@utils/string';
 import { removeAtIndex } from '@utils/array';
 
 type PredicateBuilderProps = {
+  index?: number;
   level: number;
   predicate: HookPredicateType;
   renderPredicate: (opts?: any) => void;
@@ -34,6 +37,7 @@ const DEFAULT_PREDICATE = {
 };
 
 function PredicateBuilder({
+  index,
   level,
   predicate: predicateProp,
   renderPredicate,
@@ -74,6 +78,32 @@ function PredicateBuilder({
 
   const predicatesCount = useMemo(() => predicates?.length || 0, [predicates]);
 
+  const renderTitle = useCallback((levelInner, indexInner) => {
+    if (levelInner < 0) {
+      return;
+    }
+
+    let letter = alphabet()[indexInner];
+
+    if (levelInner === 0) {
+      return letter;
+    }
+
+    letter = letter.toLowerCase();
+
+    if (levelInner >= 2) {
+      letter = `${letter}${levelInner - 1}`;
+    }
+
+    return letter;
+  }, []);
+
+  const title = useMemo(() => renderTitle(level, index), [
+    renderTitle,
+    index,
+    level,
+  ]);
+
   return (
     <>
       {predicates?.map((predicate: HookPredicateType, idx: number) => {
@@ -86,7 +116,6 @@ function PredicateBuilder({
           <PredicateGroup
             andOrOperator={idx < predicatesCount - 1 ? predicateProp?.and_or_operator : null}
             first={idx === 0}
-            index={idx}
             key={`predicate-${idx}`}
             last={idx === predicatesCount - 1}
             level={level + 1}
@@ -98,10 +127,12 @@ function PredicateBuilder({
                 predicates: removeAtIndex(predicates, idx),
               });
             }}
+            title={renderTitle(level + 1, idx)}
             updatePredicate={updatePredicateInner}
           >
             <Spacing mt={predicate?.predicates?.length >= 1 ? PADDING_UNITS : 0}>
               {renderPredicate({
+                index: idx,
                 level: level + 1,
                 predicate,
                 renderPredicate,
@@ -113,15 +144,41 @@ function PredicateBuilder({
       })}
 
       <Spacing mt={PADDING_UNITS}>
-        <Button
-          compact={level >= 0}
-          beforeIcon={<Add />}
-          onClick={() => addPredicate()}
-          secondary
-          small={level >= 0}
-        >
-          Add predicate
-        </Button>
+        <FlexContainer alignItems="center">
+          {level >= 0 && predicates?.length >= 2 && (
+            <>
+              <Select
+                compact
+                monospace
+                onChange={e => setPredicate({
+                  ...predicateProp,
+                  and_or_operator: e.target.value,
+                })}
+                small
+                paddingVertical={UNIT / 4}
+                value={predicateProp?.and_or_operator}
+              >
+                {Object.values(PredicateAndOrOperatorEnum).map((value: string) => (
+                  <option key={value} value={value}>
+                    {(PredicateAndOrOperatorEnum.OR === value ? `${value} ` : value).toUpperCase()}
+                  </option>
+                ))}
+              </Select>
+
+              <Spacing mr={1} />
+            </>
+          )}
+
+          <Button
+            compact={level >= 0}
+            beforeIcon={<Add />}
+            onClick={() => addPredicate()}
+            secondary
+            small={level >= 0}
+          >
+            Add predicate{title && ` in ${title}`}
+          </Button>
+        </FlexContainer>
       </Spacing>
     </>
   );
