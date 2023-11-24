@@ -4,6 +4,11 @@ export enum ReplicationMethodEnum {
   LOG_BASED = 'LOG_BASED',
 }
 
+export const REPLICATION_METHODS_BATCH_PIPELINE = [
+  ReplicationMethodEnum.FULL_TABLE,
+  ReplicationMethodEnum.INCREMENTAL,
+];
+
 export enum UniqueConflictMethodEnum {
   IGNORE = 'IGNORE',
   UPDATE = 'UPDATE',
