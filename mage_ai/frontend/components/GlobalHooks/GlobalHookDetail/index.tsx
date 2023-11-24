@@ -21,6 +21,7 @@ import GlobalHookType, {
 } from '@interfaces/GlobalHookType';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import PredicateBuilder from '../PredicateBuilder';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
@@ -539,6 +540,20 @@ function GlobalHookDetail({
     },
   }, [attributes]);
 
+  const predicate = useMemo(() => attributes?.predicate, [attributes]);
+  const predicatesMemo = useMemo(() => (
+    <PredicateBuilder
+      predicate={predicate}
+      setPredicate={predicate => setAttributes(prev => ({
+        ...prev,
+        predicate,
+      }))}
+    />
+  ), [
+    predicate,
+    setAttributes,
+  ]);
+
   return (
     <Spacing mb={8} p={PADDING_UNITS}>
       <SetupSection title="What to run hook for">
@@ -606,9 +621,12 @@ function GlobalHookDetail({
           title="Operation type"
         />
 
-        {/*<Accordion
+        <Accordion
           noBorder
           noBoxShadow
+          visibleMappingForced={{
+            0: true,
+          }}
         >
           <AccordionPanel
             noBorderRadius
@@ -625,8 +643,10 @@ function GlobalHookDetail({
                 } this hook should run for.
               </Text>
             </Spacing>
+
+            {predicatesMemo}
           </AccordionPanel>
-        </Accordion>*/}
+        </Accordion>
       </SetupSection>
 
       {!isNew && (
