@@ -301,7 +301,7 @@ export const getMoreActionsItems = (
           (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
         );
 
-        if (dynamicChildBlock || block?.tags?.includes(String(TagEnum.DYNAMIC_CHILD))) {
+        if (dynamicChildBlock || block?.tags?.includes(TagEnum.DYNAMIC_CHILD)) {
           items.push({
             label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
             onClick: () => savePipelineContent({
