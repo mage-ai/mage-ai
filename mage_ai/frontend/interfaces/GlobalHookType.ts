@@ -78,6 +78,11 @@ export enum PredicateOperatorEnum {
   PRESENT = 'PRESENT',
 }
 
+export const OPERATORS_WITHOUT_RIGHT = [
+  PredicateOperatorEnum.NOT_PRESENT,
+  PredicateOperatorEnum.PRESENT,
+];
+
 export const OPERATOR_LABEL_MAPPING = {
   [PredicateOperatorEnum.EQUALS]: '==',
   [PredicateOperatorEnum.GREATER_THAN]: '>',

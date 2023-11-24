@@ -12,6 +12,7 @@ import { Close } from '@oracle/icons';
 import {
   HookPredicateType,
   OPERATOR_LABEL_MAPPING,
+  OPERATORS_WITHOUT_RIGHT,
   PredicateObjectTypeEnum,
   PredicateOperatorEnum,
   PredicateValueDataTypeEnum,
@@ -88,37 +89,41 @@ function PredicateGroup({
             {operator ? OPERATOR_LABEL_MAPPING[operator] : 'operator'}
           </Text>
 
-          <Spacing mr={1} />
+          {(!operator || !OPERATORS_WITHOUT_RIGHT.includes(operator)) && (
+            <>
+              <Spacing mr={1} />
 
-          <FlexContainer
-            alignItems="center"
-            justifyContent="flex-start"
-          >
-            {!rightObjectType && rightValue && (
-              <Text default monospace small>
-                {PredicateValueDataTypeEnum.STRING === rightValueType?.value_data_type ? `'${rightValue}'` : rightValue}
-              </Text>
-            )}
-            {rightObjectType && (
-              <>
-                <Text default monospace small>
-                  {rightObjectType}
-                </Text>{!rightObjectKeys?.length && (
-                  <Text monospace muted small>
-                    ['<Text default inline monospace small>
-                      ...
-                    </Text>']
+              <FlexContainer
+                alignItems="center"
+                justifyContent="flex-start"
+              >
+                {!rightObjectType && rightValue && (
+                  <Text default monospace small>
+                    {PredicateValueDataTypeEnum.STRING === rightValueType?.value_data_type ? `'${rightValue}'` : rightValue}
                   </Text>
-                )}{rightObjectKeys?.map((key: string) => (
-                   <Text monospace muted small>
-                     ['<Text default inline monospace small>
-                       {key}
-                     </Text>']
-                   </Text>
-                ))}
-              </>
-            )}
-          </FlexContainer>
+                )}
+                {rightObjectType && (
+                  <>
+                    <Text default monospace small>
+                      {rightObjectType}
+                    </Text>{!rightObjectKeys?.length && (
+                      <Text monospace muted small>
+                        ['<Text default inline monospace small>
+                          ...
+                        </Text>']
+                      </Text>
+                    )}{rightObjectKeys?.map((key: string) => (
+                       <Text monospace muted small>
+                         ['<Text default inline monospace small>
+                           {key}
+                         </Text>']
+                       </Text>
+                    ))}
+                  </>
+                )}
+              </FlexContainer>
+            </>
+          )}
         </FlexContainer>
 
         <Spacing mb={PADDING_UNITS} />
