@@ -18,6 +18,7 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 const CUSTOM_VALUE_TYPE = 'CUSTOM_VALUE_TYPE';
 const SHARED_INPUT_PROPS = {
   compact: true,
+  monospace: true,
   small: true,
 };
 
@@ -50,7 +51,7 @@ function LeftRightForm({
   }), [rightAligned]);
 
   const dataTypeMemo = useMemo(() => {
-    const el1 = <Text default small>Data type of value</Text>;
+    const el1 = <Text default small>Value data type</Text>;
     const el2 = (
       <Select
         compact
@@ -66,7 +67,7 @@ function LeftRightForm({
       >
         {Object.values(PredicateValueDataTypeEnum).map((valueDataType: string) => (
           <option key={valueDataType} value={valueDataType}>
-            {capitalizeRemoveUnderscoreLower(valueDataType)}
+            {valueDataType.toLowerCase()}
           </option>
         ))}
       </Select>
@@ -122,7 +123,7 @@ function LeftRightForm({
         </option>
         {Object.values(PredicateObjectTypeEnum).map((valueDataType: string) => (
           <option key={valueDataType} value={valueDataType}>
-            {capitalizeRemoveUnderscoreLower(valueDataType)}
+            {valueDataType.toLowerCase()}
           </option>
         ))}
       </Select>

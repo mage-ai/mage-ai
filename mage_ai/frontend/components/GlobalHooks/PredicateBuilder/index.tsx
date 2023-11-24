@@ -12,6 +12,7 @@ import {
 } from '@interfaces/GlobalHookType';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { removeAtIndex } from '@utils/array';
 
 type PredicateBuilderProps = {
   predicate: HookPredicateType;
@@ -39,7 +40,6 @@ function PredicateBuilder({
 
   const updatePredicates = useCallback((predicatesData: HookPredicateType[]) => {
     setPredicate({
-      and_or_operator: PredicateAndOrOperatorEnum.OR,
       predicates: predicatesData,
     });
   }, [
@@ -67,12 +67,23 @@ function PredicateBuilder({
     setPredicate,
   ]);
 
+  const predicatesCount = useMemo(() => predicates?.length || 0, [predicates]);
+
   return (
     <>
       {predicates?.map((predicate: HookPredicateType, idx: number) => (
         <PredicateGroup
+          andOrOperator={idx < predicatesCount - 1 ? predicateProp?.and_or_operator : null}
+          index={idx}
           key={`predicate-${idx}`}
+          last={idx === predicatesCount - 1}
           predicate={predicate}
+          removePredicate={() => {
+            setPredicate({
+              ...predicate,
+              predicates: removeAtIndex(predicates, idx),
+            });
+          }}
           updatePredicate={(data: HookPredicateType) => updatePredicate({
             ...predicate,
             ...data,
@@ -86,7 +97,7 @@ function PredicateBuilder({
           onClick={() => addPredicate()}
           secondary
         >
-          Add predicate
+          Add predicate group
         </Button>
       </Spacing>
     </>

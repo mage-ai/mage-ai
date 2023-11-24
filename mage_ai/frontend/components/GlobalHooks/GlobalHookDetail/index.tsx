@@ -18,6 +18,7 @@ import GlobalHookType, {
   HookOutputSettingsType,
   HookStageEnum,
   HookStrategyEnum,
+  PredicateAndOrOperatorEnum,
 } from '@interfaces/GlobalHookType';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
@@ -541,12 +542,16 @@ function GlobalHookDetail({
   }, [attributes]);
 
   const predicate = useMemo(() => attributes?.predicate, [attributes]);
+
   const predicatesMemo = useMemo(() => (
     <PredicateBuilder
       predicate={predicate}
       setPredicate={predicate => setAttributes(prev => ({
         ...prev,
-        predicate,
+        predicate: {
+          ...predicate,
+          and_or_operator: PredicateAndOrOperatorEnum.OR,
+        },
       }))}
     />
   ), [
