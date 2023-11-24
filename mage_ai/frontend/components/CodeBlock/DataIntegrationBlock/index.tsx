@@ -19,7 +19,7 @@ import { CalloutStyle, EmptyCodeSpace, HeaderSectionStyle, StreamSectionStyle } 
 import { MainNavigationTabEnum } from '@components/DataIntegrationModal/constants';
 import { OpenDataIntegrationModalType, SubTabEnum } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { StreamType } from '@interfaces/IntegrationSourceType';
+import { ReplicationMethodEnum, StreamType } from '@interfaces/IntegrationSourceType';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { buildInputsFromUpstreamBlocks } from '@utils/models/block'
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
@@ -127,6 +127,7 @@ function DataIntegrationBlock({
         columns={columnsToShow}
         rows={streams?.map((stream: StreamType) => {
           const {
+            bookmark_properties: bookmarkProperties,
             destination_table: tableName,
             replication_method: replicationMethod,
             run_in_parallel: runInParallel,
@@ -216,9 +217,36 @@ function DataIntegrationBlock({
             >
               {columnsCountEl}
             </Link>,
-            <Text center default key={`${streamUUID}-replicationMethod`}>
-              {replicationMethod && capitalizeRemoveUnderscoreLower(replicationMethod)}
-            </Text>,
+            <FlexContainer
+              alignItems="center"
+              key={`${streamUUID}-replicationMethod`}
+              justifyContent="center"
+            >
+              <Text center default>
+                {replicationMethod && capitalizeRemoveUnderscoreLower(replicationMethod)}
+              </Text>
+
+              {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
+                <>
+                  <Spacing mr={1} />
+
+                  {!bookmarkProperties?.length && (
+                    <Text danger xsmall>
+                      No bookmark properties set
+                    </Text>
+                  )}
+
+                  {bookmarkProperties?.length >= 1 && bookmarkProperties?.map((
+                    col: string,
+                    idx: number,
+                  ) => (
+                    <Text inline key={col} monospace muted xsmall>
+                      {idx >= 1 && ', '}{col}
+                    </Text>
+                  ))}
+                </>
+              )}
+            </FlexContainer>,
             <FlexContainer justifyContent="flex-end" key={`${streamUUID}-runInParallel`}>
               {runInParallel
                 ? <Check size={UNIT * 2} success />

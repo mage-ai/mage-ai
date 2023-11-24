@@ -503,6 +503,46 @@ class PipelineSchedule(BaseModel):
 
         return (self.settings or {}).get('landing_time_enabled', False)
 
+    def recently_completed_pipeline_runs(
+        self,
+        pipeline_run=None,
+        sample_size: int = None,
+    ):
+        pipeline_runs = (
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+        )
+
+        if pipeline_run:
+            pipeline_runs = (
+                pipeline_runs.
+                filter(
+                    PipelineRun.id != pipeline_run.id,
+                )
+            )
+
+        pipeline_runs = (
+            pipeline_runs.
+            order_by(PipelineRun.execution_date.desc())
+        )
+
+        if sample_size:
+            pipeline_runs = pipeline_runs.limit(sample_size)
+
+        pipeline_runs = pipeline_runs.all()
+
+        pipeline_runs = sorted(
+            pipeline_runs,
+            key=lambda pr: pr.execution_date,
+            reverse=True,
+        )
+
+        return pipeline_runs
+
     def runtime_history(
         self,
         pipeline_run=None,
@@ -515,34 +555,9 @@ class PipelineSchedule(BaseModel):
             previous_runtimes += (pipeline_run.metrics or {}).get('previous_runtimes', [])
 
         if len(previous_runtimes) < sample_size_to_use - 1 if pipeline_run else sample_size_to_use:
-            pipeline_runs = (
-                PipelineRun.
-                query.
-                filter(
-                    PipelineRun.pipeline_schedule_id == self.id,
-                    PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
-                )
-            )
-
-            if pipeline_run:
-                pipeline_runs = (
-                    pipeline_runs.
-                    filter(
-                        PipelineRun.id != pipeline_run.id,
-                    )
-                )
-
-            pipeline_runs = (
-                pipeline_runs.
-                order_by(PipelineRun.execution_date.desc()).
-                limit(sample_size_to_use).
-                all()
-            )
-
-            pipeline_runs = sorted(
-                pipeline_runs,
-                key=lambda pr: pr.execution_date,
-                reverse=True,
+            pipeline_runs = self.recently_completed_pipeline_runs(
+                pipeline_run=pipeline_run,
+                sample_size=sample_size_to_use,
             )
 
             for pr in pipeline_runs:
@@ -678,6 +693,47 @@ class PipelineRun(BaseModel):
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
         ).get_logs()
+
+    def recently_completed_pipeline_runs(
+        self,
+        include_from_all_pipeline_schedules: bool = False,
+        sample_size: int = None,
+    ):
+        pipeline_runs = (
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.id != self.id,
+                PipelineRun.pipeline_uuid == self.pipeline_uuid,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+        )
+
+        if not include_from_all_pipeline_schedules:
+            pipeline_runs = (
+                pipeline_runs.
+                filter(
+                    PipelineRun.pipeline_schedule_id == self.pipeline_schedule_id,
+                )
+            )
+
+        pipeline_runs = (
+            pipeline_runs.
+            order_by(PipelineRun.execution_date.desc())
+        )
+
+        if sample_size:
+            pipeline_runs = pipeline_runs.limit(sample_size)
+
+        pipeline_runs = pipeline_runs.all()
+
+        pipeline_runs = sorted(
+            pipeline_runs,
+            key=lambda pr: pr.execution_date,
+            reverse=True,
+        )
+
+        return pipeline_runs
 
     async def logs_async(self):
         return await LoggerManagerFactory.get_logger_manager(

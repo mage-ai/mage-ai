@@ -15,6 +15,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import {
   ColumnTypeEnum,
   IntegrationSourceEnum,
+  REPLICATION_METHODS_BATCH_PIPELINE,
   ReplicationMethodEnum,
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
@@ -307,9 +308,8 @@ function StreamDetailOverview({
                 placeholder="Select an option"
                 value={replicationMethod}
               >
-                {Object.values(ReplicationMethodEnum).map(value => (
-                  <option disabled={ReplicationMethodEnum.FULL_TABLE !== value} key={value} value={value}>
-                    {ReplicationMethodEnum.FULL_TABLE !== value && '[COMING SOON] '}
+                {REPLICATION_METHODS_BATCH_PIPELINE.map(value => (
+                  <option key={value} value={value}>
                     {capitalizeRemoveUnderscoreLower(value)}
                   </option>
                 ))}

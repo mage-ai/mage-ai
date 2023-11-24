@@ -735,6 +735,14 @@ class BlockExecutor:
                 except Exception as err:
                     print(f'[WARNING] BlockExecutor._execute: {err}')
 
+            is_source = self.block.is_source()
+            if is_source and data_integration_metadata:
+                execution_partition_previous = data_integration_metadata.get(
+                    'execution_partition_previous',
+                )
+                if execution_partition_previous:
+                    extra_options['execution_partition_previous'] = execution_partition_previous
+
             if di_settings and \
                     data_integration_metadata and \
                     data_integration_metadata.get('controller') and \
@@ -746,7 +754,6 @@ class BlockExecutor:
                 if is_data_integration:
                     arr = []
 
-                    is_source = self.block.is_source()
                     data_integration_uuid = di_settings.get('data_integration_uuid')
                     catalog = di_settings.get('catalog', [])
 
@@ -770,6 +777,7 @@ class BlockExecutor:
                             logging_tags=logging_tags,
                             parent_stream=data_integration_metadata.get('parent_stream'),
                             partition=self.execution_partition,
+                            pipeline_run=pipeline_run,
                             selected_streams=[stream],
                         )
                         for br_metadata in block_run_metadata:
