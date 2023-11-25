@@ -388,11 +388,7 @@ function PipelineSchedules({
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
         label: 'Run @once',
-        onClick: isEmptyObject(variablesOrig)
-          ? () => createOnceSchedule({
-            pipeline_schedule: pipelineOnceSchedulePayload,
-          })
-          : showModal,
+        onClick: showModal,
         tooltip: 'Creates an @once trigger and runs pipeline immediately',
       }}
       showDivider={!isCreateDisabled}
