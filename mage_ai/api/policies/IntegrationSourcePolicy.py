@@ -104,6 +104,21 @@ IntegrationSourcePolicy.allow_write([
 
 IntegrationSourcePolicy.allow_query(
     [
+        'block_uuid[]',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+    override_permission_condition=lambda _policy: True,
+)
+
+
+IntegrationSourcePolicy.allow_query(
+    [
         'pipeline_schedule_id',
         'stream',
     ],

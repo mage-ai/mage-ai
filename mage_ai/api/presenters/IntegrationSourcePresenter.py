@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 
 class IntegrationSourcePresenter(BasePresenter):
     default_attributes = [
+        'block',
         'name',
         'partition',
         'pipeline_run',

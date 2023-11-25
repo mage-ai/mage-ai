@@ -57,11 +57,19 @@ type PipelineSchedulesProp = {
 };
 
 function PipelineSchedules({
-  pipeline,
+  pipeline: pipelineProp,
 }: PipelineSchedulesProp) {
   const router = useRouter();
   const isViewerRole = isViewer();
-  const pipelineUUID = pipeline.uuid;
+  const pipelineUUID = pipelineProp.uuid;
+
+  const { data } = api.pipelines.detail(pipelineUUID, {
+    includes_outputs: false,
+  }, {
+    revalidateOnFocus: false,
+  });
+  const pipeline = useMemo(() => data?.pipeline || pipelineProp, [data]);
+
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [triggerErrors, setTriggerErrors] = useState<ErrorsType>(null);
   const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(false);
@@ -177,14 +185,17 @@ function PipelineSchedules({
       initialPipelineSchedulePayload={pipelineOnceSchedulePayload}
       onCancel={hideModal}
       onSuccess={createOnceSchedule}
+      pipeline={pipeline}
       variables={variablesOrig}
     />
   ), {
   }, [
     globalVariables,
+    pipeline,
     variablesOrig,
   ], {
     background: true,
+    visible: true,
     uuid: 'run_pipeline_now_popup',
   });
 

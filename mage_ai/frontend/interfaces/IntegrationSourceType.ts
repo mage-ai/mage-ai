@@ -1,3 +1,7 @@
+import BlockType from './BlockType';
+import PipelineRunType from './PipelineRunType';
+import PipelineScheduleType from './PipelineScheduleType';
+
 export enum ReplicationMethodEnum {
   FULL_TABLE = 'FULL_TABLE',
   INCREMENTAL = 'INCREMENTAL',
@@ -148,6 +152,28 @@ export enum IntegrationDestinationEnum {
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
   SNOWFLAKE = 'snowflake',
+}
+
+export interface StreamStateData {
+  block: BlockType;
+  name?: string;
+  partition: string;
+  pipeline_run: PipelineRunType;
+  pipeline_schedule: PipelineScheduleType;
+  streams: {
+    [stream_id: string]: {
+      record: {
+        [column: string]: string | number | boolean;
+      };
+      state: {
+        bookmarks: {
+          [stream_id: string]: {
+            [column: string]: string | number | boolean;
+          };
+        };
+      };
+    };
+  };
 }
 
 export default interface IntegrationSourceType {
