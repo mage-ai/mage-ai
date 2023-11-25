@@ -98,7 +98,6 @@ class Dremio(Connection):
             raise Exception('0 Records where found')
 
         self.info('Load completed.', tags=merge_dict(tags, dict(count=len(data[0]))))
-        self.info(data)
 
         return data
 
