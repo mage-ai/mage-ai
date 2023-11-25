@@ -21,7 +21,7 @@ class PipelineRunPresenter(BasePresenter):
         'variables',
     ]
 
-    async def present(self, **kwargs):
+    async def prepare_present(self, **kwargs):
         display_format = kwargs.get('format')
         data_to_display = self.model
 
@@ -102,8 +102,11 @@ PipelineRunPresenter.register_format(
     ],
 )
 
-PipelineRunPresenter.register_format(
-    'with_basic_details',
+PipelineRunPresenter.register_formats(
+    [
+        f'integration_source/{constants.DETAIL}',
+        'with_basic_details',
+    ],
     [
         'execution_date',
         'id',

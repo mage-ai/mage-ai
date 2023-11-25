@@ -24,6 +24,7 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_METADATA,
     KEY_PARTITION_KEYS,
     KEY_PROPERTIES,
+    KEY_RECORD,
     KEY_REPLICATION_METHOD,
     KEY_SCHEMA,
     KEY_STREAM,
@@ -31,7 +32,9 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_TYPE,
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
+    KEY_VALUE,
     MAX_QUERY_STRING_SIZE,
+    OUTPUT_TYPE_RECORD,
     OUTPUT_TYPE_SCHEMA,
     OUTPUT_TYPE_STATE,
     REPLICATION_METHOD_INCREMENTAL,
@@ -305,8 +308,9 @@ def get_state_data(
     index: int = None,
     partition: str = None,
     data_integration_uuid: str = None,
+    include_record: bool = False,
     stream_id: str = None,
-) -> Dict:
+) -> Union[Dict, Tuple[Dict, Dict]]:
     output_file_paths = get_output_file_paths(
         block,
         catalog,
@@ -319,6 +323,7 @@ def get_state_data(
 
     output_file_paths.sort()
 
+    record = None
     state_data = None
 
     if output_file_paths:
@@ -328,11 +333,28 @@ def get_state_data(
             if line:
                 try:
                     row = json.loads(line)
-                    if OUTPUT_TYPE_STATE == row.get('type') and 'value' in row:
-                        state_data = row['value']
-                        break
+                    row_type = row.get(KEY_TYPE)
+
+                    if include_record and \
+                            OUTPUT_TYPE_RECORD == row_type and \
+                            KEY_RECORD in row and \
+                            (not stream_id or stream_id == row.get(KEY_STREAM)):
+
+                        record = row[KEY_RECORD]
+                    elif OUTPUT_TYPE_STATE == row_type and KEY_VALUE in row:
+                        # If it finds a state again even before it find a record, break.
+                        if state_data is not None:
+                            break
+
+                        state_data = row[KEY_VALUE]
+
+                        if not include_record or record:
+                            break
                 except json.JSONDecodeError:
                     pass
+
+        if include_record:
+            return state_data, record
 
         return state_data
 
