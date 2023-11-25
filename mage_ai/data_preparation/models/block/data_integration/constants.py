@@ -78,6 +78,8 @@ REPLICATION_METHOD_LOG_BASED = 'LOG_BASED'
 MB_1 = 1024 * 1000
 MAX_QUERY_STRING_SIZE = 10 * MB_1
 
+VARIABLE_BOOKMARK_VALUES_KEY = '__bookmark_values__'
+
 
 class IngestMode(str, Enum):
     DISK = 'disk'

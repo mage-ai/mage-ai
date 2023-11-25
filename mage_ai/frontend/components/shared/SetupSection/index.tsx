@@ -14,7 +14,7 @@ type SetupSectionProps = {
   children: any;
   description?: any;
   headerChildren?: any;
-  title: string;
+  title: string | any;
 };
 
 function SetupSection({

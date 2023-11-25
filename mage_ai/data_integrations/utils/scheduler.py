@@ -455,6 +455,7 @@ def __build_block_run_metadata_for_source(
                 block=block,
                 catalog=catalog,
                 partition=execution_partition_previous,
+                variables=pipeline_run.variables if pipeline_run else None,
             ),
         )
 

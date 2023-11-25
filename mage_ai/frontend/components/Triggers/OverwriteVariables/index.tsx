@@ -40,7 +40,7 @@ function OverwriteVariables({
   const [newVariableValue, setNewVariableValue] = useState(null);
 
   useEffect(() => {
-    const textAreaElementMappingInit = Object.entries(runtimeVariables)
+    const textAreaElementMappingInit = Object.entries(runtimeVariables || {})
       .reduce((acc, keyValPair) => {
         const [uuid, val] = keyValPair;
         const isUsingTextAreaEl = isJsonString(val)
