@@ -426,9 +426,13 @@ def __build_block_run_metadata_for_source(
 
     if at_least_one_incremental and pipeline_run:
         pipeline_runs_completed = \
-            pipeline_run.recently_completed_pipeline_runs(
-                include_from_all_pipeline_schedules=(
-                    ScheduleInterval.ONCE == pipeline_run.pipeline_schedule.schedule_interval
+            PipelineRun.recently_completed_pipeline_runs(
+                pipeline_run.pipeline_uuid,
+                pipeline_run_id=pipeline_run.id,
+                pipeline_schedule_id=(
+                    None if
+                    ScheduleInterval.ONCE == pipeline_run.pipeline_schedule.schedule_interval else
+                    pipeline_run.pipeline_schedule_id
                 ),
                 sample_size=1,
             )

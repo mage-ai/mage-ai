@@ -694,39 +694,35 @@ class PipelineRun(BaseModel):
             repo_config=self.pipeline.repo_config,
         ).get_logs()
 
+    @classmethod
     def recently_completed_pipeline_runs(
         self,
-        include_from_all_pipeline_schedules: bool = False,
+        pipeline_uuid: str,
+        pipeline_run_id: int = None,
+        pipeline_schedule_id: int = None,
         sample_size: int = None,
     ):
         pipeline_runs = (
-            PipelineRun.
+            self.
             query.
             filter(
-                PipelineRun.id != self.id,
-                PipelineRun.pipeline_uuid == self.pipeline_uuid,
-                PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+                self.pipeline_uuid == pipeline_uuid,
+                self.status == self.PipelineRunStatus.COMPLETED,
             )
         )
 
-        if not include_from_all_pipeline_schedules:
-            pipeline_runs = (
-                pipeline_runs.
-                filter(
-                    PipelineRun.pipeline_schedule_id == self.pipeline_schedule_id,
-                )
-            )
+        if pipeline_run_id is not None:
+            pipeline_runs = pipeline_runs.filter(self.id != pipeline_run_id)
 
-        pipeline_runs = (
-            pipeline_runs.
-            order_by(PipelineRun.execution_date.desc())
-        )
+        if pipeline_schedule_id is not None:
+            pipeline_runs = pipeline_runs.filter(self.pipeline_schedule_id == pipeline_schedule_id)
+
+        pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.desc())
 
         if sample_size:
             pipeline_runs = pipeline_runs.limit(sample_size)
 
         pipeline_runs = pipeline_runs.all()
-
         pipeline_runs = sorted(
             pipeline_runs,
             key=lambda pr: pr.execution_date,
