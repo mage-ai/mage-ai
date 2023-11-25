@@ -44,6 +44,8 @@ class PostgresSink(BaseSink):
         self.batch_write([message])
 
     def batch_write(self, messages: List[Dict]):
+        if not messages:
+            return
         self._print(
             f'Batch ingest {len(messages)} records, time={time.time()}. Sample: {messages[0]}')
 
