@@ -19,14 +19,15 @@ import {
   ReplicationMethodEnum,
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
-import { SectionStyle } from './index.style';
-import { StreamsOverviewProps } from '../StreamsOverview';
-import { StreamType } from '@interfaces/IntegrationSourceType';
+import { OPERATOR_LABEL_MAPPING, PredicateOperatorEnum } from '@interfaces/GlobalHookType';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { SectionStyle } from './index.style';
+import { StreamsOverviewProps } from '../StreamsOverview';
+import { StreamType } from '@interfaces/IntegrationSourceType';
 import { capitalizeRemoveUnderscoreLower, pluralize } from '@utils/string';
 import {
   getSchemaPropertiesWithMetadata,
@@ -60,6 +61,7 @@ function StreamDetailOverview({
   const {
     auto_add_new_fields: autoAddNewFields,
     bookmark_properties: bookmarkProperties,
+    bookmark_property_operators: bookmarkPropertyOperators,
     destination_table: destinationTableInit,
     disable_column_type_check: disableColumnTypeCheck,
     key_properties: keyProperties,
@@ -374,6 +376,109 @@ function StreamDetailOverview({
           </Spacing>
         </SectionStyle>
       </Spacing>
+
+      {dataIntegration?.sql
+        && ReplicationMethodEnum.INCREMENTAL === replicationMethod
+        && bookmarkProperties?.length >= 1
+        && (
+        <Spacing mb={PADDING_UNITS}>
+          <SectionStyle>
+            <Text default uppercase>
+              Bookmark property operators
+            </Text>
+
+            <Spacing mt={1}>
+              <Text muted small>
+                By default, new records are compared to the bookmark property value using the
+                operator greater than or equals (<Text
+                  inline
+                  monospace
+                  muted
+                  small
+                >
+                  {'>='}
+                </Text>).
+                <br />
+                If the bookmark property is also a unique constraint,
+                then the default operator is greater than (<Text
+                  inline
+                  monospace
+                  muted
+                  small
+                >
+                  {'>'}
+                </Text>).
+                <br />
+                Change the operator that is used when determining which records to sync based on the bookmark value from the most recently completed sync.
+              </Text>
+            </Spacing>
+
+            {bookmarkProperties?.map((column: string) => {
+              let operatorValue;
+              if (bookmarkPropertyOperators?.[column]) {
+                operatorValue = bookmarkPropertyOperators?.[column];
+              } else if (uniqueConstraints && uniqueConstraints?.includes(column)) {
+                operatorValue = PredicateOperatorEnum.GREATER_THAN;
+              } else {
+                operatorValue = PredicateOperatorEnum.GREATER_THAN_OR_EQUALS;
+              }
+              return (
+                <Spacing key={column} mt={PADDING_UNITS}>
+                  <FlexContainer alignItems="center">
+                    <Text default monospace>
+                      <Text
+                        inline
+                        monospace
+                        muted
+                      >
+                        {'{new_record}'}.
+                      </Text>{column}
+                    </Text>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Select
+                      compact
+                      defaultColor
+                      monospace
+                      onChange={e => updateValue('bookmark_property_operators', {
+                        ...bookmarkPropertyOperators,
+                        [column]: e.target.value,
+                      })}
+                      value={operatorValue}
+                    >
+                      {[
+                        PredicateOperatorEnum.EQUALS,
+                        PredicateOperatorEnum.GREATER_THAN,
+                        PredicateOperatorEnum.GREATER_THAN_OR_EQUALS,
+                        PredicateOperatorEnum.LESS_THAN,
+                        PredicateOperatorEnum.LESS_THAN_OR_EQUALS,
+                        PredicateOperatorEnum.NOT_EQUALS,
+                      ].map(value => (
+                        <option key={value} value={value}>
+                          {OPERATOR_LABEL_MAPPING[value]}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Text default monospace>
+                      <Text
+                        inline
+                        monospace
+                        muted
+                      >
+                        {'{bookmark}'}.
+                      </Text>{column}
+                    </Text>
+                  </FlexContainer>
+                </Spacing>
+              );
+            })}
+          </SectionStyle>
+        </Spacing>
+      )}
 
       <Spacing mb={PADDING_UNITS}>
         <SectionStyle>

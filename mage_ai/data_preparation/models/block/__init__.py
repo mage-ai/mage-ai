@@ -23,6 +23,7 @@ from jinja2 import Template
 import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.mixins import (
@@ -466,11 +467,14 @@ class Block(DataIntegrationMixin, SparkBlock):
                     uuid = settings.get('source') or settings.get('destination')
                     mapping = grouped_templates.get(uuid) or {}
 
+                    di_metadata = merge_dict(
+                        extract(mapping or {}, ['name']),
+                        settings,
+                    )
+                    di_metadata['sql'] = uuid in SQL_SOURCES_MAPPING
+
                     return dict(
-                        data_integration=merge_dict(
-                            extract(mapping or {}, ['name']),
-                            settings,
-                        ),
+                        data_integration=di_metadata,
                     )
             elif BlockLanguage.PYTHON == self.language:
                 try:
@@ -482,15 +486,18 @@ class Block(DataIntegrationMixin, SparkBlock):
                     uuid = di_settings.get('data_integration_uuid')
                     mapping = grouped_templates.get(uuid) or {}
 
+                    di_metadata = merge_dict(
+                        extract(mapping or {}, ['name']),
+                        ignore_keys(di_settings or {}, [
+                            'catalog',
+                            'config',
+                            'data_integration_uuid',
+                        ]),
+                    )
+                    di_metadata['sql'] = uuid in SQL_SOURCES_MAPPING
+
                     return dict(
-                        data_integration=merge_dict(
-                            extract(mapping or {}, ['name']),
-                            ignore_keys(di_settings or {}, [
-                                'catalog',
-                                'config',
-                                'data_integration_uuid',
-                            ]),
-                        ),
+                        data_integration=di_metadata,
                     )
                 except Exception as err:
                     if is_debug():
