@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import Dict, List
 
 from singer import catalog
 
@@ -10,8 +10,9 @@ class CatalogEntry(catalog.CatalogEntry):
     def __init__(
         self,
         auto_add_new_fields: bool = False,
-        disable_column_type_check: bool = None,
         bookmark_properties: List[str] = None,
+        bookmark_property_operators: Dict = None,
+        disable_column_type_check: bool = None,
         partition_keys: List[str] = None,
         run_in_parallel: bool = False,
         unique_conflict_method: str = None,
@@ -21,6 +22,7 @@ class CatalogEntry(catalog.CatalogEntry):
         super().__init__(**kwargs)
         self.auto_add_new_fields = False
         self.bookmark_properties = bookmark_properties
+        self.bookmark_property_operators = bookmark_property_operators
         self.disable_column_type_check = disable_column_type_check
         self.partition_keys = partition_keys
         self.run_in_parallel = run_in_parallel
@@ -89,6 +91,7 @@ class Catalog(catalog.Catalog):
             entry = CatalogEntry()
             entry.auto_add_new_fields = stream.get('auto_add_new_fields')
             entry.bookmark_properties = stream.get('bookmark_properties')
+            entry.bookmark_property_operators = stream.get('bookmark_property_operators')
             entry.database = stream.get('database_name')
             entry.disable_column_type_check = stream.get('disable_column_type_check')
             entry.is_view = stream.get('is_view')

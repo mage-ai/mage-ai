@@ -399,63 +399,83 @@ function StreamDetailOverview({
                   >=
                 </Text>).
                 <br />
+                If the bookmark property is also a unique constraint,
+                then the default operator is greater than (<Text
+                  inline
+                  monospace
+                  muted
+                  small
+                >
+                  >
+                </Text>).
+                <br />
                 Change the operator that is used when determining which records to sync based on the bookmark value from the most recently completed sync.
               </Text>
             </Spacing>
 
-            {bookmarkProperties?.map((column: string) => (
-              <Spacing key={column} mt={PADDING_UNITS}>
-                <FlexContainer alignItems="center">
-                  <Text default monospace>
-                    <Text
-                      inline
+            {bookmarkProperties?.map((column: string) => {
+              let operatorValue;
+              if (bookmarkPropertyOperators?.[column]) {
+                operatorValue = bookmarkPropertyOperators?.[column];
+              } else if (uniqueConstraints && uniqueConstraints?.includes(column)) {
+                operatorValue = PredicateOperatorEnum.GREATER_THAN;
+              } else {
+                operatorValue = PredicateOperatorEnum.GREATER_THAN_OR_EQUALS;
+              }
+              return (
+                <Spacing key={column} mt={PADDING_UNITS}>
+                  <FlexContainer alignItems="center">
+                    <Text default monospace>
+                      <Text
+                        inline
+                        monospace
+                        muted
+                      >
+                        {'{new_record}'}.
+                      </Text>{column}
+                    </Text>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Select
+                      compact
+                      defaultColor
                       monospace
-                      muted
+                      onChange={e => updateValue('bookmark_property_operators', {
+                        ...bookmarkPropertyOperators,
+                        [column]: e.target.value,
+                      })}
+                      value={operatorValue}
                     >
-                      {'{new_record}'}.
-                    </Text>{column}
-                  </Text>
+                      {[
+                        PredicateOperatorEnum.EQUALS,
+                        PredicateOperatorEnum.GREATER_THAN,
+                        PredicateOperatorEnum.GREATER_THAN_OR_EQUALS,
+                        PredicateOperatorEnum.LESS_THAN,
+                        PredicateOperatorEnum.LESS_THAN_OR_EQUALS,
+                        PredicateOperatorEnum.NOT_EQUALS,
+                      ].map(value => (
+                        <option key={value} value={value}>
+                          {OPERATOR_LABEL_MAPPING[value]}
+                        </option>
+                      ))}
+                    </Select>
 
-                  <Spacing mr={PADDING_UNITS} />
+                    <Spacing mr={PADDING_UNITS} />
 
-                  <Select
-                    compact
-                    defaultColor
-                    monospace
-                    onChange={e => updateValue('bookmark_property_operators', {
-                      ...bookmarkPropertyOperators,
-                      [column]: e.target.value,
-                    })}
-                    value={bookmarkPropertyOperators?.[column] || PredicateOperatorEnum.GREATER_THAN_OR_EQUALS}
-                  >
-                    {[
-                      PredicateOperatorEnum.EQUALS,
-                      PredicateOperatorEnum.GREATER_THAN,
-                      PredicateOperatorEnum.GREATER_THAN_OR_EQUALS,
-                      PredicateOperatorEnum.LESS_THAN,
-                      PredicateOperatorEnum.LESS_THAN_OR_EQUALS,
-                      PredicateOperatorEnum.NOT_EQUALS,
-                    ].map(value => (
-                      <option key={value} value={value}>
-                        {OPERATOR_LABEL_MAPPING[value]}
-                      </option>
-                    ))}
-                  </Select>
-
-                  <Spacing mr={PADDING_UNITS} />
-
-                  <Text default monospace>
-                    <Text
-                      inline
-                      monospace
-                      muted
-                    >
-                      {'{bookmark}'}.
-                    </Text>{column}
-                  </Text>
-                </FlexContainer>
-              </Spacing>
-            ))}
+                    <Text default monospace>
+                      <Text
+                        inline
+                        monospace
+                        muted
+                      >
+                        {'{bookmark}'}.
+                      </Text>{column}
+                    </Text>
+                  </FlexContainer>
+                </Spacing>
+              );
+            })}
           </SectionStyle>
         </Spacing>
       )}
