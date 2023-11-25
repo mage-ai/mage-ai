@@ -1,6 +1,7 @@
 import BlockType from './BlockType';
 import PipelineRunType from './PipelineRunType';
 import PipelineScheduleType from './PipelineScheduleType';
+import { PredicateOperatorEnum } from './GlobalHookType';
 
 export enum ReplicationMethodEnum {
   FULL_TABLE = 'FULL_TABLE',
@@ -105,6 +106,9 @@ export interface MetadataType {
 export interface StreamType {
   auto_add_new_fields?: boolean;
   bookmark_properties?: string[];
+  bookmark_property_operators?: {
+    [column: string]: PredicateOperatorEnum;
+  };
   destination_table?: string;
   disable_column_type_check?: boolean;
   key_properties?: string[];

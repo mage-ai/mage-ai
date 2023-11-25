@@ -287,6 +287,7 @@ export default interface BlockType {
       destination?: string;
       name?: string;
       source?: string;
+      sql?: boolean;
     };
     dbt?: {
       block?: {

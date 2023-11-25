@@ -396,7 +396,7 @@ function StreamDetailOverview({
                   muted
                   small
                 >
-                  >=
+                  {'>='}
                 </Text>).
                 <br />
                 If the bookmark property is also a unique constraint,
@@ -406,7 +406,7 @@ function StreamDetailOverview({
                   muted
                   small
                 >
-                  >
+                  {'>'}
                 </Text>).
                 <br />
                 Change the operator that is used when determining which records to sync based on the bookmark value from the most recently completed sync.
