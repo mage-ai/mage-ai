@@ -16,13 +16,25 @@ import api from '@api';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { StreamStateData } from '@interfaces/IntegrationSourceType';
+import { VARIABLE_BOOKMARK_VALUES_KEY } from '@interfaces/PipelineScheduleType';
 import { blocksWithStreamsWithIncrementalReplicationMethod } from '@utils/models/pipeline';
 import { capitalize } from '@utils/string';
 import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
+export interface BookmarkValuesMapping {
+  [blockUUID: string]: {
+    [streamID: string]: {
+      [column: string]: string | number | boolean;
+    };
+  };
+}
+
 type BookmarkValuesProps = {
+  bookmarkValues: BookmarkValuesMapping;
+  originalBookmarkValues?: BookmarkValuesMapping;
+  setBookmarkValues: (data: BookmarkValuesMapping) => void;
   pipeline: PipelineType;
 };
 
@@ -31,20 +43,15 @@ const SHARED_ROW_PROPS = {
 };
 
 function BookmarkValues({
+  bookmarkValues,
+  originalBookmarkValues,
+  setBookmarkValues,
   pipeline,
 }: BookmarkValuesProps) {
   const themeContext = useContext(ThemeContext);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
-  console.log(displayLocalTimezone)
-
-  const [bookmarkValuesMapping, setBookmarkValuesMapping] = useState<{
-    [blockUUID: string]: {
-      [streamID: string]: {
-        [column: string]: string | number | boolean;
-      };
-    };
-  }>(null);
+  const [bookmarkValuesOriginal, setBookmarkValuesOriginal] = useState<BookmarkValuesMapping>(null);
 
   const blocksWithStreamsMapping = useMemo(() => pipeline?.blocks
     ? blocksWithStreamsWithIncrementalReplicationMethod(pipeline)
@@ -66,7 +73,7 @@ function BookmarkValues({
   const stateDataArr: StreamStateData[] = useMemo(() => data?.integration_sources, [data]);
 
   useEffect(() => {
-    if (stateDataArr?.length >= 1 && !bookmarkValuesMapping) {
+    if (stateDataArr?.length >= 1 && (!bookmarkValues || !bookmarkValuesOriginal)) {
       const mapping = {};
 
       stateDataArr?.map(({
@@ -81,11 +88,19 @@ function BookmarkValues({
         });
       });
 
-      setBookmarkValuesMapping(mapping);
+      if (!bookmarkValues) {
+        setBookmarkValues(mapping);
+      }
+
+      if (!bookmarkValuesOriginal) {
+        setBookmarkValuesOriginal(mapping);
+      }
     }
   }, [
-    bookmarkValuesMapping,
-    setBookmarkValuesMapping,
+    bookmarkValues,
+    bookmarkValuesOriginal,
+    setBookmarkValues,
+    setBookmarkValuesOriginal,
     stateDataArr,
   ]);
 
@@ -215,31 +230,49 @@ function BookmarkValues({
                       </Spacing>
                     )}
 
-                    {Object.entries(bookmarkData || {}).map(([column, v]) => (
-                      <SetupSectionRow
-                        {...SHARED_ROW_PROPS}
-                        title={(
-                          <Text default monospace>
-                            {column}
-                          </Text>
-                        )}
-                        key={`${blockUUID}-bookmark-values-${column}`}
-                        textInput={{
-                          monospace: true,
-                          onChange: e => setBookmarkValuesMapping(prev => ({
-                            ...prev,
-                            [blockUUID]: {
-                              ...bookmarkValuesMapping?.[blockUUID],
-                              [streamID]: {
-                                ...bookmarkValuesMapping?.[blockUUID]?.[streamID],
-                                [column]: e.target.value,
+                    {Object.entries(bookmarkData || {}).map(([column, v]) => {
+                      const stateValue = bookmarkValues?.[blockUUID]?.[streamID]?.[column];
+                      const stateValueFromVariables = originalBookmarkValues?.[blockUUID]?.[streamID]?.[column];
+                      const stateValueFromOriginal = bookmarkValuesOriginal?.[blockUUID]?.[streamID]?.[column];
+
+                      return (
+                        <SetupSectionRow
+                          {...SHARED_ROW_PROPS}
+                          title={(
+                            <Text default monospace>
+                              {column}
+                            </Text>
+                          )}
+                          description={stateValueFromOriginal && stateValueFromOriginal !== stateValue && (
+                            <Text muted small>
+                              Original bookmark value from the last pipeline run: <Text
+                                default
+                                inline
+                                monospace
+                                small
+                              >
+                                {stateValueFromOriginal}
+                              </Text>
+                            </Text>
+                          )}
+                          key={`${blockUUID}-bookmark-values-${column}`}
+                          textInput={{
+                            monospace: true,
+                            onChange: e => setBookmarkValues(prev => ({
+                              ...prev,
+                              [blockUUID]: {
+                                ...bookmarkValues?.[blockUUID],
+                                [streamID]: {
+                                  ...bookmarkValues?.[blockUUID]?.[streamID],
+                                  [column]: e.target.value,
+                                },
                               },
-                            },
-                          })),
-                          value: bookmarkValuesMapping?.[blockUUID]?.[streamID]?.[column] || '',
-                        }}
-                      />
-                    ))}
+                            })),
+                            value: stateValue || '',
+                          }}
+                        />
+                      );
+                    })}
 
                     <Divider light />
 
@@ -264,7 +297,7 @@ function BookmarkValues({
                             {k}
                           </Text>,
                           <Text default key={`${k}-${v}`} monospace>
-                            {v}
+                            {(String(v))}
                           </Text>,
                         ])}
                       />

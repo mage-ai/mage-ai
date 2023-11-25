@@ -195,7 +195,6 @@ function PipelineSchedules({
     variablesOrig,
   ], {
     background: true,
-    visible: true,
     uuid: 'run_pipeline_now_popup',
   });
 

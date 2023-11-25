@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import BookmarkValues from '../BookmarkValues';
+import BookmarkValues, { BookmarkValuesMapping } from '../BookmarkValues';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
@@ -8,7 +8,9 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import OverwriteVariables from '../OverwriteVariables';
 import Panel from '@oracle/components/Panel';
-import PipelineScheduleType from '@interfaces/PipelineScheduleType';
+import PipelineScheduleType, {
+  VARIABLE_BOOKMARK_VALUES_KEY,
+} from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -38,6 +40,8 @@ function RunPipelinePopup({
   pipeline,
   variables,
 }: RunPipelinePopupProps) {
+  const [bookmarkValues, setBookmarkValues] = useState<{BookmarkValuesMapping}>(null);
+
   const [enableVariablesOverwrite, setEnableVariablesOverwrite] = useState<boolean>(true);
   const [runtimeVariables, setRuntimeVariables] = useState<{
     [keyof: string]: string,
@@ -47,8 +51,16 @@ function RunPipelinePopup({
   const finalPipelineSchedulePayload = useMemo(() => ({
     ...initialPipelineSchedulePayload,
     name: randomNameGenerator(),
-    variables: enableVariablesOverwrite ? parseVariables(runtimeVariables) : null,
+    variables: enableVariablesOverwrite
+      ? parseVariables({
+        ...runtimeVariables,
+        ...(bookmarkValues ? {
+          [VARIABLE_BOOKMARK_VALUES_KEY]: bookmarkValues,
+        } : {}),
+      })
+      : null,
   }), [
+    bookmarkValues,
     initialPipelineSchedulePayload,
     enableVariablesOverwrite,
     runtimeVariables,
@@ -71,7 +83,7 @@ function RunPipelinePopup({
 
   useEffect(() => {
     if (tabs?.length >= 1 && !selectedTab) {
-      setSelectedTab(tabs?.[1]);
+      setSelectedTab(tabs?.[0]);
     }
   }, [
     selectedTab,
@@ -177,7 +189,9 @@ function RunPipelinePopup({
 
       {TAB_BOOKMARK_VALUES.uuid === selectedTab?.uuid && (
         <BookmarkValues
+          bookmarkValues={bookmarkValues}
           pipeline={pipeline}
+          setBookmarkValues={setBookmarkValues}
         />
       )}
     </Panel>
