@@ -156,7 +156,7 @@ export type PanelProps = {
   minWidth?: number;
   noPadding?: boolean;
   overflowVisible?: boolean;
-  subtitle?: string;
+  subtitle?: JSX.Element | string;
   success?: boolean;
 };
 
@@ -222,13 +222,14 @@ function Panel({
         overflowVisible={overflowVisible}
         ref={contentContainerRef}
       >
-        {subtitle &&
+        {subtitle && typeof subtitle === 'string' &&
           <Spacing mb={2}>
             <Text default>
               {subtitle}
             </Text>
           </Spacing>
         }
+        {subtitle && typeof subtitle !== 'string' && subtitle}
         {children}
       </ContentStyle>
 
