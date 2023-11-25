@@ -92,6 +92,8 @@ PipelineRunPresenter.register_format(
         'pipeline_schedule_name',
         'pipeline_schedule_token',
         'pipeline_schedule_type',
+        'pipeline_tags',
+        'pipeline_type',
     ],
 )
 
