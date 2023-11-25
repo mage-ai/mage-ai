@@ -100,7 +100,7 @@ import { getDateAndTimeObjFromDatetimeString } from '@oracle/components/Calendar
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
-import { isNumeric, pluralize } from '@utils/string';
+import { isJsonString, isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
@@ -139,8 +139,16 @@ function Edit({
   const pipelineScheduleID = useMemo(() => pipelineSchedule?.id, [pipelineSchedule]);
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
 
+  const bookmarkValuesOriginal = useMemo(() => pipelineSchedule?.variables?.[VARIABLE_BOOKMARK_VALUES_KEY], [
+    pipelineSchedule,
+  ]);
   const [bookmarkValues, setBookmarkValues] = useState<{BookmarkValuesMapping}>(
-    pipelineSchedule?.variables?.[VARIABLE_BOOKMARK_VALUES_KEY] || null,
+    // @ts-ignore
+    bookmarkValuesOriginal
+      ? typeof bookmarkValuesOriginal === 'string' && isJsonString(bookmarkValuesOriginal)
+        ? JSON.stringify(bookmarkValuesOriginal)
+        : bookmarkValuesOriginal
+      : null,
   );
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(true);
@@ -1698,75 +1706,13 @@ function Edit({
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          {/*<FlexContainer alignItems="center">
-            <Spacing mr={2}>
-              <ToggleSwitch
-                checked={overwriteVariables}
-                disabled={isEmptyObject(formattedVariables)}
-                onCheck={setOverwriteVariables}
-              />
-            </Spacing>
-            <Text monospace muted>
-              Overwrite global variables
-            </Text>
-          </FlexContainer>*/}
-
           <OverwriteVariables
             enableVariablesOverwrite
+            // @ts-ignore
             originalVariables={pipelineSchedule?.variables}
             runtimeVariables={runtimeVariables}
-            // setEnableVariablesOverwrite={setEnableVariablesOverwrite}
             setRuntimeVariables={setRuntimeVariables}
           />
-
-          {/*{overwriteVariables
-            && runtimeVariables
-            && Object.entries(runtimeVariables).length > 0
-            && (
-            <Spacing mt={1}>
-              <Table
-                columnFlex={[null, 1]}
-                columns={[
-                  {
-                    uuid: 'Variable',
-                  },
-                  {
-                    uuid: 'Value',
-                  },
-                ]}
-                rows={Object.entries(runtimeVariables).reduce((acc, [uuid, value]) => {
-                  if (MAGE_VARIABLES_KEY === uuid) {
-                    return acc;
-                  }
-
-                  return acc.concat([[
-                    <Text
-                      default
-                      key={`variable_${uuid}`}
-                      monospace
-                    >
-                      {uuid}
-                    </Text>,
-                    <TextInput
-                      borderless
-                      key={`variable_uuid_input_${uuid}`}
-                      monospace
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setRuntimeVariables(vars => ({
-                          ...vars,
-                          [uuid]: e.target.value,
-                        }));
-                      }}
-                      paddingHorizontal={0}
-                      placeholder="Variable value"
-                      value={value}
-                    />,
-                  ]]);
-                }, [])}
-              />
-            </Spacing>
-          )}*/}
         </Spacing>
       </Spacing>
 
@@ -1780,8 +1726,10 @@ function Edit({
 
           <BookmarkValues
             bookmarkValues={bookmarkValues}
+            // @ts-ignore
             originalBookmarkValues={pipelineSchedule?.variables?.[VARIABLE_BOOKMARK_VALUES_KEY]}
             pipeline={pipeline}
+            // @ts-ignore
             setBookmarkValues={setBookmarkValues}
           />
         </Spacing>

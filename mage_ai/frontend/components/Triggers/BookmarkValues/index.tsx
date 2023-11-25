@@ -258,6 +258,7 @@ function BookmarkValues({
                           key={`${blockUUID}-bookmark-values-${column}`}
                           textInput={{
                             monospace: true,
+                            // @ts-ignore
                             onChange: e => setBookmarkValues(prev => ({
                               ...prev,
                               [blockUUID]: {
@@ -268,7 +269,7 @@ function BookmarkValues({
                                 },
                               },
                             })),
-                            value: stateValue || '',
+                            value: String(stateValue || ''),
                           }}
                         />
                       );

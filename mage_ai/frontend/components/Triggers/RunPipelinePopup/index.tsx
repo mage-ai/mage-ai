@@ -191,6 +191,7 @@ function RunPipelinePopup({
         <BookmarkValues
           bookmarkValues={bookmarkValues}
           pipeline={pipeline}
+          // @ts-ignore
           setBookmarkValues={setBookmarkValues}
         />
       )}
