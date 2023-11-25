@@ -114,7 +114,7 @@ function TriggerDetail({
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const blocksMapping =
-    useMemo(() => indexBy(pipeline?.blocks || {}, ({ uuid }) => uuid), [pipeline]);
+    useMemo(() => indexBy(pipeline?.blocks || [], ({ uuid }) => uuid), [pipeline]);
 
   const {
     uuid: pipelineUUID,
@@ -574,9 +574,7 @@ function TriggerDetail({
         }
       });
     } else {
-      arr = getFormattedVariables(ignoreKeys(variables, [
-        VARIABLE_BOOKMARK_VALUES_KEY,
-      ]), block => block.uuid === GLOBAL_VARIABLES_UUID);
+      arr = getFormattedVariables(variables, block => block.uuid === GLOBAL_VARIABLES_UUID);
     }
 
     arr = addTriggerVariables(arr || [], scheduleType);

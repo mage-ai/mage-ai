@@ -39,6 +39,7 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     OUTPUT_TYPE_STATE,
     REPLICATION_METHOD_INCREMENTAL,
     STATE_FILENAME,
+    VARIABLE_BOOKMARK_VALUES_KEY,
     IngestMode,
 )
 from mage_ai.data_preparation.models.block.data_integration.data import (
@@ -455,7 +456,17 @@ def execute_data_integration(
             if len(stream_catalogs) == 1 and \
                     REPLICATION_METHOD_INCREMENTAL == stream_catalogs[0].get('replication_method'):
 
-                if execution_partition_previous:
+                if global_vars_more and VARIABLE_BOOKMARK_VALUES_KEY in global_vars_more:
+                    bookmark_values_by_block_uuid = global_vars_more.get(
+                        VARIABLE_BOOKMARK_VALUES_KEY,
+                    ) or {}
+
+                    if bookmark_values_by_block_uuid.get(block.uuid):
+                        state_data = dict(
+                            bookmarks=bookmark_values_by_block_uuid.get(block.uuid),
+                        )
+
+                if not state_data and execution_partition_previous:
                     state_data = get_state_data(
                         block,
                         catalog,
