@@ -355,6 +355,7 @@
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
+                "integrations/databases/Qdrant",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",

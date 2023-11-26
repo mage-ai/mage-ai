@@ -29,6 +29,7 @@ class DataSource(str, Enum):
     OPENSEARCH = 'opensearch'
     PINOT = 'pinot'
     POSTGRES = 'postgres'
+    QDRANT = 'qdrant'
     REDSHIFT = 'redshift'
     S3 = 's3'
     SNOWFLAKE = 'snowflake'

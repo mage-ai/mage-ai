@@ -1,0 +1,37 @@
+---
+title: "Qdrant"
+sidebarTitle: "Qdrant"
+---
+
+## Credentials
+
+Open the file named `io_config.yaml` at the root of your Mage project and enter qdrant required fields:
+
+```yaml
+version: 0.1.1
+default:
+  QDRANT_COLLECTION: collection_name
+  QDRANT_PATH: path of the qdrant persisitant storage
+```
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader or data exporter with Template. Under "Databases" category you can
+ find the "Qdrant" template.
+
+- Qdrant data loader arguments:
+  - limit_results (int): Number of results to return.
+  - query_vector (List): vector lit used for query.
+  - collection_name (str): name of the collection. Defaults to the name defined in io_config.yaml.
+
+- Qdrant data exporter arguments:
+  - df (DataFrame): Data to export.
+  - collection_name (str): name of the collection.
+  - vector_size (int): dimension size of vector.
+  - distance (models.Distance): distance metric to use.
+
+At the same time there is `create_collection` function can be used in your block to create new collection.
+
+3. Add your customized code into the loader, exporter or add extra transformer blocks.
+4. Run the block.

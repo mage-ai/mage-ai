@@ -92,6 +92,9 @@ setuptools.setup(
             'psycopg2-binary==2.9.3',
             'sshtunnel==0.4.0',
         ],
+        'qdrant': [
+            'qdrant-client>=1.6.9',
+        ],
         'redshift': [
             'boto3==1.26.60',
             'redshift-connector==2.0.909',
