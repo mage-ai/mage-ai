@@ -82,6 +82,7 @@ class PipelineScheduler:
                     )
                 )
             except Exception:
+                logger.exception(f'Fail to get streams for {pipeline_run}')
                 traceback.print_exc()
 
         # Initialize the logger
@@ -1579,7 +1580,12 @@ def schedule_all():
             )
 
         for r in quota_filtered_runs:
-            PipelineScheduler(r).start()
+            try:
+                PipelineScheduler(r).start()
+            except Exception:
+                logger.exception(f'Failed to start {r}')
+                traceback.print_exc()
+                continue
 
         # If on_pipeline_run_limit_reached is set as SKIP, cancel the pipeline runs that
         # were not scheduled due to pipeline run limits.
