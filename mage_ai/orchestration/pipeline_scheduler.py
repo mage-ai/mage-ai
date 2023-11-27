@@ -75,11 +75,14 @@ class PipelineScheduler:
         # Get the list of integration stream if the pipeline is data integration pipeline
         self.streams = []
         if self.pipeline.type == PipelineType.INTEGRATION:
-            self.streams = self.pipeline.streams(
-                self.pipeline_run.get_variables(
-                    extra_variables=get_extra_variables(self.pipeline)
+            try:
+                self.streams = self.pipeline.streams(
+                    self.pipeline_run.get_variables(
+                        extra_variables=get_extra_variables(self.pipeline)
+                    )
                 )
-            )
+            except Exception:
+                traceback.print_exc()
 
         # Initialize the logger
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
