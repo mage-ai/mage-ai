@@ -1585,6 +1585,7 @@ def schedule_all():
             except Exception:
                 logger.exception(f'Failed to start {r}')
                 traceback.print_exc()
+                r.update(status=PipelineRun.PipelineRunStatus.FAILED)
                 continue
 
         # If on_pipeline_run_limit_reached is set as SKIP, cancel the pipeline runs that
