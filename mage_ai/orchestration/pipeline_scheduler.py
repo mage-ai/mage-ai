@@ -75,11 +75,15 @@ class PipelineScheduler:
         # Get the list of integration stream if the pipeline is data integration pipeline
         self.streams = []
         if self.pipeline.type == PipelineType.INTEGRATION:
-            self.streams = self.pipeline.streams(
-                self.pipeline_run.get_variables(
-                    extra_variables=get_extra_variables(self.pipeline)
+            try:
+                self.streams = self.pipeline.streams(
+                    self.pipeline_run.get_variables(
+                        extra_variables=get_extra_variables(self.pipeline)
+                    )
                 )
-            )
+            except Exception:
+                logger.exception(f'Fail to get streams for {pipeline_run}')
+                traceback.print_exc()
 
         # Initialize the logger
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
@@ -1576,7 +1580,13 @@ def schedule_all():
             )
 
         for r in quota_filtered_runs:
-            PipelineScheduler(r).start()
+            try:
+                PipelineScheduler(r).start()
+            except Exception:
+                logger.exception(f'Failed to start {r}')
+                traceback.print_exc()
+                r.update(status=PipelineRun.PipelineRunStatus.FAILED)
+                continue
 
         # If on_pipeline_run_limit_reached is set as SKIP, cancel the pipeline runs that
         # were not scheduled due to pipeline run limits.
