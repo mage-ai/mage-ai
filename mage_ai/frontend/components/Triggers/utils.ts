@@ -3,9 +3,9 @@ import moment from 'moment';
 import BlockRunType from '@interfaces/BlockRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import {
-  DATE_FORMAT_DISPLAY,
   DATE_FORMAT_LONG_NO_SEC,
   DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET,
+  DATE_FORMAT_LONG_T_SEP,
   dateFormatLong,
 } from '@utils/date';
 import { DEFAULT_PORT } from '@api/utils/url';
@@ -122,7 +122,7 @@ export function getTimeInUTCString(dateTime: string) {
   }
   const formattedDate = dateTime.split('+')[0];
   const momentObj = moment(getTimeInUTC(formattedDate));
-  const datetimeString = momentObj.format(DATE_FORMAT_DISPLAY);
+  const datetimeString = momentObj.format(DATE_FORMAT_LONG_T_SEP);
 
   return datetimeString;
 }
