@@ -27,8 +27,6 @@ class PipelineSchedulePresenter(BasePresenter):
         data = self.model.to_dict()
         next_execution_date = self.model.next_execution_date()
 
-        print('OMGGGGGGGGG display_format', display_format)
-
         if constants.LIST == display_format:
             data = self.model.to_dict(include_attributes=[
                 'event_matchers',
