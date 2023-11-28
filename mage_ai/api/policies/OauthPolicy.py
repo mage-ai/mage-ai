@@ -46,12 +46,12 @@ class OauthPolicy(BasePolicy, UserPermissionMixIn):
             ),
             {
                 OauthScope.CLIENT_PUBLIC: {
-                    OperationType.DETAIL: config[OauthScope.CLIENT_PUBLIC][
-                        OperationType.DETAIL
-                    ],
-                    OperationType.LIST: config[OauthScope.CLIENT_PUBLIC][
-                        OperationType.LIST
-                    ],
+                    OperationType.DETAIL: (config.get(
+                        OauthScope.CLIENT_PUBLIC,
+                    ) or {}).get(OperationType.DETAIL) or {},
+                    OperationType.LIST: (config.get(
+                        OauthScope.CLIENT_PUBLIC,
+                    ) or {}).get(OperationType.LIST) or {},
                 },
             },
         )
