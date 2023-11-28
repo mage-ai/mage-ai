@@ -20,6 +20,7 @@ GIT_SYNC_ON_PIPELINE_RUN_VAR = 'GIT_SYNC_ON_PIPELINE_RUN'
 GIT_SYNC_ON_START_VAR = 'GIT_SYNC_ON_START'
 GIT_SYNC_ON_EXECUTOR_START_VAR = 'GIT_SYNC_ON_EXECUTOR_START'
 GIT_SYNC_SUBMODULES = 'GIT_SYNC_SUBMODULES'
+GIT_ENABLE_GIT_INTEGRATION_VAR = 'GIT_ENABLE_GIT_INTEGRATION'
 
 
 class Preferences:
@@ -30,8 +31,7 @@ class Preferences:
         user: User = None,
     ):
         self.repo_path = repo_path or get_repo_path()
-        self.preferences_file_path = \
-            os.path.join(self.repo_path, PREFERENCES_FILE)
+        self.preferences_file_path = os.path.join(self.repo_path, PREFERENCES_FILE)
         self.user = user
         project_preferences = dict()
         try:
@@ -47,33 +47,43 @@ class Preferences:
             pass
 
         # Git settings
-        env_sync_config = dict()
         if os.getenv(GIT_REPO_LINK_VAR):
-            env_sync_config = dict(
+            self.sync_config = dict(
                 remote_repo_link=os.getenv(GIT_REPO_LINK_VAR),
                 repo_path=os.getenv(GIT_REPO_PATH_VAR, os.getcwd()),
                 auth_type=os.getenv(GIT_AUTH_TYPE_VAR),
                 username=os.getenv(GIT_USERNAME_VAR),
                 email=os.getenv(GIT_EMAIL_VAR),
                 branch=os.getenv(GIT_BRANCH_VAR),
-                sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_VAR) or 0)),
+                sync_on_pipeline_run=bool(
+                    int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_VAR) or 0)
+                ),
                 sync_on_start=bool(int(os.getenv(GIT_SYNC_ON_START_VAR) or 0)),
-                sync_on_executor_start=bool(int(os.getenv(GIT_SYNC_ON_EXECUTOR_START_VAR) or 0)),
+                sync_on_executor_start=bool(
+                    int(os.getenv(GIT_SYNC_ON_EXECUTOR_START_VAR) or 0)
+                ),
                 sync_submodules=bool(int(os.getenv(GIT_SYNC_SUBMODULES) or 0)),
+                enable_git_integration=bool(
+                    int(os.getenv(GIT_ENABLE_GIT_INTEGRATION_VAR) or 0)
+                ),
             )
-        project_sync_config = project_preferences.get('sync_config', dict())
-        if user:
-            user_git_settings = user.git_settings or {}
-            project_sync_config = merge_dict(project_sync_config, user_git_settings)
+        else:
+            project_sync_config = project_preferences.get('sync_config', dict())
+            if user:
+                user_git_settings = user.git_settings or {}
+                project_sync_config = merge_dict(project_sync_config, user_git_settings)
 
-        self.sync_config = merge_dict(env_sync_config, project_sync_config)
+            self.sync_config = project_sync_config
 
     def is_git_integration_enabled(self) -> bool:
-        return self.sync_config.get('remote_repo_link') and \
-            self.sync_config.get('repo_path') and \
-            self.sync_config.get('username') and \
-            self.sync_config.get('email') and \
-            self.sync_config.get('branch') is None
+        return (
+            self.sync_config.get('remote_repo_link')
+            and self.sync_config.get('repo_path')
+            and self.sync_config.get('username')
+            and self.sync_config.get('email')
+            and self.sync_config.get('branch') is None
+            or self.sync_config.get('enable_git_integration')
+        )
 
     def update_preferences(self, updates: Dict):
         preferences = self.to_dict()
@@ -90,8 +100,9 @@ class Preferences:
 def get_preferences(repo_path=None, user: User = None) -> Preferences:
     default_preferences = Preferences(repo_path=repo_path)
     if user:
-        if user.preferences is None \
-                and os.path.exists(default_preferences.preferences_file_path):
+        if user.preferences is None and os.path.exists(
+            default_preferences.preferences_file_path
+        ):
             return default_preferences
         else:
             return Preferences(user=user)
