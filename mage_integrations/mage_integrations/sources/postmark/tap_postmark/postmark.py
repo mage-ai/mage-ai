@@ -1,6 +1,7 @@
 """PayPal API Client."""  # noqa: WPS226
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 from datetime import date, datetime, timedelta
 from types import MappingProxyType
@@ -390,15 +391,15 @@ class Postmark(object):  # noqa: WPS230
                     details_data: dict = details_response.json()
 
                     # Retrieve list of messages
-                    details_messageEvents: List[dict] = details_data.get('MessageEvents', '')
+                    details_message_events: List[dict] = details_data.get('MessageEvents', '')
 
                     # Extract messageEvent types frome the MessageEvent list
-                    messageEvent_types: str = ''
-                    for event in details_messageEvents:
-                        messageEvent_types = messageEvent_types + event['Type']+','
-                    messageEvent_types =  messageEvent_types[:-1] # Get rid of the last comma
-                    message['MessageEvents'] = messageEvent_types
-
+                    message_event_types: str = ''
+                    for event in details_message_events:
+                        message_event_types = message_event_types + event['Type'] + ','
+                    message_event_types = message_event_types[:-1]    # Get rid of the last comma
+                    message['MessageEvents'] = message_event_types
+                    message['MessageEventsJson'] = json.dumps(details_message_events)
                     yield cleaner(date_day, message)
                     total += 1
 

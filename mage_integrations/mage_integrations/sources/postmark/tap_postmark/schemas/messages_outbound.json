@@ -31,6 +31,9 @@
 		"message_events": {
 			"type": "string"
 		},
+		"message_events_json": {
+			"type": "string"
+		},
 		"message_stream": {
 			"type": "string"
 		},
