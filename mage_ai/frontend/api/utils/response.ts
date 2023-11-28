@@ -164,11 +164,18 @@ export function displayErrorFromReadResponse(
     linksFinal = linksFinal.concat(tooManyOpenFilesErrLink);
   }
   if (data?.error) {
-    setErrors?.({
-      errors: parseErrorFromResponse(data),
-      links: linksFinal,
-      response: data,
-    });
+    if (data?.error?.displayMessage) {
+      setErrors?.({
+        displayMessage: data.error.displayMessage,
+        links: linksFinal,
+      });
+    } else {
+      setErrors?.({
+        errors: parseErrorFromResponse(data),
+        links: linksFinal,
+        response: data,
+      });
+    }
   } else {
     setErrors?.(null);
   }

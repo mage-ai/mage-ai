@@ -257,6 +257,8 @@ function PipelineDetailPage({
     pipelineUUID,
     {
       include_block_pipelines: true,
+      include_remote_variables_dir: true,
+      include_variables_dir: true,
       includes_outputs: isEmptyObject(messages)
         || typeof pipeline === 'undefined'
         || pipeline === null
@@ -652,14 +654,6 @@ function PipelineDetailPage({
     revalidateOnFocus: false,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
-
-  useEffect(() => {
-    let dataWithPotentialError = data;
-    if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
-      dataWithPotentialError = dataDataProviders;
-    }
-    displayErrorFromReadResponse(dataWithPotentialError, setPipelineErrors);
-  }, [data, dataDataProviders]);
 
   // Variables
   const {
@@ -1329,6 +1323,39 @@ function PipelineDetailPage({
     blocks,
     fetchPipeline,
     onChangeCodeBlock,
+  ]);
+
+  // Check for pipeline or project config errors
+  useEffect(() => {
+    let dataWithPotentialError = data;
+    let configFileLinks = [];
+    if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
+      dataWithPotentialError = dataDataProviders;
+    } else if ((pipeline?.variables_dir?.includes('.mage_data')
+      || pipeline?.remote_variables_dir === 'None') && !filePathFromUrl) {
+      dataWithPotentialError = {
+        error: {
+          displayMessage: 'The variables_dir or remote_variables_dir might be empty or '
+            + 'configured incorrectly. Please make sure those properties have values '
+            + 'entered or interpolated correctly in your project’s metadata.yaml config file.',
+        },
+      };
+      configFileLinks = [{
+        label: 'Check project configuration',
+        onClick: () => {
+          openFile(`${SpecialFileEnum.METADATA_YAML}`);
+          setPipelineErrors(null);
+        },
+      }];
+    }
+    displayErrorFromReadResponse(dataWithPotentialError, setPipelineErrors, configFileLinks);
+  }, [
+    data,
+    dataDataProviders,
+    filePathFromUrl,
+    openFile,
+    pipeline?.remote_variables_dir,
+    pipeline?.variables_dir,
   ]);
 
   const {
