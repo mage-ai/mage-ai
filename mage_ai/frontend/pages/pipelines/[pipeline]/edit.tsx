@@ -1325,26 +1325,26 @@ function PipelineDetailPage({
     onChangeCodeBlock,
   ]);
 
-  // Check for pipeline or project config errors
+  // Check for pipeline or project config issues
   useEffect(() => {
     let dataWithPotentialError = data;
     let configFileLinks = [];
+    const variablesDir = pipeline?.variables_dir;
+    const remoteVariablesDir = pipeline?.remote_variables_dir;
     if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
       dataWithPotentialError = dataDataProviders;
-    } else if ((pipeline?.variables_dir?.includes('.mage_data')
-      || pipeline?.remote_variables_dir === 'None') && !filePathFromUrl) {
+    } else if ((variablesDir?.includes('None') || remoteVariablesDir?.includes('None'))
+      && !filePathFromUrl) {
       /*
-       * If the variables_dir is not provided in the metadata.yaml project config file,
-       * the default Mage data directory (.mage_data) is used, so we check for that value.
-       * The remote_variables_dir property is not required to have a value, but if an
-       * empty variable is accidentally used, its value may be assigned to "None", which
-       * would not be the intended directory.
+       * If the variables_dir or remote_variables_dir uses an empty variable, the directory
+       * may unintentionally become "None" or include "None" in its path. We check if "None" is
+       * included in the directory values, so we can bring it to the user's attention in the UI.
        */
       dataWithPotentialError = {
         error: {
-          displayMessage: 'The variables_dir or remote_variables_dir might be empty or '
-            + 'configured incorrectly. Please make sure those properties have values '
-            + 'entered or interpolated correctly in your project’s metadata.yaml config file.',
+          displayMessage: `The variables_dir (${variablesDir}) or remote_variables_dir (${remoteVariablesDir})`
+            + ' might be configured incorrectly. Please make sure those properties have values'
+            + ' interpolated correctly in your project’s metadata.yaml config file.',
         },
       };
       configFileLinks = [{
