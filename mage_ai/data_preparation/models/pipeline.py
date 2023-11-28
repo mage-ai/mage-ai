@@ -729,6 +729,8 @@ class Pipeline:
         include_extensions: bool = False,
         include_outputs: bool = False,
         include_outputs_spark: bool = False,
+        include_remote_variables_dir: bool = False,
+        include_variables_dir: bool = False,
         sample_count: int = None,
     ):
         shared_kwargs = dict(
@@ -790,6 +792,12 @@ class Pipeline:
                     ),
                 )
             data.update(extensions=extensions_data)
+
+        if include_variables_dir:
+            data.update(variables_dir=self.variables_dir)
+
+        if include_remote_variables_dir:
+            data.update(remote_variables_dir=self.remote_variables_dir)
 
         return merge_dict(self.to_dict_base(), data)
 

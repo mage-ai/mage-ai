@@ -66,6 +66,14 @@ class PipelinePresenter(BasePresenter):
                     FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE,
                 )
 
+            include_variables_dir = query.get('include_variables_dir', [False])
+            if include_variables_dir:
+                include_variables_dir = include_variables_dir[0]
+
+            include_remote_variables_dir = query.get('include_remote_variables_dir', [False])
+            if include_remote_variables_dir:
+                include_remote_variables_dir = include_remote_variables_dir[0]
+
             return await self.model.to_dict_async(
                 include_block_catalog=include_block_catalog,
                 include_block_metadata=include_block_metadata,
@@ -77,6 +85,8 @@ class PipelinePresenter(BasePresenter):
                 include_extensions=include_extensions,
                 include_outputs=include_outputs,
                 include_outputs_spark=include_outputs_spark,
+                include_remote_variables_dir=include_remote_variables_dir,
+                include_variables_dir=include_variables_dir,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
         elif constants.UPDATE == display_format:
