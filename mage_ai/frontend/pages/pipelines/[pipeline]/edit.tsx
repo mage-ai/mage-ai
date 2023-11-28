@@ -1333,6 +1333,13 @@ function PipelineDetailPage({
       dataWithPotentialError = dataDataProviders;
     } else if ((pipeline?.variables_dir?.includes('.mage_data')
       || pipeline?.remote_variables_dir === 'None') && !filePathFromUrl) {
+      /*
+       * If the variables_dir is not provided in the metadata.yaml project config file,
+       * the default Mage data directory (.mage_data) is used, so we check for that value.
+       * The remote_variables_dir property is not required to have a value, but if an
+       * empty variable is accidentally used, its value may be assigned to "None", which
+       * would not be the intended directory.
+       */
       dataWithPotentialError = {
         error: {
           displayMessage: 'The variables_dir or remote_variables_dir might be empty or '
