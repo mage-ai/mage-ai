@@ -11,19 +11,26 @@ To find more details, please refer to Dremio docs [here](https://docs.dremio.com
 
 <b>NOTE:</b> Mage's implementation of Dremio Source doesn't allow for the `query` connection parameter
 
-| Key | Description | Required |
+### Required Parameters
+
+| Key | Description | Sample value |
 | --- | --- | --- |
-| `username` | Username of the Dremio account to use for authenticating. | True |
-| `schema` | Dremio Source Table schema. | True |
-| `source_backend` | SQL Source backend used to query data from Dremio. Please refer to the section below for detailed info <br /> E.G postgresql, mssql, mysql. | True, if applicable |
-| `password` | Password of the Dremio account to use for authenticating. | True, if no token is provided. |
-| `hostname` | The hostname or IP address of the coordinator node. | False (Default is localhost) |
-| `port` | Dremio's Arrow Flight server port. Can be other than 32010, if changed on the coordinator node. | False (Default is 32010) |
-| `token` | Either a Personal Access Token or an OAuth2 Token. | True, if no password is provided. |
-| `tls` | Enables encryption on a connection. | False |
-| `disable_certificate_verification` | Disables TLS server verification. | False |
-| `path_to_certs` | Path to trusted certificates for encrypted connections. False |
-| `session_properties` | Key value pairs of session_properties | False |
+| `username` | Username of the Dremio account to use for authenticating. | `ABC123` |
+| `schema` | Dremio Source Table schema. | `ABC123` |
+| `source_backend` | SQL Source backend used to query data from Dremio. Please refer to the section below for detailed info | `postgresql` |
+| `password` | Password of the Dremio account to use for authenticating. </b> (Required if no token is provided) | `ABC123` |
+| `token` | Either a Personal Access Token or an OAuth2 Token. </b> (Required if no password is provided) | `ABC123` |
+
+### Optional Parameters
+
+| Key | Description | Sample value |
+| --- | --- | --- |
+| `hostname` | The hostname or IP address of the coordinator node. (Defaults to localhost) | `localhost` |
+| `port` | Dremio's Arrow Flight server port. Can be other than 32010, if changed on the coordinator node. (Defaults to 32010) | `32010` |
+| `tls` | Enables encryption on a connection. | `false` |
+| `disable_certificate_verification` | Disables TLS server verification. | `true` |
+| `path_to_certs` | Path to trusted certificates for encrypted connections. | `ABC123` |
+| `session_properties` | Key value pairs of session_properties | `ABC123` |
 
 ### Source Backend
 
