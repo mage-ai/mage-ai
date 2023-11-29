@@ -272,7 +272,6 @@ class IntegrationPipeline(Pipeline):
                             sample_data_json = data.get('sample_data')
                             sample_data = pd.DataFrame.from_dict(json.loads(sample_data_json))
                             stream_id = data.get('stream_id')
-
                             variables = {
                                 f'output_sample_data_{stream_id}': sample_data,
                             }
