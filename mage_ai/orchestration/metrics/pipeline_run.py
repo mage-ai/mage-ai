@@ -9,7 +9,7 @@ from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
     IntegrationPipeline,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import dig, merge_dict, set_value
 
 KEY_DESTINATION = 'destinations'
 KEY_SOURCE = 'sources'
@@ -25,23 +25,8 @@ def calculate_pipeline_run_metrics(
             pipeline_run,
             logger=logger,
             logging_tags=logging_tags,
-            update_pipeline_run_metrics=True,
-        )
-
-
-def calculate_block_metrics(
-    pipeline_run: PipelineRun,
-    logger=None,
-    logging_tags: Dict = None,
-    streams: List[str] = None,
-) -> Dict:
-    if pipeline_run:
-        return __calculate_and_log_metrics(
-            pipeline_run,
-            logger=logger,
-            logging_tags=logging_tags,
-            streams=streams,
             update_block_run_metrics=True,
+            update_pipeline_run_metrics=True,
         )
 
 
@@ -85,6 +70,145 @@ def __calculate_and_log_metrics(
             )
 
 
+def calculate_source_metrics(
+    pipeline_run: PipelineRun,
+    block_run: BlockRun,
+    stream: str,
+    logger=None,
+    logging_tags: Dict = None,
+):
+    pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
+
+    if logging_tags is None:
+        logging_tags = dict()
+    if logger:
+        logger.info(
+            f'Calculate source metrics for stream {stream} started.',
+            **logging_tags,
+        )
+    try:
+        logs_arr = block_run.logs['content'].split('\n')
+
+        logs_by_uuid = dict(
+            sources=[logs_arr],
+        )
+
+        shared_metric_keys = [
+            'block_tags',
+            'error',
+            'errors',
+            'message',
+        ]
+
+        metrics = get_metrics({
+            stream: logs_by_uuid,
+        }, [
+            (KEY_SOURCE, shared_metric_keys + [
+                'record',
+                'records',
+            ]),
+        ])
+
+        existing_metrics = pipeline_run.metrics or {}
+
+        new_metrics = merge_dict(set_value(
+                existing_metrics,
+                ['blocks', stream, KEY_SOURCE],
+                dig(metrics, [stream, KEY_SOURCE]),
+            ), dict(
+                destination=pipeline.destination_uuid,
+                source=pipeline.source_uuid,
+            )
+        )
+        
+        pipeline_run.update(metrics=new_metrics)
+
+        if logger:
+            logger.info(
+                f'Calculate source metrics for stream {stream} completed.',
+                **merge_dict(logging_tags, dict(metrics=pipeline_run.metrics)),
+            )
+    except Exception as e:
+        if logger:
+            logger.error(
+                f'Failed to calculate source metrics for stream {stream}.',
+                **logging_tags,
+                error=e,
+            )
+
+
+def calculate_destination_metrics(
+    pipeline_run: PipelineRun,
+    block_run: BlockRun,
+    stream: str,
+    logger=None,
+    logging_tags: Dict = None,
+):
+    pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
+
+    if logging_tags is None:
+        logging_tags = dict()
+    if logger:
+        logger.info(
+            f'Calculate destination metrics for stream {stream} started.',
+            **logging_tags,
+        )
+
+    try:
+        logs_arr = block_run.logs['content'].split('\n')
+
+        logs_by_uuid = {
+            KEY_DESTINATION: [logs_arr],
+        }
+
+        shared_metric_keys = [
+            'block_tags',
+            'error',
+            'errors',
+            'message',
+        ]
+
+        metrics = get_metrics({
+            stream: logs_by_uuid,
+        }, [
+            (KEY_DESTINATION, shared_metric_keys + [
+                'record',
+                'records',
+                'records_affected',
+                'records_inserted',
+                'records_updated',
+                'state',
+            ]),
+        ])
+
+        existing_metrics = pipeline_run.metrics or {}
+
+        new_metrics = merge_dict(set_value(
+                existing_metrics,
+                ['blocks', stream, KEY_DESTINATION],
+                dig(metrics, [stream, KEY_DESTINATION]),
+            ), dict(
+                destination=pipeline.destination_uuid,
+                source=pipeline.source_uuid,
+            )
+        )
+
+        pipeline_run.update(metrics=new_metrics)
+
+        if logger:
+            logger.info(
+                f'Calculate destination metrics for stream {stream} completed.',
+                **merge_dict(logging_tags, dict(metrics=pipeline_run.metrics)),
+            )
+    except Exception as e:
+        if logger:
+            logger.error(
+                f'Failed to calculate destination metrics for stream {stream}.',
+                **logging_tags,
+                error=e,
+            )
+
+
 def __calculate_metrics(
     pipeline_run: PipelineRun,
     streams: List[str] = None,
@@ -115,20 +239,20 @@ def __calculate_metrics(
     if not streams:
         streams = [s['tap_stream_id'] for s in pipeline.streams()]
 
-    stream_ors = []
-    for stream in streams:
-        stream_ors += [
-            BlockRun.block_uuid.contains(f'{pipeline.data_loader.uuid}:{stream}'),
-            BlockRun.block_uuid.contains(f'{pipeline.data_exporter.uuid}:{stream}'),
-        ]
-    all_block_runs = BlockRun.query.filter(
-        BlockRun.pipeline_run_id == pipeline_run.id,
-        or_(*stream_ors),
-    ).all()
-
-    block_runs_by_stream = {}
-
+    block_metrics_by_stream = {}
     if update_block_run_metrics:
+        stream_ors = []
+        for stream in streams:
+            stream_ors += [
+                BlockRun.block_uuid.contains(f'{pipeline.data_loader.uuid}:{stream}'),
+                BlockRun.block_uuid.contains(f'{pipeline.data_exporter.uuid}:{stream}'),
+            ]
+        all_block_runs = BlockRun.query.filter(
+            BlockRun.pipeline_run_id == pipeline_run.id,
+            or_(*stream_ors),
+        ).all()
+
+        block_runs_by_stream = {}
         for br in all_block_runs:
             block_uuid = br.block_uuid
             parts = block_uuid.split(':')
@@ -176,6 +300,13 @@ def __calculate_metrics(
                 'state',
             ]),
         ])
+
+    shared_metric_keys = [
+        'block_tags',
+        'error',
+        'errors',
+        'message',
+    ]
 
     pipeline_metrics_by_stream = {}
     if update_pipeline_run_metrics:

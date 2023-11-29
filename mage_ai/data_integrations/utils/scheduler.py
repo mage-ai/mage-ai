@@ -156,6 +156,8 @@ def create_block_runs(
         record_counts = None
         if is_sql_source:
             record_counts = record_counts_by_stream[tap_stream_id]['count']
+        # record_counts = 250_000
+        # batch_fetch_limit = 100
         number_of_batches = math.ceil((record_counts or 1) / batch_fetch_limit)
         tags2 = merge_dict(tags, dict(
             number_of_batches=number_of_batches,

@@ -42,8 +42,9 @@ from mage_ai.orchestration.db.models.schedules import (
 )
 from mage_ai.orchestration.job_manager import JobType, job_manager
 from mage_ai.orchestration.metrics.pipeline_run import (
-    calculate_block_metrics,
+    calculate_destination_metrics,
     calculate_pipeline_run_metrics,
+    calculate_source_metrics,
 )
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -215,13 +216,14 @@ class PipelineScheduler:
             if self.pipeline_run.all_blocks_completed(self.allow_blocks_to_fail):
                 if PipelineType.INTEGRATION == self.pipeline.type:
                     tags = self.build_tags()
-                    calculate_pipeline_run_metrics(
-                        self.pipeline_run,
-                        logger=self.logger,
-                        logging_tags=tags,
-                    )
+                    # calculate_pipeline_run_metrics(
+                    #     self.pipeline_run,
+                    #     logger=self.logger,
+                    #     logging_tags=tags,
+                    # )
 
                 if self.pipeline_run.any_blocks_failed():
+                    self.pipeline_run.refresh()
                     self.pipeline_run.update(
                         status=PipelineRun.PipelineRunStatus.FAILED,
                         completed_at=datetime.now(tz=pytz.UTC),
@@ -235,6 +237,7 @@ class PipelineScheduler:
                         pipeline_run=self.pipeline_run,
                     )
                 else:
+                    self.pipeline_run.refresh()
                     self.pipeline_run.complete()
                     self.notification_sender.send_pipeline_run_success_message(
                         pipeline=self.pipeline,
@@ -1057,19 +1060,40 @@ def run_integration_stream(
                 else:
                     raise e
             else:
-                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                        f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
-
-                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
-                        destination_table=destination_table,
-                        index=index,
-                        stream=tap_stream_id,
-                    ))
+                tags2 = merge_dict(tags_updated.get('tags', {}), dict(
+                    destination_table=destination_table,
+                    index=index,
+                    stream=tap_stream_id,
+                ))
+                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
                     # Skip pipeline run metrics because they will be calculated after
                     # the pipeline run is completed.
-                    calculate_block_metrics(
+                    # calculate_block_metrics(
+                    #     pipeline_run,
+                    #     logger=pipeline_scheduler.logger,
+                    #     logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
+                    #     streams=[tap_stream_id],
+                    # )
+                    calculate_source_metrics(
                         pipeline_run,
-                        streams=[tap_stream_id],
+                        block_run,
+                        stream=tap_stream_id,
+                        logger=pipeline_scheduler.logger,
+                        logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
+                    )
+                elif f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+                    # Skip pipeline run metrics because they will be calculated after
+                    # the pipeline run is completed.
+                    # calculate_block_metrics(
+                    #     pipeline_run,
+                    #     logger=pipeline_scheduler.logger,
+                    #     logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
+                    #     streams=[tap_stream_id],
+                    # )
+                    calculate_destination_metrics(
+                        pipeline_run,
+                        block_run,
+                        stream=tap_stream_id,
                         logger=pipeline_scheduler.logger,
                         logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
                     )
