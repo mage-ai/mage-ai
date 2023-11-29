@@ -180,15 +180,13 @@
               "group": "Sources",
               "pages": [
                 "data-integrations/sources/overview",
-                "data-integrations/sources/add-new-source",
                 "data-integrations/sources/postgresql"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
-                "data-integrations/destinations/overview",
-                "data-integrations/destinations/add-new-destination"
+                "data-integrations/destinations/overview"
               ]
             },
             "data-integrations/batch-pipelines"
