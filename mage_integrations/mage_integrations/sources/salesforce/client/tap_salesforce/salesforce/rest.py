@@ -11,6 +11,7 @@ LOGGER = singer.get_logger()
 
 MAX_RETRIES = 4
 
+
 class Rest():
 
     def __init__(self, sf):

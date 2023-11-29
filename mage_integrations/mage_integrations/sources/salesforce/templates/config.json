@@ -1,6 +1,8 @@
 {
   "api_type": "REST",
-  "credentials": "",
+  "client_id": "",
+  "client_secret": "",
+  "refresh_token": "",
   "domain": "login",
   "select_fields_by_default": true,
   "threshold": 1000,

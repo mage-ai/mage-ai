@@ -26,7 +26,7 @@ class Salesforce(Source):
             return self._client
 
         self._client = SalesforceConnection(
-            credentials=parse_credentials(self.config.get('credentials')),
+            credentials=parse_credentials(self.config),
             quota_percent_total=self.config.get('quota_percent_total'),
             quota_percent_per_run=self.config.get('quota_percent_per_run'),
             is_sandbox=self.config.get('domain'),

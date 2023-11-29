@@ -22,6 +22,7 @@ DEFAULT_CHUNK_SIZE = 50000
 
 LOGGER = singer.get_logger()
 
+
 # pylint: disable=inconsistent-return-statements
 def find_parent(stream):
     parent_stream = stream
@@ -82,9 +83,11 @@ class Bulk():
         elif self.sf.jobs_completed > max_requests_for_run:
             partial_message = ("This replication job has completed {} Bulk API jobs ({:3.2f}% of " +
                                "total quota). Terminating replication due to allotted " +
-                               "quota of {}% per replication.").format(self.sf.jobs_completed,
-                                                                       (self.sf.jobs_completed / quota_max) * 100,
-                                                                       self.sf.quota_percent_per_run)
+                               "quota of {}% per replication.").format(
+                                   self.sf.jobs_completed,
+                                   (self.sf.jobs_completed / quota_max) * 100,
+                                   self.sf.quota_percent_per_run
+                                )
             raise TapSalesforceQuotaExceededException(partial_message)
 
     def _get_bulk_headers(self):
@@ -111,15 +114,21 @@ class Bulk():
                 # Add the bulk Job ID and its batches to the state so it can be resumed if necessary
                 tap_stream_id = catalog_entry['tap_stream_id']
                 state = singer.write_bookmark(state, tap_stream_id, 'JobID', job_id)
-                state = singer.write_bookmark(state, tap_stream_id, 'BatchIDs', batch_status['completed'][:])
+
+                state = singer.write_bookmark(state,
+                                              tap_stream_id,
+                                              'BatchIDs',
+                                              batch_status['completed'][:])
 
                 for completed_batch_id in batch_status['completed']:
                     for result in self.get_batch_results(job_id, completed_batch_id, catalog_entry):
                         yield result
                     # Remove the completed batch ID and write state
-                    state['bookmarks'][catalog_entry['tap_stream_id']]["BatchIDs"].remove(completed_batch_id)
-                    LOGGER.info("Finished syncing batch %s. Removing batch from state.", completed_batch_id)
-                    LOGGER.info("Batches to go: %d", len(state['bookmarks'][catalog_entry['tap_stream_id']]["BatchIDs"]))
+                    state['bookmarks'][catalog_entry['tap_stream_id']]["BatchIDs"].remove(completed_batch_id) # noqa
+                    LOGGER.info("Finished syncing batch %s. Removing batch from state.",
+                                completed_batch_id)
+                    LOGGER.info("Batches to go: %d",
+                                len(state['bookmarks'][catalog_entry['tap_stream_id']]["BatchIDs"]))
                     singer.write_state(state)
             else:
                 raise TapSalesforceException(batch_status['stateMessage'])
@@ -158,10 +167,11 @@ class Bulk():
 
             headers['Sforce-Enable-PKChunking'] = "true; chunkSize={}".format(DEFAULT_CHUNK_SIZE)
 
-            # If the stream ends with 'CleanInfo' or 'History', we can PK Chunk on the object's parent
+            # If the stream ends with 'CleanInfo' or 'History',
+            # we can PK Chunk on the object's parent
             if any(catalog_entry['stream'].endswith(suffix) for suffix in ["CleanInfo", "History"]):
                 parent = find_parent(catalog_entry['stream'])
-                headers['Sforce-Enable-PKChunking'] = headers['Sforce-Enable-PKChunking'] + "; parent={}".format(parent)
+                headers['Sforce-Enable-PKChunking'] = headers['Sforce-Enable-PKChunking'] + "; parent={}".format(parent) # noqa
 
         with metrics.http_request_timer("create_job") as timer:
             timer.tags['sobject'] = catalog_entry['stream']
@@ -179,7 +189,9 @@ class Bulk():
         endpoint = "job/{}/batch".format(job_id)
         url = self.bulk_url.format(self.sf.instance_url, endpoint)
 
-        body = self.sf._build_query_string(catalog_entry, start_date, order_by_clause=order_by_clause)
+        body = self.sf._build_query_string(catalog_entry,
+                                           start_date,
+                                           order_by_clause=order_by_clause)
 
         headers = self._get_bulk_headers()
         headers['Content-Type'] = 'text/csv'
@@ -227,7 +239,7 @@ class Bulk():
             with metrics.http_request_timer("get_job"):
                 self.sf._make_request('GET', url, headers=headers)
 
-            return True # requests will raise for a 400 InvalidJob
+            return True  # requests will raise for a 400 InvalidJob
 
         except RequestException as ex:
             if ex.response.headers["Content-Type"] == 'application/json':
@@ -289,7 +301,8 @@ class Bulk():
                 resp = self.sf._make_request('GET', url, headers=headers, stream=True)
                 for chunk in resp.iter_content(chunk_size=ITER_CHUNK_SIZE, decode_unicode=True):
                     if chunk:
-                        # Replace any NULL bytes in the chunk so it can be safely given to the CSV reader
+                        # Replace any NULL bytes in the chunk
+                        # so it can be safely given to the CSV reader
                         csv_file.write(chunk.replace('\0', ''))
 
                 csv_file.seek(0)

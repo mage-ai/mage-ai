@@ -13,8 +13,10 @@ LOGGER = singer.get_logger()
 
 BLACKLISTED_FIELDS = set(['attributes'])
 
+
 def remove_blacklisted_fields(data):
     return {k: v for k, v in data.items() if k not in BLACKLISTED_FIELDS}
+
 
 # pylint: disable=unused-argument
 def transform_bulk_data_hook(data, typ, schema):
@@ -30,6 +32,7 @@ def transform_bulk_data_hook(data, typ, schema):
 
     return result
 
+
 def get_stream_version(catalog_entry, state):
     tap_stream_id = catalog_entry['tap_stream_id']
     catalog_metadata = metadata.to_map(catalog_entry['metadata'])
@@ -44,9 +47,15 @@ def get_stream_version(catalog_entry, state):
         return stream_version
     return int(time.time() * 1000)
 
+
 def resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter):
     bulk = Bulk(sf)
-    current_bookmark = singer.get_bookmark(state, catalog_entry['tap_stream_id'], 'JobHighestBookmarkSeen') or sf.get_start_date(state, catalog_entry)
+    current_bookmark = singer.get_bookmark(
+        state,
+        catalog_entry['tap_stream_id'],
+        'JobHighestBookmarkSeen'
+    ) or sf.get_start_date(state, catalog_entry)
+
     current_bookmark = singer_utils.strptime_with_tz(current_bookmark)
     batch_ids = singer.get_bookmark(state, catalog_entry['tap_stream_id'], 'BatchIDs')
 
@@ -59,7 +68,8 @@ def resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter):
     schema = catalog_entry['schema']
 
     if not bulk.job_exists(job_id):
-        LOGGER.info("Found stored Job ID that no longer exists, resetting bookmark and removing JobID from state.")
+        LOGGER.info("Found stored Job ID that no longer exists, \
+                    resetting bookmark and removing JobID from state.")
         return counter
 
     # Iterate over the remaining batches, removing them once they are synced
@@ -78,8 +88,12 @@ def resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter):
                         time_extracted=start_time))
 
                 # Update bookmark if necessary
-                replication_key_value = replication_key and singer_utils.strptime_with_tz(rec[replication_key])
-                if replication_key_value and replication_key_value <= start_time and replication_key_value > current_bookmark:
+                replication_key_value = replication_key and singer_utils.strptime_with_tz(
+                    rec[replication_key]
+                )
+
+                if (replication_key_value and replication_key_value <= start_time
+                   and replication_key_value > current_bookmark):
                     current_bookmark = singer_utils.strptime_with_tz(rec[replication_key])
 
         state = singer.write_bookmark(state,
@@ -90,6 +104,7 @@ def resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter):
         LOGGER.info("Finished syncing batch %s. Removing batch from state.", batch_id)
         LOGGER.info("Batches to go: %d", len(batch_ids))
         singer.write_state(state)
+
 
 def sync_stream(sf, catalog_entry, state, state_msg_threshold):
     stream = catalog_entry['stream']
@@ -105,6 +120,7 @@ def sync_stream(sf, catalog_entry, state, state_msg_threshold):
         except Exception as ex:
             raise Exception("Error syncing {}: {}".format(
                 stream, ex)) from ex
+
 
 def sync_records(sf, catalog_entry, state, counter, state_msg_threshold):
     chunked_bookmark = singer_utils.strptime_with_tz(sf.get_start_date(state, catalog_entry))
@@ -134,11 +150,14 @@ def sync_records(sf, catalog_entry, state, counter, state_msg_threshold):
                 version=stream_version,
                 time_extracted=start_time))
 
-        replication_key_value = replication_key and singer_utils.strptime_with_tz(rec[replication_key])
+        replication_key_value = replication_key and singer_utils.strptime_with_tz(
+            rec[replication_key])
 
         if sf.pk_chunking:
-            if replication_key_value and replication_key_value <= start_time and replication_key_value > chunked_bookmark:
-                # Replace the highest seen bookmark and save the state in case we need to resume later
+            if (replication_key_value and replication_key_value <= start_time
+               and replication_key_value > chunked_bookmark):
+                # Replace the highest seen bookmark and save the state
+                # in case we need to resume later
                 chunked_bookmark = singer_utils.strptime_with_tz(rec[replication_key])
                 state = singer.write_bookmark(
                     state,
@@ -175,6 +194,7 @@ def sync_records(sf, catalog_entry, state, counter, state_msg_threshold):
             catalog_entry['tap_stream_id'],
             replication_key,
             singer_utils.strftime(chunked_bookmark))
+
 
 def fix_record_anytype(rec, schema):
     """Modifies a record when the schema has no 'type' element due to a SF type of 'anyType.'

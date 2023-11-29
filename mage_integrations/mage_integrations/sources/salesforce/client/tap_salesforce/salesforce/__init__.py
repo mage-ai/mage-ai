@@ -1,11 +1,9 @@
 import re
-import time
 
 import backoff
 import requests
 import singer
 import singer.utils as singer_utils
-from requests.exceptions import RequestException
 from singer import metadata, metrics
 
 from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.bulk import (
@@ -142,6 +140,7 @@ QUERY_INCOMPATIBLE_SALESFORCE_OBJECTS = set(['DataType',
                                              'AttachedContentNote',
                                              'QuoteTemplateRichTextData'])
 
+
 def log_backoff_attempt(details):
     LOGGER.info("ConnectionError detected, triggering backoff: %d try", details.get("tries"))
 
@@ -203,6 +202,7 @@ def field_to_property_schema(field, mdata):
 
     return property_schema, mdata
 
+
 class Salesforce():
     # pylint: disable=too-many-instance-attributes,too-many-arguments
     def __init__(self,
@@ -221,10 +221,11 @@ class Salesforce():
         if isinstance(quota_percent_total, str) and quota_percent_total.strip() == '':
             quota_percent_total = None
 
-        self.quota_percent_per_run = float(quota_percent_per_run) if quota_percent_per_run is not None else 25
-        self.quota_percent_total = float(quota_percent_total) if quota_percent_total is not None else 80
+        self.quota_percent_per_run = float(quota_percent_per_run) if quota_percent_per_run is not None else 25 # noqa
+        self.quota_percent_total = float(quota_percent_total) if quota_percent_total is not None else 80 # noqa
         self.is_sandbox = is_sandbox
-        self.select_fields_by_default = select_fields_by_default is True or (isinstance(select_fields_by_default, str) and select_fields_by_default.lower() == 'true')
+        self.select_fields_by_default = select_fields_by_default is True or (isinstance(
+            select_fields_by_default, str) and select_fields_by_default.lower() == 'true')
         self.default_start_date = default_start_date
         self.rest_requests_attempted = 0
         self.jobs_completed = 0
@@ -263,9 +264,11 @@ class Salesforce():
         elif self.rest_requests_attempted > max_requests_for_run:
             partial_message = ("This replication job has made {} REST requests ({:3.2f}% of " +
                                "total quota). Terminating replication due to allotted " +
-                               "quota of {}% per replication.").format(self.rest_requests_attempted,
-                                                                       (self.rest_requests_attempted / allotted) * 100,
-                                                                       self.quota_percent_per_run)
+                               "quota of {}% per replication.").format(
+                                   self.rest_requests_attempted,
+                                   (self.rest_requests_attempted / allotted) * 100,
+                                   self.quota_percent_per_run
+                                    )
             raise TapSalesforceQuotaExceededException(partial_message)
 
     def login(self):
@@ -328,7 +331,6 @@ class Salesforce():
                                             metadata.get(mdata, ('properties', k), 'selected'),
                                             self.select_fields_by_default)]
 
-
     def get_start_date(self, state, catalog_entry):
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
         replication_key = catalog_metadata.get((), {}).get('replication-key')
@@ -388,7 +390,10 @@ class Salesforce():
     # pylint: disable=line-too-long
     def get_blacklisted_fields(self):
         if self.api_type == BULK_API_TYPE:
-            return {('EntityDefinition', 'RecordTypesSupported'): "this field is unsupported by the Bulk API."}
+            return {
+                ('EntityDefinition', 'RecordTypesSupported'):
+                "this field is unsupported by the Bulk API."
+            }
         elif self.api_type == REST_API_TYPE:
             return {}
         else:
