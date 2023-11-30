@@ -201,7 +201,7 @@ function StreamDetailSchemaProperties({
             ...md?.metadata,
             ...opts,
           },
-        }
+        };
 
         return acc;
       }, {});
@@ -249,7 +249,7 @@ function StreamDetailSchemaProperties({
       });
     }
 
-    columnFlexInner.push(...[null, null])
+    columnFlexInner.push(...[null, null]);
     columnsInner.push(...[
       {
         center: true,
@@ -362,7 +362,6 @@ function StreamDetailSchemaProperties({
     setCoordinates,
     setPropertyFocused,
     stream,
-    updateStreamInBlock,
   ]);
 
   const rows = useMemo(() => schemaPropertiesSortedArray?.map(({
@@ -504,11 +503,8 @@ function StreamDetailSchemaProperties({
     keyPropertiesMapping,
     partitionKeysMapping,
     renderTypes,
-    schemaProperties,
     schemaPropertiesSortedArray,
     setBlockAttributes,
-    setCoordinates,
-    setPropertyFocused,
     stream,
     uniqueConstraintsMapping,
   ]);
@@ -726,7 +722,6 @@ function StreamDetailSchemaProperties({
   }, [
     renderTypes,
     selectedPropertiesToMerge,
-    setSelectedPropertiesToMerge,
     updateColumnsInSelectedPropertiesToMerge,
   ]);
 
@@ -806,7 +801,7 @@ function StreamDetailSchemaProperties({
 
     const rowsNewColumnsSettings = sortByKey(
       Object.entries(newColumnSettings),
-      ([column,]) => column,
+      ([column]) => column,
     ).map(([
       column,
       property,
@@ -872,36 +867,33 @@ function StreamDetailSchemaProperties({
     diffs,
     renderTableConflict,
     schemaProperties,
-    stream,
   ]);
 
-  const tableMemo = useMemo(() => {
-    return (
-      <Table
-        columnFlex={columnFlex}
-        columns={columns}
-        highlightRowOnHover
-        isSelectedRow={(index: number) => getSchemaPropertyAndHighlightedByIndex(
-          index,
-        )?.highlighted}
-        menu={rowMenu}
-        onClickRow={(index: number) => {
-          const {
-            column,
-            highlighted,
-          } = getSchemaPropertyAndHighlightedByIndex(index);
+  const tableMemo = useMemo(() => (
+    <Table
+      columnFlex={columnFlex}
+      columns={columns}
+      highlightRowOnHover
+      isSelectedRow={(index: number) => getSchemaPropertyAndHighlightedByIndex(
+        index,
+      )?.highlighted}
+      menu={rowMenu}
+      onClickRow={(index: number) => {
+        const {
+          column,
+          highlighted,
+        } = getSchemaPropertyAndHighlightedByIndex(index);
 
-          setHighlightedColumnsMapping(prev => highlighted
-            ? ignoreKeys(prev, [column])
-            : { ...prev, [column]: true }
-          );
-        }}
-        ref={refTable}
-        rows={rows}
-        stickyHeader
-      />
-    );
-  }, [
+        setHighlightedColumnsMapping(prev => highlighted
+          ? ignoreKeys(prev, [column])
+          : { ...prev, [column]: true }
+        );
+      }}
+      ref={refTable}
+      rows={rows}
+      stickyHeader
+    />
+    ), [
     columnFlex,
     columns,
     getSchemaPropertyAndHighlightedByIndex,
