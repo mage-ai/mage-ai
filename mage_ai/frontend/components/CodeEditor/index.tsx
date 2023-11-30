@@ -79,7 +79,7 @@ type CodeEditorProps = {
   onContentSizeChangeCallback?: () => void;
   onMountCallback?: () => void;
   onSave?: (value: string) => void;
-  padding?: boolean;
+  padding?: number;
   placeholder?: string;
   readOnly?: boolean;
   shortcuts?: ((monaco: any, editor: any) => void)[];

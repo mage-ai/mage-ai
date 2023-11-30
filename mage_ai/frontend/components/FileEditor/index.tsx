@@ -229,6 +229,7 @@ function FileEditor({
           onSave={(value: string) => {
             saveFile(value, file);
           }}
+          padding={10}
           selected
           textareaFocused
           value={isJsonString(file?.content)
