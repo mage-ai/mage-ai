@@ -22,6 +22,7 @@ import {
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
+import { DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT } from '@interfaces/DataSourceType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import {
   PropertyColumnMoreType,
@@ -173,11 +174,16 @@ function StreamDetailSchemaProperties({
     [column: string]: MetadataType;
   } = useMemo(() => getStreamMetadataByColumn(stream), [stream]);
 
+  const blockDestinationType = block?.metadata?.data_integration?.destination;
+  const supportsUniqueAndKeyProperties = useMemo(() =>
+    !DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT.includes(blockDestinationType),
+    [blockDestinationType],
+  );
   const {
     columnFlex,
     columns,
   } = useMemo(() => {
-    const columnFlexInner = [null, 1, 1, null];
+    const columnFlexInner = [null, 1, 1];
 
     const allColumnsSelected =
       schemaPropertiesSortedArray?.every(({
@@ -212,7 +218,7 @@ function StreamDetailSchemaProperties({
       ));
     };
 
-    const columnsInner = [
+    const columnsInner: ColumnType[] = [
       {
         label: () => (
           <ToggleSwitch
@@ -231,11 +237,21 @@ function StreamDetailSchemaProperties({
       {
         uuid: 'Types',
       },
-      {
-        center: true,
-        uuid: 'Unique',
-      },
     ];
+
+    if (supportsUniqueAndKeyProperties) {
+      columnFlexInner.push(...[null, null]);
+      columnsInner.push(...[
+        {
+          center: true,
+          uuid: 'Unique',
+        },
+        {
+          center: true,
+          uuid: 'Key',
+        },
+      ]);
+    }
 
     const {
       replication_method: replicationMethod,
@@ -249,17 +265,11 @@ function StreamDetailSchemaProperties({
       });
     }
 
-    columnFlexInner.push(...[null, null]);
-    columnsInner.push(...[
-      {
-        center: true,
-        uuid: 'Key',
-      },
-      {
-        center: true,
-        uuid: 'Partition',
-      },
-    ]);
+    columnFlexInner.push(null);
+    columnsInner.push({
+      center: true,
+      uuid: 'Partition',
+    });
 
     return {
       columnFlex: columnFlexInner,
@@ -270,6 +280,7 @@ function StreamDetailSchemaProperties({
     setBlockAttributes,
     stream,
     streamMetadataByColumn,
+    supportsUniqueAndKeyProperties,
   ]);
 
   const renderTypes = useCallback((
@@ -421,30 +432,43 @@ function StreamDetailSchemaProperties({
         {column}
       </Text>,
       renderTypes(column, p2),
-      <FlexContainer
-        alignItems="center"
-        justifyContent="center"
-        key={`${column}-unique`}
-      >
-        <Checkbox
-          checked={isUnique}
-          onClick={(e) => {
-            pauseEvent(e);
-            setBlockAttributes(prev => updateStreamInBlock(
-              {
-                ...stream,
-                unique_constraints: isUnique
-                  ? remove(uniqueConstraints || [], i => i === column)
-                  : appendArray(column, uniqueConstraints || [])
-              },
-              prev,
-            ));
-          }}
-        />
-      </FlexContainer>,
     ];
 
+    if (supportsUniqueAndKeyProperties) {
+      row.push(
+        <FlexContainer
+          alignItems="center"
+          justifyContent="center"
+          key={`${column}-unique`}
+        >
+          <Checkbox
+            checked={isUnique}
+            onClick={(e) => {
+              pauseEvent(e);
+              setBlockAttributes(prev => updateStreamInBlock(
+                {
+                  ...stream,
+                  unique_constraints: isUnique
+                    ? remove(uniqueConstraints || [], i => i === column)
+                    : appendArray(column, uniqueConstraints || []),
+                },
+                prev,
+              ));
+            }}
+          />
+        </FlexContainer>,
+      );
+    }
+
     const rowSetups = [];
+
+    if (supportsUniqueAndKeyProperties) {
+      rowSetups.push([
+        isKeyProperty,
+        'key_properties',
+        keyProperties,
+      ]);
+    }
 
     if (ReplicationMethodEnum.INCREMENTAL === replicationMethod) {
       rowSetups.push([
@@ -454,17 +478,10 @@ function StreamDetailSchemaProperties({
       ]);
     }
 
-    rowSetups.push(...[
-      [
-        isKeyProperty,
-        'key_properties',
-        keyProperties,
-      ],
-      [
-        isPartitionKey,
-        'partition_keys',
-        partitionKeys,
-      ],
+    rowSetups.push([
+      isPartitionKey,
+      'partition_keys',
+      partitionKeys,
     ]);
 
     rowSetups.forEach(([
@@ -506,6 +523,7 @@ function StreamDetailSchemaProperties({
     schemaPropertiesSortedArray,
     setBlockAttributes,
     stream,
+    supportsUniqueAndKeyProperties,
     uniqueConstraintsMapping,
   ]);
 

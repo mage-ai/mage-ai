@@ -2,6 +2,7 @@ import { BlockTypeEnum } from './BlockType';
 
 export enum DataSourceTypeEnum {
   ACTIVEMQ = 'activemq',
+  AMAZON_S3 = 'amazon_s3',    // Used for the source/destination type of a data integration block
   AMAZON_SQS = 'amazon_sqs',
   API = 'api',
   AZURE_BLOB_STORAGE = 'azure_blob_storage',
@@ -31,7 +32,7 @@ export enum DataSourceTypeEnum {
   POSTGRES = 'postgres',
   RABBITMQ = 'rabbitmq',
   REDSHIFT = 'redshift',
-  S3 = 's3',
+  S3 = 's3',    // Also refers to Amazon S3
   SNOWFLAKE = 'snowflake',
   TRINO = 'trino',
 }
@@ -73,9 +74,9 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
 };
 
 export const DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT: DataSourceTypeEnum[] = [
+  DataSourceTypeEnum.AMAZON_S3,
   DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
   DataSourceTypeEnum.KAFKA,
-  DataSourceTypeEnum.S3,
 ];
 
 export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } = {

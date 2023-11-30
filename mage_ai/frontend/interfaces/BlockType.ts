@@ -284,9 +284,9 @@ export default interface BlockType {
       config?: {
         [key: string]: number | string;
       };
-      destination?: string;
+      destination?: DataSourceTypeEnum;
       name?: string;
-      source?: string;
+      source?: DataSourceTypeEnum;
       sql?: boolean;
     };
     dbt?: {
