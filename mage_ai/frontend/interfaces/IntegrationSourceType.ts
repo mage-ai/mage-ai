@@ -151,12 +151,21 @@ export enum IntegrationSourceEnum {
 }
 
 export enum IntegrationDestinationEnum {
+  AMAZON_S3 = 'amazon_s3',
   BIGQUERY = 'bigquery',
   DELTA_LAKE_S3 = 'delta_lake_s3',
+  GOOGLE_CLOUD_STORAGE = 'google_cloud_storage',
+  KAFKA = 'kafka',
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
   SNOWFLAKE = 'snowflake',
 }
+
+export const DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT: IntegrationDestinationEnum[] = [
+  IntegrationDestinationEnum.AMAZON_S3,
+  IntegrationDestinationEnum.GOOGLE_CLOUD_STORAGE,
+  IntegrationDestinationEnum.KAFKA,
+];
 
 export interface StreamStateData {
   block: BlockType;

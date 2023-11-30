@@ -22,7 +22,7 @@ import {
   SchemaPropertyType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
-import { DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT } from '@interfaces/DataSourceType';
+import { DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT } from '@interfaces/IntegrationSourceType';
 import { PADDING_UNITS, UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import {
   PropertyColumnMoreType,

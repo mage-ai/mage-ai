@@ -16,7 +16,7 @@ import {
 } from '@utils/models/block';
 import { BackgroundStyle } from '../index.style';
 import { COLUMN_TYPES, ReplicationMethodEnum } from '@interfaces/IntegrationSourceType';
-import { DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT } from '@interfaces/DataSourceType';
+import { DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT } from '@interfaces/IntegrationSourceType';
 import { InputTypeEnum } from '../constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { StreamDetailProps } from '../StreamDetail/constants';

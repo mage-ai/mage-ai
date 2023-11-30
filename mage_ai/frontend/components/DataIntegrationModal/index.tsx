@@ -385,7 +385,7 @@ function DataIntegrationModal({
   ]);
 
   const getSubTabForMainNavigationTab =
-    useCallback((mainNavigationTab: MainNavigationTabEnum): TabType[] => {
+    useCallback((mainNavigationTab: MainNavigationTabEnum | string): TabType[] => {
       if (mainNavigationTab in SUB_TABS_BY_MAIN_NAVIGATION_TAB) {
         return SUB_TABS_BY_MAIN_NAVIGATION_TAB[mainNavigationTab];
       }

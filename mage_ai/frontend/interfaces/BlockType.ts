@@ -6,6 +6,7 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
+import { IntegrationDestinationEnum, IntegrationSourceEnum } from './IntegrationSourceType';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -284,9 +285,9 @@ export default interface BlockType {
       config?: {
         [key: string]: number | string;
       };
-      destination?: DataSourceTypeEnum;
+      destination?: IntegrationDestinationEnum;
       name?: string;
-      source?: DataSourceTypeEnum;
+      source?: IntegrationSourceEnum;
       sql?: boolean;
     };
     dbt?: {
