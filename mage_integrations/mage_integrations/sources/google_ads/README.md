@@ -4,6 +4,10 @@
 
 <br />
 
+## INCREMENTAL Sync
+This tap handles state internally, which means INCREMENTAL sync selection <b>is not supported</b>
+<br />
+
 ## Config
 
 You must enter the following credentials when configuring this source:
