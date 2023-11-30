@@ -1343,7 +1343,7 @@ function PipelineDetailPage({
       } else {
         dataWithPotentialError.error.displayMessage = 'There may be an issue with your '
           + 'pipeline’s configuration file. Please check to make sure it is valid. It '
-          + 'can be found at /pipeline/[pipeline_uuid]/metadata.yaml.';
+          + 'can be found at /pipelines/[pipeline_uuid]/metadata.yaml.';
       }
     } else if (dataDataProviders?.hasOwnProperty('error')) {
       dataWithPotentialError = dataDataProviders;
