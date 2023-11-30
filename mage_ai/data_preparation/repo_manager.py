@@ -255,16 +255,26 @@ def get_repo_config(repo_path=None) -> RepoConfig:
 
 
 def get_project_type(repo_path=None) -> ProjectType:
+    from mage_ai.settings.repo import MAGE_PROJECT_TYPE_ENV_VAR
     try:
-        return get_repo_config(repo_path=repo_path).project_type
+        project_type_from_env = os.getenv(MAGE_PROJECT_TYPE_ENV_VAR)
+        if project_type_from_env:
+            return ProjectType(project_type_from_env)
+        else:
+            return get_repo_config(repo_path=repo_path).project_type
     except Exception:
         # default to standalone project type
         return ProjectType.STANDALONE
 
 
 def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
+    from mage_ai.settings.repo import MAGE_CLUSTER_TYPE_ENV_VAR
     try:
-        return get_repo_config(repo_path=repo_path).cluster_type
+        cluster_type_from_env = os.getenv(MAGE_CLUSTER_TYPE_ENV_VAR)
+        if cluster_type_from_env:
+            return ClusterType(cluster_type_from_env)
+        else:
+            return get_repo_config(repo_path=repo_path).cluster_type
     except Exception:
         # default to None
         return None

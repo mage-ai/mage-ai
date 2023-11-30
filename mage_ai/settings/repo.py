@@ -3,6 +3,9 @@ import sys
 
 from mage_ai.shared.environments import is_test
 
+MAGE_PROJECT_TYPE_ENV_VAR = 'PROJECT_TYPE'
+MAGE_CLUSTER_TYPE_ENV_VAR = 'CLUSTER_TYPE'
+
 """
 Moved from repo_manager because repo_manager has too many dependencies
 which can cause circular import errors.

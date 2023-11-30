@@ -32,6 +32,8 @@ class GitConfig(BaseConfig):
     ssh_private_key_secret_name: str = GIT_SSH_PRIVATE_KEY_SECRET_NAME
     ssh_public_key_secret_name: str = GIT_SSH_PUBLIC_KEY_SECRET_NAME
     access_token_secret_name: str = GIT_ACCESS_TOKEN_SECRET_NAME
+    # Force Mage to show git integration panel in the UI
+    enable_git_integration: bool = False
     # This is not necessary anymore, but leaving it for backwards compatibility
     type: str = 'git'
 
