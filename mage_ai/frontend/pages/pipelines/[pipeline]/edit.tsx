@@ -1331,7 +1331,21 @@ function PipelineDetailPage({
     let configFileLinks = [];
     const variablesDir = pipeline?.variables_dir;
     const remoteVariablesDir = pipeline?.remote_variables_dir;
-    if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
+    if (data?.hasOwnProperty('error') && !filePathFromUrl) {
+      if (pipelineUUID !== 'undefined') {
+        configFileLinks = [{
+          label: 'Check pipeline configuration file for any issues',
+          onClick: () => {
+            openFile(`pipelines/${pipelineUUID}/${SpecialFileEnum.METADATA_YAML}`);
+            setErrors(null);
+          },
+        }];
+      } else {
+        dataWithPotentialError.error.displayMessage = 'There may be an issue with your '
+          + 'pipeline’s configuration file. Please check to make sure it is valid. It '
+          + 'can be found at /pipeline/[pipeline_uuid]/metadata.yaml.';
+      }
+    } else if (dataDataProviders?.hasOwnProperty('error')) {
       dataWithPotentialError = dataDataProviders;
     } else if ((variablesDir?.includes('None') || remoteVariablesDir?.includes('None'))
       && !filePathFromUrl) {
@@ -1363,6 +1377,7 @@ function PipelineDetailPage({
     openFile,
     pipeline?.remote_variables_dir,
     pipeline?.variables_dir,
+    pipelineUUID,
   ]);
 
   const {
