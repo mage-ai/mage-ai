@@ -163,7 +163,7 @@ function StreamSchemaPropertiesEditor({
       setSelectedStreamMapping={setSelectedStreamMapping}
       streamMapping={streamMapping}
     />
-    ), [
+  ), [
     selectedStreamMapping,
     setSelectedStreamMapping,
     streamMapping,
