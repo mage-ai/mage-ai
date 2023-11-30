@@ -9,12 +9,12 @@ export const SINGLE_LINE_HEIGHT = 21;
 
 export const ContainerStyle = styled.div<{
   hideDuplicateMenuItems?: boolean;
-  padding?: boolean;
+  padding?: number;
 }>`
   font-family: ${FONT_FAMILY_REGULAR};
 
-  ${props => props.padding && `
-    padding-top: ${UNIT * 2}px;
+  ${props => (typeof props.padding === 'number' && props.padding > 0) && `
+    padding-top: ${props.padding}px;
     background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 

@@ -638,7 +638,7 @@ function CodeOutput({
             <CodeEditor
               autoHeight
               language={FileExtensionEnum.SQL}
-              padding
+              padding={UNIT * 2}
               readOnly
               value={sql}
               width="100%"
