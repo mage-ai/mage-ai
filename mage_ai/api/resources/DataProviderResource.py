@@ -8,6 +8,7 @@ from mage_ai.settings.repo import get_repo_path
 
 DATA_PROVIDERS = [
     DataSource.BIGQUERY,
+    DataSource.CHROMA,
     DataSource.CLICKHOUSE,
     DataSource.DRUID,
     DataSource.DUCKDB,
@@ -21,6 +22,7 @@ DATA_PROVIDERS = [
 ]
 DATA_PROVIDERS_NAME = {
     DataSource.BIGQUERY: 'BigQuery',
+    DataSource.CHROMA: 'Chroma',
     DataSource.CLICKHOUSE: 'ClickHouse',
     DataSource.DUCKDB: 'DuckDB',
     DataSource.DRUID: 'Druid',

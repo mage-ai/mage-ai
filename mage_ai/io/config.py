@@ -27,6 +27,9 @@ class ConfigKey(str, Enum):
     AZURE_STORAGE_ACCOUNT_NAME = 'AZURE_STORAGE_ACCOUNT_NAME'
     AZURE_TENANT_ID = 'AZURE_TENANT_ID'
 
+    CHROMA_COLLECTION = 'CHROMA_COLLECTION'
+    CHROMA_PATH = 'CHROMA_PATH'
+
     CLICKHOUSE_DATABASE = 'CLICKHOUSE_DATABASE'
     CLICKHOUSE_HOST = 'CLICKHOUSE_HOST'
     CLICKHOUSE_INTERFACE = 'CLICKHOUSE_INTERFACE'
@@ -323,6 +326,7 @@ class VerboseConfigKey(str, Enum):
 
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
+    CHROMA = 'Chroma'
     CLICKHOUSE = 'ClickHouse'
     DRUID = 'Druid'
     DUCKDB = 'Duck DB'
@@ -370,6 +374,10 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.REDSHIFT,
             'user',
         ),
+        ConfigKey.CHROMA_COLLECTION: (
+            VerboseConfigKey.CHROMA, 'collection'),
+        ConfigKey.CHROMA_PATH: (
+            VerboseConfigKey.CHROMA, 'path'),
         ConfigKey.CLICKHOUSE_DATABASE: (
             VerboseConfigKey.CLICKHOUSE, 'database'),
         ConfigKey.CLICKHOUSE_HOST: (

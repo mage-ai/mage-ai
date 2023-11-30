@@ -57,6 +57,9 @@ setuptools.setup(
             'google-cloud-bigquery~=3.0',
             'db-dtypes==1.0.5',
         ],
+        'chroma': [
+            'chroma>=0.4.17',
+        ],
         'clickhouse': [
             'clickhouse-connect==0.5.20',
         ],
@@ -129,6 +132,7 @@ setuptools.setup(
             'azure-storage-blob==12.14.1',
             'boto3==1.26.60',
             'botocore==1.29.60',
+            'chroma>=0.4.17',
             'clickhouse-connect==0.5.20',
             'confluent-avro',
             'db-dtypes==1.0.5',
@@ -155,7 +159,7 @@ setuptools.setup(
             'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
-            'kubernetes==25.3.0',
+            'kubernetes>=28.1.0',
             'langchain>=0.0.222',
             'ldap3==2.9.1',
             'nats-py==2.6.0',

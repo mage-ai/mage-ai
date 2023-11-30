@@ -345,6 +345,7 @@
               "pages": [
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
+                "integrations/databases/Chroma",
                 "integrations/databases/Druid",
                 "integrations/databases/DuckDB",
                 "integrations/databases/GoogleSheets",
