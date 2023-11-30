@@ -72,6 +72,12 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.TRINO]: 'Trino',
 };
 
+export const DESTINATIONS_NO_UNIQUE_OR_KEY_SUPPORT: DataSourceTypeEnum[] = [
+  DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
+  DataSourceTypeEnum.KAFKA,
+  DataSourceTypeEnum.S3,
+];
+
 export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } = {
   [BlockTypeEnum.DATA_LOADER]: [
     DataSourceTypeEnum.GENERIC,
