@@ -588,20 +588,21 @@ class BlockResource(GenericResource):
         limit = int((meta or {}).get(META_KEY_LIMIT, 0))
         offset = int((meta or {}).get(META_KEY_OFFSET, 0))
 
-        if not limit:
-            return total_results
+        final_results = total_results
+        has_next = False
+        if limit > 0:
+            start_idx = offset
+            end_idx = start_idx + limit
 
-        start_idx = offset
-        end_idx = start_idx + limit
+            results = total_results[start_idx:(end_idx + 1)]
 
-        results = total_results[start_idx:(end_idx + 1)]
-
-        results_size = len(results)
-        has_next = results_size > limit
-        final_end_idx = results_size - 1 if has_next else results_size
+            results_size = len(results)
+            has_next = results_size > limit
+            final_end_idx = results_size - 1 if has_next else results_size
+            final_results = results[0:final_end_idx]
 
         result_set = self.build_result_set(
-            results[0:final_end_idx],
+            final_results,
             user,
             **kwargs,
         )
