@@ -130,9 +130,7 @@ function BackfillsTable({
           >
             {startedAt
               ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
-              : (
-                <>&#8212;</>
-              )
+              : <>&#8212;</>
             }
           </Text>,
           <Text
@@ -144,9 +142,7 @@ function BackfillsTable({
           >
             {completedAt
               ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
-              : (
-                <>&#8212;</>
-              )
+              : <>&#8212;</>
             }
           </Text>,
         ];

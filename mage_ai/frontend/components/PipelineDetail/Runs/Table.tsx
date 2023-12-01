@@ -611,9 +611,7 @@ function PipelineRunsTable({
                   >
                     {startedAt
                       ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
-                      : (
-                        <>&#8212;</>
-                      )
+                      : <>&#8212;</>
                     }
                   </Text>,
                   <Text
@@ -624,9 +622,7 @@ function PipelineRunsTable({
                   >
                     {completedAt
                       ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
-                      : (
-                        <>&#8212;</>
-                      )
+                      : <>&#8212;</>
                     }
                   </Text>,
                   <Text
@@ -723,9 +719,7 @@ function PipelineRunsTable({
                   >
                     {executionDate
                       ? displayLocalOrUtcTime(executionDate, displayLocalTimezone)
-                      : (
-                        <>&#8212;</>
-                      )
+                      : <>&#8212;</>
                     }
                   </Text>,
                   <Text
@@ -736,9 +730,7 @@ function PipelineRunsTable({
                   >
                     {startedAt
                       ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
-                      : (
-                        <>&#8212;</>
-                      )
+                      : <>&#8212;</>
                     }
                   </Text>,
                   <Text
@@ -749,9 +741,7 @@ function PipelineRunsTable({
                   >
                     {completedAt
                       ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
-                      : (
-                        <>&#8212;</>
-                      )
+                      : <>&#8212;</>
                     }
                   </Text>,
                   <Text
