@@ -1,8 +1,8 @@
 import asyncio
+import collections
 import os
 import traceback
 from datetime import datetime, timedelta
-from itertools import groupby
 from typing import Any, Dict, List, Set, Tuple
 
 import pytz
@@ -1451,10 +1451,9 @@ def schedule_all():
     active_pipeline_uuids = list(set([s.pipeline_uuid for s in active_pipeline_schedules]))
     pipeline_runs_by_pipeline = PipelineRun.active_runs_for_pipelines_grouped(active_pipeline_uuids)
 
-    pipeline_schedules_by_pipeline = {
-        key: list(runs)
-        for key, runs in groupby(active_pipeline_schedules, key=lambda x: x.pipeline_uuid)
-    }
+    pipeline_schedules_by_pipeline = collections.defaultdict(list)
+    for schedule in active_pipeline_schedules:
+        pipeline_schedules_by_pipeline[schedule.pipeline_uuid].append(schedule)
 
     # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
     # each pipeline.
