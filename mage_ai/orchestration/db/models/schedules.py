@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from math import ceil
 from statistics import stdev
-from typing import Dict, List
+from typing import DefaultDict, Dict, List
 
 import dateutil.parser
 import pytz
@@ -929,7 +929,7 @@ class PipelineRun(BaseModel):
         self,
         pipeline_uuids: List[str],
         include_block_runs: bool = False,
-    ) -> Dict[str, List['PipelineRun']]:
+    ) -> DefaultDict[str, List['PipelineRun']]:
         """
         Get a dictionary of active pipeline runs grouped by pipeline uuid.
         """
