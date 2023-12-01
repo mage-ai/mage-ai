@@ -131,7 +131,7 @@ function ErrorPopup({
         </Spacing>
       )}
 
-      {errors && (
+      {(errors && errors?.[0] !== '') && (
         <Spacing mt={2}>
           <Text bold large>
             Stack trace (<Link
