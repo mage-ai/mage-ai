@@ -1,8 +1,5 @@
 from typing import Dict, List
 
-from singer import catalog as catalog_singer
-from mage_integrations.utils.dictionary import ignore_keys
-
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.google_ads.tap_google_ads.client import create_sdk_client
