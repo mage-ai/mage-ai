@@ -257,8 +257,6 @@ function PipelineDetailPage({
     pipelineUUID,
     {
       include_block_pipelines: true,
-      include_remote_variables_dir: true,
-      include_variables_dir: true,
       includes_outputs: isEmptyObject(messages)
         || typeof pipeline === 'undefined'
         || pipeline === null
