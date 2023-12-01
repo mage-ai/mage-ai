@@ -58,7 +58,7 @@ setuptools.setup(
             'db-dtypes==1.0.5',
         ],
         'chroma': [
-            'chroma>=0.4.17',
+            'chromadb>=0.4.17',
         ],
         'clickhouse': [
             'clickhouse-connect==0.5.20',
