@@ -59,10 +59,6 @@ function PipelineBlockRuns({
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
-  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {}, {
-    refreshInterval: 5000,
-  });
-
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -115,6 +111,14 @@ function PipelineBlockRuns({
     { refreshInterval: 5000 },
   );
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
+
+  const blockUuids = blockRuns.map(({ block_uuid }) => block_uuid);
+  const blockUuidArg = useMemo(() => blockUuids, [blockUuids]);
+
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {
+    _limit: 30,
+    block_uuid: blockUuidArg,
+  }, {});
 
   const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
     api.pipeline_runs.useUpdate(pipelineRunId),

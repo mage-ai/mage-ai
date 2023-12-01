@@ -79,7 +79,7 @@ export default function({
         outputsByType[dataType] = {
           outputs: [],
           priority: Object.keys(outputsByType).length,
-        }
+        };
       }
 
       outputsByType[dataType].outputs.push(output);
