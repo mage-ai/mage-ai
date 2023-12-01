@@ -172,6 +172,14 @@ function Header({
     return branch;
   }, [branch]);
 
+  const hasAvatarEmoji = useMemo(() => {
+    if (!userFromLocalStorage || !userFromLocalStorage?.avatar) {
+      return false;
+    }
+
+    return !/[A-Za-z0-9]+/.exec(userFromLocalStorage?.avatar || '');
+  }, [userFromLocalStorage]);
+
   const hasAvatarAndNotEmoji = useMemo(() => {
     if (!userFromLocalStorage || !userFromLocalStorage?.avatar) {
       return false;
@@ -392,17 +400,22 @@ function Header({
                     position: 'relative',
                   }}
                 >
-                  <FlexContainer>
+                  <FlexContainer alignItems="center" flexDirection="row">
                     <LinkStyle
                       onClick={() => setUserMenuVisible(true)}
                       ref={refUserMenu}
                     >
-                      <Circle
-                        color={BLUE_TRANSPARENT}
-                        size={4 * UNIT}
-                      >
-                        {avatarMemo}
-                      </Circle>
+                      {hasAvatarEmoji && userFromLocalStorage?.avatar?.length >= 2
+                        ? avatarMemo
+                        : (
+                          <Circle
+                            color={BLUE_TRANSPARENT}
+                            size={4 * UNIT}
+                          >
+                            {avatarMemo}
+                          </Circle>
+                        )
+                      }
                     </LinkStyle>
 
                     <FlyoutMenu

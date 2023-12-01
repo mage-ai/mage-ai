@@ -267,6 +267,11 @@ class BlockResource(GenericResource):
                                     ':'.join(parts_new),
                                 )
 
+                    if metrics.get('dynamic_upstream_block_uuids'):
+                        block_mapping[block_run_block_uuid]['uuids'].extend(
+                            metrics.get('dynamic_upstream_block_uuids') or [],
+                        )
+
                     # If it should reduce, then all the children have 1 downstream.
                     if should_reduce_output(block):
                         for db in block.downstream_blocks:

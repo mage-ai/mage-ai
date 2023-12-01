@@ -27,6 +27,7 @@ export const TabsContainerStyle = styled.div<{
 
 export const SelectedUnderlineStyle = styled.div<{
   backgroundColor?: string;
+  backgroundColorPrimary?: boolean;
   selected?: boolean;
 }>`
   border-radius: 6px;
