@@ -1,5 +1,8 @@
 from typing import Dict, List
 
+from singer import catalog as catalog_singer
+from mage_integrations.utils.dictionary import ignore_keys
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.google_ads.tap_google_ads.client import create_sdk_client
@@ -17,7 +20,15 @@ class GoogleAds(Source):
 
         catalog = do_discover(resource_schema)
 
-        return Catalog(catalog['streams'])
+        catalog_entries = []
+
+        for stream in catalog['streams']:
+            stream_id = stream['tap_stream_id']
+
+            if not streams or stream_id in streams:
+                catalog_entries.append(stream)
+
+        return Catalog(catalog_entries)
 
     def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         resource_schema = create_resource_schema(self.config)
