@@ -49,6 +49,8 @@ class PipelineTest(DBTestCase):
             run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
+            remote_variables_dir=None,
+            variables_dir=self.repo_path,
             blocks=[
                 dict(
                     language='python',
@@ -212,6 +214,8 @@ class PipelineTest(DBTestCase):
             run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
+            remote_variables_dir=None,
+            variables_dir=self.repo_path,
             blocks=[
                 dict(
                     language='python',
@@ -303,6 +307,8 @@ class PipelineTest(DBTestCase):
             run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
+            remote_variables_dir=None,
+            variables_dir=self.repo_path,
             blocks=[
                 dict(
                     language='python',
@@ -417,6 +423,8 @@ class PipelineTest(DBTestCase):
             run_pipeline_in_one_process=False,
             spark_config=dict(),
             type='python',
+            remote_variables_dir=None,
+            variables_dir=self.repo_path,
             blocks=[
                 dict(
                     language='python',
@@ -670,6 +678,8 @@ class PipelineTest(DBTestCase):
                     type='integration',
                     updated_at=None,
                     uuid='test_pipeline_9',
+                    remote_variables_dir=None,
+                    variables_dir=self.repo_path,
                     blocks=[
                         dict(
                             all_upstream_blocks_executed=True,
