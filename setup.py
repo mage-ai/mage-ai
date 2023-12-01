@@ -132,7 +132,7 @@ setuptools.setup(
             'azure-storage-blob==12.14.1',
             'boto3==1.26.60',
             'botocore==1.29.60',
-            'chroma>=0.4.17',
+            'chromadb>=0.4.17',
             'clickhouse-connect==0.5.20',
             'confluent-avro',
             'db-dtypes==1.0.5',
