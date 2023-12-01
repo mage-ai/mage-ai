@@ -237,7 +237,9 @@ def __calculate_metrics(pipeline_run: PipelineRun) -> Dict:
         )['pipeline']['pipeline']
 
     existing_metrics = pipeline_run.metrics or {}
-    existing_blocks_metrics = existing_metrics.get('blocks', {})
+    existing_blocks_metrics = existing_metrics.get('blocks', {
+        stream: {} for stream in streams
+    })
 
     pipeline_run.update(
         metrics=dict(
