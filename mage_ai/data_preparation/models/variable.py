@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, List
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -19,10 +20,12 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
     STRING_SERIALIZABLE_COLUMN_TYPES,
+    apply_transform_geopandas,
     apply_transform_pandas,
     cast_column_types,
     deserialize_columns,
     serialize_columns,
+    serialize_geocolumns,
     should_deserialize_pandas,
     should_serialize_pandas,
 )
@@ -33,6 +36,7 @@ from mage_ai.shared.utils import clean_name
 
 DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
 DATAFRAME_PARQUET_FILE = 'data.parquet'
+GEO_DATAFRAME_PARQUET_FILE = 'geodata.parquet'
 DATAFRAME_PARQUET_SAMPLE_FILE = 'sample_data.parquet'
 DATAFRAME_CSV_FILE = 'data.csv'
 
@@ -100,9 +104,10 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
-        elif ((self.variable_type == VariableType.DATAFRAME or self.variable_type is None)
-                and os.path.exists(
-                os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
+        elif self.variable_type is None and self.storage.path_exists(
+            os.path.join(self.variable_path, GEO_DATAFRAME_PARQUET_FILE)
+        ):
+            # If parquet file exists for given variable, set the variable type to GEO_DATAFRAME
             self.variable_type = VariableType.GEO_DATAFRAME
         elif self.variable_type is None and \
                 len(self.storage.listdir(self.variable_path, suffix='.parquet')) > 0 and \
@@ -130,8 +135,15 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
+        elif self.variable_type is None and self.storage.path_exists(
+            os.path.join(self.variable_dir_path, f'{self.uuid}', GEO_DATAFRAME_PARQUET_FILE)
+        ):
+            # If parquet file exists for given variable, set the variable type to GEO_DATAFRAME
+            self.variable_type = VariableType.GEO_DATAFRAME
         if self.variable_type == VariableType.DATAFRAME:
             self.__delete_parquet()
+        if self.variable_type == VariableType.GEO_DATAFRAME:
+            self.__delete_geoparquet()
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__delete_dataframe_analysis()
         return self.__delete_json()
@@ -164,10 +176,14 @@ class Variable:
                 sample=sample,
                 sample_count=sample_count,
             )
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            return self.__read_geoparquet(
+                raise_exception=raise_exception,
+                sample=sample,
+                sample_count=sample_count,
+            )
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
-        elif self.variable_type == VariableType.GEO_DATAFRAME:
-            return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
         return self.__read_json(raise_exception=raise_exception, sample=sample)
@@ -193,6 +209,8 @@ class Variable:
         """
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            return self.__read_geoparquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
@@ -233,12 +251,12 @@ class Variable:
 
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            self.__write_geoparquet(data)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
             self.__write_polars_dataframe(data)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             self.__write_spark_parquet(data)
-        elif self.variable_type == VariableType.GEO_DATAFRAME:
-            self.__write_geo_dataframe(data)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             self.__write_dataframe_analysis(data)
         else:
@@ -262,12 +280,12 @@ class Variable:
 
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            self.__write_geoparquet(data)
         elif self.variable_type == VariableType.POLARS_DATAFRAME:
             self.__write_polars_dataframe(data)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             self.__write_spark_parquet(data)
-        elif self.variable_type == VariableType.GEO_DATAFRAME:
-            self.__write_geo_dataframe(data)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             self.__write_dataframe_analysis(data)
         else:
@@ -291,6 +309,13 @@ class Variable:
 
     def __delete_parquet(self) -> None:
         file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
+
+        if self.storage.path_exists(file_path):
+            self.storage.remove(file_path)
+            self.storage.remove_dir(self.variable_path)
+
+    def __delete_geoparquet(self) -> None:
+        file_path = os.path.join(self.variable_path, GEO_DATAFRAME_PARQUET_FILE)
 
         if self.storage.path_exists(file_path):
             self.storage.remove(file_path)
@@ -378,26 +403,6 @@ class Variable:
         except Exception:
             traceback.print_exc()
 
-    def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
-        import geopandas as gpd
-
-        file_path = os.path.join(self.variable_path, 'data.sh')
-        sample_file_path = os.path.join(self.variable_path, 'sample_data.sh')
-        if not os.path.exists(file_path):
-            return gpd.GeoDataFrame()
-        if sample and os.path.exists(sample_file_path):
-            try:
-                df = gpd.read_file(sample_file_path)
-            except Exception:
-                df = gpd.read_file(file_path)
-        else:
-            df = gpd.read_file(file_path)
-        if sample:
-            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
-            if df.shape[0] > sample_count:
-                df = df.iloc[:sample_count]
-        return df
-
     def __read_parquet(
         self,
         sample: bool = False,
@@ -443,6 +448,49 @@ class Variable:
             df = cast_column_types(df, column_types)
         return df
 
+    def __read_geoparquet(
+        self,
+        sample: bool = False,
+        sample_count: int = None,
+        raise_exception: bool = False,
+    ) -> gpd.GeoDataFrame:
+        file_path = os.path.join(self.variable_path, GEO_DATAFRAME_PARQUET_FILE)
+        sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
+        read_sample_success = False
+        if sample:
+            try:
+                gdf = self.storage.read_geoparquet(sample_file_path)
+                read_sample_success = True
+            except Exception as ex:
+                if raise_exception:
+                    raise Exception(f'Failed to read parquet file: {sample_file_path}') from ex
+                else:
+                    traceback.print_exc()
+        if not read_sample_success:
+            try:
+                gdf = self.storage.read_geoparquet(file_path)
+            except Exception as ex:
+                if raise_exception:
+                    raise Exception(f'Failed to read parquet file: {file_path}') from ex
+                else:
+                    traceback.print_exc()
+                gdf = gpd.GeoDataFrame()
+        if sample:
+            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+            if gdf.shape[0] > sample_count:
+                gdf = gdf.iloc[:sample_count]
+
+        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        if self.storage.path_exists(column_types_filename):
+            column_types = self.storage.read_json_file(column_types_filename)
+            if should_deserialize_pandas(column_types):
+                gdf = apply_transform_geopandas(
+                    gdf,
+                    lambda row: deserialize_columns(row, column_types),
+                )
+            gdf = cast_column_types(gdf, column_types)
+        return gdf
+
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
         if spark is None:
             return None
@@ -457,12 +505,6 @@ class Variable:
         if sample and sample_count:
             df = df.limit(sample_count)
         return df
-
-    def __write_geo_dataframe(self, data) -> None:
-        os.makedirs(self.variable_path, exist_ok=True)
-        data.to_file(os.path.join(self.variable_path, 'data.sh'))
-        df_sample_output = data.iloc[:DATAFRAME_SAMPLE_COUNT]
-        df_sample_output.to_file(os.path.join(self.variable_path, 'sample_data.sh'))
 
     def __write_parquet(self, data: pd.DataFrame) -> None:
         column_types = {}
@@ -541,6 +583,90 @@ class Variable:
 
             self.storage.write_parquet(
                 df_sample_output,
+                os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),
+            )
+        except Exception as err:
+            print(f'Sample output error: {err}.')
+            traceback.print_exc()
+
+    def __write_geoparquet(self, data: gpd.GeoDataFrame) -> None:
+        column_types = {}
+        gdf_output = data.copy()
+
+        # Clean up data types since parquet doesn't support mixed data types
+        for c in gdf_output.columns:
+            df_col = gdf_output[c]
+            if type(df_col) is gpd.GeoDataFrame:
+                raise Exception(f'Please do not use duplicate column name: "{c}"')
+            c_dtype = df_col.dtype
+            if not is_object_dtype(c_dtype):
+                column_types[c] = str(c_dtype)
+            else:
+                series_non_null = df_col.dropna()
+                if len(series_non_null) > 0:
+                    coltype = type(series_non_null.iloc[0])
+                    if is_object_dtype(series_non_null.dtype):
+                        if coltype.__name__ in STRING_SERIALIZABLE_COLUMN_TYPES:
+                            cast_coltype = str
+                        else:
+                            cast_coltype = coltype
+                        try:
+                            gdf_output[c] = series_non_null.astype(cast_coltype)
+                            coltype = str
+                        except Exception:
+                            # Fall back to convert to string
+                            # df_output[c] = series_non_null.astype(str)
+                            pass
+
+                    col_not_numpy_type = coltype.__module__ != np.__name__
+                    col_is_numpy_array_type = coltype.__name__ == np.ndarray.__name__
+                    if col_not_numpy_type or col_is_numpy_array_type:
+                        column_types[c] = coltype.__name__
+                    else:
+                        column_types[c] = type(series_non_null.iloc[0].item()).__name__
+
+        self.storage.makedirs(self.variable_path, exist_ok=True)
+        self.storage.write_json_file(
+            os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE),
+            column_types,
+        )
+
+        if should_serialize_pandas(column_types):
+            """
+            # Try using Polars to write the dataframe to improve performance
+            if type(gdf_output.index) is RangeIndex and gdf_output.index.start == 0 \
+                    and gdf_output.index.stop == gdf_output.shape[0] and gdf_output.index.step == 1:
+
+                # Polars ignores any index
+                try:
+                    pl_df = pl.from_pandas(gdf_output)
+                    self.__write_polars_dataframe(pl_df)
+                    # Test read dataframe from parquet
+                    self. __read_geoparquet(sample=True, raise_exception=True)
+
+                    return
+                except Exception:
+                    pass
+            """
+            # ddf = dask_from_pandas(df_output)
+            gdf_output_serialized = apply_transform_geopandas(
+                gdf_output,
+                lambda row: serialize_geocolumns(row, column_types),
+            )
+        else:
+            gdf_output_serialized = gdf_output
+        self.storage.write_geoparquet(
+            gdf_output_serialized,
+            os.path.join(self.variable_path, GEO_DATAFRAME_PARQUET_FILE),
+        )
+
+        try:
+            gdf_sample_output = gdf_output_serialized.iloc[
+                :DATAFRAME_SAMPLE_COUNT,
+                :DATAFRAME_SAMPLE_MAX_COLUMNS
+            ]
+            self.storage.write_geoparquet(
+                gdf_sample_output,
                 os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),
             )
         except Exception as err:
