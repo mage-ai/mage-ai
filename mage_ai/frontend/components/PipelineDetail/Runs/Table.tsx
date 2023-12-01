@@ -45,14 +45,14 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone, timeDifference, utcStringToElapsedTime } from '@utils/date';
-import { getTimeInUTCString } from '@components/Triggers/utils';
+import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { timeDifference, utcStringToElapsedTime } from '@utils/date';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const SHARED_DATE_FONT_PROPS = {
@@ -610,10 +610,8 @@ function PipelineRunsTable({
                     title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
-                      ? (displayLocalTimezone
-                        ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
-                        : getTimeInUTCString(startedAt)
-                      ): (
+                      ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
+                      : (
                         <>&#8212;</>
                       )
                     }
@@ -625,10 +623,8 @@ function PipelineRunsTable({
                     title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
-                      ? (displayLocalTimezone
-                        ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
-                        : getTimeInUTCString(completedAt)
-                      ): (
+                      ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
+                      : (
                         <>&#8212;</>
                       )
                     }
@@ -726,10 +722,8 @@ function PipelineRunsTable({
                     title={executionDate ? utcStringToElapsedTime(executionDate) : null}
                   >
                     {executionDate
-                      ? (displayLocalTimezone
-                        ? datetimeInLocalTimezone(executionDate, displayLocalTimezone)
-                        : getTimeInUTCString(executionDate)
-                      ): (
+                      ? displayLocalOrUtcTime(executionDate, displayLocalTimezone)
+                      : (
                         <>&#8212;</>
                       )
                     }
@@ -741,10 +735,8 @@ function PipelineRunsTable({
                     title={startedAt ? utcStringToElapsedTime(startedAt) : null}
                   >
                     {startedAt
-                      ? (displayLocalTimezone
-                        ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
-                        : getTimeInUTCString(startedAt)
-                      ): (
+                      ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
+                      : (
                         <>&#8212;</>
                       )
                     }
@@ -756,10 +748,8 @@ function PipelineRunsTable({
                     title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
-                      ? (displayLocalTimezone
-                        ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
-                        : getTimeInUTCString(completedAt)
-                      ): (
+                      ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
+                      : (
                         <>&#8212;</>
                       )
                     }

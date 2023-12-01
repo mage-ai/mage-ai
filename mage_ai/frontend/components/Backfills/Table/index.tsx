@@ -15,10 +15,10 @@ import {
   getRunStatusTextProps,
 } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
-import { getTimeInUTCString } from '@components/Triggers/utils';
+import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import { isViewer } from '@utils/session';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { utcStringToElapsedTime } from '@utils/date';
 
 type BackfillsTableProps = {
   pipeline: {
@@ -114,15 +114,9 @@ function BackfillsTable({
           <Text default key="backfill" monospace small>
             {(startDatetime && endDatetime) && (
               <>
-                {displayLocalTimezone
-                  ? datetimeInLocalTimezone(startDatetime, displayLocalTimezone)
-                  : getTimeInUTCString(startDatetime)
-                }
+                {displayLocalOrUtcTime(startDatetime, displayLocalTimezone)}
                 &nbsp;-&nbsp;
-                {displayLocalTimezone
-                  ? datetimeInLocalTimezone(endDatetime, displayLocalTimezone)
-                  : getTimeInUTCString(endDatetime)
-                }
+                {displayLocalOrUtcTime(endDatetime, displayLocalTimezone)}
               </>
             )}
             {!(startDatetime && endDatetime) && <>&#8212;</>}
@@ -135,10 +129,8 @@ function BackfillsTable({
             title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
             {startedAt
-              ? (displayLocalTimezone
-                ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
-                : getTimeInUTCString(startedAt)
-              ): (
+              ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
+              : (
                 <>&#8212;</>
               )
             }
@@ -151,10 +143,8 @@ function BackfillsTable({
             title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
             {completedAt
-              ? (displayLocalTimezone
-                ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
-                : getTimeInUTCString(completedAt)
-              ): (
+              ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
+              : (
                 <>&#8212;</>
               )
             }
