@@ -163,11 +163,11 @@ class VariableTest(DBTestCase):
         variable.write_data(data)
         self.assertTrue(os.path.exists(os.path.join(
             self.repo_path,
-            'pipelines/test_pipeline_4/.variables/block1/var1/data.json'
+            'pipelines/test_pipeline_5/.variables/block1/var1/data.json'
         )))
         self.assertTrue(os.path.exists(os.path.join(
             self.repo_path,
-            'pipelines/test_pipeline_4/.variables/block1/var1/sample_data.json'
+            'pipelines/test_pipeline_5/.variables/block1/var1/sample_data.json'
         )))
         self.assertEqual(variable.read_data(), data)
         self.assertEqual(variable.read_data(sample=True), dict(
