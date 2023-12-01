@@ -201,6 +201,14 @@ def create_block_runs_from_dynamic_block(
                 else:
                     arr.append(upstream_block.uuid)
 
+            if metadata.get('upstream_blocks'):
+                for up_uuid in (metadata.get('upstream_blocks') or []):
+                    up_block = block.pipeline.get_block(up_uuid)
+                    if up_block:
+                        arr.append(up_uuid)
+                    else:
+                        arr.append(f'{downstream_block.uuid}:{up_uuid}')
+
             block_run = create_block_run_from_dynamic_child(
                 downstream_block,
                 pipeline_run,
