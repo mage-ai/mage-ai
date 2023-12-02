@@ -20,11 +20,11 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { ContainerStyle } from './index.style';
 import { Edit } from '@oracle/icons';
-import { ICON_SIZE_MEDIUM, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { LOCAL_TIMEZONE_TOOLTIP_PROPS, storeLocalTimezoneSetting } from './utils';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
 
 type PreferencesProps = {
@@ -262,14 +262,7 @@ function Preferences({
                   {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
                     <Spacing ml={1}>
                       <Tooltip
-                        block
-                        description="Display dates in local timezone. Please note that certain pages
-                          (e.g. Monitor page) or components (e.g. Pipeline run bar charts) may still
-                          be in UTC time. Dates in local time will have a timezone offset in the
-                          timestamp (e.g. -07:00)."
-                        lightBackground
-                        muted
-                        size={ICON_SIZE_MEDIUM}
+                        {...LOCAL_TIMEZONE_TOOLTIP_PROPS}
                       />
                     </Spacing>
                   }

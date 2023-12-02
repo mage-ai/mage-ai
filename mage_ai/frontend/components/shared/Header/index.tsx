@@ -278,7 +278,9 @@ function Header({
             )}
 
             <Spacing ml={1}>
-              <ServerTimeDropdown />
+              <ServerTimeDropdown
+                projectName={project?.name}
+              />
             </Spacing>
 
             {version && typeof(version) !== 'undefined' && (

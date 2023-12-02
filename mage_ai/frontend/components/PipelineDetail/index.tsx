@@ -935,7 +935,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               {addNewBlocksMemo}
             </div>
           )}
-        </CodeBlock>
+        </CodeBlock>,
       );
     });
 

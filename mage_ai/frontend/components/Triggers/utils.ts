@@ -15,7 +15,10 @@ import {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import { TimeType } from '@oracle/components/Calendar';
-import { getDayRangeForCurrentMonth } from '@utils/date';
+import {
+  datetimeInLocalTimezone,
+  getDayRangeForCurrentMonth,
+} from '@utils/date';
 import { ignoreKeys } from '@utils/hash';
 import { rangeSequential } from '@utils/array';
 
@@ -125,6 +128,15 @@ export function getTimeInUTCString(dateTime: string) {
   const datetimeString = momentObj.format(DATE_FORMAT_LONG_T_SEP);
 
   return datetimeString;
+}
+
+export function displayLocalOrUtcTime(
+  datetime: string,
+  displayLocalTimezone: boolean,
+) {
+  return displayLocalTimezone
+    ? datetimeInLocalTimezone(datetime, displayLocalTimezone)
+    : getTimeInUTCString(datetime);
 }
 
 export enum TimeUnitEnum {
