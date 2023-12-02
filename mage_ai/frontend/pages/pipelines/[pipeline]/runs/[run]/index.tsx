@@ -116,7 +116,7 @@ function PipelineBlockRuns({
   const blockUuidArg = useMemo(() => blockUuids, [blockUuids]);
 
   const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {
-    _limit: 30,
+    _limit: ROW_LIMIT,
     block_uuid: blockUuidArg,
   }, {});
 
@@ -217,7 +217,7 @@ function PipelineBlockRuns({
   const buildSidekick = useCallback(props => buildTableSidekick({
     ...props,
     blockRuns,
-    blocksOverride: dataBlocks?.blocks,
+    blocksOverride: totalBlockRuns <= ROW_LIMIT && dataBlocks?.blocks,
     loadingData: loadingOutput,
     outputs: dataOutput?.outputs,
     selectedRun,
@@ -232,6 +232,7 @@ function PipelineBlockRuns({
     selectedRun,
     selectedTabSidekick,
     setSelectedTabSidekick,
+    totalBlockRuns,
   ]);
 
   return (
