@@ -53,7 +53,6 @@ function SyncRow({
   }, [pipelineRun]);
   const metricsPipeline = useMemo(() => metrics.pipeline || {}, [metrics]);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  console.log('displayLocalTimezone:', displayLocalTimezone);
 
   const destination: string = metrics.destination;
   const source: string = metrics.source;
