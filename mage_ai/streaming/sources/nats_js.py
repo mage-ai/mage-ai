@@ -91,8 +91,16 @@ class NATSSource(BaseSource):
             # Default consumer_name to stream_name if not provided
             consumer_name = self.config.consumer_name or self.config.stream_name
 
-            await self.js.add_stream(name=self.config.stream_name, subjects=[self.config.subject])
+            # Check if stream exists, otherwise create it
+            stream_info = await self.js.stream_info(self.config.stream_name)
+            if not stream_info:
+                await self.js.add_stream(
+                    name=self.config.stream_name,
+                    subjects=[self.config.subject]
+                )
+
             self.psub = await self.js.pull_subscribe(self.config.subject, consumer_name)
+
         except NoServersError as e:
             self._print(f'Caught NoServersError while connecting to NATS server: {e}')
         except Exception as e:
