@@ -91,13 +91,16 @@ class NATSSource(BaseSource):
             # Default consumer_name to stream_name if not provided
             consumer_name = self.config.consumer_name or self.config.stream_name
 
-            # Check if stream exists, otherwise create it
-            stream_info = await self.js.stream_info(self.config.stream_name)
-            if not stream_info:
-                await self.js.add_stream(
-                    name=self.config.stream_name,
-                    subjects=[self.config.subject]
-                )
+            # Check if the stream exists, and create it if it doesn't
+            try:
+                await self.js.stream_info(self.config.stream_name)
+            except Exception as e:
+                # Check the exception type or message to ensure it's about a missing stream
+                if 'stream not found' in str(e).lower():
+                    await self.js.add_stream(
+                        name=self.config.stream_name,
+                        subjects=[self.config.subject]
+                    )
 
             self.psub = await self.js.pull_subscribe(self.config.subject, consumer_name)
 
