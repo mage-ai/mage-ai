@@ -99,7 +99,7 @@ class NATSSource(BaseSource):
                 if 'stream not found' in str(e).lower():
                     await self.js.add_stream(
                         name=self.config.stream_name,
-                        subjects=[self.config.subject]
+                        subjects=[self.config.subject],
                     )
 
             self.psub = await self.js.pull_subscribe(self.config.subject, consumer_name)
