@@ -154,7 +154,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     padding-top: ${props.titleYPadding}px;
   `}
 
-  ${props => typeof props.titleXPadding === 'undefined' && `
+  ${props => typeof props.titleYPadding === 'undefined' && `
     padding-bottom: ${2 * UNIT}px;
     padding-top: ${2 * UNIT}px;
   `}
