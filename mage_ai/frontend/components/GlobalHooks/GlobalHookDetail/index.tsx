@@ -752,7 +752,7 @@ function GlobalHookDetail({
               }}
             >
               {attributes?.pipeline?.uuid && (
-                <div>
+                <Spacing mr={2}>
                   <NextLink
                     as={`/pipelines/${attributes?.pipeline?.uuid}/edit`}
                     href={'/pipelines/[pipeline]/edit'}
@@ -765,7 +765,7 @@ function GlobalHookDetail({
                       View pipeline
                     </Link>
                   </NextLink>
-                </div>
+                </Spacing>
               )}
             </SetupSectionRow>
 

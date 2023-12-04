@@ -420,6 +420,7 @@ class BaseOperation():
                     self.query = merge_dict(self.query, value)
 
         self.payload_mutated = payload
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFF', payload)
 
         return payload
 
