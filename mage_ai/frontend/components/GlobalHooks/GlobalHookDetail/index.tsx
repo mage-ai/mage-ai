@@ -630,32 +630,34 @@ function GlobalHookDetail({
           title="Operation type"
         />
 
-        <Accordion
-          noBorder
-          noBoxShadow
-          visibleMappingForced={{
-            0: true,
-          }}
-        >
-          <AccordionPanel
-            noBorderRadius
-            noPaddingContent
-            title="Targeting"
-            titleXPadding={PADDING_UNITS * UNIT}
-            titleYPadding={PADDING_UNITS * UNIT}
+        {!isNew && (
+          <Accordion
+            noBorder
+            noBoxShadow
+            visibleMappingForced={{
+              0: true,
+            }}
           >
-            <Spacing p={PADDING_UNITS}>
-              <Text default>
-                Add targeting conditions to determine what subset of {attributes?.resource_type
-                  ? pluralize(camelCaseToNormalWithSpaces(attributes?.resource_type), 2, null, true)
-                  : 'resources'
-                } this hook should run for.
-              </Text>
-            </Spacing>
+            <AccordionPanel
+              noBorderRadius
+              noPaddingContent
+              title="Targeting"
+              titleXPadding={PADDING_UNITS * UNIT}
+              titleYPadding={PADDING_UNITS * UNIT}
+            >
+              <Spacing p={PADDING_UNITS}>
+                <Text default>
+                  Add targeting conditions to determine what subset of {attributes?.resource_type
+                    ? pluralize(camelCaseToNormalWithSpaces(attributes?.resource_type), 2, null, true)
+                    : 'resources'
+                  } this hook should run for.
+                </Text>
+              </Spacing>
 
-            {predicatesMemo}
-          </AccordionPanel>
-        </Accordion>
+              {predicatesMemo}
+            </AccordionPanel>
+          </Accordion>
+        )}
       </SetupSection>
 
       {!isNew && (
