@@ -50,7 +50,7 @@ import {
 import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getUser } from '@utils/session';
-import { indexBy, sortByKey } from '@utils/array';
+import { indexBy, removeAtIndex, sortByKey } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { renderPredicate } from '../utils';
 import { selectKeys, selectEntriesWithValues } from '@utils/hash';
@@ -491,7 +491,6 @@ function GlobalHookDetail({
               <>
                 <Button
                   compact
-                  small
                   onClick={() => {
                     updateOutputAtIndex({
                       ...output,
@@ -499,6 +498,7 @@ function GlobalHookDetail({
                       keys: (keys || []).concat(keyMore),
                     }, idx);
                   }}
+                  small
                 >
                   Add key {keyMore}
                 </Button>
@@ -506,6 +506,21 @@ function GlobalHookDetail({
                 <Spacing mr={PADDING_UNITS} />
               </>
             )}
+          </SetupSectionRow>
+
+          <SetupSectionRow
+            title="Remove block output"
+          >
+            <Button
+              compact
+              onClick={() => setAttributes(prev => ({
+                ...prev,
+                outputs: removeAtIndex(prev?.outputs || [], idx),
+              }))}
+              small
+            >
+              Remove
+            </Button>
           </SetupSectionRow>
         </AccordionPanel>
       );
@@ -630,32 +645,34 @@ function GlobalHookDetail({
           title="Operation type"
         />
 
-        <Accordion
-          noBorder
-          noBoxShadow
-          visibleMappingForced={{
-            0: true,
-          }}
-        >
-          <AccordionPanel
-            noBorderRadius
-            noPaddingContent
-            title="Targeting"
-            titleXPadding={PADDING_UNITS * UNIT}
-            titleYPadding={PADDING_UNITS * UNIT}
+        {!isNew && (
+          <Accordion
+            noBorder
+            noBoxShadow
+            visibleMappingForced={{
+              0: true,
+            }}
           >
-            <Spacing p={PADDING_UNITS}>
-              <Text default>
-                Add targeting conditions to determine what subset of {attributes?.resource_type
-                  ? pluralize(camelCaseToNormalWithSpaces(attributes?.resource_type), 2, null, true)
-                  : 'resources'
-                } this hook should run for.
-              </Text>
-            </Spacing>
+            <AccordionPanel
+              noBorderRadius
+              noPaddingContent
+              title="Targeting"
+              titleXPadding={PADDING_UNITS * UNIT}
+              titleYPadding={PADDING_UNITS * UNIT}
+            >
+              <Spacing p={PADDING_UNITS}>
+                <Text default>
+                  Add targeting conditions to determine what subset of {attributes?.resource_type
+                    ? pluralize(camelCaseToNormalWithSpaces(attributes?.resource_type), 2, null, true)
+                    : 'resources'
+                  } this hook should run for.
+                </Text>
+              </Spacing>
 
-            {predicatesMemo}
-          </AccordionPanel>
-        </Accordion>
+              {predicatesMemo}
+            </AccordionPanel>
+          </Accordion>
+        )}
       </SetupSection>
 
       {!isNew && (
@@ -752,7 +769,7 @@ function GlobalHookDetail({
               }}
             >
               {attributes?.pipeline?.uuid && (
-                <div>
+                <Spacing mr={2}>
                   <NextLink
                     as={`/pipelines/${attributes?.pipeline?.uuid}/edit`}
                     href={'/pipelines/[pipeline]/edit'}
@@ -765,7 +782,7 @@ function GlobalHookDetail({
                       View pipeline
                     </Link>
                   </NextLink>
-                </div>
+                </Spacing>
               )}
             </SetupSectionRow>
 

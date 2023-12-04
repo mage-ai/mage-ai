@@ -24,6 +24,7 @@ import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { LOCAL_TIMEZONE_TOOLTIP_PROPS, storeLocalTimezoneSetting } from './utils';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -232,7 +233,9 @@ function Preferences({
             </Headline>
           </Spacing>
 
-          {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
+          {Object.entries(ignoreKeys(projectAttributes?.features, [
+            FeatureUUIDEnum.GLOBAL_HOOKS,
+          ]) || {}).map(([k, v], idx) => (
             <Spacing
               key={k}
               mt={idx === 0 ? 0 : 1}
