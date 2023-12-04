@@ -50,7 +50,7 @@ import {
 import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getUser } from '@utils/session';
-import { indexBy, sortByKey } from '@utils/array';
+import { indexBy, removeAtIndex, sortByKey } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { renderPredicate } from '../utils';
 import { selectKeys, selectEntriesWithValues } from '@utils/hash';
@@ -491,7 +491,6 @@ function GlobalHookDetail({
               <>
                 <Button
                   compact
-                  small
                   onClick={() => {
                     updateOutputAtIndex({
                       ...output,
@@ -499,6 +498,7 @@ function GlobalHookDetail({
                       keys: (keys || []).concat(keyMore),
                     }, idx);
                   }}
+                  small
                 >
                   Add key {keyMore}
                 </Button>
@@ -506,6 +506,21 @@ function GlobalHookDetail({
                 <Spacing mr={PADDING_UNITS} />
               </>
             )}
+          </SetupSectionRow>
+
+          <SetupSectionRow
+            title="Remove block output"
+          >
+            <Button
+              compact
+              onClick={() => setAttributes(prev => ({
+                ...prev,
+                outputs: removeAtIndex(prev?.outputs || [], idx),
+              }))}
+              small
+            >
+              Remove
+            </Button>
           </SetupSectionRow>
         </AccordionPanel>
       );
