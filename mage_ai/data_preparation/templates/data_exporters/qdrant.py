@@ -3,6 +3,7 @@ from os import path
 from pandas import DataFrame
 
 from mage_ai.settings.repo import get_repo_path
+from sentence_transformers import SentenceTransformer
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.qdrant import Qdrant
 
@@ -19,7 +20,9 @@ def export_data_to_qdrant(df: DataFrame, **kwargs) -> None:
     config_profile = 'default'
     # Update following collection name and vector size according to your requirement.
     collection_name = 'new_colletion'
-    vector_size = 4
+    # set default dimension based on default embeding function.
+    encoder = SentenceTransformer('all-MiniLM-L6-v2')
+    vector_size = encoder.get_sentence_embedding_dimension()
 
     Qdrant.with_config(ConfigFileLoader(config_path, config_profile)).export(
         df,

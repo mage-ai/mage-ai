@@ -67,7 +67,7 @@ class Qdrant(BaseIO):
             Loads the data from Qdrant with query_vector.
             Args:
                 limit_results (int): Number of results to return.
-                query_vector (List): vector lit used for query.
+                query_vector (List): vector list used to query.
                 collection_name (str): name of the collection.
                 Defaults to the name defined in io_config.yaml.
             Returns:

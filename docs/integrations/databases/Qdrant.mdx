@@ -18,7 +18,8 @@ default:
 
 1. Create a new pipeline or open an existing pipeline.
 2. Add a data loader or data exporter with Template. Under "Databases" category you can
- find the "Qdrant" template.
+ find the "Qdrant" template. Data loader and exporter use `SentenceTransformer` 'all-MiniLM-L6-v2'
+as default embeddinng function.
 
 - Qdrant data loader arguments:
   - limit_results (int): Number of results to return.

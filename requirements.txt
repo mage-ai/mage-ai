@@ -78,6 +78,7 @@ pydruid==0.6.5
 pyodbc==4.0.35
 qdrant-client>=1.6.9
 redshift-connector==2.0.909
+sentence-transformers>=2.2.2
 snowflake-connector-python==3.2.1
 sshtunnel==0.4.0
 tables==3.7.0
