@@ -662,11 +662,11 @@ def convert_block_output_data_for_destination(
     input_vars_fetched, _kwargs_vars, upstream_block_uuids = \
         block.fetch_input_variables(
             None,
-            partition,
-            global_vars,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=partition,
             from_notebook=from_notebook,
+            global_vars=global_vars,
             upstream_block_uuids=[stream],
         )
 

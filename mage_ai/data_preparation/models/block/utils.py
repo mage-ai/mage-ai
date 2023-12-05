@@ -647,12 +647,13 @@ def fetch_input_variables(
     pipeline,
     upstream_block_uuids: List[str],
     input_args: List[Any],
-    execution_partition: str = None,
-    global_vars: Dict = None,
+    block_run_outputs_cache: Dict[str, List] = None,
+    data_integration_settings_mapping: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
+    execution_partition: str = None,
     from_notebook: bool = False,
-    data_integration_settings_mapping: Dict = None,
+    global_vars: Dict = None,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -671,6 +672,15 @@ def fetch_input_variables(
         Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
             upstream block UUIDs.
     """
+    # Getting input variables from cache is not supported for dynamic blocks and data integration
+    # blocks now.
+    if block_run_outputs_cache:
+        return [
+            [block_run_outputs_cache.get(uuid, []) for uuid in upstream_block_uuids],
+            [],
+            upstream_block_uuids,
+        ]
+
     spark = (global_vars or dict()).get('spark')
     upstream_block_uuids_final = []
 

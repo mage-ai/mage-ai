@@ -978,6 +978,7 @@ class Block(DataIntegrationMixin, SparkBlock):
     def execute_sync(
         self,
         analyze_outputs: bool = False,
+        block_run_outputs_cache: Dict[str, List] = None,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
@@ -1039,6 +1040,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 )
 
             output = self.execute_block(
+                block_run_outputs_cache=block_run_outputs_cache,
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
                 execution_partition=execution_partition,
@@ -1218,6 +1220,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
     def execute_block(
         self,
+        block_run_outputs_cache: Dict[str, List] = None,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
@@ -1270,10 +1273,12 @@ class Block(DataIntegrationMixin, SparkBlock):
                         from_notebook=from_notebook,
                     )
             else:
+                print('block run outputs cache', block_run_outputs_cache)
                 input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                     input_args,
-                    execution_partition,
-                    global_vars,
+                    block_run_outputs_cache=block_run_outputs_cache,
+                    execution_partition=execution_partition,
+                    global_vars=global_vars,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     from_notebook=from_notebook,
@@ -1535,6 +1540,7 @@ class Block(DataIntegrationMixin, SparkBlock):
     def fetch_input_variables(
         self,
         input_args,
+        block_run_outputs_cache: Dict[str, List] = None,
         execution_partition: str = None,
         global_vars: Dict = None,
         dynamic_block_index: int = None,
@@ -1547,12 +1553,13 @@ class Block(DataIntegrationMixin, SparkBlock):
             self.pipeline,
             upstream_block_uuids or self.upstream_block_uuids,
             input_args,
-            execution_partition,
-            global_vars,
-            dynamic_block_index,
-            dynamic_upstream_block_uuids,
-            from_notebook=from_notebook,
+            block_run_outputs_cache=block_run_outputs_cache,
             data_integration_settings_mapping=data_integration_settings_mapping,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
         )
 
         return variables
@@ -2292,6 +2299,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        outputs: List[Any] = None,
         update_tests: bool = True,
         dynamic_block_uuid: str = None,
     ) -> None:
@@ -2321,12 +2329,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         else:
             test_functions = self.test_functions
 
-        outputs = self.get_raw_outputs(
-            dynamic_block_uuid or self.uuid,
-            execution_partition=execution_partition,
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-        )
+        if outputs is None:
+            outputs = self.get_raw_outputs(
+                dynamic_block_uuid or self.uuid,
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
 
         if logger and 'logger' not in global_vars:
             global_vars['logger'] = logger
@@ -3095,8 +3104,8 @@ class ConditionalBlock(AddonBlock):
             if parent_block is not None:
                 input_vars, kwargs_vars, _ = parent_block.fetch_input_variables(
                     None,
-                    execution_partition,
-                    global_vars,
+                    execution_partition=execution_partition,
+                    global_vars=global_vars,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 )
@@ -3171,11 +3180,11 @@ class CallbackBlock(AddonBlock):
             # Fetch input variables
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 None,
-                execution_partition,
-                global_vars,
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                execution_partition=execution_partition,
                 from_notebook=from_notebook,
+                global_vars=global_vars,
                 upstream_block_uuids=[parent_block.uuid] if parent_block else None,
             )
 
