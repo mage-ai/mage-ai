@@ -3,9 +3,9 @@ from os import path
 from pandas import DataFrame
 
 from mage_ai.settings.repo import get_repo_path
-from sentence_transformers import SentenceTransformer
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.qdrant import Qdrant
+from sentence_transformers import SentenceTransformer
 
 if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
@@ -14,18 +14,17 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_qdrant(df: DataFrame, **kwargs) -> None:
     """
-    Template for write data to Qdrant.
+    Template to write data into Qdrant.
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
-    # Update following collection name and vector size according to your requirement.
+    # Update following collection name or the default value in io_config will be used.
     collection_name = 'new_colletion'
-    # set default dimension based on default embeding function.
-    encoder = SentenceTransformer('all-MiniLM-L6-v2')
-    vector_size = encoder.get_sentence_embedding_dimension()
+    # Column contains the document to save.
+    document_column = 'payload'
 
     Qdrant.with_config(ConfigFileLoader(config_path, config_profile)).export(
         df,
         collection_name=collection_name,
-        vector_size=vector_size,
+        document_column=document_column,
     )

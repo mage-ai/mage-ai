@@ -8,24 +8,26 @@ from os import path
 {{ super() -}}
 {% endblock %}
 
+DEFAULT_MODEL = 'all-MiniLM-L6-v2'
 
 {% block content %}
 @data_loader
 def load_data_from_qdrant(*args, **kwargs):
     """
-    Template for loading data from Qdrant.
+    Template to load data from Qdrant.
     """
     # Use all-MiniLM-L6-v2 embedding model as default.
-    encoder = SentenceTransformer('all-MiniLM-L6-v2')
+    encoder = SentenceTransformer(DEFAULT_MODEL)
+    # Generate vector for query.
     query_vector = encoder.encode('Test query').tolist()
-    # vector used to query qdrant.
     # number of results to return.
     limit_results = 3
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
+    collection_name = 'test_collection'
 
     return Qdrant.with_config(ConfigFileLoader(config_path, config_profile)).load(
         limit_results=limit_results,
         query_vector=query_vector,
-        collection_name='test_collection')
+        collection_name=collection_name)
 {% endblock %}
