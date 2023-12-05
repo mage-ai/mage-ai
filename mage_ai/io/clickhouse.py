@@ -9,7 +9,6 @@ from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_clickhouse_type,
-    get_user_type,
 )
 
 
@@ -165,7 +164,7 @@ class ClickHouse(BaseSQLDatabase):
         df: DataFrame,
         table_name: str,
         database: str,
-        user_types: Dict = None,
+        overwrite_types: Dict = None,
     ):
 
         dtypes = infer_dtypes(df)
@@ -174,15 +173,13 @@ class ClickHouse(BaseSQLDatabase):
             for col in dtypes
         }
         fields = []
-        if user_types is not None:
-            user_mod_columns, col_with_usr_types = get_user_type(user_types)
+        if overwrite_types is not None:
 
             for cname in db_dtypes:
-                if cname in user_mod_columns:
-                    pass
-                else:
-                    fields.append(f'{cname} {db_dtypes[cname]}')
+                if cname in overwrite_types.keys():
+                    db_dtypes[cname] = overwrite_types[cname]
 
+                fields.append(f'{cname} {db_dtypes[cname]}')
         else:
             for cname in db_dtypes:
                 fields.append(f'{cname} {db_dtypes[cname]}')
@@ -201,7 +198,7 @@ class ClickHouse(BaseSQLDatabase):
         query_string: Union[str, None] = None,
         create_table_statement: Union[str, None] = None,
         verbose: bool = True,
-        overwrite_type: Dict = None,
+        overwrite_types: Dict = None,
         **kwargs,
     ) -> None:
         """
@@ -275,7 +272,7 @@ INSERT INTO {database}.{table_name}
                             df=df,
                             table_name=table_name,
                             database=database,
-                            user_types=overwrite_type,
+                            overwrite_types=overwrite_types,
                         )
                     with self.printer.print_msg(
                            f'Creating a new table: {create_table_stmt}'):

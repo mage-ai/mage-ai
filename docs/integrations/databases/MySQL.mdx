@@ -82,17 +82,11 @@ df.to_csv('default_repo/users.csv', index=False)
 Example snippet:
 
 ```python
-{% extends "data_loaders/default.jinja" %}
-{% block imports %}
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.mysql import MySQL
 from os import path
-{{ super() -}}
-{% endblock %}
 
-
-{% block content %}
 @data_loader
 def load_data_from_mysql(*args, **kwargs):
     """
@@ -107,7 +101,7 @@ def load_data_from_mysql(*args, **kwargs):
 
     with MySQL.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.load(query)
-{% endblock %}
+
 ```
 
 2. Create a Data Exporter block from the MySQL Template
@@ -150,7 +144,7 @@ def export_data_to_mysql(df: DataFrame, **kwargs) -> None:
 
 3. Custom types
 
-To overwrite a column type when running a python export block, simply specify the column name and type in the `overwrite_type` dict in data exporter config
+To overwrite a column type when running a python export block, simply specify the column name and type in the `overwrite_types` dict in data exporter config
 
 Here is an example code snippet:
 
@@ -176,7 +170,7 @@ def export_data_to_mysql(df: DataFrame, **kwargs) -> None:
     table_name = 'your_table_name'  # Specify the name of the table to export data to
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
-    overwrite_type = {'column_name': 'VARCHAR(255)'}
+    overwrite_types = {'column_name': 'VARCHAR(255)'}
 
     with MySQL.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         loader.export(
@@ -185,6 +179,7 @@ def export_data_to_mysql(df: DataFrame, **kwargs) -> None:
             table_name,
             index=False,  # Specifies whether to include index in exported table
             if_exists='replace',  # Specify resolution policy if table name already exists
+            overwrite_types=overwrite_types,
         )
 
 ```

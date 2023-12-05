@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import socket
@@ -60,38 +59,6 @@ def files_in_single_path(path):
 
 def get_absolute_path(path: str) -> str:
     return str(Path(os.path.abspath(os.path.expanduser(os.path.expandvars(path)))).resolve())
-
-
-def get_user_type(usr_input: Dict):
-    if type(usr_input) == dict:
-        # First, we collect the list of modified columns
-        # So that we can skip them on Mage's internal dtype assignment
-        mod_columns = [col for col in usr_input.keys()]
-
-        # Now, we generate default SQL CREATE TABLE string
-        columns_with_types = [(col, col_type) for col, col_type in usr_input.items()]
-        col_with_usr_types = [f'"{col}" {col_type}' for col, col_type in columns_with_types]
-
-        return mod_columns, col_with_usr_types
-
-    elif os.path.isfile(usr_input):
-
-        json_file = open(usr_input, 'r')
-
-        json_data = json.loads(json_file.read())
-
-        mod_columns = [col for col in json_data.keys()]
-
-        columns_with_types = [(col, col_type) for col, col_type in json_data.items()]
-
-        col_with_usr_types = [f'"{col}" {col_type}' for col, col_type in columns_with_types]
-
-        return mod_columns, col_with_usr_types
-
-    else:
-        raise Exception(f"Mage can't find your destination config \
-                        please make sure {usr_input} is either a valid dict \
-                            or path")
 
 
 def convert_pandas_dtype_to_python_type(dtype):

@@ -13,7 +13,7 @@ class TestTablePostgres(DBTestCase):
         dtypes = infer_dtypes(df)
         db_dtypes = {col: psg.get_type(df[col], dtypes[col]) for col in dtypes}
         unique_constraints = None
-        overwrite_type = {'datetime_time': "TIMESTAMP"}
+        overwrite_types = {'datetime_time': "TIMESTAMP"}
         schema_name = 'Test'
         table_name = 'Test'
 
@@ -22,7 +22,7 @@ class TestTablePostgres(DBTestCase):
             schema_name,
             table_name,
             unique_constraints=unique_constraints,
-            user_types=overwrite_type,
+            overwrite_types=overwrite_types,
         )
         self.assertEqual('CREATE TABLE Test.Test ("varchar_time" text,"datetime_time" TIMESTAMP);',
                          query)

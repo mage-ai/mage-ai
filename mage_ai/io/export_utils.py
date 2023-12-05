@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Mapping
 from pandas import DataFrame, Series
 from pandas.api.types import infer_dtype
 
-from mage_ai.shared.utils import clean_name, get_user_type
+from mage_ai.shared.utils import clean_name
 
 """
 Utilities for exporting Python data frames to external databases.
@@ -105,7 +105,7 @@ def gen_table_creation_query(
     schema_name: str,
     table_name: str,
     unique_constraints: List[str],
-    user_types: Dict = None,
+    overwrite_types: Dict = None,
 ) -> str:
     """
     Generates a database table creation query from a data frame.
@@ -120,17 +120,13 @@ def gen_table_creation_query(
         str: Table creation query for this table.
     """
     query = []
-    if user_types is not None:
-        user_mod_columns, col_with_usr_types = get_user_type(user_types)
+    if overwrite_types is not None:
 
         for cname in dtypes:
-            if cname in user_mod_columns:
-                pass
-            else:
-                query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
+            if cname in overwrite_types.keys():
+                dtypes[cname] = overwrite_types[cname]
 
-        query = query + col_with_usr_types
-
+            query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
     else:
         for cname in dtypes:
             query.append(f'"{clean_name(cname)}" {dtypes[cname]}')

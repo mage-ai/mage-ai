@@ -21,7 +21,6 @@ from mage_ai.shared.utils import (
     clean_name,
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
-    get_user_type,
 )
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -97,7 +96,7 @@ class Trino(BaseSQL):
                 user=settings.get('user'),
                 verify=settings.get('verify'),
                 data_type_properties=settings.get('data_type_properties'),
-                overwrite_type=settings.get('overwrite_type'),
+                overwrite_types=settings.get('overwrite_types'),
             )
 
         return cls(
@@ -121,19 +120,16 @@ class Trino(BaseSQL):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
-        user_types: Dict = None
+        overwrite_types: Dict = None
     ):
         if unique_constraints is None:
             unique_constraints = []
         query = []
-        if user_types is not None:
-            user_mod_columns, col_with_usr_types = get_user_type(user_types)
-
-            query = [f'"{clean_name(cname)}" {dtypes[cname]}' for cname in dtypes
-                     if cname not in user_mod_columns]
-
-            query = query + col_with_usr_types
-
+        if overwrite_types is not None:
+            for cname in dtypes:
+                if cname in overwrite_types.keys():
+                    dtypes[cname] = overwrite_types[cname]
+                query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
         else:
             for cname in dtypes:
                 query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
@@ -366,7 +362,7 @@ class Trino(BaseSQL):
                             db_dtypes,
                             schema_name,
                             table_name,
-                            user_types=self.settings.get('overwrite_type'),
+                            overwrite_types=self.settings.get('overwrite_types'),
                         )
                         cur.execute(query)
 

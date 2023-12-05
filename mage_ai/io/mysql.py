@@ -11,7 +11,7 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.parsers import encode_complex
-from mage_ai.shared.utils import clean_name, get_user_type
+from mage_ai.shared.utils import clean_name
 
 QUERY_ROW_LIMIT = 10_000_000
 
@@ -53,18 +53,16 @@ class MySQL(BaseSQL):
         schema_name: str,
         table_name: str,
         unique_constraints: List[str] = None,
-        user_types: Dict = None,
+        overwrite_types: Dict = None,
     ) -> str:
         if unique_constraints is None:
             unique_constraints = []
         query = []
-        if user_types is not None:
-            user_mod_columns, col_with_usr_types = get_user_type(user_types)
-
-            query = [f'`{clean_name(cname)}` {dtypes[cname]} NULL' for cname in dtypes
-                     if cname not in user_mod_columns]
-
-            query = query + col_with_usr_types
+        if overwrite_types is not None:
+            for cname in dtypes:
+                if cname in overwrite_types.keys():
+                    dtypes[cname] = overwrite_types[cname]
+                query.append(f'`{clean_name(cname)}` {dtypes[cname]} NULL')
 
         else:
             for cname in dtypes:

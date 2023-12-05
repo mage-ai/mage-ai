@@ -33,7 +33,7 @@ default:
     verify: /path/to/your/ca.crt              # Optional
     data_type_properties:
       timestamp_precision: 3                              # Optional. Set TIMESTAMP(n) precision
-    overwrite_type: path_to_types_json # Optional
+    overwrite_types: path_to_types_json # Optional
 ```
 
 <Note>Change the values according to your Trino settings.</Note>
@@ -62,7 +62,7 @@ labeled <b>default</b>.
 1. You can optionally check the box labeled <b>Use raw SQL</b>.
 If you do, read more about [how to use SQL blocks with raw SQL](/guides/blocks/sql-blocks#using-raw-sql).
 
-1. You can optionally overwrite your table columns types by adding a JSON to `overwrite_type` config, the format needs to be {"column_name":"VARCHAR"}
+1. You can optionally overwrite your table columns types by adding a JSON to `overwrite_types` config, the format needs to be {"column_name":"VARCHAR"}
 
 1. Write your SQL statements in the SQL block.
 

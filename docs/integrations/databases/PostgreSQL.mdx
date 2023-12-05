@@ -131,7 +131,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
 
 6. Custom types
 
-To overwrite a column type when running a python export block, simply specify the column name and type in the `overwrite_type` dict in data exporter config
+To overwrite a column type when running a python export block, simply specify the column name and type in the `overwrite_types` dict in data exporter config
 
 Here is an example code snippet:
 
@@ -152,7 +152,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
     table_name = 'your_table_name'  # Specify the name of the table to export data to
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
-    overwrite_type = {'column_name': 'VARCHAR(255)'}
+    overwrite_types = {'column_name': 'VARCHAR(255)'}
 
     with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         loader.export(
@@ -164,6 +164,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
             allow_reserved_words=True,
             unique_conflict_method='UPDATE',
             unique_constraints=['col'],
+            overwrite_types=overwrite_types,
         )
 
 ```

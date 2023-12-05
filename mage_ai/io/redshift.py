@@ -13,7 +13,6 @@ from mage_ai.io.utils import format_value
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_redshift_type,
-    get_user_type,
 )
 
 
@@ -136,7 +135,7 @@ class Redshift(BaseSQL):
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
         create_schema: bool = False,
-        overwrite_type: Dict = False,
+        overwrite_types: Dict = False,
     ) -> None:
         """
         Exports a Pandas data frame to a Redshift cluster given table name.
@@ -227,13 +226,15 @@ class Redshift(BaseSQL):
                     cur.execute(query)
                 else:
                     if should_create_table:
-                        if overwrite_type is not None:
-                            user_mod_columns, col_with_usr_types = get_user_type(overwrite_type)
+                        if overwrite_types is not None:
+                            for index, col in enumerate(columns_with_type):
+                                # col is a tuple with (col_name, col_type)
+                                # so we access col_name using col[0]
+                                if col[0] in overwrite_types.keys():
+                                    columns_with_type[index] = (col[0], overwrite_types[col[0]])
 
-                        col_with_types = [f'{col} {col_type}' for col, col_type in columns_with_type
-                                          if col not in user_mod_columns]
-
-                        col_with_types = col_with_types + col_with_usr_types
+                        col_with_types = [f'{col} {col_type}' for col, col_type in
+                                          columns_with_type]
 
                         col_with_types = ', '.join(col_with_types)
                         query = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
