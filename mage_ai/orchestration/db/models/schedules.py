@@ -1,12 +1,12 @@
 import asyncio
+import collections
 import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
-from itertools import groupby
 from math import ceil
 from statistics import stdev
-from typing import Dict, List
+from typing import DefaultDict, Dict, List
 
 import dateutil.parser
 import pytz
@@ -117,6 +117,18 @@ class PipelineSchedule(BaseModel):
         query = PipelineRun.query
         query.cache = True
         query = query.filter(PipelineRun.pipeline_schedule_id.in_(ids))
+        return query.all()
+
+    @classmethod
+    def fetch_latest_pipeline_runs_without_retries(self, ids: List[int]) -> List:
+        query = PipelineRun.query
+        query.cache = True
+        query = (
+            query.
+            filter(PipelineRun.pipeline_schedule_id.in_(ids)).
+            group_by(PipelineRun.execution_date).
+            order_by(func.max(PipelineRun.started_at))
+        )
         return query.all()
 
     def get_settings(self) -> 'SettingsConfig':
@@ -491,6 +503,46 @@ class PipelineSchedule(BaseModel):
 
         return (self.settings or {}).get('landing_time_enabled', False)
 
+    def recently_completed_pipeline_runs(
+        self,
+        pipeline_run=None,
+        sample_size: int = None,
+    ):
+        pipeline_runs = (
+            PipelineRun.
+            query.
+            filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+        )
+
+        if pipeline_run:
+            pipeline_runs = (
+                pipeline_runs.
+                filter(
+                    PipelineRun.id != pipeline_run.id,
+                )
+            )
+
+        pipeline_runs = (
+            pipeline_runs.
+            order_by(PipelineRun.execution_date.desc())
+        )
+
+        if sample_size:
+            pipeline_runs = pipeline_runs.limit(sample_size)
+
+        pipeline_runs = pipeline_runs.all()
+
+        pipeline_runs = sorted(
+            pipeline_runs,
+            key=lambda pr: pr.execution_date,
+            reverse=True,
+        )
+
+        return pipeline_runs
+
     def runtime_history(
         self,
         pipeline_run=None,
@@ -503,34 +555,9 @@ class PipelineSchedule(BaseModel):
             previous_runtimes += (pipeline_run.metrics or {}).get('previous_runtimes', [])
 
         if len(previous_runtimes) < sample_size_to_use - 1 if pipeline_run else sample_size_to_use:
-            pipeline_runs = (
-                PipelineRun.
-                query.
-                filter(
-                    PipelineRun.pipeline_schedule_id == self.id,
-                    PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
-                )
-            )
-
-            if pipeline_run:
-                pipeline_runs = (
-                    pipeline_runs.
-                    filter(
-                        PipelineRun.id != pipeline_run.id,
-                    )
-                )
-
-            pipeline_runs = (
-                pipeline_runs.
-                order_by(PipelineRun.execution_date.desc()).
-                limit(sample_size_to_use).
-                all()
-            )
-
-            pipeline_runs = sorted(
-                pipeline_runs,
-                key=lambda pr: pr.execution_date,
-                reverse=True,
+            pipeline_runs = self.recently_completed_pipeline_runs(
+                pipeline_run=pipeline_run,
+                sample_size=sample_size_to_use,
             )
 
             for pr in pipeline_runs:
@@ -657,7 +684,7 @@ class PipelineRun(BaseModel):
     def pipeline_type(self) -> PipelineType:
         pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
 
-        return self.pipeline.type if pipeline is not None else None
+        return pipeline.type if pipeline is not None else None
 
     @property
     def logs(self):
@@ -666,6 +693,43 @@ class PipelineRun(BaseModel):
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
         ).get_logs()
+
+    @classmethod
+    def recently_completed_pipeline_runs(
+        self,
+        pipeline_uuid: str,
+        pipeline_run_id: int = None,
+        pipeline_schedule_id: int = None,
+        sample_size: int = None,
+    ):
+        pipeline_runs = (
+            self.
+            query.
+            filter(
+                self.pipeline_uuid == pipeline_uuid,
+                self.status == self.PipelineRunStatus.COMPLETED,
+            )
+        )
+
+        if pipeline_run_id is not None:
+            pipeline_runs = pipeline_runs.filter(self.id != pipeline_run_id)
+
+        if pipeline_schedule_id is not None:
+            pipeline_runs = pipeline_runs.filter(self.pipeline_schedule_id == pipeline_schedule_id)
+
+        pipeline_runs = pipeline_runs.order_by(PipelineRun.execution_date.desc())
+
+        if sample_size:
+            pipeline_runs = pipeline_runs.limit(sample_size)
+
+        pipeline_runs = pipeline_runs.all()
+        pipeline_runs = sorted(
+            pipeline_runs,
+            key=lambda pr: pr.execution_date,
+            reverse=True,
+        )
+
+        return pipeline_runs
 
     async def logs_async(self):
         return await LoggerManagerFactory.get_logger_manager(
@@ -690,7 +754,7 @@ class PipelineRun(BaseModel):
     def pipeline_tags(self):
         pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
 
-        return self.pipeline.tags if pipeline is not None else []
+        return pipeline.tags if pipeline is not None else []
 
     def executable_block_runs(
         self,
@@ -838,6 +902,77 @@ class PipelineRun(BaseModel):
 
         return executable_block_runs
 
+    def update_block_run_statuses(self, block_runs: List['BlockRun']) -> None:
+        """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
+
+        This method updates the statuses of the block runs based on the pipeline run's block runs.
+        It retrieves the block UUIDs for failed block runs and conditionally failed block runs.
+        It maps the block run statuses to their corresponding block UUIDs.
+
+        The method iterates overthe provided block runs and checks if their dynamic upstream block
+        UUIDs or upstream block UUIDs match the failed or conditionally failed block UUIDs.
+        * If there is a match, the block run's status is updated accordingly.
+        * If no updates are made for a block run, it is added to the list of not updated block runs.
+
+        The method refreshes the pipeline run and continues iterating through block runs until no
+        more updates can be made.
+
+        Args:
+            block_runs (List[BlockRun]): A list of block runs to update.
+
+        Returns:
+            None
+        """
+        pipeline = self.pipeline
+
+        failed_block_uuids = set(
+            b.block_uuid for b in self.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                BlockRun.BlockRunStatus.FAILED,
+            ]
+        )
+        condition_failed_block_uuids = set(
+            b.block_uuid for b in self.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.CONDITION_FAILED,
+            ]
+        )
+
+        statuses = {
+            BlockRun.BlockRunStatus.CONDITION_FAILED: condition_failed_block_uuids,
+            BlockRun.BlockRunStatus.UPSTREAM_FAILED: failed_block_uuids,
+        }
+        not_updated_block_runs = []
+        for block_run in block_runs:
+            updated_status = False
+            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
+                'dynamic_upstream_block_uuids',
+            )
+
+            for status, block_uuids in statuses.items():
+                upstream_block_uuids = []
+                if dynamic_upstream_block_uuids:
+                    upstream_block_uuids = dynamic_upstream_block_uuids
+                else:
+                    block = pipeline.get_block(block_run.block_uuid)
+                    if block:
+                        upstream_block_uuids = block.upstream_block_uuids
+                if any(
+                    b in block_uuids
+                    for b in upstream_block_uuids
+                ):
+                    block_run.update(status=status)
+                    updated_status = True
+
+            if not updated_status:
+                not_updated_block_runs.append(block_run)
+
+        self.refresh()
+        # keep iterating through block runs until no more updates can be made
+        if len(block_runs) != len(not_updated_block_runs):
+            self.update_block_run_statuses(not_updated_block_runs)
+
     @classmethod
     @safe_db_query
     def active_runs_for_pipelines(
@@ -865,7 +1000,7 @@ class PipelineRun(BaseModel):
         self,
         pipeline_uuids: List[str],
         include_block_runs: bool = False,
-    ) -> Dict[str, List['PipelineRun']]:
+    ) -> DefaultDict[str, List['PipelineRun']]:
         """
         Get a dictionary of active pipeline runs grouped by pipeline uuid.
         """
@@ -874,9 +1009,9 @@ class PipelineRun(BaseModel):
             pipeline_uuids,
             include_block_runs=include_block_runs,
         )
-        grouped = {}
-        for key, runs in groupby(active_runs, key=lambda x: x.pipeline_uuid):
-            grouped[key] = list(runs)
+        grouped = collections.defaultdict(list)
+        for run in active_runs:
+            grouped[run.pipeline_uuid].append(run)
         return grouped
 
     @classmethod

@@ -2,7 +2,12 @@ import moment from 'moment';
 
 import BlockRunType from '@interfaces/BlockRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
-import { DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET, dateFormatLong } from '@utils/date';
+import {
+  DATE_FORMAT_LONG_NO_SEC,
+  DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET,
+  DATE_FORMAT_LONG_T_SEP,
+  dateFormatLong,
+} from '@utils/date';
 import { DEFAULT_PORT } from '@api/utils/url';
 import {
   PipelineScheduleFilterQueryEnum,
@@ -10,7 +15,10 @@ import {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import { TimeType } from '@oracle/components/Calendar';
-import { getDayRangeForCurrentMonth } from '@utils/date';
+import {
+  datetimeInLocalTimezone,
+  getDayRangeForCurrentMonth,
+} from '@utils/date';
 import { ignoreKeys } from '@utils/hash';
 import { rangeSequential } from '@utils/array';
 
@@ -108,15 +116,7 @@ export function getTimeInUTC(dateTime: string): Date {
   }
   const date = new Date(moment(dateTime).valueOf());
 
-  const utcTs = Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    date.getSeconds(),
-  );
-  return new Date(utcTs);
+  return date;
 }
 
 export function getTimeInUTCString(dateTime: string) {
@@ -124,10 +124,19 @@ export function getTimeInUTCString(dateTime: string) {
     return dateTime;
   }
   const formattedDate = dateTime.split('+')[0];
+  const momentObj = moment(getTimeInUTC(formattedDate));
+  const datetimeString = momentObj.format(DATE_FORMAT_LONG_T_SEP);
 
-  return getTimeInUTC(formattedDate)
-    .toISOString()
-    .split('.')[0];
+  return datetimeString;
+}
+
+export function displayLocalOrUtcTime(
+  datetime: string,
+  displayLocalTimezone: boolean,
+) {
+  return displayLocalTimezone
+    ? datetimeInLocalTimezone(datetime, displayLocalTimezone)
+    : getTimeInUTCString(datetime);
 }
 
 export enum TimeUnitEnum {
@@ -177,16 +186,18 @@ export function getDatetimeFromDateAndTime(
     includeSeconds?: boolean,
   },
 ): string {
-  let datetimeString = `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`;
+  let datetimeString;
+
+  const momentObj = moment(date);
+  momentObj.set('hour', +time?.hour || 0);
+  momentObj.set('minute', +time?.minute || 0);
+  momentObj.set('second', 0);
+  datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC);
 
   if (opts?.includeSeconds) {
     datetimeString = datetimeString.concat(':00');
   }
   if (opts?.localTimezone) {
-    const momentObj = moment(date);
-    momentObj.set('hour', +time?.hour || 0);
-    momentObj.set('minute', +time?.minute || 0);
-    momentObj.set('second', 0);
     datetimeString = momentObj.format(DATE_FORMAT_LONG_NO_SEC_WITH_OFFSET);
     if (opts?.convertToUtc) {
       datetimeString = dateFormatLong(
@@ -212,7 +223,7 @@ export function getTriggerApiEndpoint(
       url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/api_trigger`;
     } else {
       url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
-      
+
       if (pipelineSchedule?.token) {
         url = `${url}/${pipelineSchedule.token}`;
       }

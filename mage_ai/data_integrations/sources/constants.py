@@ -1,3 +1,6 @@
+from mage_ai.data_integrations.utils.settings import get_uuid
+from mage_ai.shared.hash import index_by
+
 SQL_SOURCES = [
     dict(name='BigQuery'),
     dict(
@@ -10,6 +13,8 @@ SQL_SOURCES = [
     dict(name='Redshift'),
     dict(name='Snowflake'),
 ]
+
+SQL_SOURCES_MAPPING = index_by(get_uuid, SQL_SOURCES)
 
 SOURCES = sorted([
     dict(name='Amazon S3'),

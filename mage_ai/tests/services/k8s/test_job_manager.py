@@ -41,6 +41,14 @@ MOCK_POD_CONFIG = V1Pod(
         )],
         restart_policy='Never',
         service_account_name='old_service_account_name',
+        tolerations=[
+            {
+                'effect': 'NoExecute',
+                'key': 'node.kubernetes.io/not-ready',
+                'operator': 'Exists',
+                'toleration_seconds': 300,
+            },
+        ],
         volumes=[],
     )
 )
@@ -187,6 +195,14 @@ class JobManagerTests(TestCase):
                     prefix=None,
                     secret_ref=V1SecretEnvSource(name='mysecret', optional=None),
                 ),
+        ])
+        self.assertEqual(pod_config.tolerations, [
+            {
+                'effect': 'NoExecute',
+                'key': 'node.kubernetes.io/not-ready',
+                'operator': 'Exists',
+                'toleration_seconds': 300,
+            },
         ])
 
         mock_client.V1ResourceRequirements.assert_called_once_with(

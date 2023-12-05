@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum, BlockLanguageEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Breadcrumbs from '@components/Breadcrumbs';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -23,22 +23,16 @@ import StreamGrid from './StreamGrid';
 import StreamOverviewEditor from './StreamOverviewEditor';
 import StreamSchemaPropertiesEditor from './StreamSchemaPropertiesEditor';
 import StreamsOverview from './StreamsOverview';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { CatalogType, StreamType } from '@interfaces/IntegrationSourceType';
 import {
-  Check,
   Close,
   CubeWithArrowDown,
   DocumentIcon,
-  Lightning,
-  PlugAPI,
   Search,
-  Settings,
   SettingsWithKnobs,
   Sun,
   Table as TableIcon,
@@ -67,13 +61,10 @@ import {
 import {
   PADDING_UNITS,
   UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
-  UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import {
   AttributesMappingType,
   ColumnsMappingType,
-  StreamDifferencesType,
   StreamMapping,
   buildStreamMapping,
   getAllStreamsFromStreamMapping,
@@ -82,33 +73,34 @@ import {
   getStreamFromStreamMapping,
   getStreamID,
   getStreamIDWithParentStream,
-  isStreamInMappings,
   isStreamSelected,
-  mergeSchemaProperties,
   noStreamsAnywhere as noStreamsAnywhereFunc,
-  updateStreamInBlock,
   updateStreamMappingWithPropertyAttributeValues,
   updateStreamMappingWithStreamAttributes,
-  updateStreamMetadata,
 } from '@utils/models/block';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import { get, set } from '@storage/localStorage';
+import { StreamType } from '@interfaces/IntegrationSourceType';
+import { get } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { equals, groupBy, indexBy, intersection, remove, sortByKey } from '@utils/array';
+import { indexBy, intersection, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
-type DataIntegrationModal = {
+type DataIntegrationModalProps = {
   block: BlockType;
   defaultMainNavigationTab?: MainNavigationTabEnum | string;
   defaultMainNavigationTabSub?: string;
   defaultSubTab?: string;
   onChangeBlock?: (block: BlockType) => void;
+  onChangeCodeBlock?: (type: string, uuid: string, value: string) => void;
   onClose?: () => void;
-  onSaveBlock?: () => void;
+  onSaveBlock?: (block: BlockType) => void;
   pipeline: PipelineType;
+  savePipelineContent?: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
   setContent?: (content: string) => void;
 } & CredentialsProps;
 
@@ -126,7 +118,7 @@ function DataIntegrationModal({
   pipeline,
   savePipelineContent,
   setContent,
-}) {
+}: DataIntegrationModalProps) {
   const mainContainerRef = useRef(null);
   const refAfterHeader = useRef(null);
   const refAfterFooter = useRef(null);
@@ -198,7 +190,6 @@ function DataIntegrationModal({
 
     return query;
   }, [
-    dataIntegrationType,
     dataIntegrationUUID,
   ]);
 
@@ -292,7 +283,7 @@ function DataIntegrationModal({
 
       callback?.(updated);
 
-      return updated;;
+      return updated;
     }), [
       setBlockAttributes,
     ]);
@@ -325,7 +316,7 @@ function DataIntegrationModal({
       streams,
     ]);
 
-  const componentUUID = useMemo(() => `DataIntegrationModal/${blockUUID}`, blockUUID);
+  const componentUUID = useMemo(() => `DataIntegrationModal/${blockUUID}`, [blockUUID]);
   const localStorageKeyAfter =
     useMemo(() => `block_layout_after_width_${componentUUID}`, [componentUUID]);
   const localStorageKeyBefore =
@@ -386,7 +377,7 @@ function DataIntegrationModal({
       });
     }
 
-    return SUB_TABS_FOR_STREAM_DETAIL()
+    return SUB_TABS_FOR_STREAM_DETAIL();
   }, [
     selectedMainNavigationTab,
     selectedMainNavigationTabSub,
@@ -394,7 +385,7 @@ function DataIntegrationModal({
   ]);
 
   const getSubTabForMainNavigationTab =
-    useCallback((mainNavigationTab: MainNavigationTabEnum): TabType[] => {
+    useCallback((mainNavigationTab: MainNavigationTabEnum | string): TabType[] => {
       if (mainNavigationTab in SUB_TABS_BY_MAIN_NAVIGATION_TAB) {
         return SUB_TABS_BY_MAIN_NAVIGATION_TAB[mainNavigationTab];
       }
@@ -481,14 +472,13 @@ function DataIntegrationModal({
         selectedMainNavigationTabSub: mainNavigationTabSub,
         selectedSubTab: subTabUse,
       };
-    }
+    };
 
     setAllTabs((allTabsPrev) => setAllTabsFunc(
       input(allTabsPrev),
       allTabsPrev,
     ));
   }, [
-    selectedMainNavigationTabSub,
     setHighlightedColumnsMapping,
     streamsFromCatalogMapping,
     subTabsForStreamDetail,
@@ -510,6 +500,7 @@ function DataIntegrationModal({
     defaultMainNavigationTab,
     defaultMainNavigationTabSub,
     defaultSubTab,
+    getSubTabForMainNavigationTab,
     selectedMainNavigationTab,
     setSelectedMainNavigationTab,
   ]);
@@ -646,7 +637,7 @@ function DataIntegrationModal({
           && (!parentStreamID || selectedMainNavigationTabSub === parentStreamID);
 
         arr.push(
-          <Divider key={`${uuid}-divider-top`} light />
+          <Divider key={`${uuid}-divider-top`} light />,
         );
 
         arr.push(
@@ -686,12 +677,12 @@ function DataIntegrationModal({
                 </FlexContainer>
               </Spacing>
             </Link>
-          </NavigationStyle>
+          </NavigationStyle>,
         );
 
         if (idx === streamsCount - 1) {
           arr.push(
-            <Divider key={`${uuid}-divider-last`} light />
+            <Divider key={`${uuid}-divider-last`} light />,
           );
         }
       });
@@ -733,7 +724,7 @@ function DataIntegrationModal({
               streams: streamsInit,
             } = integrationSource;
 
-            setStreamsFetched(streamsInit)
+            setStreamsFetched(streamsInit);
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -755,78 +746,75 @@ function DataIntegrationModal({
 
   const [searchText, setSearchText] = useState<string>(null);
 
-  const subheaderEl = useMemo(() => {
-    return (
-      <div ref={refSubheader}>
-        {subtabs?.length >= 1 && (
-          <Spacing p={PADDING_UNITS} >
-            <ButtonTabs
-              noPadding
-              onClickTab={({ uuid }) => setSelectedMainNavigationTab(prev => ({
-                ...prev,
-                selectedSubTab: uuid,
-              }))}
-              regularSizeText
-              selectedTabUUID={selectedSubTab}
-              tabs={subtabs}
+  const subheaderEl = useMemo(() => (
+    <div ref={refSubheader}>
+      {subtabs?.length >= 1 && (
+        <Spacing p={PADDING_UNITS} >
+          <ButtonTabs
+            noPadding
+            onClickTab={({ uuid }) => setSelectedMainNavigationTab(prev => ({
+              ...prev,
+              selectedSubTab: uuid,
+            }))}
+            regularSizeText
+            selectedTabUUID={selectedSubTab}
+            tabs={subtabs}
+          />
+        </Spacing>
+      )}
+
+      {!subtabs?.length && MainNavigationTabEnum.STREAMS === selectedMainNavigationTab && (
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Flex flex={1}>
+            <TextInput
+              beforeIcon={<Search muted={!searchText?.length} size={2 * UNIT} />}
+              fullWidth
+              noBackground
+              noBorder
+              noBorderRadiusBottom
+              noBorderRadiusTop
+              onChange={e => setSearchText(e?.target?.value)}
+              paddingHorizontal={UNIT * PADDING_UNITS}
+              paddingVertical={UNIT * PADDING_UNITS}
+              placeholder="Type the name of the stream to filter..."
+              value={searchText || ''}
             />
-          </Spacing>
-        )}
+          </Flex>
 
-        {!subtabs?.length && MainNavigationTabEnum.STREAMS === selectedMainNavigationTab && (
-          <FlexContainer
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Flex flex={1}>
-              <TextInput
-                beforeIcon={<Search muted={!searchText?.length} size={2 * UNIT} />}
-                fullWidth
-                noBackground
-                noBorder
-                noBorderRadiusBottom
-                noBorderRadiusTop
-                onChange={e => setSearchText(e?.target?.value)}
-                paddingHorizontal={UNIT * PADDING_UNITS}
-                paddingVertical={UNIT * PADDING_UNITS}
-                placeholder="Type the name of the stream to filter..."
-                value={searchText || ''}
-              />
-            </Flex>
+          {searchText?.length >= 1 && (
+            <Button
+              iconOnly
+              noPadding
+              noBackground
+              noBorder
+              onClick={() => setSearchText(null)}
+            >
+              <Close default size={2 * UNIT} />
+            </Button>
+          )}
 
-            {searchText?.length >= 1 && (
+          {!noStreamsAnywhere && (
+            <Spacing px={PADDING_UNITS}>
               <Button
-                iconOnly
-                noPadding
-                noBackground
-                noBorder
-                onClick={() => setSearchText(null)}
+                beforeIcon={<CubeWithArrowDown size={2 * UNIT} />}
+                compact
+                loading={isLoadingFetchIntegrationSource}
+                onClick={() => fetchIntegrationSource()}
+                primary
               >
-                <Close default size={2 * UNIT} />
+                Fetch streams
               </Button>
-            )}
+            </Spacing>
+          )}
+        </FlexContainer>
+      )}
 
-            {!noStreamsAnywhere && (
-              <Spacing px={PADDING_UNITS}>
-                <Button
-                  beforeIcon={<CubeWithArrowDown size={2 * UNIT} />}
-                  compact
-                  loading={isLoadingFetchIntegrationSource}
-                  onClick={() => fetchIntegrationSource()}
-                  primary
-                >
-                  Fetch streams
-                </Button>
-              </Spacing>
-            )}
-          </FlexContainer>
-        )}
-
-        <Divider light />
-      </div>
-    );
-  }, [
-    blockUUID,
+      <Divider light />
+    </div>
+  ), [
     fetchIntegrationSource,
     isLoadingFetchIntegrationSource,
     noStreamsAnywhere,
@@ -835,6 +823,7 @@ function DataIntegrationModal({
     selectedMainNavigationTab,
     selectedSubTab,
     setSearchText,
+    setSelectedMainNavigationTab,
     subtabs,
   ]);
 
@@ -924,8 +913,6 @@ function DataIntegrationModal({
     isOnConfigurationCredentials,
     isOnStreamDetailSchemaProperties,
     isOnStreamsOverview,
-    selectedMainNavigationTab,
-    selectedSubTab,
     streams,
   ]);
 
@@ -990,7 +977,7 @@ function DataIntegrationModal({
         && blockContentFromBlockProp !== null
         )
           ? blockContentFromBlockProp
-          : blockContentFromBlockAttributes
+          : blockContentFromBlockAttributes,
       );
     }
   }, [
@@ -1300,11 +1287,11 @@ function DataIntegrationModal({
                     Upstream blocks can still be selected to have its data ingested.
                     This is toggled and configured in the <Link
                       bold
-                      primary
-                      preventDefault
                       onClick={() => setSelectedMainNavigationTab(() => ({
                         selectedMainNavigationTab: MainNavigationTabEnum.STREAMS,
                       }))}
+                      preventDefault
+                      primary
                     >
                       Streams
                     </Link> section.
@@ -1361,9 +1348,11 @@ function DataIntegrationModal({
           blocksMapping={blocksMapping}
           onChangeBlock={onChangeBlock}
           selectedStreamMapping={selectedStreamMapping}
-          setSelectedMainNavigationTab={(selectedMainNavigationTab: MainNavigationTabEnum) => setSelectedMainNavigationTab(prev => ({
-            selectedMainNavigationTab,
-          }))}
+          setSelectedMainNavigationTab={
+            (selectedMainNavigationTab: MainNavigationTabEnum) => setSelectedMainNavigationTab(prev => ({
+              selectedMainNavigationTab,
+            }))
+          }
           setSelectedStreamMapping={setSelectedStreamMapping}
           streamMapping={streamsFromCatalogMapping}
           updateStreamsInCatalog={updateStreamsInCatalog}
@@ -1372,7 +1361,6 @@ function DataIntegrationModal({
     }
   }, [
     blockAttributes,
-    blockLanguage,
     blockType,
     blockUUID,
     blockUpstreamBlocks,
@@ -1384,9 +1372,7 @@ function DataIntegrationModal({
     isLoadingFetchIntegrationSource,
     noStreamsAnywhere,
     onChangeBlock,
-    pipelineUUID,
     selectedMainNavigationTab,
-    selectedMainNavigationTabSub,
     selectedStreamMapping,
     selectedSubTab,
     setDataIntegrationConfigurationForInputs,
@@ -1454,7 +1440,7 @@ function DataIntegrationModal({
                     streamMappingUpdated = updateStreamMappingWithStreamAttributes(
                       selectedStreamMapping,
                       attributesMapping,
-                    )
+                    );
                   }
 
                   updateStreamsInCatalog(
@@ -1503,6 +1489,7 @@ function DataIntegrationModal({
     setAttributesMapping,
     setHighlightedColumnsMapping,
     setSelectedStreamMapping,
+    updateStreamsInCatalog,
   ]);
 
   const after = useMemo(() => {
@@ -1567,10 +1554,9 @@ function DataIntegrationModal({
     isOnConfigurationCredentials,
     isOnStreamDetailSchemaProperties,
     isOnStreamsOverview,
+    selectedMainNavigationTab,
+    selectedMainNavigationTabSub,
     selectedStreamMapping,
-    setAttributesMapping,
-    setHighlightedColumnsMapping,
-    setSelectedStreamMapping,
     streamsFromCatalogMapping,
     updateStreamsInCatalog,
   ]);
@@ -1703,12 +1689,12 @@ function DataIntegrationModal({
         afterFooter={afterFooter}
         afterFooterBottomOffset={afterFooterBottom}
         afterHeader={(
-          <Spacing ref={refAfterHeader} px={1}>
+          <Spacing px={1} ref={refAfterHeader}>
             {afterHeader}
           </Spacing>
         )}
-        afterHeightOffset={0}
         afterHeaderOffset={0}
+        afterHeightOffset={0}
         afterHidden={afterHidden}
         afterInnerHeightMinus={
           // After header is always 48
@@ -1748,6 +1734,6 @@ function DataIntegrationModal({
       </TripleLayout>
     </ContainerStyle>
   );
-};
+}
 
 export default DataIntegrationModal;

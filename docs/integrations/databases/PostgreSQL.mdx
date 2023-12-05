@@ -120,6 +120,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
             table_name,
             index=False,  # Specifies whether to include index in exported table
             if_exists='replace',  # Specify resolution policy if table name already exists
+            drop_table_on_replace=False,   # Whether to drop the table when "if_exists" param is set to "replace"
             allow_reserved_words=True,
             unique_conflict_method='UPDATE',
             unique_constraints=['col'],

@@ -608,6 +608,7 @@ function Table({
                     lightBackground
                     maxWidth={tooltipWidth}
                     muted
+                    relativePosition
                     widthFitContent={fitTooltipContentWidth}
                   />
                 </Spacing>

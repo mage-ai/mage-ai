@@ -23,6 +23,7 @@ from jinja2 import Template
 import mage_ai.data_preparation.decorators
 from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.data_integration.mixins import (
@@ -466,11 +467,14 @@ class Block(DataIntegrationMixin, SparkBlock):
                     uuid = settings.get('source') or settings.get('destination')
                     mapping = grouped_templates.get(uuid) or {}
 
+                    di_metadata = merge_dict(
+                        extract(mapping or {}, ['name']),
+                        settings,
+                    )
+                    di_metadata['sql'] = uuid in SQL_SOURCES_MAPPING
+
                     return dict(
-                        data_integration=merge_dict(
-                            extract(mapping or {}, ['name']),
-                            settings,
-                        ),
+                        data_integration=di_metadata,
                     )
             elif BlockLanguage.PYTHON == self.language:
                 try:
@@ -482,15 +486,18 @@ class Block(DataIntegrationMixin, SparkBlock):
                     uuid = di_settings.get('data_integration_uuid')
                     mapping = grouped_templates.get(uuid) or {}
 
+                    di_metadata = merge_dict(
+                        extract(mapping or {}, ['name']),
+                        ignore_keys(di_settings or {}, [
+                            'catalog',
+                            'config',
+                            'data_integration_uuid',
+                        ]),
+                    )
+                    di_metadata['sql'] = uuid in SQL_SOURCES_MAPPING
+
                     return dict(
-                        data_integration=merge_dict(
-                            extract(mapping or {}, ['name']),
-                            ignore_keys(di_settings or {}, [
-                                'catalog',
-                                'config',
-                                'data_integration_uuid',
-                            ]),
-                        ),
+                        data_integration=di_metadata,
                     )
                 except Exception as err:
                     if is_debug():
@@ -991,6 +998,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         output_messages_to_logs: bool = False,
         disable_json_serialization: bool = False,
         data_integration_runtime_settings: Dict = None,
+        execution_partition_previous: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1044,6 +1052,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
                 data_integration_runtime_settings=data_integration_runtime_settings,
+                execution_partition_previous=execution_partition_previous,
                 **kwargs,
             )
 
@@ -1223,6 +1232,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         data_integration_runtime_settings: str = None,
+        execution_partition_previous: str = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1301,6 +1311,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
                 data_integration_runtime_settings=data_integration_runtime_settings,
+                execution_partition_previous=execution_partition_previous,
                 **kwargs,
             )
 
@@ -1356,6 +1367,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         data_integration_runtime_settings: str = None,
+        execution_partition_previous: str = None,
         **kwargs,
     ) -> List:
         if logging_tags is None:
@@ -1379,6 +1391,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
+                execution_partition_previous=execution_partition_previous,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
                 input_vars=input_vars,
@@ -2496,6 +2509,31 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None) -> Dict:
+        """
+        Enriches the provided global variables dictionary with additional context, Spark session,
+        environment, configuration, and an empty context dictionary.
+
+        Args:
+            global_vars (Optional[Dict]): A dictionary of global variables to be enriched.
+                If not provided, an empty dictionary is created.
+
+        Returns:
+            Dict: The enriched global variables dictionary.
+
+        This method checks if the pipeline type is DATABRICKS or if the environment is a Spark
+        environment. If true, it adds the Spark session to the global variables if not already
+        present.
+
+        If 'env' is not in the global variables, it adds the environment information using the
+        'get_env()' function.
+
+        Adds the block configuration to the global variables.
+
+        If 'context' is not in global_vars, it adds an empty context dictionary.
+
+        The final enriched global variables dictionary is assigned to the object's 'global_vars'
+        attribute and returned.
+        """
         if global_vars is None:
             global_vars = dict()
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
@@ -2506,8 +2544,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     global_vars['spark'] = spark
         if 'env' not in global_vars:
             global_vars['env'] = get_env()
-        if 'configuration' not in global_vars:
-            global_vars['configuration'] = self.configuration
+        global_vars['configuration'] = self.configuration
         if 'context' not in global_vars:
             global_vars['context'] = dict()
 

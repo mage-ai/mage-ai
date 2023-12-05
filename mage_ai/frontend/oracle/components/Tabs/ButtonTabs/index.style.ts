@@ -27,6 +27,7 @@ export const TabsContainerStyle = styled.div<{
 
 export const SelectedUnderlineStyle = styled.div<{
   backgroundColor?: string;
+  backgroundColorPrimary?: boolean;
   selected?: boolean;
 }>`
   border-radius: 6px;
@@ -37,7 +38,7 @@ export const SelectedUnderlineStyle = styled.div<{
   `}
 
   ${props => props.selected && !props.backgroundColor && `
-    background-color: ${(props.theme || dark).borders.darkLight};
+    background-color: ${(props.theme || dark).accent.blue};
   `}
 
   ${props => props.selected && props.backgroundColor && `

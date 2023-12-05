@@ -1,23 +1,31 @@
+import gzip
+import io
+import json
+import zipfile
 from datetime import timedelta
+
+import requests
+
 from mage_integrations.connections.amplitude.utils import build_date_range
 from mage_integrations.connections.base import Connection
 from mage_integrations.utils.dates import date_intervals
 from mage_integrations.utils.dictionary import flatten, merge_dict
-import gzip
-import io
-import json
-import requests
-import zipfile
 
-DATE_FORMAT = '%Y%m%dT%H' # 20150201T0
-URL = 'https://amplitude.com/api/2/export'
+DATE_FORMAT = '%Y%m%dT%H'   # 20150201T0
+HOST = 'https://amplitude.com'
 
 
 class Amplitude(Connection):
-    def __init__(self, api_key, secret_key):
+    def __init__(
+        self,
+        api_key: str,
+        secret_key: str,
+        host: str = HOST
+    ):
         super().__init__()
         self.api_key = api_key
         self.secret_key = secret_key
+        self.host = host or HOST
 
     def load(
         self,
@@ -111,7 +119,7 @@ class Amplitude(Connection):
 
         tags = self.build_tags(start_date=start_date_string, end_date=end_date_string)
 
-        url = f'{URL}?start={start_date_string}&end={end_date_string}'
+        url = f'{self.host}/api/2/export?start={start_date_string}&end={end_date_string}'
         self.info('Fetch files started.', tags=tags)
 
         response = requests.get(url, auth=(self.api_key, self.secret_key))

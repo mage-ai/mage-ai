@@ -180,15 +180,13 @@
               "group": "Sources",
               "pages": [
                 "data-integrations/sources/overview",
-                "data-integrations/sources/add-new-source",
                 "data-integrations/sources/postgresql"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
-                "data-integrations/destinations/overview",
-                "data-integrations/destinations/add-new-destination"
+                "data-integrations/destinations/overview"
               ]
             },
             "data-integrations/batch-pipelines"
@@ -290,6 +288,7 @@
                 "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
                 "streaming/destinations/postgres",
+                "streaming/destinations/rabbitmq",
                 "streaming/destinations/redshift",
                 "streaming/destinations/snowflake",
                 "streaming/destinations/supabase-storage",
@@ -347,6 +346,7 @@
               "pages": [
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
+                "integrations/databases/Chroma",
                 "integrations/databases/Druid",
                 "integrations/databases/DuckDB",
                 "integrations/databases/GoogleSheets",
@@ -512,7 +512,8 @@
             "guides/blocks/custom-blocks",
             "guides/blocks/markdown-blocks",
             "guides/blocks/r-blocks",
-            "guides/blocks/replicate-blocks"
+            "guides/blocks/replicate-blocks",
+            "guides/blocks/detach-blocks"
           ]
         },
         {

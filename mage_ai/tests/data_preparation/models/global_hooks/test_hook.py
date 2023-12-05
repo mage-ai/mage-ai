@@ -1,6 +1,10 @@
+import hashlib
 import uuid
+from datetime import datetime
 from typing import List
 from unittest.mock import patch
+
+from freezegun import freeze_time
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -20,6 +24,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookStrategy,
     run_hooks,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.shared.mixins import GlobalHooksMixin
@@ -33,8 +38,12 @@ class HookTest(GlobalHooksMixin):
             self.assertEqual(hook.pipeline.uuid, self.pipeline1.uuid)
         self.assertEqual(self.hooks_match[3].pipeline.uuid, self.pipeline2.uuid)
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_should_run(self):
         await self.setUpAsync()
+
+        for hook in self.hooks_match + self.hooks_miss:
+            hook.snapshot()
 
         operation_types = [HookOperation.DETAIL]
         resource_type = EntityName.Pipeline
@@ -97,8 +106,40 @@ class HookTest(GlobalHooksMixin):
             stage=HookStage.AFTER,
         ) for hook in self.hooks_match[2:]]))
 
+    @freeze_time(datetime(3000, 1, 1))
+    async def test_should_run_with_different_snapshot(self):
+        await self.setUpAsync()
+
+        operation_types = [HookOperation.DETAIL]
+        resource_type = EntityName.Pipeline
+
+        hook = self.hooks_match[0]
+        hook.snapshot()
+
+        self.assertTrue(hook.should_run(
+            conditions=[HookCondition.FAILURE],
+            operation_types=operation_types,
+            resource_type=resource_type,
+            stage=HookStage.BEFORE,
+        ))
+
+        hook.metadata.snapshot_hash = uuid.uuid4().hex
+        self.assertFalse(hook.should_run(
+            conditions=[HookCondition.FAILURE],
+            operation_types=operation_types,
+            resource_type=resource_type,
+            stage=HookStage.BEFORE,
+        ))
+
+    @freeze_time(datetime(3000, 1, 1))
     async def test_should_run_with_predicates(self):
         await self.setUpAsync()
+
+        for hook in self.hooks_match + self.hooks_miss:
+            hook.snapshot()
+
+        hook = self.hooks_match[0]
+        hook.predicate = HookPredicate.load()
 
         operation_resource = dict(
             name=self.pipeline1.name,
@@ -107,40 +148,35 @@ class HookTest(GlobalHooksMixin):
         operation_types = [HookOperation.DETAIL]
         resource_type = EntityName.Pipeline
 
-        self.assertFalse(any([hook.should_run(
-            conditions=[HookCondition.FAILURE],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.BEFORE,
-        ) for hook in self.hooks_miss[:2]]))
-        self.assertFalse(any([hook.should_run(
-            conditions=[HookCondition.SUCCESS],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.AFTER,
-        ) for hook in self.hooks_miss[2:]]))
+        with patch.object(hook.predicate, 'validate') as mock_validate:
+            self.assertTrue(hook.should_run(
+                conditions=[HookCondition.FAILURE],
+                operation_resource=operation_resource,
+                operation_types=operation_types,
+                resource_type=resource_type,
+                stage=HookStage.BEFORE,
+            ))
 
-        self.assertTrue(all([hook.should_run(
-            conditions=[HookCondition.FAILURE],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.BEFORE,
-        ) for hook in self.hooks_match[:2]]))
-        self.assertTrue(all([hook.should_run(
-            conditions=[HookCondition.SUCCESS],
-            operation_resource=operation_resource,
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=HookStage.AFTER,
-        ) for hook in self.hooks_match[2:]]))
+            mock_validate.assert_called_once_with(
+                operation_resource,
+                error=None,
+                hook=hook.to_dict(include_all=True),
+                meta=None,
+                metadata=None,
+                payload=None,
+                query=None,
+                resource=None,
+                resource_id=None,
+                resource_parent_id=None,
+                resources=None,
+                user=None,
+            )
 
     async def test_run_no_pipeline(self):
         await self.setUpAsync()
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         with patch.object(hook.pipeline, 'execute_sync') as mock_execute_sync:
             hook._pipeline = None
             hook.pipeline_settings = None
@@ -156,6 +192,7 @@ class HookTest(GlobalHooksMixin):
             raise error
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.strategies = [
             HookStrategy.BREAK,
             HookStrategy.CONTINUE,
@@ -175,6 +212,7 @@ class HookTest(GlobalHooksMixin):
             raise error
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.strategies = [
             HookStrategy.CONTINUE,
         ]
@@ -192,6 +230,7 @@ class HookTest(GlobalHooksMixin):
             raise error
 
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.operation_type = HookOperation.EXECUTE
         hook.strategies = [
             HookStrategy.BREAK,
@@ -207,6 +246,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
 
         kwargs = dict(
@@ -232,6 +272,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
         hook.resource_type = RESTRICTED_RESOURCE_TYPES[-1]
 
@@ -259,6 +300,7 @@ class HookTest(GlobalHooksMixin):
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
         hook.run_settings = HookRunSettings.load(with_trigger=True)
 
@@ -296,11 +338,58 @@ class HookTest(GlobalHooksMixin):
             mock_execute_sync.assert_not_called()
 
     @patch('mage_ai.data_preparation.models.global_hooks.models.trigger_pipeline')
+    async def test_run_with_trigger_asynchronously(self, mock_trigger_pipeline):
+        await self.setUpAsync()
+
+        variables = dict(mage=self.faker.unique.name())
+        hook = self.hooks_match[0]
+        hook.snapshot()
+        hook.pipeline_settings['variables'] = variables
+        hook.run_settings = HookRunSettings.load(
+            asynchronous=True,
+            with_trigger=True,
+        )
+
+        kwargs = dict(
+            error=uuid.uuid4().hex,
+            hook=hook.to_dict(include_all=True),
+            meta=uuid.uuid4().hex,
+            metadata=uuid.uuid4().hex,
+            query=uuid.uuid4().hex,
+            payload=uuid.uuid4().hex,
+            resource=uuid.uuid4().hex,
+            resources=uuid.uuid4().hex,
+        )
+
+        class PipelineRunFake(object):
+            pass
+
+        pipeline_run = PipelineRunFake()
+        mock_trigger_pipeline.return_value = pipeline_run
+
+        with patch.object(hook.pipeline, 'execute_sync') as mock_execute_sync:
+            hook.run(**kwargs)
+
+            mock_trigger_pipeline.assert_called_once_with(
+                hook.pipeline.uuid,
+                variables=merge_dict(variables, kwargs),
+                check_status=False,
+                error_on_failure=True,
+                poll_interval=1,
+                poll_timeout=None,
+                schedule_name=TRIGGER_NAME_FOR_GLOBAL_HOOK,
+                verbose=True,
+                _should_schedule=False,
+            )
+            mock_execute_sync.assert_not_called()
+
+    @patch('mage_ai.data_preparation.models.global_hooks.models.trigger_pipeline')
     async def test_run_with_trigger_for_restricted_resource_type(self, mock_trigger_pipeline):
         await self.setUpAsync()
 
         variables = dict(mage=self.faker.unique.name())
         hook = self.hooks_match[0]
+        hook.snapshot()
         hook.pipeline_settings['variables'] = variables
         hook.resource_type = RESTRICTED_RESOURCE_TYPES[0]
         hook.run_settings = HookRunSettings.load(with_trigger=True)
@@ -343,6 +432,7 @@ class HookTest(GlobalHooksMixin):
 
         hooks = self.hooks_match
         for hook in hooks:
+            hook.snapshot()
             hook.output = dict(payload=dict(water=uuid.uuid4().hex))
             hook.status = HookStatus.load(error=None, strategy=HookStrategy.CONTINUE)
 
@@ -474,7 +564,7 @@ class HookTest(GlobalHooksMixin):
             query={
                 'type[]': [
                     'streaming',
-                    'pyspark',
+                    'integration',
                 ],
             },
             metadata=dict(
@@ -591,68 +681,79 @@ class HookTest(GlobalHooksMixin):
                             ),
                         ))
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict(self):
-        await self.setUpAsync()
+        await self.setUpAsync(snapshot=False)
 
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
         hook.pipeline_settings['variables'] = dict(mage=1)
-        hook.run_settings = HookRunSettings.load(with_trigger=True)
+        hook.run_settings = HookRunSettings.load(asynchronous=True, with_trigger=True)
         hook.strategies = [HookStrategy.BREAK]
 
         self.assertEqual(
             hook.to_dict(convert_enum=True, ignore_empty=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
+                metadata=dict(
+                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                ),
                 outputs=[m.to_dict() for m in hook.output_settings],
                 pipeline=dict(
                     uuid=self.pipeline1.uuid,
                     variables=dict(mage=1),
                 ),
-                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
-                run_settings=dict(with_trigger=True),
+                predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
+                run_settings=dict(asynchronous=True, with_trigger=True),
                 stages=[m.value for m in hook.stages],
                 strategies=[m.value for m in hook.strategies],
                 uuid=hook.uuid,
             ),
         )
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict_include_all(self):
-        await self.setUpAsync()
+        await self.setUpAsync(snapshot=False)
 
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
         hook.pipeline_settings['variables'] = dict(mage=1)
-        hook.run_settings = HookRunSettings.load(with_trigger=True)
+        hook.run_settings = HookRunSettings.load(asynchronous=True, with_trigger=True)
         hook.strategies = [HookStrategy.BREAK]
 
         self.assertEqual(
             hook.to_dict(convert_enum=True, ignore_empty=True, include_all=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
+                metadata=dict(
+                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                ),
                 operation_type=hook.operation_type.value,
                 outputs=[m.to_dict() for m in hook.output_settings],
                 pipeline=dict(
                     uuid=self.pipeline1.uuid,
                     variables=dict(mage=1),
                 ),
-                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
+                predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
                 resource_type=hook.resource_type.value,
-                run_settings=dict(with_trigger=True),
+                run_settings=dict(asynchronous=True, with_trigger=True),
                 stages=[m.value for m in hook.stages],
                 strategies=[m.value for m in hook.strategies],
                 uuid=hook.uuid,
             ),
         )
 
+    @freeze_time(datetime(3000, 1, 1))
     async def test_to_dict_include_run_data(self):
-        await self.setUpAsync()
+        await self.setUpAsync(snapshot=False)
 
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
         hook.output = dict(fire=2)
         hook.pipeline_settings['variables'] = dict(mage=1)
-        hook.run_settings = HookRunSettings.load(with_trigger=True)
+        hook.run_settings = HookRunSettings.load(asynchronous=True, with_trigger=True)
         hook.status = HookStatus.load(error=500, strategy=HookStrategy.BREAK)
         hook.strategies = [HookStrategy.BREAK]
 
@@ -660,17 +761,44 @@ class HookTest(GlobalHooksMixin):
             hook.to_dict(convert_enum=True, ignore_empty=True, include_run_data=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
+                metadata=dict(
+                    created_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                    updated_at=datetime.utcnow().isoformat(' ', 'seconds'),
+                ),
                 output=dict(fire=2),
                 outputs=[m.to_dict() for m in hook.output_settings],
                 pipeline=dict(
                     uuid=self.pipeline1.uuid,
                     variables=dict(mage=1),
                 ),
-                predicates=[[m.to_dict() for m in arr] for arr in hook.predicates],
-                run_settings=dict(with_trigger=True),
+                predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
+                run_settings=dict(asynchronous=True, with_trigger=True),
                 stages=[m.value for m in hook.stages],
                 status=dict(error=500, strategy=HookStrategy.BREAK.value),
                 strategies=[m.value for m in hook.strategies],
                 uuid=hook.uuid,
             ),
         )
+
+    @freeze_time(datetime(3000, 1, 1))
+    async def test_snapshot(self):
+        await self.setUpAsync()
+
+        hook = self.hooks_match[0]
+        hook.snapshot()
+
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+        hashes = []
+
+        for block in self.pipeline1.blocks_by_uuid.values():
+            hashes.append(
+                hashlib.md5(f'{now}{block.content}'.encode()).hexdigest()
+            )
+
+        hashes_combined = ''.join(hashes)
+        snapshot_hash = hashlib.md5(
+            f'{now}{hashes_combined}'.encode(),
+        ).hexdigest()
+
+        self.assertEqual(now, hook.metadata.snapshotted_at)
+        self.assertEqual(snapshot_hash, hook.metadata.snapshot_hash)

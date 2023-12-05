@@ -1,6 +1,7 @@
 """PayPal API Client."""  # noqa: WPS226
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 from datetime import date, datetime, timedelta
 from types import MappingProxyType
@@ -39,6 +40,7 @@ class Postmark(object):  # noqa: WPS230
     def __init__(
         self,
         postmark_server_token: str,
+        logger=None,
     ) -> None:  # noqa: DAR101
         """Initialize client.
 
@@ -46,7 +48,7 @@ class Postmark(object):  # noqa: WPS230
             postmark_server_token {str} -- Postmark Server Token
         """
         self.postmark_server_token: str = postmark_server_token
-        self.logger: logging.Logger = singer.get_logger()
+        self.logger: logging.Logger = logger or singer.get_logger()
         self.client: httpx.Client = httpx.Client(http2=True)
 
     def stats_outbound_bounces(  # noqa: WPS210, WPS432
@@ -372,7 +374,7 @@ class Postmark(object):  # noqa: WPS230
                 # Clean and yield the message
                 # for each message, creating a new API and get message details
                 for message in message_data:
-                    API_MESSAGEID: str = '/'+ message['MessageID']
+                    API_MESSAGEID: str = '/' + message['MessageID']
                     API_DETAILS = '/details'
                     url2: str = (
                         f'{API_SCHEME}{API_BASE_URL}{API_MESSAGES_PATH}'
@@ -390,15 +392,15 @@ class Postmark(object):  # noqa: WPS230
                     details_data: dict = details_response.json()
 
                     # Retrieve list of messages
-                    details_messageEvents: List[dict] = details_data.get('MessageEvents', '')
+                    details_message_events: List[dict] = details_data.get('MessageEvents', '')
 
                     # Extract messageEvent types frome the MessageEvent list
-                    messageEvent_types: str = ''
-                    for event in details_messageEvents:
-                        messageEvent_types = messageEvent_types + event['Type']+','
-                    messageEvent_types =  messageEvent_types[:-1] # Get rid of the last comma
-                    message['MessageEvents'] = messageEvent_types
-
+                    message_event_types: str = ''
+                    for event in details_message_events:
+                        message_event_types = message_event_types + event['Type'] + ','
+                    message_event_types = message_event_types[:-1]    # Get rid of the last comma
+                    message['MessageEvents'] = message_event_types
+                    message['MessageEventsJson'] = json.dumps(details_message_events)
                     yield cleaner(date_day, message)
                     total += 1
 

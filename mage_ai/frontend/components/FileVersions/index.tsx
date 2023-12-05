@@ -17,7 +17,7 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { buildFileExtensionRegExp } from '@components/FileEditor/utils';
 import { dateFormatLongFromUnixTimestamp } from '@utils/date';
 import { isJsonString } from '@utils/string';
@@ -207,7 +207,7 @@ function FileVersions({
           <CodeEditor
             autoHeight
             language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
-            padding
+            padding={UNIT * 2}
             readOnly
             value={isJsonString(content)
               ? JSON.stringify(JSON.parse(content), null, 2)

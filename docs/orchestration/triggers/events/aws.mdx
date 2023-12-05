@@ -38,8 +38,8 @@ The following steps will walk you through how to create an event rule for SQS.
 If you’re using Mage in Docker, add the following environment variables when you run
 Mage:
 
-- `AIRBNB_AWS_ACCESS_KEY_ID`
-- `AIRBNB_AWS_SECRET_ACCESS_KEY`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 
 > Permissions
 >
@@ -58,8 +58,8 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 If you’re not using Docker to run Mage, run the following commands:
 
 ```bash
-export AIRBNB_AWS_ACCESS_KEY_ID=...
-export AIRBNB_AWS_SECRET_ACCESS_KEY=...
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
 ```
 
 ## Set up Lambda Function

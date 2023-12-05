@@ -653,14 +653,6 @@ function PipelineDetailPage({
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
-  useEffect(() => {
-    let dataWithPotentialError = data;
-    if (!data?.hasOwnProperty('error') && dataDataProviders?.hasOwnProperty('error')) {
-      dataWithPotentialError = dataDataProviders;
-    }
-    displayErrorFromReadResponse(dataWithPotentialError, setPipelineErrors);
-  }, [data, dataDataProviders]);
-
   // Variables
   const {
     data: dataGlobalVariables,
@@ -833,6 +825,8 @@ function PipelineDetailPage({
     setSelectedFilePath(filePathFromUrl);
   }, [
     filePathFromUrl,
+    // This dependency is required or else the effect will not trigger on updated query parameters.
+    qUrl,
   ]);
   useEffect(() => {
     if (!equals(filePathsFromUrl, selectedFilePaths)) {
@@ -841,6 +835,8 @@ function PipelineDetailPage({
   }, [
     filePathsFromUrl,
     selectedFilePaths,
+    // This dependency is required or else the effect will not trigger on updated query parameters.
+    qUrl,
   ]);
 
   const [createPipeline] = useMutation(
@@ -1325,6 +1321,61 @@ function PipelineDetailPage({
     blocks,
     fetchPipeline,
     onChangeCodeBlock,
+  ]);
+
+  // Check for pipeline or project config issues
+  useEffect(() => {
+    let dataWithPotentialError = data;
+    let configFileLinks = [];
+    const variablesDir = pipeline?.variables_dir;
+    const remoteVariablesDir = pipeline?.remote_variables_dir;
+    if (data?.hasOwnProperty('error') && !filePathFromUrl) {
+      if (pipelineUUID !== 'undefined') {
+        configFileLinks = [{
+          label: 'Check pipeline configuration file for any issues',
+          onClick: () => {
+            openFile(`pipelines/${pipelineUUID}/${SpecialFileEnum.METADATA_YAML}`);
+            setErrors(null);
+          },
+        }];
+      } else {
+        dataWithPotentialError.error.displayMessage = 'There may be an issue with your '
+          + 'pipeline’s configuration file. Please check to make sure it is valid. It '
+          + 'can be found at /pipelines/[pipeline_uuid]/metadata.yaml.';
+      }
+    } else if (dataDataProviders?.hasOwnProperty('error')) {
+      dataWithPotentialError = dataDataProviders;
+    } else if ((variablesDir?.includes('None') || remoteVariablesDir?.includes('None'))
+      && !filePathFromUrl) {
+      /*
+       * If the variables_dir or remote_variables_dir uses an empty variable, the directory
+       * may unintentionally become "None" or include "None" in its path. We check if "None" is
+       * included in the directory values, so we can bring it to the user's attention in the UI.
+       */
+      dataWithPotentialError = {
+        error: {
+          displayMessage: `The variables_dir (${variablesDir}) or remote_variables_dir (${remoteVariablesDir})`
+            + ' might be configured incorrectly. Please make sure those properties have values'
+            + ' interpolated correctly in your project’s metadata.yaml config file.',
+        },
+      };
+      configFileLinks = [{
+        label: 'Check project configuration',
+        onClick: () => {
+          openFile(`${SpecialFileEnum.METADATA_YAML}`);
+          setPipelineErrors(null);
+        },
+      }];
+    }
+    displayErrorFromReadResponse(dataWithPotentialError, setPipelineErrors, configFileLinks);
+  }, [
+    data,
+    dataDataProviders,
+    filePathFromUrl,
+    openFile,
+    pipeline?.remote_variables_dir,
+    pipeline?.variables_dir,
+    pipelineUUID,
   ]);
 
   const {

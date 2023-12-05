@@ -1,8 +1,8 @@
 import asyncio
+import collections
 import os
 import traceback
 from datetime import datetime, timedelta
-from itertools import groupby
 from typing import Any, Dict, List, Set, Tuple
 
 import pytz
@@ -75,11 +75,15 @@ class PipelineScheduler:
         # Get the list of integration stream if the pipeline is data integration pipeline
         self.streams = []
         if self.pipeline.type == PipelineType.INTEGRATION:
-            self.streams = self.pipeline.streams(
-                self.pipeline_run.get_variables(
-                    extra_variables=get_extra_variables(self.pipeline)
+            try:
+                self.streams = self.pipeline.streams(
+                    self.pipeline_run.get_variables(
+                        extra_variables=get_extra_variables(self.pipeline)
+                    )
                 )
-            )
+            except Exception:
+                logger.exception(f'Fail to get streams for {pipeline_run}')
+                traceback.print_exc()
 
         # Initialize the logger
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
@@ -192,6 +196,19 @@ class PipelineScheduler:
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
         else:
+            schedule = PipelineSchedule.get(
+                self.pipeline_run.pipeline_schedule_id,
+            )
+            backfills = schedule.backfills if schedule else []
+            backfill = backfills[0] if len(backfills) >= 1 else None
+
+            if backfill is not None and \
+                backfill.status == Backfill.Status.INITIAL and \
+                    self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
+                backfill.update(
+                    status=Backfill.Status.RUNNING,
+                )
+
             if self.pipeline_run.all_blocks_completed(self.allow_blocks_to_fail):
                 if PipelineType.INTEGRATION == self.pipeline.type:
                     tags = self.build_tags()
@@ -221,17 +238,20 @@ class PipelineScheduler:
 
                 self.logger_manager.output_logs_to_destination()
 
-                schedule = PipelineSchedule.get(
-                    self.pipeline_run.pipeline_schedule_id,
-                )
-
                 if schedule:
-                    backfills = schedule.backfills
-                    # When all pipeline runs that are associated with backfill is done
-                    if len(backfills) >= 1:
-                        backfill = backfills[0]
+                    if backfill is not None:
+                        """
+                        Exclude old pipeline run retries associated with the backfill
+                        (if a backfill's runs had failed and the backfill was retried, those
+                        previous runs are no longer relevant) and check if the backfill's
+                        latest pipeline runs with different execution dates were successfull.
+                        """
+                        latest_pipeline_runs = \
+                            PipelineSchedule.fetch_latest_pipeline_runs_without_retries(
+                                [backfill.pipeline_schedule_id]
+                            )
                         if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
-                                for pr in backfill.pipeline_runs]):
+                                for pr in latest_pipeline_runs]):
                             backfill.update(
                                 completed_at=datetime.now(tz=pytz.UTC),
                                 status=Backfill.Status.COMPLETED,
@@ -250,6 +270,20 @@ class PipelineScheduler:
                      not self.allow_blocks_to_fail):
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.FAILED)
+
+                # Backfill status updated to "failed" if at least 1 of its pipeline runs failed
+                if backfill is not None:
+                    latest_pipeline_runs = \
+                        PipelineSchedule.fetch_latest_pipeline_runs_without_retries(
+                            [backfill.pipeline_schedule_id]
+                        )
+                    if any(
+                        [PipelineRun.PipelineRunStatus.FAILED == pr.status
+                            for pr in latest_pipeline_runs]
+                    ):
+                        backfill.update(
+                            status=Backfill.Status.FAILED,
+                        )
 
                 asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
 
@@ -472,75 +506,6 @@ class PipelineScheduler:
                 pass
         return any_block_run_timed_out
 
-    def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
-        """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
-
-        This method updates the statuses of the block runs based on the pipeline run's block runs.
-        It retrieves the block UUIDs for failed block runs and conditionally failed block runs.
-        It maps the block run statuses to their corresponding block UUIDs.
-
-        The method iterates overthe provided block runs and checks if their dynamic upstream block
-        UUIDs or upstream block UUIDs match the failed or conditionally failed block UUIDs.
-        * If there is a match, the block run's status is updated accordingly.
-        * If no updates are made for a block run, it is added to the list of not updated block runs.
-
-        The method refreshes the pipeline run and continues iterating through block runs until no
-        more updates can be made.
-
-        Args:
-            block_runs (List[BlockRun]): A list of block runs to update.
-
-        Returns:
-            None
-        """
-        failed_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
-                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
-                BlockRun.BlockRunStatus.FAILED,
-            ]
-        )
-        condition_failed_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
-                BlockRun.BlockRunStatus.CONDITION_FAILED,
-            ]
-        )
-
-        statuses = {
-            BlockRun.BlockRunStatus.CONDITION_FAILED: condition_failed_block_uuids,
-            BlockRun.BlockRunStatus.UPSTREAM_FAILED: failed_block_uuids,
-        }
-        not_updated_block_runs = []
-        for block_run in block_runs:
-            updated_status = False
-            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
-                'dynamic_upstream_block_uuids',
-            )
-
-            for status, block_uuids in statuses.items():
-                upstream_block_uuids = []
-                if dynamic_upstream_block_uuids:
-                    upstream_block_uuids = dynamic_upstream_block_uuids
-                else:
-                    block = self.pipeline.get_block(block_run.block_uuid)
-                    if block:
-                        upstream_block_uuids = block.upstream_block_uuids
-                if any(
-                    b in block_uuids
-                    for b in upstream_block_uuids
-                ):
-                    block_run.update(status=status)
-                    updated_status = True
-
-            if not updated_status:
-                not_updated_block_runs.append(block_run)
-
-        self.pipeline_run.refresh()
-        # keep iterating through block runs until no more updates can be made
-        if len(block_runs) != len(not_updated_block_runs):
-            self.__update_block_run_statuses(not_updated_block_runs)
-
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         """Schedule the block runs for execution.
 
@@ -557,7 +522,7 @@ class PipelineScheduler:
         Returns:
             None
         """
-        self.__update_block_run_statuses(self.pipeline_run.initial_block_runs)
+        self.pipeline_run.update_block_run_statuses(self.pipeline_run.initial_block_runs)
         if block_runs is None:
             block_runs_to_schedule = self.pipeline_run.executable_block_runs(
                 allow_blocks_to_fail=self.allow_blocks_to_fail,
@@ -1417,10 +1382,9 @@ def schedule_all():
     active_pipeline_uuids = list(set([s.pipeline_uuid for s in active_pipeline_schedules]))
     pipeline_runs_by_pipeline = PipelineRun.active_runs_for_pipelines_grouped(active_pipeline_uuids)
 
-    pipeline_schedules_by_pipeline = {
-        key: list(runs)
-        for key, runs in groupby(active_pipeline_schedules, key=lambda x: x.pipeline_uuid)
-    }
+    pipeline_schedules_by_pipeline = collections.defaultdict(list)
+    for schedule in active_pipeline_schedules:
+        pipeline_schedules_by_pipeline[schedule.pipeline_uuid].append(schedule)
 
     # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
     # each pipeline.
@@ -1546,7 +1510,13 @@ def schedule_all():
             )
 
         for r in quota_filtered_runs:
-            PipelineScheduler(r).start()
+            try:
+                PipelineScheduler(r).start()
+            except Exception:
+                logger.exception(f'Failed to start {r}')
+                traceback.print_exc()
+                r.update(status=PipelineRun.PipelineRunStatus.FAILED)
+                continue
 
         # If on_pipeline_run_limit_reached is set as SKIP, cancel the pipeline runs that
         # were not scheduled due to pipeline run limits.

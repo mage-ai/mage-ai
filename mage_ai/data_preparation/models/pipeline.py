@@ -643,6 +643,7 @@ class Pipeline:
             executor_type=self.executor_type,
             name=self.name,
             notification_config=self.notification_config,
+            remote_variables_dir=self.remote_variables_dir,
             retry_config=self.retry_config,
             run_pipeline_in_one_process=self.run_pipeline_in_one_process,
             settings=self.settings.to_dict() if self.settings else self.settings,
@@ -650,6 +651,7 @@ class Pipeline:
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=updated_at,
             uuid=self.uuid,
+            variables_dir=self.variables_dir,
         )
 
         if self.variables is not None:

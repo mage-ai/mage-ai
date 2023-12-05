@@ -80,7 +80,6 @@ from mage_ai.server.terminal_server import (
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.services.spark.models.applications import Application
-from mage_ai.services.ssh.aws.emr.models import create_tunnel
 from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
@@ -96,7 +95,13 @@ from mage_ai.settings import (
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
-from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
+from mage_ai.settings.repo import (
+    DEFAULT_MAGE_DATA_DIR,
+    MAGE_CLUSTER_TYPE_ENV_VAR,
+    MAGE_PROJECT_TYPE_ENV_VAR,
+    get_repo_name,
+    set_repo_path,
+)
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
@@ -329,6 +334,8 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/files', MainPageHandler),
         (r'/global-data-products', MainPageHandler),
         (r'/global-data-products/(?P<uuid>\w+)', MainPageHandler),
+        (r'/global-hooks', MainPageHandler),
+        (r'/global-hooks/(?P<uuid>\w+)', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/templates/(?P<uuid>\w+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
@@ -526,6 +533,8 @@ async def main(
         Application.clear_cache()
 
     try:
+        from mage_ai.services.ssh.aws.emr.models import create_tunnel
+
         tunnel = create_tunnel(clean_up_on_failure=True)
         if tunnel:
             print(f'SSH tunnel active: {tunnel.is_active()}')
@@ -647,8 +656,8 @@ if __name__ == '__main__':
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
     instance_type = os.getenv(ENV_VAR_INSTANCE_TYPE, args.instance_type)
-    project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
-    cluster_type = os.getenv('CLUSTER_TYPE')
+    project_type = os.getenv(MAGE_PROJECT_TYPE_ENV_VAR, ProjectType.STANDALONE)
+    cluster_type = os.getenv(MAGE_CLUSTER_TYPE_ENV_VAR)
 
     start_server(
         host=host,

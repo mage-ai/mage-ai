@@ -23,6 +23,7 @@ type SetupSectionRowProps = {
   children?: any;
   description?: any | string;
   invalid?: boolean;
+  large?: boolean;
   selectInput?: InputType & {
     options: {
       label?: string;
@@ -30,21 +31,24 @@ type SetupSectionRowProps = {
     }[];
   };
   textInput?: InputType;
-  title: string;
+  title: string | any;
   toggleSwitch?: {
     checked?: boolean;
     onCheck?: Dispatch<SetStateAction<boolean>>;
   };
+  warning?: boolean;
 };
 
 function SetupSectionRow({
   children,
   description,
   invalid,
+  large = true,
   selectInput,
   textInput,
   title,
   toggleSwitch,
+  warning,
 }: SetupSectionRowProps) {
   return (
     <Spacing p={PADDING_UNITS}>
@@ -53,10 +57,11 @@ function SetupSectionRow({
           <Text
             danger={invalid}
             default
-            large
+            large={large}
+            warning={warning}
           >
             {title} {invalid && (
-              <Text danger inline large>
+              <Text danger inline large={large}>
                 is required
               </Text>
             )}
@@ -84,7 +89,7 @@ function SetupSectionRow({
               afterIconSize={ICON_SIZE}
               alignRight
               autoComplete="off"
-              large
+              large={large}
               noBackground
               noBorder
               fullWidth
@@ -102,7 +107,7 @@ function SetupSectionRow({
               afterIconSize={ICON_SIZE}
               alignRight
               autoComplete="off"
-              large
+              large={large}
               noBackground
               noBorder
               paddingHorizontal={0}

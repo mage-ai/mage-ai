@@ -274,8 +274,11 @@ STREAMS: MappingProxyType = MappingProxyType({
             'MessageID': {
                 'map': 'message_id', 'null': False,
             },
-             'MessageEvents': {
-                'map': 'message_events',  'null': False,
+            'MessageEvents': {
+                'map': 'message_events', 'null': False,
+            },
+            'MessageEventsJson': {
+                'map': 'message_events_json', 'null': False,
             },
             'MessageStream': {
                 'map': 'message_stream', 'null': False,
@@ -299,7 +302,7 @@ STREAMS: MappingProxyType = MappingProxyType({
                 'map': 'track_opens', 'null': True,
             },
             'Subject' : {
-                'map': 'subject', 'null': True, 
+                'map': 'subject', 'null': True,
             },
         }
     },

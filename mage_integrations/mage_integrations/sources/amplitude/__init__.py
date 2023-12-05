@@ -1,16 +1,18 @@
 from datetime import datetime, timedelta
-from mage_integrations.connections.amplitude import Amplitude as AmplitudeConnection
-from mage_integrations.sources.amplitude.constants import TABLE_KEY_PROPERTIES, VALID_REPLICATION_KEYS
-from mage_integrations.sources.base import Source, main
-from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
-from mage_integrations.sources.query import (
-    get_end_date,
-    get_start_date,
-)
-from mage_integrations.utils.array import find_index
 from typing import Dict, Generator, List
+
 import dateutil.parser
 import singer
+
+from mage_integrations.connections.amplitude import Amplitude as AmplitudeConnection
+from mage_integrations.sources.amplitude.constants import (
+    TABLE_KEY_PROPERTIES,
+    VALID_REPLICATION_KEYS,
+)
+from mage_integrations.sources.base import Source, main
+from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
+from mage_integrations.sources.query import get_end_date, get_start_date
+from mage_integrations.utils.array import find_index
 
 LOGGER = singer.get_logger()
 
@@ -22,14 +24,18 @@ class Amplitude(Source):
         self.connection = AmplitudeConnection(
             self.config['api_key'],
             self.config['secret_key'],
+            host=self.config.get('host'),
         )
 
     def load_data(
         self,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if query is None:
+            query = {}
+
         today = datetime.utcnow()
         start_date = today - timedelta(days=1)
         end_date = today

@@ -1,10 +1,14 @@
+from typing import List
+
+from singer import catalog as catalog_singer
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.postmark.tap_postmark.discover import discover
-from mage_integrations.sources.postmark.tap_postmark.postmark import Postmark as PostmarkClient
+from mage_integrations.sources.postmark.tap_postmark.postmark import (
+    Postmark as PostmarkClient,
+)
 from mage_integrations.sources.postmark.tap_postmark.sync import sync
-from singer import catalog as catalog_singer
-from typing import List
 
 
 class Postmark(Source):
@@ -27,6 +31,7 @@ class Postmark(Source):
     def sync(self, catalog: Catalog) -> None:
         postmark = PostmarkClient(
             self.config['postmark_server_token'],
+            logger=self.logger,
         )
         sync(postmark, self.state or {}, catalog, self.config['start_date'])
 

@@ -1,5 +1,6 @@
 import NextLink from 'next/link';
-import { useMemo, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { useContext, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -22,6 +23,7 @@ import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
+  VARIABLE_BOOKMARK_VALUES_KEY,
 } from '@interfaces/PipelineScheduleType';
 import PipelineTriggerType from '@interfaces/PipelineTriggerType';
 import PipelineType from '@interfaces/PipelineType';
@@ -72,10 +74,11 @@ import {
   getTriggerApiEndpoint,
 } from '../utils';
 import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
-import { ignoreKeys, isEmptyObject } from '@utils/hash';
+import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -101,12 +104,17 @@ function TriggerDetail({
   setErrors,
   variables,
 }: TriggerDetailProps) {
+  const themeContext = useContext(ThemeContext);
+
   const {
     project,
   } = useProject();
   const router = useRouter();
   const isViewerRole = isViewer();
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+
+  const blocksMapping =
+    useMemo(() => indexBy(pipeline?.blocks || [], ({ uuid }) => uuid), [pipeline]);
 
   const {
     uuid: pipelineUUID,
@@ -558,7 +566,7 @@ function TriggerDetail({
 
     if (!isEmptyObject(scheduleVariables)) {
       Object.entries(scheduleVariables).forEach(([k, v]) => {
-        if (MAGE_VARIABLES_KEY !== k) {
+        if (![MAGE_VARIABLES_KEY, VARIABLE_BOOKMARK_VALUES_KEY].includes(k)) {
           arr.push({
             uuid: k,
             value: getFormattedVariable(v),
@@ -601,6 +609,90 @@ function TriggerDetail({
   }, [
     scheduleType,
     scheduleVariables,
+    variables,
+  ]);
+
+  const bookmarkValuesTable = useMemo(() => {
+    const bookmarkValues = scheduleVariables?.[VARIABLE_BOOKMARK_VALUES_KEY];
+
+    if (!bookmarkValues) {
+      return null;
+    }
+
+    return (
+      <>
+        {Object.entries(bookmarkValues || {}).map(([blockUUID, streams]) => {
+          const block = blocksMapping?.[blockUUID];
+
+          return (
+            <Spacing key={blockUUID} mt={1}>
+              <Spacing px={PADDING_UNITS} pb={1}>
+                <Text
+                  color={getColorsForBlockType(
+                    block?.type,
+                    {
+                      blockColor: block?.color,
+                      theme: themeContext,
+                    },
+                  ).accent}
+                  monospace
+                >
+                  {blockUUID}
+                </Text>
+              </Spacing>
+
+              <Divider light />
+
+              {Object.entries(streams || {})?.map(([streamID, keyValues]) => {
+                return (
+                  <div key={streamID}>
+                    <Table
+                      columnFlex={[null, 1]}
+                      rows={[
+                        [
+                          <Text
+                            default
+                            monospace
+                          >
+                            Stream
+                          </Text>,
+                          <Text
+                            monospace
+                            rightAligned
+                          >
+                            {streamID}
+                          </Text>,
+                        ],
+                      ].concat(Object.entries(keyValues || {}).map(([uuid, value]) => [
+                        <Text
+                          default
+                          key={`settings_variable_label_${uuid}`}
+                          monospace
+                        >
+                          {uuid}
+                        </Text>,
+                        <Text
+                          key={`settings_variable_${uuid}`}
+                          monospace
+                          rightAligned
+                        >
+                          {value}
+                        </Text>,
+                      ]))}
+                    />
+                  </div>
+                );
+              })}
+            </Spacing>
+          );
+        })}
+      </>
+    );
+  }, [
+    blocksMapping,
+    scheduleType,
+    scheduleVariables,
+    themeContext,
     variables,
   ]);
 
@@ -787,6 +879,20 @@ function TriggerDetail({
               <Divider light mt={1} short />
 
               {variablesTable}
+            </Spacing>
+          )}
+
+          {bookmarkValuesTable && (
+            <Spacing my={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={5}>
+                  Bookmark values
+                </Headline>
+              </Spacing>
+
+              <Divider light mt={1} short />
+
+              {bookmarkValuesTable}
             </Spacing>
           )}
 

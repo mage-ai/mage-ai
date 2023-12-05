@@ -1,4 +1,3 @@
-from mage_ai.services.spark.api.aws_emr import AwsEmrAPI
 from mage_ai.services.spark.api.base import BaseAPI
 from mage_ai.services.spark.api.local import LocalAPI
 from mage_ai.services.spark.constants import ComputeServiceUUID
@@ -25,6 +24,8 @@ class API:
                 application_spark_ui_url=application_spark_ui_url,
             )
         elif ComputeServiceUUID.AWS_EMR == compute_service:
+            from mage_ai.services.spark.api.aws_emr import AwsEmrAPI
+
             return AwsEmrAPI(
                 all_applications=all_applications,
                 spark_session=spark_session,

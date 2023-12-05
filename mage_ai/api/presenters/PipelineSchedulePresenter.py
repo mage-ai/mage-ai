@@ -22,7 +22,7 @@ class PipelineSchedulePresenter(BasePresenter):
         'variables',
     ]
 
-    async def present(self, **kwargs):
+    async def prepare_present(self, **kwargs):
         display_format = kwargs['format']
         data = self.model.to_dict()
         next_execution_date = self.model.next_execution_date()
@@ -59,8 +59,10 @@ PipelineSchedulePresenter.register_format(
     PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
         'last_pipeline_run_status',
+        'next_pipeline_run_date',
         'pipeline_in_progress_runs_count',
         'pipeline_runs_count',
+        'tags',
     ],
 )
 
@@ -69,6 +71,8 @@ PipelineSchedulePresenter.register_formats([
     constants.UPDATE,
 ], PipelineSchedulePresenter.default_attributes + [
         'event_matchers',
+        'next_pipeline_run_date',
+        'tags',
     ],
 )
 
@@ -76,6 +80,23 @@ PipelineSchedulePresenter.register_formats([
 PipelineSchedulePresenter.register_formats([
     'with_runtime_average',
 ], PipelineSchedulePresenter.default_attributes + [
+        'next_pipeline_run_date',
         'runtime_average',
+        'tags',
+    ],
+)
+
+
+PipelineSchedulePresenter.register_formats(
+    [
+        f'integration_source/{constants.DETAIL}',
+    ],
+    [
+        'id',
+        'name',
+        'schedule_interval',
+        'schedule_type',
+        'settings',
+        'variables',
     ],
 )

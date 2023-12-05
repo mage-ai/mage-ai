@@ -28,6 +28,7 @@ export const TIME_PERIOD_INTERVAL_MAPPING = {
   [TimePeriodEnum.MONTH]: 29,
 };
 
+export const DATE_FORMAT_LONG_T_SEP = 'YYYY-MM-DDTHH:mm:ss';
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:ss';
 export const DATE_FORMAT_LONG_MS = 'YYYY-MM-DD HH:mm:ss.SSS';
 export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';

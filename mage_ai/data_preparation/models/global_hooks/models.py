@@ -1,20 +1,23 @@
+import hashlib
 import os
-from collections.abc import Iterable
 from dataclasses import dataclass, field, make_dataclass
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import yaml
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.utils import fetch_input_variables
 from mage_ai.data_preparation.models.global_hooks.constants import (
     RESOURCE_TYPES,
     HookOutputKey,
 )
+from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.data_preparation.models.global_hooks.utils import extract_valid_data
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
@@ -22,6 +25,7 @@ from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index, flatten
+from mage_ai.shared.environments import is_debug, is_test
 from mage_ai.shared.hash import (
     dig,
     extract,
@@ -73,6 +77,7 @@ class HookStrategies(BaseDataClass):
 
 @dataclass
 class HookRunSettings(BaseDataClass):
+    asynchronous: bool = False
     with_trigger: bool = False
 
 
@@ -108,8 +113,20 @@ class HookOutputSettings(BaseDataClass):
 
 
 @dataclass
-class HookPredicate(BaseDataClass):
-    resource: Dict = field(default_factory=dict)
+class MetadataUser(BaseDataClass):
+    id: int = None
+
+
+@dataclass
+class HookMetadata(BaseDataClass):
+    created_at: str = None
+    snapshot_hash: str = None
+    snapshotted_at: str = None
+    updated_at: str = None
+    user: MetadataUser = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('user', MetadataUser)
 
 
 @dataclass
@@ -120,11 +137,12 @@ class Hook(BaseDataClass):
     )
 
     conditions: List[HookCondition] = None
+    metadata: HookMetadata = None
     operation_type: HookOperation = None
     output: Dict = field(default=None)
     output_settings: List[HookOutputSettings] = None
     pipeline_settings: Dict = field(default=None)
-    predicates: List[List[HookPredicate]] = None
+    predicate: HookPredicate = None
     resource_type: EntityName = None
     run_settings: HookRunSettings = None
     stages: List[HookStage] = None
@@ -135,6 +153,8 @@ class Hook(BaseDataClass):
     def __post_init__(self):
         self._pipeline = None
 
+        self.serialize_attribute_class('metadata', HookMetadata)
+        self.serialize_attribute_class('predicate', HookPredicate)
         self.serialize_attribute_class('run_settings', HookRunSettings)
         self.serialize_attribute_class('status', HookStatus)
         self.serialize_attribute_class('strategies', HookStrategies)
@@ -144,24 +164,17 @@ class Hook(BaseDataClass):
         self.serialize_attribute_enums('conditions', HookCondition)
         self.serialize_attribute_enums('stages', HookStage)
 
-        if self.predicates and isinstance(self.predicates, list):
-            rows = []
-            for predicates in self.predicates:
-                row = []
-                if predicates and isinstance(predicates, list):
-                    for predicate in predicates:
-                        row.append(HookPredicate.load(**predicate))
-                rows.append(row)
-            self.predicates = rows
-
     def to_dict(
         self,
         include_all: bool = False,
         include_run_data: bool = False,
+        include_snapshot_validation: bool = False,
         **kwargs,
     ):
         arr = [
             'conditions',
+            'metadata',
+            'predicate',
             'run_settings',
             'stages',
             'strategies',
@@ -188,19 +201,14 @@ class Hook(BaseDataClass):
         if self.pipeline_settings:
             data['pipeline'] = self.pipeline_settings
 
-        if self.predicates:
-            rows = []
-            for predicates in self.predicates:
-                if predicates:
-                    row = []
-                    for predicate in predicates:
-                        row.append(predicate.to_dict())
-
-                    if len(row) >= 1:
-                        rows.append(row)
-
-            if len(rows) >= 1:
-                data['predicates'] = rows
+        if include_snapshot_validation:
+            key = 'snapshot_valid'
+            if data.get('metadata'):
+                data['metadata'][key] = self.__validate_snapshot()
+            else:
+                data['metadata'] = {
+                    key: False,
+                }
 
         return data
 
@@ -328,7 +336,10 @@ class Hook(BaseDataClass):
         check_status: bool = True,
         error_on_failure: bool = True,
         poll_timeout: int = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
         should_schedule: bool = False,
+        user: Dict = None,
         with_trigger: bool = False,
         **kwargs,
     ) -> None:
@@ -343,7 +354,10 @@ class Hook(BaseDataClass):
                 payload=kwargs.get('payload'),
                 query=kwargs.get('query'),
                 resource=kwargs.get('resource'),
+                resource_id=resource_id,
+                resource_parent_id=resource_parent_id,
                 resources=kwargs.get('resources'),
+                user=user,
             ))
             variables = merge_dict(
                 self.pipeline_settings.get('variables') or {},
@@ -356,11 +370,14 @@ class Hook(BaseDataClass):
             )
 
             pipeline_run = None
+
+            asynchronous = self.run_settings.asynchronous if self.run_settings else False
+
             if with_trigger or (self.run_settings and self.run_settings.with_trigger):
                 pipeline_run = trigger_pipeline(
                     self.pipeline.uuid,
                     variables=variables,
-                    check_status=check_status,
+                    check_status=check_status and not asynchronous,
                     error_on_failure=error_on_failure,
                     poll_interval=1,
                     poll_timeout=poll_timeout,
@@ -368,6 +385,10 @@ class Hook(BaseDataClass):
                     verbose=True,
                     _should_schedule=should_schedule,
                 )
+            elif asynchronous:
+                # TODO: invoking the below method will still block the current
+                # operation from completing
+                PipelineExecutor(self.pipeline).execute(global_vars=variables, update_status=False)
             else:
                 self.pipeline.execute_sync(global_vars=variables, update_status=False)
 
@@ -385,13 +406,26 @@ class Hook(BaseDataClass):
                 elif HookStrategy.CONTINUE in self.strategies:
                     self.status.strategy = HookStrategy.CONTINUE
 
+            if is_debug() or is_test():
+                print(f'[ERROR] Hook.run: {err}')
+
     def should_run(
         self,
         operation_types: List[HookOperation],
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        resources: Dict = None,
+        user: Dict = None,
     ) -> bool:
         if self.operation_type not in operation_types:
             return False
@@ -405,10 +439,64 @@ class Hook(BaseDataClass):
         if not self.__matches_any_condition(conditions):
             return False
 
-        if not self.__matches_any_predicate(operation_resource):
+        if not self.__validate_snapshot():
+            return False
+
+        if not self.__matches_predicate(
+            operation_resource,
+            error=error,
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            resources=resources,
+            user=user,
+        ):
             return False
 
         return True
+
+    def snapshot(self) -> str:
+        if not self.pipeline:
+            return
+
+        if not self.metadata:
+            self.metadata = HookMetadata.load()
+
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+        self.metadata.snapshot_hash = self.__generate_snapshot_hash(prefix=now)
+        self.metadata.snapshotted_at = now
+
+        return self.metadata.snapshot_hash
+
+    def __validate_snapshot(self) -> bool:
+        return self.metadata and \
+                self.metadata.snapshot_hash and \
+                self.metadata.snapshotted_at and \
+                self.metadata.snapshot_hash == self.__generate_snapshot_hash(
+                    self.metadata.snapshotted_at,
+                )
+
+    def __generate_snapshot_hash(self, prefix: str = None) -> str:
+        if not self.pipeline:
+            return None
+
+        hashes = []
+
+        for block in self.pipeline.blocks_by_uuid.values():
+            content = block.content or ''
+            hashes.append(
+                hashlib.md5(f'{prefix or ""}{content}'.encode()).hexdigest()
+            )
+
+        hashes_combined = ''.join(hashes)
+
+        return hashlib.md5(
+            f'{prefix or ""}{hashes_combined}'.encode(),
+        ).hexdigest()
 
     def __matches_any_condition(self, conditions: List[HookCondition]) -> bool:
         if not conditions or not self.conditions:
@@ -416,52 +504,37 @@ class Hook(BaseDataClass):
 
         return any([condition in (self.conditions or []) for condition in conditions])
 
-    def __matches_any_predicate(
+    def __matches_predicate(
         self,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        resources: Dict = None,
+        user: Dict = None,
     ) -> bool:
-        if not operation_resource or not self.predicates:
+        if not operation_resource or not self.predicate:
             return True
 
-        return any([all([self.__validate_predicate(
-            predicate,
+        return self.predicate.validate(
             operation_resource,
-        ) for predicate in predicates]) for predicates in self.predicates])
-
-    def __validate_predicate(
-        self,
-        predicate: HookPredicate,
-        operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline],
-    ) -> bool:
-        if not predicate.resource or len(predicate.resource) == 0:
-            return True
-
-        def _validate_resource(
-            resource: Union[BaseResource, Block, Dict, Pipeline],
-            predicate=predicate,
-        ) -> bool:
-            model = resource
-            if isinstance(resource, BaseResource):
-                model = resource.model
-
-            def _equals(
-                key: str,
-                value: Any,
-                model=model,
-            ) -> bool:
-                if isinstance(model, dict):
-                    return model.get(key) == value
-
-                return hasattr(model, key) and getattr(model, key) == value
-
-            check = all([_equals(key, value) for key, value in predicate.resource.items()])
-
-            return check
-
-        if isinstance(operation_resource, Iterable) and not isinstance(operation_resource, dict):
-            return all([_validate_resource(res) for res in operation_resource])
-
-        return _validate_resource(operation_resource)
+            error=error,
+            hook=self.to_dict(include_all=True),
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            resources=resources,
+            user=user,
+        )
 
 
 def __build_global_hook_resource_fields() -> List[Tuple]:
@@ -614,7 +687,15 @@ class GlobalHooks(BaseDataClass):
 
         return self.load(**yaml_config)
 
-    def add_hook(self, hook: Hook, payload: Dict = None, update: bool = False) -> Hook:
+    def add_hook(
+        self,
+        hook: Hook,
+        payload: Dict = None,
+        snapshot: bool = False,
+        update: bool = False,
+    ) -> Hook:
+        now = datetime.utcnow().isoformat(' ', 'seconds')
+
         if not update and self.get_hook(
             operation_type=hook.operation_type,
             resource_type=hook.resource_type,
@@ -646,7 +727,17 @@ class GlobalHooks(BaseDataClass):
                 hooks,
             )
             if index >= 0:
-                hook_updated = Hook.load(**merge_dict(hook.to_dict(include_all=True), payload))
+                hook_updated = Hook.load(
+                    **merge_dict(
+                        hook.to_dict(include_all=True),
+                        payload,
+                    ),
+                )
+
+                if not hook_updated.metadata:
+                    hook_updated.metadata = HookMetadata.load()
+                hook_updated.metadata.updated_at = now
+
                 if hook.resource_type == hook_updated.resource_type and \
                         hook.operation_type == hook_updated.operation_type:
 
@@ -656,6 +747,9 @@ class GlobalHooks(BaseDataClass):
                     self.add_hook(hook_updated)
                     self.remove_hook(hook)
 
+                if snapshot:
+                    hook_updated.snapshot()
+
                 return hook_updated
             else:
                 raise Exception(
@@ -663,6 +757,15 @@ class GlobalHooks(BaseDataClass):
                     f'{hook.resource_type} and operation {hook.operation_type}.',
                 )
         else:
+            if not hook.metadata:
+                hook.metadata = HookMetadata.load()
+
+            hook.metadata.created_at = now
+            hook.metadata.updated_at = now
+
+            if snapshot:
+                hook.snapshot()
+
             hooks.append(hook)
             setattr(resource, hook.operation_type.value, hooks)
             setattr(self.resources, hook.resource_type.value, resource)
@@ -734,22 +837,52 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        resources: List[Dict] = None,
+        user: Dict = None,
     ) -> List[Hook]:
         def _filter(
-            hook: Hook,
+            hook,
             conditions=conditions,
+            error=error,
+            meta=meta,
+            metadata=metadata,
             operation_resource=operation_resource,
             operation_types=operation_types,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
             resource_type=resource_type,
+            resources=resources,
             stage=stage,
+            user=user,
         ) -> bool:
             return hook.should_run(
+                operation_types,
+                resource_type,
+                stage,
                 conditions=conditions,
+                error=error,
+                meta=meta,
+                metadata=metadata,
                 operation_resource=operation_resource,
-                operation_types=operation_types,
-                resource_type=resource_type,
-                stage=stage,
+                payload=payload,
+                query=query,
+                resource=resource,
+                resource_id=resource_id,
+                resource_parent_id=resource_parent_id,
+                resources=resources,
+                user=user,
             )
 
         return list(filter(
@@ -757,7 +890,11 @@ class GlobalHooks(BaseDataClass):
             self.hooks(),
         ))
 
-    def run_hooks(self, hooks: List[Hook], **kwargs) -> List[Hook]:
+    def run_hooks(
+        self,
+        hooks: List[Hook],
+        **kwargs,
+    ) -> List[Hook]:
         hooks_by_pipeline = {}
         for hook in hooks:
             if not hook.pipeline_settings or not hook.pipeline_settings.get('uuid'):
@@ -785,21 +922,52 @@ class GlobalHooks(BaseDataClass):
         resource_type: EntityName,
         stage: HookStage,
         conditions: List[HookCondition] = None,
+        error: Dict = None,
+        meta: Dict = None,
+        metadata: Dict = None,
         operation_resource: Union[BaseResource, Block, Dict, List[BaseResource], Pipeline] = None,
-        **kwargs,
+        payload: Dict = None,
+        query: Dict = None,
+        resource: Dict = None,
+        resource_id: Union[int, str] = None,
+        resource_parent_id: Union[int, str] = None,
+        resources: List[Dict] = None,
+        user: Dict = None,
     ) -> List[Hook]:
         hooks = self.get_hooks(
-            operation_types=operation_types,
-            resource_type=resource_type,
-            stage=stage,
+            operation_types,
+            resource_type,
+            stage,
             conditions=conditions,
+            error=error,
+            meta=meta,
+            metadata=metadata,
             operation_resource=operation_resource,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            resources=resources,
+            user=user,
         )
 
         if not hooks:
             return None
 
-        return self.run_hooks(hooks, **kwargs)
+        return self.run_hooks(
+            hooks,
+            error=error,
+            meta=meta,
+            metadata=metadata,
+            payload=payload,
+            query=query,
+            resource=resource,
+            resource_id=resource_id,
+            resource_parent_id=resource_parent_id,
+            resources=resources,
+            user=user,
+        )
 
     def save(self, file_path: str = None) -> None:
         if not file_path:

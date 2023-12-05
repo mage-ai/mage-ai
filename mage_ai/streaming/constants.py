@@ -37,6 +37,7 @@ class SinkType(str, Enum):
     OPENSEARCH = 'opensearch'
     ORACLEDB = 'oracledb'
     POSTGRES = 'postgres'
+    RABBITMQ = 'rabbitmq'
     REDSHIFT = 'redshift'
     SNOWFLAKE = 'snowflake'
     SUPABASE_STORAGE = 'supabase_storage'

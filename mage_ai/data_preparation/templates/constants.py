@@ -196,6 +196,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_LOADER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='Chroma',
+        path='data_loaders/chroma.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='DuckDB',
         path='data_loaders/duckdb.py',
     ),
@@ -552,6 +559,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         path='data_exporters/snowflake.py',
     ),
     #   Databases
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Chroma',
+        path='data_exporters/chroma.py',
+    ),
     dict(
         block_type=BlockType.DATA_EXPORTER,
         groups=[GROUP_DATABASES],

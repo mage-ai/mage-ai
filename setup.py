@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.45',
+    version='0.9.47',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -56,6 +56,9 @@ setuptools.setup(
         'bigquery': [
             'google-cloud-bigquery~=3.0',
             'db-dtypes==1.0.5',
+        ],
+        'chroma': [
+            'chromadb>=0.4.17',
         ],
         'clickhouse': [
             'clickhouse-connect==0.5.20',
@@ -129,6 +132,7 @@ setuptools.setup(
             'azure-storage-blob==12.14.1',
             'boto3==1.26.60',
             'botocore==1.29.60',
+            'chromadb>=0.4.17',
             'clickhouse-connect==0.5.20',
             'confluent-avro',
             'db-dtypes==1.0.5',
@@ -155,14 +159,14 @@ setuptools.setup(
             'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
-            'kubernetes==25.3.0',
+            'kubernetes>=28.1.0',
             'langchain>=0.0.222',
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys',
             'openai>=0.27.8, <1.0.0',
             'opensearch-py==2.0.0',
-            'opentelemetry-exporter-prometheus>=1.12.0rc1',
+            'opentelemetry-exporter-prometheus>=0.41b0',
             'opentelemetry-instrumentation-tornado>=0.41b0',
             'oracledb==1.3.1',
             'pika==1.3.1',

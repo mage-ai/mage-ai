@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.block.dynamic import (
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     BlockType,
+    PipelineType,
 )
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find, unique_by
@@ -199,6 +200,14 @@ def create_block_runs_from_dynamic_block(
                     arr.append(block_uuid)
                 else:
                     arr.append(upstream_block.uuid)
+
+            if metadata.get('upstream_blocks'):
+                for up_uuid in (metadata.get('upstream_blocks') or []):
+                    up_block = block.pipeline.get_block(up_uuid)
+                    if up_block:
+                        arr.append(up_uuid)
+                    else:
+                        arr.append(f'{downstream_block.uuid}:{up_uuid}')
 
             block_run = create_block_run_from_dynamic_child(
                 downstream_block,
@@ -513,22 +522,28 @@ def output_variables(
             partition=execution_partition,
         )
 
+    if should_reduce_output(block):
+        all_variables = all_variable_uuids(
+            block,
+            partition=execution_partition,
+        )
+    else:
+        all_variables = block.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+    output_variables = [v for v in all_variables
+                        if is_output_variable(v, include_df=include_df)]
+
     if block and di_settings:
         streams = get_selected_streams(di_settings.get('catalog'))
-        output_variables = [s.get('tap_stream_id') for s in streams]
-    else:
-        if should_reduce_output(block):
-            all_variables = all_variable_uuids(
-                block,
-                partition=execution_partition,
-            )
+        tap_stream_ids = [s.get('tap_stream_id') for s in streams]
+        # For integration pipelines, we want to include variables with the "output" prefix
+        # to view sample data for the selected streams.
+        if pipeline.type == PipelineType.INTEGRATION:
+            output_variables.extend(tap_stream_ids)
         else:
-            all_variables = block.get_variables_by_block(
-                block_uuid=block_uuid,
-                partition=execution_partition,
-            )
-        output_variables = [v for v in all_variables
-                            if is_output_variable(v, include_df=include_df)]
+            output_variables = tap_stream_ids
 
     output_variables.sort()
 

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -12,7 +13,11 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import { MainNavigationTabEnum, SubTabEnum } from '../constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { ReplicationMethodEnum, UniqueConflictMethodEnum } from '@interfaces/IntegrationSourceType';
+import {
+  REPLICATION_METHODS_BATCH_PIPELINE,
+  ReplicationMethodEnum,
+  UniqueConflictMethodEnum,
+} from '@interfaces/IntegrationSourceType';
 import { StreamMapping } from '@utils/models/block';
 import { StreamType } from '@interfaces/IntegrationSourceType';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
@@ -106,8 +111,8 @@ function StreamsOverview({
     columnFlex: number[];
     columns: ColumnType[];
   } = useMemo(() => {
-    const cf = [null, 1, 3, 2, 2, null]
-    const c = [
+    const cf = [null, 1, 3, 2, 2, null];
+    const c: ColumnType[] = [
       {
         label: ({
           groupIndex,
@@ -147,7 +152,8 @@ function StreamsOverview({
         uuid: 'Unique conflict',
       },
       {
-        center: true,
+        center: BlockTypeEnum.DATA_EXPORTER === blockType,
+        rightAligned: BlockTypeEnum.DATA_EXPORTER !== blockType,
         uuid: 'Parallel',
       },
     ];
@@ -228,6 +234,7 @@ function StreamsOverview({
         const streamID = getStreamID(stream);
         const {
           auto_add_new_fields: autoAddNewFields,
+          bookmark_properties: bookmarkProperties,
           destination_table: destinationTableInit,
           disable_column_type_check: disableColumnTypeCheck,
           replication_method: replicationMethod,
@@ -289,26 +296,50 @@ function StreamsOverview({
             placeholder={streamID}
             value={destinationTable || ''}
           />,
-          <Select
-            {...INPUT_SHARED_PROPS}
-            key={`${uuid}-replicationMethod`}
-            onChange={e => updateStreamsInCatalog([
-              {
-                ...stream,
-                replication_method: e?.target?.value,
-              },
-            ])}
-            onClick={pauseEvent}
-            placeholder="Replication method"
-            value={replicationMethod}
-          >
-            {Object.values(ReplicationMethodEnum).map(value => (
-              <option disabled={ReplicationMethodEnum.FULL_TABLE !== value} key={value} value={value}>
-                {ReplicationMethodEnum.FULL_TABLE !== value && '[COMING SOON] '}
-                {capitalizeRemoveUnderscoreLower(value)}
-              </option>
-            ))}
-          </Select>,
+          <FlexContainer alignItems="center" key={`${uuid}-replicationMethod`}>
+            <Flex flex={1}>
+              <Select
+                {...INPUT_SHARED_PROPS}
+                fullWidth
+                onChange={e => updateStreamsInCatalog([
+                  {
+                    ...stream,
+                    replication_method: e?.target?.value,
+                  },
+                ])}
+                onClick={pauseEvent}
+                placeholder="Replication method"
+                value={replicationMethod}
+              >
+                {REPLICATION_METHODS_BATCH_PIPELINE.map(value => (
+                  <option key={value} value={value}>
+                    {capitalizeRemoveUnderscoreLower(value)}
+                  </option>
+                ))}
+              </Select>
+            </Flex>
+
+            {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
+              <>
+                <Spacing mr={1} />
+
+                {!bookmarkProperties?.length && (
+                  <Text danger xsmall>
+                    No bookmark properties set
+                  </Text>
+                )}
+
+                {bookmarkProperties?.length >= 1 && bookmarkProperties?.map((
+                  col: string,
+                  idx: number,
+                ) => (
+                  <Text inline key={col} monospace muted xsmall>
+                    {idx >= 1 && ', '}{col}
+                  </Text>
+                ))}
+              </>
+            )}
+          </FlexContainer>,
           <Select
             {...INPUT_SHARED_PROPS}
             key={`${uuid}-uniqueConflictMethod`}
@@ -330,7 +361,7 @@ function StreamsOverview({
           </Select>,
           <FlexContainer
             alignItems="center"
-            justifyContent="center"
+            justifyContent={BlockTypeEnum.DATA_EXPORTER === blockType ? 'center' : 'flex-end'}
             key={`${uuid}-runInParallel`}
           >
             <ToggleSwitch

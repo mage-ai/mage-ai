@@ -20,6 +20,7 @@ class PipelinePresenter(BasePresenter):
         'executor_type',
         'name',
         'notification_config',
+        'remote_variables_dir',
         'retry_config',
         'run_pipeline_in_one_process',
         'settings',
@@ -29,6 +30,7 @@ class PipelinePresenter(BasePresenter):
         'updated_at',
         'uuid',
         'variables',
+        'variables_dir',
         'widgets',
     ]
 

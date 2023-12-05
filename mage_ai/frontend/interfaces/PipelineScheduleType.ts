@@ -1,6 +1,8 @@
 import EventMatcherType from './EventMatcherType';
 import { RunStatus as RunStatusEnum } from './BlockRunType';
 
+export const VARIABLE_BOOKMARK_VALUES_KEY = '__bookmark_values__';
+
 export enum ScheduleTypeEnum {
   API = 'api',
   EVENT = 'event',

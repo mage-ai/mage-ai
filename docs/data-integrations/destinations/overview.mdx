@@ -1,7 +1,7 @@
 ---
 title: "Destinations technical documentation"
 sidebarTitle: "Overview"
-description: "A source is a system that you want to load data from and synchronize it into another system. A source can be a 3rd party API, SaaS, database, data warehouse, or a data lake."
+description: "A destination is a system where you want the data to be exported. A destination can be a 3rd party API, SaaS, database, data warehouse, or a data lake."
 ---
 
 ## Singer spec
@@ -18,3 +18,7 @@ Destinations are defined in the `mage_integrations/destinations/` directory.
 
 All destinations should be a subclass of the `Destination` class defined in
 `mage_integrations/destinations/base.py`.
+
+## Contribute
+
+Want to learn about contributing a destination? Read on [here](/contributing/data-integrations/add-new-destination)!

@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Union
 
 from faker import Faker
@@ -10,7 +10,11 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 
 faker = Faker()
@@ -157,6 +161,40 @@ def create_pipeline_run_with_schedule(
         **kwargs,
     )
     return pipeline_run
+
+
+def create_backfill(
+    pipeline_uuid: str,
+    end_datetime: datetime = None,
+    interval_type: Backfill.IntervalType = Backfill.IntervalType.DAY,
+    interval_units: int = 1,
+    pipeline_schedule_id: int = None,
+    start_datetime: datetime = None,
+    **kwargs,
+):
+    if start_datetime is None:
+        start_datetime = datetime.today() - timedelta(days=1)
+    if end_datetime is None:
+        end_datetime = datetime.today()
+    if pipeline_schedule_id is None:
+        pipeline_schedule = PipelineSchedule.create(
+            name=f'{pipeline_uuid}_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+        )
+        pipeline_schedule_id = pipeline_schedule.id
+    backfill = Backfill.create(
+        end_datetime=end_datetime,
+        interval_type=interval_type,
+        interval_units=interval_units,
+        pipeline_uuid=pipeline_uuid,
+        pipeline_schedule_id=pipeline_schedule_id,
+        start_datetime=start_datetime,
+        status=Backfill.Status.INITIAL,
+        **kwargs,
+    )
+
+    return backfill
 
 
 def create_user(

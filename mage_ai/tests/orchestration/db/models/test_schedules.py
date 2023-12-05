@@ -36,6 +36,62 @@ class PipelineScheduleTests(DBTestCase):
             self.repo_path,
         )
 
+    def test_fetch_latest_pipeline_runs_without_retries(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name='test pipeline',
+            pipeline_uuid='test_pipeline',
+        )
+        for i in range(1, 5):
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                execution_date=datetime(2023, 10, 1),
+                pipeline_schedule_id=pipeline_schedule.id,
+                started_at=datetime(2023, 10, 1, i, 0, 0),
+            )
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                execution_date=datetime(2023, 10, 15),
+                pipeline_schedule_id=pipeline_schedule.id,
+                started_at=datetime(2023, 10, 15, 0, i * 10, 0),
+            )
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                execution_date=datetime(2023, 11, 1),
+                pipeline_schedule_id=pipeline_schedule.id,
+                started_at=datetime(2023, 11, 1, 12, 30, i),
+            )
+        latest_pipeline_runs = pipeline_schedule.fetch_latest_pipeline_runs_without_retries(
+            [pipeline_schedule.id],
+        )
+        self.assertEqual(len(latest_pipeline_runs), 3)
+        latest_pipeline_runs.sort(
+            key=lambda r: r.execution_date,
+        )
+        self.assertEqual(
+            latest_pipeline_runs[0].execution_date,
+            datetime(2023, 10, 1),
+        )
+        self.assertEqual(
+            latest_pipeline_runs[0].started_at,
+            datetime(2023, 10, 1, 4, 0, 0)
+        )
+        self.assertEqual(
+            latest_pipeline_runs[1].execution_date,
+            datetime(2023, 10, 15),
+        )
+        self.assertEqual(
+            latest_pipeline_runs[1].started_at,
+            datetime(2023, 10, 15, 0, 40, 0)
+        )
+        self.assertEqual(
+            latest_pipeline_runs[2].execution_date,
+            datetime(2023, 11, 1),
+        )
+        self.assertEqual(
+            latest_pipeline_runs[2].started_at,
+            datetime(2023, 11, 1, 12, 30, 4)
+        )
+
     def test_pipeline_runs_count(self):
         pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
         for _ in range(5):
@@ -860,6 +916,69 @@ class PipelineRunTests(DBTestCase):
         self.assertEqual(
             set([r.id for r in results3]),
             set([pipeline_run.id, pipeline_run2.id, pipeline_run4.id]),
+        )
+
+    def test_active_runs_for_pipelines_grouped(self):
+        create_pipeline_with_blocks(
+            'test active run grouped 1',
+            self.repo_path,
+        )
+        create_pipeline_with_blocks(
+            'test active run grouped 2',
+            self.repo_path,
+        )
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_grouped_1',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_schedule = pipeline_run.pipeline_schedule
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_grouped_2',
+        )
+        pipeline_schedule2 = pipeline_run2.pipeline_schedule
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_grouped_1',
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_grouped_1',
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run4 = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_grouped_2',
+            pipeline_schedule_id=pipeline_schedule2.id,
+        )
+        pipeline_run4.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        results1 = PipelineRun.active_runs_for_pipelines_grouped(
+            pipeline_uuids=['test_active_run_grouped_1'],
+        )
+        results2 = PipelineRun.active_runs_for_pipelines_grouped(
+            pipeline_uuids=['test_active_run_grouped_2'],
+        )
+        results3 = PipelineRun.active_runs_for_pipelines_grouped(
+            pipeline_uuids=['test_active_run_grouped_1', 'test_active_run_grouped_2'],
+        )
+        self.assertEqual(len(results1), 1)
+        self.assertEqual(
+            set([r.id for r in results1['test_active_run_grouped_1']]),
+            set([pipeline_run.id, pipeline_run3.id]),
+        )
+        self.assertEqual(len(results2), 1)
+        self.assertEqual(
+            set([r.id for r in results2['test_active_run_grouped_2']]),
+            set([pipeline_run2.id, pipeline_run4.id]),
+        )
+        self.assertEqual(len(results3), 2)
+        self.assertEqual(
+            set([r.id for r in results3['test_active_run_grouped_1']]),
+            set([pipeline_run.id, pipeline_run3.id]),
+        )
+        self.assertEqual(
+            set([r.id for r in results3['test_active_run_grouped_2']]),
+            set([pipeline_run2.id, pipeline_run4.id]),
         )
 
 

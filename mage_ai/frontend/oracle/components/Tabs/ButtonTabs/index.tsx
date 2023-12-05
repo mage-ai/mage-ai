@@ -29,6 +29,7 @@ type ButtonTabsProps = {
   tabs: TabType[];
   underlineColor?: string;
   underlineStyle?: boolean;
+  uppercase?: boolean;
 };
 
 function ButtonTabs({
@@ -43,6 +44,7 @@ function ButtonTabs({
   tabs,
   underlineColor,
   underlineStyle,
+  uppercase = true,
 }: ButtonTabsProps, ref) {
   const tabEls = useMemo(() => {
     const tabCount: number = tabs.length;
@@ -75,6 +77,7 @@ function ButtonTabs({
             default={!selected}
             noWrapping
             small={!regularSizeText}
+            uppercase={uppercase}
           >
             {displayText}
           </Text>
