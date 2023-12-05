@@ -69,8 +69,9 @@ class ApiListHandler(BaseApiHandler):
         self,
         resource: str,
         bypass_oauth_check: bool = False,
+        is_health_check: bool = False,
     ):
-        super().initialize(bypass_oauth_check=bypass_oauth_check)
+        super().initialize(bypass_oauth_check=bypass_oauth_check, is_health_check=is_health_check)
         self.resource = resource
 
     async def get(self):

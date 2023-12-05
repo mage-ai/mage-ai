@@ -1,11 +1,60 @@
+from typing import Dict
+
+from mage_ai.api.constants import AttributeOperationType, AttributeType
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
+from mage_ai.api.policies.mixins.user_permissions import UserPermissionMixIn
 from mage_ai.api.presenters.OauthPresenter import OauthPresenter
+from mage_ai.shared.hash import merge_dict
 
 
-class OauthPolicy(BasePolicy):
-    pass
+class OauthPolicy(BasePolicy, UserPermissionMixIn):
+    @classmethod
+    def action_rule_with_permissions(self, operation: OperationType) -> Dict:
+        return merge_dict(
+            super().action_rule_with_permissions(operation),
+            {
+                OauthScope.CLIENT_PUBLIC: [
+                    dict(
+                        condition=lambda _policy: operation
+                        in [OperationType.DETAIL, OperationType.LIST],
+                    ),
+                ],
+            },
+        )
+
+    @classmethod
+    def attribute_rule_with_permissions(
+        self,
+        attribute_operation_type: AttributeOperationType,
+        resource_attribute: str,
+    ) -> Dict:
+        config = {}
+        if AttributeOperationType.READ == attribute_operation_type:
+            config = self.read_rules[self.__name__].get(resource_attribute)
+        elif AttributeOperationType.QUERY == attribute_operation_type:
+            config = self.query_rules[self.__name__].get(AttributeType.ALL)
+        else:
+            config = self.write_rules[self.__name__].get(resource_attribute)
+
+        return merge_dict(
+            super().attribute_rule_with_permissions(
+                attribute_operation_type,
+                resource_attribute,
+            ),
+            {
+                OauthScope.CLIENT_PUBLIC: {
+                    OperationType.DETAIL: config[OauthScope.CLIENT_PUBLIC][
+                        OperationType.DETAIL
+                    ],
+                    OperationType.LIST: config[OauthScope.CLIENT_PUBLIC][
+                        OperationType.LIST
+                    ],
+                },
+            },
+        )
 
 
 OauthPolicy.allow_actions(
@@ -23,6 +72,7 @@ OauthPolicy.allow_actions(
 OauthPolicy.allow_actions(
     [
         constants.DETAIL,
+        constants.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -52,6 +102,7 @@ OauthPolicy.allow_read(
         OauthScope.CLIENT_PUBLIC,
     ],
     on_action=[
+        constants.LIST,
         constants.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
@@ -88,10 +139,8 @@ OauthPolicy.allow_write(
 
 
 OauthPolicy.allow_query(
-    [
-        'redirect_uri',
-    ],
     on_action=[
+        constants.LIST,
         constants.DETAIL,
     ],
     scopes=[

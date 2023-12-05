@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 class OauthScope():
     SCOPE_DELIMITER = ','
 
@@ -13,3 +16,10 @@ class OauthScope():
     ]
 
     TOKEN_SCOPES = []
+
+
+class OauthScopeType(str, Enum):
+    CLIENT_ALL = 'all'
+    CLIENT_INTERNAL = 'internal'
+    CLIENT_PRIVATE = 'private'
+    CLIENT_PUBLIC = 'public'

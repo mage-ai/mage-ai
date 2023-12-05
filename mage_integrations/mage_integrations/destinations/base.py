@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import traceback
+from abc import ABC, abstractmethod
 from os.path import isfile
 from typing import Dict, List
 
@@ -34,7 +35,7 @@ from mage_integrations.destinations.constants import (
     STREAM_OVERRIDE_SETTINGS_KEY,
     STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY,
 )
-from mage_integrations.utils.dictionary import merge_dict
+from mage_integrations.utils.dictionary import extract, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.logger.constants import (
@@ -46,14 +47,15 @@ from mage_integrations.utils.logger.constants import (
 )
 
 LOGGER = singer.get_logger()
-MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024  # 100 mb batches
+MAXIMUM_BATCH_SIZE_MB = 100
 
 
-class Destination():
+class Destination(ABC):
     def __init__(
         self,
         argument_parser=None,
         batch_processing: bool = False,
+        catalog: Dict = None,
         config: Dict = None,
         config_file_path: str = None,
         debug: bool = False,
@@ -67,6 +69,7 @@ class Destination():
         test_connection: bool = False,
     ):
         if argument_parser:
+            argument_parser.add_argument('--catalog_json', type=str, default=None)
             argument_parser.add_argument('--config', type=str, default=None)
             argument_parser.add_argument('--config_json', type=str, default=None)
             argument_parser.add_argument('--debug', action='store_true')
@@ -78,6 +81,8 @@ class Destination():
             argument_parser.add_argument('--test_connection', action='store_true')
             args = argument_parser.parse_args()
 
+            if args.catalog_json:
+                catalog = json.loads(args.catalog_json)
             if args.config:
                 config_file_path = args.config
             if args.config_json:
@@ -97,6 +102,7 @@ class Destination():
             if args.test_connection:
                 test_connection = args.test_connection
 
+        self.catalog = catalog
         self.config = config
         self.settings = settings
         self.batch_processing = batch_processing
@@ -119,20 +125,7 @@ class Destination():
         self.validators = None
         self.versions = None
 
-    @classmethod
-    def templates(self) -> List[Dict]:
-        parts = inspect.getfile(self).split('/')
-        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
-
-        templates = {}
-        for filename in os.listdir(absolute_path):
-            path = absolute_path + '/' + filename
-            if isfile(path):
-                file_raw = filename.replace('.json', '')
-                with open(path) as file:
-                    templates[file_raw] = json.load(file)
-
-        return templates
+        self._streams_from_catalog = None
 
     @property
     def config(self) -> Dict:
@@ -140,7 +133,8 @@ class Destination():
             return self._config
         elif self.config_file_path:
             with open(self.config_file_path, 'r') as f:
-                return json.load(f)
+                self._config = json.load(f)
+            return self._config
         elif self.settings.get('config'):
             return self.settings['config']
         else:
@@ -160,8 +154,8 @@ class Destination():
             return self._settings
         elif self.settings_file_path:
             with open(self.settings_file_path) as f:
-                return yaml.safe_load(f.read())
-
+                self._settings = yaml.safe_load(f.read())
+            return self._settings
         return {}
 
     @settings.setter
@@ -169,26 +163,46 @@ class Destination():
         self._settings = settings
 
     @property
+    def streams_from_catalog(self) -> Dict:
+        if self._streams_from_catalog is not None:
+            return self._streams_from_catalog
+
+        self._streams_from_catalog = {}
+        if self.catalog and self.catalog.get('streams'):
+            for stream_dict in self.catalog.get('streams'):
+                stream_id = stream_dict.get('tap_stream_id') or stream_dict.get('stream')
+                self._streams_from_catalog[stream_id] = stream_dict
+
+        return self._streams_from_catalog
+
+    @property
     def streams_override_settings(self) -> Dict:
         return self.config.get(STREAM_OVERRIDE_SETTINGS_KEY, {})
 
+    @abstractmethod
     def test_connection(self) -> None:
-        raise Exception('Subclasses must implement the test_connection method.')
+        raise NotImplementedError('Subclasses must implement the test_connection method.')
 
-    def before_process(self) -> None:
+    def before_process(self) -> None:   # noqa: B027
         pass
 
-    def after_process(self) -> None:
+    def after_process(self) -> None:    # noqa: B027
         pass
+
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
+        raise NotImplementedError('Subclasses must implement the export_batch_data method.')
 
     def export_data(
         self,
         stream: str,
         schema: dict,
         record: dict,
-        tags: dict = {},
+        tags: dict = None,
         **kwargs,
     ) -> None:
+        if not tags:
+            tags = {}
+
         self.export_batch_data([dict(
             record=record,
             schema=schema,
@@ -196,16 +210,16 @@ class Destination():
             tags=tags,
         )], stream)
 
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
-        raise Exception('Subclasses must implement the export_batch_data method.')
-
     def process_record(
         self,
         stream: str,
         schema: Dict,
         row: Dict,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> None:
+        if not tags:
+            tags = {}
+
         self.logger.info(f'{self.__class__.__name__} process record started.', tags=tags)
 
         self.export_data(
@@ -222,15 +236,26 @@ class Destination():
 
         self.logger.info(f'{self.__class__.__name__} process record completed.', tags=tags)
 
-    def process_record_data(self, record_data: List[Dict], stream: str) -> None:
+    def process_record_data(
+        self,
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = None,
+    ) -> None:
+        if tags is None:
+            tags = {}
+
         batch_data = [dict(
             record=self.__validate_and_prepare_record(**rd),
             stream=stream,
         ) for rd in record_data]
 
-        tags = dict(
-            records=len(batch_data),
-            stream=stream,
+        tags = merge_dict(
+            tags,
+            dict(
+                records=len(batch_data),
+                stream=stream,
+            ),
         )
 
         self.logger.info(
@@ -239,7 +264,11 @@ class Destination():
         )
 
         if len(batch_data) >= 1:
-            self.export_batch_data(batch_data, stream)
+            self.export_batch_data(
+                batch_data,
+                stream,
+                tags=tags,
+            )
 
             self.logger.info(
                 f'{self.__class__.__name__} process record data for stream {stream} completed.',
@@ -256,11 +285,11 @@ class Destination():
         stream: str,
         schema: Dict,
         row: Dict,
-        tags: Dict = dict(),
+        tags: Dict = None,
     ) -> None:
         if not stream:
             message = f'Required key {KEY_STREAM} is missing from row.'
-            self.logger.exception(message, tags=tags)
+            self.logger.exception(message, tags=tags or {})
             raise Exception(message)
 
         self.bookmark_properties[stream] = row.get(KEY_BOOKMARK_PROPERTIES)
@@ -291,7 +320,10 @@ class Destination():
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
         self.validators[stream] = Draft4Validator(schema)
 
-    def process_state(self, row: Dict, tags: Dict = dict()) -> None:
+    def process_state(self, row: Dict, tags: Dict = None) -> None:
+        if not tags:
+            tags = {}
+
         state = row.get(KEY_VALUE)
         if state:
             self._emit_state(state)
@@ -394,10 +426,19 @@ class Destination():
                 else:
                     continue
 
-            schema = self.schemas.get(stream)
-
             if stream:
                 tags.update(stream=stream)
+
+            schema = None
+            if stream not in self.schemas:
+                if self.streams_from_catalog and stream in self.streams_from_catalog:
+                    stream_settings = self.streams_from_catalog.get(stream)
+                    schema = stream_settings.get('schema')
+                    tags.update(schema=schema)
+                    self.process_schema(stream, schema, stream_settings, tags=tags)
+
+            if not schema:
+                schema = self.schemas.get(stream)
 
             if stream and not batches_by_stream.get(stream):
                 batches_by_stream[stream] = dict(
@@ -410,9 +451,15 @@ class Destination():
             elif TYPE_LOG == row_type:
                 continue
             elif TYPE_SCHEMA == row_type:
-                schema = row.get(KEY_SCHEMA)
-                tags.update(schema=schema)
-                self.process_schema(stream, schema, row, tags=tags)
+                if not self.streams_from_catalog or stream not in self.streams_from_catalog:
+                    schema = row.get(KEY_SCHEMA)
+                    tags.update(schema=schema)
+                    self.process_schema(stream, schema, row, tags=tags)
+                elif self.streams_from_catalog and stream in self.streams_from_catalog:
+                    self.logger.info(
+                        f'Schema for stream {stream} already exists from catalog JSON.',
+                        tags=tags,
+                    )
             elif TYPE_RECORD == row_type:
                 record_data = dict(
                     row=row,
@@ -435,8 +482,8 @@ class Destination():
                     else:
                         arr = [stream]
 
-                    for s in arr:
-                        batches_by_stream[stream]['state_data'].append(state_data)
+                    for stream_inner in arr:
+                        batches_by_stream[stream_inner]['state_data'].append(state_data)
                 else:
                     self.process_state(**state_data)
                     final_state_data = state_data
@@ -449,7 +496,8 @@ class Destination():
                 if record_data:
                     current_byte_size += sys.getsizeof(json.dumps(record_data))
 
-                    if current_byte_size >= MAXIMUM_BATCH_BYTE_SIZE:
+                    if current_byte_size >= self.config.get(
+                            'maximum_batch_size_mb', MAXIMUM_BATCH_SIZE_MB) * 1024 * 1024:
                         self.__process_batch_set(
                             batches_by_stream,
                             final_record_data,
@@ -477,8 +525,11 @@ class Destination():
         batches_by_stream: Dict,
         final_record_data: Dict = None,
         final_state_data: Dict = None,
-        tags: Dict = {},
+        tags: Dict = None,
     ) -> None:
+        if not tags:
+            tags = {}
+
         self.logger.info('Process batch set started.', tags=tags)
 
         errors = []
@@ -493,7 +544,11 @@ class Destination():
                 # If there is an error with a stream, catch error so that state can still
                 # be persisted for previously successfully streams
                 try:
-                    self.process_record_data(record_data, stream)
+                    self.process_record_data(
+                        record_data,
+                        stream,
+                        tags=tags,
+                    )
                     final_record_data = record_data[-1]
 
                     states = batches['state_data']
@@ -504,7 +559,7 @@ class Destination():
 
         if len(stream_states.values()) >= 1:
             bookmarks = {}
-            for stream, state in stream_states.items():
+            for state in stream_states.values():
                 bookmarks.update(state['row'][KEY_VALUE]['bookmarks'])
 
             state_data = dict(row={
@@ -547,8 +602,11 @@ class Destination():
         stream: str,
         schema: dict,
         row: dict,
-        tags: dict = {},
+        tags: dict = None,
     ) -> Dict:
+        if not tags:
+            tags = {}
+
         if not stream:
             message = f'Required key {KEY_STREAM} is missing from row.'
             self.logger.exception(message, tags=tags)
@@ -560,9 +618,12 @@ class Destination():
             raise Exception(message)
 
         record = row.get(KEY_RECORD)
-        record_adjusted = record.copy()
 
-        for k, v in record.items():
+        record_adjusted = record.copy()
+        if self.streams_from_catalog and stream in self.streams_from_catalog:
+            record_adjusted = extract(record_adjusted, schema['properties'].keys())
+
+        for k in record.keys():
             if k not in schema['properties']:
                 continue
 
@@ -619,7 +680,10 @@ class Destination():
 
     def __text_input(self, input_buffer):
         if self.input_file_path:
-            self.logger.info(f'Reading input from file path {self.input_file_path}.')
+            file_size = os.path.getsize(self.input_file_path)
+            self.logger.info(
+                f'Reading {file_size} bytes from input file path {self.input_file_path}.',
+            )
 
             with open(self.input_file_path) as f:
                 for line in f:
@@ -634,9 +698,9 @@ class Destination():
         stream: str,
         schema: dict,
         row: dict,
-        tags: dict = {},
+        tags: dict = None,
     ) -> Dict:
-        record_adjusted = self.__prepare_record(stream, schema, row, tags)
+        record_adjusted = self.__prepare_record(stream, schema, row, tags or {})
         schema_properties = schema['properties']
 
         if not self.disable_column_type_check.get(stream, False):
@@ -656,3 +720,18 @@ class Destination():
                     })
 
         return record_adjusted
+
+    @classmethod
+    def templates(cls) -> List[Dict]:
+        parts = inspect.getfile(cls).split('/')
+        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
+
+        templates = {}
+        for filename in os.listdir(absolute_path):
+            path = absolute_path + '/' + filename
+            if isfile(path):
+                file_raw = filename.replace('.json', '')
+                with open(path) as file:
+                    templates[file_raw] = json.load(file)
+
+        return templates

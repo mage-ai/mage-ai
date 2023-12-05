@@ -52,9 +52,11 @@ class BaseSQL(BaseSQLConnection):
         dtypes: Mapping[str, str],
         schema_name: str,
         table_name: str,
-        unique_constraints: List[str],
+        unique_constraints: List[str] = None,
         user_types: Dict = None,
     ) -> str:
+        if unique_constraints is None:
+            unique_constraints = []
         return gen_table_creation_query(
             dtypes,
             schema_name,
@@ -105,7 +107,8 @@ class BaseSQL(BaseSQLConnection):
         db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        **kwargs,
     ) -> None:
         raise Exception('Subclasses must override this method.')
 
@@ -204,8 +207,8 @@ class BaseSQL(BaseSQLConnection):
     def export(
         self,
         df: DataFrame,
-        schema_name: str,
-        table_name: str,
+        schema_name: str = None,
+        table_name: str = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
@@ -216,6 +219,7 @@ class BaseSQL(BaseSQLConnection):
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         overwrite_type: Dict = None,
+        **kwargs,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -235,6 +239,11 @@ class BaseSQL(BaseSQLConnection):
                             Defaults to False.
             **kwargs: Additional query parameters.
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+
+        if schema_name is None:
+            schema_name = self.default_schema()
 
         if type(df) is dict:
             df = DataFrame([df])
@@ -250,6 +259,7 @@ class BaseSQL(BaseSQLConnection):
             if index:
                 df = df.reset_index()
 
+            # Clean dataframe
             dtypes = infer_dtypes(df)
             df = clean_df_for_export(df, self.clean, dtypes)
 
@@ -262,6 +272,16 @@ class BaseSQL(BaseSQLConnection):
             dtypes = infer_dtypes(df)
 
         def __process():
+            if not query_string and kwargs.get('fast_execute', True) and \
+                    hasattr(self, 'upload_dataframe_fast') and callable(self.upload_dataframe_fast):
+                self.upload_dataframe_fast(
+                    df,
+                    schema_name,
+                    table_name,
+                    if_exists=if_exists,
+                )
+                return
+
             buffer = StringIO()
             table_exists = self.table_exists(schema_name, table_name)
 
@@ -322,6 +342,7 @@ class BaseSQL(BaseSQLConnection):
                         allow_reserved_words=allow_reserved_words,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
+                        **kwargs,
                     )
             self.conn.commit()
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Spinner, { SpinnerProps } from '@oracle/components/Spinner';
 import ThemeBlock from 'stories/ThemeBlock';
@@ -15,7 +15,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<SpinnerProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<SpinnerProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {};

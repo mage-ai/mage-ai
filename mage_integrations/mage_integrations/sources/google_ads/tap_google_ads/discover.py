@@ -3,9 +3,11 @@ import sys
 
 import singer
 
-from tap_google_ads.client import create_sdk_client
-from tap_google_ads.streams import initialize_core_streams
-from tap_google_ads.streams import initialize_reports
+from mage_integrations.sources.google_ads.tap_google_ads.client import create_sdk_client
+from mage_integrations.sources.google_ads.tap_google_ads.streams import (
+    initialize_core_streams,
+    initialize_reports,
+)
 
 LOGGER = singer.get_logger()
 
@@ -261,6 +263,6 @@ def do_discover(resource_schema):
 
     streams.extend(core_streams)
     streams.extend(report_streams)
-    
+
     data = {"streams": streams}
     return data

@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -19,7 +19,13 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { ACTION_FETCH, ACTION_PULL, ACTION_RESET, ACTION_RESET_HARD } from '../constants';
+import {
+  ACTION_CLONE,
+  ACTION_FETCH,
+  ACTION_PULL,
+  ACTION_RESET,
+  ACTION_RESET_HARD,
+} from '../constants';
 import {
   Add,
   Branch,
@@ -30,7 +36,7 @@ import {
   PaginateArrowRight,
   Trash,
 } from '@oracle/icons';
-import { OathProviderEnum } from '@interfaces/OauthType';
+import { OauthProviderEnum } from '@interfaces/OauthType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -41,6 +47,7 @@ import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 type RemoteProps = {
   actionRemoteName: string;
@@ -76,6 +83,8 @@ function Remote({
   const [repoPath, setRepoPath] = useState<string>(null);
 
   const gitInitialized = useMemo(() => !!branch?.name, [branch]);
+
+  const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
 
   useEffect(() => {
     if (branch?.sync_config?.repo_path && repoPath === null) {
@@ -201,7 +210,7 @@ function Remote({
     },
   );
 
-  const { data: dataOauth, mutate: fetchOauth } = api.oauths.detail(OathProviderEnum.GITHUB, {
+  const { data: dataOauth, mutate: fetchOauth } = api.oauths.detail(OauthProviderEnum.GITHUB, {
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
   });
   const oauth = useMemo(() => dataOauth?.oauth || {}, [dataOauth]);
@@ -224,13 +233,13 @@ function Remote({
       ),
     },
   );
-  const { access_token: accessTokenFromURL } = queryFromUrl() || {};
+  const { access_token: accessTokenFromURL, provider: providerFromURL } = queryFromUrl() || {};
   useEffect(() => {
     if (oauth && !oauth?.authenticated && accessTokenFromURL) {
       // @ts-ignore
       createOauth({
         oauth: {
-          provider: OathProviderEnum.GITHUB,
+          provider: providerFromURL || OauthProviderEnum.GITHUB,
           token: accessTokenFromURL,
         },
       });
@@ -239,6 +248,7 @@ function Remote({
     accessTokenFromURL,
     createOauth,
     oauth,
+    providerFromURL,
   ]);
 
   const remotesMemo = useMemo(() => remotes?.map(({
@@ -409,10 +419,31 @@ function Remote({
           )}
           {!oauth?.authenticated && oauth?.url && (
             <>
+              {accessTokenExists && (
+                <Spacing mb={2}>
+                  <Button
+                    disabled
+                  >
+                    Using access token from Git Settings
+                  </Button>
+                  <Spacing mt={1}>
+                    <Text muted>
+                      Some features may not work unless you authenticate with GitHub.
+                    </Text>
+                  </Spacing>
+                </Spacing>
+              )}
+
               <Button
                 beforeIcon={<GitHubIcon size={UNIT * 2} />}
                 loading={isLoadingCreateOauth}
-                onClick={() => router.push(oauth?.url)}
+                onClick={() => {
+                  const url = oauth?.url;
+                  const q = queryFromUrl(url);
+                  const state = q.state;
+                  set(state, oauth?.redirect_query_params || {});
+                  router.push(url);
+                }}
                 primary
               >
                 Authenticate with GitHub
@@ -645,6 +676,9 @@ function Remote({
                   <option value={ACTION_RESET}>
                     {capitalizeRemoveUnderscoreLower(ACTION_RESET_HARD)}
                   </option>
+                  <option value={ACTION_CLONE}>
+                    {capitalizeRemoveUnderscoreLower(ACTION_CLONE)}
+                  </option>
                 </Select>
 
                 <Spacing mr={1} />
@@ -664,7 +698,7 @@ function Remote({
                   ))}
                 </Select>
                 
-                {actionName !== ACTION_FETCH && (
+                {![ACTION_FETCH, ACTION_CLONE].includes(actionName) && (
                   <Spacing ml={1}>
                     <Select
                       beforeIcon={<Branch />}
@@ -692,16 +726,27 @@ function Remote({
                   loading={isLoadingAction}
                   onClick={() => {
                     setActionProgress(null);
-                    // @ts-ignore
-                    actionGitBranch({
-                      git_custom_branch: {
-                        action_type: actionName,
-                        [actionName]: {
-                          branch: actionBranchName,
-                          remote: actionRemoteName,
+                    if (actionName !== ACTION_CLONE || (
+                        typeof window !== 'undefined'
+                        && typeof location !== 'undefined'
+                        && window.confirm(
+                          `Are you sure you want to clone remote ${actionRemoteName}? This will ` +
+                          'overwrite all your local changes and may reset any settings you may ' + 
+                          'have configured for your local Git repo. This action cannot be undone.',
+                        )
+                      )
+                    ) {
+                      // @ts-ignore
+                      actionGitBranch({
+                        git_custom_branch: {
+                          action_type: actionName,
+                          [actionName]: {
+                            branch: actionBranchName,
+                            remote: actionRemoteName,
+                          },
                         },
-                      },
-                    });
+                      });
+                    }
                   }}
                   primary
                 >

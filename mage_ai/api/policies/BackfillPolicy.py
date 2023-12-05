@@ -81,6 +81,7 @@ BackfillPolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BackfillPolicy.allow_query([
+    'include_run_count',
     'pipeline_uuid',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

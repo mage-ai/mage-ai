@@ -255,7 +255,7 @@ function LogToolbar({
             <Spacing mr={1} />
 
             <Button
-              borderRadius={UNIT / 2}
+              borderRadius={`${UNIT / 2}px`}
               onClick={() => {
                 resetLogScrollPosition();
                 const start = isoDateFormatFromDateParts(startDate, startTime.hour, startTime.minute);

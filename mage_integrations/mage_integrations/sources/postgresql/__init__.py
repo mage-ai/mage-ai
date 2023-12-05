@@ -226,6 +226,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 current_lsn,
             )
             write_state(state)
+            postgres_connection.close_connection(connection)
 
     def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
         if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):

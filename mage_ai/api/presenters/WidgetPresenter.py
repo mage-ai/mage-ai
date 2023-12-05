@@ -15,6 +15,7 @@ class WidgetPresenter(BasePresenter):
         'name',
         'outputs',
         'status',
+        'timeout',
         'type',
         'upstream_blocks',
         'uuid',

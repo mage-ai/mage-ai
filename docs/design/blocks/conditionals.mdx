@@ -1,64 +1,52 @@
 ---
 title: "Conditional blocks"
 sidebarTitle: "Conditional"
-description: "A conditional block is associated to another block.
-The conditional block will be executed before the parent block,
-and will influence whether or not the parent block gets executed."
+description: "A conditional block is an 'Add-on Block' associated with another block. The condition will be evaluated before the parent block is executed, determining if the parent block gets executed."
 ---
 
 <Note>Requires version `0.8.93` or greater.</Note>
 
-Conditional blocks are part of your pipeline but don’t run as individual steps in your pipeline
-like data loader blocks, transformer blocks, etc.
-However, conditional blocks are associated to other blocks within the pipeline
-(e.g. data loaders, transformers, data exporters, etc).
+Conditional blocks are part of your pipeline but don't run as individual steps in your pipeline like data loader blocks, transformer blocks, etc.
+However, conditional blocks are associated to other blocks within the pipeline (e.g. data loaders, transformers, data exporters, etc).
 
-Before those other blocks are executed,
-any associated conditional blocks will be executed. If any conditional block returns False, the
-parent block will not be executed, and its status will be set as `condition_failed`.
+Before those other blocks are executed, any associated conditional blocks will be executed. If any conditional block returns False, the parent block will not be executed, and its status will be set as `condition_failed`.
 
----
+### An example condition
 
-## Example
+Take the following example:
 
-1. Your pipeline has the following blocks:
-    1. `load_data_from_api` (data loader)
-    1. `clean_column_names` (transformer)
-    1. `save_data` (data exporter)
+<div align="center">
+<img src="https://github.com/mage-ai/assets/blob/main/blocks/conditionals-example.png?raw=true" width="85%"/>
+</div>
 
-1. Then, you add the following conditional block to your pipeline:
+The `morpheus` block returns a variable— `pill`, which is either red or blue. Both downstream blocks have conditionals associated with them. The `red_pill` block will only execute if `pill` is red, and the `blue_pill` block will only execute if `pill` is blue.
 
-    ```python
-    @condition
-    def check_if_data_exists(*args, **kwargs) -> bool:
-        # some code...
-    ```
+Here's what the conditionals look like for each:
 
-1. You associate the above conditional block to the following block:
+<div align="center">
+    <img src="https://github.com/mage-ai/assets/blob/main/blocks/conditional-red-pill.png?raw=true" width="70%"/>
+    <img src="https://github.com/mage-ai/assets/blob/main/blocks/conditional-blue-pill.png?raw=true" width="70%"/>
+</div>
 
-    - `clean_column_names` (transformer)
+Because `pill=red`, the `red_pill` block will execute, and the `blue_pill` block will not. Additionally, any _downstream_ blocks of the `blue_pill` block will not execute.
 
-1. When you run the pipeline, it’ll execute the `load_data_from_api` (data loader) block first.
-It completes, but the dataframe returned is empty.
+## Add conditionals to your pipeline
 
-1. Next, the pipeline will execute the conditional block and execute the function `check_if_data_exists`.
-Since there is no data in the dataframe, the function returns False.
+Conditional blocks are "add-on blocks" in Mage— that means they're added through the side panel on the right in the pipeline editor.
 
-1. The `clean_column_names` transformer block is not executed, and the status is set as `condition_failed`.
-The `save_data` data exporter block is also not executed, and is set as `condition_failed`.
+<div align="center">
+<img src="https://github.com/mage-ai/assets/blob/main/blocks/add-conditionals.gif?raw=true" width="85%"/>
+</div>
 
----
+To add a condition to your block:
 
-## How to add conditionals to your pipeline
+1. On the right side of the page, expand the side panel by hovering, click the <b>Add-ons</b> icon in the navigation.
+2. Click the button <b>Conditionals</b>.
+3. Click the button <b>+ Conditional block</b>.
+4. In the conditional block's code, add a function that returns a boolean value. Be sure it's decorated with `@condition`.
+5. Select the magnifiying class icon at the bottom of the block to associate your conditional with a block.
 
-1. Create a new pipeline or open an existing pipeline.
-1. Edit the pipeline.
-1. On the right side of the page, click the <b>Add-ons</b> icon in the navigation.
-    If you don’t see it, try expanding the right area of the page.
-1. Click the button <b>Conditionals</b>.
-1. Click the button <b>+ Conditional block</b>.
-1. In the conditional block’s code, add a function that returns a boolean value and
-   decorate it with `@condition`.
+Looking for a video walkthrough? Check out our [tips and tricks](/guides/tips-and-tricks) page!
 
 ### Positional arguments
 

@@ -16,6 +16,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { formatNumber } from '@utils/number';
 import { formatNumberLabel } from './utils/label';
 
 type TooltipData = {
@@ -105,6 +106,14 @@ function BarStackChart({
     range: [yMax, 0],
     round: true,
   });
+
+  let yTooltipValue = null;
+  if (tooltipOpen && tooltipData) {
+    yTooltipValue = tooltipData.bar.data[tooltipData.key];
+    if (Number.isSafeInteger(yTooltipValue)) {
+      yTooltipValue = formatNumber(yTooltipValue);
+    }
+  }
 
   const colorScale = scaleOrdinal<string, string>({
     domain: keys,
@@ -234,7 +243,7 @@ function BarStackChart({
           <Text bold color={colorScale(tooltipData.key)}>
             {tooltipData.key}
           </Text>
-          <Text>{tooltipData.bar.data[tooltipData.key]}</Text>
+          <Text>{yTooltipValue}</Text>
           <Text>
             {getXValue(tooltipData.bar.data)}
           </Text>

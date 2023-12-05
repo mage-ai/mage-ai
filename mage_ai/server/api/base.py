@@ -1,11 +1,13 @@
+import json
+import traceback
+
+import dateutil.parser
+import simplejson
+import tornado.web
+
 from mage_ai.api.middleware import OAuthMiddleware
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import camel_to_snake_case
-import dateutil.parser
-import json
-import simplejson
-import tornado.web
-import traceback
 
 META_KEY_LIMIT = '_limit'
 META_KEY_OFFSET = '_offset'
@@ -95,7 +97,15 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class BaseApiHandler(BaseHandler, OAuthMiddleware):
-    pass
+    def initialize(self, **kwargs) -> None:
+        super().initialize(**kwargs)
+        self.is_health_check = kwargs.get('is_health_check', False)
+
+    def prepare(self):
+        from mage_ai.server.server import latest_user_activity
+        if not self.is_health_check:
+            latest_user_activity.update_latest_activity()
+        super().prepare()
 
 
 class BaseDetailHandler(BaseHandler):

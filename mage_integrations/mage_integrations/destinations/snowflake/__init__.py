@@ -1,12 +1,15 @@
 from typing import Dict, List, Tuple
 
 import pandas as pd
+import simplejson
 from snowflake.connector.pandas_tools import write_pandas
 
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
+    COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.snowflake.utils import (
@@ -19,10 +22,10 @@ from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_command,
-    clean_column_name,
     column_type_mapping,
 )
 from mage_integrations.utils.array import batch
+from mage_integrations.utils.parsers import encode_complex
 
 
 class Snowflake(Destination):
@@ -74,6 +77,7 @@ class Snowflake(Destination):
             ),
             unique_constraints=unique_constraints,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
 
         return [
@@ -89,6 +93,9 @@ class Snowflake(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
+        if self.disable_double_quotes:
+            schema_name = schema_name.upper()
+
         query = f"""
 SELECT
     column_name
@@ -101,7 +108,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         schema_columns = schema['properties'].keys()
 
         new_columns = [c for c in schema_columns
-                       if clean_column_name(c) not in current_columns]
+                       if self.clean_column_name(c)
+                       not in current_columns]
 
         if not new_columns:
             return []
@@ -121,6 +129,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     table_name,
                 ),
                 column_identifier=self.quote,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -133,11 +142,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         unique_constraints: List[str] = None,
     ) -> str:
         unique_constraints_clean = [
-            self._wrap_with_quotes(clean_column_name(col))
+            self._wrap_with_quotes(self.clean_column_name(col))
             for col in unique_constraints
         ]
         columns_cleaned = [
-            self._wrap_with_quotes(clean_column_name(col))
+            self._wrap_with_quotes(self.clean_column_name(col))
             for col in columns
         ]
 
@@ -188,6 +197,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             convert_column_to_type_func=convert_column_if_json,
             records=records,
             column_identifier=self.quote,
+            use_lowercase=self.use_lowercase,
         )
 
         insert_columns = ', '.join(insert_columns)
@@ -274,10 +284,16 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         # This method will fail if the schema didn’t exist prior to running this destination.
         # The create schema command will only commit if the entire transaction was successful.
         # Checking the existence of a table in a non-existent schema will fail.
-        data = self.build_connection().execute([
-            f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database_name}.{schema_name}',
-        ])
+        schema_name = schema_name.upper() if self.disable_double_quotes else schema_name
+        table_name = table_name.upper() if self.disable_double_quotes else table_name
 
+        query = f"""
+SELECT
+    *
+FROM {self._wrap_with_quotes(database_name)}.INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
+"""
+        data = self.build_connection().execute([query])
         return len(data[0]) >= 1
 
     def calculate_records_inserted_and_updated(
@@ -326,16 +342,40 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         schema: str,
         table: str,
     ) -> List[List[tuple]]:
+        """
+        Write a Pandas DataFrame to a table in a Snowflake database.
+
+        Args:
+            df (pd.DataFrame): The DataFrame to be written to the table.
+            database (str): The name of the Snowflake database where the table exists.
+            schema (str): The name of the schema within the database where the table is located.
+            table (str): The name of the target table.
+
+        Returns:
+            List[List[tuple]]: A list containing a single tuple, where the tuple contains
+            information about the number of rows written to the table.
+
+        Note:
+            The function relies on the `self.disable_double_quotes` attribute to determine
+            whether to use uppercase for table, database, and schema names when constructing
+            the SQL statement for writing. Make sure this attribute is appropriately set
+            before calling this function.
+        """
         self.logger.info(
             f'write_pandas to: {database}.{schema}.{table}')
+        snowflake_connection = self.build_connection()
+        connection = snowflake_connection.build_connection()
+        if self.disable_double_quotes:
+            df.columns = [col.upper() for col in df.columns]
         success, num_chunks, num_rows, output = write_pandas(
-            self.build_connection().build_connection(),
+            connection,
             df,
-            table,
-            database=database,
-            schema=schema,
+            table.upper() if self.disable_double_quotes else table,
+            database=database.upper() if self.disable_double_quotes else database,
+            schema=schema.upper() if self.disable_double_quotes else schema,
             auto_create_table=False,
         )
+        snowflake_connection.close_connection(connection)
         self.logger.info(
             f'write_pandas completed: {success}, {num_chunks} chunks, {num_rows} rows.')
         self.logger.info(f'write_pandas output: {output}')
@@ -349,6 +389,25 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         tags: Dict = None,
         **kwargs,
     ) -> List[List[Tuple]]:
+        """
+        Process and load data into Snowflake using batch or default SQL insertion.
+
+        Args:
+            query_strings (List[str]): List of SQL query strings for pre-processing.
+            record_data (List[Dict]): List of dictionaries containing record data.
+            stream (str): The name of the data stream.
+            tags (Dict, optional): Dictionary of additional tags for the operation.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            List[List[Tuple]]: A list containing results of executed queries.
+
+        Note:
+            - The `use_batch_load` attribute determines whether to use batch load or
+              default SQL insertion.
+            - Make sure the `unique_constraints` and `unique_conflict_methods` are properly
+              configured for batch load.
+        """
         if not self.use_batch_load:
             self.logger.info('Using default SQL insertion load for Snowflake...')
             return super().process_queries(
@@ -376,9 +435,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 self.logger.info(f'Skip executing empty query_strings: {query_strings}')
 
             df = pd.DataFrame([d['record'] for d in record_data])
-            df.columns = df.columns.str.lower()
+
             self.logger.info(f'Batch upload to Snowflake: {df.shape[0]} rows.')
             self.logger.info(f'Columns: {df.columns}')
+
+            # Clean dataframe column names and values
+            df = self._clean_df(df, stream)
+
             database = self.config.get(self.DATABASE_CONFIG_KEY)
             schema = self.config.get(self.SCHEMA_CONFIG_KEY)
             table = self.config.get(self.TABLE_CONFIG_KEY)
@@ -425,6 +488,39 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 self.logger.info(f'write_dataframe_to_table completed to {full_table_name}')
 
             return results
+
+    def _clean_df(self, df: pd.DataFrame, stream: str):
+        # Clean column names in the dataframe
+        col_mapping = {col: self.clean_column_name(col) for col in df.columns}
+        df = df.rename(columns=col_mapping)
+
+        # Serialize the dict or list to string
+        def serialize_obj(val):
+            if isinstance(val, dict) or isinstance(val, list):
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
+
+        mapping = column_type_mapping(
+            self.schemas[stream],
+            convert_column_type,
+            lambda item_type_converted: 'ARRAY',
+        )
+
+        for col in col_mapping.keys():
+            clean_col_name = col_mapping[col]
+            df_col_dropna = df[clean_col_name].dropna()
+            if df_col_dropna.count() == 0:
+                continue
+            col_type = mapping[col].get('type')
+            col_settings = mapping[col].get('column_settings')
+            if COLUMN_TYPE_STRING == col_type \
+                    and COLUMN_FORMAT_DATETIME != col_settings.get('format'):
+                df[clean_col_name] = df[clean_col_name].apply(lambda x: serialize_obj(x))
+        return df
 
 
 if __name__ == '__main__':

@@ -184,7 +184,7 @@ WHERE TABLE_NAME = '{table_name}'
     def export(
         self,
         df: DataFrame,
-        table_id: str,
+        table_id: str = None,
         database: Union[str, None] = None,
         if_exists: str = 'replace',
         query_string: Union[str, None] = None,
@@ -210,6 +210,8 @@ WHERE TABLE_NAME = '{table_name}'
             this parameter is ignored (as both define the same functionality).
             **configuration_params: Configuration parameters for export job
         """
+        if table_id is None:
+            raise Exception('Please provide a table_id argument in the export method.')
 
         if type(df) is dict:
             df = DataFrame([df])

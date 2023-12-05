@@ -10,8 +10,8 @@ from mage_integrations.destinations.oracledb.utils import (
     build_alter_table_command,
     build_create_table_command,
     clean_column_name,
-    convert_column_type,
     convert_column_to_type,
+    convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
@@ -62,13 +62,16 @@ class OracleDB(Destination):
         ]
 
     def test_connection(self) -> None:
-        conn = self.build_connection().build_connection()
+        oracledb_connection = self.build_connection()
+        conn = oracledb_connection.build_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("SELECT name FROM v$database")
         except Exception as exc:
             self.logger.error(f"test_connection exception: {exc}")
             raise exc
+        finally:
+            oracledb_connection.close_connection(conn)
         return
 
     def build_create_table_commands(
@@ -92,6 +95,7 @@ class OracleDB(Destination):
                 key_properties=self.key_properties.get(stream),
                 schema=schema,
                 unique_constraints=unique_constraints,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -114,7 +118,8 @@ WHERE TABLE_NAME = '{table_name.upper()}'
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns
-                       if clean_column_name(c, handle_leading_underscore=False).lower()
+                       if clean_column_name(c, handle_leading_underscore=False,
+                                            lower_case=self.use_lowercase)
                        not in current_columns]
 
         if not new_columns:
@@ -128,6 +133,7 @@ WHERE TABLE_NAME = '{table_name.upper()}'
                 ),
                 columns=new_columns,
                 full_table_name=f'{table_name}',
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -153,11 +159,14 @@ WHERE TABLE_NAME = '{table_name.upper()}'
             convert_column_to_type_func=convert_column_to_type,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
             if COLUMN_TYPE_OBJECT == y['type'] else x,
+            use_lowercase=self.use_lowercase,
         )
-        insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
+        insert_columns = ', '.join([clean_column_name(col, lower_case=self.use_lowercase)
+                                    for col in insert_columns])
         insert_into = f'INTO {table_name} ({insert_columns})'
         commands = []
-        columns_cleaned = [clean_column_name(col) for col in columns]
+        columns_cleaned = [clean_column_name(col, lower_case=self.use_lowercase)
+                           for col in columns]
 
         for insert_value in insert_values:
             if unique_constraints and unique_conflict_method:
@@ -173,10 +182,10 @@ WHERE TABLE_NAME = '{table_name.upper()}'
                         if column in unique_constraints:
                             if len(update_command_constraint) == 0:
                                 update_command_constraint += \
-                                    f'{clean_column_name(column)} = {updated_values[idx]}'
+                                    f'{clean_column_name(column, lower_case=self.use_lowercase)} = {updated_values[idx]}' # noqa
                             else:
                                 update_command_constraint += \
-                                    f'AND {clean_column_name(column)} = {updated_values[idx]}'
+                                    f'AND {clean_column_name(column, lower_case=self.use_lowercase)} = {updated_values[idx]}' # noqa
 
                     insert_command = f'''
 BEGIN
@@ -204,11 +213,13 @@ END;
         table_name: str,
         database_name: str = None,
     ) -> bool:
-        connection = self.build_connection().build_connection()
+        oracledb_connection = self.build_connection()
+        connection = oracledb_connection.uild_connection()
         cursor = connection.cursor()
         cursor.execute(
             f'SELECT COUNT(*) FROM user_tables WHERE table_name = \'{table_name.upper()}\'')
         number_of_rows = cursor.fetchone()[0]
+        oracledb_connection.close_connection(connection)
         if number_of_rows > 0:
             return True
         return False

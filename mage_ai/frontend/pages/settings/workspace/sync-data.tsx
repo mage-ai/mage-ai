@@ -5,6 +5,9 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
+import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -48,7 +51,7 @@ function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
   const [sync, setSync] = useState<SyncType>(null);
   const [userGitSettings, setUserGitSettings] = useState<UserGitSettingsType>(null);
-  const [error, setError] = useState<string>(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const [showSyncSettings, setShowSyncSettings] = useState<boolean>(null);
 
@@ -87,11 +90,10 @@ function SyncData() {
               );
             }
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => setError(exception),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -113,11 +115,10 @@ function SyncData() {
               );
             }
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => setError(exception),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -141,7 +142,7 @@ function SyncData() {
     > = setSync;
     let settings: SyncType | UserGitSettingsType = sync;
 
-    if (requireUserAuthentication) {
+    if (!showSyncSettings && requireUserAuthentication) {
       updateSettings = setUserGitSettings;
       settings = userGitSettings;
     }
@@ -156,34 +157,85 @@ function SyncData() {
           required,
           type,
           uuid,
-        }: SyncFieldType) => (
-          <Spacing key={uuid} mt={2}>
-            {labelDescription && (
+        }: SyncFieldType) => {
+          let description;
+          if (uuid === 'ssh_public_key') {
+            description = (
+              <Spacing mb={1}>
+                <Text small>
+                  Run <Link
+                    onClick={() => {
+                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\\\n | echo');
+                      toast.success(
+                        'Successfully copied to clipboard.',
+                        {
+                          position: toast.POSITION.BOTTOM_RIGHT,
+                          toastId: uuid,
+                        },
+                      );
+                    }}
+                    small
+                  >
+                    cat ~/.ssh/id_ed25519.pub | base64 | tr -d \\n | echo
+                  </Link> in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret.
+                </Text>
+              </Spacing>
+            )
+          } else if (uuid === 'ssh_private_key') {
+            description = (
+              <Spacing mb={1}>
+                <Text small>
+                  Follow same steps as the public key, but run <Link
+                    onClick={() => {
+                      navigator.clipboard.writeText('cat ~/.ssh/id_ed25519 | base64 | tr -d \\\\n && echo');
+                      toast.success(
+                        'Successfully copied to clipboard.',
+                        {
+                          position: toast.POSITION.BOTTOM_RIGHT,
+                          toastId: uuid,
+                        },
+                      );
+                    }}
+                    small
+                  >
+                    cat ~/.ssh/id_ed25519 | base64 | tr -d \\n && echo
+                  </Link> instead. The key will be stored as a Mage secret.
+                </Text>
+              </Spacing>
+            );
+          } else {
+            description = labelDescription && (
               <Spacing mb={1}>
                 <Text small>
                   {labelDescription}
                 </Text>
               </Spacing>
-            )}
-            <TextInput  
-              autoComplete={autoComplete}
-              disabled={disabled}
-              label={label}
-              // @ts-ignore
-              onChange={e => {
-                updateSettings(prev => ({
-                  ...prev,
-                  [uuid]: e.target.value,
-                }));
-              }}
-              primary
-              required={required}
-              setContentOnMount
-              type={type}
-              value={settings?.[uuid] || ''}
-            />
-          </Spacing>
-        ))}
+            );
+          }
+          return (
+            <Spacing key={uuid} mt={2}>
+              {description}
+
+              <TextInput  
+                autoComplete={autoComplete}
+                disabled={disabled}
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  updateSettings(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={settings?.[uuid] || ''}
+              />
+            </Spacing>
+          );
+        })}
       </form>
     );
   }, [
@@ -191,6 +243,7 @@ function SyncData() {
     requireUserAuthentication,
     setUserGitSettings,
     setSync,
+    showSyncSettings,
     sync,
     userGitSettings,
   ]);
@@ -248,7 +301,7 @@ function SyncData() {
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           {authType === AuthType.SSH && (
             <Text bold>
-              You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git" openNewWindow>
+              You will need to <Link href="https://docs.mage.ai/development/git/configure#generate-ssh-token" openNewWindow>
                 set up your SSH key
               </Link> if you have not done so already.
             </Text>
@@ -317,10 +370,10 @@ function SyncData() {
             <Text bold>
               Use <Link
                 bold
-                href="https://docs.mage.ai/production/data-sync/git#git-sync"
+                href="https://docs.mage.ai/production/data-sync/git-sync"
                 openNewWindow>
-                Git Sync
-              </Link> (Click link for more information)
+                One-way git sync
+              </Link> (Click link for more info)
             </Text>
           </FlexContainer>
         </Spacing>
@@ -366,6 +419,25 @@ function SyncData() {
             <FlexContainer alignItems="center">
               <Spacing mt={2}>
                 <Checkbox
+                  checked={sync?.sync_submodules}
+                  label="Include submodules"
+                  onClick={() => {
+                    setSync(prev => ({
+                      ...prev,
+                      sync_submodules: !sync?.sync_submodules,
+                    }));
+                  }}
+                />
+              </Spacing>
+            </FlexContainer>
+            <Spacing mt={2}>
+              <Headline level={5}>
+                Additional sync settings
+              </Headline>
+            </Spacing>
+            <FlexContainer alignItems="center">
+              <Spacing mt={2}>
+                <Checkbox
                   checked={sync?.sync_on_pipeline_run}
                   label="Sync before each trigger run"
                   onClick={() => {
@@ -397,44 +469,7 @@ function SyncData() {
                 the specified Git repository.
               </Text>
             </Spacing>
-            <form>
-              {additionalGitFields.map(({
-                autoComplete,
-                disabled,
-                label,
-                labelDescription,
-                required,
-                type,
-                uuid,
-              }: SyncFieldType) => (
-                <Spacing key={uuid} mt={2}>
-                  {labelDescription && (
-                    <Spacing mb={1}>
-                      <Text small>
-                        {labelDescription}
-                      </Text>
-                    </Spacing>
-                  )}
-                  <TextInput  
-                    autoComplete={autoComplete}
-                    disabled={disabled}
-                    label={label}
-                    // @ts-ignore
-                    onChange={e => {
-                      setSync(prev => ({
-                        ...prev,
-                        [uuid]: e.target.value,
-                      }));
-                    }}
-                    primary
-                    required={required}
-                    setContentOnMount
-                    type={type}
-                    value={sync?.[uuid] || ''}
-                  />
-                </Spacing>
-              ))}
-            </form>
+            {userGitFields}
           </>
         ) : (
           <>
@@ -464,12 +499,17 @@ function SyncData() {
           </Button>
         </Spacing>
 
-        {error && (
-          <Spacing mt={1}>
-            <Text danger>
-              {error}
-            </Text>
-          </Spacing>
+        {errors && (
+          <ClickOutside
+            disableClickOutside
+            isOpen
+            onClickOutside={() => setErrors?.(null)}
+          >
+            <ErrorPopup
+              {...errors}
+              onClose={() => setErrors?.(null)}
+            />
+          </ClickOutside>
         )}
         
         {showSyncOperations && (

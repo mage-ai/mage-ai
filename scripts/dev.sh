@@ -37,6 +37,21 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --enable_prometheus)
+    ENABLE_PROMETHEUS=1
+    shift # past argument
+    shift # past value
+    ;;
+    --huggingface_api)
+    HUGGINGFACE_API="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --huggingface_inference_api_token)
+    HUGGINGFACE_INFERENCE_API_TOKEN="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --gcp_project_id)
     GCP_PROJECT_ID="$3"
     shift # past argument
@@ -87,6 +102,21 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --require-user-authentication)
+    REQUIRE_USER_PERMISSIONS=1
+    shift # past argument
+    shift # past value
+    ;;
+    --debug)
+    DEBUG=1
+    shift # past argument
+    shift # past value
+    ;;
+    --spark)
+    SPARK=1
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -107,16 +137,27 @@ export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
 export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
+export ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
 
 export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
 export GCP_REGION=$GCP_REGION
 
+export HUGGINGFACE_API=$HUGGINGFACE_API
+export HUGGINGFACE_INFERENCE_API_TOKEN=$HUGGINGFACE_INFERENCE_API_TOKEN
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
 export OPENAI_API_KEY=$OPENAI_API_KEY
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
+export DEBUG=$DEBUG
+
+UP_SERVICES="server app"
+
+if [[ "$SPARK" == "1" ]]; then
+    UP_SERVICES="server_spark app_spark"
+fi
 
 if command -v docker-compose &> /dev/null
 then
@@ -125,12 +166,12 @@ then
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker-compose -f docker-compose.yml up
+    docker-compose -f docker-compose.yml up $UP_SERVICES
 else
     # docker-compose does not exist
     HOST=$HOST \
     PORT=$PORT \
     PROJECT=$PROJECT_NAME \
     MANAGE_INSTANCE=$MANAGE_INSTANCE \
-    docker compose -f docker-compose.yml up
+    docker compose -f docker-compose.yml up $UP_SERVICES
 fi

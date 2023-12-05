@@ -1,5 +1,7 @@
 import singer
-from tap_pipedrive.stream import PipedriveIterStream
+
+from mage_integrations.sources.pipedrive.tap_pipedrive.stream import PipedriveIterStream
+
 
 class DealsProductsStream(PipedriveIterStream):
     base_endpoint = 'deals'

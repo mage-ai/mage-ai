@@ -20,6 +20,7 @@ Provide instructions so we can reproduce.
 - [ ] I have added unit tests that prove my fix is effective or that my feature works
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
+- [ ] If new documentation has been added, relative paths have been added to the appropriate section of `docs/mint.json`
 
 cc:
 <!-- Optionally mention someone to let them know about this pull request -->

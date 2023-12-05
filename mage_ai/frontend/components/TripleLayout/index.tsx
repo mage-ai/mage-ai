@@ -28,6 +28,7 @@ import {
   BeforeStyle,
   DRAGGABLE_WIDTH,
   DraggableStyle,
+  InlineContainerStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
@@ -56,31 +57,40 @@ import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
+  afterDividerContrast?: boolean;
+  afterFooter?: any;
+  afterFooterBottomOffset?: number;
   afterHeader?: any;
   afterHeaderOffset?: number;
   afterHeightOffset?: number;
   afterHidden: boolean;
+  afterInnerHeightMinus?: number;
   afterMousedownActive: boolean;
   afterNavigationItems?: NavigationItem[];
   afterOverflow?: 'hidden';
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeDividerContrast?: boolean;
   beforeFooter?: any;
   beforeHeader?: any;
   beforeHeaderOffset?: number;
   beforeHeightOffset?: number;
-  beforeHidden: boolean;
+  beforeHidden?: boolean;
   beforeMousedownActive: boolean;
   beforeNavigationItems?: NavigationItem[];
   beforeWidth?: number;
   children: any;
   contained?: boolean;
+  footerOffset?: number;
   header?: any;
   headerOffset?: number;
+  height?: number;
   hideAfterCompletely?: boolean;
   hideBeforeCompletely?: boolean;
+  inline?: boolean;
   leftOffset?: number;
+  mainContainerFooter?: any;
   mainContainerHeader?: any;
   mainContainerRef: any;
   navigationShowMore?: boolean;
@@ -95,16 +105,21 @@ type TripleLayoutProps = {
 
 function TripleLayout({
   after,
+  afterDividerContrast,
+  afterFooter,
+  afterFooterBottomOffset,
   afterHeader,
   afterHeaderOffset,
   afterHeightOffset,
   afterHidden,
+  afterInnerHeightMinus,
   afterMousedownActive,
   afterNavigationItems,
   afterOverflow,
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeDividerContrast,
   beforeFooter,
   beforeHeader,
   beforeHeaderOffset,
@@ -115,11 +130,15 @@ function TripleLayout({
   beforeWidth = 0,
   children,
   contained,
+  footerOffset,
   header,
   headerOffset = 0,
+  height: heightInlineContainer,
   hideAfterCompletely,
   hideBeforeCompletely,
+  inline,
   leftOffset = 0,
+  mainContainerFooter,
   mainContainerHeader,
   mainContainerRef,
   navigationShowMore,
@@ -140,18 +159,20 @@ function TripleLayout({
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
     setAfterHidden?.(val);
-    set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
+    set(uuid || LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
   }, [
     afterHidden,
     setAfterHidden,
+    uuid,
   ]);
   const toggleBefore = useCallback(() => {
     const val = !beforeHidden;
     setBeforeHidden?.(val);
-    set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
+    set(uuid || LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
   }, [
     beforeHidden,
     setBeforeHidden,
+    uuid,
   ]);
 
   useEffect(() => {
@@ -261,11 +282,13 @@ function TripleLayout({
   const hasAfterNavigationItems = useMemo(() => afterNavigationItems?.length >= 1, [
     afterNavigationItems,
   ]);
+
   const afterContent = useMemo(() => (
     <>
       {(setAfterHidden || afterHeader) && (
         <>
           <AsideHeaderStyle
+            inline={inline}
             style={{
               width: hasAfterNavigationItems
                 // Required
@@ -319,6 +342,7 @@ function TripleLayout({
       )}
 
       <AfterInnerStyle
+        heightMinus={afterInnerHeightMinus}
         noScrollbarTrackBackground
         overflow={afterOverflow}
         ref={refAfterInner}
@@ -331,9 +355,29 @@ function TripleLayout({
       >
         {!afterHidden && after}
       </AfterInnerStyle>
+
+      {afterFooter && !afterHidden && (
+        <AsideFooterStyle
+          bottom={inline
+            ? afterFooterBottomOffset
+            : null
+          }
+          inline={inline}
+          style={{
+            overflow: afterHidden
+              ? 'visible'
+              : 'hidden',
+            width: afterWidthFinal,
+          }}
+        >
+          {afterFooter}
+        </AsideFooterStyle>
+      )}
     </>
   ), [
     after,
+    afterFooter,
+    afterFooterBottomOffset,
     afterHeader,
     afterHeaderOffset,
     afterHeightOffset,
@@ -344,6 +388,7 @@ function TripleLayout({
     contained,
     hasAfterNavigationItems,
     headerOffset,
+    inline,
     refAfterInner,
     setAfterHidden,
     toggleAfter,
@@ -360,6 +405,7 @@ function TripleLayout({
       {(setBeforeHidden || beforeHeader) && (
         <AsideHeaderStyle
           contained={contained}
+          inline={inline}
           style={{
             overflow: beforeHidden
               ? 'visible'
@@ -423,7 +469,7 @@ function TripleLayout({
       )}
 
       <BeforeInnerStyle
-        contained={contained}
+        contained={contained && !inline}
         heightOffset={beforeFooter
           ? beforeFooterRef?.current?.getBoundingClientRect()?.height
           : null
@@ -465,13 +511,14 @@ function TripleLayout({
     contained,
     headerOffset,
     hasBeforeNavigationItems,
+    inline,
     refBeforeInner,
     setBeforeHidden,
     toggleBefore,
   ]);
 
-  return (
-    <ClientOnly>
+  const el = useMemo(() => (
+    <>
       {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
         <NextHead>
           <style
@@ -495,6 +542,7 @@ function TripleLayout({
       {before && (
         <BeforeStyle
           heightOffset={beforeHeightOffset}
+          inline={inline}
           style={{
             left: leftOffset,
             width: beforeWidthFinal,
@@ -503,6 +551,7 @@ function TripleLayout({
           <DraggableStyle
             active={beforeMousedownActive}
             disabled={beforeHidden}
+            contrast={beforeDividerContrast}
             ref={refBeforeInnerDraggable}
             right={0}
             top={contained ? 0 : ASIDE_HEADER_HEIGHT}
@@ -546,6 +595,7 @@ function TripleLayout({
       )}
 
       <MainWrapper
+        inline={inline}
         style={{
           left: beforeWidthFinal + leftOffset,
           width: mainWidth,
@@ -558,8 +608,10 @@ function TripleLayout({
             ? headerOffset
             : ((mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset)
           }
+          footerOffset={footerOffset}
+          inline={inline}
           style={{
-            width: mainWidth,
+            width: inline ? null : mainWidth,
           }}
         >
           <MainContentInnerStyle
@@ -569,17 +621,21 @@ function TripleLayout({
             {children}
           </MainContentInnerStyle>
         </MainContentStyle>
+
+        {mainContainerFooter}
       </MainWrapper>
 
       {after && !shouldHideAfterWrapper && (
         <AfterStyle
           heightOffset={afterHeightOffset}
+          inline={inline}
           style={{
             width: afterWidthFinal,
           }}
         >
           <DraggableStyle
             active={afterMousedownActive}
+            contrast={afterDividerContrast}
             disabled={afterHidden}
             left={0}
             ref={refAfterInnerDraggable}
@@ -622,6 +678,50 @@ function TripleLayout({
           {!hasAfterNavigationItems && afterContent}
         </AfterStyle>
       )}
+    </>
+  ), [
+    after,
+    afterContent,
+    afterDividerContrast,
+    afterHeightOffset,
+    afterHidden,
+    afterMousedownActive,
+    afterNavigationItems,
+    afterWidthFinal,
+    beforeContent,
+    beforeDividerContrast,
+    beforeHeightOffset,
+    beforeHidden,
+    beforeMousedownActive,
+    beforeNavigationItems,
+    beforeWidthFinal,
+    children,
+    contained,
+    footerOffset,
+    hasAfterNavigationItems,
+    hasBeforeNavigationItems,
+    header,
+    headerOffset,
+    inline,
+    leftOffset,
+    mainContainerFooter,
+    mainContainerHeader,
+    mainContainerRef,
+    mainWidth,
+    navigationShowMore,
+    refAfterInnerDraggable,
+    refBeforeInnerDraggable,
+    shouldHideAfterWrapper,
+  ]);
+
+  return (
+    <ClientOnly>
+      {inline && (
+        <InlineContainerStyle height={heightInlineContainer}>
+          {el}
+        </InlineContainerStyle>
+      )}
+      {!inline && el}
     </ClientOnly>
   );
 }

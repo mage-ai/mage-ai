@@ -13,7 +13,7 @@ from mage_ai.data_preparation.models.variable import (
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_variables_dir
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.constants import S3_PREFIX
+from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.utils import clean_name
 
@@ -40,6 +40,8 @@ class VariableManager:
         )
         if variables_dir is not None and variables_dir.startswith(S3_PREFIX):
             return S3VariableManager(**manager_args)
+        elif variables_dir is not None and variables_dir.startswith(GCS_PREFIX):
+            return GCSVariableManager(**manager_args)
         else:
             return VariableManager(**manager_args)
 
@@ -50,7 +52,8 @@ class VariableManager:
         variable_uuid: str,
         data: Any,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -65,6 +68,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         )
         # Delete data if it exists
         variable.delete()
@@ -96,7 +100,8 @@ class VariableManager:
         variable_uuid: str,
         data: Any,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -111,6 +116,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         )
         # Delete data if it exists
         variable.delete()
@@ -164,6 +170,7 @@ class VariableManager:
         variable_uuid: str,
         partition: str = None,
         variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
     ) -> None:
         Variable(
             variable_uuid,
@@ -172,6 +179,7 @@ class VariableManager:
             partition=partition,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         ).delete()
 
     def get_variable(
@@ -182,9 +190,11 @@ class VariableManager:
         dataframe_analysis_keys: List[str] = None,
         partition: str = None,
         variable_type: VariableType = None,
+        raise_exception: bool = False,
         sample: bool = False,
         sample_count: int = None,
         spark=None,
+        clean_block_uuid: bool = True,
     ) -> Any:
         variable = self.get_variable_object(
             pipeline_uuid,
@@ -193,9 +203,11 @@ class VariableManager:
             partition=partition,
             variable_type=variable_type,
             spark=spark,
+            clean_block_uuid=clean_block_uuid,
         )
         return variable.read_data(
             dataframe_analysis_keys=dataframe_analysis_keys,
+            raise_exception=raise_exception,
             sample=sample,
             sample_count=sample_count,
             spark=spark,
@@ -208,6 +220,7 @@ class VariableManager:
         variable_uuid: str,
         partition: str = None,
         variable_type: VariableType = None,
+        clean_block_uuid: bool = True,
         spark=None,
     ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
@@ -220,6 +233,7 @@ class VariableManager:
             spark=spark,
             storage=self.storage,
             variable_type=variable_type,
+            clean_block_uuid=clean_block_uuid,
         )
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
@@ -247,12 +261,13 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         partition: str = None,
+        clean_block_uuid: bool = True,
     ) -> List[str]:
         variable_dir_path = os.path.join(
             self.__pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
             partition or '',
-            clean_name(block_uuid),
+            clean_name(block_uuid) if clean_block_uuid else block_uuid,
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
@@ -273,6 +288,14 @@ class S3VariableManager(VariableManager):
         from mage_ai.data_preparation.storage.s3_storage import S3Storage
 
         self.storage = S3Storage(dirpath=variables_dir)
+
+
+class GCSVariableManager(VariableManager):
+    def __init__(self, repo_path=None, variables_dir=None):
+        super().__init__(repo_path=repo_path, variables_dir=variables_dir)
+        from mage_ai.data_preparation.storage.gcs_storage import GCSStorage
+
+        self.storage = GCSStorage(dirpath=variables_dir)
 
 
 def clean_variables(

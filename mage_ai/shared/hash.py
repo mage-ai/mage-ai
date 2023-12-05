@@ -2,6 +2,7 @@ import json
 import math
 import re
 from functools import reduce
+from typing import Any, Dict, List
 
 
 def dig(obj_arg, arr_or_string):
@@ -60,10 +61,10 @@ def ignore_keys(d, keys):
     return d2
 
 
-def ignore_keys_with_blank_values(d):
+def ignore_keys_with_blank_values(d: Dict, include_values: List[Any] = None) -> Dict:
     d2 = d.copy()
     for key, value in d.items():
-        if not value:
+        if not value and (not include_values or value not in include_values):
             d2.pop(key)
     return d2
 
@@ -105,11 +106,17 @@ def index_by(func, arr):
     return obj
 
 
-def merge_dict(a, b):
-    c = a.copy()
+def merge_dict(a: Dict, b: Dict) -> Dict:
+    if a:
+        c = a.copy()
+    else:
+        c = {}
+
     if not b:
         return c
+
     c.update(b)
+
     return c
 
 
@@ -119,3 +126,23 @@ def replace_dict_nan_value(d):
             return None
         return v
     return {k: _replace_nan_value(v) for k, v in d.items()}
+
+
+def get_safe_value(data: Dict, key: str, default_value):
+    return data.get(key, default_value) if data else default_value
+
+
+def set_value(obj: Dict, keys: List[str], value) -> Dict:
+    if len(keys) >= 2:
+        for idx in range(len(keys)):
+            keys_init = keys[:idx]
+            if len(keys_init) >= 1:
+                set_value(obj, keys_init, dig(obj, keys_init) or {})
+
+    results = dict(__obj_to_set_value=obj, __value=value)
+
+    key = ''.join(f"['{key}']" for key in keys)
+    expression = f'__obj_to_set_value{key} = __value'
+    exec(expression, results)
+
+    return results['__obj_to_set_value']

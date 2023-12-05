@@ -114,6 +114,8 @@ def convert_python_type_to_redshift_type(python_type):
         return 'FLOAT8'
     elif python_type is bool:
         return 'BOOLEAN'
+    elif python_type is datetime:
+        return 'TIMESTAMP'
     return 'VARCHAR'
 
 

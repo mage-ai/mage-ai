@@ -1,0 +1,3 @@
+config:
+{{ config }}
+source: {{ data_integration_uuid }}

@@ -8,11 +8,15 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api'
+import useProject from '@utils/models/project/useProject';
 import {
   BranchAlt,
+  Insights,
   DocumentIcon,
   Lightning,
   NavDashboard,
@@ -22,6 +26,7 @@ import {
   HexagonAll,
   TemplateShapes,
   Terminal,
+  TripleBoxes,
 } from '@oracle/icons';
 import {
   NavigationItemStyle,
@@ -29,100 +34,133 @@ import {
 } from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { pushAtIndex } from '@utils/array';
 
 const ICON_SIZE = 3 * UNIT;
-const DEFAULT_NAV_ITEMS = [
-  {
-    id: 'main',
-    items: [
-      {
-        Icon: NavDashboard,
-        id: 'overview',
-        label: () => 'Overview',
-        linkProps: {
-          href: '/overview',
-        },
+const DEFAULT_NAV_ITEMS = ({
+  featureEnabled,
+  project,
+}: {
+  featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
+  project?: ProjectType;
+}) => {
+  let miscItems = [
+    {
+      Icon: DocumentIcon,
+      id: 'files',
+      label: () => 'Files',
+      linkProps: {
+        href: '/files',
       },
-      {
-        Icon: PipelineV3,
-        id: 'pipelines',
-        label: () => 'Pipelines',
-        linkProps: {
-          href: '/pipelines',
-        },
+    },
+    {
+      Icon: TemplateShapes,
+      id: 'templates',
+      label: () => 'Templates',
+      linkProps: {
+        href: '/templates',
       },
-      {
-        Icon: Lightning,
-        id: 'triggers',
-        label: () => 'Triggers',
-        linkProps: {
-          href: '/triggers',
-        },
+    },
+    {
+      Icon: BranchAlt,
+      id: 'version-control',
+      label: () => 'Version control',
+      linkProps: {
+        href: '/version-control',
       },
-      {
-        Icon: Schedule,
-        id: 'pipeline-runs',
-        label: () => 'Pipeline runs',
-        linkProps: {
-          href: '/pipeline-runs',
-        },
+    },
+    {
+      Icon: Terminal,
+      id: 'terminal',
+      label: () => 'Terminal',
+      linkProps: {
+        href: '/terminal',
       },
-      {
-        Icon: HexagonAll,
-        id: 'global-data-products',
-        label: () => 'Global data products (beta)',
-        linkProps: {
-          href: '/global-data-products',
-        },
+    },
+    {
+      Icon: Settings,
+      id: 'settings',
+      label: () => 'Settings',
+      linkProps: {
+        href: '/settings',
       },
-    ],
-  },
-  {
-    id: 'misc',
-    items: [
-      {
-        Icon: DocumentIcon,
-        id: 'files',
-        label: () => 'Files',
-        linkProps: {
-          href: '/files',
-        },
+    },
+  ];
+
+  if (featureEnabled(FeatureUUIDEnum.COMPUTE_MANAGEMENT)) {
+    miscItems = pushAtIndex({
+      Icon: TripleBoxes,
+      id: 'compute',
+      label: () => 'Compute management (beta)',
+      linkProps: {
+        href: '/compute',
       },
-      {
-        Icon: TemplateShapes,
-        id: 'templates',
-        label: () => 'Templates',
-        linkProps: {
-          href: '/templates',
-        },
+    }, 4, miscItems);
+  }
+
+  if (featureEnabled(FeatureUUIDEnum.GLOBAL_HOOKS)) {
+    miscItems = pushAtIndex({
+      Icon: Insights,
+      id: 'global-hooks',
+      label: () => 'Global hooks (beta)',
+      linkProps: {
+        href: '/global-hooks',
       },
-      {
-        Icon: BranchAlt,
-        id: 'version-control',
-        label: () => 'Version control',
-        linkProps: {
-          href: '/version-control',
+    }, 4, miscItems);
+  }
+
+  return [
+    {
+      id: 'main',
+      items: [
+        {
+          Icon: NavDashboard,
+          id: 'overview',
+          label: () => 'Overview',
+          linkProps: {
+            href: '/overview',
+          },
         },
-      },
-      {
-        Icon: Terminal,
-        id: 'terminal',
-        label: () => 'Terminal',
-        linkProps: {
-          href: '/terminal',
+        {
+          Icon: PipelineV3,
+          id: 'pipelines',
+          label: () => 'Pipelines',
+          linkProps: {
+            href: '/pipelines',
+          },
         },
-      },
-      {
-        Icon: Settings,
-        id: 'settings',
-        label: () => 'Settings',
-        linkProps: {
-          href: '/settings',
+        {
+          Icon: Lightning,
+          id: 'triggers',
+          label: () => 'Triggers',
+          linkProps: {
+            href: '/triggers',
+          },
         },
-      },
-    ],
-  },
-];
+        {
+          Icon: Schedule,
+          id: 'pipeline-runs',
+          label: () => 'Pipeline runs',
+          linkProps: {
+            href: '/pipeline-runs',
+          },
+        },
+        {
+          Icon: HexagonAll,
+          id: 'global-data-products',
+          label: () => 'Global data products',
+          linkProps: {
+            href: '/global-data-products',
+          },
+        },
+      ],
+    },
+    {
+      id: 'misc',
+      items: miscItems,
+    },
+  ];
+}
 
 export type NavigationItem = {
   Icon?: any;
@@ -154,6 +192,17 @@ function VerticalNavigation({
 }: VerticalNavigationProps) {
   const router = useRouter();
   const { pathname } = router;
+
+  const {
+    project,
+    featureEnabled,
+  } = useProject();
+  const defaultNavItems = useMemo(() => DEFAULT_NAV_ITEMS({
+    project,
+    featureEnabled,
+  }), [
+    project,
+  ]);
 
   const buildItem = useCallback((item, idx: number) => {
     const {
@@ -358,7 +407,7 @@ function VerticalNavigation({
 
   const buttons = useMemo(() => {
     const arr = [];
-    (navigationItems || DEFAULT_NAV_ITEMS).forEach((item, idx: number) => {
+    (navigationItems || defaultNavItems).forEach((item, idx: number) => {
       const { id, items } = item;
 
       if (items?.length >= 1) {
@@ -382,6 +431,7 @@ function VerticalNavigation({
     return arr;
   }, [
     buildItem,
+    defaultNavItems,
     navigationItems,
     visible,
   ]);

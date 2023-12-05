@@ -1,3 +1,5 @@
+from enum import Enum
+
 # ECS environment variables
 ECS_CLUSTER_NAME = 'ECS_CLUSTER_NAME'
 ECS_TASK_DEFINITION = 'ECS_TASK_DEFINITION'
@@ -23,3 +25,10 @@ SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH = 'SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH'
 # K8s constants
 GCP_BACKEND_CONFIG_ANNOTATION = 'cloud.google.com/backend-config'
 NODE_PORT_SERVICE_TYPE = 'NodePort'
+
+
+class ClusterType(str, Enum):
+    EMR = 'emr'
+    ECS = 'ecs'
+    CLOUD_RUN = 'cloud_run'
+    K8S = 'k8s'

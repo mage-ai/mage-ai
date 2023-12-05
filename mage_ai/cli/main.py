@@ -11,7 +11,7 @@ from typer.core import TyperGroup
 from mage_ai.cli.utils import parse_runtime_variables
 from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.services.newrelic import initialize_new_relic
-from mage_ai.shared.constants import InstanceType
+from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 
 
 class OrderCommands(TyperGroup):
@@ -166,7 +166,7 @@ def start(
         project=project_path,
         manage=manage_instance == "1",
         dbt_docs=dbt_docs_instance == "1",
-        instance_type=instance_type,
+        instance_type=os.getenv(ENV_VAR_INSTANCE_TYPE, instance_type),
         project_type=project_type,
         cluster_type=cluster_type,
         project_uuid=project_uuid,
@@ -235,9 +235,10 @@ def run(
             runtime_variables = parse_runtime_variables(runtime_vars)
 
         sys.path.append(os.path.dirname(project_path))
-        pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
-
+        # Initialize db_connection session before getting the pipeline in case
+        # "mage_secret_var" syntax is used in the project's metadata.yaml
         db_connection.start_session()
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
         if pipeline_run_id is None:
             default_variables = get_global_variables(pipeline_uuid)

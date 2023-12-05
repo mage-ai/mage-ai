@@ -4,6 +4,7 @@ import { useMutation } from 'react-query';
 
 import AddChartMenu from './AddChartMenu';
 import BlockType, {
+  BlockLanguageEnum,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -138,6 +139,7 @@ function CommandButtons({
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
     color: blockColor,
+    language,
     metadata,
     type,
     uuid,
@@ -415,7 +417,10 @@ function CommandButtons({
               }}
               small
             >
-              {metadata?.dbt?.block?.snapshot ? 'Run snapshot' : 'Compile & preview'}
+              {(language === BlockLanguageEnum.YAML
+                ? 'Run command'
+                : 'Compile & preview'
+              )}
             </Button>
           )}
           <ClickOutside
@@ -720,6 +725,8 @@ function CommandButtons({
                 blocksMapping,
                 fetchFileTree,
                 fetchPipeline,
+                openSidekickView,
+                project,
                 savePipelineContent,
                 updatePipeline,
               },

@@ -15,5 +15,5 @@ class PipelineTriggerPresenter(BasePresenter):
         'variables',
     ]
 
-    def present(self, **kwargs):
+    async def prepare_present(self, **kwargs):
         return self.resource.model.to_dict()

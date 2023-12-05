@@ -3,6 +3,7 @@ import NextLink from 'next/link';
 import BackfillType, {
   BACKFILL_TYPE_DATETIME,
   BACKFILL_TYPE_CODE,
+  BackfillStatusEnum,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
 import Link from '@oracle/elements/Link';
@@ -10,9 +11,12 @@ import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Edit } from '@oracle/icons';
 import { RunStatus } from '@interfaces/PipelineRunType';
-import { TIMEZONE_TOOLTIP_PROPS } from '@components/shared/Table/constants';
+import {
+  TIMEZONE_TOOLTIP_PROPS,
+  getRunStatusTextProps,
+} from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone } from '@utils/date';
+import { datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { isViewer } from '@utils/session';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
@@ -88,7 +92,12 @@ function BackfillsTable({
         total_run_count: totalRunCount,
       }, idx) => {
         const arr = [
-          <Text default key="status" monospace>{status || 'inactive'}</Text>,
+          <Text
+            {...getRunStatusTextProps(status)}
+            key="status"
+          >
+            {status || 'inactive'}
+          </Text>,
           <NextLink
             as={`/pipelines/${pipelineUUID}/backfills/${id}`}
             href={'/pipelines/[pipeline]/backfills/[...slug]'}
@@ -124,7 +133,7 @@ function BackfillsTable({
             key="started_at"
             monospace
             small
-            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+            title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
             {startedAt
               ? (displayLocalTimezone
@@ -140,7 +149,7 @@ function BackfillsTable({
             key="completed_at"
             monospace
             small
-            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+            title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
             {completedAt
               ? (displayLocalTimezone

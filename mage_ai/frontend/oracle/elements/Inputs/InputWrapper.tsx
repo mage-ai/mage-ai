@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group';
 import Text, { SHARED_LARGE_TEXT_RESPONSIVE_STYLES } from '../Text';
 import dark from '@oracle/styles/themes/dark';
 import {
+  BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
@@ -30,7 +31,7 @@ export type MetaType = {
 export type InputWrapperProps = {
   afterIcon?: any;
   afterIconSize?: number;
-  afterIconClick?: () => void;
+  afterIconClick?: (e?: any, ref?: any) => void;
   alignCenter?: boolean;
   alignRight?: boolean;
   autoComplete?: string;
@@ -72,6 +73,7 @@ export type InputWrapperProps = {
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRadiusBottom?: boolean;
+  noBorderRadiusTop?: boolean;
   noBorderUntilFocus?: boolean;
   noBorderUntilHover?: boolean;
   noBlinkingCursor?: boolean;
@@ -97,7 +99,7 @@ export type InputWrapperProps = {
   spellCheck?: boolean;
   topPosition?: boolean;
   type?: string;
-  value?: string | number | string[];
+  value?: string | number | string[] | boolean;
   borderTheme?: boolean;
   visible?: boolean;
   warning?: boolean;
@@ -112,6 +114,7 @@ type InputWrapperInternalProps = {
 
 type IconContainerProps = {
   compact?: boolean;
+  noPointerEvents?: boolean;
   right?: boolean;
   top?: boolean;
 };
@@ -122,6 +125,9 @@ const ContainerStyle = styled.div<{
   maxWidth?: number;
   visible?: boolean;
 }>`
+  display: flex;
+  align-items: center;
+
   .label-enter {
     opacity: 0;
     transform: translate(0, ${UNIT}px);
@@ -182,12 +188,16 @@ const LabelContainerStyle = styled.div<{
 `;
 
 const IconContainerStyle = styled.div<IconContainerProps>`
-  position: absolute;
-  height: 100%;
-  display: flex;
   align-items: center;
+  display: flex;
+  height: 100%;
+  position: absolute;
 
   top: ${({ top }) => top ? 0 : BORDER_WIDTH}px;
+
+  ${props => props.noPointerEvents && `
+    pointer-events: none;
+  `}
 
   ${props => !props.compact && `
     padding: ${UNIT}px;
@@ -237,7 +247,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   `}
 
   ${props => !props.borderless && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${BORDER_RADIUS}px;
     border-style: ${BORDER_STYLE};
     border-width: ${BORDER_WIDTH}px};
   `}
@@ -245,6 +255,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   ${props => props.noBorderRadiusBottom && `
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+  `}
+
+  ${props => props.noBorderRadiusBottom && `
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   `}
 
   ${props => props.borderRadius && `
@@ -658,6 +673,7 @@ const InputWrapper = ({
   ...props
 }: InputWrapperProps & InputWrapperInternalProps, ref) => {
   const hasError: boolean = !!(meta && meta.touched && meta.error);
+  const inputRef = useRef(null);
   const spanRef = useRef(null);
 
   const iconProps = {
@@ -665,7 +681,11 @@ const InputWrapper = ({
     size: UNIT * (compact ? 2.5 : 3),
   };
   const AfterIconEl = afterIcon && (
-    <IconContainerStyle compact={compact} right>
+    <IconContainerStyle
+      compact={compact}
+      noPointerEvents={!afterIconClick}
+      right
+    >
       {React.cloneElement(
         afterIcon,
         afterIconSize ? { ...iconProps, size: afterIconSize } : iconProps,
@@ -746,7 +766,12 @@ const InputWrapper = ({
           {React.cloneElement(
             beforeIcon,
             {
-              ...(beforeIconSize ? { ...iconProps, size: beforeIconSize } : iconProps),
+              ...(beforeIconSize
+                ? {
+                  ...iconProps,
+                  ...beforeIcon?.props,
+                  size: beforeIconSize,
+                } : iconProps),
               ...beforeIcon?.props,
             },
           )}
@@ -757,7 +782,7 @@ const InputWrapper = ({
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            afterIconClick();
+            afterIconClick(e, ref || inputRef);
           }}
         >
           {AfterIconEl}
@@ -802,14 +827,15 @@ const InputWrapper = ({
         passwordrules,
         placeholder: (label || label === 0) ? (showLabel ? '' : label) : placeholder,
         readOnly,
-        ref,
+        ref: ref || inputRef,
         type: typeProp,
         value,
         width: dynamicSizing ? dynamicWidth : width,
       })}
 
       {((meta?.touched && meta?.error) || (!isFocused && isTouched && !content && required)) && (
-        <Text danger small>
+        // @ts-ignore
+        <Text danger noWrapping small style={{ marginLeft: 12 }}>
           {meta?.error || 'This field is required.'}
         </Text>
       )}

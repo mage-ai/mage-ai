@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 from singer import metadata
 from singer.catalog import Catalog, CatalogEntry
-from tap_postmark.schema import load_schemas
-from tap_postmark.streams import STREAMS
+
+from mage_integrations.sources.postmark.tap_postmark.schema import load_schemas
+from mage_integrations.sources.postmark.tap_postmark.streams import STREAMS
 
 
 def discover() -> Catalog:  # noqa: WPS210

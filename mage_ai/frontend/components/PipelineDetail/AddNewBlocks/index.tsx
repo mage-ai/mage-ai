@@ -203,6 +203,10 @@ function AddNewBlocks({
   const blockTemplatesByBlockType = useMemo(() => groupBlockTemplates(
     blockTemplates,
     addNewBlock,
+    {
+      'data_integrations/destinations/base': true,
+      'data_integrations/sources/base': true,
+    },
   ), [
     addNewBlock,
     blockTemplates,

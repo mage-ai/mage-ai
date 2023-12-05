@@ -202,7 +202,7 @@ function CodeBlockExtraContent({
           <>
             {blockOptions}
 
-            <Spacing mx={1}>
+            <Spacing p={1}>
               <FlexContainer justifyContent="flex-end">
                 <Button
                   compact

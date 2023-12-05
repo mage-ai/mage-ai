@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Checkbox, { CheckboxProps } from '@oracle/elements/Checkbox';
 import ThemeBlock from '../../ThemeBlock';
@@ -16,7 +16,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<CheckboxProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<CheckboxProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Unchecked = Template.bind({});
 Unchecked.args = {

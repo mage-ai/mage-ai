@@ -21,8 +21,11 @@ import {
   KEY_CODE_ARROW_UP,
   KEY_CODE_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
+
+export const DEFAULT_MENU_ITEM_HEIGHT = UNIT * 4.5;
 
 export type FlyoutMenuItemType = {
   beforeIcon?: JSX.Element;
@@ -47,15 +50,17 @@ export type FlyoutMenuItemType = {
 
 export type FlyoutMenuProps = {
   alternateBackground?: boolean;
+  customSubmenuHeights?: { [key: string]: number };
   disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
+  multipleConfirmDialogues?: boolean;
   onClickCallback?: () => void;
   open: boolean;
   parentRef: any;
   rightOffset?: number;
   roundedStyle?: boolean;
-  setConfirmationDialogueOpen?: (open: boolean) => void;
+  setConfirmationDialogueOpen?: (open: any) => void;   // "open" arg can be boolean or string (uuid)
   setConfirmationAction?: (action: any) => void;
   topOffset?: number;
   uuid: string;
@@ -64,9 +69,11 @@ export type FlyoutMenuProps = {
 
 function FlyoutMenu({
   alternateBackground,
+  customSubmenuHeights,
   disableKeyboardShortcuts,
   items,
   left,
+  multipleConfirmDialogues,
   onClickCallback,
   open,
   parentRef,
@@ -167,8 +174,17 @@ function FlyoutMenu({
   ) => {
     depth += 1;
 
+    const hasCustomHeight = customSubmenuHeights?.hasOwnProperty(uuid);
+    const submenuHeight = hasCustomHeight
+      ? customSubmenuHeights?.[uuid]
+      : null;
+    const customHeightOffset = hasCustomHeight
+      ? customSubmenuHeights?.[uuid] - DEFAULT_MENU_ITEM_HEIGHT
+      : 0;
+
     return (
       <FlyoutMenuContainerStyle
+        maxHeight={submenuHeight}
         roundedStyle={roundedStyle}
         style={{
           display: (visible || submenuVisible[uuid]) ? null : 'none',
@@ -189,7 +205,7 @@ function FlyoutMenu({
                   ? submenuTopOffset2
                   : submenuTopOffset3)
               ) || 0)
-          ),
+          ) - customHeightOffset,
         }}
         width={width}
       >
@@ -246,7 +262,7 @@ function FlyoutMenu({
                 }
 
                 if (openConfirmationDialogue && !disabled) {
-                  setConfirmationDialogueOpen?.(true);
+                  setConfirmationDialogueOpen?.(multipleConfirmDialogues ? uuid : true);
                   setConfirmationAction?.(() => onClick);
                   onClickCallback?.();
                 } else if (onClick && !disabled) {

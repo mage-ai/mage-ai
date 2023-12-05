@@ -69,17 +69,23 @@ def has_at_least_editor_role_and_notebook_edit_access(
     user: User,
     entity: Entity = None,
     entity_id: str = None,
+    disable_notebook_edit_access_override: int = None,
 ) -> bool:
-    return DISABLE_NOTEBOOK_EDIT_ACCESS != 1 and \
-        has_at_least_editor_role(user, entity, entity_id)
+    value = DISABLE_NOTEBOOK_EDIT_ACCESS
+    if disable_notebook_edit_access_override is not None:
+        value = disable_notebook_edit_access_override
+    return value != 1 and has_at_least_editor_role(user, entity, entity_id)
 
 
 def has_at_least_editor_role_and_pipeline_edit_access(
     user: User,
     entity: Entity = None,
     entity_id: str = None,
+    disable_notebook_edit_access_override: int = None,
 ) -> bool:
-    return not is_disable_pipeline_edit_access() and \
+    return not is_disable_pipeline_edit_access(
+        disable_notebook_edit_access_override=disable_notebook_edit_access_override,
+    ) and \
         has_at_least_editor_role(user, entity, entity_id)
 
 

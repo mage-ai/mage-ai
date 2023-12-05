@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import RowDataTable, { RowDataTableProps } from '@oracle/components/RowDataTable';
@@ -20,7 +20,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<RowDataTableProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<RowDataTableProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

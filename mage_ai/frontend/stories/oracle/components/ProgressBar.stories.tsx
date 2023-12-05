@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ProgressBar, { ProgressBarProps } from '@oracle/components/ProgressBar';
 import ThemeBlock from 'stories/ThemeBlock';
@@ -15,7 +15,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<ProgressBarProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<ProgressBarProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Full = Template.bind({});
 Full.args = {

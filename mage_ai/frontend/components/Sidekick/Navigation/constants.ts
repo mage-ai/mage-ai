@@ -1,4 +1,5 @@
 import PipelineType from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { NavigationItem } from '@components/Dashboard/VerticalNavigation';
 import {
@@ -11,12 +12,14 @@ import { getFormattedVariables } from '../utils';
 export function buildNavigationItems({
   activeView,
   pipeline,
+  project,
   secrets,
   setActiveSidekickView,
   variables,
 }: {
   activeView: ViewKeyEnum;
   pipeline?: PipelineType;
+  project?: ProjectType;
   secrets?: {
     [key: string]: any;
   }[];
@@ -30,7 +33,10 @@ export function buildNavigationItems({
 }): NavigationItem[] {
   const vars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
-  return SIDEKICK_VIEWS.map(({
+  return SIDEKICK_VIEWS({
+    pipeline,
+    project,
+  }).map(({
     buildLabel,
     key,
     label,

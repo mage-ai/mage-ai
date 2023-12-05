@@ -1,0 +1,50 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "tags": {
+            "type": [
+                "object",
+                "null"
+            ]
+        },
+        "id": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "name": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "contentUrl": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "createdAt": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "date-time"
+        },
+        "viewUrlName": {
+            "type": [
+                "string",
+                "null"
+            ]
+        }
+    }
+}

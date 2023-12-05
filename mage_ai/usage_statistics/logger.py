@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import PipelineRun
-from mage_ai.shared.environments import get_env
+from mage_ai.shared.environments import get_env, is_test
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
     API_ENDPOINT,
@@ -290,6 +290,9 @@ class UsageStatisticLogger():
         data: Dict,
         event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
     ) -> bool:
+        if is_test():
+            return False
+
         if not self.help_improve_mage:
             return False
 

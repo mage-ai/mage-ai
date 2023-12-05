@@ -5,17 +5,24 @@ import Flex from '@oracle/components/Flex';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tile from '@oracle/components/Tile';
-import dark from '@oracle/styles/themes/dark';
+import Tooltip from '@oracle/components/Tooltip';
 import { GroupedPipelineRunCountType } from '@interfaces/MonitorStatsType';
-import { MetricsSummaryContainerStyle } from './index.style';
+import {
+  MetricContainerStyle,
+  MetricsSummaryContainerStyle,
+} from './index.style';
 import {
   PIPELINE_TYPE_ICON_MAPPING,
   PIPELINE_TYPE_LABEL_MAPPING,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
+import { Row } from '@components/shared/Grid';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
+import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
 import { capitalize } from '@utils/string';
 import { formatNumber } from '@utils/number';
+import { formatNumberLabel } from '@components/charts/utils/label';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortTuplesArrayByFirstItem } from '@utils/array';
 
 type MetricsSummaryProps = {
@@ -25,6 +32,7 @@ type MetricsSummaryProps = {
 function MetricsSummary({
   pipelineRunCountByPipelineType,
 }: MetricsSummaryProps) {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineRunCounts = useMemo(() => {
     if (!pipelineRunCountByPipelineType) {
       return [];
@@ -48,60 +56,72 @@ function MetricsSummary({
     );
   }, [pipelineRunCountByPipelineType]);
 
+  const utcTooltipEl = useMemo(() => (
+    displayLocalTimezone
+      ? (
+        <Spacing ml="4px">
+          <Tooltip
+            {...SHARED_UTC_TOOLTIP_PROPS}
+            label="Please note that these metrics are based on UTC time."
+          />
+        </Spacing>
+      ) : null
+  ), [displayLocalTimezone]);
+
   return (
     <MetricsSummaryContainerStyle>
-      <Text bold large>
-        Pipeline run metrics
-      </Text>
+      <FlexContainer alignItems="center">
+        <Text bold large>
+          Pipeline run metrics
+        </Text>
+        {utcTooltipEl}
+      </FlexContainer>
 
       <Spacing mb={2} />
 
-      <FlexContainer alignItems="center" justifyContent="space-between">
+      <Row style={{ gap: '16px' }}>
         {pipelineRunCounts.map((
           [pipelineType, countsObj],
           idx: number,
         ) => (
-          <Flex
-            alignItems="center"
-            flex="1"
-            justifyContent="space-between"
+          <MetricContainerStyle
+            includeLeftBorder={idx !== 0}
             key={`${pipelineType}_metric`}
-            style={idx !== 0
-              ? { borderLeft: `1px solid ${dark.interactive.defaultBorder}` }
-              : null
-            }
           >
-            <Spacing pl={idx !== 0 ? 3 : 0}>
-              <Tile
-                Icon={PIPELINE_TYPE_ICON_MAPPING[pipelineType]}
-                label={PIPELINE_TYPE_LABEL_MAPPING[pipelineType]}
-              />
-            </Spacing>
+            <Tile
+              Icon={PIPELINE_TYPE_ICON_MAPPING[pipelineType]}
+              label={PIPELINE_TYPE_LABEL_MAPPING[pipelineType]}
+            />
 
             {sortTuplesArrayByFirstItem(Object.entries(countsObj))
               .map(([runStatus, count], idx: number) => (
-                <Flex
-                  flexDirection="column"
-                  key={`${runStatus}_${idx}`}
-                >
-                  <Text>
-                    {capitalize(runStatus)}
-                  </Text>
-                  <Text
-                    bold
-                    danger={runStatus === RunStatusEnum.FAILED && count > 0}
-                    xlarge
+                <Spacing key={`${runStatus}_${idx}`} px={1}>
+                  <Flex
+                    flexDirection="column"
                   >
-                    {formatNumber(count)}
-                  </Text>
-                </Flex>
+                    <Text>
+                      {capitalize(runStatus)}
+                    </Text>
+                    <Text
+                      bold
+                      danger={runStatus === RunStatusEnum.FAILED && count > 0}
+                      title={formatNumber(count)}
+                      xlarge
+                    >
+                      {formatNumberLabel(
+                        count,
+                        { maxFractionDigits: 1, minAmount: 1000 },
+                      )}
+                    </Text>
+                  </Flex>
+                </Spacing>
               ),
             )}
 
             <Spacing pr={idx !== pipelineRunCounts.length - 1 ? 2 : 0} />
-          </Flex>
+          </MetricContainerStyle>
         ))}
-      </FlexContainer>
+      </Row>
     </MetricsSummaryContainerStyle>
   );
 }

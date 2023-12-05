@@ -22,4 +22,10 @@ You must enter the following credentials when configuring this source:
 | `ssh_password` | (Optional) The password used to connect to the bastion server. It should be set if you authenticate with the bastion server with password. | `password` |
 | `ssh_pkey` | (Optional) The path to the private key used to connect to the bastion server. It should be set if you authenticate with the bastion server with private key. | `/path/to/private/key` |
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `batch_fetch_limit` | The number of rows to fetch in each batch (default to 50k). You can specify a larger batch size if your instance has higher memory. | `50000`
+
 <br />

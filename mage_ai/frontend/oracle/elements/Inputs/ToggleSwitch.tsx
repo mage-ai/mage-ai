@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import InputWrapper, { InputWrapperProps, SHARED_INPUT_STYLES } from './InputWrapper';
 import dark from '@oracle/styles/themes/dark';
+import { pauseEvent as pauseEventFunc } from '@utils/events';
 
 const HEIGHT = 26;
 const WIDTH = 46;
@@ -10,11 +11,12 @@ const COMPACT_HEIGHT = 20;
 const COMPACT_WIDTH = 35;
 
 type ToggleSwitchProps = {
-  checked: boolean;
+  checked?: boolean;
   compact?: boolean;
   disabled?: boolean;
   monotone?: boolean;
-  onCheck: Dispatch<SetStateAction<boolean>>;
+  onCheck?: Dispatch<SetStateAction<boolean>>;
+  pauseEvent?: boolean;
   purpleBackground?: boolean;
 } & InputWrapperProps;
 
@@ -93,6 +95,7 @@ const ToggleSwitch = ({
   checked,
   disabled,
   onCheck,
+  pauseEvent = true,
   ...props
 }: ToggleSwitchProps, ref) => (
   <InputWrapper
@@ -107,12 +110,18 @@ const ToggleSwitch = ({
       >
         <input
           checked={checked}
+          readOnly
           type="checkbox"
         />
         <span
           onClick={disabled
             ? null
-            : () => onCheck?.(value => !value)
+            : (e) => {
+              if (pauseEvent) {
+                pauseEventFunc(e);
+              }
+              onCheck?.(value => !value);
+            }
           }
         />
       </ToggleSwitchStyle>

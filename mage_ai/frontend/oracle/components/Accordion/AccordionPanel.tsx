@@ -14,6 +14,8 @@ import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { outline } from '@oracle/styles/mixins';
 
+export const ANIMATION_DURATION_CONTENT = 300;
+
 export type AccordionPanelProps = {
   beforeTitleElement?: any;
   contentOverflowVisible?: boolean;
@@ -23,11 +25,13 @@ export type AccordionPanelProps = {
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
+  noBorderRadius?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
   singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
+  titleYPadding?: number;
   visible?: boolean;
   visibleCount?: number;
   visibleHighlightDisabled?: boolean;
@@ -97,7 +101,6 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   ${SHARED_LINK_STYLES}
   display: block;
   position: relative;
-  padding: ${UNIT * 2}px ${UNIT * 2}px;
   z-index: 1;
 
   ${props => `
@@ -126,19 +129,34 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     border-top: 1px solid ${(props.theme || dark).borders.medium2};
   `}
 
-  ${props => props.first && `
+  ${props => !props.noBorderRadius && props.first && `
     border-top-left-radius: ${BORDER_RADIUS}px;
     border-top-right-radius: ${BORDER_RADIUS}px;
   `}
 
-  ${props => (props.last || props.singlePanel) && !props.visible && `
+  ${props => !props.noBorderRadius && (props.last || props.singlePanel) && !props.visible && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
   `}
 
-  ${props => props.titleXPadding && `
+  ${props => typeof props.titleXPadding !== 'undefined' && `
     padding-left: ${props.titleXPadding}px;
     padding-right: ${props.titleXPadding}px;
+  `}
+
+  ${props => typeof props.titleXPadding === 'undefined' && `
+    padding-left: ${2 * UNIT}px;
+    padding-right: ${2 * UNIT}px;
+  `}
+
+  ${props => typeof props.titleYPadding !== 'undefined' && `
+    padding-bottom: ${props.titleYPadding}px;
+    padding-top: ${props.titleYPadding}px;
+  `}
+
+  ${props => typeof props.titleXPadding === 'undefined' && `
+    padding-bottom: ${2 * UNIT}px;
+    padding-top: ${2 * UNIT}px;
   `}
 `;
 
@@ -193,6 +211,7 @@ const AccordionPanel = ({
   last,
   maxHeight,
   noBackground,
+  noBorderRadius,
   noPaddingContent,
   onClick,
   onEntered,
@@ -201,6 +220,7 @@ const AccordionPanel = ({
   smallTitle,
   title,
   titleXPadding,
+  titleYPadding,
   visible,
   visibleCount,
   visibleHighlightDisabled,
@@ -214,6 +234,7 @@ const AccordionPanel = ({
       first={first}
       href="#"
       last={last}
+      noBorderRadius={noBorderRadius}
       noHoverUnderline
       onClick={(e: any) => {
         e.preventDefault();
@@ -230,29 +251,30 @@ const AccordionPanel = ({
       }}
       singlePanel={singlePanel}
       titleXPadding={titleXPadding}
+      titleYPadding={titleYPadding}
       visible={visible && !visibleHighlightDisabled}
     >
-      <FlexContainer alignItems="center">
-        <Spacing mr={1}>
-          <FlexContainer alignItems="center">
-            {beforeTitleElement}
+      <FlexContainer alignItems="center" justifyContent="space-between">
+        <FlexContainer alignItems="center">
+          {beforeTitleElement}
 
-            {beforeTitleElement && <Spacing ml={1} />}
+          {beforeTitleElement && <Spacing ml={1} />}
 
-            {typeof title !== 'string' && title}
+          {typeof title !== 'string' && title}
 
-            {typeof title === 'string' && (
-              <Text
-                bold
-                default={!visible}
-                large={!smallTitle}
-                wind={highlighted}
-              >
-                {title}
-              </Text>
-            )}
-          </FlexContainer>
-        </Spacing>
+          {typeof title === 'string' && (
+            <Text
+              bold
+              default={!visible}
+              large={!smallTitle}
+              wind={highlighted}
+            >
+              {title}
+            </Text>
+          )}
+        </FlexContainer>
+
+        <Spacing mr={1} />
 
         <CSSTransition
           classNames="accordion-panel-chevron-down"
@@ -271,7 +293,7 @@ const AccordionPanel = ({
       in={visible}
       onEntered={refContentOutter => onEntered && onEntered(refContentOutter)}
       onExited={refContentOutter => onExited && onExited(refContentOutter)}
-      timeout={300}
+      timeout={ANIMATION_DURATION_CONTENT}
     >
       <ContentStyle
         contentOverflowVisible={contentOverflowVisible}

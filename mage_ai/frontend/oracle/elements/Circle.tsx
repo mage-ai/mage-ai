@@ -14,6 +14,8 @@ type CircleProps = {
   danger?: boolean;
   default?: boolean;
   muted?: boolean;
+  primary?: boolean;
+  primaryLight?: boolean;
   size: number;
   square?: boolean;
   success?: boolean;
@@ -31,6 +33,14 @@ const CircleStyle = styled.div<CircleProps>`
 
   ${props => !props.color && !(props.borderSize || props.borderColor) && `
     background-color: ${(props.theme.content || dark.content).muted};
+  `}
+
+  ${props => !props.color && props.primary && `
+    background-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+  `}
+
+  ${props => !props.color && props.primaryLight && `
+    background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryLight};
   `}
 
   ${props => props.success && !props.borderSize && `

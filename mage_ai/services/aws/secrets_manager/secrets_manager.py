@@ -1,15 +1,12 @@
-from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws import get_aws_boto3_client
 
 
 class SecretsManager:
     def __init__(self):
-        import boto3
         from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
-        from botocore.config import Config
 
-        region_name = get_aws_region_name()
-        config = Config(region_name=region_name)
-        client = boto3.client('secretsmanager', config=config)
+        client = get_aws_boto3_client('secretsmanager')
+
         cache_config = SecretCacheConfig()
         self.cache = SecretCache(config=cache_config, client=client)
 
@@ -25,12 +22,7 @@ def get_secret(secret_id: str, cached=True) -> str:
 
 
 def get_secret_force(secret_id: str) -> str:
-    import boto3
-    from botocore.config import Config
-
-    region_name = get_aws_region_name()
-    config = Config(region_name=region_name)
-    client = boto3.client('secretsmanager', config=config)
+    client = get_aws_boto3_client('secretsmanager')
 
     return client.get_secret_value(
         SecretId=secret_id,

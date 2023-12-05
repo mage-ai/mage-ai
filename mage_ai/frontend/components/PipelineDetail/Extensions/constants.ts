@@ -64,5 +64,9 @@ export type ExtensionProps = {
     blockType?: BlockTypeEnum;
     language?: BlockLanguageEnum;
   }) => void;
+  showUpdateBlockModal?: (
+    block: BlockType,
+    name: string,
+  ) => Promise<any>;
   textareaFocused: boolean;
 };

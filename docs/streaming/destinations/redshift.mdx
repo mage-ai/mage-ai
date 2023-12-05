@@ -2,7 +2,19 @@
 title: "Redshift"
 ---
 
-Mage doesn't directly stream data into Redshift. Instead, Mage can stream data to Kinesis.
+## Basic config
+
+```yaml
+connector_type: redshift
+profile: default            # profile in the io_config.yaml
+config:
+  table_name: table_name
+  schema_name: schema_name  # Override the schema name. Default schema is "public"
+```
+
+## Alternative
+
+Another option to stream data into Redshift is to stream data to Kinesis.
 You can configure streaming ingestion for your Amazon Redshift cluster and create a materialized view using SQL statements.
 
 

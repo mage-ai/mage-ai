@@ -1,3 +1,7 @@
+from typing import Dict, List
+
+from pandas import DataFrame
+
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     blocks_in_query,
     interpolate_input,
@@ -7,8 +11,6 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigKey
-from pandas import DataFrame
-from typing import Dict, List
 
 
 def create_upstream_block_tables(
@@ -24,10 +26,6 @@ def create_upstream_block_tables(
     dynamic_upstream_block_uuids: List[str] = None,
     variables: Dict = None,
 ):
-    from mage_ai.data_preparation.models.block.dbt.utils import (
-        parse_attributes,
-        source_table_name_for_block,
-    )
     configuration = configuration if configuration else block.configuration
     database_default = configuration.get('data_provider_database') or loader.default_database()
     schema_default = configuration.get('data_provider_schema') or loader.default_schema()
@@ -95,12 +93,6 @@ def create_upstream_block_tables(
             schema = schema_custom or schema_default
             if unique_table_name_suffix:
                 table_name = f'{table_name}_{unique_table_name_suffix}'
-
-            if BlockType.DBT == block.type \
-                    and BlockType.DBT != upstream_block.type:
-                attributes_dict = parse_attributes(block, variables=variables)
-                schema = attributes_dict['source_name']
-                table_name = source_table_name_for_block(upstream_block)
 
             full_table_name = '.'.join(list(filter(lambda x: x, [database, schema, table_name])))
 

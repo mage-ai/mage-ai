@@ -25,6 +25,7 @@ GitCustomBranchPolicy.allow_actions([
 GitCustomBranchPolicy.allow_read(GitBranchPresenter.default_attributes + [
     'logs',
     'remotes',
+    'access_token_exists',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[

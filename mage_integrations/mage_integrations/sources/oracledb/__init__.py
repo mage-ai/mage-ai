@@ -84,13 +84,16 @@ from selected_items where row_id = 1
             port=self.port, service=self.service)
 
     def test_connection(self):
-        conn = self.build_connection().build_connection()
+        oracledb_connection = self.build_connection()
+        conn = oracledb_connection.build_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("""SELECT name FROM v$database""")
         except Exception as exc:
             self.logger.error(f"test_connection exception: {exc}")
             raise exc
+        finally:
+            oracledb_connection.close_connection(conn)
         return
 
 

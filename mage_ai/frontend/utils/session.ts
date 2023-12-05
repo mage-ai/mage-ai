@@ -17,6 +17,13 @@ export const REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES = {
   expires: 1,
 };
 
+export const REQUIRE_USER_PERMISSIONS_COOKIE_KEY = 'REQUIRE_USER_PERMISSIONS';
+export const REQUIRE_USER_PERMISSIONS_LOCAL_STORAGE_KEY = 'REQUIRE_USER_PERMISSIONS';
+export const REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES = {
+  ...SHARED_COOKIE_PROPERTIES,
+  expires: 1,
+};
+
 export const REQUIRE_USER_AUTHENTICATION = (ctx: any = null) => {
   let val;
 
@@ -27,6 +34,26 @@ export const REQUIRE_USER_AUTHENTICATION = (ctx: any = null) => {
     val = Cookies.get(
       REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
       REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+    );
+  }
+
+  if (!!val) {
+    return String(val) !== '0' && String(val).toLowerCase() !== 'false';
+  }
+
+  return false;
+};
+
+export const REQUIRE_USER_PERMISSIONS = (ctx: any = null) => {
+  let val;
+
+  if (ctx) {
+    const cookie = ServerCookie(ctx);
+    val = cookie[REQUIRE_USER_PERMISSIONS_COOKIE_KEY];
+  } else {
+    val = Cookies.get(
+      REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
+      REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
     );
   }
 

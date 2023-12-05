@@ -4,8 +4,9 @@ import numpy as np
 import pyodbc
 import simplejson
 from pandas import DataFrame, Series
+from sqlalchemy import create_engine
 
-from mage_ai.io.base import QUERY_ROW_LIMIT
+from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
@@ -21,6 +22,7 @@ class MSSQL(BaseSQL):
         user: str,
         schema: str = None,
         port: int = 1433,
+        verbose: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -30,24 +32,25 @@ class MSSQL(BaseSQL):
             password=password,
             schema=schema,
             port=port,
+            verbose=verbose,
             **kwargs
         )
 
-    def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
-        # MSSQL doesn't support WITH statements in subqueries, so if the user uses a WITH
-        # statement in their query, it would break if we tried to enforce a limit.
-        return query
-
-    @classmethod
-    def with_config(cls, config: BaseConfigLoader) -> 'MSSQL':
-        return cls(
-            database=config[ConfigKey.MSSQL_DATABASE],
-            schema=config[ConfigKey.MSSQL_SCHEMA],
-            driver=config[ConfigKey.MSSQL_DRIVER],
-            host=config[ConfigKey.MSSQL_HOST],
-            password=config[ConfigKey.MSSQL_PASSWORD],
-            port=config[ConfigKey.MSSQL_PORT],
-            user=config[ConfigKey.MSSQL_USER],
+    @property
+    def connection_string(self):
+        driver = self.settings['driver']
+        server = self.settings['server']
+        database = self.settings['database']
+        username = self.settings['user']
+        password = self.settings['password']
+        return (
+            f'DRIVER={{{driver}}};'
+            f'SERVER={server};'
+            f'DATABASE={database};'
+            f'UID={username};'
+            f'PWD={password};'
+            'ENCRYPT=yes;'
+            'TrustServerCertificate=yes;'
         )
 
     def default_schema(self) -> str:
@@ -55,21 +58,9 @@ class MSSQL(BaseSQL):
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to MSSQL database'):
-            driver = self.settings['driver']
-            server = self.settings['server']
-            database = self.settings['database']
-            username = self.settings['user']
-            password = self.settings['password']
-            connection_string = (
-                f'DRIVER={{{driver}}};'
-                f'SERVER={server};'
-                f'DATABASE={database};'
-                f'UID={username};'
-                f'PWD={password};'
-                'ENCRYPT=yes;'
-                'TrustServerCertificate=yes;'
+            self._ctx = pyodbc.connect(
+                self.connection_string,
             )
-            self._ctx = pyodbc.connect(connection_string)
 
     def build_create_schema_command(
         self,
@@ -110,7 +101,7 @@ class MSSQL(BaseSQL):
         **kwargs,
     ) -> None:
         def serialize_obj(val):
-            if type(val) is dict:
+            if type(val) is dict or type(val) is np.ndarray:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,
@@ -148,6 +139,20 @@ class MSSQL(BaseSQL):
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
         cursor.executemany(sql, values)
+
+    def upload_dataframe_fast(
+        self,
+        df: DataFrame,
+        schema_name: str,
+        table_name: str,
+        if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
+
+    ):
+        engine = create_engine(
+            f'mssql+pyodbc://?odbc_connect={self.connection_string}',
+            fast_executemany=True,
+        )
+        df.to_sql(table_name, engine, schema=schema_name, if_exists=if_exists, index=False)
 
     def get_type(self, column: Series, dtype: str) -> str:
         if dtype in (
@@ -199,3 +204,20 @@ class MSSQL(BaseSQL):
             print(f'Invalid datatype provided: {dtype}')
 
         return 'char(255)'
+
+    @classmethod
+    def with_config(cls, config: BaseConfigLoader) -> 'MSSQL':
+        return cls(
+            database=config[ConfigKey.MSSQL_DATABASE],
+            schema=config[ConfigKey.MSSQL_SCHEMA],
+            driver=config[ConfigKey.MSSQL_DRIVER],
+            host=config[ConfigKey.MSSQL_HOST],
+            password=config[ConfigKey.MSSQL_PASSWORD],
+            port=config[ConfigKey.MSSQL_PORT],
+            user=config[ConfigKey.MSSQL_USER],
+        )
+
+    def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
+        # MSSQL doesn't support WITH statements in subqueries, so if the user uses a WITH
+        # statement in their query, it would break if we tried to enforce a limit.
+        return query

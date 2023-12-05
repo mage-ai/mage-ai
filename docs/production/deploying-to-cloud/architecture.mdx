@@ -5,7 +5,7 @@ icon: "sitemap"
 
 Here is an overview of Mage architecture:
 
-![Mage architecture](/media/mage-architecture.png)
+![Mage architecture](https://github.com/mage-ai/assets/blob/main/mage-architecture.png?raw=True)
 
 
 ## Mage server
@@ -25,7 +25,7 @@ scheduling pipeline runs for active pipeline triggers.
 ## Storage
 
 In the storage layer, Mage stores the following data:
-- **Code files**: Mage stores code files on the local disk. You can use [git](/production/data-sync/git) to sync the code between your local disk and remote the git repository. If you deploy Mage in containers, you can mount an Network File System share in your container to persist the code and data on your disk.
+- **Code files**: Mage stores code files on the local disk. You can use [git](/production/data-sync/git-integration) to sync the code between your local disk and remote the git repository. If you deploy Mage in containers, you can mount an Network File System share in your container to persist the code and data on your disk.
 - **Data and log files**: By default, Mage stores data and log files on the local disk. You can also configure it to store [logs](/development/observability/logging#logging-to-external-destination) in an external storage.
 - **Pipeline Trigger, Pipeline Run, User data, etc**.: Orchestration related objects and authentication related objects are stored in a database. By default, Mage uses a local SQLite database. In a production environment, You can configure Mage to use a [Postgres database](/production/configuring-production-settings/overview#databases).
 - **Secrets**: Mage supports storing [secrests](/development/variables/secrets) in the database. It's also recommended to use an external [Secret Manager](/production/deploying-to-cloud/secrets/AWS) to store secrets.

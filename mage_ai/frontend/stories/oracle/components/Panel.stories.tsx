@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Panel, { PanelProps } from '@oracle/components/Panel';
 import Text from '@oracle/elements/Text';
@@ -19,7 +19,7 @@ const TemplateWithTheme = ({ children, ...props }: PanelProps) => (
   </ThemeBlock>
 );
 
-const Template: Story<PanelProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<PanelProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

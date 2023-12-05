@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Dict
 
 from mage_ai.cluster_manager.cluster_manager import ClusterManager
 from mage_ai.data_preparation.repo_manager import get_repo_config
@@ -36,27 +37,37 @@ class EmrClusterManager(ClusterManager):
             is_active=c['Id'] == self.active_cluster_id,
         ) for c in valid_clusters]
 
-    def create_cluster(self):
-        emr_config = EmrConfig.load(config=get_repo_config().emr_config or dict())
+    def create_cluster(self, emr_config: Dict = None):
+        emr_config = EmrConfig.load(
+            config=merge_dict(get_repo_config().emr_config or dict(), emr_config or dict()))
 
         return create_cluster(
             get_repo_path(),
             done_status=None,
+            emr_config=emr_config,
             tags=dict(name=CLUSTER_NAME),
             bootstrap_script_path=emr_config.bootstrap_script_path,
         )
 
-    def set_active_cluster(self, auto_selection=False, cluster_id=None):
+    def set_active_cluster(
+        self,
+        auto_creation: bool = True,
+        auto_selection: bool = False,
+        cluster_id=None,
+        emr_config: Dict = None,
+    ):
         if cluster_id is None and auto_selection:
             clusters = self.list_clusters()
             if len(clusters) > 0:
                 cluster_id = clusters[0]['id']
-            else:
-                self.create_cluster()
+            elif auto_creation:
+                self.create_cluster(emr_config=emr_config)
         if cluster_id is None:
             return
 
         self.active_cluster_id = cluster_id
+        emr_config = EmrConfig.load(
+            config=merge_dict(get_repo_config().emr_config or dict(), emr_config or dict()))
 
         # Fetch cluster master instance public DNS
         cluster_info = describe_cluster(cluster_id)
@@ -73,6 +84,7 @@ class EmrClusterManager(ClusterManager):
             if type(v) is dict and 'url' in v:
                 v['url'] = f'http://{emr_dns}:8998'
 
+        config['session_configs']['jars'] = emr_config.spark_jars
         with open(sparkmagic_config_path, 'w') as f:
             f.write(json.dumps(config))
 

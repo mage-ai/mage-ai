@@ -1,19 +1,15 @@
+import json
 from datetime import datetime
 from functools import reduce
-from mage_ai.api.operations.base import BaseOperation
-from mage_ai.api.operations.constants import (
-    CREATE,
-    DELETE,
-    DETAIL,
-    LIST,
-    UPDATE,
-)
+from typing import Dict, List, Tuple, Union
+
+import simplejson
+
 from mage_ai.api.logging import debug, error, info
+from mage_ai.api.operations.base import BaseOperation
+from mage_ai.api.operations.constants import CREATE, DELETE, DETAIL, LIST, UPDATE
 from mage_ai.services.tracking.metrics import increment, timing
 from mage_ai.shared.parsers import encode_complex
-from typing import Dict, List, Tuple, Union
-import json
-import simplejson
 
 
 async def execute_operation(
@@ -41,7 +37,7 @@ async def execute_operation(
     action, options = __determine_action(
         request, child=child, child_pk=child_pk, pk=pk)
     try:
-        response = await BaseOperation(
+        base_operation = BaseOperation(
             action=action,
             files=request.files,
             headers=request.headers,
@@ -56,7 +52,8 @@ async def execute_operation(
             resource_parent=resource if child else None,
             resource_parent_id=pk if child else None,
             user=request.current_user,
-        ).execute()
+        )
+        response = await base_operation.execute()
     except Exception as err:
         __log_error(
             request,
@@ -67,9 +64,9 @@ async def execute_operation(
 
     end_time = datetime.utcnow()
 
-    error = response.get('error', None)
-    if error:
-        return __render_error(handler, error, **tags)
+    error_response = response.get('error', None)
+    if error_response:
+        return __render_error(handler, error_response, **tags)
 
     info('Action: {} {} {} {} {}'.format(
         action,

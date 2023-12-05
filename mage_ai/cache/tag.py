@@ -1,12 +1,14 @@
 import asyncio
 import os
 from datetime import datetime
+from typing import Dict, List
+
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_TAGS_TO_OBJECT_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
-from typing import Dict
 
 KEY_FOR_PIPELINES = 'Pipeline'
+NO_TAGS_QUERY = 'no_tags'
 
 
 class TagCache(BaseCache):
@@ -22,6 +24,28 @@ class TagCache(BaseCache):
 
     def get_tags(self) -> Dict:
         return self.get(self.cache_key) or {}
+
+    def get_pipeline_uuids_with_tags(self, tags: List):
+        tags_mapping = self.get_tags()
+        pipeline_uuids = set()
+
+        for tag_uuid in tags:
+            pipelines_dict = tags_mapping.get(tag_uuid, {}).get(KEY_FOR_PIPELINES, {})
+            if pipelines_dict:
+                pipeline_uuids.update(pipelines_dict.keys())
+
+        return list(pipeline_uuids)
+
+    def get_all_pipeline_uuids_with_tags(self):
+        tags_mapping = self.get_tags()
+        pipeline_uuids = set()
+
+        for tag in tags_mapping.values():
+            pipelines_dict = tag.get(KEY_FOR_PIPELINES, {})
+            if pipelines_dict:
+                pipeline_uuids.update(pipelines_dict.keys())
+
+        return list(pipeline_uuids)
 
     def build_key(self, tag_uuid: str) -> str:
         """Generate cache key for tag.

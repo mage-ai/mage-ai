@@ -1,11 +1,12 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ThemeBlock from '../../ThemeBlock';
 import {
+  AISparkle,
   Action,
   Add,
-  AISparkle,
+  AddUserSmileyFace,
   AlertCircle,
   AlertTriangle,
   Alphabet,
@@ -13,8 +14,8 @@ import {
   ArrowDownSplitTwo,
   ArrowLeft,
   ArrowRight,
-  ArrowsAdjustingFrameSquare,
   ArrowUp,
+  ArrowsAdjustingFrameSquare,
   Backfill,
   BackfillV2,
   Batch,
@@ -50,17 +51,20 @@ import {
   Column,
   Conditional,
   Copy,
+  CubesThreeSeparated,
   CubeWithArrowDown,
   Cursor,
-  DataIntegrationPipeline,
   DBT,
+  DataIntegrationPipeline,
   DiamondDetached,
+  DiamondGem,
   DiamondShared,
   DocumentIcon,
   Edit,
   Ellipsis,
   Email,
   Expand,
+  ExpandOpenUpRight,
   File as FileIcon,
   FileFill as FilledFileIcon,
   Filter,
@@ -76,6 +80,9 @@ import {
   Input,
   Insights,
   Integration,
+  Interactions,
+  LayoutSplit,
+  LayoutStacked,
   Lightning,
   List,
   Locked,
@@ -108,9 +115,11 @@ import {
   PlayButton,
   PlayButtonFilled,
   PlugAPI,
+  PowerOnOffButton,
   PowerUps,
   PreviewHidden,
   PreviewOpen,
+  Recenter,
   Refresh,
   RoundedSquare,
   Save,
@@ -137,17 +146,21 @@ import {
   Tree,
   Union,
   Variables,
+  VisibleEye,
   WeekDots,
   WorkspacesIcon,
   WorkspacesUsersIcon,
+  ZoomIn,
+  ZoomOut,
 } from '@oracle/icons';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 
 const ICONS = [
+  AISparkle,
   Action,
   Add,
-  AISparkle,
+  AddUserSmileyFace,
   AlertCircle,
   AlertTriangle,
   Alphabet,
@@ -155,8 +168,8 @@ const ICONS = [
   ArrowDownSplitTwo,
   ArrowLeft,
   ArrowRight,
-  ArrowsAdjustingFrameSquare,
   ArrowUp,
+  ArrowsAdjustingFrameSquare,
   Backfill,
   BackfillV2,
   Batch,
@@ -192,11 +205,13 @@ const ICONS = [
   Column,
   Conditional,
   Copy,
+  CubesThreeSeparated,
   CubeWithArrowDown,
   Cursor,
-  DataIntegrationPipeline,
   DBT,
+  DataIntegrationPipeline,
   DiamondDetached,
+  DiamondGem,
   DiamondShared,
   DocumentIcon,
   Edit,
@@ -204,6 +219,7 @@ const ICONS = [
   Email,
   EmptyCharts,
   Expand,
+  ExpandOpenUpRight,
   FileIcon,
   FilledFileIcon,
   Filter,
@@ -219,6 +235,9 @@ const ICONS = [
   Input,
   Insights,
   Integration,
+  Interactions,
+  LayoutSplit,
+  LayoutStacked,
   Lightning,
   List,
   Locked,
@@ -252,9 +271,11 @@ const ICONS = [
   PlayButton,
   PlayButtonFilled,
   PlugAPI,
+  PowerOnOffButton,
   PowerUps,
   PreviewHidden,
   PreviewOpen,
+  Recenter,
   Refresh,
   RoundedSquare,
   Save,
@@ -281,9 +302,12 @@ const ICONS = [
   Tree,
   Union,
   Variables,
+  VisibleEye,
   WeekDots,
   WorkspacesIcon,
   WorkspacesUsersIcon,
+  ZoomIn,
+  ZoomOut,
 ];
 
 const Icons = () => (
@@ -308,6 +332,6 @@ export default {
   title: 'Oracle/Icons',
 } as Meta;
 
-const Template: Story = () => <Icons />;
+const Template: StoryFn = () => <Icons />;
 
 export const Main = Template.bind({});

@@ -1,6 +1,6 @@
 import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
-import { createRef, useCallback, useMemo, useRef, useState } from 'react';
+import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
@@ -18,6 +18,7 @@ import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { ColumnType } from '@components/shared/Table';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
@@ -36,13 +37,15 @@ import {
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
   TIMEZONE_TOOLTIP_PROPS,
+  getTableRowUuid,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { KEY_CODE_ARROW_DOWN, KEY_CODE_ARROW_UP } from '@utils/hooks/keyboardShortcuts/constants';
 import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { datetimeInLocalTimezone } from '@utils/date';
+import { datetimeInLocalTimezone, timeDifference, utcStringToElapsedTime } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
@@ -50,6 +53,7 @@ import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { useKeyboardContext } from '@context/Keyboard';
 
 const SHARED_DATE_FONT_PROPS = {
   monospace: true,
@@ -173,12 +177,16 @@ function RetryButton({
             </>
           )
         }
-        borderRadius={BORDER_RADIUS_XXXLARGE}
+        borderRadius={`${BORDER_RADIUS_XXXLARGE}px`}
         danger={RunStatus.FAILED === status && !isViewerRole}
         default={RunStatus.INITIAL === status}
         disabled={disabled || isViewerRole}
         loading={!pipelineRun}
-        onClick={() => setShowConfirmationId(pipelineRunId)}
+        onClick={(e) => {
+          // Stop table row from being highlighted as well
+          e.stopPropagation();
+          setShowConfirmationId(pipelineRunId);
+        }}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isCancelingPipeline && !isViewerRole}
         warning={RunStatus.CANCELLED === status && !isViewerRole}
@@ -258,14 +266,17 @@ type PipelineRunsTableProps = {
   allowBulkSelect?: boolean;
   allowDelete?: boolean;
   deletePipelineRun?: MutateFunction<any>;
+  disableKeyboardNav?: boolean;
   disableRowSelect?: boolean;
   emptyMessage?: string;
   fetchPipelineRuns?: () => void;
   hideTriggerColumn?: boolean;
+  includePipelineTags?: boolean;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
   selectedRuns?: { [keyof: string]: PipelineRunType };
+  setSelectedRun?: (selectedRun: any) => void;
   setSelectedRuns?: (selectedRuns: any) => void;
   setErrors?: (errors: ErrorsType) => void;
 };
@@ -274,14 +285,17 @@ function PipelineRunsTable({
   allowBulkSelect,
   allowDelete,
   deletePipelineRun,
+  disableKeyboardNav,
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
   hideTriggerColumn,
+  includePipelineTags,
   onClickRow,
   pipelineRuns,
   selectedRun,
   selectedRuns,
+  setSelectedRun,
   setSelectedRuns,
   setErrors,
 }: PipelineRunsTableProps) {
@@ -323,6 +337,74 @@ function PipelineRunsTable({
     },
   );
 
+  const uuidKeyboard = 'PipelineDetail/Runs/Table';
+  const uuidTable = 'pipeline-runs';
+
+  const getRunRowIndex = useCallback((run: PipelineRunType) => {
+    if (!run) return null;
+    
+    const rowIndex = pipelineRuns.findIndex(pipelineRun => pipelineRun.id === run.id);
+    return rowIndex >= 0 ? rowIndex : null;
+  }, [pipelineRuns]);
+
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping) => {
+      const upPressed = keyMapping[KEY_CODE_ARROW_UP];
+      const downPressed = keyMapping[KEY_CODE_ARROW_DOWN];
+
+      if (setSelectedRun && !disableKeyboardNav && (upPressed || downPressed)) {
+        setSelectedRun((prevSelectedRun) => {
+          const prevRowIndex = getRunRowIndex(prevSelectedRun);
+          if (prevRowIndex !== null) {
+            // This disables the default auto-scrolling response to the up/down arrow keys
+            if (event.repeat) {
+              event.preventDefault();
+              return prevSelectedRun;
+            }
+
+            if (upPressed) {
+              let newRowIndex = prevRowIndex - 1;
+              if (newRowIndex < 0) {
+                newRowIndex = pipelineRuns.length - 1;
+              }
+              return pipelineRuns[newRowIndex];
+            } else if (downPressed) {
+              let newRowIndex = prevRowIndex + 1;
+              if (newRowIndex >= pipelineRuns.length) {
+                newRowIndex = 0;
+              }
+              return pipelineRuns[newRowIndex];
+            }
+          }
+  
+          return prevSelectedRun;
+        });
+      }
+    }, 
+    [pipelineRuns, setSelectedRun],
+  );
+
+  useEffect(() => {
+    const rowIndex = getRunRowIndex(selectedRun);
+    if (rowIndex !== null) {
+      const tableRowUuid = getTableRowUuid({ rowIndex, uuid: uuidTable });
+      const newSelectedRow = document.getElementById(tableRowUuid);
+      if (newSelectedRow) {
+        newSelectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [getRunRowIndex, selectedRun]);
+
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
   const columnFlex = [null, 1];
   const columns: ColumnType[] = [
@@ -341,7 +423,14 @@ function PipelineRunsTable({
     });
   }
 
-  columnFlex.push(...[1, 1, null, null]);
+  if (includePipelineTags) {
+    columnFlex.push(null);
+    columns.push({
+      uuid: 'Pipeline tags',
+    });
+  }
+
+  columnFlex.push(...[1, 1, 1, null, null]);
   columns.push(...[
     {
       ...timezoneTooltipProps,
@@ -349,7 +438,14 @@ function PipelineRunsTable({
     },
     {
       ...timezoneTooltipProps,
+      uuid: 'Started at',
+    },
+    {
+      ...timezoneTooltipProps,
       uuid: 'Completed at',
+    },
+    {
+      uuid: 'Execution time',
     },
     {
       uuid: 'Block runs',
@@ -401,6 +497,21 @@ function PipelineRunsTable({
     });
   }
 
+  const handleOnClickRow = useCallback((rowIndex: number, event: any) => {
+    if (onClickRow && setSelectedRuns && event && event.metaKey) {
+      const pipelineRun = pipelineRuns[rowIndex];
+      setSelectedRuns(prevRuns => {
+        const selected = !!prevRuns?.[pipelineRun.id];
+        return {
+          ...prevRuns,
+          [pipelineRun.id]: selected ? null : pipelineRun,
+        };
+      });
+    } else if (onClickRow) {
+      onClickRow(rowIndex);
+    }
+  }, [onClickRow, pipelineRuns, setSelectedRuns]);
+
   return (
     <TableContainerStyle
       minHeight={UNIT * 30}
@@ -421,7 +532,7 @@ function PipelineRunsTable({
               ? false
               : pipelineRuns[rowIndex].id === selectedRun?.id
             }
-            onClickRow={disableRowSelect ? null : onClickRow}
+            onClickRow={disableRowSelect ? null : handleOnClickRow}
             rowVerticalPadding={6}
             rows={pipelineRuns?.map((pipelineRun, index) => {
               const {
@@ -432,7 +543,9 @@ function PipelineRunsTable({
                 id,
                 pipeline_schedule_id: pipelineScheduleId,
                 pipeline_schedule_name: pipelineScheduleName,
+                pipeline_tags: pipelineTags,
                 pipeline_uuid: pipelineUUID,
+                started_at: startedAt,
                 status,
               } = pipelineRun;
               deleteButtonRefs.current[id] = createRef();
@@ -440,7 +553,14 @@ function PipelineRunsTable({
               const blockRunCountTooltipMessage =
                 `${completedBlockRunsCount} out of ${blockRunsCount} block runs completed`;
 
-              const isRetry =
+              const tagsEl = (
+                <TagsContainer
+                  key={`row_pipeline_tags_${index}`}
+                  tags={pipelineTags?.map(tag => ({ uuid: tag }))}
+                />
+              );
+
+                const isRetry =
                 index > 0
                   && pipelineRuns[index - 1].execution_date === pipelineRun.execution_date
                   && pipelineRuns[index - 1].pipeline_schedule_id === pipelineRun.pipeline_schedule_id;
@@ -452,7 +572,7 @@ function PipelineRunsTable({
                     <FlexContainer alignItems="center">
                       <Subitem size={ICON_SIZE_SMALL} useStroke/>
                       <Button
-                        borderRadius={BORDER_RADIUS_XXXLARGE}
+                        borderRadius={`${BORDER_RADIUS_XXXLARGE}px`}
                         notClickable
                         padding="6px"
                       >
@@ -475,20 +595,55 @@ function PipelineRunsTable({
                   );
                 }
 
+                if (includePipelineTags) {
+                  arr.push(tagsEl);
+                }
+
                 arr.push(...[
                   <Text default key="row_date_retry" monospace muted>
                     -
                   </Text>,
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
-                    key="row_completed"
+                    key="row_started_at"
                     muted
-                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
+                  >
+                    {startedAt
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                        : getTimeInUTCString(startedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    key="row_completed_at"
+                    muted
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone
                         ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
                         : getTimeInUTCString(completedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
                       ): (
                         <>&#8212;</>
                       )
@@ -513,9 +668,13 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => router.push(
-                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                    )}
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
                   >
                     <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
@@ -555,12 +714,16 @@ function PipelineRunsTable({
                   );
                 }
 
+                if (includePipelineTags) {
+                  arr.push(tagsEl);
+                }
+
                 arr.push(...[
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
                     default
                     key="row_date"
-                    title={executionDate ? `UTC: ${executionDate}` : null}
+                    title={executionDate ? utcStringToElapsedTime(executionDate) : null}
                   >
                     {executionDate
                       ? (displayLocalTimezone
@@ -574,13 +737,44 @@ function PipelineRunsTable({
                   <Text
                     {...SHARED_DATE_FONT_PROPS}
                     default
-                    key="row_completed"
-                    title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+                    key="row_started_at"
+                    title={startedAt ? utcStringToElapsedTime(startedAt) : null}
+                  >
+                    {startedAt
+                      ? (displayLocalTimezone
+                        ? datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                        : getTimeInUTCString(startedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_completed_at"
+                    title={completedAt ? utcStringToElapsedTime(completedAt) : null}
                   >
                     {completedAt
                       ? (displayLocalTimezone
                         ? datetimeInLocalTimezone(completedAt, displayLocalTimezone)
                         : getTimeInUTCString(completedAt)
+                      ): (
+                        <>&#8212;</>
+                      )
+                    }
+                  </Text>,
+                  <Text
+                    {...SHARED_DATE_FONT_PROPS}
+                    default
+                    key="row_execution_time"
+                    title={(startedAt && completedAt)
+                      ? timeDifference({ endDatetime: completedAt, showFullFormat: true, startDatetime: startedAt })
+                      : null}
+                  >
+                    {(startedAt && completedAt)
+                      ? (
+                        timeDifference({ endDatetime: completedAt, startDatetime: startedAt })
                       ): (
                         <>&#8212;</>
                       )
@@ -607,9 +801,13 @@ function PipelineRunsTable({
                     iconOnly
                     key="row_logs"
                     noBackground
-                    onClick={() => router.push(
-                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                    )}
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
+                      router.push(
+                        `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                      );
+                    }}
                   >
                     <Logs default size={ICON_SIZE_SMALL} />
                   </Button>,
@@ -665,7 +863,9 @@ function PipelineRunsTable({
                   <Checkbox
                     checked={selected}
                     key={`selected-pipeline-run-${id}`}
-                    onClick={() => {
+                    onClick={(e) => {
+                      // Stop table row from being highlighted as well
+                      e.stopPropagation();
                       setSelectedRuns(prev => ({
                         ...prev,
                         [id]: selected ? null : pipelineRun,
@@ -685,7 +885,7 @@ function PipelineRunsTable({
 
               return arr;
             })}
-            uuid="pipeline-runs"
+            uuid={uuidTable}
           />
       }
     </TableContainerStyle>

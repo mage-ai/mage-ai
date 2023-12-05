@@ -149,7 +149,6 @@ def __custom_output():
 
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
-
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame) and (
@@ -222,6 +221,7 @@ def add_execution_code(
     code: str,
     global_vars,
     block_type: BlockType = None,
+    execution_uuid: str = None,
     extension_uuid: str = None,
     kernel_name: str = None,
     output_messages_to_logs: bool = False,
@@ -233,9 +233,13 @@ def add_execution_code(
     run_upstream: bool = False,
     update_status: bool = True,
     upstream_blocks: List[str] = None,
+    variables: Dict = None,
     widget: bool = False,
 ) -> str:
     escaped_code = code.replace("'''", "\"\"\"")
+
+    if execution_uuid:
+        execution_uuid = f"'{execution_uuid}'"
 
     if extension_uuid:
         extension_uuid = f"'{extension_uuid}'"
@@ -290,6 +294,7 @@ def execute_custom_code():
         config={pipeline_config},
         repo_config={repo_config},
     )
+
     block = pipeline.get_block(block_uuid, extension_uuid={extension_uuid}, widget={widget})
 
     upstream_blocks = {upstream_blocks}
@@ -302,6 +307,10 @@ def execute_custom_code():
     \'\'\'
 
     global_vars = merge_dict({global_vars} or dict(), pipeline.variables or dict())
+
+    if {variables}:
+        global_vars = merge_dict(global_vars, {variables})
+
     if pipeline.run_pipeline_in_one_process:
         # Use shared context for blocks
         global_vars['context'] = context
@@ -324,6 +333,7 @@ def execute_custom_code():
         global_vars['logger'] = logger
     block_output = block.execute_with_callback(
         custom_code=code,
+        execution_uuid={execution_uuid},
         from_notebook=True,
         global_vars=global_vars,
         logger=logger,

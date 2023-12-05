@@ -7,4 +7,5 @@ class OauthPresenter(BasePresenter):
         'expires',
         'provider',
         'url',
+        'redirect_query_params',
     ]

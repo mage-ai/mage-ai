@@ -1,5 +1,6 @@
 import NextLink from 'next/link';
-import { useMemo, useRef, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { useContext, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -18,19 +19,22 @@ import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
 import ProjectType from '@interfaces/ProjectType';
+import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
+import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
 import { Branch, Slack } from '@oracle/icons';
 import {
   HeaderStyle,
   LOGO_HEIGHT,
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
+import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { getUser } from '@utils/session';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 
@@ -56,9 +60,12 @@ function Header({
   project: projectProp,
   version: versionProp,
 }: HeaderProps) {
+  const themeContext = useContext(ThemeContext);
+  const userFromLocalStorage = getUser();
+
   const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
-  const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
-  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState(false);
+  const [highlightedMenuIndex, setHighlightedMenuIndex] = useState<number>(null);
+  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
 
   const menuRef = useRef(null);
@@ -110,7 +117,7 @@ function Header({
   }], [breadcrumbsProp, project]);
   const { pipeline: pipelineUUID } = router.query;
 
-  const { latest_version: latesetVersion } = project || {};
+  const { latest_version: latestVersion } = project || {};
 
   const logoLink = useMemo(() => (
     <NextLink
@@ -165,6 +172,51 @@ function Header({
     return branch;
   }, [branch]);
 
+  const hasAvatarAndNotEmoji = useMemo(() => {
+    if (!userFromLocalStorage || !userFromLocalStorage?.avatar) {
+      return false;
+    }
+
+    return !!/[A-Za-z0-9]+/.exec(userFromLocalStorage?.avatar || '');
+  }, [userFromLocalStorage]);
+
+  const avatarMemo = useMemo(() => {
+    if (!userFromLocalStorage || !userFromLocalStorage?.avatar) {
+      return <Mage8Bit />;
+    }
+
+    const styleProps: {
+      color?: string;
+      fontFamily?: string;
+      fontSize?: number;
+      lineHeight?: string;
+      position?: string;
+      top?: number;
+    } = {
+      color: themeContext?.content?.active,
+      fontFamily: MONO_FONT_FAMILY_BOLD,
+    };
+
+    if (hasAvatarAndNotEmoji) {
+      styleProps.fontSize = 2 * UNIT;
+      styleProps.lineHeight = `${2 * UNIT}px`;
+      styleProps.position = 'relative';
+      styleProps.top = 1;
+    } else {
+      styleProps.fontSize = 3 * UNIT;
+    }
+
+    return (
+      // @ts-ignore
+      <div style={styleProps}>
+        {userFromLocalStorage?.avatar}
+      </div>
+    );
+  }, [
+    hasAvatarAndNotEmoji,
+    userFromLocalStorage,
+  ]);
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -194,39 +246,16 @@ function Header({
           </Flex>
 
           <Flex alignItems="center">
-            {latesetVersion && version && latesetVersion !== version && (
-              <Spacing ml={2}>
-                <Button
-                  borderLess
-                  linkProps={{
-                    href: 'https://docs.mage.ai/about/releases',
-                  }}
-                  noHoverUnderline
-                  primary
-                  target="_blank"
-                >
-                  <Text>
-                    🚀 Download new version <Text
-                      bold
-                      inline
-                      monospace
-                    >
-                      {latesetVersion}
-                    </Text>
-                  </Text>
-                </Button>
-              </Spacing>
-            )}
-
             {gitIntegrationEnabled && branch && (
-              <Spacing ml={2}>
+              <Spacing ml={1}>
                 <KeyboardShortcutButton
-                  blackBorder
-                  block
                   compact
+                  highlightOnHoverAlt
+                  noBackground
                   noHoverUnderline
                   onClick={showModal}
                   sameColorAsText
+                  title={branch}
                   uuid="Header/GitActions"
                 >
                   <FlexContainer alignItems="center">
@@ -240,29 +269,55 @@ function Header({
               </Spacing>
             )}
 
+            <Spacing ml={1}>
+              <ServerTimeDropdown />
+            </Spacing>
+
             {version && typeof(version) !== 'undefined' && (
               <Spacing ml={2}>
                 <Link
-                  default
                   href="https://www.mage.ai/changelog"
                   monospace
                   openNewWindow
+                  sameColorAsText
+                  small
                 >
                   {`v${version}`}
                 </Link>
               </Spacing>
             )}
 
-            <Spacing ml={2}>
+            {latestVersion && version && latestVersion !== version && (
+              <Spacing ml={1}>
+                <Button
+                  backgroundColor={YELLOW}
+                  borderLess
+                  compact
+                  linkProps={{
+                    href: 'https://docs.mage.ai/about/releases',
+                  }}
+                  noHoverUnderline
+                  pill
+                  sameColorAsText
+                  target="_blank"
+                  title={`Update to version ${latestVersion}`}
+                >
+                  <Text black bold>Update</Text>
+                </Button>
+              </Spacing>
+            )}
+
+            <Spacing ml={3}>
               <KeyboardShortcutButton
                 beforeElement={<Slack />}
-                blackBorder
                 compact
+                highlightOnHoverAlt
                 inline
                 linkProps={{
                   as: 'https://www.mage.ai/chat',
                   href: 'https://www.mage.ai/chat',
                 }}
+                noBackground
                 noHoverUnderline
                 openNewTab
                 sameColorAsText
@@ -346,7 +401,7 @@ function Header({
                         color={BLUE_TRANSPARENT}
                         size={4 * UNIT}
                       >
-                        <Mage8Bit />
+                        {avatarMemo}
                       </Circle>
                     </LinkStyle>
 

@@ -15,7 +15,7 @@ import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 type BlocksInPipelineProps = {
@@ -94,27 +94,25 @@ function BlocksInPipeline({
       <Spacing p={1}>
         <FlexContainer
           alignItems="center"
-          justifyContent="space-between"
         >
-          <Flex flex={1} justifyContent="center">
-            <Checkbox
-              checked={allBlocksVisible}
-              label="Show all"
-              // @ts-ignore
-              onClick={() => setHiddenBlocks(() => ({}))}
-            />
-          </Flex>
-          <Flex flex={1} justifyContent="center">
-            <Checkbox
-              checked={allBlocksHidden}
-              label="Hide all"
-              // @ts-ignore
-              onClick={() => setHiddenBlocks(() => blocks.reduce((acc, { uuid }) => ({
-                ...acc,
-                [uuid]: true,
-              }), {}))}
-            />
-          </Flex>
+          <Checkbox
+            checked={allBlocksVisible}
+            label="Show all"
+            // @ts-ignore
+            onClick={() => setHiddenBlocks(() => ({}))}
+          />
+
+          <Spacing mr={PADDING_UNITS} />
+
+          <Checkbox
+            checked={allBlocksHidden}
+            label="Hide all"
+            // @ts-ignore
+            onClick={() => setHiddenBlocks(() => blocks.reduce((acc, { uuid }) => ({
+              ...acc,
+              [uuid]: true,
+            }), {}))}
+          />
         </FlexContainer>
       </Spacing>
 

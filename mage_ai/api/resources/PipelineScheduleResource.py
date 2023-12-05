@@ -1,9 +1,9 @@
-import importlib
 import uuid
 
 from sqlalchemy.orm import selectinload
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
@@ -147,6 +147,20 @@ class PipelineScheduleResource(DatabaseResource):
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
 
+        if pipeline.should_save_trigger_in_code_automatically():
+            def _callback(resource, kwargs=kwargs, user=user):
+                from mage_ai.api.resources.PipelineTriggerResource import (
+                    PipelineTriggerResource,
+                )
+
+                PipelineTriggerResource.create(
+                    dict(pipeline_schedule_id=resource.id),
+                    user,
+                    **kwargs,
+                )
+
+            self.on_create_callback = _callback
+
         return super().create(payload, user, **kwargs)
 
     @safe_db_query
@@ -258,22 +272,28 @@ class PipelineScheduleResource(DatabaseResource):
 
         resource = super().update(payload)
         updated_model = resource.model
-        trigger = Trigger(
-            name=updated_model.name,
-            pipeline_uuid=updated_model.pipeline_uuid,
-            schedule_interval=updated_model.schedule_interval,
-            schedule_type=updated_model.schedule_type,
-            settings=updated_model.settings,
-            sla=updated_model.sla,
-            start_time=updated_model.start_time,
-            status=updated_model.status,
-            variables=updated_model.variables,
-        )
-        add_or_update_trigger_for_pipeline_and_persist(
-            trigger,
-            updated_model.pipeline_uuid,
-            update_only_if_exists=True,
-        )
+
+        pipeline = Pipeline.get(updated_model.pipeline_uuid)
+        if pipeline:
+            trigger = Trigger(
+                name=updated_model.name,
+                pipeline_uuid=updated_model.pipeline_uuid,
+                schedule_interval=updated_model.schedule_interval,
+                schedule_type=updated_model.schedule_type,
+                settings=updated_model.settings,
+                sla=updated_model.sla,
+                start_time=updated_model.start_time,
+                status=updated_model.status,
+                variables=updated_model.variables,
+            )
+
+            update_only_if_exists = not pipeline.should_save_trigger_in_code_automatically()
+
+            add_or_update_trigger_for_pipeline_and_persist(
+                trigger,
+                pipeline.uuid,
+                update_only_if_exists=update_only_if_exists,
+            )
 
         return self
 
@@ -292,6 +312,8 @@ class PipelineScheduleResource(DatabaseResource):
 
 
 def __load_tag_associations(resource):
+    from mage_ai.api.resources.TagResource import TagResource
+
     pipeline_schedule_ids = [r.id for r in resource.result_set()]
     result = (
         TagAssociation.
@@ -311,10 +333,6 @@ def __load_tag_associations(resource):
             TagAssociation.taggable_type == resource.model.__class__.__name__,
         ).
         all()
-    )
-    TagResource = getattr(
-        importlib.import_module('mage_ai.api.resources.TagResource'),
-        'TagResource',
     )
 
     return TagResource.build_result_set(result, resource.current_user)

@@ -13,6 +13,7 @@ class SyncPresenter(BasePresenter):
         'ssh_public_key',
         'sync_on_pipeline_run',
         'sync_on_start',
+        'sync_submodules',
         'type',
         'user_git_settings',
         'username',

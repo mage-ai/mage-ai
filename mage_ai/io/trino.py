@@ -237,7 +237,7 @@ class Trino(BaseSQL):
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
 
         def serialize_obj(val):
-            if type(val) is dict or type(val) is list:
+            if type(val) is dict or type(val) is list or type(val) is np.ndarray:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,
@@ -272,8 +272,8 @@ class Trino(BaseSQL):
     def export(
         self,
         df: DataFrame,
-        schema_name: str,
-        table_name: str,
+        schema_name: str = None,
+        table_name: str = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
@@ -299,6 +299,10 @@ class Trino(BaseSQL):
                             Defaults to False.
             **kwargs: Additional query parameters.
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+        if schema_name is None:
+            schema_name = self.default_schema()
 
         if type(df) is dict:
             df = DataFrame([df])

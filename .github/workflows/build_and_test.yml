@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
       - name: Install Poetry
         run: pipx install poetry
@@ -48,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
     needs: check-code-quality
     steps:
       - uses: actions/checkout@v3
@@ -58,15 +60,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install libkrb5-dev
           sudo apt-get install freetds-dev
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -r mage_integrations/requirements.txt
+          pip install mage_integrations/
           pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
+        env:
+          OPENAI_API_KEY: abcdefg
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests

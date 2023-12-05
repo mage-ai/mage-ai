@@ -190,20 +190,32 @@ class Api(Source):
 
         checked_type = self._check_response_type(response)
 
-        if checked_type == 'text/plain':
+        if checked_type == 'text/plain' or checked_type == 'text/csv':
             df = polars.read_csv(StringIO(response.content.decode()), separator=separator,
                                  has_header=header).to_pandas()
-            yield df.to_dict()
+            yield df.to_dict(orient='records')
 
         elif checked_type == 'google_sheets':
             df = self._deal_with_google_sheets(response, separator, header)
-            yield df.to_dict()
+            yield df.to_dict(orient='records')
+
+        elif checked_type == 'application/gzip':
+            df = polars.read_csv(BytesIO(response.content),
+                                 sepr=separator,
+                                 has_header=header,).to_pandas()
+            yield df.to_dict(orient='records')
 
         elif checked_type == 'application/json':
             result = response.json()
 
+            if result is None:
+                raise Exception('API response is None.')
+
             if response_parser:
                 result = dig(result, response_parser)
+
+                if result is None:
+                    raise Exception(f'API response with parser {response_parser} is None.')
 
             sample = None
             requires_columns = False
@@ -246,9 +258,9 @@ class Api(Source):
         else:
             try:
                 df = polars.read_excel(BytesIO(response.content),
-                                       read_csv_options={"separator": separator,
-                                       "has_header": header}).to_pandas()
-                yield df.to_dict()
+                                       read_csv_options={'separator': separator,
+                                       'has_header': header}).to_pandas()
+                yield df.to_dict(orient='records')
             except Exception:
                 raise Exception(f'Problems reading file {checked_type}. Check if extension is XLSX')
 

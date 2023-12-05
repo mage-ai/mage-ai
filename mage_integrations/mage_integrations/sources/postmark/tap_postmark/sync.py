@@ -7,10 +7,10 @@ from typing import Callable, Optional
 import singer
 from singer.catalog import Catalog, CatalogEntry
 
-from tap_postmark import tools
-from tap_postmark.postmark import Postmark
-from tap_postmark.streams import STREAMS
 from mage_integrations.sources.messages import write_schema
+from mage_integrations.sources.postmark.tap_postmark import tools
+from mage_integrations.sources.postmark.tap_postmark.postmark import Postmark
+from mage_integrations.sources.postmark.tap_postmark.streams import STREAMS
 
 LOGGER: logging.RootLogger = singer.get_logger()
 

@@ -1,21 +1,17 @@
 import NextLink from 'next/link';
-import { CanvasRef } from 'reaflow';
 import { useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
+import Breadcrumbs from '@components/Breadcrumbs';
 import ExtensionOptionType from '@interfaces/ExtensionOptionType';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
-import Spacing from '@oracle/elements/Spacing';
+import ProjectType from '@interfaces/ProjectType';
 import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { AsideHeaderInnerStyle } from '@components/TripleLayout/index.style';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
-import { SHARED_ZOOM_BUTTON_PROPS } from '@components/DependencyGraph/constants';
 import {
   SIDEKICK_VIEWS_BY_KEY,
   VIEW_QUERY_PARAM,
@@ -29,13 +25,13 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
-  depGraphZoom?: number;
   pipeline: PipelineType;
+  project?: ProjectType;
   secrets?: {
     [key: string]: any;
   }[];
   selectedBlock?: BlockType;
-  treeRef?: { current?: CanvasRef };
+  setSelectedBlock?: (block: BlockType) => void;
   variables?: {
     [key: string]: any;
   }[];
@@ -43,18 +39,20 @@ type SidekickHeaderProps = {
 
 function SidekickHeader({
   activeView,
-  depGraphZoom,
   pipeline,
+  project,
   secrets,
   selectedBlock,
-  treeRef,
+  setSelectedBlock,
   variables,
 }: SidekickHeaderProps) {
   const pipelineUUID = pipeline?.uuid;
   const query = queryFromUrl();
   const globalVars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
-  const sidekickView = SIDEKICK_VIEWS_BY_KEY[activeView];
+  const sidekickView = SIDEKICK_VIEWS_BY_KEY({
+    project,
+  })[activeView];
   let sidekickLabel = sidekickView?.buildLabel?.({
     pipeline,
     secrets,
@@ -94,65 +92,38 @@ function SidekickHeader({
 
   const showAddonDetails = ViewKeyEnum.ADDON_BLOCKS === activeView && query?.addon;
 
-  if (!activeView) {
-    return <div />;
-  } else if (treeRef && ViewKeyEnum.TREE === activeView) {
+  if (ViewKeyEnum.INTERACTIONS === activeView) {
+    const breadcrumbs = [];
+
+    if (selectedBlock?.uuid) {
+      breadcrumbs.push(...[
+        {
+          label: () => 'All interactions',
+          monospace: false,
+          onClick: () => setSelectedBlock(null),
+        },
+        {
+          bold: true,
+          label: () => selectedBlock?.uuid,
+          monospace: true,
+        },
+      ]);
+    } else {
+      breadcrumbs.push({
+        bold: true,
+        label: () => 'Interactions',
+        monospace: false,
+      });
+    }
+
     el = (
-      <FlexContainer
-        alignItems="center"
-        fullWidth
-        justifyContent="space-between"
-      >
-        {el}
-        <Spacing mr={1} />
-        <Flex alignItems="center">
-          <Button
-            {...SHARED_ZOOM_BUTTON_PROPS}
-            onClick={() => {
-              treeRef?.current?.zoomIn?.();
-            }}
-          >
-            <Text noWrapping>
-              Zoom in
-            </Text>
-          </Button>
-          <Spacing mr={1} />
-          <Button
-            {...SHARED_ZOOM_BUTTON_PROPS}
-            onClick={() => {
-              treeRef?.current?.zoomOut?.();
-            }}
-          >
-            <Text noWrapping>
-              Zoom out
-            </Text>
-          </Button>
-          <Spacing mr={1} />
-          <Tooltip
-            appearAbove
-            appearBefore
-            default
-            label="Shortcut: Double-click canvas"
-            lightBackground
-            size={null}
-            widthFitContent
-          >
-            <Button
-              {...SHARED_ZOOM_BUTTON_PROPS}
-              onClick={() => {
-                treeRef?.current?.fitCanvas?.();
-              }}
-            >
-              <Text noWrapping>
-                Reset
-              </Text>
-            </Button>
-          </Tooltip>
-          <Spacing mr={1} />
-          <Text bold>{depGraphZoom?.toFixed(2)}x</Text>
-        </Flex>
-      </FlexContainer>
+      <Breadcrumbs
+        breadcrumbs={breadcrumbs}
+        noMarginLeft
+      />
     );
+  } else if (!activeView) {
+    return <div />;
   } else if (showExtensionDetails) {
     const extensionOption = extensionOptionsByUUID[query?.extension];
 

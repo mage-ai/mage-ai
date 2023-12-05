@@ -1,9 +1,10 @@
-from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.postgresql import PostgreSQL
-from unittest.mock import MagicMock, patch
 import io
 import unittest
+from abc import ABC, abstractmethod
+from typing import Dict, List
+from unittest.mock import MagicMock, patch
 
+from mage_integrations.destinations.base import Destination
 
 SAMPLE_RECORD = {
     'id': 2,
@@ -44,8 +45,17 @@ SAMPLE_SCHEMA_ROW = {
 }
 SAMPLE_STREAM_NAME = 'demo_users'
 
+
+class MockDestination(Destination):
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
+        pass
+
+    def test_connection(self) -> None:
+        pass
+
+
 def build_test_destination():
-    destination = Destination(
+    destination = MockDestination(
         config=dict(database='demo_db'),
     )
     destination.disable_column_type_check = dict(demo_users=True)
@@ -61,25 +71,24 @@ def build_test_destination():
 
     return destination
 
-class BaseDestinationTests(unittest.TestCase):
-    def test_templates(self):
-        destination = PostgreSQL()
-        templates = destination.templates()
-        self.assertEqual(
-            templates,
-            {
-                'config': {
-                    'database': '',
-                    'host': '',
-                    'password': '',
-                    'port': 5432,
-                    'schema': '',
-                    'table': '',
-                    'username': '',
-                }
-            },
-        )
 
+class BaseDestinationTests(ABC):
+    """
+    Base unit tests that will be applied to all subclasses.
+    """
+    @abstractmethod
+    def test_templates(self):
+        pass
+
+    @abstractmethod
+    def test_test_connection(self):
+        pass
+
+
+class DestinationTests(unittest.TestCase):
+    """
+    Unit tests for the common methods in the base destination.
+    """
     def test_process_record(self):
         destination = build_test_destination()
         with patch.object(destination, 'export_data') as mock_export_data:
@@ -112,6 +121,7 @@ class BaseDestinationTests(unittest.TestCase):
             mock_export_batch_data.assert_called_once_with(
                 [dict(record=SAMPLE_RECORD, stream=SAMPLE_STREAM_NAME)],
                 SAMPLE_STREAM_NAME,
+                tags={'records': 1, 'stream': 'demo_users'},
             )
 
     def test_process_empty_record_data(self):
@@ -169,10 +179,12 @@ class BaseDestinationTests(unittest.TestCase):
 
     def test_process_no_state(self):
         destination = build_test_destination()
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception) as context:
             destination.process_state(
                 row=SAMPLE_RECORD_ROW
             )
+            self.assertEqual(
+                str(context.exception), 'A state message is missing a state value.')
 
     def test_process_test_connection(self):
         destination = build_test_destination()

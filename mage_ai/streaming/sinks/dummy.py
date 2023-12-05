@@ -1,8 +1,9 @@
+import time
 from dataclasses import dataclass
+from typing import Dict, List
+
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
-from typing import Dict, List
-import time
 
 
 @dataclass
@@ -13,12 +14,16 @@ class DummyConfig(BaseConfig):
 class DummySink(BaseSink):
     config_class = DummyConfig
 
-    def write(self, data: Dict):
-        if self.config.print_msg:
-            self._print(f'Ingest data {data}, time={time.time()}')
+    def init_client(self):
+        pass
 
-    def batch_write(self, data: List[Dict]):
-        if not data:
+    def write(self, message: Dict):
+        if self.config.print_msg:
+            self._print(f'Ingest data {message}, time={time.time()}')
+
+    def batch_write(self, messages: List[Dict]):
+        if not messages:
             return
         if self.config.print_msg:
-            self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
+            self._print(
+                f'Batch ingest {len(messages)} records, time={time.time()}. Sample: {messages[0]}')

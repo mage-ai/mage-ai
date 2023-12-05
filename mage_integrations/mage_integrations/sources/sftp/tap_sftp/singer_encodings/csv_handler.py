@@ -2,7 +2,7 @@ import csv
 import io
 import re
 
-from tap_sftp.singer_encodings import compression
+from mage_integrations.sources.sftp.tap_sftp.singer_encodings import compression
 
 SDC_EXTRA_COLUMN = "_sdc_extra"
 SDC_META_COLUMNS = ['_sdc_source_file', '_sdc_source_lineno', '_sdc_source_last_modified']

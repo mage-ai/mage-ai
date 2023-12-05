@@ -17,19 +17,24 @@ export const WORKSPACE_FIELDS = [
   },
 ];
 
-export const K8S_TEXT_FIELDS = [
+export const GENERAL_K8S_FIELDS = [
   {
     label: 'Service account name',
+    placeholder: 'default',
     uuid: 'service_account_name',
   },
   {
     label: 'Ingress name',
     labelDescription: 'If you want to add the workspace to an existing ingress, enter the name of the ingress here. Otherwise, the workspace can be accessed through the service.',
+    placeholder: 'my-ingress',
     uuid: 'ingress_name',
   },
+];
+
+export const VOLUME_CLAIM_K8S_FIELDS = [
   {
     label: 'Storage class name',
-    labelDescription: 'Volume claim parameters',
+    placeholder: 'default',
     uuid: 'storage_class_name',
   },
   {
@@ -44,6 +49,7 @@ export interface WorkspaceFieldType {
   disabled?: boolean;
   label: string;
   labelDescription?: string;
+  placeholder?: string;
   required?: boolean;
   type?: string;
   uuid: string;

@@ -1,7 +1,9 @@
 import uuid
 
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.shared.hash import merge_dict
@@ -12,10 +14,13 @@ async def build_project(repo_config=None, **kwargs):
     project = Project(repo_config=repo_config)
 
     model = merge_dict(project.repo_config.to_dict(), dict(
+        emr_config=project.emr_config,
         features=project.features,
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
+        remote_variables_dir=project.remote_variables_dir,
+        spark_config=project.spark_config,
         version=project.version,
     ))
 
@@ -78,6 +83,18 @@ class ProjectResource(GenericResource):
             if repo_config.openai_api_key != openai_api_key:
                 data['openai_api_key'] = payload.get('openai_api_key')
 
+        if 'emr_config' in payload:
+            data['emr_config'] = payload['emr_config']
+
+        if 'pipelines' in payload:
+            data['pipelines'] = payload['pipelines']
+
+        if 'spark_config' in payload:
+            data['spark_config'] = payload['spark_config']
+
+        if 'remote_variables_dir' in payload:
+            data['remote_variables_dir'] = payload['remote_variables_dir']
+
         if len(data.keys()) >= 1:
             repo_config.save(**data)
 
@@ -85,5 +102,9 @@ class ProjectResource(GenericResource):
 
         if should_log_project:
             await UsageStatisticLogger().project_impression()
+
+        project = Project(repo_config=repo_config)
+        if project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
+            await BlockActionObjectCache.initialize_cache(replace=True)
 
         return self

@@ -3,7 +3,7 @@ export type ErrorResponseType = {
     errors?: string[];
     code?: number;
     exception?: string;
-    message: string;
+    message?: string;
     type?: string;
   };
   status?: number;

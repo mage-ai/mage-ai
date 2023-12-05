@@ -3,6 +3,8 @@ from json import JSONDecoder
 
 import numpy as np
 
+from mage_ai.orchestration.db.models.base import BaseModel
+
 INTS = (
     np.int16,
     np.int32,
@@ -21,7 +23,9 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
 
 def encode_complex(obj):
-    if hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
+    if isinstance(obj, BaseModel):
+        return obj.__class__.__name__
+    elif hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
         return obj.isoformat()
     elif isinstance(obj, np.integer):
         return int(obj)

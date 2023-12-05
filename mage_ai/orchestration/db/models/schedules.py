@@ -3,6 +3,7 @@ import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
+from itertools import groupby
 from math import ceil
 from statistics import stdev
 from typing import Dict, List
@@ -49,6 +50,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
@@ -100,6 +102,23 @@ class PipelineSchedule(BaseModel):
             )
         )
 
+    @validates('name')
+    def validate_name(self, key, value):
+        if not value or len(value) == 0:
+            raise ValidationError(f'{key} cannot be empty.', metadata=dict(
+                key=key,
+                value=value,
+            ))
+
+        return value
+
+    @classmethod
+    def fetch_pipeline_runs(self, ids: List[int]) -> List:
+        query = PipelineRun.query
+        query.cache = True
+        query = query.filter(PipelineRun.pipeline_schedule_id.in_(ids))
+        return query.all()
+
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
         return SettingsConfig.load(config=settings)
@@ -109,8 +128,12 @@ class PipelineSchedule(BaseModel):
         return Pipeline.get(self.pipeline_uuid)
 
     @property
+    def pipeline_in_progress_runs_count(self) -> int:
+        return len(PipelineRun.in_progress_runs([self.id]))
+
+    @property
     def pipeline_runs_count(self) -> int:
-        return len(self.pipeline_runs)
+        return len(self.fetch_pipeline_runs([self.id]))
 
     @property
     def timeout(self) -> int:
@@ -127,9 +150,9 @@ class PipelineSchedule(BaseModel):
 
     @property
     def last_pipeline_run_status(self) -> str:
-        if len(self.pipeline_runs) == 0:
+        if len(self.fetch_pipeline_runs([self.id])) == 0:
             return None
-        return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
 
     @property
     def tag_associations(self):
@@ -169,6 +192,73 @@ class PipelineSchedule(BaseModel):
             kwargs['token'] = uuid.uuid4().hex
         model = super().create(**kwargs)
         return model
+
+    @classmethod
+    @safe_db_query
+    def create_or_update_batch(self, trigger_configs: List[Trigger]):
+        trigger_names = []
+        trigger_pipeline_uuids = []
+        for trigger_config in trigger_configs:
+            trigger_names.append(trigger_config.name)
+            trigger_pipeline_uuids.append(trigger_config.pipeline_uuid)
+
+        existing_pipeline_schedules = PipelineSchedule.repo_query.filter(
+            PipelineSchedule.name.in_(trigger_names),
+            PipelineSchedule.pipeline_uuid.in_(trigger_pipeline_uuids),
+        ).all()
+
+        existing_pipeline_schedules_mapping = index_by(
+            lambda x: f'{x.pipeline_uuid}:{x.name}',
+            existing_pipeline_schedules,
+        )
+
+        triggers_to_create = []
+
+        for trigger_config in trigger_configs:
+            try:
+                existing_trigger = existing_pipeline_schedules_mapping.get(
+                    f'{trigger_config.pipeline_uuid}:{trigger_config.name}',
+                )
+            except Exception:
+                traceback.print_exc()
+                continue
+
+            kwargs = dict(
+                name=trigger_config.name,
+                pipeline_uuid=trigger_config.pipeline_uuid,
+                schedule_type=trigger_config.schedule_type,
+                start_time=trigger_config.start_time,
+                schedule_interval=trigger_config.schedule_interval,
+                status=trigger_config.status,
+                variables=trigger_config.variables,
+                sla=trigger_config.sla,
+                settings=trigger_config.settings,
+            )
+
+            if existing_trigger:
+                if any([
+                    existing_trigger.name != kwargs.get('name'),
+                    existing_trigger.pipeline_uuid != kwargs.get('pipeline_uuid'),
+                    existing_trigger.schedule_interval != kwargs.get('schedule_interval'),
+                    existing_trigger.schedule_type != kwargs.get('schedule_type'),
+                    existing_trigger.settings != kwargs.get('settings'),
+                    existing_trigger.sla != kwargs.get('sla'),
+                    existing_trigger.start_time != kwargs.get('start_time'),
+                    existing_trigger.status != kwargs.get('status'),
+                    existing_trigger.variables != kwargs.get('variables'),
+                ]):
+                    if existing_trigger.token is None:
+                        kwargs['token'] = uuid.uuid4().hex
+                    existing_trigger.update(**kwargs)
+            else:
+                kwargs['token'] = uuid.uuid4().hex
+                triggers_to_create.append(kwargs)
+
+        db_connection.session.bulk_save_objects(
+            [PipelineSchedule(**data) for data in triggers_to_create],
+            return_defaults=True,
+        )
+        db_connection.session.commit()
 
     @classmethod
     @safe_db_query
@@ -219,16 +309,17 @@ class PipelineSchedule(BaseModel):
         if self.schedule_interval is None:
             return None
 
-        if self.schedule_interval == '@once':
+        if self.schedule_interval == ScheduleInterval.ONCE or \
+                self.schedule_interval == ScheduleInterval.ALWAYS_ON:
             current_execution_date = now
-        elif self.schedule_interval == '@daily':
+        elif self.schedule_interval == ScheduleInterval.DAILY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0)
-        elif self.schedule_interval == '@hourly':
+        elif self.schedule_interval == ScheduleInterval.HOURLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0)
-        elif self.schedule_interval == '@weekly':
+        elif self.schedule_interval == ScheduleInterval.WEEKLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0) - \
                 timedelta(days=now.weekday())
-        elif self.schedule_interval == '@monthly':
+        elif self.schedule_interval == ScheduleInterval.MONTHLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         else:
             cron_itr = croniter(self.schedule_interval, now)
@@ -241,24 +332,24 @@ class PipelineSchedule(BaseModel):
         # and if the schedule_interval is @daily, then the schedule should finish running by
         # every day by 12:25:00.
         if self.landing_time_enabled() and self.start_time:
-            if self.schedule_interval == '@hourly':
+            if self.schedule_interval == ScheduleInterval.HOURLY:
                 current_execution_date = current_execution_date.replace(
                     minute=self.start_time.minute,
                     second=self.start_time.second,
                 )
-            elif self.schedule_interval == '@daily':
+            elif self.schedule_interval == ScheduleInterval.DAILY:
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
                     second=self.start_time.second,
                 )
-            elif self.schedule_interval == '@weekly':
+            elif self.schedule_interval == ScheduleInterval.WEEKLY:
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
                     second=self.start_time.second,
                 ) + timedelta(days=self.start_time.weekday())
-            elif self.schedule_interval == '@monthly':
+            elif self.schedule_interval == ScheduleInterval.MONTHLY:
                 current_execution_date = current_execution_date.replace(
                     hour=self.start_time.hour,
                     minute=self.start_time.minute,
@@ -274,15 +365,16 @@ class PipelineSchedule(BaseModel):
         if current_execution_date is None:
             return None
 
-        if self.schedule_interval == '@once':
+        if self.schedule_interval == ScheduleInterval.ONCE or \
+                self.schedule_interval == ScheduleInterval.ALWAYS_ON:
             pass
-        elif self.schedule_interval == '@daily':
+        elif self.schedule_interval == ScheduleInterval.DAILY:
             next_execution_date = current_execution_date + timedelta(days=1)
-        elif self.schedule_interval == '@hourly':
+        elif self.schedule_interval == ScheduleInterval.HOURLY:
             next_execution_date = current_execution_date + timedelta(hours=1)
-        elif self.schedule_interval == '@weekly':
+        elif self.schedule_interval == ScheduleInterval.WEEKLY:
             next_execution_date = current_execution_date + timedelta(weeks=1)
-        elif self.schedule_interval == '@monthly':
+        elif self.schedule_interval == ScheduleInterval.MONTHLY:
             next_execution_date = (current_execution_date + timedelta(days=32)).replace(day=1)
         else:
             cron_itr = croniter(self.schedule_interval, current_execution_date)
@@ -329,14 +421,22 @@ class PipelineSchedule(BaseModel):
             )
             return False
 
-        if self.schedule_interval == '@once':
-            pipeline_run_count = len(self.pipeline_runs)
+        if self.schedule_interval == ScheduleInterval.ONCE:
+            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
             # Used by streaming pipeline to launch multiple executors
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
+        elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
+            if len(self.fetch_pipeline_runs([self.id])) == 0:
+                return True
+            else:
+                return self.last_pipeline_run_status not in [
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                ]
         else:
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
@@ -354,7 +454,7 @@ class PipelineSchedule(BaseModel):
                     x.execution_date.replace(tzinfo=pytz.UTC),
                     current_execution_date,
                 ) == 0,
-                self.pipeline_runs
+                self.fetch_pipeline_runs([self.id])
             ):
                 if self.landing_time_enabled():
                     if not previous_runtimes or len(previous_runtimes) == 0:
@@ -382,10 +482,10 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval not in [
-            '@daily',
-            '@hourly',
-            '@monthly',
-            '@weekly',
+            ScheduleInterval.DAILY,
+            ScheduleInterval.HOURLY,
+            ScheduleInterval.MONTHLY,
+            ScheduleInterval.WEEKLY,
         ]:
             return False
 
@@ -586,6 +686,12 @@ class PipelineRun(BaseModel):
     def pipeline_schedule_type(self):
         return self.pipeline_schedule.schedule_type
 
+    @property
+    def pipeline_tags(self):
+        pipeline = Pipeline.get(self.pipeline_uuid, check_if_exists=True)
+
+        return self.pipeline.tags if pipeline is not None else []
+
     def executable_block_runs(
         self,
         allow_blocks_to_fail: bool = False,
@@ -638,7 +744,7 @@ class PipelineRun(BaseModel):
         for block_run in self.block_runs:
             block = pipeline.get_block(block_run.block_uuid)
             metrics = block_run.metrics
-            if metrics and block and block.is_source():
+            if metrics and block and block.is_data_integration():
                 original_block_uuid = metrics.get('original_block_uuid')
 
                 if original_block_uuid and metrics.get('child'):
@@ -650,28 +756,50 @@ class PipelineRun(BaseModel):
                             block_run.block_uuid,
                         )
 
-        executable_block_runs = list()
+        executable_block_runs = []
         for block_run in self.initial_block_runs:
             completed = False
             upstream_block_uuids_override = None
 
-            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
-                'dynamic_upstream_block_uuids',
-            )
+            dynamic_upstream_block_uuids = None
+            dynamic_block_index = None
 
-            if dynamic_upstream_block_uuids:
+            if block_run.metrics:
+                """
+                {
+                  "dynamic_upstream_block_uuids": [
+                    "snowy_flower",
+                    "white_dew"
+                  ],
+                  "dynamic_block_index": 0
+                }
+                """
+                metrics = block_run.metrics
+                if 'dynamic_upstream_block_uuids' in metrics and 'dynamic_block_index' in metrics:
+                    dynamic_upstream_block_uuids = metrics['dynamic_upstream_block_uuids']
+                    dynamic_block_index = metrics['dynamic_block_index']
+
+            if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
+                uuids_to_check = []
+                for upstream_block_uuid in dynamic_upstream_block_uuids:
+                    block = pipeline.get_block(upstream_block_uuid)
+                    if is_dynamic_block_child(block):
+                        uuids_to_check.append(upstream_block_uuid)
+                    else:
+                        uuids_to_check.append(upstream_block_uuid)
+
                 if allow_blocks_to_fail:
                     completed = all(uuid in finished_block_uuids
-                                    for uuid in dynamic_upstream_block_uuids)
+                                    for uuid in uuids_to_check)
                 else:
                     completed = all(uuid in completed_block_uuids
-                                    for uuid in dynamic_upstream_block_uuids)
+                                    for uuid in uuids_to_check)
             else:
                 block = pipeline.get_block(block_run.block_uuid)
 
                 metrics = block_run.metrics
 
-                if metrics and block and block.is_source():
+                if metrics and block and block.is_data_integration():
                     if metrics.get('original'):
                         # If this is the original block, it must depend on all the children
                         # except the children that are controllers.
@@ -695,6 +823,9 @@ class PipelineRun(BaseModel):
                             metrics.get('upstream_block_uuids'):
 
                         upstream_block_uuids_override = metrics.get('upstream_block_uuids')
+                elif metrics and metrics.get('dynamic_upstream_block_uuids'):
+                    upstream_block_uuids_override = \
+                        metrics.get('dynamic_upstream_block_uuids') or []
 
                 completed = block is not None and \
                     block.all_upstream_blocks_completed(
@@ -727,6 +858,34 @@ class PipelineRun(BaseModel):
         if include_block_runs:
             query = query.options(joinedload(PipelineRun.block_runs))
         return query.all()
+
+    @classmethod
+    @safe_db_query
+    def active_runs_for_pipelines_grouped(
+        self,
+        pipeline_uuids: List[str],
+        include_block_runs: bool = False,
+    ) -> Dict[str, List['PipelineRun']]:
+        """
+        Get a dictionary of active pipeline runs grouped by pipeline uuid.
+        """
+
+        active_runs = self.active_runs_for_pipelines(
+            pipeline_uuids,
+            include_block_runs=include_block_runs,
+        )
+        grouped = {}
+        for key, runs in groupby(active_runs, key=lambda x: x.pipeline_uuid):
+            grouped[key] = list(runs)
+        return grouped
+
+    @classmethod
+    @safe_db_query
+    def batch_update_status(self, pipeline_run_ids: List[int], status):
+        PipelineRun.query.filter(PipelineRun.id.in_(pipeline_run_ids)).update({
+            PipelineRun.status: status
+        }, synchronize_session=False)
+        db_connection.session.commit()
 
     @classmethod
     def create(self, create_block_runs: bool = True, **kwargs) -> 'PipelineRun':
@@ -809,7 +968,7 @@ class PipelineRun(BaseModel):
                         f'Replicated block {block.replicated_block} ' +
                         f'does not exist in pipeline {pipeline.uuid}.',
                     )
-            elif block.is_source():
+            elif block.is_data_integration():
                 controller_uuid = block.controller_uuid
                 create_options['metrics'] = dict(
                     controller_block_uuid=controller_uuid,
@@ -1022,7 +1181,7 @@ class BlockRun(BaseModel):
 
             # Data integration child block run
             if child:
-                # [block UUID]:[source UUID]:[stream]:[controller|index]
+                # [block UUID]:[source destination UUID]:[stream]:[controller|index]
                 parts = self.block_uuid.split(':')
                 if len(parts) >= 4:
                     source_destination_uuid = parts[1]

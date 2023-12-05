@@ -14,7 +14,7 @@ import {
   OUTLINE_OFFSET,
   OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
+import { FONT_FAMILY_BOLD, FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -28,6 +28,11 @@ export function selectOutlineColor(props) {
   return (props.theme.background || dark.background).panel;
 }
 
+export type ButtonHighlightProps = {
+  highlightOnHover?: boolean;
+  highlightOnHoverAlt?: boolean;
+};
+
 export type ButtonProps = {
   afterIcon?: any;
   backgroundColor?: string;
@@ -36,7 +41,7 @@ export type ButtonProps = {
   beforeIcon?: any;
   borderColor?: string;
   borderLess?: boolean;
-  borderRadius?: number;
+  borderRadius?: string;
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
@@ -45,9 +50,9 @@ export type ButtonProps = {
   default?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
-  highlightOnHover?: boolean;
   iconOnly?: boolean;
   id?: string;
+  inline?: boolean;
   large?: boolean;
   linkProps?: {
     as?: string;
@@ -56,8 +61,10 @@ export type ButtonProps = {
   loading?: boolean;
   minWidth?: number;
   noBackground?: boolean;
+  noBold?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noHover?: boolean;
   noHoverUnderline?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;
@@ -75,6 +82,12 @@ export type ButtonProps = {
   selected?: boolean;
   selectedAlt?: boolean;
   small?: boolean;
+  style?: {
+    position?: string;
+    right?: number;
+    top?: number;
+    zIndex?: number;
+  };
   success?: boolean;
   tabIndex?: number;
   target?: string;
@@ -82,19 +95,41 @@ export type ButtonProps = {
   transparent?: boolean;
   warning?: boolean;
   width?: number;
-};
+} & ButtonHighlightProps;
+
+export const SHARED_HIGHLIGHT_STYLES = css<ButtonHighlightProps>`
+  ${props => props.highlightOnHover && `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder} !important;
+    }
+  `}
+
+  ${props => props.highlightOnHoverAlt && `
+    &:hover {
+      background-color: ${(props.theme.background || dark.background).dashboard} !important;
+    }
+  `}
+`;
 
 const SHARED_STYLES = css<{
   hasOnClick?: boolean;
 } & ButtonProps>`
   ${transition()}
+  ${SHARED_HIGHLIGHT_STYLES}
 
   border: none;
   display: block;
-  font-family: ${FONT_FAMILY_BOLD};
   padding: ${1 * UNIT}px ${1.5 * UNIT}px;
   position: relative;
   z-index: 0;
+
+  ${props => !props.noBold && `
+    font-family: ${FONT_FAMILY_BOLD};
+  `}
+
+  ${props => props.noBold && `
+    font-family: ${FONT_FAMILY_REGULAR};
+  `}
 
   ${props => !props.hasOnClick && `
     &:hover {
@@ -167,7 +202,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.borderRadius && `
-    border-radius: ${props.borderRadius}px;
+    border-radius: ${props.borderRadius} !important;
   `}
 
   ${props => !props.borderRadiusLeft && props.borderRadiusRight && `
@@ -218,12 +253,6 @@ const SHARED_STYLES = css<{
 
   ${props => props.transparent && `
     background-color: transparent;
-  `}
-
-  ${props => props.highlightOnHover && `
-    &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
-    }
   `}
 
   ${props => props.outline && !props.disabled && !props.notClickable && `

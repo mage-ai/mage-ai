@@ -1,5 +1,11 @@
 import os
 
+from .secret_generation import generate_jwt_secret
+
+# If you add a new environment variable, make sure to check if it should be added to
+# the `MAGE_SETTINGS_ENVIRONMENT_VARIABLES` list at the bottom of this file. Also, update
+# the environment variable documentation at docs/development/variables/environment-variables.mdx
+
 DEBUG = os.getenv('DEBUG', False)
 HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 QUERY_API_KEY = 'api_key'
@@ -19,8 +25,11 @@ except ValueError:
     DISABLE_NOTEBOOK_EDIT_ACCESS = 1 if os.getenv('DISABLE_NOTEBOOK_EDIT_ACCESS') else 0
 
 
-def is_disable_pipeline_edit_access():
-    return DISABLE_NOTEBOOK_EDIT_ACCESS >= 1
+def is_disable_pipeline_edit_access(disable_notebook_edit_access_override: int = None) -> bool:
+    value = DISABLE_NOTEBOOK_EDIT_ACCESS
+    if disable_notebook_edit_access_override is not None:
+        value = disable_notebook_edit_access_override
+    return value >= 1
 
 
 # ------------------------- DISABLE TERMINAL ----------------------
@@ -30,6 +39,8 @@ DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', '0').lower() in ('true', '1', '
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = \
     os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
+REQUIRE_USER_PERMISSIONS = REQUIRE_USER_AUTHENTICATION and \
+    os.getenv('REQUIRE_USER_PERMISSIONS', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
 try:
     MAGE_ACCESS_TOKEN_EXPIRY_TIME = int(os.getenv('MAGE_ACCESS_TOKEN_EXPIRY_TIME', '2592000'))
@@ -68,6 +79,11 @@ SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
 ENABLE_NEW_RELIC = os.getenv('ENABLE_NEW_RELIC', False)
 NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
 
+# If enabled, the /metrics route will expose Tornado server metrics
+ENABLE_PROMETHEUS = os.getenv(
+    'ENABLE_PROMETHEUS', 'False'
+).lower() in ('true', '1', 't')
+
 DEFAULT_LOCALHOST_URL = 'http://localhost:6789'
 MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or DEFAULT_LOCALHOST_URL
 
@@ -80,6 +96,16 @@ REQUESTS_BASE_PATH = os.getenv('MAGE_REQUESTS_BASE_PATH', BASE_PATH)
 # Routes base path is used to configure the base path for the backend routes. Defaults
 # to the MAGE_BASE_PATH environment variable.
 ROUTES_BASE_PATH = os.getenv('MAGE_ROUTES_BASE_PATH', BASE_PATH)
+# Used for OAUTH
+JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
+# Used for generating download tokens
+JWT_DOWNLOAD_SECRET = os.getenv('JWT_DOWNLOAD_SECRET', generate_jwt_secret())
+# Sets the trigger interval of the scheduler to a numeric value, in seconds
+# Determines how often the scheduler gets invoked
+try:
+    SCHEDULER_TRIGGER_INTERVAL = float(os.getenv('SCHEDULER_TRIGGER_INTERVAL', '10'))
+except ValueError:
+    SCHEDULER_TRIGGER_INTERVAL = 10
 
 # List of environment variables used to configure Mage. The value of these settings
 # will be copied between workspaces.
@@ -104,4 +130,17 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'SENTRY_TRACES_SAMPLE_RATE',
     'MAGE_PUBLIC_HOST',
     'ACTIVE_DIRECTORY_DIRECTORY_ID',
+    'ACTIVE_DIRECTORY_CLIENT_ID',
+    'ACTIVE_DIRECTORY_CLIENT_SECRET',
+    'SCHEDULER_TRIGGER_INTERVAL',
+    'REQUIRE_USER_PERMISSIONS',
+    'ENABLE_PROMETHEUS',
+    'OKTA_DOMAIN_URL',
+    'OKTA_CLIENT_ID',
+    'OKTA_CLIENT_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GHE_CLIENT_ID',
+    'GHE_CLIENT_SECRET',
+    'GHE_HOSTNAME',
 ]

@@ -103,3 +103,17 @@ services:
     volumes:
       - ~/.aws:/root/.aws
 ```
+
+## "Run block" button doesn't work when running Mage with Nginx
+
+If Mage terminal or "Run block" button doesn't work, it usually means there's a WebSocket connection issue. If Mage server is deployed with Nginx, you can add the below config to Nginx config to enable WebScoket connection.
+
+```
+        location / {
+          proxy_pass      http://127.0.0.1:6789;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "Upgrade";
+          proxy_set_header Host $host;
+        }
+```

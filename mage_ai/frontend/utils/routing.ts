@@ -80,15 +80,21 @@ export function goToWithFilters(
     itemsPerPage,
     pushHistory = false,
     resetLimitParams,
+    resetPage = false,
   }: {
     addingMultipleValues?: boolean;
     isList?: boolean,
     itemsPerPage?: number,
     pushHistory?: boolean,
     resetLimitParams?: boolean,
+    resetPage?: boolean,
   },
 ) {
   let updatedQuery = { ...query };
+
+  if (resetPage) {
+    updatedQuery.page = 0;
+  }
 
   if (addingMultipleValues) {
     Object.entries(additionalQuery).forEach(([k1, v]) => {

@@ -1,0 +1,4 @@
+connector_type: redshift
+profile: default
+config:
+  table_name: table_name

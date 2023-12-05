@@ -52,6 +52,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
     'pipeline_schedule_name',
     'pipeline_schedule_token',
     'pipeline_schedule_type',
+    'pipeline_tags',
     'pipeline_type',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -100,12 +101,17 @@ PipelineRunPolicy.allow_query([
     'disable_retries_grouping',
     'end_timestamp',
     'global_data_product_uuid',
+    'include_pipeline_tags',
     'include_pipeline_type',
+    'include_pipeline_uuids',
     'order_by[]',
+    'pipeline_tag[]',
     'pipeline_type',
     'pipeline_uuid',
+    'pipeline_uuid[]',
     'start_timestamp',
     'status',
+    'status[]',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

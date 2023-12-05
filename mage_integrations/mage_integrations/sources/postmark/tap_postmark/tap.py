@@ -7,9 +7,9 @@ import pkg_resources
 from singer import get_logger, utils
 from singer.catalog import Catalog
 
-from tap_postmark.postmark import Postmark
-from tap_postmark.discover import discover
-from tap_postmark.sync import sync
+from mage_integrations.sources.postmark.tap_postmark.discover import discover
+from mage_integrations.sources.postmark.tap_postmark.postmark import Postmark
+from mage_integrations.sources.postmark.tap_postmark.sync import sync
 
 # VERSION: str = pkg_resources.get_distribution('tap-postmark').version
 LOGGER: logging.RootLogger = get_logger()

@@ -58,7 +58,6 @@ function UserEditForm({
     owner: isOwner,
   } = getUser() || {};
 
-
   const { data: serverStatus } = api.statuses.list();
   const {
     project_type: projectType,
@@ -330,7 +329,7 @@ function UserEditForm({
                 </Spacing>
               ))}
             </FlexContainer>
-            
+
           </Spacing>
         )}
 

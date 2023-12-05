@@ -33,6 +33,7 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
             dict(
                 name='test_schedule',
                 schedule_interval='@daily',
+                schedule_type=ScheduleType.TIME,
                 start_time='2023-01-01T00:00:00',
                 status='inactive',
                 variables=[],
@@ -117,6 +118,7 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
                 dict(
                     name='test_schedule',
                     schedule_interval='@daily',
+                    schedule_type=ScheduleType.TIME,
                     start_time='2023-01-01T00:00:00',
                     status='inactive',
                     variables=[],
@@ -125,6 +127,7 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
                 dict(
                     name='test_schedule_2',
                     schedule_interval='@daily',
+                    schedule_type=ScheduleType.TIME,
                     start_time='2023-01-01T00:00:00',
                     status='inactive',
                     variables=[],

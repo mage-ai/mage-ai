@@ -19,6 +19,7 @@ type CellProps = {
   small: boolean;
   showBackground?: boolean;
   showProgress?: boolean;
+  textColor?: string;
   value: any;
   vanish?: boolean;
 };
@@ -34,6 +35,7 @@ function Cell({
   small,
   showBackground,
   showProgress,
+  textColor,
   value,
   vanish,
 }: CellProps) {
@@ -119,6 +121,7 @@ function Cell({
         first={cellIndex === 0}
         showBackground={showBackground}
         small={small}
+        textColor={textColor}
         vanish={vanish}
       >
         { !vanish && <>{cellEl} </>

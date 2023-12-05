@@ -1,22 +1,30 @@
+import * as ReactDOM from 'react-dom';
+import Editor, { loader } from '@monaco-editor/react';
 import React, {
   useCallback,
   useEffect,
   useRef,
   useState,
 } from 'react';
-import * as ReactDOM from 'react-dom';
-import Editor, { loader } from '@monaco-editor/react';
+import { getHost } from '@api/utils/url';
 
 /*
- * If https://cdn.jsdelivr.net (the default CDN) is down, uncomment the
- * loader.config method call below to use a different CDN for loading
- * the Monaco Editor.
+ * In order to load the Monaco Editor locally and avoid fetching it from a CDN
+ * (the default CDN is https://cdn.jsdelivr.net), the monaco-editor bundle was
+ * copied into the "public" folder from node_modules, and we called the
+ * loader.config method below to reference it.
+ *
+ * We can also use this method to load the Monaco Editor from a different
+ * CDN like Cloudflare.
  */
-// loader.config({
-//   paths: {
-//     vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs',
-//   },
-// });
+loader.config({
+  paths: {
+    // Load Monaco Editor from "public" directory
+    vs: `${getHost()}/monaco-editor/min/vs`,
+    // Load Monaco Editor from different CDN
+    // vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs',
+  },
+});
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Text from '@oracle/elements/Text';
@@ -68,6 +76,8 @@ type CodeEditorProps = {
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
+  onContentSizeChangeCallback?: () => void;
+  onMountCallback?: () => void;
   onSave?: (value: string) => void;
   padding?: boolean;
   placeholder?: string;
@@ -89,7 +99,9 @@ function CodeEditor({
   height,
   language,
   onChange,
+  onContentSizeChangeCallback,
   onDidChangeCursorPosition,
+  onMountCallback,
   onSave,
   padding,
   placeholder,
@@ -101,7 +113,7 @@ function CodeEditor({
   showLineNumbers = true,
   tabSize = 4,
   textareaFocused,
-  theme: themeProp,
+  theme = DEFAULT_THEME,
   value,
   width = '100%',
 }: CodeEditorProps) {
@@ -112,12 +124,28 @@ function CodeEditor({
   const [completionDisposable, setCompletionDisposable] = useState([]);
   const [monacoInstance, setMonacoInstance] = useState(null);
   const [mounted, setMounted] = useState<boolean>(false);
-  const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
+  const [loadedTheme, setLoadedTheme] = useState<string>(null);
+
+  const updateTheme = useCallback((monaco) => {
+    setLoadedTheme((prevTheme) => {
+      if (prevTheme !== theme) {
+        defineTheme(theme).then((loaded) => {
+          if (loaded) {
+            monaco.editor.setTheme(theme);
+            return theme;
+          }
+        });
+      }
+
+      return prevTheme;
+    });
+  }, [theme]);
 
   const handleEditorWillMount = useCallback((monaco) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
     setMonacoInstance(monaco);
-  }, []);
+    updateTheme(monaco);
+  }, [updateTheme]);
 
   const handleEditorDidMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
@@ -166,6 +194,10 @@ function CodeEditor({
       if (autoHeight && contentHeightChanged) {
         editor._domElement.style.height = `${contentHeight + (SINGLE_LINE_HEIGHT * 2)}px`;
       }
+
+      if (onContentSizeChangeCallback) {
+        onContentSizeChangeCallback?.();
+      }
     });
 
     if (selected && textareaFocused) {
@@ -199,26 +231,22 @@ function CodeEditor({
     }
 
     setMounted(true);
+    onMountCallback?.();
   }, [
     autoHeight,
     height,
+    onContentSizeChangeCallback,
     onDidChangeCursorPosition,
+    onMountCallback,
     onSave,
     selected,
     setMounted,
-    setSelected,
     setTextareaFocused,
     shortcutsProp,
     tabSize,
     textareaFocused,
     value,
   ]);
-
-  useEffect(() => {
-    defineTheme(DEFAULT_THEME).then(() => {
-      setTheme(DEFAULT_THEME);
-    });
-  }, []);
 
   useEffect(() => {
     let autoSaveInterval;
@@ -283,6 +311,7 @@ function CodeEditor({
    * re-add the keyboard shortcuts when the upstream or downstream connections change.
    * Including shortcutsProp in the dependency array may lead to unnecessary re-renders.
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block?.downstream_blocks, block?.upstream_blocks]);
 
   useEffect(
@@ -338,7 +367,7 @@ function CodeEditor({
           fontLigatures: true,
           fontSize,
           hideCursorInOverviewRuler: true,
-          lineNumbers: showLineNumbers,
+          lineNumbers: showLineNumbers ? 'on' : 'off',
           minimap: {
             enabled: false,
           },
@@ -355,7 +384,7 @@ function CodeEditor({
           wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
         }}
-        theme={theme}
+        theme={loadedTheme || 'vs-dark'}
         value={value}
         width={width}
       />

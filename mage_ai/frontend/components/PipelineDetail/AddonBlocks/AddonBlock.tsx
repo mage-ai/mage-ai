@@ -74,6 +74,7 @@ function AddonBlock({
   setSelectedBlock,
   setTextareaFocused,
   showBrowseTemplates,
+  showUpdateBlockModal,
   textareaFocused,
 }: AddonBlockProps) {
   const refParent = useRef(null);
@@ -279,6 +280,7 @@ function AddonBlock({
           runBlock={runBlock}
           runningBlocks={runningBlocks}
           savePipelineContent={savePipelineContent}
+          showUpdateBlockModal={showUpdateBlockModal}
           selected={selected}
           setAnyInputFocused={setAnyInputFocused}
           setErrors={setErrors}
@@ -314,6 +316,7 @@ function AddonBlock({
     setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
+    showUpdateBlockModal,
     textareaFocused,
     updateBlock,
   ]);

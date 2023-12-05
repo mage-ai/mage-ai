@@ -16,6 +16,7 @@ export default interface SyncType {
   branch?: string;
   sync_on_pipeline_run?: boolean;
   sync_on_start?: boolean;
+  sync_submodules?: boolean;
   user_git_settings?: UserGitSettingsType;
 }
 
@@ -48,14 +49,12 @@ export const SSH_GIT_FIELDS = [
   {
     autoComplete: 'ssh_public_key',
     label: 'SSH public key in base64',
-    labelDescription: 'Run "cat ~/.ssh/id_rsa.pub | base64 | tr -d \\\\n && echo" in terminal to get base64 encoded public key and paste the result here. The key will be stored as a Mage secret.',
     type: 'password',
     uuid: 'ssh_public_key',
   },
   {
     autoComplete: 'ssh_private_key',
     label: 'SSH private key in base64',
-    labelDescription: 'Follow same steps as the public key, but run "cat ~/.ssh/id_rsa | base64 | tr -d \\\\n && echo" instead. The key will be stored as a Mage secret.',
     type: 'password',
     uuid: 'ssh_private_key',
   },

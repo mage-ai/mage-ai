@@ -12,7 +12,10 @@ type WorkspacesDashboardProps = {
   breadcrumbs?: BreadcrumbType[],
   children: any;
   errors?: ErrorsType;
+  headerOffset?: number;
+  mainContainerHeader?: any;
   pageName: WorkspacesPageNameEnum;
+  setErrors?: (errors: ErrorsType) => void;
   subheaderChildren?: any;
 };
 
@@ -21,7 +24,10 @@ function WorkspacesDashboard({
   breadcrumbs = [],
   children,
   errors,
+  headerOffset,
+  mainContainerHeader,
   pageName,
+  setErrors,
   subheaderChildren,
 }: WorkspacesDashboardProps) {
   const { data: dataStatus } = api.statuses.list();
@@ -38,7 +44,10 @@ function WorkspacesDashboard({
       beforeWidth={before ? 50 * UNIT : 0}
       breadcrumbs={breadcrumbs}
       errors={errors}
+      headerOffset={headerOffset}
+      mainContainerHeader={mainContainerHeader}
       navigationItems={buildNavigationItems(user, projectType, pageName)}
+      setErrors={setErrors}
       subheaderChildren={subheaderChildren}
       title="Workspaces"
       uuid="workspaces/index"

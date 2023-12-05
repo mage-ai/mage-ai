@@ -28,6 +28,10 @@ Alternatively, instead of using `password` and `user`, you can use the following
 | `db_user` | The user ID to use with Amazon Redshift. | `admin` |
 | `secret_access_key` | The secret access key for the IAM role or IAM user configured for IAM database authentication. | `xyz123` |
 
+### Optional Configs
+| Key | Description | Sample value
+| --- | --- | --- |
+| `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
 <br />
 
 ## Grant permissions

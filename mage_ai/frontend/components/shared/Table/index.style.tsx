@@ -4,7 +4,21 @@ import dark from '@oracle/styles/themes/dark';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const HORIZONTAL_PADDING = 2 * UNIT;
+export const VERTICAL_PADDING = 1 * UNIT;
+
+export const TableWrapperStyle = styled.div<{
+  fixed?: boolean;
+}>`
+  position: relative;
+
+  ${props => props.fixed && `
+    table-layout: fixed;
+  `}
+`;
+
 export const TableContainerStyle = styled.div<{
+  hide?: boolean;
   includePadding?: boolean;
   maxHeight?: string;
   minHeight?: number;
@@ -29,17 +43,26 @@ export const TableContainerStyle = styled.div<{
   ${props => props.overflowVisible && `
     overflow: visible;
   `}
+
+  ${({ hide }) => hide && `
+    display: none;
+  `}
 `;
 
 export const TableStyle = styled.table<{
   borderCollapseSeparate?: boolean;
   columnBorders?: boolean;
+  fixed?: boolean;
 }>`
   contain: size;
   width: 100%;
 
   ${props => (props.columnBorders || props.borderCollapseSeparate) && `
     border-collapse: separate;
+  `}
+
+  ${props => props.fixed && `
+    table-layout: fixed;
   `}
 `;
 
@@ -67,6 +90,7 @@ type SHARED_TABLE_PROPS = {
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
+  rowVerticalPadding?: number;
   selected?: boolean;
 };
 
@@ -87,15 +111,32 @@ const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
   `}
 
   ${props => props.compact && `
-    padding: ${UNIT / 2}px ${UNIT}px;
+    padding-left: ${UNIT}px;
+    padding-right: ${UNIT}px;
+  `}
+
+  ${props => props.compact && (typeof props.rowVerticalPadding === 'undefined' || props.rowVerticalPadding === null) && `
+    padding-bottom: ${UNIT / 2}px;
+    padding-top: ${UNIT / 2}px;
   `}
 
   ${props => !props.compact && `
-    padding: ${UNIT}px ${2 * UNIT}px;
+    padding-left: ${HORIZONTAL_PADDING}px;
+    padding-right: ${HORIZONTAL_PADDING}px;
+  `}
+
+  ${props => !props.compact && (typeof props.rowVerticalPadding === 'undefined' || props.rowVerticalPadding === null) && `
+    padding-bottom: ${VERTICAL_PADDING}px;
+    padding-top: ${VERTICAL_PADDING}px;
   `}
 
   ${props => props.maxWidth && `
     max-width: ${props.maxWidth};
+  `}
+
+  ${props => typeof props.rowVerticalPadding !== 'undefined' && props.rowVerticalPadding !== null && `
+    padding-top: ${props.rowVerticalPadding}px;
+    padding-bottom: ${props.rowVerticalPadding}px;
   `}
 `;
 
@@ -142,17 +183,12 @@ export const SortIconContainerStyle = styled.div<{
 `;
 
 export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
+  last?: boolean;
   rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
-  last?: boolean;
   wrapColumns?: boolean;
 }>`
   ${SHARED_STYLES}
-
-  ${props => props.rowVerticalPadding && `
-    padding-top: ${props.rowVerticalPadding}px;
-    padding-bottom: ${props.rowVerticalPadding}px;
-  `}
 
   ${props => props.columnBorders && `
     border-left: 1px solid ${(props.theme.borders || dark.borders).light};

@@ -1,6 +1,7 @@
 import FeatureType from '@interfaces/FeatureType';
 import SuggestionType from './SuggestionType';
 import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
+import { CatalogType } from './IntegrationSourceType';
 import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
@@ -215,6 +216,11 @@ export interface BlockRequestPayloadType {
   content?: string;
   converted_from_type?: string;
   converted_from_uuid?: string;
+  defaults?: {
+    language?: BlockLanguageEnum;
+  };
+  detach?: boolean;
+  downstream_blocks?: string[];
   extension_uuid?: string;
   language?: BlockLanguageEnum;
   name?: string;
@@ -249,13 +255,19 @@ export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   callback_blocks?: string[];
   callback_content?: string;
+  catalog?: CatalogType;
   conditional_blocks?: string[];
   color?: BlockColorEnum;
   config?: BlockRequestConfigType;
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  defaults?: {
+    language?: BlockLanguageEnum;
+  };
+  detach?: boolean;
   description?: string;
+  documentation?: string;
   downstream_blocks?: string[];
   error?: {
     error: string;
@@ -264,9 +276,18 @@ export default interface BlockType {
   executor_type?: ExecutorTypeEnum;
   extension_uuid?: string;
   file?: string;
+  force?: boolean;
   has_callback?: boolean;
   language?: BlockLanguageEnum;
   metadata?: {
+    data_integration?: {
+      config?: {
+        [key: string]: number | string;
+      };
+      destination?: string;
+      name?: string;
+      source?: string;
+    };
     dbt?: {
       block?: {
         snapshot?: boolean;

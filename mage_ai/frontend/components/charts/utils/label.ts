@@ -3,16 +3,26 @@ import { isNumeric, roundNumber } from '@utils/string';
 export const SCATTER_PLOT_X_LABEL_MAX_LENGTH = 20;
 export const SCATTER_PLOT_Y_LABEL_MAX_LENGTH = 10;
 
-const numberFormat = Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  maximumFractionDigits: 2,
-});
+export function formatNumberLabel(
+  label: any,
+  opts?: {
+    maxFractionDigits?: number,
+    minAmount?: number,
+  },
+) {
+  const { maxFractionDigits, minAmount } = opts || {};
+  const numberFormat = Intl.NumberFormat('en-US', {
+    maximumFractionDigits: maxFractionDigits || 2,
+    notation: 'compact',
+  });
 
-export function formatNumberLabel(label) {
   if (typeof label !== 'number') {
     return label;
-  } 
-  return label >= 10000 ? numberFormat.format(label) : label.toString();
+  }
+
+  return label >= (minAmount || 10000)
+    ? numberFormat.format(label)
+    : label.toString();
 }
 
 export function truncateLabel(label, length) {

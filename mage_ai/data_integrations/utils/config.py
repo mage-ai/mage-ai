@@ -57,6 +57,15 @@ def __get_settings(absolute_file_path, variables: Dict = None, pipeline=None) ->
     return settings
 
 
+def get_batch_fetch_limit(source_config: Dict):
+    from mage_integrations.sources.constants import (
+        BATCH_FETCH_LIMIT,
+        BATCH_FETCH_LIMIT_KEY,
+    )
+
+    return source_config.get(BATCH_FETCH_LIMIT_KEY, BATCH_FETCH_LIMIT)
+
+
 def get_catalog(block, variables: Dict = None, pipeline=None) -> Dict:
     return get_settings(block, variables or {}, pipeline=pipeline)['catalog']
 

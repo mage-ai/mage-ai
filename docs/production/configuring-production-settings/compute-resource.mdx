@@ -65,7 +65,7 @@ blocks:
 ```
 By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
 
-There're two ways to customize the Kubernetes executor config:
+There're three ways to customize the Kubernetes executor config:
 
 1. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
     ```yaml
@@ -116,6 +116,55 @@ in this project. Example config:
       - name: USER_CODE_PATH
         value: /home/src/k8s_project
   ```
+3. You can configure the job template by using the `K8S_CONFIG_FILE` environment variable, which should point to the configuration file. Here is the format for the Kubernetes configuration template:
+
+```yaml
+# Kubernetes Configuration Template
+metadata:
+  annotations:
+    application: "mage"
+    composant: "executor"
+  labels:
+    application: "mage"
+    type: "spark"
+  namespace: "default"
+pod:
+  service_account_name: ""
+  image_pull_secrets: "secret"
+  volumes:
+  - name: data-pvc
+    persistent_volume_claim:
+      claim_name: pvc-name
+container:
+  name: "mage-data"
+  env:
+    - name: "KUBE_NAMESPACE"
+      value: "default"
+    - name: "secret_key"
+      value: "somesecret"
+  image: "mageai/mageai:latest"
+  image_pull_policy: "IfNotPresent"
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+    requests:
+      cpu: "0.1"
+      memory: "0.5Gi"
+  volume_mounts:
+    - mount_path: "/tmp/data"
+      name: "data-pvc"
+```
+
+**NB:** When deploying Mage in a multi-container pod, you need to specify the environment variable `MAGE_CONTAINER_NAME`. If this variable is not set, Mage will default to using the first container in the pod. To specify the Mage container, you can use:
+
+```yaml
+    env:
+      - name: MAGE_CONTAINER_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+```
 
 ### AWS ECS executor
 
@@ -154,11 +203,21 @@ name: example_pipeline
 ...
 ```
 
-The default wait timeout for the ECS task is 10 minutes. To customize the timeout, you can specify the `wait_timeout` (in seconds) field in `ecs_config`. Here is one example:
+#### Extra fields
+
+| Field name              | Description                                                                                                                   | Example values              |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| assign_public_ip        | Whether to assign public IP to the ECS task.                                                                                  | true/false (default: true)  |
+| enable_execute_command  | Whether to [enable execute command for debugging](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html)  | true/false (default: false) |
+| wait_timeout            | The maximum wait time for the ECS task (in seoncds). The default wait timeout for the ECS task is 10 minutes.                 | 1200 (default: 600)         |
+
+Example config
 ```yaml
 ecs_config:
   cpu: 1024
   memory: 2048
+  assign_public_ip: false
+  enable_execute_command: true
   wait_timeout: 1200
 ```
 

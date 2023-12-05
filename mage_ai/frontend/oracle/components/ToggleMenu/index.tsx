@@ -37,6 +37,7 @@ type ToggleMenuProps = {
   };
   parentRef: React.RefObject<any>;
   query: { [keyof: string]: string[] };
+  resetPageOnApply?: boolean;
   setOpen: (open: boolean) => void;
   toggleValueMapping?: {
     [keyof: string]: {
@@ -55,6 +56,7 @@ function ToggleMenu({
   options = {},
   parentRef,
   query,
+  resetPageOnApply,
   setOpen,
   toggleValueMapping,
 }: ToggleMenuProps) {
@@ -69,6 +71,7 @@ function ToggleMenu({
     top = 0,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
   const optionKeys = Object.keys(options);
+
 
   return (
     <ClickOutside
@@ -93,7 +96,7 @@ function ToggleMenu({
                   onMouseEnter={() => setHighlightedOptionKey(optionKey)}
                 >
                   <Text>
-                    {capitalize(optionKey)}
+                    {removeUnderscore(capitalize(optionKey))}
                   </Text>
                   <ChevronRight />
                 </OptionStyle>
@@ -103,28 +106,35 @@ function ToggleMenu({
           <Flex flex="2">
             <ContentStyle>
               {highlightedOptionKey && (
-                Object.entries((optionsState || options)?.[highlightedOptionKey] || {}).map(([value, enabled]) => (
-                  <ToggleValueStyle key={value}>
-                    <Text>
-                      {(typeof toggleValueMapping?.[highlightedOptionKey]?.[value] === 'function'
-                        // @ts-ignore
-                        ? capitalize(toggleValueMapping?.[highlightedOptionKey]?.[value]?.())
-                        : toggleValueMapping?.[highlightedOptionKey]?.[value]
-                       ) || removeUnderscore(capitalize(value))
-                      }
-                    </Text>
-                    <ToggleSwitch
-                      checked={enabled}
-                      onCheck={() => setOptionsState(prevState => ({
-                        ...prevState,
-                        [highlightedOptionKey]: {
-                          ...prevState?.[highlightedOptionKey],
-                          [value]: !enabled,
-                        },
-                      }))}
-                    />
-                  </ToggleValueStyle>
-                ))
+                Object.entries((optionsState || options)?.[highlightedOptionKey] || {}).map(([value, enabled]) => {
+                  const valueMapping = toggleValueMapping?.[highlightedOptionKey];
+                  const optionValue = (typeof valueMapping?.[value] === 'function'
+                    // @ts-ignore
+                    ? capitalize(valueMapping?.[value]?.())
+                    : valueMapping?.[value]
+                  ) || value;
+
+                  return (
+                    <ToggleValueStyle key={value}>
+                      <Text
+                        title={!valueMapping ? optionValue : null}
+                        width={200}
+                      >
+                        {optionValue}
+                      </Text>
+                      <ToggleSwitch
+                        checked={enabled}
+                        onCheck={() => setOptionsState(prevState => ({
+                          ...prevState,
+                          [highlightedOptionKey]: {
+                            ...prevState?.[highlightedOptionKey],
+                            [value]: !enabled,
+                          },
+                        }))}
+                      />
+                    </ToggleValueStyle>
+                  );
+                })
               )}
             </ContentStyle>
           </Flex>
@@ -154,6 +164,7 @@ function ToggleMenu({
                   {
                     addingMultipleValues: true,
                     pushHistory: true,
+                    resetPage: resetPageOnApply,
                   });
               }}
               secondary

@@ -10,8 +10,15 @@ import pandas as pd
 
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name
 from mage_ai.data_integrations.logger.utils import print_log_from_line
-from mage_ai.data_integrations.utils.config import build_config, get_catalog_by_stream
+from mage_ai.data_integrations.utils.config import (
+    build_config,
+    get_batch_fetch_limit,
+    get_catalog_by_stream,
+)
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.data_integration.constants import (
+    CONFIG_KEY_CLEAN_UP_INPUT_FILE,
+)
 from mage_ai.data_preparation.models.constants import PYTHON_COMMAND, BlockType
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
@@ -50,8 +57,6 @@ class IntegrationBlock(Block):
         runtime_arguments: Dict = None,
         **kwargs,
     ) -> List:
-        from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-
         if logging_tags is None:
             logging_tags = dict()
 
@@ -106,10 +111,6 @@ class IntegrationBlock(Block):
                     source_state_file_path,
                     destination_state_file_path,
                 )
-            else:
-                query_data['_offset'] = BATCH_FETCH_LIMIT * index
-            if not is_last_block_run:
-                query_data['_limit'] = BATCH_FETCH_LIMIT
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:
@@ -120,6 +121,13 @@ class IntegrationBlock(Block):
                     self.pipeline.data_loader.file_path,
                     variables_dictionary_for_config,
                 )
+                batch_fetch_limit = get_batch_fetch_limit(config)
+
+                if stream_catalog.get('replication_method') != 'INCREMENTAL':
+                    query_data['_offset'] = batch_fetch_limit * index
+                if not is_last_block_run:
+                    query_data['_limit'] = batch_fetch_limit
+
                 args = [
                     PYTHON_COMMAND,
                     self.pipeline.source_file_path,
@@ -388,6 +396,11 @@ class IntegrationBlock(Block):
                     filter_out_config_values(cmd, config),
                 )
 
+            # Automatically clean up the input file to save space
+            if config.get(CONFIG_KEY_CLEAN_UP_INPUT_FILE):
+                if os.path.exists(source_output_file_path):
+                    os.remove(source_output_file_path)
+
             outputs.append(proc)
 
         return outputs
@@ -426,12 +439,31 @@ class DestinationBlock(IntegrationBlock):
 
         return merge_dict(
             super().to_dict(
-                include_content,
-                include_outputs,
-                sample_count,
-                check_if_file_exists,
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+                check_if_file_exists=check_if_file_exists,
             ),
             data,
+        )
+
+    async def to_dict_async(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+        check_if_file_exists: bool = False,
+        destination_table: str = None,
+        state_stream: str = None,
+        **kwargs,
+    ) -> Dict:
+        return self.to_dict(
+            include_content=include_content,
+            include_outputs=include_outputs,
+            sample_count=sample_count,
+            check_if_file_exists=check_if_file_exists,
+            destination_table=destination_table,
+            state_stream=state_stream,
         )
 
     def update(self, data, update_state=False):

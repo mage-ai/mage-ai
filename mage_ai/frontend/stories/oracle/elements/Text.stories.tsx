@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Text, { TextProps } from '../../../oracle/elements/Text';
 import ThemeBlock from '../../ThemeBlock';
@@ -9,7 +9,7 @@ export default {
   title: 'Oracle/Elements/Text',
 } as Meta;
 
-const StylesTemplate: Story<TextProps> = ({ ...props }) => (
+const StylesTemplate: StoryFn<TextProps> = ({ ...props }) => (
   <ThemeBlock>
     <Text {...props} weightStyle={0}>Thin</Text>
     <Text {...props} weightStyle={2}>Light</Text>
@@ -24,7 +24,7 @@ const StylesTemplate: Story<TextProps> = ({ ...props }) => (
 export const Styles = StylesTemplate.bind({});
 Styles.args = {};
 
-const SizesTemplate: Story<TextProps> = ({ ...props }) => (
+const SizesTemplate: StoryFn<TextProps> = ({ ...props }) => (
   <ThemeBlock>
     <Text {...props} small>Small</Text>
     <Text {...props}>Regular</Text>

@@ -22,6 +22,16 @@ type ScrollbarTrackType = {
   noScrollbarTrackBackground?: boolean;
 };
 
+export const InlineContainerStyle = styled.div<{
+  height?: number;
+}>`
+  position: relative;
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+`;
+
 export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;
 }>`
@@ -77,13 +87,21 @@ export const TabStyle = styled.div<{
 
 const ASIDE_STYLE = css<{
   heightOffset?: number;
+  inline?: boolean;
 }>`
-  position: fixed;
   z-index: 2;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
     height: calc(100% - ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px);
+  `}
+
+  ${props => props.inline && `
+    position: absolute;
+  `}
+
+  ${props => !props.inline && `
+    background-color: ${(props.theme.background || dark.background).panel};
+    position: fixed;
     top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
   `}
 `;
@@ -136,12 +154,12 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 
 export const AsideHeaderStyle = styled.div<{
   contained?: boolean;
+  inline?: boolean;
   top?: number;
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
   height: ${ASIDE_SUBHEADER_HEIGHT}px;
-  position: fixed;
   z-index: 4;
 
   ${hideScrollBar()}
@@ -159,6 +177,10 @@ export const AsideHeaderStyle = styled.div<{
 
   ${props => props.contained && `
     border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => !props.inline && `
+    position: fixed;
   `}
 `;
 
@@ -196,7 +218,10 @@ export const AsideSubheaderStyle = styled.div<{
   `}
 `;
 
-export const BeforeStyle = styled.aside`
+export const BeforeStyle = styled.aside<{
+  heightOffset?: number;
+  inline?: boolean;
+}>`
   ${ASIDE_STYLE}
 
   left: 0;
@@ -219,13 +244,17 @@ export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
   `}
 `;
 
-export const AfterStyle = styled.aside`
+export const AfterStyle = styled.aside<{
+  heightOffset?: number;
+  inline?: boolean;
+}>`
   ${ASIDE_STYLE}
 
   right: 0;
 `;
 
 export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
+  heightMinus?: number;
   overflow?: string;
   verticalOffset?: number;
 }>`
@@ -234,10 +263,15 @@ export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
   ${props => props.overflow && `
     overflow: ${props.overflow};
   `}
+
+  ${props => props.heightMinus && `
+    height: calc(100% - ${props.heightMinus}px);
+  `}
 `;
 
 export const DraggableStyle = styled.div<{
   active?: boolean;
+  contrast?: boolean;
   disabled?: boolean;
   left?: number;
   right?: number;
@@ -246,35 +280,52 @@ export const DraggableStyle = styled.div<{
   ${ASIDE_DRAGGABLE_STYLE}
 
   ${props => typeof props.left !== 'undefined' && `
-    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
+    border-left-style: solid;
+    border-left-width: 1px;
     left: ${props.left}px;
   `}
 
   ${props => typeof props.right !== 'undefined' && `
-    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
+    border-right-style: solid;
+    border-right-width: 1px;
     right: ${props.right}px;
+  `}
+
+  ${props => !props.contrast && `
+    border-color: ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  ${props => props.contrast && `
+    border-color: ${(props.theme.borders || dark.borders).light};
   `}
 `;
 
-export const MainWrapper = styled.div`
+export const MainWrapper = styled.div<{
+  inline?: boolean;
+}>`
   height: 100%;
-  position: fixed;
   z-index: 1;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
+    position: ${props.inline ? 'absolute' : 'fixed'};
   `}
 `;
 
 export const MainContentStyle = styled.div<{
   beforeVisible?: boolean;
+  footerOffset?: number;
   headerOffset?: number;
+  inline?: boolean;
 }>`
-  position: fixed;
   z-index: 2;
 
   ${props => `
-    height: calc(100% - ${props.headerOffset || 0}px);
+    height: calc(100% - ${(props.headerOffset || 0) + (props.footerOffset || 0)}px);
+    position: ${props.inline ? 'relative' : 'fixed'};
+  `}
+
+  ${props => !props.inline && `
     top: ${props.headerOffset || 0}px;
   `}
 `;
@@ -339,21 +390,33 @@ export const NavigationContainerStyle = styled.div<{
 `;
 
 export const AsideFooterStyle = styled.div<{
+  bottom?: number;
   contained?: boolean;
+  inline?: boolean;
 }>`
   border-left: 1px solid transparent;
   border-right: 1px solid transparent;
   border-top: 1px solid transparent;
-  bottom: 0;
   position: fixed;
   z-index: 3;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
     border-top-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => !props.inline && `
+    background-color: ${(props.theme.background || dark.background).panel};
   `}
 
   ${props => props.contained && `
     border-left-color: ${(props.theme.borders || dark.borders).medium} !important;
+  `}
+
+  ${props => (typeof props.bottom === 'undefined' || props.bottom === null) && `
+    bottom: 0;
+  `}
+
+  ${props => typeof props.bottom !== 'undefined' && props.bottom !== null && `
+    bottom: ${props.bottom}px;
   `}
 `;

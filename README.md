@@ -64,7 +64,7 @@
     href="https://github.com/mage-ai/mage-ai"
     target="_blank"
   >
-    <img alt="Github Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
   </a>
   <a
     href="https://hub.docker.com/r/mageai/mageai"
@@ -114,7 +114,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="docs/media/overview/mage-build.gif?raw=true" /> |
+| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="https://github.com/mage-ai/assets/blob/main/overview/mage-build.gif?raw=true" /> |
 
 <p align="center">
   ↓
@@ -130,7 +130,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="docs/media/overview/mage-preview.gif?raw=True" /> |
+| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="https://github.com/mage-ai/assets/blob/main/overview/mage-preview.gif?raw=True" /> |
 
 <p align="center">
   ↓
@@ -146,7 +146,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="docs/media/overview/observability.gif?raw=True" /> |
+| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="https://github.com/mage-ai/assets/blob/main/overview/observability.gif?raw=True" /> |
 
 <br />
 
@@ -154,7 +154,7 @@
 
 Mage is an open-source data pipeline tool for transforming and integrating data.
 
-1. [Quick start](#%EF%B8%8F-quick-start)
+1. [Install](#%EF%B8%8F-install)
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
 1. [Documentation](https://docs.mage.ai)
@@ -165,71 +165,26 @@ Mage is an open-source data pipeline tool for transforming and integrating data.
 
 <br />
 
-# 🏃‍♀️ Quick start
+# 🏃‍♀️ Install
 
-You can install and run Mage using Docker (recommended), `pip`, or `conda`.
+The recommended way to install the latest version of Mage is through Docker with the following command:
 
-### Install using Docker
+```bash
+docker pull mageai/mageai:latest
+```
 
-1. Create a new project and launch tool (change `demo_project` to any other name if you want):
-    ```bash
-    docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-      /app/run_app.sh mage start demo_project
-    ```
+You can also install Mage using pip or conda, though this may cause dependency issues without the proper environment.
 
-    - If you want to run Mage locally on a different port, change the first port after `-p`
-    in the command above. For example, to change the port to `6790`, run:
+```bash
+pip install mage-ai
+```
+```bash
+conda install -c conda-forge mage-ai
+```
 
-    ```bash
-    docker run -it -p 6790:6789 -v $(pwd):/home/src mageai/mageai \
-      /app/run_app.sh mage start demo_project
-    ```
+Looking for help? The _fastest_ way to get started is by checking out our documentation [here](https://docs.mage.ai/getting-started/setup).
 
-    <sub>Want to use Spark or other integrations? Read more about [integrations](https://docs.mage.ai/data-integrations/overview).</sub>
-
-1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
-  - If you changed the Docker port for running Mage locally, go to the url
-  `http://127.0.0.1:[port]` (e.g. http://127.0.0.1:6790) in your browser to
-  view the pipelines dashboard.
-
-
-### Using `pip` or `conda`
-
-1. Install Mage
-
-    #### (a) To the current virtual environment:
-    ```bash
-    pip install mage-ai
-    ```
-    or
-    ```bash
-    conda install -c conda-forge mage-ai
-    ```
-
-    #### (b) To a new virtual environment (e.g., `myenv`):
-    ```bash
-    python3 -m venv myenv
-    source myenv/bin/activate
-    pip install mage-ai
-    ```
-    or
-    ```bash
-    conda create -n myenv -c conda-forge mage-ai
-    conda activate myenv
-    ```
-
-    <sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](https://docs.mage.ai/getting-started/setup#installing-extra-packages).</sub>
-
-    <sub>If you run into errors, please see [Install errors](https://docs.mage.ai/getting-started/setup#errors).</sub>
-
-1. Create a new project and launch tool (change `demo_project` to any other name if you want):
-    ```bash
-    mage start demo_project
-    ```
-1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
-<br />
+Looking for quick examples? Open a [demo](https://demo.mage.ai/) project right in your browser or check out our [guides](https://docs.mage.ai/guides/overview).
 
 # 🎮 Demo
 
@@ -242,7 +197,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 > The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
 ### Demo video (5 min)
 
-[![Mage quick start demo](https://github.com/mage-ai/mage-ai/assets/59450879/8e060f39-170f-4291-a8c2-0c2619188708)](https://youtu.be/GswOdShLGmg "Mage quick start demo")
+[![Mage quick start demo](https://github.com/mage-ai/assets/blob/main/overview/overview-video.png?raw=True)](https://youtu.be/GswOdShLGmg)
 
 <sub><i>Click the image to play video</i></sub>
 
@@ -255,7 +210,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 - [Train model on Titanic dataset](https://docs.mage.ai/guides/train-model)
 - [Set up dbt models and orchestrate dbt runs](https://docs.mage.ai/integrations/dbt-models)
 
-<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
+<img alt="Fire mage" height="160" src="https://github.com/mage-ai/assets/blob/main/mage-fire-charging-up.svg?raw=True" />
 
 <br />
 
@@ -294,7 +249,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 <img
   alt="data pipeline overview"
-  src="media/data-pipeline-overview.png"
+  src="https://github.com/mage-ai/assets/blob/main/data-pipeline-overview.png?raw=True"
 />
 
 New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
@@ -377,6 +332,6 @@ Check out our [FAQ page](https://docs.mage.ai/about/frequently-asked-questions) 
 # 🪪 License
 See the [LICENSE](LICENSE) file for licensing information.
 
-[<img alt="Water mage casting spell" height="300" src="media/mage-water-charging-up.svg" />](https://www.mage.ai/)
+[<img alt="Water mage casting spell" height="300" src="https://github.com/mage-ai/assets/blob/main/mage-water-charging-up.svg?raw=True" />](https://www.mage.ai/)
 
 <br />

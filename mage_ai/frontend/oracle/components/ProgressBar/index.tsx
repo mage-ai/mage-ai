@@ -5,7 +5,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-type AnimateProgressType = {
+export type AnimateProgressType = {
   duration: number;
   end: number;
   start: number;

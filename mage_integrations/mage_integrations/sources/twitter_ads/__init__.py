@@ -1,15 +1,19 @@
+from typing import List
+
+from singer import catalog as catalog_singer
+
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.twitter_ads.tap_twitter_ads import (
-    TwitterAds as TwitterAdsStream,
     build_client,
     check_credentials,
     do_discover,
 )
-from mage_integrations.sources.twitter_ads.tap_twitter_ads.sync import sync as do_sync
 from mage_integrations.sources.twitter_ads.tap_twitter_ads.streams import STREAMS
-from singer import catalog as catalog_singer
-from typing import List
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.streams import (
+    TwitterAds as TwitterAdsStream,
+)
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.sync import sync as do_sync
 
 
 class TwitterAds(Source):

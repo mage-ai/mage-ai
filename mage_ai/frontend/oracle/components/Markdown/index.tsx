@@ -1,5 +1,8 @@
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { PluggableList } from 'react-markdown/lib/react-markdown';
 
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -11,20 +14,13 @@ type MarkdownProps = {
   children: string;
 };
 
-function Markdown({
-  children,
-}: MarkdownProps) {
+function Markdown({ children }: MarkdownProps) {
   return (
     <MarkdownContainer>
       <ReactMarkdown
         components={{
           a: ({ children, href }) => (
-            <Link
-              href={href}
-              inline
-              openNewWindow
-              primary
-            >
+            <Link href={href} inline openNewWindow primary>
               {children}
             </Link>
           ),
@@ -40,15 +36,24 @@ function Markdown({
               {children}
             </Text>
           ),
-          em: ({ children }) => <Text inline italic>{children}</Text>,
+          em: ({ children }) => (
+            <Text inline italic>
+              {children}
+            </Text>
+          ),
           h1: ({ children }) => <Headline level={1}>{children}</Headline>,
           h2: ({ children }) => <Headline level={2}>{children}</Headline>,
           h3: ({ children }) => <Headline level={3}>{children}</Headline>,
           h4: ({ children }) => <Headline level={4}>{children}</Headline>,
           h5: ({ children }) => <Headline level={5}>{children}</Headline>,
           p: ({ children }) => <Text>{children}</Text>,
-          strong: ({ children }) => <Text bold inline>{children}</Text>,
+          strong: ({ children }) => (
+            <Text bold inline>
+              {children}
+            </Text>
+          ),
         }}
+        rehypePlugins={[rehypeRaw, rehypeSanitize] as PluggableList}
         remarkPlugins={[remarkGfm]}
       >
         {children}

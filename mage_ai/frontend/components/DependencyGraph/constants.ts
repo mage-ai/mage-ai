@@ -7,13 +7,15 @@ import { UNIT } from '@oracle/styles/units/spacing';
 export const MIN_NODE_WIDTH = UNIT * 20;
 
 export const ZOOMABLE_CANVAS_SIZE = 10000;
-export const SHARED_ZOOM_BUTTON_PROPS = {
-  compact: true,
-};
 
 export const SHARED_PORT_PROPS = {
   height: 10,
   width: 10,
+};
+
+export const SHARED_PORT_PROPS_SQUARE = {
+  height: 6,
+  width: 6,
 };
 
 export const INVERTED_TEXT_COLOR_BLOCK_TYPES = [
@@ -50,10 +52,14 @@ export type PortType = {
 
 export type NodeType = {
   data: {
-    block: BlockType;
+    block?: BlockType;
+    blocks?: BlockType[];
+    children?: BlockType[];
+    [key: string]: any;
   };
-  height: number;
+  height?: number;
   id: string;
-  ports: PortType[];
-  width: number;
+  parent?: string;
+  ports?: PortType[];
+  width?: number;
 };

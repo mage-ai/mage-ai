@@ -1,4 +1,4 @@
-import BlockTemplateType from '@interfaces/BlockTemplateType';
+import BlockTemplateType, { DataIntegrationTypeEnum } from '@interfaces/BlockTemplateType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import {
@@ -31,25 +31,37 @@ const getDataSourceTypes = (
   if (pipelineType === PipelineTypeEnum.STREAMING) {
     return {
       [BlockTypeEnum.DATA_LOADER]: [
+        DataSourceTypeEnum.ACTIVEMQ,
         DataSourceTypeEnum.AMAZON_SQS,
         DataSourceTypeEnum.AZURE_EVENT_HUB,
         DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
         DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.KAFKA,
+        DataSourceTypeEnum.NATS,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,
+        DataSourceTypeEnum.MONGODB
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.AZURE_DATA_LAKE,
+        DataSourceTypeEnum.BIGQUERY,
+        DataSourceTypeEnum.CLICKHOUSE,
+        DataSourceTypeEnum.DUCKDB,
         DataSourceTypeEnum.DUMMY,
+        DataSourceTypeEnum.ELASTICSEARCH,
+        DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
         DataSourceTypeEnum.INFLUXDB,
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.MONGODB,
+        DataSourceTypeEnum.MSSQL,
+        DataSourceTypeEnum.MYSQL,
         DataSourceTypeEnum.OPENSEARCH,
         DataSourceTypeEnum.POSTGRES,
-        DataSourceTypeEnum.ELASTICSEARCH,
+        DataSourceTypeEnum.REDSHIFT,
+        DataSourceTypeEnum.SNOWFLAKE,
+        DataSourceTypeEnum.TRINO,
       ],
       [BlockTypeEnum.TRANSFORMER]: [
         DataSourceTypeEnum.GENERIC,
@@ -126,16 +138,20 @@ export const getNonPythonMenuItems = (
 export function groupBlockTemplates(
   blockTemplates: BlockTemplateType[],
   addNewBlock,
+  uuidsToHideTooltips?: { [key: string]: boolean },
 ) {
   const mapping = {};
 
   blockTemplates?.forEach(({
     block_type: blockType,
+    configuration,
+    defaults,
     description,
     groups,
     language,
     name,
     path,
+    template_type: templateType,
     template_variables: templateVariables,
   }) => {
     if (!mapping[blockType]) {
@@ -150,19 +166,25 @@ export function groupBlockTemplates(
       };
     }
 
-    const newItem = {
+    const newItem: FlyoutMenuItemType = {
       label: () => name,
       onClick: () => addNewBlock({
         config: {
           template_path: path,
+          template_type: templateType,
           template_variables: templateVariables,
         },
+        configuration,
+        defaults,
         language,
         type: blockType,
       }),
-      tooltip: () => description,
-      uuid: path,
+      uuid: `${path}/${name}`,
     };
+
+    if (!uuidsToHideTooltips?.[path]) {
+      newItem.tooltip = () => description;
+    }
 
     if (groups?.length >= 1) {
       const obj = {
@@ -232,6 +254,7 @@ export const getdataSourceMenuItems = (
         [language: string]: FlyoutMenuItemType;
       };
     };
+    dataIntegrationType?: DataIntegrationTypeEnum;
     languages?: BlockLanguageEnum[];
     onlyCustomTemplate?: boolean;
     showBrowseTemplates?: (opts?: {
@@ -245,6 +268,7 @@ export const getdataSourceMenuItems = (
 ) => {
   const {
     blockTemplatesByBlockType,
+    dataIntegrationType,
     languages,
     onlyCustomTemplate,
     showBrowseTemplates,
@@ -279,6 +303,17 @@ export const getdataSourceMenuItems = (
     || (pipelineType === PipelineTypeEnum.STREAMING)
   ) {
     return dataSourceMenuItemsMapping[blockType];
+  } else if (dataIntegrationType && opts?.v2) {
+    const additionalTemplates =
+      blockTemplatesByBlockType?.[blockType]?.[dataIntegrationType]?.items || [];
+
+    return [
+      {
+        // @ts-ignore
+        items: sortByKey(additionalTemplates, ({ label }) => label()),
+        uuid: `${blockType}/${dataIntegrationType}`,
+      }
+    ];
   } else {
     const additionalTemplates =
       blockTemplatesByBlockType?.[blockType]?.[BlockLanguageEnum.PYTHON]?.items || [];

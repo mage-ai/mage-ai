@@ -8,8 +8,10 @@ import React, {
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -20,7 +22,9 @@ import {
   MENU_WIDTH,
   SortDirectionEnum,
   SortQueryEnum,
+  getTableRowUuid,
 } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
 import {
   SortIconContainerStyle,
@@ -28,16 +32,21 @@ import {
   TableHeadStyle,
   TableRowStyle,
   TableStyle,
+  TableWrapperStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
+import { isInteractiveElement } from '@context/shared/utils';
 import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
   center?: boolean;
   fitTooltipContentWidth?: boolean;
-  label?: () => any | string;
+  label?: (opts?: {
+    columnIndex?: number;
+    groupIndex?: number;
+  }) => any | string;
+  rightAligned?: boolean;
   tooltipAppearAfter?: boolean;
   tooltipMessage?: string
   tooltipWidth?: number;
@@ -51,7 +60,9 @@ export type SortedColumnType = {
 
 type TableProps = {
   alignTop?: boolean;
+  apiForFetchingAfterAction?: any;
   borderCollapseSeparate?: boolean;
+  buildApiOptionsFromObject?: (object: any) => any[];
   buildLinkProps?: (rowIndex: number) => {
     as: string;
     href: string;
@@ -66,24 +77,30 @@ type TableProps = {
   columns?: ColumnType[];
   compact?: boolean;
   defaultSortColumnIndex?: number;
+  getObjectAtRowIndex?: (rowIndex: number) => any;
   getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
+  groupsInline?: boolean;
   highlightRowOnHover?: boolean;
   localStorageKeySortColIdx?: string;
   localStorageKeySortDirection?: string;
   isSelectedRow?: (rowIndex: number) => boolean;
+  menu?: any;
   noBorder?: boolean;
   noHeader?: boolean;
-  onClickRow?: (index: number) => void;
+  onClickRow?: (index: number, event?: any) => void;
   onDoubleClickRow?: (index: number) => void;
   onRightClickRow?: (index: number, event?: any) => void;
+  renderExpandedRowWithObject?: (index: number, object: any) => any;
   renderRightClickMenu?: (rowIndex: number) => any;
   renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
+  rightClickMenuHeight?: number;
   rightClickMenuWidth?: number;
-  rowGroupHeaders?: string[];
+  rowGroupHeaders?: string[] | any[];
   rowVerticalPadding?: number;
   rows: any[][];
-  rowsGroupedByIndex?: string[][];
+  rowsGroupedByIndex?: number[][] | string[][];
+  selectedRowIndexInternal?: number;
   setRowsSorted?: (rows: React.ReactElement[][]) => void;
   sortableColumnIndexes?: number[];
   sortedColumn?: SortedColumnType;
@@ -96,7 +113,9 @@ type TableProps = {
 
 function Table({
   alignTop,
+  apiForFetchingAfterAction,
   borderCollapseSeparate,
+  buildApiOptionsFromObject,
   buildLinkProps,
   buildRowProps,
   columnBorders,
@@ -105,33 +124,69 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
+  getObjectAtRowIndex,
   getUUIDFromRow,
   getUniqueRowIdentifier,
+  groupsInline,
   highlightRowOnHover,
   isSelectedRow,
   localStorageKeySortColIdx,
   localStorageKeySortDirection,
+  menu,
   noBorder,
   noHeader,
   onClickRow,
   onDoubleClickRow,
   onRightClickRow,
+  renderExpandedRowWithObject,
   renderRightClickMenu,
   renderRightClickMenuItems,
+  rightClickMenuHeight,
   rightClickMenuWidth = MENU_WIDTH,
   rowGroupHeaders,
   rowVerticalPadding,
   rows,
   rowsGroupedByIndex,
+  selectedRowIndexInternal: selectedRowIndexInternalProp,
   setRowsSorted,
   sortableColumnIndexes,
   sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
-  uuidColumnIndex,
   uuid,
+  uuidColumnIndex,
   wrapColumns,
 }: TableProps, ref) {
+  const [selectedRowIndexInternalState, setSelectedRowIndexInternal] = useState<number>(null);
+  const selectedRowIndexInternal =
+    useMemo(() => {
+      if (typeof selectedRowIndexInternalProp !== 'undefined') {
+        return selectedRowIndexInternalProp;
+      }
+
+      return selectedRowIndexInternalState;
+    }, [
+      selectedRowIndexInternalProp,
+      selectedRowIndexInternalState,
+    ]);
+
+  const onClickRowInternal = useCallback((rowIndex: number, event: any) => {
+    setSelectedRowIndexInternal(prev => prev === rowIndex ? null : rowIndex);
+  }, [
+    setSelectedRowIndexInternal,
+  ]);
+  const objectAtRowIndex = useMemo(() => selectedRowIndexInternal === null
+    ? null
+    : getObjectAtRowIndex?.(selectedRowIndexInternal),
+  [
+    getObjectAtRowIndex,
+    selectedRowIndexInternal,
+  ]);
+  const apiArguments = buildApiOptionsFromObject && objectAtRowIndex
+    ? buildApiOptionsFromObject(objectAtRowIndex)
+    : [null];
+  const { data } = apiForFetchingAfterAction?.(...apiArguments) || {};
+
   const [coordinates, setCoordinates] = useState<{
     x: number;
     y: number;
@@ -287,8 +342,7 @@ function Table({
      */
     if (sortableColumnIndexes
       && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
-        || (sortedRowIdsPrev?.length > 0
-          && JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev))
+        || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)
       )
     ) {
       setRowsSorted?.(rowsSorted);
@@ -355,7 +409,12 @@ function Table({
             maxWidth={columnMaxWidth?.(colIndex)}
             noBorder={noBorder}
             rowVerticalPadding={rowVerticalPadding}
-            selected={isSelectedRow?.(rowIndex)}
+            selected={isSelectedRow
+              ? isSelectedRow?.(rowIndex)
+              : renderExpandedRowWithObject
+                ? selectedRowIndexInternal === rowIndex
+                : null
+            }
             stickyFirstColumn={stickyFirstColumn && colIndex === 0}
             width={calculateCellWidth(colIndex)}
             wrapColumns={wrapColumns}
@@ -373,26 +432,49 @@ function Table({
     } else {
       const handleRowClick = (rowIndex: number, event: React.MouseEvent) => {
         if (event?.detail === 1) {
-          onClickRow(rowIndex);
+          onClickRow(rowIndex, event);
         } else if (onDoubleClickRow && event?.detail === 2) {
           onDoubleClickRow(rowIndex);
         }
       };
 
+      const uuidRow = getTableRowUuid({ rowIndex, uuid });
       rowEl = (
         <TableRowStyle
           highlightOnHover={highlightRowOnHover}
-          key={`${uuid}-row-${rowIndex}`}
-          noHover={!(linkProps || onClickRow)}
+          id={uuidRow}
+          key={uuidRow}
+          noHover={!(linkProps || onClickRow || renderExpandedRowWithObject)}
           // @ts-ignore
-          onClick={onClickRow ? (e) => handleRowClick(rowIndex, e) : null}
+          onClick={(e) => {
+            if (!isInteractiveElement(e)) {
+              if (onClickRow) {
+                handleRowClick(rowIndex, e);
+              }
+
+              onClickRowInternal(rowIndex, e);
+            }
+          }}
           onContextMenu={hasRightClickMenu
             ? (e) => {
               e.preventDefault();
+              let yCoordinate = e.pageY;
+              if (rightClickMenuHeight) {
+                const windowHeight = typeof window !== 'undefined'
+                  ? window.innerHeight
+                  : null;
+                const distanceFromBottomOfPage = windowHeight
+                  ? windowHeight - e.pageY
+                  : 0;
+                const contextMenuIsCutOff = (distanceFromBottomOfPage - rightClickMenuHeight) < 0;
+                yCoordinate = contextMenuIsCutOff
+                  ? e.pageY - rightClickMenuHeight
+                  : e.pageY;
+              }
 
               setCoordinates({
                 x: e.pageX,
-                y: e.pageY,
+                y: yCoordinate,
               });
               setFocusedRowIndex(rowIndex);
               onRightClickRow?.(rowIndex, e);
@@ -443,10 +525,13 @@ function Table({
     isSelectedRow,
     noBorder,
     onClickRow,
+    onClickRowInternal,
     onDoubleClickRow,
     onRightClickRow,
+    renderExpandedRowWithObject,
     rowVerticalPadding,
     rowsSorted,
+    selectedRowIndexInternal,
     setFocusedRowIndex,
     sortedColumn,   // Included in dep array so table rows re-render when sorting column changes
     stickyFirstColumn,
@@ -454,48 +539,82 @@ function Table({
     wrapColumns,
   ]);
 
-  const headerRowEl = useMemo(() => (
+  const renderHeaderRow = useCallback(({
+    groupIndex,
+    showEmptyHeaderCells,
+  }: {
+    groupIndex?: number;
+    showEmptyHeaderCells?: boolean;
+  } = {}) => (
     <TableRowStyle noHover>
       {columns?.map((col, idx) => {
         const {
           center,
           fitTooltipContentWidth,
           label,
+          rightAligned,
           tooltipAppearAfter,
           tooltipMessage,
           tooltipWidth,
           uuid: columnUUID,
         } = col || {};
         const isSortable = sortableColumnIndexes?.includes(idx);
-        const headerTextEl = (
-          <>
+        const textProps = {
+          bold: true,
+          cyan: sortedColumnIndex === idx,
+          leftAligned: true,
+          monospace: true,
+          muted: true,
+        };
+
+        const headerDisplayText = label
+          ? label({
+            columnIndex: idx,
+            groupIndex,
+          })
+          : columnUUID;
+
+        let headerTextEl;
+        if (showEmptyHeaderCells) {
+          headerTextEl = (
             <Text
-              bold
-              cyan={sortedColumnIndex === idx}
-              leftAligned
-              monospace
-              muted
+              {...textProps}
+              // @ts-ignore
+              style={{
+                opacity: 0,
+                height: 0,
+              }}
             >
-              {label ? label() : columnUUID}
+              {headerDisplayText}
             </Text>
-            {tooltipMessage && (
-              <Spacing ml="4px">
-                <Tooltip
-                  appearBefore={!tooltipAppearAfter}
-                  label={(
-                    <Text leftAligned>
-                      {tooltipMessage}
-                    </Text>
-                  )}
-                  lightBackground
-                  maxWidth={tooltipWidth}
-                  muted
-                  widthFitContent={fitTooltipContentWidth}
-                />
-              </Spacing>
-            )}
-          </>
-        );
+          );
+        } else {
+          headerTextEl = (
+            <>
+              <Text
+                {...textProps}
+              >
+                {headerDisplayText}
+              </Text>
+              {tooltipMessage && (
+                <Spacing ml="4px">
+                  <Tooltip
+                    appearBefore={!tooltipAppearAfter}
+                    label={(
+                      <Text leftAligned>
+                        {tooltipMessage}
+                      </Text>
+                    )}
+                    lightBackground
+                    maxWidth={tooltipWidth}
+                    muted
+                    widthFitContent={fitTooltipContentWidth}
+                  />
+                </Spacing>
+              )}
+            </>
+          );
+        }
 
         return (
           <TableHeadStyle
@@ -506,11 +625,18 @@ function Table({
             noBorder={noBorder}
             onMouseEnter={isSortable ? () => setHoveredColumnIdx(idx) : null}
             onMouseLeave={isSortable ? () => setHoveredColumnIdx(null) : null}
+            rowVerticalPadding={showEmptyHeaderCells ? 0 : null}
             sticky={stickyHeader}
           >
             <FlexContainer
               alignItems="center"
-              justifyContent={center ? 'center': 'flex-start'}
+              justifyContent={
+                (center && !rightAligned)
+                  ? 'center'
+                  : rightAligned
+                    ? 'flex-end'
+                    : 'flex-start'
+                }
             >
               {isSortable
                 ? (
@@ -575,40 +701,108 @@ function Table({
   const tableEl = useMemo(() => {
     if (rowGroupHeaders?.length >= 1 && rowsGroupedByIndex?.length >= 1) {
       // @ts-ignore
-      return rowsGroupedByIndex?.reduce((acc, indexes: number[], idx: number) => {
+      return rowsGroupedByIndex?.reduce((acc: any, indexes: number[], idx: number) => {
         const els = indexes?.map((idx2: number) => rowEls?.[idx2]);
         if (els?.length >= 1) {
           const header = rowGroupHeaders[idx];
+          const key = `table-group-${idx}`;
 
-          acc.push(
-            // @ts-ignore
-            <Spacing key={`table-group-${idx}`} mt={idx >= 1 ? 2 : 0}>
-              <Accordion
-                visibleMapping={{
-                  '0': true,
-                }}
+          if (groupsInline) {
+            acc.push(
+              <div
+                key={key}
               >
-                <AccordionPanel
-                  noPaddingContent
-                  title={header}
+                {header && (
+                  <>
+                    {typeof header === 'string' && (
+                      <>
+                        <Spacing p={PADDING_UNITS}>
+                          <Headline level={5}>
+                            {header}
+                          </Headline>
+                        </Spacing>
+
+                        <Divider light />
+                      </>
+                    )}
+
+                    {typeof header !== 'string' && header}
+                  </>
+                )}
+
+                <TableStyle
+                  borderCollapseSeparate={borderCollapseSeparate}
+                  columnBorders={columnBorders}
                 >
-                  <TableStyle
-                    borderCollapseSeparate={borderCollapseSeparate}
-                    columnBorders={columnBorders}
+                  <>
+                    {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                      groupIndex: idx,
+                    })}
+                    {els}
+                  </>
+                </TableStyle>
+              </div>,
+            );
+          } else {
+            acc.push(
+              // @ts-ignore
+              <Spacing key={key} mt={idx >= 1 ? 2 : 0}>
+                <Accordion
+                  visibleMapping={{
+                    '0': true,
+                  }}
+                >
+                  <AccordionPanel
+                    noPaddingContent
+                    title={header}
                   >
-                    <>
-                      {(columns?.length >= 1 && !noHeader) && headerRowEl}
-                      {els}
-                    </>
-                  </TableStyle>
-                </AccordionPanel>
-              </Accordion>
-            </Spacing>,
-          );
+                    <TableStyle
+                      borderCollapseSeparate={borderCollapseSeparate}
+                      columnBorders={columnBorders}
+                    >
+                      <>
+                        {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+                          groupIndex: idx,
+                        })}
+                        {els}
+                      </>
+                    </TableStyle>
+                  </AccordionPanel>
+                </Accordion>
+              </Spacing>,
+            );
+          }
         }
 
         return acc;
       }, []);
+    } else if (!!renderExpandedRowWithObject && selectedRowIndexInternal !== null) {
+      const rowsBefore = rowEls?.slice(0, selectedRowIndexInternal + 1);
+      const rowsAfter = rowEls?.slice(selectedRowIndexInternal + 1, rowEls?.length);
+
+      return (
+        <>
+          <TableStyle
+            borderCollapseSeparate={borderCollapseSeparate}
+            columnBorders={columnBorders}
+          >
+            {(columns?.length >= 1 && !noHeader) && renderHeaderRow()}
+            {rowsBefore}
+          </TableStyle>
+
+          {renderExpandedRowWithObject?.(selectedRowIndexInternal, data)}
+
+          <TableStyle
+            borderCollapseSeparate={borderCollapseSeparate}
+            columnBorders={columnBorders}
+          >
+            {(columns?.length >= 1 && !noHeader) && renderHeaderRow({
+              showEmptyHeaderCells: true,
+            })}
+            {rowsAfter}
+          </TableStyle>
+        </>
+      );
     }
 
     return (
@@ -616,7 +810,7 @@ function Table({
         borderCollapseSeparate={borderCollapseSeparate}
         columnBorders={columnBorders}
       >
-        {(columns?.length >= 1 && !noHeader) && headerRowEl}
+        {(columns?.length >= 1 && !noHeader) && renderHeaderRow()}
         {rowEls}
       </TableStyle>
     );
@@ -624,19 +818,23 @@ function Table({
     borderCollapseSeparate,
     columnBorders,
     columns?.length,
-    headerRowEl,
+    data,
+    groupsInline,
     noHeader,
+    renderExpandedRowWithObject,
+    renderHeaderRow,
     rowEls,
     rowGroupHeaders,
     rowsGroupedByIndex,
+    selectedRowIndexInternal,
   ]);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <TableWrapperStyle>
       {tableEl}
-
+      {menu}
       {hasRightClickMenu && coordinates && rightClickMenu}
-    </div>
+    </TableWrapperStyle>
   );
 }
 

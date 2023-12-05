@@ -1,18 +1,14 @@
 import os
 import uuid
 
-import boto3
-from botocore.config import Config
-
-from mage_ai.services.aws import get_aws_region_name
+from mage_ai.services.aws import get_aws_boto3_client
 
 EVENT_RULE_LIMIT = 100
 
 
 def get_all_event_rules():
-    region_name = get_aws_region_name()
-    config = Config(region_name=region_name)
-    client = boto3.client('events', config=config)
+    client = get_aws_boto3_client('events')
+
     response = client.list_rules(
         Limit=EVENT_RULE_LIMIT
     )
@@ -34,9 +30,7 @@ def update_event_rule_targets(name):
     lambda_function_name = os.getenv('LAMBDA_FUNCTION_NAME')
     if lambda_function_arn is None or lambda_function_name is None:
         return
-    region_name = get_aws_region_name()
-    config = Config(region_name=region_name)
-    client = boto3.client('events', config=config)
+    client = get_aws_boto3_client('events')
     event_rule_info = client.describe_rule(Name=name)
     targets = client.list_targets_by_rule(Rule=name)['Targets']
     print(f'Current targets for Event rule {name}: {targets}')
@@ -48,7 +42,7 @@ def update_event_rule_targets(name):
     response = client.put_targets(Rule=name, Targets=targets)
     print(f'Event rule put_target repsonse: {response}')
     # Add permission to lambda function
-    lambda_client = boto3.client('lambda', config=config)
+    lambda_client = get_aws_boto3_client('lambda')
     response = lambda_client.add_permission(
         FunctionName=lambda_function_arn,
         StatementId=str(uuid.uuid4()),

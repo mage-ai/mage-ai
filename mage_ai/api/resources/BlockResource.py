@@ -12,7 +12,6 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     is_dynamic_block,
@@ -23,11 +22,15 @@ from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
     BlockType,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.custom_templates.custom_block_template import (
     CustomBlockTemplate,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.templates.data_integrations.constants import (
+    TEMPLATE_TYPE_DATA_INTEGRATION,
+)
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun
@@ -36,7 +39,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
-MAX_BLOCKS_FOR_TREE = 40
+MAX_BLOCKS_FOR_TREE = 100
 
 
 class BlockResource(GenericResource):
@@ -60,6 +63,62 @@ class BlockResource(GenericResource):
             block_mapping = {}
 
             pipeline = parent_model.pipeline
+            is_data_integration_pipeline = pipeline and PipelineType.INTEGRATION == pipeline.type
+
+            if is_data_integration_pipeline:
+                original_blocks_mapping = {}
+
+                for block_run in parent_model.block_runs:
+                    block_run_block_uuid = block_run.block_uuid
+                    block = pipeline.get_block(block_run_block_uuid)
+                    if not block:
+                        continue
+
+                    if block.uuid not in original_blocks_mapping:
+                        original_blocks_mapping[block.uuid] = {}
+
+                    block_dict = block.to_dict()
+                    block_dicts_by_uuid[block_run_block_uuid] = block_dict
+                    original_blocks_mapping[block.uuid][block_run_block_uuid] = block_dict
+
+                for block_run_block_uuid, block_dict in block_dicts_by_uuid.items():
+                    block_uuid = block_dict.get('uuid')
+                    block_uuid_parts = block_run_block_uuid.split(':')
+                    group_parts = [part for part in block_uuid_parts if part != block_uuid]
+                    group_uuid = ':'.join(group_parts)
+
+                    for key in [
+                        'downstream_blocks',
+                        'upstream_blocks',
+                    ]:
+                        uuids = []
+                        for block_uuid2 in block_dict.get(key):
+                            mapping = original_blocks_mapping.get(block_uuid2)
+                            if mapping:
+                                for uuid2 in list(mapping.keys()):
+                                    if uuid2 == ':'.join([block_uuid2, group_uuid]):
+                                        uuids.append(uuid2)
+                            else:
+                                uuids.append(block_uuid2)
+
+                        block_dict[key] = uuids
+
+                    if len(group_parts) >= 1:
+                        block_dict['tags'] = [group_parts[0]]
+
+                    if len(group_parts) >= 2:
+                        block_dict['description'] = group_parts[1]
+
+                    block_dict['name'] = block_uuid
+                    block_dict['uuid'] = block_run_block_uuid
+                    block_dicts_by_uuid[block_run_block_uuid] = block_dict
+
+                return self.build_result_set(
+                    block_dicts_by_uuid.values(),
+                    user,
+                    **kwargs,
+                )
+
             for block_run in parent_model.block_runs:
                 block_run_block_uuid = block_run.block_uuid
                 if block_run_block_uuid not in block_mapping:
@@ -243,6 +302,9 @@ class BlockResource(GenericResource):
                     arr = block_dict.get(key) or []
                     for block_uuid_base in arr:
                         block = pipeline.get_block(block_uuid_base)
+                        if block is None:
+                            # If the block is a Widget, `get_block` will return None
+                            continue
                         if block.replicated_block and not is_dynamic_block_child(block):
                             blocks_arr = block_dicts_by_uuid[block_uuid].get(key) or []
                             block_dicts_by_uuid[block_uuid][key] = \
@@ -540,15 +602,30 @@ class BlockResource(GenericResource):
                 payload_config['custom_template_uuid'] = object_from_cache.get('template_uuid')
             elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
                 block_type = object_from_cache.get('block_type')
-                language = object_from_cache.get('language')
                 payload_config['template_path'] = object_from_cache.get('path')
-                payload_config['template_variables'] = object_from_cache.get('template_variables')
+
+                if TEMPLATE_TYPE_DATA_INTEGRATION != object_from_cache.get('template_type'):
+                    language = object_from_cache.get('language')
+
+                for key in [
+                    'template_type',
+                    'template_variables',
+                ]:
+                    if object_from_cache.get(key):
+                        payload_config[key] = object_from_cache.get(key)
+
+                payload['configuration'] = merge_dict(
+                    payload.get('configuration') or {},
+                    object_from_cache.get('configuration') or {},
+                )
 
         """
         New DBT models include "content" in its block create payload,
         whereas creating blocks from existing DBT model files do not.
         """
-        if payload.get('type') == BlockType.DBT and content and language == BlockLanguage.SQL:
+        if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             dbt_block = DBTBlock(
                 name,
                 clean_name(name),
@@ -565,6 +642,7 @@ class BlockResource(GenericResource):
             color=payload.get('color'),
             config=payload_config,
             configuration=payload.get('configuration'),
+            downstream_block_uuids=payload.get('downstream_blocks', []),
             extension_uuid=payload.get('extension_uuid'),
             language=language,
             pipeline=pipeline,
@@ -615,8 +693,9 @@ class BlockResource(GenericResource):
 
             block.update_content(content)
 
-        cache = await BlockCache.initialize_cache()
-        cache.add_pipeline(block, pipeline)
+        if pipeline:
+            cache = await BlockCache.initialize_cache()
+            cache.add_pipeline(block, pipeline)
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
         cache_block_action_object.update_block(block)
@@ -687,6 +766,8 @@ class BlockResource(GenericResource):
             language = block_language
 
         if BlockType.DBT == block_type:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             block = DBTBlock(
                 block_uuid,
                 block_uuid,

@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+from typing import Dict
+
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_BLOCK_FILE,
@@ -8,9 +11,9 @@ from mage_ai.cache.block_action_object.constants import (
 from mage_ai.cache.constants import CACHE_KEY_BLOCK_ACTION_OBJECTS_MAPPING
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
+    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
     BlockType,
-    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
 )
 from mage_ai.data_preparation.models.custom_templates.constants import (
     DIRECTORY_FOR_BLOCK_TEMPLATES,
@@ -23,14 +26,17 @@ from mage_ai.data_preparation.models.custom_templates.utils import (
     get_templates,
     group_and_hydrate_files,
 )
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.templates.constants import (
     TEMPLATES,
     TEMPLATES_ONLY_FOR_V2,
 )
+from mage_ai.data_preparation.templates.data_integrations.utils import (
+    get_templates as get_templates_for_data_integrations,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.strings import remove_extension_from_filename
-from pathlib import Path
-from typing import Dict
 
 
 def parse_block_file_absolute_path(block_file_absolute_path: str) -> Dict:
@@ -224,7 +230,11 @@ class BlockActionObjectCache(BaseCache):
             OBJECT_TYPE_MAGE_TEMPLATE: {},
         }
 
-        for block_action_object in (TEMPLATES + TEMPLATES_ONLY_FOR_V2):
+        mage_templates = TEMPLATES + TEMPLATES_ONLY_FOR_V2
+        if Project().is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
+            mage_templates += get_templates_for_data_integrations()
+
+        for block_action_object in mage_templates:
             key = self.build_key_for_mage_template(block_action_object)
             mapping[OBJECT_TYPE_MAGE_TEMPLATE][key] = block_action_object
 

@@ -1,4 +1,6 @@
-from tap_pipedrive.streams.recents.dynamic_typing import DynamicTypingRecentsStream
+from mage_integrations.sources.pipedrive.tap_pipedrive.streams.recents.dynamic_typing import (
+    DynamicTypingRecentsStream,
+)
 
 
 class RecentDealsStream(DynamicTypingRecentsStream):

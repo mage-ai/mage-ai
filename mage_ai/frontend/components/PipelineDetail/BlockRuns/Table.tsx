@@ -24,9 +24,10 @@ import {
   SortDirectionEnum,
   SortQueryEnum,
   TIMEZONE_TOOLTIP_PROPS,
+  getRunStatusTextProps,
 } from '@components/shared/Table/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
@@ -34,10 +35,12 @@ import { openSaveFileDialog } from '@components/PipelineDetail/utils';
 import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 4];
+export const DEFAULT_SORTABLE_BR_COL_INDEXES = [0, 1, 3, 4, 5];
 export const COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING = {
   0: 'status',
   1: 'block_uuid',
+  3: 'created_at',
+  4: 'started_at',
   5: 'completed_at',
 };
 
@@ -192,13 +195,8 @@ function BlockRunsTable({
 
         const rows = [
           <Text
-            danger={RunStatus.FAILED === status}
-            default={RunStatus.CANCELLED === status}
-            info={RunStatus.INITIAL === status}
+            {...getRunStatusTextProps(status)}
             key={`${id}_status`}
-            monospace
-            success={RunStatus.COMPLETED === status}
-            warning={RunStatus.RUNNING === status}
           >
             {status}
           </Text>,
@@ -250,7 +248,7 @@ function BlockRunsTable({
             key={`${id}_created_at`}
             monospace
             small
-            title={createdAt ? `UTC: ${createdAt}` : null}
+            title={createdAt ? utcStringToElapsedTime(createdAt) : null}
           >
             {displayLocalTimezone
               ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
@@ -262,7 +260,7 @@ function BlockRunsTable({
             key={`${id}_started_at`}
             monospace
             small
-            title={startedAt ? `UTC: ${startedAt.slice(0, 19)}` : null}
+            title={startedAt ? utcStringToElapsedTime(startedAt) : null}
           >
             {startedAt
               ? (displayLocalTimezone
@@ -278,7 +276,7 @@ function BlockRunsTable({
             key={`${id}_completed_at`}
             monospace
             small
-            title={completedAt ? `UTC: ${completedAt.slice(0, 19)}` : null}
+            title={completedAt ? utcStringToElapsedTime(completedAt) : null}
           >
             {completedAt
               ? (displayLocalTimezone

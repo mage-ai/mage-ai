@@ -1,14 +1,150 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_input
+from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    extract_create_statement_table_name,
+    extract_drop_statement_table_names,
+    extract_insert_statement_table_names,
+    extract_update_statement_table_names,
+    interpolate_input,
+)
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.tests.base_test import DBTestCase
 
 
 class SQLBlockSharedUtilsTest(DBTestCase):
-    def setUp(self):
-        super().setUp()
+    def test_extract_create_statement_table_name(self):
+        # Test case 1: Basic CREATE TABLE statement
+        text = """
+        -- This is a comment
+        CREATE TABLE table_name (
+            column1 INT,
+            column2 VARCHAR(255)
+        );
+        """
+        expected_result = 'table_name'
+        self.assertEqual(extract_create_statement_table_name(text), expected_result)
 
+        # Test case 2: CREATE TABLE IF NOT EXISTS
+        text = """
+        CREATE TABLE IF NOT EXISTS schema.table_name (
+            column1 INT,
+            column2 VARCHAR(255)
+        );
+        """
+        expected_result = 'schema.table_name'
+        self.assertEqual(extract_create_statement_table_name(text), expected_result)
+
+        # Test case 3: No CREATE TABLE statement
+        text = """
+        SELECT * FROM table_name;
+        """
+        self.assertIsNone(extract_create_statement_table_name(text))
+
+        # Test case 4: CREATE TABLE with additional clauses
+        text = """
+        CREATE TABLE IF NOT EXISTS schema.table_name
+        ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+        WITH SERDEPROPERTIES (
+            "separatorChar" = "\\t",
+            "quoteChar"     = "'",
+            "escapeChar"    = "\\\\"
+        )
+        STORED AS TEXTFILE;
+        """
+        expected_result = 'schema.table_name'
+        self.assertEqual(extract_create_statement_table_name(text), expected_result)
+
+    def test_extract_insert_statement_table_names(self):
+        # Test case 1: Basic test with one INSERT statement
+        text = """
+        -- This is a comment
+        INSERT INTO table_name
+        VALUES (1, 'John');
+        """
+        expected_result = ['table_name']
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+        # Test case 2: INSERT INTO with overwrite
+        text = """
+        INSERT OVERWRITE INTO database.table1
+        SELECT * FROM source_table;
+        """
+        expected_result = ['database.table1']
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+        # Test case 3: No INSERT statements
+        text = """
+        SELECT * FROM table_name;
+        """
+        expected_result = []
+        self.assertEqual(extract_insert_statement_table_names(text), expected_result)
+
+    def test_extract_drop_statement_table_names(self):
+        # Test case 1: Basic DROP TABLE statement
+        text = """
+        -- This is a comment
+        DROP TABLE table_name;
+        """
+        expected_result = ['table_name']
+        self.assertEqual(extract_drop_statement_table_names(text), expected_result)
+
+        # Test case 2: DROP TABLE IF EXISTS
+        text = """
+        drop table if exists schema.table1;
+        """
+        expected_result = ['schema.table1']
+        self.assertEqual(extract_drop_statement_table_names(text), expected_result)
+
+        # Test case 3: No DROP TABLE statements
+        text = """
+        SELECT * FROM table_name;
+        """
+        expected_result = []
+        self.assertEqual(extract_drop_statement_table_names(text), expected_result)
+
+    def test_extract_update_statement_table_names(self):
+        # Test case 1: Basic test with one UPDATE statement
+        text = """
+        -- This is a comment
+        UPDATE table_name
+        SET column1 = value1, column2 = value2
+        WHERE condition;
+        """
+        expected_result = ['table_name']
+        self.assertEqual(extract_update_statement_table_names(text), expected_result)
+
+        # Test case 2: Multiple UPDATE statements
+        text = """
+        UPDATE table1
+        SET column1 = value1, column2 = value2
+        WHERE condition;
+
+        Another UPDATE statement here.
+
+        update table2
+        set column3 = value3
+        where another_condition;
+        """
+        expected_result = ['table1', 'table2']
+        self.assertEqual(extract_update_statement_table_names(text), expected_result)
+
+        # Test case 3: No UPDATE statements
+        text = """
+        SELECT * FROM table_name;
+        """
+        expected_result = []
+        self.assertEqual(extract_update_statement_table_names(text), expected_result)
+
+        # Test case 4: UPDATE statement with alias
+        text = """
+        UPDATE table_name as x
+        SET column1 = value1, column2 = value2
+        WHERE condition;
+        """
+        expected_result = ['table_name']
+        self.assertEqual(extract_update_statement_table_names(text), expected_result)
+
+    def test_interpolate_input(self):
         self.pipeline = Pipeline.create(
             'test pipeline',
             repo_path=self.repo_path,
@@ -102,8 +238,6 @@ ON 1 = 1
             data_loader_1.uuid,
             data_loader_2.uuid,
         ])
-
-    def test_interpolate_input(self):
         data_exporter = self.pipeline.get_block('data_exporter')
 
         query_string = interpolate_input(

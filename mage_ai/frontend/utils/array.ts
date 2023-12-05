@@ -1,5 +1,18 @@
 import { dig } from '@utils/hash';
 
+export function insertAtIndex(item, idx, arr) {
+  const copy1 = arr.slice(0, idx);
+  const copy2 = arr.slice(idx, arr?.length);
+
+  const arrNew = [];
+
+  arrNew.push(...copy1);
+  arrNew.push(item);
+  arrNew.push(...copy2);
+
+  return arrNew;
+}
+
 export function pushAtIndex(item, idx, arr) {
   const copy = arr.slice();
   copy.splice(idx, 0, item);
@@ -91,7 +104,7 @@ export function sortByKey(arr, sort, opts: any = {}) {
     ? val => absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort)
     : val => absoluteValue ? Math.abs(sort(val)) : sort(val);
 
-  return arr.sort((a, b) => {
+  return [...arr].sort((a, b) => {
     let sortingOrder = 0;
 
     if (sortingFunc(a) > sortingFunc(b)) {
@@ -130,7 +143,7 @@ export function splitIntoChunks(arr, numChunks) {
 }
 
 export function uniqueArray(arrArg) {
-  return arrArg.filter((elem, pos, arr) => arr.indexOf(elem) === pos);
+  return arrArg.filter((elem, pos, arr) => arr.c(elem) === pos);
 }
 
 export function unique(arrArg, compare) {
@@ -236,4 +249,14 @@ export function standardDeviation(arr, usePopulation = false) {
 
 export function randomSample(items) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => any): any[] {
+  const arr3 = parser ? arr2.map(parser) : arr2;
+
+  return arr1.filter((item: any) => {
+    const i = parser ? parser(item) : item;
+
+    return arr3.includes(i);
+  });
 }

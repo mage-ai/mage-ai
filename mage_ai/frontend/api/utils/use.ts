@@ -13,6 +13,14 @@ import {
 } from './fetcher';
 import { buildUrl } from './url';
 
+function validateID(value: number | string | boolean): number | string | boolean {
+  if (typeof value !== 'undefined' && value !== null && value !== false) {
+    return value;
+  }
+
+  return null;
+}
+
 export function fetchCreate(resource: string, body: object, opts: any = {}) {
   return buildFetchV2(buildUrl(resource), { ...opts, body, method: POST });
 }
@@ -86,13 +94,15 @@ export function useDetail(
   swrOptions: any = {},
   customOptions?: {
     key?: string;
+    pauseFetch?: boolean;
   },
 ) {
   const {
     key: keyInit,
+    pauseFetch,
   } = customOptions || {};
 
-  const url = id ? buildUrl(resource, id) : null;
+  const url = validateID(id) ? buildUrl(resource, id) : null;
   const key = url && keyInit ? keyInit : url;
 
   const {
@@ -101,7 +111,7 @@ export function useDetail(
     error,
     mutate,
   } = useSWR(
-    key,
+    pauseFetch ? null : key,
     () => fetcher(url, {
       method: GET,
       query,
@@ -133,7 +143,7 @@ export function useDetailWithParent(
     key: keyInit,
   } = customOptions || {};
 
-  const url = id && (parentId ? buildUrl(
+  const url = validateID(id) && (validateID(parentId) ? buildUrl(
     parentResource,
     parentId,
     resource,

@@ -2,106 +2,52 @@
 title: "API overview"
 icon: "webhook"
 sidebarTitle: "Overview"
-description: "The front-end client (e.g. browser) creates, reads, updates, and deletes (CRUD)
-resources by using the backend server’s API."
+description: "Our API powers everything in the app— our UI makes calls to the backend, which operates the app. You can learn more about how these work and make your own calls in this section."
 ---
+
+Want to jump-in and interact with Mage via API? Follow the [quickstart](#quickstart) below to get going! Otherwise, head to the [components](#components) section to learn about how our API is structured— this will be helpful if you're interested in adding new API endpoints or developing Mage.
+
+You can read more about the components in the _Design_ section on the sidebar to the left— it contains pages for [Resources](api-reference/resources), [Policies](api-reference/policies), and [Presenters](api-reference/presenters), which are the three components that make up an API endpoint.
 
 ## Quickstart
 
-Want to jump-in and interact with Mage via API? Replace the variables at the top of this snippet and use it to get started with authetication!
+<AccordionGroup>
+    <Accordion title="Obtain API Key" icon="key">
 
-### Initialize Session
+    You'll need your API key to authenticate calls. You can find your API key quickly by navigating to the GUI and checking the network request log from the container. 
 
-``` python
-import requests
-import json
+    You can read more about how to do this on Chromium based browers [here](https://developers.google.com/web/tools/chrome-devtools/network/reference#headers).
 
-API_KEY = "YOUR_API_KEY"
-EMAIL = "EMAIL"
-PASSWORD = "USER_PASSWORD"
+    Once you have your API key, we recommend storing it as a secret and using a solution like [dotenv](https://pypi.org/project/python-dotenv/) to load it into your environment. This will prevent you from exposing it as plain text.
 
-base_url = 'http://localhost:6789'
+    </Accordion>
+    <Accordion title="Initialize Session" icon="car">
+        
+        <Snippet file="initialize-session.mdx"/>
+    
+    </Accordion>
+    <Accordion title="Authenticate Session" icon="lock">
 
-headers = {
-    "Content-Type": "application/json",
-    "X-API-KEY": API_KEY
-}
+    To authenticate your session, we recommend using the `oauth_token` cookie. This can be done simply in Python requests with the following, where `token` is the value of the `token` key in the response payload:
 
-json_data = {
-    "session": {
-        "email": EMAIL,
-        "password": PASSWORD
-    }
-}
+    ```python
+    token = mage_session.get('token')
+    s.headers['Cookie'] = f'oauth_token={token}'
+    ```
+    </Accordion>
+    <Accordion title="Make API calls" icon="phone">
 
-s = requests.Session()
-s.headers = headers
-sessions_url = base_url + "/api/sessions"
+    With your API session configured, you can now make API calls! Here's an example of how to list all pipelines:
 
-r = s.post(url=sessions_url, json=json_data)
-mage_session = r.json().get('session')
-```
+    ```python
+    pipelines_url = base_url + '/api/pipelines'
+    r = s.get(pipelines_url)
+    list_pipelines = r.json()
 
-### Authenticate
-
-```python
-token = mage_session.get('token')
-s.headers['Cookie'] = f'oauth_token={token}'
-```
-
-### Get Pipelines
-
-```python
-pipelines_url = base_url + '/api/pipelines'
-r = s.get(pipelines_url)
-list_pipelines = r.json()
-
-print(list_pipelines)
-```
-
-## Components
-
-There are 3 components to an API endpoint:
-
-1. [Resource](/api-reference/resources)
-1. [Policy](/api-reference/policies)
-1. [Presenter](/api-reference/presenters)
-
-You’ll need to create each of those 3 components for every new API endpoint.
-
-Refer to each documentation on how to create and configure them.
-
-## Testing
-
-Create a test file in `mage_ai/tests/api/operations/test_[resource_name].py`;
-replace `resource_name` with the name of your resource.
-
-Paste in the following sample code into your file:
-
-```python
-from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.tests.api.operations.base import BaseApiTestCase
-from mage_ai.tests.factory import create_user
-
-
-class SomeResourceOperationTests(BaseApiTestCase):
-    model_class = User
-
-    async def test_execute_delete(self):
-        user = create_user(email=self.faker.email())
-
-        await self.base_test_execute_delete(user.id)
-
-    async def test_execute_detail(self):
-        user = create_user()
-        await self.base_test_execute_detail(user.id, dict(
-            email=user.email,
-            username=user.username,
-        ))
-```
-
-This is only a sample test file. It’s running tests on the `UserResource`.
-You’ll need to update the test logic to unit test your custom API endpoint.
+    print(list_pipelines)
+    ```
+    </Accordion>
+</AccordionGroup>
 
 ## Authentication
 
@@ -112,16 +58,11 @@ Most API endpoints require authentication. The API request must include the foll
 
 ### API key
 
-The API request must include the API key in the query parameter as `api_key` or in the request payload body as `api_key`. You can find your API key quickly by navigating to the GUI and checking the request log from the container:
-
-<img
-  alt="terminal with API key"
-  src="/media/local-auth.png"
-/>
+The API request must include the API key in the query parameter as `api_key` or in the request payload body as `api_key`. You can find your API key quickly by navigating to the GUI and checking the request log from the container or going to the "Network" tab in your browser's developer tools.
 
 ### OAuth token
 
-The OAuth token is generated by creating a new [session](/api-reference/sessions). 
+The OAuth token is generated by creating a new [session](/api-reference/sessions). Sessions are only required when `REQUIRE_USER_AUTHENTICATION` is enabled for your project— that is, when users must login to access Mage.
 
 The token provided in the session payload is the **raw** value. There are two ways to authenticate with this token:
 
@@ -198,3 +139,53 @@ To check for an error, one might try a solution like the following:
     err_code = r.json().get('error').get('code'):
     ```
 </CodeGroup>
+
+## Components
+
+If you're not developing our API, you can jump right in and start querying endpoints using the [quickstart](#quickstart) above. Otherwise, our API is based on three components: 
+
+1. [Resources](/api-reference/resources)
+2. [Policies](/api-reference/policies)
+3. [Presenters](/api-reference/presenters)
+
+If you'd like to contribute a new endpoint, you'll need to create one of each. To update an endpoint, it's important to understand how they work together.
+
+**Resources** are the core of the API. They define the endpoints and the logic behind them. They are the only component that is required to create a new endpoint. They are also the only component that is required to update an existing endpoint.
+
+**Policies** determine what actions can be taken on a resource: what attributes can be read, and which attributes can be written.
+
+**Presenters** determine what attributes of the resource are returned to the client in the response. You can have different sets of attributes be included in the response based on the action (e.g. create, detail, delete, list, update) or a custom format.
+
+To see examples of each, take a look at the `mage-ai/mage_ai/api` directory [here](https://github.com/mage-ai/mage-ai/tree/master/mage_ai/api).
+
+## Testing
+
+Create a test file in `mage_ai/tests/api/operations/test_[resource_name].py`;
+replace `resource_name` with the name of your resource.
+
+Paste in the following sample code into your file:
+
+```python
+from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.tests.api.operations.base import BaseApiTestCase
+from mage_ai.tests.factory import create_user
+
+
+class SomeResourceOperationTests(BaseApiTestCase):
+    model_class = User
+
+    async def test_execute_delete(self):
+        user = create_user(email=self.faker.email())
+
+        await self.base_test_execute_delete(user.id)
+
+    async def test_execute_detail(self):
+        user = create_user()
+        await self.base_test_execute_detail(user.id, dict(
+            email=user.email,
+            username=user.username,
+        ))
+```
+
+This is only a sample test file. It’s running tests on the `UserResource`.
+You’ll need to update the test logic to unit test your custom API endpoint.

@@ -1,6 +1,6 @@
 import * as osPath from 'path';
+import { useCallback, useMemo, useState } from 'react';
 import { useGlobalState } from '@storage/state';
-import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType from '@interfaces/BlockType';
@@ -11,6 +11,7 @@ import FileType, { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileTy
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
@@ -25,7 +26,10 @@ import { pauseEvent } from '@utils/events';
 import { pushAtIndex } from '@utils/array';
 
 type FileVersionsProps = {
-  onActionCallback?: (file: FileType) => void;
+  onActionCallback?: (file: FileType, opts?: {
+    blockUUID: string;
+  }) => void;
+  pipeline?: PipelineType;
   selectedBlock?: BlockType;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
@@ -34,14 +38,31 @@ type FileVersionsProps = {
 
 function FileVersions({
   onActionCallback,
+  pipeline,
   selectedBlock,
   selectedFilePath,
   setErrors,
   width,
 }: FileVersionsProps) {
   const [, setApiReloads] = useGlobalState('apiReloads');
+
+  const urlID = useMemo(() => selectedFilePath
+    ? encodeURIComponent(selectedFilePath)
+    : selectedBlock
+      ? encodeURIComponent(`${selectedBlock?.type}/${selectedBlock?.uuid}`)
+      : null,
+  [
+    selectedBlock,
+    selectedFilePath
+  ]);
+
   const { data: dataFileVersions1, mutate: fetchFileVersions1 } =
-    api.file_versions.files.list(selectedFilePath && encodeURIComponent(selectedFilePath));
+    api.file_versions.files.list(urlID,
+    {
+      block_uuid: selectedBlock?.uuid,
+      pipeline_uuid: pipeline?.uuid,
+    },
+  );
   const fileVersions: FileType[] = useMemo(() => dataFileVersions1?.file_versions || [], [
     dataFileVersions1,
   ]);
@@ -66,8 +87,8 @@ function FileVersions({
     regex,
   ]);
 
-  const [updateFile, { isLoading }] = useMutation(
-    api.file_contents.useUpdate(selectedFilePath && encodeURIComponent(selectedFilePath)),
+  const [updateFileOrig, { isLoading }] = useMutation(
+    api.file_contents.useUpdate(urlID),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -93,7 +114,9 @@ function FileVersions({
             }));
 
             setSelectedFileVersionIndex(prev => prev + 1);
-            onActionCallback?.(resp?.file_content);
+            onActionCallback?.(resp?.file_content, {
+              blockUUID: selectedBlock?.uuid,
+            });
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -103,6 +126,33 @@ function FileVersions({
       ),
     },
   );
+
+  const updateFile = useCallback((data: {
+    version: string;
+  }) => {
+    const payload: {
+      block_uuid?: string;
+      pipeline_uuid?: string;
+      version: string;
+    } = {
+      ...data,
+    };
+
+    if (!selectedFilePath) {
+      payload.block_uuid = selectedBlock?.uuid;
+      payload.pipeline_uuid = pipeline?.uuid;
+    }
+
+    // @ts-ignore
+    return updateFileOrig({
+      file_content: payload,
+    });
+  }, [
+    pipeline,
+    selectedBlock,
+    selectedFilePath,
+    updateFileOrig,
+  ]);
 
   const rowsMemo = useMemo(() => {
     let arr = fileVersions.map((file: FileType) => {
@@ -132,9 +182,7 @@ function FileVersions({
                 pauseEvent(e);
                 // @ts-ignore
                 updateFile({
-                  file_content: {
-                    version: name,
-                  },
+                  version: name,
                 });
               }}
               small

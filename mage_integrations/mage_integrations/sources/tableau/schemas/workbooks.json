@@ -1,0 +1,250 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "id": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "name": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "content_url": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "date-time"
+        },
+        "created_at": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "date-time"
+        },
+        "data_acceleration_config": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "properties": {
+                "accelerate_now": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "acceleration_enabled": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "acceleration_status": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "last_updated_at": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date-time"
+                }
+            }
+        },
+        "description": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "owner_id": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "permissions": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "capabilities": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "Connect": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "Read": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "Write": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    },
+                    "grantee_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "grantee_tag_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            }
+        },
+        "project_id": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "project_name": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "show_tabs": {
+            "type": [
+                "boolean",
+                "null"
+            ]
+        },
+        "size": {
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "tags": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            }
+        },
+        "views": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "properties": {
+                "view": {
+                    "type": [
+                        "array",
+                        "null"
+                    ],
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "tags": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ]
+                            },
+                            "id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "contentUrl": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "createdAt": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date-time"
+                            },
+                            "updatedAt": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date-time"
+                            },
+                            "viewUrlName": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "updated_at": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "format": "date-time"
+        },
+        "webpage_url": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "encryptExtracts": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "defaultViewId": {
+            "type": [
+                "string",
+                "null"
+            ]
+        }
+    }
+}

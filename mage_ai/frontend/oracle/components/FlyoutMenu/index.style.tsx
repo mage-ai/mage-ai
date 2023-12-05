@@ -6,6 +6,7 @@ import {
   BORDER_STYLE,
   BORDER_WIDTH,
 } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
@@ -16,13 +17,24 @@ type LinkProps = {
   largePadding?: boolean;
 };
 
-export const FlyoutMenuContainerStyle = styled.div<any>`
+export const FlyoutMenuContainerStyle = styled.div<{
+  maxHeight?: number;
+  roundedStyle?: boolean;
+  width?: number;
+}>`
+  ${ScrollbarStyledCss}
   position: absolute;
   max-height: ${UNIT * 58}px;
+  z-index: 1;
 
   ${props => props.width && `
     min-width: 0px;
     width: ${props.width}px;
+  `}
+
+  ${({ maxHeight }) => maxHeight && `
+    max-height: ${maxHeight}px;
+    overflow: auto;
   `}
 
   ${props => `

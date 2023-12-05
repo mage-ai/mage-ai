@@ -26,7 +26,7 @@ Each pipeline is represented by a YAML file (here's an [example](https://github.
 
 <img
   alt="Pipeline"
-  src="/media/overview/mage-build.gif"
+  src="https://github.com/mage-ai/assets/blob/main/overview/mage-build.gif?raw=True"
 />
 
 Pipelines can be filtered, tagged, and grouped by various properties. See our [docs page](/pipelines/pipeline-tagging) for more info.
@@ -36,7 +36,7 @@ Pipelines can be filtered, tagged, and grouped by various properties. See our [d
 A block is a file with code that can be executed independently or within a
 pipeline. Together, blocks form a Directed Acyclic Graph (DAG), which we call pipelines. A block won't start running in a pipeline until all its upstream dependencies are met.
 
-There are 5 types of blocks.
+There are 8 types of blocks.
 
 1. Data loader
 
@@ -48,7 +48,11 @@ There are 5 types of blocks.
 
 5. Sensor
 
-6. Chart
+6. dbt
+
+7. Extensions
+
+8. Callbacks
 
 For more information, please see the [documentation on blocks](/design/blocks)
 

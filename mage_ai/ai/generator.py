@@ -12,7 +12,7 @@ class Generator:
             pipeline_uuid = request.get('pipeline_uuid')
             block_uuid = request.get('block_uuid')
             return dict(
-                block_doc=await LLMPipelineWizard().async_generate_block_documentation_with_name(
+                block_doc=await LLMPipelineWizard().async_generate_doc_for_block(
                     pipeline_uuid,
                     block_uuid
                 )
@@ -21,7 +21,7 @@ class Generator:
             from mage_ai.ai.llm_pipeline_wizard import LLMPipelineWizard
 
             pipeline_uuid = request.get('pipeline_uuid')
-            return await LLMPipelineWizard().async_generate_pipeline_documentation(
+            return await LLMPipelineWizard().async_generate_doc_for_pipeline(
                 pipeline_uuid,
             )
         elif use_case == LLMUseCase.GENERATE_BLOCK_WITH_DESCRIPTION:

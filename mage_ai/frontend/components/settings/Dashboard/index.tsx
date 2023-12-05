@@ -1,22 +1,37 @@
 import Dashboard from '@components/Dashboard';
 import VerticalSectionLinks from '@components/VerticalSectionLinks';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { BreadcrumbType } from '@components/shared/Header';
 import { SECTIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getUser } from '@utils/session';
 
 type SettingsDashboardProps = {
   after?: any;
+  afterHeader?: any;
   afterHidden?: boolean;
+  afterWidth?: number;
+  appendBreadcrumbs?: boolean;
+  breadcrumbs?: BreadcrumbType[];
   children: any;
+  hideAfterCompletely?: boolean;
+  setAfterHidden?: (value: boolean) => void;
+  title?: string;
   uuidItemSelected: string;
   uuidWorkspaceSelected: string;
 };
 
 function SettingsDashboard({
   after,
+  afterHeader,
   afterHidden,
+  afterWidth,
+  appendBreadcrumbs,
+  breadcrumbs,
   children,
+  hideAfterCompletely,
+  setAfterHidden,
+  title,
   uuidItemSelected,
   uuidWorkspaceSelected,
 }: SettingsDashboardProps) {
@@ -25,9 +40,14 @@ function SettingsDashboard({
   return (
     <Dashboard
       after={after}
+      afterHeader={afterHeader}
       afterHidden={!after || afterHidden}
-      afterWidth={after ? 50 * UNIT : 0}
+      afterWidth={after
+        ? afterWidth || 50 * UNIT
+        : 0
+      }
       afterWidthOverride
+      appendBreadcrumbs={appendBreadcrumbs}
       before={(
         <BeforeStyle>
           <VerticalSectionLinks
@@ -40,8 +60,11 @@ function SettingsDashboard({
         </BeforeStyle>
       )}
       beforeWidth={BEFORE_WIDTH}
-      title="Settings"
-      uuid="settings/index"
+      breadcrumbs={breadcrumbs}
+      hideAfterCompletely={hideAfterCompletely}
+      setAfterHidden={setAfterHidden}
+      title={title || 'Settings'}
+      uuid={`${title || 'settings'}/index`}
     >
       {children}
     </Dashboard>

@@ -1,7 +1,8 @@
 import singer
 from singer import metadata
-from tap_sftp import client
-from tap_sftp.singer_encodings import json_schema
+
+from mage_integrations.sources.sftp.tap_sftp import client
+from mage_integrations.sources.sftp.tap_sftp.singer_encodings import json_schema
 
 LOGGER = singer.get_logger()
 

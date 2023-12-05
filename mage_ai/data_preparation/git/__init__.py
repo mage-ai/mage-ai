@@ -59,13 +59,7 @@ class Git:
             if self.remote_repo_link:
                 url = urlsplit(self.remote_repo_link)
 
-            if os.getenv(GIT_ACCESS_TOKEN_VAR):
-                token = os.getenv(GIT_ACCESS_TOKEN_VAR)
-            elif self.git_config and self.git_config.access_token_secret_name:
-                token = get_secret_value(
-                    self.git_config.access_token_secret_name,
-                    repo_name=get_repo_path(),
-                )
+            token = self.get_access_token()
 
             if self.git_config and url:
                 user = self.git_config.username
@@ -256,6 +250,88 @@ class Git:
                 return func(self, *args, **kwargs)
 
         return wrapper
+
+    @_remote_command
+    def submodules_update(self, repo_path: str = None) -> None:
+        self.__submodules_update(repo_path=repo_path)
+
+    def __submodules_update(self, repo_path: str = None) -> None:
+        """
+        Attempt to update submodules for the specified repo path. Only the top-level
+        submodules will be updated at the moment.
+
+        Args:
+            repo_path (str, optional): The path to the repo. If not provided, self.repo will be
+                used.
+        """
+        import git
+        from git.config import GitConfigParser
+        if repo_path:
+            repo = git.Repo(repo_path)
+        else:
+            repo = self.repo
+            repo_path = self.repo_path
+
+        parser = GitConfigParser(
+            os.path.join(repo_path, '.gitmodules'),
+            read_only=True,
+        )
+        sections = parser.sections()
+        for section in sections:
+            path = parser.get(section, 'path', fallback=None)
+            submodule_url = parser.get(section, 'url', fallback=None)
+            parser.release()
+            if path and submodule_url:
+                submodule_full_path = os.path.join(repo_path, path)
+                tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
+                try:
+                    print(f'Updating {section}...')
+                    # Create a temporary directory to store the current contents of the submodule
+                    # directory because the `git submodule update` command will fail if the
+                    # submodule directory already exists and is not empty.
+                    if os.path.exists(submodule_full_path) and next(
+                        os.scandir(submodule_full_path), None
+                    ):
+                        shutil.move(
+                            submodule_full_path,
+                            tmp_full_path,
+                        )
+                    url = urlsplit(submodule_url)
+                    if self.auth_type == AuthType.HTTPS:
+                        user = self.git_config.username
+                        token = self.get_access_token()
+                        url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+                        url = urlunsplit(url)
+                        # Overwrite the submodule URL with git credentials.
+                        repo.config_writer().set_value(
+                            f'submodule.{path}', 'url', url).release()
+
+                    subprocess.run(
+                        [
+                            'git',
+                            'submodule',
+                            'update',
+                            '--init',
+                            path,
+                        ],
+                        check=True,
+                        cwd=repo_path,
+                        timeout=20,
+                    )
+                except Exception:
+                    if os.path.exists(tmp_full_path):
+                        shutil.move(
+                            tmp_full_path,
+                            submodule_full_path,
+                        )
+                else:
+                    print(f'{section} updated!')
+                finally:
+                    if os.path.exists(tmp_full_path):
+                        shutil.rmtree(tmp_full_path)
+                    repo_config_writer = repo.config_writer()
+                    repo_config_writer.remove_section(f'submodule.{path}')
+                    repo_config_writer.release()
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
@@ -509,7 +585,7 @@ class Git:
             self.repo.git.switch('-c', branch)
 
     @_remote_command
-    def clone(self):
+    def clone(self, sync_submodules: bool = False) -> None:
         from git import Repo
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
@@ -526,6 +602,9 @@ class Git:
                 origin=REMOTE_NAME,
                 env=env,
             )
+
+            if sync_submodules:
+                self.__submodules_update(repo_path=tmp_path)
 
             shutil.rmtree(os.path.join(self.repo_path, '.git'))
             shutil.copytree(
@@ -618,8 +697,10 @@ class Git:
 
     def __setup_repo(self):
         import git
+        import git.cmd
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
+        repo_git = git.cmd.Git(self.repo_path)
         try:
             # Clone the remote repo and copy over the .git folder
             # to initialize the local repository.
@@ -629,7 +710,6 @@ class Git:
                 env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
                 if not self.__add_host_to_known_hosts():
                     raise Exception('Could not add host to known_hosts')
-            repo_git = git.cmd.Git(self.repo_path)
             repo_git.update_environment(**env)
             proc = repo_git.clone(
                 self.remote_repo_link,
@@ -699,3 +779,15 @@ class Git:
         if return_code is None:
             proc.kill()
             raise TimeoutError
+
+    def get_access_token(self) -> str:
+        token = None
+        if os.getenv(GIT_ACCESS_TOKEN_VAR):
+            token = os.getenv(GIT_ACCESS_TOKEN_VAR)
+        elif self.git_config and self.git_config.access_token_secret_name:
+            token = get_secret_value(
+                self.git_config.access_token_secret_name,
+                repo_name=get_repo_path(),
+            )
+
+        return token

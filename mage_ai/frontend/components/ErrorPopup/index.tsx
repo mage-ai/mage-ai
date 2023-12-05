@@ -10,6 +10,7 @@ import {
   ErrorPopupStyle,
 } from './index.style';
 import { ErrorType, ErrorResponseType } from '@interfaces/ErrorsType';
+import { isObject } from '@utils/hash';
 
 type ErrorPopupProps = {
   displayMessage?: string;
@@ -37,7 +38,7 @@ function ErrorPopup({
   } = errorsProp || {};
 
   const {
-    errors,
+    errors: errorsFromResponse,
     exception,
     message: messageFromResponse,
   } = response?.error || {};
@@ -52,6 +53,12 @@ function ErrorPopup({
     displayMessage = messages[0];
     messages = null;
   }
+
+  const errors = Array.isArray(errorsFromResponse)
+    ? errorsFromResponse
+    : isObject(errorsFromResponse)
+      ? Object.values(errorsFromResponse).filter((value) => typeof value === 'string')
+      : [errorsFromResponse ? String(errorsFromResponse) : ''];
 
   return (
     <ErrorPopupStyle>
@@ -110,6 +117,7 @@ function ErrorPopup({
                 <Text
                   // @ts-ignore
                   dangerouslySetInnerHTML={{
+                    // @ts-ignore
                     __html: msg.replaceAll(' ', '&nbsp;'),
                   }}
                   default
@@ -141,10 +149,12 @@ function ErrorPopup({
                 <Text
                   // @ts-ignore
                   dangerouslySetInnerHTML={{
+                    // @ts-ignore
                     __html: msg.replaceAll(' ', '&nbsp;'),
                   }}
                   default
                   disableWordBreak
+                  // @ts-ignore
                   key={msg}
                   monospace
                 />

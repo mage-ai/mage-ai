@@ -19,11 +19,12 @@ You must enter the following credentials when configuring this source:
 | `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 | `warehouse` | Name of the warehouse that contains the specified database and schema. | `COMPUTE_WH` |
-| `use_batch_load` | If `true`, use batch upload instead of insertion query. | `false` (default value) |
+| `use_batch_load` | If `true`, use batch upload instead of insertion query. | `true` (default value) |
 
 ### Optional Configs
 
 | Key | Description | Sample value
 | --- | --- | --- |
 | `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true`
+| `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
 <br />

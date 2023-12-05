@@ -24,7 +24,9 @@
     "prompt": "✨ Make magic..."
   },
   "metadata": {
-    "og:image": "/media/og.png",
+    "og:image": "https://github.com/mage-ai/mage-ai/blob/master/docs/og.png?raw=True",
+    "og:description": "Mage is an open-source, hybrid framework for transforming and integrating data. Our docs are the best place to learn about making magical data pipelines.",
+    "og:site_name": "Mage Docs",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {
@@ -188,7 +190,8 @@
                 "data-integrations/destinations/overview",
                 "data-integrations/destinations/add-new-destination"
               ]
-            }
+            },
+            "data-integrations/batch-pipelines"
           ]
         },
         {
@@ -259,28 +262,48 @@
             {
               "group": "Sources",
               "pages": [
+                "streaming/sources/activemq",
                 "streaming/sources/amazon-sqs",
                 "streaming/sources/azure-event-hub",
                 "streaming/sources/google-cloud-pubsub",
+                "streaming/sources/influxdb",
                 "streaming/sources/kafka",
-                "streaming/sources/kinesis"
+                "streaming/sources/kinesis",
+                "streaming/sources/nats"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
                 "streaming/destinations/amazon-s3",
+                "streaming/destinations/bigquery",
+                "streaming/destinations/clickhouse",
+                "streaming/destinations/duckdb",
                 "streaming/destinations/dummy",
                 "streaming/destinations/elasticsearch",
+                "streaming/destinations/google-cloud-pubsub",
                 "streaming/destinations/influxdb",
                 "streaming/destinations/kafka",
                 "streaming/destinations/kinesis",
                 "streaming/destinations/mongodb",
+                "streaming/destinations/mssql",
+                "streaming/destinations/mysql",
                 "streaming/destinations/opensearch",
                 "streaming/destinations/postgres",
-                "streaming/destinations/redshift"
+                "streaming/destinations/redshift",
+                "streaming/destinations/snowflake",
+                "streaming/destinations/trino"
               ]
             }
+          ]
+        },
+        {
+          "group": "User defined permissions",
+          "icon": "fingerprint",
+          "pages": [
+            "authentication/permissions/overview",
+            "authentication/permissions/roles",
+            "authentication/permissions/permissions"
           ]
         }
       ]
@@ -317,15 +340,19 @@
                 "development/dependencies/custom-files"
               ]
             },
+            "development/io_config",
             {
               "group": "Storage",
               "pages": [
                 "integrations/databases/BigQuery",
                 "integrations/databases/ClickHouse",
                 "integrations/databases/Druid",
+                "integrations/databases/DuckDB",
+                "integrations/databases/GoogleSheets",
                 "integrations/databases/MicrosoftSQLServer",
                 "integrations/databases/MongoDB",
                 "integrations/databases/MySQL",
+                "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
@@ -342,7 +369,7 @@
           "pages": [
             "development/project/setup",
             "getting-started/setting-up-git",
-            "development/git/generate-an-ssh-token",
+            "development/git/configure",
             "getting-started/file-versions",
             "development/text-editor"
           ]
@@ -389,7 +416,8 @@
                     "integrations/observability/great-expectations",
                     "integrations/observability/metaplane",
                     "integrations/observability/newrelic",
-                    "integrations/observability/sentry"
+                    "integrations/observability/sentry",
+                    "integrations/observability/prometheus"
                   ]
                 },
                 {
@@ -428,6 +456,7 @@
             "development/testing/unit-tests"
           ]
         },
+        "development/ai/overview",
         {
           "group": "Visualizations",
           "icon": "chart-line-up-down",
@@ -435,7 +464,13 @@
             "visualizations/dashboards"
           ]
         },
-        "development/ai/overview",
+        {
+          "group": "No-code interactions",
+          "icon": "universal-access",
+          "pages": [
+            "interactions/overview"
+          ]
+        },
         "development/updating-mage"
       ]
     },
@@ -489,7 +524,16 @@
             "guides/train-model"
           ]
         },
-        "guides/ai/overview",
+        "guides/dbt/developing-dbt-in-mage",
+        {
+          "group": "Using AI",
+          "icon": "microchip-ai",
+          "pages": [
+            "guides/ai/overview",
+            "guides/ai/ai-client"
+          ]
+        },
+        "guides/docker/connecting-a-database",
         "guides/community-examples",
         "guides/tips-and-tricks"
       ]
@@ -646,6 +690,8 @@
           "icon": "passport",
           "pages": [
             "production/authentication/overview",
+            "production/authentication/google",
+            "production/authentication/okta",
             "production/authentication/microsoft"
           ]
         },
@@ -697,8 +743,21 @@
           "group": "Version control",
           "icon": "code-branch",
           "pages": [
-            "production/data-sync/git",
+            "production/data-sync/git-sync",
             "production/data-sync/github"
+          ]
+        },
+        {
+          "group": "Workspaces",
+          "icon": "boxes-stacked",
+          "pages": [
+            "production/developing-in-the-cloud/workspaces/overview",
+            {
+              "group": "Environments",
+              "pages": [
+                "production/developing-in-the-cloud/workspaces/kubernetes"
+              ]
+            }
           ]
         }
       ]
@@ -707,15 +766,40 @@
       "group": "Get Started",
       "pages": [
         "contributing/overview",
+        "contributing/development-environment"
+      ]
+    },{
+      "group": "Components",
+      "pages":[
         {
           "group": "Backend",
           "icon": "server",
           "pages": [
             "contributing/backend/overview",
             {
+              "group": "Data integration",
+              "pages": [
+                "contributing/data-integrations/adapt-existing-source",
+                "contributing/data-integrations/add-new-source",
+                "contributing/data-integrations/add-new-destination"
+              ]
+            },
+            {
+              "group": "IO classes",
+              "pages": [
+                "contributing/backend/io/adding-a-class"
+              ]
+            },
+            {
               "group": "Streaming",
               "pages": [
                 "contributing/backend/streaming/sources-and-destinations"
+              ]
+            },
+            {
+              "group": "Testing",
+              "pages": [
+                "contributing/backend/testing/overview"
               ]
             }
           ]
@@ -726,6 +810,13 @@
           "pages": [
             "contributing/frontend/overview",
             "contributing/charts/how-to-add"
+          ]
+        },
+        {
+          "group": "Documentation",
+          "icon": "book",
+          "pages": [
+            "contributing/documentation/overview"
           ]
         }
       ]
@@ -887,6 +978,10 @@
       "destination": "/integrations/observability/sentry"
     },
     {
+      "source": "/production/observability/prometheus",
+      "destination": "/integrations/observability/prometheus"
+    },
+    {
       "source": "/guides/triggers/configure-triggers-in-code",
       "destination": "/orchestration/triggers/configure-triggers-in-code"
     },
@@ -997,6 +1092,23 @@
     {
       "source": "/guides/streaming/sources/kinesis",
       "destination": "/streaming/sources/kinesis"
+    },
+    {
+      "source": "/data-integrations/sources/adapt-existing-source",
+      "destination": "/contributing/data-integrations/adapt-existing-source"
+    },
+    {
+      "source": "/data-integrations/sources/add-new-source",
+      "destination": "/contributing/data-integrations/add-new-source"
+    },
+    {
+      "source": "/data-integrations/destination/add-new-destination",
+      "destination": "/contributing/data-integrations/add-new-destination"
+    },
+    {
+      "source": "/development/git/generate-an-ssh-token",
+      "destination": "/development/git/configure#generate-ssh-token"
     }
   ]
 }
+

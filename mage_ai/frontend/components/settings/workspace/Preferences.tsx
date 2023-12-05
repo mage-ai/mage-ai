@@ -10,7 +10,8 @@ import FlexContainer, {
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Panel from '@oracle/components/Panel';
-import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import ProjectType, { FeatureUUIDEnum, ProjectPipelinesType } from '@interfaces/ProjectType';
+import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -21,6 +22,7 @@ import { ContainerStyle } from './index.style';
 import { Edit } from '@oracle/icons';
 import { ICON_SIZE_MEDIUM, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { PADDING_UNITS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { storeLocalTimezoneSetting } from './utils';
 import { useError } from '@context/Error';
@@ -53,6 +55,11 @@ function Preferences({
     openai_api_key: openaiApiKey,
     project_uuid: projectUUID,
   } = project || {};
+
+  const isDemoApp = useMemo(() =>
+    typeof window !== 'undefined' && window.location.hostname === 'demo.mage.ai',
+    [],
+  );
 
   useEffect(() => {
     if (!projectAttributes) {
@@ -89,6 +96,7 @@ function Preferences({
     };
     help_improve_mage?: boolean;
     openai_api_key?: string;
+    pipelines?: ProjectPipelinesType;
   }) => updateProjectBase({
     project: payload,
   }), [updateProjectBase]);
@@ -152,6 +160,7 @@ function Preferences({
             <Spacing mr={PADDING_UNITS} />
 
             <ToggleSwitch
+              compact
               checked={projectAttributes?.help_improve_mage}
               onCheck={() => setProjectAttributes(prev => ({
                 ...prev,
@@ -185,6 +194,36 @@ function Preferences({
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS} />
 
+      <SetupSection
+        description="Global settings that are applied to all pipelines in this project."
+        title="Pipeline settings"
+      >
+        <SetupSectionRow
+          description="Every time a trigger is created or updated in this pipeline, automatically persist it in code."
+          title="Save triggers in code automatically"
+          toggleSwitch={{
+            checked: !!projectAttributes?.pipelines?.settings?.triggers?.save_in_code_automatically,
+            onCheck: (valFunc: (val: boolean) => boolean) => setProjectAttributes(prev => ({
+              ...prev,
+              pipelines: {
+                ...prev?.pipelines,
+                settings: {
+                  ...prev?.pipelines?.settings,
+                  triggers: {
+                    ...prev?.pipelines?.settings?.triggers,
+                    save_in_code_automatically: valFunc(
+                      prev?.pipelines?.settings?.triggers?.save_in_code_automatically,
+                    ),
+                  },
+                },
+              },
+            })),
+          }}
+        />
+      </SetupSection>
+
+      <Spacing mt={UNITS_BETWEEN_SECTIONS} />
+
       <Panel noPadding overflowVisible>
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={1}>
@@ -196,16 +235,30 @@ function Preferences({
           {Object.entries(projectAttributes?.features || {}).map(([k, v], idx) => (
             <Spacing
               key={k}
-              mt={idx === 0 ? 0 : '4px'}
+              mt={idx === 0 ? 0 : 1}
             >
               <FlexContainer
                 alignItems="center"
-                justifyContent="space-between"
               >
+                <ToggleSwitch
+                  checked={!!v}
+                  compact
+                  onCheck={() => setProjectAttributes(prev => ({
+                    ...prev,
+                    features: {
+                      ...projectAttributes?.features,
+                      [k]: !v,
+                    },
+                  }))}
+                />
+
+                <Spacing mr={PADDING_UNITS} />
+
                 <Flex>
-                  <Text default monospace>
-                    {k}
+                  <Text default={!v} monospace>
+                    {capitalizeRemoveUnderscoreLower(k)}
                   </Text>
+
                   {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
                     <Spacing ml={1}>
                       <Tooltip
@@ -221,19 +274,6 @@ function Preferences({
                     </Spacing>
                   }
                 </Flex>
-
-                <Spacing mr={PADDING_UNITS} />
-
-                <ToggleSwitch
-                  checked={!!v}
-                  onCheck={() => setProjectAttributes(prev => ({
-                    ...prev,
-                    features: {
-                      ...projectAttributes?.features,
-                      [k]: !v,
-                    },
-                  }))}
-                />
               </FlexContainer>
             </Spacing>
           ))}
@@ -267,7 +307,8 @@ function Preferences({
               </FlexContainer>
             :
               <TextInput
-                label="API key"
+                disabled={isDemoApp}
+                label={isDemoApp ? 'Entering API key is disabled on demo' : 'API key'}
                 monospace
                 onChange={e => setProjectAttributes(prev => ({
                   ...prev,
@@ -291,6 +332,7 @@ function Preferences({
               features: projectAttributes?.features,
               help_improve_mage: projectAttributes?.help_improve_mage,
               openai_api_key: projectAttributes?.openai_api_key,
+              pipelines: projectAttributes?.pipelines,
             });
           }}
           primary

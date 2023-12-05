@@ -17,11 +17,13 @@ class EcsConfig(BaseConfig):
     cluster: str
     security_groups: List[str]
     subnets: List[str]
-    tags: List = field(default_factory=list)
-    network_configuration: Dict = None
+    assign_public_ip: bool = True
     cpu: int = 512
-    memory: int = 1024
+    enable_execute_command: bool = False
     launch_type: str = 'FARGATE'
+    memory: int = 1024
+    network_configuration: Dict = None
+    tags: List = field(default_factory=list)
     wait_timeout: int = 600
 
     @classmethod
@@ -71,19 +73,21 @@ class EcsConfig(BaseConfig):
             network_configuration = {
                 'awsvpcConfiguration': {
                     'subnets': self.subnets,
-                    'assignPublicIp': 'ENABLED',
+                    'assignPublicIp': 'ENABLED' if self.assign_public_ip else 'DISABLED',
                     'securityGroups': self.security_groups,
                 }
             }
 
         task_config = dict(
-            taskDefinition=self.task_definition,
-            launchType=self.launch_type,
             cluster=self.cluster,
-            platformVersion='LATEST',
             count=1,
+            enableExecuteCommand=self.enable_execute_command,
+            launchType=self.launch_type,
             networkConfiguration=network_configuration,
+            platformVersion='LATEST',
+            propagateTags='TASK_DEFINITION',
             tags=self.tags,
+            taskDefinition=self.task_definition,
         )
         if command is not None:
             task_config['overrides'] = {

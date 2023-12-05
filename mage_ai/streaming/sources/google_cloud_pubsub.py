@@ -1,12 +1,14 @@
+import os
+from dataclasses import dataclass
+from typing import Callable
+
 from google.api_core import retry
 from google.cloud import pubsub_v1
 from google.oauth2 import service_account
-from dataclasses import dataclass
+
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
-from typing import Callable
-import os
 
 
 @dataclass
@@ -92,7 +94,9 @@ class GoogleCloudPubSubSource(BaseSource):
         def callback(
                 received_message: pubsub_v1.subscriber.message.Message) -> None:
             # self._print(f'Received: {received_message}.')
-            handler(dict(data=received_message.message.data.decode()))
+            handler(dict(
+                data=received_message.message.data.decode(),
+                metadata=dict(attributes=received_message.message.attributes)))
             # self._print(f'Handled: {received_message.message.data}.')
             received_message.ack()
 
@@ -136,7 +140,8 @@ class GoogleCloudPubSubSource(BaseSource):
                 for received_message in response.received_messages:
                     # self._print(f'Received: {received_message.message.data}.')
                     message_values.append(
-                        dict(data=received_message.message.data.decode())
+                        dict(data=received_message.message.data.decode(),
+                             metadata=dict(attributes=received_message.message.attributes))
                     )
                     # self._print(f'Batched: {received_message.message.data}.')
                     ack_ids.append(received_message.ack_id)

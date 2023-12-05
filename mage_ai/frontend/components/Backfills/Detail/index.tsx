@@ -22,7 +22,10 @@ import PipelineRunType, {
   RunStatus,
 } from '@interfaces/PipelineRunType';
 import PipelineType from '@interfaces/PipelineType';
-import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
+import PipelineVariableType, {
+  GLOBAL_VARIABLES_UUID,
+  VariableType,
+} from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -163,6 +166,7 @@ function BackfillDetail({
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
           setErrors={setErrors}
+          setSelectedRun={setSelectedRun}
         />
         <Spacing p={2}>
           <Paginate
@@ -403,17 +407,23 @@ function BackfillDetail({
 
   const modelVariables = useMemo(() => modelVariablesInit || {}, [modelVariablesInit]);
   const variablesTable = useMemo(() => {
-    let arr = [];
+    const arr = getFormattedVariables(variables, block => block.uuid === GLOBAL_VARIABLES_UUID) || [];
 
     if (!isEmptyObject(modelVariables)) {
       Object.entries(modelVariables).forEach(([k, v]) => {
-        arr.push({
-          uuid: k,
-          value: getFormattedVariable(v),
-        });
+        const currentVarIdx = arr.findIndex((pipelineVar: VariableType) => pipelineVar?.uuid === k);
+        if (currentVarIdx !== -1) {
+          arr.splice(currentVarIdx, 1, {
+            uuid: k,
+            value: getFormattedVariable(v),
+          });
+        } else {
+          arr.push({
+            uuid: k,
+            value: getFormattedVariable(v),
+          });
+        }
       });
-    } else {
-      arr = getFormattedVariables(variables, block => block.uuid === GLOBAL_VARIABLES_UUID);
     }
 
     if (typeof arr === 'undefined' || !arr?.length) {

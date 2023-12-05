@@ -9,12 +9,9 @@ from typing import Callable, Dict, List
 from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.repo_manager import (
-    RepoConfig,
-    get_repo_config,
-    get_repo_path,
-)
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import str_to_timedelta
 

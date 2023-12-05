@@ -5,14 +5,15 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import DisableTriggerModal from './DisableTriggerModal';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
 } from '@interfaces/PipelineScheduleType';
 import PipelineTriggerType from '@interfaces/PipelineTriggerType';
+import PipelineType from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -33,6 +34,7 @@ import {
   DELETE_CONFIRM_TOP_OFFSET_DIFF,
   DELETE_CONFIRM_TOP_OFFSET_DIFF_FIRST,
   TIMEZONE_TOOLTIP_PROPS,
+  getRunStatusTextProps,
 } from '@components/shared/Table/constants';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { RunStatus } from '@interfaces/BlockRunType';
@@ -42,11 +44,12 @@ import {
   checkIfCustomInterval,
   convertUtcCronExpressionToLocalTimezone,
 } from './utils';
-import { dateFormatLong, datetimeInLocalTimezone } from '@utils/date';
+import { dateFormatLong, datetimeInLocalTimezone, utcStringToElapsedTime } from '@utils/date';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { useModal } from '@context/Modal';
 
 const ICON_SIZE = UNIT * 1.5;
 
@@ -83,6 +86,8 @@ function TriggersTable({
 }: TriggersTableProps) {
   const pipelineUUID = pipeline?.uuid;
   const router = useRouter();
+
+  const toggleTriggerRefs = useRef({});
   const deleteButtonRefs = useRef({});
   const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<number>(null);
   const [confirmDialogueTopOffset, setConfirmDialogueTopOffset] = useState<number>(0);
@@ -90,6 +95,24 @@ function TriggersTable({
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
+
+  const [updatePipeline]: any = useMutation(
+    (pipeline: PipelineType) =>
+      api.pipelines.useUpdate(pipeline.uuid)({ pipeline }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineSchedules?.();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -102,7 +125,7 @@ function TriggersTable({
           callback: () => {
             fetchPipelineSchedules?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -211,6 +234,70 @@ function TriggersTable({
     columnFlex.splice(5, 0, null);
   }
 
+  const [showDisableTriggerModal, hideDisableTriggerModal] = useModal(({ 
+    inProgressRunsCount,
+    left,
+    pipelineScheduleId,
+    pipelineUuid,
+    top,
+    topOffset,
+  }) => (
+    <DisableTriggerModal 
+      inProgressRunsCount={inProgressRunsCount}
+      left={left} 
+      onAllow={(pipelineScheduleId) => {
+        hideDisableTriggerModal();
+        updatePipelineSchedule({
+          id: pipelineScheduleId,
+          status: ScheduleStatusEnum.INACTIVE,
+        });
+      }}
+      onStop={(pipelineScheduleId, pipelineUuid) => {
+        hideDisableTriggerModal();
+        // Cancel all in progress runs
+        updatePipeline({
+          pipeline_schedule_id: pipelineScheduleId,
+          status: RunStatus.CANCELLED,
+          uuid: pipelineUuid,
+        });
+        updatePipelineSchedule({
+          id: pipelineScheduleId,
+          status: ScheduleStatusEnum.INACTIVE,
+        });
+      }}
+      pipelineScheduleId={pipelineScheduleId} 
+      pipelineUuid={pipelineUuid}
+      top={top} 
+      topOffset={topOffset}
+    />
+  ), {
+  }, [], {
+    background: true,
+    uuid: 'disable_trigger',
+  });
+
+  const handleTogglePipeline = ({ 
+    event, 
+    inProgressRunsCount,
+    pipelineIsActive,
+    pipelineScheduleId, 
+    pipelineUuid,
+  }) => {
+    pauseEvent(event);
+    if (pipelineIsActive && inProgressRunsCount > 0) {
+      const toggleEl = toggleTriggerRefs.current[pipelineScheduleId]?.current as Element;
+      const { height, left, top } = toggleEl?.getBoundingClientRect();
+      showDisableTriggerModal({ inProgressRunsCount, left, pipelineScheduleId, pipelineUuid, top, topOffset: height });
+    } else {
+      updatePipelineSchedule({
+        id: pipelineScheduleId,
+        status: pipelineIsActive
+          ? ScheduleStatusEnum.INACTIVE
+          : ScheduleStatusEnum.ACTIVE,
+      });
+    }
+  };
+
   return (
     <TableContainerStyle overflowVisible>
       {pipelineSchedules.length === 0
@@ -240,6 +327,7 @@ function TriggersTable({
                 created_at: createdAt,
                 description,
                 next_pipeline_run_date: nextRunDate,
+                pipeline_in_progress_runs_count: inProgressRunsCount,
                 pipeline_runs_count: pipelineRunsCount,
                 pipeline_uuid: triggerPipelineUUID,
                 last_pipeline_run_status: lastPipelineRunStatus,
@@ -251,6 +339,7 @@ function TriggersTable({
               const isActive = ScheduleStatusEnum.ACTIVE === status;
               const isCustomInterval = checkIfCustomInterval(scheduleInterval);
               const finalPipelineUUID = pipelineUUID || triggerPipelineUUID;
+              toggleTriggerRefs.current[id] = createRef();
               deleteButtonRefs.current[id] = createRef();
 
               const triggerAsCodeIcon = pipelineTriggersByName?.[name]
@@ -283,20 +372,20 @@ function TriggersTable({
                     size={20}
                     widthFitContent
                   >
-                    <ToggleSwitch
-                      checked={isActive}
-                      compact
-                      onCheck={(e) => {
-                        pauseEvent(e);
-                        updatePipelineSchedule({
-                          id: pipelineSchedule.id,
-                          status: isActive
-                            ? ScheduleStatusEnum.INACTIVE
-                            : ScheduleStatusEnum.ACTIVE,
-                        });
-                      }}
-                      purpleBackground
-                    />
+                    <div ref={toggleTriggerRefs.current[id]} style={{ position: 'relative' }}>
+                      <ToggleSwitch
+                        checked={isActive}
+                        compact
+                        onCheck={(event) => handleTogglePipeline({ 
+                          event, 
+                          inProgressRunsCount,
+                          pipelineIsActive: isActive,
+                          pipelineScheduleId: id, 
+                          pipelineUuid: triggerPipelineUUID,
+                        })}
+                        purpleBackground
+                      />
+                    </div>
                   </Tooltip>,
                   <Text
                     default
@@ -385,12 +474,8 @@ function TriggersTable({
                   }
                 </Text>,
                 <Text
-                  danger={RunStatus.FAILED === lastPipelineRunStatus}
-                  default={!lastPipelineRunStatus}
+                  {...getRunStatusTextProps(lastPipelineRunStatus)}
                   key={`latest_run_status_${idx}`}
-                  monospace
-                  success={RunStatus.COMPLETED === lastPipelineRunStatus}
-                  warning={RunStatus.CANCELLED === lastPipelineRunStatus}
                 >
                   {lastPipelineRunStatus || 'N/A'}
                 </Text>,
@@ -495,7 +580,7 @@ function TriggersTable({
                     key={`created_at_${idx}`}
                     monospace
                     small
-                    title={createdAt ? `UTC: ${createdAt.slice(0, 19)}` : null}
+                    title={createdAt ? utcStringToElapsedTime(createdAt) : null}
                   >
                     {datetimeInLocalTimezone(createdAt?.slice(0, 19), displayLocalTimezone)}
                   </Text>,

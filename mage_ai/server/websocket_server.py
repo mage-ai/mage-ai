@@ -49,6 +49,7 @@ from mage_ai.server.utils.output_display import (
     get_block_output_process_code,
     get_pipeline_execution_code,
 )
+from mage_ai.services.spark.constants import ComputeServiceUUID
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     HIDE_ENV_VAR_VALUES,
@@ -373,6 +374,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         run_upstream = message.get('run_upstream')
         upstream_blocks = message.get('upstream_blocks')
 
+        variables = message.get('variables') or None
+
         pipeline_uuid = pipeline.uuid
 
         widget = BlockType.CHART == block_type
@@ -416,25 +419,52 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     remote_execution = True
                 else:
                     remote_execution = False
+
+                execution_uuid = None
+                # Need to cache everything here
+                if block.should_track_spark() and \
+                        ComputeServiceUUID.AWS_EMR == block.compute_service_uuid:
+
+                    execution_uuid = str(uuid.uuid4()).split('-')[0]
+                    block.clear_spark_jobs_cache()
+                    block.cache_spark_application()
+                    block.set_spark_job_execution_start(execution_uuid=execution_uuid)
+
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,
                     custom_code,
                     global_vars,
                     block_type=block_type,
+                    execution_uuid=execution_uuid,
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
+                    # The UI can execute a block and send run_settings to control the behavior
+                    # of the block run while executing it from the notebook.
+                    # E.G.
+                    # run_settings = dict(selected_streams=[
+                    #     'account_v2',
+                    #     'user_with_emails',
+                    # ])
                     run_settings=run_settings,
                     run_tests=run_tests,
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
                     upstream_blocks=upstream_blocks,
+                    variables=variables,
                     widget=widget,
                 )
+            elif BlockType.SCRATCHPAD == block_type:
+                # Initialize the db_connection session if it hasn't been initialized yet.
+                initialize_db_connection = """
+from mage_ai.orchestration.db import db_connection
+db_connection.start_session()
+"""
+                client.execute(initialize_db_connection)
 
             msg_id = client.execute(add_internal_output_info(code))
 

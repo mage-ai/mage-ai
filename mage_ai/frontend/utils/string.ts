@@ -105,7 +105,7 @@ export function pascalize(word) {
     .join('');
 }
 
-export function pluralize(string, n, withCommas = false) {
+export function pluralize(string, n, withCommas = false, wordOnly = false) {
   let number = n;
   const hasNumber = number !== undefined && number !== null;
   if (!hasNumber) {
@@ -126,7 +126,7 @@ export function pluralize(string, n, withCommas = false) {
     }
   }
 
-  if (hasNumber) {
+  if (hasNumber && !wordOnly) {
     const numberText = withCommas ? numberWithCommas(number) : number;
     return `${numberText} ${word}`;
   }
@@ -195,6 +195,10 @@ export function abbreviateNumber(value) {
 
 export function snakeCaseToUrlPathname(snakeCaseString) {
   return snakeCaseString.split('_').join('-');
+}
+
+export function camelCaseToNormalWithSpaces(camelCaseString: string): string {
+  return camelCaseString.replace(/([A-Z])/g, ' $1');
 }
 
 export function timeBetween(startAt, endAt) {
@@ -310,4 +314,26 @@ export function removeExtensionFromFilename(filename: string): string {
     fn = fileParts.slice(0, -1).join('.');
   }
   return parts.slice(0, parts.length - 1).concat(fn).join(osPath.sep);
+}
+
+export function formatNumberToDuration(duration: number): string {
+  let displayText = String(duration);
+  if (duration) {
+    if (duration >= 1000 * 60 * 60) {
+      displayText = `${roundNumber(duration / (1000 * 60 * 60), 2)}h`;
+    } else if (duration >= 1000 * 60) {
+      displayText = `${roundNumber(duration / (1000 * 60), 2)}m`;
+    } else if (duration >= 1000) {
+      displayText = `${roundNumber(duration / (1000), 2)}s`;
+    } else {
+      displayText = `${duration}ms`;
+    }
+  }
+
+  return displayText
+}
+
+export function alphabet(): string[] {
+  const alpha = Array.from(Array(26)).map((e, i) => i + 65);
+  return alpha.map((x) => String.fromCharCode(x));
 }

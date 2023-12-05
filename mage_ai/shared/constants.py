@@ -15,6 +15,9 @@ VALID_ENVS = frozenset([
 SAMPLE_SIZE = 1000
 
 S3_PREFIX = 's3://'
+GCS_PREFIX = 'gs://'
+
+ENV_VAR_INSTANCE_TYPE = 'INSTANCE_TYPE'
 
 
 class InstanceType(str, Enum):

@@ -9,10 +9,10 @@ function getHostCore(
   defaultPort: string = DEFAULT_PORT,
 ){
   let host = defaultHost;
-  if(windowDefined){
+  if (windowDefined) {
     host = window.location.hostname;
   }
-  if(host === defaultHost){
+  if (host === defaultHost) {
     host = `${host}:${defaultPort}`;
   } else if (windowDefined && !!window.location.port){
     host = `${host}:${window.location.port}`;
@@ -48,7 +48,7 @@ function getProtocol(
   return protocol;
 }
 
-function getHost(){
+export function getHost(){
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
   const PORT = DEFAULT_PORT;
@@ -56,7 +56,7 @@ function getHost(){
   const host = getHostCore(windowDefined, LOCALHOST, PORT);
   const protocol = getProtocol(windowDefined, host, LOCALHOST);
 
-  return `${protocol}${host}/api`;
+  return `${protocol}${host}`;
 }
 
 
@@ -82,15 +82,15 @@ export function buildUrl(
   query: any = {},
   grandchildResource: string = null,
 ): string {
-  let path: string =`${getHost()}/${resource}`;
+  let path: string =`${getHost()}/api/${resource}`;
 
-  if (id) {
+  if (typeof id !== 'undefined' && id !== null) {
     path = `${path}/${id}`;
   }
   if (childResource) {
     path = `${path}/${childResource}`;
   }
-  if (childId) {
+  if (typeof childId !== 'undefined' && childId !== null) {
     path = `${path}/${childId}`;
   }
   if (grandchildResource) {

@@ -33,27 +33,27 @@ class ElasticSearchSink(BaseSink):
     def test_connection(self):
         return True
 
-    def write(self, data: Dict):
-        self._print(f'Ingest data {data}, time={time.time()}')
+    def write(self, message: Dict):
+        self._print(f'Ingest data {message}, time={time.time()}')
         if self.config._id is not None:
             self.client.index(
                 index=self.config.index_name,
-                body=data,
-                id=data[self.config._id],
+                body=message,
+                id=message[self.config._id],
                 refresh=True
             )
         else:
             self.client.index(
                 index=self.config.index_name,
-                body=data,
+                body=message,
                 refresh=True
             )
 
-    def batch_write(self, data: List[Dict]):
-        self._print(f'Batch ingest data {data}, time={time.time()}')
+    def batch_write(self, messages: List[Dict]):
+        self._print(f'Batch ingest data {messages}, time={time.time()}')
         if self.config._id is not None:
             docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
-                     'doc': doc} for doc in data]
+                     'doc': doc} for doc in messages]
         else:
-            docs = [{'_index': self.config.index_name, 'doc': doc} for doc in data]
+            docs = [{'_index': self.config.index_name, 'doc': doc} for doc in messages]
         helpers.bulk(self.client, docs)

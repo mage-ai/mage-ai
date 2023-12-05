@@ -1,16 +1,15 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ThemeBlock from '../../ThemeBlock';
 import { UNIT } from '@oracle/styles/units/spacing';
 import Histogram, { HistogramContainerProps } from '@components/charts/Histogram';
-import { PURPLE, PURPLE_DISABLED } from '@oracle/styles/colors/main';
 import Text from '@oracle/elements/Text';
 import { sortByKey } from '@utils/array';
 
 export default {
   component: Histogram,
-  title: 'Components/Charts/Histogram'
+  title: 'Components/Charts/Histogram',
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
@@ -20,7 +19,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<HistogramContainerProps> =
+const Template: StoryFn<HistogramContainerProps> =
   (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
@@ -71,7 +70,7 @@ const data = [
     '5/31/2022',
     false,
   ],
-]
+];
 
 Regular.args = {
   data,
@@ -92,4 +91,4 @@ Regular.args = {
   showZeroes: true,
   sortData: d => sortByKey(d, '[4]'),
   width: 500,
-}
+};

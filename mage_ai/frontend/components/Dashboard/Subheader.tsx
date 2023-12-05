@@ -4,13 +4,15 @@ import { SubheaderStyle } from './index.style';
 
 type SubheaderProps = {
   children?: any;
+  noPadding?: boolean;
 };
 
 function Subheader({
   children,
+  noPadding,
 }: SubheaderProps, ref) {
   return (
-    <SubheaderStyle ref={ref}>
+    <SubheaderStyle noPadding={noPadding} ref={ref}>
       {children}
     </SubheaderStyle>
   );

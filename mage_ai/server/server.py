@@ -1,13 +1,16 @@
 import argparse
 import asyncio
+import json
 import os
 import shutil
 import stat
 import traceback
 import webbrowser
+from datetime import datetime
 from time import sleep
-from typing import Union
+from typing import Optional, Union
 
+import pytz
 import tornado.ioloop
 import tornado.web
 from tornado import autoreload
@@ -19,9 +22,14 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.tag import TagCache
+from mage_ai.cluster_manager.constants import ClusterType
+from mage_ai.cluster_manager.manage import check_auto_termination
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
+    get_cluster_type,
     get_project_type,
     get_project_uuid,
     get_variables_dir,
@@ -35,11 +43,11 @@ from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
+from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
-from mage_ai.server.api.clusters import ClusterType
-from mage_ai.server.api.downloads import ApiDownloadHandler
+from mage_ai.server.api.downloads import ApiDownloadHandler, ApiResourceDownloadHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -70,19 +78,26 @@ from mage_ai.server.terminal_server import (
     TerminalWebsocketServer,
 )
 from mage_ai.server.websocket_server import WebSocketServer
+from mage_ai.services.redis.redis import init_redis_client
+from mage_ai.services.spark.models.applications import Application
+from mage_ai.services.ssh.aws.emr.models import create_tunnel
+from mage_ai.services.ssh.aws.emr.utils import file_path as file_path_aws_emr
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
+    ENABLE_PROMETHEUS,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
+    REDIS_URL,
     REQUESTS_BASE_PATH,
     REQUIRE_USER_AUTHENTICATION,
+    REQUIRE_USER_PERMISSIONS,
     ROUTES_BASE_PATH,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
 )
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, get_repo_name, set_repo_path
-from mage_ai.shared.constants import InstanceType
+from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -93,7 +108,32 @@ BASE_PATH_EXPORTS_FOLDER = 'frontend_dist_base_path'
 BASE_PATH_TEMPLATE_EXPORTS_FOLDER = 'frontend_dist_base_path_template'
 BASE_PATH_PLACEHOLDER = 'CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_'
 
+lock = DistributedLock()
 logger = Logger().new_server_logger(__name__)
+
+
+class ActivityTracker:
+    def __init__(self):
+        self.latest_activity = None
+        self.redis_client = init_redis_client(REDIS_URL)
+
+    def get_latest_activity(self) -> Optional[datetime]:
+        if self.redis_client:
+            latest_activity_ts = self.redis_client.get('latest_activity')
+            if latest_activity_ts:
+                return datetime.fromisoformat(latest_activity_ts)
+            else:
+                return None
+        return self.latest_activity
+
+    def update_latest_activity(self) -> None:
+        if self.redis_client and lock.try_acquire_lock('activity_tracker', timeout=10):
+            self.redis_client.set('latest_activity', datetime.now(tz=pytz.UTC).isoformat())
+        else:
+            self.latest_activity = datetime.now(tz=pytz.UTC)
+
+
+latest_user_activity = ActivityTracker()
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -121,6 +161,14 @@ class ApiSchedulerHandler(BaseHandler):
         elif action_type == 'stop':
             scheduler_manager.stop_scheduler()
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
+
+
+class PrometheusMetricsHandler(BaseHandler):
+    def get(self):
+        import prometheus_client
+
+        self.set_header('Content-Type', prometheus_client.CONTENT_TYPE_LATEST)
+        self.write(prometheus_client.generate_latest(prometheus_client.REGISTRY))
 
 
 def replace_base_path(base_path: str) -> str:
@@ -179,6 +227,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/?', MainPageHandler),
         (r'/files', MainPageHandler),
         (r'/overview', MainPageHandler),
+        (r'/oauth', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
@@ -207,6 +256,11 @@ def make_app(template_dir: str = None, update_routes: bool = False):
             {'path': os.path.join(template_dir, 'images')},
         ),
         (
+            r'/monaco-editor/(.*)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(template_dir, 'monaco-editor')},
+        ),
+        (
             r'/(favicon.ico)',
             tornado.web.StaticFileHandler,
             {'path': template_dir},
@@ -220,39 +274,54 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         # TODO: This call is not easily removed from the frontend so will change this
         # in a future PR.
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\-\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
         ),
 
         # Trigger pipeline via API
+        # Original route for backwards compatibility
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
+            ApiTriggerPipelineHandler,
+        ),
+        (
+            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/api_trigger',
             ApiTriggerPipelineHandler,
         ),
 
         # Download block output
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/block_outputs/'
-            r'(?P<block_uuid>[\w\%2f\.(/.*)?]+)/downloads',
+            r'(?P<block_uuid>[\w\-\%2f\.(/.*)?]+)/downloads',
             ApiDownloadHandler,
+        ),
+        # Download resource
+        (
+            r'/api/downloads/(?P<token>[\w/%.-]+)',
+            ApiResourceDownloadHandler
         ),
 
         # API v1 routes
         (
             r'/api/status(?:es)?',
             ApiListHandler,
-            {'resource': 'statuses', 'bypass_oauth_check': True},
+            {
+                'resource': 'statuses',
+                'bypass_oauth_check': True,
+                'is_health_check': True,
+            },
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)' \
+            r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
             ApiChildDetailHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)/(?P<child>\w+)',
             ApiChildListHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)',
             ApiResourceDetailHandler,
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
@@ -265,6 +334,26 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/version-control', MainPageHandler),
     ]
 
+    if ENABLE_PROMETHEUS:
+        from opentelemetry import metrics
+        from opentelemetry.exporter.prometheus import PrometheusMetricReader
+        from opentelemetry.instrumentation.tornado import TornadoInstrumentor
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+        TornadoInstrumentor().instrument()
+        # Service name is required for most backends
+        resource = Resource(attributes={
+            SERVICE_NAME: 'mage'
+        })
+
+        # Initialize PrometheusMetricReader which pulls metrics from the SDK
+        # on-demand to respond to scrape requests
+        reader = PrometheusMetricReader()
+        provider = MeterProvider(resource=resource, metric_readers=[reader])
+        metrics.set_meter_provider(provider)
+        routes += [(r'/metrics', PrometheusMetricsHandler)]
+
     if update_routes:
         updated_routes = []
         for route in routes:
@@ -274,6 +363,15 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         updated_routes = routes
 
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
+
+    file_path = file_path_aws_emr()
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w') as f:
+            f.write(json.dumps({}))
+
+    autoreload.watch(file_path)
+
     return tornado.web.Application(
         updated_routes,
         autoreload=True,
@@ -324,13 +422,15 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
-    url = f'http://{host or "localhost"}:{port}'
+    host = host or 'localhost'
+    url = f'http://{host}:{port}'
     if update_routes:
         url = f'{url}/{ROUTES_BASE_PATH}'
     webbrowser.open_new_tab(url)
     logger.info(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
+    latest_user_activity.update_latest_activity()
 
     # Git sync if option is enabled
     preferences = get_preferences()
@@ -406,6 +506,9 @@ async def main(
                 user_id=owner_user.id,
             )
 
+    if REQUIRE_USER_PERMISSIONS:
+        logger.info('User permissions requirement is enabled.')
+
     logger.info('Initializing block cache.')
     await BlockCache.initialize_cache(replace=True)
 
@@ -415,12 +518,34 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
+    project_model = Project()
+    if project_model and \
+            project_model.spark_config and \
+            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+
+        Application.clear_cache()
+
+    try:
+        tunnel = create_tunnel(clean_up_on_failure=True)
+        if tunnel:
+            print(f'SSH tunnel active: {tunnel.is_active()}')
+    except Exception as err:
+        print(f'[WARNING] SSH tunnel failed to create and connect: {err}')
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
         SCHEDULER_AUTO_RESTART_INTERVAL,
     )
     periodic_callback.start()
+
+    if ProjectType.MAIN == project_type:
+        # Check scheduler status periodically
+        auto_termination_callback = PeriodicCallback(
+            lambda: check_auto_termination(get_cluster_type()),
+            60_000,
+        )
+        auto_termination_callback.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(
@@ -521,7 +646,7 @@ if __name__ == '__main__':
     project = args.project
     manage = args.manage_instance == '1'
     dbt_docs = args.dbt_docs_instance == '1'
-    instance_type = args.instance_type
+    instance_type = os.getenv(ENV_VAR_INSTANCE_TYPE, args.instance_type)
     project_type = os.getenv('PROJECT_TYPE', ProjectType.STANDALONE)
     cluster_type = os.getenv('CLUSTER_TYPE')
 

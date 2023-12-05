@@ -2,7 +2,7 @@ import re
 from os import path
 from typing import Callable, Dict, List, Tuple, Union
 
-from jinja2 import Template
+from jinja2 import StrictUndefined, Template
 from pandas import DataFrame
 
 from mage_ai.data_preparation.models.block.sql.constants import (
@@ -228,7 +228,7 @@ def interpolate_input(
 def interpolate_vars(query, global_vars=None):
     if global_vars is None:
         global_vars = dict()
-    return Template(query).render(**global_vars)
+    return Template(query, undefined=StrictUndefined).render(**global_vars)
 
 
 def table_name_parts(
@@ -349,10 +349,6 @@ def create_upstream_block_tables(
 ):
     if cache_keys is None:
         cache_keys = []
-    from mage_ai.data_preparation.models.block.dbt.utils import (
-        parse_attributes,
-        source_table_name_for_block,
-    )
     configuration = configuration if configuration else block.configuration
 
     input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
@@ -408,12 +404,6 @@ def create_upstream_block_tables(
 
             if not schema and not no_schema:
                 schema = schema_name
-
-            if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
-                if not no_schema:
-                    attributes_dict = parse_attributes(block, variables=variables)
-                    schema = attributes_dict['source_name']
-                table_name = source_table_name_for_block(upstream_block)
 
             full_table_name = '.'.join(list(filter(lambda x: x, [
                 schema,
@@ -504,7 +494,16 @@ def extract_insert_statement_table_names(text: str) -> List[str]:
 
 def extract_drop_statement_table_names(text: str) -> List[str]:
     matches = re.findall(
-        r'drop table(?: if exists)*',
+        r'\bdrop\s+table(?:\s+if\s+exists)?\s+([\w.]+)',
+        remove_comments(text),
+        re.IGNORECASE,
+    )
+    return matches
+
+
+def extract_update_statement_table_names(text: str) -> List[str]:
+    matches = re.findall(
+        r'\bupdate\b\s+([\w.]+)\s+(?:as\s+\w+\s+)?set\s+[\s\S]*?\bwhere\b',
         remove_comments(text),
         re.IGNORECASE,
     )
@@ -522,6 +521,11 @@ def has_create_or_insert_statement(text: str) -> bool:
 
 def has_drop_statement(text: str) -> bool:
     matches = extract_drop_statement_table_names(text)
+    return len(matches) >= 1
+
+
+def has_update_statement(text: str) -> bool:
+    matches = extract_update_statement_table_names(text)
     return len(matches) >= 1
 
 

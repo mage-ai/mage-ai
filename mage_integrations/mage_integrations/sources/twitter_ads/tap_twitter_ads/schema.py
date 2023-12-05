@@ -1,9 +1,10 @@
-import os
 import json
+import os
+
 import singer
 from singer import metadata
-from tap_twitter_ads.streams import STREAMS
 
+from mage_integrations.sources.twitter_ads.tap_twitter_ads.streams import STREAMS
 
 LOGGER = singer.get_logger()
 
@@ -109,12 +110,19 @@ def get_schemas(reports, logger=LOGGER):
         # https://github.com/singer-io/singer-python/blob/master/singer/metadata.py#L25-L44
         mdata = metadata.get_standard_metadata(
             schema=schema,
-            key_properties=(hasattr(stream_metadata, 'key_properties') or None) and stream_metadata.key_properties,
-            valid_replication_keys=(hasattr(stream_metadata, 'replication_keys') or None) and stream_metadata.replication_keys,
-            replication_method=(hasattr(stream_metadata, 'replication_method') or None) and stream_metadata.replication_method
+            key_properties=(hasattr(stream_metadata, 'key_properties')
+                            or None) and stream_metadata.key_properties,
+
+            valid_replication_keys=(hasattr(stream_metadata, 'replication_keys')
+                                    or None) and stream_metadata.replication_keys,
+
+            replication_method=(hasattr(stream_metadata, 'replication_method')
+                                or None) and stream_metadata.replication_method
         )
         # Make replication keys of automatic inclusion
-        mdata = make_replication_key_automatic(mdata, schema, (hasattr(stream_metadata, 'replication_keys') or None) and stream_metadata.replication_keys)
+        mdata = make_replication_key_automatic(mdata, schema,
+                                               (hasattr(stream_metadata, 'replication_keys')
+                                                or None) and stream_metadata.replication_keys)
 
         field_metadata[stream_name] = mdata
 
@@ -125,8 +133,10 @@ def get_schemas(reports, logger=LOGGER):
         report_segment = report.get('segment')
         report_granularity = report.get('granularity')
 
-        # Metrics & Segmentation: https://developer.twitter.com/en/docs/ads/analytics/overview/metrics-and-segmentation
-        # Google Sheet summary: https://docs.google.com/spreadsheets/d/1Cn3B1TPZOjg9QhnnF44Myrs3W8hNOSyFRH6qn8SCc7E/edit?usp=sharing
+        # Metrics & Segmentation:
+        # https://developer.twitter.com/en/docs/ads/analytics/overview/metrics-and-segmentation
+        # Google Sheet summary:
+        # https://docs.google.com/spreadsheets/d/1Cn3B1TPZOjg9QhnnF44Myrs3W8hNOSyFRH6qn8SCc7E/edit?usp=sharing
         err = None
         running_error = ''
         if report_entity not in ENTITY_TYPES:
@@ -148,7 +158,7 @@ def get_schemas(reports, logger=LOGGER):
 
         # Undocumented rule: CONVERSION_TAGS report segment only allowed for certain entities
         if report_segment == 'CONVERSION_TAGS' and report_entity in \
-                ['FUNDING_INSTRUMENT', 'PROMOTED_ACCOUNT']: # 'ACCOUNT',
+                ['FUNDING_INSTRUMENT', 'PROMOTED_ACCOUNT']:  # 'ACCOUNT',
             err = 'Report: {}, Entity: {}, Segment: CONVERSION_TAGS, INVALID COMBINATION'.format(
                 report_name, report_entity)
             running_error = '{}; {}'.format(running_error, err)
@@ -188,8 +198,10 @@ def get_schemas(reports, logger=LOGGER):
             schema['properties']['dimensions'].pop('segment_value', None)
 
         # Web Conversion ONLY valid for NO_SEGMENT, PLATFORM, and CONVERSION_TAGS segment
-        # Reference: https://developer.twitter.com/en/docs/ads/analytics/overview/metrics-and-segmentation#WEB_CONVERSION
-        #   Docs ^^ say 'PLATFORMS Only' Segmentation; but CONVERSION_TAGS segment only allow WEB_CONVERSION metrics
+        # Reference:
+        # https://developer.twitter.com/en/docs/ads/analytics/overview/metrics-and-segmentation#WEB_CONVERSION
+        #   Docs ^^ say 'PLATFORMS Only' Segmentation;
+        # but CONVERSION_TAGS segment only allow WEB_CONVERSION metrics
         if report_segment not in ('NO_SEGMENT', 'PLATFORMS', 'CONVERSION_TAGS'):
             schema['properties'].pop('web_conversion', None)
 

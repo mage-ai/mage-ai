@@ -1,16 +1,17 @@
+from typing import Callable, Dict, List
+
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.extensions.constants import (
-    EXTENSION_UUIDS,
     EXTENSION_UUID_GREAT_EXPECTATIONS,
+    EXTENSION_UUIDS,
 )
-from typing import Dict, List
 
 
 class ExtensionBlock(Block):
     def post_process_output(self, output: Dict) -> List:
         return output
 
-    def _block_decorator(self, decorated_functions):
+    def _block_decorator(self, decorated_functions: List[Callable]):
         def custom_code(
             extension_name: str,
             expectations: List[Dict] = None,
@@ -29,16 +30,26 @@ class ExtensionBlock(Block):
                     f"{', '.join(EXTENSION_UUIDS)}",
                 )
 
-            def inner(function):
+            def inner(function: Callable):
                 def func(*args, **kwargs):
                     if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
-                        from mage_ai.data_preparation.models.block.extension.great_expectations \
-                            import GreatExpectations
+                        import mage_ai.data_preparation.models.block.extension.great_expectations
 
-                        ge = GreatExpectations(self, expectations=expectations)
+                        ge = (
+                                mage_ai.
+                                data_preparation.
+                                models.
+                                block.
+                                extension.
+                                great_expectations.
+                                GreatExpectations(
+                                    self,
+                                    expectations=expectations,
+                                )
+                            )
                         validators_and_uuids = ge.build_validators(*args, **kwargs)
                         validators = [t[0] for t in validators_and_uuids]
-                        function(*validators)
+                        function(*validators, **kwargs)
 
                         validation_results = []
                         for validator, uuid in validators_and_uuids:

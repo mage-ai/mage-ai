@@ -5,11 +5,22 @@ from typing import Dict, List, Optional
 
 from simple_salesforce import Salesforce, bulk, exceptions
 from singer_sdk.plugin_base import PluginBase
-from target_salesforce.session_credentials import SalesforceAuth, parse_credentials
-from target_salesforce.utils.exceptions import InvalidStreamSchema, SalesforceApiError
-from target_salesforce.utils.transformation import transform_record
-from target_salesforce.utils.validation import ObjectField, validate_schema_field
 
+from mage_integrations.destinations.salesforce.target_salesforce.session_credentials import (
+    SalesforceAuth,
+    parse_credentials,
+)
+from mage_integrations.destinations.salesforce.target_salesforce.utils.exceptions import (
+    InvalidStreamSchema,
+    SalesforceApiError,
+)
+from mage_integrations.destinations.salesforce.target_salesforce.utils.transformation import (
+    transform_record,
+)
+from mage_integrations.destinations.salesforce.target_salesforce.utils.validation import (
+    ObjectField,
+    validate_schema_field,
+)
 from mage_integrations.destinations.sink import BatchSink
 
 

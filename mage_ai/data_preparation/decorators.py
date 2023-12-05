@@ -77,6 +77,10 @@ def columns(function):
     return function
 
 
+def data_integration_destination(function):
+    return function
+
+
 def data_integration_source(function):
     return function
 
@@ -90,4 +94,8 @@ def data_integration_config(function):
 
 
 def data_integration_selected_streams(function):
+    return function
+
+
+def preprocesser_functions(function):
     return function

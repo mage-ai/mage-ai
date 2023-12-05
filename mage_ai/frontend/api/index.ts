@@ -32,13 +32,18 @@ export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
+export const COMPUTE_CLUSTERS: 'compute_clusters' = 'compute_clusters';
+export const COMPUTE_CONNECTIONS: 'compute_connections' = 'compute_connections';
+export const COMPUTE_SERVICES: 'compute_services' = 'compute_services';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const EVENT_MATCHERS = 'event_matchers';
 export const EVENT_RULES = 'event_rules';
+export const EXECUTION_STATES: 'execution_states' = 'execution_states';
 export const EXTENSION_OPTIONS = 'extension_options';
 export const FEATURES: 'features' = 'features';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
@@ -51,11 +56,13 @@ export const GIT_BRANCHES: 'git_branches' = 'git_branches';
 export const GIT_CUSTOM_BRANCHES: 'git_custom_branches' = 'git_custom_branches';
 export const GIT_FILES: 'git_files' = 'git_files';
 export const GLOBAL_DATA_PRODUCTS: 'global_data_products' = 'global_data_products';
+export const GLOBAL_HOOKS: 'global_hooks' = 'global_hooks';
 export const INSTANCES: 'instances' = 'instances';
 export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration_destinations';
 export const INTEGRATION_SAMPLES = 'integration_samples';
 export const INTEGRATION_SOURCES = 'integration_sources';
 export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
+export const INTERACTIONS: 'interactions' = 'interactions';
 export const KERNELS: 'kernels' = 'kernels';
 export const LLMS = 'llms';
 export const LOGS = 'logs';
@@ -63,7 +70,9 @@ export const MONITOR_STATS = 'monitor_stats';
 export const OAUTHS = 'oauths';
 export const OUTPUTS = 'outputs';
 export const PAGE_BLOCK_LAYOUTS: 'page_block_layouts' = 'page_block_layouts';
+export const PERMISSIONS: 'permissions' = 'permissions';
 export const PIPELINES: 'pipelines' = 'pipelines';
+export const PIPELINE_INTERACTIONS: 'pipeline_interactions' = 'pipeline_interactions';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
 export const PIPELINE_TRIGGERS: 'pipeline_triggers' = 'pipeline_triggers';
@@ -72,7 +81,18 @@ export const PROJECTS: 'projects' = 'projects';
 export const ROLES: 'roles' = 'roles';
 export const SEARCH_RESULTS: 'search_results' = 'search_results';
 export const SECRETS: 'secrets' = 'secrets';
+export const SEEDS: 'seeds' = 'seeds';
 export const SESSIONS: 'sessions' = 'sessions';
+export const SPARK_APPLICATIONS: 'spark_applications' = 'spark_applications';
+export const SPARK_ENVIRONMENTS: 'spark_environments' = 'spark_environments';
+export const SPARK_EXECUTORS: 'spark_executors' = 'spark_executors';
+export const SPARK_JOBS: 'spark_jobs' = 'spark_jobs';
+export const SPARK_SQLS: 'spark_sqls' = 'spark_sqls';
+export const SPARK_STAGES: 'spark_stages' = 'spark_stages';
+export const SPARK_STAGE_ATTEMPTS: 'spark_stage_attempts' = 'spark_stage_attempts';
+export const SPARK_STAGE_ATTEMPT_TASKS: 'spark_stage_attempt_tasks' = 'spark_stage_attempt_tasks';
+export const SPARK_STAGE_ATTEMPT_TASK_SUMMARYS: 'spark_stage_attempt_task_summarys' = 'spark_stage_attempt_task_summarys';
+export const SPARK_THREADS: 'spark_threads' = 'spark_threads';
 export const STATUSES: 'statuses' = 'statuses';
 export const SYNCS: 'syncs' = 'syncs';
 export const TAGS: 'tags' = 'tags';
@@ -99,13 +119,20 @@ const RESOURCES: any[][] = [
   [BLOCK_OUTPUTS],
   [BLOCK_RUNS],
   [BLOCK_TEMPLATES],
+  [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
+  [COMPUTE_CLUSTERS, COMPUTE_SERVICES],
+  [COMPUTE_CONNECTIONS, COMPUTE_SERVICES],
+  [COMPUTE_SERVICES],
   [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
+  [DOWNLOADS, FILES],
+  [DOWNLOADS, PIPELINES],
   [EVENT_MATCHERS],
   [EVENT_RULES],
+  [EXECUTION_STATES],
   [EXTENSION_OPTIONS],
   [FEATURE_SETS],
   [FILES],
@@ -117,30 +144,48 @@ const RESOURCES: any[][] = [
   [GIT_CUSTOM_BRANCHES],
   [GIT_FILES],
   [GLOBAL_DATA_PRODUCTS],
+  [GLOBAL_HOOKS],
   [INSTANCES, CLUSTERS],
   [INTEGRATION_DESTINATIONS],
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
+  [INTERACTIONS, PIPELINE_INTERACTIONS],
+  [INTERACTIONS],
   [KERNELS],
   [LLMS],
   [LOGS, PIPELINES],
   [MONITOR_STATS],
   [OAUTHS],
   [OUTPUTS, BLOCK_RUNS],
+  [OUTPUTS, PIPELINES],
+  [OUTPUTS],
   [PAGE_BLOCK_LAYOUTS],
+  [PERMISSIONS],
   [PIPELINES],
-  [PIPELINE_RUNS],
+  [PIPELINE_INTERACTIONS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
-  [PIPELINE_SCHEDULES],
+  [PIPELINE_RUNS],
   [PIPELINE_SCHEDULES, PIPELINES],
+  [PIPELINE_SCHEDULES],
   [PIPELINE_TRIGGERS, PIPELINES],
   [PROJECTS],
   [PULL_REQUESTS],
   [ROLES],
   [SEARCH_RESULTS],
   [SECRETS],
+  [SEEDS],
   [SESSIONS],
+  [SPARK_APPLICATIONS],
+  [SPARK_ENVIRONMENTS],
+  [SPARK_EXECUTORS],
+  [SPARK_JOBS],
+  [SPARK_SQLS],
+  [SPARK_STAGES],
+  [SPARK_STAGE_ATTEMPTS, SPARK_STAGES],
+  [SPARK_STAGE_ATTEMPT_TASKS, SPARK_STAGES],
+  [SPARK_STAGE_ATTEMPT_TASK_SUMMARYS, SPARK_STAGES],
+  [SPARK_THREADS, SPARK_EXECUTORS],
   [STATUSES],
   [SYNCS],
   [TAGS],

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Menu, { MenuProps } from '@oracle/components/Menu';
 import ThemeBlock from 'stories/ThemeBlock';
@@ -16,7 +16,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<MenuProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<MenuProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

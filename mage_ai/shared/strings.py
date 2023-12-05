@@ -1,11 +1,17 @@
 import re
 
+import inflection
+
 
 def camel_to_snake_case(name):
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     name = re.sub('__([A-Z])', r'_\1', name)
     name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name)
     return name.lower()
+
+
+def classify(name):
+    return ''.join([n.capitalize() for n in name.split('_')])
 
 
 def format_enum(v):
@@ -19,7 +25,7 @@ def is_number(s) -> bool:
     try:
         float(s)
         return True
-    except ValueError:
+    except (ValueError, TypeError):
         return False
 
 
@@ -42,3 +48,7 @@ def remove_extension_from_filename(filename: str) -> str:
     parts = filename.split('/')
     fn = parts[-1].split('.')[0]
     return '/'.join(parts[:-1] + [fn])
+
+
+def singularize(word: str) -> str:
+    return inflection.singularize(word)

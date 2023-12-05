@@ -1,5 +1,11 @@
-from deltalake import PyDeltaTableError
+import argparse
+import sys
+from typing import Dict, List
+
+import pandas as pd
+import pyarrow as pa
 from deltalake.writer import try_get_deltatable
+
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -12,20 +18,16 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_STRING,
     KEY_RECORD,
 )
-from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
+from mage_integrations.destinations.delta_lake.constants import MODE_APPEND
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
-from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
+
+# from mage_integrations.destinations.delta_lake.schema import (
+#     delta_arrow_schema_from_pandas,
+# )
 from mage_integrations.destinations.delta_lake.writer import write_deltalake
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import find
 from mage_integrations.utils.dictionary import merge_dict
-from typing import Dict, List
-import argparse
-import math
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-import sys
 
 MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024))
 
@@ -84,7 +86,7 @@ class DeltaLake(BaseDestination):
 
             non_null = df[column_name].notnull()
             df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
-                lambda x: str(column_type_df(x)),
+                lambda x, column_type_df=column_type_df: str(column_type_df(x)),
             )
 
             if df[column_name].dropna().count() != number_of_rows:
@@ -126,7 +128,7 @@ class DeltaLake(BaseDestination):
 
         return table
 
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
         storage_options = self.build_storage_options()
         friendly_table_name = self.config['table']
         table_uri = self.build_table_uri(stream)

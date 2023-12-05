@@ -2,13 +2,14 @@ import os
 import traceback
 import uuid
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 from warnings import warn
 
 import ruamel.yaml
 import yaml
 from jinja2 import Template
 
+from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
@@ -44,6 +45,7 @@ class RepoConfig:
         self.cluster_type = None
 
         self.remote_variables_dir = None
+        self.ai_config = None
         self.azure_container_instance_config = None
         self.ecs_config = None
         self.emr_config = None
@@ -55,6 +57,7 @@ class RepoConfig:
         self.queue_config = None
         self.help_improve_mage = None
         self.openai_api_key = None
+        self._pipelines = None
         self.retry_config = None
         self.ldap_config = None
         self.s3_bucket = None
@@ -91,13 +94,17 @@ class RepoConfig:
                     repo_path=self.repo_path,
                     repo_config=repo_config
                 )
-            os.makedirs(self.variables_dir, exist_ok=True)
+            try:
+                os.makedirs(self.variables_dir, exist_ok=True)
+            except Exception:
+                pass
 
             self.project_type = repo_config.get('project_type')
             self.cluster_type = repo_config.get('cluster_type')
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
 
             # Executor configs
+            self.ai_config = repo_config.get('ai_config', dict())
             self.azure_container_instance_config = \
                 repo_config.get('azure_container_instance_config')
             self.ecs_config = repo_config.get('ecs_config')
@@ -111,6 +118,7 @@ class RepoConfig:
             self.project_uuid = repo_config.get('project_uuid')
             self.help_improve_mage = repo_config.get('help_improve_mage')
             self.openai_api_key = repo_config.get('openai_api_key')
+            self.pipelines = repo_config.get('pipelines')
             self.retry_config = repo_config.get('retry_config')
 
             self.ldap_config = repo_config.get('ldap_config')
@@ -143,8 +151,25 @@ class RepoConfig:
         else:
             return get_metadata_path()
 
+    @property
+    def pipelines(self):
+        if isinstance(self._pipelines, dict):
+            self.pipelines = self._pipelines
+
+        return self._pipelines
+
+    @pipelines.setter
+    def pipelines(self, pipelines: Dict = None) -> None:
+        from mage_ai.data_preparation.models.project.models import ProjectPipelines
+
+        if isinstance(pipelines, dict):
+            self._pipelines = ProjectPipelines.load(**(pipelines or {}))
+        else:
+            self._pipelines = pipelines
+
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
+            ai_config=self.ai_config,
             azure_container_instance_config=self.azure_container_instance_config,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
@@ -153,6 +178,7 @@ class RepoConfig:
             help_improve_mage=self.help_improve_mage,
             notification_config=self.notification_config,
             openai_api_key=self.openai_api_key,
+            pipelines=self.pipelines.to_dict() if self.pipelines else self.pipelines,
             project_type=self.project_type,
             project_uuid=self.project_uuid,
             queue_config=self.queue_config,
@@ -172,7 +198,10 @@ class RepoConfig:
 
         for key, value in kwargs.items():
             data[key] = value
-            if hasattr(self, key):
+
+            if 'pipelines' == key:
+                self.pipelines = value
+            elif hasattr(self, key):
                 setattr(self, key, value)
 
         with open(self.metadata_path, 'w') as f:
@@ -233,6 +262,14 @@ def get_project_type(repo_path=None) -> ProjectType:
         return ProjectType.STANDALONE
 
 
+def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
+    try:
+        return get_repo_config(repo_path=repo_path).cluster_type
+    except Exception:
+        # default to None
+        return None
+
+
 def get_variables_dir(
     repo_path: str = None,
     repo_config: Dict = None,
@@ -278,7 +315,7 @@ def get_variables_dir(
             variables_dir = DEFAULT_MAGE_DATA_DIR
         variables_dir = os.path.expanduser(variables_dir)
 
-    if not variables_dir.startswith('s3'):
+    if not variables_dir.startswith('s3') and not variables_dir.startswith('gs'):
         if os.path.isabs(variables_dir) and variables_dir != repo_path:
             # If the variables_dir is an absolute path and not same as repo_path
             variables_dir = os.path.join(variables_dir, repo_name)
@@ -289,7 +326,7 @@ def get_variables_dir(
         try:
             os.makedirs(variables_dir, exist_ok=True)
         except Exception:
-            traceback.print_exc()
+            pass
     return variables_dir
 
 

@@ -123,7 +123,7 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
 If you haven't already, open a browser to `http://localhost:6789`. From the pipelines page, select `example_pipeline` and open the notebook view by selecting `Edit pipeline` from the left side nav.
 
 <p align="center">
-<img src= "/media/quickstart/open-pipeline.gif"/>
+<img src="https://github.com/mage-ai/assets/blob/main/quickstart/open-pipeline.gif?raw=True"/>
 </p>
 
 Select the first cell by clicking it and select the "play" icon in the top right to run the cell. You've just ran your first Mage block & loaded data from a dataset!
@@ -134,21 +134,21 @@ Do the same for the following cells in the pipeline to transform and export the 
 
 Mage also has the following add-on packages:
 
-| Package              | Install               | Description                                        |
-| -------------------- | --------------------- | -------------------------------------------------- |
-| all                  | `mage-ai[all]`        | install all add-ons                                |
-| azure                | `mage-ai[azure]`      | install Azure related packages                     |
-| clickhouse           | `mage-ai[clickhouse]` | use Clickhouse for data import or export           |
-| dbt                  | `mage-ai[dbt]`        | install dbt packages                               |
-| google-cloud-storage | `mage-ai[storage]`    | use Google Cloud Storage for data import or export |
-| hdf5                 | `mage-ai[hdf5]`       | process data in HDF5 file format                   |
-| mysql                | `mage-ai[mysql]`      | use MySQL for data import or export                |
-| postgres             | `mage-ai[postgres]`   | use PostgreSQL for data import or export           |
-| redshift             | `mage-ai[redshift]`   | use Redshift for data import or export             |
-| s3                   | `mage-ai[s3]`         | use S3 for data import or export                   |
-| snowflake            | `mage-ai[snowflake]`  | use Snowflake for data import or export            |
-| spark                | `mage-ai[spark]`      | use Spark (EMR) in your Mage pipeline              |
-| streaming            | `mage-ai[streaming]`  | use Streaming pipelines                            |
+| Package              | Install                        | Description                                        |
+| -------------------- | ------------------------------ | -------------------------------------------------- |
+| all                  | `mage-ai[all]`                 | install all add-ons                                |
+| azure                | `mage-ai[azure]`               | install Azure related packages                     |
+| clickhouse           | `mage-ai[clickhouse]`          | use Clickhouse for data import or export           |
+| dbt                  | `mage-ai[dbt]`                 | install dbt packages                               |
+| google-cloud-storage | `mage-ai[google-cloud-storage]`| use Google Cloud Storage for data import or export |
+| hdf5                 | `mage-ai[hdf5]`                | process data in HDF5 file format                   |
+| mysql                | `mage-ai[mysql]`               | use MySQL for data import or export                |
+| postgres             | `mage-ai[postgres]`            | use PostgreSQL for data import or export           |
+| redshift             | `mage-ai[redshift]`            | use Redshift for data import or export             |
+| s3                   | `mage-ai[s3]`                  | use S3 for data import or export                   |
+| snowflake            | `mage-ai[snowflake]`           | use Snowflake for data import or export            |
+| spark                | `mage-ai[spark]`               | use Spark (EMR) in your Mage pipeline              |
+| streaming            | `mage-ai[streaming]`           | use Streaming pipelines                            |
 
 To install these, run the following command from the Mage terminal:
 
@@ -167,3 +167,5 @@ read more about installing from `requirements.txt` [here](/development/dependenc
 ## 🧭 Journey on
 
 Navigate to our [tutorials](/guides/overview) to learn more about Mage and how to build your own pipelines or continue exploring our docs for advanced configuration and deployment options.
+
+If you're interested in connecting a database in Docker, check out our [guide](/guides/docker/connecting-a-database) for more information.

@@ -1,9 +1,12 @@
-from mage_ai.io.base import ExportWritePolicy, QUERY_ROW_LIMIT
+from typing import IO, Any, Dict, List, Union
+
+from pandas import DataFrame, Series
+from pydruid.db.api import Connection
+from pydruid.db.api import Cursor as CursorParent
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.sql import BaseSQL
-from pandas import DataFrame, Series
-from pydruid.db.api import Connection, Cursor as CursorParent
-from typing import Dict, List, Union, Any, IO
 
 WRITE_NOT_SUPPORTED_EXCEPTION = Exception('write operations are not supported.')
 
@@ -138,7 +141,8 @@ class Druid(BaseSQL):
                          db_dtypes: List[str],
                          dtypes: List[str],
                          full_table_name: str,
-                         buffer: Union[IO, None] = None) -> None:
+                         buffer: Union[IO, None] = None,
+                         **kwargs) -> None:
         raise WRITE_NOT_SUPPORTED_EXCEPTION
 
     def export(self,

@@ -1,3 +1,6 @@
+from typing import Dict
+
+
 class ApiError(Exception):
     UNAUTHORIZED_ACCESS = {
         'code': 403,
@@ -37,8 +40,9 @@ class ApiError(Exception):
         'type': 'invalid_oauth_token',
     }
 
-    def __init__(self, opts={}):
-        self.code = opts.get('code')
-        self.errors = opts.get('errors')
-        self.message = opts.get('message')
-        self.type = opts.get('type')
+    def __init__(self, opts: Dict = None):
+        if opts:
+            self.code = opts.get('code')
+            self.errors = opts.get('errors')
+            self.message = opts.get('message')
+            self.type = opts.get('type')

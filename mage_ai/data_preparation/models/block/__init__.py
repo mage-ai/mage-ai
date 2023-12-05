@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import importlib.util
+import inspect
 import json
 import logging
 import os
@@ -24,10 +25,15 @@ from mage_ai.cache.block import BlockCache
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.data_integration.mixins import SourceMixin
-from mage_ai.data_preparation.models.block.data_integration.utils import execute_source
+from mage_ai.data_preparation.models.block.data_integration.mixins import (
+    DataIntegrationMixin,
+)
+from mage_ai.data_preparation.models.block.data_integration.utils import (
+    execute_data_integration,
+)
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
+from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     fetch_input_variables,
@@ -60,14 +66,16 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import RepoConfig
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.data_preparation.templates.data_integrations.utils import get_templates
 from mage_ai.data_preparation.templates.template import load_template
+from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
-from mage_ai.shared.environments import get_env
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.environments import get_env, is_debug
+from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
@@ -181,6 +189,7 @@ def run_blocks_sync(
     run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
+    update_status: bool = True,
 ) -> None:
     tries_by_block_uuid = {}
     tasks = dict()
@@ -235,6 +244,7 @@ def run_blocks_sync(
                 from_notebook=not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=True,
+                update_status=update_status,
             )
 
             if run_tests:
@@ -252,7 +262,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(SourceMixin):
+class Block(DataIntegrationMixin, SparkBlock):
     def __init__(
         self,
         name: str,
@@ -270,6 +280,7 @@ class Block(SourceMixin):
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
+        repo_config=None,
         timeout: int = None,
     ) -> None:
         if configuration is None:
@@ -326,10 +337,30 @@ class Block(SourceMixin):
         # This is used to memoize source UUID, destination UUID, selected streams, config, catalog
         self._data_integration = None
         self._data_integration_loaded = False
+        # Used when interpolating upstream block outputs in YAML files
+        self.fetched_inputs_from_blocks = None
+
+        self.execution_timestamp_start = None
+        self.execution_timestamp_end = None
+        self.execution_uuid = None
+        self._compute_service_uuid = None
+        self._repo_config = repo_config
+        self._spark_session_current = None
+        self.global_vars = None
 
     @property
     def uuid(self) -> str:
-        return self.dynamic_block_uuid or self._uuid
+        return self._uuid
+
+    @property
+    def repo_config(self):
+        if self._repo_config:
+            return self._repo_config
+
+        if self.pipeline:
+            self._repo_config = self.pipeline.repo_config
+
+        return self._repo_config
 
     @property
     def uuid_replicated(self) -> str:
@@ -338,7 +369,6 @@ class Block(SourceMixin):
 
     @uuid.setter
     def uuid(self, x) -> None:
-        self.dynamic_block_uuid = None
         self._uuid = x
 
     @property
@@ -373,6 +403,99 @@ class Block(SourceMixin):
         return self._content
 
     async def metadata_async(self) -> Dict:
+        if self.is_data_integration():
+            grouped_templates = get_templates(group_templates=True)
+
+            if BlockLanguage.YAML == self.language:
+                content = await self.content_async()
+                if content:
+                    variables = {}
+                    if self.pipeline and self.pipeline.variables:
+                        variables.update(self.pipeline.variables)
+
+                    def _block_output(
+                        block_uuid: str,
+                        parse: str = None,
+                        current_block=self,
+                        global_vars=variables,
+                    ) -> Any:
+                        data = None
+
+                        if not self.fetched_inputs_from_blocks:
+                            input_vars_fetched, _kwargs_vars, _upstream_block_uuids = \
+                                self.fetch_input_variables_and_catalog(
+                                    None,
+                                    None,
+                                    global_vars=global_vars,
+                                    from_notebook=True,
+                                )
+                            self.fetched_inputs_from_blocks = input_vars_fetched
+
+                        if block_uuid in self.upstream_block_uuids and \
+                                self.data_integration_inputs and \
+                                block_uuid in self.data_integration_inputs:
+
+                            up_uuids = [i for i in
+                                        self.upstream_block_uuids if i in
+                                        self.data_integration_inputs]
+
+                            index = up_uuids.index(block_uuid)
+                            data = self.fetched_inputs_from_blocks[index]
+
+                        if parse:
+                            results = {}
+                            exec(f'_parse_func = {parse}', results)
+                            try:
+                                return results['_parse_func'](data)
+                            except Exception:
+                                pass
+
+                        return data
+
+                    text = Template(content).render(
+                        block_output=_block_output,
+                        variables=lambda x, p=None, v=variables: get_variable_for_template(
+                            x,
+                            parse=p,
+                            variables=v,
+                        ),
+                        **get_template_vars(),
+                    )
+
+                    settings = yaml.safe_load(text)
+                    uuid = settings.get('source') or settings.get('destination')
+                    mapping = grouped_templates.get(uuid) or {}
+
+                    return dict(
+                        data_integration=merge_dict(
+                            extract(mapping or {}, ['name']),
+                            settings,
+                        ),
+                    )
+            elif BlockLanguage.PYTHON == self.language:
+                try:
+                    di_settings = self.get_data_integration_settings(
+                        data_integration_uuid_only=True,
+                        from_notebook=True,
+                        global_vars=self.pipeline.variables if self.pipeline else None,
+                    )
+                    uuid = di_settings.get('data_integration_uuid')
+                    mapping = grouped_templates.get(uuid) or {}
+
+                    return dict(
+                        data_integration=merge_dict(
+                            extract(mapping or {}, ['name']),
+                            ignore_keys(di_settings or {}, [
+                                'catalog',
+                                'config',
+                                'data_integration_uuid',
+                            ]),
+                        ),
+                    )
+                except Exception as err:
+                    if is_debug():
+                        print(f'[ERROR] Block.metadata_async: {err}')
+
         return {}
 
     @property
@@ -389,10 +512,10 @@ class Block(SourceMixin):
                 self._outputs = self.get_outputs()
         return self._outputs
 
-    async def outputs_async(self) -> List:
+    async def __outputs_async(self) -> List:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
-                self._outputs = await self.get_outputs_async()
+                self._outputs = await self.__get_outputs_async()
         return self._outputs
 
     @property
@@ -451,6 +574,7 @@ class Block(SourceMixin):
         from mage_ai.data_preparation.models.block.sql.utils.shared import (
             extract_create_statement_table_name,
             extract_insert_statement_table_names,
+            extract_update_statement_table_names,
         )
 
         if not self.content:
@@ -462,40 +586,43 @@ class Block(SourceMixin):
 
         matches = extract_insert_statement_table_names(self.content)
         if len(matches) == 0:
+            matches = extract_update_statement_table_names(self.content)
+
+        if len(matches) == 0:
             return None
 
         return matches[len(matches) - 1]
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs) -> None:
-        from mage_ai.data_preparation.models.block.dbt.utils import (
-            add_blocks_upstream_from_refs,
-        )
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
+            downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                arr = add_blocks_upstream_from_refs(block)
-                upstream_block_uuids += [b.uuid for b in arr]
-                upstream_block_uuids = [*set(upstream_block_uuids)]     # Remove duplicates
-                priority_final = priority if len(upstream_block_uuids) == 0 else None
+            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
+                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in upstream_dbt_blocks
+                }
+                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                pipeline.validate('A cycle was formed while adding a block')
+                pipeline.save()
             else:
-                priority_final = priority
-
-            pipeline.add_block(
-                block,
-                upstream_block_uuids,
-                priority=priority_final,
-                widget=widget,
-            )
+                pipeline.add_block(
+                    block,
+                    downstream_block_uuids=downstream_block_uuids,
+                    upstream_block_uuids=upstream_block_uuids,
+                    priority=priority,
+                    widget=widget,
+                )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
             DestinationBlock,
             SourceBlock,
@@ -508,6 +635,8 @@ class Block(SourceMixin):
         if BlockType.CHART == block_type:
             return Widget
         elif BlockType.DBT == block_type:
+            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+
             return DBTBlock
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.CALLBACK == block_type:
@@ -543,6 +672,7 @@ class Block(SourceMixin):
         upstream_block_uuids: List[str] = None,
         config: Dict = None,
         widget: bool = False,
+        downstream_block_uuids: List[str] = None,
     ) -> 'Block':
         """
         1. Create a new folder for block_type if not exist
@@ -624,6 +754,7 @@ class Block(SourceMixin):
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
             widget=widget,
+            downstream_block_uuids=downstream_block_uuids,
         )
         return block
 
@@ -760,6 +891,7 @@ class Block(SourceMixin):
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        execution_uuid: str = None,
         from_notebook: bool = False,
         **kwargs
     ) -> Dict:
@@ -769,6 +901,9 @@ class Block(SourceMixin):
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        if execution_uuid:
+            self.execution_uuid = execution_uuid
+
         if logging_tags is None:
             logging_tags = dict()
 
@@ -808,17 +943,18 @@ class Block(SourceMixin):
                 from_notebook=from_notebook,
                 **kwargs
             )
-        except Exception as e:
+        except Exception as error:
             for callback_block in callback_arr:
                 callback_block.execute_callback(
                     'on_failure',
+                    callback_kwargs=dict(__error=error),
+                    from_notebook=from_notebook,
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
                     parent_block=self,
-                    from_notebook=from_notebook,
                 )
-            raise e
+            raise
 
         for callback_block in callback_arr:
             callback_block.execute_callback(
@@ -910,6 +1046,7 @@ class Block(SourceMixin):
                 data_integration_runtime_settings=data_integration_runtime_settings,
                 **kwargs,
             )
+
             block_output = self.post_process_output(output)
             variable_mapping = dict()
 
@@ -936,7 +1073,7 @@ class Block(SourceMixin):
                         variable_mapping,
                         execution_partition=execution_partition,
                         override_outputs=True,
-                        spark=(global_vars or dict()).get('spark'),
+                        spark=self.__get_spark_session_from_global_vars(global_vars=global_vars),
                         dynamic_block_uuid=dynamic_block_uuid,
                     )
                 except ValueError as e:
@@ -1107,14 +1244,30 @@ class Block(SourceMixin):
             logging_tags=logging_tags,
         ):
             # Fetch input variables
-            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
-                input_args,
-                execution_partition,
-                global_vars,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                from_notebook=from_notebook,
-            )
+
+            # Only fetch the input variables that the destination block explicitly declares.
+            # If all the input variables are fetched, there is a chance that a lot of data from
+            # an upstream source block is loaded just to be used as inputs for the block’s
+            # decorated functions. Only do this for the notebook because
+            if from_notebook and self.is_data_integration():
+                input_vars, kwargs_vars, upstream_block_uuids = \
+                    self.fetch_input_variables_and_catalog(
+                        input_args,
+                        execution_partition,
+                        global_vars,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        from_notebook=from_notebook,
+                    )
+            else:
+                input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+                    input_args,
+                    execution_partition,
+                    global_vars,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    from_notebook=from_notebook,
+                )
 
             outputs_from_input_vars = {}
             if input_args is None:
@@ -1219,7 +1372,7 @@ class Block(SourceMixin):
             input_vars=input_vars,
             partition=execution_partition,
         ):
-            return execute_source(
+            return execute_data_integration(
                 self,
                 outputs_from_input_vars=outputs_from_input_vars,
                 custom_code=custom_code,
@@ -1240,9 +1393,11 @@ class Block(SourceMixin):
             )
 
         decorated_functions = []
+        preprocesser_functions = []
         test_functions = []
 
         results = merge_dict({
+            'preprocesser': self._block_decorator(preprocesser_functions),
             'test': self._block_decorator(test_functions),
             self.type: self._block_decorator(decorated_functions),
         }, outputs_from_input_vars)
@@ -1258,16 +1413,36 @@ class Block(SourceMixin):
 
         outputs = None
 
+        if preprocesser_functions:
+            for preprocesser_function in preprocesser_functions:
+                self.execute_block_function(
+                    preprocesser_function,
+                    input_vars,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                )
+
         block_function = self._validate_execution(decorated_functions, input_vars)
         if block_function is not None:
             if logger and 'logger' not in global_vars:
                 global_vars['logger'] = logger
+
+            track_spark = from_notebook and self.should_track_spark()
+
+            if track_spark:
+                self.clear_spark_jobs_cache()
+                self.cache_spark_application()
+                self.set_spark_job_execution_start()
+
             outputs = self.execute_block_function(
                 block_function,
                 input_vars,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
             )
+
+            if track_spark:
+                self.set_spark_job_execution_end()
 
         self.test_functions = test_functions
 
@@ -1301,6 +1476,7 @@ class Block(SourceMixin):
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
+
         return output
 
     def __initialize_decorator_modules(
@@ -1334,7 +1510,8 @@ class Block(SourceMixin):
             self.module = module
 
             return block_function_updated
-        except Exception:
+        except Exception as err:
+            print(f'[WARNING] Block.initialize_decorator_modules: {err}')
             print('Falling back to default block execution...')
 
         return block_function
@@ -1351,8 +1528,9 @@ class Block(SourceMixin):
         dynamic_upstream_block_uuids: List[str] = None,
         from_notebook: bool = False,
         upstream_block_uuids: List[str] = None,
+        data_integration_settings_mapping: Dict = None,
     ) -> Tuple[List, List, List]:
-        return fetch_input_variables(
+        variables = fetch_input_variables(
             self.pipeline,
             upstream_block_uuids or self.upstream_block_uuids,
             input_args,
@@ -1361,7 +1539,10 @@ class Block(SourceMixin):
             dynamic_block_index,
             dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
+            data_integration_settings_mapping=data_integration_settings_mapping,
         )
+
+        return variables
 
     def get_analyses(self) -> List:
         if self.status == BlockStatus.NOT_EXECUTED:
@@ -1383,6 +1564,106 @@ class Block(SourceMixin):
             analyses.append(data)
         return analyses
 
+    def get_variables_by_block(
+        self,
+        block_uuid: str,
+        dynamic_block_index: int = None,
+        partition: str = None,
+    ):
+        variable_manager = self.pipeline.variable_manager
+
+        block_uuid_use = block_uuid
+        clean_block_uuid = True
+        if dynamic_block_index is not None or is_dynamic_block_child(self):
+            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            clean_block_uuid = False
+
+        return variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            block_uuid=block_uuid_use,
+            clean_block_uuid=clean_block_uuid,
+            partition=partition,
+        )
+
+    def get_variable(
+        self,
+        block_uuid: str,
+        variable_uuid: str,
+        dynamic_block_index: int = None,
+        partition: str = None,
+        raise_exception: bool = False,
+        spark=None,
+    ):
+        variable_manager = self.pipeline.variable_manager
+
+        block_uuid_use = block_uuid
+        clean_block_uuid = True
+        if dynamic_block_index is not None or is_dynamic_block_child(self):
+            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            clean_block_uuid = False
+
+        return variable_manager.get_variable(
+            self.pipeline.uuid,
+            block_uuid=block_uuid_use,
+            clean_block_uuid=clean_block_uuid,
+            partition=partition,
+            raise_exception=raise_exception,
+            spark=spark,
+            variable_uuid=variable_uuid,
+        )
+
+    def get_variable_object(
+        self,
+        block_uuid: str,
+        variable_uuid: str = None,
+        dynamic_block_index: int = None,
+        partition: str = None,
+    ):
+        variable_manager = self.pipeline.variable_manager
+
+        block_uuid_use = block_uuid
+        clean_block_uuid = True
+        if dynamic_block_index is not None or is_dynamic_block_child(self):
+            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            clean_block_uuid = False
+
+        return variable_manager.get_variable_object(
+            self.pipeline.uuid,
+            block_uuid=block_uuid_use,
+            clean_block_uuid=clean_block_uuid,
+            partition=partition,
+            spark=self.get_spark_session(),
+            variable_uuid=variable_uuid,
+        )
+
+    def get_raw_outputs(
+        self,
+        block_uuid: str,
+        execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+    ) -> List[Any]:
+        all_variables = self.get_variables_by_block(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+        )
+
+        outputs = []
+
+        for variable_uuid in all_variables:
+            variable = self.pipeline.get_block_variable(
+                block_uuid,
+                variable_uuid,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+                partition=execution_partition,
+                raise_exception=True,
+                spark=self.__get_spark_session_from_global_vars(global_vars),
+            )
+            outputs.append(variable)
+
+        return outputs
+
     def get_outputs(
         self,
         execution_partition: str = None,
@@ -1392,6 +1673,7 @@ class Block(SourceMixin):
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
         block_uuid: str = None,
+        selected_variables: List[str] = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -1403,23 +1685,24 @@ class Block(SourceMixin):
         outputs = []
         variable_manager = self.pipeline.variable_manager
 
-        all_variables = variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
-            block_uuid,
+        all_variables = self.get_variables_by_block(
+            block_uuid=block_uuid,
             partition=execution_partition,
         )
+
         if not include_print_outputs:
             all_variables = self.output_variables(
                 execution_partition=execution_partition,
             )
 
         for v in all_variables:
-            variable_object = variable_manager.get_variable_object(
-                self.pipeline.uuid,
-                block_uuid,
-                v,
+            if selected_variables and v not in selected_variables:
+                continue
+
+            variable_object = self.get_variable_object(
+                block_uuid=block_uuid,
                 partition=execution_partition,
-                spark=self.__get_spark_session(),
+                variable_uuid=v,
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -1428,7 +1711,7 @@ class Block(SourceMixin):
             data = variable_object.read_data(
                 sample=sample,
                 sample_count=sample_count,
-                spark=self.__get_spark_session(),
+                spark=self.get_spark_session(),
             )
             if type(data) is pd.DataFrame:
                 if csv_lines_only:
@@ -1513,7 +1796,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    async def get_outputs_async(
+    async def __get_outputs_async(
         self,
         execution_partition: str = None,
         include_print_outputs: bool = True,
@@ -1546,7 +1829,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 block_uuid,
                 v,
                 partition=execution_partition,
-                spark=self.__get_spark_session(),
+                spark=self.get_spark_session(),
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -1555,7 +1838,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data = await variable_object.read_data_async(
                 sample=True,
                 sample_count=sample_count,
-                spark=self.__get_spark_session(),
+                spark=self.get_spark_session(),
             )
             if type(data) is pd.DataFrame:
                 try:
@@ -1636,8 +1919,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         for o in outputs:
             if o is None:
                 continue
+
+            if not isinstance(o, dict):
+                continue
+
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
-                    not is_output_variable(o['variable_uuid']):
+                    (not is_output_variable(o['variable_uuid']) or
+                        BlockType.SCRATCHPAD == self.type):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
@@ -1648,9 +1936,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         self.store_variables(variable_mapping, override=override)
 
-    async def save_outputs_async(self, outputs, override=False) -> None:
+    async def save_outputs_async(
+        self,
+        outputs,
+        override: bool = False,
+        override_outputs: bool = False,
+    ) -> None:
         variable_mapping = self.__save_outputs_prepare(outputs)
-        await self.store_variables_async(variable_mapping, override=override)
+        await self.store_variables_async(
+            variable_mapping,
+            override=override,
+            override_outputs=override_outputs,
+        )
 
     def get_executor_type(self) -> str:
         if self.executor_type:
@@ -1702,9 +1999,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def to_dict(
         self,
+        include_block_catalog: bool = False,
         include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
+        include_outputs_spark: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
         **kwargs,
@@ -1716,21 +2015,30 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.callback_block is not None:
                 data['callback_content'] = self.callback_block.content
 
+        if include_block_catalog and self.is_data_integration() and self.pipeline:
+            data['catalog'] = self.get_catalog_from_file()
+
         if include_outputs:
-            data['outputs'] = self.outputs
+            include_outputs_use = include_outputs
+            if self.is_using_spark() and self.compute_management_enabled():
+                include_outputs_use = include_outputs_use and include_outputs_spark
 
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+            if include_outputs_use:
+                data['outputs'] = self.outputs
 
-                file_path = self.file.file_path
-                if not os.path.isfile(file_path):
-                    data['error'] = dict(
-                        error='No such file or directory',
-                        message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
-                    )
+                if check_if_file_exists and not \
+                        self.replicated_block and \
+                        BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
+                    file_path = self.file.file_path
+                    if not os.path.isfile(file_path):
+                        data['error'] = dict(
+                            error='No such file or directory',
+                            message='You may have moved it or changed its filename. '
+                            'Delete the current block to remove it from the pipeline '
+                            'or write code and save the pipeline to create a new file at '
+                            f'{file_path}.',
+                        )
 
         return data
 
@@ -1744,8 +2052,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_conditional_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
+        include_outputs_spark: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
+        **kwargs,
     ) -> Dict:
         data = self.to_dict_base(
             include_callback_blocks=include_callback_blocks,
@@ -1757,33 +2067,30 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.callback_block is not None:
                 data['callback_content'] = await self.callback_block.content_async()
 
-        if include_block_catalog and \
-                self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER] and \
-                BlockLanguage.YAML == self.language and \
-                data.get('content') and \
-                self.pipeline:
-
-            content = data.get('content') or ''
-            if content:
-                config = yaml.safe_load(content)
-                if config.get('source') or config.get('destination'):
-                    data['catalog'] = await self.get_catalog_from_file_async()
+        if include_block_catalog and self.is_data_integration() and self.pipeline:
+            data['catalog'] = await self.get_catalog_from_file_async()
 
         if include_outputs:
-            data['outputs'] = await self.outputs_async()
+            include_outputs_use = include_outputs
+            if self.is_using_spark() and self.compute_management_enabled():
+                include_outputs_use = include_outputs_use and include_outputs_spark
 
-            if check_if_file_exists and not \
-                    self.replicated_block and \
-                    BlockType.GLOBAL_DATA_PRODUCT != self.type:
+            if include_outputs_use:
+                data['outputs'] = await self.__outputs_async()
 
-                file_path = self.file.file_path
-                if not os.path.isfile(file_path):
-                    data['error'] = dict(
-                        error='No such file or directory',
-                        message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
-                    )
+                if check_if_file_exists and not \
+                        self.replicated_block and \
+                        BlockType.GLOBAL_DATA_PRODUCT != self.type:
+
+                    file_path = self.file.file_path
+                    if not os.path.isfile(file_path):
+                        data['error'] = dict(
+                            error='No such file or directory',
+                            message='You may have moved it or changed its filename. '
+                            'Delete the current block to remove it from the pipeline '
+                            'or write code and save the pipeline to create a new file at '
+                            f'{file_path}.',
+                        )
 
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()
@@ -1798,7 +2105,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def update(self, data, **kwargs) -> 'Block':
         if 'name' in data and data['name'] != self.name:
-            self.__update_name(data['name'])
+            detach = kwargs.get('detach', False)
+            self.__update_name(data['name'], detach=detach)
 
         if (
             'type' in data
@@ -1820,6 +2128,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_upstream_blocks(
                 data['upstream_blocks'],
                 check_upstream_block_order=check_upstream_block_order,
+            )
+
+        if 'downstream_blocks' in data and self.pipeline:
+            self.pipeline.update_block(
+                self,
+                downstream_block_uuids=data.get('downstream_blocks') or [],
+                widget=BlockType.CHART == self.type,
             )
 
         if 'callback_blocks' in data and set(data['callback_blocks']) != set(
@@ -1993,21 +2308,12 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         else:
             test_functions = self.test_functions
 
-        variable_manager = self.pipeline.variable_manager
-        outputs = [
-            variable_manager.get_variable(
-                self.pipeline.uuid,
-                self.uuid,
-                variable,
-                partition=execution_partition,
-                spark=(global_vars or dict()).get('spark'),
-            )
-            for variable in self.output_variables(
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-            )
-        ]
+        outputs = self.get_raw_outputs(
+            dynamic_block_uuid or self.uuid,
+            execution_partition=execution_partition,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
+        )
 
         if logger and 'logger' not in global_vars:
             global_vars['logger'] = logger
@@ -2018,49 +2324,50 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             logger=logger,
             logging_tags=logging_tags,
         ):
-            tests_passed = 0
-            for func in test_functions:
-                test_function = func
-                if from_notebook and self.module:
-                    test_function = getattr(self.module, func.__name__)
-                try:
-                    sig = signature(test_function)
-                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                        test_function(*outputs, **global_vars)
-                    else:
-                        test_function(*outputs)
-                    tests_passed += 1
-                except AssertionError as err:
-                    error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
-                    stacktrace = traceback.format_exc()
+            if test_functions and len(test_functions) >= 0:
+                tests_passed = 0
+                for func in test_functions:
+                    test_function = func
+                    if from_notebook and self.module:
+                        test_function = getattr(self.module, func.__name__)
+                    try:
+                        sig = signature(test_function)
+                        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                            test_function(*outputs, **global_vars)
+                        else:
+                            test_function(*outputs)
+                        tests_passed += 1
+                    except AssertionError as err:
+                        error_message = f'FAIL: {test_function.__name__} (block: {self.uuid})'
+                        stacktrace = traceback.format_exc()
 
-                    if from_notebook:
-                        error_json = json.dumps(dict(
-                            error=str(err),
-                            message=error_message,
-                            stacktrace=stacktrace.split('\n'),
+                        if from_notebook:
+                            error_json = json.dumps(dict(
+                                error=str(err),
+                                message=error_message,
+                                stacktrace=stacktrace.split('\n'),
+                            ))
+                            print(f'[__internal_test__]{error_json}')
+                        else:
+                            print('==============================================================')
+                            print(error_message)
+                            print('--------------------------------------------------------------')
+                            print(stacktrace)
+
+                message = f'{tests_passed}/{len(test_functions)} tests passed.'
+                if from_notebook:
+                    if len(test_functions) >= 1:
+                        success_json = json.dumps(dict(
+                            message=message,
                         ))
-                        print(f'[__internal_test__]{error_json}')
-                    else:
-                        print('==============================================================')
-                        print(error_message)
-                        print('--------------------------------------------------------------')
-                        print(stacktrace)
+                        print(f'[__internal_test__]{success_json}')
+                else:
+                    print('--------------------------------------------------------------')
+                    print(message)
 
-            message = f'{tests_passed}/{len(test_functions)} tests passed.'
-            if from_notebook:
-                if len(test_functions) >= 1:
-                    success_json = json.dumps(dict(
-                        message=message,
-                    ))
-                    print(f'[__internal_test__]{success_json}')
-            else:
-                print('--------------------------------------------------------------')
-                print(message)
-
-            if tests_passed != len(test_functions):
-                raise Exception(f'Failed to pass tests for block {self.uuid}')
+                if tests_passed != len(test_functions):
+                    raise Exception(f'Failed to pass tests for block {self.uuid}')
 
             handle_run_tests(
                 self,
@@ -2194,7 +2501,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
                 is_spark_env()):
             if not global_vars.get('spark'):
-                spark = self.__get_spark_session()
+                spark = self.get_spark_session()
                 if spark is not None:
                     global_vars['spark'] = spark
         if 'env' not in global_vars:
@@ -2203,12 +2510,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             global_vars['configuration'] = self.configuration
         if 'context' not in global_vars:
             global_vars['context'] = dict()
+
+        self.global_vars = global_vars
+
         return global_vars
 
-    def __get_spark_session(self):
+    def get_spark_session(self):
         if self.spark_init and (not self.pipeline or
                                 not self.pipeline.spark_config):
             return self.spark
+
         try:
             if self.pipeline and self.pipeline.spark_config:
                 spark_config = SparkConfig.load(
@@ -2221,8 +2532,28 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         except Exception:
             self.spark = None
 
+        if not self.spark and self.global_vars and self.global_vars.get('spark'):
+            self.spark = self.global_vars.get('spark')
+
         self.spark_init = True
         return self.spark
+
+    def __get_spark_session_from_global_vars(self, global_vars: Dict = None):
+        if global_vars is None:
+            global_vars = dict()
+        spark = global_vars.get('spark')
+        if self.pipeline and self.pipeline.spark_config:
+            spark_config = self.pipeline.spark_config
+        else:
+            repo_config = RepoConfig(repo_path=self.repo_path)
+            spark_config = repo_config.spark_config
+        if not spark_config:
+            return spark
+        spark_config = SparkConfig.load(config=spark_config)
+        if spark_config.use_custom_session:
+            return global_vars.get('context', dict()).get(
+                spark_config.custom_session_var_name, spark)
+        return spark
 
     def __store_variables_prepare(
         self,
@@ -2234,12 +2565,20 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     ) -> Dict:
         self.dynamic_block_uuid = dynamic_block_uuid
 
+        block_uuid = self.uuid
+        clean_block_uuid = True
+        if dynamic_block_uuid is not None:
+            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            clean_block_uuid = False
+
         if self.pipeline is None:
             return
+
         all_variables = self.pipeline.variable_manager.get_variables_by_block(
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid=block_uuid,
             partition=execution_partition,
+            clean_block_uuid=clean_block_uuid,
         )
 
         variable_mapping = self.__consolidate_variables(variable_mapping)
@@ -2253,6 +2592,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             is_output_var = is_output_variable(v)
             if (override and not is_output_var) or (override_outputs and is_output_var):
                 removed_variables.append(v)
+
         return dict(
             removed_variables=removed_variables,
             variable_mapping=variable_mapping,
@@ -2272,24 +2612,33 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             execution_partition,
             override,
             override_outputs,
-            dynamic_block_uuid,
+            dynamic_block_uuid=dynamic_block_uuid,
         )
+
+        block_uuid = self.uuid
+        clean_block_uuid = True
+        if dynamic_block_uuid is not None:
+            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            clean_block_uuid = False
+
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
                     and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
+
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
                 data,
                 partition=execution_partition,
+                clean_block_uuid=clean_block_uuid,
             )
 
         for uuid in variables_data['removed_variables']:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
             )
 
@@ -2309,22 +2658,32 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             override_outputs,
             dynamic_block_uuid,
         )
+
+        block_uuid = self.uuid
+        clean_block_uuid = True
+        if dynamic_block_uuid is not None:
+            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            clean_block_uuid = False
+
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
+
             await self.pipeline.variable_manager.add_variable_async(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
                 data,
                 partition=execution_partition,
+                clean_block_uuid=clean_block_uuid,
             )
 
         for uuid in variables_data['removed_variables']:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 uuid,
+                clean_block_uuid=clean_block_uuid,
             )
 
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
@@ -2367,17 +2726,17 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         from_notebook: bool = False,
         global_vars: Dict = None,
         input_args: List[Any] = None,
+        block_uuid: str = None,
     ) -> List[str]:
         return output_variables(
             self.pipeline,
-            self.uuid,
+            block_uuid or self.uuid,
             execution_partition,
             dynamic_block_index=dynamic_block_index,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
             input_args=input_args,
-
         )
 
     def output_variable_objects(
@@ -2457,7 +2816,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return custom_code
 
     # TODO: Update all pipelines that use this block
-    def __update_name(self, name) -> None:
+    def __update_name(
+        self,
+        name: str,
+        detach: bool = False,
+    ) -> None:
         """
         1. Rename block file
         2. Update the folder of variable
@@ -2466,6 +2829,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         old_uuid = self.uuid
         # This has to be here
         old_file_path = self.file_path
+        block_content = self.content
 
         new_uuid = clean_name(name)
         self.name = name
@@ -2490,16 +2854,39 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             parent_dir = os.path.dirname(new_file_path)
             os.makedirs(parent_dir, exist_ok=True)
 
-            os.rename(old_file_path, new_file_path)
+            if detach:
+                """"
+                Detaching a block creates a copy of the block file while keeping the existing block
+                file the same. Without detaching a block, the existing block file is simply renamed.
+                """
+                with open(new_file_path, 'w') as f:
+                    f.write(block_content)
+            else:
+                os.rename(old_file_path, new_file_path)
 
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
             cache = BlockCache()
-            cache.move_pipelines(self, dict(
-                type=self.type,
-                uuid=old_uuid,
-            ))
+            if detach:
+                """"
+                New block added to pipeline, so it must be added to the block cache.
+                Old block no longer in pipeline, so it must be removed from block cache.
+                """
+                cache.add_pipeline(self, self.pipeline)
+                old_block = self.get_block(
+                    old_uuid,
+                    old_uuid,
+                    self.type,
+                    language=self.language,
+                    pipeline=self.pipeline,
+                )
+                cache.remove_pipeline(old_block, self.pipeline.uuid)
+            else:
+                cache.move_pipelines(self, dict(
+                    type=self.type,
+                    uuid=old_uuid,
+                ))
 
     def __update_pipeline_block(self, widget=False) -> None:
         if self.pipeline is None:
@@ -2700,6 +3087,7 @@ class CallbackBlock(AddonBlock):
     def execute_callback(
         self,
         callback: str,
+        callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         execution_partition: str = None,
@@ -2714,6 +3102,8 @@ class CallbackBlock(AddonBlock):
             logger=logger,
             logging_tags=logging_tags,
         ):
+            if callback_kwargs is None:
+                callback_kwargs = dict()
             global_vars = self._create_global_vars(
                 global_vars,
                 parent_block,
@@ -2765,23 +3155,39 @@ class CallbackBlock(AddonBlock):
             for kwargs_var in kwargs_vars:
                 global_vars_copy.update(kwargs_var)
 
+            callback_kwargs = merge_dict(
+                callback_kwargs,
+                global_vars_copy,
+            )
+
             for callback_function in callback_functions_legacy:
-                callback_function(**global_vars_copy)
+                callback_function(**callback_kwargs)
 
             for callback_function in callback_functions:
-                try:
+                inner_function = callback_function(callback_status)
+                if inner_function is not None:
+                    sig = inspect.signature(inner_function)
                     # As of version 0.8.81, callback functions have access to the parent block’s
-                    # data output.
-                    callback_function(callback_status, *input_vars, **global_vars_copy)
-                except TypeError:
-                    # This try except block will make the above code backwards compatible in case
+                    # data output. If the callback function has any positional arguments, we will
+                    # pass in the input variables as positional arguments.
+                    if not input_vars or any(
+                        [
+                            p.kind not in [p.KEYWORD_ONLY, p.VAR_KEYWORD]
+                            for p in sig.parameters.values()
+                        ]
+                    ):
+                        inner_function(
+                            *input_vars,
+                            **callback_kwargs,
+                        )
+                    # This else block will make the above code backwards compatible in case
                     # a user has already written callback functions with only keyword arguments.
-                    callback_function(
-                        callback_status,
-                        **merge_dict(global_vars_copy, dict(
-                            __input=outputs_from_input_vars,
-                        )),
-                    )
+                    else:
+                        inner_function(
+                            **merge_dict(callback_kwargs, dict(
+                                __input=outputs_from_input_vars,
+                            )),
+                        )
 
     def update_content(self, content, widget=False) -> 'CallbackBlock':
         if not self.file.exists():
@@ -2816,9 +3222,9 @@ class CallbackBlock(AddonBlock):
                 )
 
             def inner(function):
-                def func(callback_status_inner, *args, **kwargs):
+                def func(callback_status_inner):
                     if callback_status_inner == callback_status:
-                        return function(*args, **kwargs)
+                        return function
                 decorated_functions.append(func)
 
             return inner

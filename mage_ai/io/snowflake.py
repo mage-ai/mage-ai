@@ -96,16 +96,7 @@ class Snowflake(BaseSQLConnection):
 
                     rows = cursor.execute(query, timeout=self.timeout, **variables).fetchall()
 
-                    full_table_name = fetch_query_at_indexes[idx]
-
-                    columns = []
-                    if type(full_table_name) is str:
-                        columns = self.get_columns(
-                            cursor,
-                            full_table_name=full_table_name,
-                        )
-                    elif len(rows) >= 1 and len(rows[0]) >= 1:
-                        columns = [f'col_{i}' for i in range(len(rows[0]))]
+                    columns = [i[0] for i in cursor.description]
 
                     result = DataFrame(rows, columns=columns)
                 else:
@@ -184,22 +175,14 @@ class Snowflake(BaseSQLConnection):
 
         with self.printer.print_msg(print_message):
             with self.conn.cursor() as cur:
-                columns = None
-                if (database and schema and table_name) or full_table_name:
-                    columns = self.get_columns(
-                        cur,
-                        database=database,
-                        schema=schema,
-                        table_name=table_name,
-                        full_table_name=full_table_name,
-                    )
-
                 results = cur.execute(
                     self._enforce_limit(query_string, limit),
                     *args,
                     timeout=self.timeout,
                     **kwargs,
                 ).fetchall()
+
+                columns = [i[0] for i in cur.description]
 
                 if not columns and len(results) >= 1:
                     columns = [f'col{i}' for i in range(len(results[0]))]
@@ -209,9 +192,9 @@ class Snowflake(BaseSQLConnection):
     def export(
         self,
         df: DataFrame,
-        table_name: str,
-        database: str,
-        schema: str,
+        table_name: str = None,
+        database: str = None,
+        schema: str = None,
         if_exists: str = 'append',
         query_string: Union[str, None] = None,
         verbose: bool = True,
@@ -233,6 +216,12 @@ class Snowflake(BaseSQLConnection):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
+        if database is None:
+            database = self.default_database()
+        if schema is None:
+            schema = self.default_schema()
 
         if type(df) is dict:
             df = DataFrame([df])

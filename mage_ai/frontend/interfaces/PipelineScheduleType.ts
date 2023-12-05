@@ -24,7 +24,16 @@ export enum ScheduleIntervalEnum {
   DAILY = '@daily',
   WEEKLY = '@weekly',
   MONTHLY = '@monthly',
+  ALWAYS_ON = '@always_on'
 }
+
+export const SCHEDULE_INTERVALS = [
+  ScheduleIntervalEnum.ONCE,
+  ScheduleIntervalEnum.HOURLY,
+  ScheduleIntervalEnum.DAILY,
+  ScheduleIntervalEnum.WEEKLY,
+  ScheduleIntervalEnum.MONTHLY,
+];
 
 export interface SelectedScheduleType {
   pipelineUuid: string;
@@ -51,6 +60,7 @@ export interface PipelineScheduleSettingsType {
   landing_time_enabled?: boolean;
   skip_if_previous_running?: boolean;
   timeout?: number;
+  invalid_schedule_interval?: boolean; // Used to detect triggers with invalid cron expressions
 }
 
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
@@ -76,6 +86,7 @@ export default interface PipelineScheduleType {
   last_pipeline_run_status?: RunStatusEnum;
   name?: string;
   next_pipeline_run_date?: string;
+  pipeline_in_progress_runs_count?: number;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;
   runtime_average?: number;

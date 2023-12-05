@@ -1,7 +1,6 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import light from '@oracle/styles/themes/light';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_LIGHT,
@@ -14,6 +13,7 @@ import {
 import {
   HEADLINE_SIZE,
   LARGE,
+  LARGE_LG,
   REGULAR,
   SMALL,
   XLARGE,
@@ -45,6 +45,7 @@ export type TextProps = {
   italic?: boolean;
   large?: boolean;
   largeSm?: boolean;
+  largeLg?: boolean;
   letterSpacing?: number;
   leftAligned?: boolean;
   lineHeight?: number;
@@ -66,6 +67,7 @@ export type TextProps = {
   secondary?: boolean;
   sky?: boolean;
   small?: boolean;
+  strikethrough?: boolean;
   success?: boolean;
   textOverflow?: boolean;
   textOverflowLines?: number;
@@ -91,7 +93,7 @@ export const SHARED_LARGE_TEXT_RESPONSIVE_STYLES = css<{
 `;
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
-  ${props => !props.xsmall && !props.small && !props.large && !props.xlarge && `
+  ${props => !props.xsmall && !props.small && !props.large && !props.largeLg && !props.xlarge && `
     ${REGULAR}
   `}
 
@@ -105,6 +107,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.large && `
     ${LARGE}
+  `}
+
+  ${props => props.largeLg && `
+    ${LARGE_LG}
   `}
 
   ${props => props.xlarge && `
@@ -184,11 +190,15 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
   `}
 
   ${props => props.wind && !props.disabled && `
-    color: ${(props.theme.brand || light.brand).wind500} !important;
+    color: ${(props.theme.brand || dark.brand).wind500} !important;
   `}
 
   ${props => props.cursor && `
     cursor: ${props.cursor};
+  `}
+
+  ${props => props.strikethrough && `
+    text-decoration: line-through;
   `}
 `;
 
@@ -198,19 +208,19 @@ export const SHARED_STYLES = css<TextProps>`
   ${SHARED_TEXT_STYLES}
 
   ${props => !(props.default && props.disabled  && props.muted) && !props.noColor && `
-    color: ${(props.theme.content || light.content).active};
+    color: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => props.default && `
-    color: ${(props.theme.content || light.content).default};
+    color: ${(props.theme.content || dark.content).default};
   `}
 
   ${props => props.inverted && `
-    color: ${(props.theme.content || light.content).inverted};
+    color: ${(props.theme.content || dark.content).inverted};
   `}
 
   ${props => props.muted && `
-    color: ${(props.theme.content || light.content).muted};
+    color: ${(props.theme.content || dark.content).muted};
   `}
 
   ${props => props.noColor && `
@@ -235,19 +245,19 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.black && `
-    color: ${(props.theme.monotone || light.monotone).black};
+    color: ${(props.theme.monotone || dark.monotone).black};
   `}
 
   ${props => props.primary && `
-    color: ${(props.theme.interactive || light.interactive).linkPrimary};
+    color: ${(props.theme.interactive || dark.interactive).linkPrimary};
   `}
 
   ${props => props.secondary && `
-    color: ${(props.theme.interactive || light.interactive).linkSecondary};
+    color: ${(props.theme.interactive || dark.interactive).linkSecondary};
   `}
 
   ${props => props.danger && `
-    color: ${(props.theme.interactive || light.interactive).dangerBorder};
+    color: ${(props.theme.interactive || dark.interactive).dangerBorder};
   `}
 
   ${props => props.info && `
@@ -259,7 +269,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.success && `
-    color: ${(props.theme.status || light.status).positive};
+    color: ${(props.theme.status || dark.status).positive};
   `}
 
   ${props => props.underline && `

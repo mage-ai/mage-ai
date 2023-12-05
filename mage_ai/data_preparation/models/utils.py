@@ -1,10 +1,11 @@
 import traceback
-from typing import Dict
+from typing import Any, Dict
 
 import dask.dataframe as dd
 import numpy
 import pandas as pd
 import simplejson
+import yaml
 
 from mage_ai.shared.parsers import encode_complex
 
@@ -101,3 +102,12 @@ def should_deserialize_pandas(column_types: Dict) -> bool:
         if column_type in JSON_SERIALIZABLE_COLUMN_TYPES:
             return True
     return False
+
+
+def is_yaml_serializable(key: str, value: Any) -> bool:
+    try:
+        s = yaml.dump(dict(key=value))
+        yaml.safe_load(s)
+        return True
+    except Exception:
+        return False

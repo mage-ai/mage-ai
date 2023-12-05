@@ -52,7 +52,6 @@ class SyncOperationTests(BaseApiTestCase):
         self.assertEqual(preferences['username'], 'username1')
 
         preferences = get_preferences().sync_config
-        print('response:', preferences)
         self.assertEqual(preferences['remote_repo_link'], 'test_link')
         self.assertIsNone(preferences.get('username'))
 

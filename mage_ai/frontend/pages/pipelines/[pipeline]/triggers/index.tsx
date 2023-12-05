@@ -1,13 +1,17 @@
 import NextLink from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
+import InteractionType from '@interfaces/InteractionType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
+import PipelineInteractionType from '@interfaces/PipelineInteractionType';
 import PipelineScheduleType, {
   PipelineScheduleFilterQueryEnum,
   SCHEDULE_TYPE_TO_LABEL,
@@ -24,21 +28,25 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import TagType from '@interfaces/TagType';
 import Text from '@oracle/elements/Text';
+import TriggerEdit from '@components/Triggers/Edit';
 import Toolbar from '@components/shared/Table/Toolbar';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
+import { Interactions as InteractionsIcon } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
+import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
+import { capitalize, randomNameGenerator } from '@utils/string';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
-import { getFormattedVariables } from '@components/Sidekick/utils';
+import { getFormattedGlobalVariables, getFormattedVariables } from '@components/Sidekick/utils';
 import { getPipelineScheduleApiFilterQuery } from '@components/Triggers/utils';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 
@@ -54,7 +62,9 @@ function PipelineSchedules({
   const router = useRouter();
   const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
-  const [errors, setErrors] = useState(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
+  const [triggerErrors, setTriggerErrors] = useState<ErrorsType>(null);
+  const [isCreatingTrigger, setIsCreatingTrigger] = useState<boolean>(false);
 
   const { data: dataProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
@@ -62,6 +72,28 @@ function PipelineSchedules({
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
   );
+
+  const { data: dataClientPage } = api.client_pages.detail('pipeline_schedule:create', {
+    'pipelines[]': [pipelineUUID],
+  }, {}, {
+    key: `Triggers/Edit/${pipelineUUID}`,
+  });
+  const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
+
+  // const isInteractionsEnabled =
+  //   useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
+  //     project?.features,
+  //   ]);
+  const isInteractionsEnabled =
+    useMemo(() => clientPage?.components?.find(({
+      uuid,
+    }) => uuid === 'create_with_interactions_component')?.enabled, [
+      clientPage,
+    ]);
+  const isCreateDisabled =
+    useMemo(() => clientPage?.disabled, [
+      clientPage,
+    ]);
 
   const {
     data: dataGlobalVariables,
@@ -125,18 +157,13 @@ function PipelineSchedules({
   const [createOnceSchedule, { isLoading: isLoadingCreateOnceSchedule }]: any =
     useCreateScheduleMutation(fetchPipelineSchedules);
 
-  const variablesOrig = useMemo(() => (
-    getFormattedVariables(
-      globalVariables,
-      block => block.uuid === GLOBAL_VARIABLES_UUID,
-    )?.reduce((acc, { uuid, value }) => ({
-      ...acc,
-      [uuid]: value,
-    }), {})
-  ), [globalVariables]);
+  const variablesOrig = useMemo(() => getFormattedGlobalVariables(globalVariables), [
+    globalVariables,
+  ]);
 
+  const randomTriggerName = randomNameGenerator();
   const pipelineOnceSchedulePayload = useMemo(() => ({
-    name: randomNameGenerator(),
+    name: randomTriggerName,
     schedule_interval: ScheduleIntervalEnum.ONCE,
     schedule_type: ScheduleTypeEnum.TIME,
     start_time: dateFormatLong(
@@ -144,7 +171,7 @@ function PipelineSchedules({
       { dayAgo: true, utcFormat: true },
     ),
     status: ScheduleStatusEnum.ACTIVE,
-  }), []);
+  }), [randomTriggerName]);
   const [showModal, hideModal] = useModal(() => (
     <RunPipelinePopup
       initialPipelineSchedulePayload={pipelineOnceSchedulePayload}
@@ -164,26 +191,44 @@ function PipelineSchedules({
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
     const variablesOverride = selectedSchedule?.variables;
-    const hasOverride = !isEmptyObject(variablesOverride);
-
-    const showVariables = hasOverride
-      ? selectedSchedule?.variables
-      : !isEmptyObject(variablesOrig) ? variablesOrig : null;
+    const hasVariables = !isEmptyObject(variablesOrig);
 
     return (props: DependencyGraphProps) => {
-      const dependencyGraphHeight = props.height - (showVariables ? 151 : 80);
+      /**
+       * Because it's required to specify the DependencyGraph height, we calculate
+       * the RuntimeVariables height here instead of within its component.
+       * We dynamically calculate the RuntimeVariables height based on the number
+       * of visible rows in the runtime variables table at any time.
+       */
+      let runtimeVariablesHeight = 80;
+      if (hasVariables) {
+        const maxVisibleRows = 5;
+        const headerRowHeight = 46; // Includes top + bottom border
+        const rowHeight = 43; // Includes bottom border
+        const numVariables = Object.keys(variablesOrig).length;
+        const numVisibleRows = Math.min(maxVisibleRows, numVariables);
+        runtimeVariablesHeight = headerRowHeight + (numVisibleRows * rowHeight) + 1;
+      }
+
+      const dependencyGraphHeight = props.height - runtimeVariablesHeight;
 
       return (
         <>
-          {showVariables && (
+          <DependencyGraph
+            {...props}
+            enablePorts={false}
+            height={dependencyGraphHeight}
+            noStatus
+          />
+          {hasVariables && (
             <RuntimeVariables
-              hasOverride={hasOverride}
+              height={runtimeVariablesHeight}
               scheduleType={selectedSchedule?.schedule_type}
               variables={variablesOrig}
               variablesOverride={variablesOverride}
             />
           )}
-          {!showVariables && (
+          {!hasVariables && (
             <Spacing p={PADDING_UNITS}>
               <Text>
                 This pipeline has no runtime variables.
@@ -206,11 +251,6 @@ function PipelineSchedules({
               }
             </Spacing>
           )}
-          <DependencyGraph
-            {...props}
-            height={dependencyGraphHeight}
-            noStatus
-          />
         </>
       );
     };
@@ -235,14 +275,83 @@ function PipelineSchedules({
     dataPipelineTriggers,
   ]);
 
+  useEffect(() => {
+    const triggers = dataPipelineTriggers?.pipeline_triggers || [];
+    const triggerWithInvalidCronExpression = triggers.find(({ settings }) => settings?.invalid_schedule_interval);
+    if (triggerWithInvalidCronExpression) {
+      setTriggerErrors({
+        displayMessage: `Schedule interval for Trigger (in code) "${triggerWithInvalidCronExpression?.name}"`
+          + ' is invalid. Please check your cron expression’s syntax in the pipeline’s triggers.yaml file.',
+      });
+    } else {
+      setTriggerErrors(null);
+    }
+  }, [dataPipelineTriggers?.pipeline_triggers]);
+
   const { data: dataTags } = api.tags.list();
   const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
     dataTags,
   ]);
 
+  const {
+    data: dataPipelineInteraction,
+    mutate: fetchPipelineInteraction,
+  } = api.pipeline_interactions.detail(
+    isInteractionsEnabled && pipelineUUID,
+    {
+      filter_for_permissions: 1,
+    },
+  );
+
+  const {
+    data: dataInteractions,
+    mutate: fetchInteractions,
+  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
+
+  const { data: dataPipeline } = api.pipelines.detail(isInteractionsEnabled && pipelineUUID);
+
+  const pipelineInteraction: PipelineInteractionType =
+    useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
+      dataPipelineInteraction,
+    ]);
+  const interactions: InteractionType[] =
+    useMemo(() => dataInteractions?.interactions || [], [
+      dataInteractions,
+    ]);
+  const pipelineHasInteractions =
+    useMemo(() => isInteractionsEnabled
+      && Object.keys(pipelineInteraction?.blocks || {})?.length >= 1,
+    [
+      isInteractionsEnabled,
+      pipelineInteraction,
+    ]);
+
+  const newTriggerFromInteractionsButtonMemo = useMemo(() => pipelineHasInteractions && (
+    <>
+      <Spacing ml="12px" />
+
+      <VerticalDividerStyle />
+
+      <Spacing ml="12px" />
+
+      <KeyboardShortcutButton
+        {...SHARED_BUTTON_PROPS}
+        Icon={InteractionsIcon}
+        inline
+        onClick={() => setIsCreatingTrigger(true)}
+        uuid="Create trigger with no-code"
+      >
+        Create trigger with no-code
+      </KeyboardShortcutButton>
+    </>
+  ), [
+    pipelineHasInteractions,
+    setIsCreatingTrigger,
+  ]);
+
   const toolbarEl = useMemo(() => (
     <Toolbar
-      addButtonProps={{
+      addButtonProps={!isCreateDisabled && {
         isLoading: isLoadingCreateNewSchedule,
         label: 'New trigger',
         onClick: () => createNewSchedule({
@@ -258,6 +367,9 @@ function PipelineSchedules({
         type: Object.values(ScheduleTypeEnum),
       }}
       filterValueLabelMapping={{
+        status: Object.values(ScheduleStatusEnum).reduce(
+          (acc, cv) => ({ ...acc, [cv]: capitalize(cv) }), {},
+        ),
         tag: tags.reduce((acc, { uuid }) => ({
           ...acc,
           [uuid]: uuid,
@@ -271,7 +383,8 @@ function PipelineSchedules({
         );
       }}
       query={query}
-      secondaryButtonProps={{
+      resetPageOnFilterApply
+      secondaryButtonProps={!isCreateDisabled && {
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
         label: 'Run @once',
@@ -282,14 +395,18 @@ function PipelineSchedules({
           : showModal,
         tooltip: 'Creates an @once trigger and runs pipeline immediately',
       }}
-      showDivider
-    />
+      showDivider={!isCreateDisabled}
+    >
+      {newTriggerFromInteractionsButtonMemo}
+    </Toolbar>
   ), [
     createNewSchedule,
     createOnceSchedule,
+    isCreateDisabled,
     isLoadingCreateNewSchedule,
     isLoadingCreateOnceSchedule,
     isViewerRole,
+    newTriggerFromInteractionsButtonMemo,
     pipelineOnceSchedulePayload,
     pipelineUUID,
     query,
@@ -299,60 +416,99 @@ function PipelineSchedules({
     variablesOrig,
   ]);
 
-  return (
-    <PipelineDetailPage
-      breadcrumbs={[
+  const breadcrumbs = useMemo(() => {
+    const arr = [];
+
+    if (isCreatingTrigger) {
+      arr.push(...[
         {
           label: () => 'Triggers',
+          onClick: () => setIsCreatingTrigger(false),
         },
-      ]}
-      buildSidekick={buildSidekick}
-      errors={errors}
+        {
+          bold: true,
+          label: () => 'New trigger',
+        },
+      ]);
+    } else {
+      arr.push({
+        label: () => 'Triggers',
+      });
+    }
+
+    return arr;
+  }, [
+    isCreatingTrigger,
+    setIsCreatingTrigger,
+  ]);
+
+  if (isCreatingTrigger) {
+    return (
+      <TriggerEdit
+        creatingWithLimitation
+        errors={errors}
+        onCancel={() => setIsCreatingTrigger(false)}
+        pipeline={dataPipeline?.pipeline}
+        setErrors={setErrors}
+        useCreateScheduleMutation={useCreateScheduleMutation}
+      />
+    );
+  }
+
+  return (
+    <PipelineDetailPage
+      breadcrumbs={breadcrumbs}
+      buildSidekick={!isCreatingTrigger && buildSidekick}
+      errors={errors || triggerErrors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheader={toolbarEl}
+      subheader={!isCreatingTrigger && toolbarEl}
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
-      <Divider light />
+      {!isCreatingTrigger && (
+        <>
+          <Divider light />
 
-      {!dataPipelineSchedules
-        ?
-          <Spacing m={2}>
-            <Spinner inverted />
-          </Spacing>
-        :
-          <>
-            <TriggersTable
-              fetchPipelineSchedules={fetchPipelineSchedules}
-              pipeline={pipeline}
-              pipelineSchedules={pipelineSchedules}
-              pipelineTriggersByName={pipelineTriggersByName}
-              selectedSchedule={selectedSchedule}
-              setErrors={setErrors}
-              setSelectedSchedule={setSelectedSchedule}
-            />
-            <Spacing p={2}>
-              <Paginate
-                maxPages={9}
-                onUpdate={(p) => {
-                  const newPage = Number(p);
-                  const updatedQuery = {
-                    ...q,
-                    page: newPage >= 0 ? newPage : 0,
-                  };
-                  router.push(
-                    '/pipelines/[pipeline]/triggers',
-                    `/pipelines/${pipelineUUID}/triggers?${queryString(updatedQuery)}`,
-                  );
-                }}
-                page={Number(page)}
-                totalPages={Math.ceil(totalTriggers / ROW_LIMIT)}
-              />
-            </Spacing>
-          </>
-      }
+          {!dataPipelineSchedules
+            ?
+              <Spacing m={2}>
+                <Spinner inverted large />
+              </Spacing>
+            :
+              <>
+                <TriggersTable
+                  fetchPipelineSchedules={fetchPipelineSchedules}
+                  pipeline={pipeline}
+                  pipelineSchedules={pipelineSchedules}
+                  pipelineTriggersByName={pipelineTriggersByName}
+                  selectedSchedule={selectedSchedule}
+                  setErrors={setErrors}
+                  setSelectedSchedule={setSelectedSchedule}
+                />
+                <Spacing p={2}>
+                  <Paginate
+                    maxPages={9}
+                    onUpdate={(p) => {
+                      const newPage = Number(p);
+                      const updatedQuery = {
+                        ...q,
+                        page: newPage >= 0 ? newPage : 0,
+                      };
+                      router.push(
+                        '/pipelines/[pipeline]/triggers',
+                        `/pipelines/${pipelineUUID}/triggers?${queryString(updatedQuery)}`,
+                      );
+                    }}
+                    page={Number(page)}
+                    totalPages={Math.ceil(totalTriggers / ROW_LIMIT)}
+                  />
+                </Spacing>
+              </>
+          }
+        </>
+      )}
     </PipelineDetailPage>
   );
 }

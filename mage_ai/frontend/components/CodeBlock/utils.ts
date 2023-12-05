@@ -13,11 +13,13 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
 import { getColorsForBlockType } from './index.style';
 import { goToWithQuery } from '@utils/routing';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
 
 export const getUpstreamBlockUuids = (
   currentBlock: BlockType,
@@ -115,6 +117,11 @@ export const getMoreActionsItems = (
     };
     fetchFileTree: () => void;
     fetchPipeline: () => void;
+    openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+      addon: AddonBlockTypeEnum,
+      blockUUID: string;
+    }) => void;
+    project?: ProjectType;
     savePipelineContent: (payload?: {
       block?: BlockType;
       pipeline?: PipelineType;
@@ -143,6 +150,8 @@ export const getMoreActionsItems = (
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
+
+  const isInteractionsEnabled = !!opts?.project?.features?.[FeatureUUIDEnum.INTERACTIONS];
 
   if (BlockTypeEnum.SCRATCHPAD !== blockType) {
     if (![
@@ -199,6 +208,42 @@ export const getMoreActionsItems = (
       });
 
       if (isDBT && BlockLanguageEnum.SQL === language) {
+        items.unshift(...[
+          {
+            label: () => 'Test model',
+            onClick: () => runBlock({
+              block,
+              runSettings: {
+                test_model: true,
+              },
+            }),
+            tooltip: () => 'Execute command dbt test.',
+            uuid: 'test_model',
+          },
+          {
+            label: () => 'Build model',
+            onClick: () => runBlock({
+              block,
+              runSettings: {
+                build_model: true,
+              },
+            }),
+            tooltip: () => 'Execute command dbt build.',
+            uuid: 'build_model',
+          },
+          {
+            label: () => 'Add upstream models',
+            onClick: () => {
+              updatePipeline({
+                pipeline: {
+                  add_upstream_for_block_uuid: block?.uuid,
+                },
+              });
+            },
+            tooltip: () => 'Add upstream models for this model to the pipeline.',
+            uuid: 'add_upstream_models',
+          },
+        ]);
         if (!metadata?.dbt?.block?.snapshot) {
           items.unshift(...[
             {
@@ -211,41 +256,22 @@ export const getMoreActionsItems = (
               }),
               tooltip: () => 'Execute command dbt run.',
               uuid: 'run_model',
-            },
+            }
+          ]);
+        }
+        if (metadata?.dbt?.block?.snapshot) {
+          items.unshift(...[
             {
-              label: () => 'Test model',
+              label: () => 'Run snapshot',
               onClick: () => runBlock({
                 block,
                 runSettings: {
-                  test_model: true,
+                  run_model: true,
                 },
               }),
-              tooltip: () => 'Execute command dbt test.',
-              uuid: 'test_model',
-            },
-            {
-              label: () => 'Build model',
-              onClick: () => runBlock({
-                block,
-                runSettings: {
-                  build_model: true,
-                },
-              }),
-              tooltip: () => 'Execute command dbt build.',
-              uuid: 'build_model',
-            },
-            {
-              label: () => 'Add upstream models',
-              onClick: () => {
-                updatePipeline({
-                  pipeline: {
-                    add_upstream_for_block_uuid: block?.uuid,
-                  },
-                });
-              },
-              tooltip: () => 'Add upstream models for this model to the pipeline.',
-              uuid: 'add_upstream_models',
-            },
+              tooltip: () => 'Execute command dbt snapshot.',
+              uuid: 'run_model',
+            }
           ]);
         }
       }
@@ -327,6 +353,16 @@ export const getMoreActionsItems = (
         });
       }
     }
+  }
+
+  if (isInteractionsEnabled) {
+    items.push({
+      label: () => 'Add / Edit interactions',
+      onClick: () => {
+        opts?.openSidekickView?.(ViewKeyEnum.INTERACTIONS);
+      },
+      uuid: 'Add interactions',
+    });
   }
 
   items.push({
@@ -471,3 +507,15 @@ export const getBlockColorHexCodeMapping = () => (
     ).accent,
   }), {})
 );
+
+export function calculateOffsetPercentage(
+  heights: number[],
+  totalHeight: number,
+  containerHeight: number,
+): number {
+  const heightsWithValue =
+    heights?.reduce((acc, height: number) => !height ? acc : acc.concat(height), []);
+  const heightLast = heightsWithValue?.[heightsWithValue?.length - 1] || 0;
+
+  return ((Math.min(heightLast, containerHeight) * 0.25) || 0) / totalHeight;
+}
