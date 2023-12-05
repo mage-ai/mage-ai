@@ -511,7 +511,8 @@
             "guides/blocks/custom-blocks",
             "guides/blocks/markdown-blocks",
             "guides/blocks/r-blocks",
-            "guides/blocks/replicate-blocks"
+            "guides/blocks/replicate-blocks",
+            "guides/blocks/detach-blocks"
           ]
         },
         {
