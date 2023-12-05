@@ -10,9 +10,8 @@ from pandas import DataFrame, Series
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.sql import BaseSQL
-from mage_ai.shared.utils import clean_name, get_user_type
 from mage_ai.shared.parsers import encode_complex
-
+from mage_ai.shared.utils import clean_name, get_user_type
 
 QUERY_ROW_LIMIT = 10_000_000
 
