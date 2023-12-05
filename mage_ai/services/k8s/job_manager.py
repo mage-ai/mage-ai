@@ -11,7 +11,6 @@ from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
     KUBE_CONTAINER_NAME,
     KUBE_POD_NAME_ENV_VAR,
-    KUBE_POD_NAMESPACE_ENV_VAR,
 )
 from mage_ai.shared.hash import merge_dict
 
@@ -36,7 +35,7 @@ class JobManager():
 
         self.pod_config = self.core_api_client.read_namespaced_pod(
             name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-            namespace=os.getenv(KUBE_POD_NAMESPACE_ENV_VAR),
+            namespace=self.namespace,
         )
         self.container_name = KUBE_CONTAINER_NAME
 

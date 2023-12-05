@@ -259,9 +259,27 @@ class LoggerManager:
             *[file.to_dict_async(include_content=True) for file in files]
         )
 
-    def output_logs_to_destination(self):
+    def upload_logs(self, key: str, logs: str) -> None:
         """
-        Output logs to the configured destination.
+        Upload logs to the configured destination.
         (Placeholder, this function is not implemented yet.)
+
+        Args:
+            key (str): key to upload to logs to in the destination
+            logs (str): logs to upload
         """
         pass
+
+    def output_logs_to_destination(self) -> None:
+        """
+        Fetch existing logs from the destination if they exist and
+        upload logs to the configured destination.
+        """
+        existing_logs = self.get_logs().get('content')
+
+        new_logs = self.stream.getvalue()
+        if existing_logs:
+            new_logs = existing_logs + '\n' + new_logs
+
+        key = self.get_log_filepath()
+        self.upload_logs(key, new_logs)
