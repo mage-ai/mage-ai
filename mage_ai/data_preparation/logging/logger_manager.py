@@ -273,13 +273,13 @@ class LoggerManager:
     def output_logs_to_destination(self) -> None:
         """
         Fetch existing logs from the destination if they exist and
-        upload logs to the configured destination.
+        upload logs from the stream to the configured destination.
         """
-        existing_logs = self.get_logs().get('content')
+        if self.stream:
+            existing_logs = self.get_logs().get('content')
+            new_logs = self.stream.getvalue()
+            if existing_logs:
+                new_logs = existing_logs + '\n' + new_logs
 
-        new_logs = self.stream.getvalue()
-        if existing_logs:
-            new_logs = existing_logs + '\n' + new_logs
-
-        key = self.get_log_filepath()
-        self.upload_logs(key, new_logs)
+            key = self.get_log_filepath()
+            self.upload_logs(key, new_logs)
