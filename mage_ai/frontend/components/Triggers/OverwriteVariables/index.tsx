@@ -96,8 +96,6 @@ function OverwriteVariables({
     );
   };
 
-  console.log('wtf')
-
   return (
     <>
       {/*<ToggleStyle borderless={borderless}>
