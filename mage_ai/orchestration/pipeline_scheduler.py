@@ -506,75 +506,6 @@ class PipelineScheduler:
                 pass
         return any_block_run_timed_out
 
-    def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
-        """Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
-
-        This method updates the statuses of the block runs based on the pipeline run's block runs.
-        It retrieves the block UUIDs for failed block runs and conditionally failed block runs.
-        It maps the block run statuses to their corresponding block UUIDs.
-
-        The method iterates overthe provided block runs and checks if their dynamic upstream block
-        UUIDs or upstream block UUIDs match the failed or conditionally failed block UUIDs.
-        * If there is a match, the block run's status is updated accordingly.
-        * If no updates are made for a block run, it is added to the list of not updated block runs.
-
-        The method refreshes the pipeline run and continues iterating through block runs until no
-        more updates can be made.
-
-        Args:
-            block_runs (List[BlockRun]): A list of block runs to update.
-
-        Returns:
-            None
-        """
-        failed_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
-                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
-                BlockRun.BlockRunStatus.FAILED,
-            ]
-        )
-        condition_failed_block_uuids = set(
-            b.block_uuid for b in self.pipeline_run.block_runs
-            if b.status in [
-                BlockRun.BlockRunStatus.CONDITION_FAILED,
-            ]
-        )
-
-        statuses = {
-            BlockRun.BlockRunStatus.CONDITION_FAILED: condition_failed_block_uuids,
-            BlockRun.BlockRunStatus.UPSTREAM_FAILED: failed_block_uuids,
-        }
-        not_updated_block_runs = []
-        for block_run in block_runs:
-            updated_status = False
-            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
-                'dynamic_upstream_block_uuids',
-            )
-
-            for status, block_uuids in statuses.items():
-                upstream_block_uuids = []
-                if dynamic_upstream_block_uuids:
-                    upstream_block_uuids = dynamic_upstream_block_uuids
-                else:
-                    block = self.pipeline.get_block(block_run.block_uuid)
-                    if block:
-                        upstream_block_uuids = block.upstream_block_uuids
-                if any(
-                    b in block_uuids
-                    for b in upstream_block_uuids
-                ):
-                    block_run.update(status=status)
-                    updated_status = True
-
-            if not updated_status:
-                not_updated_block_runs.append(block_run)
-
-        self.pipeline_run.refresh()
-        # keep iterating through block runs until no more updates can be made
-        if len(block_runs) != len(not_updated_block_runs):
-            self.__update_block_run_statuses(not_updated_block_runs)
-
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         """Schedule the block runs for execution.
 
@@ -591,7 +522,7 @@ class PipelineScheduler:
         Returns:
             None
         """
-        self.__update_block_run_statuses(self.pipeline_run.initial_block_runs)
+        self.pipeline_run.update_block_run_statuses(self.pipeline_run.initial_block_runs)
         if block_runs is None:
             block_runs_to_schedule = self.pipeline_run.executable_block_runs(
                 allow_blocks_to_fail=self.allow_blocks_to_fail,

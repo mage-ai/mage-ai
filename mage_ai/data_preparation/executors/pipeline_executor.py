@@ -111,6 +111,8 @@ class PipelineExecutor:
             return asyncio.create_task(execute_block())
 
         while not pipeline_run.all_blocks_completed(allow_blocks_to_fail):
+            # Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
+            pipeline_run.update_block_run_statuses(pipeline_run.initial_block_runs)
             executable_block_runs = pipeline_run.executable_block_runs(
                 allow_blocks_to_fail=allow_blocks_to_fail,
             )
