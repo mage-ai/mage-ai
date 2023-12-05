@@ -66,8 +66,7 @@ class AmazonS3(Destination):
 
         # Add _mage_created_at and _mage_updated_at columns
         for r in record_data:
-            record = update_record_with_internal_columns(r['record'])
-            r['record'] = record
+            r['record'] = update_record_with_internal_columns(r['record'])
 
         df = pd.DataFrame([d['record'] for d in record_data])
         column_header_format = self.config.get('column_header_format')
@@ -78,7 +77,7 @@ class AmazonS3(Destination):
             elif column_header_format == 'upper':
                 column_mapping = {col: col.upper() for col in df.columns}
             if column_mapping:
-                df.columns = df.columns.to_series().replace(column_mapping)
+                df = df.rename(columns=column_mapping)
 
         buffer = BytesIO()
         if self.file_type == 'parquet':
