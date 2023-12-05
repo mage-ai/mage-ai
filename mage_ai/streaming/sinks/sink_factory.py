@@ -53,6 +53,10 @@ class SinkFactory:
             from mage_ai.streaming.sinks.postgres import PostgresSink
 
             return PostgresSink(config, **kwargs)
+        elif connector_type == SinkType.SUPABASE_STORAGE:
+            from mage_ai.streaming.sinks.supabase_storage import SupabaseStorageSink
+
+            return SupabaseStorageSink(config, **kwargs)
         elif connector_type in GENERIC_IO_SINK_TYPES:
             from mage_ai.streaming.sinks.generic_io import GenericIOSink
 

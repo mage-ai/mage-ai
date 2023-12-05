@@ -39,6 +39,7 @@ class SinkType(str, Enum):
     POSTGRES = 'postgres'
     REDSHIFT = 'redshift'
     SNOWFLAKE = 'snowflake'
+    SUPABASE_STORAGE = 'supabase_storage'
     TRINO = 'trino'
 
 
