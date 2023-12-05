@@ -1273,7 +1273,6 @@ class Block(DataIntegrationMixin, SparkBlock):
                         from_notebook=from_notebook,
                     )
             else:
-                print('block run outputs cache', block_run_outputs_cache)
                 input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                     input_args,
                     block_run_outputs_cache=block_run_outputs_cache,

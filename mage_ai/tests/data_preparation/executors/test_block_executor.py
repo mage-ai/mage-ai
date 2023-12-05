@@ -99,6 +99,8 @@ class BlockExecutorTest(TestCase):
         self.block_executor._execute.assert_called_once_with(
             analyze_outputs=analyze_outputs,
             block_run_id=None,
+            block_run_outputs_cache=None,
+            cache_block_output_in_memory=False,
             callback_url=callback_url,
             global_vars=global_vars,
             input_from_output=input_from_output,
