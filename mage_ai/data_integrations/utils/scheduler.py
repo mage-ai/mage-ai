@@ -24,7 +24,7 @@ from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
 from mage_ai.data_preparation.models.triggers import ScheduleInterval
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.orchestration.metrics.pipeline_run import calculate_pipeline_run_metrics
+from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
 
@@ -79,11 +79,7 @@ def initialize_state_and_runs(
 
         block_runs = create_block_runs(pipeline_run, logger, variables=variables)
 
-        calculate_pipeline_run_metrics(
-            pipeline_run,
-            logger=logger,
-            logging_tags=tags,
-        )
+        calculate_metrics(pipeline_run, logger=logger, logging_tags=tags)
 
         return block_runs
     except Exception as err:
