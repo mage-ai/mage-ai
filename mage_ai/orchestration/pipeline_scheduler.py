@@ -41,11 +41,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineSchedule,
 )
 from mage_ai.orchestration.job_manager import JobType, job_manager
-from mage_ai.orchestration.metrics.pipeline_run import (
-    calculate_destination_metrics,
-    calculate_pipeline_run_metrics,
-    calculate_source_metrics,
-)
+from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -216,11 +212,7 @@ class PipelineScheduler:
             if self.pipeline_run.all_blocks_completed(self.allow_blocks_to_fail):
                 if PipelineType.INTEGRATION == self.pipeline.type:
                     tags = self.build_tags()
-                    calculate_pipeline_run_metrics(
-                        self.pipeline_run,
-                        logger=self.logger,
-                        logging_tags=tags,
-                    )
+                    calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
                 if self.pipeline_run.any_blocks_failed():
                     self.pipeline_run.update(
@@ -415,11 +407,7 @@ class PipelineScheduler:
                         stream.get('tap_stream_id')
                     )
 
-                calculate_pipeline_run_metrics(
-                    self.pipeline_run,
-                    logger=self.logger,
-                    logging_tags=tags,
-                )
+                calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
     def memory_usage_failure(self, tags: Dict = None) -> None:
         if tags is None:
@@ -437,11 +425,7 @@ class PipelineScheduler:
         )
 
         if PipelineType.INTEGRATION == self.pipeline.type:
-            calculate_pipeline_run_metrics(
-                self.pipeline_run,
-                logger=self.logger,
-                logging_tags=tags,
-            )
+            calculate_metrics(self.pipeline_run, logger=self.logger, logging_tags=tags)
 
     def build_tags(self, **kwargs):
         base_tags = dict(
@@ -989,24 +973,16 @@ def run_integration_stream(
                 else:
                     raise e
             else:
-                tags2 = merge_dict(tags_updated.get('tags', {}), dict(
-                    destination_table=destination_table,
-                    index=index,
-                    stream=tap_stream_id,
-                ))
-                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
-                    calculate_source_metrics(
-                        pipeline_run,
-                        block_run,
+                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
+                        f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+
+                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
+                        destination_table=destination_table,
+                        index=index,
                         stream=tap_stream_id,
-                        logger=pipeline_scheduler.logger,
-                        logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
-                    )
-                elif f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
-                    calculate_destination_metrics(
+                    ))
+                    calculate_metrics(
                         pipeline_run,
-                        block_run,
-                        stream=tap_stream_id,
                         logger=pipeline_scheduler.logger,
                         logging_tags=merge_dict(tags_updated, dict(tags=tags2)),
                     )
