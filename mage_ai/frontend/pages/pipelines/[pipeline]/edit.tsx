@@ -248,6 +248,7 @@ function PipelineDetailPage({
   const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
 
   // Pipeline
+  // eslint-disable-next-line prefer-const
   let pipeline;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
   const {
@@ -354,11 +355,10 @@ function PipelineDetailPage({
   const [sideBySideEnabledState, setSideBySideEnabledState] = useState<boolean>(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_SIDE_BY_SIDE_ENABLED, false),
   );
-  const sideBySideEnabled = useMemo(() => {
-    return !isDataIntegration
-      && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
-      && sideBySideEnabledState;
-  }, [
+  const sideBySideEnabled = useMemo(() => !isDataIntegration
+    && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+    && sideBySideEnabledState,
+  [
     featureEnabled,
     featureUUIDs,
     isDataIntegration,
@@ -435,6 +435,8 @@ function PipelineDetailPage({
       }, ANIMATION_DURATION_CONTENT + 1);
     }
   }, [
+    dispatchEventChanged,
+    dispatchEventChangedOutput,
     localStorageHiddenBlocksKey,
     setHiddenBlocksState,
     sideBySideEnabled,
@@ -469,7 +471,7 @@ function PipelineDetailPage({
   ]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
-  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(Number(utcNowDate({ dateObj: true })));
+  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(moment().utc().unix());
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
   const [showStalePipelineMessageModal, hideStalePipelineMessageModal] = useModal(() => (
@@ -922,9 +924,8 @@ function PipelineDetailPage({
       showStalePipelineMessageModal();
       return;
     }
-    const utcNowDateObj = utcNowDate({ dateObj: true });
     const utcNowDateString = utcNowDate();
-    setPipelineLastSavedState(Number(utcNowDateObj));
+    setPipelineLastSavedState(moment().utc().unix());
 
     const blocksByExtensions = {};
     const blocksByUUID = {};
@@ -1881,14 +1882,14 @@ function PipelineDetailPage({
     return func();
   }, [
     createBlock,
+    featureEnabled,
+    featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW,
     fetchFileTree,
     fetchPipeline,
     isDataIntegration,
     openFile,
     pipeline,
     savePipelineContent,
-    setBlocks,
-    setErrors,
     sideBySideEnabled,
   ]);
 
@@ -3103,6 +3104,7 @@ function PipelineDetailPage({
       );
     }
   }, [
+    kernel,
     mainContainerWidth,
     page,
     pipelineContentTouched,
