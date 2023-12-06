@@ -186,7 +186,7 @@ class Destination(ABC):
     def before_process(self) -> None:   # noqa: B027
         pass
 
-    def after_process(self, **kwargs) -> None:    # noqa: B027
+    def after_process(self) -> None:    # noqa: B027
         pass
 
     def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
