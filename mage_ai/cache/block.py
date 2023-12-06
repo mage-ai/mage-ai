@@ -1,7 +1,7 @@
 import asyncio
 import os
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
@@ -12,10 +12,14 @@ class BlockCache(BaseCache):
     cache_key = CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
 
     @classmethod
-    async def initialize_cache(self, replace: bool = False) -> 'BlockCache':
+    async def initialize_cache(
+        self,
+        replace: bool = False,
+        caches: List[BaseCache] = None,
+    ) -> 'BlockCache':
         cache = self()
         if replace or not cache.exists():
-            await cache.initialize_cache_for_all_pipelines()
+            await cache.initialize_cache_for_all_pipelines(caches=caches)
 
         return cache
 
@@ -138,7 +142,7 @@ class BlockCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    async def initialize_cache_for_all_pipelines(self) -> None:
+    async def initialize_cache_for_all_pipelines(self, caches: List[BaseCache] = None) -> None:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
@@ -157,5 +161,12 @@ class BlockCache(BaseCache):
                 if key not in mapping:
                     mapping[key] = {}
                 mapping[key][pipeline_dict['uuid']] = build_pipeline_dict(pipeline_dict)
+
+        if caches:
+            for cache_class in caches:
+                await cache_class.initialize_cache(
+                    replace=True,
+                    pipelines=pipeline_dicts,
+                )
 
         self.set(self.cache_key, mapping)

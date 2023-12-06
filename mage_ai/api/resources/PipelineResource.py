@@ -1,13 +1,19 @@
 import asyncio
+import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
 from mage_ai.ai.constants import LLMUseCase
-from mage_ai.api.operations.constants import DELETE, DETAIL
+from mage_ai.api.operations.constants import (
+    DELETE,
+    DETAIL,
+    META_KEY_LIMIT,
+    META_KEY_OFFSET,
+)
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
@@ -16,6 +22,7 @@ from mage_ai.authentication.operation_history.utils import (
     record_create_pipeline_async,
     record_detail_pipeline_async,
 )
+from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -55,9 +62,27 @@ class PipelineResource(BaseResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
+        limit = (meta or {}).get(META_KEY_LIMIT, None)
+        if limit is not None:
+            limit = int(limit)
+        offset = (meta or {}).get(META_KEY_OFFSET, 0)
+        if offset is not None:
+            offset = int(offset)
+
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
             include_schedules = include_schedules[0]
+
+        sort_direction = query.get('sort_direction', [False])
+        if sort_direction:
+            sort_direction = sort_direction[0]
+
+        sorts = query.get('sort[]', [])
+        if sorts:
+            new_sorts = []
+            for sort in sorts:
+                new_sorts += sort.split(',')
+            sorts = new_sorts
 
         tags = query.get('tag[]', [])
         if tags:
@@ -116,9 +141,25 @@ class PipelineResource(BaseResource):
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
-        await UsageStatisticLogger().pipelines_impression(lambda: len(pipeline_uuids))
+        total_count = len(pipeline_uuids)
+        await UsageStatisticLogger().pipelines_impression(lambda: total_count)
 
-        async def get_pipeline(uuid):
+        reverse_sort = sort_direction == 'desc'
+        if not sorts:
+            pipeline_uuids = sorted(pipeline_uuids, reverse=reverse_sort)
+
+        offset_limit_applied = False
+        # Offset and limit now. If these filters exist, we must limit and offset after the filter.
+        if not pipeline_types and not pipeline_statuses:
+            if offset:
+                pipeline_uuids = pipeline_uuids[offset:]
+            if limit:
+                pipeline_uuids = pipeline_uuids[:(limit + 1)]
+            offset_limit_applied = True
+
+        cache = await PipelineCache.initialize_cache()
+
+        async def get_pipeline(uuid, cache=cache) -> Tuple:
             try:
                 return await Pipeline.get_async(uuid)
             except Exception as err:
@@ -127,12 +168,40 @@ class PipelineResource(BaseResource):
                     raise Exception(err_message)
                 else:
                     print(err_message)
-                    return None
+                    return (None, False)
 
-        pipelines = await asyncio.gather(
-            *[get_pipeline(uuid) for uuid in pipeline_uuids]
-        )
+        pipeline_uuids_miss = []
+        pipelines = []
+
+        if pipeline_types:
+            for pipeline_dict in cache.get_models(types=pipeline_types):
+                pipelines.append(Pipeline(
+                    pipeline_dict['pipeline']['uuid'],
+                    config=pipeline_dict['pipeline'],
+                ))
+        else:
+            for uuid in pipeline_uuids:
+                pipeline_dict = cache.get_model(dict(uuid=uuid))
+                if pipeline_dict and pipeline_dict.get('pipeline'):
+                    pipelines.append(Pipeline(uuid, config=pipeline_dict['pipeline']))
+                else:
+                    pipeline_uuids_miss.append(uuid)
+
+        if len(pipeline_uuids_miss) >= 1:
+            pipelines += await asyncio.gather(
+                *[get_pipeline(uuid) for uuid in pipeline_uuids_miss]
+            )
+
         pipelines = [p for p in pipelines if p is not None]
+
+        if sorts:
+            pipelines = sorted(
+                pipelines,
+                key=lambda p, sorts=sorts: tuple(
+                    [getattr(p, k) for k in sorts],
+                ),
+                reverse=reverse_sort,
+            )
 
         @safe_db_query
         def query_pipeline_schedules(pipeline_uuids):
@@ -194,11 +263,33 @@ class PipelineResource(BaseResource):
                 if pipeline.uuid in history_by_pipeline_uuid:
                     pipeline.history = history_by_pipeline_uuid.get(pipeline.uuid)
 
-        return self.build_result_set(
-            pipelines,
+        if offset_limit_applied:
+            results = pipelines
+        else:
+            total_count = len(pipelines)
+            results = pipelines
+            if offset:
+                results = results[offset:]
+            if limit:
+                results = results[:(limit + 1)]
+
+        results_size = len(results)
+        has_next = limit and total_count > limit
+        final_end_idx = results_size - 1 if has_next else results_size
+
+        arr = pipelines[0:final_end_idx]
+        result_set = self.build_result_set(
+            arr,
             user,
             **kwargs,
         )
+        result_set.metadata = {
+            'count': total_count,
+            'results': len(arr),
+            'next': has_next,
+        }
+
+        return result_set
 
     @classmethod
     @safe_db_query
@@ -296,7 +387,8 @@ class PipelineResource(BaseResource):
     @classmethod
     @safe_db_query
     async def get_model(self, pk):
-        return await Pipeline.get_async(pk)
+        uuid = urllib.parse.unquote(pk)
+        return await Pipeline.get_async(uuid)
 
     @classmethod
     @safe_db_query
