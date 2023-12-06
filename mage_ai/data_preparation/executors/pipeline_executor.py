@@ -131,7 +131,8 @@ class PipelineExecutor:
             block_run_outputs = await asyncio.gather(*block_run_tasks)
             if self.pipeline.cache_block_output_in_memory:
                 for idx, block_run in enumerate(executable_block_runs):
-                    block_run_outputs_cache[block_run.block_uuid] = block_run_outputs[idx]
+                    block_run_outputs_cache[block_run.block_uuid] = \
+                        block_run_outputs[idx].get('output', [])
 
     def build_tags(self, **kwargs):
         default_tags = dict(

@@ -672,15 +672,6 @@ def fetch_input_variables(
         Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
             upstream block UUIDs.
     """
-    # Getting input variables from cache is not supported for dynamic blocks and data integration
-    # blocks now.
-    if block_run_outputs_cache:
-        return [
-            [block_run_outputs_cache.get(uuid, []) for uuid in upstream_block_uuids],
-            [],
-            upstream_block_uuids,
-        ]
-
     spark = (global_vars or dict()).get('spark')
     upstream_block_uuids_final = []
 
@@ -693,6 +684,7 @@ def fetch_input_variables(
             upstream_block_uuids_final = upstream_block_uuids
     elif pipeline is not None:
         input_vars = [None for i in range(len(upstream_block_uuids))]
+        # A mapping from upstream block UUID to a list of variable names
         input_variables_by_uuid = input_variables(
             pipeline,
             upstream_block_uuids,
@@ -705,6 +697,7 @@ def fetch_input_variables(
             input_args=input_args,
             data_integration_settings_mapping=data_integration_settings_mapping,
         )
+        # Block UUIDs
         keys = input_variables_by_uuid.keys()
         reduce_output_indexes = []
 
@@ -718,8 +711,10 @@ def fetch_input_variables(
                 input_vars[idx] = global_data_product.get_outputs()
                 continue
 
+            # Block output variables for upstream_block_uuid
             variables = input_variables_by_uuid[upstream_block_uuid]
 
+            # Fetch variable values
             if should_reduce:
                 variable_values = [reduce_output_from_block(
                     upstream_block,
@@ -732,19 +727,23 @@ def fetch_input_variables(
                     spark=spark,
                 ) for variable_uuid in variables]
             else:
-                variable_values = [
-                    pipeline.get_block_variable(
-                        upstream_block_uuid,
-                        var,
-                        from_notebook=from_notebook,
-                        global_vars=global_vars,
-                        input_args=input_args,
-                        partition=execution_partition,
-                        raise_exception=True,
-                        spark=spark,
-                    )
-                    for var in variables
-                ]
+                # Getting input variables from cache the cache is not empty
+                if block_run_outputs_cache:
+                    variable_values = block_run_outputs_cache.get(upstream_block_uuid, [])
+                else:
+                    variable_values = [
+                        pipeline.get_block_variable(
+                            upstream_block_uuid,
+                            var,
+                            from_notebook=from_notebook,
+                            global_vars=global_vars,
+                            input_args=input_args,
+                            partition=execution_partition,
+                            raise_exception=True,
+                            spark=spark,
+                        )
+                        for var in variables
+                    ]
 
             upstream_in_dynamic_upstream = False
             if dynamic_upstream_block_uuids:
