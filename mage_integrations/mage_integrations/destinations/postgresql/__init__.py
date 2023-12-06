@@ -4,6 +4,7 @@ from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLCon
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     INTERNAL_COLUMN_CREATED_AT,
+    REPLICATION_METHOD_FULL_REFRESH,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.postgresql.utils import (
@@ -25,6 +26,10 @@ class PostgreSQL(Destination):
     @property
     def quote(self) -> str:
         return '"'
+
+    @property
+    def drop_table(self) -> bool:
+        return False
 
     def full_table_name(self, schema_name: str, table_name: str):
         return f'{self._wrap_with_quotes(schema_name)}.{self._wrap_with_quotes(table_name)}'
@@ -202,6 +207,60 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                     records_inserted += t[0]
 
         return records_inserted, 0
+
+    def after_process(self) -> None:
+        """After executing the _process function AND
+        replication_method is FULL_REFRESH
+        This method will exchange the temporary and production
+        table names, and, if requested, drop the old table.
+        """
+        self.logger.info('Started after process')
+        self.logger.info(f'{self.replication_methods}')  # TODO remove
+        if REPLICATION_METHOD_FULL_REFRESH in self.replication_methods.values():
+            self.logger.info('FULL REFRESH: Altering table names')
+            self._alter_name(
+                table_name=self.config.get(self.TABLE_CONFIG_KEY),
+                schema_name=self.config.get(self.SCHEMA_CONFIG_KEY),
+            )
+            if self.drop_table:
+                self.logger.info('FULL REFRESH: Dropping old table')
+                self._drop_table(
+                    table_name=self.config.get(self.TABLE_CONFIG_KEY),
+                    schema_name=self.config.get(self.SCHEMA_CONFIG_KEY),
+                )
+        else:
+            pass
+
+    def _alter_name(
+            self,
+            table_name: str,
+            schema_name: str,
+    ) -> None:
+        postgres_connection = self.build_connection()
+        connection = postgres_connection.build_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"ALTER TABLE {schema_name}.{table_name} RENAME TO {'old_' + table_name}",
+            )
+            cursor.execute(
+                f"ALTER TABLE {schema_name}.{'temp_' + table_name} RENAME TO {table_name}",
+            )
+        connection.commit()
+        postgres_connection.close_connection(connection)
+
+    def _drop_table(
+            self,
+            table_name: str,
+            schema_name: str,
+    ) -> None:
+        postgres_connection = self.build_connection()
+        connection = postgres_connection.build_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"DROP TABLE {schema_name}.{'old_' + table_name}",
+            )
+        connection.commit()
+        postgres_connection.close_connection(connection)
 
 
 if __name__ == '__main__':
