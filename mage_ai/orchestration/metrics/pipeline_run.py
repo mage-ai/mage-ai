@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
     IntegrationPipeline,
 )
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.shared.hash import dig, merge_dict, set_value
+from mage_ai.shared.hash import merge_dict
 
 KEY_DESTINATION = 'destinations'
 KEY_SOURCE = 'sources'
@@ -138,9 +138,7 @@ def __calculate_block_metrics(
         pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
         logs_arr = block_run.logs['content'].split('\n')
-
         logs_by_uuid = {key: [logs_arr]}
-
         metrics = get_metrics(
             {stream: logs_by_uuid},
             [(key, KEY_TO_METRICS.get(key, []))],
@@ -148,12 +146,29 @@ def __calculate_block_metrics(
 
         existing_metrics = deepcopy(pipeline_run.metrics or {})
 
+        # Each source/destination block calculate metrics for only the block run itself
+        # so we need to add the newly calculated metrics to the existing metrics.
+        updated_block_metrics = existing_metrics.get('blocks', {})
+
+        if stream not in updated_block_metrics:
+            updated_block_metrics[stream] = {}
+
+        if key not in updated_block_metrics[stream]:
+            updated_block_metrics[stream][key] = {}
+
+        for key_metric, value in metrics[stream][key].items():
+            if key_metric not in updated_block_metrics[stream][key]:
+                updated_block_metrics[stream][key][key_metric] = 0
+
+            if isinstance(value, int):
+                updated_block_metrics[stream][key][key_metric] += value
+            else:
+                updated_block_metrics[stream][key][key_metric] = value
+
+        existing_metrics['blocks'] = updated_block_metrics
+
         new_metrics = merge_dict(
-            set_value(
-                existing_metrics,
-                ['blocks', stream, key],
-                dig(metrics, [stream, key]),
-            ),
+            existing_metrics,
             dict(
                 destination=pipeline.destination_uuid,
                 source=pipeline.source_uuid,
@@ -237,9 +252,9 @@ def __calculate_metrics(pipeline_run: PipelineRun) -> Dict:
         )['pipeline']['pipeline']
 
     existing_metrics = pipeline_run.metrics or {}
-    existing_blocks_metrics = existing_metrics.get('blocks', {
-        stream: {} for stream in streams
-    })
+    existing_blocks_metrics = existing_metrics.get(
+        'blocks', {stream: {} for stream in streams}
+    )
 
     pipeline_run.update(
         metrics=dict(
