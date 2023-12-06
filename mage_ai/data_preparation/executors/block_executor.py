@@ -84,6 +84,8 @@ class BlockExecutor:
         self,
         analyze_outputs: bool = False,
         block_run_id: int = None,
+        block_run_outputs_cache: Dict[str, List] = None,
+        cache_block_output_in_memory: bool = False,
         callback_url: Union[str, None] = None,
         global_vars: Union[Dict, None] = None,
         input_from_output: Union[Dict, None] = None,
@@ -105,6 +107,10 @@ class BlockExecutor:
         Args:
             analyze_outputs: Whether to analyze the outputs of the block.
             block_run_id: The ID of the block run.
+            block_run_outputs_cache: block uuid to block outputs mapping. It's used when
+                cache_block_output_in_memory is set to True.
+            cache_block_output_in_memory: Whether to cache the block output in memory. By default,
+                the block output is persisted on disk.
             callback_url: The URL for the callback.
             global_vars: Global variables for the block execution.
             input_from_output: Input from the output of a previous block.
@@ -512,6 +518,8 @@ class BlockExecutor:
                         return self._execute(
                             analyze_outputs=analyze_outputs,
                             block_run_id=block_run_id,
+                            block_run_outputs_cache=block_run_outputs_cache,
+                            cache_block_output_in_memory=cache_block_output_in_memory,
                             callback_url=callback_url,
                             global_vars=global_vars,
                             update_status=update_status,
@@ -620,6 +628,8 @@ class BlockExecutor:
         self,
         analyze_outputs: bool = False,
         block_run_id: int = None,
+        block_run_outputs_cache: Dict[str, List] = None,
+        cache_block_output_in_memory: bool = False,
         callback_url: Union[str, None] = None,
         global_vars: Union[Dict, None] = None,
         update_status: bool = False,
@@ -640,7 +650,11 @@ class BlockExecutor:
 
         Args:
             analyze_outputs: Whether to analyze the outputs of the block.
+            block_run_outputs_cache: block uuid to block outputs mapping. It's used when
+                cache_block_output_in_memory is set to True.
             callback_url: The URL for the callback.
+            cache_block_output_in_memory: Whether to cache the block output in memory. By default,
+                the block output is persisted on disk.
             global_vars: Global variables for the block execution.
             update_status: Whether to update the status of the block execution.
             input_from_output: Input from the output of a previous block.
@@ -659,7 +673,10 @@ class BlockExecutor:
             logging_tags = dict()
 
         extra_options = {}
-        store_variables = True
+        if cache_block_output_in_memory:
+            store_variables = False
+        else:
+            store_variables = True
         is_data_integration = False
 
         if self.project.is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
@@ -957,6 +974,7 @@ class BlockExecutor:
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
+            block_run_outputs_cache=block_run_outputs_cache,
             execution_partition=self.execution_partition,
             global_vars=global_vars,
             logger=self.logger,
@@ -979,6 +997,7 @@ class BlockExecutor:
                 global_vars=global_vars,
                 logger=self.logger,
                 logging_tags=logging_tags,
+                outputs=result if cache_block_output_in_memory else None,
             )
         elif PipelineType.INTEGRATION != self.pipeline.type and \
                 (not is_data_integration or BlockLanguage.PYTHON == self.block.language):
@@ -987,6 +1006,7 @@ class BlockExecutor:
                 global_vars=global_vars,
                 logger=self.logger,
                 logging_tags=logging_tags,
+                outputs=result if cache_block_output_in_memory else None,
                 update_tests=False,
                 dynamic_block_uuid=dynamic_block_uuid,
             )

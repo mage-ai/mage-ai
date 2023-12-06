@@ -89,7 +89,10 @@ class PipelineExecutor:
         if global_vars is None:
             global_vars = dict()
 
-        def create_block_task(block_run: BlockRun) -> asyncio.Task:
+        def create_block_task(
+            block_run: BlockRun,
+            block_run_outputs_cache: Dict[str, List],
+        ) -> asyncio.Task:
             async def execute_block() -> None:
                 executor_kwargs = dict(
                     pipeline=self.pipeline,
@@ -102,13 +105,17 @@ class PipelineExecutor:
                     block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
 
                 block_run.update(**block_run_data)
-                BlockExecutor(**executor_kwargs).execute(
+                return BlockExecutor(**executor_kwargs).execute(
                     block_run_id=block_run.id,
+                    block_run_outputs_cache=block_run_outputs_cache,
+                    cache_block_output_in_memory=self.pipeline.cache_block_output_in_memory,
                     global_vars=global_vars,
                     pipeline_run_id=pipeline_run.id,
                 )
 
             return asyncio.create_task(execute_block())
+
+        block_run_outputs_cache = dict()
 
         while not pipeline_run.all_blocks_completed(allow_blocks_to_fail):
             # Update the statuses of the block runs to CONDITION_FAILED or UPSTREAM_FAILED.
@@ -118,8 +125,14 @@ class PipelineExecutor:
             )
             if not executable_block_runs:
                 return
-            block_run_tasks = [create_block_task(b) for b in executable_block_runs]
-            await asyncio.gather(*block_run_tasks)
+            block_run_tasks = [
+                create_block_task(b, block_run_outputs_cache=block_run_outputs_cache)
+                for b in executable_block_runs]
+            block_run_outputs = await asyncio.gather(*block_run_tasks)
+            if self.pipeline.cache_block_output_in_memory:
+                for idx, block_run in enumerate(executable_block_runs):
+                    block_run_outputs_cache[block_run.block_uuid] = \
+                        block_run_outputs[idx].get('output', [])
 
     def build_tags(self, **kwargs):
         default_tags = dict(

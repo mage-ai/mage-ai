@@ -64,6 +64,8 @@ class Pipeline:
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None, catalog=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
+        # Can only be set True when run_pipeline_in_one_process is True
+        self.cache_block_output_in_memory = False
         self.concurrency_config = dict()
         self.created_at = None
         self.data_integration = None
@@ -507,6 +509,7 @@ class Pipeline:
         self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks') or []
+        self.cache_block_output_in_memory = config.get('cache_block_output_in_memory', False)
         self.callback_configs = config.get('callbacks') or []
         self.concurrency_config = config.get('concurrency_config') or dict()
         self.conditional_configs = config.get('conditionals') or []
@@ -634,6 +637,7 @@ class Pipeline:
             updated_at = updated_at.isoformat()
 
         base = dict(
+            cache_block_output_in_memory=self.cache_block_output_in_memory,
             concurrency_config=self.concurrency_config,
             created_at=self.created_at,
             data_integration=self.data_integration if not exclude_data_integration else None,
@@ -865,6 +869,7 @@ class Pipeline:
                 should_update_block_cache = True
 
         for key in [
+            'cache_block_output_in_memory',
             'data_integration',
             'executor_type',
             'retry_config',

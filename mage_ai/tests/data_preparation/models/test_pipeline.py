@@ -35,6 +35,7 @@ class PipelineTest(DBTestCase):
         pipeline = Pipeline('test_pipeline_2', self.repo_path)
 
         self.assertEqual(pipeline.to_dict(), dict(
+            cache_block_output_in_memory=False,
             concurrency_config=dict(),
             data_integration=None,
             description=None,
@@ -200,6 +201,7 @@ class PipelineTest(DBTestCase):
         pipeline.delete_block(block)
         pipeline = Pipeline('test_pipeline_3', self.repo_path)
         self.assertEqual(pipeline.to_dict(), dict(
+            cache_block_output_in_memory=False,
             concurrency_config=dict(),
             data_integration=None,
             description=None,
@@ -293,6 +295,7 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
+            cache_block_output_in_memory=False,
             concurrency_config=dict(),
             data_integration=None,
             description=None,
@@ -409,6 +412,7 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block7, upstream_block_uuids=['block2', 'block3', 'block6'])
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
+            cache_block_output_in_memory=False,
             concurrency_config=dict(),
             data_integration=None,
             description=None,
@@ -661,6 +665,7 @@ class PipelineTest(DBTestCase):
             self.assertEqual(
                 config_json,
                 dict(
+                    cache_block_output_in_memory=False,
                     concurrency_config=dict(),
                     created_at='2023-08-01 08:08:24+00:00',
                     data_integration=None,

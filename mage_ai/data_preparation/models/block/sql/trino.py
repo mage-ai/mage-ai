@@ -32,8 +32,8 @@ def create_upstream_block_tables(
 
     input_vars, kwargs_vars, upstream_block_uuids = block.fetch_input_variables(
         None,
-        execution_partition,
-        None,
+        execution_partition=execution_partition,
+        global_vars=None,
         dynamic_block_index=dynamic_block_index,
         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )
