@@ -25,6 +25,7 @@ SOURCES = sorted([
     dict(name='Commercetools'),
     dict(name='Couchbase'),
     dict(name='Datadog'),
+    dict(name='Dremio'),
     dict(name='DynamoDB'),
     dict(name='Facebook Ads'),
     dict(name='Freshdesk'),
