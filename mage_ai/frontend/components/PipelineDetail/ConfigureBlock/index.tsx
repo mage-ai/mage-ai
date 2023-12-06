@@ -96,8 +96,9 @@ function ConfigureBlock({
       ...blockAttributes,
       name: blockAttributes?.name || defaultName,
     });
-  }, [blockAttributes, defaultName, onSave]);
-
+    onClose();
+  }, [blockAttributes, defaultName, onClose, onSave]);
+    
   useEffect(() => {
     const handleKeyDown = (event) => {
       event.stopPropagation();
