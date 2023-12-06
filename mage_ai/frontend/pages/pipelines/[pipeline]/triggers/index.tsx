@@ -32,7 +32,6 @@ import TriggerEdit from '@components/Triggers/Edit';
 import Toolbar from '@components/shared/Table/Toolbar';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
-import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { Interactions as InteractionsIcon } from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
@@ -41,7 +40,7 @@ import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { dateFormatLong } from '@utils/date';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
-import { getFormattedGlobalVariables, getFormattedVariables } from '@components/Sidekick/utils';
+import { getFormattedGlobalVariables } from '@components/Sidekick/utils';
 import { getPipelineScheduleApiFilterQuery } from '@components/Triggers/utils';
 import { indexBy, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
@@ -68,7 +67,7 @@ function PipelineSchedules({
   }, {
     revalidateOnFocus: false,
   });
-  const pipeline = useMemo(() => data?.pipeline || pipelineProp, [data]);
+  const pipeline = useMemo(() => data?.pipeline || pipelineProp, [data?.pipeline, pipelineProp]);
 
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [triggerErrors, setTriggerErrors] = useState<ErrorsType>(null);
@@ -305,7 +304,6 @@ function PipelineSchedules({
 
   const {
     data: dataPipelineInteraction,
-    mutate: fetchPipelineInteraction,
   } = api.pipeline_interactions.detail(
     isInteractionsEnabled && pipelineUUID,
     {
@@ -315,7 +313,6 @@ function PipelineSchedules({
 
   const {
     data: dataInteractions,
-    mutate: fetchInteractions,
   } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
 
   const { data: dataPipeline } = api.pipelines.detail(isInteractionsEnabled && pipelineUUID);
@@ -407,19 +404,16 @@ function PipelineSchedules({
     </Toolbar>
   ), [
     createNewSchedule,
-    createOnceSchedule,
     isCreateDisabled,
     isLoadingCreateNewSchedule,
     isLoadingCreateOnceSchedule,
     isViewerRole,
     newTriggerFromInteractionsButtonMemo,
-    pipelineOnceSchedulePayload,
     pipelineUUID,
     query,
     router,
     showModal,
     tags,
-    variablesOrig,
   ]);
 
   const breadcrumbs = useMemo(() => {

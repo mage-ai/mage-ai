@@ -276,6 +276,7 @@ function Toolbar({
     onClickFilterDefaults,
     onFilterApply,
     query,
+    resetPageOnFilterApply,
   ]);
 
   const {

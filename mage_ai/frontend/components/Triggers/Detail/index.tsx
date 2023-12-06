@@ -21,6 +21,7 @@ import PipelineRunType, {
  } from '@interfaces/PipelineRunType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
+  ScheduleIntervalEnum,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
   VARIABLE_BOOKMARK_VALUES_KEY,
@@ -43,16 +44,19 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
   Alphabet,
   CalendarDate,
+  Edit,
   Info,
   Lightning,
+  LightningOff,
   MultiShare,
   MusicNotes,
-  Pause,
+  Once,
   PlugAPI,
   Schedule,
   Sun,
   Switch,
 } from '@oracle/icons';
+import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
 import {
   PADDING_UNITS,
@@ -226,7 +230,7 @@ function TriggerDetail({
           callback: () => {
             fetchPipelineSchedule();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -257,7 +261,24 @@ function TriggerDetail({
           callback: () => {
             fetchPipelineTriggers();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [createPipelineRun]: any = useMutation(
+      api.pipeline_runs.pipeline_schedules.useCreate(pipelineScheduleID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineRuns();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -267,6 +288,11 @@ function TriggerDetail({
   );
 
   const isActive = useMemo(() => ScheduleStatusEnum.ACTIVE === status, [status]);
+  const disabledRunOnce = useMemo(() => !isActive
+    && !(scheduleType === ScheduleTypeEnum.TIME
+      && scheduleInterval === ScheduleIntervalEnum.ONCE),
+    [isActive, scheduleInterval, scheduleType],
+  );
 
   const detailsMemo = useMemo(() => {
     const iconProps = {
@@ -1024,11 +1050,11 @@ function TriggerDetail({
           <Button
             beforeIcon={isActive
               ?
-                <Pause size={2 * UNIT} />
+                <LightningOff size={ICON_SIZE_SMALL} />
               :
                 <Lightning
                   inverted={!isViewerRole}
-                  size={2 * UNIT}
+                  size={ICON_SIZE_SMALL}
                 />
             }
             danger={isActive && !isViewerRole}
@@ -1053,9 +1079,32 @@ function TriggerDetail({
 
           <Spacing mr={PADDING_UNITS} />
 
+          <Button
+            beforeIcon={<Once size={ICON_SIZE_SMALL} />}
+            disabled={disabledRunOnce}
+            onClick={() => createPipelineRun({
+              pipeline_run: {
+                pipeline_schedule_id: pipelineScheduleID,
+                pipeline_uuid: pipelineUUID,
+                variables: scheduleVariables,
+              },
+            })}
+            outline
+            sameColorAsText
+            title={disabledRunOnce
+              ? 'Trigger must be enabled to run@once'
+              : 'Manually run pipeline once immediately'
+            }
+          >
+            Run @once
+          </Button>
+
+          <Spacing mr={PADDING_UNITS} />
+
           {!isViewerRole &&
             <>
               <Button
+                beforeIcon={<Edit size={ICON_SIZE_SMALL} />}
                 linkProps={{
                   as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}/edit`,
                   href: '/pipelines/[pipeline]/triggers/[...slug]',
