@@ -236,6 +236,13 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
     dict(
         block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Weaviate',
+        path='data_loaders/weaviate.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
         description='Fetch data from an API request.',
         language=BlockLanguage.PYTHON,
         name='API',
@@ -600,6 +607,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Qdrant',
         path='data_exporters/qdrant.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Weaviate',
+        path='data_exporters/weaviate.py',
     ),
     # Sensors
     dict(

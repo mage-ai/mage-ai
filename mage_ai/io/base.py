@@ -35,6 +35,7 @@ class DataSource(str, Enum):
     SNOWFLAKE = 'snowflake'
     SPARK = 'spark'
     TRINO = 'trino'
+    WEAVIATE = 'weaviate'
 
 
 class FileFormat(str, Enum):
