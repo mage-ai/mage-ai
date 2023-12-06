@@ -202,8 +202,7 @@ class Destination(BaseDestination):
                 database_name,
                 schema_name,
                 table_name,
-            ] if x]
-            )
+            ] if x])
 
             self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
 
@@ -222,8 +221,22 @@ class Destination(BaseDestination):
                     2. If table does exists, the code generates the same table as it would
                     with a FULL_TABLE method (with a 'temp_' prefix),
                     ensuring the table is fully refreshed.
-                    3. Ensure temp_table exists, so the target can write data to it.
                 """
+                # Check if a temp table already exists
+                # if a table with this name exists, full refresh
+                # can be compromised
+                temp_table_exists = self.does_table_exist(
+                    database_name=database_name,
+                    schema_name=schema_name,
+                    table_name='temp_' + table_name,
+                )
+
+                if temp_table_exists:
+                    raise Exception('Temp table already exists')
+
+                # If not, create a temp table
+                # process_queries method will execute
+                # table creation
                 query_strings += self.build_create_table_commands(
                     database_name=database_name,
                     schema=schema,
@@ -233,17 +246,6 @@ class Destination(BaseDestination):
                     unique_constraints=unique_constraints
                 )
                 self.attempted_create_table = True
-
-                temp_table_exists = self.does_table_exist(
-                    database_name=database_name,
-                    schema_name=schema_name,
-                    table_name='temp_' + table_name,
-                )
-
-                if temp_table_exists:
-                    pass
-                else:
-                    raise Exception('Unable to create temporary table')
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
