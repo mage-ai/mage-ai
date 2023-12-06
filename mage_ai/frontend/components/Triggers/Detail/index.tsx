@@ -1096,7 +1096,7 @@ function TriggerDetail({
               : 'Manually run pipeline once immediately'
             }
           >
-            Run @once
+            Run@once
           </Button>
 
           <Spacing mr={PADDING_UNITS} />

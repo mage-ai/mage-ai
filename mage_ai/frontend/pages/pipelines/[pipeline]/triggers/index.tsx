@@ -394,7 +394,7 @@ function PipelineSchedules({
       secondaryButtonProps={!isCreateDisabled && {
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
-        label: 'Run @once',
+        label: 'Run@once',
         onClick: showModal,
         tooltip: 'Creates an @once trigger and runs pipeline immediately',
       }}
