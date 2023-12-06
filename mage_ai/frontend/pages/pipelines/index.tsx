@@ -15,6 +15,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import Panel from '@oracle/components/Panel';
 import PipelineType, {
   FILTERABLE_PIPELINE_STATUSES,
@@ -27,6 +28,7 @@ import PipelineType, {
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { SortedColumnType } from '@components/shared/Table';
@@ -64,6 +66,7 @@ import {
   setFilters,
   setGroupBys,
 } from '@storage/pipelines';
+import { META_QUERY_KEYS, MetaQueryEnum } from '@api/constants';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import {
@@ -92,7 +95,7 @@ import { filterQuery, queryFromUrl } from '@utils/url';
 import { get, set } from '@storage/localStorage';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
-import { indexBy, sortByKey } from '@utils/array';
+import { indexBy, range, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
@@ -107,7 +110,7 @@ const TAB_RECENT = {
 };
 const TAB_ALL = {
   Icon: PipelineV3,
-  label: () => 'All pipelines',
+  label: (opts) => opts?.count ? `All pipelines › ${opts?.count || 0}` : 'All pipelines',
   uuid: 'all',
 };
 const TABS = [
@@ -129,6 +132,7 @@ function PipelineListPage() {
   const router = useRouter();
   const refButtonTabs = useRef(null);
   const refTable = useRef(null);
+  const refPaginate = useRef(null);
 
   const [buttonTabsHeight, setButtonTabsHeight] = useState<number>(null);
 
@@ -147,6 +151,7 @@ function PipelineListPage() {
     PipelineQueryEnum.STATUS,
     PipelineQueryEnum.TAG,
     PipelineQueryEnum.TYPE,
+    ...META_QUERY_KEYS,
   ]);
 
   useEffect(() => {
@@ -375,13 +380,17 @@ function PipelineListPage() {
 
       if (f) {
         Object.entries(f).forEach(([k, v]) => {
-          filtersQuery[k] = [];
+          if (META_QUERY_KEYS.includes(k)) {
+            filtersQuery[k] = v;
+          } else {
+            filtersQuery[k] = [];
 
-          Object.entries(v).forEach(([k2, v2]) => {
-            if (v2) {
-              filtersQuery[k].push(k2);
-            }
-          });
+            Object.entries(v).forEach(([k2, v2]) => {
+              if (v2) {
+                filtersQuery[k].push(k2);
+              }
+            });
+          }
         });
       }
 
@@ -397,14 +406,19 @@ function PipelineListPage() {
         f[k] = {};
 
         let v2 = v;
-        if (!Array.isArray(v2)) {
-          v2 = [v2];
-        }
 
-        if (v2 && Array.isArray(v2)) {
-          v2?.forEach((v3) => {
-            f[k][v3] = true;
-          });
+        if (META_QUERY_KEYS.includes(k)) {
+          f[k] = v;
+        } else {
+          if (!Array.isArray(v2)) {
+            v2 = [v2];
+          }
+
+          if (v2 && Array.isArray(v2)) {
+            v2?.forEach((v3) => {
+              f[k][v3] = true;
+            });
+          }
         }
       });
 
@@ -1195,6 +1209,7 @@ function PipelineListPage() {
         },
       ]}
       defaultSortColumnIndex={2}
+      disableSort
       getUniqueRowIdentifier={getUniqueRowIdentifier}
       isSelectedRow={(rowIndex: number) => pipelinesSortedInner[rowIndex]?.uuid === selectedPipeline?.uuid}
       localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
@@ -1539,11 +1554,85 @@ function PipelineListPage() {
       selectedTabUUID,
     ]);
 
+  const limitMemo = useMemo(() => {
+    const limit = query?.[MetaQueryEnum.LIMIT];
+
+    return (
+      <FlexContainer alignItems="center">
+        <Text muted small>
+          Per page
+        </Text>
+
+        <Spacing mr={1} />
+
+        <Select
+          compact
+          onChange={e => goToWithQuery({
+            [MetaQueryEnum.LIMIT]: e.target.value,
+          }, {
+            pushHistory: true,
+          })}
+          small
+          value={limit}
+        >
+          {limit && ((limit > (5 * ROW_LIMIT)) || (limit % ROW_LIMIT)) && (
+            <option value={limit}>
+              {limit}
+            </option>
+          )}
+          {range(5).map((i, idx) => {
+            const val = (idx + 1) * ROW_LIMIT;
+
+            return (
+              <option value={val}>
+                {val}
+              </option>
+            );
+          })}
+        </Select>
+      </FlexContainer>
+    );
+  }, [
+    query,
+  ]);
+
+  const paginateMemo = useMemo(() => {
+    const count = data?.metadata?.count || 0;
+    const limit = query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT
+    const offset = query?.[MetaQueryEnum.OFFSET] || 0;
+    const totalPages = Math.ceil(count / limit);
+
+    return (
+      <Spacing p={PADDING_UNITS}>
+        <Paginate
+          maxPages={MAX_PAGES}
+          onUpdate={(p) => {
+            const newPage = Number(p);
+            goToWithQuery({
+              [MetaQueryEnum.OFFSET]: newPage * limit,
+            });
+          }}
+          page={Math.floor(offset / limit)}
+          totalPages={totalPages}
+        />
+      </Spacing>
+    );
+  }, [
+    data,
+    query,
+  ]);
+
   return (
     <Dashboard
       errors={errors}
       setErrors={setErrors}
-      subheaderChildren={toolbarEl}
+      subheaderChildren={(
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          {toolbarEl}
+
+          {limitMemo}
+        </FlexContainer>
+      )}
       title="Pipelines"
       uuid="pipelines/index"
     >
@@ -1563,7 +1652,17 @@ function PipelineListPage() {
             })}
             regularSizeText
             selectedTabUUID={selectedTabUUID}
-            tabs={TABS}
+            tabs={TABS.map(({
+              Icon,
+              label,
+              uuid,
+            }) => ({
+              Icon,
+              label: () => label({
+                count: data?.metadata?.count,
+              }),
+              uuid,
+            }))}
           />
         </Spacing>
       )}
@@ -1587,7 +1686,7 @@ function PipelineListPage() {
         hide={showNoPipelinesForTab}
         includePadding={!!groupByQuery}
         // Height of table = viewport height - (header height + subheader height)
-        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 0)}px)`}
+        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 0) + refPaginate?.current?.getBoundingClientRect?.()?.height}px)`}
       >
         {(!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID)
           && pipelinesTableMemo
@@ -1598,6 +1697,10 @@ function PipelineListPage() {
           && pipelinesFromHistoryTableMemo
         }
       </TableContainerStyle>
+
+      <div ref={refPaginate}>
+        {paginateMemo}
+      </div>
     </Dashboard>
   );
 }

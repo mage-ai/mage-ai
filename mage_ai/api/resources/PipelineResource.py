@@ -13,6 +13,7 @@ from mage_ai.api.operations.constants import (
     DETAIL,
     META_KEY_LIMIT,
     META_KEY_OFFSET,
+    META_KEY_ORDER_BY,
 )
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
@@ -69,20 +70,23 @@ class PipelineResource(BaseResource):
         if offset is not None:
             offset = int(offset)
 
+        sorts = []
+        reverse_sort = False
+        order_by = (meta or {}).get(META_KEY_ORDER_BY, None)
+        if order_by is not None and not isinstance(order_by, list):
+            order_by = [order_by]
+        if order_by:
+            for idx, val in enumerate(order_by):
+                val = val.lower().replace(' ', '_')
+                if val.startswith('-'):
+                    if idx == 0:
+                        reverse_sort = True
+                    val = val[1:]
+                sorts.append(val)
+
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
             include_schedules = include_schedules[0]
-
-        sort_direction = query.get('sort_direction', [False])
-        if sort_direction:
-            sort_direction = sort_direction[0]
-
-        sorts = query.get('sort[]', [])
-        if sorts:
-            new_sorts = []
-            for sort in sorts:
-                new_sorts += sort.split(',')
-            sorts = new_sorts
 
         tags = query.get('tag[]', [])
         if tags:
@@ -144,7 +148,6 @@ class PipelineResource(BaseResource):
         total_count = len(pipeline_uuids)
         await UsageStatisticLogger().pipelines_impression(lambda: total_count)
 
-        reverse_sort = sort_direction == 'desc'
         if not sorts:
             pipeline_uuids = sorted(pipeline_uuids, reverse=reverse_sort)
 
@@ -195,11 +198,22 @@ class PipelineResource(BaseResource):
         pipelines = [p for p in pipelines if p is not None]
 
         if sorts:
+            def _sort_key(p, sorts=sorts, reverse_sort=reverse_sort):
+                bools = []
+                vals = []
+                for k in sorts:
+                    if hasattr(p, k):
+                        val = getattr(p, k)
+                        vals.append(val)
+                        bools.append(val is None if not reverse_sort else val is not None)
+                    else:
+                        bools.append(False)
+
+                return tuple(bools + vals)
+
             pipelines = sorted(
                 pipelines,
-                key=lambda p, sorts=sorts: tuple(
-                    [getattr(p, k) for k in sorts],
-                ),
+                key=_sort_key,
                 reverse=reverse_sort,
             )
 
