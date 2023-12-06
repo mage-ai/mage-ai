@@ -48,7 +48,6 @@ import {
   MultiShare,
   MusicNotes,
   Pause,
-  PlayButtonFilled,
   PlugAPI,
   Schedule,
   Sun,
@@ -78,7 +77,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
-import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -626,7 +625,7 @@ function TriggerDetail({
 
           return (
             <Spacing key={blockUUID} mt={1}>
-              <Spacing px={PADDING_UNITS} pb={1}>
+              <Spacing pb={1} px={PADDING_UNITS}>
                 <Text
                   color={getColorsForBlockType(
                     block?.type,
@@ -643,46 +642,46 @@ function TriggerDetail({
 
               <Divider light />
 
-              {Object.entries(streams || {})?.map(([streamID, keyValues]) => {
-                return (
-                  <div key={streamID}>
-                    <Table
-                      columnFlex={[null, 1]}
-                      rows={[
-                        [
-                          <Text
-                            default
-                            monospace
-                          >
-                            Stream
-                          </Text>,
-                          <Text
-                            monospace
-                            rightAligned
-                          >
-                            {streamID}
-                          </Text>,
-                        ],
-                      ].concat(Object.entries(keyValues || {}).map(([uuid, value]) => [
+              {Object.entries(streams || {})?.map(([streamID, keyValues], idx) => (
+                <div key={streamID}>
+                  <Table
+                    columnFlex={[null, 1]}
+                    rows={[
+                      [
                         <Text
                           default
-                          key={`settings_variable_label_${uuid}`}
+                          key={`stream_title_${idx}`}
                           monospace
                         >
-                          {uuid}
+                          Stream
                         </Text>,
                         <Text
-                          key={`settings_variable_${uuid}`}
+                          key={`stream_id_${idx}`}
                           monospace
                           rightAligned
                         >
-                          {value}
+                          {streamID}
                         </Text>,
-                      ]))}
-                    />
-                  </div>
-                );
-              })}
+                      ],
+                    ].concat(Object.entries(keyValues || {}).map(([uuid, value]) => [
+                      <Text
+                        default
+                        key={`settings_variable_label_${uuid}`}
+                        monospace
+                      >
+                        {uuid}
+                      </Text>,
+                      <Text
+                        key={`settings_variable_${uuid}`}
+                        monospace
+                        rightAligned
+                      >
+                        {value}
+                      </Text>,
+                    ]))}
+                  />
+                </div>
+              ))}
             </Spacing>
           );
         })}
@@ -690,10 +689,8 @@ function TriggerDetail({
     );
   }, [
     blocksMapping,
-    scheduleType,
     scheduleVariables,
     themeContext,
-    variables,
   ]);
 
   const dbtSettingsTable = useMemo(() => {
@@ -1029,7 +1026,7 @@ function TriggerDetail({
               ?
                 <Pause size={2 * UNIT} />
               :
-                <PlayButtonFilled
+                <Lightning
                   inverted={!isViewerRole}
                   size={2 * UNIT}
                 />
@@ -1049,8 +1046,8 @@ function TriggerDetail({
             success={!isActive && !isViewerRole}
           >
             {isActive
-              ? 'Pause trigger'
-              : 'Start trigger'
+              ? 'Disable trigger'
+              : 'Enable trigger'
             }
           </Button>
 
