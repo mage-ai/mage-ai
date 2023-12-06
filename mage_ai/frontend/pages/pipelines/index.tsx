@@ -118,6 +118,9 @@ const TABS = [
   TAB_RECENT,
 ];
 const QUERY_PARAM_TAB = 'tab';
+const NON_ARRAY_QUERY_KEYS = [
+  PipelineQueryEnum.SEARCH,
+];
 
 const sharedOpenButtonProps = {
   borderRadius: `${BORDER_RADIUS_SMALL}px`,
@@ -133,6 +136,7 @@ function PipelineListPage() {
   const refButtonTabs = useRef(null);
   const refTable = useRef(null);
   const refPaginate = useRef(null);
+  const timeout = useRef(null);
 
   const [buttonTabsHeight, setButtonTabsHeight] = useState<number>(null);
 
@@ -140,7 +144,19 @@ function PipelineListPage() {
   const [pipelineRowsSorted, setPipelineRowsSorted] = useState<React.ReactElement[][]>(null);
   const [pipelineRowsSortedFromHistory, setPipelineRowsSortedFromHistory] =
     useState<React.ReactElement[][]>(null);
-  const [searchText, setSearchText] = useState<string>(null);
+  const [searchText, setSearchTextState] = useState<string>(null);
+  const setSearchText = useCallback((searchQuery: string) => {
+    setSearchTextState(searchQuery);
+
+    clearTimeout(timeout.current);
+
+    timeout.current = setTimeout(() => goToWithQuery({
+      [PipelineQueryEnum.SEARCH]: searchQuery,
+    }), 500);
+  }, [
+    setSearchTextState,
+  ]);
+
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
@@ -148,6 +164,7 @@ function PipelineListPage() {
 
   const q = queryFromUrl();
   const query = filterQuery(q, [
+    PipelineQueryEnum.SEARCH,
     PipelineQueryEnum.STATUS,
     PipelineQueryEnum.TAG,
     PipelineQueryEnum.TYPE,
@@ -194,17 +211,18 @@ function PipelineListPage() {
   });
 
   const filterPipelinesBySearchText = useCallback((arr: PipelineType[]): PipelineType[] => {
-    let pipelinesFinal: PipelineType[] = arr || [];
-    if (searchText) {
-      const lowercaseSearchText = searchText.toLowerCase();
-      pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
-         name?.toLowerCase().includes(lowercaseSearchText)
-          || uuid?.toLowerCase().includes(lowercaseSearchText)
-          || description?.toLowerCase().includes(lowercaseSearchText),
-      );
-    }
+    return arr;
+    // let pipelinesFinal: PipelineType[] = arr || [];
+    // if (searchText) {
+    //   const lowercaseSearchText = searchText.toLowerCase();
+    //   pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
+    //      name?.toLowerCase().includes(lowercaseSearchText)
+    //       || uuid?.toLowerCase().includes(lowercaseSearchText)
+    //       || description?.toLowerCase().includes(lowercaseSearchText),
+    //   );
+    // }
 
-    return pipelinesFinal;
+    // return pipelinesFinal;
   }, [
     searchText,
   ]);
@@ -380,7 +398,7 @@ function PipelineListPage() {
 
       if (f) {
         Object.entries(f).forEach(([k, v]) => {
-          if (META_QUERY_KEYS.includes(k)) {
+          if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
             filtersQuery[k] = v;
           } else {
             filtersQuery[k] = [];
@@ -407,7 +425,7 @@ function PipelineListPage() {
 
         let v2 = v;
 
-        if (META_QUERY_KEYS.includes(k)) {
+        if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
           f[k] = v;
         } else {
           if (!Array.isArray(v2)) {
@@ -423,6 +441,10 @@ function PipelineListPage() {
       });
 
       setFilters(f);
+    }
+
+    if (queryFinal?.[PipelineQueryEnum.SEARCH]) {
+      setSearchText(queryFinal?.[PipelineQueryEnum.SEARCH]);
     }
 
     if (!isEmptyObject(queryFinal)) {

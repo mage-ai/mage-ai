@@ -85,9 +85,9 @@ class PipelineCache(BaseCache):
         pipeline,
         added_at: str = None,
     ) -> None:
-        self.update_pipelines([pipeline], added_at)
+        self.update_models([pipeline], added_at)
 
-    def update_many_models(
+    def update_models(
         self,
         pipelines,
         added_at: str = None,

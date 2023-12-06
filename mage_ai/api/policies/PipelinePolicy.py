@@ -146,6 +146,7 @@ PipelinePolicy.allow_query(
 PipelinePolicy.allow_query([
     'from_history_days',
     'include_schedules',
+    'search',
     'status[]',
     'tag[]',
     'type[]',

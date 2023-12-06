@@ -42,7 +42,7 @@ def build_pipeline_dict(
             ) for block in (pipeline.get('blocks') or [])]
     else:
         for key in PIPELINE_KEYS:
-            pipeline_output_dict[key] = getattr(key, pipeline)
+            pipeline_output_dict[key] = getattr(pipeline, key)
 
         if include_details:
             pipeline_output_dict['blocks'] = [{k: getattr(

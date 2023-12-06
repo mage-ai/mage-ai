@@ -88,6 +88,10 @@ class PipelineResource(BaseResource):
         if include_schedules:
             include_schedules = include_schedules[0]
 
+        search_query = query.get('search', [None])
+        if search_query:
+            search_query = search_query[0]
+
         tags = query.get('tag[]', [])
         if tags:
             new_tags = []
@@ -145,6 +149,13 @@ class PipelineResource(BaseResource):
         else:
             pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
+        if search_query:
+            pipeline_uuids = list(filter(
+                lambda x: search_query.lower() in x.lower() or
+                search_query.lower() in x.lower().split(' '),
+                pipeline_uuids,
+            ))
+
         total_count = len(pipeline_uuids)
         await UsageStatisticLogger().pipelines_impression(lambda: total_count)
 
@@ -153,7 +164,7 @@ class PipelineResource(BaseResource):
 
         offset_limit_applied = False
         # Offset and limit now. If these filters exist, we must limit and offset after the filter.
-        if not pipeline_types and not pipeline_statuses:
+        if not sorts and not pipeline_types and not pipeline_statuses:
             if offset:
                 pipeline_uuids = pipeline_uuids[offset:]
             if limit:
@@ -396,6 +407,12 @@ class PipelineResource(BaseResource):
             user=user.id if user else None,
         )
 
+        async def _on_create_callback(resource):
+            cache = await PipelineCache.initialize_cache()
+            cache.add_model(resource.model)
+
+        self.on_create_callback = _on_create_callback
+
         return self(pipeline, user, **kwargs)
 
     @classmethod
@@ -438,7 +455,12 @@ class PipelineResource(BaseResource):
         return self(pipeline, user, **kwargs)
 
     @safe_db_query
-    def delete(self, **kwargs):
+    async def delete(self, **kwargs):
+        async def _on_delete_callback(resource):
+            cache = await PipelineCache.initialize_cache()
+            cache.remove_model(resource.model)
+
+        self.on_delete_callback = _on_delete_callback
         return self.model.delete()
 
     @safe_db_query
@@ -633,7 +655,7 @@ class PipelineResource(BaseResource):
         status = payload.get('status')
         pipeline_uuid = self.model.uuid
 
-        def _update_callback(resource):
+        async def _update_callback(resource):
             if status:
                 pipeline_schedule_id = payload.get('pipeline_schedule_id')
                 pipeline_runs = payload.get('pipeline_runs')
@@ -653,6 +675,9 @@ class PipelineResource(BaseResource):
                     retry_pipeline_runs(pipeline_runs)
                 elif status == 'retry_incomplete_block_runs':
                     retry_incomplete_block_runs(pipeline_uuid)
+
+            cache = await PipelineCache.initialize_cache()
+            cache.update_model(resource.model)
 
         self.on_update_callback = _update_callback
 
