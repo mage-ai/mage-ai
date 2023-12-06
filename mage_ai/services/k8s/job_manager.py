@@ -36,7 +36,7 @@ class JobManager():
 
         self.pod_config = self.core_api_client.read_namespaced_pod(
             name=os.getenv(KUBE_POD_NAME_ENV_VAR),
-            namespace=os.getenv(KUBE_POD_NAMESPACE_ENV_VAR),
+            namespace=os.getenv(KUBE_POD_NAMESPACE_ENV_VAR, self.namespace),
         )
         self.container_name = KUBE_CONTAINER_NAME
 
