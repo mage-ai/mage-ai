@@ -32,6 +32,7 @@ Alternatively, instead of using `password` and `user`, you can use the following
 | Key | Description | Sample value
 | --- | --- | --- |
 | `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
+| `allow_reserved_words` | If `true`, Mage will ignore SQL reserved words. Default is `false`| `true`, `false`|
 <br />
 
 ## Grant permissions

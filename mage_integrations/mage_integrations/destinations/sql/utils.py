@@ -17,9 +17,13 @@ from mage_integrations.destinations.utils import (
 )
 
 
-def clean_column_name(col, lower_case: bool = True):
+def clean_column_name(
+        col,
+        lower_case: bool = True,
+        allow_reserved_words: bool = False
+):
     col_new = clean_column_name_orig(col, lower_case=lower_case)
-    if col_new.upper() in SQL_RESERVED_WORDS_SUBSET:
+    if allow_reserved_words is False and col_new.upper() in SQL_RESERVED_WORDS_SUBSET:
         col_new = f'_{col_new}'
     return col_new
 
