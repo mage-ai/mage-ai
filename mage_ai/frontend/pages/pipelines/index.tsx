@@ -103,6 +103,7 @@ import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils'
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 import { initiateDownload } from '@utils/downloads';
+import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 
 const TAB_RECENT = {
   Icon: Schedule,
@@ -633,8 +634,10 @@ function PipelineListPage() {
   });
 
   const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
-    <>
-    </>
+    <UploadPipeline
+      fetchPipelines={fetchPipelines}
+      onCancel={hideImportPipelineModal}
+    />
   ), {
   }, [
     fetchPipelines,
