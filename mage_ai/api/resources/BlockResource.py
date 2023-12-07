@@ -127,9 +127,21 @@ class BlockResource(GenericResource):
                         uuids=[],
                     )
 
+                metrics = block_run.metrics
+
                 # Handle dynamic blocks and data integration blocks
                 block = pipeline.get_block(block_run_block_uuid)
                 if not block:
+                    if metrics.get('hook'):
+                        block_dicts_by_uuid[block_run_block_uuid] = dict(
+                            configuration=metrics.get('hook_variables'),
+                            downstream_blocks=metrics.get('downstream_blocks') or [],
+                            tags=[
+                                'global hook',
+                            ],
+                            upstream_blocks=[],
+                            uuid=block_run_block_uuid,
+                        )
                     continue
 
                 if block.uuid not in block_count_by_base_uuid:
@@ -141,7 +153,6 @@ class BlockResource(GenericResource):
                     block_dict['tags'] = []
                 block_dict['uuid'] = block_run_block_uuid
 
-                metrics = block_run.metrics
                 if metrics and block.is_data_integration():
                     child = metrics.get('child')
                     controller = metrics.get('controller')
@@ -293,6 +304,11 @@ class BlockResource(GenericResource):
                     block_dict['description'] = block.replicated_block
 
                 block_dict['tags'] += block.tags()
+
+                if metrics and metrics.get('upstream_blocks'):
+                    block_dict['upstream_blocks'] = (block_dict.get('upstream_blocks') or []) + (
+                        metrics.get('upstream_blocks') or []
+                    )
 
                 block_dicts_by_uuid[block_run_block_uuid] = block_dict
 

@@ -112,8 +112,6 @@ function RunPipelinePopup({
     tabs,
   ]);
 
-  console.log(tabs)
-
   return (
     <Panel
       noPadding

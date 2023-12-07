@@ -1084,7 +1084,7 @@ def run_block(
     block_uuid = block_run.block_uuid
     block = pipeline.get_block(block_uuid)
 
-    if retry_config is None:
+    if block and retry_config is None:
         retry_config = merge_dict(
             get_repo_config(get_repo_path()).retry_config or dict(),
             block.retry_config or dict(),

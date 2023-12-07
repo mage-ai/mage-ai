@@ -37,6 +37,7 @@ from mage_ai.data_preparation.models.block.utils import (
 )
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
+    BlockType,
     ExecutorType,
     PipelineType,
 )
@@ -861,9 +862,22 @@ class PipelineRun(BaseModel):
                     completed = all(uuid in completed_block_uuids
                                     for uuid in uuids_to_check)
             else:
-                block = pipeline.get_block(block_run.block_uuid)
-
                 metrics = block_run.metrics
+
+                block = pipeline.get_block(block_run.block_uuid)
+                if not block and metrics.get('hook'):
+                    from mage_ai.data_preparation.models.block.hook.block import (
+                        HookBlock,
+                    )
+                    from mage_ai.data_preparation.models.global_hooks.models import Hook
+
+                    hook = Hook.load(**(metrics.get('hook') or {}))
+                    block = HookBlock(
+                        hook.uuid,
+                        hook.uuid,
+                        BlockType.HOOK,
+                        hook=hook,
+                    )
 
                 if metrics and block and block.is_data_integration():
                     if metrics.get('original'):
@@ -1121,6 +1135,16 @@ class PipelineRun(BaseModel):
                 ))
 
             block_arr.append((block_uuid, create_options))
+
+        from mage_ai.data_preparation.models.global_hooks.pipelines import (
+            attach_global_hook_execution,
+        )
+
+        block_arr = attach_global_hook_execution(
+            self,
+            pipeline,
+            block_arr,
+        )
 
         return [self.create_block_run(block_uuid, **options) for block_uuid, options in block_arr]
 

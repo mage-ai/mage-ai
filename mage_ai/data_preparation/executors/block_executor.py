@@ -133,8 +133,8 @@ class BlockExecutor:
         if self.project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS) and not self.block:
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
             if block_run and block_run.metrics and block_run.metrics.get('hook'):
+                from mage_ai.data_preparation.models.block.hook.block import HookBlock
                 from mage_ai.data_preparation.models.global_hooks.models import Hook
-                from mage_ai.data_preparation.models.hook.block import HookBlock
 
                 hook = Hook.load(**(block_run.metrics.get('hook') or {}))
                 self.block = HookBlock(
@@ -667,6 +667,7 @@ class BlockExecutor:
         block_run_dicts: List[str] = None,
         **kwargs,
     ) -> Dict:
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', self.block)
         """
         Execute the block.
 

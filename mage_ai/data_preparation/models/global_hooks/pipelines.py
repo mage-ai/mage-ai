@@ -67,15 +67,25 @@ def attach_global_hook_execution(
             arr.append((
                 block_run_block_uuid,
                 dict(
-                    downstream_blocks=[br.block_uuid for br in root_block_runs],
-                    hook=hook.to_dict(include_all=True),
-                    hook_variables=hook_variables,
+                    metrics=dict(
+                        downstream_blocks=[tup[0] for tup in root_block_runs],
+                        hook=hook.to_dict(include_all=True),
+                        hook_variables=hook_variables,
+                    ),
                 ),
             ))
 
         for block_uuid, create_options in root_block_runs:
-            arr.append((block_uuid), merge_dict(create_options, dict(
-                upstream_blocks=hook_block_run_block_uuids,
-            )))
+            arr.append((
+                block_uuid,
+                merge_dict(
+                    create_options,
+                    dict(
+                        metrics=dict(
+                            upstream_blocks=hook_block_run_block_uuids,
+                        ),
+                    ),
+                ),
+            ))
 
     return arr
