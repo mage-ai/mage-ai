@@ -632,6 +632,17 @@ function PipelineListPage() {
     uuid: 'rename_pipeline_and_save',
   });
 
+  const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
+    <>
+    </>
+  ), {
+  }, [
+    fetchPipelines,
+  ], {
+    background: true,
+    uuid: 'upload_pipeline',
+  });
+
   const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
     <ErrorProvider>
       <BrowseTemplates
@@ -735,6 +746,7 @@ function PipelineListPage() {
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showImportPipelineModal,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -754,6 +766,7 @@ function PipelineListPage() {
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showImportPipelineModal,
   ]);
 
   const { data: dataTags } = api.tags.list();

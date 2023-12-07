@@ -257,6 +257,17 @@ function OverviewPage() {
     uuid: 'browse_templates',
   });
 
+  const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
+    <>
+    </>
+  ), {
+  }, [
+    ,
+  ], {
+    background: true,
+    uuid: 'import_pipeline',
+  });
+
   const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
     cancelButtonText,
     header,
@@ -334,6 +345,7 @@ function OverviewPage() {
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      showImportPipelineModal,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -353,6 +365,7 @@ function OverviewPage() {
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,
+    showImportPipelineModal,
   ]);
 
   const addButtonEl = useMemo(() => (
