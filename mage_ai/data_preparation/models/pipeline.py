@@ -1,9 +1,11 @@
 import asyncio
 import datetime
-from io import BytesIO
 import json
 import os
 import shutil
+import tempfile
+import zipfile
+from io import BytesIO
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import aiofiles
@@ -33,7 +35,12 @@ from mage_ai.data_preparation.models.constants import (
     ExecutorType,
     PipelineType,
 )
-from mage_ai.data_preparation.models.errors import FileWriteError, InvalidPipelineZipError, PipelineZipTooLargeError, SerializationError
+from mage_ai.data_preparation.models.errors import (
+    FileWriteError,
+    InvalidPipelineZipError,
+    PipelineZipTooLargeError,
+    SerializationError,
+)
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.models import PipelineSettings
 from mage_ai.data_preparation.models.project import Project
@@ -246,7 +253,11 @@ class Pipeline:
             if config_zip_path is None or not os.path.exists(config_zip_path):
                 raise InvalidPipelineZipError
 
-            p_files, conf_dest_path, p_name = self.__update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir)
+            p_files, conf_dest_path, p_name = self.__update_pipeline_yaml(
+                config_zip_path,
+                overwrite,
+                tmp_dir
+            )
 
             # write all files in bulk
             for source, destination in p_files:
@@ -303,7 +314,7 @@ class Pipeline:
             duplicate_pipeline_uuid,
             repo_path=duplicate_pipeline.repo_path,
         )
-    
+
     @classmethod
     def exists(self, uuid, repo_path: str = None):
         return os.path.exists(
@@ -1240,7 +1251,7 @@ class Pipeline:
                     cache.remove_pipeline(tag_uuid, old_uuid, self.repo_path)
                 cache.add_pipeline(tag_uuid, self)
 
-    # updates pipeline yaml if the import process generates new names for the pipeline itself or for included blocks
+    # Updates pipeline YAML for new pipeline or block names from the import process
     # compiles list of files to be written
     # also returns the new pipeline name and the config destination path
     def __update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir):
@@ -2098,7 +2109,7 @@ class Pipeline:
                     f'Pipeline is invalid: duplicate blocks with uuid {uuid}')
             check_block_uuids.add(uuid)
 
-    # Searches for a file with the given name in the specified directory (root_dir) and its subdirectories.
+    # Searches for a file with the specified name in the provided directory and its subdirectories.
     # Returns str, the full path to the found file, or None if the file is not found.
     def __find_pipeline_file(self, root_dir, file_name, folder=''):
         file_path = os.path.join(root_dir, file_name)
@@ -2106,9 +2117,12 @@ class Pipeline:
         if not os.path.exists(file_path):
             walk_start = os.path.join(root_dir, folder)
             file_gen = (os.path.join(root, file_name) for root, _, _ in os.walk(walk_start))
-            file_path = next((potential_path for potential_path in file_gen if os.path.exists(potential_path)), None)
-
+            file_path = next(
+                (potential_path for potential_path in file_gen if os.path.exists(potential_path)),
+                None
+            )
         return file_path
+
 
 class StackFrame:
     def __init__(self, block):
