@@ -24,6 +24,7 @@ import {
   SortQueryEnum,
   getTableRowUuid,
 } from './constants';
+import { MetaQueryEnum } from '@api/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
 import {
@@ -77,6 +78,7 @@ type TableProps = {
   columns?: ColumnType[];
   compact?: boolean;
   defaultSortColumnIndex?: number;
+  disableSort?: boolean;
   getObjectAtRowIndex?: (rowIndex: number) => any;
   getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
@@ -124,6 +126,7 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
+  disableSort,
   getObjectAtRowIndex,
   getUUIDFromRow,
   getUniqueRowIdentifier,
@@ -279,7 +282,7 @@ function Table({
     rightClickMenuWidth,
   ]);
 
-  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn)
+  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn && !disableSort)
     ?
       sortByKey(
         rows,
@@ -315,6 +318,7 @@ function Table({
     : rows
   ), [
     defaultSortColumnIndex,
+    disableSort,
     getUUIDFromRow,
     rows,
     setRowsSorted,
@@ -358,7 +362,10 @@ function Table({
         set(localStorageKeySortDirection, sortDirection);
       }
 
+      const column = columns?.[sortColIdx]?.uuid;
+
       goToWithQuery({
+        [MetaQueryEnum.ORDER_BY]: `${sortedColumnDirection === SortDirectionEnum.DESC ? '-' : ''}${column}`,
         [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
         [SortQueryEnum.SORT_DIRECTION]: sortDirection,
       }, {
@@ -366,6 +373,7 @@ function Table({
       });
     }
   }, [
+    columns,
     defaultSortColumnIndex,
     localStorageKeySortColIdx,
     localStorageKeySortDirection,

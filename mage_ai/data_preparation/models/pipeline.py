@@ -12,6 +12,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
@@ -837,6 +838,9 @@ class Pipeline:
             should_update_block_cache = True
             should_update_tag_cache = True
 
+            cache = PipelineCache()
+            cache.move_model(dict(uuid=new_uuid), dict(uuid=old_uuid))
+
         should_save = False
 
         if 'extensions' in data:
@@ -1590,7 +1594,9 @@ class Pipeline:
             if block.type == BlockType.SCRATCHPAD:
                 self.delete_block(block)
                 os.remove(block.file_path)
-        shutil.rmtree(self.dir_path)
+
+        if os.path.exists(self.dir_path):
+            shutil.rmtree(self.dir_path)
 
         # Delete secret directory when deleting pipeline
         try:

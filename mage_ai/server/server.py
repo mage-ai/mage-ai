@@ -21,6 +21,7 @@ from tornado.options import options
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.cluster_manager.manage import check_auto_termination
@@ -516,8 +517,12 @@ async def main(
     if REQUIRE_USER_PERMISSIONS:
         logger.info('User permissions requirement is enabled.')
 
-    logger.info('Initializing block cache.')
-    await BlockCache.initialize_cache(replace=True)
+    try:
+        logger.info('Initializing block cache.')
+        logger.info('Initializing pipeline cache.')
+        await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
+    except Exception as err:
+        print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
 
     logger.info('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)

@@ -241,7 +241,9 @@ class BaseResource(Resource, ResultSetMixIn):
                 res = await res
 
             if self.on_delete_callback:
-                self.on_delete_callback(resource=res)
+                callback = self.on_delete_callback(resource=self)
+                if callback and inspect.isawaitable(callback):
+                    await callback
 
             return res
         except Exception as err:
@@ -260,7 +262,9 @@ class BaseResource(Resource, ResultSetMixIn):
                 res = await res
 
             if self.on_update_callback:
-                self.on_update_callback(resource=res)
+                callback = self.on_update_callback(resource=res)
+                if callback and inspect.isawaitable(callback):
+                    await callback
 
             return res
         except Exception as err:

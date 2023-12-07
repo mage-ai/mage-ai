@@ -15,6 +15,7 @@ FILE_KEY_NAME = 'file'
 META_KEY_FORMAT = '_format'
 META_KEY_LIMIT = '_limit'
 META_KEY_OFFSET = '_offset'
+META_KEY_ORDER_BY = '_order_by[]'
 
 COOKIE_PREFIX = '__COOKIE__'
 
