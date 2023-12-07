@@ -6,6 +6,11 @@ from mage_ai.api.utils import get_query_timestamps
 from mage_ai.cache.tag import TagCache
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+)
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
@@ -258,6 +263,18 @@ class PipelineRunResource(DatabaseResource):
             pipeline.type,
             payload,
         )
+
+        def _create_callback(resource):
+            schedule = PipelineSchedule.get(
+                resource.pipeline_schedule_id,
+            )
+            if schedule and \
+                schedule.status == ScheduleStatus.INACTIVE and \
+                schedule.schedule_type == ScheduleType.TIME and \
+                    schedule.schedule_interval == ScheduleInterval.ONCE:
+                schedule.update(status=ScheduleStatus.ACTIVE)
+
+        self.on_create_callback = _create_callback
 
         return super().create(configured_payload, user, **kwargs)
 
