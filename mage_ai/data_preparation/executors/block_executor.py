@@ -673,7 +673,6 @@ class BlockExecutor:
         block_run_dicts: List[str] = None,
         **kwargs,
     ) -> Dict:
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', self.block)
         """
         Execute the block.
 

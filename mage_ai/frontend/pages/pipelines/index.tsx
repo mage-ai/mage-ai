@@ -1243,7 +1243,6 @@ function PipelineListPage() {
         },
       ]}
       defaultSortColumnIndex={2}
-      disableSort
       getUniqueRowIdentifier={getUniqueRowIdentifier}
       isSelectedRow={(rowIndex: number) => pipelinesSortedInner[rowIndex]?.uuid === selectedPipeline?.uuid}
       localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
