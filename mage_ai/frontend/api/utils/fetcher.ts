@@ -62,10 +62,10 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
         type,
       } = file;
       const formData = new FormData();
-      const key: string = Object.keys(body).filter(k => k !== 'file')[0];
+      const bodyWithoutFile = Object.fromEntries(Object.entries(body).filter(([k]) => k !== 'file'));
       const jsonRootBody = JSON.stringify({
         api_key: API_KEY,
-        [key]: body[key],
+        ...bodyWithoutFile,
       });
       formData.set(
         'json_root_body',
