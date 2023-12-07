@@ -78,6 +78,7 @@ class BaseOperation():
         presented_init = None
         metadata = None
         result = None
+        resource_parent = None
 
         resource_key = 'resource'
         if LIST == self.action:
@@ -93,7 +94,6 @@ class BaseOperation():
             if isinstance(result, ResultSet):
                 metadata = result.metadata
 
-            resource_parent = None
             if result:
                 if isinstance(result, list) or isinstance(result, ResultSet):
                     sample = result[0]
