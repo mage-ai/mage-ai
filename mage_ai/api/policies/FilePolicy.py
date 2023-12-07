@@ -42,6 +42,7 @@ FilePolicy.allow_write([
     'file',
     'name',
     'overwrite',
+    'pipeline_zip',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
