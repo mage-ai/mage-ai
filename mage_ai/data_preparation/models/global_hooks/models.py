@@ -226,7 +226,11 @@ class Hook(BaseDataClass):
 
         return self._pipeline
 
-    def get_and_set_output(self, pipeline_run: PipelineRun = None) -> Dict:
+    def get_and_set_output(
+        self,
+        pipeline_run: PipelineRun = None,
+        resource_parent_type: str = None,
+    ) -> Dict:
         self.output = {}
 
         if not self.pipeline or not self.output_settings:
@@ -327,7 +331,11 @@ class Hook(BaseDataClass):
 
                     self.output = set_value(self.output, keys, output_acc)
 
-        self.output = extract_valid_data(self.resource_type, self.output or {})
+        self.output = extract_valid_data(
+            self.resource_type,
+            self.output or {},
+            resource_parent_type=resource_parent_type,
+        )
 
         return self.output
 
@@ -337,7 +345,9 @@ class Hook(BaseDataClass):
         error_on_failure: bool = True,
         poll_timeout: int = None,
         resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
         resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
         should_schedule: bool = False,
         user: Dict = None,
         with_trigger: bool = False,
@@ -355,10 +365,12 @@ class Hook(BaseDataClass):
                 query=kwargs.get('query'),
                 resource=kwargs.get('resource'),
                 resource_id=resource_id,
+                resource_parent=resource_parent,
                 resource_parent_id=resource_parent_id,
+                resource_parent_type=resource_parent_type,
                 resources=kwargs.get('resources'),
                 user=user,
-            ))
+            ), resource_parent_type=resource_parent_type)
             variables = merge_dict(
                 self.pipeline_settings.get('variables') or {},
                 merge_dict(
@@ -423,7 +435,9 @@ class Hook(BaseDataClass):
         query: Dict = None,
         resource: Dict = None,
         resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
         resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
         resources: Dict = None,
         user: Dict = None,
     ) -> bool:
@@ -451,7 +465,9 @@ class Hook(BaseDataClass):
             query=query,
             resource=resource,
             resource_id=resource_id,
+            resource_parent=resource_parent,
             resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
             resources=resources,
             user=user,
         ):
@@ -514,7 +530,9 @@ class Hook(BaseDataClass):
         query: Dict = None,
         resource: Dict = None,
         resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
         resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
         resources: Dict = None,
         user: Dict = None,
     ) -> bool:
@@ -531,7 +549,9 @@ class Hook(BaseDataClass):
             query=query,
             resource=resource,
             resource_id=resource_id,
+            resource_parent=resource_parent,
             resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
             resources=resources,
             user=user,
         )
@@ -655,7 +675,7 @@ def run_hooks(args_arrays: List[List]) -> List[Dict]:
         hook_dict, kwargs = args_array
         hook = Hook.load(**hook_dict)
         pipeline_run = hook.run(**kwargs)
-        hook.get_and_set_output(pipeline_run=pipeline_run)
+        hook.get_and_set_output(pipeline_run=pipeline_run, **kwargs)
         arr.append(hook.to_dict(include_run_data=True))
 
     return arr
@@ -845,7 +865,9 @@ class GlobalHooks(BaseDataClass):
         query: Dict = None,
         resource: Dict = None,
         resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
         resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
         resources: List[Dict] = None,
         user: Dict = None,
     ) -> List[Hook]:
@@ -861,7 +883,9 @@ class GlobalHooks(BaseDataClass):
             query=query,
             resource=resource,
             resource_id=resource_id,
+            resource_parent=resource_parent,
             resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
             resource_type=resource_type,
             resources=resources,
             stage=stage,
@@ -880,7 +904,9 @@ class GlobalHooks(BaseDataClass):
                 query=query,
                 resource=resource,
                 resource_id=resource_id,
+                resource_parent=resource_parent,
                 resource_parent_id=resource_parent_id,
+                resource_parent_type=resource_parent_type,
                 resources=resources,
                 user=user,
             )
@@ -930,7 +956,9 @@ class GlobalHooks(BaseDataClass):
         query: Dict = None,
         resource: Dict = None,
         resource_id: Union[int, str] = None,
+        resource_parent: Dict = None,
         resource_parent_id: Union[int, str] = None,
+        resource_parent_type: str = None,
         resources: List[Dict] = None,
         user: Dict = None,
     ) -> List[Hook]:
@@ -947,7 +975,9 @@ class GlobalHooks(BaseDataClass):
             query=query,
             resource=resource,
             resource_id=resource_id,
+            resource_parent=resource_parent,
             resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
             resources=resources,
             user=user,
         )
@@ -964,7 +994,9 @@ class GlobalHooks(BaseDataClass):
             query=query,
             resource=resource,
             resource_id=resource_id,
+            resource_parent=resource_parent,
             resource_parent_id=resource_parent_id,
+            resource_parent_type=resource_parent_type,
             resources=resources,
             user=user,
         )

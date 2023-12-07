@@ -153,6 +153,9 @@ class HookTest(GlobalHooksMixin):
                 conditions=[HookCondition.FAILURE],
                 operation_resource=operation_resource,
                 operation_types=operation_types,
+                resource_parent=dict(fire=5),
+                resource_parent_id=3,
+                resource_parent_type=EntityName.User,
                 resource_type=resource_type,
                 stage=HookStage.BEFORE,
             ))
@@ -167,7 +170,9 @@ class HookTest(GlobalHooksMixin):
                 query=None,
                 resource=None,
                 resource_id=None,
-                resource_parent_id=None,
+                resource_parent=dict(fire=5),
+                resource_parent_id=3,
+                resource_parent_type=EntityName.User,
                 resources=None,
                 user=None,
             )
@@ -436,7 +441,13 @@ class HookTest(GlobalHooksMixin):
             hook.output = dict(payload=dict(water=uuid.uuid4().hex))
             hook.status = HookStatus.load(error=None, strategy=HookStrategy.CONTINUE)
 
-        kwargs = dict(fire=uuid.uuid4().hex)
+        kwargs = dict(
+            fire=uuid.uuid4().hex,
+            resource_parent=dict(fire=5),
+            resource_parent_id=3,
+            resource_parent_type=EntityName.User,
+        )
+
         hook1, hook2, hook3, hook4 = hooks
 
         def _load(hooks=hooks, **hook_dict) -> Hook:
@@ -514,6 +525,10 @@ class HookTest(GlobalHooksMixin):
                                             ]:
                                                 mock_func.assert_called_once_with(
                                                     pipeline_run=pipeline_run,
+                                                    fire=kwargs['fire'],
+                                                    resource_parent=dict(fire=5),
+                                                    resource_parent_id=3,
+                                                    resource_parent_type=EntityName.User,
                                                 )
 
     async def test_get_and_set_output_with_no_pipeline_or_output_settings(self):

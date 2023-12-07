@@ -78,6 +78,7 @@ class BaseOperation():
         presented_init = None
         metadata = None
         result = None
+        resource_parent = None
 
         resource_key = 'resource'
         if LIST == self.action:
@@ -93,11 +94,21 @@ class BaseOperation():
             if isinstance(result, ResultSet):
                 metadata = result.metadata
 
+            if result:
+                if isinstance(result, list) or isinstance(result, ResultSet):
+                    sample = result[0]
+                else:
+                    sample = result
+                if hasattr(sample, 'model_options'):
+                    if sample.model_options:
+                        resource_parent = sample.model_options.get('parent_model')
+
             results_altered = self.__run_hooks_after(
                 condition=HookCondition.SUCCESS,
                 metadata=metadata,
                 operation_resource=result,
                 payload=self.payload_mutated,
+                resource_parent=resource_parent,
                 **{
                     resource_key: presented_init,
                 },
@@ -224,6 +235,7 @@ class BaseOperation():
                 metadata=metadata,
                 operation_resource=result,
                 payload=self.payload_mutated,
+                resource_parent=resource_parent,
                 **{
                     resource_key: presented_init,
                 },
@@ -279,6 +291,7 @@ class BaseOperation():
         payload: Dict = None,
         query: Dict = None,
         resource: Dict = None,
+        resource_parent: Any = None,
         resources: List[Dict] = None,
     ) -> List[Hook]:
         project = Project()
@@ -290,6 +303,10 @@ class BaseOperation():
             operation_types.append(HookOperation.UPDATE_ANYWHERE)
 
         try:
+            resource_parent_dict = None
+            if resource_parent and hasattr(resource_parent, '__dict__'):
+                resource_parent_dict = resource_parent.__dict__
+
             global_hooks = GlobalHooks.load_from_file()
             hooks = global_hooks.get_and_run_hooks(
                 operation_types,
@@ -304,7 +321,9 @@ class BaseOperation():
                 query=query,
                 resource=resource,
                 resource_id=self.pk,
+                resource_parent=resource_parent_dict,
                 resource_parent_id=self.resource_parent_id,
+                resource_parent_type=self.__resource_parent_entity_name(),
                 resources=resources,
                 user=dict(id=self.user.id) if self.user else None,
             )
@@ -329,6 +348,7 @@ class BaseOperation():
         operation_resource: Union[BaseResource, List[BaseResource]] = None,
         payload: Dict = None,
         resource: Dict = None,
+        resource_parent: Any = None,
         resources: List[Dict] = None,
     ) -> Union[Dict, List[Dict]]:
         hooks = self.__run_hooks(
@@ -341,6 +361,7 @@ class BaseOperation():
             payload=payload,
             query=self.query,
             resource=resource,
+            resource_parent=resource_parent,
             resources=resources,
             stage=HookStage.AFTER,
         )
@@ -382,6 +403,7 @@ class BaseOperation():
         self,
         operation_resource: Union[BaseResource, Dict, List[BaseResource]] = None,
         payload: Dict = None,
+        resource_parent: Any = None,
         **kwargs,
     ) -> Dict:
         if not payload:
@@ -394,6 +416,7 @@ class BaseOperation():
             operation_resource=operation_resource,
             payload=payload,
             query=self.query,
+            resource_parent=resource_parent,
         )
 
         if not hooks:
@@ -430,14 +453,19 @@ class BaseOperation():
             return await self.__delete_show_or_update()
 
     async def __create_or_index(self) -> Union[BaseResource, Dict, List[BaseResource]]:
+        updated_options = await self.__updated_options()
+
         operation_resource = None,
         payload = None
         if CREATE == self.action:
             payload = self.__payload_for_resource()
             operation_resource = payload
-        payload = self.__run_hooks_before(operation_resource=operation_resource, payload=payload)
-
-        updated_options = await self.__updated_options()
+        payload = self.__run_hooks_before(
+            operation_resource=operation_resource,
+            payload=payload,
+            resource_parent=updated_options.get('parent_model'),
+            resource_parent_id=self.resource_parent_id,
+        )
 
         policy = self.__policy_class()(None, self.user, **updated_options)
         await policy.authorize_action(self.action)
@@ -680,21 +708,30 @@ class BaseOperation():
                     self.__classified_class())), '{}Resource'.format(
                 self.__classified_class()), )
 
-    async def __parent_model(self):
-        if self.resource_parent and self.resource_parent_id:
-            parent_class = classify(singularize(self.resource_parent))
-            parent_resource_class = getattr(
+    def __resource_parent_entity_name(self) -> str:
+        if self.resource_parent:
+            return classify(singularize(self.resource_parent))
+
+    def __resource_parent_class(self):
+        entity_name = self.__resource_parent_entity_name()
+        if entity_name:
+            return getattr(
                 importlib.import_module(
-                    'mage_ai.api.resources.{}Resource'.format(parent_class)),
-                '{}Resource'.format(parent_class),
+                    'mage_ai.api.resources.{}Resource'.format(entity_name)),
+                '{}Resource'.format(entity_name),
             )
-            try:
-                model = parent_resource_class.get_model(self.resource_parent_id)
-                if inspect.isawaitable(model):
-                    model = await model
-                return model
-            except DoesNotExistError:
-                raise ApiError(ApiError.RESOURCE_NOT_FOUND)
+
+    async def __parent_model(self):
+        if self.resource_parent_id:
+            parent_resource_class = self.__resource_parent_class()
+            if parent_resource_class:
+                try:
+                    model = parent_resource_class.get_model(self.resource_parent_id)
+                    if inspect.isawaitable(model):
+                        model = await model
+                    return model
+                except DoesNotExistError:
+                    raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
     def __combined_options(self):
         if not self.__combined_options_attr:
