@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from io import BytesIO
 import json
 import os
 import shutil
@@ -25,13 +26,14 @@ from mage_ai.data_preparation.models.block.errors import HasDownstreamDependenci
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
+    PIPELINE_MAX_SIZE,
     PIPELINES_FOLDER,
     BlockLanguage,
     BlockType,
     ExecutorType,
     PipelineType,
 )
-from mage_ai.data_preparation.models.errors import SerializationError
+from mage_ai.data_preparation.models.errors import FileWriteError, InvalidPipelineZipError, PipelineZipTooLargeError, SerializationError
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipelines.models import PipelineSettings
 from mage_ai.data_preparation.models.project import Project
@@ -226,6 +228,39 @@ class Pipeline:
             repo_path=repo_path,
         )
         return pipeline
+
+    @classmethod
+    def import_from_zip(self, zip_content, overwrite=False):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            zip_data = BytesIO(zip_content)
+            with zipfile.ZipFile(zip_data, 'r') as zipf:
+                zip_size = sum(e.file_size for e in zipf.infolist())  # calc zip size in bytes
+                if zip_size / 1000 > PIPELINE_MAX_SIZE:  # prevention against zip-bombs
+                    raise PipelineZipTooLargeError(
+                        f'Pipeline zip excedes size limit {PIPELINE_MAX_SIZE/1000}Kb')
+                zipf.extractall(tmp_dir)
+
+            config_zip_path = self.__find_pipeline_file(
+                self, tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
+            )
+            if config_zip_path is None or not os.path.exists(config_zip_path):
+                raise InvalidPipelineZipError('Invalid pipeline zip.')
+
+            p_files, conf_dest_path, p_name = self.__update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir)
+
+            # write all files in bulk
+            for source, destination in p_files:
+                try:
+                    dir_path, file_name = os.path.split(destination)
+                    with open(source, 'r') as src:
+                        File.create(file_name, dir_path, src.read(), overwrite=overwrite)
+                except Exception:
+                    raise FileWriteError(f'Failed to write pipeline file to {destination}.')
+
+            # return the pipelin configuration file
+            ret_file = File.from_path(conf_dest_path)
+            ret_file.filename = p_name
+            return ret_file
 
     @classmethod
     def duplicate(
@@ -1205,6 +1240,87 @@ class Pipeline:
                     cache.remove_pipeline(tag_uuid, old_uuid, self.repo_path)
                 cache.add_pipeline(tag_uuid, self)
 
+    # updates pipeline yaml if the import process generates new names for the pipeline itself or for included blocks
+    # compiles list of files to be written
+    # also returns the new pipeline name and the config destination path
+    def __update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir):
+        files_to_be_written = []
+        with open(config_zip_path, 'r+') as pipeline_config:
+            config = yaml.safe_load(pipeline_config)
+
+            # check if pipeline exists with same uuid and generate new one if necessary
+            if not overwrite:
+                uuid = config['uuid']
+                index = 0
+                while self.exists(uuid):
+                    index += 1
+                    uuid = f'{config["uuid"]}_{index}'
+                config['uuid'] = uuid
+                config['name'] = uuid
+            pipeline_name = config['uuid']
+
+            # retain block upstream and downstream references
+            keys_to_keep = ['upstream_blocks', 'downstream_blocks']
+            block_hierarchy = {
+                block['uuid']: {key: [] for key in keys_to_keep}
+                for block in config['blocks']
+            }
+
+            for b_index, block in enumerate(config['blocks']):
+                name = block['name']
+                uuid = block['uuid']
+                type = block['type']
+                language = block.get('language', 'python')
+
+                block_inst = Block(name=name, uuid=uuid, block_type=type, language=language)
+
+                # check if block exists with same uuid and generate new one if necessary
+                if not overwrite:
+                    index = 0
+                    while block_inst.exists:
+                        index += 1
+                        block_inst.uuid = f'{block["uuid"]}_{index}'
+
+                # save block
+                block_destination_path = block_inst.file_path
+                file_extension = block_destination_path.split('.')[-1]
+                block_directory = block_destination_path.split(os.path.sep)[-2]
+                block_zip_path = self.__find_pipeline_file(
+                    self, tmp_dir, f'{uuid}.{file_extension}', block_directory
+                )
+
+                if block_zip_path is None or not os.path.exists(block_zip_path):
+                    raise InvalidPipelineZipError(f'Block {uuid} missing from zip file.')
+
+                files_to_be_written.append((block_zip_path, block_destination_path))
+
+                # save new block parameters
+                block['uuid'] = block_inst.uuid
+                block['name'] = block_inst.uuid
+                config['blocks'][b_index] = block
+
+                # modify upstream and downstream referencesd
+                for upstr_name in block['upstream_blocks']:
+                    block_hierarchy[upstr_name]['downstream_blocks'].append(block['uuid'])
+                for downstr_name in block['downstream_blocks']:
+                    block_hierarchy[downstr_name]['upstream_blocks'].append(block['uuid'])
+
+            # save upstream and downstream references
+            hierarchy_list = list(block_hierarchy.values())
+            for b_index, block in enumerate(config['blocks']):
+                block['upstream_blocks'] = hierarchy_list[b_index]['upstream_blocks']
+                block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
+
+            pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
+            config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
+            files_to_be_written.append((config_zip_path, config_destination_path))
+
+            # dump new config back in temp folder
+            pipeline_config.seek(0)
+            yaml.dump(config, pipeline_config)
+
+            return files_to_be_written, config_destination_path, pipeline_name
+
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]
         uuids_old = [b['uuid'] for b in self.block_configs if b]
@@ -1982,6 +2098,15 @@ class Pipeline:
                     f'Pipeline is invalid: duplicate blocks with uuid {uuid}')
             check_block_uuids.add(uuid)
 
+    def __find_pipeline_file(self, root_dir, file_name, folder=''):
+        file_path = os.path.join(root_dir, file_name)
+
+        if not os.path.exists(file_path):
+            walk_start = os.path.join(root_dir, folder)
+            file_gen = (os.path.join(root, file_name) for root, _, _ in os.walk(walk_start))
+            file_path = next(file_gen, None)
+
+        return file_path
 
 class StackFrame:
     def __init__(self, block):
