@@ -569,20 +569,26 @@ class BlockExecutor:
                             error=error,
                         )),
                     )
+
+                    error_details = dict(
+                        error=error,
+                        errors=traceback.format_stack(),
+                        message=traceback.format_exc(),
+                    )
+
                     if on_failure is not None:
                         on_failure(
                             self.block_uuid,
-                            error=dict(
-                                error=error,
-                                errors=traceback.format_stack(),
-                                message=traceback.format_exc(),
-                            ),
+                            error=error_details,
                         )
                     else:
                         self.__update_block_run_status(
                             BlockRun.BlockRunStatus.FAILED,
                             block_run_id=block_run_id,
                             callback_url=callback_url,
+                            error_details=dict(
+                                error=error,
+                            ),
                             tags=tags,
                         )
                     self._execute_callback(
@@ -1188,6 +1194,7 @@ class BlockExecutor:
         status: BlockRun.BlockRunStatus,
         block_run_id: int = None,
         callback_url: str = None,
+        error_details: Dict = None,
         pipeline_run: PipelineRun = None,
         tags: Dict = None,
     ):
@@ -1230,8 +1237,15 @@ class BlockExecutor:
             update_kwargs = dict(
                 status=status
             )
+
             if status == BlockRun.BlockRunStatus.COMPLETED:
                 update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+
+            if BlockRun.BlockRunStatus.FAILED == status and error_details:
+                update_kwargs['metrics'] = merge_dict(block_run.metrics or {}, dict(
+                    __error_details=error_details,
+                ))
+
             block_run.update(**update_kwargs)
             return
         except Exception as err2:
@@ -1242,13 +1256,15 @@ class BlockExecutor:
                 )),
             )
 
+        block_run_data = dict(status=status)
+        if error_details:
+            block_run_data['error_details'] = error_details
+
         # Fall back to making API calls
         response = requests.put(
             callback_url,
             data=json.dumps({
-                'block_run': {
-                    'status': status,
-                },
+                'block_run': block_run_data,
             }),
             headers={
                 'Content-Type': 'application/json',

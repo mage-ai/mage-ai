@@ -37,6 +37,7 @@ import {
 } from './index.style';
 import { goToWithQuery } from '@utils/routing';
 import { isInteractiveElement } from '@context/shared/utils';
+import { selectEntriesWithValues } from '@utils/hash';
 import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
 
@@ -364,11 +365,13 @@ function Table({
 
       const column = columns?.[sortColIdx]?.uuid;
 
-      goToWithQuery({
-        [MetaQueryEnum.ORDER_BY]: `${sortedColumnDirection === SortDirectionEnum.DESC ? '-' : ''}${column}`,
+      goToWithQuery(selectEntriesWithValues({
+        [MetaQueryEnum.ORDER_BY]: column
+          ? `${sortedColumnDirection === SortDirectionEnum.DESC ? '-' : ''}${column}`
+          : null,
         [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
         [SortQueryEnum.SORT_DIRECTION]: sortDirection,
-      }, {
+      }), {
         pushHistory: true,
       });
     }

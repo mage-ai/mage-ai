@@ -35,12 +35,18 @@ def attach_global_hook_execution(
         ),
         resource_id=pipeline.uuid,
     )
+
     hooks = global_hooks.get_hooks(
         [HookOperation.EXECUTE],
         EntityName.Pipeline,
         HookStage.BEFORE,
         **hook_variables,
     )
+
+    if hooks:
+        hooks = [h for h in hooks if h.pipeline_settings and h.pipeline_settings.get(
+            'uuid',
+        ) and h.pipeline_settings.get('uuid') != pipeline.uuid]
 
     if not hooks:
         return block_uuids_and_create_options
