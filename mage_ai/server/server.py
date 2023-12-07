@@ -336,7 +336,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/global-data-products', MainPageHandler),
         (r'/global-data-products/(?P<uuid>\w+)', MainPageHandler),
         (r'/global-hooks', MainPageHandler),
-        (r'/global-hooks/(?P<uuid>\w+)', MainPageHandler),
+        (r'/global-hooks/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/templates/(?P<uuid>\w+)', MainPageHandler),
         (r'/version-control', MainPageHandler),

@@ -50,6 +50,8 @@ function LeftRightForm({
 }: LeftRightFormProps) {
   const buttonRef = useRef(null);
 
+  console.log(rightAligned, leftObjectType, leftValue)
+
   const [buttonAfterWidth, setButtonAfterWidth] = useState();
   useEffect(() => {
     setButtonAfterWidth(buttonRef?.current?.getBoundingClientRect()?.width);
@@ -112,6 +114,9 @@ function LeftRightForm({
       </Text>
     );
 
+    const showCustomValue = CUSTOM_VALUE_TYPE === String(leftObjectTypeState)
+      || (!leftObjectType && leftValue);
+
     const el2 = (
       <Select
         {...SHARED_INPUT_PROPS}
@@ -132,7 +137,7 @@ function LeftRightForm({
           }
         }}
         placeholder="required"
-        value={CUSTOM_VALUE_TYPE === String(leftObjectTypeState) ? CUSTOM_VALUE_TYPE : leftObjectType}
+        value={showCustomValue ? CUSTOM_VALUE_TYPE : leftObjectType}
       >
         <option value={CUSTOM_VALUE_TYPE}>
           Custom value
@@ -145,7 +150,7 @@ function LeftRightForm({
       </Select>
     );
 
-    const el3 = CUSTOM_VALUE_TYPE === String(leftObjectTypeState) && (
+    const el3 = showCustomValue && (
       <>
         {!rightAligned && <Spacing mr={1} />}
 

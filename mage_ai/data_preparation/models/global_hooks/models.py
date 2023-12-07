@@ -460,6 +460,30 @@ class Hook(BaseDataClass):
         resources: Dict = None,
         user: Dict = None,
     ) -> bool:
+        print(
+            'WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+            self.operation_type not in operation_types,
+            self.resource_type != resource_type,
+            self.stages and stage not in (self.stages or []),
+            not self.__matches_any_condition(conditions),
+            not self.__validate_snapshot(),
+            not self.__matches_predicate(
+                operation_resource,
+                error=error,
+                meta=meta,
+                metadata=metadata,
+                payload=payload,
+                query=query,
+                resource=resource,
+                resource_id=resource_id,
+                resource_parent=resource_parent,
+                resource_parent_id=resource_parent_id,
+                resource_parent_type=resource_parent_type,
+                resources=resources,
+                user=user,
+            ),
+        )
+
         if self.operation_type not in operation_types:
             return False
 
