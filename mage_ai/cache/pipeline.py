@@ -23,8 +23,8 @@ class PipelineCache(BaseCache):
 
         return cache
 
-    def get(self, key: str, include_all: bool = False) -> Union[Dict, List]:
-        mapping = super().get(key) or {}
+    def get(self, key: str, include_all: bool = False, **kwargs) -> Union[Dict, List]:
+        mapping = super().get(key, **kwargs) or {}
 
         if include_all:
             return mapping
@@ -37,6 +37,7 @@ class PipelineCache(BaseCache):
             ['type'],
             'uuid',
         )
+
         super().set(key, dict(
             groups=groups,
             models=value,
@@ -77,16 +78,6 @@ class PipelineCache(BaseCache):
                 uuids.update(arr)
         return [models.get(key) for key in uuids]
 
-    def add_model(self, pipeline) -> None:
-        self.update_pipeline(pipeline, added_at=datetime.utcnow().timestamp())
-
-    def update_model(
-        self,
-        pipeline,
-        added_at: str = None,
-    ) -> None:
-        self.update_models([pipeline], added_at)
-
     def update_models(
         self,
         pipelines,
@@ -101,15 +92,23 @@ class PipelineCache(BaseCache):
             if not key:
                 continue
 
-            pipelines_dict = mapping.get(key, {})
-            pipelines_dict[pipeline.uuid] = build_pipeline_dict(
+            mapping[key] = build_pipeline_dict(
                 pipeline,
                 added_at=added_at,
                 include_details=True,
             )
-            mapping[key] = pipelines_dict
 
         self.set(self.cache_key, mapping)
+
+    def update_model(
+        self,
+        pipeline,
+        added_at: str = None,
+    ) -> None:
+        self.update_models([pipeline], added_at)
+
+    def add_model(self, model) -> None:
+        self.update_model(model, added_at=datetime.utcnow().timestamp())
 
     def move_model(self, new_model, old_model) -> None:
         new_key = self.build_key(new_model)
