@@ -492,7 +492,9 @@ class GlobalHooksTest(BaseApiTestCase):
                     conditions=[HookCondition.SUCCESS, HookCondition.FAILURE],
                     operation_resource=dict(mage=1),
                     resource_id=1,
+                    resource_parent=dict(fire=5),
                     resource_parent_id=3,
+                    resource_parent_type=EntityName.User,
                     user=dict(id=7),
                 )
 
@@ -513,7 +515,9 @@ class GlobalHooksTest(BaseApiTestCase):
                     query=None,
                     resource=None,
                     resource_id=1,
+                    resource_parent=dict(fire=5),
                     resource_parent_id=3,
+                    resource_parent_type=EntityName.User,
                     resources=None,
                     user=dict(id=7),
                 )
@@ -526,7 +530,9 @@ class GlobalHooksTest(BaseApiTestCase):
                     query=None,
                     resource=None,
                     resource_id=1,
+                    resource_parent=dict(fire=5),
                     resource_parent_id=3,
+                    resource_parent_type=EntityName.User,
                     resources=None,
                     user=dict(id=7),
                 )
