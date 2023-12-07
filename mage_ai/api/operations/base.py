@@ -323,6 +323,7 @@ class BaseOperation():
                 resource_id=self.pk,
                 resource_parent=resource_parent_dict,
                 resource_parent_id=self.resource_parent_id,
+                resource_parent_type=self.__resource_parent_entity_name(),
                 resources=resources,
                 user=dict(id=self.user.id) if self.user else None,
             )
@@ -707,21 +708,30 @@ class BaseOperation():
                     self.__classified_class())), '{}Resource'.format(
                 self.__classified_class()), )
 
-    async def __parent_model(self):
-        if self.resource_parent and self.resource_parent_id:
-            parent_class = classify(singularize(self.resource_parent))
-            parent_resource_class = getattr(
+    def __resource_parent_entity_name(self) -> str:
+        if self.resource_parent:
+            return classify(singularize(self.resource_parent))
+
+    def __resource_parent_class(self):
+        entity_name = self.__resource_parent_entity_name()
+        if entity_name:
+            return getattr(
                 importlib.import_module(
-                    'mage_ai.api.resources.{}Resource'.format(parent_class)),
-                '{}Resource'.format(parent_class),
+                    'mage_ai.api.resources.{}Resource'.format(entity_name)),
+                '{}Resource'.format(entity_name),
             )
-            try:
-                model = parent_resource_class.get_model(self.resource_parent_id)
-                if inspect.isawaitable(model):
-                    model = await model
-                return model
-            except DoesNotExistError:
-                raise ApiError(ApiError.RESOURCE_NOT_FOUND)
+
+    async def __parent_model(self):
+        if self.resource_parent_id:
+            parent_resource_class = self.__resource_parent_class()
+            if parent_resource_class:
+                try:
+                    model = parent_resource_class.get_model(self.resource_parent_id)
+                    if inspect.isawaitable(model):
+                        model = await model
+                    return model
+                except DoesNotExistError:
+                    raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
     def __combined_options(self):
         if not self.__combined_options_attr:

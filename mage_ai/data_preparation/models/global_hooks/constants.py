@@ -39,17 +39,23 @@ class HookOutputKey(str, Enum):
 
 
 class HookInputKey(str, Enum):
+    HOOK = 'hook'
+    RESOURCE_ID = 'resource_id'
     RESOURCE_PARENT = 'resource_parent'
+    RESOURCE_PARENT_ID = 'resource_parent_id'
+    RESOURCE_PARENT_TYPE = 'resource_parent_type'
+    USER = 'user'
 
 
 VALID_KEYS_FOR_INPUT_OUTPUT_DATA_RESTRICTED = [key.value for key in HookOutputKey] + [
     HookInputKey.RESOURCE_PARENT.value,
 ]
 VALID_KEYS_FOR_INPUT_OUTPUT_DATA_UNRESTRICTED = [
-    'hook',
-    'resource_id',
-    'resource_parent_id',
-    'user',
+    HookInputKey.HOOK.value,
+    HookInputKey.RESOURCE_ID.value,
+    HookInputKey.RESOURCE_PARENT_ID.value,
+    HookInputKey.RESOURCE_PARENT_TYPE.value,
+    HookInputKey.USER.value,
 ]
 VALID_KEYS_FOR_INPUT_OUTPUT_DATA_ALL = \
     VALID_KEYS_FOR_INPUT_OUTPUT_DATA_RESTRICTED + VALID_KEYS_FOR_INPUT_OUTPUT_DATA_UNRESTRICTED
@@ -64,7 +70,7 @@ class PredicateAndOrOperator(str, Enum):
 
 class PredicateObjectType(str, Enum):
     ERROR = HookOutputKey.ERROR.value
-    HOOK = 'hook'
+    HOOK = HookInputKey.HOOK.value
     META = HookOutputKey.META.value
     METADATA = HookOutputKey.METADATA.value
     OPERATION_RESOURCE = 'operation_resource'
@@ -72,9 +78,11 @@ class PredicateObjectType(str, Enum):
     QUERY = HookOutputKey.QUERY.value
     RESOURCE = HookOutputKey.RESOURCE.value
     RESOURCES = HookOutputKey.RESOURCES.value
-    RESOURCE_ID = 'resource_id'
-    RESOURCE_PARENT_ID = 'resource_parent_id'
-    USER = 'user'
+    RESOURCE_ID = HookInputKey.RESOURCE_ID.value
+    RESOURCE_PARENT = HookInputKey.RESOURCE_PARENT.value
+    RESOURCE_PARENT_ID = HookInputKey.RESOURCE_PARENT_ID.value
+    RESOURCE_PARENT_TYPE = HookInputKey.RESOURCE_PARENT_TYPE.value
+    USER = HookInputKey.USER.value
 
 
 class PredicateOperator(str, Enum):
