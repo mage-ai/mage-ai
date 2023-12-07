@@ -1245,7 +1245,7 @@ class Pipeline:
     # also returns the new pipeline name and the config destination path
     def __update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir):
         files_to_be_written = []
-        with open(config_zip_path, 'r+') as pipeline_config:
+        with open(config_zip_path, 'r') as pipeline_config:
             config = yaml.safe_load(pipeline_config)
 
             # check if pipeline exists with same uuid and generate new one if necessary
@@ -1315,11 +1315,11 @@ class Pipeline:
             config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
             files_to_be_written.append((config_zip_path, config_destination_path))
 
-            # dump new config back in temp folder
-            pipeline_config.seek(0)
+        # dump new config information back in temp folder
+        with open(config_zip_path, 'w') as pipeline_config:
             yaml.dump(config, pipeline_config)
 
-            return files_to_be_written, config_destination_path, pipeline_name
+        return files_to_be_written, config_destination_path, pipeline_name
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]
@@ -2098,13 +2098,15 @@ class Pipeline:
                     f'Pipeline is invalid: duplicate blocks with uuid {uuid}')
             check_block_uuids.add(uuid)
 
+    # Searches for a file with the given name in the specified directory (root_dir) and its subdirectories.
+    # Returns str, the full path to the found file, or None if the file is not found.
     def __find_pipeline_file(self, root_dir, file_name, folder=''):
         file_path = os.path.join(root_dir, file_name)
 
         if not os.path.exists(file_path):
             walk_start = os.path.join(root_dir, folder)
             file_gen = (os.path.join(root, file_name) for root, _, _ in os.walk(walk_start))
-            file_path = next(file_gen, None)
+            file_path = next((potential_path for potential_path in file_gen if os.path.exists(potential_path)), None)
 
         return file_path
 
