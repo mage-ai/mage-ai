@@ -569,6 +569,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return {}
 
     @property
+    def exists(self) -> bool:
+        return self.file.exists()
+
+    @property
     def executable(self) -> bool:
         return (
             self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
