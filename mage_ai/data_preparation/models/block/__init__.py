@@ -1548,9 +1548,6 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         return block_function
 
-    def exists(self) -> bool:
-        return os.path.exists(self.file_path)
-
     def fetch_input_variables(
         self,
         input_args,
