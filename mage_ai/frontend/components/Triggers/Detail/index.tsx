@@ -1090,13 +1090,14 @@ function TriggerDetail({
               },
             })}
             outline
-            sameColorAsText
             title={disabledRunOnce
               ? 'Trigger must be enabled to run@once'
               : 'Manually run pipeline once immediately'
             }
           >
-            Run@once
+            <Text disabled={disabledRunOnce}>
+              Run@once
+            </Text>
           </Button>
 
           <Spacing mr={PADDING_UNITS} />
