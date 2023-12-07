@@ -32,7 +32,11 @@ import TriggerEdit from '@components/Triggers/Edit';
 import Toolbar from '@components/shared/Table/Toolbar';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
-import { Interactions as InteractionsIcon } from '@oracle/icons';
+import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import {
+  Interactions as InteractionsIcon,
+  Once,
+} from '@oracle/icons';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
@@ -392,6 +396,7 @@ function PipelineSchedules({
       query={query}
       resetPageOnFilterApply
       secondaryButtonProps={!isCreateDisabled && {
+        beforeIcon: <Once size={ICON_SIZE_SMALL} />,
         disabled: isViewerRole,
         isLoading: isLoadingCreateOnceSchedule,
         label: 'Run@once',

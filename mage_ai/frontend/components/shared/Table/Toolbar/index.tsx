@@ -77,6 +77,7 @@ type ToolbarProps = {
   };
   resetPageOnFilterApply?: boolean;
   secondaryButtonProps?: {
+    beforeIcon?: JSX.Element;
     disabled?: boolean;
     isLoading?: boolean;
     label?: string;
@@ -195,6 +196,7 @@ function Toolbar({
   ]);
 
   const {
+    beforeIcon: secondaryButtonBeforeIcon,
     disabled: secondaryButtonDisabled,
     label: secondaryButtonLabel,
     onClick: onClickSecondaryButton,
@@ -203,6 +205,7 @@ function Toolbar({
   } = secondaryButtonProps || {};
   const secondaryButtonEl = useMemo(() => (
     <KeyboardShortcutButton
+      beforeElement={secondaryButtonBeforeIcon}
       bold
       disabled={secondaryButtonDisabled}
       greyBorder
@@ -219,6 +222,7 @@ function Toolbar({
   ), [
     isLoadingSecondaryButton,
     onClickSecondaryButton,
+    secondaryButtonBeforeIcon,
     secondaryButtonDisabled,
     secondaryButtonLabel,
     secondaryButtonTooltip,
