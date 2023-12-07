@@ -85,6 +85,7 @@ import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
+import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -290,8 +291,9 @@ function OverviewPage({
   });
 
   const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
-    <>
-    </>
+    <UploadPipeline
+      onCancel={hideImportPipelineModal}
+    />
   ), {
   }, [
     ,

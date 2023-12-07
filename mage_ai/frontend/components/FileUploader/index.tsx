@@ -11,6 +11,8 @@ import api from '@api';
 type FileUploaderProps = {
   children: any;
   directoryPath: string;
+  pipelineZip?: boolean;
+  overwrite?: boolean;
   onDragActiveChange?: (isDragActive: boolean) => void;
   setFileUploadProgress?: (opts: {
     [path: string]: number;
@@ -23,6 +25,8 @@ type FileUploaderProps = {
 function FileUploader({
   children,
   directoryPath,
+  pipelineZip = false,
+  overwrite = false,
   onDragActiveChange,
   setFileUploadProgress,
   setUploadedFiles,
@@ -33,6 +37,7 @@ function FileUploader({
         const parts = [
           body?.dir_path,
           body?.file?.name,
+          body?.pipelineZip,
         ];
         const fileFullPath = parts.filter(s => s?.length >= 1).join(osPath.sep);
         // @ts-ignore
@@ -65,7 +70,8 @@ function FileUploader({
       createFile({
         dir_path: dirPath,
         file: file,
-        overwrite: false,
+        pipeline_zip: pipelineZip,
+        overwrite: overwrite,
       }).then(({
         data,
       }) => {
@@ -93,9 +99,10 @@ function FileUploader({
   }, [
     createFile,
     directoryPath,
+    overwrite,
     setFileUploadProgress,
     setUploadedFiles,
-
+    pipelineZip,
   ]);
 
   return (
