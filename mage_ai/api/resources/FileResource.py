@@ -178,9 +178,9 @@ class FileResource(GenericResource):
         except PipelineZipTooLargeError as err:
             error.update(dict(message=str(err)))
             raise ApiError(error)
-        except InvalidPipelineZipError:
+        except InvalidPipelineZipError as err:
             error.update(dict(
-                message=f'Invalid pipeline zip {filename}.'))
+                message=f'Invalid pipeline zip {filename}. \n{str(err)}'))
             raise ApiError(error)
 
     @classmethod

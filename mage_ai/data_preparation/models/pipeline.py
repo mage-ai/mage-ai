@@ -254,7 +254,7 @@ class Pipeline:
                 self, tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
             )
             if config_zip_path is None or not os.path.exists(config_zip_path):
-                raise InvalidPipelineZipError('Invalid pipeline zip.')
+                raise InvalidPipelineZipError
 
             p_files, conf_dest_path, p_name = self.__update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir)
 
