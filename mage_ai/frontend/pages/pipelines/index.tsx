@@ -398,6 +398,7 @@ function PipelineListPage() {
 
       if (f) {
         Object.entries(f).forEach(([k, v]) => {
+          // @ts-ignore
           if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
             filtersQuery[k] = v;
           } else {
