@@ -4,7 +4,7 @@ x-server_settings: &server_settings
   build:
     context: .
     dockerfile: ./dev.Dockerfile
-  command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
+  command: "python -m debugpy --listen 0.0.0.0:5678 mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
   environment:
     - AUTHENTICATION_MODE=$AUTHENTICATION_MODE
     - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
@@ -44,6 +44,7 @@ x-server_settings: &server_settings
     - SCHEDULER_TRIGGER_INTERVAL=$SCHEDULER_TRIGGER_INTERVAL
   ports:
     - 6789:6789
+    - 5678:5678
   volumes:
     - .:/home/src
     - ~/.aws:/root/.aws
