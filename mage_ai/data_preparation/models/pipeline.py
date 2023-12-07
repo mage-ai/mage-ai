@@ -1589,7 +1589,9 @@ class Pipeline:
             if block.type == BlockType.SCRATCHPAD:
                 self.delete_block(block)
                 os.remove(block.file_path)
-        shutil.rmtree(self.dir_path)
+
+        if os.path.exists(self.dir_path):
+            shutil.rmtree(self.dir_path)
 
         # Delete secret directory when deleting pipeline
         try:

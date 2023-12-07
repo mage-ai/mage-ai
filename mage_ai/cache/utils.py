@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Union
 
-from mage_ai.shared.hash import extract
+from mage_ai.shared.hash import extract, merge_dict
 
 PIPELINE_KEYS = [
     'description',
@@ -36,19 +36,29 @@ def build_pipeline_dict(
     if isinstance(pipeline, dict):
         pipeline_output_dict.update(extract(pipeline, PIPELINE_KEYS))
         if include_details:
-            pipeline_output_dict['blocks'] = [extract(
+            pipeline_output_dict['blocks'] = [merge_dict(extract(
                 block,
                 BLOCK_KEYS,
-            ) for block in (pipeline.get('blocks') or [])]
+            ), dict(
+                downstream_blocks=[b.get('uuid') if isinstance(b, dict) else b for b in (
+                    block.get('downstream_blocks') or []
+                )],
+                upstream_blocks=[b.get('uuid') if isinstance(b, dict) else b for b in (
+                    block.get('upstream_blocks') or []
+                )],
+            )) for block in (pipeline.get('blocks') or [])]
     else:
         for key in PIPELINE_KEYS:
             pipeline_output_dict[key] = getattr(pipeline, key)
 
         if include_details:
-            pipeline_output_dict['blocks'] = [{k: getattr(
+            pipeline_output_dict['blocks'] = [merge_dict({k: getattr(
                 block,
                 k,
-            ) for k in BLOCK_KEYS} for block in pipeline.blocks_by_uuid.values()]
+            ) for k in BLOCK_KEYS}, dict(
+                downstream_blocks=[b.uuid for b in (block.downstream_blocks or [])],
+                upstream_blocks=[b.uuid for b in (block.upstream_blocks or [])],
+            )) for block in pipeline.blocks_by_uuid.values()]
 
     return dict(
         added_at=added_at,

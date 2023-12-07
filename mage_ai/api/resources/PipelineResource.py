@@ -2,7 +2,7 @@ import asyncio
 import urllib.parse
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
@@ -173,7 +173,7 @@ class PipelineResource(BaseResource):
 
         cache = await PipelineCache.initialize_cache()
 
-        async def get_pipeline(uuid, cache=cache) -> Tuple:
+        async def get_pipeline(uuid: str) -> Pipeline:
             try:
                 return await Pipeline.get_async(uuid)
             except Exception as err:
@@ -182,7 +182,7 @@ class PipelineResource(BaseResource):
                     raise Exception(err_message)
                 else:
                     print(err_message)
-                    return (None, False)
+                    return None
 
         pipeline_uuids_miss = []
         pipelines = []
