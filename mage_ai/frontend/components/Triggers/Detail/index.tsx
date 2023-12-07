@@ -271,7 +271,7 @@ function TriggerDetail({
     },
   );
 
-  const [createPipelineRun]: any = useMutation(
+  const [createPipelineRun, { isLoading: isLoadingCreatePipelineRun }]: any = useMutation(
       api.pipeline_runs.pipeline_schedules.useCreate(pipelineScheduleID),
     {
       onSuccess: (response: any) => onSuccess(
@@ -1085,6 +1085,7 @@ function TriggerDetail({
               <Button
                 beforeIcon={<Once size={ICON_SIZE_SMALL} />}
                 disabled={disabledRunOnce}
+                loading={isLoadingCreatePipelineRun}
                 onClick={() => createPipelineRun({
                   pipeline_run: {
                     pipeline_schedule_id: pipelineScheduleID,
