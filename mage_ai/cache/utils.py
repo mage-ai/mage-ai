@@ -71,6 +71,9 @@ def group_models_by_keys(model_dicts: List[Dict], keys: List[str], uuid_key: str
     mapping = {key: {} for key in keys}
 
     for model_dict in model_dicts:
+        if not model_dict:
+            continue
+
         for key in keys:
             value = str(model_dict.get(key))
             if value not in mapping[key]:
