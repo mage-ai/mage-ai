@@ -27,10 +27,7 @@ def extract_valid_data(
             VALID_KEYS_FOR_INPUT_OUTPUT_DATA_ALL,
         )
 
-    if HookInputKey.RESOURCE_PARENT.value in data and \
-            resource_parent_type and \
-            resource_parent_type in limited_types:
-
+    if not resource_parent_type or resource_parent_type in limited_types:
         data = ignore_keys(data, [HookInputKey.RESOURCE_PARENT.value])
 
     return data
