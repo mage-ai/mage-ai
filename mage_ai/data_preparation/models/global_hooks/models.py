@@ -43,7 +43,7 @@ class HookOperation(str, Enum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
-    EXECUTE = 'execute'
+    EXECUTE = 'execute'  # Resources supported: Pipeline, Block (in the notebook)
     LIST = OperationType.LIST.value
     UPDATE = OperationType.UPDATE.value
     UPDATE_ANYWHERE = 'update_anywhere'

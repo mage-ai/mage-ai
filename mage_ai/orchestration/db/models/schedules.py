@@ -842,6 +842,8 @@ class PipelineRun(BaseModel):
                 if 'dynamic_upstream_block_uuids' in metrics and 'dynamic_block_index' in metrics:
                     dynamic_upstream_block_uuids = metrics['dynamic_upstream_block_uuids']
                     dynamic_block_index = metrics['dynamic_block_index']
+                elif metrics.get('upstream_blocks'):
+                    upstream_block_uuids_override = metrics.get('upstream_blocks') or None
 
             if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
                 uuids_to_check = []

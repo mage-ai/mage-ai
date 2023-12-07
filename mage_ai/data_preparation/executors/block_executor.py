@@ -37,6 +37,8 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
 )
+from mage_ai.data_preparation.models.global_hooks.models import Hook
+from mage_ai.data_preparation.models.hook.block import HookBlock
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
@@ -128,6 +130,24 @@ class BlockExecutor:
         Returns:
             The result of the block execution.
         """
+        block_run = None
+
+        if self.project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS) and not self.block:
+            block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+            if block_run and block_run.metrics and block_run.metrics.get('hook'):
+                hook = Hook.load(**(block_run.metrics.get('hook') or {}))
+                self.block = HookBlock(
+                    hook.uuid,
+                    hook.uuid,
+                    BlockType.HOOK,
+                    hook=hook,
+                )
+                if block_run.metrics.get('hook_variables'):
+                    global_vars = merge_dict(
+                        global_vars,
+                        block_run.metrics.get('hook_variables') or {},
+                    )
+
         if template_runtime_configuration:
             # Used for data integration pipeline
             self.block.template_runtime_configuration = template_runtime_configuration
@@ -146,7 +166,8 @@ class BlockExecutor:
             if on_start is not None:
                 on_start(self.block_uuid)
 
-            block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+            if not block_run:
+                block_run = BlockRun.query.get(block_run_id) if block_run_id else None
             pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
 
             # Data integration block
