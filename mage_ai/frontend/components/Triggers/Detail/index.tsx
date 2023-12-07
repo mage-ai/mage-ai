@@ -27,7 +27,7 @@ import PipelineScheduleType, {
   VARIABLE_BOOKMARK_VALUES_KEY,
 } from '@interfaces/PipelineScheduleType';
 import PipelineTriggerType from '@interfaces/PipelineTriggerType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -121,6 +121,7 @@ function TriggerDetail({
 
   const {
     uuid: pipelineUUID,
+    type: pipelineType,
   } = pipeline || {};
   const {
     description,
@@ -1079,28 +1080,31 @@ function TriggerDetail({
 
           <Spacing mr={PADDING_UNITS} />
 
-          <Button
-            beforeIcon={<Once size={ICON_SIZE_SMALL} />}
-            disabled={disabledRunOnce}
-            onClick={() => createPipelineRun({
-              pipeline_run: {
-                pipeline_schedule_id: pipelineScheduleID,
-                pipeline_uuid: pipelineUUID,
-                variables: scheduleVariables,
-              },
-            })}
-            outline
-            title={disabledRunOnce
-              ? 'Trigger must be enabled to run@once'
-              : 'Manually run pipeline once immediately'
-            }
-          >
-            <Text disabled={disabledRunOnce}>
-              Run@once
-            </Text>
-          </Button>
-
-          <Spacing mr={PADDING_UNITS} />
+          {pipelineType !== PipelineTypeEnum.STREAMING &&
+            <>
+              <Button
+                beforeIcon={<Once size={ICON_SIZE_SMALL} />}
+                disabled={disabledRunOnce}
+                onClick={() => createPipelineRun({
+                  pipeline_run: {
+                    pipeline_schedule_id: pipelineScheduleID,
+                    pipeline_uuid: pipelineUUID,
+                    variables: scheduleVariables,
+                  },
+                })}
+                outline
+                title={disabledRunOnce
+                  ? 'Trigger must be enabled to run@once'
+                  : 'Manually run pipeline once immediately'
+                }
+              >
+                <Text disabled={disabledRunOnce}>
+                  Run@once
+                </Text>
+              </Button>
+              <Spacing mr={PADDING_UNITS} />
+            </>
+          }
 
           {!isViewerRole &&
             <>
