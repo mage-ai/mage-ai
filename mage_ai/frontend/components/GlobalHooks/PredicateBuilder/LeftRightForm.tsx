@@ -50,8 +50,6 @@ function LeftRightForm({
 }: LeftRightFormProps) {
   const buttonRef = useRef(null);
 
-  console.log(rightAligned, leftObjectType, leftValue)
-
   const [buttonAfterWidth, setButtonAfterWidth] = useState();
   useEffect(() => {
     setButtonAfterWidth(buttonRef?.current?.getBoundingClientRect()?.width);
