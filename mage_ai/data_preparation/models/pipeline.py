@@ -268,6 +268,16 @@ class Pipeline:
             duplicate_pipeline_uuid,
             repo_path=duplicate_pipeline.repo_path,
         )
+    
+    @classmethod
+    def exists(self, uuid, repo_path: str = None):
+        return os.path.exists(
+            os.path.join(
+                repo_path or get_repo_path(),
+                PIPELINES_FOLDER,
+                uuid,
+            ),
+        )
 
     @classmethod
     def get(
