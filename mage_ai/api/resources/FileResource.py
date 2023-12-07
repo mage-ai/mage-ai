@@ -12,8 +12,12 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.errors import (
     FileExistsError,
     FileNotInProjectError,
+    FileWriteError,
+    InvalidPipelineZipError,
+    PipelineZipTooLargeError,
 )
 from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
@@ -127,6 +131,8 @@ class FileResource(GenericResource):
     async def create(self, payload: Dict, user, **kwargs) -> 'FileResource':
         dir_path = payload['dir_path']
         repo_path = get_repo_path(root_project=True)
+        pipeline_zip = payload.get('pipeline_zip', False)
+        overwrite = payload.get('overwrite', False)
         content = None
 
         if 'file' in payload:
@@ -137,29 +143,44 @@ class FileResource(GenericResource):
             filename = payload['name']
 
         error = ApiError.RESOURCE_INVALID.copy()
-        file_path = File(filename, dir_path, repo_path).file_path
         try:
-            ensure_file_is_in_project(file_path)
-            file = await File.create_async(
-                filename,
-                dir_path,
-                repo_path=repo_path,
-                content=content,
-                overwrite=payload.get('overwrite', False),
-            )
+            if pipeline_zip:  # pipeline upload
+                pipeline_file = Pipeline.import_from_zip(content, overwrite)  # import from zip
+                return self(pipeline_file, user, **kwargs)
+            else:
+                file_path = File(filename, dir_path, repo_path).file_path
+                ensure_file_is_in_project(file_path)
+                file = File.create(
+                    filename,
+                    dir_path,
+                    repo_path=repo_path,
+                    content=content,
+                    overwrite=overwrite,
+                )
 
-            block_type = Block.block_type_from_path(dir_path)
-            if block_type:
-                cache_block_action_object = await BlockActionObjectCache.initialize_cache()
-                cache_block_action_object.update_block(block_file_absolute_path=file.file_path)
+                block_type = Block.block_type_from_path(dir_path)
+                if block_type:
+                    cache_block_action_object = await BlockActionObjectCache.initialize_cache()
+                    cache_block_action_object.update_block(block_file_absolute_path=file.file_path)
 
-            return self(file, user, **kwargs)
+                return self(file, user, **kwargs)
+
         except FileExistsError as err:
             error.update(dict(message=str(err)))
             raise ApiError(error)
         except FileNotInProjectError:
             error.update(dict(
                 message=f'File at path: {file_path} is not in the project directory.'))
+            raise ApiError(error)
+        except FileWriteError as err:
+            error.update(dict(message=str(err)))
+            raise ApiError(error)
+        except PipelineZipTooLargeError as err:
+            error.update(dict(message=str(err)))
+            raise ApiError(error)
+        except InvalidPipelineZipError:
+            error.update(dict(
+                message=f'Invalid pipeline zip {filename}.'))
             raise ApiError(error)
 
     @classmethod
