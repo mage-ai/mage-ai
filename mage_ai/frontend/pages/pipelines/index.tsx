@@ -426,6 +426,7 @@ function PipelineListPage() {
 
         let v2 = v;
 
+        // @ts-ignore
         if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
           f[k] = v;
         } else {
