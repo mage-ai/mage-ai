@@ -32,7 +32,7 @@ class HookBlock(Block):
                 raise Exception(error)
 
             output = [error]
-        elif output is None:
+        elif output is not None:
             output = [self.hook.output]
 
         return output
