@@ -33,7 +33,10 @@ class PipelineSchedulePolicy(BasePolicy):
     @property
     def entity(self):
         if self.resource and self.resource.model:
-            return Entity.PIPELINE, self.resource.model.pipeline_uuid
+            if isinstance(self.resource.model, dict):
+                return Entity.PIPELINE, self.resource.model.get('pipeline_uuid')
+            else:
+                return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
         return Entity.PROJECT, get_project_uuid()
 

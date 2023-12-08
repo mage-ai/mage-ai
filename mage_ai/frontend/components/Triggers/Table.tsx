@@ -480,7 +480,7 @@ function TriggersTable({
                   {lastPipelineRunStatus || 'N/A'}
                 </Text>,
                 <Text default key={`trigger_run_count_${idx}`} monospace>
-                  {pipelineRunsCount}
+                  {pipelineRunsCount || '0'}
                 </Text>,
               ]);
 
