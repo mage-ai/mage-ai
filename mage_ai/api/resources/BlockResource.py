@@ -3,6 +3,7 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
@@ -48,6 +49,12 @@ class BlockResource(GenericResource):
     def collection(self, query_arg, meta, user, **kwargs):
         parent_model = kwargs.get('parent_model')
 
+        block_uuids = query_arg.get('block_uuid[]', [])
+        if block_uuids:
+            block_uuids = block_uuids[0]
+        if block_uuids:
+            block_uuids = set(block_uuids.split(','))
+
         block_count_by_base_uuid = {}
         block_dicts_by_uuid = {}
         data_integration_sets_by_uuid = {}
@@ -57,7 +64,8 @@ class BlockResource(GenericResource):
 
         if isinstance(parent_model, Pipeline):
             for block_uuid, block in parent_model.blocks_by_uuid.items():
-                block_dicts_by_uuid[block_uuid] = block.to_dict()
+                if not block_uuids or block_uuid in block_uuids:
+                    block_dicts_by_uuid[block_uuid] = block.to_dict()
 
         if isinstance(parent_model, PipelineRun):
             block_mapping = {}
@@ -70,6 +78,8 @@ class BlockResource(GenericResource):
 
                 for block_run in parent_model.block_runs:
                     block_run_block_uuid = block_run.block_uuid
+                    if block_uuids and block_run_block_uuid not in block_uuids:
+                        continue
                     block = pipeline.get_block(block_run_block_uuid)
                     if not block:
                         continue
@@ -590,6 +600,38 @@ class BlockResource(GenericResource):
             user,
             **kwargs,
         )
+
+    @classmethod
+    async def process_collection(self, query_arg, meta, user, **kwargs):
+        total_results = self.collection(query_arg, meta, user, **kwargs)
+        total_count = len(total_results)
+
+        limit = int((meta or {}).get(META_KEY_LIMIT, 0))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
+
+        final_results = total_results
+        has_next = False
+        if limit > 0:
+            start_idx = offset
+            end_idx = start_idx + limit
+
+            results = total_results[start_idx:(end_idx + 1)]
+
+            results_size = len(results)
+            has_next = results_size > limit
+            final_end_idx = results_size - 1 if has_next else results_size
+            final_results = results[0:final_end_idx]
+
+        result_set = self.build_result_set(
+            final_results,
+            user,
+            **kwargs,
+        )
+        result_set.metadata = {
+            'count': total_count,
+            'next': has_next,
+        }
+        return result_set
 
     @classmethod
     @safe_db_query
