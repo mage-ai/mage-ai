@@ -142,7 +142,7 @@ class PipelineScheduleResource(DatabaseResource):
         # Get fields to be returned in a single query. The result of this query
         # will be a record of (pipeline_schedule_id, pipeline_runs_count,
         # in_progress_runs_count, last_pipeline_run_id).
-        counts_query = (
+        schedule_data_query = (
             PipelineRun.select(
                 PipelineRun.pipeline_schedule_id,
                 func.count(PipelineRun.pipeline_schedule_id).label(
@@ -171,11 +171,11 @@ class PipelineScheduleResource(DatabaseResource):
             )
             .group_by(PipelineRun.pipeline_schedule_id)
         )
-        pipeline_run_counts = counts_query.all()
+        pipeline_schedule_data = schedule_data_query.all()
 
         pipeline_runs_to_fetch = []
-        for count in pipeline_run_counts:
-            pipeline_runs_to_fetch.append(count.last_pipeline_run_id)
+        for data in pipeline_schedule_data:
+            pipeline_runs_to_fetch.append(data.last_pipeline_run_id)
 
         pipeline_run_statuses = (
             PipelineRun.select(
@@ -194,16 +194,16 @@ class PipelineScheduleResource(DatabaseResource):
         }
 
         run_counts_by_pipeline_schedule = {
-            count.pipeline_schedule_id: dict(
-                pipeline_runs_count=count.pipeline_runs_count,
-                pipeline_in_progress_runs_count=count.in_progress_runs_count,
+            data.pipeline_schedule_id: dict(
+                pipeline_runs_count=data.pipeline_runs_count,
+                pipeline_in_progress_runs_count=data.in_progress_runs_count,
                 last_pipeline_run_status=pipeline_run_status_by_id.get(
-                    count.last_pipeline_run_id
+                    data.last_pipeline_run_id
                 )
-                if count.last_pipeline_run_id
+                if data.last_pipeline_run_id
                 else None,
             )
-            for count in pipeline_run_counts
+            for data in pipeline_schedule_data
         }
 
         # Get tags for each pipeline schedule in a single query. The result of this query will be
