@@ -856,34 +856,41 @@ class PipelineRunTests(DBTestCase):
                 controller=1,
             ),
         )
-        data_integration_controller_child = BlockRun.create(
-            block_uuid=f'{data_integration_controller.block_uuid}:child',
+        data_integration_controller_child1 = BlockRun.create(
+            block_uuid=f'{data_integration_controller.block_uuid}:child0',
             pipeline_run=pipeline_run,
             metrics=dict(
                 original_block_uuid=block.uuid,
-                controller_uuid=data_integration_controller.block_uuid,
+                controller_block_uuid=data_integration_controller.block_uuid,
                 controller=1,
                 child=1,
             ),
         )
+
+        data_integration_controller_child2 = BlockRun.create(
+            block_uuid=f'{data_integration_controller.block_uuid}:child1',
+            pipeline_run=pipeline_run,
+            metrics=dict(
+                original_block_uuid=block.uuid,
+                controller_block_uuid=data_integration_controller.block_uuid,
+                controller=1,
+                child=1,
+                upstream_block_uuids=[
+                    data_integration_controller_child1.block_uuid,
+                ],
+            ),
+        )
+
         data_integration_child1 = BlockRun.create(
-            block_uuid=f'{data_integration_controller_child.block_uuid}:0',
+            block_uuid=f'{data_integration_controller_child1.block_uuid}:child0',
             pipeline_run=pipeline_run,
             metrics=dict(
                 original_block_uuid=block.uuid,
-                controller_uuid=data_integration_controller_child.block_uuid,
+                controller_block_uuid=data_integration_controller_child1.block_uuid,
                 child=1,
             ),
         )
-        data_integration_child2 = BlockRun.create(
-            block_uuid=f'{data_integration_controller_child.block_uuid}:1',
-            pipeline_run=pipeline_run,
-            metrics=dict(
-                original_block_uuid=block.uuid,
-                controller_uuid=data_integration_controller_child.block_uuid,
-                child=1,
-            ),
-        )
+
         data_integration_original = BlockRun.create(
             block_uuid=block.uuid,
             pipeline_run=pipeline_run,
@@ -900,9 +907,8 @@ class PipelineRunTests(DBTestCase):
                 [br.block_uuid for br in pipeline_run.executable_block_runs()],
                 [
                     data_integration_controller.block_uuid,
-                    data_integration_controller_child.block_uuid,
+                    data_integration_controller_child1.block_uuid,
                     data_integration_child1.block_uuid,
-                    data_integration_child2.block_uuid,
                 ],
             )
 
@@ -911,13 +917,32 @@ class PipelineRunTests(DBTestCase):
             self.assertEqual(
                 [br.block_uuid for br in pipeline_run.executable_block_runs()],
                 [
-                    data_integration_controller_child.block_uuid,
+                    data_integration_controller_child1.block_uuid,
+                    data_integration_child1.block_uuid,
+                ],
+            )
+
+            data_integration_controller_child1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            data_integration_child2 = BlockRun.create(
+                block_uuid=f'{data_integration_controller_child2.block_uuid}:child1',
+                pipeline_run=pipeline_run,
+                metrics=dict(
+                    original_block_uuid=block.uuid,
+                    controller_block_uuid=data_integration_controller_child2.block_uuid,
+                    child=1,
+                ),
+            )
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_controller_child2.block_uuid,
                     data_integration_child1.block_uuid,
                     data_integration_child2.block_uuid,
                 ],
             )
 
-            data_integration_controller_child.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            data_integration_controller_child2.update(status=BlockRun.BlockRunStatus.COMPLETED)
 
             self.assertEqual(
                 [br.block_uuid for br in pipeline_run.executable_block_runs()],
@@ -928,6 +953,14 @@ class PipelineRunTests(DBTestCase):
             )
 
             data_integration_child1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_child2.block_uuid,
+                ],
+            )
+
             data_integration_child2.update(status=BlockRun.BlockRunStatus.COMPLETED)
 
             self.assertEqual(

@@ -809,6 +809,33 @@ class PipelineRun(BaseModel):
         for block_run in self.block_runs:
             block = pipeline.get_block(block_run.block_uuid)
             metrics = block_run.metrics
+            """
+            controller
+            {
+                "controller": 1,
+                "original_block_uuid": "...",
+            }
+
+            controller child of controller
+            {
+                "controller": 1,
+                "child": 1,
+                "original_block_uuid": "...",
+                "controller_block_uuid": "controller_block_uuid",
+            }
+
+            child of controller child
+            {
+                "child": 1,
+                "original_block_uuid": "...",
+                "controller_block_uuid": "controller_child_block_uuid",
+            }
+
+            original block run
+            {
+                "original": 1,
+            }
+            """
             if metrics and block and block.is_data_integration():
                 original_block_uuid = metrics.get('original_block_uuid')
 
