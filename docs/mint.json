@@ -273,6 +273,7 @@
             {
               "group": "Destinations",
               "pages": [
+                "streaming/destinations/activemq",
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/bigquery",
                 "streaming/destinations/clickhouse",
