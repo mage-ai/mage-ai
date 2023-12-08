@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { redirectToUrl } from '@utils/url';
+import { toast } from 'react-toastify';
 
 function NotFoundPage() {
   useEffect(() => {
+    toast.error('The previous page does not exist.');
     redirectToUrl('/pipelines');
   }, []);
 
