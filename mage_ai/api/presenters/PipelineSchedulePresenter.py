@@ -49,7 +49,6 @@ class PipelineSchedulePresenter(BasePresenter):
 PipelineSchedulePresenter.register_format(
     constants.LIST,
     PipelineSchedulePresenter.default_attributes + [
-        'event_matchers',
         'last_pipeline_run_status',
         'next_pipeline_run_date',
         'pipeline_in_progress_runs_count',
