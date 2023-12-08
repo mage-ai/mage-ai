@@ -124,11 +124,11 @@ class BlockExecutorTest(BaseApiTestCase):
                     )
 
                     for block in blocks[1:]:
-                        create_option = find(lambda tup: tup[0] == block.uuid, arr)
+                        create_option = find(lambda tup, block=block: tup[0] == block.uuid, arr)
                         self.assertFalse('metrics' in create_option[1])
 
                     for hook in hooks_match[1:]:
-                        create_option = find(lambda tup: tup[0] == hook.uuid, arr)
+                        create_option = find(lambda tup, hook=hook: tup[0] == hook.uuid, arr)
                         metrics = create_option[1]['metrics']
                         self.assertEqual(metrics['downstream_blocks'], [blocks[0].uuid])
                         self.assertEqual(metrics['hook'], hook.to_dict(include_all=True))
