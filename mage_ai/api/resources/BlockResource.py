@@ -315,7 +315,11 @@ class BlockResource(GenericResource):
 
                 block_dict['tags'] += block.tags()
 
-                if metrics and metrics.get('upstream_blocks'):
+                # This is primary used to show global hooks that run before the pipeline execution.
+                if metrics and \
+                        metrics.get('upstream_blocks') and \
+                        (not block or not is_dynamic_block_child(block)):
+
                     block_dict['upstream_blocks'] = (block_dict.get('upstream_blocks') or []) + (
                         metrics.get('upstream_blocks') or []
                     )
