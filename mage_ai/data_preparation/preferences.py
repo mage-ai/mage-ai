@@ -20,20 +20,72 @@ GIT_BRANCH_VAR = 'GIT_BRANCH'
 GIT_SYNC_ON_PIPELINE_RUN_VAR = 'GIT_SYNC_ON_PIPELINE_RUN'
 GIT_SYNC_ON_START_VAR = 'GIT_SYNC_ON_START'
 GIT_SYNC_ON_EXECUTOR_START_VAR = 'GIT_SYNC_ON_EXECUTOR_START'
-GIT_SYNC_SUBMODULES = 'GIT_SYNC_SUBMODULES'
+GIT_SYNC_SUBMODULES_VAR = 'GIT_SYNC_SUBMODULES'
 
 GIT_ENABLE_GIT_INTEGRATION_VAR = 'GIT_ENABLE_GIT_INTEGRATION'
 GIT_OVERWRITE_WITH_PROJECT_SETTINGS_VAR = 'GIT_OVERWRITE_WITH_PROJECT_SETTINGS'
 
+ENV_VAR_TO_CONFIG_KEY = {
+    GIT_REPO_LINK_VAR: 'remote_repo_link',
+    GIT_REPO_PATH_VAR: 'repo_path',
+    GIT_USERNAME_VAR: 'username',
+    GIT_EMAIL_VAR: 'email',
+    GIT_AUTH_TYPE_VAR: 'auth_type',
+    GIT_BRANCH_VAR: 'branch',
+    GIT_SYNC_ON_PIPELINE_RUN_VAR: 'sync_on_pipeline_run',
+    GIT_SYNC_ON_START_VAR: 'sync_on_start',
+    GIT_SYNC_ON_EXECUTOR_START_VAR: 'sync_on_executor_start',
+    GIT_SYNC_SUBMODULES_VAR: 'sync_submodules',
+}
 
-def get_bool_value_for_sync_config(value) -> bool:
-    if value is None:
-        return False
+BOOLEAN_ENV_VARS = set(
+    [
+        GIT_SYNC_ON_PIPELINE_RUN_VAR,
+        GIT_SYNC_ON_START_VAR,
+        GIT_SYNC_ON_EXECUTOR_START_VAR,
+        GIT_SYNC_SUBMODULES_VAR,
+    ]
+)
 
-    if not isinstance(value, str):
-        return bool(value)
 
-    return get_bool_value(value)
+def get_value_for_sync_config(env_var) -> bool:
+    value = os.getenv(env_var)
+    return get_bool_value(value) if env_var in BOOLEAN_ENV_VARS else value
+
+
+def build_sync_config(project_sync_config: Dict) -> Dict:
+    """
+    Build the final sync_config from the saved project sync config and the environment variables.
+    The git setting values from the environment variables will take precedence unless the
+    GIT_OVERWRITE_WITH_PROJECT_SETTINGS environment variable is set to true.
+    """
+
+    # Remove null or empty string values from the project_sync_config
+    project_sync_config = {
+        k: v
+        for k, v in project_sync_config.items()
+        if v is not None and (not isinstance(v, str) or v)
+    }
+
+    if any([k in os.environ for k in ENV_VAR_TO_CONFIG_KEY]):
+        sync_config = {
+            v: get_value_for_sync_config(k)
+            for k, v in ENV_VAR_TO_CONFIG_KEY.items()
+        }
+
+        # If the GIT_OVERWRITE_WITH_PROJECT_SETTINGS environment variable is set to true,
+        # overwrite the sync_config with the config from the project preferences file.
+        if get_bool_value(os.getenv(GIT_OVERWRITE_WITH_PROJECT_SETTINGS_VAR)):
+            sync_config = merge_dict(sync_config, project_sync_config)
+    else:
+        sync_config = project_sync_config
+
+    # Set the enable_git_integration field from environment variables
+    sync_config['enable_git_integration'] = get_value_for_sync_config(
+        GIT_ENABLE_GIT_INTEGRATION_VAR
+    )
+
+    return sync_config
 
 
 class Preferences:
@@ -65,57 +117,7 @@ class Preferences:
             user_git_settings = user.git_settings or {}
             project_sync_config = merge_dict(project_sync_config, user_git_settings)
 
-        # Remove null or empty string values from the project_sync_config
-        project_sync_config = {
-            k: v
-            for k, v in project_sync_config.items()
-            if v is not None and (not isinstance(v, str) or v)
-        }
-
-        # Use the environment variable value if it exists. Otherwise, use
-        # the value specified in the preferences file.
-        self.sync_config = dict(
-            remote_repo_link=os.getenv(
-                GIT_REPO_LINK_VAR, project_sync_config.get('remote_repo_link')
-            ),
-            repo_path=os.getenv(
-                GIT_REPO_PATH_VAR, project_sync_config.get('repo_path')
-            ),
-            auth_type=os.getenv(
-                GIT_AUTH_TYPE_VAR, project_sync_config.get('auth_type')
-            ),
-            username=os.getenv(GIT_USERNAME_VAR, project_sync_config.get('username')),
-            email=os.getenv(GIT_EMAIL_VAR, project_sync_config.get('email')),
-            branch=os.getenv(GIT_BRANCH_VAR, project_sync_config.get('branch')),
-            sync_on_pipeline_run=get_bool_value_for_sync_config(
-                os.getenv(
-                    GIT_SYNC_ON_PIPELINE_RUN_VAR,
-                    project_sync_config.get('sync_on_pipeline_run'),
-                )
-            ),
-            sync_on_start=get_bool_value_for_sync_config(
-                os.getenv(
-                    GIT_SYNC_ON_START_VAR, project_sync_config.get('sync_on_start')
-                )
-            ),
-            sync_on_executor_start=get_bool_value_for_sync_config(
-                os.getenv(
-                    GIT_SYNC_ON_EXECUTOR_START_VAR,
-                    project_sync_config.get('sync_on_executor_start'),
-                )
-            ),
-            sync_submodules=get_bool_value_for_sync_config(
-                os.getenv(
-                    GIT_SYNC_SUBMODULES, project_sync_config.get('sync_submodules')
-                )
-            ),
-            enable_git_integration=get_bool_value_for_sync_config(
-                os.getenv(GIT_ENABLE_GIT_INTEGRATION_VAR)
-            ),
-        )
-
-        if get_bool_value(os.getenv(GIT_OVERWRITE_WITH_PROJECT_SETTINGS_VAR, '0')):
-            self.sync_config = merge_dict(self.sync_config, project_sync_config)
+        self.sync_config = build_sync_config(project_sync_config)
 
     def is_git_integration_enabled(self) -> bool:
         return (

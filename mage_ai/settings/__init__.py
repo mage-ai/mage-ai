@@ -39,6 +39,9 @@ def get_bool_value(value: str) -> bool:
     Converts a string environment variable to a bool value. Returns True if the value
     is 'true', '1', or 't' (case insensitive). Otherwise, False
     """
+    if value is None:
+        return False
+
     return value.lower() in ('true', '1', 't')
 
 
