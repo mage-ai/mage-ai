@@ -132,8 +132,8 @@ def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_run(pipeline_uuid: str):
-    pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
+def create_pipeline_run(pipeline_uuid: str, **kwargs):
+    pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline', **kwargs)
     return pipeline_run
 
 
