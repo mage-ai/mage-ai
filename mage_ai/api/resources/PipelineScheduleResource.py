@@ -2,7 +2,6 @@ import collections
 import uuid
 
 from sqlalchemy import case
-from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.expression import func
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
@@ -106,10 +105,6 @@ class PipelineScheduleResource(DatabaseResource):
             )
 
         if global_data_product_uuid or pipeline:
-            query = query.options(
-                selectinload(PipelineSchedule.event_matchers)
-            ).options(selectinload(PipelineSchedule.pipeline_runs))
-
             if global_data_product_uuid:
                 query = query.filter(
                     PipelineSchedule.global_data_product_uuid
