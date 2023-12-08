@@ -1,23 +1,23 @@
+import router from 'next/router';
 import { useMemo, useState } from 'react';
 
 import ApiErrorType from '@interfaces/ApiErrorType';
 import Button from '@oracle/elements/Button';
-import FileType from '@interfaces/FileType';
 import FileUploader from '@components/FileUploader';
+import FileType from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Panel from '@oracle/components/Panel';
-import ProgressBar from '@oracle/components/ProgressBar';
+import PopupMenu from '@oracle/components/PopupMenu';
+import ProgressBar from '@oracle/components/ProgressBar';   
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import { DropZoneStyle, TableStyle } from './index.style';
 import { isEmptyObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { useModal } from '@context/Modal';
-import PopupMenu from '@oracle/components/PopupMenu';
 import { UNIT } from '@oracle/styles/units/spacing';
-import router from 'next/router';
+import { useModal } from '@context/Modal';
 
 type UploadPipelineProps = {
   fetchPipelines?: () => void;
