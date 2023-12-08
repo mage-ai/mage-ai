@@ -915,6 +915,7 @@ function PipelineListPage() {
           setFilters({});
         }
       }}
+      // @ts-ignore
       query={query}
       searchProps={{
         onChange: setSearchText,
