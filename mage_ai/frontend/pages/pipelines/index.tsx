@@ -446,6 +446,7 @@ function PipelineListPage() {
               f[k] = v2;
           } else {
             if (!Array.isArray(v2)) {
+              // @ts-ignore
               v2 = [v2];
             }
 
