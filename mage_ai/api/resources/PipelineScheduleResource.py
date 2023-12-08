@@ -42,7 +42,6 @@ class PipelineScheduleResource(DatabaseResource):
         The result of this method will be a ResultSet of dictionaries. Each dict will already
         contain the additional fields that are needed for the pipeline schedule LIST endpoint.
         """
-        print('=========================== NEW REQUEST ==========================')
         pipeline = kwargs.get('parent_model')
 
         global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
