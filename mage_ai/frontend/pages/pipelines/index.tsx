@@ -163,12 +163,19 @@ function PipelineListPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const q = queryFromUrl();
-  const query = filterQuery(q, [
-    PipelineQueryEnum.SEARCH,
-    PipelineQueryEnum.STATUS,
-    PipelineQueryEnum.TAG,
-    PipelineQueryEnum.TYPE,
-    ...META_QUERY_KEYS,
+  const query = {
+    [MetaQueryEnum.LIMIT]: ROW_LIMIT,
+    ...filterQuery(q, [
+      PipelineQueryEnum.SEARCH,
+      PipelineQueryEnum.STATUS,
+      PipelineQueryEnum.TAG,
+      PipelineQueryEnum.TYPE,
+      ...META_QUERY_KEYS,
+    ]),
+  };
+
+  const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
+    q,
   ]);
 
   useEffect(() => {
@@ -193,6 +200,10 @@ function PipelineListPage() {
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
     include_schedules: 1,
+  }, {
+    revalidateOnFocus: false,
+  }, {
+    pauseFetch: operationHistoryEnabled && selectedTabUUID && TAB_RECENT.uuid === selectedTabUUID,
   });
 
   const fromHistoryDays = useMemo(() => q?.[PipelineQueryEnum.HISTORY_DAYS] || 7, [q]);
@@ -207,7 +218,7 @@ function PipelineListPage() {
       : fromHistoryDays,
     include_schedules: 1,
   }, {}, {
-    pauseFetch: !operationHistoryEnabled,
+    pauseFetch: !operationHistoryEnabled || !selectedTabUUID || TAB_RECENT.uuid !== selectedTabUUID,
   });
 
   const filterPipelinesBySearchText = useCallback((arr: PipelineType[]): PipelineType[] => {
@@ -312,10 +323,6 @@ function PipelineListPage() {
       : undefined
   ), [sortColumnIndexQuery, sortDirectionQuery]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
-
-  const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
-    q,
-  ]);
 
   const [downloadPipeline] = useMutation(
     ({
@@ -1630,7 +1637,11 @@ function PipelineListPage() {
   ]);
 
   const paginateMemo = useMemo(() => {
-    const count = data?.metadata?.count || 0;
+    let dataUse = data;
+    if (operationHistoryEnabled && TAB_RECENT.uuid === selectedTabUUID) {
+      dataUse = dataPipelinesFromHistory;
+    }
+    const count = dataUse?.metadata?.count || 0;
     const limit = query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT
     const offset = query?.[MetaQueryEnum.OFFSET] || 0;
     const totalPages = Math.ceil(count / limit);
@@ -1652,7 +1663,10 @@ function PipelineListPage() {
     );
   }, [
     data,
+    dataPipelinesFromHistory,
+    operationHistoryEnabled,
     query,
+    selectedTabUUID,
   ]);
 
   return (
@@ -1671,8 +1685,6 @@ function PipelineListPage() {
     >
       {operationHistoryEnabled && (
         <Spacing
-          pb={!groupByQuery ? PADDING_UNITS : 0}
-          pt={PADDING_UNITS}
           px={PADDING_UNITS}
           ref={refButtonTabs}
         >
@@ -1680,6 +1692,8 @@ function PipelineListPage() {
             noPadding
             onClickTab={({ uuid }) => goToWithQuery({
               [QUERY_PARAM_TAB]: uuid,
+              [MetaQueryEnum.LIMIT]: null,
+              [MetaQueryEnum.OFFSET]: null,
             }, {
               pushHistory: true,
             })}
@@ -1696,6 +1710,7 @@ function PipelineListPage() {
               }),
               uuid,
             }))}
+            underlineStyle
           />
         </Spacing>
       )}
