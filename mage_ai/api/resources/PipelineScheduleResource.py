@@ -115,10 +115,7 @@ class PipelineScheduleResource(DatabaseResource):
                     PipelineSchedule.pipeline_uuid == pipeline.uuid,
                 )
 
-            query.order_by(
-                PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc()
-            )
-
+            query = query.order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.asc())
         else:
             order_by = query_arg.get('order_by', [None])
             if order_by[0]:
