@@ -58,6 +58,7 @@ class BlockExecutorTest(BaseApiTestCase):
 
     def tearDown(self):
         BlockRun.query.delete()
+        PipelineRun.query.delete()
         self.pipeline1.delete()
         super().tearDown()
 
