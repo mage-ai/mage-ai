@@ -130,7 +130,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
                 return self.send_json_message(
                     ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
 
-        return terminado.TermSocket.on_message(self, json.dumps(command))
+        return terminado.TermSocket.on_message(self, json.dumps(command, ensure_ascii=False))
 
     def __initialize_terminal(self, term_name: str, cwd: str = None):
         self.terminal = self.term_manager.get_terminal(term_name, cwd=cwd)

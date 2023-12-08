@@ -706,7 +706,7 @@ class WorkloadManager:
                 pre_start_script = f.read()
 
             config_map_data['pre-start.py'] = pre_start_script
-            config_map_data['initial-config.json'] = json.dumps(mage_container_config)
+            config_map_data['initial-config.json'] = json.dumps(mage_container_config, ensure_ascii=False)
 
         post_start_file_name = None
         if post_start_config and post_start_config.hook_path is not None:

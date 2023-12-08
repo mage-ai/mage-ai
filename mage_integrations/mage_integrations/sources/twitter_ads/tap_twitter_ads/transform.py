@@ -90,7 +90,7 @@ def transform_report(report_name, report_data, account_id):
                 }
 
                 # Create MD5 hash key of sorted json dimesions (above)
-                dims_md5 = str(hash_data(json.dumps(dimensions, sort_keys=True)))
+                dims_md5 = str(hash_data(json.dumps(dimensions, sort_keys=True, ensure_ascii=False)))
                 record = {
                     '__sdc_dimensions_hash_key': dims_md5,
                     'start_time': series_start,

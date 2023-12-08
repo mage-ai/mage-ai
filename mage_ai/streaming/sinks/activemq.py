@@ -64,6 +64,6 @@ class ActiveMQSink(BaseSink):
                 data = message
                 metadata = None
             self.connection.send(destination=f'/queue/{self.config.queue_name}',
-                                 body=json.dumps(data).encode('utf-8'),
+                                 body=json.dumps(data, ensure_ascii=False).encode('utf-8'),
                                  headers=metadata,
                                  )

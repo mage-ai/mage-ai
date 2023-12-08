@@ -212,9 +212,9 @@ DESCRIBE {schema_name}.{table_name}
         item_type_converted = column_type_dict['item_type_converted']
 
         if 'JSON' == item_type_converted.upper():
-            return f"JSON '{json.dumps(value)}'"
+            return f"JSON '{json.dumps(value, ensure_ascii=False)}'"
         else:
-            return f"CAST('{json.dumps(value)}' AS {item_type_converted})"
+            return f"CAST('{json.dumps(value, ensure_ascii=False)}' AS {item_type_converted})"
 
     def calculate_records_inserted_and_updated(
         self,

@@ -174,7 +174,7 @@ def generate_hash(record, metadata):
             fields_to_hash.append((key, val))
 
     hash_source_data = sorted(fields_to_hash, key=lambda x: x[0])
-    hash_bytes = json.dumps(hash_source_data).encode("utf-8")
+    hash_bytes = json.dumps(hash_source_data, ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(hash_bytes).hexdigest()
 
 

@@ -110,7 +110,8 @@ class ADProvider(SsoProvider, OauthProvider):
                         dict(
                             redirect_uri=req.url,
                             tenant_id=ad_directory_id,
-                        )
+                        ),
+                        ensure_ascii=False
                     )
                 ),
             )

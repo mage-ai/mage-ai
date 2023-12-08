@@ -58,7 +58,7 @@ def convert_array(value, column_settings):
     def format_value(val):
         val_str = str(val)
         if type(val) is list or type(val) is dict:
-            return f"'{json.dumps(val)}'"
+            return f"'{json.dumps(val, ensure_ascii=False)}'"
         elif is_number(val_str):
             return val_str
         else:

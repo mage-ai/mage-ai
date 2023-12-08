@@ -127,6 +127,7 @@ class DBTCli:
                     tags,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 )
                 message = f'{message} ({tags_json})'
 

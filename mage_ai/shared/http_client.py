@@ -30,7 +30,7 @@ class HttpClient:
         elif method == 'POST':
             response = requests.post(
                 url,
-                data=json.dumps(ignore_keys_with_blank_values(payload)),
+                data=json.dumps(ignore_keys_with_blank_values(payload), ensure_ascii=False),
                 headers=self.headers,
             )
         if response is not None:

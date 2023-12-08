@@ -45,5 +45,5 @@ def update_destination_state_bookmarks(
 ) -> None:
     bookmarks = {stream: bookmark_values}
     with open(absolute_path_to_destination_state, 'w') as f:
-        line = json.dumps(dict(bookmarks=bookmarks))
+        line = json.dumps(dict(bookmarks=bookmarks), ensure_ascii=False)
         f.write(line)

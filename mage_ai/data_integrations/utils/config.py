@@ -34,7 +34,7 @@ def __get_settings(absolute_file_path, variables: Dict = None, pipeline=None) ->
         and pipeline.data_integration \
             and 'catalog' in pipeline.data_integration:
         settings['catalog'] = interpolate_variables(
-            json.dumps(pipeline.data_integration['catalog']),
+            json.dumps(pipeline.data_integration['catalog'], ensure_ascii=False),
             variables_use,
         )
 
@@ -105,6 +105,7 @@ def build_catalog_json(
         catalog,
         default=encode_complex,
         ignore_nan=True,
+        ensure_ascii=False
     )
 
 
@@ -127,6 +128,7 @@ def build_config(
         config,
         default=encode_complex,
         ignore_nan=True,
+        ensure_ascii=False
     )
 
 

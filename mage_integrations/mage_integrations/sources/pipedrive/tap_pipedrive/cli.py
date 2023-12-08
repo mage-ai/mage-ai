@@ -18,7 +18,7 @@ def main():
 
     if args.discover:
         catalog = pipedrive_tap.do_discover()
-        json.dump(catalog.to_dict(), sys.stdout, indent=2)
+        json.dump(catalog.to_dict(), sys.stdout, indent=2, ensure_ascii=False)
         logger.info('Finished discover')
     else:
         if args.catalog:

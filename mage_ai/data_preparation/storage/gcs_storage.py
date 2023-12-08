@@ -122,6 +122,7 @@ class GCSStorage(BaseStorage):
                 data,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             )
         blob.upload_from_string(data=data, content_type='application/json')
 

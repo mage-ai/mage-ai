@@ -94,7 +94,7 @@ def create_a_new_cluster(
     if type(response) is not dict:
         response = json.loads(response)
 
-    print(json.dumps(response, indent=2))
+    print(json.dumps(response, indent=2, ensure_ascii=False))
     print('\n')
     cluster_id = response['JobFlowId']
     print(f'Cluster ID: {cluster_id}')

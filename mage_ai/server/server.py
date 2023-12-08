@@ -457,7 +457,7 @@ def make_app(
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w') as f:
-            f.write(json.dumps({}))
+            f.write(json.dumps({}, ensure_ascii=False))
 
     if is_dev() and not DISABLE_AUTORELOAD:
         should_autoreload = True

@@ -31,7 +31,7 @@ class Mage:
             remote_id = pipeline.metadata.get('remote_id')
             if remote_id is not None:
                 requests.put(
-                    data=json.dumps(data),
+                    data=json.dumps(data, ensure_ascii=False),
                     headers={
                         'Content-Type': 'application/json',
                         'X-API-KEY': api_key,
@@ -40,7 +40,7 @@ class Mage:
                 )
             else:
                 response = requests.post(
-                    data=json.dumps(data),
+                    data=json.dumps(data, ensure_ascii=False),
                     headers={
                         'Content-Type': 'application/json',
                         'X-API-KEY': api_key,

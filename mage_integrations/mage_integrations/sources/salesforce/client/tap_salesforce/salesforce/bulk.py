@@ -179,7 +179,7 @@ class Bulk():
                 'POST',
                 url,
                 headers=headers,
-                body=json.dumps(body))
+                body=json.dumps(body, ensure_ascii=False))
 
         job = resp.json()
 
@@ -326,7 +326,7 @@ class Bulk():
                 'POST',
                 url,
                 headers=self._get_bulk_headers(),
-                body=json.dumps(body))
+                body=json.dumps(body, ensure_ascii=False))
 
     # pylint: disable=no-self-use
     def _iter_lines(self, response):

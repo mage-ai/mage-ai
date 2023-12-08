@@ -9,7 +9,7 @@ def fix_overwritten_partitions(client, bucket: str, key: str, version: int) -> N
 
     final_rows = current['add'] + removes_updated + current['other']
 
-    body = '\n'.join([json.dumps(row) for row in final_rows])
+    body = '\n'.join([json.dumps(row, ensure_ascii=False) for row in final_rows])
 
     client.put_object(
         Body=body.encode(),

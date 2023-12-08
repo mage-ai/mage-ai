@@ -31,7 +31,7 @@ data_type_to_value_mapping = {
     PredicateValueDataType.FLOAT: 1.0,
     PredicateValueDataType.INTEGER: 3,
     PredicateValueDataType.LIST: [model],
-    PredicateValueDataType.STRING: json.dumps(model),
+    PredicateValueDataType.STRING: json.dumps(model, ensure_ascii=False),
 }
 
 

@@ -18,7 +18,7 @@ def do_discover(client):
     """
     catalog = _discover(client)
     # Dump catalog
-    json.dump(catalog, sys.stdout, indent=2)
+    json.dump(catalog, sys.stdout, indent=2, ensure_ascii=False)
 
 
 @singer.utils.handle_top_exception(LOGGER)

@@ -180,7 +180,7 @@ class ClickhouseSink(SQLSink):
         for record in records:
             for key, value in record.items():
                 if isinstance(value, dict):
-                    record[key] = json.dumps(value)
+                    record[key] = json.dumps(value, ensure_ascii=False)
 
         return super().bulk_insert_records(full_table_name, schema, records)
 

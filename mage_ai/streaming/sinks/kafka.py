@@ -71,7 +71,7 @@ class KafkaSink(BaseSink):
         kwargs = dict(
             bootstrap_servers=self.config.bootstrap_server,
             api_version=self.config.api_version,
-            value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+            value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8'),
             key_serializer=lambda x: x.encode('utf-8') if x else None,
             batch_size=batch_size,
             linger_ms=timeout_ms,

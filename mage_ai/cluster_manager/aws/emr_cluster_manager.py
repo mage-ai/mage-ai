@@ -90,7 +90,7 @@ class EmrClusterManager(ClusterManager):
 
         config['session_configs']['jars'] = emr_config.spark_jars
         with open(sparkmagic_config_path, 'w') as f:
-            f.write(json.dumps(config))
+            f.write(json.dumps(config), ensure_ascii=False)
 
         return merge_dict(cluster_info, dict(cluster_id=cluster_id))
 

@@ -66,6 +66,7 @@ def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
                     default=encode_complex,
                     ignore_nan=True,
                     use_decimal=True,
+                    ensure_ascii=False
                 )
         elif column_type in STRING_SERIALIZABLE_COLUMN_TYPES:
             val = row[column]

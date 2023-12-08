@@ -44,7 +44,7 @@ def build_integration_module_info(key: str, option: Dict) -> Dict:
                 PYTHON_COMMAND,
                 absolute_file_path,
                 '--config_json',
-                json.dumps({}),
+                json.dumps({}, ensure_ascii=False),
                 '--show_templates',
             ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             for line in proc.stdout.decode().split('\n'):

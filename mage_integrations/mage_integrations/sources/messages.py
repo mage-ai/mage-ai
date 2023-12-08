@@ -50,6 +50,7 @@ def format_message(message):
             default=encode_complex,
             ignore_nan=True,
             use_decimal=True,
+            ensure_ascii=False
         )
     except ValueError as err:
         raise Exception(f'Fail to serialize message {message}') from err

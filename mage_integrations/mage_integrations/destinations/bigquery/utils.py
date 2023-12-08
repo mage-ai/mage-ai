@@ -1,5 +1,4 @@
 import json
-import re
 from typing import Dict, List
 
 import dateutil.parser
@@ -15,52 +14,17 @@ from mage_integrations.destinations.sql.utils import (
     convert_column_type as convert_column_type_orig,
 )
 
-EMOJI_PATTERN = re.compile(
-    "["
-    u"\U0001F600-\U0001F64F"  # emoticons
-    u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-    u"\U0001F680-\U0001F6FF"  # transport & map symbols
-    u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-    u"\U00002702-\U000027B0"  # dingbats
-    u"\U000024C2-\U0001F251"  # enclosed characters
-    u"\U0001f926-\U0001f937"  # woman, man, and other emojis with skin tones
-    u"\U0001F1F2"             # regional indicator symbol letters A
-    u"\U0001F1F4"             # regional indicator symbol letters B
-    u"\U0001F620"             # angry face
-    u"\u200d"                 # zero width joiner
-    u"\u2640-\u2642"          # male and female symbols
-    u"\u2600-\u2B55"          # weather symbols
-    u"\u23cf"                 # eject button
-    u"\u23e9"                 # fast forward button
-    u"\u231a"                 # watch
-    u"\ufe0f"                 # emoji variation selector-16
-    u"\u3030"                 # wavy dash
-    u"\U00002500-\U00002BEF"  # Chinese characters
-    u"\U00010000-\U0010ffff"  # other characters
-    u'\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff\uD83C-\uDBFF\uDC00-\uDFFF'     # noqa: E501
-    "]+",
-    flags=re.UNICODE,  # specify the unicode flag to handle unicode characters properly
-)
 
-
-def remove_emoji_code(v: str) -> str:
-    if type(v) is str:
-        v = re.sub(r'(\\ud83d(\\ud[0-f][0-f][0-f])?)|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)     # noqa: E501
-        v = EMOJI_PATTERN.sub(r'', v)
-    return v
-
-
-def stringify_object_and_remove_emoji_code(v: str) -> str:
+def stringify_object(v: str) -> str:
     if type(v) is dict or type(v) is list:
-        v = json.dumps(v)
-    v = remove_emoji_code(v)
+        v = json.dumps(v, ensure_ascii=False)
     if type(v) is not str:
         v = str(v)
     return v
 
 
 def replace_single_quotes_with_double(v: str) -> str:
-    v = stringify_object_and_remove_emoji_code(v)
+    v = stringify_object(v)
     return v.replace("'", '"')
 
 
@@ -98,18 +62,18 @@ def convert_array_for_batch_load(value, column_type_dict: Dict) -> str:
 
     if 'JSON' == item_type_converted:
         if type(value) is list:
-            value_next = [json.loads(stringify_object_and_remove_emoji_code(v)) for v in value]
+            value_next = [json.loads(stringify_object(v)) for v in value]
         else:
-            value_next = [json.loads(stringify_object_and_remove_emoji_code(value))]
+            value_next = [json.loads(stringify_object(value))]
 
         return value_next
 
     value_next = value
     if 'STRING' == item_type_converted:
         if type(value) is list:
-            value_next = [stringify_object_and_remove_emoji_code(v) for v in value]
+            value_next = [stringify_object(v) for v in value]
         else:
-            value_next = [stringify_object_and_remove_emoji_code(value)]
+            value_next = [stringify_object(value)]
 
     return value_next
 
@@ -212,8 +176,7 @@ def convert_json_or_string(value, column_type_dict):
     if COLUMN_TYPE_OBJECT == column_type:
         value = f"'{replace_single_quotes_with_double(value)}'"
         value = f'TO_JSON({value})'
-    else:
-        value = EMOJI_PATTERN.sub(r'', value)
+
     return value
 
 
@@ -224,7 +187,7 @@ def convert_json_or_string_for_batch_load(
 ):
     column_type = column_type_dict['type']
     if COLUMN_TYPE_OBJECT == column_type:
-        value = stringify_object_and_remove_emoji_code(value)
+        value = stringify_object(value)
         value = value.replace('\n', '\\n')
         if convert_json_to_dict:
             value = json.loads(value)
@@ -232,7 +195,6 @@ def convert_json_or_string_for_batch_load(
         if type(value) is not str:
             value = str(value)
         value = value.replace('\n', '\\n')
-        value = remove_emoji_code(value)
     return value
 
 

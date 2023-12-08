@@ -34,7 +34,7 @@ def do_discover(client, config, return_streams: bool = False):
     if return_streams:
         return catalog_dict
 
-    json.dump(catalog_dict, sys.stdout, indent=2)
+    json.dump(catalog_dict, sys.stdout, indent=2, ensure_ascii=False)
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():

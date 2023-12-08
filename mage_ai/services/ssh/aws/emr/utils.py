@@ -134,6 +134,7 @@ def tunnel(
             data,
             default=encode_complex,
             ignore_nan=True,
+            ensure_ascii=False
         ))
 
 

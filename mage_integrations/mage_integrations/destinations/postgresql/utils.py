@@ -28,7 +28,7 @@ def convert_array(v: List, column_type_dict: Dict):
         for v2 in v:
             if v2:
                 if type(v2) is dict:
-                    v2 = json.dumps(v2)
+                    v2 = json.dumps(v2, ensure_ascii=False)
             arr.append(v2)
         arr_joined = ', '.join([f"'{escape_quotes(v2, double=False)}'" for v2 in arr])
         value_final = f"ARRAY[{arr_joined}]::JSONB[]"

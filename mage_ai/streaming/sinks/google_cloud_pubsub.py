@@ -49,7 +49,7 @@ class GoogleCloudPubSubSink(BaseSink):
     def write(self, message: Dict):
 
         if isinstance(message, dict):
-            data = json.dumps(message.get('data', message))
+            data = json.dumps(message.get('data', message), ensure_ascii=False)
         else:
             data = message
 

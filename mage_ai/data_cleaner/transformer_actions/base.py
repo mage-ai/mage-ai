@@ -183,7 +183,7 @@ class BaseAction:
                 ]
 
             if self.action.get('action_options'):
-                action_options_json = json.dumps(self.action['action_options'])
+                action_options_json = json.dumps(self.action['action_options'], ensure_ascii=False)
                 self.action['action_options'] = json.loads(interpolate(action_options_json, k, v))
 
     def join(self, df, df_to_join, action):

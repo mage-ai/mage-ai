@@ -889,6 +889,7 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
                 data,
                 default=datetime.isoformat,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
             type=DataType.TEXT,
             variable_uuid=variable_uuid,

@@ -1357,7 +1357,7 @@ class BlockExecutor:
             template_run_configuration = kwargs.get('template_runtime_configuration')
             options += [
                 '--template-runtime-configuration',
-                json.dumps(template_run_configuration),
+                json.dumps(template_run_configuration, ensure_ascii=False),
             ]
         return cmd.split(' ') + options
 
@@ -1422,7 +1422,7 @@ class BlockExecutor:
             callback_url,
             data=json.dumps({
                 'block_run': block_run_data,
-            }),
+            }, ensure_ascii=False),
             headers={
                 'Content-Type': 'application/json',
             },

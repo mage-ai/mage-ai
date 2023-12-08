@@ -28,7 +28,7 @@ class KinesisSink(BaseSink):
         self._print(f'Ingest data {message}, time={time.time()}')
         self.kinesis_client.put_record(
             StreamName=self.config.stream_name,
-            Data=json.dumps(message),
+            Data=json.dumps(message, ensure_ascii=False),
             PartitionKey=self.config.partition_key,
         )
 
@@ -39,7 +39,7 @@ class KinesisSink(BaseSink):
             f'Batch ingest {len(messages)} records, time={time.time()}. Sample: {messages[0]}')
         records = [
             {
-                'Data': json.dumps(d).encode('utf-8'),
+                'Data': json.dumps(d, ensure_ascii=False).encode('utf-8'),
                 'PartitionKey': self.config.partition_key,
             } for d in messages
         ]

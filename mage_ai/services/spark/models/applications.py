@@ -80,7 +80,7 @@ class Application(BaseSparkModel):
         })
 
         with open(self.__cache_file_path(), 'w') as f:
-            f.write(json.dumps(data))
+            f.write(json.dumps(data, ensure_ascii=False))
 
     @classmethod
     def get_applications_from_cache(self) -> Dict:

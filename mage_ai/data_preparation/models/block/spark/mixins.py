@@ -337,7 +337,7 @@ class SparkBlock:
         })
 
         with open(self.spark_jobs_full_path, 'w') as f:
-            f.write(json.dumps(data))
+            f.write(json.dumps(data, ensure_ascii=False))
 
     def __load_spark_job_submission_timestamps(self) -> None:
         self.execution_end_application = None

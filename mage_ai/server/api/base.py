@@ -55,6 +55,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 chunk,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             )
         super().write(chunk)
 

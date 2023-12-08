@@ -72,7 +72,7 @@ class RabbitMQSink(BaseSink):
             self.main_channel.basic_publish(
                 exchange='',
                 routing_key=self.config.queue_name,
-                body=json.dumps(data).encode('utf-8'),
+                body=json.dumps(data, ensure_ascii=False).encode('utf-8'),
                 properties=message_properties,
                 mandatory=True,
             )

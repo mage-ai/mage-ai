@@ -132,7 +132,7 @@ class HuggingFaceClient(AIClient):
             'parameters': {
                 'return_full_text': False,
                 'max_new_tokens': 800,
-                'num_return_sequences': 1}})
+                'num_return_sequences': 1}}, ensure_ascii=False)
         headers.update(
             {'Authorization': f'Bearer {self.api_token}'})
         response = requests.post(self.api, headers=headers, data=data)

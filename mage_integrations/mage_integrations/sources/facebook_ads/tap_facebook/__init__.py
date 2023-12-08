@@ -951,7 +951,7 @@ def do_discover(return_streams: bool = False):
     if return_streams:
         return catalog
 
-    json.dump(catalog, sys.stdout, indent=4)
+    json.dump(catalog, sys.stdout, indent=4, ensure_ascii=False)
 
 
 def setup_account(config):

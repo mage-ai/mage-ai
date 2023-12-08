@@ -54,7 +54,7 @@ def do_discover(client, config, return_streams: bool = False, selected_streams=N
     catalog = {"streams": discover_streams(client, config, selected_streams=selected_streams)}
 
     if not return_streams:
-        json.dump(catalog, sys.stdout, indent=2)
+        json.dump(catalog, sys.stdout, indent=2, ensure_ascii=False)
 
     LOGGER.info("Finished discover")
 

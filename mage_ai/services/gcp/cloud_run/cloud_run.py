@@ -77,7 +77,7 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
         operation = jobs_client.create_job(request=request)
         logger.info("Waiting for create_job operation to complete...")
         response = operation.result()
-        logger.info(json.dumps(response, indent=4, default=str))
+        logger.info(json.dumps(response, indent=4, default=str, ensure_ascii=False))
     except AlreadyExists:
         pass
 
@@ -89,7 +89,7 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
     ))
     logger.info('Waiting for run_job operation to complete...')
     response = operation.result()
-    logger.info(json.dumps(response, indent=4, default=str))
+    logger.info(json.dumps(response, indent=4, default=str, ensure_ascii=False))
 
     # Delete the job after job completes
     delete_request = run_v2.DeleteJobRequest(
@@ -98,6 +98,6 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
     delete_operation = jobs_client.delete_job(request=delete_request)
     delete_response = delete_operation.result()
     logger.info('Waiting for delete_job operation to complete...')
-    logger.info(json.dumps(delete_response, indent=4, default=str))
+    logger.info(json.dumps(delete_response, indent=4, default=str, ensure_ascii=False))
 
     return response

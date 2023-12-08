@@ -252,7 +252,7 @@ for config in [
 
     response = config.get('response') or dict(error=None)
     handler_write_called_with = \
-        config.get('handler_write_called_with') or json.dumps(dict(error=None))
+        config.get('handler_write_called_with') or json.dumps(dict(error=None), ensure_ascii=False)
     operation_called_with = merge_dict(dict(
         query={},
         payload={},

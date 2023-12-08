@@ -12,7 +12,7 @@ from mage_integrations.destinations.sql.utils import (
 
 
 def convert_array(v: List, column_type_dict: Dict):
-    return json.dumps(v)
+    return json.dumps(v, ensure_ascii=False)
 
 
 def convert_column_type(

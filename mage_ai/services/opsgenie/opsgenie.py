@@ -33,7 +33,7 @@ def send_opsgenie_alert(
     }
 
     print(f'Creating Opsgenie Alert {payload}')
-    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    response = requests.post(url, headers=headers, data=json.dumps(payload, ensure_ascii=False))
 
     if response.status_code == 202:
         print(f'Alert successfully opened: {message}')

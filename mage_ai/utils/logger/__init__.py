@@ -69,6 +69,7 @@ class Logger():
             data,
             default=encode_complex,
             ignore_nan=True,
+            ensure_ascii=False
         )
 
         if self.log_to_stdout:

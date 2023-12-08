@@ -100,7 +100,7 @@ class BitbucketClient(Client):
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json',
             },
-            data=json.dumps(data),
+            data=json.dumps(data, ensure_ascii=False),
             timeout=10,
         )
 

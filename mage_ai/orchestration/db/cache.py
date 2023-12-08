@@ -27,6 +27,7 @@ class CachingQuery(Query):
                     compiler.params or {},
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 )
                 self.cache_key = str(hash(f'{cache_key_1}:{cache_key_2}'))
 

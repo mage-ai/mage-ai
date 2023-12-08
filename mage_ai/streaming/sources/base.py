@@ -81,7 +81,7 @@ class BaseSource(ABC):
             return
         try:
             with open(self.checkpoint_path, 'w') as fp:
-                json.dump(self.checkpoint, fp)
+                json.dump(self.checkpoint, fp, ensure_ascii=False)
         except Exception:
             pass
 

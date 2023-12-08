@@ -114,7 +114,7 @@ def update_catalog(
         catalog = json.loads(f.read())
 
     with open(absolute_path_to_catalog, 'w') as f:
-        f.write(json.dumps(update_catalog_dict(catalog.copy(), **kwargs), indent=2))
+        f.write(json.dumps(update_catalog_dict(catalog.copy(), **kwargs), indent=2, ensure_ascii=False))
 
 
 def update_source_state_from_destination_state(
@@ -136,7 +136,7 @@ def update_source_state_from_destination_state(
             f.write('')
 
     with open(absolute_path_to_source_state, 'w') as f:
-        line = json.dumps(dict(bookmarks={}))
+        line = json.dumps(dict(bookmarks={}), ensure_ascii=False)
         if destination_state and len(destination_state) >= 1:
             line = destination_state[len(destination_state) - 1]
         f.write(line)

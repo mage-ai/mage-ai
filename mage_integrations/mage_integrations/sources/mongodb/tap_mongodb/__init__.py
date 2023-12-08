@@ -183,7 +183,7 @@ def do_discover(client, config, databases=None, return_streams: bool = False):
     if return_streams:
         return streams
 
-    json.dump({'streams': streams}, sys.stdout, indent=2)
+    json.dump({'streams': streams}, sys.stdout, indent=2, ensure_ascii=False)
 
 
 def is_stream_selected(stream):

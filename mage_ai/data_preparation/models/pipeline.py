@@ -408,7 +408,7 @@ class Pipeline:
             and source_pipeline.data_integration is not None
         ):
             with open(duplicate_pipeline.catalog_config_path, 'w') as fp:
-                json.dump(source_pipeline.data_integration, fp)
+                json.dump(source_pipeline.data_integration, fp, ensure_ascii=False)
 
         duplicate_pipeline_dict = source_pipeline.to_dict(exclude_data_integration=True)
         duplicate_pipeline_dict['uuid'] = duplicate_pipeline_uuid
@@ -2365,7 +2365,7 @@ class Pipeline:
         else:
             if self.data_integration is not None:
                 with open(self.catalog_config_path, 'w') as fp:
-                    json.dump(self.data_integration, fp)
+                    json.dump(self.data_integration, fp, ensure_ascii=False)
             pipeline_dict = self.to_dict(
                 exclude_data_integration=True,
                 include_execution_framework=True,
@@ -2442,7 +2442,7 @@ class Pipeline:
         else:
             if self.data_integration is not None:
                 async with aiofiles.open(self.catalog_config_path, mode='w') as fp:
-                    await fp.write(json.dumps(self.data_integration))
+                    await fp.write(json.dumps(self.data_integration), ensure_ascii=False)
             pipeline_dict = self.to_dict(
                 exclude_data_integration=True,
                 include_extensions=True,

@@ -400,7 +400,7 @@ class Postmark(object):  # noqa: WPS230
                         message_event_types = message_event_types + event['Type'] + ','
                     message_event_types = message_event_types[:-1]    # Get rid of the last comma
                     message['MessageEvents'] = message_event_types
-                    message['MessageEventsJson'] = json.dumps(details_message_events)
+                    message['MessageEventsJson'] = json.dumps(details_message_events, ensure_ascii=False)
                     yield cleaner(date_day, message)
                     total += 1
 

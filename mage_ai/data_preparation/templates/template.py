@@ -39,7 +39,7 @@ def build_template_from_suggestion(suggestion: Mapping) -> str:
         str: String version of Python code to execute to run this cleaning suggestion.
     """
     clean_title = suggestion['title'].lower().replace(' ', '_')
-    cleaned_payload = json.dumps(suggestion['action_payload'], indent=4)
+    cleaned_payload = json.dumps(suggestion['action_payload'], indent=4, ensure_ascii=False)
     cleaned_payload = cleaned_payload.replace('\n', '\n    ')
     template = read_template_file('transformers/suggestion_fmt.jinja')
     return (

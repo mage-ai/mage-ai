@@ -32,7 +32,7 @@ class EcsTaskManager:
     @instance_metadata.setter
     def instance_metadata(self, metadata):
         with open(self.metadata_file, 'w', encoding='utf-8') as file:
-            json.dump(metadata, file)
+            json.dump(metadata, file, ensure_ascii=False)
 
     def list_tasks(self):
         ec2_client = get_aws_boto3_client('ec2')

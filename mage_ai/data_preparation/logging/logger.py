@@ -69,6 +69,7 @@ class DictLogger():
             merge_dict(self.logging_tags or dict(), merge_dict(kwargs, data)),
             default=encode_complex,
             ignore_nan=True,
+            ensure_ascii=False
         )
 
         if log_level is None:

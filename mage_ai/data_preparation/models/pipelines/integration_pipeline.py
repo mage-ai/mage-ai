@@ -139,7 +139,7 @@ class IntegrationPipeline(Pipeline):
 
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
-                f.write(json.dumps(dict(bookmarks={})))
+                f.write(json.dumps(dict(bookmarks={}), ensure_ascii=False))
 
         return file_path
 
@@ -169,7 +169,7 @@ class IntegrationPipeline(Pipeline):
 
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
-                f.write(json.dumps(dict(bookmarks={})))
+                f.write(json.dumps(dict(bookmarks={}), ensure_ascii=False))
 
         return file_path
 
@@ -191,6 +191,7 @@ class IntegrationPipeline(Pipeline):
                         config_interpolated,
                         default=encode_complex,
                         ignore_nan=True,
+                        ensure_ascii=False
                     ),
                     '--test_connection',
                 ]
@@ -249,7 +250,7 @@ class IntegrationPipeline(Pipeline):
                     '--settings',
                     self.settings_file_path,
                     '--selected_streams_json',
-                    json.dumps(streams),
+                    json.dumps(streams, ensure_ascii=False),
                 ]
 
                 proc = subprocess.run(
@@ -329,7 +330,7 @@ class IntegrationPipeline(Pipeline):
                                 stream=tap_stream_id,
                             ),
                             '--selected_streams_json',
-                            json.dumps([tap_stream_id]),
+                            json.dumps([tap_stream_id], ensure_ascii=False),
                             '--count_records',
                         ],
                         config=config,
@@ -354,7 +355,7 @@ class IntegrationPipeline(Pipeline):
             if streams:
                 run_args += [
                     '--selected_streams_json',
-                    json.dumps(streams),
+                    json.dumps(streams, ensure_ascii=False),
                 ]
             return json.loads(
                 self.__run_in_subprocess(

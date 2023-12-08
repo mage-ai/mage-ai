@@ -501,7 +501,7 @@ class Target(PluginBase, SingerReader, metaclass=abc.ABCMeta):
         Args:
             state: TODO
         """
-        state_json = json.dumps(state)
+        state_json = json.dumps(state, ensure_ascii=False)
         self.logger.info(f"Emitting completed target state {state_json}")
         self.logger.info(f"{self.config}")
         text = f'{state_json}\n'

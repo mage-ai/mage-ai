@@ -143,13 +143,13 @@ class IntegrationBlock(Block):
                     '--state',
                     source_state_file_path,
                     '--query_json',
-                    json.dumps(query_data),
+                    json.dumps(query_data, ensure_ascii=False),
                 ]
 
                 if len(selected_streams) >= 1:
                     args += [
                         '--selected_streams_json',
-                        json.dumps(selected_streams),
+                        json.dumps(selected_streams, ensure_ascii=False),
                     ]
 
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -313,7 +313,7 @@ class IntegrationBlock(Block):
                                 line = json.dumps(merge_dict(
                                     data,
                                     dict(record=record_transformed),
-                                ))
+                                ), ensure_ascii=False)
                                 records_transformed += 1
 
                                 if records_transformed % 1000 == 0:
@@ -328,7 +328,7 @@ class IntegrationBlock(Block):
                     output_arr.append(line)
                     idx += 1
 
-            output_arr[schema_index] = json.dumps(schema_updated)
+            output_arr[schema_index] = json.dumps(schema_updated, ensure_ascii=False)
 
             with open(source_output_file_path, 'w') as f:
                 output = '\n'.join(output_arr)

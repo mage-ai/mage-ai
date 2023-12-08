@@ -295,7 +295,7 @@ def build_insert_command(
                     value_final = convert_datetime_func(v, column_type_dict)
                 else:
                     if type(v) is dict or type(v) is list:
-                        value_final = json.dumps(v)
+                        value_final = json.dumps(v, ensure_ascii=False)
                     else:
                         value_final = str(v).replace("'", "''")
 

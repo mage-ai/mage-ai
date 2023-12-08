@@ -141,12 +141,14 @@ class MSSQL(BaseSQL):
                     val,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 )
             elif type(val) is list and len(val) >= 1 and type(val[0]) is dict:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 )
             return val
 

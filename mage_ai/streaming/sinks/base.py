@@ -98,7 +98,7 @@ class BaseSink(ABC):
             return
         with open(self.buffer_path, 'a') as fp:
             for record in data:
-                fp.write(json.dumps(record) + '\n')
+                fp.write(json.dumps(record, ensure_ascii=False) + '\n')
 
     def _is_message_format_v2(self, message: Dict):
         """

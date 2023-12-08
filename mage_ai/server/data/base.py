@@ -62,6 +62,7 @@ class Model:
                 file,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             )
 
     def read_parquet_file(self, file_name):

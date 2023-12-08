@@ -96,7 +96,7 @@ def get_state_file_path(block, data_integration_uuid: str, stream: str) -> str:
 
     if not os.path.exists(file_path):
         with open(file_path, 'w') as f:
-            f.write(json.dumps(dict(bookmarks={})))
+            f.write(json.dumps(dict(bookmarks={}), ensure_ascii=False))
 
     return file_path
 
@@ -406,6 +406,7 @@ def execute_data_integration(
         config,
         default=encode_complex,
         ignore_nan=True,
+        ensure_ascii=False
     )
     query = data_integration_settings.get('query')
 
@@ -505,6 +506,7 @@ def execute_data_integration(
                 query_data,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
         ]
 
@@ -515,6 +517,7 @@ def execute_data_integration(
                     catalog,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False,
                 ),
             ]
         else:
@@ -530,6 +533,7 @@ def execute_data_integration(
                     state_data,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 ),
             ]
 
@@ -540,6 +544,7 @@ def execute_data_integration(
                     selected_streams,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 ),
             ]
 
@@ -1017,6 +1022,7 @@ def __execute_destination(
                 catalog_final,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
         ]
 
@@ -1027,6 +1033,7 @@ def __execute_destination(
             config,
             default=encode_complex,
             ignore_nan=True,
+            ensure_ascii=False
         ),
     ]
 
@@ -1158,6 +1165,7 @@ def discover(source_uuid: str, config: Dict, streams: List[str] = None) -> Dict:
             config,
             default=encode_complex,
             ignore_nan=True,
+            ensure_ascii=False
         ),
         '--discover',
     ]
@@ -1169,6 +1177,7 @@ def discover(source_uuid: str, config: Dict, streams: List[str] = None) -> Dict:
                 streams,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
         ]
 
@@ -1191,6 +1200,7 @@ def discover_streams(source_uuid: str, config: Dict) -> List[str]:
                     config,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 ),
                 '--discover',
                 '--discover_streams',
@@ -1245,12 +1255,14 @@ def count_records(
                 config,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
             '--selected_streams_json',
             simplejson.dumps(
                 [stream],
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
             '--count_records',
         ]
@@ -1262,6 +1274,7 @@ def count_records(
                     catalog,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 ),
             ]
         elif catalog_file_path:
@@ -1312,6 +1325,7 @@ def count_records(
                     state_data,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 ),
             ]
 
@@ -1347,6 +1361,7 @@ def test_connection(block) -> None:
                     config,
                     default=encode_complex,
                     ignore_nan=True,
+                    ensure_ascii=False
                 ),
                 '--test_connection',
             ]
@@ -1466,6 +1481,7 @@ def __fetch_data_from_source_block(
                 config,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
             '--load_sample_data',
             '--log_to_stdout',
@@ -1473,7 +1489,7 @@ def __fetch_data_from_source_block(
             '--catalog',
             block.get_catalog_file_path(),
             '--selected_streams_json',
-            json.dumps(stream_ids),
+            json.dumps(stream_ids, ensure_ascii=False),
         ]
 
         proc = subprocess.run(

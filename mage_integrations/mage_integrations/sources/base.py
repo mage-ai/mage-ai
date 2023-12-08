@@ -218,16 +218,16 @@ class Source:
                             'type': TYPE_SAMPLE_DATA,
                         }
 
-                        sys.stdout.write(simplejson.dumps(output) + '\n')
+                        sys.stdout.write(simplejson.dumps(output, ensure_ascii=False) + '\n')
             elif self.discover_mode:
                 if self.discover_streams_mode:
-                    json.dump(self.discover_streams(), sys.stdout)
+                    json.dump(self.discover_streams(), sys.stdout, ensure_ascii=False)
                 else:
                     catalog = self.discover(streams=self.selected_streams)
                     if type(catalog) is Catalog:
                         catalog.dump()
                     elif type(catalog) is dict:
-                        json.dump(catalog, sys.stdout)
+                        json.dump(catalog, sys.stdout, ensure_ascii=False)
             elif self.count_records_mode:
                 arr = []
                 selected_streams_arr = self.catalog.get_selected_streams(self.state or {}) or []
@@ -245,9 +245,9 @@ class Source:
                         id=tap_stream_id,
                         stream=tap_stream_id,
                     ))
-                json.dump(arr, sys.stdout)
+                json.dump(arr, sys.stdout, ensure_ascii=False)
             elif self.show_templates:
-                json.dump(self.templates(), sys.stdout)
+                json.dump(self.templates(), sys.stdout, ensure_ascii=False)
             else:
                 if not self.catalog:
                     catalog = self.discover(streams=self.selected_streams)

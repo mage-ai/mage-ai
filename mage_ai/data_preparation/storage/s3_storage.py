@@ -92,6 +92,7 @@ class S3Storage(BaseStorage):
                 data,
                 default=encode_complex,
                 ignore_nan=True,
+                ensure_ascii=False
             ),
         )
 

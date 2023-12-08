@@ -84,7 +84,7 @@ class TestAdCreative(unittest.TestCase):
         mocked_good_response = Response()
 
         # Convert our expected value into a JSON string, and then into bytes
-        byte_string = json.dumps(expected_value).encode()
+        byte_string = json.dumps(expected_value, ensure_ascii=False).encode()
 
         mocked_good_response._content = byte_string
 
@@ -170,7 +170,7 @@ class TestInsightJobs(unittest.TestCase):
         mocked_good_response = Response()
 
         # Convert our expected value into a JSON string, and then into bytes
-        byte_string = json.dumps(expected_value).encode()
+        byte_string = json.dumps(expected_value, ensure_ascii=False).encode()
 
         mocked_good_response._content = byte_string
 

@@ -214,7 +214,7 @@ class MongoDBProjection(unittest.TestCase):
             annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
             additional_md = [{ "breadcrumb" : [], "metadata" : {'replication-method' : 'LOG_BASED'}}]
             if projection_mapping['projection'] is not None:
-                additional_md[0]['metadata']['tap_mongodb.projection'] = json.dumps(projection_mapping['projection'])
+                additional_md[0]['metadata']['tap_mongodb.projection'] = json.dumps(projection_mapping['projection'], ensure_ascii=False)
             selected_metadata = connections.select_catalog_and_fields_via_metadata(conn_id,
                                                                                     stream_catalog,
                                                                                     annotated_schema,

@@ -230,7 +230,7 @@ def write_deltalake(
                 partition_values,
                 int(datetime.now().timestamp()),
                 True,
-                json.dumps(stats, cls=DeltaJSONEncoder),
+                json.dumps(stats, cls=DeltaJSONEncoder, ensure_ascii=False),
             )
         )
 

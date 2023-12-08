@@ -72,5 +72,5 @@ class Client(object):
         return self.request(method='get', path=path, url=url, **kwargs)
 
     def post(self, path: str = None, url: str = None, data: Dict = dict(), **kwargs):
-        kwargs['data'] = json.dumps(data)
+        kwargs['data'] = json.dumps(data, ensure_ascii=False)
         return self.request(method='post', path=path, url=url, **kwargs)

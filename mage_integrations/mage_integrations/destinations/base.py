@@ -354,7 +354,7 @@ class Destination(ABC):
                 self.logger.info('Testing connection...')
                 self.test_connection()
             elif self.show_templates:
-                json.dump(self.templates(), sys.stdout)
+                json.dump(self.templates(), sys.stdout, ensure_ascii=False)
             else:
                 self._process(input_buffer)
         except Exception as err:
@@ -494,7 +494,7 @@ class Destination(ABC):
 
             if self.batch_processing:
                 if record_data:
-                    current_byte_size += sys.getsizeof(json.dumps(record_data))
+                    current_byte_size += sys.getsizeof(json.dumps(record_data, ensure_ascii=False))
 
                     if current_byte_size >= self.config.get(
                             'maximum_batch_size_mb', MAXIMUM_BATCH_SIZE_MB) * 1024 * 1024:
@@ -597,7 +597,7 @@ class Destination(ABC):
 
     def _emit_state(self, state):
         if state:
-            line = json.dumps(state)
+            line = json.dumps(state, ensure_ascii=False)
             text = f'{line}\n'
             if self.state_file_path:
                 with open(self.state_file_path, 'w') as f:

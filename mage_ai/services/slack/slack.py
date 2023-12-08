@@ -26,7 +26,7 @@ def send_slack_message(config: SlackConfig, message: str, title: str = None) -> 
 
     response = requests.post(
         config.webhook_url,
-        json.dumps(payload),
+        json.dumps(payload, ensure_ascii=False),
     )
 
     try:

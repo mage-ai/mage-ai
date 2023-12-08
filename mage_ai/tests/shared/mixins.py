@@ -63,17 +63,17 @@ if 'data_exporter' not in globals():
 
 @data_loader
 def load_data(*args, **kwargs):
-    return {json.dumps(query)}
+    return {json.dumps(query, ensure_ascii=False)}
 
 
 @transformer
 def transform(*args, **kwargs):
-    return {json.dumps(query)}
+    return {json.dumps(query, ensure_ascii=False)}
 
 
 @data_exporter
 def export_data(*args, **kwargs):
-    return {json.dumps(query)}
+    return {json.dumps(query, ensure_ascii=False)}
 """
 
 

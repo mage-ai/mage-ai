@@ -11,7 +11,7 @@ LOGGER = singer.get_logger()
 def transform_sheet_metadata(spreadsheet_id, sheet, columns):
     # Convert to properties to dict
     sheet_metadata = sheet.get('properties')
-    sheet_metadata_tf = json.loads(json.dumps(sheet_metadata))
+    sheet_metadata_tf = json.loads(json.dumps(sheet_metadata, ensure_ascii=False))
     sheet_id = sheet_metadata_tf.get('sheetId')
     sheet_url = 'https://docs.google.com/spreadsheets/d/{}/edit#gid={}'.format(
         spreadsheet_id, sheet_id)
@@ -23,7 +23,7 @@ def transform_sheet_metadata(spreadsheet_id, sheet, columns):
 # Tranform spreadsheet_metadata: remove defaultFormat and sheets nodes, format as array
 def transform_spreadsheet_metadata(spreadsheet_metadata):
     # Convert to dict
-    spreadsheet_metadata_tf = json.loads(json.dumps(spreadsheet_metadata))
+    spreadsheet_metadata_tf = json.loads(json.dumps(spreadsheet_metadata, ensure_ascii=False))
     # Remove keys: defaultFormat and sheets (sheets will come in sheet_metadata)
     if spreadsheet_metadata_tf.get('properties'):
         spreadsheet_metadata_tf['properties'].pop('defaultFormat', None)
@@ -36,7 +36,7 @@ def transform_spreadsheet_metadata(spreadsheet_metadata):
 # Tranform file_metadata: remove nodes from lastModifyingUser, format as array
 def transform_file_metadata(file_metadata):
     # Convert to dict
-    file_metadata_tf = json.loads(json.dumps(file_metadata))
+    file_metadata_tf = json.loads(json.dumps(file_metadata, ensure_ascii=False))
     # Remove keys
     if file_metadata_tf.get('lastModifyingUser'):
         file_metadata_tf['lastModifyingUser'].pop('photoLink', None)

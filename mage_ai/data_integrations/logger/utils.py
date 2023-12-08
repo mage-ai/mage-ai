@@ -31,7 +31,7 @@ def print_log_from_line(
 
         if type(data) is not dict:
             if type(data) is list and len(data) >= 1:
-                log_to_print = json.dumps(data)
+                log_to_print = json.dumps(data, ensure_ascii=False)
         else:
             message = data.get('message')
             tags1 = data.get('tags')
@@ -71,11 +71,11 @@ def print_log_from_line(
                     except Exception:
                         pass
                 else:
-                    log_to_print = json.dumps(data)
+                    log_to_print = json.dumps(data, ensure_ascii=False)
             if data.get('level') in [LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION]:
                 if message:
                     if tags1:
-                        message = f'{message} {json.dumps(tags1)}'
+                        message = f'{message} {json.dumps(tags1, ensure_ascii=False)}'
                 else:
                     message = 'Exception raised, please check logs for more details.'
 

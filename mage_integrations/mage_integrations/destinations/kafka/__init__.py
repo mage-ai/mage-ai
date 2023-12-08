@@ -37,7 +37,7 @@ class Kafka(Destination):
         kwargs = dict(
             bootstrap_servers=self.config['bootstrap_server'],
             api_version=ast.literal_eval(self.config.get('api_version', '(0, 10, 2)')),
-            value_serializer=lambda x: json.dumps(x).encode('utf-8'),
+            value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8'),
             key_serializer=lambda x: x.encode('utf-8') if x else None,
         )
         producer = KafkaProducer(**kwargs)
