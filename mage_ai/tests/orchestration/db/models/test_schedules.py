@@ -972,6 +972,9 @@ class PipelineRunTests(DBTestCase):
 
     def test_executable_block_runs_with_dynamic_blocks(self):
         pass
+        # dynamic_upstream_block_uuids
+        # dynamic_block_index
+        # upstream_blocks
 
     def test_executable_block_runs_with_hook_blocks(self):
         pass
