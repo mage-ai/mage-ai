@@ -2,6 +2,7 @@ import collections
 import uuid
 
 from sqlalchemy import case
+from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import func
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
@@ -115,7 +116,9 @@ class PipelineScheduleResource(DatabaseResource):
                     PipelineSchedule.pipeline_uuid == pipeline.uuid,
                 )
 
-            query = query.order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.asc())
+            query = query.order_by(
+                PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc()
+            )
         else:
             order_by = query_arg.get('order_by', [None])
             if order_by[0]:
@@ -130,6 +133,8 @@ class PipelineScheduleResource(DatabaseResource):
                     query = query.order_by(PipelineSchedule.status.asc())
                 elif order_by == 'schedule_type':
                     query = query.order_by(PipelineSchedule.schedule_type.asc())
+
+        query = query.options(joinedload(PipelineSchedule.event_matchers))
 
         schedules = query.all()
         schedule_ids = [schedule.id for schedule in schedules]
@@ -223,7 +228,7 @@ class PipelineScheduleResource(DatabaseResource):
             )
             results.append(
                 merge_dict(
-                    s.to_dict(),
+                    s.to_dict(include_attributes=['event_matchers']),
                     additional_fields,
                 )
             )
