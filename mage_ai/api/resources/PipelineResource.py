@@ -207,7 +207,6 @@ class PipelineResource(BaseResource):
             )
 
         pipelines = [p for p in pipelines if p is not None]
-
         if sorts:
             def _sort_key(p, sorts=sorts, reverse_sort=reverse_sort):
                 bools = []
@@ -292,17 +291,15 @@ class PipelineResource(BaseResource):
             results = pipelines
         else:
             total_count = len(pipelines)
-            results = pipelines
-            if offset:
-                results = results[offset:]
-            if limit:
-                results = results[:(limit + 1)]
+            start_index = offset or 0
+            end_index = (start_index + limit if limit else total_count) + 1
+            results = pipelines[start_index:end_index]
 
         results_size = len(results)
         has_next = limit and total_count > limit
         final_end_idx = results_size - 1 if has_next else results_size
 
-        arr = pipelines[0:final_end_idx]
+        arr = results[0:final_end_idx]
         result_set = self.build_result_set(
             arr,
             user,
