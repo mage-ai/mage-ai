@@ -281,6 +281,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
+        hook=None,
         repo_config=None,
         timeout: int = None,
     ) -> None:
@@ -348,6 +349,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         self._repo_config = repo_config
         self._spark_session_current = None
         self.global_vars = None
+        self.hook = hook
 
     @property
     def uuid(self) -> str:

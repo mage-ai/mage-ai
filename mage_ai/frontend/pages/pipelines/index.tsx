@@ -96,7 +96,7 @@ import { get, set } from '@storage/localStorage';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy, range, sortByKey } from '@utils/array';
-import { isEmptyObject } from '@utils/hash';
+import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
@@ -398,26 +398,33 @@ function PipelineListPage() {
 
       if (f) {
         Object.entries(f).forEach(([k, v]) => {
-          // @ts-ignore
-          if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
-            filtersQuery[k] = v;
-          } else {
-            filtersQuery[k] = [];
+          if (typeof v !== 'undefined' && v !== null) {
+            // @ts-ignore
+            if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
+              filtersQuery[k] = v;
+            } else {
+              filtersQuery[k] = [];
 
-            Object.entries(v).forEach(([k2, v2]) => {
-              if (v2) {
-                filtersQuery[k].push(k2);
-              }
-            });
+              Object.entries(v).forEach(([k2, v2]) => {
+                if (v2) {
+                  filtersQuery[k].push(k2);
+                }
+              });
+            }
           }
         });
       }
 
       if (!isEmptyObject(filtersQuery)) {
-        queryFinal = {
+        queryFinal = {};
+        Object.entries({
           ...queryFinal,
           ...filtersQuery,
-        };
+        } || {}).forEach(([k, v]) => {
+          if (typeof v !== 'undefined' && v !== null) {
+            queryFinal[k] = v;
+          }
+        });
       }
     } else {
       const f = {};
@@ -426,23 +433,25 @@ function PipelineListPage() {
 
         let v2 = v;
 
-        // @ts-ignore
-        if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
-          f[k] = v;
-        } else {
-          if (!Array.isArray(v2)) {
-            v2 = [v2];
-          }
+        if (typeof v !== 'undefined' && v !== null) {
+          // @ts-ignore
+          if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
+              f[k] = v2;
+          } else {
+            if (!Array.isArray(v2)) {
+              v2 = [v2];
+            }
 
-          if (v2 && Array.isArray(v2)) {
-            v2?.forEach((v3) => {
-              f[k][v3] = true;
-            });
+            if (v2 && Array.isArray(v2)) {
+              v2?.forEach((v3) => {
+                f[k][v3] = true;
+              });
+            }
           }
         }
       });
 
-      setFilters(f);
+      setFilters(selectEntriesWithValues(f));
     }
 
     if (queryFinal?.[PipelineQueryEnum.SEARCH]) {
@@ -450,7 +459,8 @@ function PipelineListPage() {
     }
 
     if (!isEmptyObject(queryFinal)) {
-      goToWithQuery(queryFinal, {
+      console.log('wtf', queryFinal, selectEntriesWithValues(queryFinal))
+      goToWithQuery(selectEntriesWithValues(queryFinal), {
         pushHistory: false,
       });
     }
@@ -1233,7 +1243,6 @@ function PipelineListPage() {
         },
       ]}
       defaultSortColumnIndex={2}
-      disableSort
       getUniqueRowIdentifier={getUniqueRowIdentifier}
       isSelectedRow={(rowIndex: number) => pipelinesSortedInner[rowIndex]?.uuid === selectedPipeline?.uuid}
       localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}

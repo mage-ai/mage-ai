@@ -43,7 +43,7 @@ class HookOperation(str, Enum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
-    EXECUTE = 'execute'
+    EXECUTE = 'execute'  # Resources supported: Pipeline, Block (in the notebook)
     LIST = OperationType.LIST.value
     UPDATE = OperationType.UPDATE.value
     UPDATE_ANYWHERE = 'update_anywhere'
@@ -82,11 +82,20 @@ class HookRunSettings(BaseDataClass):
 
 
 @dataclass
+class ErrorDetails(BaseDataClass):
+    error: str = None
+    errors: str = None
+    message: str = None
+
+
+@dataclass
 class HookStatus(BaseDataClass):
     error: str = None
+    errors: List[ErrorDetails] = None
     strategy: HookStrategy = None
 
     def __post_init__(self):
+        self.serialize_attribute_classes('errors', ErrorDetails)
         self.serialize_attribute_enum('strategy', HookStrategy)
 
 
@@ -356,6 +365,8 @@ class Hook(BaseDataClass):
         if not self.pipeline:
             return
 
+        pipeline_run = None
+
         try:
             variables_from_operation = extract_valid_data(self.resource_type, dict(
                 error=kwargs.get('error'),
@@ -371,6 +382,7 @@ class Hook(BaseDataClass):
                 resources=kwargs.get('resources'),
                 user=user,
             ), resource_parent_type=resource_parent_type)
+
             variables = merge_dict(
                 self.pipeline_settings.get('variables') or {},
                 merge_dict(
@@ -380,8 +392,6 @@ class Hook(BaseDataClass):
                     ),
                 ),
             )
-
-            pipeline_run = None
 
             asynchronous = self.run_settings.asynchronous if self.run_settings else False
 
@@ -406,7 +416,16 @@ class Hook(BaseDataClass):
 
             return pipeline_run
         except Exception as err:
-            self.status = HookStatus.load(error=err)
+            error_details_arr = []
+
+            if pipeline_run and pipeline_run.block_runs:
+                for block_run in pipeline_run.block_runs:
+                    block_run.refresh()
+
+                    if block_run.metrics.get('__error_details'):
+                        error_details_arr.append(block_run.metrics.get('__error_details'))
+
+            self.status = HookStatus.load(error=err, errors=error_details_arr)
 
             if self.strategies:
                 if HookStrategy.RAISE in self.strategies:
@@ -911,9 +930,11 @@ class GlobalHooks(BaseDataClass):
                 user=user,
             )
 
+        hooks = self.hooks()
+
         return list(filter(
             _filter,
-            self.hooks(),
+            hooks,
         ))
 
     def run_hooks(

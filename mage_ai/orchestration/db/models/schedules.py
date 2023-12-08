@@ -37,6 +37,7 @@ from mage_ai.data_preparation.models.block.utils import (
 )
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
+    BlockType,
     ExecutorType,
     PipelineType,
 )
@@ -808,6 +809,33 @@ class PipelineRun(BaseModel):
         for block_run in self.block_runs:
             block = pipeline.get_block(block_run.block_uuid)
             metrics = block_run.metrics
+            """
+            controller
+            {
+                "controller": 1,
+                "original_block_uuid": "...",
+            }
+
+            controller child of controller
+            {
+                "controller": 1,
+                "child": 1,
+                "original_block_uuid": "...",
+                "controller_block_uuid": "controller_block_uuid",
+            }
+
+            child of controller child
+            {
+                "child": 1,
+                "original_block_uuid": "...",
+                "controller_block_uuid": "controller_child_block_uuid",
+            }
+
+            original block run
+            {
+                "original": 1,
+            }
+            """
             if metrics and block and block.is_data_integration():
                 original_block_uuid = metrics.get('original_block_uuid')
 
@@ -842,6 +870,8 @@ class PipelineRun(BaseModel):
                 if 'dynamic_upstream_block_uuids' in metrics and 'dynamic_block_index' in metrics:
                     dynamic_upstream_block_uuids = metrics['dynamic_upstream_block_uuids']
                     dynamic_block_index = metrics['dynamic_block_index']
+                elif metrics.get('upstream_blocks'):
+                    upstream_block_uuids_override = metrics.get('upstream_blocks') or None
 
             if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
                 uuids_to_check = []
@@ -851,6 +881,7 @@ class PipelineRun(BaseModel):
                         uuids_to_check.append(upstream_block_uuid)
                     else:
                         uuids_to_check.append(upstream_block_uuid)
+                    # uuids_to_check.append(upstream_block_uuid)
 
                 if allow_blocks_to_fail:
                     completed = all(uuid in finished_block_uuids
@@ -859,9 +890,22 @@ class PipelineRun(BaseModel):
                     completed = all(uuid in completed_block_uuids
                                     for uuid in uuids_to_check)
             else:
-                block = pipeline.get_block(block_run.block_uuid)
-
                 metrics = block_run.metrics
+
+                block = pipeline.get_block(block_run.block_uuid)
+                if not block and metrics.get('hook'):
+                    from mage_ai.data_preparation.models.block.hook.block import (
+                        HookBlock,
+                    )
+                    from mage_ai.data_preparation.models.global_hooks.models import Hook
+
+                    hook = Hook.load(**(metrics.get('hook') or {}))
+                    block = HookBlock(
+                        hook.uuid,
+                        hook.uuid,
+                        BlockType.HOOK,
+                        hook=hook,
+                    )
 
                 if metrics and block and block.is_data_integration():
                     if metrics.get('original'):
@@ -1119,6 +1163,16 @@ class PipelineRun(BaseModel):
                 ))
 
             block_arr.append((block_uuid, create_options))
+
+        from mage_ai.data_preparation.models.global_hooks.pipelines import (
+            attach_global_hook_execution,
+        )
+
+        block_arr = attach_global_hook_execution(
+            self,
+            pipeline,
+            block_arr,
+        )
 
         return [self.create_block_run(block_uuid, **options) for block_uuid, options in block_arr]
 

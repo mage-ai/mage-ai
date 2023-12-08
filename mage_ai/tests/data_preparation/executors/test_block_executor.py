@@ -1,13 +1,21 @@
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
+
+from faker import Faker
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.tests.base_test import TestCase
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.tests.api.operations.test_base import BaseApiTestCase
+from mage_ai.tests.factory import create_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import build_hooks
 
 
-class BlockExecutorTest(TestCase):
+class BlockExecutorTest(BaseApiTestCase):
     def setUp(self):
         self.pipeline = MagicMock()
         self.pipeline.uuid = 'pipeline_uuid'
@@ -40,6 +48,19 @@ class BlockExecutorTest(TestCase):
         self.block_executor.logger_manager = self.logger_manager
         self.block_executor.logger = self.logger
         self.block_executor.block = self.block
+
+        self.faker = Faker()
+
+        self.pipeline1 = create_pipeline_with_blocks(
+            self.faker.unique.name(),
+            self.repo_path,
+        )
+
+    def tearDown(self):
+        BlockRun.query.delete()
+        PipelineRun.query.delete()
+        self.pipeline1.delete()
+        super().tearDown()
 
     def test_execute(self):
         analyze_outputs = False
@@ -242,3 +263,44 @@ class BlockExecutorTest(TestCase):
             'on_success',
             **expected_kwargs,
         )
+
+    def test_hook_block(self):
+        _global_hooks, _hooks, hooks_match, _hooks_miss = build_hooks(self, self.pipeline1)
+
+        hook = hooks_match[0]
+
+        pipeline_run = PipelineRun.create(
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline1.uuid,
+        )
+        block_run = BlockRun.create(
+            block_uuid=hook.uuid,
+            metrics=dict(
+                hook=hook.to_dict(include_all=True),
+                hook_variables=dict(mage=1),
+            ),
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        executor = BlockExecutor(
+            self.pipeline1,
+            hook.uuid,
+        )
+
+        def __is_feature_enabled(feature_uuid):
+            return FeatureUUID.GLOBAL_HOOKS == feature_uuid
+
+        value = uuid4().hex
+
+        class CustomHookBlock(HookBlock):
+            def execute_sync(self, *args, **kwargs):
+                return value, kwargs['global_vars']
+
+        with patch('mage_ai.data_preparation.models.block.hook.block.HookBlock', CustomHookBlock):
+            with patch.object(executor.project, 'is_feature_enabled', __is_feature_enabled):
+                result, variables = executor.execute(block_run_id=block_run.id)
+
+                self.assertEqual(value, result)
+                self.assertEqual(executor.block.uuid, hook.uuid)
+                self.assertEqual(executor.block.hook, hook)
+                self.assertEqual(executor.block.type, BlockType.HOOK)

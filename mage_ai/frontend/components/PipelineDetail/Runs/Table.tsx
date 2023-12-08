@@ -342,7 +342,7 @@ function PipelineRunsTable({
 
   const getRunRowIndex = useCallback((run: PipelineRunType) => {
     if (!run) return null;
-    
+
     const rowIndex = pipelineRuns.findIndex(pipelineRun => pipelineRun.id === run.id);
     return rowIndex >= 0 ? rowIndex : null;
   }, [pipelineRuns]);
@@ -386,11 +386,11 @@ function PipelineRunsTable({
               return pipelineRuns[newRowIndex];
             }
           }
-  
+
           return prevSelectedRun;
         });
       }
-    }, 
+    },
     [pipelineRuns, setSelectedRun],
   );
 
@@ -406,10 +406,14 @@ function PipelineRunsTable({
   }, [getRunRowIndex, selectedRun]);
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [null, 1];
+  const columnFlex = [null, null, 1];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
+    },
+    {
+      center: true,
+      uuid: 'ID',
     },
     {
       uuid: 'Pipeline',
@@ -582,6 +586,9 @@ function PipelineRunsTable({
                       </Button>
                     </FlexContainer>
                   </Spacing>,
+                  <Text center default key="row_id" monospace muted>
+                    {pipelineRun?.id}
+                  </Text>,
                   <Text default key="row_pipeline_uuid" monospace muted>
                     {pipelineUUID}
                   </Text>,
@@ -686,6 +693,9 @@ function PipelineRunsTable({
                     setShowConfirmationId={setShowConfirmationId}
                     showConfirmationId={showConfirmationId}
                   />,
+                  <Text center default key="row_id" monospace muted>
+                    {pipelineRun?.id}
+                  </Text>,
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
                   </Text>,

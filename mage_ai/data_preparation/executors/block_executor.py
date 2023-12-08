@@ -128,6 +128,27 @@ class BlockExecutor:
         Returns:
             The result of the block execution.
         """
+        block_run = None
+
+        if self.project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS) and not self.block:
+            block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+            if block_run and block_run.metrics and block_run.metrics.get('hook'):
+                from mage_ai.data_preparation.models.block.hook.block import HookBlock
+                from mage_ai.data_preparation.models.global_hooks.models import Hook
+
+                hook = Hook.load(**(block_run.metrics.get('hook') or {}))
+                self.block = HookBlock(
+                    hook.uuid,
+                    hook.uuid,
+                    BlockType.HOOK,
+                    hook=hook,
+                )
+                if block_run.metrics.get('hook_variables'):
+                    global_vars = merge_dict(
+                        global_vars,
+                        block_run.metrics.get('hook_variables') or {},
+                    )
+
         if template_runtime_configuration:
             # Used for data integration pipeline
             self.block.template_runtime_configuration = template_runtime_configuration
@@ -146,7 +167,8 @@ class BlockExecutor:
             if on_start is not None:
                 on_start(self.block_uuid)
 
-            block_run = BlockRun.query.get(block_run_id) if block_run_id else None
+            if not block_run:
+                block_run = BlockRun.query.get(block_run_id) if block_run_id else None
             pipeline_run = PipelineRun.query.get(pipeline_run_id) if pipeline_run_id else None
 
             # Data integration block
@@ -547,20 +569,26 @@ class BlockExecutor:
                             error=error,
                         )),
                     )
+
+                    error_details = dict(
+                        error=error,
+                        errors=traceback.format_stack(),
+                        message=traceback.format_exc(),
+                    )
+
                     if on_failure is not None:
                         on_failure(
                             self.block_uuid,
-                            error=dict(
-                                error=error,
-                                errors=traceback.format_stack(),
-                                message=traceback.format_exc(),
-                            ),
+                            error=error_details,
                         )
                     else:
                         self.__update_block_run_status(
                             BlockRun.BlockRunStatus.FAILED,
                             block_run_id=block_run_id,
                             callback_url=callback_url,
+                            error_details=dict(
+                                error=error,
+                            ),
                             tags=tags,
                         )
                     self._execute_callback(
@@ -1165,6 +1193,7 @@ class BlockExecutor:
         status: BlockRun.BlockRunStatus,
         block_run_id: int = None,
         callback_url: str = None,
+        error_details: Dict = None,
         pipeline_run: PipelineRun = None,
         tags: Dict = None,
     ):
@@ -1207,8 +1236,15 @@ class BlockExecutor:
             update_kwargs = dict(
                 status=status
             )
+
             if status == BlockRun.BlockRunStatus.COMPLETED:
                 update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+
+            if BlockRun.BlockRunStatus.FAILED == status and error_details:
+                update_kwargs['metrics'] = merge_dict(block_run.metrics or {}, dict(
+                    __error_details=error_details,
+                ))
+
             block_run.update(**update_kwargs)
             return
         except Exception as err2:
@@ -1219,13 +1255,15 @@ class BlockExecutor:
                 )),
             )
 
+        block_run_data = dict(status=status)
+        if error_details:
+            block_run_data['error_details'] = error_details
+
         # Fall back to making API calls
         response = requests.put(
             callback_url,
             data=json.dumps({
-                'block_run': {
-                    'status': status,
-                },
+                'block_run': block_run_data,
             }),
             headers={
                 'Content-Type': 'application/json',

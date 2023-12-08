@@ -54,6 +54,7 @@ class BlockType(str, Enum):
     DBT = 'dbt'
     EXTENSION = 'extension'
     GLOBAL_DATA_PRODUCT = 'global_data_product'
+    HOOK = 'hook'
     MARKDOWN = 'markdown'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'

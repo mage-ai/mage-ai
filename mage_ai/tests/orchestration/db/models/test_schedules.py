@@ -1,10 +1,13 @@
 import os
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 from croniter import croniter
 from freezegun import freeze_time
 
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -832,6 +835,150 @@ class PipelineRunTests(DBTestCase):
         self.assertEqual(len(block_runs4), 1)
         self.assertEqual(block_runs4[0].block_uuid, 'block4')
 
+    def test_executable_block_runs_with_data_integration_blocks(self):
+        block = Block.create(
+            self.faker.unique.name(),
+            'data_loader',
+            self.pipeline.repo_path,
+            language='yaml',
+        )
+        self.pipeline.add_block(block)
+
+        pipeline_run = create_pipeline_run(
+            pipeline_uuid=self.pipeline.uuid,
+            create_block_runs=False,
+        )
+        data_integration_controller = BlockRun.create(
+            block_uuid=f'{block.uuid}:controller',
+            pipeline_run=pipeline_run,
+            metrics=dict(
+                original_block_uuid=block.uuid,
+                controller=1,
+            ),
+        )
+        data_integration_controller_child1 = BlockRun.create(
+            block_uuid=f'{data_integration_controller.block_uuid}:child0',
+            pipeline_run=pipeline_run,
+            metrics=dict(
+                original_block_uuid=block.uuid,
+                controller_block_uuid=data_integration_controller.block_uuid,
+                controller=1,
+                child=1,
+            ),
+        )
+
+        data_integration_controller_child2 = BlockRun.create(
+            block_uuid=f'{data_integration_controller.block_uuid}:child1',
+            pipeline_run=pipeline_run,
+            metrics=dict(
+                original_block_uuid=block.uuid,
+                controller_block_uuid=data_integration_controller.block_uuid,
+                controller=1,
+                child=1,
+                upstream_block_uuids=[
+                    data_integration_controller_child1.block_uuid,
+                ],
+            ),
+        )
+
+        data_integration_child1 = BlockRun.create(
+            block_uuid=f'{data_integration_controller_child1.block_uuid}:child0',
+            pipeline_run=pipeline_run,
+            metrics=dict(
+                original_block_uuid=block.uuid,
+                controller_block_uuid=data_integration_controller_child1.block_uuid,
+                child=1,
+            ),
+        )
+
+        data_integration_original = BlockRun.create(
+            block_uuid=block.uuid,
+            pipeline_run=pipeline_run,
+            metrics=dict(
+                original=1,
+            ),
+        )
+
+        with patch(
+            'mage_ai.data_preparation.models.project.Project.is_feature_enabled',
+            lambda _x, feature_uuid: FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE == feature_uuid,
+        ):
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_controller.block_uuid,
+                    data_integration_controller_child1.block_uuid,
+                    data_integration_child1.block_uuid,
+                ],
+            )
+
+            data_integration_controller.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_controller_child1.block_uuid,
+                    data_integration_child1.block_uuid,
+                ],
+            )
+
+            data_integration_controller_child1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            data_integration_child2 = BlockRun.create(
+                block_uuid=f'{data_integration_controller_child2.block_uuid}:child1',
+                pipeline_run=pipeline_run,
+                metrics=dict(
+                    original_block_uuid=block.uuid,
+                    controller_block_uuid=data_integration_controller_child2.block_uuid,
+                    child=1,
+                ),
+            )
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_controller_child2.block_uuid,
+                    data_integration_child1.block_uuid,
+                    data_integration_child2.block_uuid,
+                ],
+            )
+
+            data_integration_controller_child2.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_child1.block_uuid,
+                    data_integration_child2.block_uuid,
+                ],
+            )
+
+            data_integration_child1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_child2.block_uuid,
+                ],
+            )
+
+            data_integration_child2.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+            self.assertEqual(
+                [br.block_uuid for br in pipeline_run.executable_block_runs()],
+                [
+                    data_integration_original.block_uuid,
+                ],
+            )
+
+    def test_executable_block_runs_with_dynamic_blocks(self):
+        pass
+        # dynamic_upstream_block_uuids
+        # dynamic_block_index
+        # upstream_blocks
+
+    def test_executable_block_runs_with_hook_blocks(self):
+        pass
+
     def test_execution_partition(self):
         execution_date = datetime.now()
         pipeline_run = create_pipeline_run_with_schedule(
@@ -846,7 +993,10 @@ class PipelineRunTests(DBTestCase):
 
     @freeze_time('2023-05-01 01:20:33')
     def test_execution_partition_from_variables(self):
-        pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+        )
         payload = configure_pipeline_run_payload(pipeline_schedule, PipelineType.PYTHON, dict())[0]
         pipeline_run = PipelineRun.create(**payload)
         execution_date_str = datetime.utcnow().strftime(format='%Y%m%dT%H%M%S_%f')

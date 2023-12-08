@@ -234,7 +234,7 @@ function TriggersTable({
     columnFlex.splice(5, 0, null);
   }
 
-  const [showDisableTriggerModal, hideDisableTriggerModal] = useModal(({ 
+  const [showDisableTriggerModal, hideDisableTriggerModal] = useModal(({
     inProgressRunsCount,
     left,
     pipelineScheduleId,
@@ -242,9 +242,9 @@ function TriggersTable({
     top,
     topOffset,
   }) => (
-    <DisableTriggerModal 
+    <DisableTriggerModal
       inProgressRunsCount={inProgressRunsCount}
-      left={left} 
+      left={left}
       onAllow={(pipelineScheduleId) => {
         hideDisableTriggerModal();
         updatePipelineSchedule({
@@ -265,9 +265,9 @@ function TriggersTable({
           status: ScheduleStatusEnum.INACTIVE,
         });
       }}
-      pipelineScheduleId={pipelineScheduleId} 
+      pipelineScheduleId={pipelineScheduleId}
       pipelineUuid={pipelineUuid}
-      top={top} 
+      top={top}
       topOffset={topOffset}
     />
   ), {
@@ -276,11 +276,11 @@ function TriggersTable({
     uuid: 'disable_trigger',
   });
 
-  const handleTogglePipeline = ({ 
-    event, 
+  const handleTogglePipeline = ({
+    event,
     inProgressRunsCount,
     pipelineIsActive,
-    pipelineScheduleId, 
+    pipelineScheduleId,
     pipelineUuid,
   }) => {
     pauseEvent(event);
@@ -376,11 +376,11 @@ function TriggersTable({
                       <ToggleSwitch
                         checked={isActive}
                         compact
-                        onCheck={(event) => handleTogglePipeline({ 
-                          event, 
+                        onCheck={(event) => handleTogglePipeline({
+                          event,
                           inProgressRunsCount,
                           pipelineIsActive: isActive,
-                          pipelineScheduleId: id, 
+                          pipelineScheduleId: id,
                           pipelineUuid: triggerPipelineUUID,
                         })}
                         purpleBackground
