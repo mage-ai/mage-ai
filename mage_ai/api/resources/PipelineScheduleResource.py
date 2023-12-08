@@ -43,6 +43,7 @@ class PipelineScheduleResource(DatabaseResource):
         The result of this method will be a ResultSet of dictionaries. Each dict will already
         contain the additional fields that are needed for the pipeline schedule LIST endpoint.
         """
+        print('=========================== NEW REQUEST ==========================')
         pipeline = kwargs.get('parent_model')
 
         global_data_product_uuid = query_arg.get('global_data_product_uuid', [None])
@@ -176,13 +177,33 @@ class PipelineScheduleResource(DatabaseResource):
         )
         pipeline_run_counts = counts_query.all()
 
+        pipeline_runs_to_fetch = []
+        for count in pipeline_run_counts:
+            pipeline_runs_to_fetch.append(count.last_pipeline_run_id)
+
+        pipeline_run_statuses = (
+            PipelineRun.select(
+                PipelineRun.id,
+                PipelineRun.status,
+            )
+            .filter(
+                PipelineRun.id.in_(pipeline_runs_to_fetch),
+            )
+            .all()
+        )
+
+        pipeline_run_status_by_id = {
+            pipeline_run.id: pipeline_run.status
+            for pipeline_run in pipeline_run_statuses
+        }
+
         run_counts_by_pipeline_schedule = {
             count.pipeline_schedule_id: dict(
                 pipeline_runs_count=count.pipeline_runs_count,
                 pipeline_in_progress_runs_count=count.in_progress_runs_count,
-                last_pipeline_run_status=PipelineRun.query.get(
+                last_pipeline_run_status=pipeline_run_status_by_id.get(
                     count.last_pipeline_run_id
-                ).status
+                )
                 if count.last_pipeline_run_id
                 else None,
             )
@@ -211,7 +232,7 @@ class PipelineScheduleResource(DatabaseResource):
             )
             results.append(
                 merge_dict(
-                    s.to_dict(include_attributes=['event_matchers']),
+                    s.to_dict(),
                     additional_fields,
                 )
             )
