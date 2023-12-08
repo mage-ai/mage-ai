@@ -143,9 +143,9 @@ class PipelineScheduleResource(DatabaseResource):
         schedules = query.all()
         schedule_ids = [schedule.id for schedule in schedules]
 
-        # Get the number of pipeline runs and in progress pipeline runs for each pipeline schedule
-        # in a single query. The result of this query will be a record of
-        # (pipeline_schedule_id, pipeline_runs_count, in_progress_runs_count).
+        # Get fields to be returned in a single query. The result of this query
+        # will be a record of (pipeline_schedule_id, pipeline_runs_count,
+        # in_progress_runs_count, last_pipeline_run_id).
         counts_query = (
             PipelineRun.select(
                 PipelineRun.pipeline_schedule_id,
