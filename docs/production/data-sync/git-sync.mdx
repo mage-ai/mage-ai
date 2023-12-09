@@ -17,6 +17,14 @@ use the same credentials that are provided for the main repository to update the
 
 ## Git sync settings as environment variables
 
+<Note>
+
+Mage will prioritize git settings from environment variables when they are set. If you want to be able
+to change git settings from the UI, you will need to set the `GIT_OVERWRITE_WITH_PROJECT_SETTINGS` environment
+variable to `1`. Otherwise, edits to the git settings from the UI will not be applied.
+
+</Note>
+
 You can choose to pass in Git settings as environment variables. Mage will read from these environment
 variables to configure your Git repo.
 
