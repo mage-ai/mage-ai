@@ -4,6 +4,7 @@ from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.api.utils import get_query_timestamps
 from mage_ai.cache.tag import TagCache
+from mage_ai.data_preparation.models.block.utils import get_all_descendants
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
@@ -290,25 +291,15 @@ class PipelineRunResource(DatabaseResource):
                 if is_integration:
                     from_block = pipeline.block_from_block_uuid_with_stream(from_block_uuid)
                 else:
-                    from_block = pipeline.blocks_by_uuid.get(from_block_uuid)
+                    from_block = pipeline.get_block(from_block_uuid)
 
                 if from_block:
-                    downstream_blocks = from_block.get_all_downstream_blocks()
-                    if is_integration:
-                        block_uuid_suffix = from_block_uuid[len(from_block.uuid):]
-                        downstream_block_uuids = [from_block_uuid] + \
-                            [f'{b.uuid}{block_uuid_suffix}' for b in downstream_blocks]
-                    else:
-                        downstream_block_uuids = [from_block_uuid] + \
-                            [b.uuid for b in downstream_blocks]
-
-                    block_runs_to_retry = \
-                        list(
-                            filter(
-                                lambda br: br.block_uuid in downstream_block_uuids,
-                                self.model.block_runs
-                            )
-                        )
+                    descendants = [b.uuid for b in get_all_descendants(from_block)]
+                    block_runs_to_retry = []
+                    for block_run in self.model.block_runs:
+                        block2 = pipeline.get_block(block_run.block_uuid)
+                        if block2.uuid in descendants or block2.uuid == from_block.uuid:
+                            block_runs_to_retry.append(block_run)
             elif PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
                 block_runs_to_retry = \
                     list(

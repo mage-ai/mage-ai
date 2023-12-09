@@ -3437,7 +3437,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   {!codeCollapsed
                     ? (!(isMarkdown && !isEditingBlock)
                       ? (replicatedBlock && !isDataIntegration)
-                        ? (<Spacing px={1}>
+                        ? (<Spacing px={1} py={PADDING_UNITS}>
                           <Text monospace muted>
                             Replicated from block <Link
                               color={getColorsForBlockType(

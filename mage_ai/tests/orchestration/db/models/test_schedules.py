@@ -34,10 +34,13 @@ class PipelineScheduleTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.pipeline = create_pipeline_with_blocks(
+        pipeline, blocks = create_pipeline_with_blocks(
             'test pipeline',
             self.repo_path,
+            return_blocks=True,
         )
+        self.pipeline = pipeline
+        self.blocks = blocks
 
     def test_fetch_latest_pipeline_runs_without_retries(self):
         pipeline_schedule = PipelineSchedule.create(
@@ -971,8 +974,76 @@ class PipelineRunTests(DBTestCase):
             )
 
     def test_executable_block_runs_with_dynamic_blocks(self):
+        # block1, block2, block3, block4 = self.blocks
+        # block5 = Block.create(
+        #     self.faker.unique.name(),
+        #     'data_exporter',
+        #     self.pipeline.repo_path,
+        # )
+        # self.pipeline.add_block(block5, upstream_block_uuids=[block4.uuid])
+
+        # pipeline_run = create_pipeline_run(
+        #     pipeline_uuid=self.pipeline.uuid,
+        #     create_block_runs=False,
+        # )
+
+        # BlockRun.create(
+        #     block_uuid=block1.uuid,
+        #     pipeline_run=pipeline_run,
+        #     status=BlockRun.BlockRunStatus.COMPLETED,
+        # )
+
+        # block_run_dynamic = BlockRun.create(
+        #     block_uuid=block2.uuid,
+        #     pipeline_run=pipeline_run,
+        # )
+
+        # block_run_dynamic_child0 = BlockRun.create(
+        #     block_uuid=f'{block2.uuid}:0',
+        #     metrics=dict(
+        #         block_uuid='0',
+        #         dynamic_block_index=0,
+        #         dynamic_upstream_block_uuids=[
+        #             block1.uuid,
+        #             block2.uuid,
+        #         ],
+        #     ),
+        # )
+        # block_run_dynamic_child1 = BlockRun.create(
+        #     block_uuid=f'{block2.uuid}:1',
+        #     metrics=dict(
+        #         block_uuid='1',
+        #         dynamic_block_index=1,
+        #         dynamic_upstream_block_uuids=[
+        #             block1.uuid,
+        #             block2.uuid,
+        #             f'{block2.uuid}:0',
+        #         ],
+        #         upstream_blocks=[
+        #             '0',
+        #         ],
+        #     ),
+        # )
+        # block_run_dynamic_child2 = BlockRun.create(
+        #     block_uuid=f'{block2.uuid}:2',
+        #     metrics=dict(
+        #         block_uuid='2',
+        #         dynamic_block_index=2,
+        #         dynamic_upstream_block_uuids=[
+        #             block1.uuid,
+        #             block2.uuid,
+        #             f'{block2.uuid}:0',
+        #             f'{block2.uuid}:1',
+        #         ],
+        #         upstream_blocks=[
+        #             '0',
+        #             '1',
+        #         ],
+        #     ),
+        # )
+
         pass
-        # dynamic_upstream_block_uuids
+        #
         # dynamic_block_index
         # upstream_blocks
 
