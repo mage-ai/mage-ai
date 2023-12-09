@@ -28,7 +28,12 @@ def create_pipeline(name: str, repo_path: str):
     return pipeline
 
 
-def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: PipelineType = None):
+def create_pipeline_with_blocks(
+    name: str,
+    repo_path: str,
+    pipeline_type: PipelineType = None,
+    return_blocks: bool = False,
+):
     """
     Creates a pipeline with blocks for data processing and transformation.
 
@@ -52,6 +57,10 @@ def create_pipeline_with_blocks(name: str, repo_path: str, pipeline_type: Pipeli
     pipeline.add_block(block2, upstream_block_uuids=['block1'])
     pipeline.add_block(block3, upstream_block_uuids=['block1'])
     pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
+
+    if return_blocks:
+        return pipeline, [block1, block2, block3, block4]
+
     return pipeline
 
 
