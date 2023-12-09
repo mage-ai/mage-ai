@@ -41,8 +41,10 @@ def clean_name(name: str, **kwargs) -> str:
 def dynamic_block_uuid(
     block_uuid: str,
     metadata: Dict,
-    index: int,
+    index: int = None,
+    indexes: List[int] = None,
     upstream_block_uuid: str = None,
+    upstream_block_uuids: List[str] = None,
 ) -> str:
     """
     Generates a dynamic block UUID based on the given parameters.
@@ -59,7 +61,9 @@ def dynamic_block_uuid(
     block_uuid_subname = metadata.get('block_uuid', index)
     uuid = f'{block_uuid}:{block_uuid_subname}'
 
-    if upstream_block_uuid:
+    if upstream_block_uuids:
+        uuid = f'{block_uuid}:{"__".join(upstream_block_uuids)}:{block_uuid_subname}'
+    elif upstream_block_uuid:
         parts = upstream_block_uuid.split(':')
         if len(parts) >= 2:
             upstream_indexes = ':'.join(parts[1:])
@@ -72,9 +76,11 @@ def create_block_run_from_dynamic_child(
     block,
     pipeline_run,
     block_metadata: Dict,
-    index: int,
+    index: int = None,
+    indexes: List[int] = None,
     skip_if_exists: bool = True,
     upstream_block_uuid: str = None,
+    upstream_block_uuids: List[str] = None,
 ):
     """
     Creates a block run for a dynamic child block.
@@ -92,11 +98,16 @@ def create_block_run_from_dynamic_child(
     metadata = block_metadata.copy()
     metadata.update(dict(dynamic_block_index=index))
 
+    if indexes:
+        metadata['indexes'] = indexes
+
     block_uuid = dynamic_block_uuid(
         block.uuid,
         metadata,
-        index,
+        index=index,
+        indexes=indexes,
         upstream_block_uuid=upstream_block_uuid,
+        upstream_block_uuids=upstream_block_uuids,
     )
     block_run = pipeline_run.create_block_run(
         block_uuid,
@@ -215,7 +226,7 @@ def create_block_runs_from_dynamic_block(
                 merge_dict(metadata, dict(
                     dynamic_upstream_block_uuids=arr,
                 )),
-                idx,
+                index=idx,
                 upstream_block_uuid=block_uuid,
             )
             all_block_runs.append(block_run)
@@ -223,6 +234,8 @@ def create_block_runs_from_dynamic_block(
 
             if is_dynamic or should_reduce:
                 continue
+
+            continue
 
             # Schedule all descendants
             for b in descendants:
@@ -278,7 +291,7 @@ def create_block_runs_from_dynamic_block(
                     merge_dict(metadata, dict(
                         dynamic_upstream_block_uuids=arr,
                     )),
-                    idx,
+                    index=idx,
                 )
                 all_block_runs.append(br)
 

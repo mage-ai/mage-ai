@@ -8,7 +8,7 @@ import {
   NavDashboard,
   PipeIcon,
   Schedule,
-  Settings,
+  SettingsWithKnobs,
 } from '@oracle/icons';
 import { PageNameEnum } from './constants';
 import { isViewer } from '@utils/session';
@@ -107,7 +107,7 @@ export function buildNavigationItems(
 
     // @ts-ignore
     navigationItems.push({
-      Icon: Settings,
+      Icon: SettingsWithKnobs,
       id: PageNameEnum.SETTINGS,
       isSelected: () => PageNameEnum.SETTINGS === pageName,
       label: () => 'Pipeline settings',

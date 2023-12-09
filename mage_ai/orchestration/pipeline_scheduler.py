@@ -17,10 +17,6 @@ from mage_ai.data_integrations.utils.scheduler import (
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.utils import (
-    create_block_runs_from_dynamic_block,
-    is_dynamic_block,
-)
 from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
@@ -345,14 +341,6 @@ class PipelineScheduler:
 
     @safe_db_query
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
-        block = self.pipeline.get_block(block_uuid)
-        if block and is_dynamic_block(block):
-            create_block_runs_from_dynamic_block(
-                block,
-                self.pipeline_run,
-                block_uuid=block.uuid if block.replicated_block else block_uuid,
-            )
-
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
         @retry(retries=2, delay=5)
