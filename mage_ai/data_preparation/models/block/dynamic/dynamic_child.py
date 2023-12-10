@@ -76,6 +76,7 @@ class DynamicChildBlockFactory:
                     parent_index=None,
                     upstream_block_uuid=block_uuid,
                     extra_settings=dict(
+                        block_uuid_prefix=block_uuid.split(':')[-1],
                         dynamic_upstream_block_uuids=[
                             block_uuid,
                         ],
@@ -205,6 +206,7 @@ class DynamicChildBlockFactory:
         block_uuids = []
         upstream_blocks = []
         dynamic_upstream_block_uuids = []
+        upstream_block_uuids_for_dynamic_block_uuid = []
 
         for tup in child_data_list:
             parent_block_uuid, parent_index, metadata_inner, extra_settings = tup
@@ -215,7 +217,13 @@ class DynamicChildBlockFactory:
                         extra_settings.get('dynamic_upstream_block_uuids') or [],
                     )
 
-            block_uuid_metadata = str(parent_index) if parent_index is not None else None
+                block_uuid_prefix = str(parent_index) if parent_index is not None else None
+                if 'block_uuid_prefix' in extra_settings:
+                    block_uuid_prefix = extra_settings.get('block_uuid_prefix')
+
+                upstream_block_uuids_for_dynamic_block_uuid.append(block_uuid_prefix)
+
+            block_uuid_metadata = None
             if metadata_inner:
                 metadata[parent_block_uuid] = metadata_inner
 
@@ -239,6 +247,7 @@ class DynamicChildBlockFactory:
             block.uuid,
             metadata_for_uuid,
             index=index,
+            upstream_block_uuids=upstream_block_uuids_for_dynamic_block_uuid,
         )
 
         metrics = dict(
