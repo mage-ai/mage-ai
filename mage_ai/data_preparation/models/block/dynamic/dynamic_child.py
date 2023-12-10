@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.block.utils import (
     dynamic_block_uuid,
     dynamic_block_values_and_metadata,
     is_dynamic_block,
+    is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.constants import BlockType
 
@@ -41,32 +42,65 @@ class DynamicChildBlockFactory:
         execution_partition: str = None,
         **kwargs,
     ) -> List[Dict]:
-        return [dict(
-            block_uuid=block_uuid,
-            metadata=metrics,
-        ) for _block_run, block_uuid, metrics in self.create_block_runs(execution_partition)]
+        arr = []
 
-    def create_block_runs(self, execution_partition: str = None) -> List[Tuple]:
-        blocks = []
-        for block in self.block.upstream_blocks:
-            if is_dynamic_block(block):
-                blocks.append(block)
+        for block_uuid, metrics in self.build_block_runs(self.block, execution_partition):
+            self.pipeline_run.create_block_run(
+                block_uuid,
+                metrics=metrics,
+                skip_if_exists=True,
+            )
+            arr.append(dict(
+                block_uuid=block_uuid,
+                metadata=metrics,
+            ))
+
+        return arr
+
+    def build_block_runs(self, block, execution_partition: str = None) -> List[Tuple]:
+        upstream_blocks = []
+        for upstream_block in block.upstream_blocks:
+            if is_dynamic_block(upstream_block):
+                upstream_blocks.append((upstream_block, False))
+            elif is_dynamic_block_child(upstream_block):
+                upstream_blocks.append((upstream_block, True))
 
         outputs = []
-        for block in blocks:
-            values, block_metadata = dynamic_block_values_and_metadata(
-                block,
-                execution_partition,
-                block.uuid,
-            )
-            if isinstance(values, pd.DataFrame):
-                values = values.to_dict(orient='records')
-            outputs.append((values, block_metadata))
+        for upstream_block, is_dynamic_child in upstream_blocks:
+            values = None
+            block_metadata = None
+
+            if is_dynamic_child:
+                values = [dict(
+                    parent_index=None,
+                    upstream_block_uuid=block_uuid,
+                    value=metrics,
+                ) for block_uuid, metrics in self.build_block_runs(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )]
+                outputs.append((values, None))
+            else:
+                values, block_metadata = dynamic_block_values_and_metadata(
+                    upstream_block,
+                    execution_partition,
+                    upstream_block.uuid,
+                )
+
+                if isinstance(values, pd.DataFrame):
+                    values = values.to_dict(orient='records')
+
+                outputs.append((
+                    [dict(
+                        parent_index=parent_index,
+                        upstream_block_uuid=upstream_block.uuid,
+                        value=value,
+                    ) for parent_index, value in enumerate(values)],
+                    block_metadata,
+                ))
 
         all_data = None
-        for idx_outer, output in enumerate(outputs):
-            upstream_block = blocks[idx_outer]
-
+        for output in outputs:
             child_data = None
             child_metadata = None
 
@@ -81,49 +115,75 @@ class DynamicChildBlockFactory:
             if all_data is None:
                 all_data = []
                 if child_data:
-                    for idx, data in enumerate(child_data):
+                    for data_dict in child_data:
+                        parent_index = data_dict['parent_index']
+                        upstream_block_uuid = data_dict['upstream_block_uuid']
+                        value = data_dict['value']
+
                         metadata = None
-                        if idx < metadata_len:
-                            metadata = child_metadata[idx]
-                        all_data.append([(upstream_block.uuid, idx, data, metadata)])
+                        if parent_index is not None and parent_index < metadata_len:
+                            metadata = child_metadata[parent_index]
+                        all_data.append([(
+                            upstream_block_uuid,
+                            parent_index,
+                            value,
+                            metadata,
+                        )])
                 else:
-                    all_data.append([(None, None, None)])
+                    all_data.append([(None, None, None, None)])
             else:
                 arr = []
                 for data_arr in all_data:
                     if child_data:
-                        for idx, data in enumerate(child_data):
+                        for data_dict in child_data:
+                            parent_index = data_dict['parent_index']
+                            upstream_block_uuid = data_dict['upstream_block_uuid']
+                            value = data_dict['value']
+
                             metadata = None
-                            if idx < metadata_len:
-                                metadata = child_metadata[idx]
-                            arr.append(data_arr + [(upstream_block.uuid, idx, data, metadata)])
+                            if parent_index is not None and parent_index < metadata_len:
+                                metadata = child_metadata[parent_index]
+                            arr.append(data_arr + [(
+                                upstream_block_uuid,
+                                parent_index,
+                                value,
+                                metadata,
+                            )])
                     else:
-                        arr.append(data_arr + [(None, None, None)])
+                        arr.append(data_arr + [(None, None, None, None)])
 
                 all_data = arr
 
         block_runs_tuples = []
         for idx, tup in enumerate(all_data):
-            block_runs_tuples.append(self.create_block_run(idx, tup))
+            block_runs_tuples.append(self.build_block_run(block, idx, tup))
 
         return block_runs_tuples
 
-    def create_block_run(self, index: int, child_data_list: List[Tuple]) -> Tuple:
+    def build_block_run(self, block, index: int, child_data_list: List[Tuple]) -> Tuple:
         metadata = {}
-        dynamic_block_indexes = {}
+        dynamic_block_indexes = None
         block_uuids = []
+        upstream_blocks = []
 
         for tup in child_data_list:
-            parent_block_uuid, parent_index, output_data, metadata = tup
+            parent_block_uuid, parent_index, output_data, metadata_inner = tup
 
-            block_uuid_metadata = str(parent_index)
-            if metadata:
-                metadata[parent_block_uuid] = metadata
-                if metadata.get('block_uuid'):
-                    block_uuid_metadata = metadata['block_uuid']
+            upstream_blocks.append(parent_block_uuid)
+
+            block_uuid_metadata = str(parent_index) if parent_index is not None else None
+            if metadata_inner:
+                metadata[parent_block_uuid] = metadata_inner
+
+                if metadata_inner.get('block_uuid'):
+                    block_uuid_metadata = metadata_inner['block_uuid']
+
             block_uuids.append(block_uuid_metadata)
 
-            dynamic_block_indexes[parent_block_uuid] = parent_index
+            if parent_index is not None:
+                if dynamic_block_indexes is None:
+                    dynamic_block_indexes = {}
+                dynamic_block_indexes[parent_block_uuid] = parent_index
 
         metadata_for_uuid = {}
         if any([uuid is not None for uuid in block_uuids]):
@@ -132,20 +192,27 @@ class DynamicChildBlockFactory:
             )
 
         block_uuid = dynamic_block_uuid(
-            self.block.uuid,
+            block.uuid,
             metadata_for_uuid,
             index=index,
-            # upstream_block_uuid=upstream_block_uuid,
-        )
-        metrics = dict(
-            dynamic_block_index=index,
-            dynamic_block_indexes=dynamic_block_indexes,
-            metadata=metadata,
-        )
-        block_run = self.pipeline_run.create_block_run(
-            block_uuid,
-            metrics=metrics,
-            skip_if_exists=True,
         )
 
-        return block_run, block_uuid, metrics
+        metrics = dict(
+            dynamic_block_index=index,
+        )
+
+        if len(metadata) >= 1:
+            metrics['metadata'] = metadata
+
+        if len(upstream_blocks) >= 1:
+            metrics['upstream_blocks'] = upstream_blocks
+
+        if dynamic_block_indexes:
+            metrics['dynamic_block_indexes'] = dynamic_block_indexes
+
+        if metadata:
+            upstream_blocks = metadata.get('upstream_blocks') or []
+            if upstream_blocks:
+                metrics['upstream_blocks'].extend(upstream_blocks)
+
+        return block_uuid, metrics

@@ -773,8 +773,7 @@ def fetch_input_variables(
                         upstream_in_dynamic_upstream = True
 
             # This is for blocks with multiple upstream dynamic blocks or dynamic child blocks.
-
-            if dynamic_block_indexes:
+            if dynamic_block_indexes and upstream_block_uuid in dynamic_block_indexes:
                 input_value = None
 
                 input_data = variable_values[0]
@@ -784,14 +783,13 @@ def fetch_input_variables(
                 if len(variable_values) >= 2:
                     metadata_data = variable_values[1]
 
-                if upstream_block_uuid in dynamic_block_indexes:
-                    index_of_upstream = int(dynamic_block_indexes.get(upstream_block_uuid))
+                index_of_upstream = int(dynamic_block_indexes.get(upstream_block_uuid))
 
-                    if input_data and index_of_upstream < len(input_data):
-                        input_value = input_data[index_of_upstream]
+                if input_data and index_of_upstream < len(input_data):
+                    input_value = input_data[index_of_upstream]
 
-                    if metadata_data and index_of_upstream < len(metadata_data):
-                        kwargs_vars.append(metadata_data[index_of_upstream])
+                if metadata_data and index_of_upstream < len(metadata_data):
+                    kwargs_vars.append(metadata_data[index_of_upstream])
 
                 input_vars[idx] = input_value
             elif should_reduce:
