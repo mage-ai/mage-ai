@@ -490,6 +490,7 @@ def output_variables(
     block_uuid: str,
     execution_partition: str = None,
     dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
@@ -528,6 +529,7 @@ def output_variables(
     if block and not di_settings:
         di_settings = block.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -615,6 +617,7 @@ def input_variables(
     upstream_block_uuids: List[str],
     execution_partition: str = None,
     dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
@@ -644,6 +647,7 @@ def input_variables(
             block_uuid,
             execution_partition,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -663,6 +667,7 @@ def fetch_input_variables(
     block_run_outputs_cache: Dict[str, List] = None,
     data_integration_settings_mapping: Dict = None,
     dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_upstream_block_uuids: List[str] = None,
     execution_partition: str = None,
     from_notebook: bool = False,
@@ -703,6 +708,7 @@ def fetch_input_variables(
             upstream_block_uuids,
             execution_partition,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -766,7 +772,29 @@ def fetch_input_variables(
                     elif upstream_block_uuid in uuids:
                         upstream_in_dynamic_upstream = True
 
-            if should_reduce:
+            # This is for blocks with multiple upstream dynamic blocks or dynamic child blocks.
+
+            if dynamic_block_indexes:
+                input_value = None
+
+                input_data = variable_values[0]
+                metadata_data = None
+
+                # The 2nd item is for the metadata
+                if len(variable_values) >= 2:
+                    metadata_data = variable_values[1]
+
+                if upstream_block_uuid in dynamic_block_indexes:
+                    index_of_upstream = int(dynamic_block_indexes.get(upstream_block_uuid))
+
+                    if input_data and index_of_upstream < len(input_data):
+                        input_value = input_data[index_of_upstream]
+
+                    if metadata_data and index_of_upstream < len(metadata_data):
+                        kwargs_vars.append(metadata_data[index_of_upstream])
+
+                input_vars[idx] = input_value
+            elif should_reduce:
                 if isinstance(variable_values, list) and len(variable_values) == 1:
                     final_val = variable_values[0]
                 else:

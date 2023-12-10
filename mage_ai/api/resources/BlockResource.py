@@ -288,7 +288,7 @@ class BlockResource(GenericResource):
                                     ':'.join(parts_new),
                                 )
 
-                    if metrics.get('dynamic_upstream_block_uuids'):
+                    if metrics and metrics.get('dynamic_upstream_block_uuids'):
                         block_mapping[block_run_block_uuid]['uuids'].extend(
                             metrics.get('dynamic_upstream_block_uuids') or [],
                         )

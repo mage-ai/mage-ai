@@ -30,11 +30,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.utils import (
-    get_all_ancestors,
-    is_dynamic_block,
-    is_dynamic_block_child,
-)
+from mage_ai.data_preparation.models.block.utils import is_dynamic_block_child
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
     BlockType,
@@ -1125,15 +1121,9 @@ class PipelineRun(BaseModel):
         pipeline = self.pipeline
         blocks = pipeline.get_executable_blocks()
 
-        arr = []
-        for block in blocks:
-            ancestors = get_all_ancestors(block)
-            if len(block.upstream_blocks) == 0 or not find(is_dynamic_block, ancestors):
-                arr.append(block)
-
         block_arr = []
 
-        for block in arr:
+        for block in blocks:
             create_options = {}
             block_uuid = block.uuid
 

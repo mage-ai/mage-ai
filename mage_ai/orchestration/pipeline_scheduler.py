@@ -313,14 +313,23 @@ class PipelineScheduler:
                     self.__schedule_blocks(block_runs)
 
     @safe_db_query
-    def on_block_complete(self, block_uuid: str) -> None:
+    def on_block_complete(
+        self,
+        block_uuid: str,
+        metrics: Dict = None,
+    ) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
         @retry(retries=2, delay=5)
-        def update_status():
+        def update_status(metrics=metrics):
+            metrics_prev = block_run.metrics or {}
+            if metrics:
+                metrics_prev.update(metrics)
+
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
                 completed_at=datetime.now(tz=pytz.UTC),
+                metrics=metrics_prev,
             )
 
         update_status()
@@ -340,14 +349,23 @@ class PipelineScheduler:
             self.schedule()
 
     @safe_db_query
-    def on_block_complete_without_schedule(self, block_uuid: str) -> None:
+    def on_block_complete_without_schedule(
+        self,
+        block_uuid: str,
+        metrics: Dict = None,
+    ) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
 
         @retry(retries=2, delay=5)
-        def update_status():
+        def update_status(metrics=metrics):
+            metrics_prev = block_run.metrics or {}
+            if metrics:
+                metrics_prev.update(metrics)
+
             block_run.update(
                 status=BlockRun.BlockRunStatus.COMPLETED,
                 completed_at=datetime.now(tz=pytz.UTC),
+                metrics=metrics_prev,
             )
 
         update_status()
