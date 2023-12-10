@@ -282,12 +282,12 @@ class BlockResource(GenericResource):
                         dynamic_block_uuids_by_base_uuid[block.uuid] = []
                     dynamic_block_uuids_by_base_uuid[block.uuid].append(block_run_block_uuid)
 
-                    # parts = block_run_block_uuid.split(':')
+                    parts = block_run_block_uuid.split(':')
 
                     # [block_uuid]:[index_1]:[index_2]...:[index_N]
-                    # parts_length = len(parts)
-                    # if parts_length >= 2:
-                    #     block_dict['description'] = ':'.join(parts[1:])
+                    parts_length = len(parts)
+                    if parts_length >= 2:
+                        block_dict['description'] = ':'.join(parts[1:])
 
                     #     e_i = parts_length - 1
                     #     parts_new = parts[1:e_i]

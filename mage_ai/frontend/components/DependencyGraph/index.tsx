@@ -2085,7 +2085,7 @@ function DependencyGraph({
                   return (
                     <foreignObject
                       height={nodeHeight}
-                      onClick={(e) => onClickNode(e, node)}
+                      onClick={(e) => onClickNode?.(e, node)}
                       onContextMenu={contextMenuEnabled
                         ? (e) => onContextMenuNode(e, node, {
                           nodeHeight,

@@ -482,7 +482,7 @@ def is_dynamic_block_child(block) -> bool:
 
     dynamic_or_child_with_reduce = list(filter(lambda x: should_reduce_output(x), dynamic_or_child))
 
-    return len(block.upstream_blocks) > len(dynamic_or_child_with_reduce)
+    return len(dynamic_or_child) > len(dynamic_or_child_with_reduce)
 
 
 def output_variables(
