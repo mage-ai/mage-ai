@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -40,10 +40,13 @@ class DynamicChildBlockFactory:
         self,
         execution_partition: str = None,
         **kwargs,
-    ):
-        return [br.block_uuid for br in self.create_block_runs(execution_partition)]
+    ) -> List[Dict]:
+        return [dict(
+            block_uuid=block_uuid,
+            metadata=metrics,
+        ) for _block_run, block_uuid, metrics in self.create_block_runs(execution_partition)]
 
-    def create_block_runs(self, execution_partition: str = None):
+    def create_block_runs(self, execution_partition: str = None) -> List[Tuple]:
         blocks = []
         for block in self.block.upstream_blocks:
             if is_dynamic_block(block):
@@ -99,14 +102,11 @@ class DynamicChildBlockFactory:
 
                 all_data = arr
 
-        block_runs = []
+        block_runs_tuples = []
         for idx, tup in enumerate(all_data):
-            block_runs.append(self.create_block_run(idx, tup))
+            block_runs_tuples.append(self.create_block_run(idx, tup))
 
-        return [dict(
-            block_uuid=block_uuid,
-            metadata=metrics,
-        ) for block_run, block_uuid, metrics in block_runs]
+        return block_runs_tuples
 
     def create_block_run(self, index: int, child_data_list: List[Tuple]) -> Tuple:
         metadata = {}
