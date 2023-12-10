@@ -39,7 +39,10 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
         if upstream_block.uuid in upstream_block_uuids_mapping:
             br_uuids = upstream_block_uuids_mapping[upstream_block.uuid]
             for br_uuid in br_uuids:
-                up_block_run = find(lambda br: br.block_uuid == br_uuid, block_runs)
+                up_block_run = find(
+                    lambda br, br_uuid=br_uuid: br.block_uuid == br_uuid,
+                    block_runs,
+                )
 
                 if up_block_run:
                     completed = 'completed' == up_block_run.status
@@ -64,7 +67,10 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
         else:
             # If the upstream block has no upstream blocks,
             # check to see if its single block run is completed.
-            up_block_run = find(lambda br: br.block_uuid == upstream_block.uuid, block_runs)
+            up_block_run = find(
+                lambda br, upstream_block=upstream_block: br.block_uuid == upstream_block.uuid,
+                block_runs,
+            )
 
             if up_block_run:
                 completed = 'completed' == up_block_run.status
