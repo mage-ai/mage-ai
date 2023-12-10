@@ -1968,7 +1968,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    def __save_outputs_prepare(self, outputs) -> Dict:
+    def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
         for o in outputs:
             if o is None:
@@ -1979,16 +1979,30 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
                     (not is_output_variable(o['variable_uuid']) or
-                        BlockType.SCRATCHPAD == self.type):
+                        BlockType.SCRATCHPAD == self.type or
+                        override_output_variable):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
         self._outputs_loaded = True
         return variable_mapping
 
-    def save_outputs(self, outputs, override=False) -> None:
-        variable_mapping = self.__save_outputs_prepare(outputs)
-        self.store_variables(variable_mapping, override=override)
+    def save_outputs(
+        self,
+        outputs,
+        override: bool = False,
+        execution_partition: str = None,
+        override_output_variable: bool = False,
+    ) -> None:
+        variable_mapping = self.__save_outputs_prepare(
+            outputs,
+            override_output_variable=override_output_variable,
+        )
+        self.store_variables(
+            variable_mapping,
+            execution_partition=execution_partition,
+            override=override,
+        )
 
     async def save_outputs_async(
         self,

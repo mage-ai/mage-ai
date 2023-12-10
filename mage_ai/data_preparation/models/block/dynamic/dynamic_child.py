@@ -36,7 +36,11 @@ class DynamicChildBlockFactory:
     ) -> List[Dict]:
         arr = []
 
-        for block_uuid, metrics in self.__build_block_runs(self.block, execution_partition):
+        values = self.__build_block_runs(self.block, execution_partition)
+        if not values:
+            return None
+
+        for block_uuid, metrics in values:
             self.pipeline_run.create_block_run(
                 block_uuid,
                 metrics=metrics,
@@ -87,14 +91,15 @@ class DynamicChildBlockFactory:
                 if isinstance(values, pd.DataFrame):
                     values = values.to_dict(orient='records')
 
-                outputs.append((
-                    [dict(
-                        parent_index=parent_index,
-                        upstream_block_uuid=upstream_block.uuid,
-                        extra_settings=dict(value=value),
-                    ) for parent_index, value in enumerate(values)],
-                    block_metadata,
-                ))
+                if values:
+                    outputs.append((
+                        [dict(
+                            parent_index=parent_index,
+                            upstream_block_uuid=upstream_block.uuid,
+                            extra_settings=dict(value=value),
+                        ) for parent_index, value in enumerate(values)],
+                        block_metadata,
+                    ))
 
         all_data = None
         for output in outputs:
@@ -150,6 +155,9 @@ class DynamicChildBlockFactory:
                         arr.append(data_arr + [(None, None, None, None)])
 
                 all_data = arr
+
+        if all_data is None:
+            return None
 
         block_runs_tuples = []
         for idx, child_data_list in enumerate(all_data):
