@@ -285,6 +285,10 @@ class BlockExecutor:
                 dynamic_upstream_block_uuids = block_run_data.get(
                     'dynamic_upstream_block_uuids', None)
 
+            # 2023/12/12 (tommy dang): this doesn’t seem to be used anymore because the
+            # fetching the reduce output from upstream dynamic child blocks is handled in
+            # the function reduce_output_from_block.
+
             # If there are upstream blocks that were dynamically created, and if any of them are
             # configured to reduce their output, we must update the dynamic_upstream_block_uuids to
             # include all the upstream block’s dynamically created blocks by getting the upstream
