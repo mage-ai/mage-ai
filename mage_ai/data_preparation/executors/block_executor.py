@@ -82,7 +82,10 @@ class BlockExecutor:
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
         # If this is the original block run for the original dynamic block
-        if is_dynamic_block_child(self.block) and self.block.uuid == self.block_uuid:
+        if self.block and \
+                self.block.uuid == self.block_uuid and \
+                is_dynamic_block_child(self.block):
+
             self.block = DynamicChildBlockFactory(self.block)
 
         self.block_run = None

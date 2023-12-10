@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -25,6 +26,8 @@ class BlockExecutorTest(BaseApiTestCase):
         self.logger_manager = MagicMock()
         self.logger = MagicMock()
         self.block = MagicMock(spec=Block)
+        self.block.configuration = {}
+        self.block.upstream_blocks = []
         self.block.type = BlockType.DBT
 
         self.pipeline.get_block.return_value = self.block
@@ -68,7 +71,7 @@ class BlockExecutorTest(BaseApiTestCase):
         global_vars = {'var1': 'value1'}
         update_status = True
 
-        def on_complete(block_uuid):
+        def on_complete(block_uuid, metrics: Dict = None):
             pass
 
         def on_failure(block_uuid, error):
@@ -136,6 +139,7 @@ class BlockExecutorTest(BaseApiTestCase):
             runtime_arguments=runtime_arguments,
             template_runtime_configuration=template_runtime_configuration,
             dynamic_block_index=None,
+            dynamic_block_indexes=None,
             dynamic_block_uuid=None,
             dynamic_upstream_block_uuids=None,
             block_run_dicts=None,
