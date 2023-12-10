@@ -30,8 +30,14 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.dynamic.utils import all_upstreams_completed
-from mage_ai.data_preparation.models.block.utils import is_dynamic_block_child
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    all_upstreams_completed,
+    dynamically_created_child_block_runs,
+)
+from mage_ai.data_preparation.models.block.utils import (
+    is_dynamic_block_child,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
     BlockType,
@@ -952,7 +958,39 @@ class PipelineRun(BaseModel):
                     upstream_block_uuids_override = \
                         metrics.get('dynamic_upstream_block_uuids') or []
 
-                completed = block is not None and \
+                incomplete = False
+                if block:
+                    up_uuids = []
+                    up_uuids_dynamic_children = []
+
+                    for upstream_block in block.upstream_blocks:
+                        if incomplete:
+                            continue
+
+                        if is_dynamic_block_child(upstream_block):
+                            if should_reduce_output(upstream_block):
+                                upstream_upstream_completed = all_upstreams_completed(
+                                    upstream_block,
+                                    block_runs_all,
+                                )
+                                if upstream_upstream_completed:
+                                    brs = dynamically_created_child_block_runs(
+                                        pipeline,
+                                        upstream_block,
+                                        block_runs_all,
+                                    )
+                                    up_uuids_dynamic_children += [br.block_uuid for br in brs]
+                                else:
+                                    incomplete = True
+                        else:
+                            up_uuids.append(upstream_block.uuid)
+
+                        if len(up_uuids_dynamic_children) >= 1:
+                            upstream_block_uuids_override = \
+                                (upstream_block_uuids_override or []) + \
+                                up_uuids + up_uuids_dynamic_children
+
+                completed = not incomplete and block is not None and \
                     block.all_upstream_blocks_completed(
                         completed_block_uuids,
                         upstream_block_uuids_override,

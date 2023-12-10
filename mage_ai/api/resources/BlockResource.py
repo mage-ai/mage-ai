@@ -13,6 +13,9 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    dynamically_created_child_block_runs,
+)
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     is_dynamic_block,
@@ -41,14 +44,6 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 MAX_BLOCKS_FOR_TREE = 100
-
-
-def dynamically_created_child_block_runs(pipeline, block, block_runs):
-    def _find_child(br, block=block, pipeline=pipeline):
-        block2 = pipeline.get_block(br.block_uuid)
-        return br.block_uuid != block.uuid and block2 and block2.uuid == block.uuid
-
-    return list(filter(_find_child, block_runs))
 
 
 class BlockResource(GenericResource):

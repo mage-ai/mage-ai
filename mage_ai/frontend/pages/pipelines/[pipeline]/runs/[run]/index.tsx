@@ -13,7 +13,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
   COMPLETED_STATUSES,
@@ -40,6 +40,8 @@ import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+
+const ROW_LIMIT = 100;
 
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;

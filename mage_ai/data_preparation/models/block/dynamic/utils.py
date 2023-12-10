@@ -3,6 +3,14 @@ from typing import List
 from mage_ai.shared.array import find
 
 
+def dynamically_created_child_block_runs(pipeline, block, block_runs: List):
+    def _find_child(br, block=block, pipeline=pipeline):
+        block2 = pipeline.get_block(br.block_uuid)
+        return br.block_uuid != block.uuid and block2 and block2.uuid == block.uuid
+
+    return list(filter(_find_child, block_runs))
+
+
 def all_upstreams_completed(block, block_runs: List) -> bool:
     pipeline = block.pipeline
 
