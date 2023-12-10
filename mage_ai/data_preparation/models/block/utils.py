@@ -821,8 +821,7 @@ def fetch_input_variables(
                     arr = variable_values[1]
                     index_to_use = 0 if dynamic_block_index is None else dynamic_block_index
                     if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
-                        val = arr[index_to_use]
-                    kwargs_vars.append(val)
+                        kwargs_vars.append(arr[index_to_use])
             elif not dynamic_upstream_block_uuids or not upstream_in_dynamic_upstream:
                 if type(variable_values) is list and len(variable_values) == 1:
                     final_val = variable_values[0]
