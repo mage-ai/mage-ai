@@ -38,7 +38,7 @@ def clean_name(name: str, **kwargs) -> str:
 
 def dynamic_block_uuid(
     block_uuid: str,
-    metadata: Dict,
+    metadata: Dict = None,
     index: int = None,
     indexes: List[int] = None,
     upstream_block_uuid: str = None,
@@ -56,7 +56,7 @@ def dynamic_block_uuid(
     Returns:
         str: The generated dynamic block UUID.
     """
-    block_uuid_subname = metadata.get('block_uuid', index)
+    block_uuid_subname = metadata.get('block_uuid', index) if metadata else index
     uuid = f'{block_uuid}:{block_uuid_subname}'
 
     if upstream_block_uuids:
