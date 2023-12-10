@@ -3,48 +3,12 @@ from typing import Any, Dict, List, Tuple
 
 
 def all_variable_uuids(block, partition: str = None) -> List[str]:
-    arr = all_variable_uuids_and_file_paths_for_reducing_block_output(
+    arr = __all_variable_uuids_and_file_paths_for_reducing_block_output(
         block,
         partition=partition,
     )
 
     return list(set([tup[0] for tup in arr]))
-
-
-def all_variable_uuids_and_file_paths_for_reducing_block_output(
-    block,
-    partition: str = None,
-) -> List[Tuple]:
-    block_uuid = block.uuid
-    variable_object_for_base_block = block.get_variable_object(
-        block_uuid=block_uuid,
-        partition=partition,
-    )
-
-    variable_uuid_and_file_paths = []
-
-    # /.mage_data/default_repo/pipelines/dynamic_reduce_all_levels
-    # /.variables/415/20230930T135530/child_b_30
-    variable_dir_path = variable_object_for_base_block.variable_dir_path
-    for tup in os.walk(variable_dir_path):
-        # ('../child_b_30/0/0/output_0', [], ['data.json', 'sample_data.json'])
-        dir_path, subdirs, _filenames = tup
-
-        # No subdirectories means its a leaf node with only files.
-        if len(subdirs) == 0:
-            # dir_path
-            # /.mage_data/default_repo/pipelines/dynamic_reduce_all_levels
-            # /.variables/415/20230930T135530/child_b_30/1/1/output_0
-
-            # e.g. output_0
-            dir_name = os.path.basename(os.path.normpath(dir_path))
-
-            variable_uuid_and_file_paths.append((
-                dir_name,
-                dir_path,
-            ))
-
-    return variable_uuid_and_file_paths
 
 
 def reduce_output_from_block(
@@ -69,7 +33,7 @@ def reduce_output_from_block(
     # /.variables/415/20230930T135530/child_b_30
     variable_dir_path = variable_object_for_base_block.variable_dir_path
 
-    arr = all_variable_uuids_and_file_paths_for_reducing_block_output(
+    arr = __all_variable_uuids_and_file_paths_for_reducing_block_output(
         block,
         partition=partition,
     )
@@ -105,3 +69,39 @@ def reduce_output_from_block(
         output.append(variable)
 
     return output
+
+
+def __all_variable_uuids_and_file_paths_for_reducing_block_output(
+    block,
+    partition: str = None,
+) -> List[Tuple]:
+    block_uuid = block.uuid
+    variable_object_for_base_block = block.get_variable_object(
+        block_uuid=block_uuid,
+        partition=partition,
+    )
+
+    variable_uuid_and_file_paths = []
+
+    # /.mage_data/default_repo/pipelines/dynamic_reduce_all_levels
+    # /.variables/415/20230930T135530/child_b_30
+    variable_dir_path = variable_object_for_base_block.variable_dir_path
+    for tup in os.walk(variable_dir_path):
+        # ('../child_b_30/0/0/output_0', [], ['data.json', 'sample_data.json'])
+        dir_path, subdirs, _filenames = tup
+
+        # No subdirectories means its a leaf node with only files.
+        if len(subdirs) == 0:
+            # dir_path
+            # /.mage_data/default_repo/pipelines/dynamic_reduce_all_levels
+            # /.variables/415/20230930T135530/child_b_30/1/1/output_0
+
+            # e.g. output_0
+            dir_name = os.path.basename(os.path.normpath(dir_path))
+
+            variable_uuid_and_file_paths.append((
+                dir_name,
+                dir_path,
+            ))
+
+    return variable_uuid_and_file_paths
