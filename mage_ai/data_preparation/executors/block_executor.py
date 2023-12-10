@@ -24,9 +24,6 @@ from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
     DynamicChildBlockFactory,
 )
 from mage_ai.data_preparation.models.block.utils import (
-    create_block_runs_from_dynamic_block,
-)
-from mage_ai.data_preparation.models.block.utils import (
     dynamic_block_uuid as dynamic_block_uuid_func,
 )
 from mage_ai.data_preparation.models.block.utils import (
@@ -1244,23 +1241,6 @@ class BlockExecutor:
         try:
             if not block_run_id:
                 block_run_id = int(callback_url.split('/')[-1])
-
-            try:
-                if status == BlockRun.BlockRunStatus.COMPLETED and \
-                        pipeline_run is not None and is_dynamic_block(self.block):
-                    create_block_runs_from_dynamic_block(
-                        self.block,
-                        pipeline_run,
-                        block_uuid=self.block.uuid if self.block.replicated_block
-                        else self.block_uuid,
-                    )
-            except Exception as err1:
-                self.logger.exception(
-                    f'Failed to create block runs for dynamic block {self.block.uuid}.',
-                    **merge_dict(tags, dict(
-                        error=err1
-                    )),
-                )
 
             block_run = BlockRun.query.get(block_run_id)
             update_kwargs = dict(
