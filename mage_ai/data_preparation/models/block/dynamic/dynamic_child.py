@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.shared.array import find_index
 
 
 class DynamicChildBlockFactory:
@@ -159,8 +160,42 @@ class DynamicChildBlockFactory:
                 all_data = arr
 
         block_runs_tuples = []
-        for idx, tup in enumerate(all_data):
-            block_runs_tuples.append(self.build_block_run(block, idx, tup))
+        for idx, child_data_list in enumerate(all_data):
+            block_runs_tuples.append(self.build_block_run(block, idx, child_data_list))
+
+        # Add upstream blocks defined dynamically from the dynamic block’s metadata
+        pipeline = block.pipeline
+        for idx, child_data_list in enumerate(all_data):
+            for idx2, tup in enumerate(child_data_list):
+                _upstream_block_uuid, _parent_index, metadata_inner, _extra_settings = tup
+
+                if metadata_inner and metadata_inner.get('upstream_blocks'):
+                    up_uuids = []
+                    for up_uuid in (metadata_inner.get('upstream_blocks') or []):
+                        up_block = pipeline.get_block(up_uuid)
+                        if up_block:
+                            up_uuids.append(up_uuid)
+                        else:
+                            # The upstream block UUID is a partial UUID from the metadata that is
+                            # used to customize the dynamic child block’s block_run block UUID.
+                            def _find(child_data_list2, idx2=idx2, up_uuid=up_uuid):
+                                _up, _pi, metadata_inner2, _es = child_data_list2[idx2]
+                                if metadata_inner2 and metadata_inner2.get('block_uuid') == up_uuid:
+                                    return True
+                                return False
+
+                            idx3 = find_index(_find, all_data)
+                            if idx3 >= 0:
+                                pair = block_runs_tuples[idx3]
+                                up_uuids.append(pair[0])
+
+                    if len(up_uuids) >= 1:
+                        block_uuid, metrics = block_runs_tuples[idx]
+                        if not metrics:
+                            metrics = {}
+                        metrics['dynamic_upstream_block_uuids'] = \
+                            (metrics.get('dynamic_upstream_block_uuids') or []) + up_uuids
+                        block_runs_tuples[idx] = (block_uuid, metrics)
 
         return block_runs_tuples
 
