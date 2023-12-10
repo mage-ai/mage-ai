@@ -15,7 +15,7 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
     pipeline = block.pipeline
 
     block_runs_for_current_block = filter(
-        lambda br: block.uuid == pipeline.get_block(br.block_uuid),
+        lambda br: block.uuid == pipeline.get_block(br.block_uuid).uuid,
         block_runs,
     )
 
@@ -56,14 +56,15 @@ def all_upstreams_completed(block, block_runs: List) -> bool:
         elif upstream_block.upstream_blocks:
             # If the upstream block has other upstream blocks that don’t have
             # dynamically created upstream blocks:
-            for up_upstream_block in upstream_block.upstream_blocks:
-                completed = all_upstreams_completed(
-                    up_upstream_block,
-                    block_runs,
-                )
-                completed_checks.append(completed)
-                if not completed:
-                    return False
+            completed = all_upstreams_completed(
+                upstream_block,
+                block_runs,
+            )
+            completed_checks.append(completed)
+            if not completed:
+                return False
+
+            # for up_upstream_block in upstream_block.upstream_blocks:
         else:
             # If the upstream block has no upstream blocks,
             # check to see if its single block run is completed.
