@@ -389,16 +389,12 @@ class BlockExecutorTest(BaseApiTestCase):
         )
 
         self.assertTrue(isinstance(executor.block, DynamicChildBlockFactory))
-        self.assertTrue(executor.block.block_run is None)
-        self.assertTrue(executor.block.block_run_id is None)
         self.assertTrue(executor.block.pipeline_run is None)
 
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
             mock_execute_sync.assert_called_once()
 
-            self.assertEqual(executor.block.block_run.id, block_run.id)
-            self.assertEqual(executor.block.block_run_id, block_run.id)
             self.assertEqual(executor.block.pipeline_run.id, pipeline_run.id)
 
         block_run_dynamic_child_spawn = BlockRun.create(
@@ -449,3 +445,33 @@ class BlockExecutorTest(BaseApiTestCase):
                     update_status=False,
                     verify_output=True,
                 )
+
+    def test_block_run_for_dynamic_child_block_reduce_output(self):
+        block1 = self.blocks[0]
+        block2 = self.blocks[1]
+        block1.configuration = dict(dynamic=True)
+        block2.configuration = dict(reduce_output=True)
+        self.pipeline1.add_block(block1)
+        self.pipeline1.add_block(block2)
+
+        pipeline_run = PipelineRun.create(
+            execution_date=datetime.utcnow(),
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline1.uuid,
+        )
+        block_run = BlockRun.create(
+            block_uuid=block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        executor = BlockExecutor(
+            self.pipeline1,
+            block_run.block_uuid,
+            execution_partition=pipeline_run.execution_partition,
+        )
+
+        self.assertFalse(isinstance(executor.block, DynamicChildBlockFactory))
+
+        with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
+            executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
+            mock_execute_sync.assert_called_once()

@@ -13,17 +13,8 @@ from mage_ai.shared.array import find_index
 
 
 class DynamicChildBlockFactory:
-    def __init__(
-        self,
-        block,
-        block_run=None,
-        block_run_id: int = None,
-        pipeline_run=None,
-        **kwargs,
-    ):
+    def __init__(self, block, pipeline_run=None, **kwargs):
         self.block = block
-        self.block_run = block_run
-        self.block_run_id = block_run_id
         self.pipeline_run = pipeline_run
         self.type = BlockType.DYNAMIC_CHILD
 
@@ -45,7 +36,7 @@ class DynamicChildBlockFactory:
     ) -> List[Dict]:
         arr = []
 
-        for block_uuid, metrics in self.build_block_runs(self.block, execution_partition):
+        for block_uuid, metrics in self.__build_block_runs(self.block, execution_partition):
             self.pipeline_run.create_block_run(
                 block_uuid,
                 metrics=metrics,
@@ -58,7 +49,7 @@ class DynamicChildBlockFactory:
 
         return arr
 
-    def build_block_runs(self, block, execution_partition: str = None) -> List[Tuple]:
+    def __build_block_runs(self, block, execution_partition: str = None) -> List[Tuple]:
         upstream_blocks = []
         for upstream_block in block.upstream_blocks:
             if is_dynamic_block(upstream_block):
@@ -81,7 +72,7 @@ class DynamicChildBlockFactory:
                             block_uuid,
                         ],
                     ),
-                ) for block_uuid, metrics in self.build_block_runs(
+                ) for block_uuid, metrics in self.__build_block_runs(
                     upstream_block,
                     execution_partition=execution_partition,
                 )]
@@ -162,7 +153,7 @@ class DynamicChildBlockFactory:
 
         block_runs_tuples = []
         for idx, child_data_list in enumerate(all_data):
-            block_runs_tuples.append(self.build_block_run(block, idx, child_data_list))
+            block_runs_tuples.append(self.__build_block_run(block, idx, child_data_list))
 
         # Add upstream blocks defined dynamically from the dynamic block’s metadata
         pipeline = block.pipeline
@@ -200,7 +191,7 @@ class DynamicChildBlockFactory:
 
         return block_runs_tuples
 
-    def build_block_run(self, block, index: int, child_data_list: List[Tuple]) -> Tuple:
+    def __build_block_run(self, block, index: int, child_data_list: List[Tuple]) -> Tuple:
         metadata = {}
         dynamic_block_indexes = None
         block_uuids = []

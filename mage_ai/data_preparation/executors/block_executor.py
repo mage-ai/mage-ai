@@ -1029,8 +1029,6 @@ class BlockExecutor:
                     return arr
 
         if is_dynamic_block_child(self.block) and self.block_uuid == self.block.uuid:
-            self.block.block_run = self.block_run
-            self.block.block_run_id = block_run_id
             self.block.pipeline_run = pipeline_run
 
         result = self.block.execute_sync(
