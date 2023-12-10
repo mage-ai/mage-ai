@@ -74,7 +74,11 @@ class DynamicChildBlockFactory:
                 values = [dict(
                     parent_index=None,
                     upstream_block_uuid=block_uuid,
-                    value=metrics,
+                    extra_settings=dict(
+                        dynamic_upstream_block_uuids=[
+                            block_uuid,
+                        ],
+                    ),
                 ) for block_uuid, metrics in self.build_block_runs(
                     upstream_block,
                     execution_partition=execution_partition,
@@ -94,7 +98,7 @@ class DynamicChildBlockFactory:
                     [dict(
                         parent_index=parent_index,
                         upstream_block_uuid=upstream_block.uuid,
-                        value=value,
+                        extra_settings=dict(value=value),
                     ) for parent_index, value in enumerate(values)],
                     block_metadata,
                 ))
@@ -118,7 +122,7 @@ class DynamicChildBlockFactory:
                     for data_dict in child_data:
                         parent_index = data_dict['parent_index']
                         upstream_block_uuid = data_dict['upstream_block_uuid']
-                        value = data_dict['value']
+                        extra_settings = data_dict['extra_settings']
 
                         metadata = None
                         if parent_index is not None and parent_index < metadata_len:
@@ -126,8 +130,8 @@ class DynamicChildBlockFactory:
                         all_data.append([(
                             upstream_block_uuid,
                             parent_index,
-                            value,
                             metadata,
+                            extra_settings,
                         )])
                 else:
                     all_data.append([(None, None, None, None)])
@@ -138,7 +142,7 @@ class DynamicChildBlockFactory:
                         for data_dict in child_data:
                             parent_index = data_dict['parent_index']
                             upstream_block_uuid = data_dict['upstream_block_uuid']
-                            value = data_dict['value']
+                            extra_settings = data_dict['extra_settings']
 
                             metadata = None
                             if parent_index is not None and parent_index < metadata_len:
@@ -146,8 +150,8 @@ class DynamicChildBlockFactory:
                             arr.append(data_arr + [(
                                 upstream_block_uuid,
                                 parent_index,
-                                value,
                                 metadata,
+                                extra_settings,
                             )])
                     else:
                         arr.append(data_arr + [(None, None, None, None)])
@@ -165,11 +169,16 @@ class DynamicChildBlockFactory:
         dynamic_block_indexes = None
         block_uuids = []
         upstream_blocks = []
+        dynamic_upstream_block_uuids = []
 
         for tup in child_data_list:
-            parent_block_uuid, parent_index, output_data, metadata_inner = tup
+            parent_block_uuid, parent_index, metadata_inner, extra_settings = tup
 
-            upstream_blocks.append(parent_block_uuid)
+            if extra_settings:
+                if extra_settings.get('dynamic_upstream_block_uuids'):
+                    dynamic_upstream_block_uuids.extend(
+                        extra_settings.get('dynamic_upstream_block_uuids') or [],
+                    )
 
             block_uuid_metadata = str(parent_index) if parent_index is not None else None
             if metadata_inner:
@@ -203,6 +212,9 @@ class DynamicChildBlockFactory:
 
         if len(metadata) >= 1:
             metrics['metadata'] = metadata
+
+        if len(dynamic_upstream_block_uuids) >= 1:
+            metrics['dynamic_upstream_block_uuids'] = dynamic_upstream_block_uuids
 
         if len(upstream_blocks) >= 1:
             metrics['upstream_blocks'] = upstream_blocks

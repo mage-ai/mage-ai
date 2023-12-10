@@ -901,7 +901,6 @@ class PipelineRun(BaseModel):
                         uuids_to_check.append(upstream_block_uuid)
                     else:
                         uuids_to_check.append(upstream_block_uuid)
-
                 if allow_blocks_to_fail:
                     completed = all(uuid in finished_block_uuids
                                     for uuid in uuids_to_check)
