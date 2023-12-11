@@ -80,7 +80,9 @@ class KubernetesWorkspace(Workspace):
         return cls(name)
 
     def delete(self, **kwargs):
-        self.workload_manager.delete_workload(self.name)
+        self.workload_manager.delete_workload(
+            self.name, ingress_name=self.config.ingress_name
+        )
 
         super().delete(**kwargs)
 
@@ -99,9 +101,11 @@ class KubernetesWorkspace(Workspace):
         ingress_name = config.get('ingress_name')
         try:
             if ingress_name:
-                ingress = self.workload_manager.networking_client.read_namespaced_ingress(
-                    ingress_name,
-                    self.workload_manager.namespace,
+                ingress = (
+                    self.workload_manager.networking_client.read_namespaced_ingress(
+                        ingress_name,
+                        self.workload_manager.namespace,
+                    )
                 )
                 rule = ingress.spec.rules[0]
                 host = rule.host
