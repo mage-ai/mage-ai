@@ -804,17 +804,23 @@ class PipelineScheduleTests(DBTestCase):
 
 
 class PipelineRunTests(DBTestCase):
-    @classmethod
-    def setUpClass(self):
-        super().setUpClass()
-        self.pipeline = create_pipeline_with_blocks(
+    def setUp(self):
+        super().setUp()
+        self.pipeline, self.blocks = create_pipeline_with_blocks(
             'test pipeline',
             self.repo_path,
+            return_blocks=True,
         )
+        self.block, self.block2, self.block3, self.block4 = self.blocks
+
+    def tearDown(self):
+        BlockRun.query.delete()
+        self.pipeline.delete()
+        super().tearDown()
 
     def test_block_runs_count(self):
         pipeline_run = create_pipeline_run(pipeline_uuid='test_pipeline')
-        block_count = len(self.__class__.pipeline.get_executable_blocks())
+        block_count = len(self.pipeline.get_executable_blocks())
         self.assertEqual(pipeline_run.block_runs_count, block_count)
 
     def test_executable_block_runs(self):
@@ -973,79 +979,211 @@ class PipelineRunTests(DBTestCase):
                 ],
             )
 
-    def test_executable_block_runs_with_dynamic_blocks(self):
-        # block1, block2, block3, block4 = self.blocks
-        # block5 = Block.create(
-        #     self.faker.unique.name(),
-        #     'data_exporter',
-        #     self.pipeline.repo_path,
-        # )
-        # self.pipeline.add_block(block5, upstream_block_uuids=[block4.uuid])
+    def test_executable_block_runs_for_dynamic_block(self):
+        self.block2.configuration = dict(dynamic=True)
+        self.pipeline.add_block(self.block2, upstream_block_uuids=[self.block.uuid])
+        self.pipeline.add_block(self.block3, upstream_block_uuids=[self.block.uuid])
 
-        # pipeline_run = create_pipeline_run(
-        #     pipeline_uuid=self.pipeline.uuid,
-        #     create_block_runs=False,
-        # )
+        pipeline_run = PipelineRun.create(
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline.uuid,
+            create_block_runs=False,
+        )
+        block_run1 = BlockRun.create(
+            block_uuid=self.block.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+        block_run2 = BlockRun.create(
+            block_uuid=self.block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+        block_run3 = BlockRun.create(
+            block_uuid=self.block3.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
 
-        # BlockRun.create(
-        #     block_uuid=block1.uuid,
-        #     pipeline_run=pipeline_run,
-        #     status=BlockRun.BlockRunStatus.COMPLETED,
-        # )
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([block_run1.id]),
+        )
+        block_run1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([block_run2.id, block_run3.id]),
+        )
 
-        # block_run_dynamic = BlockRun.create(
-        #     block_uuid=block2.uuid,
-        #     pipeline_run=pipeline_run,
-        # )
+    def test_executable_block_runs_for_dynamic_child_blocks(self):
+        self.block.configuration = dict(dynamic=True)
+        self.pipeline.add_block(self.block2, upstream_block_uuids=[self.block.uuid])
+        self.pipeline.add_block(self.block3, upstream_block_uuids=[self.block2.uuid])
+        self.pipeline.add_block(self.block4, upstream_block_uuids=[
+            self.block2.uuid,
+            self.block3.uuid,
+        ])
 
-        # block_run_dynamic_child0 = BlockRun.create(
-        #     block_uuid=f'{block2.uuid}:0',
-        #     metrics=dict(
-        #         block_uuid='0',
-        #         dynamic_block_index=0,
-        #         dynamic_upstream_block_uuids=[
-        #             block1.uuid,
-        #             block2.uuid,
-        #         ],
-        #     ),
-        # )
-        # block_run_dynamic_child1 = BlockRun.create(
-        #     block_uuid=f'{block2.uuid}:1',
-        #     metrics=dict(
-        #         block_uuid='1',
-        #         dynamic_block_index=1,
-        #         dynamic_upstream_block_uuids=[
-        #             block1.uuid,
-        #             block2.uuid,
-        #             f'{block2.uuid}:0',
-        #         ],
-        #         upstream_blocks=[
-        #             '0',
-        #         ],
-        #     ),
-        # )
-        # block_run_dynamic_child2 = BlockRun.create(
-        #     block_uuid=f'{block2.uuid}:2',
-        #     metrics=dict(
-        #         block_uuid='2',
-        #         dynamic_block_index=2,
-        #         dynamic_upstream_block_uuids=[
-        #             block1.uuid,
-        #             block2.uuid,
-        #             f'{block2.uuid}:0',
-        #             f'{block2.uuid}:1',
-        #         ],
-        #         upstream_blocks=[
-        #             '0',
-        #             '1',
-        #         ],
-        #     ),
-        # )
+        pipeline_run = PipelineRun.create(
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline.uuid,
+            create_block_runs=False,
+        )
+        block_run1 = BlockRun.create(
+            block_uuid=self.block.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+        block_run2 = BlockRun.create(
+            block_uuid=self.block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+        block_run2_0 = BlockRun.create(
+            block_uuid=f'{self.block2.uuid}:0',
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(
+                dynamic_block_index=0,
+            ),
+        )
+        block_run2_1 = BlockRun.create(
+            block_uuid=f'{self.block2.uuid}:1',
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(
+                dynamic_block_index=1,
+            ),
+        )
+        block_run3 = BlockRun.create(
+            block_uuid=self.block3.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+        block_run3_0 = BlockRun.create(
+            block_uuid=f'{self.block3.uuid}:0',
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(
+                dynamic_block_index=0,
+                dynamic_upstream_block_uuids=[
+                    f'{self.block2.uuid}:0',
+                ],
+            ),
+        )
+        block_run3_1 = BlockRun.create(
+            block_uuid=f'{self.block3.uuid}:1',
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(
+                dynamic_block_index=0,
+                dynamic_upstream_block_uuids=[
+                    f'{self.block2.uuid}:0',
+                    f'{self.block2.uuid}:1',
+                ],
+            ),
+        )
+        block_run4 = BlockRun.create(
+            block_uuid=self.block4.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
 
-        pass
-        #
-        # dynamic_block_index
-        # upstream_blocks
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([block_run1.id]),
+        )
+        block_run1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run2.id,
+                block_run2_0.id,
+                block_run2_1.id,
+            ]),
+        )
+
+        block_run2.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run2_0.id,
+                block_run2_1.id,
+                block_run3.id,
+            ]),
+        )
+
+        block_run2_0.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run2_1.id,
+                block_run3.id,
+                block_run3_0.id,
+            ]),
+        )
+
+        block_run3.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run2_1.id,
+                block_run3_0.id,
+            ]),
+        )
+
+        block_run2_1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run3_0.id,
+                block_run3_1.id,
+                block_run4.id,
+            ]),
+        )
+
+        block_run2_0.update(status=BlockRun.BlockRunStatus.RUNNING)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([]),
+        )
+
+        block_run2_0.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        block_run3_0.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run3_1.id,
+                block_run4.id,
+            ]),
+        )
+
+        block_run3_1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run4.id,
+            ]),
+        )
+
+        self.block3.configuration = dict(reduce_output=True)
+        block_run1.update(status=BlockRun.BlockRunStatus.RUNNING)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([]),
+        )
+
+        block_run1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run4.id,
+            ]),
+        )
+
+        block_run2.update(status=BlockRun.BlockRunStatus.RUNNING)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([]),
+        )
+
+        block_run2.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run4.id,
+            ]),
+        )
 
     def test_executable_block_runs_with_hook_blocks(self):
         pass
