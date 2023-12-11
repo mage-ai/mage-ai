@@ -1298,7 +1298,10 @@ def cancel_block_runs_and_jobs(
 
 
 def check_sla():
-    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    repo_pipelines = set(Pipeline.get_all_pipelines(
+        get_repo_path(),
+        disable_pipelines_folder_creation=True,
+    ))
     pipeline_schedules_results = PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
     pipeline_schedules_mapping = index_by(lambda x: x.id, pipeline_schedules_results)
 
@@ -1362,7 +1365,10 @@ def schedule_all():
     """
     db_connection.session.expire_all()
 
-    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    repo_pipelines = set(Pipeline.get_all_pipelines(
+        get_repo_path(),
+        disable_pipelines_folder_creation=True,
+    ))
 
     # Sync schedules from yaml file to DB
     sync_schedules(list(repo_pipelines))

@@ -339,15 +339,25 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def get_all_pipelines(self, repo_path) -> List[str]:
+    def get_all_pipelines(
+        self,
+        repo_path: str,
+        disable_pipelines_folder_creation: bool = False,
+    ) -> List[str]:
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
-        if not os.path.exists(pipelines_folder):
+        pipelines_folder_exists = os.path.exists(pipelines_folder)
+        if not pipelines_folder_exists and not disable_pipelines_folder_creation:
             os.mkdir(pipelines_folder)
-        return [
-            d
-            for d in os.listdir(pipelines_folder)
-            if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
-        ]
+            pipelines_folder_exists = True
+
+        if pipelines_folder_exists:
+            return [
+                d
+                for d in os.listdir(pipelines_folder)
+                if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
+            ]
+
+        return []
 
     @classmethod
     def get_pipelines_by_block(self, block, repo_path=None, widget=False) -> List['Pipeline']:

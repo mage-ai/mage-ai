@@ -13,8 +13,10 @@ from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
+from mage_ai.settings.repo import get_metadata_path
 from mage_ai.settings.repo import get_repo_name as get_repo_name_new
 from mage_ai.settings.repo import get_repo_path as get_repo_path_new
+from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 
 yml = ruamel.yaml.YAML()
@@ -28,17 +30,15 @@ class ProjectType(str, Enum):
     STANDALONE = 'standalone'
 
 
-def get_metadata_path():
-    return os.path.join(get_repo_path_new(), 'metadata.yaml')
-
-
 class RepoConfig:
     def __init__(
         self,
         repo_path: str = None,
         config_dict: Dict = None,
+        root_project: bool = False,
     ):
-        self.repo_path = repo_path or get_repo_path_new()
+        self.root_project = root_project
+        self.repo_path = repo_path or get_repo_path_new(root_project=self.root_project)
         self.repo_name = os.path.basename(self.repo_path)
         self.project_uuid = None
         self.project_type = None
@@ -92,7 +92,8 @@ class RepoConfig:
             else:
                 self.variables_dir = get_variables_dir(
                     repo_path=self.repo_path,
-                    repo_config=repo_config
+                    repo_config=repo_config,
+                    root_project=self.root_project,
                 )
             try:
                 os.makedirs(self.variables_dir, exist_ok=True)
@@ -139,9 +140,13 @@ class RepoConfig:
             pass
 
     @classmethod
-    def from_dict(self, config_dict: Dict) -> 'RepoConfig':
+    def from_dict(self, config_dict: Dict, root_project: bool = False) -> 'RepoConfig':
         repo_path = config_dict.get('repo_path')
-        repo_config = RepoConfig(repo_path=repo_path, config_dict=config_dict)
+        repo_config = RepoConfig(
+            repo_path=repo_path,
+            config_dict=config_dict,
+            root_project=root_project,
+        )
         return repo_config
 
     @property
@@ -149,7 +154,7 @@ class RepoConfig:
         if self.repo_path:
             return os.path.join(self.repo_path, 'metadata.yaml')
         else:
-            return get_metadata_path()
+            return get_metadata_path(root_project=self.root_project)
 
     @property
     def pipelines(self):
@@ -213,6 +218,7 @@ def init_repo(
     project_type: str = ProjectType.STANDALONE,
     cluster_type: str = None,
     project_uuid: str = None,
+    root_project: bool = False,
 ) -> None:
     """
     Initialize a repository under the current path.
@@ -247,11 +253,11 @@ def init_repo(
     if not project_uuid:
         project_uuid = uuid.uuid4().hex
     new_config.update(project_uuid=project_uuid)
-    get_repo_config(repo_path).save(**new_config)
+    get_repo_config(repo_path, root_project=root_project).save(**new_config)
 
 
-def get_repo_config(repo_path=None) -> RepoConfig:
-    return RepoConfig(repo_path=repo_path)
+def get_repo_config(repo_path: str = None, root_project: bool = False) -> RepoConfig:
+    return RepoConfig(repo_path=repo_path, root_project=root_project)
 
 
 def get_project_type(repo_path=None) -> ProjectType:
@@ -280,66 +286,6 @@ def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
         return None
 
 
-def get_variables_dir(
-    repo_path: str = None,
-    repo_config: Dict = None,
-) -> str:
-    """
-    Fetches the variables directory for the project.
-
-    Priority:
-        1. os.getenv(MAGE_DATA_DIR_ENV_VAR)
-        2. 'variables_dir' from repo_config argument
-        3. 'variables_dir' from project's metadata.yaml file
-            This method will either read from the metadata.yaml file or the repo_config argument.
-            It will not read from both.
-        4. DEFAULT_MAGE_DATA_DIR
-
-    Args:
-        repo_path (str): Path to the project's root directory
-        repo_config (Dict): Dictionary containing the project's metadata.yaml file
-
-    Returns:
-        str: Path to the variables directory
-    """
-    if repo_path is None:
-        repo_path = get_repo_path_new()
-    repo_name = os.path.basename(repo_path)
-    variables_dir = None
-    if os.getenv(MAGE_DATA_DIR_ENV_VAR):
-        variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
-    else:
-        if repo_config is not None:
-            variables_dir = repo_config.get('variables_dir')
-        else:
-            from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-            if os.path.exists(get_metadata_path()):
-                with open(get_metadata_path(), 'r', encoding='utf-8') as f:
-                    config_file = Template(f.read()).render(
-                        **get_template_vars_no_db()
-                    )
-                    repo_config = yaml.full_load(config_file) or {}
-                    if repo_config.get('variables_dir'):
-                        variables_dir = repo_config.get('variables_dir')
-        if variables_dir is None:
-            variables_dir = DEFAULT_MAGE_DATA_DIR
-        variables_dir = os.path.expanduser(variables_dir)
-
-    if not variables_dir.startswith('s3') and not variables_dir.startswith('gs'):
-        if os.path.isabs(variables_dir) and variables_dir != repo_path:
-            # If the variables_dir is an absolute path and not same as repo_path
-            variables_dir = os.path.join(variables_dir, repo_name)
-        else:
-            variables_dir = os.path.abspath(
-                os.path.join(repo_path, variables_dir),
-            )
-        try:
-            os.makedirs(variables_dir, exist_ok=True)
-        except Exception:
-            pass
-    return variables_dir
-
-
 def set_project_uuid_from_metadata() -> None:
     global project_uuid
     if os.path.exists(get_metadata_path()):
@@ -348,7 +294,7 @@ def set_project_uuid_from_metadata() -> None:
             project_uuid = config.get('project_uuid')
 
 
-def init_project_uuid(overwrite_uuid: str = None) -> None:
+def init_project_uuid(overwrite_uuid: str = None, root_project: bool = False) -> None:
     """
     Initialize the project_uuid constant. The project_uuid constant is used throughout
     the server as an identifier for the project.
@@ -358,7 +304,7 @@ def init_project_uuid(overwrite_uuid: str = None) -> None:
             value of project_uuid.
     """
     global project_uuid
-    repo_config = get_repo_config()
+    repo_config = get_repo_config(root_project=root_project)
     if overwrite_uuid:
         if repo_config.project_uuid != overwrite_uuid:
             repo_config.save(project_uuid=overwrite_uuid)

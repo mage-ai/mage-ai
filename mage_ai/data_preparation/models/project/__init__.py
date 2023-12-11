@@ -5,16 +5,16 @@ import aiohttp
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import get_project_paths, get_repo_path
 from mage_ai.shared.environments import is_debug
 
 
 class Project():
-    def __init__(self, repo_config=None):
-        parts = get_repo_path().split('/')
-
+    def __init__(self, repo_config=None, root_project: bool = False):
+        self.root_project = root_project
+        parts = get_repo_path(root_project=self.root_project).split('/')
         self.name = parts[-1]
-        self.repo_config = repo_config or get_repo_config()
+        self.repo_config = repo_config or get_repo_config(root_project=self.root_project)
         self.version = VERSION
 
     @property
@@ -55,6 +55,9 @@ class Project():
     @property
     def pipelines(self) -> Dict:
         return self.repo_config.pipelines
+
+    def projects(self) -> Dict:
+        return get_project_paths()
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)

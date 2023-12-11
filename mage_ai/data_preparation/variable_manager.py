@@ -10,9 +10,9 @@ from mage_ai.data_preparation.models.variable import (
     Variable,
     VariableType,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_config, get_variables_dir
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.utils import clean_name

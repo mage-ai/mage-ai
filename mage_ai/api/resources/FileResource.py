@@ -20,7 +20,7 @@ class FileResource(GenericResource):
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
         return self.build_result_set(
-            [File.get_all_files(get_repo_path())],
+            [File.get_all_files(get_repo_path(root_project=True))],
             user,
             **kwargs,
         )

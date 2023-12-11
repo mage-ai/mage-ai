@@ -24,6 +24,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
 import { Branch, Slack } from '@oracle/icons';
 import {
@@ -89,9 +90,10 @@ function Header({
   } = useMemo(() => dataGitBranch?.['git_branch'] || {}, [dataGitBranch]);
 
   const {
-    data: dataProjects,
-  } = api.projects.list({}, { revalidateOnFocus: false }, { pauseFetch: !!projectProp });
-  const project = useMemo(() => projectProp || dataProjects?.projects?.[0], [dataProjects, projectProp]);
+    project: projectInit,
+    rootProject,
+  } = useProject();
+  const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
 
   const loggedIn = AuthToken.isLoggedIn();

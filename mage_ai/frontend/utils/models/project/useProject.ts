@@ -21,7 +21,43 @@ function useProject(): {
   sparkEnabled: boolean;
 } {
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
-  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+  const {
+    project,
+    rootProject,
+  }: {
+    project: ProjectType;
+    rootProject: ProjectType;
+  } = useMemo(() => {
+    let project2;
+    let rootProject2;
+
+    (dataProjects?.projects || [])?.forEach((project3) => {
+      if (project2 && rootProject2) {
+        return;
+      }
+
+      if (project3?.root_project) {
+        if (!rootProject2) {
+          rootProject2 = project3;
+        }
+      } else {
+        if (!project2) {
+          project2 = project3;
+        }
+      }
+    });
+
+    if (rootProject2 && !project2) {
+      project2 = rootProject2;
+      rootProject2 = null;
+    }
+
+    return {
+      project: project2,
+      rootProject: rootProject2,
+    };
+  }, [dataProjects]);
+
   const computeManagementEnabled: boolean =
     featureEnabled(project, FeatureUUIDEnum.COMPUTE_MANAGEMENT);
 
@@ -30,6 +66,7 @@ function useProject(): {
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
     project,
+    rootProject,
     sparkEnabled: computeManagementEnabled
       && (project.spark_config || project.emr_config)
       && (

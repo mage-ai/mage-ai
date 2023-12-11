@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
@@ -11,6 +12,7 @@ import TripleLayout from '@components/TripleLayout';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
 import {
   ContainerStyle,
   VERTICAL_NAVIGATION_WIDTH,
@@ -22,6 +24,8 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { onSuccess } from '@api/utils/response';
+import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 export type DashboardSharedProps = {
@@ -77,6 +81,10 @@ function Dashboard({
   title,
   uuid,
 }: DashboardProps & VerticalNavigationProps, ref) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'Dashboard/index',
+  });
+
   const {
     width: widthWindow,
   } = useWindowSize();
@@ -99,32 +107,83 @@ function Dashboard({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [, setMainContainerWidth] = useState<number>(null);
 
-  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
-  const projects = dataProjects?.projects;
+  const {
+    fetchProjects,
+    project,
+    rootProject,
+  } = useProject();
 
-  const breadcrumbProject = {
-    label: () => projects?.[0]?.name,
-    linkProps: {
-      href: '/',
+  const [updateProject, { isLoading: isLoadingUpdateProject }]: any = useMutation(
+    api.projects.useUpdate(project?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchProjects();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
     },
-  };
+  );
+
+  const breadcrumbProjects = [];
+  if (rootProject) {
+    breadcrumbProjects.push({
+      label: () => rootProject?.name,
+      linkProps: {
+        href: '/',
+      },
+    });
+  }
+
+  if (project) {
+    const crumb = {
+      label: () => project?.name,
+    };
+
+    if (rootProject) {
+      crumb.loading = isLoadingUpdateProject;
+      crumb.options = Object.keys(rootProject?.projects || {}).map((projectName: string) => ({
+        onClick: () => {
+          updateProject({
+            project: {
+              activate_project: projectName,
+            },
+          });
+        },
+        selected: projectName === project?.name,
+        uuid: projectName,
+      }));
+    } else {
+      crumb.linkProps = {
+        href: '/',
+      };
+    }
+
+    breadcrumbProjects.push(crumb);
+  }
+
   const breadcrumbs = [];
   if (breadcrumbsProp) {
     if (addProjectBreadcrumbToCustomBreadcrumbs) {
-      breadcrumbs.push(breadcrumbProject);
+      breadcrumbs.push(...breadcrumbProjects);
     }
 
     breadcrumbs.push(...breadcrumbsProp);
   }
 
-  if ((!breadcrumbsProp?.length || appendBreadcrumbs) && projects?.length >= 1) {
+  if ((!breadcrumbsProp?.length || appendBreadcrumbs) && project) {
     if (!breadcrumbsProp?.length) {
       breadcrumbs.unshift({
         bold: !appendBreadcrumbs,
         label: () => title,
       });
     }
-    breadcrumbs.unshift(breadcrumbProject);
+    breadcrumbs.unshift(...breadcrumbProjects);
   }
 
   useEffect(() => {
@@ -180,8 +239,6 @@ function Dashboard({
       <Header
         breadcrumbs={breadcrumbs}
         menuItems={headerMenuItems}
-        project={projects?.[0]}
-        version={projects?.[0]?.version}
       />
 
       <ContainerStyle ref={ref}>

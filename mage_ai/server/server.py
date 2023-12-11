@@ -33,7 +33,6 @@ from mage_ai.data_preparation.repo_manager import (
     get_cluster_type,
     get_project_type,
     get_project_uuid,
-    get_variables_dir,
     init_project_uuid,
     init_repo,
 )
@@ -101,6 +100,7 @@ from mage_ai.settings.repo import (
     MAGE_CLUSTER_TYPE_ENV_VAR,
     MAGE_PROJECT_TYPE_ENV_VAR,
     get_repo_name,
+    get_variables_dir,
     set_repo_path,
 )
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
@@ -599,7 +599,7 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    init_project_uuid(overwrite_uuid=project_uuid)
+    init_project_uuid(overwrite_uuid=project_uuid, root_project=True)
 
     asyncio.run(UsageStatisticLogger().project_impression())
 

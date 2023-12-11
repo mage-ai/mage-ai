@@ -65,7 +65,11 @@ export default interface ProjectType {
   openai_api_key?: string;
   pipelines?: ProjectPipelinesType;
   project_uuid?: string;
+  projects?: {
+    [name: string]: string;
+  };
   remote_variables_dir?: string;
+  root_project?: boolean;
   spark_config?: SparkConfigType;
   version?: string;
 }
