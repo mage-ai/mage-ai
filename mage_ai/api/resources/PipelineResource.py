@@ -207,25 +207,6 @@ class PipelineResource(BaseResource):
             )
 
         pipelines = [p for p in pipelines if p is not None]
-        if sorts:
-            def _sort_key(p, sorts=sorts, reverse_sort=reverse_sort):
-                bools = []
-                vals = []
-                for k in sorts:
-                    if hasattr(p, k):
-                        val = getattr(p, k)
-                        vals.append(val)
-                        bools.append(val is None if not reverse_sort else val is not None)
-                    else:
-                        bools.append(False)
-
-                return tuple(bools + vals)
-
-            pipelines = sorted(
-                pipelines,
-                key=_sort_key,
-                reverse=reverse_sort,
-            )
 
         @safe_db_query
         def query_pipeline_schedules(pipeline_uuids):
@@ -246,7 +227,7 @@ class PipelineResource(BaseResource):
                 filter(
                     a.pipeline_uuid.in_(pipeline_uuids),
                     or_(
-                        a.repo_path == get_repo_path(),
+                        a.repo_path == Project().repo_path_for_database_query('pipeline_schedules'),
                         a.repo_path.is_(None),
                     )
                 )
@@ -286,6 +267,34 @@ class PipelineResource(BaseResource):
             for pipeline in pipelines:
                 if pipeline.uuid in history_by_pipeline_uuid:
                     pipeline.history = history_by_pipeline_uuid.get(pipeline.uuid)
+
+        if sorts:
+            def _sort_key(p, sorts=sorts, reverse_sort=reverse_sort):
+                bools = []
+                vals = []
+                for k in sorts:
+                    if 'blocks' == k.lower():
+                        val = len(p.blocks_by_uuid)
+                        vals.append(val)
+                        bools.append(val is None if not reverse_sort else val is not None)
+                    elif 'triggers' == k.lower():
+                        val = len(p.blocks_by_uuid)
+                        vals.append(val)
+                        bools.append(val is None if not reverse_sort else val is not None)
+                    elif hasattr(p, k):
+                        val = getattr(p, k)
+                        vals.append(val)
+                        bools.append(val is None if not reverse_sort else val is not None)
+                    else:
+                        bools.append(False)
+
+                return tuple(bools + vals)
+
+            pipelines = sorted(
+                pipelines,
+                key=_sort_key,
+                reverse=reverse_sort,
+            )
 
         if offset_limit_applied:
             results = pipelines
