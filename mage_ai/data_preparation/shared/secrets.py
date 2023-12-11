@@ -117,7 +117,7 @@ def create_secret(
         'name': name,
         'value': encrypted_value,
         'key_uuid': key_uuid,
-        'repo_name': Project().repo_path_for_database_query('secrets'),
+        'repo_name': Project().repo_path_for_database_query('secrets')[0],
     }
 
     secret = Secret(**kwargs)
@@ -138,7 +138,7 @@ def get_valid_secrets_for_repo() -> List:
     fernet = Fernet(key)
 
     secrets = Secret.query.filter(
-        Secret.repo_name == Project().repo_path_for_database_query('secrets'),
+        Secret.repo_name.in_(Project().repo_path_for_database_query('secrets')),
     )
     valid_secrets = []
     if secrets.count() > 0:
@@ -183,7 +183,7 @@ def get_secret_value(
         # For backwards compatibility, check if there is a secret with the name and no uuid
         if entity == Entity.GLOBAL:
             if repo_name is None:
-                repo_name = Project().repo_path_for_database_query('secrets')
+                repo_name = Project().repo_path_for_database_query('secrets')[0]
             secret_legacy = Secret.query.filter(
                 Secret.name == name,
                 Secret.repo_name == repo_name,
@@ -231,7 +231,7 @@ def delete_secret(
     if entity == Entity.GLOBAL and not secret:
         secret = Secret.query.filter(
             Secret.name == name,
-            Secret.repo_name == Project().repo_path_for_database_query('secrets'),
+            Secret.repo_name == Project().repo_path_for_database_query('secrets')[0],
             Secret.key_uuid.is_(None),
         ).one_or_none()
 

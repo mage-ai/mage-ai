@@ -101,9 +101,9 @@ class PipelineSchedule(BaseModel):
     def repo_query(cls):
         return cls.query.filter(
             or_(
-                PipelineSchedule.repo_path == Project().repo_path_for_database_query(
+                PipelineSchedule.repo_path.in_(Project().repo_path_for_database_query(
                     'pipeline_schedules',
-                ),
+                )),
                 PipelineSchedule.repo_path.is_(None),
             )
         )

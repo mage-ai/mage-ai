@@ -1,5 +1,5 @@
 import os
-from typing import Dict
+from typing import Dict, List
 
 import aiohttp
 
@@ -75,16 +75,16 @@ class Project():
     def pipelines(self) -> Dict:
         return self.repo_config.pipelines
 
-    def repo_path_for_database_query(self, key: str) -> str:
+    def repo_path_for_database_query(self, key: str) -> List[str]:
         if self.settings:
-            query_alias = dig(self.settings, ['database', 'query', key])
-            if query_alias:
-                return os.path.join(
+            query_arr = dig(self.settings, ['database', 'query', key])
+            if query_arr:
+                return [os.path.join(
                     os.path.dirname(get_repo_path(root_project=True)),
                     query_alias,
-                )
+                ) for query_alias in query_arr]
 
-        return self.repo_path
+        return [self.repo_path]
 
     def projects(self) -> Dict:
         return project_platform_settings()
