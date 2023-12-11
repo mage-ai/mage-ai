@@ -254,9 +254,10 @@ class Pipeline:
                 raise InvalidPipelineZipError
 
             p_files, conf_dest_path, p_name = self.__update_pipeline_yaml(
+                self,
+                tmp_dir,
                 config_zip_path,
                 overwrite,
-                tmp_dir
             )
 
             # write all files in bulk
@@ -1254,7 +1255,7 @@ class Pipeline:
     # Updates pipeline YAML for new pipeline or block names from the import process
     # compiles list of files to be written
     # also returns the new pipeline name and the config destination path
-    def __update_pipeline_yaml(self, config_zip_path, overwrite, tmp_dir):
+    def __update_pipeline_yaml(self, tmp_dir, config_zip_path, overwrite):
         files_to_be_written = []
         with open(config_zip_path, 'r') as pipeline_config:
             config = yaml.safe_load(pipeline_config)
