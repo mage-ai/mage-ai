@@ -995,6 +995,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_block_uuid: str = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
@@ -1053,6 +1054,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
                 data_integration_runtime_settings=data_integration_runtime_settings,
@@ -1234,6 +1236,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         data_integration_runtime_settings: str = None,
@@ -1271,6 +1274,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                         execution_partition,
                         global_vars,
                         dynamic_block_index=dynamic_block_index,
+                        dynamic_block_indexes=dynamic_block_indexes,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         from_notebook=from_notebook,
                     )
@@ -1279,6 +1283,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                     input_args,
                     block_run_outputs_cache=block_run_outputs_cache,
                     dynamic_block_index=dynamic_block_index,
+                    dynamic_block_indexes=dynamic_block_indexes,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     execution_partition=execution_partition,
                     from_notebook=from_notebook,
@@ -1305,6 +1310,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 outputs_from_input_vars,
                 custom_code=custom_code,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 from_notebook=from_notebook,
@@ -1361,6 +1367,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         outputs_from_input_vars,
         custom_code: str = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: List[str] = None,
         execution_partition: str = None,
         from_notebook: bool = False,
@@ -1384,6 +1391,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         if self.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -1395,6 +1403,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 outputs_from_input_vars=outputs_from_input_vars,
                 custom_code=custom_code,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 execution_partition_previous=execution_partition_previous,
@@ -1544,6 +1553,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         block_run_outputs_cache: Dict[str, List] = None,
         data_integration_settings_mapping: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: List[str] = None,
         execution_partition: str = None,
         from_notebook: bool = False,
@@ -1579,6 +1589,7 @@ class Block(DataIntegrationMixin, SparkBlock):
             block_run_outputs_cache=block_run_outputs_cache,
             data_integration_settings_mapping=data_integration_settings_mapping,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             execution_partition=execution_partition,
             from_notebook=from_notebook,
@@ -1957,7 +1968,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    def __save_outputs_prepare(self, outputs) -> Dict:
+    def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
         for o in outputs:
             if o is None:
@@ -1968,16 +1979,30 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
                     (not is_output_variable(o['variable_uuid']) or
-                        BlockType.SCRATCHPAD == self.type):
+                        BlockType.SCRATCHPAD == self.type or
+                        override_output_variable):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
         self._outputs_loaded = True
         return variable_mapping
 
-    def save_outputs(self, outputs, override=False) -> None:
-        variable_mapping = self.__save_outputs_prepare(outputs)
-        self.store_variables(variable_mapping, override=override)
+    def save_outputs(
+        self,
+        outputs,
+        override: bool = False,
+        execution_partition: str = None,
+        override_output_variable: bool = False,
+    ) -> None:
+        variable_mapping = self.__save_outputs_prepare(
+            outputs,
+            override_output_variable=override_output_variable,
+        )
+        self.store_variables(
+            variable_mapping,
+            execution_partition=execution_partition,
+            override=override,
+        )
 
     async def save_outputs_async(
         self,
@@ -3158,6 +3183,7 @@ class CallbackBlock(AddonBlock):
         callback: str,
         callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         execution_partition: str = None,
         global_vars: Dict = None,
@@ -3204,6 +3230,7 @@ class CallbackBlock(AddonBlock):
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 None,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 from_notebook=from_notebook,

@@ -30,10 +30,13 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    all_upstreams_completed,
+    dynamically_created_child_block_runs,
+)
 from mage_ai.data_preparation.models.block.utils import (
-    get_all_ancestors,
-    is_dynamic_block,
     is_dynamic_block_child,
+    should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
@@ -805,8 +808,12 @@ class PipelineRun(BaseModel):
         completed_block_uuids = _build_block_uuids(self.completed_block_runs)
         finished_block_uuids = _build_block_uuids(self.block_runs)
 
+        block_runs_all = []
+
         data_integration_block_uuids_mapping = {}
         for block_run in self.block_runs:
+            block_runs_all.append(block_run)
+
             block = pipeline.get_block(block_run.block_uuid)
             metrics = block_run.metrics
             """
@@ -873,11 +880,30 @@ class PipelineRun(BaseModel):
                 elif metrics.get('upstream_blocks'):
                     upstream_block_uuids_override = metrics.get('upstream_blocks') or None
 
+            block = pipeline.get_block(block_run.block_uuid)
+
+            # If this is the original dynamic child block, don’t run until all it’s
+            # upstream dynamic child blocks have their upstreams completed.
+            if block and block.uuid == block_run.block_uuid and is_dynamic_block_child(block):
+                upstream_dynamic_child_blocks = \
+                    [up_block for up_block in block.upstream_blocks if is_dynamic_block_child(
+                        up_block,
+                    )]
+
+                if upstream_dynamic_child_blocks:
+                    if not all(
+                        [all_upstreams_completed(
+                            up_block,
+                            block_runs_all,
+                        ) for up_block in upstream_dynamic_child_blocks],
+                    ):
+                        continue
+
             if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
                 uuids_to_check = []
                 for upstream_block_uuid in dynamic_upstream_block_uuids:
-                    block = pipeline.get_block(upstream_block_uuid)
-                    if is_dynamic_block_child(block):
+                    upstream_block = pipeline.get_block(upstream_block_uuid)
+                    if is_dynamic_block_child(upstream_block):
                         uuids_to_check.append(upstream_block_uuid)
                     else:
                         uuids_to_check.append(upstream_block_uuid)
@@ -891,7 +917,6 @@ class PipelineRun(BaseModel):
             else:
                 metrics = block_run.metrics
 
-                block = pipeline.get_block(block_run.block_uuid)
                 if not block and metrics.get('hook'):
                     from mage_ai.data_preparation.models.block.hook.block import (
                         HookBlock,
@@ -934,7 +959,39 @@ class PipelineRun(BaseModel):
                     upstream_block_uuids_override = \
                         metrics.get('dynamic_upstream_block_uuids') or []
 
-                completed = block is not None and \
+                incomplete = False
+                if block:
+                    up_uuids = []
+                    up_uuids_dynamic_children = []
+
+                    for upstream_block in block.upstream_blocks:
+                        if incomplete:
+                            continue
+
+                        if is_dynamic_block_child(upstream_block):
+                            if should_reduce_output(upstream_block):
+                                upstream_upstream_completed = all_upstreams_completed(
+                                    upstream_block,
+                                    block_runs_all,
+                                )
+                                if upstream_upstream_completed:
+                                    brs = dynamically_created_child_block_runs(
+                                        pipeline,
+                                        upstream_block,
+                                        block_runs_all,
+                                    )
+                                    up_uuids_dynamic_children += [br.block_uuid for br in brs]
+                                else:
+                                    incomplete = True
+                        else:
+                            up_uuids.append(upstream_block.uuid)
+
+                        if len(up_uuids_dynamic_children) >= 1:
+                            upstream_block_uuids_override = \
+                                (upstream_block_uuids_override or []) + \
+                                up_uuids + up_uuids_dynamic_children
+
+                completed = not incomplete and block is not None and \
                     block.all_upstream_blocks_completed(
                         completed_block_uuids,
                         upstream_block_uuids_override,
@@ -1125,15 +1182,9 @@ class PipelineRun(BaseModel):
         pipeline = self.pipeline
         blocks = pipeline.get_executable_blocks()
 
-        arr = []
-        for block in blocks:
-            ancestors = get_all_ancestors(block)
-            if len(block.upstream_blocks) == 0 or not find(is_dynamic_block, ancestors):
-                arr.append(block)
-
         block_arr = []
 
-        for block in arr:
+        for block in blocks:
             create_options = {}
             block_uuid = block.uuid
 

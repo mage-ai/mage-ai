@@ -388,6 +388,7 @@ function DependencyGraph({
     blocksOverride,
     pipeline,
   ]);
+
   const blockUUIDMapping =
     useMemo(() => indexBy(allBlocks || [], ({ uuid }) => uuid), [allBlocks]);
 
@@ -1890,7 +1891,7 @@ function DependencyGraph({
             if (selectedBlockTwice) {
               if (selectedBlockTwice?.uuid === blockUUID
                 || blockUUIDs?.includes(selectedBlockTwice?.uuid)
-                || downstreamBlocks?.map(({ uuid }) => uuid)?.includes(selectedBlockTwice?.uuid)
+                || downstreamBlocks?.map(b => b?.uuid)?.includes(selectedBlockTwice?.uuid)
               ) {
                 edgeClassNames.push('selected-twice');
               }
@@ -2084,7 +2085,7 @@ function DependencyGraph({
                   return (
                     <foreignObject
                       height={nodeHeight}
-                      onClick={(e) => onClickNode(e, node)}
+                      onClick={(e) => onClickNode?.(e, node)}
                       onContextMenu={contextMenuEnabled
                         ? (e) => onContextMenuNode(e, node, {
                           nodeHeight,

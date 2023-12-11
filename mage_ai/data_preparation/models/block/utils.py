@@ -19,8 +19,6 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.array import find, unique_by
-from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
 
 
@@ -40,9 +38,11 @@ def clean_name(name: str, **kwargs) -> str:
 
 def dynamic_block_uuid(
     block_uuid: str,
-    metadata: Dict,
-    index: int,
+    metadata: Dict = None,
+    index: int = None,
+    indexes: List[int] = None,
     upstream_block_uuid: str = None,
+    upstream_block_uuids: List[str] = None,
 ) -> str:
     """
     Generates a dynamic block UUID based on the given parameters.
@@ -56,55 +56,18 @@ def dynamic_block_uuid(
     Returns:
         str: The generated dynamic block UUID.
     """
-    block_uuid_subname = metadata.get('block_uuid', index)
+    block_uuid_subname = metadata.get('block_uuid', index) if metadata else index
     uuid = f'{block_uuid}:{block_uuid_subname}'
 
-    if upstream_block_uuid:
+    if upstream_block_uuids:
+        uuid = f'{block_uuid}:{"__".join(upstream_block_uuids)}:{block_uuid_subname}'
+    elif upstream_block_uuid:
         parts = upstream_block_uuid.split(':')
         if len(parts) >= 2:
             upstream_indexes = ':'.join(parts[1:])
             uuid = f'{uuid}:{upstream_indexes}'
 
     return uuid
-
-
-def create_block_run_from_dynamic_child(
-    block,
-    pipeline_run,
-    block_metadata: Dict,
-    index: int,
-    skip_if_exists: bool = True,
-    upstream_block_uuid: str = None,
-):
-    """
-    Creates a block run for a dynamic child block.
-
-    Args:
-        block: The dynamic child block.
-        pipeline_run: The pipeline run.
-        block_metadata (Dict): The metadata of the block.
-        index (int): The index of the dynamic block.
-        upstream_block_uuid (str, optional): The UUID of the upstream block.
-
-    Returns:
-        block_run: The created block run.
-    """
-    metadata = block_metadata.copy()
-    metadata.update(dict(dynamic_block_index=index))
-
-    block_uuid = dynamic_block_uuid(
-        block.uuid,
-        metadata,
-        index,
-        upstream_block_uuid=upstream_block_uuid,
-    )
-    block_run = pipeline_run.create_block_run(
-        block_uuid,
-        metrics=metadata,
-        skip_if_exists=skip_if_exists,
-    )
-
-    return block_run
 
 
 def dynamic_block_values_and_metadata(
@@ -147,210 +110,6 @@ def dynamic_block_values_and_metadata(
             )
 
     return values, block_metadata
-
-
-def create_block_runs_from_dynamic_block(
-    block,
-    pipeline_run,
-    block_uuid: str = None,
-) -> List:
-    """
-    Creates block runs for all dynamic child blocks of a dynamic block.
-
-    Args:
-        block: The dynamic block.
-        pipeline_run: The pipeline run.
-        block_uuid (str, optional): The UUID of the block.
-
-    Returns:
-        List: A list of all the created block runs.
-    """
-    block_uuid_original = block.uuid
-    block_uuid = block_uuid_original if block_uuid is None else block_uuid
-    execution_partition = pipeline_run.execution_partition
-
-    values, block_metadata = dynamic_block_values_and_metadata(
-        block,
-        execution_partition,
-        block_uuid,
-    )
-
-    # SQL blocks will return a Pandas DataFrame
-    if type(values) is pd.DataFrame:
-        values = values.to_dict(orient='records')
-
-    all_block_runs = []
-    # Dynamic child blocks (aka created from a dynamic block)
-    for downstream_block in block.downstream_blocks:
-        is_dynamic = is_dynamic_block(downstream_block)
-        should_reduce = should_reduce_output(downstream_block)
-        descendants = get_all_descendants(downstream_block)
-
-        block_runs_created_by_block_uuid = {}
-        dynamic_child_block_runs = []
-        for idx, _ in enumerate(values):
-            if idx < len(block_metadata):
-                metadata = block_metadata[idx].copy()
-            else:
-                metadata = {}
-
-            arr = []
-            for upstream_block in downstream_block.upstream_blocks:
-                if block_uuid_original == upstream_block.uuid and block_uuid_original != block_uuid:
-                    arr.append(block_uuid)
-                else:
-                    arr.append(upstream_block.uuid)
-
-            if metadata.get('upstream_blocks'):
-                for up_uuid in (metadata.get('upstream_blocks') or []):
-                    up_block = block.pipeline.get_block(up_uuid)
-                    if up_block:
-                        arr.append(up_uuid)
-                    else:
-                        arr.append(f'{downstream_block.uuid}:{up_uuid}')
-
-            block_run = create_block_run_from_dynamic_child(
-                downstream_block,
-                pipeline_run,
-                merge_dict(metadata, dict(
-                    dynamic_upstream_block_uuids=arr,
-                )),
-                idx,
-                upstream_block_uuid=block_uuid,
-            )
-            all_block_runs.append(block_run)
-            dynamic_child_block_runs.append(block_run)
-
-            if is_dynamic or should_reduce:
-                continue
-
-            # Schedule all descendants
-            for b in descendants:
-                # If block has dynamic upstream, skip since creation of downstream
-                # is handled in pipeline scheduler
-                if find(lambda x: is_dynamic_block(x), b.upstream_blocks):
-                    continue
-
-                """
-                If a descendant has an immediate upstream block that is different than
-                the current downstream_block that reduces output, skip this loop because
-                this descendant will be created by that other upstream block that reduces output
-                """
-                # if find(
-                #     lambda x: downstream_block.uuid != x.uuid and should_reduce_output(x),
-                #     b.upstream_blocks,
-                # ):
-                #     continue
-
-                arr = []
-                for upstream_block in b.upstream_blocks:
-                    ancestors = get_all_ancestors(upstream_block)
-                    # If the upstream block has the current dynamic child as an ancestor,
-                    # then have this block depend on a block UUID with the dynamic UUID suffix;
-                    # e.g. block_uuid:index
-                    if downstream_block.uuid in [a.uuid for a in ancestors]:
-                        arr.append(dynamic_block_uuid(
-                            upstream_block.uuid,
-                            metadata,
-                            idx,
-                        ))
-                    elif downstream_block.uuid == upstream_block.uuid:
-                        arr.append(block_run.block_uuid)
-                    elif is_dynamic_block_child(upstream_block):
-                        # Needs to know that the ancestors are dynamic
-                        # or dynamic child without reduce
-                        arr.append(dynamic_block_uuid(
-                            upstream_block.uuid,
-                            metadata,
-                            idx,
-                        ))
-                    else:
-                        arr.append(upstream_block.uuid)
-
-                b_uuid = dynamic_block_uuid(b.uuid, metadata, idx)
-                if b_uuid in block_runs_created_by_block_uuid:
-                    continue
-                block_runs_created_by_block_uuid[b_uuid] = True
-
-                br = create_block_run_from_dynamic_child(
-                    b,
-                    pipeline_run,
-                    merge_dict(metadata, dict(
-                        dynamic_upstream_block_uuids=arr,
-                    )),
-                    idx,
-                )
-                all_block_runs.append(br)
-
-        if should_reduce:
-            for b in descendants:
-                ancestors = get_all_ancestors(b)
-                unique_dynamic_ancestors = unique_by(
-                    list(filter(lambda x: is_dynamic_block(x), ancestors)),
-                    lambda x: x.uuid,
-                )
-
-                skip_creating_downstream = False
-                ancestors_uuids = [a.uuid for a in ancestors]
-
-                for dynamic_ancestor in unique_dynamic_ancestors:
-                    if skip_creating_downstream:
-                        break
-
-                    """
-                    If any dynamic ancestors doesn't have reduce block as the descendants, skip
-                    creating this downstream block.
-                    """
-                    dynamic_ancestor_descendants = get_all_descendants(dynamic_ancestor)
-
-                    dynamic_ancestor_has_reduce_block = False
-                    for d in dynamic_ancestor_descendants:
-                        if d.uuid in ancestors_uuids:
-                            if should_reduce_output(d):
-                                dynamic_ancestor_has_reduce_block = True
-                                break
-                    if not dynamic_ancestor_has_reduce_block:
-                        skip_creating_downstream = True
-                        break
-
-                    down_uuids_as_ancestors = []
-                    for down in dynamic_ancestor.downstream_blocks:
-                        if down.uuid in ancestors_uuids and not should_reduce_output(down):
-                            down_uuids_as_ancestors.append(down.uuid)
-                    skip_creating_downstream = len(down_uuids_as_ancestors) >= 2
-
-                # Only create downstream block runs if it doesn’t have dynamically created upstream
-                # blocks (aka dynamic child) that were created by a 2nd ancestor that is a dynamic
-                # block
-                if skip_creating_downstream:
-                    continue
-
-                for upstream_block in b.upstream_blocks:
-                    if should_reduce_output(upstream_block) and \
-                            upstream_block.uuid != downstream_block.uuid:
-                        skip_creating_downstream = True
-                        break
-                """
-                If an upstream block needs to be reduced but it's not the same with the current
-                block that's being reduced, skip the downstream block creation.
-                """
-                if skip_creating_downstream:
-                    continue
-
-                arr = []
-                for upstream_block in b.upstream_blocks:
-                    if downstream_block.uuid == upstream_block.uuid:
-                        arr += [b.block_uuid for b in dynamic_child_block_runs]
-                    else:
-                        arr.append(upstream_block.uuid)
-
-                all_block_runs.append(pipeline_run.create_block_run(
-                    b.uuid,
-                    metrics=dict(dynamic_upstream_block_uuids=arr),
-                    skip_if_exists=True,
-                ))
-
-    return all_block_runs
 
 
 def get_all_ancestors(block) -> List:
@@ -469,7 +228,7 @@ def is_dynamic_block_child(block) -> bool:
 
     dynamic_or_child_with_reduce = list(filter(lambda x: should_reduce_output(x), dynamic_or_child))
 
-    return len(block.upstream_blocks) > len(dynamic_or_child_with_reduce)
+    return len(dynamic_or_child) > len(dynamic_or_child_with_reduce)
 
 
 def output_variables(
@@ -477,6 +236,7 @@ def output_variables(
     block_uuid: str,
     execution_partition: str = None,
     dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
@@ -515,6 +275,7 @@ def output_variables(
     if block and not di_settings:
         di_settings = block.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -602,6 +363,7 @@ def input_variables(
     upstream_block_uuids: List[str],
     execution_partition: str = None,
     dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_upstream_block_uuids: List[str] = None,
     from_notebook: bool = False,
     global_vars: Dict = None,
@@ -631,6 +393,7 @@ def input_variables(
             block_uuid,
             execution_partition,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -650,6 +413,7 @@ def fetch_input_variables(
     block_run_outputs_cache: Dict[str, List] = None,
     data_integration_settings_mapping: Dict = None,
     dynamic_block_index: int = None,
+    dynamic_block_indexes: Dict = None,
     dynamic_upstream_block_uuids: List[str] = None,
     execution_partition: str = None,
     from_notebook: bool = False,
@@ -690,6 +454,7 @@ def fetch_input_variables(
             upstream_block_uuids,
             execution_partition,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -753,7 +518,27 @@ def fetch_input_variables(
                     elif upstream_block_uuid in uuids:
                         upstream_in_dynamic_upstream = True
 
-            if should_reduce:
+            # This is for blocks with multiple upstream dynamic blocks or dynamic child blocks.
+            if dynamic_block_indexes and upstream_block_uuid in dynamic_block_indexes:
+                input_value = None
+
+                input_data = variable_values[0]
+                metadata_data = None
+
+                # The 2nd item is for the metadata
+                if len(variable_values) >= 2:
+                    metadata_data = variable_values[1]
+
+                index_of_upstream = int(dynamic_block_indexes.get(upstream_block_uuid))
+
+                if input_data and index_of_upstream < len(input_data):
+                    input_value = input_data[index_of_upstream]
+
+                if metadata_data and index_of_upstream < len(metadata_data):
+                    kwargs_vars.append(metadata_data[index_of_upstream])
+
+                input_vars[idx] = input_value
+            elif should_reduce:
                 if isinstance(variable_values, list) and len(variable_values) == 1:
                     final_val = variable_values[0]
                 else:
@@ -780,8 +565,7 @@ def fetch_input_variables(
                     arr = variable_values[1]
                     index_to_use = 0 if dynamic_block_index is None else dynamic_block_index
                     if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
-                        val = arr[index_to_use]
-                    kwargs_vars.append(val)
+                        kwargs_vars.append(arr[index_to_use])
             elif not dynamic_upstream_block_uuids or not upstream_in_dynamic_upstream:
                 if type(variable_values) is list and len(variable_values) == 1:
                     final_val = variable_values[0]

@@ -52,6 +52,7 @@ class BlockType(str, Enum):
     DATA_EXPORTER = 'data_exporter'
     DATA_LOADER = 'data_loader'
     DBT = 'dbt'
+    DYNAMIC_CHILD = 'dynamic_child'
     EXTENSION = 'extension'
     GLOBAL_DATA_PRODUCT = 'global_data_product'
     HOOK = 'hook'

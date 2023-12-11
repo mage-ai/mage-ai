@@ -1,11 +1,16 @@
 import os
-from unittest.mock import MagicMock, patch
+from datetime import datetime
+from typing import Dict
+from unittest.mock import ANY, MagicMock, patch
 from uuid import uuid4
 
 from faker import Faker
 
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
+    DynamicChildBlockFactory,
+)
 from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
@@ -25,6 +30,8 @@ class BlockExecutorTest(BaseApiTestCase):
         self.logger_manager = MagicMock()
         self.logger = MagicMock()
         self.block = MagicMock(spec=Block)
+        self.block.configuration = {}
+        self.block.upstream_blocks = []
         self.block.type = BlockType.DBT
 
         self.pipeline.get_block.return_value = self.block
@@ -51,10 +58,13 @@ class BlockExecutorTest(BaseApiTestCase):
 
         self.faker = Faker()
 
-        self.pipeline1 = create_pipeline_with_blocks(
+        arr = create_pipeline_with_blocks(
             self.faker.unique.name(),
             self.repo_path,
+            return_blocks=True,
         )
+        self.pipeline1 = arr[0]
+        self.blocks = arr[1]
 
     def tearDown(self):
         BlockRun.query.delete()
@@ -68,7 +78,7 @@ class BlockExecutorTest(BaseApiTestCase):
         global_vars = {'var1': 'value1'}
         update_status = True
 
-        def on_complete(block_uuid):
+        def on_complete(block_uuid, metrics: Dict = None):
             pass
 
         def on_failure(block_uuid, error):
@@ -136,6 +146,7 @@ class BlockExecutorTest(BaseApiTestCase):
             runtime_arguments=runtime_arguments,
             template_runtime_configuration=template_runtime_configuration,
             dynamic_block_index=None,
+            dynamic_block_indexes=None,
             dynamic_block_uuid=None,
             dynamic_upstream_block_uuids=None,
             block_run_dicts=None,
@@ -304,3 +315,163 @@ class BlockExecutorTest(BaseApiTestCase):
                 self.assertEqual(executor.block.uuid, hook.uuid)
                 self.assertEqual(executor.block.hook, hook)
                 self.assertEqual(executor.block.type, BlockType.HOOK)
+
+    def test_block_run_for_dynamic_block(self):
+        block1 = self.blocks[0]
+        block1.configuration = dict(dynamic=True)
+        self.pipeline1.add_block(block1)
+
+        pipeline_run = PipelineRun.create(
+            execution_date=datetime.utcnow(),
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline1.uuid,
+        )
+        block_run = BlockRun.create(
+            block_uuid=block1.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        executor = BlockExecutor(
+            self.pipeline1,
+            block_run.block_uuid,
+            execution_partition=pipeline_run.execution_partition,
+        )
+
+        children = 5
+        child_data = [i for i in range(children)]
+        child_metadata = None
+
+        def __on_complete(
+            block_uuid: str,
+            metrics: Dict = None,
+            block1=block1,
+            children=children,
+            test_case=self,
+        ):
+            test_case.assertEqual(block_uuid, block1.uuid)
+            test_case.assertEqual(metrics, dict(children=children))
+
+        def __execute_sync(
+            child_data=child_data,
+            child_metadata=child_metadata,
+            *args,
+            **kwargs,
+        ):
+            return dict(output=[
+                child_data,
+                child_metadata,
+            ])
+
+        with patch.object(self.pipeline1, 'get_block', lambda _x: block1):
+            with patch.object(block1, 'execute_sync', __execute_sync):
+                executor.execute(block_run_id=block_run.id, on_complete=__on_complete)
+
+    def test_block_run_for_dynamic_child_block(self):
+        block1 = self.blocks[0]
+        block1.configuration = dict(dynamic=True)
+        self.pipeline1.add_block(block1)
+        block2 = self.blocks[1]
+
+        pipeline_run = PipelineRun.create(
+            execution_date=datetime.utcnow(),
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline1.uuid,
+        )
+        block_run = BlockRun.create(
+            block_uuid=block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        executor = BlockExecutor(
+            self.pipeline1,
+            block_run.block_uuid,
+            execution_partition=pipeline_run.execution_partition,
+        )
+
+        self.assertTrue(isinstance(executor.block, DynamicChildBlockFactory))
+        self.assertTrue(executor.block.pipeline_run is None)
+
+        with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
+            executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
+            mock_execute_sync.assert_called_once()
+
+            self.assertEqual(executor.block.pipeline_run.id, pipeline_run.id)
+
+        block_run_dynamic_child_spawn = BlockRun.create(
+            block_uuid=f'{block2.uuid}:0',
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(dynamic_block_indexes=dict({
+                block1.uuid: 0,
+            }))
+        )
+        executor = BlockExecutor(
+            self.pipeline1,
+            block_run_dynamic_child_spawn.block_uuid,
+            execution_partition=pipeline_run.execution_partition,
+        )
+
+        self.assertFalse(isinstance(executor.block, DynamicChildBlockFactory))
+
+        with patch.object(self.pipeline1, 'get_block', lambda _x: block2):
+            with patch.object(block2, 'execute_sync') as mock_execute_sync:
+                executor.execute(
+                    block_run_id=block_run_dynamic_child_spawn.id,
+                    pipeline_run_id=pipeline_run.id,
+                )
+
+                mock_execute_sync.assert_called_once_with(
+                    analyze_outputs=False,
+                    block_run_outputs_cache=None,
+                    dynamic_block_index=None,
+                    dynamic_block_indexes=dict({
+                        block1.uuid: 0,
+                    }),
+                    dynamic_block_uuid=None,
+                    dynamic_upstream_block_uuids=None,
+                    execution_partition=pipeline_run.execution_partition,
+                    global_vars=None,
+                    input_from_output=None,
+                    logger=ANY,
+                    logging_tags=dict(
+                        block_run_id=block_run_dynamic_child_spawn.id,
+                        block_type=block2.type,
+                        block_uuid=block_run_dynamic_child_spawn.block_uuid,
+                        pipeline_run_id=pipeline_run.id,
+                        pipeline_uuid=self.pipeline1.uuid,
+                    ),
+                    run_all_blocks=True,
+                    runtime_arguments=None,
+                    store_variables=True,
+                    update_status=False,
+                    verify_output=True,
+                )
+
+    def test_block_run_for_dynamic_child_block_reduce_output(self):
+        block1 = self.blocks[0]
+        block2 = self.blocks[1]
+        block1.configuration = dict(dynamic=True)
+        block2.configuration = dict(reduce_output=True)
+        self.pipeline1.add_block(block1)
+        self.pipeline1.add_block(block2)
+
+        pipeline_run = PipelineRun.create(
+            execution_date=datetime.utcnow(),
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline1.uuid,
+        )
+        block_run = BlockRun.create(
+            block_uuid=block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        executor = BlockExecutor(
+            self.pipeline1,
+            block_run.block_uuid,
+            execution_partition=pipeline_run.execution_partition,
+        )
+
+        self.assertFalse(isinstance(executor.block, DynamicChildBlockFactory))
+
+        with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
+            executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
+            mock_execute_sync.assert_called_once()
