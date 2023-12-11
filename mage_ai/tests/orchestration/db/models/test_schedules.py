@@ -1265,9 +1265,6 @@ class PipelineRunTests(DBTestCase):
             ]),
         )
 
-    def test_executable_block_runs_for_data_integration_blocks(self):
-        pass
-
     def test_execution_partition(self):
         execution_date = datetime.now()
         pipeline_run = create_pipeline_run_with_schedule(
