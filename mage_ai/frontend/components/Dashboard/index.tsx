@@ -119,7 +119,9 @@ function Dashboard({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchProjects();
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
