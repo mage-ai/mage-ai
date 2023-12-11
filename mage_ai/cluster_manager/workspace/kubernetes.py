@@ -89,3 +89,38 @@ class KubernetesWorkspace(Workspace):
 
     def resume(self, **kwargs):
         self.workload_manager.restart_workload(self.name)
+
+    def to_dict(self):
+        config = dict(
+            name=self.name,
+            **self.config.to_dict(),
+        )
+
+        ingress_name = config.get('ingress_name')
+        try:
+            if ingress_name:
+                ingress = self.workload_manager.networking_client.read_namespaced_ingress(
+                    ingress_name,
+                    self.workload_manager.namespace,
+                )
+                rule = ingress.spec.rules[0]
+                host = rule.host
+
+                tls_enabled = False
+                try:
+                    tls = ingress.spec.tls[0]
+                    tls_enabled = host in tls.hosts
+                except Exception:
+                    pass
+
+                paths = rule.http.paths
+                for path in paths:
+                    if path.backend.service.name == f'{self.name}-service':
+                        prefix = 'https' if tls_enabled else 'http'
+                        url = f'{prefix}://{host}{path.path}'
+                        config['url'] = url
+                        break
+        except Exception:
+            pass
+
+        return config
