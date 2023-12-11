@@ -6,7 +6,6 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.shared.environments import is_test
-from mage_ai.shared.io import safe_write
 
 MAGE_PROJECT_TYPE_ENV_VAR = 'PROJECT_TYPE'
 MAGE_CLUSTER_TYPE_ENV_VAR = 'CLUSTER_TYPE'
@@ -22,37 +21,6 @@ else:
     DEFAULT_MAGE_DATA_DIR = os.path.join('~', '.mage_data')
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
 REPO_PATH_ENV_VAR = 'MAGE_REPO_PATH'
-LOCAL_PROJECT_METADATA_FILENAME = '.metadata.yaml'
-
-
-def set_local_project_metadata(repo_path: str = None, project_metadata: Dict = None) -> Dict:
-    variables_dir = get_variables_dir(repo_path=repo_path, root_project=True)
-    local_project_metadata_path = os.path.join(variables_dir, LOCAL_PROJECT_METADATA_FILENAME)
-
-    content = yaml.dump(project_metadata)
-    safe_write(local_project_metadata_path, content)
-
-
-def get_set_local_project_metadata(repo_path: str = None, project_metadata: Dict = None) -> Dict:
-    project_metadata_init = {}
-
-    variables_dir = get_variables_dir(repo_path=repo_path, root_project=True)
-    local_project_metadata_path = os.path.join(variables_dir, LOCAL_PROJECT_METADATA_FILENAME)
-
-    if os.path.exists(local_project_metadata_path):
-        from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-
-        with open(local_project_metadata_path, 'r', encoding='utf-8') as f:
-            config_file = Template(f.read()).render(
-                **get_template_vars_no_db()
-            )
-            project_metadata_init = yaml.full_load(config_file) or {}
-
-    if project_metadata:
-        project_metadata_init.update(project_metadata)
-        set_local_project_metadata(repo_path=repo_path, project_metadata=project_metadata_init)
-
-    return project_metadata_init
 
 
 def get_repo_path(root_project: bool = False) -> str:
@@ -60,40 +28,12 @@ def get_repo_path(root_project: bool = False) -> str:
     if root_project:
         return repo_path
 
-    project_paths = get_project_paths()
-    if project_paths:
-        project_metadata = get_set_local_project_metadata(repo_path=repo_path)
+    from mage_ai.settings.platform import build_active_project_repo_path, has_settings
 
-        active_project = project_metadata and project_metadata.get('project')
-        no_active_project = not active_project
-        if not active_project:
-            active_project = list(project_paths.keys())[0]
-
-        if no_active_project:
-            project_metadata['project'] = active_project
-            set_local_project_metadata(repo_path=repo_path, project_metadata=project_metadata)
-
-        if active_project and active_project in project_paths:
-            return project_paths[active_project]
+    if has_settings():
+        return build_active_project_repo_path(repo_path)
 
     return repo_path
-
-
-def get_project_paths() -> Dict:
-    from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-
-    metadata_path = get_metadata_path(root_project=True)
-    if os.path.exists(metadata_path):
-        with open(metadata_path, 'r', encoding='utf-8') as f:
-            config_file = Template(f.read()).render(
-                **get_template_vars_no_db()
-            )
-            repo_config = yaml.full_load(config_file) or {}
-            paths = repo_config.get('paths') or {}
-            if paths:
-                projects = paths.get('projects') or {}
-
-                return projects
 
 
 def set_repo_path(repo_path: str) -> None:

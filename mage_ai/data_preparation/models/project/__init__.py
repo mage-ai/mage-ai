@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 import aiohttp
@@ -5,16 +6,24 @@ import aiohttp
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
-from mage_ai.settings.repo import get_project_paths, get_repo_path
+from mage_ai.settings.platform import project_platform_settings
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.hash import dig
 
 
 class Project():
-    def __init__(self, repo_config=None, root_project: bool = False):
+    def __init__(self, repo_config=None, repo_path: str = None, root_project: bool = False):
         self.root_project = root_project
-        parts = get_repo_path(root_project=self.root_project).split('/')
+        self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
+
+        parts = self.repo_path.split('/')
         self.name = parts[-1]
-        self.repo_config = repo_config or get_repo_config(root_project=self.root_project)
+
+        self.repo_config = repo_config or get_repo_config(
+            repo_path=self.repo_path,
+            root_project=self.root_project,
+        )
         self.version = VERSION
 
     @property
@@ -56,8 +65,23 @@ class Project():
     def pipelines(self) -> Dict:
         return self.repo_config.pipelines
 
+    def repo_path_for_database_query(self, key: str) -> str:
+        settings = self.project_settings()
+        if settings:
+            query_alias = dig(settings, ['database', 'query', key])
+            if query_alias:
+                return os.path.join(
+                    os.path.dirname(get_repo_path(root_project=True)),
+                    query_alias,
+                )
+
+        return self.repo_path
+
     def projects(self) -> Dict:
-        return get_project_paths()
+        return project_platform_settings()
+
+    def project_settings(self) -> Dict:
+        return (self.projects() or {}).get(self.name)
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)

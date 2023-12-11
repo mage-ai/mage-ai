@@ -146,3 +146,11 @@ def set_value(obj: Dict, keys: List[str], value) -> Dict:
     exec(expression, results)
 
     return results['__obj_to_set_value']
+
+
+def combine_into(child: Dict, parent: Dict) -> None:
+    for k, v in child.items():
+        if isinstance(v, dict):
+            combine_into(v, parent.setdefault(k, {}))
+        else:
+            parent[k] = v

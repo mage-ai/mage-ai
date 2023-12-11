@@ -5,9 +5,10 @@ from typing import List, Optional, Tuple
 
 from cryptography.fernet import Fernet, InvalidToken
 
+from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings.repo import get_data_dir, get_repo_path
+from mage_ai.settings.repo import get_data_dir
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
@@ -116,7 +117,7 @@ def create_secret(
         'name': name,
         'value': encrypted_value,
         'key_uuid': key_uuid,
-        'repo_name': get_repo_path(),
+        'repo_name': Project().repo_path_for_database_query('secrets'),
     }
 
     secret = Secret(**kwargs)
@@ -136,7 +137,9 @@ def get_valid_secrets_for_repo() -> List:
 
     fernet = Fernet(key)
 
-    secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
+    secrets = Secret.query.filter(
+        Secret.repo_name == Project().repo_path_for_database_query('secrets'),
+    )
     valid_secrets = []
     if secrets.count() > 0:
         for secret in secrets:
@@ -180,7 +183,7 @@ def get_secret_value(
         # For backwards compatibility, check if there is a secret with the name and no uuid
         if entity == Entity.GLOBAL:
             if repo_name is None:
-                repo_name = get_repo_path()
+                repo_name = Project().repo_path_for_database_query('secrets')
             secret_legacy = Secret.query.filter(
                 Secret.name == name,
                 Secret.repo_name == repo_name,
@@ -228,7 +231,7 @@ def delete_secret(
     if entity == Entity.GLOBAL and not secret:
         secret = Secret.query.filter(
             Secret.name == name,
-            Secret.repo_name == get_repo_path(),
+            Secret.repo_name == Project().repo_path_for_database_query('secrets'),
             Secret.key_uuid.is_(None),
         ).one_or_none()
 

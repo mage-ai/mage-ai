@@ -1,0 +1,167 @@
+import os
+from typing import Dict
+
+import yaml
+from jinja2 import Template
+
+from mage_ai.shared.array import find
+from mage_ai.shared.hash import combine_into, merge_dict
+from mage_ai.shared.io import safe_write
+
+PLATFORM_SETTINGS_FILENAME = 'settings.yaml'
+LOCAL_PLATFORM_SETTINGS_FILENAME = f'.{PLATFORM_SETTINGS_FILENAME}'
+
+
+def activate_project(project_name: str) -> None:
+    if project_name:
+        platform_settings = __local_platform_settings() or {}
+        if 'projects' not in platform_settings:
+            platform_settings['projects'] = {}
+        platform_settings['projects'][project_name] = merge_dict(
+            platform_settings['projects'].get(project_name) or {},
+            dict(active=True),
+        )
+
+        __update_local_platform_settings(platform_settings)
+
+
+def build_active_project_repo_path(repo_path: str) -> str:
+    settings = project_platform_settings(repo_path=repo_path)
+    active_project = active_project_settings(settings=settings)
+    no_active_project = not active_project
+
+    items = list(settings.items() or [])
+    if no_active_project and items:
+        project_name, project_settings = items[0]
+        active_project = merge_dict(
+            project_settings or {},
+            dict(
+                active=True,
+                uuid=project_name,
+            ),
+        )
+
+    if no_active_project and active_project:
+        __update_local_platform_settings(
+            dict(projects={
+                active_project['uuid']: dict(active=True),
+            }),
+            merge=True,
+            repo_path=repo_path,
+        )
+
+    if active_project:
+        path_override = active_project.get('path') or active_project.get('uuid')
+
+        return os.path.join(repo_path, path_override)
+
+    return repo_path
+
+
+def has_settings() -> bool:
+    return os.path.exists(__platform_settings_full_path())
+
+
+def platform_settings() -> Dict:
+    return __load_platform_settings(__platform_settings_full_path())
+
+
+def active_project_settings(
+    get_default: bool = False,
+    repo_path: str = None,
+    settings: Dict = None,
+) -> Dict:
+    if not settings:
+        settings = project_platform_settings(repo_path=repo_path)
+
+    items = list(settings.items())
+    if items:
+        project_settings_tup = find(
+            lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
+            items,
+        )
+
+        if not project_settings_tup and get_default:
+            project_settings_tup = items[0]
+
+        if project_settings_tup:
+            project_name, project_settings = project_settings_tup
+
+            return merge_dict(
+                project_settings or {},
+                dict(uuid=project_name),
+            )
+
+
+def project_platform_settings(repo_path: str = None) -> Dict:
+    return (combined_platform_settings(repo_path=repo_path) or {}).get('projects')
+
+
+def combined_platform_settings(repo_path: str = None) -> Dict:
+    child = (platform_settings() or {}).copy()
+    parent = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+    combine_into(child, parent)
+    return parent
+
+
+def git_settings(repo_path: str = None) -> Dict:
+    git_dict = {}
+
+    settings = active_project_settings(get_default=True, repo_path=repo_path)
+    if settings and settings.get('git'):
+        git_dict = settings.get('git') or {}
+
+    if git_dict.get('path'):
+        git_dict['path'] = os.path.join(
+            os.path.dirname(__platform_settings_full_path()),
+            git_dict['path'],
+        )
+    else:
+        git_dict['path'] = build_active_project_repo_path(repo_path=repo_path)
+
+    return git_dict
+
+
+def __platform_settings_full_path() -> str:
+    from mage_ai.settings.repo import get_repo_path
+
+    return os.path.join(get_repo_path(root_project=True), PLATFORM_SETTINGS_FILENAME)
+
+
+def __load_platform_settings(full_path: str) -> Dict:
+    from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
+
+    settings = None
+    if os.path.exists(full_path):
+        with open(full_path, 'r', encoding='utf-8') as f:
+            content = Template(f.read()).render(**get_template_vars_no_db())
+            settings = yaml.full_load(content) or {}
+
+    return settings
+
+
+def __local_platform_settings_full_path(repo_path: str = None) -> str:
+    from mage_ai.settings.repo import get_variables_dir
+
+    variables_dir = get_variables_dir(repo_path=repo_path, root_project=True)
+    return os.path.join(variables_dir, LOCAL_PLATFORM_SETTINGS_FILENAME)
+
+
+def __local_platform_settings(repo_path: str = None) -> Dict:
+    return __load_platform_settings(__local_platform_settings_full_path(repo_path=repo_path))
+
+
+def __update_local_platform_settings(
+    platform_settings: Dict,
+    merge: bool = False,
+    repo_path: str = None,
+) -> None:
+    if merge:
+        child = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+        parent = platform_settings.copy()
+        combine_into(child, parent)
+        platform_settings = parent
+
+    full_path = __local_platform_settings_full_path(repo_path=repo_path)
+    content = yaml.dump(platform_settings)
+    safe_write(full_path, content)

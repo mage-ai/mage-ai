@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings.repo import get_set_local_project_metadata
+from mage_ai.settings.platform import activate_project
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -60,9 +60,7 @@ class ProjectResource(GenericResource):
     @safe_db_query
     async def update(self, payload, **kwargs):
         if payload.get('activate_project'):
-            get_set_local_project_metadata(project_metadata=dict(
-                project=payload.get('activate_project'),
-            ))
+            activate_project(payload.get('activate_project'))
 
         repo_config = get_repo_config()
 
