@@ -11,6 +11,9 @@ from jinja2 import Template
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.platform import (
+    get_directory_of_file_path,
+)
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.models.block.dbt.utils import (
@@ -59,6 +62,9 @@ class DBTBlockSQL(DBTBlock):
         """
         file_path = self.configuration.get('file_path')
 
+        if self.has_platform_settings:
+            return file_path
+
         return str((Path(self.repo_path)) / 'dbt' / file_path)
 
     @property
@@ -69,6 +75,9 @@ class DBTBlockSQL(DBTBlock):
         Returns:
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
+        if self.has_platform_settings:
+            return get_directory_of_file_path(self.file_path)
+
         return str(
             Path(self.base_project_path) /
             self.configuration.get('file_path', '').split(os.sep)[0]
@@ -183,7 +192,10 @@ class DBTBlockSQL(DBTBlock):
                 '--resource-type', 'model',
                 '--resource-type', 'snapshot'
             ]
-            res, _success = DBTCli(args).invoke()
+            try:
+                res, _success = DBTCli(args).invoke()
+            except Exception as err:
+                print(f'[ERROR] DBTBlockSQL.upstream_dbt_blocks ({self.file_path}): {err}.')
         if res:
             nodes = [simplejson.loads(node) for node in res]
         else:

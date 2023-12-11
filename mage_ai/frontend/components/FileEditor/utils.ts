@@ -1,5 +1,7 @@
 import * as osPath from 'path';
 import BlockType, {
+  ALL_BLOCK_TYPES,
+  ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS,
   BlockColorEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -9,19 +11,33 @@ import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
 } from '@interfaces/FileType';
 import { find } from '@utils/array';
-import { removeExtensionFromFilename } from '@utils/string';
+import { removeExtensionFromFilename, singularize } from '@utils/string';
 
 export const getBlockFilename = (path: string[]) => path.at(-1);
 
 export const getBlockType = (path: string[]): BlockTypeEnum => {
-  const blockTypeFolder = path[0];
+  let value;
 
-  if (blockTypeFolder === BlockTypeEnum.DBT
-    || blockTypeFolder === BlockTypeEnum.CUSTOM) {
-    return blockTypeFolder;
-  }
+  path?.forEach((part) => {
+    if (part?.length >= 1) {
+      let part2 = part?.toLowerCase();
 
-  return path[0].slice(0, -1) as BlockTypeEnum;
+      if (part2 in ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS) {
+        value = part2
+      } else {
+        part2 = singularize(part2);
+        if (part2 in ALL_BLOCK_TYPES) {
+          value = part2;
+        }
+      }
+    }
+
+    if (value) {
+      return;
+    }
+  });
+
+  return value as BlockTypeEnum;
 };
 
 export const getBlockUUID = (path: string[]) => {
@@ -67,7 +83,7 @@ export function buildAddBlockRequestPayload(
   const blockType = getBlockType(file.path.split(osPath.sep));
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: {
-      file_path: isDBT ? blockUUID : null,
+      file_path: isDBT ? blockUUID : file.path,
     },
     language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
     name: removeExtensionFromFilename(blockUUID),

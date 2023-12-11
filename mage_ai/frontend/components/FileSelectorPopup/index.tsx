@@ -43,23 +43,25 @@ function FileSelectorPopup({
 
   const dbtModelFiles = useMemo(
     () => {
-      const arr1 = find(files?.[0]?.children || [], ({ name }) => 'dbt' === name)?.children;
-      const projects = [];
+      return files;
 
-      arr1?.forEach((folder) => {
-        const {
-          children = [],
-        } = folder;
+      // const arr1 = find(files?.[0]?.children || [], ({ name }) => 'dbt' === name)?.children;
+      // const projects = [];
 
-        if (children.length >= 1) {
-          projects.push({
-            ...folder,
-            children,
-          });
-        }
-      });
+      // arr1?.forEach((folder) => {
+      //   const {
+      //     children = [],
+      //   } = folder;
 
-      return projects;
+      //   if (children.length >= 1) {
+      //     projects.push({
+      //       ...folder,
+      //       children,
+      //     });
+      //   }
+      // });
+
+      // return projects;
     },
     [
       files,

@@ -34,6 +34,7 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
+from mage_ai.data_preparation.models.block.platform import from_another_project
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -73,6 +74,7 @@ from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
+from mage_ai.settings.platform import has_settings
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env, is_debug
@@ -350,6 +352,35 @@ class Block(DataIntegrationMixin, SparkBlock):
         self._spark_session_current = None
         self.global_vars = None
         self.hook = hook
+        self._has_platform_settings = None
+        self._file_is_from_another_project = None
+
+    @property
+    def has_platform_settings(self):
+        if self._has_platform_settings is not None:
+            return self._has_platform_settings
+
+        self._has_platform_settings = has_settings()
+
+        return self._has_platform_settings
+
+    @property
+    def file_is_from_another_project(self) -> bool:
+        if self._file_is_from_another_project is not None:
+            return self._file_is_from_another_project
+
+        if self.exists():
+            self._file_is_from_another_project = False
+            return self._file_is_from_another_project
+
+        file_path = self.get_file_path_from_configuration()
+        if file_path:
+            self._file_is_from_another_project = from_another_project(
+                self.pipeline,
+                file_path,
+            )
+
+        return self._file_is_from_another_project
 
     @property
     def uuid(self) -> str:
@@ -548,7 +579,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
     @property
-    def file_path(self) -> str:
+    def __file_path_internal(self) -> str:
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
         block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
 
@@ -557,6 +588,32 @@ class Block(DataIntegrationMixin, SparkBlock):
             block_directory,
             f'{self.uuid}.{file_extension}',
         )
+
+    @property
+    def file_path(self) -> str:
+        if self.file_is_from_another_project:
+            return self.get_file_path_from_configuration(with_repo_path=True)
+
+        return self.__file_path_internal
+
+    def get_file_path_from_configuration(
+        self,
+        with_repo_path: bool = False,
+    ) -> str:
+        file_path = None
+        if self.configuration:
+            file_path = self.configuration.get('file_path')
+
+        if file_path and with_repo_path:
+            repo_path = None
+            if self.has_platform_settings:
+                repo_path = get_repo_path(root_project=True)
+            else:
+                repo_path = get_repo_path(root_project=False)
+
+            return os.path.join(repo_path, file_path)
+
+        return file_path
 
     @property
     def file(self) -> File:
@@ -603,7 +660,12 @@ class Block(DataIntegrationMixin, SparkBlock):
         return matches[len(matches) - 1]
 
     @classmethod
-    def after_create(self, block: 'Block', **kwargs) -> None:
+    def after_create(
+        self,
+        block: 'Block',
+        file_is_from_another_project: bool = False,
+        **kwargs,
+    ) -> None:
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
@@ -612,14 +674,21 @@ class Block(DataIntegrationMixin, SparkBlock):
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
-                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
-                upstream_dbt_blocks_by_uuid = {
-                    block.uuid: block
-                    for block in upstream_dbt_blocks
-                }
-                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
-                pipeline.validate('A cycle was formed while adding a block')
-                pipeline.save()
+                try:
+                    upstream_dbt_blocks = block.upstream_dbt_blocks() or []
+                    upstream_dbt_blocks_by_uuid = {
+                        block.uuid: block
+                        for block in upstream_dbt_blocks
+                    }
+                    pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                    pipeline.validate('A cycle was formed while adding a block')
+                    pipeline.save()
+                except Exception as err:
+                    if block.has_platform_settings:
+                        print(f'[ERROR] Block.after_create for {block.uuid}: {err}.')
+                        pipeline.add_block(block)
+                    else:
+                        raise err
             else:
                 pipeline.add_block(
                     block,
@@ -701,42 +770,50 @@ class Block(DataIntegrationMixin, SparkBlock):
         # Only create a file on the filesystem if the block type isn’t a global data product
         # because global data products reference a data product which already has its
         # own files.
-        if not replicated_block and \
-                (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
-                BlockType.GLOBAL_DATA_PRODUCT != block_type:
+        file_path_from_configuration = configuration and configuration.get('file_path')
+        file_is_from_another_project = (
+            file_path_from_configuration and
+            pipeline and
+            from_another_project(pipeline, file_path_from_configuration)
+        )
 
-            block_directory = self.file_directory_name(block_type)
-            block_dir_path = os.path.join(repo_path, block_directory)
-            if not os.path.exists(block_dir_path):
-                os.mkdir(block_dir_path)
-                with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
-                    pass
+        if not file_is_from_another_project:
+            if not replicated_block and \
+                    (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
+                    BlockType.GLOBAL_DATA_PRODUCT != block_type:
 
-            file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
-            file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
-            if os.path.exists(file_path):
-                already_exists = True
-                if (pipeline is not None and pipeline.has_block(
-                    uuid,
-                    block_type=block_type,
-                    extension_uuid=extension_uuid,
-                )) or require_unique_name:
-                    """
-                    The BLOCK_EXISTS_ERROR constant is used on the frontend to identify when
-                    a user is trying to create a new block with an existing block name, and
-                    link them to the existing block file so the user can choose to add the
-                    existing block to their pipeline.
-                    """
-                    raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
-                                    Please use a different name.')
-            else:
-                load_template(
-                    block_type,
-                    config,
-                    file_path,
-                    language=language,
-                    pipeline_type=pipeline.type if pipeline is not None else None,
-                )
+                block_directory = self.file_directory_name(block_type)
+                block_dir_path = os.path.join(repo_path, block_directory)
+                if not os.path.exists(block_dir_path):
+                    os.mkdir(block_dir_path)
+                    with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                        pass
+
+                file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+                file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
+                if os.path.exists(file_path):
+                    already_exists = True
+                    if (pipeline is not None and pipeline.has_block(
+                        uuid,
+                        block_type=block_type,
+                        extension_uuid=extension_uuid,
+                    )) or require_unique_name:
+                        """
+                        The BLOCK_EXISTS_ERROR constant is used on the frontend to identify when
+                        a user is trying to create a new block with an existing block name, and
+                        link them to the existing block file so the user can choose to add the
+                        existing block to their pipeline.
+                        """
+                        raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
+                                        Please use a different name.')
+                else:
+                    load_template(
+                        block_type,
+                        config,
+                        file_path,
+                        language=language,
+                        pipeline_type=pipeline.type if pipeline is not None else None,
+                    )
 
         block = self.block_class_from_type(block_type, pipeline=pipeline)(
             name,
@@ -752,13 +829,14 @@ class Block(DataIntegrationMixin, SparkBlock):
         block.already_exists = already_exists
 
         if BlockType.DBT == block.type:
-            if block.file_path and not block.file.exists():
+            if block.file_path and not block.file.exists() and not file_is_from_another_project:
                 block.file.create_parent_directories(block.file_path)
                 block.file.update_content('')
 
         self.after_create(
             block,
             config=config,
+            file_is_from_another_project=file_is_from_another_project,
             pipeline=pipeline,
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
@@ -1545,7 +1623,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         return block_function
 
     def exists(self) -> bool:
-        return os.path.exists(self.file_path)
+        return os.path.exists(self.__file_path_internal)
 
     def fetch_input_variables(
         self,

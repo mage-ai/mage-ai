@@ -57,6 +57,16 @@ export enum BlockTypeEnum {
   TRANSFORMER = 'transformer',
 }
 
+export const ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS = {
+  [BlockTypeEnum.CUSTOM.value]: BlockTypeEnum.CUSTOM,
+  [BlockTypeEnum.DBT.value]: BlockTypeEnum.DBT,
+};
+
+export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce((acc, [k, v]) => ({
+  ...acc,
+  [v]: k,
+}), {});
+
 export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.CALLBACK,
   BlockTypeEnum.CONDITIONAL,

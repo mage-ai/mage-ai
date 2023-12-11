@@ -25,7 +25,7 @@ class Project():
         self.name = parts[-1]
         self.settings = None
 
-        if has_settings():
+        if not root_project and has_settings():
             self.settings = active_project_settings(get_default=True)
             if self.settings and self.settings.get('uuid'):
                 self.name = self.settings.get('uuid')

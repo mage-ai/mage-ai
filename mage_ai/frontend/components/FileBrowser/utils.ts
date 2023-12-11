@@ -1,6 +1,7 @@
 import * as osPath from 'path';
 
 import BlockType, {
+  ALL_BLOCK_TYPES,
   BlockTypeEnum,
   BLOCK_TYPES,
   DRAGGABLE_BLOCK_TYPES,
@@ -17,6 +18,7 @@ import FileType, {
   METADATA_FILENAME,
 } from '@interfaces/FileType';
 import { cleanName, singularize } from '@utils/string';
+import { getBlockType } from '@components/FileEditor/utils';
 import { prependArray, removeAtIndex } from '@utils/array';
 
 export function getFullPath(
@@ -64,30 +66,7 @@ export function getBlockFromFile(
     return null;
   }
 
-  let blockType;
-  // This happens when you open a file from the file browser and edit it on the notebook UI
-  if (parts.length === 1) {
-    parts = file?.path?.split(osPath.sep);
-    if (parts) {
-      if (parts[0] === BlockTypeEnum.CUSTOM) {
-        blockType = parts[0];
-      } else {
-        blockType = singularize(parts[0] || '');
-      }
-    }
-  } else {
-    // This assumes path default_repo/[block_type]s/..
-    if (parts[1] === BlockTypeEnum.CUSTOM) {
-      blockType = parts[1];
-    } else {
-      const v = parts[1];
-      if (BlockTypeEnum.DBT === v) {
-        blockType = v;
-      } else {
-        blockType = singularize(v || '');
-      }
-    }
-  }
+  let blockType = getBlockType(parts);
 
   if (!parts || BlockTypeEnum.DBT === blockType) {
     return null;
