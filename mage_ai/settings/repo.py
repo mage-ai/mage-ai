@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from typing import Dict
 
 import yaml
@@ -42,7 +43,14 @@ def set_repo_path(repo_path: str) -> None:
 
 
 def get_repo_name(root_project: bool = False) -> str:
-    return os.path.basename(get_repo_path(root_project=root_project))
+    from mage_ai.settings.platform import has_settings
+
+    repo_path = get_repo_path(root_project=root_project)
+
+    if has_settings():
+        return Path(repo_path).relative_to(get_repo_path(root_project=True))
+
+    return os.path.basename(repo_path)
 
 
 def get_data_dir() -> str:
@@ -78,7 +86,7 @@ def get_variables_dir(
     """
     if repo_path is None:
         repo_path = get_repo_path(root_project=root_project)
-    repo_name = os.path.basename(repo_path)
+    repo_name = get_repo_name(root_project=root_project)
     variables_dir = None
     if os.getenv(MAGE_DATA_DIR_ENV_VAR):
         variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
