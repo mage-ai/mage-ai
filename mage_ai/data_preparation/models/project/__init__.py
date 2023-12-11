@@ -6,7 +6,11 @@ import aiohttp
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
-from mage_ai.settings.platform import project_platform_settings
+from mage_ai.settings.platform import (
+    active_project_settings,
+    has_settings,
+    project_platform_settings,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import dig
@@ -19,6 +23,12 @@ class Project():
 
         parts = self.repo_path.split('/')
         self.name = parts[-1]
+        self.settings = None
+
+        if has_settings():
+            self.settings = active_project_settings(get_default=True)
+            if self.settings and self.settings.get('uuid'):
+                self.name = self.settings.get('uuid')
 
         self.repo_config = repo_config or get_repo_config(
             repo_path=self.repo_path,
@@ -66,9 +76,8 @@ class Project():
         return self.repo_config.pipelines
 
     def repo_path_for_database_query(self, key: str) -> str:
-        settings = self.project_settings()
-        if settings:
-            query_alias = dig(settings, ['database', 'query', key])
+        if self.settings:
+            query_alias = dig(self.settings, ['database', 'query', key])
             if query_alias:
                 return os.path.join(
                     os.path.dirname(get_repo_path(root_project=True)),
@@ -79,9 +88,6 @@ class Project():
 
     def projects(self) -> Dict:
         return project_platform_settings()
-
-    def project_settings(self) -> Dict:
-        return (self.projects() or {}).get(self.name)
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)

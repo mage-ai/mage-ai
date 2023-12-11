@@ -14,6 +14,7 @@ class ProjectPresenter(BasePresenter):
         'projects',
         'remote_variables_dir',
         'root_project',
+        'settings',
         'spark_config',
         'version',
     ]

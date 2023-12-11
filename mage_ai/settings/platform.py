@@ -17,10 +17,20 @@ def activate_project(project_name: str) -> None:
         platform_settings = __local_platform_settings() or {}
         if 'projects' not in platform_settings:
             platform_settings['projects'] = {}
+
         platform_settings['projects'][project_name] = merge_dict(
             platform_settings['projects'].get(project_name) or {},
             dict(active=True),
         )
+
+        projects = platform_settings['projects'] or {}
+        for key, value in projects.items():
+            if key == project_name:
+                continue
+            platform_settings['projects'][key] = merge_dict(
+                platform_settings['projects'].get(key) or {},
+                dict(active=False),
+            )
 
         __update_local_platform_settings(platform_settings)
 
