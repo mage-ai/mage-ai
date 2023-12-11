@@ -35,6 +35,20 @@ def activate_project(project_name: str) -> None:
         __update_local_platform_settings(platform_settings)
 
 
+def build_repo_path_for_all_projects(repo_path: str) -> Dict:
+    mapping = {}
+    settings = project_platform_settings(repo_path=repo_path)
+    for project_name, project_settings in settings.items():
+        path_override = project_settings.get('path') or project_name
+        mapping[project_name] = dict(
+            full_path=os.path.join(repo_path, path_override),
+            path=path_override,
+            uuid=project_name,
+        )
+
+    return mapping
+
+
 def build_active_project_repo_path(repo_path: str) -> str:
     settings = project_platform_settings(repo_path=repo_path)
     active_project = active_project_settings(settings=settings)

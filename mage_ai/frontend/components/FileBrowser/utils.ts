@@ -68,7 +68,7 @@ export function getBlockFromFile(
 
   let blockType = getBlockType(parts);
 
-  if (!parts || BlockTypeEnum.DBT === blockType) {
+  if (!parts) {
     return null;
   }
 

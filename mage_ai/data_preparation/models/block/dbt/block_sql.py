@@ -20,9 +20,12 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     get_source_name,
     get_source_table_name_for_block,
 )
+from mage_ai.data_preparation.models.block.platform import from_another_project
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.settings.platform import has_settings
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
@@ -63,7 +66,7 @@ class DBTBlockSQL(DBTBlock):
         file_path = self.configuration.get('file_path')
 
         if self.has_platform_settings:
-            return file_path
+            return os.path.join(get_repo_path(root_project=True), file_path)
 
         return str((Path(self.repo_path)) / 'dbt' / file_path)
 
@@ -203,8 +206,14 @@ class DBTBlockSQL(DBTBlock):
 
         # transform List into dict and remove unnecessary fields
         file_path = self.configuration.get('file_path')
+
         path_parts = file_path.split(os.sep)
         project_dir = path_parts[0]
+
+        is_from_another_project = has_settings() and from_another_project(self.pipeline, file_path)
+        if is_from_another_project:
+            project_dir = get_directory_of_file_path(file_path)
+
         nodes = {
             node['unique_id']: {
                 'file_path': os.path.join(project_dir, node['original_file_path']),
@@ -267,7 +276,7 @@ class DBTBlockSQL(DBTBlock):
                 block_type=self.type,
                 language=self.language,
                 pipeline=self.pipeline,
-                configuration=dict(file_path=node['file_path'])
+                configuration=dict(file_path=node['file_path']),
             )
             # reset upstream dbt blocks
             block.upstream_blocks = [

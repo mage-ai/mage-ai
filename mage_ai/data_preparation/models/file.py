@@ -66,7 +66,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ):
-        repo_path = repo_path or get_repo_path()
+        repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
         self.write(
@@ -92,7 +92,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ):
-        repo_path = repo_path or get_repo_path()
+        repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
         await self.write_async(
@@ -111,7 +111,7 @@ class File:
     def from_path(self, file_path, repo_path: str = None):
         repo_path_alt = repo_path
         if repo_path_alt is None:
-            repo_path_alt = get_repo_path()
+            repo_path_alt = get_repo_path(file_path=file_path)
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
@@ -357,7 +357,7 @@ class File:
 
 def ensure_file_is_in_project(file_path: str) -> None:
     full_file_path = get_absolute_path(file_path)
-    full_repo_path = get_absolute_path(get_repo_path())
+    full_repo_path = get_absolute_path(get_repo_path(file_path=file_path))
     if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
         raise FileNotInProjectError(
             f'File at path: {file_path} is not in the project directory.')

@@ -24,14 +24,37 @@ MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
 REPO_PATH_ENV_VAR = 'MAGE_REPO_PATH'
 
 
-def get_repo_path(root_project: bool = False) -> str:
+def get_repo_path(file_path: str = None, root_project: bool = False) -> str:
     repo_path = os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
     if root_project:
         return repo_path
 
-    from mage_ai.settings.platform import build_active_project_repo_path, has_settings
+    from mage_ai.settings.platform import (
+        build_active_project_repo_path,
+        build_repo_path_for_all_projects,
+        has_settings,
+    )
 
     if has_settings():
+        repo_path_use = None
+
+        if file_path:
+            for project_name, settings in build_repo_path_for_all_projects(
+                repo_path=repo_path,
+            ).items():
+                full_path = settings['full_path']
+                path = settings['path']
+
+                try:
+                    if file_path.startswith(full_path) or Path(file_path).relative_to(path):
+                        repo_path_use = full_path
+                        break
+                except ValueError:
+                    pass
+
+        if repo_path_use:
+            return repo_path_use
+
         return build_active_project_repo_path(repo_path)
 
     return repo_path

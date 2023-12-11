@@ -8,6 +8,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import FileType, {
+  FileExtensionEnum,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
 } from '@interfaces/FileType';
 import { find } from '@utils/array';
@@ -36,6 +37,21 @@ export const getBlockType = (path: string[]): BlockTypeEnum => {
       return;
     }
   });
+
+  if (!value) {
+    const extensions = [
+      `\\.${FileExtensionEnum.SQL}`,
+      `\\.${FileExtensionEnum.YAML}`,
+      `\\.${FileExtensionEnum.YML}`,
+    ].join('|');
+    const extensionRegex = new RegExp(`${extensions}$`);
+    const fileName = path.join(osPath.sep);
+
+    if (fileName.match(extensionRegex)) {
+      return BlockTypeEnum.DBT;
+    }
+  }
+
 
   return value as BlockTypeEnum;
 };
