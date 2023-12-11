@@ -17,11 +17,7 @@ from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_
 from mage_ai.data_preparation.models.block.data_integration.utils import (
     convert_outputs_to_data,
 )
-from mage_ai.data_preparation.models.block.errors import (
-    HasDownstreamDependencies,
-    NoMultipleDynamicUpstreamBlocks,
-)
-from mage_ai.data_preparation.models.block.utils import is_dynamic_block
+from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
@@ -1010,22 +1006,6 @@ class Pipeline:
 
                     configuration = block_data.get('configuration')
                     if configuration:
-                        if configuration.get('dynamic') and not is_dynamic_block(block):
-                            for downstream_block in block.downstream_blocks:
-                                dynamic_blocks = list(filter(
-                                    is_dynamic_block,
-                                    downstream_block.upstream_blocks,
-                                ))
-
-                                if len(dynamic_blocks) >= 1:
-                                    db_uuids = [block.uuid] + [b.uuid for b in dynamic_blocks]
-                                    raise NoMultipleDynamicUpstreamBlocks(
-                                        f'Block {downstream_block.uuid} can only have 1 '
-                                        'upstream block that is dynamic. Current request is '
-                                        'trying to set the following dynamic blocks as '
-                                        f"upstream: {', '.join(db_uuids)}.",
-                                    )
-
                         block.configuration = configuration
                         should_save_async = should_save_async or True
 
@@ -1368,32 +1348,6 @@ class Pipeline:
         is_extension = BlockType.EXTENSION == block.type
 
         if upstream_block_uuids is not None:
-            mapping = {}
-            if widget:
-                mapping = self.widgets_by_uuid
-            elif is_extension and extension_uuid:
-                if extension_uuid not in self.extensions:
-                    self.extensions[extension_uuid] = {}
-                mapping = self.extensions[extension_uuid].get('blocks_by_uuid', {})
-            elif is_callback:
-                mapping = self.callbacks_by_uuid
-            elif is_conditional:
-                mapping = self.conditionals_by_uuid
-            else:
-                mapping = self.blocks_by_uuid
-
-            dynamic_upstream_blocks = list(filter(
-                is_dynamic_block,
-                [mapping[b_uuid] for b_uuid in upstream_block_uuids if b_uuid in mapping],
-            ))
-
-            if len(dynamic_upstream_blocks) >= 2:
-                raise NoMultipleDynamicUpstreamBlocks(
-                    f'Block {block.uuid} can only have 1 upstream block that is dynamic. '
-                    'Current request is trying to set the following dynamic blocks as upstream: '
-                    f"{', '.join([b.uuid for b in dynamic_upstream_blocks])}.",
-                )
-
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
             if curr_upstream_block_uuids != new_upstream_block_uuids or \
