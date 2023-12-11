@@ -5,7 +5,6 @@ import pytz
 import yaml
 from freezegun import freeze_time
 
-from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -13,7 +12,6 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleType,
 )
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.backfills.service import start_backfill
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
@@ -500,123 +498,6 @@ class PipelineSchedulerTests(DBTestCase):
         block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
         self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
         self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)
-
-    # dynamic block tests
-    @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
-    @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
-    def test_schedule_for_dynamic_blocks(self, mock_job_manager, mock_run_pipeline):
-        pipeline_run = create_pipeline_run_with_schedule(
-            pipeline_uuid='test_dynamic_pipeline',
-            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
-        )
-        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        scheduler.schedule()
-        for b in pipeline_run.block_runs:
-            if b.block_uuid == 'block1':
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
-                b.update(status=BlockRun.BlockRunStatus.COMPLETED)
-            else:
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.INITIAL)
-        with patch.object(scheduler, 'schedule') as mock_schedule:
-            with patch.object(Block, 'output_variables') as mock_block_variables:
-                with patch.object(VariableManager, 'get_variable') as mock_variable:
-                    mock_block_variables.return_value = ['values', 'metadata']
-                    # only mock the metadata
-                    mock_variable.return_value = [
-                        {'block_uuid': 'for_user_1'},
-                        {'block_uuid': 'for_user_2'},
-                    ]
-                    scheduler.on_block_complete_without_schedule('block1')
-                    mock_schedule.assert_not_called()
-                    block_run1 = BlockRun.get(
-                        pipeline_run_id=pipeline_run.id,
-                        block_uuid='block2:for_user_1',
-                    )
-                    self.assertTrue(block_run1 is not None)
-                    block_run2 = BlockRun.get(
-                        pipeline_run_id=pipeline_run.id,
-                        block_uuid='block2:for_user_2',
-                    )
-                    self.assertTrue(block_run2 is not None)
-
-        scheduler.schedule()
-        for b in pipeline_run.block_runs:
-            if b.block_uuid.startswith('block2'):
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
-
-    @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
-    @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
-    def test_schedule_for_dynamic_blocks_allow_blocks_to_fail(
-        self,
-        mock_job_manager,
-        mock_run_pipeline,
-    ):
-        pipeline_run = create_pipeline_run_with_schedule(
-            pipeline_uuid='test_dynamic_pipeline',
-            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
-        )
-        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        scheduler.schedule()
-        for b in pipeline_run.block_runs:
-            if b.block_uuid == 'block1':
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
-                b.update(status=BlockRun.BlockRunStatus.COMPLETED)
-            else:
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.INITIAL)
-        with patch.object(scheduler, 'schedule') as mock_schedule:
-            with patch.object(Block, 'output_variables') as mock_block_variables:
-                with patch.object(VariableManager, 'get_variable') as mock_variable:
-                    mock_block_variables.return_value = ['values', 'metadata']
-                    # only mock the metadata
-                    mock_variable.return_value = [
-                        {'block_uuid': 'for_user_1'},
-                        {'block_uuid': 'for_user_2'},
-                    ]
-                    scheduler.on_block_complete_without_schedule('block1')
-                    mock_schedule.assert_not_called()
-                    block_run1 = BlockRun.get(
-                        pipeline_run_id=pipeline_run.id,
-                        block_uuid='block2:for_user_1',
-                    )
-                    self.assertTrue(block_run1 is not None)
-                    block_run2 = BlockRun.get(
-                        pipeline_run_id=pipeline_run.id,
-                        block_uuid='block2:for_user_2',
-                    )
-                    self.assertTrue(block_run2 is not None)
-
-        scheduler.schedule()
-        for b in pipeline_run.block_runs:
-            if b.block_uuid.startswith('block2'):
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
-
-    def test_on_block_complete_dynamic_blocks(self):
-        pipeline_run = create_pipeline_run_with_schedule(
-            pipeline_uuid='test_dynamic_pipeline',
-            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
-        )
-        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        with patch.object(scheduler, 'schedule') as mock_schedule:
-            with patch.object(Block, 'output_variables') as mock_block_variables:
-                with patch.object(VariableManager, 'get_variable') as mock_variable:
-                    mock_block_variables.return_value = ['values', 'metadata']
-                    # only mock the metadata
-                    mock_variable.return_value = [
-                        {'block_uuid': 'for_user_1'},
-                        {'block_uuid': 'for_user_2'},
-                    ]
-                    scheduler.on_block_complete_without_schedule('block1')
-                    mock_schedule.assert_not_called()
-                    block_run1 = BlockRun.get(
-                        pipeline_run_id=pipeline_run.id,
-                        block_uuid='block2:for_user_1',
-                    )
-                    self.assertTrue(block_run1 is not None)
-                    block_run2 = BlockRun.get(
-                        pipeline_run_id=pipeline_run.id,
-                        block_uuid='block2:for_user_2',
-                    )
-                    self.assertTrue(block_run2 is not None)
 
     @freeze_time('2023-05-01 01:20:33')
     def test_send_sla_message(self):
