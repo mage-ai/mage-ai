@@ -365,13 +365,15 @@ function Table({
 
       const column = columns?.[sortColIdx]?.uuid;
 
-      goToWithQuery(selectEntriesWithValues({
+      goToWithQuery({
+        ...selectEntriesWithValues({
+          [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
+          [SortQueryEnum.SORT_DIRECTION]: sortDirection,
+        }),
         [MetaQueryEnum.ORDER_BY]: column
           ? `${sortedColumnDirection === SortDirectionEnum.DESC ? '-' : ''}${column}`
           : null,
-        [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
-        [SortQueryEnum.SORT_DIRECTION]: sortDirection,
-      }), {
+      }, {
         pushHistory: true,
       });
     }

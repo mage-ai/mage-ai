@@ -39,6 +39,7 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import useProject from '@utils/models/project/useProject';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
@@ -138,6 +139,11 @@ function PipelineListPage() {
   const refPaginate = useRef(null);
   const timeout = useRef(null);
 
+  const {
+    fetchProjects,
+    project,
+  } = useProject();
+
   const [buttonTabsHeight, setButtonTabsHeight] = useState<number>(null);
 
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
@@ -185,8 +191,6 @@ function PipelineListPage() {
     refButtonTabs,
   ]);
 
-  const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
-  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
   const displayLocalTimezone = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
@@ -202,8 +206,6 @@ function PipelineListPage() {
     include_schedules: 1,
   }, {
     revalidateOnFocus: false,
-  }, {
-    pauseFetch: operationHistoryEnabled && selectedTabUUID && TAB_RECENT.uuid === selectedTabUUID,
   });
 
   const fromHistoryDays = useMemo(() => q?.[PipelineQueryEnum.HISTORY_DAYS] || 7, [q]);
@@ -352,6 +354,16 @@ function PipelineListPage() {
   );
 
   useEffect(() => {
+    if (query?.[PipelineQueryEnum.SEARCH] && searchText === null) {
+      setSearchTextState(query?.[PipelineQueryEnum.SEARCH]);
+    }
+  }, [
+    query,
+    searchText,
+    setSearchTextState,
+  ]);
+
+  useEffect(() => {
     let queryFinal = {};
 
     if (sortColumnIndexQuery && sortableColumnIndexes.includes(+sortColumnIndexQuery)) {
@@ -462,12 +474,7 @@ function PipelineListPage() {
       setFilters(selectEntriesWithValues(f));
     }
 
-    if (queryFinal?.[PipelineQueryEnum.SEARCH]) {
-      setSearchText(queryFinal?.[PipelineQueryEnum.SEARCH]);
-    }
-
     if (!isEmptyObject(queryFinal)) {
-      console.log('wtf', queryFinal, selectEntriesWithValues(queryFinal))
       goToWithQuery(selectEntriesWithValues(queryFinal), {
         pushHistory: false,
       });

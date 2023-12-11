@@ -6,6 +6,7 @@ from mage_ai.shared.hash import extract, merge_dict
 PIPELINE_KEYS = [
     'description',
     'name',
+    'tags',
     'type',
     'updated_at',
     'uuid',
@@ -28,6 +29,7 @@ def build_pipeline_dict(
     pipeline_output_dict = dict(
         description=None,
         name=None,
+        tags=None,
         type=None,
         updated_at=None,
         uuid=None,
