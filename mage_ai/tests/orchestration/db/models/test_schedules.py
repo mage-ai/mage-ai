@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timezone
 from unittest.mock import patch
+from uuid import uuid4
 
 from croniter import croniter
 from freezegun import freeze_time
@@ -28,6 +29,7 @@ from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
 )
+from mage_ai.tests.shared.mixins import build_hooks
 
 
 class PipelineScheduleTests(DBTestCase):
@@ -1103,6 +1105,24 @@ class PipelineRunTests(DBTestCase):
             ]),
         )
 
+        # If this is the original dynamic child block, don’t run until all it’s
+        # upstream dynamic child blocks have their upstreams completed.
+        block_run1.update(status=BlockRun.BlockRunStatus.RUNNING)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([]),
+        )
+
+        block_run1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run2_0.id,
+                block_run2_1.id,
+                block_run3.id,
+            ]),
+        )
+
         block_run2_0.update(status=BlockRun.BlockRunStatus.COMPLETED)
         self.assertEqual(
             sorted([br.id for br in pipeline_run.executable_block_runs()]),
@@ -1186,7 +1206,64 @@ class PipelineRunTests(DBTestCase):
         )
 
     def test_executable_block_runs_with_hook_blocks(self):
-        pass
+        _global_hooks, _hooks, hooks_match, _hooks_miss = build_hooks(self, self.pipeline)
+
+        hook = hooks_match[0]
+        hook.uuid = f'{hook.uuid}-{uuid4().hex}'
+
+        pipeline_run = PipelineRun.create(
+            pipeline_schedule_id=0,
+            pipeline_uuid=self.pipeline.uuid,
+            create_block_runs=False,
+        )
+        BlockRun.create(
+            block_uuid=hook.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+        block_run_hook = BlockRun.create(
+            block_uuid=hook.uuid,
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(hook=hook.to_dict(include_all=True))
+        )
+
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([block_run_hook.id]),
+        )
+
+        self.pipeline.add_block(self.block, upstream_block_uuids=None)
+        self.pipeline.add_block(self.block2, upstream_block_uuids=[self.block.uuid])
+
+        block_run1 = BlockRun.create(
+            block_uuid=self.block.uuid,
+            pipeline_run_id=pipeline_run.id,
+            metrics=dict(upstream_blocks=[hook.uuid]),
+        )
+        block_run2 = BlockRun.create(
+            block_uuid=self.block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([block_run_hook.id]),
+        )
+
+        block_run_hook.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run1.id,
+            ]),
+        )
+
+        block_run1.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.assertEqual(
+            sorted([br.id for br in pipeline_run.executable_block_runs()]),
+            sorted([
+                block_run2.id,
+            ]),
+        )
 
     def test_execution_partition(self):
         execution_date = datetime.now()

@@ -917,7 +917,7 @@ class PipelineRun(BaseModel):
             else:
                 metrics = block_run.metrics
 
-                if not block and metrics.get('hook'):
+                if not block and metrics and metrics.get('hook'):
                     from mage_ai.data_preparation.models.block.hook.block import (
                         HookBlock,
                     )
