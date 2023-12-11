@@ -13,7 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { DropZoneStyle, TableStyle } from './index.style';
+import { DropZoneStyle, TableStyle } from '../../FileBrowser/UploadFiles/index.style';
 import { isEmptyObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -45,9 +45,9 @@ function UploadPipeline({
 
     // inverted confirm and cancel buttons because Popup component cannot hide confirm
     return <PopupMenu
+          cancelText={!error ? `Edit ${pipeline?.name}` : null}
           centerOnScreen
-          confirmText={'Close'}
-          {...(!error ? { cancelText: `Edit ${pipeline?.name}` } : null)}
+          confirmText="Close"
           danger={error}
           neutral={!error}
           onCancel={error ? undefined : () => router.push(
@@ -136,7 +136,7 @@ function UploadPipeline({
           </Spacing>
         </FlexContainer>
       )}
-      headerTitle={'Import pipeline from zip'}
+      headerTitle="Import pipeline from zip"
     >
       {hasFiles && (
         <TableStyle>

@@ -38,6 +38,7 @@ import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
+import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import useProject from '@utils/models/project/useProject';
@@ -104,7 +105,6 @@ import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils'
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 import { initiateDownload } from '@utils/downloads';
-import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 
 const TAB_RECENT = {
   Icon: Schedule,
