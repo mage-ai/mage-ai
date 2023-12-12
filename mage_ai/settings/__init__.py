@@ -48,7 +48,6 @@ def get_bool_value(value: str) -> bool:
 # ------------------------- DISABLE TERMINAL ----------------------
 
 DISABLE_TERMINAL = os.getenv('DISABLE_TERMINAL', '0').lower() in ('true', '1', 't')
-DISABLE_PROJECT_PLATFORM = os.getenv('DISABLE_PROJECT_PLATFORM', '0').lower() in ('true', '1', 't')
 
 # ----------------- Authentication settings ----------------
 REQUIRE_USER_AUTHENTICATION = get_bool_value(
@@ -163,5 +162,4 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'GHE_CLIENT_ID',
     'GHE_CLIENT_SECRET',
     'GHE_HOSTNAME',
-    'DISABLE_PROJECT_PLATFORM',
 ]
