@@ -80,11 +80,12 @@ class KubernetesWorkspace(Workspace):
         return cls(name)
 
     def delete(self, **kwargs):
-        self.workload_manager.delete_workload(
-            self.name, ingress_name=self.config.ingress_name
-        )
-
-        super().delete(**kwargs)
+        try:
+            self.workload_manager.delete_workload(
+                self.name, ingress_name=self.config.ingress_name
+            )
+        finally:
+            super().delete(**kwargs)
 
     def stop(self, **kwargs):
         self.workload_manager.scale_down_workload(self.name)
