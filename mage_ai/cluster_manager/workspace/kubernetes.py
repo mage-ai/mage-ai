@@ -101,29 +101,11 @@ class KubernetesWorkspace(Workspace):
         ingress_name = config.get('ingress_name')
         try:
             if ingress_name:
-                ingress = (
-                    self.workload_manager.networking_client.read_namespaced_ingress(
-                        ingress_name,
-                        self.workload_manager.namespace,
-                    )
+                url = self.workload_manager.get_url_from_ingress(
+                    ingress_name,
+                    self.name,
                 )
-                rule = ingress.spec.rules[0]
-                host = rule.host
-
-                tls_enabled = False
-                try:
-                    tls = ingress.spec.tls[0]
-                    tls_enabled = host in tls.hosts
-                except Exception:
-                    pass
-
-                paths = rule.http.paths
-                for path in paths:
-                    if path.backend.service.name == f'{self.name}-service':
-                        prefix = 'https' if tls_enabled else 'http'
-                        url = f'{prefix}://{host}{path.path}'
-                        config['url'] = url
-                        break
+                config['url'] = url
         except Exception:
             pass
 

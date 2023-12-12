@@ -73,7 +73,7 @@ class WorkloadManager:
             pass
 
         try:
-            config.load_kube_config('/home/src/testfiles/kubeconfig')
+            config.load_kube_config()
         except Exception:
             pass
 
@@ -422,10 +422,11 @@ class WorkloadManager:
         self,
         ingress_name: str,
         service_name: str,
-        workspace_name: str,
+        workload_name: str,
     ) -> None:
         ingress = self.networking_client.read_namespaced_ingress(
-            ingress_name, self.namespace
+            ingress_name,
+            self.namespace,
         )
         rule = ingress.spec.rules[0]
         paths = rule.http.paths
@@ -437,7 +438,7 @@ class WorkloadManager:
                         name=service_name, port=client.V1ServiceBackendPort(number=6789)
                     )
                 ),
-                path=f'/{workspace_name}',
+                path=f'/{workload_name}',
                 path_type='Prefix',
             ),
         )
@@ -448,6 +449,27 @@ class WorkloadManager:
         self.networking_client.patch_namespaced_ingress(
             ingress_name, self.namespace, ingress
         )
+
+    def get_url_from_ingress(self, ingress_name: str, workload_name: str) -> str:
+        ingress = self.networking_client.read_namespaced_ingress(
+            ingress_name,
+            self.namespace,
+        )
+        rule = ingress.spec.rules[0]
+        host = rule.host
+
+        tls_enabled = False
+        try:
+            tls = ingress.spec.tls[0]
+            tls_enabled = host in tls.hosts
+        except Exception:
+            pass
+
+        paths = rule.http.paths
+        for path in paths:
+            if path.backend.service.name == f'{workload_name}-service':
+                prefix = 'https' if tls_enabled else 'http'
+                return f'{prefix}://{host}{path.path}'
 
     def delete_workload(self, name: str, ingress_name: str = None):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
