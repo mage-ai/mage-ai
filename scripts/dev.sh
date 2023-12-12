@@ -102,7 +102,7 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    --require-user-authentication)
+    --require-user-permissions)
     REQUIRE_USER_PERMISSIONS=1
     shift # past argument
     shift # past value
