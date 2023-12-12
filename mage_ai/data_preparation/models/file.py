@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import aiofiles
 
@@ -385,3 +385,12 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
         )
     )
     return tree_entry
+
+
+def get_full_file_paths_containing_item(root_full_path: str, comparator: Callable) -> List[str]:
+    configfiles = [os.path.join(
+        dirpath,
+        f,
+    ) for dirpath, dirnames, files in os.walk(root_full_path) for f in files if comparator(f)]
+
+    return configfiles
