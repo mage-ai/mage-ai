@@ -343,7 +343,6 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/version-control', MainPageHandler),
     ]
 
-
     if ENABLE_PROMETHEUS or OTEL_EXPORTER_OTLP_ENDPOINT:
         from opentelemetry.instrumentation.tornado import TornadoInstrumentor
         TornadoInstrumentor().instrument()

@@ -58,6 +58,8 @@ x-app_settings: &app_settings
   depends_on:
     - server
   command: ./scripts/install_and_run.sh
+  environment:
+    - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=${OTEL_EXPORTER_OTLP_HTTP_ENDPOINT}
   ports:
     - 3000:3000
   volumes:
