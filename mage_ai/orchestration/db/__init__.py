@@ -53,7 +53,10 @@ if db_connection_url.startswith('postgresql'):
     db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
 try:
-    SQLAlchemyInstrumentor().instrument(enable_commenter=True, commenter_options={})
+    # if OpenTelemetry is enabled, instrument SQLAlchemy
+    if os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+        SQLAlchemyInstrumentor().instrument(enable_commenter=True, commenter_options={})
+
     engine = create_engine(
         db_connection_url,
         **db_kwargs,
