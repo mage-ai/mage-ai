@@ -52,7 +52,10 @@ class File:
     def create_parent_directories(self, file_path: str) -> bool:
         will_create = not self.file_exists(file_path)
         if will_create:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            try:
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            except FileExistsError as err:
+                print(f'[WARNING] File.create_parent_directories: {err}.')
         return will_create
 
     @classmethod
