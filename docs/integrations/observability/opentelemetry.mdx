@@ -24,51 +24,6 @@ Configure the OpenTelemetry Exporters in your application by setting the followi
 
    Example:
    ```bash
-   export OTEL_EXPORTER_OTLP_HTTP_ENDPOINT="http://<collector-host>:<collector-port>"
-   ```
-
-
-2. **OTLP Exporter**:
-
-The OTEL_EXPORTER_OTLP_ENDPOINT environment variable sets a general collector endpoint, which can be used for both gRPC and HTTP connections.
-
-Example:
-
-```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT="http://<collector-host>:<collector-port>/v1/traces"
-```
-
-
-Certainly! Here's a complete Markdown document focusing on setting up and monitoring your mage_ai application with OpenTelemetry, considering the updated environment variables:
-
-markdown
-Copy code
----
-title: "Monitoring with OpenTelemetry"
-sidebarTitle: "OpenTelemetry"
----
-
-## Overview
-
-This guide details how to monitor your `mage_ai` application using OpenTelemetry. OpenTelemetry provides a unified approach to collecting telemetry data, such as traces and metrics, which are essential for understanding your application's performance and behavior.
-
-## Prerequisites
-
-Ensure the following prerequisites are in place before proceeding:
-- An OpenTelemetry Collector is set up and configured to receive telemetry data.
-- The `mage_ai` application is ready for instrumentation with OpenTelemetry.
-
-## Configuring OpenTelemetry in `mage_ai`
-
-### Setting Environment Variables
-
-Configure the OpenTelemetry Exporters in your application by setting the following environment variables:
-
-1. **OTLP HTTP Exporter**:
-   Use `OTEL_EXPORTER_OTLP_HTTP_ENDPOINT` to specify the HTTP endpoint of your OpenTelemetry Collector.
-
-   Example:
-   ```bash
    export OTEL_EXPORTER_OTLP_HTTP_ENDPOINT="http://192.168.1.56:3418/v1/traces"
    ```
 
