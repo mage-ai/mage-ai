@@ -5,6 +5,7 @@ from typing import Dict
 import yaml
 from jinja2 import Template
 
+from mage_ai.settings import DISABLE_PROJECT_PLATFORM
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.shared.io import safe_write
@@ -103,7 +104,7 @@ def build_active_project_repo_path(repo_path: str) -> str:
 
 
 def has_settings() -> bool:
-    return os.path.exists(__platform_settings_full_path())
+    return not DISABLE_PROJECT_PLATFORM and os.path.exists(__platform_settings_full_path())
 
 
 def platform_settings() -> Dict:
