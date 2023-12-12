@@ -3,8 +3,16 @@ server_url: "nats://localhost:4222"
 subject: subject_name
 stream_name: stream_name
 
-# Optional: Batch size and timeout for reading messages
+# Optional: Consumer type, available types: PULL and PUSH. Use PULL if not provided
+consumer_type: PULL
+
+# Optional: Push consumer configuration
 batch_size: 100
+
+# Optional: Pull consumer configuration
+use_queue_group: true
+
+# Optional: Consumer timeout reading messages
 timeout: 5
 
 # Optional: TLS configuration
@@ -16,5 +24,5 @@ use_tls: false
 # Optional: NKEY seed string
 # nkeys_seed_str: "SUAPAEYJQOQHJ4"
 
-# Optional: Consumer name for pull-based subscription
+# Optional: Consumer name for durable consumer identifier, use stream name if not provided
 consumer_name: "my_consumer"
