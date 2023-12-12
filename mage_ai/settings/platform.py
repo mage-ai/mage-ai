@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict
 
 import yaml
@@ -35,7 +36,7 @@ def activate_project(project_name: str) -> None:
         __update_local_platform_settings(platform_settings)
 
 
-def build_repo_path_for_all_projects(repo_path: str) -> Dict:
+def __build_repo_path_for_all_projects(repo_path: str) -> Dict:
     mapping = {}
     settings = project_platform_settings(repo_path=repo_path)
     for project_name, project_settings in settings.items():
@@ -47,6 +48,23 @@ def build_repo_path_for_all_projects(repo_path: str) -> Dict:
         )
 
     return mapping
+
+
+def get_repo_paths_for_file_path(repo_path: str, file_path: str) -> Dict:
+    result = None
+
+    for project_name, settings in __build_repo_path_for_all_projects(repo_path=repo_path).items():
+        full_path = settings['full_path']
+        path = settings['path']
+
+        try:
+            if file_path.startswith(full_path) or Path(file_path).relative_to(path):
+                result = settings
+                break
+        except ValueError:
+            pass
+
+    return result
 
 
 def build_active_project_repo_path(repo_path: str) -> str:

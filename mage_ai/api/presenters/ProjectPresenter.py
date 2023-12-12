@@ -13,6 +13,7 @@ class ProjectPresenter(BasePresenter):
         'project_uuid',
         'projects',
         'remote_variables_dir',
+        'repo_path',
         'root_project',
         'settings',
         'spark_config',

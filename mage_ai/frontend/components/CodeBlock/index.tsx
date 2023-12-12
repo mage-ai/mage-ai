@@ -706,7 +706,7 @@ function CodeBlock({
     configuration_type: ConfigurationTypeEnum.DBT,
     option_type: OptionTypeEnum.PROJECTS,
     resource_type: ResourceTypeEnum.Block,
-    resource_uuid: blockUUID,
+    resource_uuid: BlockLanguageEnum.SQL === blockLanguage ? blockUUID : null,
   });
   const configurationOptions: ConfigurationOptionType[] =
     useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
@@ -714,12 +714,13 @@ function CodeBlock({
   const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
   const dbtProjects = useMemo(() => {
     return configurationOptions
-      ? indexBy(configurationOptions, ({ name }) => name)
+      ? indexBy(configurationOptions, ({ uuid }) => uuid)
       : (dbtMetadata.projects || {});
   }, [
     configurationOptions,
     dbtMetadata,
   ]);
+
   const dbtProjectName =
     useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
       dataProviderConfig,
@@ -727,18 +728,20 @@ function CodeBlock({
     ]);
 
   const dbtProfileData = useMemo(() => {
-      if (!configurationOptions) {
-        return [
-          dbtProjects[dbtProjectName] || {
-            target: null,
-            targets: [],
-          },
-        ];
-      }
+    if (!configurationOptions) {
+      return [
+        dbtProjects[dbtProjectName] || {
+          target: null,
+          targets: [],
+        },
+      ];
+    }
 
-      const configOpts = configurationOptions?.find(({ uuid }) => dbtProjectName === uuid);
+    const configOpts = configurationOptions?.length === 1
+      ? configurationOptions?.[0]
+      : configurationOptions?.find(({ uuid }) => dbtProjectName === uuid);
 
-      return configOpts?.option?.profiles || [];
+    return configOpts?.option?.profiles || [];
   }, [
     configurationOptions,
     dbtProjectName,

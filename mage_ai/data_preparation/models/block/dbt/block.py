@@ -11,6 +11,7 @@ import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_adapter import DBTAdapter
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
@@ -47,7 +48,7 @@ class DBTBlock(Block):
         Returns:
             Union[str, os.PathLike]: Path of base dbt project
         """
-        return str(Path(self.repo_path) / 'dbt')
+        return str(Path(self.repo_path) / DBT_DIRECTORY_NAME)
 
     @property
     def project_path(self) -> Union[str, os.PathLike]:
@@ -62,7 +63,7 @@ class DBTBlock(Block):
             Dict[str, Any]: dbt block config
         """
         config = self.configuration or {}
-        return config.get('dbt') or {}
+        return config.get(DBT_DIRECTORY_NAME) or {}
 
     def target(self, variables: Dict = None) -> str:
         if variables is None:

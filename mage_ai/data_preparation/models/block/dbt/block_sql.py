@@ -10,6 +10,7 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.platform import (
     get_directory_of_file_path,
@@ -84,7 +85,7 @@ class DBTBlockSQL(DBTBlock):
                     except ValueError:
                         return os.path.join(active_name, file_path)
 
-        return str((Path(self.repo_path)) / 'dbt' / file_path)
+        return str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 
     @property
     def project_path(self) -> Union[str, os.PathLike]:
@@ -119,7 +120,9 @@ class DBTBlockSQL(DBTBlock):
                 return os.path.join(self.base_project_path, project_name)
             except ValueError:
                 try:
-                    file_path_starting_at_project = Path(self.file_path).relative_to('dbt')
+                    file_path_starting_at_project = Path(self.file_path).relative_to(
+                        DBT_DIRECTORY_NAME,
+                    )
                     project_name = Path(file_path_starting_at_project).parts[0]
 
                     return os.path.join(self.base_project_path, project_name)
@@ -250,14 +253,53 @@ class DBTBlockSQL(DBTBlock):
             return []
 
         # transform List into dict and remove unnecessary fields
+        # default_repo/dbt/demo/models/example/my_first_dbt_model.sql
         file_path = self.configuration.get('file_path')
 
-        path_parts = file_path.split(os.sep)
-        project_dir = path_parts[0]
+        # Needs to be either:
+        # default_repo/dbt/analytics
+        # default_repo/demo_project/dbt/analytics
+        project_dir = None
+        repo_path_relative = None
 
-        is_from_another_project = has_settings() and from_another_project(self.pipeline, file_path)
-        if is_from_another_project:
-            project_dir = get_directory_of_file_path(file_path)
+        if has_settings():
+            if from_another_project(file_path):
+                project_dir = get_directory_of_file_path(file_path)
+            else:
+                # default_repo/demo_project
+                root_name = get_repo_name(root_project=True)
+                active_name = get_repo_name(root_project=False)
+
+                try:
+                    # default_repo/demo_project/dbt/demo/models/example/my_first_dbt_model.sql
+                    # default_repo/demo_project
+                    # == dbt/demo/models/example/my_first_dbt_model.sql
+                    remaining = Path(self.file_path).relative_to(
+                        os.path.join(root_name, active_name),
+                    )
+                    project_dir = Path(remaining).parts[0]
+                except ValueError:
+                    try:
+                        # demo_project/dbt/demo/models/example/my_first_dbt_model.sql
+                        # demo_project
+                        # == dbt/demo/models/example/my_first_dbt_model.sql
+                        remaining = Path(self.file_path).relative_to(os.path.join(active_name))
+                        project_dir = Path(remaining).parts[0]
+                    except ValueError:
+                        # Already dbt/demo/models/example/my_first_dbt_model.sql
+                        project_dir = Path(remaining).parts[0]
+        else:
+            # default_repo
+            repo_path_relative = os.path.join(get_repo_name(root_project=False))
+            try:
+                # default_repo/dbt/demo/models/example/my_first_dbt_model.sql
+                # default_repo
+                # == dbt/demo/models/example/my_first_dbt_model.sql
+                remaining = Path(self.file_path).relative_to(repo_path_relative)
+                project_dir = Path(remaining).parts[0]
+            except ValueError:
+                # Already dbt/demo/models/example/my_first_dbt_model.sql
+                project_dir = Path(remaining).parts[0]
 
         nodes = {
             node['unique_id']: {

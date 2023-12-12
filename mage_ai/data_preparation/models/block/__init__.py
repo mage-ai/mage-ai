@@ -375,10 +375,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         file_path = self.get_file_path_from_configuration()
         if file_path:
-            self._file_is_from_another_project = from_another_project(
-                self.pipeline,
-                file_path,
-            )
+            self._file_is_from_another_project = from_another_project(file_path)
 
         return self._file_is_from_another_project
 
@@ -774,7 +771,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         file_is_from_another_project = (
             file_path_from_configuration and
             pipeline and
-            from_another_project(pipeline, file_path_from_configuration)
+            from_another_project(file_path_from_configuration)
         )
 
         if not file_is_from_another_project:

@@ -36,6 +36,7 @@ class OptionType(str, Enum):
 @dataclass
 class ConfigurationOption(BaseDataClass):
     configuration_type: ConfigurationType = None
+    name: str = None
     option: Dict = None
     option_type: OptionType = None
     resource_type: EntityName = None
@@ -126,19 +127,20 @@ class ConfigurationOption(BaseDataClass):
                                 targets=targets,
                             ))
 
+                    full_path = str(Path(project_full_path).relative_to(repo_path))
+
                     results.append(ConfigurationOption.load(
                         configuration_type=configuration_type,
+                        name=project.get('name'),
                         option=dict(
                             profiles=profiles_arr,
                             project=merge_dict(project, dict(
-                                full_path=str(
-                                    Path(project_full_path).relative_to(repo_path),
-                                ),
+                                full_path=full_path,
                             )),
                         ),
                         option_type=option_type,
                         resource_type=resource_type,
-                        uuid=project.get('name'),
+                        uuid=os.path.dirname(full_path),
                     ))
 
                 return results

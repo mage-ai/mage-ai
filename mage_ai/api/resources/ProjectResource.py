@@ -22,6 +22,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
         project_uuid=project.project_uuid,
         projects=project.projects(),
         remote_variables_dir=project.remote_variables_dir,
+        repo_path=project.repo_path,
         root_project=root_project,
         settings=project.settings,
         spark_config=project.spark_config,

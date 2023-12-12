@@ -41,6 +41,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import useStatus from '@utils/models/status/useStatus';
 import {
   ANIMATION_DURATION,
   OverlayStyle,
@@ -81,12 +82,14 @@ import { SIDE_BY_SIDE_VERTICAL_PADDING } from '@components/CodeBlock/index.style
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
+import { buildAddBlockRequestPayload } from '@components/FileEditor/utils';
 import { buildBlockRefKey } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { isInputElement } from '@context/shared/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
+import { removeRootFromFilePath } from '@components/FileBrowser/utils';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
@@ -257,11 +260,7 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  // const startTime = performance.now();
-  // useEffect(() => {
-  //   const duration = performance.now() - startTime;
-  //   console.log('PipelineDetail render', duration);
-  // }, []);
+  const { status } = useStatus();
 
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
@@ -1123,13 +1122,23 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                 finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
               }
 
+              const blockName = finalFilePath?.replace(
+                `${status?.repo_path_relative}${path.sep}`,
+                '',
+              );
+
+              finalFilePath = finalFilePath?.replace(
+                `${status?.repo_path_relative_root}${path.sep}`,
+                '',
+              );
+
               const newBlock: BlockRequestPayloadType = {
                 configuration: {
                   file_path: finalFilePath,
                   limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
                 },
                 language: BlockLanguageEnum.SQL,
-                name: removeExtensionFromFilename(finalFilePath),
+                name: removeExtensionFromFilename(blockName),
                 type: BlockTypeEnum.DBT,
               };
               if (creatingNewDBTModel) {
