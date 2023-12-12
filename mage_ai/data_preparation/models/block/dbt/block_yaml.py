@@ -45,14 +45,14 @@ class DBTBlockYAML(DBTBlock):
                 return add_directory_names(
                     project_name,
                     file_from_another_project=True,
-                    project_has_settings=True,
+                    project_platform_activated=True,
                 )
             else:
                 project_name = remove_directory_names(
                     project_name,
                     directory_names_to_remove=[DBT_DIRECTORY_NAME],
                     file_from_another_project=False,
-                    project_has_settings=self.has_platform_settings,
+                    project_platform_activated=self.has_platform_settings,
                     use_absolute_paths=False,
                 )
 

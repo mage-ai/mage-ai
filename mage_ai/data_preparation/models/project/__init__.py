@@ -8,7 +8,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import (
     active_project_settings,
-    has_settings,
+    project_platform_activated,
     project_platform_settings,
 )
 from mage_ai.settings.repo import get_repo_path
@@ -25,7 +25,7 @@ class Project():
         self.name = parts[-1]
         self.settings = None
 
-        if not root_project and has_settings():
+        if not root_project and project_platform_activated():
             self.settings = active_project_settings(get_default=True)
             if self.settings and self.settings.get('uuid'):
                 self.name = self.settings.get('uuid')

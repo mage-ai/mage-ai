@@ -12,7 +12,7 @@ from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.file import get_full_file_paths_containing_item
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.settings.platform import has_settings
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
@@ -57,7 +57,7 @@ class ConfigurationOption(BaseDataClass):
         resource_uuid: Union[str, int] = None,
     ):
         if ConfigurationType.DBT == configuration_type:
-            repo_path = get_repo_path(root_project=has_settings())
+            repo_path = get_repo_path(root_project=project_platform_activated())
 
             project_path_only = None
             if pipeline and EntityName.Block == resource_type and resource_uuid is not None:

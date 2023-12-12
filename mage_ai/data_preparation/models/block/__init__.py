@@ -74,7 +74,7 @@ from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
-from mage_ai.settings.platform import has_settings
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env, is_debug
@@ -360,7 +360,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         if self._has_platform_settings is not None:
             return self._has_platform_settings
 
-        self._has_platform_settings = has_settings()
+        self._has_platform_settings = project_platform_activated()
 
         return self._has_platform_settings
 

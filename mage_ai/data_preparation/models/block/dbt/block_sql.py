@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.block.platform import from_another_project
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
-from mage_ai.settings.platform import has_settings
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.path_fixer import add_directory_names, remove_directory_names
@@ -72,7 +72,7 @@ class DBTBlockSQL(DBTBlock):
                 return add_directory_names(
                     file_path,
                     file_from_another_project=True,
-                    project_has_settings=True,
+                    project_platform_activated=True,
                 )
             else:
                 # If file is in the current active project, remove the root project
@@ -80,7 +80,7 @@ class DBTBlockSQL(DBTBlock):
                 value = remove_directory_names(
                     file_path=file_path,
                     file_from_another_project=self.file_is_from_another_project,
-                    project_has_settings=self.has_platform_settings,
+                    project_platform_activated=self.has_platform_settings,
                     use_absolute_paths=False,
                 )
         else:
@@ -263,7 +263,7 @@ class DBTBlockSQL(DBTBlock):
         project_dir = None
         repo_path_relative = None
 
-        if has_settings():
+        if project_platform_activated():
             if from_another_project(file_path):
                 project_dir = get_directory_of_file_path(
                     file_path,

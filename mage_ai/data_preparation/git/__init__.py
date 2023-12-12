@@ -13,7 +13,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.settings.platform import git_settings, has_settings
+from mage_ai.settings.platform import git_settings, project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
@@ -45,7 +45,7 @@ class Git:
 
         self.repo_path = os.getcwd()
 
-        if has_settings():
+        if project_platform_activated():
             git_dict = git_settings()
             if git_dict and git_dict.get('path'):
                 self.repo_path = git_dict.get('path')
@@ -82,7 +82,7 @@ class Git:
         if self.repo and self.git_config:
             self.__set_git_config()
 
-        if self.remote_repo_link:
+        if self.remote_repo_link and self.repo:
             try:
                 self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
             except git.exc.GitCommandError:

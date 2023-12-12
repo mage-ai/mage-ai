@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings.platform import activate_project
+from mage_ai.settings.platform import activate_project, project_platform_activated
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -42,7 +42,7 @@ class ProjectResource(GenericResource):
         project = await self.member(None, user, **kwargs)
         collection = [project.model]
 
-        if not project.model.get('root_project'):
+        if not project.model.get('root_project') and project_platform_activated():
             root_project = await self.member(None, user, root_project=True, **kwargs)
             if root_project and root_project.model and root_project.model.get('projects'):
                 collection.append(root_project)

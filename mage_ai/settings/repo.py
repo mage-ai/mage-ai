@@ -41,13 +41,14 @@ def get_repo_path(
     repo_path_use = None
 
     if not root_project:
-        from mage_ai.settings.platform import (
-            build_active_project_repo_path,
-            get_repo_paths_for_file_path,
-            has_settings,
-        )
+        from mage_ai.settings.platform import project_platform_activated
 
-        if has_settings():
+        if project_platform_activated():
+            from mage_ai.settings.platform import (
+                build_active_project_repo_path,
+                get_repo_paths_for_file_path,
+            )
+
             if file_path:
                 settings = get_repo_paths_for_file_path(file_path, repo_path)
                 if settings and settings.get('full_path'):
@@ -74,11 +75,11 @@ def set_repo_path(repo_path: str) -> None:
 
 
 def get_repo_name(root_project: bool = False) -> str:
-    from mage_ai.settings.platform import has_settings
+    from mage_ai.settings.platform import project_platform_activated
 
     repo_path = get_repo_path(root_project=root_project)
 
-    if has_settings():
+    if project_platform_activated():
         return Path(repo_path).relative_to(get_repo_path(root_project=True))
 
     return os.path.basename(repo_path)

@@ -103,7 +103,7 @@ def build_active_project_repo_path(repo_path: str) -> str:
     return repo_path
 
 
-def has_settings() -> bool:
+def project_platform_activated() -> bool:
     return ENABLE_PROJECT_PLATFORM and os.path.exists(__platform_settings_full_path())
 
 

@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.errors import (
     FileExistsError,
     FileNotInProjectError,
 )
-from mage_ai.settings.platform import has_settings
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.utils import get_absolute_path
 
@@ -360,7 +360,7 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
-    if has_settings():
+    if project_platform_activated():
         return
 
     full_file_path = get_absolute_path(file_path)
