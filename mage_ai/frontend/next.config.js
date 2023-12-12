@@ -3,6 +3,7 @@
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
+  output: 'export',
   eslint: {
     ignoreDuringBuilds: true,
   },
