@@ -28,6 +28,7 @@ from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.settings.platform import has_settings
 from mage_ai.settings.repo import get_repo_name, get_repo_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.path_fixer import remove_directory_names
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
 
@@ -67,23 +68,14 @@ class DBTBlockSQL(DBTBlock):
         file_path = self.configuration.get('file_path')
 
         if self.has_platform_settings:
-            root_path = get_repo_path(root_project=True)
-            root_name = get_repo_name(root_project=True)
-            active_name = get_repo_name(root_project=False)
-
-            if self.file_is_from_another_project:
-                return os.path.join(root_path, file_path)
-            else:
-                # If file is in the current active project, remove the root project
-                # and current active project directory names from the file path.
-                try:
-                    return str(Path(file_path).relative_to(os.path.join(root_name, active_name)))
-                except ValueError:
-                    try:
-                        Path(file_path).relative_to(os.path.join(active_name))
-                        return file_path
-                    except ValueError:
-                        return os.path.join(active_name, file_path)
+            # If file is in the current active project, remove the root project
+            # and current active project directory names from the file path.
+            return remove_directory_names(
+                file_path=file_path,
+                file_from_another_project=self.file_is_from_another_project,
+                project_has_settings=self.has_platform_settings,
+                use_absolute_paths=False,
+            )
 
         return str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 

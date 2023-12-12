@@ -66,8 +66,8 @@ def remove_directory_names(
     for path in paths:
         try:
             diff = Path(file_path).relative_to(path)
-            full_path = diff
+            file_path = diff
         except ValueError:
             continue
 
-    return full_path
+    return file_path
