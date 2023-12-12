@@ -7,7 +7,8 @@ module.exports = removeImports({
     ignoreDuringBuilds: true,
   },
   experimental: {
-    esmExternals: true
+    esmExternals: true,
+    instrumentationHook: true,
   },
   reactStrictMode: true,
 });

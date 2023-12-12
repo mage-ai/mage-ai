@@ -3,6 +3,7 @@ import os
 from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -50,6 +51,7 @@ if db_connection_url.startswith('postgresql'):
     db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
 try:
+    SQLAlchemyInstrumentor().instrument(enable_commenter=True, commenter_options={})
     engine = create_engine(
         db_connection_url,
         **db_kwargs,
