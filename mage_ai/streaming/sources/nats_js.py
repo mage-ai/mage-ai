@@ -127,8 +127,7 @@ class NATSSource(BaseSource):
                 "manual_ack": True,
             }
 
-            # since the nats-py does not support difference value of queue and durable options,
-            # so for the queue options value use the value of durable
+            # nats-py requires the value of 'queue' to be the same as 'durable'
             if self.config.use_queue_group:
                 subs_options["queue"] = consumer_name
 

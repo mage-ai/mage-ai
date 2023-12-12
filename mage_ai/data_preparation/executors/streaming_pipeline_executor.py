@@ -180,6 +180,16 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 **merge_dict(global_vars, kwargs),
             )
 
+        async def handle_event_async(message, **kwargs):
+            outputs_by_block = dict()
+            outputs_by_block[self.source_block.uuid] = [message]
+
+            handle_batch_events_recursively(
+                self.source_block,
+                outputs_by_block,
+                **merge_dict(global_vars, kwargs),
+            )
+
         def handle_event(message, **kwargs):
             outputs_by_block = dict()
             outputs_by_block[self.source_block.uuid] = [message]
@@ -195,12 +205,11 @@ class StreamingPipelineExecutor(PipelineExecutor):
             if source.consume_method == SourceConsumeMethod.BATCH_READ:
                 source.batch_read(handler=handle_batch_events)
             elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
-                try:
-                    loop = asyncio.get_running_loop()
-                    loop.run_until_complete(source.read_async(handler=handle_event))
-                except Exception as exc:
-                    print(exc)
-                    asyncio.run(source.read_async(handler=handle_event))
+                loop = asyncio.get_event_loop()
+                if loop is not None:
+                    loop.run_until_complete(source.read_async(handler=handle_event_async))
+                else:
+                    asyncio.run(source.read_async(handler=handle_event_async))
             elif source.consume_method == SourceConsumeMethod.READ:
                 source.read(handler=handle_event)
         finally:
