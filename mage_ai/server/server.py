@@ -346,10 +346,10 @@ def make_app(template_dir: str = None, update_routes: bool = False):
     if ENABLE_PROMETHEUS or OTEL_EXPORTER_OTLP_ENDPOINT:
         from opentelemetry.instrumentation.tornado import TornadoInstrumentor
         TornadoInstrumentor().instrument()
-        print('OpenTelemetry instrumentation enabled.')
+        logger.info('OpenTelemetry instrumentation enabled.')
 
     if OTEL_EXPORTER_OTLP_ENDPOINT:
-        print(f'OTEL_EXPORTER_OTLP_ENDPOINT: {OTEL_EXPORTER_OTLP_ENDPOINT}')
+        logger.info(f'OTEL_EXPORTER_OTLP_ENDPOINT: {OTEL_EXPORTER_OTLP_ENDPOINT}')
 
         from opentelemetry import trace
         from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
