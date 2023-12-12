@@ -28,7 +28,7 @@ from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.settings.platform import has_settings
 from mage_ai.settings.repo import get_repo_name, get_repo_path
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.path_fixer import remove_directory_names
+from mage_ai.shared.path_fixer import add_directory_names, remove_directory_names
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
 
@@ -66,18 +66,27 @@ class DBTBlockSQL(DBTBlock):
             Union[str, os.PathLike]: The file path of the DBT block.
         """
         file_path = self.configuration.get('file_path')
-
+        value = None
         if self.has_platform_settings:
-            # If file is in the current active project, remove the root project
-            # and current active project directory names from the file path.
-            return remove_directory_names(
-                file_path=file_path,
-                file_from_another_project=self.file_is_from_another_project,
-                project_has_settings=self.has_platform_settings,
-                use_absolute_paths=False,
-            )
+            if self.file_is_from_another_project():
+                return add_directory_names(
+                    file_path,
+                    file_from_another_project=True,
+                    project_has_settings=True,
+                )
+            else:
+                # If file is in the current active project, remove the root project
+                # and current active project directory names from the file path.
+                value = remove_directory_names(
+                    file_path=file_path,
+                    file_from_another_project=self.file_is_from_another_project,
+                    project_has_settings=self.has_platform_settings,
+                    use_absolute_paths=False,
+                )
+        else:
+            value = str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 
-        return str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
+        return value
 
     @property
     def project_path(self) -> Union[str, os.PathLike]:

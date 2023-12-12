@@ -3,8 +3,72 @@ from pathlib import Path
 from typing import List
 
 from mage_ai.data_preparation.models.block.platform import from_another_project
-from mage_ai.settings.platform import has_settings
+from mage_ai.settings.platform import get_repo_paths_for_file_path, has_settings
 from mage_ai.settings.repo import get_repo_path
+
+
+def convert_absolute_path_to_relative(file_path: str) -> str:
+    return os.path.join(*Path(file_path).parts[1:])
+
+
+def convert_relative_path_to_absolute(file_path: str) -> str:
+    return os.path.join(os.sep, file_path)
+
+
+def add_directory_names(
+    file_path: str,
+    file_from_another_project: bool = None,
+    project_has_settings: bool = None,
+) -> str:
+    if project_has_settings is None:
+        project_has_settings = has_settings()
+
+    # You can’t have files from another project unless there is a settings file
+    # in the root directory
+    if file_from_another_project is None:
+        if project_has_settings:
+            file_from_another_project = from_another_project(file_path)
+        else:
+            file_from_another_project = False
+
+    file_path_is_absolute = os.path.isabs(file_path)
+
+    paths = []
+    if file_path_is_absolute:
+        # /home/src/default_repo
+        # /home/src/default_repo/demo_project
+        paths.append(get_repo_path(root_project=False, file_path=file_path))
+        if project_has_settings:
+            # /home/src/default_repo
+            paths.append(get_repo_path(root_project=True, file_path=file_path))
+    else:
+        # default_repo
+        # default_repo/demo_project
+        paths.append(get_repo_path(absolute_path=False, root_project=False, file_path=file_path))
+        if project_has_settings:
+            # default_repo
+            paths.append(get_repo_path(absolute_path=False, root_project=True, file_path=file_path))
+
+    file_path_new = file_path
+    for path in paths:
+        # First loop:
+        # /home/src/default_repo
+        # /home/src/default_repo/demo_project
+        try:
+            diff = Path(file_path_new).relative_to(path)
+            file_path_new = diff
+        except ValueError:
+            continue
+
+    if os.path.isabs(file_path_new):
+        file_path_new = convert_absolute_path_to_relative(file_path_new)
+
+    full_path = get_repo_paths_for_file_path(
+        repo_path=get_repo_path(absolute_path=True, root_project=True, file_path=file_path),
+        file_path=file_path,
+    )['full_path']
+
+    return os.path.join(full_path, file_path_new)
 
 
 def remove_directory_names(
