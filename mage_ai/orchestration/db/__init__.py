@@ -3,7 +3,6 @@ import os
 from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -24,6 +23,9 @@ db_kwargs = dict(
     pool_pre_ping=True,
 )
 
+# Only import if OpenTelemetry is enabled
+if os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'):
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 if is_test():
     db_connection_url = f'sqlite:///{TEST_DB}'
