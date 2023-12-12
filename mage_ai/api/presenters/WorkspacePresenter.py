@@ -19,6 +19,7 @@ class WorkspacePresenter(BasePresenter):
                 'name',
                 'repo_path',
                 'success',
+                'url',
                 *[f.name for f in fields(KubernetesWorkspaceConfig)],
                 *[f.name for f in fields(CloudRunWorkspaceConfig)],
                 *[f.name for f in fields(EcsWorkspaceConfig)],

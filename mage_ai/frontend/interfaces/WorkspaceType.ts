@@ -13,4 +13,5 @@ export default interface WorkspaceType {
   name: string;
   project_uuid?: string;
   repo_path?: string;
+  url?: string;
 }
