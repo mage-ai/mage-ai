@@ -26,7 +26,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.settings.platform import has_settings
-from mage_ai.settings.repo import get_repo_name, get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.path_fixer import add_directory_names, remove_directory_names
 from mage_ai.shared.strings import remove_extension_from_filename
@@ -265,11 +265,14 @@ class DBTBlockSQL(DBTBlock):
 
         if has_settings():
             if from_another_project(file_path):
-                project_dir = get_directory_of_file_path(file_path)
+                project_dir = get_directory_of_file_path(
+                    file_path,
+                    absolute_path=False,
+                )
             else:
                 # default_repo/demo_project
-                root_name = get_repo_name(root_project=True)
-                active_name = get_repo_name(root_project=False)
+                root_name = get_repo_path(absolute_path=False, root_project=True)
+                active_name = get_repo_path(absolute_path=False, root_project=False)
 
                 try:
                     # default_repo/demo_project/dbt/demo/models/example/my_first_dbt_model.sql
@@ -291,7 +294,11 @@ class DBTBlockSQL(DBTBlock):
                         project_dir = Path(remaining).parts[0]
         else:
             # default_repo
-            repo_path_relative = os.path.join(get_repo_name(root_project=False))
+            repo_path_relative = os.path.join(get_repo_path(
+                absolute_path=False,
+                root_project=False,
+            ))
+
             try:
                 # default_repo/dbt/demo/models/example/my_first_dbt_model.sql
                 # default_repo
