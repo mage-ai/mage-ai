@@ -4,6 +4,7 @@ const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
   output: 'export',
+  distDir: 'frontend_dist',
   eslint: {
     ignoreDuringBuilds: true,
   },
