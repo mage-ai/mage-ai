@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.settings.platform import has_settings
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import get_repo_name, get_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
@@ -66,7 +66,23 @@ class DBTBlockSQL(DBTBlock):
         file_path = self.configuration.get('file_path')
 
         if self.has_platform_settings:
-            return os.path.join(get_repo_path(root_project=True), file_path)
+            root_path = get_repo_path(root_project=True)
+            root_name = get_repo_name(root_project=True)
+            active_name = get_repo_name(root_project=False)
+
+            if self.file_is_from_another_project:
+                return os.path.join(root_path, file_path)
+            else:
+                # If file is in the current active project, remove the root project
+                # and current active project directory names from the file path.
+                try:
+                    return str(Path(file_path).relative_to(os.path.join(root_name, active_name)))
+                except ValueError:
+                    try:
+                        Path(file_path).relative_to(os.path.join(active_name))
+                        return file_path
+                    except ValueError:
+                        return os.path.join(active_name, file_path)
 
         return str((Path(self.repo_path)) / 'dbt' / file_path)
 
@@ -79,7 +95,36 @@ class DBTBlockSQL(DBTBlock):
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
         if self.has_platform_settings:
-            return get_directory_of_file_path(self.file_path)
+            if self.file_is_from_another_project:
+                return get_directory_of_file_path(self.file_path)
+
+            root_path = get_repo_path(root_project=True)
+
+            try:
+                # Path('/home/src/default_repo/default_repo/dbt').relative_to(
+                #     '/home/src/default_repo'
+                # ) == 'default_repo/dbt'
+                base_path = str(Path(self.base_project_path).relative_to(root_path))
+            except ValueError:
+                base_path = self.base_project_path
+
+            try:
+                # Path('default_repo/dbt/demo/models/example/my_first_dbt_model.sql').relative_to(
+                #     'default_repo/dbt'
+                # ) == 'demo/models/example/my_first_dbt_model.sql'
+                file_path_starting_at_project = Path(self.file_path).relative_to(base_path)
+                # 'demo'
+                project_name = Path(file_path_starting_at_project).parts[0]
+
+                return os.path.join(self.base_project_path, project_name)
+            except ValueError:
+                try:
+                    file_path_starting_at_project = Path(self.file_path).relative_to('dbt')
+                    project_name = Path(file_path_starting_at_project).parts[0]
+
+                    return os.path.join(self.base_project_path, project_name)
+                except ValueError:
+                    pass
 
         return str(
             Path(self.base_project_path) /

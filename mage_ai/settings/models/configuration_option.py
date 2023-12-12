@@ -3,15 +3,18 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import aiofiles
 import yaml
 
 from mage_ai.authentication.permissions.constants import EntityName
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.file import get_full_file_paths_containing_item
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.platform import has_settings
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -20,23 +23,22 @@ async def read_file(full_path: str) -> str:
         return yaml.safe_load(await f.read()) or {}
 
 
+class ConfigurationType(str, Enum):
+    DBT = 'dbt'
+
+
 class OptionType(str, Enum):
     PROFILES = 'profiles'
     PROJECTS = 'projects'
     TARGETS = 'targets'
 
 
-class ConfigurationType(str, Enum):
-    DBT = 'dbt'
-
-
 @dataclass
 class ConfigurationOption(BaseDataClass):
-    configuration_type: str = None
-    metadata: Dict = None
+    configuration_type: ConfigurationType = None
     option: Dict = None
-    option_type: str = None
-    resource_type: str = None
+    option_type: OptionType = None
+    resource_type: EntityName = None
     uuid: str = None
 
     def __post_init__(self):
@@ -50,9 +52,17 @@ class ConfigurationOption(BaseDataClass):
         configuration_type: ConfigurationType,
         option_type: OptionType,
         resource_type: EntityName,
+        pipeline: Pipeline = None,
+        resource_uuid: Union[str, int] = None,
     ):
         if ConfigurationType.DBT == configuration_type:
             repo_path = get_repo_path(root_project=has_settings())
+
+            project_path_only = None
+            if pipeline and EntityName.Block == resource_type and resource_uuid is not None:
+                block = pipeline.get_block(resource_uuid)
+                if block and BlockType.DBT == block.type:
+                    project_path_only = block.project_path
 
             if OptionType.PROJECTS == option_type or OptionType.PROFILES == option_type:
                 project_full_paths = get_full_file_paths_containing_item(
@@ -60,62 +70,75 @@ class ConfigurationOption(BaseDataClass):
                   lambda x: x.startswith('dbt_project.y'),
                 )
 
-                if OptionType.PROJECTS == option_type:
+                if project_path_only is not None:
+                    project_full_paths2 = []
+                    for fp in project_full_paths:
+                        try:
+                            Path(fp).relative_to(project_path_only)
+                            project_full_paths2.append(fp)
+                        except ValueError:
+                            pass
+                    project_full_paths = project_full_paths2
 
-                    projects = await asyncio.gather(
-                        *[read_file(full_path) for full_path in project_full_paths]
-                    )
+                profile_full_paths_init = get_full_file_paths_containing_item(
+                  repo_path,
+                  lambda x: x.startswith('profiles.y'),
+                )
 
-                    return [ConfigurationOption.load(
+                profile_full_paths = []
+                profile_full_paths_by_project = {}
+                for project_full_path in project_full_paths:
+                    profile_full_paths_by_project[project_full_path] = []
+
+                    for fp in profile_full_paths_init:
+                        if os.path.dirname(project_full_path) in os.path.dirname(fp):
+                            profile_full_paths.append(fp)
+                            profile_full_paths_by_project[project_full_path].append(fp)
+
+                projects = await asyncio.gather(
+                    *[read_file(full_path) for full_path in project_full_paths]
+                )
+                profiles = await asyncio.gather(
+                    *[read_file(full_path) for full_path in profile_full_paths]
+                )
+
+                profiles_mapping = {k: profiles[idx] for idx, k in enumerate(profile_full_paths)}
+                results = []
+                for idx, project in enumerate(projects):
+                    project_full_path = project_full_paths[idx]
+                    profile_full_paths = profile_full_paths_by_project[project_full_path]
+
+                    profiles_arr = []
+                    for profile_fp in profile_full_paths:
+                        if profile_fp not in profiles_mapping:
+                            continue
+
+                        profile = profiles_mapping[profile_fp]
+
+                        for project_name, opts in profile.items():
+                            target = opts.get('target')
+                            targets = list((opts.get('outputs') or {}).keys())
+
+                            profiles_arr.append(dict(
+                                full_path=str(Path(profile_fp).relative_to(repo_path)),
+                                project=project_name,
+                                target=target,
+                                targets=targets,
+                            ))
+
+                    results.append(ConfigurationOption.load(
                         configuration_type=configuration_type,
-                        option=project,
+                        option=dict(
+                            profiles=profiles_arr,
+                            project=merge_dict(project, dict(
+                                full_path=str(
+                                    Path(project_full_path).relative_to(repo_path),
+                                ),
+                            )),
+                        ),
                         option_type=option_type,
                         resource_type=resource_type,
                         uuid=project.get('name'),
-                    ) for project in projects]
-                elif OptionType.PROFILES == option_type:
-                    profile_full_paths_init = get_full_file_paths_containing_item(
-                      repo_path,
-                      lambda x: x.startswith('profiles.y'),
-                    )
+                    ))
 
-                    profile_full_paths = []
-                    for full_path in profile_full_paths_init:
-                        profile_full_paths.extend([(
-                            full_path,
-                            project_full_path,
-                        ) for project_full_path in project_full_paths if os.path.dirname(
-                            project_full_path,
-                        ) in os.path.dirname(full_path)])
-
-                    profiles = await asyncio.gather(
-                        *[read_file(
-                            full_path,
-                        ) for full_path, project_full_path in profile_full_paths]
-                    )
-
-                    results = []
-                    for idx, profile in enumerate(profiles):
-                        full_path, project_full_path = profile_full_paths[idx]
-
-                        option = []
-                        for opts in profile.values():
-                            option.extend(list((opts.get('outputs') or {}).keys()))
-
-                        results.append(ConfigurationOption.load(
-                            configuration_type=configuration_type,
-                            metadata=dict(
-                                full_path=str(
-                                    Path(full_path).relative_to(repo_path),
-                                ),
-                                project_full_path=str(
-                                    Path(project_full_path).relative_to(repo_path),
-                                ),
-                            ),
-                            option=option,
-                            option_type=option_type,
-                            resource_type=resource_type,
-                            uuid=list(profile.keys())[0] if profile else None,
-                        ))
-
-                    return results
+                return results

@@ -38,6 +38,11 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
+import ConfigurationOptionType, {
+  ConfigurationTypeEnum,
+  OptionTypeEnum,
+  ResourceTypeEnum,
+} from '@interfaces/ConfigurationOptionType';
 import DataIntegrationBlock from './DataIntegrationBlock';
 import DataProviderType, {
   DataProviderEnum,
@@ -376,12 +381,6 @@ function CodeBlock({
   widgets,
   windowWidth,
 }: CodeBlockProps, ref) {
-  // const startTime = performance.now();
-  // useEffect(() => {
-  //   const duration = performance.now() - startTime;
-  //   console.log('CodeBlock render', duration);
-  // }, []);
-
   const themeContext = useContext(ThemeContext);
   const refColumn1 = useRef(null);
   const refColumn2 = useRef(null);
@@ -703,28 +702,59 @@ function CodeBlock({
     drop: (item: BlockType) => onDrop?.(block, item),
   }), [block]);
 
+  const { data: dataConfigurationOptions } = api.configuration_options.pipelines.list(pipelineUUID, {
+    configuration_type: ConfigurationTypeEnum.DBT,
+    option_type: OptionTypeEnum.PROJECTS,
+    resource_type: ResourceTypeEnum.Block,
+    resource_uuid: blockUUID,
+  });
+  const configurationOptions: ConfigurationOptionType[] =
+    useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
+
   const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
-  const dbtProjects = useMemo(() => dbtMetadata.projects || {}, [dbtMetadata]);
+  const dbtProjects = useMemo(() => {
+    return configurationOptions
+      ? indexBy(configurationOptions, ({ name }) => name)
+      : (dbtMetadata.projects || {});
+  }, [
+    configurationOptions,
+    dbtMetadata,
+  ]);
   const dbtProjectName =
     useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
       dataProviderConfig,
       dbtMetadata,
     ]);
-  const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {
-    target: null,
-    targets: [],
+
+  const dbtProfileData = useMemo(() => {
+      if (!configurationOptions) {
+        return [
+          dbtProjects[dbtProjectName] || {
+            target: null,
+            targets: [],
+          },
+        ];
+      }
+
+      const configOpts = configurationOptions?.find(({ uuid }) => dbtProjectName === uuid);
+
+      return configOpts?.option?.profiles || [];
   }, [
+    configurationOptions,
     dbtProjectName,
     dbtProjects,
   ]);
 
-  const dbtProfileTargets = useMemo(() => dbtProfileData.targets || [], [dbtProfileData]);
+  const dbtProfileTargets = useMemo(() => {
+    return (dbtProfileData || [])?.reduce((acc, { targets }) => acc.concat(targets || []), []);
+  }, [dbtProfileData]);
+
   const dbtProfileTarget = useMemo(() => dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET], [
     dataProviderConfig,
   ]);
   const dbtProfileTargetSelectPlaceholder = dbtProjectName
-    ? (dbtProfileData?.target
-      ? find(dbtProfileTargets, (target: string) => target === dbtProfileData.target)
+    ? (dbtProfileData?.[0]?.target
+      ? find(dbtProfileTargets, (target: string) => target === dbtProfileData?.[0]?.target)
       : 'Select target')
     : 'Select project first';
 
@@ -2710,7 +2740,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                                 setAnyInputFocused(true);
                               }}
                               placeholder={dbtProjectName
-                                ? (dbtProfileData?.target || 'Enter target')
+                                ? (dbtProfileData?.[0]?.target || 'Enter target')
                                 : 'Select project first'
                               }
                               small

@@ -420,6 +420,7 @@ function PipelineDetail({
       project,
     ],
   );
+
   const { data: dataBlockTemplates } = api.block_templates.list({
     show_all: useV2AddNewBlock ? true : false,
   }, {

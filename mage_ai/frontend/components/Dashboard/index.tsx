@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
@@ -24,8 +23,6 @@ import {
   get,
   set,
 } from '@storage/localStorage';
-import { onSuccess } from '@api/utils/response';
-import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
 export type DashboardSharedProps = {
@@ -81,10 +78,6 @@ function Dashboard({
   title,
   uuid,
 }: DashboardProps & VerticalNavigationProps, ref) {
-  const [showError] = useError(null, {}, [], {
-    uuid: 'Dashboard/index',
-  });
-
   const {
     width: widthWindow,
   } = useWindowSize();
@@ -108,66 +101,8 @@ function Dashboard({
   const [, setMainContainerWidth] = useState<number>(null);
 
   const {
-    fetchProjects,
     project,
-    rootProject,
   } = useProject();
-
-  const [updateProject, { isLoading: isLoadingUpdateProject }]: any = useMutation(
-    api.projects.useUpdate(project?.name),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            if (typeof window !== 'undefined') {
-              window.location.reload();
-            }
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const breadcrumbProjects = [];
-  if (rootProject) {
-    breadcrumbProjects.push({
-      label: () => rootProject?.name,
-      linkProps: {
-        href: '/',
-      },
-    });
-  }
-
-  if (project) {
-    const crumb = {
-      label: () => project?.name,
-    };
-
-    if (rootProject) {
-      crumb.loading = isLoadingUpdateProject;
-      crumb.options = Object.keys(rootProject?.projects || {}).map((projectName: string) => ({
-        onClick: () => {
-          updateProject({
-            project: {
-              activate_project: projectName,
-            },
-          });
-        },
-        selected: projectName === project?.name,
-        uuid: projectName,
-      }));
-    } else {
-      crumb.linkProps = {
-        href: '/',
-      };
-    }
-
-    breadcrumbProjects.push(crumb);
-  }
 
   const breadcrumbs = [];
   if (breadcrumbsProp) {
@@ -185,7 +120,6 @@ function Dashboard({
         label: () => title,
       });
     }
-    breadcrumbs.unshift(...breadcrumbProjects);
   }
 
   useEffect(() => {

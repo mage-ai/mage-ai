@@ -1,6 +1,7 @@
 import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
 import { useContext, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -36,8 +37,10 @@ import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getUser } from '@utils/session';
+import { onSuccess } from '@api/utils/response';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
+import { useError } from '@context/Error';
 
 export type BreadcrumbType = BreadcrumbTypeOrig;
 
@@ -61,6 +64,10 @@ function Header({
   project: projectProp,
   version: versionProp,
 }: HeaderProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'shared/Header',
+  });
+
   const themeContext = useContext(ThemeContext);
   const userFromLocalStorage = getUser();
 
@@ -109,14 +116,81 @@ function Header({
     });
   };
 
-  const breadcrumbs = useMemo(() => breadcrumbsProp || [{
-    bold: true,
-    label: () => project?.name,
-    linkProps: {
-      href: '/',
-      sameColorText: true,
+  const [updateProject, { isLoading: isLoadingUpdateProject }]: any = useMutation(
+    api.projects.useUpdate(project?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
     },
-  }], [breadcrumbsProp, project]);
+  );
+
+  const breadcrumbProjects = [];
+  if (rootProject) {
+    breadcrumbProjects.push({
+      label: () => rootProject?.name,
+      linkProps: {
+        href: '/',
+      },
+    });
+  }
+
+  if (project) {
+    const crumb = {
+      label: () => project?.name,
+    };
+
+    if (rootProject) {
+      crumb.loading = isLoadingUpdateProject;
+      crumb.options = Object.keys(rootProject?.projects || {}).map((projectName: string) => ({
+        onClick: () => {
+          updateProject({
+            project: {
+              activate_project: projectName,
+            },
+          });
+        },
+        selected: projectName === project?.name,
+        uuid: projectName,
+      }));
+    } else {
+      crumb.linkProps = {
+        href: '/',
+      };
+    }
+
+    breadcrumbProjects.push(crumb);
+  }
+
+  const breadcrumbs = useMemo(() => {
+    // breadcrumbsProp || [{
+    //   bold: true,
+    //   label: () => project?.name,
+    //   linkProps: {
+    //     href: '/',
+    //     sameColorText: true,
+    //   },
+    // }]
+
+    return [
+      ...breadcrumbProjects,
+      ...(breadcrumbsProp || []),
+    ];
+  }, [
+    breadcrumbProjects,
+    breadcrumbsProp,
+    project,
+  ]);
   const { pipeline: pipelineUUID } = router.query;
 
   const { latest_version: latestVersion } = project || {};

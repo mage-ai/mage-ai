@@ -32,6 +32,7 @@ ConfigurationOptionPolicy.allow_query(
         'configuration_type',
         'option_type',
         'resource_type',
+        'resource_uuid',
     ],
     scopes=[OauthScope.CLIENT_PRIVATE],
     on_action=[constants.LIST],
