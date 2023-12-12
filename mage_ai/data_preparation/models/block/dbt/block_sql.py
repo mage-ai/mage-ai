@@ -88,8 +88,8 @@ class DBTBlockSQL(DBTBlock):
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
         if self.has_platform_settings:
-            if self.file_is_from_another_project:
-                return get_directory_of_file_path(self.file_path)
+            if self.file_is_from_another_project():
+                return get_directory_of_file_path(self.configuration.get('file_path'))
 
             root_path = get_repo_path(root_project=True)
 

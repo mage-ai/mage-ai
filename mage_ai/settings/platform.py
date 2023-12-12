@@ -36,13 +36,15 @@ def activate_project(project_name: str) -> None:
         __update_local_platform_settings(platform_settings)
 
 
-def build_repo_path_for_all_projects(repo_path: str) -> Dict:
+def ___build_repo_path_for_all_projects(repo_path: str) -> Dict:
+    from mage_ai.settings.repo import get_repo_path
+
     mapping = {}
     settings = project_platform_settings(repo_path=repo_path)
     for project_name, project_settings in settings.items():
         path_override = project_settings.get('path') or project_name
         mapping[project_name] = dict(
-            full_path=os.path.join(repo_path, path_override),
+            full_path=os.path.join(get_repo_path(root_project=True), path_override),
             path=path_override,
             uuid=project_name,
         )
@@ -53,12 +55,12 @@ def build_repo_path_for_all_projects(repo_path: str) -> Dict:
 def get_repo_paths_for_file_path(repo_path: str, file_path: str) -> Dict:
     result = None
 
-    for project_name, settings in build_repo_path_for_all_projects(repo_path=repo_path).items():
+    for project_name, settings in ___build_repo_path_for_all_projects(repo_path=repo_path).items():
         full_path = settings['full_path']
         path = settings['path']
 
         try:
-            if file_path.startswith(full_path) or Path(file_path).relative_to(path):
+            if str(file_path).startswith(full_path) or Path(file_path).relative_to(path):
                 result = settings
                 break
         except ValueError:

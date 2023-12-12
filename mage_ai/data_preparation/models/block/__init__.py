@@ -353,7 +353,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         self.global_vars = None
         self.hook = hook
         self._has_platform_settings = None
-        self._file_is_from_another_project = None
+        # self._file_is_from_another_project = None
 
     @property
     def has_platform_settings(self):
@@ -364,20 +364,12 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         return self._has_platform_settings
 
-    @property
     def file_is_from_another_project(self) -> bool:
-        if self._file_is_from_another_project is not None:
-            return self._file_is_from_another_project
-
-        if self.exists():
-            self._file_is_from_another_project = False
-            return self._file_is_from_another_project
-
         file_path = self.get_file_path_from_configuration()
         if file_path:
-            self._file_is_from_another_project = from_another_project(file_path)
+            return from_another_project(file_path)
 
-        return self._file_is_from_another_project
+        return False
 
     @property
     def uuid(self) -> str:
@@ -588,7 +580,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
     @property
     def file_path(self) -> str:
-        if self.file_is_from_another_project:
+        if self.file_is_from_another_project():
             return self.get_file_path_from_configuration(with_repo_path=True)
 
         return self.__file_path_internal

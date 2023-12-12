@@ -1,23 +1,27 @@
 import os
 
+from mage_ai.settings.platform import get_repo_paths_for_file_path
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find
+from mage_ai.shared.files import find_directory
 
 
 def get_directory_of_file_path(file_path: str) -> str:
-    # file_path: default_repo/main_dbt/demo/models/example/my_second_dbt_model.sql
-    repo_path = get_repo_path(root_project=True)
+    full_path_of_file_path = find_directory(
+        get_repo_path(root_project=True),
+        lambda fn: str(fn).endswith(str(file_path)),
+    )
+    paths_dict = get_repo_paths_for_file_path(
+        get_repo_path(root_project=True),
+        full_path_of_file_path,
+    )
+    full_path = paths_dict['full_path']
 
-    found = False
-    dirname = os.path.dirname(file_path)
-    while not found and repo_path != dirname:
-        filenames = os.listdir(dirname)
-        found = find(
-            lambda fn: fn.startswith('dbt_project.y') and os.path.isfile(os.path.join(dirname, fn)),
-            filenames,
-        )
-        if not found:
-            dirname = os.path.dirname(dirname)
+    project_full_path = find_directory(
+        get_repo_path(root_project=True),
+        lambda fn: str(fn).startswith(str(os.path.dirname(full_path))) and (
+            str(fn).endswith(os.path.join(os.sep, 'dbt_project.yml')) or
+            str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
+        ),
+    )
 
-    if found:
-        return dirname
+    return os.path.dirname(project_full_path)

@@ -42,7 +42,6 @@ class DBTBlockYAML(DBTBlock):
         project_name = remove_directory_names(
             file_path=project_name,
             directory_names_to_remove=[DBT_DIRECTORY_NAME],
-            file_from_another_project=self.file_is_from_another_project,
             project_has_settings=self.has_platform_settings,
         )
 
