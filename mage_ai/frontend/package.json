@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "export": "next build",
-    "export_prod": "next build && mv out ../server/frontend_dist",
+    "export_prod": "next build && rm -rf ../server/frontend_dist && mv frontend_dist ../server",
     "export_prod_base_path": "next build && rm -rf ../server/frontend_dist_base_path_template && mv frontend_dist ../server/frontend_dist_base_path_template",
     "dev": "next dev",
     "lint": "next lint",
