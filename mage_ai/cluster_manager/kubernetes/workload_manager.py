@@ -471,6 +471,28 @@ class WorkloadManager:
                 prefix = 'https' if tls_enabled else 'http'
                 return f'{prefix}://{host}{path.path}'
 
+    def remove_service_from_ingress_paths(
+        self,
+        ingress_name: str,
+        workload_name: str,
+    ) -> None:
+        ingress = self.networking_client.read_namespaced_ingress(
+            ingress_name, self.namespace
+        )
+        rule = ingress.spec.rules[0]
+        paths = rule.http.paths
+        for path in paths:
+            if path.backend.service.name == f'{workload_name}-service':
+                paths.remove(path)
+                break
+        ingress.spec.rules[0] = client.V1IngressRule(
+            host=rule.host,
+            http=client.V1HTTPIngressRuleValue(paths=paths),
+        )
+        self.networking_client.patch_namespaced_ingress(
+            ingress_name, self.namespace, ingress
+        )
+
     def delete_workload(self, name: str, ingress_name: str = None):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
@@ -485,22 +507,7 @@ class WorkloadManager:
 
         try:
             if ingress_name:
-                ingress = self.networking_client.read_namespaced_ingress(
-                    ingress_name, self.namespace
-                )
-                rule = ingress.spec.rules[0]
-                paths = rule.http.paths
-                for path in paths:
-                    if path.backend.service.name == f'{name}-service':
-                        paths.remove(path)
-                        break
-                ingress.spec.rules[0] = client.V1IngressRule(
-                    host=rule.host,
-                    http=client.V1HTTPIngressRuleValue(paths=paths),
-                )
-                self.networking_client.patch_namespaced_ingress(
-                    ingress_name, self.namespace, ingress
-                )
+                self.remove_service_from_ingress_paths(ingress_name, name)
         except Exception as ex:
             raise Exception(
                 'Failed to delete workspace path from ingress, you may need to manually delete it'
