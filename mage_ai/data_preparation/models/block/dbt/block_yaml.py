@@ -14,11 +14,12 @@ from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NA
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
+from mage_ai.data_preparation.models.block.platform import from_another_project
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.path_fixer import remove_directory_names
+from mage_ai.shared.path_fixer import add_directory_names, remove_directory_names
 
 
 class DBTBlockYAML(DBTBlock):
@@ -39,11 +40,21 @@ class DBTBlockYAML(DBTBlock):
         if not project_name:
             return
 
-        project_name = remove_directory_names(
-            file_path=project_name,
-            directory_names_to_remove=[DBT_DIRECTORY_NAME],
-            project_has_settings=self.has_platform_settings,
-        )
+        if self.has_platform_settings:
+            if from_another_project(project_name):
+                return add_directory_names(
+                    project_name,
+                    file_from_another_project=True,
+                    project_has_settings=True,
+                )
+            else:
+                project_name = remove_directory_names(
+                    project_name,
+                    directory_names_to_remove=[DBT_DIRECTORY_NAME],
+                    file_from_another_project=False,
+                    project_has_settings=self.has_platform_settings,
+                    use_absolute_paths=False,
+                )
 
         # self.base_project_path:  /home/src/default_repo/default_repo/dbt
         return str(Path(self.base_project_path) / project_name)
