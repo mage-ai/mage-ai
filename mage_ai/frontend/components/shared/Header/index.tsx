@@ -146,7 +146,7 @@ function Header({
   }
 
   if (project) {
-    const crumb = {
+    const crumb: BreadcrumbType = {
       label: () => project?.name,
     };
 

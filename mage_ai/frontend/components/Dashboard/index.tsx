@@ -106,9 +106,9 @@ function Dashboard({
 
   const breadcrumbs = [];
   if (breadcrumbsProp) {
-    if (addProjectBreadcrumbToCustomBreadcrumbs) {
-      breadcrumbs.push(...breadcrumbProjects);
-    }
+    // if (addProjectBreadcrumbToCustomBreadcrumbs) {
+    //   breadcrumbs.push(...breadcrumbProjects);
+    // }
 
     breadcrumbs.push(...breadcrumbsProp);
   }
@@ -174,6 +174,7 @@ function Dashboard({
 
       <Header
         breadcrumbs={breadcrumbs}
+        // excludeProject={!addProjectBreadcrumbToCustomBreadcrumbs}
         menuItems={headerMenuItems}
       />
 

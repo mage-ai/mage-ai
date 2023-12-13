@@ -18,6 +18,7 @@ function useProject(): {
   };
   fetchProjects: () => any;
   project: ProjectType;
+  rootProject?: ProjectType;
   sparkEnabled: boolean;
 } {
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();

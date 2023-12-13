@@ -58,8 +58,8 @@ export enum BlockTypeEnum {
 }
 
 export const ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS = {
-  [BlockTypeEnum.CUSTOM.value]: BlockTypeEnum.CUSTOM,
-  [BlockTypeEnum.DBT.value]: BlockTypeEnum.DBT,
+  [BlockTypeEnum.CUSTOM]: BlockTypeEnum.CUSTOM,
+  [BlockTypeEnum.DBT]: BlockTypeEnum.DBT,
 };
 
 export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce((acc, [k, v]) => ({
