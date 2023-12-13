@@ -90,7 +90,8 @@ export function buildAddBlockRequestPayload(
   // data_loaders/team/foo.py
   // data_loaders/team/growth/foo.py
   const parts = file.path.replace(repoPath, '').split(osPath.sep);
-  const isDBT = file.path.split(osPath.sep)[0] === BlockTypeEnum.DBT;
+  const blockType = getBlockType(file.path.split(osPath.sep));
+  const isDBT = BlockTypeEnum.DBT === blockType;
 
   let blockUUID = getBlockUUID(parts);
   if (parts.length >= 3 && !isDBT) {
@@ -98,7 +99,6 @@ export function buildAddBlockRequestPayload(
     blockUUID = `${nestedFolders}/${blockUUID}`;
   }
 
-  const blockType = getBlockType(file.path.split(osPath.sep));
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: selectEntriesWithValues({
       file_path: isDBT ? blockUUID : null,

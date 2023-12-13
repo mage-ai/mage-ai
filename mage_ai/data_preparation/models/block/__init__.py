@@ -554,10 +554,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file_path(self) -> str:
-        if self.project_platform_activated:
-            file_path = self.get_file_path_from_source()
-            if file_path:
-                return file_path
+        file_path = self.get_file_path_from_source()
+        if file_path:
+            return file_path
 
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
         block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
@@ -638,15 +637,25 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         block.uuid: block
                         for block in upstream_dbt_blocks
                     }
+
+                    for b in upstream_dbt_blocks:
+                        print('WTTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+                        print('\t', b.uuid)
+                        print('\t', b.configuration)
+                        print('\t', b.file_path)
+                        print('\t', b.project_path)
+                        print('\n')
+
                     pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
                     pipeline.validate('A cycle was formed while adding a block')
                     pipeline.save()
                 except Exception as err:
-                    if block.project_platform_activated:
-                        print(f'[ERROR] Block.after_create for {block.uuid}: {err}.')
-                        pipeline.add_block(block)
-                    else:
-                        raise err
+                    # if block.project_platform_activated:
+                    #     print(f'[ERROR] Block.after_create for {block.uuid}: {err}.')
+                    #     pipeline.add_block(block)
+                    # else:
+                    #     raise err
+                    raise err
             else:
                 pipeline.add_block(
                     block,

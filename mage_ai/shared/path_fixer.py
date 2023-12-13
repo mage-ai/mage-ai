@@ -8,6 +8,7 @@ from mage_ai.settings.platform import (
     project_platform_activated as project_platform_activated_check,
 )
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.utils import base_repo_dirname
 
 
 def convert_absolute_path_to_relative(file_path: str) -> str:
@@ -16,6 +17,31 @@ def convert_absolute_path_to_relative(file_path: str) -> str:
 
 def convert_relative_path_to_absolute(file_path: str) -> str:
     return os.path.join(os.sep, file_path)
+
+
+def remove_base_repo_directory_name(file_path: str) -> str:
+    """
+    Removes /home/src from
+    /home/src/default_platform/dbt/demo == default_platform/dbt/demo
+    /home/src/default_platform/default_repo/dbt/demo == default_platform/default_repo/dbt/demo
+    """
+    try:
+        path = Path(file_path).relative_to(base_repo_dirname())
+        return str(path)
+    except ValueError:
+        return file_path
+
+
+def remove_repo_names(file_path: str) -> str:
+    try:
+        path = Path(file_path).relative_to(get_repo_path(
+            absolute_path=False,
+            file_path=file_path,
+            root_project=False,
+        ))
+        return str(path)
+    except ValueError:
+        return file_path
 
 
 def get_path_parts(file_path: str) -> Tuple[str, str, str]:

@@ -13,7 +13,7 @@ from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.platform import (
-    get_directory_of_file_path,
+    get_project_directory_from_file_path,
 )
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
@@ -98,7 +98,7 @@ class DBTBlockSQL(DBTBlock):
         """
         if self.has_platform_settings:
             if self.file_is_from_another_project():
-                return get_directory_of_file_path(self.configuration.get('file_path'))
+                return get_project_directory_from_file_path(self.configuration.get('file_path'))
 
             root_path = get_repo_path(root_project=True)
 
@@ -265,7 +265,7 @@ class DBTBlockSQL(DBTBlock):
 
         if project_platform_activated():
             if from_another_project(file_path):
-                project_dir = get_directory_of_file_path(
+                project_dir = get_project_directory_from_file_path(
                     file_path,
                     absolute_path=False,
                 )
