@@ -71,10 +71,10 @@ def set_repo_path(repo_path: str) -> None:
     sys.path.append(os.path.dirname(repo_path))
 
 
-def get_repo_name(root_project: bool = False) -> str:
+def get_repo_name(repo_path: str = None, root_project: bool = False) -> str:
     from mage_ai.settings.platform import project_platform_activated
 
-    repo_path = get_repo_path(root_project=root_project)
+    repo_path = repo_path or get_repo_path(root_project=root_project)
 
     if project_platform_activated():
         return Path(repo_path).relative_to(get_repo_path(root_project=True))
@@ -115,7 +115,7 @@ def get_variables_dir(
     """
     if repo_path is None:
         repo_path = get_repo_path(root_project=root_project)
-    repo_name = get_repo_name(root_project=root_project)
+    repo_name = get_repo_name(repo_path=repo_path, root_project=root_project)
     variables_dir = None
     if os.getenv(MAGE_DATA_DIR_ENV_VAR):
         variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
