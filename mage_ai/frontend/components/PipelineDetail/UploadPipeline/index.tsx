@@ -13,7 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { DropZoneStyle, TableStyle } from '../../FileBrowser/UploadFiles/index.style';
+import { DropZoneStyle, TableStyle } from '@components/FileBrowser/UploadFiles/index.style';
 import { isEmptyObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -28,7 +28,7 @@ function UploadPipeline({
   fetchPipelines,
   onCancel,
 }: UploadPipelineProps) {
-  const [overwriteVariable, setOverwriteVariable] = useState<boolean>(false);
+  const [overwritePipeline, setOverwritePipeline] = useState<boolean>(false);
   const [isDragActive, setIsDragActive] = useState<boolean>(false);
   const [fileUploadProgress, setFileUploadProgress] = useState<{
     [key: string]: number;
@@ -129,14 +129,14 @@ function UploadPipeline({
               <Text>Overwrite pipeline files</Text>
               <Spacing ml={1}/>
               <ToggleSwitch
-                checked={overwriteVariable}
-                onCheck={setOverwriteVariable}
+                checked={overwritePipeline}
+                onCheck={setOverwritePipeline}
               />
             </FlexContainer>
           </Spacing>
         </FlexContainer>
       )}
-      headerTitle="Import pipeline from zip"
+      headerTitle="Import pipeline from .zip file"
     >
       {hasFiles && (
         <TableStyle>
@@ -147,23 +147,21 @@ function UploadPipeline({
       {!hasFiles && (
         <FileUploader
           directoryPath={null} // no directory needs to be specified in case of pipeline imports
-          overwrite = {overwriteVariable}
-          pipelineZip = {true}
+          onDragActiveChange={setIsDragActive}
+          overwrite={overwritePipeline}
+          pipelineZip={true}
+          setFileUploadProgress={setFileUploadProgress}
           setUploadedFiles={(uploadedFiles) => {
             // @ts-ignore
             setUploadedPipeline(uploadedFiles);
             showPopupMenu();
             fetchPipelines?.();
           }}
-          // @ts-ignore
-          onDragActiveChange={setIsDragActive}
-          // @ts-ignore
-          setFileUploadProgress={setFileUploadProgress}
         >
           <DropZoneStyle>
             <Text center>
-              {isDragActive && 'Drop pipeline zip to import' }
-              {!isDragActive && 'Click or drop pipeline zip to upload' }
+              {isDragActive && 'Drop pipeline zip to import'}
+              {!isDragActive && 'Click or drop pipeline zip to upload'}
             </Text>
           </DropZoneStyle>
         </FileUploader>
