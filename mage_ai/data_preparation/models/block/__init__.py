@@ -631,31 +631,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
-                try:
-                    upstream_dbt_blocks = block.upstream_dbt_blocks() or []
-                    upstream_dbt_blocks_by_uuid = {
-                        block.uuid: block
-                        for block in upstream_dbt_blocks
-                    }
-
-                    for b in upstream_dbt_blocks:
-                        print('WTTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
-                        print('\t', b.uuid)
-                        print('\t', b.configuration)
-                        print('\t', b.file_path)
-                        print('\t', b.project_path)
-                        print('\n')
-
-                    pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
-                    pipeline.validate('A cycle was formed while adding a block')
-                    pipeline.save()
-                except Exception as err:
-                    # if block.project_platform_activated:
-                    #     print(f'[ERROR] Block.after_create for {block.uuid}: {err}.')
-                    #     pipeline.add_block(block)
-                    # else:
-                    #     raise err
-                    raise err
+                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
+                upstream_dbt_blocks_by_uuid = {
+                    block.uuid: block
+                    for block in upstream_dbt_blocks
+                }
+                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
+                pipeline.validate('A cycle was formed while adding a block')
+                pipeline.save()
             else:
                 pipeline.add_block(
                     block,

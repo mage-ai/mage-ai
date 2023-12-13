@@ -198,9 +198,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 '--resource-type', 'model',
                 '--resource-type', 'snapshot'
             ]
-            print('------------------------------------------')
-            print(args)
-            print('\n')
             res, _success = DBTCli(args).invoke()
         if res:
             nodes_init = [simplejson.loads(node) for node in res]
@@ -211,12 +208,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         file_path = self.__get_original_file_path()
         path_parts = file_path.split(os.sep)
         project_dir = path_parts[0]
-
-        print('=====================================================')
-        print('\t', file_path)
-        print('\t', path_parts)
-        print('\t', project_dir)
-        print('\n')
 
         nodes_default = {
             node['unique_id']: {
@@ -231,13 +222,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
 
         nodes = self.hydrate_dbt_nodes(nodes_default, nodes_init)
 
-        for key, node in nodes.items():
-            print('\n')
-            print('************************************************************ 00000')
-            print(key)
-            print(node)
-            print('\n')
-
         # calculate downstream_nodes
         for unique_id, node in nodes.items():
             for upstream_node in node['upstream_nodes']:
@@ -245,13 +229,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                     downstream_nodes = nodes[upstream_node].get('downstream_nodes', set())
                     downstream_nodes.add(unique_id)
                     nodes[upstream_node]['downstream_nodes'] = downstream_nodes
-
-        for key, node in nodes.items():
-            print('\n')
-            print('************************************************************ 11111')
-            print(key)
-            print(node)
-            print('\n')
 
         # map dbt unique_id to mage uuid
         uuids_default = {
@@ -262,13 +239,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             for unique_id, node in nodes.items()
         }
         uuids = self.node_uuids_mapping(uuids_default, nodes)
-
-        for unique_id, uuid_mage in uuids.items():
-            print('\n')
-            print('************************************************************ uuidsssssss')
-            print(unique_id)
-            print('\t', uuid_mage)
-            print('\n')
 
         # replace dbt unique_ids with mage uuids
         nodes = {
@@ -288,13 +258,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             }
             for unique_id, node in nodes.items()
         }
-
-        for key, node in nodes.items():
-            print('\n')
-            print('************************************************************ 22222')
-            print(key)
-            print(node)
-            print('\n')
 
         # create dict of blocks
         blocks = {}
