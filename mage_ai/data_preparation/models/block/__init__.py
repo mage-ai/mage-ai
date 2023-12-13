@@ -353,7 +353,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         self.global_vars = None
         self.hook = hook
         self._has_platform_settings = None
-        # self._file_is_from_another_project = None
 
     @property
     def has_platform_settings(self):
@@ -363,13 +362,6 @@ class Block(DataIntegrationMixin, SparkBlock):
         self._has_platform_settings = project_platform_activated()
 
         return self._has_platform_settings
-
-    def file_is_from_another_project(self) -> bool:
-        file_path = self.get_file_path_from_configuration()
-        if file_path:
-            return from_another_project(file_path)
-
-        return False
 
     @property
     def uuid(self) -> str:
@@ -568,7 +560,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
     @property
-    def __file_path_internal(self) -> str:
+    def file_path(self) -> str:
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
         block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
 
@@ -577,32 +569,6 @@ class Block(DataIntegrationMixin, SparkBlock):
             block_directory,
             f'{self.uuid}.{file_extension}',
         )
-
-    @property
-    def file_path(self) -> str:
-        if self.file_is_from_another_project():
-            return self.get_file_path_from_configuration(with_repo_path=True)
-
-        return self.__file_path_internal
-
-    def get_file_path_from_configuration(
-        self,
-        with_repo_path: bool = False,
-    ) -> str:
-        file_path = None
-        if self.configuration:
-            file_path = self.configuration.get('file_path')
-
-        if file_path and with_repo_path:
-            repo_path = None
-            if self.has_platform_settings:
-                repo_path = get_repo_path(root_project=True)
-            else:
-                repo_path = get_repo_path(root_project=False)
-
-            return os.path.join(repo_path, file_path)
-
-        return file_path
 
     @property
     def file(self) -> File:
@@ -1612,7 +1578,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         return block_function
 
     def exists(self) -> bool:
-        return os.path.exists(self.__file_path_internal)
+        return os.path.exists(self.file_path)
 
     def fetch_input_variables(
         self,
