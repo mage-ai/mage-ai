@@ -239,6 +239,7 @@ class Hook(BaseDataClass):
         self,
         pipeline_run: PipelineRun = None,
         resource_parent_type: str = None,
+        **kwargs,
     ) -> Dict:
         self.output = {}
 
