@@ -1085,7 +1085,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       // Used in project platform
       source: {
         path: filePath,
-        project: null,
       },
     };
 
