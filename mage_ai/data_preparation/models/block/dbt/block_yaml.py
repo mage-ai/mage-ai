@@ -73,7 +73,7 @@ class DBTBlockYAML(DBTBlock):
         projects = {}
 
         project_dirs = Project(self.get_base_project_from_source()).local_packages
-        for project_dir in project_dirs:
+        for project_dir in (project_dirs or []):
             project_full_path = str(Path(self.get_base_project_from_source()) / project_dir)
 
             project = Project(project_full_path).project

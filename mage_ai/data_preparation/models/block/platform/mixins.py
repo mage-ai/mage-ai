@@ -80,9 +80,10 @@ class ProjectPlatformAccessible:
             # /home/src/default_repo/dbt
             return self.base_project_path
 
-        return os.path.dirname(self.get_project_path_from_project_name(
-            self.configuration.get('dbt_project_name'),
-        ))
+        val = self.get_project_path_from_project_name(self.configuration.get('dbt_project_name'))
+
+        if val:
+            return os.path.dirname(val)
 
     def build_file(self) -> File:
         if not self.is_from_another_project():
