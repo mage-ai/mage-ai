@@ -25,7 +25,6 @@ from mage_ai.shared.parsers import encode_complex
 
 
 class DBTBlock(Block):
-
     def __new__(cls, *args, **kwargs) -> 'DBTBlock':
         """
         Factory for the child blocks
@@ -48,6 +47,7 @@ class DBTBlock(Block):
         Returns:
             Union[str, os.PathLike]: Path of base dbt project
         """
+        # /home/src/default_repo becomes /home/src/default_repo/dbt
         return str(Path(self.repo_path) / DBT_DIRECTORY_NAME)
 
     @property

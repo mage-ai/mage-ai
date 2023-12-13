@@ -10,6 +10,7 @@ from mage_ai.settings.platform import (
     project_platform_activated as project_platform_activated_func,
 )
 from mage_ai.shared.path_fixer import (
+    add_root_repo_path_to_relative_path,
     get_path_parts,
     remove_base_repo_directory_name,
     remove_repo_names,
@@ -48,6 +49,40 @@ class ProjectPlatformAccessible:
                 str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
             ),
         )
+
+    def get_project_path_from_project_name(self, project_name: str) -> str:
+        if not self.project_platform_activated or \
+                not project_name or \
+                not from_another_project(project_name):
+
+            return
+
+        # The block YAML file can be from a different project than the profile
+
+        # project_name: default_repo/dbt/demo
+
+        # return value:
+        # /home/src/default_repo/dbt/demo
+        # /home/src/default_platform/default_repo/dbt/demo
+        if not project_name:
+            from mage_ai.data_preparation.models.block.dbt.constants import (
+                DBT_DIRECTORY_NAME,
+            )
+
+            # A project profile hasn’t been selected yet for this block (it’s done through the UI).
+            root_project_path, path, file_path_base = get_path_parts(self.__file_source_path())
+            project_name = os.path.join(path, DBT_DIRECTORY_NAME)
+
+        return add_root_repo_path_to_relative_path(project_name)
+
+    def get_base_project_from_source(self) -> str:
+        if not self.is_from_another_project():
+            # /home/src/default_repo/dbt
+            return self.base_project_path
+
+        return os.path.dirname(self.get_project_path_from_project_name(
+            self.configuration.get('dbt_project_name'),
+        ))
 
     def build_file(self) -> File:
         if not self.is_from_another_project():

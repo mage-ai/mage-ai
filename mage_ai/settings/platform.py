@@ -65,12 +65,20 @@ def get_repo_paths_for_file_path(file_path: str, repo_path: str = None) -> Dict:
     for project_name, settings in repo_paths_all.items():
         full_path = settings['full_path']
         path = settings['path']
-        path_with_root = os.path.join(base_repo_name(), path)
+        root_path = base_repo_name()
+        path_with_root = os.path.join(root_path, path)
 
         try:
             if (
                 str(file_path).startswith(full_path) or
-                Path(file_path).relative_to(path_with_root)
+                (
+                    str(file_path).startswith(root_path) and
+                    Path(file_path).relative_to(path_with_root)
+                ) or
+                (
+                    str(file_path).startswith(path) and
+                    Path(file_path).relative_to(path)
+                )
             ):
                 result = settings
                 break

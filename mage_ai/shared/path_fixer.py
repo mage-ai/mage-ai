@@ -11,6 +11,20 @@ from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_dirname
 
 
+def add_root_repo_path_to_relative_path(relative_file_path: str) -> str:
+    repo_path = get_repo_path(root_project=True)
+    repo_path_name = Path(repo_path).name
+
+    try:
+        # If the relative path already contains the root project name, return it
+        diff = Path(relative_file_path).relative_to(repo_path_name)
+        relative_file_path = str(diff)
+    except ValueError:
+        pass
+
+    return os.path.join(repo_path, relative_file_path)
+
+
 def convert_absolute_path_to_relative(file_path: str) -> str:
     return os.path.join(*Path(file_path).parts[1:])
 

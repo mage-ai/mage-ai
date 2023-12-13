@@ -3,6 +3,7 @@ import BlockType, {
   ALL_BLOCK_TYPES,
   ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS,
   BlockColorEnum,
+  BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
@@ -99,14 +100,16 @@ export function buildAddBlockRequestPayload(
     blockUUID = `${nestedFolders}/${blockUUID}`;
   }
 
+  const blockLanguage = FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension];
+
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: selectEntriesWithValues({
-      file_path: isDBT ? blockUUID : null,
+      file_path: (isDBT && BlockLanguageEnum.SQL === blockLanguage) ? blockUUID : null,
       file_source: {
         path: getFullPath(file),
       },
     }),
-    language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
+    language: blockLanguage,
     name: removeExtensionFromFilename(blockUUID),
     type: blockType,
   };
