@@ -101,12 +101,12 @@ export function buildAddBlockRequestPayload(
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: {
       file_path: isDBT ? blockUUID : null,
+      file_source: {
+        path: getFullPath(file),
+      },
     },
     language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
     name: removeExtensionFromFilename(blockUUID),
-    source: {
-      path: getFullPath(file),
-    },
     type: blockType,
   };
 

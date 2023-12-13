@@ -1077,15 +1077,15 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     const newBlock: BlockRequestPayloadType = {
       configuration: {
         file_path: finalFilePath,
+        file_source: {
+          path: filePath,
+        },
         limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
       },
       language: BlockLanguageEnum.SQL,
       name: removeExtensionFromFilename(finalFilePath),
       type: BlockTypeEnum.DBT,
       // Used in project platform
-      source: {
-        path: filePath,
-      },
     };
 
     if (creatingNewDBTModel) {
