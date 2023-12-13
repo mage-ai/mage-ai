@@ -10,6 +10,7 @@ import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
@@ -31,6 +32,11 @@ class DBTBlockYAML(DBTBlock):
         """
         project_name = self.configuration.get('dbt_project_name')
         if project_name:
+            try:
+                project_name = Path(project_name).relative_to(DBT_DIRECTORY_NAME)
+            except ValueError:
+                pass
+
             return str(Path(self.base_project_path) / project_name)
 
     def tags(self) -> List[str]:
