@@ -6,6 +6,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings import ENABLE_PROJECT_PLATFORM
+from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.shared.io import safe_write
@@ -38,30 +39,39 @@ def activate_project(project_name: str) -> None:
 
 
 def ___build_repo_path_for_all_projects(repo_path: str) -> Dict:
-    from mage_ai.settings.repo import get_repo_path
-
     mapping = {}
     settings = project_platform_settings(repo_path=repo_path)
+    root_project_path = base_repo_path()
+    root_project_name = base_repo_name()
+
     for project_name, project_settings in settings.items():
         path_override = project_settings.get('path') or project_name
         mapping[project_name] = dict(
-            full_path=os.path.join(get_repo_path(root_project=True), path_override),
+            full_path=os.path.join(root_project_path, path_override),
+            full_path_relative=os.path.join(root_project_name, path_override),
             path=path_override,
+            root_project_name=root_project_name,
+            root_project_full_path=root_project_path,
             uuid=project_name,
         )
 
     return mapping
 
 
-def get_repo_paths_for_file_path(repo_path: str, file_path: str) -> Dict:
+def get_repo_paths_for_file_path(file_path: str, repo_path: str = None) -> Dict:
     result = None
 
-    for project_name, settings in ___build_repo_path_for_all_projects(repo_path=repo_path).items():
+    repo_paths_all = ___build_repo_path_for_all_projects(repo_path=repo_path)
+    for project_name, settings in repo_paths_all.items():
         full_path = settings['full_path']
         path = settings['path']
+        path_with_root = os.path.join(base_repo_name(), path)
 
         try:
-            if str(file_path).startswith(full_path) or Path(file_path).relative_to(path):
+            if (
+                str(file_path).startswith(full_path) or
+                Path(file_path).relative_to(path_with_root)
+            ):
                 result = settings
                 break
         except ValueError:
@@ -70,7 +80,10 @@ def get_repo_paths_for_file_path(repo_path: str, file_path: str) -> Dict:
     return result
 
 
-def build_active_project_repo_path(repo_path: str) -> str:
+def build_active_project_repo_path(repo_path: str = None) -> str:
+    if not repo_path:
+        repo_path = base_repo_path()
+
     settings = project_platform_settings(repo_path=repo_path)
     active_project = active_project_settings(settings=settings)
     no_active_project = not active_project
@@ -168,9 +181,7 @@ def git_settings(repo_path: str = None) -> Dict:
 
 
 def __platform_settings_full_path() -> str:
-    from mage_ai.settings.repo import get_repo_path
-
-    return os.path.join(get_repo_path(root_project=True), PLATFORM_SETTINGS_FILENAME)
+    return os.path.join(base_repo_path(), PLATFORM_SETTINGS_FILENAME)
 
 
 def __load_platform_settings(full_path: str) -> Dict:

@@ -12,8 +12,8 @@ def get_directory_of_file_path(file_path: str, absolute_path: bool = True) -> st
         lambda fn: str(fn).endswith(str(file_path)),
     )
     paths_dict = get_repo_paths_for_file_path(
-        get_repo_path(root_project=True),
         full_path_of_file_path,
+        repo_path=get_repo_path(root_project=True),
     )
     full_path = paths_dict['full_path']
 

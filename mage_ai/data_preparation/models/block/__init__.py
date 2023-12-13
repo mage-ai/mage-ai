@@ -34,7 +34,10 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
-from mage_ai.data_preparation.models.block.platform import from_another_project
+from mage_ai.data_preparation.models.block.platform.mixins import (
+    ProjectPlatformAccessible,
+)
+from mage_ai.data_preparation.models.block.platform.utils import from_another_project
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -74,7 +77,6 @@ from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
-from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env, is_debug
@@ -265,7 +267,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(DataIntegrationMixin, SparkBlock):
+class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def __init__(
         self,
         name: str,
@@ -352,16 +354,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         self._spark_session_current = None
         self.global_vars = None
         self.hook = hook
-        self._has_platform_settings = None
-
-    @property
-    def has_platform_settings(self):
-        if self._has_platform_settings is not None:
-            return self._has_platform_settings
-
-        self._has_platform_settings = project_platform_activated()
-
-        return self._has_platform_settings
+        self._project_platform_activated = None
 
     @property
     def uuid(self) -> str:
@@ -561,6 +554,11 @@ class Block(DataIntegrationMixin, SparkBlock):
 
     @property
     def file_path(self) -> str:
+        if self.project_platform_activated:
+            file_path = self.get_file_path_from_source()
+            if file_path:
+                return file_path
+
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
         block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
 
@@ -571,17 +569,12 @@ class Block(DataIntegrationMixin, SparkBlock):
         )
 
     @property
-    def file_source(self) -> str:
-        if self.configuration:
-            return self.configuration.get('file_source')
-
-    @property
-    def file_source_path(self) -> str:
-        if self.file_source:
-            return self.file_source.get('path')
-
-    @property
     def file(self) -> File:
+        if self.project_platform_activated:
+            file = self.build_file()
+            if file:
+                return file
+
         return File.from_path(self.file_path)
 
     @property
@@ -649,7 +642,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                     pipeline.validate('A cycle was formed while adding a block')
                     pipeline.save()
                 except Exception as err:
-                    if block.has_platform_settings:
+                    if block.project_platform_activated:
                         print(f'[ERROR] Block.after_create for {block.uuid}: {err}.')
                         pipeline.add_block(block)
                     else:
@@ -735,11 +728,17 @@ class Block(DataIntegrationMixin, SparkBlock):
         # Only create a file on the filesystem if the block type isn’t a global data product
         # because global data products reference a data product which already has its
         # own files.
-        file_path_from_configuration = configuration and configuration.get('file_path')
+
+        # Don’t create a file if it’s from another project.
+
+        file_path_from_source = (
+            configuration and
+            configuration.get('file_source') and
+            (configuration.get('file_source') or {}).get('path')
+        )
         file_is_from_another_project = (
-            file_path_from_configuration and
-            pipeline and
-            from_another_project(file_path_from_configuration)
+            file_path_from_source and
+            from_another_project(file_path_from_source)
         )
 
         if not file_is_from_another_project:

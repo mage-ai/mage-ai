@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
-from mage_ai.data_preparation.models.block.platform import from_another_project
+from mage_ai.data_preparation.models.block.platform.utils import from_another_project
 from mage_ai.settings.platform import get_repo_paths_for_file_path
 from mage_ai.settings.platform import (
     project_platform_activated as project_platform_activated_check,
@@ -16,6 +16,31 @@ def convert_absolute_path_to_relative(file_path: str) -> str:
 
 def convert_relative_path_to_absolute(file_path: str) -> str:
     return os.path.join(os.sep, file_path)
+
+
+def get_path_parts(file_path: str) -> Tuple[str, str, str]:
+    paths = get_repo_paths_for_file_path(file_path)
+
+    root_project_full_path = paths['root_project_full_path']
+    full_path_relative = paths['full_path_relative']
+    path = paths['path']
+
+    file_path_base = None
+
+    # The file path either has both the root project name and the nested project name
+    # or just has the nested project name in it.
+    for path2 in [
+        full_path_relative,
+        path,
+    ]:
+        if file_path_base:
+            break
+        try:
+            file_path_base = Path(file_path).relative_to(path2)
+        except ValueError:
+            pass
+
+    return (root_project_full_path, path, file_path_base)
 
 
 def add_directory_names(

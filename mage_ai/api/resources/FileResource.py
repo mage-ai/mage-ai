@@ -38,7 +38,7 @@ class FileResource(GenericResource):
     @safe_db_query
     async def create(self, payload: Dict, user, **kwargs) -> 'FileResource':
         dir_path = payload['dir_path']
-        repo_path = get_repo_path()
+        repo_path = get_repo_path(root_project=True)
         content = None
 
         if 'file' in payload:

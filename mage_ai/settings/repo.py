@@ -6,6 +6,8 @@ from typing import Dict
 import yaml
 from jinja2 import Template
 
+from mage_ai.settings.constants import REPO_PATH_ENV_VAR
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_test
 
 MAGE_PROJECT_TYPE_ENV_VAR = 'PROJECT_TYPE'
@@ -21,11 +23,6 @@ if is_test():
 else:
     DEFAULT_MAGE_DATA_DIR = os.path.join('~', '.mage_data')
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
-REPO_PATH_ENV_VAR = 'MAGE_REPO_PATH'
-
-
-def base_repo_path() -> str:
-    return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
 
 
 def base_repo_path_directory_name() -> str:

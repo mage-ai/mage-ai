@@ -272,14 +272,11 @@ function Folder({
         <div
           className="row"
           onClick={(e) => {
-            console.log('WTFFFFFFFFFFFFFFF0')
             e.preventDefault();
 
             if (disabled) {
               return;
             }
-
-            console.log('WTFFFFFFFFFFFFFFF1')
 
             if (parentFile?.name === FOLDER_NAME_CHARTS) {
               openSidekickView?.(ViewKeyEnum.CHARTS);
@@ -293,12 +290,9 @@ function Folder({
               }
             }
 
-            console.log('WTFFFFFFFFFFFFFFF2')
-
             const nonPythonBlockFromFile = getNonPythonBlockFromFile(file);
 
             if (children) {
-              console.log('WTFFFFFFFFFFFFFFF3')
               if (allowSelectingFolders) {
                 selectFile(filePathToUse);
               } else {
@@ -308,17 +302,11 @@ function Folder({
                   return !collapsedPrev;
                 });
               }
-
-              console.log('WTFFFFFFFFFFFFFFF4')
-
               onClickFolder?.(filePathToUse);
             } else {
-              console.log('WTFFFFFFFFFFFFFFF5')
               if (onClickFile) {
-                console.log('WTFFFFFFFFFFFFFFF6')
                 onClickFile(filePathToUse);
               } else if (nonPythonBlockFromFile) {
-                console.log('WTFFFFFFFFFFFFFFF7')
                 onSelectBlockFile?.(
                   nonPythonBlockFromFile.uuid,
                   nonPythonBlockFromFile.type,
@@ -329,10 +317,8 @@ function Folder({
                   },
                 );
               } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
-                console.log('WTFFFFFFFFFFFFFFF8')
                 openFile?.(filePathToUse);
               } else {
-                console.log('WTFFFFFFFFFFFFFFF9')
                 const block = getBlockFromFile(file);
                 if (block) {
                   onSelectBlockFile?.(
