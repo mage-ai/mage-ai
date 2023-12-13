@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from typing import Callable, Dict, List, Tuple
 
@@ -119,8 +120,16 @@ class File:
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
-    def get_all_files(self, repo_path):
-        return traverse(os.path.basename(repo_path), True, repo_path)
+    def get_all_files(self, repo_path, pattern: str = None):
+        file_selector = None
+        if pattern is not None:
+            def __select(x: Dict, pattern=pattern):
+                filename = x.get('name')
+                return re.search(pattern, filename or '')
+
+            file_selector = __select
+
+        return traverse(os.path.basename(repo_path), True, repo_path, file_selector=file_selector)
 
     @classmethod
     def file_path_versions_dir(
@@ -370,7 +379,14 @@ def ensure_file_is_in_project(file_path: str) -> None:
             f'File at path: {file_path} is not in the project directory.')
 
 
-def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:
+def traverse(
+    name: str,
+    is_dir: bool,
+    path: str,
+    disabled=False,
+    depth=1,
+    file_selector: Callable = None,
+) -> Dict:
     tree_entry = dict(name=name)
     if not is_dir:
         tree_entry['disabled'] = disabled
@@ -378,6 +394,26 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
     if depth >= MAX_DEPTH:
         return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
+
+    def __filter(entry, depth=depth, file_selector=file_selector) -> bool:
+        if entry.name in BLACKLISTED_DIRS:
+            return False
+
+        if not file_selector:
+            return True
+
+        entry_path = entry.path
+        if entry.is_dir(follow_symlinks=False) or os.path.isdir(entry_path):
+            return True
+        else:
+            return file_selector(dict(
+                depth=depth + 1,
+                name=str(entry.name),
+                path=entry.path,
+            ))
+
+        return True
+
     tree_entry['children'] = list(
         traverse(
             entry.name,
@@ -385,12 +421,13 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
             entry.path,
             can_access_children,
             depth + 1,
-        )
-        for entry in sorted(
-            filter(lambda entry: entry.name not in BLACKLISTED_DIRS, os.scandir(path)),
+            file_selector=file_selector,
+        ) for entry in sorted(
+            filter(__filter, os.scandir(path)),
             key=lambda entry: entry.name,
         )
     )
+
     return tree_entry
 
 

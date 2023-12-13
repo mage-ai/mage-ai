@@ -19,8 +19,17 @@ class FileResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
+        pattern = query.get('pattern', [None])
+        if pattern:
+            pattern = pattern[0]
+        if pattern:
+            pattern = urllib.parse.unquote(pattern)
+
         return self.build_result_set(
-            [File.get_all_files(get_repo_path(root_project=True))],
+            [File.get_all_files(
+                get_repo_path(root_project=True),
+                pattern=pattern,
+            )],
             user,
             **kwargs,
         )

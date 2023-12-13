@@ -1,7 +1,7 @@
 import * as osPath from 'path';
 import { useMemo, useState } from 'react';
 
-import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
@@ -26,6 +26,15 @@ type FileSelectorPopupProps = {
   files: FileType[];
   onClose: () => void;
   onOpenFile: (filePath: string) => void;
+  onSelectBlockFile?: (
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+    opts?: {
+      file?: FileType;
+      path?: string;
+    },
+  ) => void;
   setDbtModelName?: (name: string) => void;
 };
 
@@ -36,37 +45,12 @@ function FileSelectorPopup({
   files,
   onClose,
   onOpenFile,
+  onSelectBlockFile,
   setDbtModelName,
 }: FileSelectorPopupProps) {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
 
-  const dbtModelFiles = useMemo(
-    () => {
-      return files;
-
-      // const arr1 = find(files?.[0]?.children || [], ({ name }) => 'dbt' === name)?.children;
-      // const projects = [];
-
-      // arr1?.forEach((folder) => {
-      //   const {
-      //     children = [],
-      //   } = folder;
-
-      //   if (children.length >= 1) {
-      //     projects.push({
-      //       ...folder,
-      //       children,
-      //     });
-      //   }
-      // });
-
-      // return projects;
-    },
-    [
-      files,
-    ],
-  );
   const existingModelsByFilePath = useMemo(
     () => indexBy(blocks, ({ configuration }) => configuration.file_path),
     [blocks],
@@ -144,11 +128,11 @@ function FileSelectorPopup({
         <FileBrowser
           allowSelectingFolders={creatingNewDBTModel}
           disableContextMenu
-          files={dbtModelFiles}
+          files={files}
           isFileDisabled={(filePath: string, children) => {
-            if (creatingNewDBTModel) {
-              return !children || children?.some(childFolder => childFolder?.name === 'models');
-            }
+            // if (creatingNewDBTModel) {
+            //   return !children || children?.some(childFolder => childFolder?.name === 'models');
+            // }
 
             return !!existingModelsByFilePath[filePath]
               || (!children?.length &&
@@ -156,6 +140,7 @@ function FileSelectorPopup({
               );
           }}
           openFile={onOpenFile}
+          onSelectBlockFile={onSelectBlockFile}
           selectFile={setSelectedFilePath}
           uncollapsed
           useRootFolder

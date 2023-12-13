@@ -10,17 +10,25 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.platform import (
+    get_directory_of_file_path,
+)
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.models.block.dbt.utils import (
     get_source_name,
     get_source_table_name_for_block,
 )
+from mage_ai.data_preparation.models.block.platform import from_another_project
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.path_fixer import add_directory_names, remove_directory_names
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
 
@@ -58,8 +66,27 @@ class DBTBlockSQL(DBTBlock):
             Union[str, os.PathLike]: The file path of the DBT block.
         """
         file_path = self.configuration.get('file_path')
+        value = None
+        if self.has_platform_settings:
+            if self.file_is_from_another_project():
+                return add_directory_names(
+                    file_path,
+                    file_from_another_project=True,
+                    project_platform_activated=True,
+                )
+            else:
+                # If file is in the current active project, remove the root project
+                # and current active project directory names from the file path.
+                value = remove_directory_names(
+                    file_path=file_path,
+                    file_from_another_project=self.file_is_from_another_project,
+                    project_platform_activated=self.has_platform_settings,
+                    use_absolute_paths=False,
+                )
+        else:
+            value = str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 
-        return str((Path(self.repo_path)) / 'dbt' / file_path)
+        return value
 
     @property
     def project_path(self) -> Union[str, os.PathLike]:
@@ -69,6 +96,40 @@ class DBTBlockSQL(DBTBlock):
         Returns:
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
+        if self.has_platform_settings:
+            if self.file_is_from_another_project():
+                return get_directory_of_file_path(self.configuration.get('file_path'))
+
+            root_path = get_repo_path(root_project=True)
+
+            try:
+                # Path('/home/src/default_repo/default_repo/dbt').relative_to(
+                #     '/home/src/default_repo'
+                # ) == 'default_repo/dbt'
+                base_path = str(Path(self.base_project_path).relative_to(root_path))
+            except ValueError:
+                base_path = self.base_project_path
+
+            try:
+                # Path('default_repo/dbt/demo/models/example/my_first_dbt_model.sql').relative_to(
+                #     'default_repo/dbt'
+                # ) == 'demo/models/example/my_first_dbt_model.sql'
+                file_path_starting_at_project = Path(self.file_path).relative_to(base_path)
+                # 'demo'
+                project_name = Path(file_path_starting_at_project).parts[0]
+
+                return os.path.join(self.base_project_path, project_name)
+            except ValueError:
+                try:
+                    file_path_starting_at_project = Path(self.file_path).relative_to(
+                        DBT_DIRECTORY_NAME,
+                    )
+                    project_name = Path(file_path_starting_at_project).parts[0]
+
+                    return os.path.join(self.base_project_path, project_name)
+                except ValueError:
+                    pass
+
         return str(
             Path(self.base_project_path) /
             self.configuration.get('file_path', '').split(os.sep)[0]
@@ -183,16 +244,71 @@ class DBTBlockSQL(DBTBlock):
                 '--resource-type', 'model',
                 '--resource-type', 'snapshot'
             ]
-            res, _success = DBTCli(args).invoke()
+            try:
+                res, _success = DBTCli(args).invoke()
+            except Exception as err:
+                print(f'[ERROR] DBTBlockSQL.upstream_dbt_blocks ({self.file_path}): {err}.')
         if res:
             nodes = [simplejson.loads(node) for node in res]
         else:
             return []
 
         # transform List into dict and remove unnecessary fields
+        # default_repo/dbt/demo/models/example/my_first_dbt_model.sql
         file_path = self.configuration.get('file_path')
-        path_parts = file_path.split(os.sep)
-        project_dir = path_parts[0]
+
+        # Needs to be either:
+        # default_repo/dbt/analytics
+        # default_repo/demo_project/dbt/analytics
+        project_dir = None
+        repo_path_relative = None
+
+        if project_platform_activated():
+            if from_another_project(file_path):
+                project_dir = get_directory_of_file_path(
+                    file_path,
+                    absolute_path=False,
+                )
+            else:
+                # default_repo/demo_project
+                root_name = get_repo_path(absolute_path=False, root_project=True)
+                active_name = get_repo_path(absolute_path=False, root_project=False)
+
+                try:
+                    # default_repo/demo_project/dbt/demo/models/example/my_first_dbt_model.sql
+                    # default_repo/demo_project
+                    # == dbt/demo/models/example/my_first_dbt_model.sql
+                    remaining = Path(self.file_path).relative_to(
+                        os.path.join(root_name, active_name),
+                    )
+                    project_dir = Path(remaining).parts[0]
+                except ValueError:
+                    try:
+                        # demo_project/dbt/demo/models/example/my_first_dbt_model.sql
+                        # demo_project
+                        # == dbt/demo/models/example/my_first_dbt_model.sql
+                        remaining = Path(self.file_path).relative_to(os.path.join(active_name))
+                        project_dir = Path(remaining).parts[0]
+                    except ValueError:
+                        # Already dbt/demo/models/example/my_first_dbt_model.sql
+                        project_dir = Path(remaining).parts[0]
+        else:
+            # default_repo
+            repo_path_relative = os.path.join(get_repo_path(
+                absolute_path=False,
+                root_project=False,
+            ))
+
+            try:
+                # default_repo/dbt/demo/models/example/my_first_dbt_model.sql
+                # default_repo
+                # == dbt/demo/models/example/my_first_dbt_model.sql
+                remaining = Path(self.file_path).relative_to(repo_path_relative)
+                project_dir = Path(remaining).parts[0]
+            except ValueError:
+                # Already dbt/demo/models/example/my_first_dbt_model.sql
+                project_dir = ''
+
         nodes = {
             node['unique_id']: {
                 'file_path': os.path.join(project_dir, node['original_file_path']),
@@ -255,7 +371,7 @@ class DBTBlockSQL(DBTBlock):
                 block_type=self.type,
                 language=self.language,
                 pipeline=self.pipeline,
-                configuration=dict(file_path=node['file_path'])
+                configuration=dict(file_path=node['file_path']),
             )
             # reset upstream dbt blocks
             block.upstream_blocks = [

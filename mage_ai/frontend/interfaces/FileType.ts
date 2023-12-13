@@ -1,5 +1,9 @@
 import { BlockLanguageEnum } from './BlockType';
 
+export enum BlockFolderNameEnum {
+  DBT = 'dbt',
+}
+
 export enum FileExtensionEnum {
   CSV = 'csv',
   JSON = 'json',
