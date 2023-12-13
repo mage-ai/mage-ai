@@ -27,7 +27,7 @@ def activate_project(project_name: str) -> None:
         )
 
         projects = platform_settings['projects'] or {}
-        for key, value in projects.items():
+        for key in projects.keys():
             if key == project_name:
                 continue
             platform_settings['projects'][key] = merge_dict(
@@ -62,7 +62,7 @@ def get_repo_paths_for_file_path(file_path: str, repo_path: str = None) -> Dict:
     result = None
 
     repo_paths_all = ___build_repo_path_for_all_projects(repo_path=repo_path)
-    for project_name, settings in repo_paths_all.items():
+    for settings in repo_paths_all.values():
         full_path = settings['full_path']
         path = settings['path']
         root_path = base_repo_name()

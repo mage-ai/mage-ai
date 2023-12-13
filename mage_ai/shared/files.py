@@ -49,7 +49,7 @@ def read_last_line(filename: str) -> str:
 
 
 def find_directory(top_level_path: str, comparator: Callable) -> str:
-    for path, subdirs, files in os.walk(top_level_path):
+    for path, _subdirs, files in os.walk(top_level_path):
         for name in files:
             full_path = os.path.join(path, name)
             if comparator(full_path):
