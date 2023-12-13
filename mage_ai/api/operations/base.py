@@ -42,6 +42,7 @@ from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.settings import REQUIRE_USER_PERMISSIONS
 from mage_ai.shared.array import flatten
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.shared.strings import classify
 
@@ -327,7 +328,9 @@ class BaseOperation():
                 resources=resources,
                 user=dict(id=self.user.id) if self.user else None,
             )
-        except Exception:
+        except Exception as err:
+            if is_debug():
+                raise err
             hooks = []
 
         try:
