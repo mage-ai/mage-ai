@@ -22,7 +22,7 @@ export type BreadcrumbType = {
   onClick?: () => void;
   options?: {
     label?: () => string;
-    onClick?: () => void;
+    onClick?: (val?: any) => void;
     selected?: boolean;
     uuid: string;
   }[];

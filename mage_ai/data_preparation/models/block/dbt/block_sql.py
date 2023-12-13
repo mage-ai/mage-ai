@@ -215,6 +215,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 # default_repo/dbt/demo/models/example/model.sql
                 # default_platform/default_repo/dbt/demo/models/example/model.sql
                 'file_path': os.path.join(project_dir, node['original_file_path']),
+                'original_file_path': node['original_file_path'],
                 'upstream_nodes': set(node['depends_on']['nodes'])
             }
             for node in nodes_init
