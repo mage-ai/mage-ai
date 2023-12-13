@@ -14,6 +14,7 @@ import FileType, {
 import { find } from '@utils/array';
 import { getFullPath } from '@utils/files';
 import { removeExtensionFromFilename, singularize } from '@utils/string';
+import { selectEntriesWithValues } from '@utils/hash';
 
 export const getBlockFilename = (path: string[]) => path.at(-1);
 
@@ -99,12 +100,12 @@ export function buildAddBlockRequestPayload(
 
   const blockType = getBlockType(file.path.split(osPath.sep));
   const blockReqPayload: BlockRequestPayloadType = {
-    configuration: {
+    configuration: selectEntriesWithValues({
       file_path: isDBT ? blockUUID : null,
       file_source: {
         path: getFullPath(file),
       },
-    },
+    }),
     language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
     name: removeExtensionFromFilename(blockUUID),
     type: blockType,

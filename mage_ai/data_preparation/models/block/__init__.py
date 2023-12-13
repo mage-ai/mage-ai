@@ -571,6 +571,16 @@ class Block(DataIntegrationMixin, SparkBlock):
         )
 
     @property
+    def file_source(self) -> str:
+        if self.configuration:
+            return self.configuration.get('file_source')
+
+    @property
+    def file_source_path(self) -> str:
+        if self.file_source:
+            return self.file_source.get('path')
+
+    @property
     def file(self) -> File:
         return File.from_path(self.file_path)
 
