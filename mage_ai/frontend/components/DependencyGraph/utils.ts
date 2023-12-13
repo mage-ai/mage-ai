@@ -302,7 +302,7 @@ export function buildNodesEdgesPorts({
   blocks?.forEach((block: BlockType) => {
     if (block?.upstream_blocks?.length >= 1) {
       const arr = block?.upstream_blocks || [];
-      const key = sortByKey(arr, uuid => uuid).join(',');
+      const key = sortByKey([...arr], uuid => uuid).join(',');
 
       if (!(key in mappingUpstreamBlockSet)) {
         mappingUpstreamBlockSet[key] = {
