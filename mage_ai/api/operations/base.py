@@ -326,7 +326,13 @@ class BaseOperation():
                 resource_parent_id=self.resource_parent_id,
                 resource_parent_type=self.__resource_parent_entity_name(),
                 resources=resources,
-                user=dict(id=self.user.id) if self.user else None,
+                user=dict(
+                    avatar=self.user.avatar,
+                    first_name=self.user.first_name,
+                    id=self.user.id,
+                    last_name=self.user.last_name,
+                    username=self.user.username,
+                ) if self.user else None,
             )
         except Exception as err:
             if is_debug():
