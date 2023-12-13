@@ -57,21 +57,21 @@ export const getNewPipelineButtonMenuItems = (
     },
   ];
 
-  if (opts?.showImportPipelineModal) {
-    arr.push({
-      beforeIcon: <Upload />,
-      label: () => 'Import pipeline zip',
-      onClick: () => opts?.showImportPipelineModal?.(),
-      uuid: 'Pipelines/NewPipelineMenu/upload',
-    });
-  }
-
   if (opts?.showBrowseTemplates) {
     arr.push({
       beforeIcon: <TemplateShapes />,
       label: () => 'From a template',
       onClick: () => opts?.showBrowseTemplates?.(),
       uuid: 'Pipelines/NewPipelineMenu/custom_template',
+    });
+  }
+
+  if (opts?.showImportPipelineModal) {
+    arr.push({
+      beforeIcon: <Upload />,
+      label: () => 'Import pipeline zip',
+      onClick: () => opts?.showImportPipelineModal?.(),
+      uuid: 'Pipelines/NewPipelineMenu/upload',
     });
   }
 
