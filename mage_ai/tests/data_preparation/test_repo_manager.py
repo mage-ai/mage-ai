@@ -10,10 +10,12 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_uuid,
     get_repo_config,
     init_project_uuid,
+    init_repo,
     set_project_uuid_from_metadata,
 )
 from mage_ai.settings.repo import MAGE_DATA_DIR_ENV_VAR
 from mage_ai.tests.base_test import DBTestCase
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def mock_uuid_value():
@@ -132,3 +134,53 @@ class RepoManagerTest(DBTestCase):
         self.assertEqual(get_project_uuid(), '000000')
 
         os.remove(metadata_path)
+
+
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+class RepoManagerProjectPlatformTest(ProjectPlatformMixin):
+    def test_init(self):
+        repo = RepoConfig(root_project=False)
+        self.assertFalse(repo.root_project)
+        self.assertEqual(repo.repo_path, '/home/src/test/mage_platform')
+        self.assertEqual(repo.variables_dir, '/home/src/test/mage_platform')
+
+        repo = RepoConfig(root_project=True)
+        self.assertTrue(repo.root_project)
+        self.assertEqual(repo.repo_path, '/home/src/test')
+        self.assertEqual(repo.variables_dir, '/home/src/test')
+
+    def test_from_dict(self):
+        repo = RepoConfig.from_dict(dict(), root_project=False)
+        self.assertFalse(repo.root_project)
+        self.assertEqual(repo.repo_path, '/home/src/test/mage_platform')
+        self.assertEqual(repo.variables_dir, '/home/src/test/mage_platform')
+
+        repo = RepoConfig.from_dict(dict(), root_project=True)
+        self.assertTrue(repo.root_project)
+        self.assertEqual(repo.repo_path, '/home/src/test')
+        self.assertEqual(repo.variables_dir, '/home/src/test')
+
+    def test_metadata_path(self):
+        repo = RepoConfig(root_project=False)
+        self.assertEqual(repo.metadata_path, '/home/src/test/mage_platform/metadata.yaml')
+
+        repo = RepoConfig(root_project=True)
+        self.assertEqual(repo.metadata_path, '/home/src/test/metadata.yaml')
+
+    def test_get_repo_config(self):
+        repo = get_repo_config(root_project=False)
+        self.assertFalse(repo.root_project)
+        self.assertEqual(repo.repo_path, '/home/src/test/mage_platform')
+        self.assertEqual(repo.variables_dir, '/home/src/test/mage_platform')
+
+        repo = get_repo_config(root_project=True)
+        self.assertTrue(repo.root_project)
+        self.assertEqual(repo.repo_path, '/home/src/test')
+        self.assertEqual(repo.variables_dir, '/home/src/test')
+
+    def test_init_repo(self):
+        shutil.rmtree('/home/src/test2')
+        with patch('mage_ai.data_preparation.repo_manager.get_repo_config') as mock_get_repo_config:
+            init_repo('/home/src/test2', root_project=True)
+            mock_get_repo_config.assert_called_once_with('/home/src/test2', root_project=True)
+        shutil.rmtree('/home/src/test2')
