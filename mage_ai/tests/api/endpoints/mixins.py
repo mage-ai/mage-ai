@@ -32,7 +32,13 @@ from mage_ai.tests.factory import create_pipeline_with_blocks
 @contextmanager
 def patch_manager(patch_settings: List[Tuple]):
     with ExitStack() as stack:
-        yield [stack.enter_context(patch(settings)) for settings in patch_settings]
+        yield [stack.enter_context(patch(*settings)) for settings in patch_settings]
+
+
+@contextmanager
+def patch_object_manager(patch_settings: List[Tuple]):
+    with ExitStack() as stack:
+        yield [stack.enter_context(patch.object(*settings)) for settings in patch_settings]
 
 
 def entity_name(resource: str) -> str:
@@ -70,6 +76,7 @@ def build_list_endpoint_tests(
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
     patch_function_settings: List[Tuple] = None,
+    patch_object_settings: List[Tuple] = None,
     assert_after: Callable[[AsyncDBTestCase], List[Dict]] = None,
 ):
     def _build_test_list_endpoint(
@@ -87,6 +94,7 @@ def build_list_endpoint_tests(
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
         patch_function_settings=patch_function_settings,
+        patch_object_settings=patch_object_settings,
         assert_after=assert_after,
     ):
         async def _test_list_endpoint(
@@ -105,6 +113,7 @@ def build_list_endpoint_tests(
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
             patch_function_settings=patch_function_settings,
+            patch_object_settings=patch_object_settings,
             assert_after=assert_after,
         ):
             await self.build_test_list_endpoint(
@@ -122,6 +131,7 @@ def build_list_endpoint_tests(
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
                 patch_function_settings=patch_function_settings,
+                patch_object_settings=patch_object_settings,
                 assert_after=assert_after,
             )
         return _test_list_endpoint
@@ -386,6 +396,7 @@ def build_update_endpoint_tests(
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
     patch_function_settings: List[Tuple] = None,
+    patch_object_settings: List[Tuple] = None,
 ):
     def _build_test_update_endpoint(
         authentication: int = None,
@@ -401,6 +412,7 @@ def build_update_endpoint_tests(
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
         patch_function_settings=patch_function_settings,
+        patch_object_settings=patch_object_settings,
     ):
         async def _test_update_endpoint(
             self,
@@ -417,6 +429,7 @@ def build_update_endpoint_tests(
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
             patch_function_settings=patch_function_settings,
+            patch_object_settings=patch_object_settings,
         ):
             payload = build_payload(self)
             if payload and inspect.isawaitable(payload):
@@ -436,6 +449,7 @@ def build_update_endpoint_tests(
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
                 patch_function_settings=patch_function_settings,
+                patch_object_settings=patch_object_settings,
             )
         return _test_update_endpoint
 
@@ -620,6 +634,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
         patch_function_settings: List[Tuple] = None,
+        patch_object_settings: List[Tuple] = None,
         assert_after: Callable[[AsyncDBTestCase], List[Dict]] = None,
     ):
         self.authentication = authentication
@@ -640,50 +655,51 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         )
 
         with patch_manager(patch_function_settings or []) as mocks:
-            with patch(
-                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
-                authentication or permissions or 0,
-            ):
+            with patch_object_manager(patch_object_settings or []) as mock_objects:
                 with patch(
-                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
-                    permissions or 0,
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
+                    authentication or permissions or 0,
                 ):
-                    meta = None
-                    if build_meta:
-                        meta = build_meta(self)
-                        if meta and inspect.isawaitable(meta):
-                            meta = await meta
-                    query = None
-                    if build_query:
-                        query = build_query(self)
-                        if query and inspect.isawaitable(query):
-                            query = await query
+                    with patch(
+                        'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
+                        permissions or 0,
+                    ):
+                        meta = None
+                        if build_meta:
+                            meta = build_meta(self)
+                            if meta and inspect.isawaitable(meta):
+                                meta = await meta
+                        query = None
+                        if build_query:
+                            query = build_query(self)
+                            if query and inspect.isawaitable(query):
+                                query = await query
 
-                    base_operation = BaseOperation(
-                        action=OperationType.LIST,
-                        meta=meta,
-                        query=query,
-                        resource=resource,
-                        resource_parent=resource_parent,
-                        resource_parent_id=resource_parent_id,
-                        user=self.user if authentication or permissions else None,
-                    )
+                        base_operation = BaseOperation(
+                            action=OperationType.LIST,
+                            meta=meta,
+                            query=query,
+                            resource=resource,
+                            resource_parent=resource_parent,
+                            resource_parent_id=resource_parent_id,
+                            user=self.user if authentication or permissions else None,
+                        )
 
-                    response = await base_operation.execute()
-                    results = response[resource]
+                        response = await base_operation.execute()
+                        results = response[resource]
 
-                    self.assertEqual(
-                        len(results),
-                        get_list_count(self) if get_list_count else list_count,
-                    )
+                        self.assertEqual(
+                            len(results),
+                            get_list_count(self) if get_list_count else list_count,
+                        )
 
-                    if result_keys_to_compare:
-                        for result in results:
-                            validations = [k in result for k in result_keys_to_compare]
-                            self.assertTrue(all(validations))
+                        if result_keys_to_compare:
+                            for result in results:
+                                validations = [k in result for k in result_keys_to_compare]
+                                self.assertTrue(all(validations))
 
-                    if assert_after:
-                        assert_after(self, results, mocks=mocks)
+                        if assert_after:
+                            assert_after(self, results, mocks=mocks, mock_objects=mock_objects)
 
     async def build_test_create_endpoint(
         self,
@@ -850,6 +866,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
         patch_function_settings: List[Tuple] = None,
+        patch_object_settings: List[Tuple] = None,
     ):
         self.authentication = authentication
         self.permissions = permissions

@@ -1,7 +1,7 @@
 import shutil
 from functools import reduce
 
-from mage_ai.api.resources.ProjectResource import build_project
+from mage_ai.api.resources.ProjectResource import ProjectResource, build_project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings.repo import set_repo_path
 from mage_ai.shared.hash import merge_dict
@@ -22,11 +22,42 @@ class ProjectAPIEndpointTest(BaseAPIEndpointTest):
         shutil.rmtree(self.repo_path)
 
 
-async def __assert_after_list(self, result, **kwargs):
-    pass
+def __assert_after_list(self, result, **kwargs):
+    self.assertEqual(result[1]['projects'], dict(mage={}))
 
 
 # No parent
+build_list_endpoint_tests(
+    ProjectAPIEndpointTest,
+    list_count=1,
+    resource='project',
+    result_keys_to_compare=[
+        'features',
+        'help_improve_mage',
+        'latest_version',
+        'name',
+        'openai_api_key',
+        'pipelines',
+        'project_uuid',
+        'projects',
+        'repo_path',
+        'root_project',
+        'settings',
+        'version',
+    ],
+)
+
+
+async def __member(_, user, **kwargs):
+    model = await build_project(**kwargs)
+
+    if kwargs.get('root_project'):
+        model['projects'] = dict(
+            mage={},
+        )
+
+    return ProjectResource(model, user, **kwargs)
+
 build_list_endpoint_tests(
     ProjectAPIEndpointTest,
     list_count=2,
@@ -45,10 +76,12 @@ build_list_endpoint_tests(
         'settings',
         'version',
     ],
+    test_uuid='with_multiple_projects',
     patch_function_settings=[
         ('mage_ai.api.resources.ProjectResource.project_platform_activated', lambda: True),
+        ('mage_ai.api.resources.ProjectResource.ProjectResource.member', __member),
     ],
-    assert_after=__assert_after_list
+    assert_after=__assert_after_list,
 )
 
 
@@ -92,6 +125,6 @@ build_update_endpoint_tests(
     get_model_before_update=_get_model_before_update,
     assert_after_update=_assert_after_update,
     patch_function_settings=[
-        ('mage_ai.api.resources.ProjectResource.activate_project'),
+        ('mage_ai.api.resources.ProjectResource.activate_project',),
     ],
 )
