@@ -1,6 +1,7 @@
 import importlib
 import inspect
-from typing import Any, Callable, Dict, List, Union
+from contextlib import ExitStack, contextmanager
+from typing import Any, Callable, Dict, List, Tuple, Union
 from unittest.mock import patch
 
 import inflection
@@ -26,6 +27,12 @@ from mage_ai.orchestration.db.models.schedules import (
 from mage_ai.shared.strings import classify, singularize
 from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
+
+
+@contextmanager
+def patch_manager(patch_settings: List[Tuple]):
+    with ExitStack() as stack:
+        yield [stack.enter_context(patch(settings)) for settings in patch_settings]
 
 
 def entity_name(resource: str) -> str:
@@ -62,6 +69,8 @@ def build_list_endpoint_tests(
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
+    patch_function_settings: List[Tuple] = None,
+    assert_after: Callable[[AsyncDBTestCase], List[Dict]] = None,
 ):
     def _build_test_list_endpoint(
         authentication: int = None,
@@ -77,6 +86,8 @@ def build_list_endpoint_tests(
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
+        patch_function_settings=patch_function_settings,
+        assert_after=assert_after,
     ):
         async def _test_list_endpoint(
             self,
@@ -93,6 +104,8 @@ def build_list_endpoint_tests(
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
+            patch_function_settings=patch_function_settings,
+            assert_after=assert_after,
         ):
             await self.build_test_list_endpoint(
                 authentication=authentication,
@@ -108,6 +121,8 @@ def build_list_endpoint_tests(
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
+                patch_function_settings=patch_function_settings,
+                assert_after=assert_after,
             )
         return _test_list_endpoint
 
@@ -370,6 +385,7 @@ def build_update_endpoint_tests(
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
+    patch_function_settings: List[Tuple] = None,
 ):
     def _build_test_update_endpoint(
         authentication: int = None,
@@ -384,6 +400,7 @@ def build_update_endpoint_tests(
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
+        patch_function_settings=patch_function_settings,
     ):
         async def _test_update_endpoint(
             self,
@@ -399,6 +416,7 @@ def build_update_endpoint_tests(
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
+            patch_function_settings=patch_function_settings,
         ):
             payload = build_payload(self)
             if payload and inspect.isawaitable(payload):
@@ -417,6 +435,7 @@ def build_update_endpoint_tests(
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
+                patch_function_settings=patch_function_settings,
             )
         return _test_update_endpoint
 
@@ -600,6 +619,8 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
+        patch_function_settings: List[Tuple] = None,
+        assert_after: Callable[[AsyncDBTestCase], List[Dict]] = None,
     ):
         self.authentication = authentication
         self.permissions = permissions
@@ -618,47 +639,51 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             permission_settings=permission_settings,
         )
 
-        with patch(
-            'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
-            authentication or permissions or 0,
-        ):
+        with patch_manager(patch_function_settings or []) as mocks:
             with patch(
-                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
-                permissions or 0,
+                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
+                authentication or permissions or 0,
             ):
-                meta = None
-                if build_meta:
-                    meta = build_meta(self)
-                    if meta and inspect.isawaitable(meta):
-                        meta = await meta
-                query = None
-                if build_query:
-                    query = build_query(self)
-                    if query and inspect.isawaitable(query):
-                        query = await query
+                with patch(
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
+                    permissions or 0,
+                ):
+                    meta = None
+                    if build_meta:
+                        meta = build_meta(self)
+                        if meta and inspect.isawaitable(meta):
+                            meta = await meta
+                    query = None
+                    if build_query:
+                        query = build_query(self)
+                        if query and inspect.isawaitable(query):
+                            query = await query
 
-                base_operation = BaseOperation(
-                    action=OperationType.LIST,
-                    meta=meta,
-                    query=query,
-                    resource=resource,
-                    resource_parent=resource_parent,
-                    resource_parent_id=resource_parent_id,
-                    user=self.user if authentication or permissions else None,
-                )
+                    base_operation = BaseOperation(
+                        action=OperationType.LIST,
+                        meta=meta,
+                        query=query,
+                        resource=resource,
+                        resource_parent=resource_parent,
+                        resource_parent_id=resource_parent_id,
+                        user=self.user if authentication or permissions else None,
+                    )
 
-                response = await base_operation.execute()
-                results = response[resource]
+                    response = await base_operation.execute()
+                    results = response[resource]
 
-                self.assertEqual(
-                    len(results),
-                    get_list_count(self) if get_list_count else list_count,
-                )
+                    self.assertEqual(
+                        len(results),
+                        get_list_count(self) if get_list_count else list_count,
+                    )
 
-                if result_keys_to_compare:
-                    for result in results:
-                        validations = [k in result for k in result_keys_to_compare]
-                        self.assertTrue(all(validations))
+                    if result_keys_to_compare:
+                        for result in results:
+                            validations = [k in result for k in result_keys_to_compare]
+                            self.assertTrue(all(validations))
+
+                    if assert_after:
+                        assert_after(self, results, mocks=mocks)
 
     async def build_test_create_endpoint(
         self,
@@ -824,6 +849,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
+        patch_function_settings: List[Tuple] = None,
     ):
         self.authentication = authentication
         self.permissions = permissions
@@ -842,67 +868,73 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             permission_settings=permission_settings,
         )
 
-        with patch(
-            'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
-            authentication or permissions or 0,
-        ):
+        with patch_manager(patch_function_settings or []) as mocks:
             with patch(
-                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
-                permissions or 0,
+                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
+                authentication or permissions or 0,
             ):
-                base_operation = BaseOperation(
-                    action=OperationType.UPDATE,
-                    payload={
-                        singularize(resource): payload,
-                    },
-                    pk=resource_id,
-                    resource=resource,
-                    resource_parent=resource_parent,
-                    resource_parent_id=resource_parent_id,
-                    user=self.user if authentication or permissions else None,
-                )
+                with patch(
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
+                    permissions or 0,
+                ):
+                    base_operation = BaseOperation(
+                        action=OperationType.UPDATE,
+                        payload={
+                            singularize(resource): payload,
+                        },
+                        pk=resource_id,
+                        resource=resource,
+                        resource_parent=resource_parent,
+                        resource_parent_id=resource_parent_id,
+                        user=self.user if authentication or permissions else None,
+                    )
 
-                updated_at = None
-                if assert_after_update is None:
-                    model = get_resource(resource).model_class.get(resource_id)
-                    if hasattr(model, 'updated_at'):
-                        updated_at = model.updated_at
+                    updated_at = None
+                    if assert_after_update is None:
+                        model = get_resource(resource).model_class.get(resource_id)
+                        if hasattr(model, 'updated_at'):
+                            updated_at = model.updated_at
 
-                model_before_update = None
-                if assert_after_update is not None:
-                    if get_model_before_update is not None:
-                        model_before_update = get_model_before_update(self)
-                        if model_before_update and inspect.isawaitable(model_before_update):
-                            model_before_update = await model_before_update
+                    model_before_update = None
+                    if assert_after_update is not None:
+                        if get_model_before_update is not None:
+                            model_before_update = get_model_before_update(self)
+                            if model_before_update and inspect.isawaitable(model_before_update):
+                                model_before_update = await model_before_update
 
-                        if model_before_update and isinstance(model_before_update, BaseModel):
-                            current_attributes = dict(model_before_update.__dict__)
-                            current_attributes.pop('_sa_instance_state')
-                            model_before_update = model_before_update.__class__(
-                                **current_attributes,
-                            )
+                            if model_before_update and isinstance(model_before_update, BaseModel):
+                                current_attributes = dict(model_before_update.__dict__)
+                                current_attributes.pop('_sa_instance_state')
+                                model_before_update = model_before_update.__class__(
+                                    **current_attributes,
+                                )
 
-                response = await base_operation.execute()
-                key = singularize(resource)
-                if key not in response:
-                    raise Exception(response)
+                    response = await base_operation.execute()
+                    key = singularize(resource)
+                    if key not in response:
+                        raise Exception(response)
 
-                result = response[key]
+                    result = response[key]
 
-                self.assertIsNotNone(result)
+                    self.assertIsNotNone(result)
 
-                if assert_after_update is not None:
-                    validation = assert_after_update(self, result, model_before_update)
-                    if validation and inspect.isawaitable(validation):
-                        validation = await validation
-                    self.assertTrue(validation)
-                else:
-                    model = get_resource(resource).model_class.get(resource_id)
-                    if updated_at is not None:
-                        self.assertNotEqual(updated_at, model.updated_at)
+                    if assert_after_update is not None:
+                        validation = assert_after_update(
+                            self,
+                            result,
+                            model_before_update,
+                            mocks=mocks,
+                        )
+                        if validation and inspect.isawaitable(validation):
+                            validation = await validation
+                        self.assertTrue(validation)
                     else:
-                        for k, v in payload.items():
-                            self.assertNotEqual(getattr(model, k), v)
+                        model = get_resource(resource).model_class.get(resource_id)
+                        if updated_at is not None:
+                            self.assertNotEqual(updated_at, model.updated_at)
+                        else:
+                            for k, v in payload.items():
+                                self.assertNotEqual(getattr(model, k), v)
 
     async def build_test_delete_endpoint(
         self,

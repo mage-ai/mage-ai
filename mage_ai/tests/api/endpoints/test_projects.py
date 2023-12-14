@@ -22,10 +22,14 @@ class ProjectAPIEndpointTest(BaseAPIEndpointTest):
         shutil.rmtree(self.repo_path)
 
 
+async def __assert_after_list(self, result, **kwargs):
+    pass
+
+
 # No parent
 build_list_endpoint_tests(
     ProjectAPIEndpointTest,
-    list_count=1,
+    list_count=2,
     resource='project',
     result_keys_to_compare=[
         'features',
@@ -35,8 +39,16 @@ build_list_endpoint_tests(
         'openai_api_key',
         'pipelines',
         'project_uuid',
+        'projects',
+        'repo_path',
+        'root_project',
+        'settings',
         'version',
     ],
+    patch_function_settings=[
+        ('mage_ai.api.resources.ProjectResource.project_platform_activated', lambda: True),
+    ],
+    assert_after=__assert_after_list
 )
 
 
@@ -44,7 +56,9 @@ async def _get_model_before_update(_self):
     return await build_project()
 
 
-async def _assert_after_update(self, result, model_before_update):
+async def _assert_after_update(self, result, model_before_update, **kwargs):
+    mocks = kwargs.get('mocks')
+
     model_after_update = await _get_model_before_update(self)
 
     before_update = all([
@@ -58,6 +72,8 @@ async def _assert_after_update(self, result, model_before_update):
         model_after_update['openai_api_key'] == result['openai_api_key'],
     ])
 
+    mocks[0].assert_called_once_with('project_name')
+
     return before_update and after_update
 
 
@@ -66,6 +82,7 @@ build_update_endpoint_tests(
     resource='project',
     get_resource_id=lambda self: self.faker.unique.name(),
     build_payload=lambda self: dict(
+        activate_project='project_name',
         help_improve_mage=True,
         features=reduce(lambda obj, key: merge_dict(obj, {
             key.value: True,
@@ -74,4 +91,7 @@ build_update_endpoint_tests(
     ),
     get_model_before_update=_get_model_before_update,
     assert_after_update=_assert_after_update,
+    patch_function_settings=[
+        ('mage_ai.api.resources.ProjectResource.activate_project'),
+    ],
 )
