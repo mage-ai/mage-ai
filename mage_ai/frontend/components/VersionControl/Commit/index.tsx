@@ -110,7 +110,16 @@ function Commit({
     },
   );
 
+  const repositoryUrl = useMemo(
+    () => repositories?.find(({ name }) => name === repositoryName)?.url,
+    [
+      repositories,
+      repositoryName,
+    ],
+  );
+
   const { data: dataPullRequests, mutate: fetchPullRequests } = api.pull_requests.list({
+    remote_url: repositoryUrl,
     repository: repositoryName,
   }, {}, {
     pauseFetch: !repositoryName,
@@ -173,6 +182,7 @@ function Commit({
   ), [pullRequests]);
 
   const { data: dataGitBranches } = api.git_custom_branches.list({
+    remote_url: repositoryUrl,
     repository: repositoryName,
   }, {}, {
     pauseFetch: !repositoryName,

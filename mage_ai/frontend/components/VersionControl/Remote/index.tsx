@@ -48,6 +48,7 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { set } from '@storage/localStorage';
+import Authentication from './Authentication';
 
 type RemoteProps = {
   actionRemoteName: string;
@@ -386,80 +387,6 @@ function Remote({
 
   return (
     <>
-      {dataOauth && (
-        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-          {oauth?.authenticated && (
-            <>
-              <Button
-                beforeIcon={<GitHubIcon size={UNIT * 2} />}
-                disabled
-              >
-                Successfully authenticated with GitHub
-              </Button>
-
-              <Spacing my={1}>
-                <Text muted>
-                  You can pull, push, and create pull requests on GitHub.
-                </Text>
-              </Spacing>
-
-              <Button
-                loading={isLoadingUpdateOauth}
-                // @ts-ignore
-                onClick={() => updateOauth({
-                  oauth: {
-                    action_type: 'reset',
-                  },
-                })}
-                warning
-              >
-                Reset GitHub authentication
-              </Button>
-            </>
-          )}
-          {!oauth?.authenticated && oauth?.url && (
-            <>
-              {accessTokenExists && (
-                <Spacing mb={2}>
-                  <Button
-                    disabled
-                  >
-                    Using access token from Git Settings
-                  </Button>
-                  <Spacing mt={1}>
-                    <Text muted>
-                      Some features may not work unless you authenticate with GitHub.
-                    </Text>
-                  </Spacing>
-                </Spacing>
-              )}
-
-              <Button
-                beforeIcon={<GitHubIcon size={UNIT * 2} />}
-                loading={isLoadingCreateOauth}
-                onClick={() => {
-                  const url = oauth?.url;
-                  const q = queryFromUrl(url);
-                  const state = q.state;
-                  set(state, oauth?.redirect_query_params || {});
-                  router.push(url);
-                }}
-                primary
-              >
-                Authenticate with GitHub
-              </Button>
-
-              <Spacing mt={1}>
-                <Text muted>
-                  Authenticating with GitHub will allow you to pull, push,
-                  and create pull requests on GitHub.
-                </Text>
-              </Spacing>
-            </>
-          )}
-        </Spacing>
-      )}
-
       <Spacing mb={UNITS_BETWEEN_SECTIONS}>
         <Headline>
           Setup
@@ -495,7 +422,9 @@ function Remote({
           <FlexContainer alignItems="center">
             <TextInput
               disabled={gitInitialized && !editRepoPathActive}
+              fullWidth
               label="Git directory"
+              maxWidth={400}
               monospace
               onChange={e => setRepoPath(e.target.value)}
               ref={refInputRepoPath}
@@ -556,6 +485,14 @@ function Remote({
             )}
           </FlexContainer>
         </Spacing>
+      </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Authentication
+          branch={branch}
+          isLoadingCreateOauth={isLoadingCreateOauth}
+          showError={showError}
+        />
       </Spacing>
 
       {gitInitialized && (
