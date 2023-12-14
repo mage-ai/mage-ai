@@ -349,6 +349,7 @@ class ProjectPlatformMixin(AsyncDBTestCase):
         content = yaml.dump(dict(
             projects={
                 self.platform_project_name: {},
+                'mage_data': {},
             },
         ))
         safe_write(platform_settings_full_path(), content)

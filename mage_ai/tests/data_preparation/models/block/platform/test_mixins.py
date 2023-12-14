@@ -1,8 +1,10 @@
+import os
 from typing import Callable
 from unittest.mock import patch
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlock, DBTBlockSQL
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
 from mage_ai.tests.api.endpoints.mixins import BaseAPIEndpointTest
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
@@ -185,3 +187,247 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
                             )
                             mock_create_parent_directories.assert_not_called()
                             mock_update_content.assert_not_called()
+
+
+@patch(
+    'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+    lambda: True,
+)
+@patch(
+    'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
+    lambda: True,
+)
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
+    def test_project_platform_activated(self):
+        with patch(
+            'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+            lambda: False,
+        ):
+            self.assertFalse(self.build_block().project_platform_activated)
+
+        self.assertTrue(self.build_block().project_platform_activated)
+
+    def test_clean_file_paths(self):
+        os.makedirs(f'{self.repo_path}/dir3/dir4', exist_ok=True)
+        with open(f'{self.repo_path}/dir3/dbt_project.yml', 'w') as f:
+            f.write('')
+        with open(f'{self.repo_path}/dir3/dir4/filename.sql', 'w') as f:
+            f.write('')
+
+        configuration = dict(
+            file_path='test/mage_platform/dir1/dir2/filename.sql',
+            file_source=dict(
+                path='test/mage_platform/dir3/dir4/filename.sql',
+            ),
+        )
+        block = self.build_block()
+        block.type = BlockType.DBT
+
+        self.assertEqual(block.clean_file_paths(configuration), dict(
+            file_path='mage_platform/dir1/dir2/filename.sql',
+            file_source=dict(
+                path='mage_platform/dir3/dir4/filename.sql',
+                project_path='mage_platform/dir3',
+            ),
+        ))
+
+        configuration['file_source']['project_path'] = self.faker.unique.name()
+        configuration_new = block.clean_file_paths(configuration)
+        self.assertEqual(configuration_new, dict(
+            file_path='mage_platform/dir1/dir2/filename.sql',
+            file_source=dict(
+                path='mage_platform/dir3/dir4/filename.sql',
+                project_path='mage_platform/dir3',
+            ),
+        ))
+
+        block.configuration = configuration_new
+        project_path = self.faker.unique.name()
+        configuration_new['file_source']['project_path'] = project_path
+        self.assertEqual(block.clean_file_paths(configuration_new), dict(
+            file_path='mage_platform/dir1/dir2/filename.sql',
+            file_source=dict(
+                path='mage_platform/dir3/dir4/filename.sql',
+                project_path=project_path,
+            ),
+        ))
+
+    def test_is_from_another_project(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            with patch(
+                'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
+                lambda: True,
+            ):
+                block = self.build_block()
+                block._configuration = dict(
+                    file_source=dict(path='test/mage_platform/mage.py'),
+                )
+                block._project_platform_activated = True
+                self.assertFalse(block.is_from_another_project())
+
+                block._configuration = dict(
+                    file_source=dict(path='test/mage_data/mage.py'),
+                )
+                self.assertTrue(block.is_from_another_project())
+
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
+            with patch(
+                'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
+                lambda: False,
+            ):
+                block = self.build_block()
+                block._configuration = dict(
+                    file_source=dict(path='test/mage_platform/mage.py'),
+                )
+                block._project_platform_activated = True
+                self.assertFalse(block.is_from_another_project())
+
+    def test_get_file_path_from_source(self):
+        block = self.build_block()
+        block._configuration = dict(
+            file_source=dict(path='test/mage_platform/mage.py'),
+        )
+        with patch.object(block, 'is_from_another_project', lambda: True):
+            self.assertEqual(block.get_file_path_from_source(), 'test/mage_platform/mage.py')
+
+    def test_get_project_path_from_source(self):
+        block = self.build_block()
+
+        block._configuration = dict(
+            file_source=dict(project_path='mage_platform/mage.py'),
+        )
+        with patch.object(block, 'is_from_another_project', lambda: True):
+            self.assertEqual(
+                block.get_project_path_from_source(),
+                '/home/src/test/mage_platform/mage.py',
+            )
+
+        block._configuration = dict(
+            file_source=dict(project_path='/mage_platform/mage.py'),
+        )
+        with patch.object(block, 'is_from_another_project', lambda: True):
+            self.assertEqual(
+                block.get_project_path_from_source(),
+                '/mage_platform/mage.py',
+            )
+
+    def test_get_project_path_from_project_name(self):
+        block = self.build_block()
+        self.assertIsNone(block.get_project_path_from_project_name('test/mage_platform/dir1'))
+
+        self.assertEqual(
+            block.get_project_path_from_project_name('mage_data/dir1'),
+            '/home/src/test/mage_data/dir1',
+        )
+
+    def test_get_base_project_from_source(self):
+        block = self.build_block()
+        block._configuration = dict(
+            dbt_project_name='mage_data/fire',
+            file_source=dict(path='mage_data/mage.py'),
+        )
+        self.assertEqual(block.get_base_project_from_source(), '/home/src/test/mage_data')
+
+    def test_build_file(self):
+        block = self.build_block()
+        block._configuration = dict(
+            file_source=dict(path='mage_data/utils/mage.py'),
+        )
+        file = block.build_file()
+        self.assertEqual(str(file.filename), 'utils/mage.py')
+        self.assertEqual(str(file.dir_path), 'mage_data')
+        self.assertEqual(str(file.repo_path), '/home/src/test')
+
+    def test_hydrate_dbt_nodes(self):
+        block = self.build_block()
+        block.project_path = '/home/src/test/mage_data/dbt/demo'
+
+        nodes_default = 'fire'
+        nodes_init = [
+            dict(
+                depends_on=dict(nodes=['water']),
+                original_file_path='models/users.sql',
+                unique_id='ice',
+            ),
+        ]
+
+        block._configuration = dict(
+            file_source=dict(path='mage_platform/utils/mage.py'),
+        )
+        self.assertEqual(block.hydrate_dbt_nodes(nodes_default, nodes_init), nodes_default)
+
+        block._configuration = dict(
+            file_source=dict(path='mage_data/utils/mage.py'),
+        )
+        self.assertEqual(block.hydrate_dbt_nodes(nodes_default, nodes_init), dict(
+            ice=dict(
+                file_path='test/mage_data/dbt/demo/models/users.sql',
+                original_file_path='models/users.sql',
+                upstream_nodes=set(['water']),
+            ),
+        ))
+
+    def test_node_uuids_mapping(self):
+        block = self.build_block()
+        block.project_path = '/home/src/test/mage_data/dbt/demo'
+
+        nodes_init = [
+            dict(
+                depends_on=dict(nodes=['water']),
+                original_file_path='models/users.sql',
+                unique_id='ice',
+            ),
+        ]
+
+        default_value = 'fire'
+        block._configuration = dict(
+            file_source=dict(path='mage_platform/utils/mage.py'),
+        )
+        self.assertEqual(block.node_uuids_mapping(default_value, None), default_value)
+
+        block._configuration = dict(
+            file_source=dict(path='mage_data/utils/mage.py'),
+        )
+        nodes = block.hydrate_dbt_nodes(None, nodes_init)
+        self.assertEqual(block.node_uuids_mapping(None, nodes), dict(
+            ice='dbt/demo/models/users',
+        ))
+
+    def test_build_dbt_block(self):
+        block = self.build_block()
+        block._configuration = dict(
+            file_source=dict(path='mage_data/utils/mage.py'),
+        )
+        block.project_path = '/home/src/test/mage_data/dbt/demo'
+
+        os.makedirs('/home/src/test/mage_data/dbt/demo/models', exist_ok=True)
+        with open('/home/src/test/mage_data/dbt/demo/models/users.sql', 'w') as f:
+            f.write('')
+        with open('/home/src/test/mage_data/dbt/dbt_project.yml', 'w') as f:
+            f.write('')
+
+        name = self.faker.unique.name()
+        block = block.build_dbt_block(
+            block_class=DBTBlock,
+            block_dict=dict(
+                block_type=BlockType.DBT,
+                configuration=None,
+                language=BlockLanguage.SQL,
+                name=name,
+                uuid=self.faker.unique.name(),
+                pipeline=None,
+            ),
+            node=dict(original_file_path='models/users.sql'),
+        )
+
+        self.assertTrue(isinstance(block, DBTBlockSQL))
+        self.assertEqual(block.type, BlockType.DBT)
+        self.assertEqual(block.configuration, dict(
+            file_source=dict(
+                path='mage_data/dbt/demo/models/users.sql',
+                project_path='mage_data/dbt',
+            ),
+        ))
+        self.assertEqual(block.language, BlockLanguage.SQL)
+        self.assertEqual(block.name, name)

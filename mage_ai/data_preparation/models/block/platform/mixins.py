@@ -7,9 +7,7 @@ from mage_ai.data_preparation.models.block.platform.utils import (
 )
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.file import File
-from mage_ai.settings.platform import (
-    project_platform_activated as project_platform_activated_func,
-)
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
     add_root_repo_path_to_relative_path,
@@ -29,7 +27,7 @@ class ProjectPlatformAccessible:
         if self._project_platform_activated is not None:
             return self._project_platform_activated
 
-        self._project_platform_activated = project_platform_activated_func()
+        self._project_platform_activated = project_platform_activated()
 
         return self._project_platform_activated
 
