@@ -1,5 +1,5 @@
 import os
-from typing import Callable
+from typing import Callable, List
 
 
 def reverse_readline(filename, buf_size=8192):
@@ -46,6 +46,15 @@ def read_last_line(filename: str) -> str:
         last_line = f.readline().decode()
 
         return last_line
+
+
+def get_full_file_paths_containing_item(root_full_path: str, comparator: Callable) -> List[str]:
+    configfiles = [os.path.join(
+        dirpath,
+        f,
+    ) for dirpath, dirnames, files in os.walk(root_full_path) for f in files if comparator(f)]
+
+    return configfiles
 
 
 def find_directory(top_level_path: str, comparator: Callable) -> str:

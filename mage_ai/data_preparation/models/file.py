@@ -429,12 +429,3 @@ def traverse(
     )
 
     return tree_entry
-
-
-def get_full_file_paths_containing_item(root_full_path: str, comparator: Callable) -> List[str]:
-    configfiles = [os.path.join(
-        dirpath,
-        f,
-    ) for dirpath, dirnames, files in os.walk(root_full_path) for f in files if comparator(f)]
-
-    return configfiles

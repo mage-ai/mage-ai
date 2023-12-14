@@ -10,10 +10,10 @@ import yaml
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.file import get_full_file_paths_containing_item
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.files import get_full_file_paths_containing_item
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
