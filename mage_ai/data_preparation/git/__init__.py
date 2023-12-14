@@ -45,6 +45,7 @@ class Git:
 
         self.repo_path = os.getcwd()
 
+        print(project_platform_activated())
         if project_platform_activated():
             git_dict = git_settings()
             if git_dict and git_dict.get('path'):
