@@ -245,7 +245,14 @@ class Pipeline:
                 if zip_size / 1000 > PIPELINE_MAX_SIZE:  # prevention against zip-bombs
                     raise PipelineZipTooLargeError(
                         f'Pipeline zip excedes size limit {PIPELINE_MAX_SIZE/1000}Kb')
-                zipf.extractall(tmp_dir)
+
+                zip_contents = zipf.namelist()
+                # Check if zip contains a directory
+                if len(zip_content) == 1 and zip_contents[0].endswith('/'):
+                    dir_name = os.path.join(tmp_dir, zip_contents[0])
+                    zipf.extractall(dir_name)
+                else:
+                    zipf.extractall(tmp_dir)
 
             config_zip_path = self.__find_pipeline_file(
                 self, tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
