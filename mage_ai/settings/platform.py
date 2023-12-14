@@ -130,10 +130,10 @@ def project_platform_activated() -> bool:
 
 
 def platform_settings() -> Dict:
-    config = __load_platform_settings(__platform_settings_full_path())
+    config = __load_platform_settings(__platform_settings_full_path()) or {}
     config['projects'] = merge_dict(
-        __get_projects_of_any_type(),
-        config.get('projects') or {},
+        __get_projects_of_any_type() or {},
+        (config.get('projects') if config else {}) or {},
     )
     return config
 
