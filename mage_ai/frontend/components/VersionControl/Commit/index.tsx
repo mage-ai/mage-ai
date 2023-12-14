@@ -477,6 +477,7 @@ function Commit({
                     createPullRequest({
                       pull_request: {
                         ...pullRequest,
+                        remote_url: repositoryUrl,
                         repository: repositoryName,
                       },
                     });

@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 from mage_ai.data_preparation.git.clients.base import Client
@@ -51,18 +53,20 @@ class BitbucketClient(Client):
 
         arr = []
         for pr in data.get('values', []):
-            arr.append(dict(
-                body=pr.get('summary', {}).get('raw'),
-                created_at=pr.get('created_on'),
-                id=pr.get('id'),
-                is_merged=pr.get('state') == 'MERGED',
-                last_modified=pr.get('updated_on'),
-                merged=pr.get('state') == 'MERGED',
-                state=pr.get('state'),
-                title=pr.get('title'),
-                url=pr.get('links', {}).get('html', {}).get('href'),
-                user=pr.get('author', {}).get('display_name'),
-            ))
+            arr.append(
+                dict(
+                    body=pr.get('summary', {}).get('raw'),
+                    created_at=pr.get('created_on'),
+                    id=pr.get('id'),
+                    is_merged=pr.get('state') == 'MERGED',
+                    last_modified=pr.get('updated_on'),
+                    merged=pr.get('state') == 'MERGED',
+                    state=pr.get('state'),
+                    title=pr.get('title'),
+                    url=pr.get('links', {}).get('html', {}).get('href'),
+                    user=pr.get('author', {}).get('display_name'),
+                )
+            )
 
         return arr
 
@@ -74,6 +78,21 @@ class BitbucketClient(Client):
         compare_branch: str,
         title: str,
     ):
+        data = {
+            'title': title,
+            'description': body,
+            'source': {
+                'branch': {
+                    'name': compare_branch,
+                },
+            },
+            'destination': {
+                'branch': {
+                    'name': base_branch,
+                },
+            },
+        }
+
         resp = requests.post(
             f'https://api.bitbucket.org/2.0/repositories/{repository_name}/pullrequests',
             headers={
@@ -81,22 +100,11 @@ class BitbucketClient(Client):
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json',
             },
-            data={
-                'title': title,
-                'description': body,
-                'source': {
-                    'branch': {
-                        'name': compare_branch,
-                    },
-                },
-                'destination': {
-                    'branch': {
-                        'name': base_branch,
-                    },
-                },
-            },
+            data=json.dumps(data),
             timeout=10,
         )
+
+        resp.raise_for_status()
         pr = resp.json()
         return dict(
             body=pr.get('summary', {}).get('raw'),

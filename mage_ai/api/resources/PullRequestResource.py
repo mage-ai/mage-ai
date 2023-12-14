@@ -73,17 +73,17 @@ class PullRequestResource(GenericResource):
             raise ApiError(error)
 
         remote_url = payload.get('remote_url')
+        provider = get_provider_from_remote_url(remote_url)
 
-        access_token = api.get_access_token_for_user(user)
+        access_token = api.get_access_token_for_user(user, provider=provider)
         if not access_token:
             error.update(
                 dict(
-                    message='Access token not found, please authenticate with GitHub.',
+                    message=f'Access token not found, please authenticate with {provider}.',
                 )
             )
             raise ApiError(error)
 
-        provider = get_provider_from_remote_url(remote_url)
         client = GitClient.get_client_for_provider(provider)(access_token.token)
 
         return self(
