@@ -65,7 +65,7 @@ class OauthResource(GenericResource):
                         model.update(**auth_url_response)
                 oauths.append(model)
             except Exception:
-                raise
+                continue
 
         return self.build_result_set(oauths, user, **kwargs)
 

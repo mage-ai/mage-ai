@@ -1,23 +1,23 @@
 import React, { useMemo } from 'react';
+import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
+import BitbucketWithText from '@oracle/icons/custom/BitbucketWithText';
+import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Button from '@oracle/elements/Button';
+import GitBranchType from '@interfaces/GitBranchType';
 import Headline from '@oracle/elements/Headline';
+import OauthType, { OauthProviderEnum } from '@interfaces/OauthType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { GitHubIcon, GitHubWithTextIcon } from '@oracle/icons';
-import { UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import api from '@api';
-import OauthType, { OauthProviderEnum } from '@interfaces/OauthType';
+import { GitHubWithTextIcon } from '@oracle/icons';
+import { UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { set } from '@storage/localStorage';
-import { useRouter } from 'next/router';
-import GitBranchType from '@interfaces/GitBranchType';
-import { useMutation } from 'react-query';
-import BitbucketWithText from '@oracle/icons/custom/BitbucketWithText';
-import Divider from '@oracle/elements/Divider';
 
 const PROVIDER_TO_ICON_MAPPING = {
   [OauthProviderEnum.GITHUB]: GitHubWithTextIcon,
