@@ -126,11 +126,11 @@ def build_active_project_repo_path(repo_path: str = None) -> str:
 
 
 def project_platform_activated() -> bool:
-    return ENABLE_PROJECT_PLATFORM and os.path.exists(__platform_settings_full_path())
+    return ENABLE_PROJECT_PLATFORM and os.path.exists(platform_settings_full_path())
 
 
 def platform_settings() -> Dict:
-    config = __load_platform_settings(__platform_settings_full_path()) or {}
+    config = __load_platform_settings(platform_settings_full_path()) or {}
     config['projects'] = merge_dict(
         __get_projects_of_any_type() or {},
         (config.get('projects') if config else {}) or {},
@@ -196,7 +196,7 @@ def git_settings(repo_path: str = None) -> Dict:
 
     if git_dict.get('path'):
         git_dict['path'] = os.path.join(
-            os.path.dirname(__platform_settings_full_path()),
+            os.path.dirname(platform_settings_full_path()),
             git_dict['path'],
         )
     else:
@@ -205,7 +205,7 @@ def git_settings(repo_path: str = None) -> Dict:
     return git_dict
 
 
-def __platform_settings_full_path() -> str:
+def platform_settings_full_path() -> str:
     return os.path.join(base_repo_path(), PLATFORM_SETTINGS_FILENAME)
 
 
@@ -250,7 +250,7 @@ def __load_platform_settings(full_path: str) -> Dict:
     return settings
 
 
-def __local_platform_settings_full_path(repo_path: str = None) -> str:
+def local_platform_settings_full_path(repo_path: str = None) -> str:
     from mage_ai.settings.repo import get_variables_dir
 
     variables_dir = get_variables_dir(repo_path=repo_path, root_project=True)
@@ -258,7 +258,7 @@ def __local_platform_settings_full_path(repo_path: str = None) -> str:
 
 
 def __local_platform_settings(repo_path: str = None) -> Dict:
-    return __load_platform_settings(__local_platform_settings_full_path(repo_path=repo_path))
+    return __load_platform_settings(local_platform_settings_full_path(repo_path=repo_path))
 
 
 def __update_local_platform_settings(
@@ -272,6 +272,6 @@ def __update_local_platform_settings(
         combine_into(child, parent)
         platform_settings = parent
 
-    full_path = __local_platform_settings_full_path(repo_path=repo_path)
+    full_path = local_platform_settings_full_path(repo_path=repo_path)
     content = yaml.dump(platform_settings)
     safe_write(full_path, content)

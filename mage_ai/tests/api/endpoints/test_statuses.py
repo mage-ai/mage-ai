@@ -2,6 +2,7 @@ from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_list_endpoint_tests,
 )
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 class StatusAPIEndpointTest(BaseAPIEndpointTest):
@@ -20,6 +21,9 @@ build_list_endpoint_tests(
         'project_type',
         'project_uuid',
         'repo_path',
+        'repo_path_relative',
+        'repo_path_relative_root',
+        'repo_path_root',
         'require_user_authentication',
         'require_user_permissions',
         'scheduler_status',
@@ -44,8 +48,54 @@ build_list_endpoint_tests(
         'project_type',
         'project_uuid',
         'repo_path',
+        'repo_path_relative',
+        'repo_path_relative_root',
+        'repo_path_root',
         'require_user_authentication',
         'require_user_permissions',
         'scheduler_status',
     ],
+)
+
+
+class StatusWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
+    pass
+
+
+def __assert_after_list(self, result, **kwargs):
+    for key, value in [
+        ('repo_path', '/home/src/test/mage_platform'),
+        ('repo_path_relative', 'test/mage_platform'),
+        ('repo_path_relative_root', 'test'),
+        ('repo_path_root', '/home/src/test'),
+    ]:
+        self.assertEqual(
+            result[0][key],
+            value,
+        )
+
+
+build_list_endpoint_tests(
+    StatusWithProjectPlatformAPIEndpointTest,
+    list_count=1,
+    resource='status',
+    result_keys_to_compare=[
+        'disable_pipeline_edit_access',
+        'instance_type',
+        'is_instance_manager',
+        'max_print_output_lines',
+        'project_type',
+        'project_uuid',
+        'repo_path',
+        'repo_path_relative',
+        'repo_path_relative_root',
+        'repo_path_root',
+        'require_user_authentication',
+        'require_user_permissions',
+        'scheduler_status',
+    ],
+    patch_function_settings=[
+        ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+    ],
+    assert_after=__assert_after_list,
 )

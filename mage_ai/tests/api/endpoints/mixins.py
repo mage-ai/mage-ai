@@ -594,6 +594,7 @@ def build_delete_endpoint_tests(
 
 class BaseAPIEndpointTest(AsyncDBTestCase):
     def setUp(self):
+        super().setUp()
         self.faker = Faker()
         self.pipeline, self.blocks = create_pipeline_with_blocks(
             'test pipeline',
@@ -618,6 +619,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         RolePermission.query.delete()
         User.query.delete()
         UserRole.query.delete()
+        super().tearDown()
 
     async def build_test_list_endpoint(
         self,

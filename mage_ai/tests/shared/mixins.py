@@ -2,6 +2,8 @@ import json
 import os
 from typing import Callable, Dict, List
 
+import yaml
+
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.global_hooks.constants import (
@@ -24,8 +26,14 @@ from mage_ai.data_preparation.models.global_hooks.predicates import (
     HookPredicate,
     PredicateValueType,
 )
+from mage_ai.settings.platform import (
+    local_platform_settings_full_path,
+    platform_settings_full_path,
+)
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
 
 
@@ -326,3 +334,29 @@ class GlobalHooksMixin(BaseApiTestCase):
 
     def cleanup(self):
         pass
+
+
+class ProjectPlatformMixin(AsyncDBTestCase):
+    @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        self.platform_project_name = 'mage_platform'
+        content = yaml.dump(dict(
+            projects={
+                self.platform_project_name: {},
+            },
+        ))
+        safe_write(platform_settings_full_path(), content)
+
+        content = yaml.dump(dict(
+            projects={
+                self.platform_project_name: dict(active=True),
+            },
+        ))
+        safe_write(local_platform_settings_full_path(), content)
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove(platform_settings_full_path())
+        os.remove(local_platform_settings_full_path())
+        super().tearDownClass()
