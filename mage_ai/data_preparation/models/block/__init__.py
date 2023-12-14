@@ -389,10 +389,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @configuration.setter
     def configuration(self, x) -> None:
-        if self.project_platform_activated:
-            x = self.clean_file_paths(x)
-
-        self._configuration = x
+        self._configuration = self.clean_file_paths(x) if x else x
 
     @property
     def content(self) -> str:

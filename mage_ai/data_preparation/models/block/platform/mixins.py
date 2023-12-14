@@ -39,40 +39,47 @@ class ProjectPlatformAccessible:
         if not config:
             return config
 
-        if config.get('file_source'):
-            file_source = config.get('file_source') or {}
-            if file_source:
-                if file_source.get('path'):
-                    # default_platform/tons_of_dbt_projects/diff_name/models/example/
-                    # my_first_dbt_model.sql
-                    path = file_source.get('path')
-                    path = str(remove_base_repo_name(path)) if path else path
-                    file_source['path'] = path
-                    config['file_source'] = file_source
+        if self.project_platform_activated:
+            if config.get('file_source'):
+                file_source = config.get('file_source') or {}
+                if file_source:
+                    if file_source.get('path'):
+                        # default_platform/tons_of_dbt_projects/diff_name/models/example/
+                        # my_first_dbt_model.sql
+                        path = file_source.get('path')
+                        path = str(remove_base_repo_name(path)) if path else path
+                        file_source['path'] = path
+                        config['file_source'] = file_source
 
-                    if BlockType.DBT == self.type:
-                        file_source_prev = (self._configuration or {}).get('file_source') or {}
-                        file_source_path_changed = True
-                        if file_source_prev and file_source_prev.get('path'):
-                            file_source_path_changed = self._configuration.get(
-                                'file_source',
-                            ).get('path') != path
+                        if BlockType.DBT == self.type:
+                            file_source_prev = (self._configuration or {}).get('file_source') or {}
+                            file_source_path_changed = True
+                            if file_source_prev and file_source_prev.get('path'):
+                                file_source_path_changed = self._configuration.get(
+                                    'file_source',
+                                ).get('path') != path
 
-                        if file_source_path_changed or not file_source_prev.get('project_path'):
-                            # /home/src/default_repo/default_platform/tons_of_dbt_projects/diff_name
-                            project_path = get_selected_directory_from_file_path(
-                                file_path=path,
-                                selector=lambda fn: (
-                                    str(fn).endswith(os.path.join(os.sep, 'dbt_project.yml')) or
-                                    str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
-                                ),
-                            )
-                            # tons_of_dbt_projects/diff_name
-                            file_source['project_path'] = remove_base_repo_path(project_path)
+                            if file_source_path_changed or not file_source_prev.get('project_path'):
+                                # /home/src/default_repo/default_platform/
+                                # tons_of_dbt_projects/diff_name
+                                project_path = get_selected_directory_from_file_path(
+                                    file_path=path,
+                                    selector=lambda fn: (
+                                        str(fn).endswith(os.path.join(os.sep, 'dbt_project.yml')) or
+                                        str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
+                                    ),
+                                )
+                                # tons_of_dbt_projects/diff_name
+                                file_source['project_path'] = remove_base_repo_path(project_path)
 
-        if config.get('file_path'):
-            file_path = config.get('file_path')
-            config['file_path'] = str(remove_base_repo_name(file_path)) if file_path else file_path
+            if config.get('file_path'):
+                file_path = config.get('file_path')
+                config['file_path'] = str(remove_base_repo_name(
+                    file_path,
+                )) if file_path else file_path
+        else:
+            if config.get('file_source'):
+                config.pop('file_source', None)
 
         return config
 
