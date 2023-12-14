@@ -609,6 +609,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             self.repo_path,
             return_blocks=True,
         )
+        self.block, self.block2, self.block3, self.block4 = self.blocks
         self.user = User.create(username=self.faker.unique.name())
         self.authentication = None
         self.permissions = None

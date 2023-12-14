@@ -629,12 +629,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return matches[len(matches) - 1]
 
     @classmethod
-    def after_create(
-        self,
-        block: 'Block',
-        file_is_from_another_project: bool = False,
-        **kwargs,
-    ) -> None:
+    def after_create(self, block: 'Block', **kwargs) -> None:
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
@@ -804,7 +799,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self.after_create(
             block,
             config=config,
-            file_is_from_another_project=file_is_from_another_project,
             pipeline=pipeline,
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
