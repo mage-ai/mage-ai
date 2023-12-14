@@ -28,20 +28,59 @@ def get_selected_directory_from_file_path(
     selector: Callable,
     absolute_path: bool = True,
 ) -> str:
+    # /home/src/default_repo/default_platform/tons_of_dbt_projects/diff_name/models/example/
+    # my_second_dbt_model.sql
     full_path_of_file_path = find_directory(
         get_repo_path(root_project=True),
         lambda fn: str(fn).endswith(str(file_path)),
     )
+
+    """
+    {
+        "full_path": "/home/src/default_repo/default_platform/tons_of_dbt_projects",
+        "full_path_relative": "default_platform/tons_of_dbt_projects",
+        "path": "tons_of_dbt_projects",
+        "root_project_name": "default_platform",
+        "root_project_full_path": "/home/src/default_repo/default_platform",
+        "uuid": "tons_of_dbt_projects"
+    }
+    """
     paths_dict = get_repo_paths_for_file_path(
         full_path_of_file_path,
         repo_path=get_repo_path(root_project=True),
     )
-    full_path = paths_dict['full_path']
 
-    project_full_path = find_directory(
-        get_repo_path(root_project=True),
-        lambda fn: str(fn).startswith(str(os.path.dirname(full_path))) and selector(fn),
-    )
+    # /home/src/default_repo/default_platform/tons_of_dbt_projects
+    full_path = paths_dict['full_path']
+    # /home/src/default_repo/default_platform
+    full_path_dir = os.path.dirname(full_path)
+
+    # /home/src/default_repo/default_platform/tons_of_dbt_projects/diff_name/models/example
+    file_path_dir = os.path.dirname(full_path_of_file_path)
+
+    dirnames = []
+    try:
+        # Should return: tons_of_dbt_projects/diff_name/models/example
+        diff = Path(file_path_dir).relative_to(full_path_dir)
+        dirnames.extend(list(diff.parts))
+    except ValueError:
+        dirnames.append('')
+
+    dirnames_count = len(dirnames)
+    project_full_path = None
+    for idx in range(dirnames_count):
+        arr = dirnames[:(dirnames_count - idx)]
+
+        project_full_path = find_directory(
+            get_repo_path(root_project=True),
+            lambda fn: str(fn).startswith(str(os.path.join(
+                full_path_dir,
+                *arr,
+            ))) and selector(fn),
+        )
+
+        if project_full_path:
+            break
 
     path = os.path.dirname(project_full_path)
 

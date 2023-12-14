@@ -6,9 +6,10 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings import ENABLE_PROJECT_PLATFORM
+from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
 from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import combine_into, merge_dict
+from mage_ai.shared.hash import combine_into, extract, merge_dict
 from mage_ai.shared.io import safe_write
 
 PLATFORM_SETTINGS_FILENAME = 'settings.yaml'
@@ -129,7 +130,12 @@ def project_platform_activated() -> bool:
 
 
 def platform_settings() -> Dict:
-    return __load_platform_settings(__platform_settings_full_path())
+    config = __load_platform_settings(__platform_settings_full_path())
+    config['projects'] = merge_dict(
+        __get_projects_of_any_type(),
+        config.get('projects') or {},
+    )
+    return config
 
 
 def active_project_settings(
@@ -159,8 +165,19 @@ def active_project_settings(
             )
 
 
-def project_platform_settings(repo_path: str = None) -> Dict:
-    return (combined_platform_settings(repo_path=repo_path) or {}).get('projects')
+def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
+    mapping = (combined_platform_settings(repo_path=repo_path) or {}).get('projects')
+
+    if mage_projects_only:
+        select_keys = []
+
+        for project_name, settings in mapping.items():
+            if 'is_project' not in settings or settings.get('is_project'):
+                select_keys.append(project_name)
+
+        return extract(mapping, select_keys)
+
+    return mapping
 
 
 def combined_platform_settings(repo_path: str = None) -> Dict:
@@ -192,8 +209,37 @@ def __platform_settings_full_path() -> str:
     return os.path.join(base_repo_path(), PLATFORM_SETTINGS_FILENAME)
 
 
+def __get_projects_of_any_type() -> Dict:
+    mapping = {}
+
+    repo_path = base_repo_path()
+    for path in os.listdir(repo_path):
+        project_path = os.path.join(repo_path, path)
+        if not os.path.isdir(project_path):
+            continue
+
+        is_project = False
+        is_project_platform = False
+
+        for path2 in os.listdir(project_path):
+            if PLATFORM_SETTINGS_FILENAME == path2:
+                is_project_platform = True
+            elif PROJECT_METADATA_FILENAME == path2:
+                is_project = True
+
+        mapping[path] = dict(
+            is_project=is_project,
+            is_project_platform=is_project_platform,
+            uuid=path,
+        )
+
+    return mapping
+
+
 def __load_platform_settings(full_path: str) -> Dict:
     from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
+
+    # default_platform/tons_of_dbt_projects/demo2/models/example/restaurant_user_transactions.sql
 
     settings = None
     if os.path.exists(full_path):

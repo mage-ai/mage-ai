@@ -87,7 +87,7 @@ class Project():
         return [self.repo_path]
 
     def projects(self) -> Dict:
-        return project_platform_settings()
+        return project_platform_settings(mage_projects_only=True)
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)

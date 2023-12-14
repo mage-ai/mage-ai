@@ -6,7 +6,7 @@ from typing import Dict
 import yaml
 from jinja2 import Template
 
-from mage_ai.settings.constants import REPO_PATH_ENV_VAR
+from mage_ai.settings.constants import PROJECT_METADATA_FILENAME, REPO_PATH_ENV_VAR
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_test
 
@@ -87,7 +87,7 @@ def get_data_dir() -> str:
 
 
 def get_metadata_path(root_project: bool = False):
-    return os.path.join(get_repo_path(root_project=root_project), 'metadata.yaml')
+    return os.path.join(get_repo_path(root_project=root_project), PROJECT_METADATA_FILENAME)
 
 
 def get_variables_dir(

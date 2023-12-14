@@ -186,6 +186,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         """
         # Get upstream nodes via dbt list
         with Profiles(self.project_path, self.pipeline.variables) as profiles:
+            print(self.project_path, profiles.profiles_dir)
             args = [
                 'list',
                 # project-dir
