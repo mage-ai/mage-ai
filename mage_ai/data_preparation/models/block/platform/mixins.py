@@ -5,15 +5,18 @@ from mage_ai.data_preparation.models.block.platform.utils import (
     from_another_project,
     get_selected_directory_from_file_path,
 )
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.file import File
 from mage_ai.settings.platform import (
     project_platform_activated as project_platform_activated_func,
 )
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
     add_root_repo_path_to_relative_path,
     get_path_parts,
     remove_base_repo_directory_name,
     remove_base_repo_name,
+    remove_base_repo_path,
     remove_repo_names,
 )
 from mage_ai.shared.strings import remove_extension_from_filename
@@ -38,12 +41,34 @@ class ProjectPlatformAccessible:
 
         if config.get('file_source'):
             file_source = config.get('file_source') or {}
-            if file_source and file_source.get('path'):
-                # default_platform/tons_of_dbt_projects/diff_name/models/example/
-                # my_first_dbt_model.sql
-                path = file_source.get('path')
-                file_source['path'] = str(remove_base_repo_name(path)) if path else path
-                config['file_source'] = file_source
+            if file_source:
+                if file_source.get('path'):
+                    # default_platform/tons_of_dbt_projects/diff_name/models/example/
+                    # my_first_dbt_model.sql
+                    path = file_source.get('path')
+                    path = str(remove_base_repo_name(path)) if path else path
+                    file_source['path'] = path
+                    config['file_source'] = file_source
+
+                    if BlockType.DBT == self.type:
+                        file_source_prev = (self._configuration or {}).get('file_source') or {}
+                        file_source_path_changed = True
+                        if file_source_prev and file_source_prev.get('path'):
+                            file_source_path_changed = self._configuration.get(
+                                'file_source',
+                            ).get('path') != path
+
+                        if file_source_path_changed or not file_source_prev.get('project_path'):
+                            # /home/src/default_repo/default_platform/tons_of_dbt_projects/diff_name
+                            project_path = get_selected_directory_from_file_path(
+                                file_path=path,
+                                selector=lambda fn: (
+                                    str(fn).endswith(os.path.join(os.sep, 'dbt_project.yml')) or
+                                    str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
+                                ),
+                            )
+                            # tons_of_dbt_projects/diff_name
+                            file_source['project_path'] = remove_base_repo_path(project_path)
 
         if config.get('file_path'):
             file_path = config.get('file_path')
@@ -64,13 +89,10 @@ class ProjectPlatformAccessible:
         if not self.is_from_another_project():
             return
 
-        return get_selected_directory_from_file_path(
-            file_path=self.get_file_path_from_source(),
-            selector=lambda fn: (
-                str(fn).endswith(os.path.join(os.sep, 'dbt_project.yml')) or
-                str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
-            ),
-        )
+        # tons_of_dbt_projects/diff_name
+        project_path_relative = self.__file_source_project()
+        if project_path_relative:
+            return os.path.join(base_repo_path(), project_path_relative)
 
     def get_project_path_from_project_name(self, project_name: str) -> str:
         if not self.project_platform_activated or \
@@ -212,3 +234,7 @@ class ProjectPlatformAccessible:
     def __file_source_path(self) -> str:
         file_source = self.__file_source()
         return file_source.get('path') if file_source else None
+
+    def __file_source_project(self) -> str:
+        file_source = self.__file_source()
+        return file_source.get('project_path') if file_source else None

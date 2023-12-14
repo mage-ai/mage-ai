@@ -8,7 +8,7 @@ from mage_ai.settings.platform import (
     project_platform_activated as project_platform_activated_check,
 )
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.settings.utils import base_repo_dirname, base_repo_name
+from mage_ai.settings.utils import base_repo_dirname, base_repo_name, base_repo_path
 
 
 def add_root_repo_path_to_relative_path(relative_file_path: str) -> str:
@@ -31,6 +31,19 @@ def convert_absolute_path_to_relative(file_path: str) -> str:
 
 def convert_relative_path_to_absolute(file_path: str) -> str:
     return os.path.join(os.sep, file_path)
+
+
+def remove_base_repo_path(file_path: str) -> str:
+    """
+    Removes /home/src/default_platform from
+    /home/src/default_platform/dbt/demo == dbt/demo
+    /home/src/default_platform/default_repo/dbt/demo == default_repo/dbt/demo
+    """
+    try:
+        path = Path(file_path).relative_to(base_repo_path())
+        return str(path)
+    except ValueError:
+        return file_path
 
 
 def remove_base_repo_name(file_path: str) -> str:

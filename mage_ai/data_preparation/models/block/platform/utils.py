@@ -70,13 +70,14 @@ def get_selected_directory_from_file_path(
     project_full_path = None
     for idx in range(dirnames_count):
         arr = dirnames[:(dirnames_count - idx)]
+        path_test = str(os.path.join(
+            full_path_dir,
+            *arr,
+        ))
 
         project_full_path = find_directory(
             get_repo_path(root_project=True),
-            lambda fn: str(fn).startswith(str(os.path.join(
-                full_path_dir,
-                *arr,
-            ))) and selector(fn),
+            lambda fn, path_test=path_test: str(fn).startswith(path_test) and selector(fn),
         )
 
         if project_full_path:

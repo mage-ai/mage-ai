@@ -302,7 +302,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self.pipeline = pipeline
         self.language = language or BlockLanguage.PYTHON
         self.color = block_color
-        self._configuration = None
+        # Need to set this before using the custom @setter.configuration
+        self._configuration = configuration
         self.has_callback = has_callback
         self.timeout = timeout
         self.retry_config = retry_config
