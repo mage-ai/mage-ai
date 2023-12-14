@@ -442,7 +442,7 @@ def build_update_endpoint_tests(
                 build_payload=build_payload,
                 permissions=permissions,
                 resource=resource,
-                resource_id=get_resource_id(self),
+                get_resource_id=get_resource_id,
                 resource_parent=resource_parent,
                 resource_parent_id=get_resource_parent_id(self) if get_resource_parent_id else None,
                 authentication_accesses=authentication_accesses,
@@ -883,7 +883,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
     async def build_test_update_endpoint(
         self,
         resource: str,
-        resource_id: Union[int, str],
+        get_resource_id: Callable[[AsyncDBTestCase], Union[int, str]],
         build_payload: Callable[[AsyncDBTestCase], Dict],
         get_model_before_update: Callable[[AsyncDBTestCase], Any] = None,
         assert_after_update: Callable[[AsyncDBTestCase], None] = None,
@@ -923,6 +923,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                     'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
                     permissions or 0,
                 ):
+                    resource_id = get_resource_id(self)
                     payload = build_payload(self)
                     if payload and inspect.isawaitable(payload):
                         payload = await payload

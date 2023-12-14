@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_list_endpoint_tests,
@@ -59,7 +61,15 @@ build_list_endpoint_tests(
 
 
 class StatusWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
-    pass
+    def setUp(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            super().setUp()
+            self.setup_final()
+
+    def tearDown(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            self.teardown_final()
+            super().tearDown()
 
 
 def __assert_after_list(self, result, **kwargs):

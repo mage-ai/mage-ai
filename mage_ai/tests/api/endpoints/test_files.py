@@ -1,5 +1,6 @@
 import os
 import urllib.parse
+from unittest.mock import patch
 
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
@@ -114,13 +115,22 @@ build_delete_endpoint_tests(
 
 
 class FileWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
-    pass
+    def setUp(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            super().setUp()
+            self.setup_final()
+            self.files_count = get_files_count(self)
+
+    def tearDown(self):
+        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            self.teardown_final()
+            super().tearDown()
 
 
 build_create_endpoint_tests(
     FileWithProjectPlatformAPIEndpointTest,
-    assert_after_create_count=lambda self: get_files_count(self) == self.files_count + 1,
-    assert_before_create_count=lambda self: get_files_count(self) == self.files_count,
+    assert_after_create_count=lambda self, mocks: get_files_count(self) == self.files_count + 1,
+    assert_before_create_count=lambda self, mocks: get_files_count(self) == self.files_count,
     build_payload=lambda self: dict(
         dir_path=os.path.dirname(get_model_before_update(self).file_path),
         name=self.faker.unique.name().replace(' ', '_'),
