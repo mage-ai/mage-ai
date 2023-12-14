@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Authentication from './Authentication';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
@@ -30,7 +31,6 @@ import {
   Add,
   Branch,
   ChevronRight,
-  GitHubIcon,
   Lightning,
   MultiShare,
   PaginateArrowRight,
@@ -47,8 +47,6 @@ import { TAB_BRANCHES } from '../constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
-import { set } from '@storage/localStorage';
-import Authentication from './Authentication';
 
 type RemoteProps = {
   actionRemoteName: string;
@@ -211,19 +209,12 @@ function Remote({
     },
   );
 
-  const { data: dataOauth, mutate: fetchOauth } = api.oauths.detail(OauthProviderEnum.GITHUB, {
-    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
-  });
-  const oauth = useMemo(() => dataOauth?.oauth || {}, [dataOauth]);
-
   const [createOauth, { isLoading: isLoadingCreateOauth }] = useMutation(
     api.oauths.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
-            fetchOauth();
-          },
+          callback: () => window.location.href = `${router.basePath}/version-control`,
           onErrorCallback: (response, errors) => {
             showError({
               errors,
@@ -236,7 +227,7 @@ function Remote({
   );
   const { access_token: accessTokenFromURL, provider: providerFromURL } = queryFromUrl() || {};
   useEffect(() => {
-    if (oauth && !oauth?.authenticated && accessTokenFromURL) {
+    if (accessTokenFromURL) {
       // @ts-ignore
       createOauth({
         oauth: {
@@ -248,7 +239,6 @@ function Remote({
   }, [
     accessTokenFromURL,
     createOauth,
-    oauth,
     providerFromURL,
   ]);
 

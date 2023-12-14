@@ -6,7 +6,7 @@ import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { GitHubIcon } from '@oracle/icons';
+import { GitHubIcon, GitHubWithTextIcon } from '@oracle/icons';
 import { UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import api from '@api';
 import OauthType, { OauthProviderEnum } from '@interfaces/OauthType';
@@ -16,6 +16,13 @@ import { set } from '@storage/localStorage';
 import { useRouter } from 'next/router';
 import GitBranchType from '@interfaces/GitBranchType';
 import { useMutation } from 'react-query';
+import BitbucketWithText from '@oracle/icons/custom/BitbucketWithText';
+import Divider from '@oracle/elements/Divider';
+
+const PROVIDER_TO_ICON_MAPPING = {
+  [OauthProviderEnum.GITHUB]: GitHubWithTextIcon,
+  [OauthProviderEnum.BITBUCKET]: BitbucketWithText,
+};
 
 type ProviderProps = {
   isLoadingCreateOauth: boolean;
@@ -53,16 +60,14 @@ function Provider({
     },
   );
 
+  const Icon = PROVIDER_TO_ICON_MAPPING[provider];
+
   return (
     <FlexContainer justifyContent="space-between">
       <Flex>
-        <GitHubIcon size={UNIT * 2} />
-        <Spacing mr={1} />
-        <Text bold>
-          {provider}
-        </Text>
+        <Icon size={UNIT * 12} />
       </Flex>
-      <Flex>
+      <Flex alignItems="center">
         {oauth?.authenticated ? (
           <Button
             loading={isLoadingUpdateOauth}
@@ -144,26 +149,32 @@ function Authentication({
             </Button>
             <Spacing mt={1}>
               <Text muted>
-                Some features may not work unless you authenticate with GitHub.
+                Some features may not work unless you authenticate with a Git client.
               </Text>
             </Spacing>
           </Spacing>
         )}
 
         <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-          <Text muted>
-            Authenticating with the apps below will allow you to easily pull, push, and create
-            pull requests.
-          </Text>
           <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Text muted>
+              Authenticating with the apps below will allow you to easily pull, push, and create
+              pull requests.
+            </Text>
+          </Spacing>
+          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} style={{ maxWidth: '600px' }}>
+            <Divider muted />
             {[OauthProviderEnum.GITHUB, OauthProviderEnum.BITBUCKET].map(provider => (
-              <Provider
-                isLoadingCreateOauth={isLoadingCreateOauth}
-                key={provider}
-                oauth={providerMapping?.[provider]}
-                provider={provider}
-                showError={showError}
-              />
+              <>
+                <Provider
+                  isLoadingCreateOauth={isLoadingCreateOauth}
+                  key={provider}
+                  oauth={providerMapping?.[provider]}
+                  provider={provider}
+                  showError={showError}
+                />
+                <Divider muted />
+              </>
             ))}
           </Spacing>
         </Spacing>
