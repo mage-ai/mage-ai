@@ -1255,10 +1255,16 @@ class BlockExecutor:
             if status == BlockRun.BlockRunStatus.COMPLETED:
                 update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
 
-            if BlockRun.BlockRunStatus.FAILED == status and error_details:
-                update_kwargs['metrics'] = merge_dict(block_run.metrics or {}, dict(
-                    __error_details=error_details,
-                ))
+            # Cannot save raw value in DB; it breaks:
+            # sqlalchemy.exc.StatementError:
+            # (builtins.TypeError) Object of type Py4JJavaError is not JSON serializable
+            # [SQL: UPDATE block_run SET updated_at=CURRENT_TIMESTAMP, status=?, metrics=?
+            # WHERE block_run.id = ?]
+
+            # if BlockRun.BlockRunStatus.FAILED == status and error_details:
+            #     update_kwargs['metrics'] = merge_dict(block_run.metrics or {}, dict(
+            #         __error_details=error_details,
+            #     ))
 
             block_run.update(**update_kwargs)
             return
