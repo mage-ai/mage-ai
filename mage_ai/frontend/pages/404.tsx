@@ -3,6 +3,7 @@ import { redirectToUrl } from '@utils/url';
 import Headline from '@oracle/elements/Headline';
 import Text from '@oracle/elements/Text';
 import Spacing from '@oracle/elements/Spacing';
+import GradientLogoIcon from '@oracle/icons/GradientLogo';
 
 function NotFoundPage() {
   const [secondsToRedirect, setSecondsToRedirect] = useState(5);
@@ -28,10 +29,13 @@ function NotFoundPage() {
         marginTop: '16rem',
       }}
     >
-      <Spacing mb={1}>
+      <GradientLogoIcon height={64} />
+      <Spacing my={2}>
         <Headline level={1}>404 - Page Not Found</Headline>
       </Spacing>
-      <Text>You will be redirected to the Pipelines dashboard in {secondsToRedirect} seconds.</Text>
+      <Text large>
+        You will be redirected to the Pipelines dashboard in {secondsToRedirect} seconds.
+      </Text>
     </main>
   );
 }
