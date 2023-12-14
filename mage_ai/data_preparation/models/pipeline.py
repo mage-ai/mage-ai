@@ -247,12 +247,15 @@ class Pipeline:
                         f'Pipeline zip excedes size limit {PIPELINE_MAX_SIZE/1000}Kb')
 
                 zip_contents = zipf.namelist()
-                # Check if zip contains a directory
-                if len(zip_content) == 1 and zip_contents[0].endswith('/'):
-                    dir_name = os.path.join(tmp_dir, zip_contents[0])
-                    zipf.extractall(dir_name)
-                else:
-                    zipf.extractall(tmp_dir)
+                prefix = os.path.commonpath(zip_contents)  # Check if zip contents are part of a root folder
+                
+                zipf.extractall(tmp_dir)
+                if prefix:
+                    for file in zip_contents[1:]:  # move each file except the folder itself
+                        original_path = os.path.join(tmp_dir, file)
+                        final_path = os.path.join(tmp_dir, os.path.relpath(file, prefix))
+                        os.rename(original_path, final_path)
+                    os.removedirs(os.path.join(tmp_dir, prefix))  # remove root folder
 
             config_zip_path = self.__find_pipeline_file(
                 self, tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
