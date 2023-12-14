@@ -20,6 +20,7 @@ class EntityName(str, Enum):
     ComputeCluster = 'ComputeCluster'
     ComputeConnection = 'ComputeConnection'
     ComputeService = 'ComputeService'
+    ConfigurationOption = 'ConfigurationOption'
     CustomTemplate = 'CustomTemplate'
     DataProvider = 'DataProvider'
     Database = 'Database'

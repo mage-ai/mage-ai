@@ -595,9 +595,10 @@ def build_delete_endpoint_tests(
 class BaseAPIEndpointTest(AsyncDBTestCase):
     def setUp(self):
         self.faker = Faker()
-        self.pipeline = create_pipeline_with_blocks(
+        self.pipeline, self.blocks = create_pipeline_with_blocks(
             'test pipeline',
             self.repo_path,
+            return_blocks=True,
         )
         self.user = User.create(username=self.faker.unique.name())
         self.authentication = None
