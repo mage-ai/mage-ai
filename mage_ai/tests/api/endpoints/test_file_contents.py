@@ -5,6 +5,7 @@ from mage_ai.tests.api.endpoints.mixins import (
     build_detail_endpoint_tests,
     build_update_endpoint_tests,
 )
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def get_resource_id(self) -> str:
@@ -18,7 +19,7 @@ def get_model_before_update(self):
     return block.file.content()
 
 
-class FileContentAPIEndpointTest(BaseAPIEndpointTest):
+class FileContentAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
     pass
 
 
@@ -31,6 +32,22 @@ build_detail_endpoint_tests(
         'name',
         'path',
     ],
+)
+
+
+build_detail_endpoint_tests(
+    FileContentAPIEndpointTest,
+    resource='file_content',
+    get_resource_id=get_resource_id,
+    result_keys_to_compare=[
+        'content',
+        'name',
+        'path',
+    ],
+    patch_function_settings=[
+        ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+    ],
+    test_uuid='with_project_platform',
 )
 
 

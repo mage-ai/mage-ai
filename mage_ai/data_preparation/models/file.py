@@ -369,6 +369,7 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
+    print('WTFFFFFFFFFFFF ensure_file_is_in_project', project_platform_activated())
     if project_platform_activated():
         return
 

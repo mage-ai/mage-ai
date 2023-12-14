@@ -194,6 +194,7 @@ def build_create_endpoint_tests(
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
+    patch_function_settings: List[Tuple] = None,
 ):
     def _build_test_create_endpoint(
         authentication: int = None,
@@ -209,6 +210,7 @@ def build_create_endpoint_tests(
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
+        patch_function_settings=patch_function_settings,
     ):
         async def _test_create_endpoint(
             self,
@@ -225,18 +227,15 @@ def build_create_endpoint_tests(
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
+            patch_function_settings=patch_function_settings,
         ):
-            payload = build_payload(self)
-            if payload and inspect.isawaitable(payload):
-                payload = await payload
-
             await self.build_test_create_endpoint(
                 after_create_count=after_create_count,
                 assert_after_create_count=assert_after_create_count,
                 assert_before_create_count=assert_before_create_count,
                 authentication=authentication,
                 before_create_count=before_create_count,
-                payload=payload,
+                build_payload=build_payload,
                 permissions=permissions,
                 resource=resource,
                 resource_parent=resource_parent,
@@ -244,6 +243,7 @@ def build_create_endpoint_tests(
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
+                patch_function_settings=patch_function_settings,
             )
         return _test_create_endpoint
 
@@ -298,6 +298,7 @@ def build_detail_endpoint_tests(
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
+    patch_function_settings: List[Tuple] = None,
 ):
     def _build_test_detail_endpoint(
         authentication: int = None,
@@ -312,6 +313,7 @@ def build_detail_endpoint_tests(
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
+        patch_function_settings=patch_function_settings,
     ):
         async def _test_detail_endpoint(
             self,
@@ -327,6 +329,7 @@ def build_detail_endpoint_tests(
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
+            patch_function_settings=patch_function_settings,
         ):
             await self.build_test_detail_endpoint(
                 authentication=authentication,
@@ -341,6 +344,7 @@ def build_detail_endpoint_tests(
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
+                patch_function_settings=patch_function_settings,
             )
         return _test_detail_endpoint
 
@@ -431,15 +435,11 @@ def build_update_endpoint_tests(
             patch_function_settings=patch_function_settings,
             patch_object_settings=patch_object_settings,
         ):
-            payload = build_payload(self)
-            if payload and inspect.isawaitable(payload):
-                payload = await payload
-
             await self.build_test_update_endpoint(
                 assert_after_update=assert_after_update,
                 get_model_before_update=get_model_before_update,
                 authentication=authentication,
-                payload=payload,
+                build_payload=build_payload,
                 permissions=permissions,
                 resource=resource,
                 resource_id=get_resource_id(self),
@@ -505,6 +505,7 @@ def build_delete_endpoint_tests(
     authentication_accesses: List[PermissionAccess] = None,
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
+    patch_function_settings: List[Tuple] = None,
 ):
     def _build_test_delete_endpoint(
         authentication: int = None,
@@ -520,6 +521,7 @@ def build_delete_endpoint_tests(
         authentication_accesses=authentication_accesses,
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
+        patch_function_settings=patch_function_settings,
     ):
         async def _test_delete_endpoint(
             self,
@@ -536,6 +538,7 @@ def build_delete_endpoint_tests(
             authentication_accesses=authentication_accesses,
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
+            patch_function_settings=patch_function_settings,
         ):
             await self.build_test_delete_endpoint(
                 after_delete_count=after_delete_count,
@@ -551,6 +554,7 @@ def build_delete_endpoint_tests(
                 authentication_accesses=authentication_accesses,
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
+                patch_function_settings=patch_function_settings,
             )
         return _test_delete_endpoint
 
@@ -707,7 +711,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
     async def build_test_create_endpoint(
         self,
         resource: str,
-        payload: Dict,
+        build_payload: Callable[[AsyncDBTestCase], Dict],
         after_create_count: int = None,
         assert_after_create_count: Callable[[AsyncDBTestCase], None] = None,
         assert_before_create_count: Callable[[AsyncDBTestCase], None] = None,
@@ -719,6 +723,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
+        patch_function_settings: List[Tuple] = None,
     ):
         self.authentication = authentication
         self.permissions = permissions
@@ -737,47 +742,60 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             permission_settings=permission_settings,
         )
 
-        with patch(
-            'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
-            authentication or permissions or 0,
-        ):
+        with patch_manager(patch_function_settings or []) as mocks:
             with patch(
-                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
-                permissions or 0,
+                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
+                authentication or permissions or 0,
             ):
-                base_operation = BaseOperation(
-                    action=OperationType.CREATE,
-                    payload={
-                        singularize(resource): payload,
-                    },
-                    resource=resource,
-                    resource_parent=resource_parent,
-                    resource_parent_id=resource_parent_id,
-                    user=self.user if authentication or permissions else None,
-                )
+                with patch(
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
+                    permissions or 0,
+                ):
+                    payload = build_payload(self)
+                    if payload and inspect.isawaitable(payload):
+                        payload = await payload
 
-                before_count = None
-                if assert_before_create_count is not None:
-                    self.assertTrue(assert_before_create_count(self))
-                else:
-                    before_count = len(get_resource(resource).model_class.all())
-                    self.assertEqual(
-                        before_count,
-                        before_create_count if before_create_count is not None else 0,
+                    base_operation = BaseOperation(
+                        action=OperationType.CREATE,
+                        payload={
+                            singularize(resource): payload,
+                        },
+                        resource=resource,
+                        resource_parent=resource_parent,
+                        resource_parent_id=resource_parent_id,
+                        user=self.user if authentication or permissions else None,
                     )
 
-                response = await base_operation.execute()
-                self.assertIsNone(response.get('error'))
+                    before_count = None
+                    if assert_before_create_count is not None:
+                        if mocks:
+                            validation = assert_before_create_count(self, mocks=mocks)
+                        else:
+                            validation = assert_before_create_count(self)
+                        self.assertTrue(validation)
+                    else:
+                        before_count = len(get_resource(resource).model_class.all())
+                        self.assertEqual(
+                            before_count,
+                            before_create_count if before_create_count is not None else 0,
+                        )
 
-                after_count = None
-                if assert_after_create_count is not None:
-                    self.assertTrue(assert_after_create_count(self))
-                else:
-                    after_count = len(get_resource().model_class.all())
-                    self.assertEqual(
-                        after_count,
-                        after_create_count if after_create_count is not None else before_count + 1,
-                    )
+                    response = await base_operation.execute()
+                    self.assertIsNone(response.get('error'))
+
+                    after_count = None
+                    if assert_after_create_count is not None:
+                        if mocks:
+                            validation = assert_after_create_count(self, mocks=mocks)
+                        else:
+                            validation = assert_after_create_count(self)
+                        self.assertTrue(validation)
+                    else:
+                        after_count = len(get_resource().model_class.all())
+                        self.assertEqual(
+                            after_count,
+                            before_count + 1 if after_create_count is None else after_create_count,
+                        )
 
     async def build_test_detail_endpoint(
         self,
@@ -793,6 +811,8 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
+        patch_function_settings: List[Tuple] = None,
+        assert_after: Callable[[AsyncDBTestCase], None] = None,
     ):
         self.authentication = authentication
         self.permissions = permissions
@@ -811,54 +831,60 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             permission_settings=permission_settings,
         )
 
-        with patch(
-            'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
-            authentication or permissions or 0,
-        ):
+        with patch_manager(patch_function_settings or []) as mocks:
             with patch(
-                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
-                permissions or 0,
+                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
+                authentication or permissions or 0,
             ):
-                meta = None
-                if build_meta:
-                    meta = build_meta(self)
-                    if meta and inspect.isawaitable(meta):
-                        meta = await meta
-                query = None
-                if build_query:
-                    query = build_query(self)
-                    if query and inspect.isawaitable(query):
-                        query = await query
+                with patch(
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
+                    permissions or 0,
+                ):
+                    meta = None
+                    if build_meta:
+                        meta = build_meta(self)
+                        if meta and inspect.isawaitable(meta):
+                            meta = await meta
+                    query = None
+                    if build_query:
+                        query = build_query(self)
+                        if query and inspect.isawaitable(query):
+                            query = await query
 
-                base_operation = BaseOperation(
-                    action=OperationType.DETAIL,
-                    meta=meta,
-                    pk=resource_id,
-                    query=query,
-                    resource=resource,
-                    resource_parent=resource_parent,
-                    resource_parent_id=resource_parent_id,
-                    user=self.user if authentication or permissions else None,
-                )
+                    base_operation = BaseOperation(
+                        action=OperationType.DETAIL,
+                        meta=meta,
+                        pk=resource_id,
+                        query=query,
+                        resource=resource,
+                        resource_parent=resource_parent,
+                        resource_parent_id=resource_parent_id,
+                        user=self.user if authentication or permissions else None,
+                    )
 
-                response = await base_operation.execute()
-                key = singularize(resource)
-                if key not in response:
-                    raise Exception(response)
+                    response = await base_operation.execute()
+                    key = singularize(resource)
+                    if key not in response:
+                        raise Exception(response)
 
-                result = response[key]
+                    result = response[key]
 
-                self.assertIsNotNone(result)
+                    self.assertIsNotNone(result)
 
-                if result_keys_to_compare:
-                    validations = [k in result for k in result_keys_to_compare]
-                    self.assertTrue(all(validations))
+                    if result_keys_to_compare:
+                        validations = [k in result for k in result_keys_to_compare]
+                        self.assertTrue(all(validations))
+
+                    if assert_after is not None:
+                        validation = assert_after(self, result, mocks=mocks)
+                        if validation and inspect.isawaitable(validation):
+                            validation = await validation
 
     async def build_test_update_endpoint(
         self,
         resource: str,
         resource_id: Union[int, str],
-        payload: Dict,
+        build_payload: Callable[[AsyncDBTestCase], Dict],
         get_model_before_update: Callable[[AsyncDBTestCase], Any] = None,
         assert_after_update: Callable[[AsyncDBTestCase], None] = None,
         authentication: int = None,
@@ -897,6 +923,10 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                     'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
                     permissions or 0,
                 ):
+                    payload = build_payload(self)
+                    if payload and inspect.isawaitable(payload):
+                        payload = await payload
+
                     base_operation = BaseOperation(
                         action=OperationType.UPDATE,
                         payload={
@@ -939,12 +969,16 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                     self.assertIsNotNone(result)
 
                     if assert_after_update is not None:
-                        validation = assert_after_update(
+                        args = [
                             self,
                             result,
                             model_before_update,
-                            mocks=mocks,
-                        )
+                        ]
+                        if mocks:
+                            validation = assert_after_update(*args, mocks=mocks)
+                        else:
+                            validation = assert_after_update(*args)
+
                         if validation and inspect.isawaitable(validation):
                             validation = await validation
                         self.assertTrue(validation)
@@ -971,6 +1005,7 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
         authentication_accesses: List[PermissionAccess] = None,
         permissions_accesses: List[PermissionAccess] = None,
         permission_settings: List[Dict] = None,
+        patch_function_settings: List[Tuple] = None,
     ):
         self.authentication = authentication
         self.permissions = permissions
@@ -989,45 +1024,56 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
             permission_settings=permission_settings,
         )
 
-        with patch(
-            'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
-            authentication or permissions or 0,
-        ):
+        with patch_manager(patch_function_settings or []) as mocks:
             with patch(
-                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
-                permissions or 0,
+                'mage_ai.api.policies.BasePolicy.REQUIRE_USER_AUTHENTICATION',
+                authentication or permissions or 0,
             ):
-                base_operation = BaseOperation(
-                    action=OperationType.DELETE,
-                    pk=resource_id,
-                    resource=resource,
-                    resource_parent=resource_parent,
-                    resource_parent_id=resource_parent_id,
-                    user=self.user if authentication or permissions else None,
-                )
-
-                before_count = None
-                if assert_before_delete_count is not None:
-                    self.assertTrue(assert_before_delete_count(self))
-                else:
-                    before_count = len(get_resource(resource).model_class.all())
-                    self.assertEqual(
-                        before_count,
-                        before_delete_count if before_delete_count is not None else 1,
+                with patch(
+                    'mage_ai.api.policies.BasePolicy.REQUIRE_USER_PERMISSIONS',
+                    permissions or 0,
+                ):
+                    base_operation = BaseOperation(
+                        action=OperationType.DELETE,
+                        pk=resource_id,
+                        resource=resource,
+                        resource_parent=resource_parent,
+                        resource_parent_id=resource_parent_id,
+                        user=self.user if authentication or permissions else None,
                     )
 
-                response = await base_operation.execute()
-                self.assertIsNone(response.get('error'))
+                    before_count = None
+                    if assert_before_delete_count is not None:
+                        if mocks:
+                            validation = assert_before_delete_count(self, mocks=mocks)
+                        else:
+                            validation = assert_before_delete_count(self)
 
-                after_count = None
-                if assert_after_delete_count is not None:
-                    self.assertTrue(assert_after_delete_count(self))
-                else:
-                    after_count = len(get_resource().model_class.all())
-                    self.assertEqual(
-                        after_count,
-                        after_delete_count if after_delete_count is not None else before_count - 1,
-                    )
+                        self.assertTrue(validation)
+                    else:
+                        before_count = len(get_resource(resource).model_class.all())
+                        self.assertEqual(
+                            before_count,
+                            before_delete_count if before_delete_count is not None else 1,
+                        )
+
+                    response = await base_operation.execute()
+                    self.assertIsNone(response.get('error'))
+
+                    after_count = None
+                    if assert_after_delete_count is not None:
+                        if mocks:
+                            validation = assert_after_delete_count(self, mocks=mocks)
+                        else:
+                            validation = assert_after_delete_count(self)
+
+                        self.assertTrue(validation)
+                    else:
+                        after_count = len(get_resource().model_class.all())
+                        self.assertEqual(
+                            after_count,
+                            before_count - 1 if after_delete_count is None else after_delete_count,
+                        )
 
     def __create_authentications(
         self,

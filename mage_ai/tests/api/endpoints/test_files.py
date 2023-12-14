@@ -8,6 +8,7 @@ from mage_ai.tests.api.endpoints.mixins import (
     build_list_endpoint_tests,
     build_update_endpoint_tests,
 )
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def get_resource_id(self) -> str:
@@ -50,6 +51,35 @@ build_list_endpoint_tests(
 )
 
 
+def __assert_after(test_case, result, *args, **kwargs):
+    arr = []
+    for file in result:
+        for child in file['children']:
+            if child['name'] == 'pipelines':
+                for child2 in child['children']:
+                    arr.append(child2['children'])
+            else:
+                arr.append(child['children'])
+
+    test_case.assertTrue(all(len(a) == 0 for a in arr))
+
+
+build_list_endpoint_tests(
+    FileAPIEndpointTest,
+    list_count=1,
+    resource='files',
+    result_keys_to_compare=[
+        'children',
+        'name',
+    ],
+    build_query=lambda _x: dict(
+        pattern=['do_not_match_anything'],
+    ),
+    test_uuid='with_search',
+    assert_after=__assert_after,
+)
+
+
 build_create_endpoint_tests(
     FileAPIEndpointTest,
     assert_after_create_count=lambda self: get_files_count(self) == self.files_count + 1,
@@ -80,4 +110,23 @@ build_delete_endpoint_tests(
     assert_before_delete_count=lambda self: get_files_count(self) == self.files_count,
     get_resource_id=lambda self: get_resource_id(self),
     resource='files',
+)
+
+
+class FileWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
+    pass
+
+
+build_create_endpoint_tests(
+    FileWithProjectPlatformAPIEndpointTest,
+    assert_after_create_count=lambda self: get_files_count(self) == self.files_count + 1,
+    assert_before_create_count=lambda self: get_files_count(self) == self.files_count,
+    build_payload=lambda self: dict(
+        dir_path=os.path.dirname(get_model_before_update(self).file_path),
+        name=self.faker.unique.name().replace(' ', '_'),
+    ),
+    resource='files',
+    patch_function_settings=[
+        ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+    ],
 )
