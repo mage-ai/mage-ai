@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import shutil
 import uuid
 from unittest.mock import patch
 
@@ -759,6 +760,45 @@ class PipelineTest(DBTestCase):
             with self.assertRaises(Exception) as err:
                 pipeline.save()
             self.assertTrue('Writing empty pipeline metadata is prevented.' in str(err.exception))
+
+    def test_get_all_pipelines(self):
+        pipeline1 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        pipeline2 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        pipelines = Pipeline.get_all_pipelines('/home/src/test')
+        self.assertEqual(pipelines, [pipeline1.uuid, pipeline2.uuid])
+
+        pipeline3 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path='/home/src/test/mage_platform',
+        )
+        pipeline4 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path='/home/src/test/mage_platform',
+        )
+        pipelines = Pipeline.get_all_pipelines('/home/src/test/mage_platform')
+        self.assertEqual(pipelines, [pipeline3.uuid, pipeline4.uuid])
+        shutil.rmtree('/home/src/test/mage_platform')
+
+    def test_get_all_pipelines_disable_pipelines_folder_creation(self):
+        os.mkdir('/home/src/test/mage_data1')
+        self.assertFalse(os.path.exists('/home/src/test/mage_data1/pipelines'))
+        Pipeline.get_all_pipelines('/home/src/test/mage_data1')
+        self.assertTrue(os.path.exists('/home/src/test/mage_data1/pipelines'))
+
+        self.assertFalse(os.path.exists('/home/src/test/mage_data2/pipelines'))
+        Pipeline.get_all_pipelines(
+            '/home/src/test/mage_data2',
+            disable_pipelines_folder_creation=True,
+        )
+        self.assertFalse(os.path.exists('/home/src/test/mage_data2/pipelines'))
+
+        shutil.rmtree('/home/src/test/mage_data1')
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(
