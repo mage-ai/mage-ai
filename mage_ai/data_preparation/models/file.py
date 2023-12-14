@@ -51,12 +51,14 @@ class File:
         return os.path.isfile(file_path)
 
     @classmethod
-    def create_parent_directories(self, file_path: str) -> bool:
+    def create_parent_directories(self, file_path: str, raise_exception: bool = False) -> bool:
         will_create = not self.file_exists(file_path)
         if will_create:
             try:
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
             except FileExistsError as err:
+                if raise_exception:
+                    raise err
                 print(f'[WARNING] File.create_parent_directories: {err}.')
         return will_create
 
