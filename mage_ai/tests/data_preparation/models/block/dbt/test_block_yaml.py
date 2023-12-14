@@ -8,6 +8,10 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.data_preparation.models.block.platform.test_mixins import (
+    BlockWithProjectPlatformShared,
+)
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def build_block(pipeline, content: str) -> DBTBlock:
@@ -233,3 +237,59 @@ class DBTBlockYAMLTest(TestCase):
             '--profiles-dir',
             'test_profiles_dir',
         ], None)
+
+
+@patch(
+    'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+    lambda: True,
+)
+@patch(
+    'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
+    lambda: True,
+)
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+class DBTBlockYAMLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
+    def test_project_path(self):
+        block = build_block(MagicMock(), '')
+        block.configuration['dbt_project_name'] = 'mage_data/dbt/demo'
+        self.assertEqual(block.project_path, '/home/src/test/mage_data/dbt/demo')
+
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Project')
+    def test_metadata_async(self, Project, Profiles):
+        Project.return_value.local_packages = ['test_project_name']
+        Project.return_value.project = {
+            'name': 'test_project_name',
+            'profile': 'test_project_name'
+        }
+        Profiles.return_value.profiles = {
+            'test_project_name': {
+                'target': 'test',
+                'outputs': {
+                    'test': None,
+                    'dev': None,
+                    'prod': None
+                }
+            }
+        }
+
+        block = build_block(MagicMock(), '')
+        # block.configuration['dbt_project_name'] = 'demo'
+        metadata = asyncio.run(block.metadata_async())
+
+        self.assertEqual(
+            metadata,
+            {
+                'dbt': {
+                    'block': {},
+                    'project': None,
+                    'projects': {
+                        'test_project_name': {
+                            'project_name': 'test_project_name',
+                            'target': 'test',
+                            'targets': ['dev', 'prod', 'test']
+                        }
+                    }
+                }
+            }
+        )
