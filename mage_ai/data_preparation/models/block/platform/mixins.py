@@ -13,6 +13,7 @@ from mage_ai.shared.path_fixer import (
     add_root_repo_path_to_relative_path,
     get_path_parts,
     remove_base_repo_directory_name,
+    remove_base_repo_name,
     remove_repo_names,
 )
 from mage_ai.shared.strings import remove_extension_from_filename
@@ -28,6 +29,27 @@ class ProjectPlatformAccessible:
         self._project_platform_activated = project_platform_activated_func()
 
         return self._project_platform_activated
+
+    def clean_file_paths(self, configuration: Dict) -> Dict:
+        config = (configuration or {}).copy()
+
+        if not config:
+            return config
+
+        if config.get('file_source'):
+            file_source = config.get('file_source') or {}
+            if file_source and file_source.get('path'):
+                # default_platform/tons_of_dbt_projects/diff_name/models/example/
+                # my_first_dbt_model.sql
+                path = file_source.get('path')
+                file_source['path'] = str(remove_base_repo_name(path)) if path else path
+                config['file_source'] = file_source
+
+        if config.get('file_path'):
+            file_path = config.get('file_path')
+            config['file_path'] = str(remove_base_repo_name(file_path)) if file_path else file_path
+
+        return config
 
     def is_from_another_project(self) -> bool:
         return self.project_platform_activated and from_another_project(self.__file_source_path())

@@ -302,7 +302,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self.pipeline = pipeline
         self.language = language or BlockLanguage.PYTHON
         self.color = block_color
-        self.configuration = configuration
+        self._configuration = None
         self.has_callback = has_callback
         self.timeout = timeout
         self.retry_config = retry_config
@@ -356,9 +356,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         self.hook = hook
         self._project_platform_activated = None
 
+        # Needs to after self._project_platform_activated = None
+        self.configuration = configuration
+
     @property
     def uuid(self) -> str:
         return self._uuid
+
+    @property
+    def configuration(self) -> Dict:
+        return self._configuration
 
     @property
     def repo_config(self):
@@ -378,6 +385,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     @uuid.setter
     def uuid(self, x) -> None:
         self._uuid = x
+
+    @configuration.setter
+    def configuration(self, x) -> None:
+        if self.project_platform_activated:
+            x = self.clean_file_paths(x)
+
+        self._configuration = x
 
     @property
     def content(self) -> str:
