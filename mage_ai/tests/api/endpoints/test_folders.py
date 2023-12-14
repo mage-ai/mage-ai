@@ -89,8 +89,8 @@ class FolderWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatf
 
 build_create_endpoint_tests(
     FolderWithProjectPlatformAPIEndpointTest,
-    assert_after_create_count=lambda self: get_count(self) == self.count + 1,
-    assert_before_create_count=lambda self: get_count(self) == self.count,
+    assert_after_create_count=lambda self, mocks: get_count(self) == self.count + 1,
+    assert_before_create_count=lambda self, mocks: get_count(self) == self.count,
     build_payload=lambda self: dict(
         name=self.faker.unique.name().replace(' ', '_'),
         path=get_repo_path(root_project=False),
@@ -121,8 +121,8 @@ build_update_endpoint_tests(
 
 build_delete_endpoint_tests(
     FolderWithProjectPlatformAPIEndpointTest,
-    assert_after_delete_count=lambda self: get_count(self) == self.count - 1,
-    assert_before_delete_count=lambda self: get_count(self) == self.count,
+    assert_after_delete_count=lambda self, mocks: get_count(self) == self.count - 1,
+    assert_before_delete_count=lambda self, mocks: get_count(self) == self.count,
     get_resource_id=lambda self: get_resource_id(self),
     resource='folders',
     patch_function_settings=[
