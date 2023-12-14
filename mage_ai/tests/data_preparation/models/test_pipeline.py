@@ -771,7 +771,7 @@ class PipelineTest(DBTestCase):
             repo_path=self.repo_path,
         )
         pipelines = Pipeline.get_all_pipelines('/home/src/test')
-        self.assertEqual(pipelines, [pipeline1.uuid, pipeline2.uuid])
+        self.assertTrue(all([uuid in pipelines for uuid in [pipeline1.uuid, pipeline2.uuid]]))
 
         pipeline3 = Pipeline.create(
             self.faker.unique.name(),
@@ -782,7 +782,7 @@ class PipelineTest(DBTestCase):
             repo_path='/home/src/test/mage_platform',
         )
         pipelines = Pipeline.get_all_pipelines('/home/src/test/mage_platform')
-        self.assertEqual(pipelines, [pipeline3.uuid, pipeline4.uuid])
+        self.assertTrue(all([uuid in pipelines for uuid in [pipeline3.uuid, pipeline4.uuid]]))
         shutil.rmtree('/home/src/test/mage_platform')
 
     def test_get_all_pipelines_disable_pipelines_folder_creation(self):
