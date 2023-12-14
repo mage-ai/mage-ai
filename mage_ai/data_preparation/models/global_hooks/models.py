@@ -422,9 +422,14 @@ class Hook(BaseDataClass):
             if pipeline_run and pipeline_run.block_runs:
                 for block_run in pipeline_run.block_runs:
                     block_run.refresh()
+                    # Cannot save raw value in DB; it breaks:
+                    # sqlalchemy.exc.StatementError:
+                    # (builtins.TypeError) Object of type Py4JJavaError is not JSON serializable
+                    # [SQL: UPDATE block_run SET updated_at=CURRENT_TIMESTAMP, status=?, metrics=?
+                    # WHERE block_run.id = ?]
 
-                    if block_run.metrics.get('__error_details'):
-                        error_details_arr.append(block_run.metrics.get('__error_details'))
+                    # if block_run.metrics.get('__error_details'):
+                    #     error_details_arr.append(block_run.metrics.get('__error_details'))
 
             self.status = HookStatus.load(error=err, errors=error_details_arr)
 
