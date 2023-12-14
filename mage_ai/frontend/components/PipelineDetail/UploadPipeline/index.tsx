@@ -120,30 +120,21 @@ function UploadPipeline({
   return (
     <Panel
       footer={(
-        <>
-          <FlexContainer fullWidth alignItems="center" justifyContent="center">
-            <Text warning>
-              The zipfile should include the pipeline&apos;s metadata.yaml file 
-              and each block&apos;s script file in the root folder.
-            </Text>
-          </FlexContainer>
-          <Spacing mb={1}></Spacing>
-          <FlexContainer fullWidth justifyContent="space-between">
-            <Button onClick={() => onCancel()}>
-              Close
-            </Button>
-            <Spacing ml={1}>
-              <FlexContainer alignItems="center" justifyContent="flex-end">
-                <Text>Overwrite pipeline files</Text>
-                <Spacing ml={1}/>
-                <ToggleSwitch
-                  checked={overwritePipeline}
-                  onCheck={setOverwritePipeline}
-                />
-              </FlexContainer>
-            </Spacing>
-          </FlexContainer>
-        </>
+        <FlexContainer fullWidth justifyContent="space-between">
+          <Button onClick={() => onCancel()}>
+            Close
+          </Button>
+          <Spacing ml={1}>
+            <FlexContainer alignItems="center" justifyContent="flex-end">
+              <Text>Overwrite pipeline files</Text>
+              <Spacing ml={1}/>
+              <ToggleSwitch
+                checked={overwritePipeline}
+                onCheck={setOverwritePipeline}
+              />
+            </FlexContainer>
+          </Spacing>
+        </FlexContainer>
       )}
       headerTitle="Import pipeline from .zip file"
     >
@@ -173,6 +164,13 @@ function UploadPipeline({
               {!isDragActive && 'Click or drop pipeline zip to upload'}
             </Text>
           </DropZoneStyle>
+          <Spacing mt={2}>
+            <Text warning>
+              The zip file should include the pipeline’s metadata.yaml file and each 
+              <br />
+              block’s script file in the root folder.
+            </Text>
+          </Spacing>
         </FileUploader>
       )}
     </Panel>
