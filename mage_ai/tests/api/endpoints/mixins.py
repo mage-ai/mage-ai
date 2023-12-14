@@ -299,6 +299,7 @@ def build_detail_endpoint_tests(
     permissions_accesses: List[PermissionAccess] = None,
     permission_settings: List[Dict] = None,
     patch_function_settings: List[Tuple] = None,
+    assert_after: Callable[[AsyncDBTestCase], List[Dict]] = None,
 ):
     def _build_test_detail_endpoint(
         authentication: int = None,
@@ -314,6 +315,7 @@ def build_detail_endpoint_tests(
         permissions_accesses=permissions_accesses,
         permission_settings=permission_settings,
         patch_function_settings=patch_function_settings,
+        assert_after=assert_after,
     ):
         async def _test_detail_endpoint(
             self,
@@ -330,6 +332,7 @@ def build_detail_endpoint_tests(
             permissions_accesses=permissions_accesses,
             permission_settings=permission_settings,
             patch_function_settings=patch_function_settings,
+            assert_after=assert_after,
         ):
             await self.build_test_detail_endpoint(
                 authentication=authentication,
@@ -345,6 +348,7 @@ def build_detail_endpoint_tests(
                 permissions_accesses=permissions_accesses,
                 permission_settings=permission_settings,
                 patch_function_settings=patch_function_settings,
+                assert_after=assert_after,
             )
         return _test_detail_endpoint
 
@@ -876,7 +880,11 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
                         self.assertTrue(all(validations))
 
                     if assert_after is not None:
-                        validation = assert_after(self, result, mocks=mocks)
+                        if mocks:
+                            validation = assert_after(self, result, mocks=mocks)
+                        else:
+                            validation = assert_after(self, result)
+
                         if validation and inspect.isawaitable(validation):
                             validation = await validation
 
