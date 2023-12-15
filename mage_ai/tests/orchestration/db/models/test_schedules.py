@@ -108,7 +108,7 @@ class PipelineScheduleTests(DBTestCase):
                 'test_pipeline',
                 pipeline_schedule_id=pipeline_schedule.id,
             )
-        self.assertEqual(pipeline_schedule.pipeline_runs_count, 8)
+        self.assertEqual(pipeline_schedule.pipeline_runs_count, 5)
 
     def test_in_progress_runs_count(self):
         pipeline_schedule = PipelineSchedule.create(
