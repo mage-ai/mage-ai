@@ -1,0 +1,26 @@
+demo:
+  target: dev
+  outputs:
+    postgres:
+      dbname: dangerous
+      host: host.docker.internal
+      password: postgres
+      port: 5432
+      schema: mage_dbt
+      type: postgres
+      user: postgres
+    dev:
+      dbname: dangerous
+      host: host.docker.internal
+      password: postgres
+      port: 5432
+      schema: mage_dbt
+      type: postgres
+      user: postgres
+    bigquery:
+      dataset: mage_demo_dev
+      keyfile: bigquery_credentials.json
+      method: service-account
+      project: materia-284023
+      threads: 1
+      type: bigquery

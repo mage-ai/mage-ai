@@ -47,6 +47,20 @@ class ConfigurationOption(BaseDataClass):
         self.serialize_attribute_enum('option_type', OptionType)
         self.serialize_attribute_enum('resource_type', EntityName)
 
+    def to_dict(self) -> Dict:
+        return merge_dict(super().to_dict(), dict(
+            configuration_type=(
+                self.configuration_type.value if self.configuration_type
+                else self.configuration_type
+            ),
+            option_type=(
+                self.option_type.value if self.option_type else self.option_type
+            ),
+            resource_type=(
+                self.resource_type.value if self.resource_type else self.resource_type
+            ),
+        ))
+
     @classmethod
     async def fetch(
         self,
