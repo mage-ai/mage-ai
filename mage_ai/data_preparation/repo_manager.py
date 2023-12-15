@@ -91,7 +91,6 @@ class RepoConfig:
                         os.path.join(self.repo_path, self.variables_dir)
                     )
             else:
-                print('WTFFFFFFFFFFFFFFFFFFFFFFF', self.repo_path, repo_config, self.root_project)
                 self.variables_dir = get_variables_dir(
                     repo_path=self.repo_path,
                     repo_config=repo_config,
