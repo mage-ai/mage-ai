@@ -157,7 +157,7 @@ class PipelineSchedule(BaseModel):
                         PipelineRun.PipelineRunStatus.RUNNING,
                     ]
                 ),
-                (coalesce(PipelineRun.passed_sla, False) is False),
+                (coalesce(PipelineRun.passed_sla, False).is_(False)),
             )
             .scalar()
         )
@@ -472,7 +472,7 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
-            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
+            pipeline_run_count = self.pipeline_runs_count
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
@@ -480,7 +480,7 @@ class PipelineSchedule(BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            if len(self.fetch_pipeline_runs([self.id])) == 0:
+            if self.pipeline_runs_count == 0:
                 return True
             else:
                 return self.last_pipeline_run_status not in [
