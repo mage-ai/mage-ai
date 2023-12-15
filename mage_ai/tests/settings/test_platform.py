@@ -55,6 +55,7 @@ SETTINGS = dict(
     lambda: True,
 )
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.platform.ENABLE_PROJECT_PLATFORM', True)
 class PlatformSettingsTest(ProjectPlatformMixin):
     def setUp(self):
         super().setUp()

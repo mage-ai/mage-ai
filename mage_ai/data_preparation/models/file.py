@@ -122,8 +122,16 @@ class File:
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
-    def get_all_files(self, repo_path, exclude_pattern: str = None, pattern: str = None):
+    def get_all_files(
+        self,
+        repo_path,
+        exclude_dir_pattern: str = None,
+        exclude_pattern: str = None,
+        pattern: str = None,
+    ):
+        dir_selector = None
         file_selector = None
+
         if exclude_pattern is not None or pattern is not None:
             def __select(x: Dict, pattern=pattern):
                 filename = x.get('name')
@@ -136,7 +144,23 @@ class File:
 
             file_selector = __select
 
-        return traverse(os.path.basename(repo_path), True, repo_path, file_selector=file_selector)
+        if exclude_dir_pattern is not None:
+            def __select(x: Dict, pattern=pattern):
+                filename = x.get('name')
+                checks = []
+                if exclude_dir_pattern:
+                    checks.append(not re.search(exclude_dir_pattern, filename or ''))
+                return all(checks)
+
+            dir_selector = __select
+
+        return traverse(
+            os.path.basename(repo_path),
+            True,
+            repo_path,
+            dir_selector=dir_selector,
+            file_selector=file_selector,
+        )
 
     @classmethod
     def file_path_versions_dir(
@@ -392,6 +416,7 @@ def traverse(
     path: str,
     disabled=False,
     depth=1,
+    dir_selector: Callable = None,
     file_selector: Callable = None,
 ) -> Dict:
     tree_entry = dict(name=name)
@@ -402,7 +427,12 @@ def traverse(
         return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
 
-    def __filter(entry, depth=depth, file_selector=file_selector) -> bool:
+    def __filter(
+        entry,
+        depth=depth,
+        dir_selector=dir_selector,
+        file_selector=file_selector,
+    ) -> bool:
         if entry.name in BLACKLISTED_DIRS:
             return False
 
@@ -411,7 +441,11 @@ def traverse(
 
         entry_path = entry.path
         if entry.is_dir(follow_symlinks=False) or os.path.isdir(entry_path):
-            return True
+            return True if dir_selector is None else dir_selector(dict(
+                depth=depth + 1,
+                name=str(entry.name),
+                path=entry.path,
+            ))
         else:
             return file_selector(dict(
                 depth=depth + 1,
@@ -428,6 +462,7 @@ def traverse(
             entry.path,
             can_access_children,
             depth + 1,
+            dir_selector=dir_selector,
             file_selector=file_selector,
         ) for entry in sorted(
             filter(__filter, os.scandir(path)),
