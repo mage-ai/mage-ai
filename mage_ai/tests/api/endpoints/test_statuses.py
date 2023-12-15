@@ -1,5 +1,7 @@
+import os
 from unittest.mock import patch
 
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_list_endpoint_tests,
@@ -74,10 +76,10 @@ class StatusWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatf
 
 def __assert_after_list(self, result, **kwargs):
     for key, value in [
-        ('repo_path', '/home/src/test/mage_platform'),
+        ('repo_path', os.path.join(base_repo_path(), 'mage_platform')),
         ('repo_path_relative', 'test/mage_platform'),
         ('repo_path_relative_root', 'test'),
-        ('repo_path_root', '/home/src/test'),
+        ('repo_path_root', base_repo_path()),
     ]:
         self.assertEqual(
             result[0][key],

@@ -1,6 +1,7 @@
 import os
 import shutil
 
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import find_directory, get_full_file_paths_containing_item
 from mage_ai.tests.base_test import AsyncDBTestCase
 
@@ -8,7 +9,7 @@ from mage_ai.tests.base_test import AsyncDBTestCase
 class FilesTest(AsyncDBTestCase):
     def setUp(self):
         super().setUp()
-        self.directory = '/home/src/test/test_files'
+        self.directory = os.path.join(base_repo_path(), 'test_files')
 
         os.makedirs(os.path.join(self.directory, 'dir1'), exist_ok=True)
         os.makedirs(os.path.join(self.directory, 'dir2'), exist_ok=True)
@@ -31,7 +32,7 @@ class FilesTest(AsyncDBTestCase):
     def test_find_directory(self):
         self.assertEqual(
             find_directory(self.directory, lambda fn: str(fn).endswith('.txt')),
-            '/home/src/test/test_files/dir2/file2.txt',
+            os.path.join(base_repo_path(), 'test_files/dir2/file2.txt'),
         )
 
     def test_get_full_file_paths_containing_item(self):
@@ -39,7 +40,7 @@ class FilesTest(AsyncDBTestCase):
             self.directory,
             lambda fn: str(fn).endswith('.txt'),
         )), sorted([
-            '/home/src/test/test_files/dir1/file1.txt',
-            '/home/src/test/test_files/dir2/dir3/file2_3.txt',
-            '/home/src/test/test_files/dir2/file2.txt',
+            os.path.join(base_repo_path(), 'test_files/dir1/file1.txt'),
+            os.path.join(base_repo_path(), 'test_files/dir2/dir3/file2_3.txt'),
+            os.path.join(base_repo_path(), 'test_files/dir2/file2.txt'),
         ]))

@@ -347,7 +347,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
         file = block.build_file()
         self.assertEqual(str(file.filename), 'utils/mage.py')
         self.assertEqual(str(file.dir_path), 'mage_data')
-        self.assertEqual(str(file.repo_path), '/home/src/test')
+        self.assertEqual(str(file.repo_path), base_repo_path())
 
     def test_hydrate_dbt_nodes(self):
         block = self.build_block()
