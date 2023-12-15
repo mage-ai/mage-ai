@@ -166,7 +166,7 @@ def active_project_settings(
 
 
 def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
-    mapping = (combined_platform_settings(repo_path=repo_path) or {}).get('projects')
+    mapping = (__combined_platform_settings(repo_path=repo_path) or {}).get('projects')
 
     if mage_projects_only:
         select_keys = []
@@ -180,7 +180,7 @@ def project_platform_settings(repo_path: str = None, mage_projects_only: bool = 
     return mapping
 
 
-def combined_platform_settings(repo_path: str = None) -> Dict:
+def __combined_platform_settings(repo_path: str = None) -> Dict:
     child = (platform_settings() or {}).copy()
     parent = (__local_platform_settings(repo_path=repo_path) or {}).copy()
     combine_into(child, parent)

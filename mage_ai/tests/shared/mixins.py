@@ -343,10 +343,9 @@ class GlobalHooksMixin(BaseApiTestCase):
 
 class ProjectPlatformMixin(AsyncDBTestCase):
     @classmethod
-    def setUpClass(self):
-        super().setUpClass()
+    def initialize_settings(self, settings: Dict = None):
         self.platform_project_name = 'mage_platform'
-        content = yaml.dump(dict(
+        content = yaml.dump(settings or dict(
             projects={
                 self.platform_project_name: {},
                 'mage_data': {},
@@ -362,9 +361,17 @@ class ProjectPlatformMixin(AsyncDBTestCase):
         safe_write(local_platform_settings_full_path(), content)
 
     @classmethod
+    def setUpClass(self):
+        super().setUpClass()
+        self.initialize_settings()
+
+    @classmethod
     def tearDownClass(self):
-        os.remove(platform_settings_full_path())
-        os.remove(local_platform_settings_full_path())
+        if os.path.exists(platform_settings_full_path()):
+            os.remove(platform_settings_full_path())
+        if os.path.exists(local_platform_settings_full_path()):
+            os.remove(local_platform_settings_full_path())
+
         try:
             super().tearDownClass()
         except Exception as err:
