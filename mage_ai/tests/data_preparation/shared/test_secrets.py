@@ -120,7 +120,6 @@ class SecretProjectPlatformTest(ProjectPlatformMixin, DBTestCase):
                 shutil.rmtree(platform_settings_full_path())
             except Exception:
                 pass
-
             mock_data_dir.return_value = os.path.join(base_repo_path(), 'data')
             secret = create_secret(uuid4().hex, '123')
 

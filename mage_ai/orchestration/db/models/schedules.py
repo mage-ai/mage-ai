@@ -147,11 +147,30 @@ class PipelineSchedule(BaseModel):
 
     @property
     def pipeline_in_progress_runs_count(self) -> int:
-        return len(PipelineRun.in_progress_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+                PipelineRun.status.in_(
+                    [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]
+                ),
+                (coalesce(PipelineRun.passed_sla, False).is_(False)),
+            )
+            .scalar()
+        )
 
     @property
     def pipeline_runs_count(self) -> int:
-        return len(self.fetch_pipeline_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .scalar()
+        )
 
     @property
     def timeout(self) -> int:
@@ -159,8 +178,9 @@ class PipelineSchedule(BaseModel):
 
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
-        if schedule_interval and schedule_interval not in \
-                [e.value for e in ScheduleInterval]:
+        if schedule_interval and schedule_interval not in [
+            e.value for e in ScheduleInterval
+        ]:
             if not croniter.is_valid(schedule_interval):
                 raise ValueError('Cron expression is invalid.')
 
@@ -168,9 +188,21 @@ class PipelineSchedule(BaseModel):
 
     @property
     def last_pipeline_run_status(self) -> str:
-        if len(self.fetch_pipeline_runs([self.id])) == 0:
+        query_result = (
+            PipelineRun.select(PipelineRun.id, PipelineRun.status)
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .order_by(
+                PipelineRun.created_at.desc(),
+            )
+            .first()
+        )
+
+        if query_result is None:
             return None
-        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
+
+        return query_result.status
 
     @property
     def tag_associations(self):
@@ -440,7 +472,7 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
-            pipeline_run_count = len(self.fetch_pipeline_runs([self.id]))
+            pipeline_run_count = self.pipeline_runs_count
             if pipeline_run_count == 0:
                 return True
             executor_count = self.pipeline.executor_count
@@ -448,7 +480,7 @@ class PipelineSchedule(BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            if len(self.fetch_pipeline_runs([self.id])) == 0:
+            if self.pipeline_runs_count == 0:
                 return True
             else:
                 return self.last_pipeline_run_status not in [
