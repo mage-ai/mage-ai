@@ -435,16 +435,25 @@ class PipelineResource(BaseResource):
         resource_id: str = None,
         **kwargs,
     ):
+        all_projects = project_platform_activated()
+
         pipeline_uuid = urllib.parse.unquote(pk)
 
-        if 'PipelineScheduleResource' == resource_class.__name__ and resource_id:
-            pipeline_schedule = PipelineSchedule.query.get(resource_id)
-            return get_pipeline_from_platform_async(
-                pipeline_uuid,
-                repo_path=pipeline_schedule.repo_path if pipeline_schedule else None,
-            )
+        if all_projects:
+            if 'PipelineScheduleResource' == resource_class.__name__ and resource_id:
+                pipeline_schedule = None
 
-        return await Pipeline.get_async(pipeline_uuid, all_projects=project_platform_activated())
+                try:
+                    pipeline_schedule = PipelineSchedule.query.get(resource_id)
+                except Exception:
+                    pass
+
+                return await get_pipeline_from_platform_async(
+                    pipeline_uuid,
+                    repo_path=pipeline_schedule.repo_path if pipeline_schedule else None,
+                )
+
+        return await Pipeline.get_async(pipeline_uuid, all_projects=all_projects)
 
     @classmethod
     @safe_db_query
