@@ -76,7 +76,7 @@ class PipelineScheduleResource(DatabaseResource):
         if project_platform_activated():
             query = PipelineSchedule.query
         else:
-            query = query.repo_query
+            query = PipelineSchedule.repo_query
 
         tag_query = TagAssociation.select(
             Tag.name,
