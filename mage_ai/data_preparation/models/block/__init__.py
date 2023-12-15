@@ -507,7 +507,6 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         return {}
 
-    @property
     def exists(self) -> bool:
         return self.file.exists()
 
