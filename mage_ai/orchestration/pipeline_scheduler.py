@@ -76,8 +76,8 @@ class PipelineScheduler:
         self.pipeline_run = pipeline_run
         self.pipeline_schedule = pipeline_run.pipeline_schedule
         self.pipeline = get_pipeline_from_platform(
-            self.pipeline_schedule.pipeline_uuid,
-            repo_path=self.pipeline_schedule.repo_path,
+            pipeline_run.pipeline_uuid,
+            repo_path=self.pipeline_schedule.repo_path if self.pipeline_schedule else None,
         )
 
         # Get the list of integration stream if the pipeline is data integration pipeline
