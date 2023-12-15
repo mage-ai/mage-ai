@@ -122,12 +122,17 @@ class File:
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
-    def get_all_files(self, repo_path, pattern: str = None):
+    def get_all_files(self, repo_path, exclude_pattern: str = None, pattern: str = None):
         file_selector = None
-        if pattern is not None:
+        if exclude_pattern is not None or pattern is not None:
             def __select(x: Dict, pattern=pattern):
                 filename = x.get('name')
-                return re.search(pattern, filename or '')
+                checks = []
+                if exclude_pattern:
+                    checks.append(not re.search(exclude_pattern, filename or ''))
+                if pattern:
+                    checks.append(re.search(pattern, filename or ''))
+                return all(checks)
 
             file_selector = __select
 

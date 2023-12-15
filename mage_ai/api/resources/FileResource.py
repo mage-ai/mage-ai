@@ -28,6 +28,7 @@ class FileResource(GenericResource):
         return self.build_result_set(
             [File.get_all_files(
                 get_repo_path(root_project=True),
+                exclude_pattern=r'^.|/.',
                 pattern=pattern,
             )],
             user,
