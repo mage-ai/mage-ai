@@ -440,19 +440,9 @@ class PipelineResource(BaseResource):
         pipeline_uuid = urllib.parse.unquote(pk)
 
         if all_projects:
-            if 'PipelineScheduleResource' == resource_class.__name__ and resource_id:
-                pipeline_schedule = None
-
-                try:
-                    pipeline_schedule = PipelineSchedule.query.get(resource_id)
-                except Exception:
-                    pass
-
-                pipeline = await get_pipeline_from_platform_async(
-                    pipeline_uuid,
-                    repo_path=pipeline_schedule.repo_path if pipeline_schedule else None,
-                )
-                return pipeline
+            return await get_pipeline_from_platform_async(
+                pipeline_uuid,
+            )
 
         return await Pipeline.get_async(pipeline_uuid, all_projects=all_projects)
 

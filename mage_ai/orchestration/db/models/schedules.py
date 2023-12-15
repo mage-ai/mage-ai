@@ -800,10 +800,19 @@ class PipelineRun(BaseModel):
         return pipeline_runs
 
     async def logs_async(self):
+        repo_path = None
+        if self.pipeline_schedule:
+            repo_path = self.pipeline_schedule.repo_path
+
+        pipeline = await get_pipeline_from_platform_async(
+            self.pipeline_uuid,
+            repo_path=repo_path,
+        )
+
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
-            repo_config=self.pipeline.repo_config,
+            repo_config=pipeline.repo_config,
         ).get_logs_async()
 
     @property

@@ -2,6 +2,8 @@ from enum import Enum
 
 from mage_ai.authentication.permissions.constants import EntityName
 
+GLOBAL_HOOKS_FILENAME = 'global_hooks.yaml'
+
 DISABLED_RESOURCE_TYPES = [
     EntityName.ALL,
     EntityName.ALL_EXCEPT_RESERVED,
