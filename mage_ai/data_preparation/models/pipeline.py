@@ -110,6 +110,13 @@ class Pipeline:
 
     @property
     def config_path(self):
+        if project_platform_activated():
+            from mage_ai.settings.platform.utils import get_pipeline_config_path
+
+            config_path, _repo_path = get_pipeline_config_path(self.uuid)
+            if config_path:
+                return config_path
+
         return os.path.join(
             self.repo_path,
             PIPELINES_FOLDER,
@@ -119,6 +126,13 @@ class Pipeline:
 
     @property
     def catalog_config_path(self):
+        if project_platform_activated():
+            from mage_ai.settings.platform.utils import get_pipeline_config_path
+
+            config_path, _repo_path = get_pipeline_config_path(self.uuid)
+            if config_path:
+                return os.path.join(os.path.dirname(config_path), DATA_INTEGRATION_CATALOG_FILE)
+
         return os.path.join(
             self.repo_path,
             PIPELINES_FOLDER,

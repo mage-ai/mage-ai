@@ -564,19 +564,34 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def repo_path(self) -> str:
         return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
+    @classmethod
+    def __build_file_path(
+        self,
+        repo_path: str,
+        block_uuid: str,
+        block_type: BlockType,
+        language: BlockLanguage,
+    ) -> str:
+        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+        block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
+
+        return os.path.join(
+            repo_path or os.getcwd(),
+            block_directory,
+            f'{block_uuid}.{file_extension}',
+        )
+
     @property
     def file_path(self) -> str:
         file_path = self.get_file_path_from_source()
         if file_path:
             return file_path
 
-        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
-        block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
-
-        return os.path.join(
+        return self.__build_file_path(
             self.repo_path or os.getcwd(),
-            block_directory,
-            f'{self.uuid}.{file_extension}',
+            self.uuid,
+            self.type,
+            self.language,
         )
 
     @property
@@ -777,6 +792,20 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         language=language,
                         pipeline_type=pipeline.type if pipeline is not None else None,
                     )
+
+        from mage_ai.settings.platform import project_platform_activated
+
+        if project_platform_activated():
+            configuration = configuration or {}
+            if not configuration.get('file_source'):
+                configuration['file_source'] = {}
+            if not configuration['file_source'].get('path'):
+                configuration['file_source']['path'] = self.__build_file_path(
+                    get_repo_path(absolute_path=False, root_project=False),
+                    uuid,
+                    block_type,
+                    language,
+                )
 
         block = self.block_class_from_type(block_type, pipeline=pipeline)(
             name,

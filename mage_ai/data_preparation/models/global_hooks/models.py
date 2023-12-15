@@ -228,7 +228,12 @@ class Hook(BaseDataClass):
 
         if self.pipeline_settings:
             try:
-                self._pipeline = Pipeline.get(self.pipeline_settings.get('uuid'))
+                repo_path = self.pipeline_settings.get('repo_path')
+                self._pipeline = Pipeline.get(
+                    self.pipeline_settings.get('uuid'),
+                    repo_path=repo_path,
+                    all_projects=False if repo_path else True,
+                )
                 self._pipeline.run_pipeline_in_one_process = True
             except Exception as err:
                 print(f'[WARNING] Hook.pipeline {self.uuid}: {err}')

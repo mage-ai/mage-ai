@@ -448,10 +448,11 @@ class PipelineResource(BaseResource):
                 except Exception:
                     pass
 
-                return await get_pipeline_from_platform_async(
+                pipeline = await get_pipeline_from_platform_async(
                     pipeline_uuid,
                     repo_path=pipeline_schedule.repo_path if pipeline_schedule else None,
                 )
+                return pipeline
 
         return await Pipeline.get_async(pipeline_uuid, all_projects=all_projects)
 

@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.variable import (
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.shared.constants import GCS_PREFIX, S3_PREFIX
 from mage_ai.shared.dates import str_to_timedelta
@@ -314,7 +315,7 @@ def get_global_variables(
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
-    pipeline = pipeline or Pipeline.get(pipeline_uuid)
+    pipeline = pipeline or Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
     if pipeline.variables is not None:
         global_variables = pipeline.variables
     else:
