@@ -199,6 +199,7 @@ class Hook(BaseDataClass):
         if include_all:
             arr.extend([
                 'operation_type',
+                'project'
                 'resource_type',
             ])
 
@@ -384,6 +385,8 @@ class Hook(BaseDataClass):
             return
 
         pipeline_run = None
+
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', self.project)
 
         try:
             variables_from_operation = extract_valid_data(self.resource_type, dict(

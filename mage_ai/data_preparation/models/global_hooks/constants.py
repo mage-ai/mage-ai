@@ -42,6 +42,7 @@ class HookOutputKey(str, Enum):
 
 class HookInputKey(str, Enum):
     HOOK = 'hook'
+    PROJECT = 'project'
     RESOURCE_ID = 'resource_id'
     RESOURCE_PARENT = 'resource_parent'
     RESOURCE_PARENT_ID = 'resource_parent_id'
@@ -54,6 +55,7 @@ VALID_KEYS_FOR_INPUT_OUTPUT_DATA_RESTRICTED = [key.value for key in HookOutputKe
 ]
 VALID_KEYS_FOR_INPUT_OUTPUT_DATA_UNRESTRICTED = [
     HookInputKey.HOOK.value,
+    HookInputKey.PROJECT.value,
     HookInputKey.RESOURCE_ID.value,
     HookInputKey.RESOURCE_PARENT_ID.value,
     HookInputKey.RESOURCE_PARENT_TYPE.value,
