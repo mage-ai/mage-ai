@@ -27,7 +27,7 @@ const PROVIDER_TO_ICON_MAPPING = {
 type ProviderProps = {
   isLoadingCreateOauth: boolean;
   oauth: OauthType;
-  provider: OauthProviderEnum;
+  provider: OauthProviderEnum | string;
   showError: (opts: any) => void;
 };
 
@@ -164,12 +164,12 @@ function Authentication({
           </Spacing>
           <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} style={{ maxWidth: '600px' }}>
             <Divider muted />
-            {[OauthProviderEnum.GITHUB, OauthProviderEnum.BITBUCKET].map(provider => (
+            {Object.entries(providerMapping || {}).map(([provider, oauth]) => (
               <>
                 <Provider
                   isLoadingCreateOauth={isLoadingCreateOauth}
                   key={provider}
-                  oauth={providerMapping?.[provider]}
+                  oauth={oauth}
                   provider={provider}
                   showError={showError}
                 />

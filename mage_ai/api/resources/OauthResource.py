@@ -40,7 +40,6 @@ class OauthResource(GenericResource):
         if oauth_type == 'git':
             providers = GIT_OAUTH_PROVIDERS
 
-        print('providers:', providers)
         oauths = []
         for provider in providers:
             try:
@@ -144,11 +143,6 @@ class OauthResource(GenericResource):
         else:
             provider = pk
 
-        provider_class = NAME_TO_PROVIDER.get(provider)
-        provider_instance = None
-        if provider_class is not None:
-            provider_instance = provider_class()
-
         access_tokens = access_tokens_for_client(
             get_oauth_client_id(provider),
             user=user,
@@ -160,9 +154,15 @@ class OauthResource(GenericResource):
             model['expires'] = max(
                 [access_token.expires for access_token in access_tokens]
             )
+            return self(model, user, **kwargs)
+
+        provider_class = NAME_TO_PROVIDER.get(provider)
+        provider_instance = None
+        if provider_class is not None:
+            provider_instance = provider_class()
         # If an oauth code is provided, we need to exchange it for an access token for
         # the provider and return the redirect uri.
-        elif code:
+        if code:
             if provider_instance is not None:
                 # 1. Obtain an access token from the Oauth provider.
                 # 2. Update uri query parameters with provider and access token from response.
