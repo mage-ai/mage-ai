@@ -979,7 +979,7 @@ class GlobalHooks(BaseDataClass):
 
         hooks = []
         if project_platform_activated() and self.project_global_hooks:
-            for project_name, settings in self.project_global_hooks.items():
+            for settings in self.project_global_hooks.values():
                 global_hooks = settings.get('global_hooks')
                 project = settings.get('project')
 
