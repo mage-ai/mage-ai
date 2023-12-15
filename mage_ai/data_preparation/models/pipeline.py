@@ -27,7 +27,7 @@ from mage_ai.data_preparation.models.block.errors import HasDownstreamDependenci
 from mage_ai.data_preparation.models.constants import (
     DATA_INTEGRATION_CATALOG_FILE,
     PIPELINE_CONFIG_FILE,
-    PIPELINE_MAX_SIZE,
+    PIPELINE_MAX_FILE_SIZE,
     PIPELINES_FOLDER,
     BlockLanguage,
     BlockType,
@@ -240,18 +240,19 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def import_from_zip(self, zip_content, overwrite=False):
+    def import_from_zip(self, zip_content: str, overwrite: bool = False) -> File:
         with tempfile.TemporaryDirectory() as tmp_dir:
             zip_data = BytesIO(zip_content)
             with zipfile.ZipFile(zip_data, 'r') as zipf:
                 zip_size = sum(e.file_size for e in zipf.infolist())  # calc zip size in bytes
-                if zip_size / 1000 > PIPELINE_MAX_SIZE:  # prevention against zip-bombs
+                if zip_size / 1000 > PIPELINE_MAX_FILE_SIZE:  # prevention against zip-bombs
                     raise PipelineZipTooLargeError(
-                        f'Pipeline zip excedes size limit {PIPELINE_MAX_SIZE/1000}Kb')
+                        f'Pipeline zip exceeds size limit {PIPELINE_MAX_FILE_SIZE/1000}Kb')
 
                 zip_contents = zipf.namelist()
-                prefix = os.path.commonpath(zip_contents)  # Check if zip contents are part of a root folder
-                
+                # Verify if zip conts are part of a root folder
+                prefix = os.path.commonpath(zip_contents)
+
                 zipf.extractall(tmp_dir)
                 if prefix:
                     for file in zip_contents[1:]:  # move each file except the folder itself
@@ -260,21 +261,13 @@ class Pipeline:
                         os.rename(original_path, final_path)
                     os.removedirs(os.path.join(tmp_dir, prefix))  # remove root folder
 
-            config_zip_path = self.__find_pipeline_file(
-                self, tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
-            )
-            if config_zip_path is None or not os.path.exists(config_zip_path):
-                raise InvalidPipelineZipError
-
-            p_files, conf_dest_path, p_name = self.__update_pipeline_yaml(
-                self,
+            pipeline_files, new_pipeline_name = self.__update_pipeline_yaml(
                 tmp_dir,
-                config_zip_path,
                 overwrite,
             )
 
             # write all files in bulk
-            for source, destination in p_files:
+            for source, destination in pipeline_files:
                 try:
                     dir_path, file_name = os.path.split(destination)
                     with open(source, 'r') as src:
@@ -283,8 +276,9 @@ class Pipeline:
                     raise FileWriteError(f'Failed to write pipeline file to {destination}.')
 
             # return the pipelin configuration file
-            ret_file = File.from_path(conf_dest_path)
-            ret_file.filename = p_name
+            config_destination_path = pipeline_files[0][1]  # First item is the pipeline config path
+            ret_file = File.from_path(config_destination_path)
+            ret_file.filename = new_pipeline_name
             return ret_file
 
     @classmethod
@@ -1256,12 +1250,66 @@ class Pipeline:
                     cache.remove_pipeline(tag_uuid, old_uuid, self.repo_path)
                 cache.add_pipeline(tag_uuid, self)
 
-    # Updates pipeline YAML for new pipeline or block names from the import process
-    # compiles list of files to be written
-    # also returns the new pipeline name and the config destination path
-    def __update_pipeline_yaml(self, tmp_dir, config_zip_path, overwrite):
+    @classmethod
+    def __find_pipeline_file(self, root_dir, file_name, sub_folder) -> str:
+        """
+        Searches for a file with a specified name in the provided directory and its subdirectories.
+        Used in the pipeline import process for looking up files in the pipeline zip.
+
+        Args:
+            root_dir (str): The root directory where the search takes place.
+            file_name (str): Name of the file to search for.
+            sub_folder (str, optional): Folder parameter used for situations where
+                the file is enclosed in a child folder, e.g., "pipelines/[pipeline_name]/metadata.yaml",
+                where `pipelines` is the sub_folder.
+
+        Returns:
+            str or None: Path of the found file, or None if not found.
+
+        Examples:
+            >>> __find_pipeline_file('path/to/dir', 'file.txt')
+            'path/to/dir/file.txt'
+
+            >>> __find_pipeline_file('path/to/dir', 'metadata.yaml', 'pipelines')
+            'path/to/dir/pipelines/[pipeline_name]/metadata.yaml'
+        """
+        file_path = os.path.join(root_dir, file_name)
+
+        if not os.path.exists(file_path):
+            walk_start = os.path.join(root_dir, sub_folder)
+            file_gen = (os.path.join(root, file_name) for root, _, _ in os.walk(walk_start))
+            file_path = next(
+                (potential_path for potential_path in file_gen if os.path.exists(potential_path)),
+                None
+            )
+        return file_path
+
+    @classmethod
+    def __update_pipeline_yaml(self, tmp_dir, overwrite) -> tuple[List[tuple[str, str]], str]:
+        """
+        Updates the pipeline config yaml during the import process.
+        Modifies pipeline and block names in case of name conflict.
+        Updates each block`s upstream and downstream references.
+        Compiles list of files to be writen in bulk at the end of the import process.
+
+        Args:
+            tmp_dir: the temporary directory in which the pipeline files reside
+
+        Returns:
+            tuple:
+                - files_to_be_written: a list of tuples containing the source and destination paths
+                    for each resource needed to be writen on the server at the end of the import process
+                - new_pipeline_name: str
+        """
+        config_zip_path = self.__find_pipeline_file(
+            tmp_dir, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
+        )
+        if config_zip_path is None or not os.path.exists(config_zip_path):
+            raise InvalidPipelineZipError
+        
         files_to_be_written = []
         with open(config_zip_path, 'r') as pipeline_config:
+            
             config = yaml.safe_load(pipeline_config)
 
             # check if pipeline exists with same uuid and generate new one if necessary
@@ -1273,12 +1321,15 @@ class Pipeline:
                     uuid = f'{config["uuid"]}_{index}'
                 config['uuid'] = uuid
                 config['name'] = uuid
-            pipeline_name = config['uuid']
+            new_pipeline_name = config['uuid']
+
+            pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
+            config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
+            files_to_be_written.append((config_zip_path, config_destination_path))
 
             # retain block upstream and downstream references
-            keys_to_keep = ['upstream_blocks', 'downstream_blocks']
             block_hierarchy = {
-                block['uuid']: {key: [] for key in keys_to_keep}
+                block['uuid']: {key: [] for key in ['upstream_blocks', 'downstream_blocks']}
                 for block in config['blocks']
             }
 
@@ -1293,16 +1344,16 @@ class Pipeline:
                 # check if block exists with same uuid and generate new one if necessary
                 if not overwrite:
                     index = 0
-                    while block_inst.exists:
+                    while block_inst.exists():
                         index += 1
                         block_inst.uuid = f'{block["uuid"]}_{index}'
 
                 # save block
                 block_destination_path = block_inst.file_path
-                file_extension = block_destination_path.split('.')[-1]
-                block_directory = block_destination_path.split(os.path.sep)[-2]
+                _, file_extension = os.path.splitext(block_destination_path)
+                block_directory = os.path.basename(os.path.dirname(block_destination_path))
                 block_zip_path = self.__find_pipeline_file(
-                    self, tmp_dir, f'{uuid}.{file_extension}', block_directory
+                    tmp_dir, f'{uuid}{file_extension}', block_directory
                 )
 
                 if block_zip_path is None or not os.path.exists(block_zip_path):
@@ -1327,15 +1378,11 @@ class Pipeline:
                 block['upstream_blocks'] = hierarchy_list[b_index]['upstream_blocks']
                 block['downstream_blocks'] = hierarchy_list[b_index]['downstream_blocks']
 
-            pipe_f_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, config['uuid'])
-            config_destination_path = os.path.join(pipe_f_path, PIPELINE_CONFIG_FILE)
-            files_to_be_written.append((config_zip_path, config_destination_path))
-
         # dump new config information back in temp folder
         with open(config_zip_path, 'w') as pipeline_config:
             yaml.dump(config, pipeline_config)
 
-        return files_to_be_written, config_destination_path, pipeline_name
+        return files_to_be_written, new_pipeline_name
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
         uuids_new = [b['uuid'] for b in blocks if b]
@@ -2120,20 +2167,6 @@ class Pipeline:
                 raise InvalidPipelineError(
                     f'Pipeline is invalid: duplicate blocks with uuid {uuid}')
             check_block_uuids.add(uuid)
-
-    # Searches for a file with the specified name in the provided directory and its subdirectories.
-    # Returns str, the full path to the found file, or None if the file is not found.
-    def __find_pipeline_file(self, root_dir, file_name, folder=''):
-        file_path = os.path.join(root_dir, file_name)
-
-        if not os.path.exists(file_path):
-            walk_start = os.path.join(root_dir, folder)
-            file_gen = (os.path.join(root, file_name) for root, _, _ in os.walk(walk_start))
-            file_path = next(
-                (potential_path for potential_path in file_gen if os.path.exists(potential_path)),
-                None
-            )
-        return file_path
 
 
 class StackFrame:

@@ -333,7 +333,7 @@ class BlockResource(GenericResource):
         else:
             block = Block.get_block(block_uuid, block_uuid, block_type, language=language)
 
-        if not block.exists:
+        if not block.exists():
             error.update(ApiError.RESOURCE_NOT_FOUND)
             raise ApiError(error)
 
