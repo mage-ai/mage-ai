@@ -735,7 +735,12 @@ class BaseOperation():
             parent_resource_class = self.__resource_parent_class()
             if parent_resource_class:
                 try:
-                    model = parent_resource_class.get_model(self.resource_parent_id)
+                    model = parent_resource_class.get_model(
+                        self.resource_parent_id,
+                        query=self.query,
+                        resource_class=self.__resource_class(),
+                        resource_id=self.pk,
+                    )
                     if inspect.isawaitable(model):
                         model = await model
                     return model

@@ -307,12 +307,14 @@ def clean_variables(
 
 def get_global_variables(
     pipeline_uuid: str,
+    pipeline=None,
 ) -> Dict[str, Any]:
     """
     Get all global variables. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    pipeline = Pipeline.get(pipeline_uuid)
+
+    pipeline = pipeline or Pipeline.get(pipeline_uuid)
     if pipeline.variables is not None:
         global_variables = pipeline.variables
     else:

@@ -18,6 +18,7 @@ function useProject(): {
   };
   fetchProjects: () => any;
   project: ProjectType;
+  projectPlatformActivated?: boolean;
   rootProject?: ProjectType;
   sparkEnabled: boolean;
 } {
@@ -67,6 +68,7 @@ function useProject(): {
     featureUUIDs: FeatureUUIDEnum,
     fetchProjects,
     project,
+    projectPlatformActivated: project?.name !== rootProject?.name,
     rootProject,
     sparkEnabled: computeManagementEnabled
       && (project.spark_config || project.emr_config)

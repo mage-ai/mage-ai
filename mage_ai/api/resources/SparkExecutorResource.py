@@ -15,5 +15,5 @@ class SparkExecutorResource(GenericResource, SparkApplicationChild):
         )
 
     @classmethod
-    async def get_model(self, pk) -> Executor:
+    async def get_model(self, pk, **kwargs) -> Executor:
         return Executor.load(id=pk)

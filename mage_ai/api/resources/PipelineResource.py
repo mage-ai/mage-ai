@@ -52,6 +52,8 @@ from mage_ai.orchestration.pipeline_scheduler import (
 )
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
+from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform.utils import get_pipeline_from_platform_async
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
@@ -425,14 +427,29 @@ class PipelineResource(BaseResource):
 
     @classmethod
     @safe_db_query
-    async def get_model(self, pk):
-        uuid = urllib.parse.unquote(pk)
-        return await Pipeline.get_async(uuid)
+    async def get_model(
+        self,
+        pk,
+        query: Dict = None,
+        resource_class=None,
+        resource_id: str = None,
+        **kwargs,
+    ):
+        pipeline_uuid = urllib.parse.unquote(pk)
+
+        if 'PipelineScheduleResource' == resource_class.__name__ and resource_id:
+            pipeline_schedule = PipelineSchedule.query.get(resource_id)
+            return get_pipeline_from_platform_async(
+                pipeline_uuid,
+                repo_path=pipeline_schedule.repo_path if pipeline_schedule else None,
+            )
+
+        return await Pipeline.get_async(pipeline_uuid, all_projects=project_platform_activated())
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        pipeline = await Pipeline.get_async(pk)
+        pipeline = await Pipeline.get_async(pk, all_projects=project_platform_activated())
 
         api_operation_action = kwargs.get('api_operation_action', None)
         if api_operation_action != DELETE:

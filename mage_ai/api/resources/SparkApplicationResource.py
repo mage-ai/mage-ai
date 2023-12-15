@@ -6,7 +6,7 @@ from mage_ai.shared.hash import index_by
 
 class SparkApplicationResource(GenericResource, SparkApplicationChild):
     @classmethod
-    async def get_model(self, pk):
+    async def get_model(self, pk, **kwargs):
         return Application.load(id=pk)
 
     @classmethod
