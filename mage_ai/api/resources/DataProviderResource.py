@@ -41,7 +41,8 @@ class DataProviderResource(GenericResource):
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         async with aiofiles.open(f'{get_repo_path()}/io_config.yaml', mode='r') as file:
-            profiles = list(yaml.safe_load(await file.read()).keys())
+            content = await file.read()
+            profiles = list(yaml.safe_load(content).keys()) if content else []
 
         collection = [dict(
             id=DATA_PROVIDERS_NAME[ds.value],

@@ -6,12 +6,13 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
+from mage_ai.settings.platform import activate_project, project_platform_activated
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
-async def build_project(repo_config=None, **kwargs):
-    project = Project(repo_config=repo_config)
+async def build_project(repo_config=None, root_project: bool = False, **kwargs):
+    project = Project(repo_config=repo_config, root_project=root_project)
 
     model = merge_dict(project.repo_config.to_dict(), dict(
         emr_config=project.emr_config,
@@ -19,7 +20,11 @@ async def build_project(repo_config=None, **kwargs):
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
+        projects=project.projects(),
         remote_variables_dir=project.remote_variables_dir,
+        repo_path=project.repo_path,
+        root_project=root_project,
+        settings=project.settings,
         spark_config=project.spark_config,
         version=project.version,
     ))
@@ -37,6 +42,11 @@ class ProjectResource(GenericResource):
         project = await self.member(None, user, **kwargs)
         collection = [project.model]
 
+        if not project.model.get('root_project') and project_platform_activated():
+            root_project = await self.member(None, user, root_project=True, **kwargs)
+            if root_project and root_project.model and root_project.model.get('projects'):
+                collection.append(root_project)
+
         return self.build_result_set(
             collection,
             user,
@@ -46,11 +56,14 @@ class ProjectResource(GenericResource):
     @classmethod
     @safe_db_query
     async def member(self, _, user, **kwargs):
-        model = await build_project()
+        model = await build_project(**kwargs)
         return self(model, user, **kwargs)
 
     @safe_db_query
     async def update(self, payload, **kwargs):
+        if payload.get('activate_project'):
+            activate_project(payload.get('activate_project'))
+
         repo_config = get_repo_config()
 
         data = {}

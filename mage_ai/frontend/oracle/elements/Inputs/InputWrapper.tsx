@@ -50,6 +50,7 @@ export type InputWrapperProps = {
   compact?: boolean
   danger?: boolean;
   defaultColor?: boolean;
+  defaultTextColor?: boolean;
   disablePointerEvents?: boolean;
   disabled?: boolean;
   dynamicSizing?: boolean;
@@ -652,6 +653,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
 
   ${props => typeof props?.buttonBeforeWidth !== 'undefined' && `
     padding-left: ${props.buttonBeforeWidth}px !important;
+  `}
+
+  ${props => props.defaultTextColor && `
+    color: ${(props.theme.content || dark.content).default} !important;
   `}
 `;
 

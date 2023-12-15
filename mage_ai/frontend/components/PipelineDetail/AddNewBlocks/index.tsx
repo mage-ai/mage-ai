@@ -327,7 +327,7 @@ function AddNewBlocks({
       onClick: () => addNewBlock({
         configuration: {
           dbt: {
-            command: null,
+            command: 'run',
           },
         },
         language: BlockLanguageEnum.YAML,

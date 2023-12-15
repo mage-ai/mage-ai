@@ -38,6 +38,7 @@ export const COLUMNS: 'columns' = 'columns';
 export const COMPUTE_CLUSTERS: 'compute_clusters' = 'compute_clusters';
 export const COMPUTE_CONNECTIONS: 'compute_connections' = 'compute_connections';
 export const COMPUTE_SERVICES: 'compute_services' = 'compute_services';
+export const CONFIGURATION_OPTIONS: 'configuration_options' = 'configuration_options';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
@@ -125,6 +126,7 @@ const RESOURCES: any[][] = [
   [COMPUTE_CLUSTERS, COMPUTE_SERVICES],
   [COMPUTE_CONNECTIONS, COMPUTE_SERVICES],
   [COMPUTE_SERVICES],
+  [CONFIGURATION_OPTIONS, PIPELINES],
   [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],

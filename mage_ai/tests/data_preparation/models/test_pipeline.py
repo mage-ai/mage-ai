@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import shutil
 import uuid
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline_run_with_schedule
 
@@ -759,6 +761,45 @@ class PipelineTest(DBTestCase):
             with self.assertRaises(Exception) as err:
                 pipeline.save()
             self.assertTrue('Writing empty pipeline metadata is prevented.' in str(err.exception))
+
+    def test_get_all_pipelines(self):
+        pipeline1 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        pipeline2 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        pipelines = Pipeline.get_all_pipelines(base_repo_path())
+        self.assertTrue(all([uuid in pipelines for uuid in [pipeline1.uuid, pipeline2.uuid]]))
+
+        pipeline3 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=os.path.join(base_repo_path(), 'mage_platform'),
+        )
+        pipeline4 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=os.path.join(base_repo_path(), 'mage_platform'),
+        )
+        pipelines = Pipeline.get_all_pipelines(os.path.join(base_repo_path(), 'mage_platform'))
+        self.assertTrue(all([uuid in pipelines for uuid in [pipeline3.uuid, pipeline4.uuid]]))
+        shutil.rmtree(os.path.join(base_repo_path(), 'mage_platform'))
+
+    def test_get_all_pipelines_disable_pipelines_folder_creation(self):
+        os.mkdir(os.path.join(base_repo_path(), 'mage_data1'))
+        self.assertFalse(os.path.exists(os.path.join(base_repo_path(), 'mage_data1/pipelines')))
+        Pipeline.get_all_pipelines(os.path.join(base_repo_path(), 'mage_data1'))
+        self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'mage_data1/pipelines')))
+
+        self.assertFalse(os.path.exists(os.path.join(base_repo_path(), 'mage_data2/pipelines')))
+        Pipeline.get_all_pipelines(
+            os.path.join(base_repo_path(), 'mage_data2'),
+            disable_pipelines_folder_creation=True,
+        )
+        self.assertFalse(os.path.exists(os.path.join(base_repo_path(), 'mage_data2/pipelines')))
+
+        shutil.rmtree(os.path.join(base_repo_path(), 'mage_data1'))
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(

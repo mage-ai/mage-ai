@@ -20,20 +20,19 @@ import PopupMenu from '@oracle/components/PopupMenu';
 import Text from '@oracle/elements/Text';
 import UploadFiles from './UploadFiles';
 import api from '@api';
+import useStatus from '@utils/models/status/useStatus';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
-import {
-  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
-} from '@interfaces/FileType';
+import { FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE } from '@interfaces/FileType';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
 import { createPortal } from 'react-dom';
-import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
 import { find } from '@utils/array';
+import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
+import { initiateDownload } from '@utils/downloads';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
-import { initiateDownload } from '@utils/downloads';
 
 const MENU_WIDTH: number = UNIT * 20;
 const MENU_ITEM_HEIGHT = 36;
@@ -90,8 +89,7 @@ function FileBrowser({
   const [draggingFile, setDraggingFile] = useState<FileType>(null);
   const [selectedFile, setSelectedFile] = useState<FileType>(null);
 
-  const { data: serverStatus } = api.statuses.list();
-  const repoPath = useMemo(() => serverStatus?.statuses?.[0]?.repo_path, [serverStatus]);
+  const { status } = useStatus();
 
   const [downloadFile] = useMutation(
     (fullPath: string) => api.downloads.files.useCreate(fullPath)(),
@@ -249,7 +247,7 @@ function FileBrowser({
               ...draggingFile,
               path: getFullPathWithoutRootFolder(draggingFile),
             },
-            repoPath,
+            status.repo_path,
             pipeline,
           );
 
@@ -299,8 +297,8 @@ function FileBrowser({
     handleClick,
     pipeline,
     ref,
-    repoPath,
     setSelectedBlock,
+    status,
     timeout,
     updateDestinationBlock,
   ]);
@@ -564,7 +562,7 @@ function FileBrowser({
             uuid="FileBrowser/ContextMenu"
             width={MENU_WIDTH}
           />
-        </div>, 
+        </div>,
         document.body,
       )
     );

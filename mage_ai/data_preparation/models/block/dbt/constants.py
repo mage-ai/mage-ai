@@ -1,3 +1,5 @@
+DBT_DIRECTORY_NAME = 'dbt'
+
 SQL_SERVER_ADAPTER_NAME = 'SQLServerAdapter'
 SYNAPSE_ADAPTER_NAME = 'SynapseAdapter'
 FABRIC_ADAPTER_NAME = 'FabricAdapter'

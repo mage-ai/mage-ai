@@ -29,7 +29,7 @@ class FileContentResource(GenericResource):
 
         if not file:
             file_path = urllib.parse.unquote(pk)
-            file = File.from_path(file_path, get_repo_path())
+            file = File.from_path(file_path, get_repo_path(root_project=True))
 
         try:
             ensure_file_is_in_project(file.file_path)

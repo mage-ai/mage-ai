@@ -45,6 +45,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -58,7 +59,6 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
@@ -101,7 +101,9 @@ class PipelineSchedule(BaseModel):
     def repo_query(cls):
         return cls.query.filter(
             or_(
-                PipelineSchedule.repo_path == get_repo_path(),
+                PipelineSchedule.repo_path.in_(Project().repo_path_for_database_query(
+                    'pipeline_schedules',
+                )),
                 PipelineSchedule.repo_path.is_(None),
             )
         )

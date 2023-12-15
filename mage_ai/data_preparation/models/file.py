@@ -1,6 +1,7 @@
 import os
+import re
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import aiofiles
 
@@ -8,6 +9,7 @@ from mage_ai.data_preparation.models.errors import (
     FileExistsError,
     FileNotInProjectError,
 )
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.utils import get_absolute_path
 
@@ -49,10 +51,15 @@ class File:
         return os.path.isfile(file_path)
 
     @classmethod
-    def create_parent_directories(self, file_path: str) -> bool:
+    def create_parent_directories(self, file_path: str, raise_exception: bool = False) -> bool:
         will_create = not self.file_exists(file_path)
         if will_create:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            try:
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            except FileExistsError as err:
+                if raise_exception:
+                    raise err
+                print(f'[WARNING] File.create_parent_directories: {err}.')
         return will_create
 
     @classmethod
@@ -66,7 +73,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ):
-        repo_path = repo_path or get_repo_path()
+        repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
         self.write(
@@ -92,7 +99,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ):
-        repo_path = repo_path or get_repo_path()
+        repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
         await self.write_async(
@@ -111,12 +118,49 @@ class File:
     def from_path(self, file_path, repo_path: str = None):
         repo_path_alt = repo_path
         if repo_path_alt is None:
-            repo_path_alt = get_repo_path()
+            repo_path_alt = get_repo_path(file_path=file_path)
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
-    def get_all_files(self, repo_path):
-        return traverse(os.path.basename(repo_path), True, repo_path)
+    def get_all_files(
+        self,
+        repo_path,
+        exclude_dir_pattern: str = None,
+        exclude_pattern: str = None,
+        pattern: str = None,
+    ):
+        dir_selector = None
+        file_selector = None
+
+        if exclude_pattern is not None or pattern is not None:
+            def __select(x: Dict, pattern=pattern):
+                filename = x.get('name')
+                checks = []
+                if exclude_pattern:
+                    checks.append(not re.search(exclude_pattern, filename or ''))
+                if pattern:
+                    checks.append(re.search(pattern, filename or ''))
+                return all(checks)
+
+            file_selector = __select
+
+        if exclude_dir_pattern is not None:
+            def __select(x: Dict, pattern=pattern):
+                filename = x.get('name')
+                checks = []
+                if exclude_dir_pattern:
+                    checks.append(not re.search(exclude_dir_pattern, filename or ''))
+                return all(checks)
+
+            dir_selector = __select
+
+        return traverse(
+            os.path.basename(repo_path),
+            True,
+            repo_path,
+            dir_selector=dir_selector,
+            file_selector=file_selector,
+        )
 
     @classmethod
     def file_path_versions_dir(
@@ -356,14 +400,25 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
+    if project_platform_activated():
+        return
+
     full_file_path = get_absolute_path(file_path)
-    full_repo_path = get_absolute_path(get_repo_path())
+    full_repo_path = get_absolute_path(get_repo_path(file_path=file_path))
     if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
         raise FileNotInProjectError(
             f'File at path: {file_path} is not in the project directory.')
 
 
-def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:
+def traverse(
+    name: str,
+    is_dir: bool,
+    path: str,
+    disabled=False,
+    depth=1,
+    dir_selector: Callable = None,
+    file_selector: Callable = None,
+) -> Dict:
     tree_entry = dict(name=name)
     if not is_dir:
         tree_entry['disabled'] = disabled
@@ -371,6 +426,35 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
     if depth >= MAX_DEPTH:
         return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
+
+    def __filter(
+        entry,
+        depth=depth,
+        dir_selector=dir_selector,
+        file_selector=file_selector,
+    ) -> bool:
+        if entry.name in BLACKLISTED_DIRS:
+            return False
+
+        if not file_selector:
+            return True
+
+        entry_path = entry.path
+        if entry.is_dir(follow_symlinks=False) or os.path.isdir(entry_path):
+            return True if dir_selector is None else dir_selector(dict(
+                depth=depth + 1,
+                name=str(entry.name),
+                path=entry.path,
+            ))
+        else:
+            return file_selector(dict(
+                depth=depth + 1,
+                name=str(entry.name),
+                path=entry.path,
+            ))
+
+        return True
+
     tree_entry['children'] = list(
         traverse(
             entry.name,
@@ -378,10 +462,12 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
             entry.path,
             can_access_children,
             depth + 1,
-        )
-        for entry in sorted(
-            filter(lambda entry: entry.name not in BLACKLISTED_DIRS, os.scandir(path)),
+            dir_selector=dir_selector,
+            file_selector=file_selector,
+        ) for entry in sorted(
+            filter(__filter, os.scandir(path)),
             key=lambda entry: entry.name,
         )
     )
+
     return tree_entry

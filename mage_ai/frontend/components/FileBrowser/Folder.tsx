@@ -51,6 +51,10 @@ export type FolderSharedProps = {
     blockUUID: string,
     blockType: BlockTypeEnum,
     filePath: string,
+    opts?: {
+      file?: FileType;
+      path?: string;
+    },
   ) => void;
   onClickFile?: (path: string) => void;
   onClickFolder?: (path: string) => void;
@@ -298,7 +302,6 @@ function Folder({
                   return !collapsedPrev;
                 });
               }
-
               onClickFolder?.(filePathToUse);
             } else {
               if (onClickFile) {
@@ -308,6 +311,10 @@ function Folder({
                   nonPythonBlockFromFile.uuid,
                   nonPythonBlockFromFile.type,
                   getFullPathWithoutRootFolder(file),
+                  {
+                    file,
+                    path: filePathToUse,
+                  },
                 );
               } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
                 openFile?.(filePathToUse);

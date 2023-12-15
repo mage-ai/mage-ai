@@ -19,8 +19,35 @@ class FileResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
+        pattern = query.get('pattern', [None])
+        if pattern:
+            pattern = pattern[0]
+        if pattern:
+            pattern = urllib.parse.unquote(pattern)
+
+        exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
+        if exclude_dir_pattern:
+            exclude_dir_pattern = exclude_dir_pattern[0]
+        if exclude_dir_pattern:
+            exclude_dir_pattern = urllib.parse.unquote(exclude_dir_pattern)
+        elif exclude_dir_pattern is None:
+            exclude_dir_pattern = r'^\.|\/\.'
+
+        exclude_pattern = query.get('exclude_pattern', [None])
+        if exclude_pattern:
+            exclude_pattern = exclude_pattern[0]
+        if exclude_pattern:
+            exclude_pattern = urllib.parse.unquote(exclude_pattern)
+        elif exclude_pattern is None:
+            exclude_pattern = r'^\.|\/\.'
+
         return self.build_result_set(
-            [File.get_all_files(get_repo_path())],
+            [File.get_all_files(
+                get_repo_path(root_project=True),
+                exclude_dir_pattern=exclude_dir_pattern,
+                exclude_pattern=exclude_pattern,
+                pattern=pattern,
+            )],
             user,
             **kwargs,
         )
@@ -29,7 +56,7 @@ class FileResource(GenericResource):
     @safe_db_query
     async def create(self, payload: Dict, user, **kwargs) -> 'FileResource':
         dir_path = payload['dir_path']
-        repo_path = get_repo_path()
+        repo_path = get_repo_path(root_project=True)
         content = None
 
         if 'file' in payload:
