@@ -69,7 +69,7 @@ def repo_path_from_database_query_to_project_repo_path(
     mapping = {}
 
     repo_paths = build_repo_path_for_all_projects(repo_path=repo_path, mage_projects_only=True)
-    for project_name, paths in repo_paths.items():
+    for paths in repo_paths.values():
         full_path = paths['full_path']
         mapping[full_path] = full_path
 
