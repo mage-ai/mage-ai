@@ -22,7 +22,7 @@ import {
   ACTION_PUSH,
   TAB_FILES,
 } from '../constants';
-import { Branch, GitHubIcon, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
+import { Branch, Lightning, MultiShare, PaginateArrowLeft } from '@oracle/icons';
 import {
   PADDING_UNITS,
   UNIT,
@@ -348,8 +348,6 @@ function Commit({
                   </Spacing>
 
                   <Select
-                    beforeIcon={<GitHubIcon />}
-                    beforeIconSize={UNIT * 1.5}
                     monospace
                     onChange={e => setRepositoryName(e.target.value)}
                     placeholder="Choose repository"
