@@ -109,6 +109,55 @@ class PipelineScheduleTests(DBTestCase):
             )
         self.assertEqual(pipeline_schedule.pipeline_runs_count, 5)
 
+    def test_in_progress_runs_count(self):
+        pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
+        for _ in range(5):
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                pipeline_schedule_id=pipeline_schedule.id,
+                status=PipelineRun.PipelineRunStatus.RUNNING,
+            )
+        for _ in range(3):
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                pipeline_schedule_id=pipeline_schedule.id,
+                status=PipelineRun.PipelineRunStatus.INITIAL,
+            )
+        for _ in range(6):
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                pipeline_schedule_id=pipeline_schedule.id,
+                status=PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+        create_pipeline_run_with_schedule(
+            'test_pipeline',
+            pipeline_schedule_id=pipeline_schedule.id,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+            passed_sla=True
+        )
+        self.assertEqual(pipeline_schedule.pipeline_in_progress_runs_count, 8)
+        self.assertEqual(pipeline_schedule.pipeline_runs_count, 14)
+
+    def test_last_pipeline_run_status(self):
+        pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
+        pipeline_schedule2 = PipelineSchedule.create(pipeline_uuid='test_pipeline')
+        for _ in range(5):
+            create_pipeline_run_with_schedule(
+                'test_pipeline',
+                pipeline_schedule_id=pipeline_schedule.id,
+                status=PipelineRun.PipelineRunStatus.RUNNING,
+            )
+        create_pipeline_run_with_schedule(
+            'test_pipeline',
+            pipeline_schedule_id=pipeline_schedule.id,
+            status=PipelineRun.PipelineRunStatus.FAILED,
+        )
+        self.assertEqual(
+            pipeline_schedule.last_pipeline_run_status,
+            PipelineRun.PipelineRunStatus.FAILED,
+        )
+        self.assertIsNone(pipeline_schedule2.last_pipeline_run_status)
+
     def test_validate_schedule_interval(self):
         PipelineSchedule.create(
             pipeline_uuid='test_pipeline',

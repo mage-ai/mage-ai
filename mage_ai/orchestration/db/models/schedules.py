@@ -147,11 +147,30 @@ class PipelineSchedule(BaseModel):
 
     @property
     def pipeline_in_progress_runs_count(self) -> int:
-        return len(PipelineRun.in_progress_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+                PipelineRun.status.in_(
+                    [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]
+                ),
+                (coalesce(PipelineRun.passed_sla, False) is False),
+            )
+            .scalar()
+        )
 
     @property
     def pipeline_runs_count(self) -> int:
-        return len(self.fetch_pipeline_runs([self.id]))
+        return (
+            PipelineRun.select(func.count(PipelineRun.id))
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .scalar()
+        )
 
     @property
     def timeout(self) -> int:
@@ -159,8 +178,9 @@ class PipelineSchedule(BaseModel):
 
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
-        if schedule_interval and schedule_interval not in \
-                [e.value for e in ScheduleInterval]:
+        if schedule_interval and schedule_interval not in [
+            e.value for e in ScheduleInterval
+        ]:
             if not croniter.is_valid(schedule_interval):
                 raise ValueError('Cron expression is invalid.')
 
@@ -168,9 +188,21 @@ class PipelineSchedule(BaseModel):
 
     @property
     def last_pipeline_run_status(self) -> str:
-        if len(self.fetch_pipeline_runs([self.id])) == 0:
+        query_result = (
+            PipelineRun.select(PipelineRun.id, PipelineRun.status)
+            .filter(
+                PipelineRun.pipeline_schedule_id == self.id,
+            )
+            .order_by(
+                PipelineRun.created_at.desc(),
+            )
+            .one_or_none()
+        )
+
+        if query_result is None:
             return None
-        return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
+
+        return query_result.status
 
     @property
     def tag_associations(self):
