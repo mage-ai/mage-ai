@@ -71,6 +71,15 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
   });
 }
 
+export type GoToWithFiltersProps = {
+  addingMultipleValues?: boolean;
+  isList?: boolean,
+  itemsPerPage?: number,
+  pushHistory?: boolean,
+  resetLimitParams?: boolean,
+  resetPage?: boolean,
+};
+
 export function goToWithFilters(
   query: any,
   additionalQuery: any,
@@ -79,16 +88,9 @@ export function goToWithFilters(
     isList,
     itemsPerPage,
     pushHistory = false,
-    resetLimitParams,
+    resetLimitParams = false,
     resetPage = false,
-  }: {
-    addingMultipleValues?: boolean;
-    isList?: boolean,
-    itemsPerPage?: number,
-    pushHistory?: boolean,
-    resetLimitParams?: boolean,
-    resetPage?: boolean,
-  },
+  }: GoToWithFiltersProps,
 ) {
   let updatedQuery = { ...query };
 
