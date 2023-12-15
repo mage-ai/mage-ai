@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import platform_settings_full_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.base_test import AsyncDBTestCase
@@ -110,15 +111,29 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
             ):
                 project = Project(root_project=False)
 
-                self.assertEqual(project.repo_path_for_database_query('pipeline_schedules'), [
-                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo'),
-                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo/default_repo'),
-                ])
+                self.assertEqual(
+                    sorted(project.repo_path_for_database_query('pipeline_schedules')),
+                    sorted([
+                        get_repo_path(root_project=False),
+                        os.path.join(os.path.dirname(base_repo_path()), 'default_repo'),
+                        os.path.join(
+                            os.path.dirname(base_repo_path()),
+                            'default_repo/default_repo',
+                        ),
+                    ]),
+                )
 
-                self.assertEqual(project.repo_path_for_database_query('secrets'), [
-                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
-                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo2/default_repo'),
-                ])
+                self.assertEqual(
+                    sorted(project.repo_path_for_database_query('secrets')),
+                    sorted([
+                        get_repo_path(root_project=False),
+                        os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
+                        os.path.join(
+                            os.path.dirname(base_repo_path()),
+                            'default_repo2/default_repo',
+                        ),
+                    ]),
+                )
 
                 project = Project(root_project=True)
 

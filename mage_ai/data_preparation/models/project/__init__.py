@@ -82,7 +82,9 @@ class Project():
                 return [os.path.join(*[part for part in [
                     os.path.dirname(get_repo_path(root_project=True)),
                     query_alias,
-                ] if len(part) >= 1]) for query_alias in query_arr]
+                ] if len(part) >= 1]) for query_alias in query_arr] + [
+                    get_repo_path(root_project=False)
+                ]
 
         return [self.repo_path]
 
