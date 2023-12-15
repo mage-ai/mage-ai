@@ -100,10 +100,7 @@ class ProjectPlatformAccessible:
             return os.path.join(base_repo_path(), project_path_relative)
 
     def get_project_path_from_project_name(self, project_name: str) -> str:
-        if not self.project_platform_activated or \
-                not project_name or \
-                not from_another_project(project_name):
-
+        if not self.project_platform_activated or not project_name:
             return
 
         # The block YAML file can be from a different project than the profile
