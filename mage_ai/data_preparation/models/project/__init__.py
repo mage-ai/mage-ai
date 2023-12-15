@@ -79,10 +79,10 @@ class Project():
         if self.settings:
             query_arr = dig(self.settings, ['database', 'query', key])
             if query_arr:
-                return [os.path.join(
+                return [os.path.join(*[part for part in [
                     os.path.dirname(get_repo_path(root_project=True)),
                     query_alias,
-                ) for query_alias in query_arr]
+                ] if len(part) >= 1]) for query_alias in query_arr]
 
         return [self.repo_path]
 
