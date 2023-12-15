@@ -180,3 +180,54 @@ class PlatformSettingsTest(ProjectPlatformMixin):
 
     def test_local_platform_settings_full_path(self):
         self.assertEquals(local_platform_settings_full_path(), '/home/src/test/.settings.yaml')
+
+    def test_get_repo_path(self):
+        from mage_ai.settings.repo import get_repo_path
+
+        self.assertEqual(get_repo_path(), '/home/src/test/mage_platform')
+        self.assertEqual(get_repo_path(absolute_path=False), 'test/mage_platform')
+
+        self.assertEqual(get_repo_path(root_project=True), '/home/src/test')
+        self.assertEqual(get_repo_path(root_project=True, absolute_path=False), 'test')
+
+        file_path = '/home/src/test/mage_data/platform/data_loaders/load.py'
+        self.assertEqual(get_repo_path(file_path=file_path), '/home/src/test/mage_data/platform')
+        self.assertEqual(
+            get_repo_path(file_path=file_path, absolute_path=False),
+            'test/mage_data/platform',
+        )
+
+        self.assertEqual(
+            get_repo_path(file_path=file_path, root_project=True),
+            '/home/src/test',
+        )
+        self.assertEqual(
+            get_repo_path(file_path=file_path, root_project=True, absolute_path=False),
+            'test',
+        )
+
+    def test_get_metadata_path(self):
+        from mage_ai.settings.repo import get_metadata_path
+
+        self.assertEqual(get_metadata_path(), '/home/src/test/mage_platform/metadata.yaml')
+        self.assertEqual(get_metadata_path(root_project=True), '/home/src/test/metadata.yaml')
+
+        activate_project('mage_data')
+        self.assertEqual(get_metadata_path(), '/home/src/test/mage_data/platform/metadata.yaml')
+        self.assertEqual(get_metadata_path(root_project=True), '/home/src/test/metadata.yaml')
+
+    def test_get_variables_dir(self):
+        from mage_ai.settings.repo import get_variables_dir
+
+        self.assertEqual(get_variables_dir(), '/home/src/test/mage_platform')
+        self.assertEqual(
+            get_variables_dir('/home/src/test/mage_data/platform'),
+            '/home/src/test/mage_data/platform',
+        )
+
+        activate_project('mage_data')
+        self.assertEqual(get_variables_dir(), '/home/src/test/mage_data/platform')
+        self.assertEqual(
+            get_variables_dir('/home/src/test/mage_platform'),
+            '/home/src/test/mage_platform',
+        )
