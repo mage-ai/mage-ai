@@ -69,7 +69,6 @@ from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
@@ -562,14 +561,15 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the
-            # current_execution_date, then don’t schedule.
-            if not find(
-                lambda x: compare(
-                    x.execution_date.replace(tzinfo=pytz.UTC),
-                    current_execution_date,
-                ) == 0,
-                self.fetch_pipeline_runs([self.id])
-            ):
+            # current_execution_date, then don’t schedule
+            run_exists = PipelineRun.select(
+                PipelineRun.query.filter(
+                    PipelineRun.pipeline_schedule_id == self.id,
+                    PipelineRun.execution_date == current_execution_date,
+                ).exists()
+            ).scalar()
+
+            if not run_exists:
                 if self.landing_time_enabled():
                     if not previous_runtimes or len(previous_runtimes) == 0:
                         return True
