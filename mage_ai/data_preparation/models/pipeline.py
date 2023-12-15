@@ -1266,7 +1266,8 @@ class Pipeline:
             root_dir (str): The root directory where the search takes place.
             file_name (str): Name of the file to search for.
             sub_folder (str, optional): Folder parameter used for situations where
-                the file is enclosed in a child folder, e.g., "pipelines/[pipeline_name]/metadata.yaml",
+                the file is enclosed in a child folder,
+                e.g., "pipelines/[pipeline_name]/metadata.yaml",
                 where `pipelines` is the sub_folder.
 
         Returns:
@@ -1304,7 +1305,7 @@ class Pipeline:
         Returns:
             tuple:
                 - files_to_be_written: a list of tuples containing the source and destination paths
-                    for each resource needed to be writen on the server at the end of the import process
+                    for each resource needed to be writen at the end of the import process
                 - new_pipeline_name: str
         """
         config_zip_path = self.__find_pipeline_file(
@@ -1312,10 +1313,10 @@ class Pipeline:
         )
         if config_zip_path is None or not os.path.exists(config_zip_path):
             raise InvalidPipelineZipError
-        
+
         files_to_be_written = []
         with open(config_zip_path, 'r') as pipeline_config:
-            
+
             config = yaml.safe_load(pipeline_config)
 
             # check if pipeline exists with same uuid and generate new one if necessary
