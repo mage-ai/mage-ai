@@ -1393,9 +1393,6 @@ def schedule_all():
         pipeline_uuids=repo_pipelines,
     ))
 
-    print('wtffffffffffffffff-----------------------------', repo_pipelines)
-    print('wtffffffffffffffff', [ps.name for ps in active_pipeline_schedules])
-
     backfills = Backfill.filter(pipeline_schedule_ids=[ps.id for ps in active_pipeline_schedules])
 
     backfills_by_pipeline_schedule_id = index_by(
