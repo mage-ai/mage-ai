@@ -196,7 +196,7 @@ class PipelineSchedule(BaseModel):
             .order_by(
                 PipelineRun.created_at.desc(),
             )
-            .one_or_none()
+            .first()
         )
 
         if query_result is None:
