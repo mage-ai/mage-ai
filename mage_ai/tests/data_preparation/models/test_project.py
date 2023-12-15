@@ -8,6 +8,7 @@ from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import platform_settings_full_path
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.base_test import AsyncDBTestCase
+from mage_ai.tests.settings.test_platform import SETTINGS
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
@@ -91,24 +92,7 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                     )
 
     def test_repo_path_for_database_query(self):
-        content = yaml.dump(dict(
-            projects=dict(
-                mage_platform=dict(
-                    database=dict(
-                        query=dict(
-                            pipeline_schedules=[
-                                'default_repo',
-                                'default_repo/default_repo',
-                            ],
-                            secrets=[
-                                'default_repo2',
-                                'default_repo2/default_repo',
-                            ],
-                        ),
-                    ),
-                ),
-            ),
-        ))
+        content = yaml.dump(SETTINGS)
         safe_write(platform_settings_full_path(), content)
 
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):

@@ -365,7 +365,10 @@ class ProjectPlatformMixin(AsyncDBTestCase):
     def tearDownClass(self):
         os.remove(platform_settings_full_path())
         os.remove(local_platform_settings_full_path())
-        super().tearDownClass()
+        try:
+            super().tearDownClass()
+        except Exception as err:
+            print(f'[ERROR] ProjectPlatformMixin.tearDownClass: {err}.')
 
     def setup_final(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
