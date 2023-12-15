@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.base_test import TestCase
 from mage_ai.tests.data_preparation.models.block.platform.test_mixins import (
     BlockWithProjectPlatformShared,
@@ -249,7 +250,7 @@ class DBTBlockSQLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlatf
             path='mage_data/dbt/demo/models/fire.sql',
             project_path='mage_data/dbt/demo',
         )
-        self.assertEqual(block.project_path, '/home/src/test/mage_data/dbt/demo')
+        self.assertEqual(block.project_path, os.path.join(base_repo_path(), 'mage_data/dbt/demo'))
 
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
@@ -271,15 +272,18 @@ class DBTBlockSQLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlatf
         )
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
 
-        os.makedirs('/home/src/test/mage_data/dbt/demo/models', exist_ok=True)
+        os.makedirs(os.path.join(base_repo_path(), 'mage_data/dbt/demo/models'), exist_ok=True)
         for key in [
             'fire',
             'ice',
             'water',
         ]:
-            with open(f'/home/src/test/mage_data/dbt/demo/models/{key}.sql', 'w') as f:
+            with open(
+                os.path.join(base_repo_path(), f'mage_data/dbt/demo/models/{key}.sql'),
+                'w',
+            ) as f:
                 f.write('')
-        with open('/home/src/test/mage_data/dbt/dbt_project.yml', 'w') as f:
+        with open(os.path.join(base_repo_path(), 'mage_data/dbt/dbt_project.yml'), 'w') as f:
             f.write('')
 
         block = build_block()

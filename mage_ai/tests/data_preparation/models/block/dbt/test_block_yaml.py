@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.base_test import TestCase
 from mage_ai.tests.data_preparation.models.block.platform.test_mixins import (
     BlockWithProjectPlatformShared,
@@ -252,7 +253,7 @@ class DBTBlockYAMLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlat
     def test_project_path(self):
         block = build_block(MagicMock(), '')
         block.configuration['dbt_project_name'] = 'mage_data/dbt/demo'
-        self.assertEqual(block.project_path, '/home/src/test/mage_data/dbt/demo')
+        self.assertEqual(block.project_path, os.path.join(base_repo_path(), 'mage_data/dbt/demo'))
 
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Project')

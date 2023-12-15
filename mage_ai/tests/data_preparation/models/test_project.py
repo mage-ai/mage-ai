@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 import yaml
@@ -6,6 +7,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import platform_settings_full_path
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.settings.test_platform import SETTINGS
@@ -15,24 +17,28 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
     def test_init(self):
         with patch(
-            'mage_ai.data_preparation.models.project.get_repo_config',
-        ) as mock_get_repo_config:
-            project = Project()
+            'mage_ai.data_preparation.models.project.project_platform_activated',
+            lambda: False,
+        ):
+            with patch(
+                'mage_ai.data_preparation.models.project.get_repo_config',
+            ) as mock_get_repo_config:
+                project = Project(repo_path=base_repo_path())
 
-            self.assertEqual(project.name, 'test')
-            self.assertEqual(project.repo_path, '/home/src/test')
-            self.assertEqual(project.settings, None)
-            self.assertEqual(project.version, VERSION)
-            self.assertFalse(project.root_project)
+                self.assertEqual(project.name, 'test')
+                self.assertEqual(project.repo_path, base_repo_path())
+                self.assertEqual(project.settings, None)
+                self.assertEqual(project.version, VERSION)
+                self.assertFalse(project.root_project)
 
-            mock_get_repo_config.assert_called_once_with(
-                repo_path='/home/src/test',
-                root_project=False,
-            )
+                mock_get_repo_config.assert_called_once_with(
+                    repo_path=base_repo_path(),
+                    root_project=False,
+                )
 
-        project = Project(repo_path='/home/src/test/mage_platform')
+        project = Project(repo_path=os.path.join(base_repo_path(), 'mage_platform'))
         self.assertEqual(project.name, 'mage_platform')
-        self.assertEqual(project.repo_path, '/home/src/test/mage_platform')
+        self.assertEqual(project.repo_path, os.path.join(base_repo_path(), 'mage_platform'))
 
         with patch(
             'mage_ai.data_preparation.models.project.get_repo_config',
@@ -40,13 +46,13 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
             project = Project(root_project=True)
 
             self.assertEqual(project.name, 'test')
-            self.assertEqual(project.repo_path, '/home/src/test')
+            self.assertEqual(project.repo_path, base_repo_path())
             self.assertEqual(project.settings, None)
             self.assertEqual(project.version, VERSION)
             self.assertTrue(project.root_project)
 
             mock_get_repo_config.assert_called_once_with(
-                repo_path='/home/src/test',
+                repo_path=base_repo_path(),
                 root_project=True,
             )
 
@@ -62,7 +68,9 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                     project = Project(root_project=False)
 
                     self.assertEqual(project.name, 'mage_platform')
-                    self.assertEqual(project.repo_path, '/home/src/test/mage_platform')
+                    self.assertEqual(
+                        project.repo_path, os.path.join(base_repo_path(), 'mage_platform'),
+                    )
                     self.assertEqual(project.settings, dict(
                         active=True,
                         uuid='mage_platform',
@@ -71,7 +79,7 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                     self.assertFalse(project.root_project)
 
                     mock_get_repo_config.assert_called_once_with(
-                        repo_path='/home/src/test/mage_platform',
+                        repo_path=os.path.join(base_repo_path(), 'mage_platform'),
                         root_project=False,
                     )
 
@@ -81,13 +89,13 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                     project = Project(root_project=True)
 
                     self.assertEqual(project.name, 'test')
-                    self.assertEqual(project.repo_path, '/home/src/test')
+                    self.assertEqual(project.repo_path, base_repo_path())
                     self.assertEqual(project.settings, None)
                     self.assertEqual(project.version, VERSION)
                     self.assertTrue(project.root_project)
 
                     mock_get_repo_config.assert_called_once_with(
-                        repo_path='/home/src/test',
+                        repo_path=base_repo_path(),
                         root_project=True,
                     )
 
@@ -103,23 +111,23 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                 project = Project(root_project=False)
 
                 self.assertEqual(project.repo_path_for_database_query('pipeline_schedules'), [
-                    '/home/src/default_repo',
-                    '/home/src/default_repo/default_repo',
+                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo'),
+                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo/default_repo'),
                 ])
 
                 self.assertEqual(project.repo_path_for_database_query('secrets'), [
-                    '/home/src/default_repo2',
-                    '/home/src/default_repo2/default_repo',
+                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
+                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo2/default_repo'),
                 ])
 
                 project = Project(root_project=True)
 
                 self.assertEqual(project.repo_path_for_database_query('pipeline_schedules'), [
-                    '/home/src/test',
+                    base_repo_path(),
                 ])
 
                 self.assertEqual(project.repo_path_for_database_query('secrets'), [
-                    '/home/src/test',
+                    base_repo_path(),
                 ])
 
     def test_projects(self):

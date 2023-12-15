@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from mage_ai.data_preparation.models.errors import FileNotInProjectError
 from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
@@ -52,49 +53,61 @@ class FileTest(AsyncDBTestCase):
 class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
     def tearDown(self):
         try:
-            shutil.rmtree('/home/src/test/demo')
+            shutil.rmtree(os.path.join(base_repo_path(), 'demo'))
         except FileNotFoundError:
             pass
         try:
-            shutil.rmtree('/home/src/test/mage_platform')
+            shutil.rmtree(os.path.join(base_repo_path(), 'mage_platform'))
         except FileNotFoundError:
             pass
         super().tearDown()
 
     def test_create(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.assertFalse(os.path.exists('/home/src/test/mage_platform/demo/file.txt'))
+            self.assertFalse(
+                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+            )
             File.create('file.txt', 'demo', 'mage')
-            self.assertTrue(os.path.exists('/home/src/test/mage_platform/demo/file.txt'))
+            self.assertTrue(
+                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+            )
 
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-            self.assertFalse(os.path.exists('/home/src/test/demo/file.txt'))
+            self.assertFalse(
+                os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
+            )
             File.create('file.txt', 'demo', 'mage')
-            self.assertTrue(os.path.exists('/home/src/test/demo/file.txt'))
+            self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
 
     async def test_create_async(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.assertFalse(os.path.exists('/home/src/test/mage_platform/demo/file.txt'))
+            self.assertFalse(
+                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+            )
             await File.create_async('file.txt', 'demo', 'mage')
-            self.assertTrue(os.path.exists('/home/src/test/mage_platform/demo/file.txt'))
+            self.assertTrue(
+                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+            )
 
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-            self.assertFalse(os.path.exists('/home/src/test/demo/file.txt'))
+            self.assertFalse(
+                os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
+            )
             await File.create_async('file.txt', 'demo', 'mage')
-            self.assertTrue(os.path.exists('/home/src/test/demo/file.txt'))
+            self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
 
     def test_from_path(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
             file = File.from_path('demo/file.txt')
             self.assertEqual(file.filename, 'file.txt')
             self.assertEqual(file.dir_path, 'demo')
-            self.assertEqual(file.repo_path, '/home/src/test/mage_platform')
+            self.assertEqual(file.repo_path, os.path.join(base_repo_path(), 'mage_platform'))
 
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
             file = File.from_path('demo/file.txt')
             self.assertEqual(file.filename, 'file.txt')
             self.assertEqual(file.dir_path, 'demo')
-            self.assertEqual(file.repo_path, '/home/src/test')
+            self.assertEqual(file.repo_path, base_repo_path())
 
     def test_get_all_files(self):
         File.create('file.txt', 'demo', 'mage')
@@ -102,7 +115,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
         File.create('demo.sql', 'demo', 'mage')
 
         full_paths = File.get_all_files(
-            '/home/src/test',
+            base_repo_path(),
             pattern='.sql$',
         )
 

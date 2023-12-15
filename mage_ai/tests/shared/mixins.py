@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from typing import Callable, Dict, List
 from unittest.mock import patch
 
@@ -389,6 +390,14 @@ class ProjectPlatformMixin(AsyncDBTestCase):
 
     def teardown_final(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+            try:
+                shutil.rmtree(platform_settings_full_path())
+            except Exception:
+                pass
+            try:
+                shutil.rmtree(local_platform_settings_full_path())
+            except Exception:
+                pass
             super().tearDown()
 
     def setUp(self):

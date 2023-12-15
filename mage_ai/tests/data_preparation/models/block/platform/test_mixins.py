@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlock, DBTBlockSQL
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.api.endpoints.mixins import BaseAPIEndpointTest
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
@@ -68,7 +69,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
 
     def test_file_path(self):
         self.run_test_file_path(
-            lambda block: f'/home/src/test/data_loaders/{block.uuid}.py',
+            lambda block: os.path.join(base_repo_path(), f'data_loaders/{block.uuid}.py'),
         )
 
     def test_file(self):
@@ -127,7 +128,10 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
 
     def test_file_path(self):
         self.run_test_file_path(
-            lambda block: f'/home/src/test/mage_platform/data_loaders/{block.uuid}.py',
+            lambda block: os.path.join(
+                base_repo_path(),
+                f'mage_platform/data_loaders/{block.uuid}.py',
+            ),
         )
 
     def test_file(self):
@@ -162,8 +166,11 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
                 mock_load_template.assert_not_called()
 
     def test_create_dbt(self):
-        file = self.build_block().file
-        file_path = self.faker.unique.name()
+        block = self.build_block()
+        file = block.file
+        file_path = f'mage_platform/data_loaders/{block.uuid}.py'
+        with open(os.path.join(base_repo_path(), 'mage_platform', 'dbt_project.yml'), 'w') as f:
+            f.write('')
 
         with patch.object(file, 'create_parent_directories') as mock_create_parent_directories:
             with patch.object(file, 'update_content') as mock_update_content:
@@ -179,7 +186,7 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
                             self.build_block(
                                 block_type=BlockType.DBT,
                                 configuration=dict(
-                                    file_path=self.faker.unique.name(),
+                                    file_path=f'mage_platform/data_loaders/{block.uuid}.py',
                                     file_source=dict(
                                         path=file_path,
                                     ),
@@ -300,7 +307,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
         with patch.object(block, 'is_from_another_project', lambda: True):
             self.assertEqual(
                 block.get_project_path_from_source(),
-                '/home/src/test/mage_platform/mage.py',
+                os.path.join(base_repo_path(), 'mage_platform/mage.py'),
             )
 
         block._configuration = dict(
@@ -318,7 +325,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
 
         self.assertEqual(
             block.get_project_path_from_project_name('mage_data/dir1'),
-            '/home/src/test/mage_data/dir1',
+            os.path.join(base_repo_path(), 'mage_data/dir1'),
         )
 
     def test_get_base_project_from_source(self):
@@ -327,7 +334,10 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
             dbt_project_name='mage_data/fire',
             file_source=dict(path='mage_data/mage.py'),
         )
-        self.assertEqual(block.get_base_project_from_source(), '/home/src/test/mage_data')
+        self.assertEqual(
+            block.get_base_project_from_source(),
+            os.path.join(base_repo_path(), 'mage_data'),
+        )
 
     def test_build_file(self):
         block = self.build_block()
@@ -341,7 +351,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
 
     def test_hydrate_dbt_nodes(self):
         block = self.build_block()
-        block.project_path = '/home/src/test/mage_data/dbt/demo'
+        block.project_path = os.path.join(base_repo_path(), 'mage_data/dbt/demo')
 
         nodes_default = 'fire'
         nodes_init = [
@@ -370,7 +380,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
 
     def test_node_uuids_mapping(self):
         block = self.build_block()
-        block.project_path = '/home/src/test/mage_data/dbt/demo'
+        block.project_path = os.path.join(base_repo_path(), 'mage_data/dbt/demo')
 
         nodes_init = [
             dict(
@@ -399,12 +409,12 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
         block._configuration = dict(
             file_source=dict(path='mage_data/utils/mage.py'),
         )
-        block.project_path = '/home/src/test/mage_data/dbt/demo'
+        block.project_path = os.path.join(base_repo_path(), 'mage_data/dbt/demo')
 
-        os.makedirs('/home/src/test/mage_data/dbt/demo/models', exist_ok=True)
-        with open('/home/src/test/mage_data/dbt/demo/models/users.sql', 'w') as f:
+        os.makedirs(os.path.join(base_repo_path(), 'mage_data/dbt/demo/models'), exist_ok=True)
+        with open(os.path.join(base_repo_path(), 'mage_data/dbt/demo/models/users.sql'), 'w') as f:
             f.write('')
-        with open('/home/src/test/mage_data/dbt/dbt_project.yml', 'w') as f:
+        with open(os.path.join(base_repo_path(), 'mage_data/dbt/dbt_project.yml'), 'w') as f:
             f.write('')
 
         name = self.faker.unique.name()

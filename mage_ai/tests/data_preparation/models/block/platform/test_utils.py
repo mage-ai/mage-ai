@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.platform.utils import (
     from_another_project,
     get_selected_directory_from_file_path,
 )
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
@@ -40,16 +41,34 @@ class BlockPlatformUtilsTest(ProjectPlatformMixin):
             self.assertFalse(from_another_project('mage_platform/fire.py'))
 
     def test_get_selected_directory_from_file_path(self):
-        os.makedirs('/home/src/test/mage_platform/dbt/demo/models/team/group', exist_ok=True)
-        with open('/home/src/test/mage_platform/dbt/demo/models/team/group/fire.sql', 'w') as f:
+        os.makedirs(
+            os.path.join(base_repo_path(), 'mage_platform/dbt/demo/models/team/group'),
+            exist_ok=True,
+        )
+        with open(
+            os.path.join(base_repo_path(), 'mage_platform/dbt/demo/models/team/group/fire.sql'),
+            'w',
+        ) as f:
             f.write('')
-        with open('/home/src/test/mage_platform/dbt/demo/dbt_project.yml', 'w') as f:
+        with open(
+            os.path.join(base_repo_path(), 'mage_platform/dbt/demo/dbt_project.yml'),
+            'w',
+        ) as f:
             f.write('')
 
-        os.makedirs('/home/src/test/mage_platform/dbt/demo2/models/team/group', exist_ok=True)
-        with open('/home/src/test/mage_platform/dbt/demo2/models/team/group/fire.sql', 'w') as f:
+        os.makedirs(
+            os.path.join(base_repo_path(), 'mage_platform/dbt/demo2/models/team/group'),
+            exist_ok=True,
+        )
+        with open(
+            os.path.join(base_repo_path(), 'mage_platform/dbt/demo2/models/team/group/fire.sql'),
+            'w',
+        ) as f:
             f.write('')
-        with open('/home/src/test/mage_platform/dbt/demo2/dbt_project.yml', 'w') as f:
+        with open(
+            os.path.join(base_repo_path(), 'mage_platform/dbt/demo2/dbt_project.yml'),
+            'w',
+        ) as f:
             f.write('')
 
         project_path = get_selected_directory_from_file_path(
@@ -60,4 +79,4 @@ class BlockPlatformUtilsTest(ProjectPlatformMixin):
             ),
         )
 
-        self.assertEqual('/home/src/test/mage_platform/dbt/demo2', project_path)
+        self.assertEqual(os.path.join(base_repo_path(), 'mage_platform/dbt/demo2'), project_path)

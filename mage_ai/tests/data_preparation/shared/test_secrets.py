@@ -15,6 +15,7 @@ from mage_ai.data_preparation.shared.secrets import (
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.secrets import Secret
 from mage_ai.settings.platform import platform_settings_full_path
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.settings.test_platform import SETTINGS
@@ -92,13 +93,16 @@ class SecretProjectPlatformTest(ProjectPlatformMixin, DBTestCase):
 
             self.assertEqual(get_secret_value(secret.name), '123')
 
-            self.assertEqual(secret.repo_name, '/home/src/test/mage_platform')
+            self.assertEqual(secret.repo_name, os.path.join(base_repo_path(), 'mage_platform'))
 
             content = yaml.dump(SETTINGS)
             safe_write(platform_settings_full_path(), content)
 
             secret = create_secret(uuid4().hex, '123')
-            self.assertEqual(secret.repo_name, '/home/src/default_repo2')
+            self.assertEqual(
+                secret.repo_name,
+                os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
+            )
 
             try:
                 shutil.rmtree(platform_settings_full_path())
@@ -113,7 +117,7 @@ class SecretProjectPlatformTest(ProjectPlatformMixin, DBTestCase):
             except Exception:
                 pass
 
-            mock_data_dir.return_value = os.path.join('/home/src/test', 'data')
+            mock_data_dir.return_value = os.path.join(base_repo_path(), 'data')
             secret = create_secret(uuid4().hex, '123')
 
             self.assertTrue(secret.name in [s.name for s in get_valid_secrets_for_repo()])
@@ -135,10 +139,13 @@ class SecretProjectPlatformTest(ProjectPlatformMixin, DBTestCase):
     @patch('mage_ai.data_preparation.shared.secrets.get_data_dir')
     def test_get_secret_value(self, mock_data_dir):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            mock_data_dir.return_value = os.path.join('/home/src/test', 'data')
+            mock_data_dir.return_value = os.path.join(base_repo_path(), 'data')
             content = yaml.dump(SETTINGS)
             safe_write(platform_settings_full_path(), content)
 
             secret = create_secret(uuid4().hex, '123')
-            self.assertEqual(secret.repo_name, '/home/src/default_repo2')
+            self.assertEqual(
+                secret.repo_name,
+                os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
+            )
             self.assertEqual(get_secret_value(secret.name), '123')
