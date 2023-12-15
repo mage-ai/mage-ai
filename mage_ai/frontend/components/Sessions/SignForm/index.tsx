@@ -5,11 +5,8 @@ import { useRouter } from 'next/router';
 import ApiErrorType from '@interfaces/ApiErrorType';
 import AuthToken from '@api/utils/AuthToken';
 import FlexContainer from '@oracle/components/FlexContainer';
-import GoogleSignIn from '../GoogleSignIn';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import MicrosoftSignIn from '../MicrosoftSignIn';
-import OktaSignIn from '../OktaSignIn';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -20,7 +17,7 @@ import {
   KEY_CODE_ENTER,
   KEY_SYMBOL_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { OAUTH_PROVIDER_SIGN_IN_MAPPING, OauthProviderEnum } from '@interfaces/OauthType';
+import { OAUTH_PROVIDER_SIGN_IN_MAPPING } from '@interfaces/OauthType';
 import { PADDING_HORIZONTAL_UNITS } from '@oracle/styles/units/spacing';
 import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';

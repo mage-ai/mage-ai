@@ -57,6 +57,7 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
 GitBranchPolicy.allow_query([
     'include_remote_branches',
     'repository',
+    'remote_url',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
