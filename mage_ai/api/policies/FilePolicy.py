@@ -60,6 +60,8 @@ FilePolicy.allow_write([
 
 FilePolicy.allow_query(
     [
+        'exclude_dir_pattern',
+        'exclude_pattern',
         'pattern',
     ],
     scopes=[
