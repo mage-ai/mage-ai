@@ -75,6 +75,7 @@ type ToolbarProps = {
   query?: {
     [keyof: string]: string[];
   };
+  resetLimitOnFilterApply?: boolean;
   resetPageOnFilterApply?: boolean;
   secondaryButtonProps?: {
     beforeIcon?: JSX.Element;
@@ -106,6 +107,7 @@ function Toolbar({
   onClickFilterDefaults,
   onFilterApply,
   query = {},
+  resetLimitOnFilterApply,
   resetPageOnFilterApply,
   secondaryButtonProps,
   searchProps,
@@ -249,6 +251,7 @@ function Toolbar({
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
       query={query}
+      resetLimitOnApply={resetLimitOnFilterApply}
       resetPageOnApply={resetPageOnFilterApply}
       setOpen={setFilterButtonMenuOpen}
       toggleValueMapping={filterValueLabelMapping}
@@ -280,6 +283,7 @@ function Toolbar({
     onClickFilterDefaults,
     onFilterApply,
     query,
+    resetLimitOnFilterApply,
     resetPageOnFilterApply,
   ]);
 

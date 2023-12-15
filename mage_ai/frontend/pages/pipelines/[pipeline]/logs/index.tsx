@@ -31,12 +31,11 @@ import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import {
-  LIMIT_PARAM,
-  OFFSET_PARAM,
   LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
 } from '@components/Logs/Toolbar/constants';
 import { LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS } from '@storage/constants';
+import { MetaQueryEnum } from '@api/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -232,8 +231,8 @@ function PipelineLogsPage({
   useEffect(() => {
     if (onlyLoadPastDayLogs) {
       goToWithQuery({
-        [LIMIT_PARAM]: LOG_FILE_COUNT_INTERVAL,
-        [OFFSET_PARAM]: 0,
+        [MetaQueryEnum.LIMIT]: LOG_FILE_COUNT_INTERVAL,
+        [MetaQueryEnum.OFFSET]: 0,
         start_timestamp: dayAgoTimestamp,
       });
     }
@@ -276,8 +275,8 @@ function PipelineLogsPage({
       );
       goToWithQuery({
         ...q,
-        [LIMIT_PARAM]: newLimit,
-        [OFFSET_PARAM]: newOffset,
+        [MetaQueryEnum.LIMIT]: newLimit,
+        [MetaQueryEnum.OFFSET]: newOffset,
       });
     }
   }, [greaterLogCount, limit, offset, q, totalBlockRunLogCount, totalPipelineRunLogCount]);
@@ -292,8 +291,8 @@ function PipelineLogsPage({
       newOffset = Math.max(0, (offset - LOG_FILE_COUNT_INTERVAL));
       goToWithQuery({
         ...q,
-        [LIMIT_PARAM]: newLimit,
-        [OFFSET_PARAM]: newOffset,
+        [MetaQueryEnum.LIMIT]: newLimit,
+        [MetaQueryEnum.OFFSET]: newOffset,
       });
     }
   }, [greaterLogCount, limit, offset, q]);

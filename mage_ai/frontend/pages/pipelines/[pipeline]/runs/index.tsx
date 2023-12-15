@@ -43,12 +43,12 @@ import {
   PipeIcon,
   Refresh,
 } from '@oracle/icons';
-import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
-import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import {
   CANCEL_ALL_RUNNING_PIPELINE_RUNS_UUID,
   PageNameEnum,
 } from '@components/PipelineDetailPage/constants';
+import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { MetaQueryEnum } from '@api/constants';
 import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { POPUP_MENU_WIDTH, SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
@@ -57,6 +57,7 @@ import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
+import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { queryFromUrl, queryString } from '@utils/url';
 
@@ -171,7 +172,7 @@ function PipelineRuns({
     [TAB_URL_PARAM, 'page', SortQueryEnum.SORT_COL_IDX, SortQueryEnum.SORT_DIRECTION],
   );
   if (isPipelineRunsTab) {
-    blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [OFFSET_PARAM, 'status']);
+    blockRunsRequestQuery = ignoreKeys(blockRunsRequestQuery, [MetaQueryEnum.OFFSET, 'status']);
   }
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
@@ -197,7 +198,7 @@ function PipelineRuns({
     pipelineRunsRequestQuery.status = q.status;
   }
   if (!isPipelineRunsTab) {
-    pipelineRunsRequestQuery = ignoreKeys(pipelineRunsRequestQuery, [OFFSET_PARAM]);
+    pipelineRunsRequestQuery = ignoreKeys(pipelineRunsRequestQuery, [MetaQueryEnum.OFFSET]);
   }
   const {
     data: dataPipelineRuns,
