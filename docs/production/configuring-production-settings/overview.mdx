@@ -33,6 +33,9 @@ To use a specific `schema_name` in PostgreSQL:
 
 `export MAGE_DATABASE_CONNECTION_URL="postgresql+psycopg2://user:password@host:port/dbname?options=-c%%20search_path%%3Dschema_name"`
 
+#### MySQL
+`export MAGE_DATABASE_CONNECTION_URL=mysql+mysqlconnector://user:password@host:port/dbname`
+
 #### MSSQL
 `export MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;"`
 
