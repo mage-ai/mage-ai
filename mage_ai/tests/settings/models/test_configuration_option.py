@@ -19,7 +19,7 @@ CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 class ConfigurationOptionTest(AsyncDBTestCase):
     def setUp(self):
         super().setUp()
-        self.directory = '/home/src/test/mage_platform'
+        self.directory = os.path.join(self.repo_path, 'mage_platform')
 
         os.makedirs(os.path.join(self.directory, 'dir1'), exist_ok=True)
         os.makedirs(os.path.join(self.directory, 'dir2', 'dir3'), exist_ok=True)
@@ -75,7 +75,7 @@ class ConfigurationOptionTest(AsyncDBTestCase):
     async def test_fetch_with_resource_uuid(self):
         pipeline = create_pipeline_with_blocks(
             self.faker.unique.name(),
-            '/home/src/test/mage_platform',
+            os.path.join(self.repo_path, 'mage_platform'),
         )
         block = DBTBlock(
             block_type='dbt',

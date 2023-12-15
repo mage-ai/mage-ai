@@ -1,4 +1,5 @@
 import os
+import shutil
 from unittest.mock import patch
 
 import yaml
@@ -17,6 +18,7 @@ from mage_ai.settings.platform import (
     project_platform_activated,
     project_platform_settings,
 )
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 SETTINGS = dict(
@@ -60,6 +62,17 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         self.__get_settings()
         self.__get_settings_local()
 
+    def tearDown(self):
+        try:
+            shutil.rmtree(platform_settings_full_path())
+        except Exception:
+            pass
+        try:
+            shutil.rmtree(local_platform_settings_full_path())
+        except Exception:
+            pass
+        super().tearDown()
+
     def __get_settings(self):
         with open(platform_settings_full_path()) as f:
             content = Template(f.read()).render(**get_template_vars_no_db())
@@ -86,10 +99,10 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         self.assertEqual(
             get_repo_paths_for_file_path('mage_platform/data_loaders/load.py'),
             dict(
-                full_path='/home/src/test/mage_platform',
+                full_path=os.path.join(base_repo_path(), 'mage_platform'),
                 full_path_relative='test/mage_platform',
                 path='mage_platform',
-                root_project_full_path='/home/src/test',
+                root_project_full_path=base_repo_path(),
                 root_project_name='test',
                 uuid='mage_platform',
             ),
@@ -100,24 +113,33 @@ class PlatformSettingsTest(ProjectPlatformMixin):
                 'mage_data/platform/data_loaders/mage/fire/water/ice/load.py',
             ),
             dict(
-                full_path='/home/src/test/mage_data/platform',
+                full_path=os.path.join(base_repo_path(), 'mage_data/platform'),
                 full_path_relative='test/mage_data/platform',
                 path='mage_data/platform',
-                root_project_full_path='/home/src/test',
+                root_project_full_path=base_repo_path(),
                 root_project_name='test',
                 uuid='mage_data',
             ),
         )
 
     def test_build_active_project_repo_path(self):
-        self.assertEqual(build_active_project_repo_path(), '/home/src/test/mage_platform')
+        self.assertEqual(
+            build_active_project_repo_path(),
+            os.path.join(base_repo_path(), 'mage_platform'),
+        )
         activate_project('mage_data')
-        self.assertEqual(build_active_project_repo_path(), '/home/src/test/mage_data/platform')
+        self.assertEqual(
+            build_active_project_repo_path(),
+            os.path.join(base_repo_path(), 'mage_data/platform'),
+        )
 
     def test_build_active_project_repo_path_no_active_projects(self):
         os.remove(local_platform_settings_full_path())
         self.assertFalse(os.path.exists(local_platform_settings_full_path()))
-        self.assertEqual(build_active_project_repo_path(), '/home/src/test/mage_platform')
+        self.assertEqual(
+            build_active_project_repo_path(),
+            os.path.join(base_repo_path(), 'mage_platform'),
+        )
 
     def test_project_platform_activated(self):
         self.assertTrue(project_platform_activated())
@@ -167,31 +189,39 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         ))
 
     def test_git_settings(self):
-        self.assertEqual(git_settings(), dict(
-            path='/home/src/test/mage_platform/git',
-        ))
         activate_project('mage_data')
         self.assertEqual(git_settings(), dict(
-            path='/home/src/test/mage_data/dev',
+            path=os.path.join(base_repo_path(), 'mage_data/dev'),
+        ))
+        activate_project('mage_platform')
+        self.assertEqual(git_settings(), dict(
+            path=os.path.join(base_repo_path(), 'mage_platform', 'git'),
         ))
 
     def test_platform_settings_full_path(self):
-        self.assertEquals(platform_settings_full_path(), '/home/src/test/settings.yaml')
+        self.assertEquals(
+            platform_settings_full_path(), os.path.join(base_repo_path(), 'settings.yaml'),
+        )
 
     def test_local_platform_settings_full_path(self):
-        self.assertEquals(local_platform_settings_full_path(), '/home/src/test/.settings.yaml')
+        self.assertEquals(
+            local_platform_settings_full_path(), os.path.join(base_repo_path(), '.settings.yaml'),
+        )
 
     def test_get_repo_path(self):
         from mage_ai.settings.repo import get_repo_path
 
-        self.assertEqual(get_repo_path(), '/home/src/test/mage_platform')
+        self.assertEqual(get_repo_path(), os.path.join(base_repo_path(), 'mage_platform'))
         self.assertEqual(get_repo_path(absolute_path=False), 'test/mage_platform')
 
-        self.assertEqual(get_repo_path(root_project=True), '/home/src/test')
+        self.assertEqual(get_repo_path(root_project=True), base_repo_path())
         self.assertEqual(get_repo_path(root_project=True, absolute_path=False), 'test')
 
-        file_path = '/home/src/test/mage_data/platform/data_loaders/load.py'
-        self.assertEqual(get_repo_path(file_path=file_path), '/home/src/test/mage_data/platform')
+        file_path = os.path.join(base_repo_path(), 'mage_data/platform/data_loaders/load.py')
+        self.assertEqual(
+            get_repo_path(file_path=file_path),
+            os.path.join(base_repo_path(), 'mage_data/platform'),
+        )
         self.assertEqual(
             get_repo_path(file_path=file_path, absolute_path=False),
             'test/mage_data/platform',
@@ -199,7 +229,7 @@ class PlatformSettingsTest(ProjectPlatformMixin):
 
         self.assertEqual(
             get_repo_path(file_path=file_path, root_project=True),
-            '/home/src/test',
+            base_repo_path(),
         )
         self.assertEqual(
             get_repo_path(file_path=file_path, root_project=True, absolute_path=False),
@@ -209,25 +239,37 @@ class PlatformSettingsTest(ProjectPlatformMixin):
     def test_get_metadata_path(self):
         from mage_ai.settings.repo import get_metadata_path
 
-        self.assertEqual(get_metadata_path(), '/home/src/test/mage_platform/metadata.yaml')
-        self.assertEqual(get_metadata_path(root_project=True), '/home/src/test/metadata.yaml')
+        self.assertEqual(
+            get_metadata_path(),
+            os.path.join(base_repo_path(), 'mage_platform/metadata.yaml'),
+        )
+        self.assertEqual(
+            get_metadata_path(root_project=True),
+            os.path.join(base_repo_path(), 'metadata.yaml'),
+        )
 
         activate_project('mage_data')
-        self.assertEqual(get_metadata_path(), '/home/src/test/mage_data/platform/metadata.yaml')
-        self.assertEqual(get_metadata_path(root_project=True), '/home/src/test/metadata.yaml')
+        self.assertEqual(
+            get_metadata_path(),
+            os.path.join(base_repo_path(), 'mage_data/platform/metadata.yaml'),
+        )
+        self.assertEqual(
+            get_metadata_path(root_project=True),
+            os.path.join(base_repo_path(), 'metadata.yaml'),
+        )
 
     def test_get_variables_dir(self):
         from mage_ai.settings.repo import get_variables_dir
 
-        self.assertEqual(get_variables_dir(), '/home/src/test/mage_platform')
+        self.assertEqual(get_variables_dir(), os.path.join(base_repo_path(), 'mage_platform'))
         self.assertEqual(
-            get_variables_dir('/home/src/test/mage_data/platform'),
-            '/home/src/test/mage_data/platform',
+            get_variables_dir(os.path.join(base_repo_path(), 'mage_data/platform')),
+            os.path.join(base_repo_path(), 'mage_data/platform'),
         )
 
         activate_project('mage_data')
-        self.assertEqual(get_variables_dir(), '/home/src/test/mage_data/platform')
+        self.assertEqual(get_variables_dir(), os.path.join(base_repo_path(), 'mage_data/platform'))
         self.assertEqual(
-            get_variables_dir('/home/src/test/mage_platform'),
-            '/home/src/test/mage_platform',
+            get_variables_dir(os.path.join(base_repo_path(), 'mage_platform')),
+            os.path.join(base_repo_path(), 'mage_platform'),
         )
