@@ -6,6 +6,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_create_endpoint_tests,
@@ -108,6 +109,51 @@ build_list_endpoint_tests(
         'updated_at',
         'variables',
     ],
+)
+
+
+def __assert_after(test_case, results, mocks, mock_objects):
+    mocks[0].assert_called_once_with(get_repo_path())
+
+
+# Project platform
+build_list_endpoint_tests(
+    PipelineRunAPIEndpointTest,
+    list_count=3,
+    build_query=lambda self: {
+        'include_pipeline_uuids': [
+            True,
+        ],
+    },
+    test_uuid='include_pipeline_uuids',
+    resource='pipeline_run',
+    result_keys_to_compare=[
+        'backfill_id',
+        'block_runs',
+        'block_runs_count',
+        'completed_at',
+        'completed_block_runs_count',
+        'created_at',
+        'event_variables',
+        'execution_date',
+        'executor_type',
+        'id',
+        'metrics',
+        'passed_sla',
+        'pipeline_schedule_id',
+        'pipeline_schedule_name',
+        'pipeline_schedule_token',
+        'pipeline_schedule_type',
+        'pipeline_uuid',
+        'started_at',
+        'status',
+        'updated_at',
+        'variables',
+    ],
+    patch_function_settings=[
+        ('mage_ai.api.resources.PipelineRunResource.Pipeline.get_all_pipelines_all_projects',),
+    ],
+    assert_after=__assert_after,
 )
 
 
