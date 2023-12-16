@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
+from unittest.mock import patch
 
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -89,7 +90,8 @@ class PipelineScheduleAPIEndpointTest(BaseAPIEndpointTest):
         }
 
 
-class PipelineScheduleProjectPlatformTests(PipelineScheduleAPIEndpointTest, ProjectPlatformMixin):
+@patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True)
+class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin, BaseAPIEndpointTest):
     async def test_collection_project_platform_activated(self):
         pipelines = []
         pipeline_schedules = []
@@ -114,7 +116,14 @@ class PipelineScheduleProjectPlatformTests(PipelineScheduleAPIEndpointTest, Proj
         results = await self.build_test_list_endpoint(
             resource='pipeline_schedules',
             authentication=1,
-            list_count=5,
+            list_count=2,
+            patch_function_settings=[
+                ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+                (
+                    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+                    lambda: True,
+                ),
+            ],
         )
 
         for pipeline_schedule in pipeline_schedules:
