@@ -486,7 +486,8 @@ class PipelineSchedule(BaseModel):
                 compare(now, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
             return False
 
-        if not pipeline:
+        pipeline_use = pipeline or self.pipeline
+        if not pipeline_use:
             try:
                 Pipeline.get(self.pipeline_uuid)
             except Exception:
@@ -495,8 +496,6 @@ class PipelineSchedule(BaseModel):
                     + f'for pipeline schedule ID {self.id}.',
                 )
                 return False
-
-        pipeline_use = pipeline or self.pipeline
 
         if self.schedule_interval == ScheduleInterval.ONCE:
             pipeline_run_count = self.pipeline_runs_count

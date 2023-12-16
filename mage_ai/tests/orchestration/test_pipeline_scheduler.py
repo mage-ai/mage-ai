@@ -1176,3 +1176,61 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
             with patch.object(PipelineRunMock, 'in_progress_runs') as mock:
                 check_sla()
                 mock.assert_called_once_with(set([s.id for s in pipeline_schedules]))
+
+    @freeze_time('2023-11-11 12:30:00')
+    def test_schedule_all(self):
+        with patch(
+            'mage_ai.orchestration.pipeline_scheduler.project_platform_activated',
+            lambda: True,
+        ):
+            pipeline_schedules = []
+            for settings in self.repo_paths.values():
+                full_path = settings['full_path']
+                pipeline = create_pipeline_with_blocks(
+                    self.faker.unique.name(),
+                    repo_path=full_path,
+                )
+                pipeline_schedule = PipelineSchedule.create(
+                    name=self.faker.unique.name(),
+                    pipeline_uuid=pipeline.uuid,
+                    repo_path=full_path,
+                    schedule_interval='@hourly',
+                    schedule_type=ScheduleType.TIME,
+                    start_time=datetime(2023, 10, 10, 13, 13, 20),
+                    status=ScheduleStatus.ACTIVE,
+                )
+                pipeline_schedules.append(pipeline_schedule)
+
+            count = PipelineRun.query.count()
+
+            class PipelineSchedulerMock:
+                def __init__(self, pipeline_run):
+                    self.pipeline_run = pipeline_run
+
+                def schedule(self):
+                    pass
+
+                def start(self):
+                    pass
+
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler.PipelineScheduler',
+                PipelineSchedulerMock,
+            ):
+                with patch.object(PipelineSchedulerMock, 'schedule') as mock:
+                    with patch.object(PipelineSchedulerMock, 'start') as mock_start:
+                        schedule_all()
+                        count += 2
+                        self.assertEqual(PipelineRun.query.count(), count)
+                        self.assertEqual(mock.call_count, 0)
+                        self.assertEqual(mock_start.call_count, 2)
+
+                with patch.object(PipelineSchedulerMock, 'schedule') as mock:
+                    with patch.object(PipelineSchedulerMock, 'start') as mock_start:
+                        for pr in PipelineRun.query.all():
+                            pr.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+                        schedule_all()
+                        self.assertEqual(PipelineRun.query.count(), count)
+                        self.assertEqual(mock.call_count, 2)
+                        self.assertEqual(mock_start.call_count, 0)
