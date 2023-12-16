@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.global_hooks.predicates import (
     PredicateValueType,
 )
 from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
     local_platform_settings_full_path,
     platform_settings_full_path,
 )
@@ -387,6 +388,7 @@ class ProjectPlatformMixin(AsyncDBTestCase):
                 self.repo_path,
                 return_blocks=True,
             )
+            self.repo_paths = build_repo_path_for_all_projects(mage_projects_only=True)
 
     def teardown_final(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):

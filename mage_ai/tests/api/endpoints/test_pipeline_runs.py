@@ -16,6 +16,7 @@ from mage_ai.tests.api.endpoints.mixins import (
     build_update_endpoint_tests,
 )
 from mage_ai.tests.factory import create_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def get_pipeline(self):
@@ -79,6 +80,45 @@ class PipelineRunAPIEndpointTest(BaseAPIEndpointTest):
             self.pipeline_schedule2.id: 1,
             self.pipeline_schedule3.id: 1,
         }
+
+
+class PipelineRunProjectPlatformTests(PipelineRunAPIEndpointTest, ProjectPlatformMixin):
+    async def test_collection_project_platform_activated(self):
+        pipelines = []
+        pipeline_schedules = []
+        pipeline_runs = []
+
+        for settings in self.repo_paths.values():
+            pipeline = create_pipeline_with_blocks(
+                self.faker.unique.name(),
+                settings['full_path'],
+            )
+            pipelines.append(pipeline)
+
+            pipeline_schedule = PipelineSchedule.create(
+                name=self.faker.unique.name(),
+                pipeline_uuid=self.pipeline.uuid,
+                repo_path=settings['full_path'],
+            )
+            pipeline_schedules.append(pipeline_schedule)
+
+            pipeline_run = PipelineRun.create(
+                pipeline_schedule_id=pipeline_schedule.id,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            )
+            pipeline_runs.append(pipeline_run)
+
+        results = await self.build_test_list_endpoint(
+            resource='pipeline_runs',
+            authentication=1,
+            list_count=5,
+        )
+
+        for pipeline_run in pipeline_runs:
+            self.assertIn(
+                pipeline_run.id,
+                [result['id'] for result in results],
+            )
 
 
 # No parent
