@@ -12,15 +12,27 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 class BlockWithProjectPlatformShared:
-    def build_block(self, block_type: BlockType = None, **kwargs):
-        self.block = Block.create(
-            self.faker.unique.name(),
-            block_type or 'data_loader',
-            self.repo_path,
-            language='python',
-            **kwargs,
-        )
-        return self.block
+    def build_block(self, project_platform: bool = True, block_type: BlockType = None, **kwargs):
+        with patch(
+            'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+            lambda: project_platform,
+        ):
+            with patch(
+                'mage_ai.data_preparation.models.block.project_platform_activated',
+                lambda: project_platform,
+            ):
+                with patch(
+                    'mage_ai.settings.platform.project_platform_activated',
+                    lambda: project_platform,
+                ):
+                    self.block = Block.create(
+                        self.faker.unique.name(),
+                        block_type or 'data_loader',
+                        self.repo_path,
+                        language='python',
+                        **kwargs,
+                    )
+                    return self.block
 
     def run_test_file_path(self, test_value: Callable):
         self.build_block()
@@ -44,12 +56,18 @@ class BlockWithProjectPlatformShared:
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: False)
 class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProjectPlatformShared):
     def test_configuration_getter(self):
-        self.build_block(configuration=dict(mage=1))
-        self.assertEqual(self.block.configuration, dict(mage=1))
-        self.assertEqual(self.block._configuration, dict(mage=1))
+        self.build_block(project_platform=False, configuration=dict(mage=1))
+        self.assertEqual(self.block.configuration, dict(
+            file_source=dict(path=f'mage_platform/data_loaders/{self.block.uuid}.py'),
+            mage=1,
+        ))
+        self.assertEqual(self.block._configuration, dict(
+            file_source=dict(path=f'mage_platform/data_loaders/{self.block.uuid}.py'),
+            mage=1,
+        ))
 
     def test_configuration_setter(self):
-        block = self.build_block()
+        block = self.build_block(project_platform=False)
         self.assertEqual(block.configuration, {})
 
         with patch.object(
@@ -67,7 +85,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
         )
 
     def test_file(self):
-        self.build_block()
+        self.build_block(project_platform=False)
         file = File.from_path(self.block.file_path)
         for key in [
             'filename',
@@ -81,7 +99,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
 
     def test_create(self):
         with patch('mage_ai.data_preparation.models.block.load_template') as mock_load_template:
-            self.build_block()
+            self.build_block(project_platform=False)
             mock_load_template.assert_called_once_with(
                 self.block.type,
                 {},
@@ -91,7 +109,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
             )
 
     def test_create_dbt(self):
-        file = self.build_block().file
+        file = self.build_block(project_platform=False).file
 
         with patch(
             'mage_ai.data_preparation.models.block.File.from_path',

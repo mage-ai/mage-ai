@@ -7,13 +7,14 @@ from jinja2 import Template
 
 from mage_ai.settings import ENABLE_PROJECT_PLATFORM
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
+from mage_ai.settings.platform.constants import (
+    LOCAL_PLATFORM_SETTINGS_FILENAME,
+    PLATFORM_SETTINGS_FILENAME,
+)
 from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import combine_into, dig, extract, merge_dict
 from mage_ai.shared.io import safe_write
-
-PLATFORM_SETTINGS_FILENAME = 'settings.yaml'
-LOCAL_PLATFORM_SETTINGS_FILENAME = f'.{PLATFORM_SETTINGS_FILENAME}'
 
 
 def activate_project(project_name: str) -> None:
