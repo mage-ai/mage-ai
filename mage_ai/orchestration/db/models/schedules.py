@@ -162,6 +162,7 @@ class PipelineSchedule(BaseModel):
     def pipeline(self) -> 'Pipeline':
         return get_pipeline_from_platform(
             self.pipeline_uuid,
+            check_if_exists=True,
             repo_path=self.repo_path,
         )
 

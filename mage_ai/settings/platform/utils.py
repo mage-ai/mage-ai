@@ -17,6 +17,7 @@ from mage_ai.shared.files import find_directory
 
 def get_pipeline_from_platform(
     pipeline_uuid: str,
+    check_if_exists: bool = False,
     repo_path: str = None,
     mapping: Dict = None,
     use_repo_path: bool = False,
@@ -24,7 +25,7 @@ def get_pipeline_from_platform(
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
     if not project_platform_activated():
-        return Pipeline.get(pipeline_uuid)
+        return Pipeline.get(pipeline_uuid, check_if_exists=check_if_exists)
 
     if not mapping:
         mapping = repo_path_from_database_query_to_project_repo_path('pipeline_schedules')

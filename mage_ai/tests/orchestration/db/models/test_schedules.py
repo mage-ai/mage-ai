@@ -22,6 +22,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineSchedule,
 )
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import AsyncDBTestCase, DBTestCase
 from mage_ai.tests.factory import (
@@ -1792,21 +1793,25 @@ class BlockRunTests(DBTestCase):
 
 class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
     def test_repo_query(self):
-        pipeline_schedule1 = PipelineSchedule.create(
-            name='test pipeline',
-            pipeline_uuid=self.pipeline.uuid,
-            repo_path=self.repo_path,
-        )
-        pipeline_schedule2 = PipelineSchedule.create(
-            name='test pipeline',
-            pipeline_uuid=self.pipeline.uuid,
-            repo_path=None,
-        )
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+            lambda: False,
+        ):
+            pipeline_schedule1 = PipelineSchedule.create(
+                name='test pipeline',
+                pipeline_uuid=self.pipeline.uuid,
+                repo_path=base_repo_path(),
+            )
+            pipeline_schedule2 = PipelineSchedule.create(
+                name='test pipeline',
+                pipeline_uuid=self.pipeline.uuid,
+                repo_path=None,
+            )
 
-        ids = [ps.id for ps in PipelineSchedule.repo_query.all()]
+            ids = [ps.id for ps in PipelineSchedule.repo_query.all()]
 
-        self.assertIn(pipeline_schedule1.id, ids)
-        self.assertIn(pipeline_schedule2.id, ids)
+            self.assertIn(pipeline_schedule1.id, ids)
+            self.assertIn(pipeline_schedule2.id, ids)
 
         with patch(
             'mage_ai.orchestration.db.models.schedules.project_platform_activated',
@@ -1837,6 +1842,7 @@ class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
 
             mock.assert_called_once_with(
                 pipeline_uuid,
+                check_if_exists=True,
                 repo_path=repo_path,
             )
 
@@ -1948,9 +1954,13 @@ class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
             'mage_ai.orchestration.db.models.schedules.get_global_variables',
             wraps=lambda pipeline_uuid, pipeline: {},
         ) as mock:
-            pipeline_run.get_variables(pipeline_uuid=pipeline_run.pipeline_uuid)
-            self.assertEqual(mock.mock_calls[0][1][0], pipeline_run.pipeline_uuid)
-            self.assertEqual(mock.mock_calls[0][2]['pipeline'].uuid, pipeline_run.pipeline_uuid)
+            with patch(
+                'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+                lambda: True,
+            ):
+                pipeline_run.get_variables(pipeline_uuid=pipeline_run.pipeline_uuid)
+                self.assertEqual(mock.mock_calls[0][1][0], pipeline_run.pipeline_uuid)
+                self.assertEqual(mock.mock_calls[0][2]['pipeline'].uuid, pipeline_run.pipeline_uuid)
 
 
 class BlockRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
