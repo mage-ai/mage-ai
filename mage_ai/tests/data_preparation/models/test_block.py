@@ -746,7 +746,12 @@ def test_output(output, *args) -> None:
 
 class BlockProjectPlatformTests(ProjectPlatformMixin):
     def test_file_path(self):
-        block = Block.create('test_transformer', 'transformer', self.repo_path)
-        with patch.object(block, 'get_file_path_from_source') as mock:
-            block.file_path
-            mock.assert_called_once()
+        path = os.path.join('mage_data', 'transformers', 'test_transformer.py')
+        block = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            configuration=dict(file_source=dict(path=path))
+        )
+
+        self.assertEqual(block.file_path, path)
