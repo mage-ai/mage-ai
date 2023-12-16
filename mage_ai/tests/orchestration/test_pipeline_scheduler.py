@@ -1239,6 +1239,8 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
                         'mage_ai.orchestration.db.models.schedules.project_platform_activated',
                         lambda: True,
                     ):
+                        PipelineRun.query.delete()
+
                         pipeline_schedules = []
                         for settings in self.repo_paths.values():
                             full_path = settings['full_path']
