@@ -14,6 +14,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_integration_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 class BlockTest(DBTestCase):
@@ -733,3 +734,19 @@ def test_output(output, *args) -> None:
         })
         output_variables = block.output_variables()
         self.assertTrue('output_sample_data_stream1' in output_variables)
+
+    def test_file_path(self):
+        block = Block.create('test_transformer', 'transformer', self.repo_path)
+        self.assertEqual(block.file_path, os.path.join(
+            self.repo_path,
+            'transformers',
+            f'{block.uuid}.py',
+        ))
+
+
+class BlockProjectPlatformTests(ProjectPlatformMixin):
+    def test_file_path(self):
+        block = Block.create('test_transformer', 'transformer', self.repo_path)
+        with patch.object(block, 'get_file_path_from_source') as mock:
+            block.file_path
+            mock.assert_called_once()
