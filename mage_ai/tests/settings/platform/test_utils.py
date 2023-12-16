@@ -136,7 +136,7 @@ class PlatformUtilsTests(ProjectPlatformMixin, AsyncDBTestCase):
 
         full_path = os.path.join(
             os.path.dirname(base_repo_path()),
-            'default_repo',
+            'default_repo/default_repo',
         )
 
         with patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True):
