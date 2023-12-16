@@ -182,6 +182,7 @@ class Hook(BaseDataClass):
     def to_dict(
         self,
         include_all: bool = False,
+        include_project: bool = False,
         include_run_data: bool = False,
         include_snapshot_validation: bool = False,
         **kwargs,
@@ -199,14 +200,17 @@ class Hook(BaseDataClass):
         if include_all:
             arr.extend([
                 'operation_type',
-                'project'
                 'resource_type',
+            ])
+
+        if include_project:
+            arr.extend([
+                'project',
             ])
 
         if include_run_data:
             arr.extend([
                 'output',
-                'project',
                 'status',
             ])
 
@@ -386,8 +390,6 @@ class Hook(BaseDataClass):
 
         pipeline_run = None
 
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', self.project)
-
         try:
             variables_from_operation = extract_valid_data(self.resource_type, dict(
                 error=kwargs.get('error'),
@@ -409,7 +411,7 @@ class Hook(BaseDataClass):
                 merge_dict(
                     variables_from_operation,
                     dict(
-                        hook=self.to_dict(include_all=True),
+                        hook=self.to_dict(include_all=True, include_project=True),
                         project=self.project,
                     ),
                 ),
@@ -588,7 +590,7 @@ class Hook(BaseDataClass):
         return self.predicate.validate(
             operation_resource,
             error=error,
-            hook=self.to_dict(include_all=True),
+            hook=self.to_dict(include_all=True, include_project=True),
             meta=meta,
             metadata=metadata,
             payload=payload,
@@ -1010,6 +1012,7 @@ class GlobalHooks(BaseDataClass):
             hooks_by_pipeline[pipeline_uuid].append((
                 hook.to_dict(
                     include_all=True,
+                    include_project=True,
                     include_output=True,
                 ),
                 kwargs,
