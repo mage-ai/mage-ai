@@ -339,7 +339,8 @@ def get_global_variable(
     Get global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    pipeline = Pipeline.get(pipeline_uuid)
+
+    pipeline = Pipeline.get(pipeline_uuid, all_projects=project_platform_activated())
     if pipeline.variables is not None:
         return pipeline.variables.get(key)
     else:
