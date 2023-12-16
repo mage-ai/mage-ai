@@ -13,11 +13,12 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.settings.utils import base_repo_path
-from mage_ai.tests.base_test import DBTestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.factory import create_pipeline_run_with_schedule
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
-class PipelineTest(DBTestCase):
+class PipelineTest(AsyncDBTestCase):
     def test_create(self):
         pipeline = Pipeline.create(
             'test pipeline',
@@ -801,6 +802,31 @@ class PipelineTest(DBTestCase):
 
         shutil.rmtree(os.path.join(base_repo_path(), 'mage_data1'))
 
+    def test_config_path(self):
+        pipeline = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(
+            pipeline.config_path,
+            os.path.join(pipeline.repo_path, 'pipelines', pipeline.uuid, 'metadata.yaml'),
+        )
+
+    def test_catalog_config_path(self):
+        pipeline = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(
+            pipeline.catalog_config_path,
+            os.path.join(
+                pipeline.repo_path,
+                'pipelines',
+                pipeline.uuid,
+                'data_integration_catalog.json',
+            ),
+        )
+
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(
             name,
@@ -914,3 +940,177 @@ def export_data(df, *args):
             '''
             )
         return block
+
+    def test_get(self):
+        pipeline = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(Pipeline.get(pipeline.uuid).uuid, pipeline.uuid)
+
+    async def test_get_async(self):
+        pipeline = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=self.repo_path,
+        )
+        self.assertEqual((await Pipeline.get_async(pipeline.uuid)).uuid, pipeline.uuid)
+
+    def test_get_all_pipelines_all_projects(self):
+        with patch('mage_ai.data_preparation.models.pipeline.Pipeline.get_all_pipelines') as mock:
+            Pipeline.get_all_pipelines_all_projects(
+                repo_path=self.repo_path,
+                repo_paths=[self.repo_path],
+            )
+            mock.assert_called_once_with(repo_path=self.repo_path, repo_paths=[self.repo_path])
+
+
+class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
+    def test_config_path(self):
+        for settings in self.repo_paths.values():
+            pipeline = Pipeline.create(
+                self.faker.unique.name(),
+                repo_path=settings['full_path'],
+            )
+
+            self.assertEqual(
+                pipeline.config_path,
+                os.path.join(settings['full_path'], 'pipelines', pipeline.uuid, 'metadata.yaml'),
+            )
+
+    def test_catalog_config_path(self):
+        for settings in self.repo_paths.values():
+            pipeline = Pipeline.create(
+                self.faker.unique.name(),
+                repo_path=settings['full_path'],
+            )
+
+            self.assertEqual(
+                pipeline.catalog_config_path,
+                os.path.join(
+                    settings['full_path'],
+                    'pipelines',
+                    pipeline.uuid,
+                    'data_integration_catalog.json',
+                ),
+            )
+
+    def test_get(self):
+        pipeline1 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=base_repo_path(),
+        )
+
+        self.assertEqual(
+            Pipeline.get(pipeline1.uuid, repo_path=base_repo_path()).uuid,
+            pipeline1.uuid,
+        )
+
+        pipelines = []
+        for settings in self.repo_paths.values():
+            pipeline = Pipeline.create(
+                self.faker.unique.name(),
+                repo_path=settings['full_path'],
+            )
+            pipelines.append(pipeline)
+
+        for pipeline in pipelines:
+            self.assertIsNone(
+                Pipeline.get(pipeline.uuid, check_if_exists=True, repo_path=base_repo_path()),
+            )
+
+        for pipeline in pipelines:
+            self.assertEqual(
+                Pipeline.get(
+                    pipeline.uuid,
+                    all_projects=True,
+                    check_if_exists=True,
+                    repo_path=base_repo_path(),
+                ).uuid,
+                pipeline.uuid,
+            )
+
+    async def test_get_async(self):
+        pipeline1 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=base_repo_path(),
+        )
+
+        self.assertEqual(
+            (await Pipeline.get_async(pipeline1.uuid, repo_path=base_repo_path())).uuid,
+            pipeline1.uuid,
+        )
+
+        pipelines = []
+        for settings in self.repo_paths.values():
+            pipeline = Pipeline.create(
+                self.faker.unique.name(),
+                repo_path=settings['full_path'],
+            )
+            pipelines.append(pipeline)
+
+        for pipeline in pipelines:
+            error = False
+            try:
+                await Pipeline.get_async(
+                    pipeline.uuid,
+                    repo_path=base_repo_path(),
+                )
+            except Exception:
+                error = True
+            self.assertTrue(error)
+
+        for pipeline in pipelines:
+            self.assertEqual(
+                (await Pipeline.get_async(
+                    pipeline.uuid,
+                    all_projects=True,
+                    repo_path=base_repo_path(),
+                )).uuid,
+                pipeline.uuid,
+            )
+
+    def test_get_all_pipelines_all_projects(self):
+        with patch(
+            'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+            lambda: True,
+        ):
+            pipeline1 = Pipeline.create(
+                self.faker.unique.name(),
+                repo_path=base_repo_path(),
+            )
+            pipelines = []
+            for settings in self.repo_paths.values():
+                pipeline = Pipeline.create(
+                    self.faker.unique.name(),
+                    repo_path=settings['full_path'],
+                )
+                pipelines.append(pipeline)
+
+            uuids = Pipeline.get_all_pipelines_all_projects()
+
+            self.assertNotIn(pipeline1.uuid, uuids)
+
+            for pipeline in pipelines:
+                self.assertIn(pipeline.uuid, uuids)
+
+    def test_get_all_pipelines(self):
+        pipeline1 = Pipeline.create(
+            self.faker.unique.name(),
+            repo_path=base_repo_path(),
+        )
+        pipelines = []
+        for settings in self.repo_paths.values():
+            pipeline = Pipeline.create(
+                self.faker.unique.name(),
+                repo_path=settings['full_path'],
+            )
+            pipelines.append(pipeline)
+
+        uuids = Pipeline.get_all_pipelines(repo_paths=[
+            base_repo_path(),
+        ] + [d['full_path'] for d in self.repo_paths.values()])
+
+        self.assertIn(pipeline1.uuid, uuids)
+
+        for pipeline in pipelines:
+            self.assertIn(pipeline.uuid, uuids)
