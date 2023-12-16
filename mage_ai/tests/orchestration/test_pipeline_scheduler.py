@@ -1104,10 +1104,11 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
                             block_uuid,
                             execution_partition,
                             block_uuid_test=block_run.block_uuid,
+                            fake_executor=fake_executor,
                             pipeline_run=pipeline_run,
                             pipeline_test=pipeline,
                         ):
-                            self.assertEqual(block_run.block_uuid, block_uuid_test)
+                            self.assertEqual(block_uuid, block_uuid_test)
                             self.assertEqual(execution_partition, pipeline_run.execution_partition)
                             self.assertEqual(pipeline.uuid, pipeline_test.uuid)
 
@@ -1119,7 +1120,11 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
 
                     fake_repo_config = FakeRepoConfig()
 
-                    def __get_repo_config(repo_path, full_path=full_path):
+                    def __get_repo_config(
+                        repo_path,
+                        fake_repo_config=fake_repo_config,
+                        full_path=full_path,
+                    ):
                         self.assertEqual(repo_path, full_path)
                         return fake_repo_config
 
