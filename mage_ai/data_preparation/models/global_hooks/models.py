@@ -1042,12 +1042,10 @@ class GlobalHooks(BaseDataClass):
         resources: List[Dict] = None,
         user: Dict = None,
     ) -> List[Hook]:
-        get_hook_args = [
+        hooks = self.get_hooks(
             operation_types,
             resource_type,
             stage,
-        ]
-        get_hook_kwargs = dict(
             conditions=conditions,
             error=error,
             meta=meta,
@@ -1063,8 +1061,6 @@ class GlobalHooks(BaseDataClass):
             resources=resources,
             user=user,
         )
-
-        hooks = self.get_hooks(*get_hook_args, **get_hook_kwargs)
 
         if not hooks:
             return None
