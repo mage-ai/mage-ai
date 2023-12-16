@@ -28,7 +28,7 @@ def get_pipeline_from_platform(
     if not mapping:
         mapping = repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
 
-    if repo_path and not use_repo_path:
+    if repo_path and not use_repo_path and mapping:
         repo_path = mapping.get(repo_path)
         if repo_path is None or str(repo_path) == str(None):
             repo_path = None
