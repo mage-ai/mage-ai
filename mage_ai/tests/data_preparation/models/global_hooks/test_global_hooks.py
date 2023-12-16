@@ -622,19 +622,17 @@ class GlobalHooksProjectPlatformTest(ProjectPlatformMixin, BaseApiTestCase):
                 content = yaml.safe_dump(build_seed_data(self))
                 safe_write(file_path, content)
 
-        global_hooks = GlobalHooks.load_from_file()
+            global_hooks = GlobalHooks.load_from_file()
 
-        self.assertEqual(global_hooks.to_dict(), build_seed_data(self))
-
-        for project_name, settings in self.repo_paths.items():
-            self.assertEqual(
-                settings,
-                global_hooks.project_global_hooks[project_name]['project'],
-            )
-            self.assertEqual(
-                build_seed_data(self),
-                global_hooks.project_global_hooks[project_name]['global_hooks'].to_dict(),
-            )
+            for project_name, settings in self.repo_paths.items():
+                self.assertEqual(
+                    settings,
+                    global_hooks.project_global_hooks[project_name]['project'],
+                )
+                self.assertEqual(
+                    build_seed_data(self),
+                    global_hooks.project_global_hooks[project_name]['global_hooks'].to_dict(),
+                )
 
     async def test_get_hooks(self):
         hooks_all = []

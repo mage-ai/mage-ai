@@ -841,7 +841,7 @@ class HookProjectPlatformTest(ProjectPlatformMixin, GlobalHooksMixin):
 
                 hook._pipeline = None
                 hook.pipeline_settings = dict(uuid=pipeline.uuid)
-                self.assertEqual(hook.pipeline.uuid, pipeline.uuid)
+                self.assertIsNone(hook.pipeline)
 
                 hook._pipeline = None
                 hook.project = project

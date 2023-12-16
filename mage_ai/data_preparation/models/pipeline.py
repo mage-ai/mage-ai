@@ -47,10 +47,8 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.constants import Entity
-from mage_ai.settings.platform import (
-    build_repo_path_for_all_projects,
-    project_platform_activated,
-)
+from mage_ai.settings.platform import build_repo_path_for_all_projects
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
@@ -276,7 +274,7 @@ class Pipeline:
             IntegrationPipeline,
         )
 
-        if all_projects and not use_repo_path:
+        if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
             config_path, repo_path = get_pipeline_config_path(uuid)
@@ -346,7 +344,7 @@ class Pipeline:
             IntegrationPipeline,
         )
 
-        if all_projects and not use_repo_path:
+        if all_projects and not use_repo_path and project_platform_activated():
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
             config_path, repo_path = get_pipeline_config_path(uuid)

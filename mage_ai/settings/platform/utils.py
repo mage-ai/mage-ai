@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.settings.platform import (
     build_repo_path_for_all_projects,
+    get_repo_paths_for_file_path,
     project_platform_activated,
     repo_path_from_database_query_to_project_repo_path,
 )
@@ -88,8 +89,9 @@ def get_pipeline_config_path(pipeline_uuid: str) -> Tuple[str, str]:
             comparator=__select,
         )
         if full_filename:
+            paths = get_repo_paths_for_file_path(file_path=full_filename)
             match_config_path = full_filename
-            match_repo_path = full_path
+            match_repo_path = (paths.get('full_path') if paths else None) or full_path
 
         if match_config_path:
             break

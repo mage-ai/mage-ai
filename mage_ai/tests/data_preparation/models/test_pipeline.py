@@ -1018,16 +1018,20 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 Pipeline.get(pipeline.uuid, check_if_exists=True, repo_path=base_repo_path()),
             )
 
-        for pipeline in pipelines:
-            self.assertEqual(
-                Pipeline.get(
+        with patch(
+            'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+            lambda: True,
+        ):
+            for pipeline in pipelines:
+                self.assertEqual(
+                    Pipeline.get(
+                        pipeline.uuid,
+                        all_projects=True,
+                        check_if_exists=True,
+                        repo_path=base_repo_path(),
+                    ).uuid,
                     pipeline.uuid,
-                    all_projects=True,
-                    check_if_exists=True,
-                    repo_path=base_repo_path(),
-                ).uuid,
-                pipeline.uuid,
-            )
+                )
 
     async def test_get_async(self):
         pipeline1 = Pipeline.create(
@@ -1059,15 +1063,19 @@ class PipelineProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 error = True
             self.assertTrue(error)
 
-        for pipeline in pipelines:
-            self.assertEqual(
-                (await Pipeline.get_async(
+        with patch(
+            'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+            lambda: True,
+        ):
+            for pipeline in pipelines:
+                self.assertEqual(
+                    (await Pipeline.get_async(
+                        pipeline.uuid,
+                        all_projects=True,
+                        repo_path=base_repo_path(),
+                    )).uuid,
                     pipeline.uuid,
-                    all_projects=True,
-                    repo_path=base_repo_path(),
-                )).uuid,
-                pipeline.uuid,
-            )
+                )
 
     def test_get_all_pipelines_all_projects(self):
         with patch(

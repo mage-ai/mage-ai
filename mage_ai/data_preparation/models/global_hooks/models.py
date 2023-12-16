@@ -245,7 +245,6 @@ class Hook(BaseDataClass):
                     repo_path = self.project.get('full_path')
                 elif self.pipeline_settings.get('repo_path'):
                     repo_path = self.pipeline_settings.get('repo_path')
-
                 self._pipeline = Pipeline.get(
                     self.pipeline_settings.get('uuid'),
                     repo_path=repo_path,

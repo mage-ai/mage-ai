@@ -32,6 +32,8 @@ class BlockWithProjectPlatformShared:
                         language='python',
                         **kwargs,
                     )
+                    self.block.project_platform_activated
+
                     return self.block
 
     def run_test_file_path(self, test_value: Callable):
@@ -58,11 +60,9 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
     def test_configuration_getter(self):
         self.build_block(project_platform=False, configuration=dict(mage=1))
         self.assertEqual(self.block.configuration, dict(
-            file_source=dict(path=f'mage_platform/data_loaders/{self.block.uuid}.py'),
             mage=1,
         ))
         self.assertEqual(self.block._configuration, dict(
-            file_source=dict(path=f'mage_platform/data_loaders/{self.block.uuid}.py'),
             mage=1,
         ))
 
@@ -118,10 +118,13 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
             with patch.object(file, 'create_parent_directories') as mock_create_parent_directories:
                 with patch.object(file, 'update_content') as mock_update_content:
                     with patch.object(file, 'exists', lambda: False):
+                        os.makedirs(os.path.dirname(self.block.file_path), exist_ok=True)
+
                         self.build_block(
+                            project_platform=False,
                             block_type=BlockType.DBT,
                             configuration=dict(
-                                file_path=self.faker.unique.name(),
+                                file_path=f'data_loaders/{self.block.uuid}.py',
                             ),
                         )
                         mock_create_parent_directories.assert_called_once_with(
@@ -245,11 +248,7 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
 class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
     def test_project_platform_activated(self):
-        with patch(
-            'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
-            lambda: False,
-        ):
-            self.assertFalse(self.build_block().project_platform_activated)
+        self.assertFalse(self.build_block(project_platform=False).project_platform_activated)
 
         self.assertTrue(self.build_block().project_platform_activated)
 

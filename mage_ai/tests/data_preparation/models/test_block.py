@@ -746,12 +746,21 @@ def test_output(output, *args) -> None:
 
 class BlockProjectPlatformTests(ProjectPlatformMixin):
     def test_file_path(self):
-        path = os.path.join('mage_data', 'transformers', 'test_transformer.py')
-        block = Block.create(
-            'test_transformer',
-            'transformer',
-            self.repo_path,
-            configuration=dict(file_source=dict(path=path))
-        )
+        path = os.path.join('mage_platform', 'transformers', 'test_transformer.py')
 
-        self.assertEqual(block.file_path, path)
+        with patch(
+            'mage_ai.data_preparation.models.block.project_platform_activated',
+            lambda: True,
+        ):
+            with patch(
+                'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+                lambda: True,
+            ):
+                block = Block.create(
+                    'test_transformer',
+                    'transformer',
+                    self.repo_path,
+                    configuration=dict(file_source=dict(path=path))
+                )
+
+                self.assertEqual(block.file_path, path)

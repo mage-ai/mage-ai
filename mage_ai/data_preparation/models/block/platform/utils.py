@@ -35,6 +35,12 @@ def get_selected_directory_from_file_path(
         lambda fn: str(fn).endswith(str(file_path)),
     )
 
+    if not full_path_of_file_path:
+        full_path_of_file_path = find_directory(
+            get_repo_path(root_project=True),
+            lambda fn: str(fn).endswith(str(os.path.dirname(file_path))),
+        )
+
     """
     {
         "full_path": "/home/src/default_repo/default_platform/tons_of_dbt_projects",
@@ -49,6 +55,9 @@ def get_selected_directory_from_file_path(
         full_path_of_file_path,
         repo_path=get_repo_path(root_project=True),
     )
+
+    if not paths_dict:
+        return
 
     # /home/src/default_repo/default_platform/tons_of_dbt_projects
     full_path = paths_dict['full_path']

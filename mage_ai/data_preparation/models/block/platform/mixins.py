@@ -68,7 +68,10 @@ class ProjectPlatformAccessible:
                                     ),
                                 )
                                 # tons_of_dbt_projects/diff_name
-                                file_source['project_path'] = remove_base_repo_path(project_path)
+                                if project_path:
+                                    file_source['project_path'] = remove_base_repo_path(
+                                        project_path,
+                                    )
 
             if config.get('file_path'):
                 file_path = config.get('file_path')
