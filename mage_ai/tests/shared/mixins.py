@@ -34,6 +34,7 @@ from mage_ai.settings.platform import (
     platform_settings_full_path,
 )
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
@@ -369,9 +370,14 @@ class ProjectPlatformMixin(AsyncDBTestCase):
 
     @classmethod
     def tearDownClass(self):
-        if os.path.exists(platform_settings_full_path()):
+        if os.path.exists(platform_settings_full_path()) and \
+                base_repo_path() != platform_settings_full_path():
+
             os.remove(platform_settings_full_path())
-        if os.path.exists(local_platform_settings_full_path()):
+
+        if os.path.exists(local_platform_settings_full_path()) and \
+                base_repo_path() != local_platform_settings_full_path():
+
             os.remove(local_platform_settings_full_path())
 
         try:

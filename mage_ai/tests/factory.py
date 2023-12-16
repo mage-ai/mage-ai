@@ -44,11 +44,23 @@ def create_pipeline_with_blocks(
     Returns:
         Pipeline: The created pipeline with added blocks.
     """
-    pipeline = Pipeline.create(
-        name,
-        repo_path=repo_path,
-        pipeline_type=pipeline_type,
-    )
+    tries = 0
+    pipeline = None
+    while pipeline is None and tries < 100:
+        try:
+            name_use = name
+            if tries >= 1:
+                name_use = f'{name_use} {tries}'
+
+            pipeline = Pipeline.create(
+                name_use,
+                repo_path=repo_path,
+                pipeline_type=pipeline_type,
+            )
+        except Exception as err:
+            print(f'[ERROR] create_pipeline_with_blocks: {err}.')
+        tries += 1
+
     block1 = Block.create('block1', 'data_loader', repo_path, language='python')
     block2 = Block.create('block2', 'transformer', repo_path, language='python')
     block3 = Block.create('block3', 'transformer', repo_path, language='python')
