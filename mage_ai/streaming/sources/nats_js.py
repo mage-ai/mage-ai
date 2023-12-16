@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import json
 import ssl
 import threading
@@ -21,8 +22,7 @@ class SSLConfig:
     check_hostname: bool = False
 
 
-@dataclass
-class ConsumerType:
+class ConsumerType(str, enum.Enum):
     PULL = "PULL"
     PUSH = "PUSH"
 
