@@ -27,7 +27,8 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
 from mage_ai.shared.hash import merge_dict
-from mage_ai.tests.shared.mixins import GlobalHooksMixin
+from mage_ai.tests.factory import create_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import GlobalHooksMixin, ProjectPlatformMixin
 
 
 class HookTest(GlobalHooksMixin):
@@ -261,6 +262,7 @@ class HookTest(GlobalHooksMixin):
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
             payload=uuid.uuid4().hex,
+            project=None,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -288,6 +290,7 @@ class HookTest(GlobalHooksMixin):
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
             payload=uuid.uuid4().hex,
+            project=None,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -295,7 +298,7 @@ class HookTest(GlobalHooksMixin):
         with patch.object(hook.pipeline, 'execute_sync') as mock_execute_sync:
             hook.run(**kwargs)
             mock_execute_sync.assert_called_once_with(
-                global_vars=merge_dict(variables, dict(hook=kwargs['hook'])),
+                global_vars=merge_dict(variables, dict(hook=kwargs['hook'], project=None)),
                 update_status=False,
             )
 
@@ -316,6 +319,7 @@ class HookTest(GlobalHooksMixin):
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
             payload=uuid.uuid4().hex,
+            project=None,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -362,6 +366,7 @@ class HookTest(GlobalHooksMixin):
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
             payload=uuid.uuid4().hex,
+            project=None,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -406,6 +411,7 @@ class HookTest(GlobalHooksMixin):
             metadata=uuid.uuid4().hex,
             query=uuid.uuid4().hex,
             payload=uuid.uuid4().hex,
+            project=None,
             resource=uuid.uuid4().hex,
             resources=uuid.uuid4().hex,
         )
@@ -421,7 +427,7 @@ class HookTest(GlobalHooksMixin):
 
             mock_trigger_pipeline.assert_called_once_with(
                 hook.pipeline.uuid,
-                variables=merge_dict(variables, dict(hook=kwargs['hook'])),
+                variables=merge_dict(variables, dict(hook=kwargs['hook'], project=None)),
                 check_status=True,
                 error_on_failure=True,
                 poll_interval=1,
@@ -703,11 +709,12 @@ class HookTest(GlobalHooksMixin):
         hook = self.hooks_match[0]
         hook.conditions = [HookCondition.SUCCESS]
         hook.pipeline_settings['variables'] = dict(mage=1)
+        hook.project = dict(mage=1)
         hook.run_settings = HookRunSettings.load(asynchronous=True, with_trigger=True)
         hook.strategies = [HookStrategy.BREAK]
 
         self.assertEqual(
-            hook.to_dict(convert_enum=True, ignore_empty=True),
+            hook.to_dict(convert_enum=True, ignore_empty=True, include_project=True),
             dict(
                 conditions=[m.value for m in hook.conditions],
                 metadata=dict(
@@ -720,6 +727,7 @@ class HookTest(GlobalHooksMixin):
                     variables=dict(mage=1),
                 ),
                 predicate=hook.predicate.to_dict(convert_enum=True, ignore_empty=True),
+                project=dict(mage=1),
                 run_settings=dict(asynchronous=True, with_trigger=True),
                 stages=[m.value for m in hook.stages],
                 strategies=[m.value for m in hook.strategies],
@@ -817,3 +825,24 @@ class HookTest(GlobalHooksMixin):
 
         self.assertEqual(now, hook.metadata.snapshotted_at)
         self.assertEqual(snapshot_hash, hook.metadata.snapshot_hash)
+
+
+class HookProjectPlatformTest(ProjectPlatformMixin, GlobalHooksMixin):
+    async def test_pipeline(self):
+        await self.setUpAsync()
+
+        for hook in self.hooks_match[:3]:
+            for project in self.repo_paths.values():
+                pipeline = create_pipeline_with_blocks(
+                    self.faker.unique.name(),
+                    project['full_path'],
+                )
+                pipeline.save()
+
+                hook._pipeline = None
+                hook.pipeline_settings = dict(uuid=pipeline.uuid)
+                self.assertIsNone(hook.pipeline)
+
+                hook._pipeline = None
+                hook.project = project
+                self.assertEqual(hook.pipeline.uuid, pipeline.uuid)

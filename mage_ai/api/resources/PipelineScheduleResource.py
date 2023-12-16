@@ -24,6 +24,7 @@ from mage_ai.orchestration.db.models.tags import (
     TagAssociation,
     TagAssociationWithTag,
 )
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
@@ -72,7 +73,10 @@ class PipelineScheduleResource(DatabaseResource):
         if statuses:
             statuses = statuses.split(',')
 
-        query = PipelineSchedule.repo_query
+        if project_platform_activated():
+            query = PipelineSchedule.query
+        else:
+            query = PipelineSchedule.repo_query
 
         tag_query = TagAssociation.select(
             Tag.name,
@@ -246,7 +250,7 @@ class PipelineScheduleResource(DatabaseResource):
         payload['pipeline_uuid'] = pipeline.uuid
 
         if 'repo_path' not in payload:
-            payload['repo_path'] = get_repo_path()
+            payload['repo_path'] = (pipeline.repo_path if pipeline else None) or get_repo_path()
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
 

@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from croniter import croniter
@@ -22,14 +22,15 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineSchedule,
 )
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict
-from mage_ai.tests.base_test import DBTestCase
+from mage_ai.tests.base_test import AsyncDBTestCase, DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
 )
-from mage_ai.tests.shared.mixins import build_hooks
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin, build_hooks
 
 
 class PipelineScheduleTests(DBTestCase):
@@ -285,7 +286,7 @@ class PipelineScheduleTests(DBTestCase):
                 ),
             )
         )
-        self.assertTrue(pipeline_schedule1.should_schedule())
+        self.assertTrue(pipeline_schedule1.should_schedule(pipeline=self.pipeline))
         PipelineRun.create(
             pipeline_schedule_id=pipeline_schedule1.id,
             pipeline_uuid=pipeline_schedule1.pipeline_uuid,
@@ -1788,3 +1789,253 @@ class BlockRunTests(DBTestCase):
                 f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/{b.block_uuid}.log',
             )
             self.assertEqual(b.logs.get('path'), expected_file_path)
+
+
+class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
+    def test_repo_query(self):
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+            lambda: False,
+        ):
+            pipeline_schedule1 = PipelineSchedule.create(
+                name='test pipeline',
+                pipeline_uuid=self.pipeline.uuid,
+                repo_path=base_repo_path(),
+            )
+            pipeline_schedule2 = PipelineSchedule.create(
+                name='test pipeline',
+                pipeline_uuid=self.pipeline.uuid,
+                repo_path=None,
+            )
+
+            ids = [ps.id for ps in PipelineSchedule.repo_query.all()]
+
+            self.assertIn(pipeline_schedule1.id, ids)
+            self.assertIn(pipeline_schedule2.id, ids)
+
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+            lambda: True,
+        ):
+            arr = []
+            for settings in self.repo_paths.values():
+                arr.append(PipelineSchedule.create(
+                    name='test pipeline',
+                    pipeline_uuid='mage',
+                    repo_path=settings['full_path'],
+                ))
+
+            ids = [ps.id for ps in PipelineSchedule.repo_query.all()]
+
+            for ps in arr:
+                self.assertIn(ps.id, ids)
+
+    def test_pipeline(self):
+        with patch('mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform') as mock:
+            pipeline_uuid = self.faker.unique.name()
+            repo_path = self.faker.unique.name()
+
+            PipelineSchedule(
+                pipeline_uuid=pipeline_uuid,
+                repo_path=repo_path,
+            ).pipeline
+
+            mock.assert_called_once_with(
+                pipeline_uuid,
+                check_if_exists=True,
+                repo_path=repo_path,
+            )
+
+
+class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
+    def test_pipeline(self):
+        pipeline_uuid = self.faker.unique.name()
+        repo_path = self.faker.unique.name()
+
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.unique.name(),
+            pipeline_uuid=pipeline_uuid,
+            repo_path=repo_path,
+        )
+
+        pipeline_run = PipelineRun.create(
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+            create_block_runs=False,
+        )
+
+        with patch('mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform') as mock:
+            pipeline_run.pipeline
+
+            mock.assert_called_once_with(
+                pipeline_uuid,
+                repo_path=repo_path,
+            )
+
+    async def test_logs_async(self):
+        value = self.faker.unique.name()
+        pipeline = Mock()
+        pipeline.repo_config = value
+
+        pipeline_uuid = self.faker.unique.name()
+        repo_path = self.faker.unique.name()
+
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.unique.name(),
+            pipeline_uuid=pipeline_uuid,
+            repo_path=repo_path,
+        )
+
+        pipeline_run = PipelineRun.create(
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+            create_block_runs=False,
+        )
+
+        async def __get_pipeline_from_platform_async(
+            pipeline_uuid: str,
+            repo_path: str,
+            pipeline=pipeline,
+            pipeline_uuid_test=pipeline_uuid,
+            repo_path_test=repo_path,
+        ):
+            self.assertEqual(pipeline_uuid, pipeline_uuid_test)
+            self.assertEqual(repo_path, repo_path_test)
+
+            return pipeline
+
+        class FakeLoggerManager:
+            async def get_logs_async(cls):
+                with open(os.path.join(self.repo_path, 'test.log'), 'w') as f:
+                    f.write('test')
+
+        fake_logger_manager = FakeLoggerManager()
+
+        class FakeLoggerManagerFactory:
+            @classmethod
+            def get_logger_manager(
+                cls,
+                pipeline_uuid: str,
+                partition: str,
+                repo_config: str,
+            ):
+                self.assertEqual(pipeline_uuid, pipeline_run.pipeline_uuid)
+                self.assertEqual(partition, pipeline_run.execution_partition)
+                self.assertEqual(repo_config, value)
+
+                return fake_logger_manager
+
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform_async',
+            __get_pipeline_from_platform_async,
+        ):
+            with patch(
+                'mage_ai.orchestration.db.models.schedules.LoggerManagerFactory',
+                FakeLoggerManagerFactory,
+            ):
+                await pipeline_run.logs_async()
+
+                with open(os.path.join(self.repo_path, 'test.log'), 'r') as f:
+                    self.assertEqual(f.read(), 'test')
+
+    def test_get_variables(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.unique.name(),
+            pipeline_uuid=self.pipeline.uuid,
+        )
+
+        pipeline_run = PipelineRun.create(
+            pipeline_uuid=self.pipeline.uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+            create_block_runs=False,
+        )
+
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.get_global_variables',
+            wraps=lambda pipeline_uuid, pipeline: {},
+        ) as mock:
+            with patch(
+                'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+                lambda: True,
+            ):
+                pipeline_run.get_variables(pipeline_uuid=pipeline_run.pipeline_uuid)
+                self.assertEqual(mock.mock_calls[0][1][0], pipeline_run.pipeline_uuid)
+                self.assertEqual(mock.mock_calls[0][2]['pipeline'].uuid, pipeline_run.pipeline_uuid)
+
+
+class BlockRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
+    async def test_logs_async(self):
+        value = self.faker.unique.name()
+        pipeline_uuid = self.faker.unique.name()
+
+        pipeline = Mock()
+        pipeline.uuid = pipeline_uuid
+        pipeline.repo_config = value
+
+        repo_path = self.faker.unique.name()
+
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.unique.name(),
+            pipeline_uuid=pipeline_uuid,
+            repo_path=repo_path,
+        )
+
+        pipeline_run = PipelineRun.create(
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+            create_block_runs=False,
+        )
+
+        block_uuid_value = 'mage_fire'
+        block_run = BlockRun.create(
+            block_uuid=block_uuid_value,
+            pipeline_run=pipeline_run,
+        )
+
+        async def __get_pipeline_from_platform_async(
+            pipeline_uuid: str,
+            repo_path: str,
+            pipeline=pipeline,
+            pipeline_uuid_test=pipeline_uuid,
+            repo_path_test=repo_path,
+        ):
+            self.assertEqual(pipeline_uuid, pipeline_uuid_test)
+            self.assertEqual(repo_path, repo_path_test)
+
+            return pipeline
+
+        class FakeLoggerManager:
+            async def get_logs_async(cls):
+                with open(os.path.join(self.repo_path, 'test.log'), 'w') as f:
+                    f.write('test')
+
+        fake_logger_manager = FakeLoggerManager()
+
+        class FakeLoggerManagerFactory:
+            @classmethod
+            def get_logger_manager(
+                cls,
+                pipeline_uuid: str,
+                block_uuid: str,
+                partition: str,
+                repo_config: str,
+            ):
+                self.assertEqual(pipeline_uuid, pipeline_run.pipeline_uuid)
+                self.assertEqual(block_uuid, block_uuid_value)
+                self.assertEqual(partition, pipeline_run.execution_partition)
+                self.assertEqual(repo_config, value)
+
+                return fake_logger_manager
+
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform_async',
+            __get_pipeline_from_platform_async,
+        ):
+            with patch(
+                'mage_ai.orchestration.db.models.schedules.LoggerManagerFactory',
+                FakeLoggerManagerFactory,
+            ):
+                await block_run.logs_async()
+
+                with open(os.path.join(self.repo_path, 'test.log'), 'r') as f:
+                    self.assertEqual(f.read(), 'test')

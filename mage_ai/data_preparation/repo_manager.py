@@ -18,6 +18,7 @@ from mage_ai.settings.repo import get_repo_name as get_repo_name_new
 from mage_ai.settings.repo import get_repo_path as get_repo_path_new
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
+from mage_ai.shared.environments import is_debug
 
 yml = ruamel.yaml.YAML()
 yml.preserve_quotes = True
@@ -135,9 +136,10 @@ class RepoConfig:
             self.logging_config = repo_config.get('logging_config', dict())
 
             self.variables_retention_period = repo_config.get('variables_retention_period')
-        except Exception:
+        except Exception as err:
             traceback.print_exc()
-            pass
+            if is_debug():
+                raise err
 
     @classmethod
     def from_dict(self, config_dict: Dict, root_project: bool = False) -> 'RepoConfig':

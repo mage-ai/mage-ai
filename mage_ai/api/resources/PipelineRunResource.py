@@ -248,7 +248,7 @@ class PipelineRunResource(DatabaseResource):
         }
 
         if include_pipeline_uuids:
-            pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+            pipeline_uuids = Pipeline.get_all_pipelines_all_projects(get_repo_path())
             result_set.metadata['pipeline_uuids'] = pipeline_uuids
 
         return result_set

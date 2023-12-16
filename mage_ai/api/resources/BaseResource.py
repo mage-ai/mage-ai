@@ -218,7 +218,7 @@ class BaseResource(Resource, ResultSetMixIn):
                 'Resource', '')).lower()
 
     @classmethod
-    async def get_model(self, pk):
+    async def get_model(self, pk, **kwargs):
         if self.model_class:
             return self.model_class.query.get(pk)
 

@@ -105,7 +105,7 @@ class FileResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def get_model(self, pk):
+    def get_model(self, pk, **kwargs):
         file_path = urllib.parse.unquote(pk)
         return File.from_path(file_path, get_repo_path())
 

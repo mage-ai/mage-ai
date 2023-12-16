@@ -59,6 +59,14 @@ from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    project_platform_activated,
+)
+from mage_ai.settings.platform.utils import (
+    get_pipeline_from_platform,
+    get_pipeline_from_platform_async,
+)
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
@@ -99,11 +107,20 @@ class PipelineSchedule(BaseModel):
 
     @classproperty
     def repo_query(cls):
+        repo_paths = []
+
+        queries = Project().repo_path_for_database_query('pipeline_schedules')
+        if queries:
+            repo_paths.extend(queries)
+
+        if project_platform_activated():
+            repo_paths.extend([d.get(
+                'full_path',
+            ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()])
+
         return cls.query.filter(
             or_(
-                PipelineSchedule.repo_path.in_(Project().repo_path_for_database_query(
-                    'pipeline_schedules',
-                )),
+                PipelineSchedule.repo_path.in_(repo_paths),
                 PipelineSchedule.repo_path.is_(None),
             )
         )
@@ -143,7 +160,11 @@ class PipelineSchedule(BaseModel):
 
     @property
     def pipeline(self) -> 'Pipeline':
-        return Pipeline.get(self.pipeline_uuid)
+        return get_pipeline_from_platform(
+            self.pipeline_uuid,
+            check_if_exists=True,
+            repo_path=self.repo_path,
+        )
 
     @property
     def pipeline_in_progress_runs_count(self) -> int:
@@ -433,7 +454,11 @@ class PipelineSchedule(BaseModel):
         return next_execution_date
 
     @safe_db_query
-    def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
+    def should_schedule(
+        self,
+        previous_runtimes: List[int] = None,
+        pipeline: Pipeline = None,
+    ) -> bool:
         """
         Determine whether a pipeline schedule should be executed based on its configuration and
         history.
@@ -462,20 +487,22 @@ class PipelineSchedule(BaseModel):
                 compare(now, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
             return False
 
-        try:
-            Pipeline.get(self.pipeline_uuid)
-        except Exception:
-            print(
-                f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
-                + f'for pipeline schedule ID {self.id}.',
-            )
-            return False
+        pipeline_use = pipeline or self.pipeline
+        if not pipeline_use:
+            try:
+                Pipeline.get(self.pipeline_uuid)
+            except Exception:
+                print(
+                    f'[WARNING] Pipeline {self.pipeline_uuid} cannot be found '
+                    + f'for pipeline schedule ID {self.id}.',
+                )
+                return False
 
         if self.schedule_interval == ScheduleInterval.ONCE:
             pipeline_run_count = self.pipeline_runs_count
             if pipeline_run_count == 0:
                 return True
-            executor_count = self.pipeline.executor_count
+            executor_count = pipeline_use.executor_count
             # Used by streaming pipeline to launch multiple executors
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
@@ -716,7 +743,10 @@ class PipelineRun(BaseModel):
 
     @property
     def pipeline(self) -> 'Pipeline':
-        return Pipeline.get(self.pipeline_uuid)
+        return get_pipeline_from_platform(
+            self.pipeline_uuid,
+            repo_path=self.pipeline_schedule.repo_path if self.pipeline_schedule else None,
+        )
 
     @property
     def pipeline_type(self) -> PipelineType:
@@ -770,10 +800,19 @@ class PipelineRun(BaseModel):
         return pipeline_runs
 
     async def logs_async(self):
+        repo_path = None
+        if self.pipeline_schedule:
+            repo_path = self.pipeline_schedule.repo_path
+
+        pipeline = await get_pipeline_from_platform_async(
+            self.pipeline_uuid,
+            repo_path=repo_path,
+        )
+
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
-            repo_config=self.pipeline.repo_config,
+            repo_config=pipeline.repo_config,
         ).get_logs_async()
 
     @property
@@ -1287,7 +1326,10 @@ class PipelineRun(BaseModel):
 
         variables = merge_dict(
             merge_dict(
-                get_global_variables(pipeline_uuid or self.pipeline_uuid) or dict(),
+                get_global_variables(
+                    pipeline_uuid or self.pipeline_uuid,
+                    pipeline=self.pipeline,
+                ) or dict(),
                 self.pipeline_schedule.variables or dict(),
             ),
             pipeline_run_variables,
@@ -1408,7 +1450,15 @@ class BlockRun(BaseModel):
         ).get_logs()
 
     async def logs_async(self):
-        pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
+        repo_path = None
+        if self.pipeline_run and self.pipeline_run.pipeline_schedule:
+            repo_path = self.pipeline_run.pipeline_schedule.repo_path
+
+        pipeline = await get_pipeline_from_platform_async(
+            self.pipeline_run.pipeline_uuid,
+            repo_path=repo_path,
+        )
+
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
             block_uuid=clean_name(self.block_uuid),

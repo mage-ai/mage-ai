@@ -68,7 +68,10 @@ class ProjectPlatformAccessible:
                                     ),
                                 )
                                 # tons_of_dbt_projects/diff_name
-                                file_source['project_path'] = remove_base_repo_path(project_path)
+                                if project_path:
+                                    file_source['project_path'] = remove_base_repo_path(
+                                        project_path,
+                                    )
 
             if config.get('file_path'):
                 file_path = config.get('file_path')
@@ -85,13 +88,13 @@ class ProjectPlatformAccessible:
         return self.project_platform_activated and from_another_project(self.__file_source_path())
 
     def get_file_path_from_source(self) -> str:
-        if not self.is_from_another_project():
+        if not self.project_platform_activated:
             return
 
         return self.__file_source_path()
 
     def get_project_path_from_source(self) -> str:
-        if not self.is_from_another_project():
+        if not self.project_platform_activated:
             return
 
         # tons_of_dbt_projects/diff_name
@@ -100,10 +103,7 @@ class ProjectPlatformAccessible:
             return os.path.join(base_repo_path(), project_path_relative)
 
     def get_project_path_from_project_name(self, project_name: str) -> str:
-        if not self.project_platform_activated or \
-                not project_name or \
-                not from_another_project(project_name):
-
+        if not self.project_platform_activated or not project_name:
             return
 
         # The block YAML file can be from a different project than the profile
@@ -125,7 +125,7 @@ class ProjectPlatformAccessible:
         return add_root_repo_path_to_relative_path(project_name)
 
     def get_base_project_from_source(self) -> str:
-        if not self.is_from_another_project():
+        if not self.project_platform_activated:
             # /home/src/default_repo/dbt
             return self.base_project_path
 
@@ -135,7 +135,7 @@ class ProjectPlatformAccessible:
             return os.path.dirname(val)
 
     def build_file(self) -> File:
-        if not self.is_from_another_project():
+        if not self.project_platform_activated:
             return
 
         root_project_path, path, file_path_base = get_path_parts(self.get_file_path_from_source())
@@ -159,7 +159,7 @@ class ProjectPlatformAccessible:
           }
         }
         """
-        if not self.is_from_another_project():
+        if not self.project_platform_activated:
             return nodes_default
 
         # self.project_path
@@ -184,7 +184,7 @@ class ProjectPlatformAccessible:
         }
 
     def node_uuids_mapping(self, uuids_default: Dict, nodes: Dict) -> Dict:
-        if not self.is_from_another_project():
+        if not self.project_platform_activated:
             return uuids_default
 
         return {
@@ -210,7 +210,7 @@ class ProjectPlatformAccessible:
         pipeline = block_dict['pipeline']
         uuid = block_dict['uuid']
 
-        if self.is_from_another_project():
+        if self.project_platform_activated:
             # self.project_path
             #   /home/src/default_platform/default_repo/dbt/demo
             # node['original_file_path']

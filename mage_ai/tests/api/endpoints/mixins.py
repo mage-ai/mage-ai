@@ -32,7 +32,22 @@ from mage_ai.tests.factory import create_pipeline_with_blocks
 @contextmanager
 def patch_manager(patch_settings: List[Tuple]):
     with ExitStack() as stack:
-        yield [stack.enter_context(patch(*settings)) for settings in patch_settings]
+        arr = []
+        for settings in patch_settings:
+            args = []
+            kwargs = {}
+            for v in settings:
+                if isinstance(v, dict):
+                    kwargs.update(v)
+                else:
+                    args.append(v)
+
+            arr.append(stack.enter_context(
+                patch(*args, **kwargs),
+            ))
+        yield [stack.enter_context(
+            patch(*settings),
+        ) for settings in patch_settings]
 
 
 @contextmanager
@@ -712,6 +727,8 @@ class BaseAPIEndpointTest(AsyncDBTestCase):
 
                         if assert_after:
                             assert_after(self, results, mocks=mocks, mock_objects=mock_objects)
+
+                        return results
 
     async def build_test_create_endpoint(
         self,

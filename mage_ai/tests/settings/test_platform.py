@@ -10,6 +10,7 @@ from mage_ai.settings.platform import (
     activate_project,
     active_project_settings,
     build_active_project_repo_path,
+    build_repo_path_for_all_projects,
     get_repo_paths_for_file_path,
     git_settings,
     local_platform_settings_full_path,
@@ -17,6 +18,7 @@ from mage_ai.settings.platform import (
     platform_settings_full_path,
     project_platform_activated,
     project_platform_settings,
+    repo_path_from_database_query_to_project_repo_path,
 )
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
@@ -273,4 +275,68 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         self.assertEqual(
             get_variables_dir(os.path.join(base_repo_path(), 'mage_platform')),
             os.path.join(base_repo_path(), 'mage_platform'),
+        )
+
+    def test_build_repo_path_for_all_projects(self):
+        self.assertEqual(build_repo_path_for_all_projects(), dict(
+          mage_data=dict(
+            full_path=os.path.join(base_repo_path(), 'mage_data/platform'),
+            full_path_relative='test/mage_data/platform',
+            path='mage_data/platform',
+            root_project_full_path=base_repo_path(),
+            root_project_name='test',
+            uuid='mage_data',
+          ),
+          mage_platform=dict(
+                full_path=os.path.join(base_repo_path(), 'mage_platform'),
+                full_path_relative='test/mage_platform',
+                path='mage_platform',
+                root_project_full_path=base_repo_path(),
+                root_project_name='test',
+                uuid='mage_platform',
+            ),
+        ))
+
+    def test_repo_path_from_database_query_to_project_repo_path(self):
+        self.assertEqual(
+            repo_path_from_database_query_to_project_repo_path('pipeline_schedules'),
+            {
+                os.path.join(
+                    os.path.dirname(base_repo_path()),
+                    'default_repo',
+                ): os.path.join(base_repo_path(), 'mage_platform'),
+                os.path.join(
+                    os.path.dirname(base_repo_path()),
+                    'default_repo/default_repo',
+                ): os.path.join(base_repo_path(), 'mage_platform'),
+                os.path.join(
+                    base_repo_path(),
+                    'mage_data/platform',
+                ): os.path.join(base_repo_path(), 'mage_data/platform'),
+                os.path.join(
+                    base_repo_path(),
+                    'mage_platform',
+                ): os.path.join(base_repo_path(), 'mage_platform'),
+            },
+        )
+        self.assertEqual(
+            repo_path_from_database_query_to_project_repo_path('secrets'),
+            {
+                os.path.join(
+                    os.path.dirname(base_repo_path()),
+                    'default_repo2',
+                ): os.path.join(base_repo_path(), 'mage_platform'),
+                os.path.join(
+                    os.path.dirname(base_repo_path()),
+                    'default_repo2/default_repo',
+                ): os.path.join(base_repo_path(), 'mage_platform'),
+                os.path.join(
+                    base_repo_path(),
+                    'mage_data/platform',
+                ): os.path.join(base_repo_path(), 'mage_data/platform'),
+                os.path.join(
+                    base_repo_path(),
+                    'mage_platform',
+                ): os.path.join(base_repo_path(), 'mage_platform'),
+            },
         )

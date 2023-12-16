@@ -33,6 +33,7 @@ class GlobalHookUtilsTest(AsyncDBTestCase):
             if entity_name in limited_types:
                 self.assertEqual(extracted_data, dict(
                     hook=data['hook'],
+                    project=data['project'],
                     resource_id=data['resource_id'],
                     resource_parent_id=data['resource_parent_id'],
                     resource_parent_type=data['resource_parent_type'],
@@ -54,6 +55,7 @@ class GlobalHookUtilsTest(AsyncDBTestCase):
                 if entity_name in limited_types:
                     self.assertEqual(extracted_data, dict(
                         hook=data['hook'],
+                        project=data['project'],
                         resource_id=data['resource_id'],
                         resource_parent_id=data['resource_parent_id'],
                         resource_parent_type=data['resource_parent_type'],

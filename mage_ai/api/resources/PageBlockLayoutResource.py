@@ -11,7 +11,7 @@ from mage_ai.shared.utils import clean_name
 
 class PageBlockLayoutResource(GenericResource):
     @classmethod
-    def get_model(self, pk):
+    def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
         return PageBlockLayout.load(uuid)
 
