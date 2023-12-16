@@ -34,8 +34,14 @@ def patch_manager(patch_settings: List[Tuple]):
     with ExitStack() as stack:
         arr = []
         for settings in patch_settings:
-            args = [v for v in settings if not isinstance(v, dict)]
-            kwargs = [v for v in settings if isinstance(v, dict)]
+            args = []
+            kwargs = {}
+            for v in settings:
+                if isinstance(v, dict):
+                    kwargs.update(v)
+                else:
+                    args.append(v)
+
             arr.append(stack.enter_context(
                 patch(*args, **kwargs),
             ))
