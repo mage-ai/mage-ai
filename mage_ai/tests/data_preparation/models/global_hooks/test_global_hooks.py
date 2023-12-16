@@ -636,46 +636,62 @@ class GlobalHooksProjectPlatformTest(ProjectPlatformMixin, BaseApiTestCase):
 
     async def test_get_hooks(self):
         hooks_all = []
-        for project_name, settings in self.repo_paths.items():
-            repo_path = settings['full_path']
-            pipeline, _blocks = await build_pipeline_with_blocks_and_content(
-                self,
-                repo_path=repo_path,
-            )
-            os.makedirs(repo_path, exist_ok=True)
-            global_hooks = GlobalHooks.load_from_file(repo_path=repo_path, all_global_hooks=False)
-            hook1, hook2, hook3 = build_and_add_hooks(
-                self,
-                global_hooks,
-                pipeline=dict(uuid=pipeline.uuid),
-                snapshot=True,
-            )
-            hook1.uuid = f'{hook1.uuid}_{project_name}'
-            hook2.uuid = f'{hook2.uuid}_{project_name}'
-            hook3.uuid = f'{hook3.uuid}_{project_name}'
-            hooks_all.extend([hook1, hook3])
-            global_hooks.save(file_path=global_hooks.file_path(repo_path=repo_path))
 
         with patch(
             'mage_ai.data_preparation.models.global_hooks.models.project_platform_activated',
             lambda: True,
         ):
-            repo_path = base_repo_path()
-            os.makedirs(repo_path, exist_ok=True)
-            global_hooks = GlobalHooks.load_from_file(repo_path=repo_path)
+            with patch(
+                'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+                lambda: True,
+            ):
+                for project_name, settings in self.repo_paths.items():
+                    repo_path = settings['full_path']
+                    pipeline, _blocks = await build_pipeline_with_blocks_and_content(
+                        self,
+                        repo_path=repo_path,
+                    )
+                    os.makedirs(repo_path, exist_ok=True)
+                    global_hooks = GlobalHooks.load_from_file(
+                        repo_path=repo_path,
+                        all_global_hooks=False,
+                    )
+                    hook1, hook2, hook3 = build_and_add_hooks(
+                        self,
+                        global_hooks,
+                        pipeline=dict(uuid=pipeline.uuid),
+                        snapshot=True,
+                    )
+                    hook1.uuid = f'{hook1.uuid}_{project_name}'
+                    hook2.uuid = f'{hook2.uuid}_{project_name}'
+                    hook3.uuid = f'{hook3.uuid}_{project_name}'
+                    hooks_all.extend([hook1, hook3])
+                    global_hooks.save(file_path=global_hooks.file_path(repo_path=repo_path))
 
-            hooks = global_hooks.get_hooks(
-                operation_types=[
-                    HookOperation.DETAIL,
-                    HookOperation.DELETE,
-                ],
-                resource_type=EntityName.Chart,
-                stage=HookStage.BEFORE,
-            )
+        with patch(
+            'mage_ai.data_preparation.models.global_hooks.models.project_platform_activated',
+            lambda: True,
+        ):
+            with patch(
+                'mage_ai.data_preparation.models.pipeline.project_platform_activated',
+                lambda: True,
+            ):
+                repo_path = base_repo_path()
+                os.makedirs(repo_path, exist_ok=True)
+                global_hooks = GlobalHooks.load_from_file(repo_path=repo_path)
 
-            self.assertEqual(len(hooks), 4)
-            for hook in hooks_all:
-                self.assertIsNotNone(find(
-                    lambda x, hook=hook: x.uuid == hook.uuid,
-                    hooks,
-                ))
+                hooks = global_hooks.get_hooks(
+                    operation_types=[
+                        HookOperation.DETAIL,
+                        HookOperation.DELETE,
+                    ],
+                    resource_type=EntityName.Chart,
+                    stage=HookStage.BEFORE,
+                )
+
+                self.assertEqual(len(hooks), 4)
+                for hook in hooks_all:
+                    self.assertIsNotNone(find(
+                        lambda x, hook=hook: x.uuid == hook.uuid,
+                        hooks,
+                    ))
