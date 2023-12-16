@@ -201,7 +201,7 @@ class ProjectPlatformAccessible:
         self,
         block_class,
         block_dict,
-        node: Dict,
+        node: Dict = None,
     ):
         block_type = block_dict['block_type']
         configuration = block_dict['configuration'] or {}
@@ -219,7 +219,7 @@ class ProjectPlatformAccessible:
                 path=remove_base_repo_directory_name(
                     os.path.join(
                         self.project_path,
-                        node['original_file_path'],
+                        (node.get('original_file_path') or '') if node else '',
                     ),
                 ),
             )
