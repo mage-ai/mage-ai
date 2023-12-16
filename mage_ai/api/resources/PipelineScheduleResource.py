@@ -250,7 +250,7 @@ class PipelineScheduleResource(DatabaseResource):
         payload['pipeline_uuid'] = pipeline.uuid
 
         if 'repo_path' not in payload:
-            payload['repo_path'] = get_repo_path()
+            payload['repo_path'] = (pipeline.repo_path if pipeline else None) or get_repo_path()
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex
 
