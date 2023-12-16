@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import (
@@ -82,7 +83,8 @@ class PipelineRunAPIEndpointTest(BaseAPIEndpointTest):
         }
 
 
-class PipelineRunProjectPlatformTests(PipelineRunAPIEndpointTest, ProjectPlatformMixin):
+@patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True)
+class PipelineRunProjectPlatformTests(ProjectPlatformMixin, BaseAPIEndpointTest):
     async def test_collection_project_platform_activated(self):
         pipelines = []
         pipeline_schedules = []
@@ -97,7 +99,7 @@ class PipelineRunProjectPlatformTests(PipelineRunAPIEndpointTest, ProjectPlatfor
 
             pipeline_schedule = PipelineSchedule.create(
                 name=self.faker.unique.name(),
-                pipeline_uuid=self.pipeline.uuid,
+                pipeline_uuid=pipeline.uuid,
                 repo_path=settings['full_path'],
             )
             pipeline_schedules.append(pipeline_schedule)
@@ -111,7 +113,14 @@ class PipelineRunProjectPlatformTests(PipelineRunAPIEndpointTest, ProjectPlatfor
         results = await self.build_test_list_endpoint(
             resource='pipeline_runs',
             authentication=1,
-            list_count=5,
+            list_count=2,
+            patch_function_settings=[
+                ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+                (
+                    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+                    lambda: True,
+                ),
+            ],
         )
 
         for pipeline_run in pipeline_runs:

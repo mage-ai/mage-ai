@@ -555,7 +555,7 @@ class Pipeline:
 
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):
-            raise Exception(f'Pipeline {self.uuid} does not exist.')
+            raise Exception(f'Pipeline {self.uuid} does not exist in repo_path {self.repo_path}.')
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
         return config
