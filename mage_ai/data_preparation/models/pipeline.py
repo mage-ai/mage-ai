@@ -62,7 +62,15 @@ CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path=None, config=None, repo_config=None, catalog=None):
+    def __init__(
+        self,
+        uuid,
+        repo_path=None,
+        config=None,
+        repo_config=None,
+        catalog=None,
+        use_repo_path: bool = False,
+    ):
         self.block_configs = []
         self.blocks_by_uuid = {}
         # Can only be set True when run_pipeline_in_one_process is True
@@ -84,6 +92,7 @@ class Pipeline:
         self.tags = []
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+        self.use_repo_path = use_repo_path
         self.uuid = uuid
         self.widget_configs = []
         self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
@@ -110,7 +119,7 @@ class Pipeline:
 
     @property
     def config_path(self):
-        if project_platform_activated():
+        if project_platform_activated() and not self.use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
             config_path, _repo_path = get_pipeline_config_path(self.uuid)
@@ -126,7 +135,7 @@ class Pipeline:
 
     @property
     def catalog_config_path(self):
-        if project_platform_activated():
+        if project_platform_activated() and not self.use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
             config_path, _repo_path = get_pipeline_config_path(self.uuid)
@@ -251,7 +260,7 @@ class Pipeline:
 
         return cls.get(
             duplicate_pipeline_uuid,
-            repo_path=duplicate_pipeline.repo_path
+            repo_path=duplicate_pipeline.repo_path,
         )
 
     @classmethod
@@ -260,13 +269,14 @@ class Pipeline:
         uuid,
         repo_path: str = None,
         check_if_exists: bool = False,
-        all_projects: bool = False
+        all_projects: bool = False,
+        use_repo_path: bool = False,
     ):
         from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
             IntegrationPipeline,
         )
 
-        if all_projects:
+        if all_projects and not use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
             config_path, repo_path = get_pipeline_config_path(uuid)
@@ -281,7 +291,7 @@ class Pipeline:
         if check_if_exists and not os.path.exists(config_path):
             return None
 
-        pipeline = self(uuid, repo_path=repo_path)
+        pipeline = self(uuid, repo_path=repo_path, use_repo_path=use_repo_path)
         if PipelineType.INTEGRATION == pipeline.type:
             pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
 
@@ -325,12 +335,18 @@ class Pipeline:
         return config
 
     @classmethod
-    async def get_async(self, uuid, repo_path: str = None, all_projects: bool = False):
+    async def get_async(
+        self,
+        uuid,
+        repo_path: str = None,
+        all_projects: bool = False,
+        use_repo_path: bool = False,
+    ):
         from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
             IntegrationPipeline,
         )
 
-        if all_projects:
+        if all_projects and not use_repo_path:
             from mage_ai.settings.platform.utils import get_pipeline_config_path
 
             config_path, repo_path = get_pipeline_config_path(uuid)
@@ -369,9 +385,10 @@ class Pipeline:
                 catalog=catalog,
                 config=config,
                 repo_path=repo_path,
+                use_repo_path=use_repo_path,
             )
         else:
-            pipeline = self(uuid, repo_path=repo_path, config=config)
+            pipeline = self(uuid, repo_path=repo_path, config=config, use_repo_path=use_repo_path)
         return pipeline
 
     @classmethod

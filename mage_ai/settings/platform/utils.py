@@ -18,6 +18,7 @@ def get_pipeline_from_platform(
     pipeline_uuid: str,
     repo_path: str = None,
     mapping: Dict = None,
+    use_repo_path: bool = False,
 ):
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
@@ -27,7 +28,7 @@ def get_pipeline_from_platform(
     if not mapping:
         mapping = repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
 
-    if repo_path:
+    if repo_path and not use_repo_path:
         repo_path = mapping.get(repo_path)
         if repo_path is None or str(repo_path) == str(None):
             repo_path = None
@@ -36,6 +37,7 @@ def get_pipeline_from_platform(
         pipeline_uuid,
         repo_path=repo_path,
         all_projects=False if repo_path else True,
+        use_repo_path=use_repo_path,
     )
 
 
@@ -43,6 +45,7 @@ async def get_pipeline_from_platform_async(
     pipeline_uuid: str,
     repo_path: str = None,
     mapping: Dict = None,
+    use_repo_path: bool = False,
 ):
     from mage_ai.data_preparation.models.pipeline import Pipeline
 
@@ -52,7 +55,7 @@ async def get_pipeline_from_platform_async(
     if not mapping:
         mapping = repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
 
-    if repo_path:
+    if repo_path and not use_repo_path:
         repo_path = mapping.get(repo_path)
         if repo_path is None or str(repo_path) == str(None):
             repo_path = None
@@ -61,13 +64,8 @@ async def get_pipeline_from_platform_async(
         pipeline_uuid,
         repo_path=repo_path,
         all_projects=False if repo_path else True,
+        use_repo_path=use_repo_path,
     )
-
-
-def full_paths_for_all_projects() -> List[str]:
-    return [d.get(
-        'full_path',
-    ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()]
 
 
 def get_pipeline_config_path(pipeline_uuid: str) -> Tuple[str, str]:
@@ -77,7 +75,7 @@ def get_pipeline_config_path(pipeline_uuid: str) -> Tuple[str, str]:
 
     full_paths = [
         repo_path_active,
-    ] + [fp for fp in full_paths_for_all_projects() if fp != repo_path_active]
+    ] + [fp for fp in __full_paths_for_all_projects() if fp != repo_path_active]
 
     match_config_path = None
     match_repo_path = None
@@ -97,3 +95,9 @@ def get_pipeline_config_path(pipeline_uuid: str) -> Tuple[str, str]:
             break
 
     return match_config_path, match_repo_path
+
+
+def __full_paths_for_all_projects() -> List[str]:
+    return [d.get(
+        'full_path',
+    ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()]
