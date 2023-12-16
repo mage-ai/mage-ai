@@ -75,7 +75,7 @@ def attach_global_hook_execution(
                 dict(
                     metrics=dict(
                         downstream_blocks=[tup[0] for tup in root_block_runs],
-                        hook=hook.to_dict(include_all=True),
+                        hook=hook.to_dict(include_all=True, include_project=True),
                         hook_variables=hook_variables,
                     ),
                 ),
