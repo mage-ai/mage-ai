@@ -20,10 +20,12 @@ from mage_ai.data_preparation.models.global_hooks.models import (
     HookStrategy,
 )
 from mage_ai.data_preparation.models.global_hooks.predicates import HookPredicate
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.io import safe_write
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import build_pipeline_with_blocks_and_content
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 SEED_DATA_HOOK_UUID = 'laser'
 
@@ -567,6 +569,7 @@ class GlobalHooksTest(BaseApiTestCase):
         hook1, hook2, hook3 = build_and_add_hooks(self, self.global_hooks)
         hook4 = build_hook(self)
         self.global_hooks.add_hook(hook4)
+        self.global_hooks.project_global_hooks = dict(mage=1)
 
         self.assertEqual(
             self.global_hooks.to_dict(),
@@ -604,3 +607,77 @@ class GlobalHooksTest(BaseApiTestCase):
                 },
             ),
         )
+
+
+class GlobalHooksProjectPlatformTest(ProjectPlatformMixin, BaseApiTestCase):
+    def test_load_from_file(self):
+        with patch(
+            'mage_ai.data_preparation.models.global_hooks.models.project_platform_activated',
+            lambda: True,
+        ):
+            for settings in self.repo_paths.values():
+                repo_path = settings['full_path']
+                file_path = GlobalHooks.file_path(repo_path=repo_path)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                content = yaml.safe_dump(build_seed_data(self))
+                safe_write(file_path, content)
+
+        global_hooks = GlobalHooks.load_from_file()
+
+        self.assertEqual(global_hooks.to_dict(), build_seed_data(self))
+
+        for project_name, settings in self.repo_paths.items():
+            self.assertEqual(
+                settings,
+                global_hooks.project_global_hooks[project_name]['project'],
+            )
+            self.assertEqual(
+                build_seed_data(self),
+                global_hooks.project_global_hooks[project_name]['global_hooks'].to_dict(),
+            )
+
+    async def test_get_hooks(self):
+        hooks_all = []
+        for project_name, settings in self.repo_paths.items():
+            repo_path = settings['full_path']
+            pipeline, _blocks = await build_pipeline_with_blocks_and_content(
+                self,
+                repo_path=repo_path,
+            )
+            os.makedirs(repo_path, exist_ok=True)
+            global_hooks = GlobalHooks.load_from_file(repo_path=repo_path, all_global_hooks=False)
+            hook1, hook2, hook3 = build_and_add_hooks(
+                self,
+                global_hooks,
+                pipeline=dict(uuid=pipeline.uuid),
+                snapshot=True,
+            )
+            hook1.uuid = f'{hook1.uuid}_{project_name}'
+            hook2.uuid = f'{hook2.uuid}_{project_name}'
+            hook3.uuid = f'{hook3.uuid}_{project_name}'
+            hooks_all.extend([hook1, hook3])
+            global_hooks.save(file_path=global_hooks.file_path(repo_path=repo_path))
+
+        with patch(
+            'mage_ai.data_preparation.models.global_hooks.models.project_platform_activated',
+            lambda: True,
+        ):
+            repo_path = base_repo_path()
+            os.makedirs(repo_path, exist_ok=True)
+            global_hooks = GlobalHooks.load_from_file(repo_path=repo_path)
+
+            hooks = global_hooks.get_hooks(
+                operation_types=[
+                    HookOperation.DETAIL,
+                    HookOperation.DELETE,
+                ],
+                resource_type=EntityName.Chart,
+                stage=HookStage.BEFORE,
+            )
+
+            self.assertEqual(len(hooks), 4)
+            for hook in hooks_all:
+                self.assertIsNotNone(find(
+                    lambda x, hook=hook: x.uuid == hook.uuid,
+                    hooks,
+                ))

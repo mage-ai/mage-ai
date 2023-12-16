@@ -740,14 +740,14 @@ class GlobalHooks(BaseDataClass):
             self.resources.update_attributes()
 
     @classmethod
-    def file_path(self) -> str:
-        return os.path.join(get_repo_path(), GLOBAL_HOOKS_FILENAME)
+    def file_path(self, repo_path: str = None) -> str:
+        return os.path.join(repo_path or get_repo_path(), GLOBAL_HOOKS_FILENAME)
 
     @classmethod
-    def __load_from_file(self, file_path: str = None) -> 'GlobalHooks':
+    def __load_from_file(self, file_path: str = None, repo_path: str = None) -> 'GlobalHooks':
         yaml_config = {}
 
-        file_path_to_use = file_path or self.file_path()
+        file_path_to_use = file_path or self.file_path(repo_path=repo_path)
         if os.path.exists(file_path_to_use):
             with open(file_path_to_use, 'r') as fp:
                 content = fp.read()
@@ -757,10 +757,15 @@ class GlobalHooks(BaseDataClass):
         return self.load(**yaml_config)
 
     @classmethod
-    def load_from_file(self, file_path: str = None) -> 'GlobalHooks':
-        model = self.__load_from_file(file_path=file_path)
+    def load_from_file(
+        self,
+        all_global_hooks: bool = True,
+        file_path: str = None,
+        repo_path: str = None,
+    ) -> 'GlobalHooks':
+        model = self.__load_from_file(file_path=file_path, repo_path=repo_path)
 
-        if project_platform_activated():
+        if all_global_hooks and project_platform_activated():
             model.project_global_hooks = {}
 
             for project_name, settings in build_repo_path_for_all_projects().items():
@@ -768,7 +773,7 @@ class GlobalHooks(BaseDataClass):
 
                 model.project_global_hooks[project_name] = dict(
                     global_hooks=self.__load_from_file(
-                        os.path.join(full_path, GLOBAL_HOOKS_FILENAME),
+                        file_path=os.path.join(full_path, GLOBAL_HOOKS_FILENAME),
                     ),
                     project=settings,
                 )
@@ -1090,7 +1095,7 @@ class GlobalHooks(BaseDataClass):
             with open(file_path) as f:
                 content_original = f.read()
 
-        with open(self.file_path(), 'w'):
+        with open(file_path, 'w'):
             try:
                 data = self.to_dict()
                 content = yaml.safe_dump(data)

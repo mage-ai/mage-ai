@@ -243,8 +243,9 @@ async def build_pipeline_with_blocks_and_content(
     block_settings: Dict = None,
     name: str = None,
     pipeline_type: PipelineType = None,
+    repo_path: str = None,
 ) -> Pipeline:
-    repo_path = test_case.repo_path
+    repo_path = repo_path or test_case.repo_path
 
     pipeline = Pipeline.create(
         name or test_case.faker.unique.name(),
