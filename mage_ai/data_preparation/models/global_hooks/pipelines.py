@@ -17,8 +17,7 @@ def attach_global_hook_execution(
     pipeline: Pipeline,
     block_uuids_and_create_options: List[Tuple[str, Dict]],
 ) -> List[Tuple[str, Dict]]:
-    project = Project()
-    if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+    if not Project.is_feature_enabled_in_root_or_active_project(FeatureUUID.GLOBAL_HOOKS):
         return block_uuids_and_create_options
 
     global_hooks = GlobalHooks.load_from_file()

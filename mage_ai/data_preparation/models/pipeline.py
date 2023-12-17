@@ -1006,8 +1006,7 @@ class Pipeline:
 
             global_hooks = None
             if len(arr) >= 1:
-                project = Project(self.repo_config)
-                if project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+                if Project.is_feature_enabled_in_root_or_active_project(FeatureUUID.GLOBAL_HOOKS):
                     from mage_ai.data_preparation.models.global_hooks.models import (
                         GlobalHooks,
                     )

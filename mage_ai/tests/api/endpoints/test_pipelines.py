@@ -116,13 +116,15 @@ build_delete_endpoint_tests(
 class PipelineWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
     def setUp(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            super().setUp()
-            self.setup_final()
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                super().setUp()
+                self.setup_final()
 
     def tearDown(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.teardown_final()
-            super().tearDown()
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                self.teardown_final()
+                super().tearDown()
 
 
 build_list_endpoint_tests(
@@ -152,6 +154,7 @@ build_list_endpoint_tests(
         'widgets',
     ],
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
     ],
 )
@@ -170,6 +173,7 @@ build_create_endpoint_tests(
         name=self.faker.unique.name(),
     ),
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
     ],
 )
@@ -203,6 +207,7 @@ build_detail_endpoint_tests(
         'widgets',
     ],
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
     ],
 )
@@ -216,6 +221,7 @@ build_update_endpoint_tests(
     get_model_before_update=lambda self: self.pipeline,
     assert_after_update=lambda self, result, model, mocks: model.name != result['name'],
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
     ],
 )
@@ -232,6 +238,7 @@ build_delete_endpoint_tests(
         Pipeline.get_all_pipelines(self.repo_path),
     ) == 3,
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
     ],
 )

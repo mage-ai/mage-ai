@@ -308,7 +308,14 @@ class BlockExecutorTest(BaseApiTestCase):
                 return value, kwargs['global_vars']
 
         with patch('mage_ai.data_preparation.models.block.hook.block.HookBlock', CustomHookBlock):
-            with patch.object(executor.project, 'is_feature_enabled', __is_feature_enabled):
+            with patch('.'.join([
+                'mage_ai',
+                'data_preparation',
+                'executors',
+                'block_executor',
+                'Project',
+                'is_feature_enabled_in_root_or_active_project',
+            ]), __is_feature_enabled):
                 result, variables = executor.execute(block_run_id=block_run.id)
 
                 self.assertEqual(value, result)

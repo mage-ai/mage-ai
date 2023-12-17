@@ -150,17 +150,15 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         self.assertFalse(project_platform_activated())
 
     def test_platform_settings(self):
-        self.assertEqual(platform_settings(), dict(
-            projects=dict(
-                mage_platform=dict(
-                    database=SETTINGS['projects']['mage_platform']['database'],
-                    git=SETTINGS['projects']['mage_platform']['git'],
-                ),
-                mage_data=dict(
-                    git=SETTINGS['projects']['mage_data']['git'],
-                    path='mage_data/platform',
-                ),
-            ),
+        settings = platform_settings()
+        projects = settings['projects']
+        self.assertEqual(projects['mage_platform'], dict(
+            database=SETTINGS['projects']['mage_platform']['database'],
+            git=SETTINGS['projects']['mage_platform']['git'],
+        ))
+        self.assertEqual(projects['mage_data'], dict(
+            git=SETTINGS['projects']['mage_data']['git'],
+            path='mage_data/platform',
         ))
 
     def test_active_project_settings(self):
@@ -179,7 +177,7 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         ))
 
     def test_project_platform_settings(self):
-        self.assertEqual(project_platform_settings(), dict(
+        self.assertEqual(project_platform_settings(mage_projects_only=True), dict(
             mage_platform=dict(
                 active=True,
                 database=SETTINGS['projects']['mage_platform']['database'],
@@ -278,16 +276,16 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         )
 
     def test_build_repo_path_for_all_projects(self):
-        self.assertEqual(build_repo_path_for_all_projects(), dict(
-          mage_data=dict(
-            full_path=os.path.join(base_repo_path(), 'mage_data/platform'),
-            full_path_relative='test/mage_data/platform',
-            path='mage_data/platform',
-            root_project_full_path=base_repo_path(),
-            root_project_name='test',
-            uuid='mage_data',
-          ),
-          mage_platform=dict(
+        self.assertEqual(build_repo_path_for_all_projects(mage_projects_only=True), dict(
+            mage_data=dict(
+                full_path=os.path.join(base_repo_path(), 'mage_data/platform'),
+                full_path_relative='test/mage_data/platform',
+                path='mage_data/platform',
+                root_project_full_path=base_repo_path(),
+                root_project_name='test',
+                uuid='mage_data',
+            ),
+            mage_platform=dict(
                 full_path=os.path.join(base_repo_path(), 'mage_platform'),
                 full_path_relative='test/mage_platform',
                 path='mage_platform',

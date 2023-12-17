@@ -127,7 +127,7 @@ def build_active_project_repo_path(repo_path: str = None) -> str:
     if not repo_path:
         repo_path = base_repo_path()
 
-    settings = project_platform_settings(repo_path=repo_path)
+    settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
     active_project = active_project_settings(settings=settings)
     no_active_project = not active_project
 
@@ -178,7 +178,7 @@ def active_project_settings(
     settings: Dict = None,
 ) -> Dict:
     if not settings:
-        settings = project_platform_settings(repo_path=repo_path)
+        settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
     items = list(settings.items())
     if items:

@@ -63,42 +63,43 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                 'mage_ai.data_preparation.models.project.project_platform_activated',
                 lambda: True,
             ):
-                with patch(
-                    'mage_ai.data_preparation.models.project.get_repo_config',
-                ) as mock_get_repo_config:
-                    project = Project(root_project=False)
+                with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                    with patch(
+                        'mage_ai.data_preparation.models.project.get_repo_config',
+                    ) as mock_get_repo_config:
+                        project = Project(root_project=False)
 
-                    self.assertEqual(project.name, 'mage_platform')
-                    self.assertEqual(
-                        project.repo_path, os.path.join(base_repo_path(), 'mage_platform'),
-                    )
-                    self.assertEqual(project.settings, dict(
-                        active=True,
-                        uuid='mage_platform',
-                    ))
-                    self.assertEqual(project.version, VERSION)
-                    self.assertFalse(project.root_project)
+                        self.assertEqual(project.name, 'mage_platform')
+                        self.assertEqual(
+                            project.repo_path, os.path.join(base_repo_path(), 'mage_platform'),
+                        )
+                        self.assertEqual(project.settings, dict(
+                            active=True,
+                            uuid='mage_platform',
+                        ))
+                        self.assertEqual(project.version, VERSION)
+                        self.assertFalse(project.root_project)
 
-                    mock_get_repo_config.assert_called_once_with(
-                        repo_path=os.path.join(base_repo_path(), 'mage_platform'),
-                        root_project=False,
-                    )
+                        mock_get_repo_config.assert_called_once_with(
+                            repo_path=os.path.join(base_repo_path(), 'mage_platform'),
+                            root_project=False,
+                        )
 
-                with patch(
-                    'mage_ai.data_preparation.models.project.get_repo_config',
-                ) as mock_get_repo_config:
-                    project = Project(root_project=True)
+                    with patch(
+                        'mage_ai.data_preparation.models.project.get_repo_config',
+                    ) as mock_get_repo_config:
+                        project = Project(root_project=True)
 
-                    self.assertEqual(project.name, 'test')
-                    self.assertEqual(project.repo_path, base_repo_path())
-                    self.assertEqual(project.settings, None)
-                    self.assertEqual(project.version, VERSION)
-                    self.assertTrue(project.root_project)
+                        self.assertEqual(project.name, 'test')
+                        self.assertEqual(project.repo_path, base_repo_path())
+                        self.assertEqual(project.settings, None)
+                        self.assertEqual(project.version, VERSION)
+                        self.assertTrue(project.root_project)
 
-                    mock_get_repo_config.assert_called_once_with(
-                        repo_path=base_repo_path(),
-                        root_project=True,
-                    )
+                        mock_get_repo_config.assert_called_once_with(
+                            repo_path=base_repo_path(),
+                            root_project=True,
+                        )
 
     def test_repo_path_for_database_query(self):
         content = yaml.dump(SETTINGS)

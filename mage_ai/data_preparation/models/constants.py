@@ -148,3 +148,11 @@ NON_PIPELINE_EXECUTABLE_BLOCK_TYPES = [
 ]
 
 PYTHON_COMMAND = 'python3'
+
+
+SINGULAR_FOLDER_BLOCK_TYPES = [
+    BlockType.CUSTOM,
+]
+
+BLOCK_TYPE_DIRECTORY_NAME = \
+    {v: f'{v.value}s' for v in BlockType if v not in SINGULAR_FOLDER_BLOCK_TYPES}

@@ -89,29 +89,33 @@ class SecretProjectPlatformTest(ProjectPlatformMixin, DBTestCase):
             lambda: True,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-                mock_data_dir.return_value = os.path.join(self.repo_path, 'data')
+                with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                    mock_data_dir.return_value = os.path.join(self.repo_path, 'data')
 
-                secret = create_secret(uuid4().hex, '123')
+                    secret = create_secret(uuid4().hex, '123')
 
-                self.assertIsNotNone(secret)
+                    self.assertIsNotNone(secret)
 
-                self.assertEqual(get_secret_value(secret.name), '123')
+                    self.assertEqual(get_secret_value(secret.name), '123')
 
-                self.assertEqual(secret.repo_name, os.path.join(base_repo_path(), 'mage_platform'))
+                    self.assertEqual(
+                        secret.repo_name,
+                        os.path.join(base_repo_path(), 'mage_platform'),
+                    )
 
-                content = yaml.dump(SETTINGS)
-                safe_write(platform_settings_full_path(), content)
+                    content = yaml.dump(SETTINGS)
+                    safe_write(platform_settings_full_path(), content)
 
-                secret = create_secret(uuid4().hex, '123')
-                self.assertEqual(
-                    secret.repo_name,
-                    os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
-                )
+                    secret = create_secret(uuid4().hex, '123')
+                    self.assertEqual(
+                        secret.repo_name,
+                        os.path.join(os.path.dirname(base_repo_path()), 'default_repo2'),
+                    )
 
-                try:
-                    shutil.rmtree(platform_settings_full_path())
-                except Exception:
-                    pass
+                    try:
+                        shutil.rmtree(platform_settings_full_path())
+                    except Exception:
+                        pass
 
     @patch('mage_ai.data_preparation.shared.secrets.get_data_dir')
     def test_get_valid_secrets_for_repo(self, mock_data_dir):
@@ -130,18 +134,19 @@ class SecretProjectPlatformTest(ProjectPlatformMixin, DBTestCase):
             lambda: True,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-                content = yaml.dump(SETTINGS)
-                safe_write(platform_settings_full_path(), content)
+                with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                    content = yaml.dump(SETTINGS)
+                    safe_write(platform_settings_full_path(), content)
 
-                secret2 = create_secret(uuid4().hex, '123')
-                secrets = [s.name for s in get_valid_secrets_for_repo()]
-                self.assertTrue(secret2.name in secrets)
-                self.assertFalse(secret.name in secrets)
+                    secret2 = create_secret(uuid4().hex, '123')
+                    secrets = [s.name for s in get_valid_secrets_for_repo()]
+                    self.assertTrue(secret2.name in secrets)
+                    self.assertFalse(secret.name in secrets)
 
-                try:
-                    shutil.rmtree(platform_settings_full_path())
-                except Exception:
-                    pass
+                    try:
+                        shutil.rmtree(platform_settings_full_path())
+                    except Exception:
+                        pass
 
     @patch('mage_ai.data_preparation.shared.secrets.get_data_dir')
     def test_get_secret_value(self, mock_data_dir):

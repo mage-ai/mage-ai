@@ -7,7 +7,8 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME, REPO_PATH_ENV_VAR
-from mage_ai.settings.utils import base_repo_path
+from mage_ai.settings.platform.utils import project_platform_activated
+from mage_ai.settings.utils import base_repo_dirname, base_repo_path
 from mage_ai.shared.environments import is_test
 
 MAGE_PROJECT_TYPE_ENV_VAR = 'PROJECT_TYPE'
@@ -38,8 +39,6 @@ def get_repo_path(
     repo_path_use = None
 
     if not root_project:
-        from mage_ai.settings.platform import project_platform_activated
-
         if project_platform_activated():
             from mage_ai.settings.platform import (
                 build_active_project_repo_path,
@@ -72,12 +71,31 @@ def set_repo_path(repo_path: str) -> None:
 
 
 def get_repo_name(repo_path: str = None, root_project: bool = False) -> str:
-    from mage_ai.settings.platform import project_platform_activated
-
+    # If root_project is False:
+    # get_repo_path() == /home/src/test/nested_repo_project
+    # If root_project is True:
+    # get_repo_path() == /home/src/test
     repo_path = repo_path or get_repo_path(root_project=root_project)
 
     if project_platform_activated():
-        return Path(repo_path).relative_to(get_repo_path(root_project=True))
+        # If root_project is False:
+        # get_repo_path() == /home/src/test/nested_repo_project
+        # If root_project is True:
+        # get_repo_path() == /home/src/test
+
+        # base_repo_dirname() == /home/src
+
+        # If root_project is False:
+        # /home/src/test/nested_repo_project relative_to /home/src == test/nested_repo_project
+        # The case above will make the variables directory turn out to be:
+        # /home/src/test/test/nested_repo_project (it adds the root_project twice).
+
+        # If root_project is True:
+        # /home/src/test relative_to /home/src == test
+
+        return Path(repo_path).relative_to(
+            base_repo_dirname() if root_project else base_repo_path(),
+        )
 
     return os.path.basename(repo_path)
 

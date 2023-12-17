@@ -1,16 +1,21 @@
 import os
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Callable, Dict, List, Tuple
 
 import aiofiles
 
+from mage_ai.cache.dbt.constants import IGNORE_DIRECTORY_NAMES
 from mage_ai.data_preparation.models.errors import (
     FileExistsError,
     FileNotInProjectError,
 )
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.utils import get_absolute_path
 
 FILE_VERSIONS_DIR = '.file_versions'
@@ -264,8 +269,10 @@ class File:
                 kwargs['encoding'] = 'utf-8'
             with open(file_path, **kwargs) as f:
                 if content:
-                    f.write(content)
+                    f.write(content or '')
         self.validate_content(dir_path, filename, content)
+
+        update_caches(repo_path, dir_path, filename)
 
     @classmethod
     async def write_async(
@@ -293,7 +300,9 @@ class File:
             if write_type != 'wb':
                 kwargs['encoding'] = 'utf-8'
             async with aiofiles.open(file_path, **kwargs) as fp:
-                await fp.write(content)
+                await fp.write(content or '')
+
+        await update_caches_async(repo_path, dir_path, filename)
 
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
@@ -471,3 +480,52 @@ def traverse(
     )
 
     return tree_entry
+
+
+def __should_update_dbt_cache(dir_path: str, filename: str) -> bool:
+    project_model = Project(root_project=True)
+    if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+        # If the file is a SQL or YAML file
+        if (
+            filename.endswith('.sql') or
+            filename.endswith('.yml') or
+            filename.endswith('.yaml')
+        ):
+            base_dir_path = Path(dir_path).parts[0].lower()
+            # If the file doesn’t exist in a block’s folder (e.g. data_loaders/, pipelines/)
+            if base_dir_path not in IGNORE_DIRECTORY_NAMES:
+                # If project platform features isn’t enabled or the repo_path exists outside of
+                # the registered projects.
+                return True
+
+    return False
+
+
+async def update_caches_async(repo_path: str, dir_path: str, filename: str) -> None:
+    if __should_update_dbt_cache(dir_path, filename):
+        print(f'Updating dbt cache for {repo_path}.')
+
+        try:
+            from mage_ai.cache.dbt.cache import DBTCache
+
+            dbt_cache = await DBTCache.initialize_cache_async(root_project=True)
+            await dbt_cache.update_async(file_path=os.path.join(repo_path, dir_path, filename))
+        except Exception as err:
+            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            if is_debug():
+                raise err
+
+
+def update_caches(repo_path: str, dir_path: str, filename: str) -> None:
+    if __should_update_dbt_cache(dir_path, filename):
+        print(f'Updating dbt cache for {repo_path}.')
+
+        try:
+            from mage_ai.cache.dbt.cache import DBTCache
+
+            dbt_cache = DBTCache.initialize_cache(root_project=True)
+            dbt_cache.update(file_path=os.path.join(repo_path, dir_path, filename))
+        except Exception as err:
+            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            if is_debug():
+                raise err

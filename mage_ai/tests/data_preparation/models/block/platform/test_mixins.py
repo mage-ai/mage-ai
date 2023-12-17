@@ -134,6 +134,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
 
 
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
     def test_configuration_getter(self):
         block = self.build_block(configuration=dict(mage=1))
@@ -246,6 +247,7 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
     lambda: True,
 )
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
     def test_project_platform_activated(self):
         self.assertFalse(self.build_block(project_platform=False).project_platform_activated)
@@ -267,6 +269,8 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
         )
         block = self.build_block()
         block.type = BlockType.DBT
+
+        print(block.clean_file_paths(configuration))
 
         self.assertEqual(block.clean_file_paths(configuration), dict(
             file_path='mage_platform/dir1/dir2/filename.sql',
@@ -293,7 +297,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
             file_path='mage_platform/dir1/dir2/filename.sql',
             file_source=dict(
                 path='mage_platform/dir3/dir4/filename.sql',
-                project_path=project_path,
+                project_path='mage_platform/dir3',
             ),
         ))
 
@@ -305,13 +309,13 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
             ):
                 block = self.build_block()
                 block._configuration = dict(
-                    file_source=dict(path='test/mage_platform/mage.py'),
+                    file_source=dict(path='mage_platform/mage.py'),
                 )
                 block._project_platform_activated = True
                 self.assertFalse(block.is_from_another_project())
 
                 block._configuration = dict(
-                    file_source=dict(path='test/mage_data/mage.py'),
+                    file_source=dict(path='mage_data/mage.py'),
                 )
                 self.assertTrue(block.is_from_another_project())
 
@@ -438,7 +442,7 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
         )
         nodes = block.hydrate_dbt_nodes(None, nodes_init)
         self.assertEqual(block.node_uuids_mapping(None, nodes), dict(
-            ice='dbt/demo/models/users',
+            ice='mage_data/dbt/demo/models/users',
         ))
 
     def test_build_dbt_block(self):

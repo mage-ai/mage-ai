@@ -64,14 +64,24 @@ build_list_endpoint_tests(
 
 class StatusWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
     def setUp(self):
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            super().setUp()
-            self.setup_final()
+        with patch('mage_ai.settings.platform.constants.project_platform_activated', lambda: True):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+                with patch(
+                    'mage_ai.settings.repo.project_platform_activated',
+                    lambda: True,
+                ):
+                    super().setUp()
+                    self.setup_final()
 
     def tearDown(self):
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.teardown_final()
-            super().tearDown()
+        with patch('mage_ai.settings.platform.constants.project_platform_activated', lambda: True):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+                with patch(
+                    'mage_ai.settings.repo.project_platform_activated',
+                    lambda: True,
+                ):
+                    self.teardown_final()
+                    super().tearDown()
 
 
 def __assert_after_list(self, result, **kwargs):
@@ -107,7 +117,9 @@ build_list_endpoint_tests(
         'scheduler_status',
     ],
     patch_function_settings=[
+        ('mage_ai.settings.platform.constants.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
     ],
     assert_after=__assert_after_list,
 )

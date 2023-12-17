@@ -116,30 +116,34 @@ build_delete_endpoint_tests(
 
 
 def get_files_count_project_platform(self):
-    files = set()
-    for block in self.pipeline.blocks_by_uuid.values():
-        dir_name = os.path.join(base_repo_path(), os.path.dirname(block.file_path))
-        os.makedirs(dir_name, exist_ok=True)
+    with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+        with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+            files = set()
+            for block in self.pipeline.blocks_by_uuid.values():
+                dir_name = os.path.join(base_repo_path(), os.path.dirname(block.file_path))
+                os.makedirs(dir_name, exist_ok=True)
 
-        for filename in os.listdir(dir_name):
-            if filename == '__init__.py':
-                continue
-            files.add(os.path.join(dir_name, filename))
+                for filename in os.listdir(dir_name):
+                    if filename == '__init__.py':
+                        continue
+                    files.add(os.path.join(dir_name, filename))
 
-    return len(list(files))
+            return len(list(files))
 
 
 class FileWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
     def setUp(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            super().setUp()
-            self.setup_final()
-            self.files_count = get_files_count_project_platform(self)
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                super().setUp()
+                self.setup_final()
+                self.files_count = get_files_count_project_platform(self)
 
     def tearDown(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.teardown_final()
-            super().tearDown()
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                self.teardown_final()
+                super().tearDown()
 
 
 build_create_endpoint_tests(
@@ -156,6 +160,7 @@ build_create_endpoint_tests(
     ),
     resource='files',
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
     ],
 )

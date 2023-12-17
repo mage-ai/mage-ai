@@ -14,6 +14,7 @@ class EntityName(str, Enum):
     BlockOutput = 'BlockOutput'
     BlockRun = 'BlockRun'
     BlockTemplate = 'BlockTemplate'
+    CacheItem = 'CacheItem'
     Chart = 'Chart'
     ClientPage = 'ClientPage'
     Cluster = 'Cluster'

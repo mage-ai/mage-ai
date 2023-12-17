@@ -138,6 +138,7 @@ class RepoManagerTest(DBTestCase):
 
 
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class RepoManagerProjectPlatformTest(ProjectPlatformMixin):
     def test_init(self):
         repo = RepoConfig(root_project=False)

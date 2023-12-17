@@ -14,6 +14,7 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
     lambda: True,
 )
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class BlockPlatformUtilsTest(ProjectPlatformMixin):
     def test_from_another_project(self):
         with patch(
