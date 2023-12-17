@@ -113,7 +113,6 @@ def get_variables_dir(
     repo_config: Dict = None,
     root_project: bool = False,
 ) -> str:
-    print(repo_path, repo_config, root_project)
     """
     Fetches the variables directory for the project.
 
