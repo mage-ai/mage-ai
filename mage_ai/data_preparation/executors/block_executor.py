@@ -140,7 +140,9 @@ class BlockExecutor:
         """
         block_run = None
 
-        if self.project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS) and not self.block:
+        if Project.is_feature_enabled_in_root_or_active_project(
+            FeatureUUID.GLOBAL_HOOKS,
+        ) and not self.block:
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
             self.block_run = block_run
             if block_run and block_run.metrics and block_run.metrics.get('hook'):

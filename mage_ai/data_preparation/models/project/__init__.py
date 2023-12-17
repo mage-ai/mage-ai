@@ -75,6 +75,16 @@ class Project():
     def pipelines(self) -> Dict:
         return self.repo_config.pipelines
 
+    @classmethod
+    def is_feature_enabled_in_root_or_active_project(self, feature_name: FeatureUUID) -> bool:
+        if self(root_project=True).is_feature_enabled(feature_name):
+            return True
+
+        if project_platform_activated():
+            return self(root_project=False).is_feature_enabled(feature_name)
+
+        return False
+
     def repo_path_for_database_query(self, key: str) -> List[str]:
         if self.settings:
             query_arr = dig(self.settings, ['database', 'query', key])
@@ -91,7 +101,7 @@ class Project():
     def projects(self) -> Dict:
         return project_platform_settings(mage_projects_only=True)
 
-    def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
+    def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)
 
         if is_debug():

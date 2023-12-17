@@ -49,13 +49,15 @@ build_update_endpoint_tests(
 class FileContentWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatformMixin):
     def setUp(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            super().setUp()
-            self.setup_final()
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                super().setUp()
+                self.setup_final()
 
     def tearDown(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.teardown_final()
-            super().tearDown()
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                self.teardown_final()
+                super().tearDown()
 
 
 build_detail_endpoint_tests(
@@ -68,6 +70,7 @@ build_detail_endpoint_tests(
         'path',
     ],
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
         ('mage_ai.api.resources.FileContentResource.ensure_file_is_in_project', lambda _x: True),
     ],
@@ -82,6 +85,7 @@ build_update_endpoint_tests(
     get_model_before_update=get_model_before_update,
     assert_after_update=lambda self, result, model, mocks: model != result['content'],
     patch_function_settings=[
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
         ('mage_ai.api.resources.FileContentResource.ensure_file_is_in_project', lambda _x: True),
     ],
