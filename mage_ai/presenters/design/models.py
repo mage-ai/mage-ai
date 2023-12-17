@@ -32,9 +32,43 @@ class DesignComponents(BaseDataClass):
 
 
 @dataclass
+class UIElementConfigurations(BaseDataClass):
+    items: List[str] = None
+    items_more: List[str] = None
+
+
+@dataclass
+class UIComponentConfigurations(BaseDataClass):
+    add: UIElementConfigurations = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('add', UIElementConfigurations)
+
+
+@dataclass
+class ResourceUIComponentConfigurations(BaseDataClass):
+    block: UIComponentConfigurations
+
+    def __post_init__(self):
+        self.serialize_attribute_class('block', UIComponentConfigurations)
+
+
+@dataclass
+class PageComponentConfigurations(BaseDataClass):
+    buttons: ResourceUIComponentConfigurations = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('buttons', ResourceUIComponentConfigurations)
+
+
+@dataclass
 class DesignPageConfigurations(BaseDataClass):
-    list: Dict = None
-    edit: Dict = None
+    edit: PageComponentConfigurations = None
+    list: PageComponentConfigurations = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('edit', PageComponentConfigurations)
+        self.serialize_attribute_class('list', PageComponentConfigurations)
 
 
 @dataclass

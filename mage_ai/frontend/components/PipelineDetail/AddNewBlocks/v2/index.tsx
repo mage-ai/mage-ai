@@ -4,15 +4,14 @@ import { useMutation } from 'react-query';
 import AutocompleteDropdown from '@components/AutocompleteDropdown';
 import BlockActionObjectType, { ObjectType } from '@interfaces/BlockActionObjectType';
 import Button from '@oracle/elements/Button';
+import ButtonItems, { ButtonItemsProps } from './ButtonItems';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Link from '@oracle/elements/Link';
-import MarkdownPen from '@oracle/icons/custom/MarkdownPen';
 import Panel from '@oracle/components/Panel';
-import PenWriting from '@oracle/icons/custom/PenWriting';
 import ProjectType from '@interfaces/ProjectType';
 import SearchResultType, { SearchResultTypeEnum } from '@interfaces/SearchResultType';
 import Spacing from '@oracle/elements/Spacing';
@@ -20,6 +19,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
   BLOCK_TYPE_NAME_MAPPING,
@@ -54,7 +54,6 @@ import {
   SearchStyle,
   TextInputFocusAreaStyle,
 } from './index.style';
-import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/constants';
 import {
   KEY_SYMBOL_FORWARD_SLASH,
@@ -65,10 +64,8 @@ import { LOCAL_STORAGE_KEY_SETUP_AI_LATER } from '@storage/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { UNITS_BETWEEN_SECTIONS, UNIT } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { getdataSourceMenuItems } from '../utils';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useError } from '@context/Error';
@@ -76,42 +73,18 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 // WORKING ON storing a user clicking setup later on the project modal
 
-const BUTTON_INDEX_TEMPLATES = 0;
-const BUTTON_INDEX_CUSTOM = 1;
-const BUTTON_INDEX_MARKDOWN = 0;
-
 type AddNewBlocksV2Props = {
-  addNewBlock: (block: BlockRequestPayloadType) => void;
-  blockIdx: number;
-  blockTemplatesByBlockType: {
-    [blockType: string]: {
-      [language: string]: FlyoutMenuItemType;
-    };
-  };
-  compact?: boolean;
   focused?: boolean;
-  itemsDBT: FlyoutMenuItemType[];
-  pipelineType: PipelineTypeEnum;
   project?: ProjectType;
   searchTextInputRef?: any;
-  setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setFocused?: (focused: boolean) => void;
-  showBrowseTemplates?: (opts?: {
-    addNew?: boolean;
-    addNewBlock: (block: BlockRequestPayloadType) => void;
-    blockType?: BlockTypeEnum;
-    language?: BlockLanguageEnum;
-  }) => void;
   showConfigureProjectModal?: (opts: {
     cancelButtonText?: string;
     header?: any;
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
-  showGlobalDataProducts?: (opts?: {
-    addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
-  }) => void;
-};
+} & ButtonItemsProps;
 
 function AddNewBlocksV2({
   addNewBlock,
@@ -136,12 +109,16 @@ function AddNewBlocksV2({
   const refTextInput =
     typeof searchTextInputRef !== 'undefined' ? searchTextInputRef : refTextInputInit;
 
+  const { design } = useCustomDesign();
+
   const componentUUID = useMemo(() => `AddNewBlocksV2/${blockIdx}`, [blockIdx]);
   const [showError] = useError(null, {}, [], {
     uuid: `AddNewBlocksV2/${blockIdx}`,
   });
 
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState<number>(null);
+  const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
+
   const [focusedState, setFocusedState] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>(null);
   const [searchResult, setSearchResult] = useState<SearchResultType>(null);
@@ -209,386 +186,6 @@ function AddNewBlocksV2({
     ],
   );
 
-  const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
-  const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
-    setAddNewBlockMenuOpenIdx?.(idx => (
-      (idx === null || buttonMenuOpenIndex !== newButtonMenuOpenIndex)
-        ? blockIdx
-        : null
-    )),
-    [blockIdx, buttonMenuOpenIndex, setAddNewBlockMenuOpenIdx],
-  );
-
-  const itemsDataLoader = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_LOADER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      v2: true,
-    },
-  )?.find(({
-    uuid,
-  }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
-  const itemsDataLoaderSource = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_LOADER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      dataIntegrationType: DataIntegrationTypeEnum.SOURCES,
-      v2: true,
-    },
-  )?.find(({
-    uuid,
-  }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${DataIntegrationTypeEnum.SOURCES}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
-
-  const itemsDataExporter = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_EXPORTER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      v2: true,
-    },
-  )?.find(({
-      uuid,
-  }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
-  const itemsDataExporterDestination = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_EXPORTER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      dataIntegrationType: DataIntegrationTypeEnum.DESTINATIONS,
-      v2: true,
-    },
-  )?.find(({
-    uuid,
-  }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${DataIntegrationTypeEnum.DESTINATIONS}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
-
-  const itemsTransformer = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.TRANSFORMER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      v2: true,
-    },
-  )?.find(({
-    uuid,
-  }) => uuid === `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`)?.items, [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
-
-  const itemsSensors = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.SENSOR,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      v2: true,
-    },
-  )?.find(({
-      uuid,
-  }) => uuid === `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
-
-  const buildNonPythonItems = useCallback((blockType: BlockTypeEnum) => [
-    {
-      isGroupingTitle: true,
-      label: () => 'SQL',
-      uuid: `${BlockLanguageEnum.SQL}/${blockType}/group`,
-    },
-    {
-      label: () => 'Base template (generic)',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.SQL,
-          type: blockType,
-        });
-      },
-      uuid: `${BlockLanguageEnum.SQL}/${blockType}/Base template (generic)`,
-    },
-    {
-      isGroupingTitle: true,
-      label: () => 'R',
-      uuid: `${BlockLanguageEnum.R}/${blockType}/group`,
-    },
-    {
-      label: () => 'Base template (generic)',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.R,
-          type: blockType,
-        });
-      },
-      uuid: `${BlockLanguageEnum.R}/${blockType}/Base template (generic)`,
-    },
-  ], [
-    addNewBlock,
-  ]);
-
-  const itemsTemplates = useMemo(() => {
-    const dataLoaderGroupItems = [
-      {
-        isGroupingTitle: true,
-        label: () => 'Python',
-        uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_LOADER}/group`,
-      },
-      // @ts-ignore
-    ].concat(
-      itemsDataLoader,
-    ).concat(
-      // @ts-ignore
-      buildNonPythonItems(BlockTypeEnum.DATA_LOADER),
-    );
-
-    if (itemsDataLoaderSource) {
-      dataLoaderGroupItems.push(...[
-        {
-          isGroupingTitle: true,
-          label: () => 'Data integrations',
-          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
-        },
-        {
-          // @ts-ignore
-          items: itemsDataLoaderSource,
-          label: () => capitalize(DataIntegrationTypeEnum.SOURCES),
-          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`,
-        },
-      ]);
-    }
-
-    const dataExporterGroupItems =[
-      {
-        isGroupingTitle: true,
-        label: () => 'Python',
-        uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.DATA_EXPORTER}/group`,
-      },
-      // @ts-ignore
-    ].concat(itemsDataExporter).concat(buildNonPythonItems(BlockTypeEnum.DATA_EXPORTER));
-
-    if (itemsDataExporterDestination) {
-      dataExporterGroupItems.push(...[
-        {
-          isGroupingTitle: true,
-          label: () => 'Data integrations',
-          uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
-        },
-        {
-          // @ts-ignore
-          items: itemsDataExporterDestination,
-          label: () => capitalize(DataIntegrationTypeEnum.DESTINATIONS),
-          uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`,
-        },
-      ]);
-    }
-
-    return [
-      {
-        beforeIcon: (
-          <CubeWithArrowDown
-            fill={getColorsForBlockType(
-              BlockTypeEnum.DATA_LOADER,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: dataLoaderGroupItems,
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
-        uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <FrameBoxSelection
-            fill={getColorsForBlockType(
-              BlockTypeEnum.TRANSFORMER,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: [
-          {
-            isGroupingTitle: true,
-            label: () => 'Python',
-            uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.TRANSFORMER}/group`,
-          },
-          // @ts-ignore
-        ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
-        uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <CircleWithArrowUp
-            fill={getColorsForBlockType(
-              BlockTypeEnum.DATA_EXPORTER,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: dataExporterGroupItems,
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
-        uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <Sensor
-            fill={getColorsForBlockType(
-              BlockTypeEnum.SENSOR,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: [
-          {
-            isGroupingTitle: true,
-            label: () => 'Python',
-            uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
-          },
-          // @ts-ignore
-        ].concat(itemsSensors),
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
-        uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <DBTIcon
-            fill={getColorsForBlockType(
-              BlockTypeEnum.DBT,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: itemsDBT,
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
-        uuid: BlockTypeEnum.DBT,
-      },
-      {
-        beforeIcon: (
-          <HexagonAll
-            size={ICON_SIZE}
-          />
-        ),
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
-        onClick: () => showGlobalDataProducts({
-          // @ts-ignore
-          addNewBlock,
-        }),
-        uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
-      },
-      {
-        isGroupingTitle: true,
-        label: () => 'Custom templates',
-        uuid: 'custom_templates',
-      },
-      {
-        beforeIcon: <TemplateShapes default size={ICON_SIZE} />,
-        label: () => 'Browse templates',
-        onClick: () => showBrowseTemplates({
-          addNewBlock,
-        }),
-        uuid: 'browse_templates',
-      },
-      {
-        beforeIcon: <ArrowsAdjustingFrameSquare default size={ICON_SIZE} />,
-        label: () => 'Create new template',
-        onClick: () => showBrowseTemplates({
-          addNew: true,
-          addNewBlock,
-        }),
-        uuid: 'create_template',
-      },
-    ];
-  }, [
-    addNewBlock,
-    buildNonPythonItems,
-    itemsDataExporter,
-    itemsDataExporterDestination,
-    itemsDataLoader,
-    itemsDataLoaderSource,
-    itemsDBT,
-    itemsSensors,
-    itemsTransformer,
-    showBrowseTemplates,
-    showGlobalDataProducts,
-  ]);
-
-  const itemsCustom = useMemo(() => [
-    {
-      beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
-      label: () => 'Python block',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.PYTHON,
-          type: BlockTypeEnum.CUSTOM,
-        });
-      },
-      uuid: 'Python',
-    },
-    {
-      beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
-      label: () => 'SQL block',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.SQL,
-          type: BlockTypeEnum.CUSTOM,
-        });
-      },
-      uuid: 'SQL',
-    },
-    {
-      beforeIcon: <BlockGeneric default size={ICON_SIZE} />,
-      label: () => 'R block',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.R,
-          type: BlockTypeEnum.CUSTOM,
-        });
-      },
-      uuid: 'R',
-    },
-    {
-      beforeIcon: <PenWriting default size={ICON_SIZE} />,
-      label: () => 'Scratchpad',
-      onClick: () => {
-        addNewBlock({
-          language: BlockLanguageEnum.PYTHON,
-          type: BlockTypeEnum.SCRATCHPAD,
-        });
-      },
-      uuid: 'scratchpad',
-    },
-  ], [
-    addNewBlock,
-  ]);
 
   const [createSearchResult] = useMutation(
     api.search_results.useCreate(),
@@ -695,133 +292,20 @@ function AddNewBlocksV2({
         <FlexContainer
           alignItems="center"
         >
-          <ButtonWrapper
+          <ButtonItems
+            addNewBlock={addNewBlock}
+            blockIdx={blockIdx}
+            blockTemplatesByBlockType={blockTemplatesByBlockType}
+            buttonMenuOpenIndex={buttonMenuOpenIndex}
+            closeButtonMenu={closeButtonMenu}
             compact={compact}
-            increasedZIndex={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
-          >
-            <FlyoutMenuWrapper
-              customSubmenuHeights={{
-                [`${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`]: 504,
-                [`${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`]: 504,
-              }}
-              disableKeyboardShortcuts
-              items={itemsTemplates}
-              onClickCallback={closeButtonMenu}
-              open={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
-              parentRef={buttonRefTemplates}
-              uuid="button_templates"
-            >
-              <Tooltip
-                block
-                label="Add a block from a template"
-                size={null}
-                widthFitContent
-              >
-                <Button
-                  beforeIcon={
-                    <TemplateShapes
-                      secondary={BUTTON_INDEX_TEMPLATES === buttonMenuOpenIndex}
-                      size={ICON_SIZE}
-                    />
-                  }
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setButtonMenuOpenIndex(val =>
-                      val === BUTTON_INDEX_TEMPLATES
-                        ? null
-                        : BUTTON_INDEX_TEMPLATES,
-                    );
-                    handleBlockZIndex(BUTTON_INDEX_TEMPLATES);
-                  }}
-                >
-                  Templates
-                </Button>
-              </Tooltip>
-            </FlyoutMenuWrapper>
-          </ButtonWrapper>
-
-          <Spacing mr={3} />
-
-          <ButtonWrapper
-            compact={compact}
-            increasedZIndex={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
-          >
-            <FlyoutMenuWrapper
-              disableKeyboardShortcuts
-              items={itemsCustom}
-              onClickCallback={closeButtonMenu}
-              open={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
-              parentRef={buttonRefCustom}
-              uuid="button_custom"
-            >
-              <Tooltip
-                block
-                label="Add a blank custom block or scratchpad block"
-                size={null}
-                widthFitContent
-              >
-                <Button
-                  beforeIcon={
-                    <BlockBlank
-                      secondary={BUTTON_INDEX_CUSTOM === buttonMenuOpenIndex}
-                      size={ICON_SIZE}
-                    />
-                  }
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setButtonMenuOpenIndex(val =>
-                      val === BUTTON_INDEX_CUSTOM
-                        ? null
-                        : BUTTON_INDEX_CUSTOM,
-                    );
-                    handleBlockZIndex(BUTTON_INDEX_CUSTOM);
-                  }}
-                >
-                  Custom
-                </Button>
-              </Tooltip>
-            </FlyoutMenuWrapper>
-          </ButtonWrapper>
-
-          <Spacing mr={3} />
-
-          <ButtonWrapper
-            compact={compact}
-            increasedZIndex={BUTTON_INDEX_MARKDOWN === buttonMenuOpenIndex}
-          >
-            <Tooltip
-              block
-              label="Add a markdown block for documentation"
-              size={null}
-              widthFitContent
-            >
-              <Button
-                beforeIcon={
-                  <MarkdownPen size={ICON_SIZE} />
-                }
-                noBackground
-                noBorder
-                noPadding
-                onClick={(e) => {
-                  e.preventDefault();
-                  addNewBlock({
-                    language: BlockLanguageEnum.MARKDOWN,
-                    type: BlockTypeEnum.MARKDOWN,
-                  });
-                }}
-              >
-                Markdown
-              </Button>
-            </Tooltip>
-          </ButtonWrapper>
-
-          <Spacing mr={3} />
+            design={design}
+            itemsDBT={itemsDBT}
+            setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+            setButtonMenuOpenIndex={setButtonMenuOpenIndex}
+            showBrowseTemplates={showBrowseTemplates}
+            showGlobalDataProducts={showGlobalDataProducts}
+          />
 
           <DividerStyle />
 

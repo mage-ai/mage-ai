@@ -207,14 +207,16 @@ function Header({
     width?: number;
   }>(null);
   const customDesignMedia = useMemo(() => {
-    const media = design?.components?.header?.media;
-    const image = new Image();
-    image.src = media?.url || media?.file_path;;
-    image.onload = () => {
-      setCustomMediaSize(image);
-    };
+    if (typeof window !== 'undefined') {
+      const media = design?.components?.header?.media;
+      const image = new Image();
+      image.src = media?.url || media?.file_path;;
+      image.onload = () => {
+        setCustomMediaSize(image);
+      };
 
-    return image;
+      return image;
+    }
   }, [
     design,
     setCustomMediaSize,

@@ -203,6 +203,7 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [WORKSPACES],
 ];
 
+// @ts-ignore
 export const RESOURCES = RESOURCES_PAIRS_ARRAY.reduce((keys: string[]) => ({
   [keys[0]]: keys,
 }), {});
