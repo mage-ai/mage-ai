@@ -63,97 +63,134 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
         super().tearDown()
 
     def test_create(self):
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.assertFalse(
-                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
-            )
-            File.create('file.txt', 'demo', 'mage')
-            self.assertTrue(
-                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
-            )
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: True,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+                self.assertFalse(
+                    os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+                )
+                File.create('file.txt', 'demo', 'mage')
+                self.assertTrue(
+                    os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+                )
 
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-            self.assertFalse(
-                os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
-            )
-            File.create('file.txt', 'demo', 'mage')
-            self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: False,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
+                self.assertFalse(
+                    os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
+                )
+                File.create('file.txt', 'demo', 'mage')
+                self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
 
     async def test_create_async(self):
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            self.assertFalse(
-                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
-            )
-            await File.create_async('file.txt', 'demo', 'mage')
-            self.assertTrue(
-                os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
-            )
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: True,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+                self.assertFalse(
+                    os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+                )
+                await File.create_async('file.txt', 'demo', 'mage')
+                self.assertTrue(
+                    os.path.exists(os.path.join(base_repo_path(), 'mage_platform/demo/file.txt')),
+                )
 
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-            self.assertFalse(
-                os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
-            )
-            await File.create_async('file.txt', 'demo', 'mage')
-            self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: False,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
+                self.assertFalse(
+                    os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
+                )
+                await File.create_async('file.txt', 'demo', 'mage')
+                self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
 
     def test_from_path(self):
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            file = File.from_path('demo/file.txt')
-            self.assertEqual(file.filename, 'file.txt')
-            self.assertEqual(file.dir_path, 'demo')
-            self.assertEqual(file.repo_path, os.path.join(base_repo_path(), 'mage_platform'))
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: True,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+                file = File.from_path('demo/file.txt')
+                self.assertEqual(file.filename, 'file.txt')
+                self.assertEqual(file.dir_path, 'demo')
+                self.assertEqual(file.repo_path, os.path.join(base_repo_path(), 'mage_platform'))
 
-        with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-            file = File.from_path('demo/file.txt')
-            self.assertEqual(file.filename, 'file.txt')
-            self.assertEqual(file.dir_path, 'demo')
-            self.assertEqual(file.repo_path, base_repo_path())
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: False,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
+                file = File.from_path('demo/file.txt')
+                self.assertEqual(file.filename, 'file.txt')
+                self.assertEqual(file.dir_path, 'demo')
+                self.assertEqual(file.repo_path, base_repo_path())
 
     def test_get_all_files(self):
-        File.create('file.txt', 'demo', 'mage')
-        File.create('file.sql', 'demo', 'mage')
-        File.create('demo.sql', 'demo', 'mage')
+        with patch(
+            'mage_ai.data_preparation.models.file.project_platform_activated',
+            lambda: True,
+        ):
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
+                File.create('file.txt', 'demo', 'mage')
+                File.create('file.sql', 'demo', 'mage')
+                File.create('demo.sql', 'demo', 'mage')
 
-        full_paths = File.get_all_files(
-            base_repo_path(),
-            pattern='.sql$',
-        )
+                full_paths = File.get_all_files(
+                    base_repo_path(),
+                    pattern='.sql$',
+                )
 
-        self.assertEqual(full_paths, dict(
-            name='test',
-            children=[
-                dict(
-                    name='demo',
+                self.assertEqual(full_paths, dict(
+                    name='test',
                     children=[
-                        dict(name='demo.sql', disabled=False),
-                        dict(name='file.sql', disabled=False),
+                        dict(
+                            name='demo',
+                            children=[
+                                dict(name='demo.sql', disabled=False),
+                                dict(name='file.sql', disabled=False),
+                            ],
+                        ),
+                        dict(
+                            name='mage_platform',
+                            children=[
+                                dict(name='data_exporters', children=[]),
+                                dict(name='data_loaders', children=[]),
+                                dict(name='pipelines', children=[
+                                    dict(name=self.pipeline.uuid, children=[]),
+                                ]),
+                                dict(name='transformers', children=[]),
+                            ],
+                        ),
                     ],
-                ),
-                dict(
-                    name='mage_platform',
-                    children=[
-                        dict(name='data_exporters', children=[]),
-                        dict(name='data_loaders', children=[]),
-                        dict(name='pipelines', children=[
-                            dict(name=self.pipeline.uuid, children=[]),
-                        ]),
-                        dict(name='transformers', children=[]),
-                    ],
-                ),
-            ],
-        ))
+                ))
 
     def test_ensure_file_is_in_project(self):
         with patch(
             'mage_ai.data_preparation.models.file.project_platform_activated',
             lambda: False,
         ):
-            error = False
-            try:
-                ensure_file_is_in_project('mage_data/demo/file.txt')
-            except FileNotInProjectError:
-                error = True
-            self.assertTrue(error)
+            with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
+                error = False
+                try:
+                    ensure_file_is_in_project('mage_data/demo/file.txt')
+                except FileNotInProjectError:
+                    error = True
+                self.assertTrue(error)
 
-        with patch('mage_ai.data_preparation.models.file.project_platform_activated', lambda: True):
-            ensure_file_is_in_project('mage_data/demo/file.txt')
+            with patch(
+                'mage_ai.data_preparation.models.file.project_platform_activated',
+                lambda: True,
+            ):
+                with patch(
+                    'mage_ai.data_preparation.models.file.project_platform_activated',
+                    lambda: True,
+                ):
+                    ensure_file_is_in_project('mage_data/demo/file.txt')
