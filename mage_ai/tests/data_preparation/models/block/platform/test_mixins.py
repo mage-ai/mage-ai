@@ -134,6 +134,7 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
 
 
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
     def test_configuration_getter(self):
         block = self.build_block(configuration=dict(mage=1))

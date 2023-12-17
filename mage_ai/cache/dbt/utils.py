@@ -149,7 +149,7 @@ def __clean_profiles(profiles: Dict) -> Dict:
 
     mapping = profiles.copy()
     for project_name, profile_dict in profiles.items():
-        if not profile_dict.get('outputs'):
+        if not isinstance(profile_dict, dict) or not profile_dict.get('outputs'):
             continue
 
         outputs = profile_dict.get('outputs') or {}

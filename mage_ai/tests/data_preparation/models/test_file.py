@@ -51,6 +51,7 @@ class FileTest(AsyncDBTestCase):
         shutil.rmtree(os.path.dirname(file_path))
 
 
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
     def tearDown(self):
         try:
@@ -82,11 +83,12 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-                self.assertFalse(
-                    os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
-                )
-                File.create('file.txt', 'demo', 'mage')
-                self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
+                with patch('mage_ai.settings.repo.project_platform_activated', lambda: False):
+                    self.assertFalse(
+                        os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
+                    )
+                    File.create('file.txt', 'demo', 'mage')
+                    self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
 
     async def test_create_async(self):
         with patch(
@@ -107,11 +109,12 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-                self.assertFalse(
-                    os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
-                )
-                await File.create_async('file.txt', 'demo', 'mage')
-                self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
+                with patch('mage_ai.settings.repo.project_platform_activated', lambda: False):
+                    self.assertFalse(
+                        os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')),
+                    )
+                    await File.create_async('file.txt', 'demo', 'mage')
+                    self.assertTrue(os.path.exists(os.path.join(base_repo_path(), 'demo/file.txt')))
 
     def test_from_path(self):
         with patch(
@@ -129,10 +132,11 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
-                file = File.from_path('demo/file.txt')
-                self.assertEqual(file.filename, 'file.txt')
-                self.assertEqual(file.dir_path, 'demo')
-                self.assertEqual(file.repo_path, base_repo_path())
+                with patch('mage_ai.settings.repo.project_platform_activated', lambda: False):
+                    file = File.from_path('demo/file.txt')
+                    self.assertEqual(file.filename, 'file.txt')
+                    self.assertEqual(file.dir_path, 'demo')
+                    self.assertEqual(file.repo_path, base_repo_path())
 
     def test_get_all_files(self):
         with patch(
