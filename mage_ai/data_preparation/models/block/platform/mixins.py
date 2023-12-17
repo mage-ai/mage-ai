@@ -63,8 +63,8 @@ class ProjectPlatformAccessible:
                                 project_path = get_selected_directory_from_file_path(
                                     file_path=path,
                                     selector=lambda fn: (
-                                        str(fn).endswith(os.path.join(os.sep, 'dbt_project.yml')) or
-                                        str(fn).endswith(os.path.join(os.sep, 'dbt_project.yaml'))
+                                        str(fn).endswith('dbt_project.yml') or
+                                        str(fn).endswith('dbt_project.yaml')
                                     ),
                                 )
                                 # tons_of_dbt_projects/diff_name

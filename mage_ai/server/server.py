@@ -21,6 +21,7 @@ from tornado.options import options
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.dbt.cache import DBTCache
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
@@ -530,12 +531,20 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+    project_model = Project(root_project=True)
+    if project_model:
+        if project_model.spark_config and \
+                project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
 
-        Application.clear_cache()
+            Application.clear_cache()
+
+        if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+            try:
+                logger.info('Initializing dbt cache.')
+                dbt_cache = await DBTCache.initialize_cache(replace=True, root_project=True)
+                logger.info(f'dbt cached in {dbt_cache.file_path}')
+            except Exception as err:
+                print(f'[ERROR] DBTCache.initialize_cache: {err}.')
 
     try:
         from mage_ai.services.ssh.aws.emr.models import create_tunnel
