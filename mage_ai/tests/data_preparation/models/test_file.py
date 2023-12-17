@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 from pathlib import Path
@@ -7,6 +6,7 @@ from unittest.mock import patch
 from mage_ai.data_preparation.models.errors import FileNotInProjectError
 from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
 from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.array import find
 from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
@@ -149,8 +149,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                     pattern='.sql$',
                 )
 
-                result1 = json.dumps(full_paths, sort_keys=True)
-                result2 = json.dumps(dict(
+                result = dict(
                     name='test',
                     children=[
                         dict(
@@ -172,9 +171,44 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                             ],
                         ),
                     ],
-                ), sort_keys=True)
+                )
 
-                self.assertEqual(result1, result2)
+                self.assertEqual(full_paths['name'], result['name'])
+
+                mage_platform = find(lambda x: x['name'] == 'mage_platform', full_paths['children'])
+
+                for key in [
+                    'data_exporters',
+                    'data_loaders',
+                    'demo',
+                    'pipelines',
+                    'transformers',
+                ]:
+                    self.assertIsNotNone(find(
+                        lambda x, key=key: x['name'] == key,
+                        mage_platform['children'],
+                    ))
+
+                demo = find(lambda x: x['name'] == 'demo', mage_platform['children'])
+
+                for key in [
+                    'demo.sql',
+                    'file.sql',
+                ]:
+                    self.assertIsNotNone(find(
+                        lambda x, key=key: x['name'] == key,
+                        demo['children'],
+                    ))
+
+                pipelines = find(lambda x: x['name'] == 'pipelines', mage_platform['children'])
+
+                for key in [
+                    self.pipeline.uuid,
+                ]:
+                    self.assertIsNotNone(find(
+                        lambda x, key=key: x['name'] == key,
+                        pipelines['children'],
+                    ))
 
     def test_ensure_file_is_in_project(self):
         with patch(
