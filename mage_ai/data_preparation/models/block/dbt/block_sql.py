@@ -186,23 +186,40 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         """
         # Get upstream nodes via dbt list
         with Profiles(self.project_path, self.pipeline.variables) as profiles:
-            args = [
-                'list',
-                # project-dir
-                # /home/src/default_repo/default_platform/default_repo/dbt/demo
-                '--project-dir', self.project_path,
-                '--profiles-dir', str(profiles.profiles_dir),
-                '--select', '+' + Path(self.__get_original_file_path()).stem,
-                '--output', 'json',
-                '--output-keys', 'unique_id original_file_path depends_on',
-                '--resource-type', 'model',
-                '--resource-type', 'snapshot'
-            ]
-            res, _success = DBTCli(args).invoke()
-        if res:
-            nodes_init = [simplejson.loads(node) for node in res]
-        else:
-            return []
+            try:
+                args = [
+                    'list',
+                    # project-dir
+                    # /home/src/default_repo/default_platform/default_repo/dbt/demo
+                    '--project-dir', self.project_path,
+                    '--profiles-dir', str(profiles.profiles_dir),
+                    '--select', '+' + Path(self.__get_original_file_path()).stem,
+                    '--output', 'json',
+                    '--output-keys', 'unique_id original_file_path depends_on',
+                    '--resource-type', 'model',
+                    '--resource-type', 'snapshot'
+                ]
+                res, _success = DBTCli(args).invoke()
+
+                if res:
+                    nodes_init = [simplejson.loads(node) for node in res]
+                else:
+                    return []
+            except Exception as err:
+                print(f'[ERROR] DBTBlockSQL.upstream_dbt_blocks: {err}.')
+                return [
+                    self.build_dbt_block(
+                        block_class=DBTBlock,
+                        block_dict=dict(
+                            block_type=self.type,
+                            configuration=self.configuration,
+                            language=self.language,
+                            name=self.uuid,
+                            pipeline=self.pipeline,
+                            uuid=self.uuid,
+                        ),
+                    )
+                ]
 
         # transform List into dict and remove unnecessary fields
         file_path = self.__get_original_file_path()
