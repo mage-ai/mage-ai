@@ -105,6 +105,7 @@ from mage_ai.settings.repo import (
     set_repo_path,
 )
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -545,6 +546,8 @@ async def main(
                 logger.info(f'dbt cached in {dbt_cache.file_path}')
             except Exception as err:
                 print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                if is_debug():
+                    raise err
 
     try:
         from mage_ai.services.ssh.aws.emr.models import create_tunnel
