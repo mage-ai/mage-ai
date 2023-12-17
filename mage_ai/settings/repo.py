@@ -7,6 +7,7 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.settings.constants import PROJECT_METADATA_FILENAME, REPO_PATH_ENV_VAR
+from mage_ai.settings.platform.utils import project_platform_activated
 from mage_ai.settings.utils import base_repo_dirname, base_repo_path
 from mage_ai.shared.environments import is_test
 
@@ -38,8 +39,6 @@ def get_repo_path(
     repo_path_use = None
 
     if not root_project:
-        from mage_ai.settings.platform import project_platform_activated
-
         if project_platform_activated():
             from mage_ai.settings.platform import (
                 build_active_project_repo_path,
@@ -72,8 +71,6 @@ def set_repo_path(repo_path: str) -> None:
 
 
 def get_repo_name(repo_path: str = None, root_project: bool = False) -> str:
-    from mage_ai.settings.platform import project_platform_activated
-
     repo_path = repo_path or get_repo_path(root_project=root_project)
 
     if project_platform_activated():

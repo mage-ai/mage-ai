@@ -11,7 +11,6 @@ from mage_ai.settings.platform import (
     project_platform_activated,
     repo_path_from_database_query_to_project_repo_path,
 )
-from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.files import find_directory
 
 
@@ -71,6 +70,8 @@ async def get_pipeline_from_platform_async(
 
 
 def get_pipeline_config_path(pipeline_uuid: str) -> Tuple[str, str]:
+    from mage_ai.settings.repo import get_repo_path
+
     repo_path_active = get_repo_path(root_project=False)
 
     path_relative = os.path.join(PIPELINES_FOLDER, pipeline_uuid, PIPELINE_CONFIG_FILE)
