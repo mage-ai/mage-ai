@@ -129,7 +129,11 @@ class ProjectPlatformAccessible:
         if not self.project_platform_activated:
             return
 
-        root_project_path, path, file_path_base = get_path_parts(self.get_file_path_from_source())
+        parts = get_path_parts(self.get_file_path_from_source())
+        if not parts:
+            return
+
+        root_project_path, path, file_path_base = parts
 
         return File(
             filename=file_path_base,
