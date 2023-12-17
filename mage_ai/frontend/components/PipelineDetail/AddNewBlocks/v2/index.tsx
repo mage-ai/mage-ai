@@ -292,209 +292,213 @@ function AddNewBlocksV2({
         <FlexContainer
           alignItems="center"
         >
-          <ButtonItems
-            addNewBlock={addNewBlock}
-            blockIdx={blockIdx}
-            blockTemplatesByBlockType={blockTemplatesByBlockType}
-            buttonMenuOpenIndex={buttonMenuOpenIndex}
-            closeButtonMenu={closeButtonMenu}
-            compact={compact}
-            design={design}
-            itemsDBT={itemsDBT}
-            setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-            setButtonMenuOpenIndex={setButtonMenuOpenIndex}
-            showBrowseTemplates={showBrowseTemplates}
-            showGlobalDataProducts={showGlobalDataProducts}
-          />
+          <Flex>
+            <ButtonItems
+              addNewBlock={addNewBlock}
+              blockIdx={blockIdx}
+              blockTemplatesByBlockType={blockTemplatesByBlockType}
+              buttonMenuOpenIndex={buttonMenuOpenIndex}
+              closeButtonMenu={closeButtonMenu}
+              compact={compact}
+              design={design}
+              itemsDBT={itemsDBT}
+              setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+              setButtonMenuOpenIndex={setButtonMenuOpenIndex}
+              showBrowseTemplates={showBrowseTemplates}
+              showGlobalDataProducts={showGlobalDataProducts}
+            />
+          </Flex>
 
           <DividerStyle />
 
           <Spacing mr={3} />
 
-          <SearchStyle>
-            {focusArea}
-            <FlexContainer alignItems="center" fullWidth>
-              <TextInput
-                fullWidth
-                noBackground
-                noBorder
-                noBorderRadiusBottom
-                noBorderRadiusTop
-                // Need setTimeout because when clicking a row, the onBlur will be triggered.
-                // If the onBlur triggers too soon, clicking a row does nothing.
-                onBlur={() => setTimeout(() => setFocused(false), 150)}
-                onChange={onUserTyping}
-                onFocus={() => setFocused(true)}
-                paddingHorizontal={0}
-                paddingVertical={0}
-                placeholder="Search for a block..."
-                ref={refTextInput}
-                value={inputValue || ''}
-              />
-              <KeyboardTextGroup
-                addPlusSignBetweenKeys
-                disabled
-                keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_FORWARD_SLASH]]}
-              />
-            </FlexContainer>
-            {focusArea}
+          <Flex flex={1}>
+            <SearchStyle>
+              {focusArea}
+              <FlexContainer alignItems="center" fullWidth>
+                <TextInput
+                  fullWidth
+                  noBackground
+                  noBorder
+                  noBorderRadiusBottom
+                  noBorderRadiusTop
+                  // Need setTimeout because when clicking a row, the onBlur will be triggered.
+                  // If the onBlur triggers too soon, clicking a row does nothing.
+                  onBlur={() => setTimeout(() => setFocused(false), 150)}
+                  onChange={onUserTyping}
+                  onFocus={() => setFocused(true)}
+                  paddingHorizontal={0}
+                  paddingVertical={0}
+                  placeholder="Search for a block..."
+                  ref={refTextInput}
+                  value={inputValue || ''}
+                />
+                <KeyboardTextGroup
+                  addPlusSignBetweenKeys
+                  disabled
+                  keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_FORWARD_SLASH]]}
+                />
+              </FlexContainer>
+              {focusArea}
 
-            <DropdownStyle
-              topOffset={refTextInput?.current?.getBoundingClientRect().height + (
-                compact
-                  ? 1.5 * UNIT
-                  : 2.5 * UNIT
-              )}
-            >
-              <AutocompleteDropdown
-                itemGroups={[
-                  {
-                    items: focused ? autocompleteItems : [],
-                    renderItem: (
-                      {
-                        itemObject: blockActionObject,
-                      }: ItemType,
-                      opts: RenderItemProps,
-                    ) => {
-                      const {
-                        block_type: blockType,
-                        description,
-                        language,
-                        object_type: objectType,
-                        title,
-                      } = blockActionObject;
+              <DropdownStyle
+                topOffset={refTextInput?.current?.getBoundingClientRect().height + (
+                  compact
+                    ? 1.5 * UNIT
+                    : 2.5 * UNIT
+                )}
+              >
+                <AutocompleteDropdown
+                  itemGroups={[
+                    {
+                      items: focused ? autocompleteItems : [],
+                      renderItem: (
+                        {
+                          itemObject: blockActionObject,
+                        }: ItemType,
+                        opts: RenderItemProps,
+                      ) => {
+                        const {
+                          block_type: blockType,
+                          description,
+                          language,
+                          object_type: objectType,
+                          title,
+                        } = blockActionObject;
 
-                      const iconProps: {
-                        default?: boolean;
-                        fill?: string;
-                        size: number;
-                        warning?: boolean;
-                      } = {
-                        fill: getColorsForBlockType(blockType).accent,
-                        size: ICON_SIZE,
-                      };
-                      let Icon = BLOCK_TYPE_ICON_MAPPING[blockType];
+                        const iconProps: {
+                          default?: boolean;
+                          fill?: string;
+                          size: number;
+                          warning?: boolean;
+                        } = {
+                          fill: getColorsForBlockType(blockType).accent,
+                          size: ICON_SIZE,
+                        };
+                        let Icon = BLOCK_TYPE_ICON_MAPPING[blockType];
 
-                      const isGenerateBlock = ObjectType.GENERATE_BLOCK === objectType;
-                      if (isGenerateBlock) {
-                        Icon = AISparkle;
-                        iconProps.default = false;
-                        iconProps.fill = null;
-                        iconProps.warning = true;
-                      }
-
-                      const displayText =
-                        `${title}${description ? ': ' + description : ''}`.slice(0, 80);
-
-                      return (
-                        <RowStyle
-                          {...opts}
-                          onClick={(e) => {
-                            pauseEvent(e);
-                            opts?.onClick?.(e);
-                          }}
-                        >
-                          <Flex
-                            alignItems="center"
-                            flex={1}
-                          >
-                            {Icon && <Icon default={!iconProps?.fill} {...iconProps} />}
-
-                            <Spacing mr={2} />
-
-                            <Text default overflowWrap textOverflow>
-                              {displayText}
-                            </Text>
-                          </Flex>
-
-                          <Spacing mr={1} />
-
-                          <Text monospace muted uppercase>
-                            {isGenerateBlock ? 'AI' : ABBREV_BLOCK_LANGUAGE_MAPPING[language]}
-                          </Text>
-
-                          <Spacing mr={1} />
-
-                          {ObjectType.BLOCK_FILE === objectType && (
-                            <FileIcon muted size={ICON_SIZE} />
-                          )}
-
-                          {ObjectType.CUSTOM_BLOCK_TEMPLATE === objectType && (
-                            <TemplateShapes muted size={ICON_SIZE} />
-                          )}
-
-                          {ObjectType.MAGE_TEMPLATE === objectType && (
-                            <BlockCubePolygon muted size={ICON_SIZE} />
-                          )}
-
-                          {isGenerateBlock && hasOpenAIAPIKey && (
-                            <AISparkle muted size={ICON_SIZE} />
-                          )}
-                          {isGenerateBlock && !hasOpenAIAPIKey && (
-                            <AlertTriangle muted size={ICON_SIZE} />
-                          )}
-                        </RowStyle>
-                      );
-                    },
-                  },
-                ]}
-                onSelectItem={({
-                  itemObject: blockActionObject,
-                }: ItemType) => {
-                  const {
-                    object_type: objectType,
-                  } = blockActionObject;
-
-                  if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
-                    showConfigureProjectModal?.({
-                      cancelButtonText: 'Set this up later',
-                      header: (
-                        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-                          <Panel>
-                            <Text warning>
-                              You need to add an OpenAI API key to your project before you can
-                              generate blocks using AI.
-                            </Text>
-
-                            <Spacing mt={1}>
-                              <Text warning>
-                                Read <Link
-                                  href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                                  openNewWindow
-                                >
-                                  OpenAI’s documentation
-                                </Link> to get your API key.
-                              </Text>
-                            </Spacing>
-                          </Panel>
-                        </Spacing>
-                      ),
-                      onCancel: () => {
-                        setSetupAILater(true);
-                      },
-                      onSaveSuccess: (project: ProjectType) => {
-                        if (project?.openai_api_key) {
-                          addNewBlock({
-                            block_action_object: blockActionObject,
-                          });
-                          setInputValue(null);
-                          setSearchResult(null);
+                        const isGenerateBlock = ObjectType.GENERATE_BLOCK === objectType;
+                        if (isGenerateBlock) {
+                          Icon = AISparkle;
+                          iconProps.default = false;
+                          iconProps.fill = null;
+                          iconProps.warning = true;
                         }
+
+                        const displayText =
+                          `${title}${description ? ': ' + description : ''}`.slice(0, 80);
+
+                        return (
+                          <RowStyle
+                            {...opts}
+                            onClick={(e) => {
+                              pauseEvent(e);
+                              opts?.onClick?.(e);
+                            }}
+                          >
+                            <Flex
+                              alignItems="center"
+                              flex={1}
+                            >
+                              {Icon && <Icon default={!iconProps?.fill} {...iconProps} />}
+
+                              <Spacing mr={2} />
+
+                              <Text default overflowWrap textOverflow>
+                                {displayText}
+                              </Text>
+                            </Flex>
+
+                            <Spacing mr={1} />
+
+                            <Text monospace muted uppercase>
+                              {isGenerateBlock ? 'AI' : ABBREV_BLOCK_LANGUAGE_MAPPING[language]}
+                            </Text>
+
+                            <Spacing mr={1} />
+
+                            {ObjectType.BLOCK_FILE === objectType && (
+                              <FileIcon muted size={ICON_SIZE} />
+                            )}
+
+                            {ObjectType.CUSTOM_BLOCK_TEMPLATE === objectType && (
+                              <TemplateShapes muted size={ICON_SIZE} />
+                            )}
+
+                            {ObjectType.MAGE_TEMPLATE === objectType && (
+                              <BlockCubePolygon muted size={ICON_SIZE} />
+                            )}
+
+                            {isGenerateBlock && hasOpenAIAPIKey && (
+                              <AISparkle muted size={ICON_SIZE} />
+                            )}
+                            {isGenerateBlock && !hasOpenAIAPIKey && (
+                              <AlertTriangle muted size={ICON_SIZE} />
+                            )}
+                          </RowStyle>
+                        );
                       },
-                    });
-                  } else {
-                    addNewBlock({
-                      block_action_object: blockActionObject,
-                      require_unique_name: false,
-                    });
-                    setInputValue(null);
-                    setSearchResult(null);
-                  }
-                }}
-                uuid={componentUUID}
-              />
-            </DropdownStyle>
-          </SearchStyle>
+                    },
+                  ]}
+                  onSelectItem={({
+                    itemObject: blockActionObject,
+                  }: ItemType) => {
+                    const {
+                      object_type: objectType,
+                    } = blockActionObject;
+
+                    if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
+                      showConfigureProjectModal?.({
+                        cancelButtonText: 'Set this up later',
+                        header: (
+                          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+                            <Panel>
+                              <Text warning>
+                                You need to add an OpenAI API key to your project before you can
+                                generate blocks using AI.
+                              </Text>
+
+                              <Spacing mt={1}>
+                                <Text warning>
+                                  Read <Link
+                                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                                    openNewWindow
+                                  >
+                                    OpenAI’s documentation
+                                  </Link> to get your API key.
+                                </Text>
+                              </Spacing>
+                            </Panel>
+                          </Spacing>
+                        ),
+                        onCancel: () => {
+                          setSetupAILater(true);
+                        },
+                        onSaveSuccess: (project: ProjectType) => {
+                          if (project?.openai_api_key) {
+                            addNewBlock({
+                              block_action_object: blockActionObject,
+                            });
+                            setInputValue(null);
+                            setSearchResult(null);
+                          }
+                        },
+                      });
+                    } else {
+                      addNewBlock({
+                        block_action_object: blockActionObject,
+                        require_unique_name: false,
+                      });
+                      setInputValue(null);
+                      setSearchResult(null);
+                    }
+                  }}
+                  uuid={componentUUID}
+                />
+              </DropdownStyle>
+            </SearchStyle>
+          </Flex>
         </FlexContainer>
       </ContainerStyle>
     </ClickOutside>

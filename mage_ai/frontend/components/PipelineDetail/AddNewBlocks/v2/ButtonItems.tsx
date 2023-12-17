@@ -30,14 +30,21 @@ import {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
-import { BUTTON_ITEMS_DEFAULT, ITEMS_MORE } from './constants';
+import {
+  BUTTON_ITEMS_DEFAULT,
+  ITEMS_MORE,
+  ITEMS_MORE_UUIDS_ORDERED,
+  ITEM_BROWSE_TEMPLATES,
+  ITEM_CREATE_TEMPLATE,
+} from './constants';
 import { ButtonWrapper, ICON_SIZE } from './index.style';
 import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getdataSourceMenuItems } from '../utils';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { ignoreKeys } from '@utils/hash';
 
 type ItemSettingsOptions = {
   index: number;
@@ -102,21 +109,6 @@ function ButtonItems({
     ref6,
     ref7,
   ];
-
-  const itemUUIDs = useMemo(() => {
-    const base = [ITEMS_MORE];
-
-    // const addSettings = design?.pages?.pipelines?.edit?.buttons?.block?.add;
-    // if (addSettings) {
-    //   // @ts-ignore
-    //   return base.concat(addSettings?.items);
-    // }
-
-    // @ts-ignore
-    return base.concat(BUTTON_ITEMS_DEFAULT);
-  }, [
-    design,
-  ]);
 
   const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
     setAddNewBlockMenuOpenIdx?.(idx => (
@@ -263,8 +255,8 @@ function ButtonItems({
     addNewBlock,
   ]);
 
-  const itemsTemplates = useMemo(() => {
-    const dataLoaderGroupItems = [
+  const dataLoaderGroupItems = useMemo(() => {
+    const arr = [
       {
         isGroupingTitle: true,
         label: () => 'Python',
@@ -279,22 +271,38 @@ function ButtonItems({
     );
 
     if (itemsDataLoaderSource) {
-      dataLoaderGroupItems.push(...[
+      arr.push(...[
         {
           isGroupingTitle: true,
           label: () => 'Data integrations',
-          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/group`,
+          uuid: [
+            BlockTypeEnum.DATA_LOADER,
+            TemplateTypeEnum.DATA_INTEGRATION,
+            'group',
+          ].join('/'),
         },
         {
           // @ts-ignore
           items: itemsDataLoaderSource,
           label: () => capitalize(DataIntegrationTypeEnum.SOURCES),
-          uuid: `${BlockTypeEnum.DATA_LOADER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.SOURCES}`,
+          uuid: [
+            BlockTypeEnum.DATA_LOADER,
+            TemplateTypeEnum.DATA_INTEGRATION,
+            DataIntegrationTypeEnum.SOURCES,
+          ].join('/'),
         },
       ]);
     }
 
-    const dataExporterGroupItems =[
+    return arr;
+  }, [
+    buildNonPythonItems,
+    itemsDataLoader,
+    itemsDataLoaderSource,
+  ]);
+
+  const dataExporterGroupItems = useMemo(() => {
+    const arr =[
       {
         isGroupingTitle: true,
         label: () => 'Python',
@@ -304,7 +312,7 @@ function ButtonItems({
     ].concat(itemsDataExporter).concat(buildNonPythonItems(BlockTypeEnum.DATA_EXPORTER));
 
     if (itemsDataExporterDestination) {
-      dataExporterGroupItems.push(...[
+      arr.push(...[
         {
           isGroupingTitle: true,
           label: () => 'Data integrations',
@@ -317,136 +325,13 @@ function ButtonItems({
           uuid: `${BlockTypeEnum.DATA_EXPORTER}/${TemplateTypeEnum.DATA_INTEGRATION}/${DataIntegrationTypeEnum.DESTINATIONS}`,
         },
       ]);
-    }
+    };
 
-    return [
-      {
-        beforeIcon: (
-          <CubeWithArrowDown
-            fill={getColorsForBlockType(
-              BlockTypeEnum.DATA_LOADER,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: dataLoaderGroupItems,
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
-        uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <FrameBoxSelection
-            fill={getColorsForBlockType(
-              BlockTypeEnum.TRANSFORMER,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: [
-          {
-            isGroupingTitle: true,
-            label: () => 'Python',
-            uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.TRANSFORMER}/group`,
-          },
-          // @ts-ignore
-        ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
-        uuid: `${BlockTypeEnum.TRANSFORMER}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <CircleWithArrowUp
-            fill={getColorsForBlockType(
-              BlockTypeEnum.DATA_EXPORTER,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: dataExporterGroupItems,
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
-        uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <Sensor
-            fill={getColorsForBlockType(
-              BlockTypeEnum.SENSOR,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: [
-          {
-            isGroupingTitle: true,
-            label: () => 'Python',
-            uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
-          },
-          // @ts-ignore
-        ].concat(itemsSensors),
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
-        uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
-      },
-      {
-        beforeIcon: (
-          <DBTIcon
-            fill={getColorsForBlockType(
-              BlockTypeEnum.DBT,
-            ).accent}
-            size={ICON_SIZE}
-          />
-        ),
-        items: itemsDBT,
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DBT],
-        uuid: BlockTypeEnum.DBT,
-      },
-      {
-        beforeIcon: (
-          <HexagonAll
-            size={ICON_SIZE}
-          />
-        ),
-        label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.GLOBAL_DATA_PRODUCT],
-        onClick: () => showGlobalDataProducts({
-          // @ts-ignore
-          addNewBlock,
-        }),
-        uuid: BlockTypeEnum.GLOBAL_DATA_PRODUCT,
-      },
-      {
-        isGroupingTitle: true,
-        label: () => 'Custom templates',
-        uuid: 'custom_templates',
-      },
-      {
-        beforeIcon: <TemplateShapes default size={ICON_SIZE} />,
-        label: () => 'Browse templates',
-        onClick: () => showBrowseTemplates({
-          addNewBlock,
-        }),
-        uuid: 'browse_templates',
-      },
-      {
-        beforeIcon: <ArrowsAdjustingFrameSquare default size={ICON_SIZE} />,
-        label: () => 'Create new template',
-        onClick: () => showBrowseTemplates({
-          addNew: true,
-          addNewBlock,
-        }),
-        uuid: 'create_template',
-      },
-    ];
+    return arr;
   }, [
-    addNewBlock,
     buildNonPythonItems,
     itemsDataExporter,
     itemsDataExporterDestination,
-    itemsDataLoader,
-    itemsDataLoaderSource,
-    itemsDBT,
-    itemsSensors,
-    itemsTransformer,
-    showBrowseTemplates,
-    showGlobalDataProducts,
   ]);
 
   const itemsCustom = useMemo(() => [
@@ -498,27 +383,177 @@ function ButtonItems({
     addNewBlock,
   ]);
 
+  const itemUUIDs = useMemo(() => {
+    const base = [ITEMS_MORE];
+
+    const items = design?.pages?.pipelines?.edit?.buttons?.block?.add?.items;
+    if (items) {
+      // @ts-ignore
+      return base.concat(items);
+    }
+
+    // @ts-ignore
+    return base.concat(BUTTON_ITEMS_DEFAULT);
+  }, [
+    design,
+  ]);
+
+  const itemsMoreUUIDs = useMemo(() => {
+    const base = [];
+
+    const items = design?.pages?.pipelines?.edit?.buttons?.block?.add?.items_more;
+    if (items) {
+      // @ts-ignore
+      return base.concat(items);
+    }
+
+    // @ts-ignore
+    return base.concat(ITEMS_MORE_UUIDS_ORDERED.filter(uuid => !itemUUIDs.includes(uuid)));
+  }, [
+    design,
+    itemUUIDs,
+  ]);
+
   const getItemConfiguration = useCallback(({
     index,
   }: ItemSettingsOptions) => Object.entries({
     [BlockTypeEnum.CUSTOM]: {
       Icon: BlockBlank,
       items: itemsCustom,
-      tooltip: 'Add a blank custom block or scratchpad block',
+      tooltip: () => 'Add a blank custom block or scratchpad block',
+    },
+    [BlockTypeEnum.DATA_EXPORTER]: {
+      Icon: CircleWithArrowUp,
+      // beforeIcon: (
+      //   <CircleWithArrowUp
+      //     fill={getColorsForBlockType(
+      //       BlockTypeEnum.DATA_EXPORTER,
+      //     ).accent}
+      //     size={ICON_SIZE}
+      //   />
+      // ),
+      items: dataExporterGroupItems,
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_EXPORTER],
+      uuid: `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`,
+    },
+    [BlockTypeEnum.SENSOR]: {
+      Icon: Sensor,
+      // beforeIcon: (
+      //   <Sensor
+      //     fill={getColorsForBlockType(
+      //       BlockTypeEnum.SENSOR,
+      //     ).accent}
+      //     size={ICON_SIZE}
+      //   />
+      // ),
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.SENSOR}/group`,
+        },
+        // @ts-ignore
+      ].concat(itemsSensors),
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.SENSOR],
+      uuid: `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`,
+    },
+    [BlockTypeEnum.DATA_LOADER]: {
+      Icon: CubeWithArrowDown,
+      // beforeIcon: (
+      //   <CubeWithArrowDown
+      //     fill={getColorsForBlockType(
+      //       BlockTypeEnum.DATA_LOADER,
+      //     ).accent}
+      //     size={ICON_SIZE}
+      //   />
+      // ),
+      items: dataLoaderGroupItems,
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.DATA_LOADER],
+      uuid: `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`,
+    },
+    [BlockTypeEnum.DBT]: {
+      Icon: DBTIcon,
+      // beforeIcon: (
+      //   <DBTIcon
+      //     fill={getColorsForBlockType(
+      //       BlockTypeEnum.DBT,
+      //     ).accent}
+      //     size={ICON_SIZE}
+      //   />
+      // ),
+      items: itemsDBT,
+      label: () => 'dbt',
+    },
+    [BlockTypeEnum.GLOBAL_DATA_PRODUCT]: {
+      Icon: HexagonAll,
+      // beforeIcon: (
+      //   <HexagonAll
+      //     size={ICON_SIZE}
+      //   />
+      // ),
+      onClick: () => showGlobalDataProducts({
+        // @ts-ignore
+        addNewBlock,
+      }),
     },
     [BlockTypeEnum.MARKDOWN]: {
       Icon: MarkdownPen,
       onClick: (e) => {
-        e.preventDefault();
+        e?.preventDefault();
         addNewBlock({
           language: BlockLanguageEnum.MARKDOWN,
           type: BlockTypeEnum.MARKDOWN,
         });
       },
-      tooltip: 'Add a markdown block for documentation',
+      tooltip: () => 'Add a markdown block for documentation',
+    },
+    [BlockTypeEnum.TRANSFORMER]: {
+      Icon: FrameBoxSelection,
+      // beforeIcon: (
+      //   <FrameBoxSelection
+      //     fill={getColorsForBlockType(
+      //       BlockTypeEnum.TRANSFORMER,
+      //     ).accent}
+      //     size={ICON_SIZE}
+      //   />
+      // ),
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: [BlockLanguageEnum.PYTHON, BlockTypeEnum.TRANSFORMER, 'group'].join('/'),
+        },
+        // @ts-ignore
+      ].concat(itemsTransformer).concat(buildNonPythonItems(BlockTypeEnum.TRANSFORMER)),
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
+      uuid: [BlockLanguageEnum.PYTHON, BlockTypeEnum.TRANSFORMER].join('/'),
     },
     [ITEMS_MORE]: {
       Icon: TemplateShapes,
+      buildItems: () => itemsMoreUUIDs?.map((uuid: string, idx2) => {
+        const config = getItemConfiguration({
+          index: idx2 * 100,
+        })[uuid];
+        const { Icon } = config;
+
+        if (Icon) {
+          const isOtherItems = [
+            ITEM_BROWSE_TEMPLATES,
+            ITEM_CREATE_TEMPLATE,
+          ].includes(uuid);
+          const color = getColorsForBlockType(uuid)?.accent;
+
+          config.beforeIcon = (
+            <Icon
+              default={isOtherItems}
+              fill={isOtherItems ? null : color}
+              size={ICON_SIZE}
+            />
+          );
+        }
+
+        return ignoreKeys(config, config.beforeIcon ? ['Icon'] : []);
+      }),
       customSubmenuHeights: {
         [[
           BlockTypeEnum.DATA_EXPORTER,
@@ -531,49 +566,77 @@ function ButtonItems({
           DataIntegrationTypeEnum.SOURCES,
         ].join('/')]: 504,
       },
-      items: itemsTemplates,
-      tooltip: 'Add a block from a template',
-      uuid: 'Templates',
+      label: () => 'Templates',
+      tooltip: () => 'Add a block from a template',
+    },
+    [ITEM_BROWSE_TEMPLATES]: {
+      Icon: TemplateShapes,
+      // beforeIcon: <TemplateShapes default size={ICON_SIZE} />,
+      label: () => 'Browse templates',
+      onClick: () => showBrowseTemplates({
+        addNewBlock,
+      }),
+    },
+    [ITEM_CREATE_TEMPLATE]: {
+      Icon: ArrowsAdjustingFrameSquare,
+      // beforeIcon: <ArrowsAdjustingFrameSquare default size={ICON_SIZE} />,
+      label: () => 'Create new template',
+      onClick: () => showBrowseTemplates({
+        addNew: true,
+        addNewBlock,
+      }),
     },
   }).reduce((acc, [k, v]) => ({
     ...acc,
     [k]: {
       Icon: BLOCK_TYPE_ICON_MAPPING[k],
       index,
+      label: () => BLOCK_TYPE_NAME_MAPPING[k],
       onClick: (e) => {
-        e.preventDefault();
+        e?.preventDefault();
         setButtonMenuOpenIndex(val => val === index ? null : index);
         handleBlockZIndex(index);
       },
-      title: BLOCK_TYPE_NAME_MAPPING[k],
       uuid: v?.uuid || k,
       ...v,
     },
   }), {}), [
+    addNewBlock,
+    dataExporterGroupItems,
+    dataLoaderGroupItems,
     handleBlockZIndex,
     itemsCustom,
-    itemsTemplates,
+    itemsDBT,
+    itemsMoreUUIDs,
+    itemsSensors,
+    itemsTransformer,
     setButtonMenuOpenIndex,
+    showBrowseTemplates,
+    showGlobalDataProducts,
   ]);
 
   const buildButton = useCallback(({
     Icon,
+    beforeIcon,
+    buildItems,
     customSubmenuHeights,
     index,
     items,
+    label,
     onClick,
-    title,
     tooltip,
     uuid,
   }: {
-    Icon: any;
+    Icon?: any;
+    beforeIcon?: any;
+    buildItems?: () => FlyoutMenuItemType[];
     customSubmenuHeights?: {
       [key: string]: number;
     },
     index: number;
     items?: FlyoutMenuItemType[];
+    label?: () => string;
     onClick?: (e?: any) => void;
-    title?: string;
     tooltip?: string;
     uuid: string;
   }) => {
@@ -586,11 +649,11 @@ function ButtonItems({
         <FlyoutMenuWrapper
           customSubmenuHeights={customSubmenuHeights}
           disableKeyboardShortcuts
-          items={items}
+          items={buildItems?.() || items}
           onClickCallback={closeButtonMenu}
           open={index === buttonMenuOpenIndex}
           parentRef={refsMapping[index]}
-          uuid={title}
+          uuid={uuid}
         >
           <Tooltip
             block
@@ -599,21 +662,20 @@ function ButtonItems({
             widthFitContent
           >
             <Button
-              beforeIcon={
+              beforeIcon={beforeIcon || Icon && (
                 <Icon
                   secondary={index === buttonMenuOpenIndex}
                   size={ICON_SIZE}
                 />
-              }
+              )}
               noBackground
               noBorder
               noPadding
               onClick={(e) => {
-                console.log('WTFFFFFFFFFFFFFFFFFFF', uuid, index)
                 onClick?.(e);
               }}
             >
-              {title || uuid}
+              {label?.() || uuid}
             </Button>
           </Tooltip>
         </FlyoutMenuWrapper>
@@ -624,8 +686,6 @@ function ButtonItems({
     closeButtonMenu,
     compact,
   ]);
-
-  console.log(itemUUIDs)
 
   return (
     <>
