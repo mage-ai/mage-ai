@@ -21,6 +21,7 @@ class EntityName(str, Enum):
     ComputeConnection = 'ComputeConnection'
     ComputeService = 'ComputeService'
     ConfigurationOption = 'ConfigurationOption'
+    CustomDesign = 'CustomDesign'
     CustomTemplate = 'CustomTemplate'
     DataProvider = 'DataProvider'
     Database = 'Database'
