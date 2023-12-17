@@ -52,6 +52,7 @@ class PathFixerTest(DBTestCase):
 
 
 @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class PathFixerProjectPlatformTest(ProjectPlatformMixin):
     def test_add_root_repo_path_to_relative_path(self):
         from mage_ai.shared.path_fixer import add_root_repo_path_to_relative_path
