@@ -71,10 +71,31 @@ def set_repo_path(repo_path: str) -> None:
 
 
 def get_repo_name(repo_path: str = None, root_project: bool = False) -> str:
+    # If root_project is False:
+    # get_repo_path() == /home/src/test/nested_repo_project
+    # If root_project is True:
+    # get_repo_path() == /home/src/test
     repo_path = repo_path or get_repo_path(root_project=root_project)
 
     if project_platform_activated():
-        return Path(repo_path).relative_to(base_repo_dirname())
+        # If root_project is False:
+        # get_repo_path() == /home/src/test/nested_repo_project
+        # If root_project is True:
+        # get_repo_path() == /home/src/test
+
+        # base_repo_dirname() == /home/src
+
+        # If root_project is False:
+        # /home/src/test/nested_repo_project relative_to /home/src == test/nested_repo_project
+        # The case above will make the variables directory turn out to be:
+        # /home/src/test/test/nested_repo_project (it adds the root_project twice).
+
+        # If root_project is True:
+        # /home/src/test relative_to /home/src == test
+
+        return Path(repo_path).relative_to(
+            base_repo_dirname() if root_project else base_repo_path(),
+        )
 
     return os.path.basename(repo_path)
 
@@ -92,6 +113,7 @@ def get_variables_dir(
     repo_config: Dict = None,
     root_project: bool = False,
 ) -> str:
+    print(repo_path, repo_config, root_project)
     """
     Fetches the variables directory for the project.
 

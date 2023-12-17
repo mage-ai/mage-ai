@@ -344,6 +344,8 @@ class GlobalHooksMixin(BaseApiTestCase):
         pass
 
 
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class ProjectPlatformMixin(AsyncDBTestCase):
     @classmethod
     def initialize_settings(self, settings: Dict = None):
