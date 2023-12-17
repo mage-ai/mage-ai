@@ -141,7 +141,7 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         self.assertFalse(os.path.exists(local_platform_settings_full_path()))
         self.assertEqual(
             build_active_project_repo_path(),
-            os.path.join(base_repo_path(), 'mage_data/platform'),
+            os.path.join(base_repo_path(), 'mage_platform'),
         )
 
     def test_project_platform_activated(self):
