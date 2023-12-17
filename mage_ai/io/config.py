@@ -87,6 +87,9 @@ class ConfigKey(str, Enum):
     PINOT_SCHEME = 'PINOT_SCHEME'
     PINOT_USER = 'PINOT_USER'
 
+    QDRANT_COLLECTION = 'QDRANT_COLLECTION'
+    QDRANT_PATH = 'QDRANT_PATH'
+
     POSTGRES_CONNECTION_METHOD = 'POSTGRES_CONNECTION_METHOD'
     POSTGRES_CONNECT_TIMEOUT = 'POSTGRES_CONNECT_TIMEOUT'
     POSTGRES_DBNAME = 'POSTGRES_DBNAME'
@@ -335,6 +338,7 @@ class VerboseConfigKey(str, Enum):
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
     SPARK = 'Spark'
+    QDRANT = 'Qdrant'
 
 
 class ConfigFileLoader(BaseConfigLoader):
@@ -410,6 +414,8 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.POSTGRES_PORT: (VerboseConfigKey.POSTGRES, 'port'),
         ConfigKey.POSTGRES_SCHEMA: (VerboseConfigKey.POSTGRES, 'schema'),
         ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
+        ConfigKey.QDRANT_COLLECTION: (VerboseConfigKey.QDRANT, 'collection'),
+        ConfigKey.QDRANT_PATH: (VerboseConfigKey.QDRANT, 'path'),
         ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
         ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
