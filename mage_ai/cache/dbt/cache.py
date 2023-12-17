@@ -1,8 +1,10 @@
 import os
+from typing import List
 
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_DBT_PROJECTS_PROFILES_MODELS
 from mage_ai.cache.dbt.constants import FileType, infer_file_type
+from mage_ai.cache.dbt.models import DBTCacheItem
 from mage_ai.cache.dbt.utils import (
     absolute_project_file_path,
     build_mapping,
@@ -49,6 +51,14 @@ class DBTCache(BaseCache):
 
     def get_cache(self):
         return self.get(self.cache_key)
+
+    def get_cache_items(self) -> List[DBTCacheItem]:
+        mapping = self.get_cache() or {}
+
+        return [DBTCacheItem.load(
+            item=item,
+            uuid=uuid,
+        ) for uuid, item in mapping.items()]
 
     async def initialize_cache_for_models_async(
         self,

@@ -46,6 +46,7 @@ async def read_content_async(file_path: str) -> Dict:
         async with aiofiles.open(file_path, mode='r') as f:
             config = yaml.safe_load(await f.read()) or {}
             config['file_path'] = remove_base_repo_path(file_path)
+            config['uuid'] = os.path.dirname(remove_base_repo_path(file_path))
             return config
 
 
@@ -60,7 +61,7 @@ async def load_content_async(file_path: str):
 
     return dict(
         models=models,
-        profiles=profiles,
+        profiles=__clean_profiles(profiles),
         project=project,
     )
 
@@ -100,7 +101,7 @@ def load_content(file_path: str):
 
     return dict(
         models=models,
-        profiles=profiles,
+        profiles=__clean_profiles(profiles),
         project=project,
     )
 
@@ -140,3 +141,19 @@ def get_project_path_from_file_path(
             project_file_paths = get_project_path_from_file_path(file_path, walk_up_parents=False)
 
         return project_file_paths
+
+
+def __clean_profiles(profiles: Dict) -> Dict:
+    if not profiles:
+        return profiles
+
+    mapping = profiles.copy()
+    for project_name, profile_dict in profiles.items():
+        if not profile_dict.get('outputs'):
+            continue
+
+        outputs = profile_dict.get('outputs') or {}
+        for target in outputs.keys():
+            mapping[project_name]['outputs'][target] = {}
+
+    return mapping
