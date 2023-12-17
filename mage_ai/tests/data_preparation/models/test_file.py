@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from pathlib import Path
@@ -148,21 +149,22 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                     pattern='.sql$',
                 )
 
-                self.assertEqual(full_paths, dict(
+                result1 = json.dumps(full_paths, sort_keys=True)
+                result2 = json.dumps(dict(
                     name='test',
                     children=[
-                        dict(
-                            name='demo',
-                            children=[
-                                dict(name='demo.sql', disabled=False),
-                                dict(name='file.sql', disabled=False),
-                            ],
-                        ),
                         dict(
                             name='mage_platform',
                             children=[
                                 dict(name='data_exporters', children=[]),
                                 dict(name='data_loaders', children=[]),
+                                dict(
+                                    name='demo',
+                                    children=[
+                                        dict(name='demo.sql', disabled=False),
+                                        dict(name='file.sql', disabled=False),
+                                    ],
+                                ),
                                 dict(name='pipelines', children=[
                                     dict(name=self.pipeline.uuid, children=[]),
                                 ]),
@@ -170,7 +172,9 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                             ],
                         ),
                     ],
-                ))
+                ), sort_keys=True)
+
+                self.assertEqual(result1, result2)
 
     def test_ensure_file_is_in_project(self):
         with patch(
