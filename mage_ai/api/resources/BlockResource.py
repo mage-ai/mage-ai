@@ -799,7 +799,7 @@ class BlockResource(GenericResource):
             if payload.get('converted_from'):
                 content = convert_to_block(block, content)
 
-            block.update_content(content)
+            await block.update_content_async(content)
 
         if pipeline:
             cache = await BlockCache.initialize_cache()

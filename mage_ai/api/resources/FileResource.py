@@ -70,7 +70,7 @@ class FileResource(GenericResource):
         file_path = File(filename, dir_path, repo_path).file_path
         try:
             ensure_file_is_in_project(file_path)
-            file = File.create(
+            file = await File.create_async(
                 filename,
                 dir_path,
                 repo_path=repo_path,

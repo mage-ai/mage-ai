@@ -54,7 +54,7 @@ class FileContentResource(GenericResource):
             file_version = find(lambda f: f.filename == str(version), self.model.file_versions())
             content = file_version.content()
 
-        self.model.update_content(content)
+        await self.model.update_content_async(content)
 
         block_type = Block.block_type_from_path(self.model.dir_path)
         if block_type:

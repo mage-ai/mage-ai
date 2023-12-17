@@ -178,7 +178,7 @@ def active_project_settings(
     settings: Dict = None,
 ) -> Dict:
     if not settings:
-        settings = project_platform_settings(repo_path=repo_path)
+        settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
     items = list(settings.items())
     if items:

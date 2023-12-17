@@ -541,7 +541,7 @@ async def main(
         if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
             try:
                 logger.info('Initializing dbt cache.')
-                dbt_cache = await DBTCache.initialize_cache(replace=True, root_project=True)
+                dbt_cache = await DBTCache.initialize_cache_async(replace=True, root_project=True)
                 logger.info(f'dbt cached in {dbt_cache.file_path}')
             except Exception as err:
                 print(f'[ERROR] DBTCache.initialize_cache: {err}.')
