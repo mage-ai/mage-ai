@@ -149,6 +149,7 @@ def set_value(obj: Dict, keys: List[str], value) -> Dict:
 
 
 def combine_into(child: Dict, parent: Dict) -> None:
+    # Child will merge into parent and override parent values.
     for k, v in child.items():
         if isinstance(v, dict):
             combine_into(v, parent.setdefault(k, {}))

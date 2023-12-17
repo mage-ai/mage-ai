@@ -1,23 +1,26 @@
 import os
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 import yaml
 
 from mage_ai.data_preparation.models.project.models import ProjectDataClass
 from mage_ai.presenters.design.constants import CUSTOM_DESIGN_FILENAME
 from mage_ai.settings.platform import (
+    active_project_settings,
     build_repo_path_for_all_projects,
     project_platform_activated,
 )
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.utils import base_repo_name, base_repo_path
+from mage_ai.shared.hash import combine_into
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
 class DesignComponentConfigurations(BaseDataClass):
-    logo: Dict = None
+    media: Dict = None
 
 
 @dataclass
@@ -30,12 +33,14 @@ class DesignComponents(BaseDataClass):
 
 @dataclass
 class DesignPageConfigurations(BaseDataClass):
+    list: Dict = None
     edit: Dict = None
 
 
 @dataclass
 class DesignPages(BaseDataClass):
     pipelines: DesignPageConfigurations = None
+    triggers: DesignPageConfigurations = None
 
     def __post_init__(self):
         self.serialize_attribute_class('pipelines', DesignPageConfigurations)
@@ -47,6 +52,7 @@ class CustomDesign(BaseDataClass):
     custom_designs: Dict = None
     pages: DesignPages = None
     project: ProjectDataClass = None
+    uuid: str = None
 
     def __post_init__(self):
         self.serialize_attribute_class('components', DesignComponents)
@@ -70,7 +76,9 @@ class CustomDesign(BaseDataClass):
         if all_configurations and project_platform_activated():
             model.custom_designs = {}
 
-            for project_name, project in build_repo_path_for_all_projects().items():
+            for project_name, project in build_repo_path_for_all_projects(
+                mage_projects_only=True,
+            ).items():
                 full_path = project['full_path']
 
                 model.custom_designs[project_name] = self.__load_from_file(
@@ -96,7 +104,48 @@ class CustomDesign(BaseDataClass):
                 if content:
                     yaml_config = yaml.safe_load(content) or {}
 
-        return self.load(project=project, **yaml_config)
+        return self.load(
+            project=project,
+            uuid=(project.get('uuid') if project else None) or repo_path,
+            **yaml_config,
+        )
+
+    @classmethod
+    def get_all(self) -> List['CustomDesign']:
+        custom_design = self.load_from_file(all_configurations=True)
+
+        arr = []
+
+        if custom_design.custom_designs:
+            arr.extend(list(custom_design.custom_designs.values()))
+        else:
+            arr.append(custom_design)
+
+        return arr
+
+    @classmethod
+    def combine_in_order_of_priority(self) -> 'CustomDesign':
+        custom_design = self.load_from_file(
+            all_configurations=True,
+            repo_path=base_repo_path(),
+        )
+
+        if not project_platform_activated() or not custom_design.custom_designs:
+            return custom_design
+
+        active_project_uuid = (active_project_settings(get_default=True) or {}).get('uuid')
+        root_project_uuid = base_repo_name()
+        if active_project_uuid == root_project_uuid:
+            return custom_design
+
+        child = custom_design.custom_designs.get(active_project_uuid) or {}
+        child = child.to_dict() if child else {}
+        parent = custom_design.to_dict()
+
+        # Active project settings supercede root project settings
+        combine_into(child, parent)
+
+        return self.load(uuid=active_project_uuid, **parent)
 
     def save(self, file_path: str = None, repo_path: str = None) -> None:
         if not file_path:
@@ -120,6 +169,6 @@ class CustomDesign(BaseDataClass):
     def to_dict(self, **kwargs) -> Dict:
         return super().to_dict(
             convert_enum=True,
-            ignore_attributes=['custom_designs'],
+            ignore_attributes=['custom_designs', 'uuid'],
             ignore_empty=True,
         )
