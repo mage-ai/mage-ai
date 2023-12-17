@@ -354,6 +354,7 @@ function AddNewBlocks({
 
   if (useV2) {
     return (
+      // @ts-ignore
       <AddNewBlocksV2
         addNewBlock={addNewBlock}
         blockIdx={blockIdx}

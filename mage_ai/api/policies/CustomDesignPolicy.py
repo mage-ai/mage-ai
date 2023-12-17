@@ -10,6 +10,7 @@ class CustomDesignPolicy(BasePolicy):
 
 CustomDesignPolicy.allow_actions(
     [
+        OperationType.DETAIL,
         OperationType.LIST,
     ],
     scopes=[
@@ -26,6 +27,32 @@ CustomDesignPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
+        OperationType.DETAIL,
+        OperationType.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+    override_permission_condition=lambda _policy: True,
+)
+
+
+CustomDesignPolicy.allow_query(
+    [
+        'operation',
+        'page_path',
+        'page_pathname',
+        'page_query',
+        'page_type',
+        'page_uuid',
+        'resource',
+        'resource_id',
+        'resource_parent',
+        'resource_parent_id',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
         OperationType.LIST,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
