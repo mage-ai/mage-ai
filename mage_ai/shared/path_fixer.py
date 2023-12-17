@@ -83,6 +83,9 @@ def remove_repo_names(file_path: str) -> str:
 def get_path_parts(file_path: str) -> Tuple[str, str, str]:
     paths = get_repo_paths_for_file_path(file_path)
 
+    if not paths:
+        return None
+
     root_project_full_path = paths['root_project_full_path']
     full_path_relative = paths['full_path_relative']
     path = paths['path']
