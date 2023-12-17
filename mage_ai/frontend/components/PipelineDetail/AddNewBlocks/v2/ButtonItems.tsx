@@ -540,7 +540,9 @@ function ButtonItems({
           const isOtherItems = [
             ITEM_BROWSE_TEMPLATES,
             ITEM_CREATE_TEMPLATE,
+            // @ts-ignore
           ].includes(uuid);
+          // @ts-ignore
           const color = getColorsForBlockType(uuid)?.accent;
 
           config.beforeIcon = (
@@ -594,7 +596,8 @@ function ButtonItems({
       label: () => BLOCK_TYPE_NAME_MAPPING[k],
       onClick: (e) => {
         e?.preventDefault();
-        setButtonMenuOpenIndex(val => val === index ? null : index);
+        // @ts-ignore
+        setButtonMenuOpenIndex((val: number) => Number(val) === Number(index) ? null : Number(index));
         handleBlockZIndex(index);
       },
       uuid: v?.uuid || k,

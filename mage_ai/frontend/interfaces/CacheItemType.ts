@@ -10,8 +10,11 @@ interface DBTProfileType {
       };
     };
   };
+  // @ts-ignore
   file_path: string;
+  // @ts-ignore
   target?: string;
+  // @ts-ignore
   uuid: string;
 }
 

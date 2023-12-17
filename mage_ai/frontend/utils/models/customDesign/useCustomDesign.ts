@@ -25,7 +25,7 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     asPath: string;
     pathname: string;
     query?: {
-      [key: string]: string;
+      [key: string]: string | string[];
     };
   };
 } {

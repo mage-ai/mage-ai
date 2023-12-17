@@ -302,6 +302,7 @@ function AddNewBlocksV2({
               compact={compact}
               design={design}
               itemsDBT={itemsDBT}
+              pipelineType={pipelineType}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
               setButtonMenuOpenIndex={setButtonMenuOpenIndex}
               showBrowseTemplates={showBrowseTemplates}
