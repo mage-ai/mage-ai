@@ -15,7 +15,6 @@ from mage_ai.shared.path_fixer import (
     remove_base_repo_directory_name,
     remove_base_repo_name,
     remove_base_repo_path,
-    remove_repo_names,
 )
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
@@ -49,29 +48,21 @@ class ProjectPlatformAccessible:
                         file_source['path'] = path
                         config['file_source'] = file_source
 
-                        if BlockType.DBT == self.type:
-                            file_source_prev = (self._configuration or {}).get('file_source') or {}
-                            file_source_path_changed = True
-                            if file_source_prev and file_source_prev.get('path'):
-                                file_source_path_changed = self._configuration.get(
-                                    'file_source',
-                                ).get('path') != path
-
-                            if file_source_path_changed or not file_source_prev.get('project_path'):
-                                # /home/src/default_repo/default_platform/
-                                # tons_of_dbt_projects/diff_name
-                                project_path = get_selected_directory_from_file_path(
-                                    file_path=path,
-                                    selector=lambda fn: (
-                                        str(fn).endswith('dbt_project.yml') or
-                                        str(fn).endswith('dbt_project.yaml')
-                                    ),
+                        if BlockType.DBT == self.type and path:
+                            # /home/src/default_repo/default_platform/
+                            # tons_of_dbt_projects/diff_name
+                            project_path = get_selected_directory_from_file_path(
+                                file_path=path,
+                                selector=lambda fn: (
+                                    str(fn).endswith('dbt_project.yml') or
+                                    str(fn).endswith('dbt_project.yaml')
+                                ),
+                            )
+                            # tons_of_dbt_projects/diff_name
+                            if project_path:
+                                file_source['project_path'] = remove_base_repo_path(
+                                    project_path,
                                 )
-                                # tons_of_dbt_projects/diff_name
-                                if project_path:
-                                    file_source['project_path'] = remove_base_repo_path(
-                                        project_path,
-                                    )
 
             if config.get('file_path'):
                 file_path = config.get('file_path')
@@ -166,6 +157,7 @@ class ProjectPlatformAccessible:
         #   /home/src/default_platform/default_repo/dbt/demo
         # node['original_file_path']
         #   models/example/model.sql
+        print('self.project_path', self.project_path)
         return {
             node['unique_id']: {
                 # file_path needs to be:
@@ -190,7 +182,7 @@ class ProjectPlatformAccessible:
         return {
             unique_id: clean_name(
                 remove_extension_from_filename(
-                    remove_repo_names(node['file_path']),
+                    remove_base_repo_name(node['file_path']),
                 ),
                 allow_characters=[os.sep],
             )

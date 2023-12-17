@@ -387,26 +387,28 @@ class ProjectPlatformMixin(AsyncDBTestCase):
 
     def setup_final(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            super().setUp()
-            self.repo_path = get_repo_path(root_project=False)
-            self.pipeline, self.blocks = create_pipeline_with_blocks(
-                self.faker.unique.name(),
-                self.repo_path,
-                return_blocks=True,
-            )
-            self.repo_paths = build_repo_path_for_all_projects(mage_projects_only=True)
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                super().setUp()
+                self.repo_path = get_repo_path(root_project=False)
+                self.pipeline, self.blocks = create_pipeline_with_blocks(
+                    self.faker.unique.name(),
+                    self.repo_path,
+                    return_blocks=True,
+                )
+                self.repo_paths = build_repo_path_for_all_projects(mage_projects_only=True)
 
     def teardown_final(self):
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
-            try:
-                shutil.rmtree(platform_settings_full_path())
-            except Exception:
-                pass
-            try:
-                shutil.rmtree(local_platform_settings_full_path())
-            except Exception:
-                pass
-            super().tearDown()
+            with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
+                try:
+                    shutil.rmtree(platform_settings_full_path())
+                except Exception:
+                    pass
+                try:
+                    shutil.rmtree(local_platform_settings_full_path())
+                except Exception:
+                    pass
+                super().tearDown()
 
     def setUp(self):
         self.setup_final()
