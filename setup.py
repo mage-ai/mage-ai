@@ -181,7 +181,7 @@ setuptools.setup(
             'pydruid==0.6.5',
             'pymongo==4.3.3',
             'pyodbc==4.0.35',
-            'qdrant-client>=1.6.9',
+            # 'qdrant-client>=1.6.9',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',
             'sentence-transformers>=2.2.2',
