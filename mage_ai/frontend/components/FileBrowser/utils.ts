@@ -53,6 +53,35 @@ export function getFullPathWithoutRootFolder(
   return removeRootFromFilePath(fullPath);
 }
 
+export function validBlockFileExtension(filename: string): string {
+  const extensions = [
+    `\\.${FileExtensionEnum.PY}`,
+    `\\.${FileExtensionEnum.R}`,
+    `\\.${FileExtensionEnum.SQL}`,
+    `\\.${FileExtensionEnum.YAML}`,
+    `\\.${FileExtensionEnum.YML}`,
+  ].join('|');
+  const extensionRegex = new RegExp(`${extensions}$`);
+
+  const match = filename.match(extensionRegex)
+
+  return match?.length >= 1 ? match[0].replace('.', '') : null;
+}
+
+export function validBlockFromFilename(filename: string, blockType: BlockTypeEnum): boolean {
+  const fileExtension = validBlockFileExtension(filename);
+
+  return ![
+    '__init__.py',
+  ].includes(filename) && (
+    BlockTypeEnum.DBT !== blockType || ![
+      FileExtensionEnum.YAML,
+      FileExtensionEnum.YML,
+      // @ts-ignore
+    ].includes(fileExtension)
+  );
+}
+
 export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
@@ -81,17 +110,8 @@ export function getBlockFromFile(
     fileName = parts[parts.length - 1];
   }
 
-  const extensions = [
-    `\\.${FileExtensionEnum.PY}`,
-    `\\.${FileExtensionEnum.R}`,
-    `\\.${FileExtensionEnum.SQL}`,
-    `\\.${FileExtensionEnum.YAML}`,
-    `\\.${FileExtensionEnum.YML}`,
-  ].join('|');
-  const extensionRegex = new RegExp(`${extensions}$`);
-
   const blockTypesToInclude = draggableBlockTypesOnly ? DRAGGABLE_BLOCK_TYPES : BLOCK_TYPES;
-  if (blockTypesToInclude.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
+  if (blockTypesToInclude.concat(BlockTypeEnum.DBT).includes(blockType) && validBlockFileExtension(fileName)) {
     const idx = fileName.lastIndexOf('.');
     const extension = fileName.slice(idx + 1);
 
