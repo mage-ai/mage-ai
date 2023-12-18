@@ -21,6 +21,7 @@ import Text from '@oracle/elements/Text';
 import UploadFiles from './UploadFiles';
 import api from '@api';
 import useStatus from '@utils/models/status/useStatus';
+import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE } from '@interfaces/FileType';
@@ -476,6 +477,40 @@ function FileBrowser({
             showModal();
           },
           uuid: 'upload_files',
+        },
+        {
+          label: () => 'Expand all subfolders',
+          onClick: () => {
+            const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_FOLDER_EXPAND, {
+              detail: {
+                collapsed: false,
+                file: selectedFile,
+                folder: selectedFolder,
+              },
+            });
+
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(eventCustom);
+            }
+          },
+          uuid: 'Expand all subfolders',
+        },
+        {
+          label: () => 'Collapse all subfolders',
+          onClick: () => {
+            const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_FOLDER_EXPAND, {
+              detail: {
+                collapsed: true,
+                file: selectedFile,
+                folder: selectedFolder,
+              },
+            });
+
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(eventCustom);
+            }
+          },
+          uuid: 'Collapse all subfolders',
         },
       ]);
     } else if (selectedFile) {

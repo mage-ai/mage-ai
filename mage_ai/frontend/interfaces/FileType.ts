@@ -53,6 +53,7 @@ export default interface FileType {
   name?: string;
   parent?: FileType;
   path?: string;
+  uuid?: string;
 }
 
 export const FOLDER_NAME_CHARTS = 'charts';

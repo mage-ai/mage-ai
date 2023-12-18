@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
@@ -9,17 +9,21 @@ import FileType, {
 } from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
-import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
+import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
+import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import {
+  Charts,
   Ellipsis,
   ChevronDown,
   ChevronRight,
   FileFill,
-  Folder as FolderIcon,
+  FolderV2Filled as FolderIcon,
   NavGraph,
   Pipeline,
+  RoundedSquare,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
+import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
 import {
   ICON_SIZE,
   INDENT_WIDTH,
@@ -27,7 +31,7 @@ import {
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { get, set } from '@storage/localStorage';
+import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
@@ -35,6 +39,8 @@ import {
   getFullPath,
   getFullPathWithoutRootFolder,
   getNonPythonBlockFromFile,
+  validBlockFileExtension,
+  validBlockFromFilename,
 } from './utils';
 import { range, sortByKey } from '@utils/array';
 import { singularize } from '@utils/string';
@@ -80,6 +86,7 @@ type FolderProps = {
   setSelectedFile: (file: FileType) => void;
   theme: ThemeType;
   timeout?: any;
+  uuidCombined?: string[];
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
@@ -108,13 +115,19 @@ function Folder({
   timeout,
   uncollapsed,
   useRootFolder,
+  uuidCombined,
 }: FolderProps) {
+  const folderStates = get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {});
+
   const {
     children: childrenProp,
     disabled: disabledProp,
     name,
     parent: parentFile,
   } = file;
+
+  const uuidCombinedUse = [].concat(uuidCombined || []).concat(name || DEFAULT_NAME);
+  const uuid = uuidCombinedUse?.join('/');
 
   if (!name && !allowEmptyFolders) {
     file.name = DEFAULT_NAME;
@@ -153,30 +166,85 @@ function Folder({
         // || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
-  const uuid = `${level}/${name}`;
   const collapsedInit = (Array.isArray(children) && children?.length > 0)
     // Top level of project folders is initially uncollapsed, but the nested folders are collapsed.
-    ? get(uuid, level > 1)
-    : false;
+    ? (uuid in folderStates ? folderStates?.[uuid] : level >= 1)
+    : level >= 1;
   const [collapsed, setCollapsed] = useState<boolean>(typeof uncollapsed === 'undefined'
     ? collapsedInit
     : !uncollapsed,
   );
 
+  useEffect(() => {
+    const handleExpand = ({
+      detail: {
+        collapsed,
+        file,
+        folder,
+      },
+    }) => {
+      if (folder && uuid?.startsWith(folder?.uuid)) {
+        getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+          [uuid]: collapsed,
+        });
+        setCollapsed(collapsed);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
+      }
+    };
+  }, [
+    setCollapsed,
+    uuid,
+  ]);
+
+  const folderNameForBlock = uuidCombinedUse?.find?.(
+    (key) => {
+      const keySingle = singularize(key);
+
+      return keySingle in ALL_BLOCK_TYPES;
+    },
+  );
+  const blockType = folderNameForBlock ? singularize(folderNameForBlock) : null;
+  const isFolder = !!children;
+  const isFirstParentFolderForBlock =
+    isFolder && folderNameForBlock && folderNameForBlock === name;
+  const isBlockFile = folderNameForBlock
+    && !isFolder
+    && validBlockFileExtension(name)
+    && validBlockFromFilename(name, blockType);
+
+  const color = folderNameForBlock
+    ? getColorsForBlockType(blockType, { theme }).accent
+    : null;
+
   let IconEl = FileFill;
   if (level === 1 && name === FOLDER_NAME_PIPELINES) {
     IconEl = Pipeline;
   } else if (name === FOLDER_NAME_CHARTS) {
-    IconEl = NavGraph;
-  } else if (children) {
-    IconEl = FolderIcon;
+    IconEl = Charts;
+  } else if (isFolder) {
+    if (isFirstParentFolderForBlock) {
+      IconEl = BLOCK_TYPE_ICON_MAPPING?.[blockType] || FolderIcon;
+    } else {
+      IconEl = FolderIcon;
+    }
   } else if (!name && allowEmptyFolders) {
     IconEl = Ellipsis;
   }
 
-  let color;
-  if (children && BLOCK_TYPES.includes(singularize(name)) && singularize(name) !== BlockTypeEnum.CHART) {
-    color = getColorsForBlockType(singularize(name), { theme }).accent;
+  let BlockIconEl = Circle;
+  if (BlockTypeEnum.CHART === blockType) {
+    BlockIconEl = Charts;
   }
 
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
@@ -209,6 +277,7 @@ function Folder({
       timeout={timeout}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
+      uuidCombined={uuidCombinedUse}
     />
   )), [
     allowEmptyFolders,
@@ -238,6 +307,7 @@ function Folder({
     uncollapsed,
     useRootFolder,
     uuid,
+    uuidCombinedUse,
   ]);
 
   const lineEls = useMemo(() => {
@@ -297,9 +367,13 @@ function Folder({
                 selectFile(filePathToUse);
               } else {
                 setCollapsed((collapsedPrev) => {
-                  set(uuid, !collapsedPrev);
+                  const value = !collapsedPrev;
 
-                  return !collapsedPrev;
+                  getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+                    [uuid]: value,
+                  });
+
+                  return value;
                 });
               }
               onClickFolder?.(filePathToUse);
@@ -344,7 +418,10 @@ function Folder({
               y: e.pageY,
             });
             setDraggingFile(null);
-            setSelectedFile(file);
+            setSelectedFile({
+              ...file,
+              uuid,
+            });
           }}
           onMouseDown={(e) => {
             const block = file ? getBlockFromFile(file, null, true) : null;
@@ -392,19 +469,31 @@ function Folder({
                 marginRight: UNIT / 2,
               }}
             >
-              {!color && <IconEl disabled={disabledColor} size={ICON_SIZE} />}
-              {color && (
-                <Circle
-                  color={color}
-                  size={ICON_SIZE}
-                  square
-                />
-              )}
+              {(!!folderNameForBlock && !isFolder && !!isBlockFile)
+                ? (
+                  <BlockIconEl
+                    color={color}
+                    size={(folderNameForBlock && !isFolder)
+                      ? ICON_SIZE * 0.7
+                      : ICON_SIZE
+                    }
+                    square
+                  />
+                )
+                : (
+                  <IconEl
+                    fill={isFirstParentFolderForBlock ? color : null}
+                    disabled={disabledColor}
+                    size={ICON_SIZE}
+                  />
+                )
+              }
             </div>
 
             <Text
-              color={color}
-              default={!color && !disabled}
+              // color={folderNameForBlock && isFolder ? color : null}
+              // default={(!folderNameForBlock || !isFolder) && !disabled
+              default={!disabled}
               disabled={disabled}
               monospace
               small
