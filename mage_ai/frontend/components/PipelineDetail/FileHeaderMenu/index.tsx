@@ -242,7 +242,7 @@ function FileHeaderMenu({
       onClick: () => {
         setSideBySideEnabled(false);
       },
-      uuid: 'Show output next to code',
+      uuid: 'Show output below block',
     },
     {
       label: () => (
