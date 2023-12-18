@@ -420,7 +420,8 @@
                     "integrations/observability/metaplane",
                     "integrations/observability/newrelic",
                     "integrations/observability/sentry",
-                    "integrations/observability/prometheus"
+                    "integrations/observability/prometheus",
+                    "integrations/observability/opentelemetry"
                   ]
                 },
                 {

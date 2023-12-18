@@ -3,11 +3,14 @@
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
+  output: 'export',
+  distDir: 'frontend_dist',
   eslint: {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    esmExternals: true
+    esmExternals: true,
+    instrumentationHook: true,
   },
   reactStrictMode: true,
 });

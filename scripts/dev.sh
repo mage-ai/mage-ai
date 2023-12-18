@@ -42,6 +42,21 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --otel_exporter_otlp_endpoint)
+    OTEL_EXPORTER_OTLP_ENDPOINT="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --otel_exporter_otlp_http_endpoint)
+    OTEL_EXPORTER_OTLP_HTTP_ENDPOINT="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --otel_python_tornado_excluded_urls)
+    OTEL_PYTHON_TORNADO_EXCLUDED_URLS="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --huggingface_api)
     HUGGINGFACE_API="$3"
     shift # past argument
@@ -143,6 +158,9 @@ export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
 export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
 export ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
+export OTEL_EXPORTER_OTLP_ENDPOINT=$OTEL_EXPORTER_OTLP_ENDPOINT
+export OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=$OTEL_EXPORTER_OTLP_HTTP_ENDPOINT
+export OTEL_PYTHON_TORNADO_EXCLUDED_URLS=$OTEL_PYTHON_TORNADO_EXCLUDED_URLS
 
 export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
@@ -158,6 +176,9 @@ export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
 export ENABLE_PROJECT_PLATFORM=$ENABLE_PROJECT_PLATFORM
 export DEBUG=$DEBUG
+
+
+env
 
 UP_SERVICES="server app"
 

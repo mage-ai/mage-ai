@@ -172,6 +172,7 @@ setuptools.setup(
             'opensearch-py==2.0.0',
             'opentelemetry-exporter-prometheus>=0.41b0',
             'opentelemetry-instrumentation-tornado>=0.41b0',
+            'opentelemetry-exporter-otlp==1.21.0',
             'oracledb==1.3.1',
             'pika==1.3.1',
             'pinotdb==5.1.0',
