@@ -597,7 +597,7 @@ function ButtonItems({
       onClick: (e) => {
         e?.preventDefault();
         // @ts-ignore
-        setButtonMenuOpenIndex((val: number) => Number(val) === Number(index) ? null : Number(index));
+        setButtonMenuOpenIndex((val: number) => val === index ? null : index);
         handleBlockZIndex(index);
       },
       uuid: v?.uuid || k,

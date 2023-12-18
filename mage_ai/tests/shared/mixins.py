@@ -44,6 +44,8 @@ from mage_ai.tests.factory import (
     create_pipeline_with_blocks,
 )
 
+CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
+
 
 def build_content(query: Dict) -> str:
     return f"""
@@ -417,3 +419,91 @@ class ProjectPlatformMixin(AsyncDBTestCase):
 
     def tearDown(self):
         self.teardown_final()
+
+
+def setup_dbt_project(repo_path: str) -> str:
+    dbt_directory = os.path.join(repo_path, 'dbt')
+    os.makedirs(dbt_directory, exist_ok=True)
+
+    source_dir = os.path.join(CURRENT_FILE_PATH, 'mocks', 'dbt')
+
+    if os.path.exists(dbt_directory):
+        shutil.rmtree(dbt_directory)
+    shutil.copytree(source_dir, dbt_directory)
+
+    return dbt_directory
+
+
+def remove_dbt_project(project_path: str = None, repo_path: str = None):
+    dbt_directory = project_path or os.path.join(repo_path, 'dbt')
+    try:
+        if os.path.exists(dbt_directory):
+            shutil.rmtree(dbt_directory)
+    except Exception as err:
+        print(f'[ERROR] remove_dbt_project: {err}.')
+
+
+def setup_custom_design(repo_path: str, mock_design_filename: str = None) -> str:
+    destination = os.path.join(repo_path, 'design.yaml')
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+
+    if os.path.exists(destination):
+        os.remove(destination)
+
+    source = os.path.join(CURRENT_FILE_PATH, 'mocks', mock_design_filename or 'mock_design.yaml')
+    shutil.copyfile(source, destination)
+
+    return destination
+
+
+def remove_custom_design(
+    project_path: str = None,
+    repo_path: str = None,
+    mock_design_filename: str = None,
+):
+    destination = os.path.join(repo_path, 'design.yaml')
+    try:
+        if os.path.exists(destination):
+            os.remove(destination)
+    except Exception as err:
+        print(f'[ERROR] remove_custom_design: {err}.')
+
+
+class DBTMixin(AsyncDBTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.dbt_directory = setup_dbt_project(self.repo_path)
+
+    def tearDown(self):
+        remove_dbt_project(repo_path=self.repo_path)
+        super().tearDown()
+
+
+class CustomDesignMixin:
+    def setUp(self):
+        super().setUp()
+
+        setup_custom_design(self.repo_path)
+
+        if hasattr(self, 'repo_paths'):
+            for paths in self.repo_paths.values():
+                full_path = paths.get('full_path')
+                if full_path == self.repo_path:
+                    continue
+                setup_custom_design(repo_path=full_path, mock_design_filename='mock_design2.yaml')
+
+    def tearDown(self):
+        remove_custom_design(repo_path=self.repo_path)
+
+        if hasattr(self, 'repo_paths'):
+            for paths in self.repo_paths.values():
+                full_path = paths.get('full_path')
+                if full_path == self.repo_path:
+                    continue
+                remove_custom_design(
+                    repo_path=full_path,
+                    mock_design_filename='mock_design2.yaml',
+                )
+
+        super().tearDown()

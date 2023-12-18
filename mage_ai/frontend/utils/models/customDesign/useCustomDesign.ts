@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import CustomDesignType from '@interfaces/CustomDesignType';
+import api from '@api';
+import useProject, { UseProjectType } from '@utils/models/project/useProject';
 import { ClientPageTypeEnum } from '@interfaces/ClientPageType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
-import api from '@api';
 import { selectEntriesWithValues } from '@utils/hash';
 
 type CustomDesignHookOptionsType = {
@@ -15,6 +16,7 @@ type CustomDesignHookOptionsType = {
   resourceID?: string;
   resourceParent?: string;
   resourceParentID?: string;
+  useProjectData?: UseProjectType;
 };
 
 function useCustomDesign(opts?: CustomDesignHookOptionsType): {
@@ -37,6 +39,7 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     resourceID,
     resourceParent,
     resourceParentID,
+    useProjectData: useProjectDataProp,
   } = opts || {
     operation: null,
     pageType: null,
@@ -45,8 +48,41 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     resourceID: null,
     resourceParent: null,
     resourceParentID: null,
+    useProjectData: null,
   };
 
+  const useProjectData = useProject({
+    pauseFetch: !!useProjectDataProp,
+  });
+
+  const useProjectDataFinal: UseProjectType =
+    useMemo(() => typeof useProjectDataProp !== 'undefined' && useProjectDataProp !== null
+      ? useProjectDataProp
+      : useProjectData
+    , [
+      useProjectDataProp,
+      useProjectData,
+    ]);
+
+  const {
+    featureEnabled,
+    featureUUIDs,
+    project,
+  } = useProjectDataFinal || {
+    featureEnabled: null,
+    featureUUIDs: null,
+    project: null,
+  };
+
+  const shouldFetch = useMemo(() => featureEnabled
+    && featureUUIDs
+    && project
+    && featureEnabled?.(featureUUIDs?.CUSTOM_DESIGN),
+  [
+    featureEnabled,
+    featureUUIDs,
+    project,
+  ]);
 
   const regex = /^\/{1}/i;
   const router = useRouter();
@@ -67,6 +103,10 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
       resource_parent: resourceParent,
       resource_parent_id: resourceParentID,
     }),
+    {},
+    {
+      pauseFetch: !shouldFetch,
+    },
   );
   const design = useMemo(() => data?.custom_design || [], [data]);
 

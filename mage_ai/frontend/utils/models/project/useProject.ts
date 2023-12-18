@@ -4,12 +4,13 @@ import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import api from '@api';
 import { featureEnabled } from '.';
 
-function useProject(): {
+export type UseProjectType = {
   featureEnabled: (featureUUID: FeatureUUIDEnum) => boolean;
   // @ts-ignore
   featureUUIDs: {
     ADD_NEW_BLOCK_V2: FeatureUUIDEnum;
     COMPUTE_MANAGEMENT: FeatureUUIDEnum;
+    CUSTOM_DESIGN: FeatureUUIDEnum;
     DATA_INTEGRATION_IN_BATCH_PIPELINE: FeatureUUIDEnum;
     INTERACTIONS: FeatureUUIDEnum;
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW: FeatureUUIDEnum;
@@ -21,8 +22,20 @@ function useProject(): {
   projectPlatformActivated?: boolean;
   rootProject?: ProjectType;
   sparkEnabled: boolean;
-} {
-  const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
+};
+
+type UseProjectProps = {
+  pauseFetch?: boolean;
+};
+
+function useProject({
+  pauseFetch,
+}: UseProjectProps = {
+  pauseFetch: false,
+}): UseProjectType {
+  const { data: dataProjects, mutate: fetchProjects } = api.projects.list({}, {}, {
+    pauseFetch,
+  });
   const {
     project,
     rootProject,
