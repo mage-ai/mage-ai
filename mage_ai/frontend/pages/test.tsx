@@ -1,4 +1,4 @@
-import Browser from '@components/dbt/Browser';
+import Browser from '@components/BlockBrowser';
 
 function Test() {
   return (

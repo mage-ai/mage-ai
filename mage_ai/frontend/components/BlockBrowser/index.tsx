@@ -3,13 +3,14 @@ import { useMutation } from 'react-query';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Breadcrumbs from '@components/Breadcrumbs';
+import BrowserHeader from './BrowserHeader';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
 import Checkbox from '@oracle/elements/Checkbox';
 import Divider from '@oracle/elements/Divider';
-import FileBrowserNavigation from '@components/dbt/Browser/FileBrowserNavigation';
-import FileBrowserNavigationHeader from '@components/dbt/Browser/FileBrowserNavigation/Header';
+import FileBrowserNavigation from './FileBrowserNavigation';
+import FileBrowserNavigationHeader from './FileBrowserNavigation/Header';
 import Flex from '@oracle/components/Flex';
 import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -32,6 +33,7 @@ import {
   Sun,
   Table as TableIcon,
 } from '@oracle/icons';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { get } from '@storage/localStorage';
@@ -56,12 +58,13 @@ function Browser() {
     height: heightWindow,
     width: widthWindow,
   } = useWindowSize();
+  console.log(heightWindow)
 
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
   });
 
-  const [afterHidden, setAfterHidden] = useState<boolean>(false);
+  const [afterHidden, setAfterHidden] = useState<boolean>(true);
   const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(Math.max(
@@ -130,11 +133,17 @@ function Browser() {
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         contained
-        // headerOffset={headerOffset}
+        headerOffset={HEADER_HEIGHT}
         height={heightWindow}
         // hideAfterCompletely={!after || (isOnStreamsOverview && !streams?.length)}
         inline
         // mainContainerHeader={subheaderEl}
+        mainContainerHeader={(
+          <BrowserHeader
+            blockType={selectedLink?.uuid as BlockTypeEnum}
+            selectedTab={selectedTab}
+          />
+        )}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}
         setAfterMousedownActive={setAfterMousedownActive}

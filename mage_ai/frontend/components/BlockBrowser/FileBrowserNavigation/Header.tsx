@@ -21,6 +21,7 @@ function FileBrowserNavigationHeader({
   return (
     <>
       <ButtonTabs
+        large
         onClickTab={tab => setSelectedTab?.(tab)}
         selectedTabUUID={selectedTab?.uuid}
         tabs={tabs}
