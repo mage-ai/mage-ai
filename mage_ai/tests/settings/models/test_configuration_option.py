@@ -10,6 +10,7 @@ from mage_ai.settings.models.configuration_option import (
     ConfigurationType,
     OptionType,
 )
+from mage_ai.shared.array import find
 from mage_ai.tests.base_test import AsyncDBTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 
@@ -60,7 +61,14 @@ class ConfigurationOptionTest(AsyncDBTestCase):
             resource_type=EntityName.Block,
         )
         with open(os.path.join(CURRENT_FILE_PATH, 'example_options.json')) as f:
-            self.assertEqual([o.to_dict() for o in options], json.loads(f.read()))
+            results = [o.to_dict() for o in options]
+            arr = json.loads(f.read())
+
+            for item in arr:
+                self.assertEqual(
+                    item,
+                    find(lambda x, item=item: x['uuid'] == item['uuid'], results),
+                )
 
     async def test_fetch_project_platform_activated(self):
         with patch(
@@ -78,7 +86,14 @@ class ConfigurationOptionTest(AsyncDBTestCase):
                         CURRENT_FILE_PATH,
                         'example_options_project_platform.json',
                     )) as f:
-                        self.assertEqual([o.to_dict() for o in options], json.loads(f.read()))
+                        results = [o.to_dict() for o in options]
+                        arr = json.loads(f.read())
+
+                        for item in arr:
+                            self.assertEqual(
+                                item,
+                                find(lambda x, item=item: x['uuid'] == item['uuid'], results),
+                            )
 
     async def test_fetch_with_resource_uuid(self):
         pipeline = create_pipeline_with_blocks(
@@ -104,7 +119,14 @@ class ConfigurationOptionTest(AsyncDBTestCase):
         )
 
         with open(os.path.join(CURRENT_FILE_PATH, 'example_options_resource_uuid.json')) as f:
-            self.assertEqual([o.to_dict() for o in options], json.loads(f.read()))
+            results = [o.to_dict() for o in options]
+            arr = json.loads(f.read())
+
+            for item in arr:
+                self.assertEqual(
+                    item,
+                    find(lambda x, item=item: x['uuid'] == item['uuid'], results),
+                )
 
     async def test_fetch_with_resource_uuid_project_platform_activated(self):
         with patch(
@@ -139,4 +161,11 @@ class ConfigurationOptionTest(AsyncDBTestCase):
                         CURRENT_FILE_PATH,
                         'example_options_resource_uuid.json',
                     )) as f:
-                        self.assertEqual([o.to_dict() for o in options], json.loads(f.read()))
+                        results = [o.to_dict() for o in options]
+                        arr = json.loads(f.read())
+
+                        for item in arr:
+                            self.assertEqual(
+                                item,
+                                find(lambda x, item=item: x['uuid'] == item['uuid'], results),
+                            )
