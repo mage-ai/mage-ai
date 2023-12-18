@@ -1607,7 +1607,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
             return block_function_updated
         except Exception as err:
-            print(f'[WARNING] Block.initialize_decorator_modules: {err}')
+            if is_debug():
+                print(f'[WARNING] Block.initialize_decorator_modules: {err}')
             print('Falling back to default block execution...')
 
         return block_function
