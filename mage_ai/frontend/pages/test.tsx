@@ -1,16 +1,9 @@
-import api from '@api';
-import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
+import Browser from '@components/dbt/Browser';
 
 function Test() {
-  const {
-    designs,
-  } = useCustomDesign();
-
-  console.log(designs)
-
   return (
     <div>
-
+      <Browser />
     </div>
   );
 }
