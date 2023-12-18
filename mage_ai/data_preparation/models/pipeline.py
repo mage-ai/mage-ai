@@ -252,11 +252,13 @@ class Pipeline:
 
                 zipf.extractall(tmp_dir)
                 if prefix:
-                    for file in zip_contents[1:]:  # move each file except the folder itself
-                        original_path = os.path.join(tmp_dir, file)
-                        final_path = os.path.join(tmp_dir, os.path.relpath(file, prefix))
-                        os.rename(original_path, final_path)
-                    os.removedirs(os.path.join(tmp_dir, prefix))  # remove root folder
+                    inner_path = os.path.join(tmp_dir, prefix)
+                    all_files = os.listdir(inner_path)
+                    for file in all_files:  # move each file except the folder itself
+                        source_path = os.path.join(inner_path, file)
+                        destination_path = os.path.join(tmp_dir, file)
+                        os.rename(source_path, destination_path)
+                    os.removedirs(inner_path)  # remove root folder
 
             pipeline_files, new_pipeline_name = self.__update_pipeline_yaml(
                 tmp_dir,
