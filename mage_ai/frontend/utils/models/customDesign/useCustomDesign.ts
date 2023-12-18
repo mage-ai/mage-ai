@@ -55,10 +55,10 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     pauseFetch: !!useProjectDataProp,
   });
 
-  const useProjectDataFinal =
+  const useProjectDataFinal: UseProjectType =
     useMemo(() => typeof useProjectDataProp !== 'undefined' && useProjectDataProp !== null
-      ? (useProjectDataProp || {})
-      : (useProjectData || {})
+      ? useProjectDataProp
+      : useProjectData
     , [
       useProjectDataProp,
       useProjectData,
