@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
@@ -20,6 +20,7 @@ import {
   Pipeline,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
+import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
 import {
   ICON_SIZE,
   INDENT_WIDTH,
@@ -27,7 +28,7 @@ import {
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { get, set } from '@storage/localStorage';
+import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
@@ -80,6 +81,7 @@ type FolderProps = {
   setSelectedFile: (file: FileType) => void;
   theme: ThemeType;
   timeout?: any;
+  uuidCombined?: string[];
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
@@ -108,13 +110,19 @@ function Folder({
   timeout,
   uncollapsed,
   useRootFolder,
+  uuidCombined,
 }: FolderProps) {
+  const folderStates = get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {});
+
   const {
     children: childrenProp,
     disabled: disabledProp,
     name,
     parent: parentFile,
   } = file;
+
+  const uuidCombinedUse = [].concat(uuidCombined || []).concat(name || DEFAULT_NAME);
+  const uuid = uuidCombinedUse?.join('/');
 
   if (!name && !allowEmptyFolders) {
     file.name = DEFAULT_NAME;
@@ -153,15 +161,46 @@ function Folder({
         // || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
-  const uuid = `${level}/${name}`;
   const collapsedInit = (Array.isArray(children) && children?.length > 0)
     // Top level of project folders is initially uncollapsed, but the nested folders are collapsed.
-    ? get(uuid, level > 1)
-    : false;
+    ? (uuid in folderStates ? folderStates?.[uuid] : level >= 1)
+    : level >= 1;
   const [collapsed, setCollapsed] = useState<boolean>(typeof uncollapsed === 'undefined'
     ? collapsedInit
     : !uncollapsed,
   );
+
+  useEffect(() => {
+    const handleExpand = ({
+      detail: {
+        collapsed,
+        file,
+        folder,
+      },
+    }) => {
+      if (folder && uuid?.startsWith(folder?.uuid)) {
+        getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+          [uuid]: collapsed,
+        });
+        setCollapsed(collapsed);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
+      }
+    };
+  }, [
+    setCollapsed,
+    uuid,
+  ]);
 
   let IconEl = FileFill;
   if (level === 1 && name === FOLDER_NAME_PIPELINES) {
@@ -209,6 +248,7 @@ function Folder({
       timeout={timeout}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
+      uuidCombined={uuidCombinedUse}
     />
   )), [
     allowEmptyFolders,
@@ -238,6 +278,7 @@ function Folder({
     uncollapsed,
     useRootFolder,
     uuid,
+    uuidCombinedUse,
   ]);
 
   const lineEls = useMemo(() => {
@@ -297,9 +338,13 @@ function Folder({
                 selectFile(filePathToUse);
               } else {
                 setCollapsed((collapsedPrev) => {
-                  set(uuid, !collapsedPrev);
+                  const value = !collapsedPrev;
 
-                  return !collapsedPrev;
+                  getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+                    [uuid]: value,
+                  });
+
+                  return value;
                 });
               }
               onClickFolder?.(filePathToUse);
@@ -344,7 +389,10 @@ function Folder({
               y: e.pageY,
             });
             setDraggingFile(null);
-            setSelectedFile(file);
+            setSelectedFile({
+              ...file,
+              uuid,
+            });
           }}
           onMouseDown={(e) => {
             const block = file ? getBlockFromFile(file, null, true) : null;
