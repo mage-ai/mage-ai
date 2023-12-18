@@ -323,7 +323,7 @@ class Pipeline:
                 uuid,
             ),
         )
-    
+
     def get(
         self,
         uuid,
