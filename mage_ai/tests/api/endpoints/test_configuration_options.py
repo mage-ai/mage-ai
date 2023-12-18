@@ -56,11 +56,23 @@ build_list_endpoint_tests(
 @patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True)
 @patch('mage_ai.settings.repo.project_platform_activated', lambda: True)
 class ConfigurationOptionProjectPlatformAPIEndpointTest(
-    ProjectPlatformMixin,
     DBTMixin,
+    ProjectPlatformMixin,
     BaseAPIEndpointTest,
 ):
     pass
+
+
+def __assert_after_list2(self, result, **kwargs):
+    with open(os.path.join(
+        CURRENT_FILE_PATH,
+        'mocks',
+        'mock_dbt_configuration_options_project_platform.json',
+    )) as f:
+        self.assertEqual(
+            result,
+            json.loads(f.read()),
+        )
 
 
 build_list_endpoint_tests(
@@ -77,7 +89,7 @@ build_list_endpoint_tests(
         'resource_type',
         'uuid',
     ],
-    assert_after=__assert_after_list,
+    assert_after=__assert_after_list2,
     build_query=__build_query,
     patch_function_settings=[
         ('mage_ai.settings.models.configuration_option.project_platform_activated', lambda: True),

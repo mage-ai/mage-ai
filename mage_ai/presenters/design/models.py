@@ -16,6 +16,7 @@ from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.hash import combine_into
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.models import BaseDataClass
+from mage_ai.shared.path_fixer import remove_base_repo_directory_name
 
 
 @dataclass
@@ -140,7 +141,11 @@ class CustomDesign(BaseDataClass):
 
         return self.load(
             project=project,
-            uuid=(project.get('uuid') if project else None) or repo_path,
+            uuid=(project.get('uuid') if project else None) or (
+                remove_base_repo_directory_name(
+                    repo_path or os.path.dirname(file_path_to_use),
+                ) if file_path_to_use else None
+            ),
             **yaml_config,
         )
 
@@ -167,7 +172,8 @@ class CustomDesign(BaseDataClass):
         if not project_platform_activated() or not custom_design.custom_designs:
             return custom_design
 
-        active_project_uuid = (active_project_settings(get_default=True) or {}).get('uuid')
+        settings = (active_project_settings(get_default=True) or {})
+        active_project_uuid = settings.get('uuid')
         root_project_uuid = base_repo_name()
         if active_project_uuid == root_project_uuid:
             return custom_design
