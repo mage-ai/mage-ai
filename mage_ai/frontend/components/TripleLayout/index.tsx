@@ -71,6 +71,7 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeContentHeightOffset?: number;
   beforeDividerContrast?: boolean;
   beforeFooter?: any;
   beforeHeader?: any;
@@ -119,6 +120,7 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeContentHeightOffset,
   beforeDividerContrast,
   beforeFooter,
   beforeHeader,
@@ -402,6 +404,31 @@ function TripleLayout({
 
   const beforeFooterRef = useRef(null);
 
+  const beforeContentHeightOffsetUse: number = useMemo(() => {
+    let val = null;
+
+    const hasBeforeFooter = typeof beforeFooter !== 'undefined' && beforeFooter !== null;
+    const hasOffset =
+      typeof beforeContentHeightOffset !== 'undefined' && beforeContentHeightOffset !== null;
+
+    if (hasBeforeFooter || hasOffset) {
+      val = 0;
+
+      if (beforeFooter) {
+        val += beforeFooterRef?.current?.getBoundingClientRect()?.height || 0;
+      }
+
+      if (hasOffset) {
+        val += beforeContentHeightOffset || 0;
+      }
+    }
+
+    return val;
+  }, [
+    beforeFooter,
+    beforeContentHeightOffset,
+  ]);
+
   const beforeContent = useMemo(() => (
     <>
       {(setBeforeHidden || beforeHeader) && (
@@ -472,10 +499,7 @@ function TripleLayout({
 
       <BeforeInnerStyle
         contained={contained && !inline}
-        heightOffset={beforeFooter
-          ? beforeFooterRef?.current?.getBoundingClientRect()?.height
-          : null
-        }
+        heightOffset={beforeContentHeightOffsetUse}
         noScrollbarTrackBackground
         ref={refBeforeInner}
         verticalOffset={beforeHeader
@@ -503,6 +527,7 @@ function TripleLayout({
     </>
   ), [
     before,
+    beforeContentHeightOffsetUse,
     beforeFooter,
     beforeFooterRef,
     beforeHeader,

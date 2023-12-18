@@ -68,7 +68,7 @@ function Browser() {
     get(localStorageKeyBefore),
     UNIT * 40,
   ));
-  const [beforeHeightOffset, setBeforeHeightOffset] = useState(null);
+  const [beforeHeaderHeight, setBeforeHeaderHeight] = useState(null);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
   const { data } = api.cache_items.list({
@@ -85,10 +85,10 @@ function Browser() {
   ]);
 
   useEffect(() => {
-    setBeforeHeightOffset(refHeaderBefore?.current?.getBoundingClientRect()?.height);
+    setTimeout(() => {
+      setBeforeHeaderHeight(refHeaderBefore?.current?.getBoundingClientRect()?.height);
+    }, 1);
   }, []);
-
-  console.log(heightWindow)
 
   return (
     <>
@@ -126,6 +126,7 @@ function Browser() {
           </div>
         )}
         beforeHeightOffset={0}
+        beforeContentHeightOffset={beforeHeaderHeight}
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         contained
