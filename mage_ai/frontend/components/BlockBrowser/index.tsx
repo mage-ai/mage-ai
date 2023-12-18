@@ -33,6 +33,12 @@ import {
   Sun,
   Table as TableIcon,
 } from '@oracle/icons';
+import {
+  FileContextTab,
+  NAV_LINKS,
+  NavLinkUUIDEnum,
+  TABS_MAPPING,
+} from './FileBrowserNavigation/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -58,7 +64,6 @@ function Browser() {
     height: heightWindow,
     width: widthWindow,
   } = useWindowSize();
-  console.log(heightWindow)
 
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
@@ -85,6 +90,21 @@ function Browser() {
   const after = useMemo(() => {
 
   }, [
+  ]);
+
+  const navigateBack = useCallback(() => {
+    if (selectedLink) {
+      if (NavLinkUUIDEnum.ALL_BLOCKS === selectedLink?.uuid) {
+        setSelectedLink(null);
+        setSelectedTab(TABS_MAPPING[FileContextTab.FILES]);
+      } else {
+        setSelectedLink(NAV_LINKS?.[0]);
+      }
+    }
+  }, [
+    selectedLink,
+    setSelectedLink,
+    setSelectedTab,
   ]);
 
   useEffect(() => {
@@ -121,12 +141,11 @@ function Browser() {
           />
         )}
         beforeHeader={(
-          <div ref={refHeaderBefore}>
-            <FileBrowserNavigationHeader
-              selectedTab={selectedTab}
-              setSelectedTab={setSelectedTab}
-            />
-          </div>
+          <FileBrowserNavigationHeader
+            ref={refHeaderBefore}
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
+          />
         )}
         beforeHeightOffset={0}
         beforeContentHeightOffset={beforeHeaderHeight}
@@ -140,7 +159,8 @@ function Browser() {
         // mainContainerHeader={subheaderEl}
         mainContainerHeader={(
           <BrowserHeader
-            blockType={selectedLink?.uuid as BlockTypeEnum}
+            navigateBack={navigateBack}
+            selectedLink={selectedLink}
             selectedTab={selectedTab}
           />
         )}

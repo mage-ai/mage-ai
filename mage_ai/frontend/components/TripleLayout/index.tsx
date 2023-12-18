@@ -283,8 +283,6 @@ function TripleLayout({
   const mainWidth =
     `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
 
-  console.log('WTFFFFFFFFFFFF', beforeWidthFinal, afterWidthFinal, leftOffset);
-
   const hasAfterNavigationItems = useMemo(() => afterNavigationItems?.length >= 1, [
     afterNavigationItems,
   ]);

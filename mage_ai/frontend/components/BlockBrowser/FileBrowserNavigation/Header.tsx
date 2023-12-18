@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import FlexContainer from '@oracle/components/FlexContainer';
+import { HeaderStyle } from '../BrowserHeader/index.style';
 import { getTabs } from './constants';
 
 type FileBrowserNavigationHeaderProps = {
@@ -11,7 +13,7 @@ type FileBrowserNavigationHeaderProps = {
 function FileBrowserNavigationHeader({
   selectedTab,
   setSelectedTab,
-}: FileBrowserNavigationHeaderProps) {
+}: FileBrowserNavigationHeaderProps, ref) {
   const tabs = getTabs();
 
   useEffect(() => {
@@ -19,17 +21,18 @@ function FileBrowserNavigationHeader({
   }, []);
 
   return (
-    <>
-      <ButtonTabs
-        large
-        onClickTab={tab => setSelectedTab?.(tab)}
-        selectedTabUUID={selectedTab?.uuid}
-        tabs={tabs}
-        underlineStyle
-      />
-    </>
+    <HeaderStyle ref={ref}>
+      <FlexContainer alignItems="flex-end" fullHeight>
+        <ButtonTabs
+          large
+          onClickTab={tab => setSelectedTab?.(tab)}
+          selectedTabUUID={selectedTab?.uuid}
+          tabs={tabs}
+          underlineStyle
+        />
+      </FlexContainer>
+    </HeaderStyle>
   );
 }
 
-
-export default FileBrowserNavigationHeader;
+export default React.forwardRef(FileBrowserNavigationHeader);

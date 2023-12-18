@@ -4,9 +4,8 @@ import BlockNavigation from '@components/CustomTemplates/BrowseTemplates/Navigat
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import useFiles from '@utils/models/file/useFiles';
-import { ALL_BLOCK_TYPES } from '@interfaces/BlockType';
-import { FileContextTab } from './constants';
-import { NAV_LINKS, NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
+import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
+import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { useError } from '@context/Error';
 
@@ -31,11 +30,11 @@ function FileBrowserNavigation({
     uuid: 'FileBrowserNavigation',
   });
 
-  const navLinks = NAV_LINKS?.filter(({ uuid }) => uuid in ALL_BLOCK_TYPES);
-
   useEffect(() => {
-    setSelectedLink?.(prev => prev ? prev : navLinks?.[0]);
-  }, []);
+    if (FileContextTab.BLOCKS === selectedTab?.uuid) {
+      setSelectedLink?.(prev => prev ? prev : NAV_LINKS?.[0]);
+    }
+  }, [selectedTab]);
 
   return (
     <>
@@ -53,7 +52,7 @@ function FileBrowserNavigation({
 
       {FileContextTab.BLOCKS === selectedTab?.uuid && (
         <BlockNavigation
-          navLinks={navLinks}
+          navLinks={NAV_LINKS}
           selectedLink={selectedLink}
           setSelectedLink={setSelectedLink}
         />
