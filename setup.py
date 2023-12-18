@@ -93,8 +93,8 @@ setuptools.setup(
             'sshtunnel==0.4.0',
         ],
         'qdrant': [
-            'qdrant-client>=1.6.9',
-            'sentence-transformers>=2.2.2',
+            'qdrant-client==1.6.9',
+            'sentence-transformers==2.2.2',
         ],
         'redshift': [
             'boto3==1.26.60',
@@ -181,10 +181,10 @@ setuptools.setup(
             'pydruid==0.6.5',
             'pymongo==4.3.3',
             'pyodbc==4.0.35',
-            # 'qdrant-client>=1.6.9',
+            'qdrant-client==1.6.9',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',
-            # 'sentence-transformers>=2.2.2',
+            'sentence-transformers==2.2.2',
             'snowflake-connector-python==3.2.1',
             'sshtunnel==0.4.0',
             'stomp.py==8.1.0',
