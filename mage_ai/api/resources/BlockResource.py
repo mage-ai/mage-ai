@@ -141,7 +141,7 @@ class BlockResource(GenericResource):
                 metrics = block_run.metrics
 
                 # If block is dynamic child and the original block’s block run, skip.
-                if is_dynamic_block_child(block) and block.uuid == block_run_block_uuid:
+                if block and is_dynamic_block_child(block) and block.uuid == block_run_block_uuid:
                     # Show the block if no other dynamic child block runs have been created:
                     if dynamically_created_child_block_runs(pipeline, block, block_runs):
                         continue
@@ -799,7 +799,7 @@ class BlockResource(GenericResource):
             if payload.get('converted_from'):
                 content = convert_to_block(block, content)
 
-            block.update_content(content)
+            await block.update_content_async(content)
 
         if pipeline:
             cache = await BlockCache.initialize_cache()

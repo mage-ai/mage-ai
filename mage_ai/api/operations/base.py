@@ -42,6 +42,7 @@ from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.settings import REQUIRE_USER_PERMISSIONS
 from mage_ai.shared.array import flatten
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.shared.strings import classify
 
@@ -294,8 +295,7 @@ class BaseOperation():
         resource_parent: Any = None,
         resources: List[Dict] = None,
     ) -> List[Hook]:
-        project = Project()
-        if not project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS):
+        if not Project.is_feature_enabled_in_root_or_active_project(FeatureUUID.GLOBAL_HOOKS):
             return None
 
         operation_types = [operation_type]
@@ -325,9 +325,17 @@ class BaseOperation():
                 resource_parent_id=self.resource_parent_id,
                 resource_parent_type=self.__resource_parent_entity_name(),
                 resources=resources,
-                user=dict(id=self.user.id) if self.user else None,
+                user=dict(
+                    avatar=self.user.avatar,
+                    first_name=self.user.first_name,
+                    id=self.user.id,
+                    last_name=self.user.last_name,
+                    username=self.user.username,
+                ) if self.user else None,
             )
-        except Exception:
+        except Exception as err:
+            if is_debug():
+                raise err
             hooks = []
 
         try:
@@ -726,7 +734,12 @@ class BaseOperation():
             parent_resource_class = self.__resource_parent_class()
             if parent_resource_class:
                 try:
-                    model = parent_resource_class.get_model(self.resource_parent_id)
+                    model = parent_resource_class.get_model(
+                        self.resource_parent_id,
+                        query=self.query,
+                        resource_class=self.__resource_class(),
+                        resource_id=self.pk,
+                    )
                     if inspect.isawaitable(model):
                         model = await model
                     return model

@@ -315,3 +315,32 @@ class PipelineResourceTest(BaseApiTestCase):
                 await PipelineResource(self.pipeline1, None, None).process_delete()
 
                 mock_remove_model.assert_called_once()
+
+    async def test_get_model(self):
+        model = await PipelineResource.get_model(self.pipeline1.uuid)
+        self.assertEqual(model.uuid, self.pipeline1.uuid)
+
+    async def test_get_model_all_projects(self):
+        with patch(
+            'mage_ai.api.resources.PipelineResource.project_platform_activated',
+            lambda: True,
+        ):
+            with patch(
+                'mage_ai.api.resources.PipelineResource.get_pipeline_from_platform_async',
+            ) as mock:
+                await PipelineResource.get_model(self.pipeline1.uuid)
+                mock.assert_called_once_with(
+                    self.pipeline1.uuid,
+                )
+
+    async def test_member(self):
+        with patch(
+            'mage_ai.api.resources.PipelineResource.project_platform_activated',
+            lambda: True,
+        ):
+            with patch(
+                'mage_ai.api.resources.PipelineResource.Pipeline.get_async',
+                wraps=Pipeline.get_async,
+            ) as mock:
+                await PipelineResource.member(self.pipeline1.uuid, None)
+                mock.assert_called_once_with(self.pipeline1.uuid, all_projects=True)

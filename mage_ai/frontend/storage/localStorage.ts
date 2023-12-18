@@ -12,6 +12,7 @@ export const LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS = 'data_output_block_uuid
 const LOCAL_STORAGE_KEY_OBJECT_COUNTS = 'object_counts';
 export const LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING = 'hide_kernel_warning';
 export const LOCAL_STORAGE_KEY_OAUTH_STATE = 'oauth_state';
+export const LOCAL_STORAGE_KEY_FOLDERS_STATE = 'folders_state';
 
 function getCustomCodeKey(featureSetId: string) {
   return `${LOCAL_STORAGE_KEY_CUSTOM_CODE}_${featureSetId}`;
@@ -35,6 +36,18 @@ export function get(key, value = null) {
   }
 
   return value;
+}
+
+// Has to be an object
+export function getSetUpdate(key, value) {
+  const combined = {
+    ...(get(key) || {}),
+    ...value,
+  };
+
+  set(key, combined);
+
+  return combined;
 }
 
 export function remove(key) {

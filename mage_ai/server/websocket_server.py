@@ -56,6 +56,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     is_disable_pipeline_edit_access,
 )
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.hash import merge_dict
@@ -227,7 +228,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         kernel_name = message.get('kernel_name', get_active_kernel_name())
         pipeline = None
         if pipeline_uuid:
-            pipeline = Pipeline.get(pipeline_uuid, get_repo_path())
+            pipeline = Pipeline.get(
+                pipeline_uuid,
+                repo_path=get_repo_path(),
+                all_projects=project_platform_activated(),
+            )
 
         # Add default trigger runtime variables so the code can run successfully.
         global_vars = {}
@@ -441,7 +446,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     kernel_name=kernel_name,
                     output_messages_to_logs=output_messages_to_logs,
                     pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=get_repo_config().to_dict(remote=remote_execution),
+                    repo_config=pipeline.repo_config.to_dict(remote=remote_execution),
+                    # repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_incomplete_upstream=run_incomplete_upstream,
                     # The UI can execute a block and send run_settings to control the behavior
                     # of the block run while executing it from the notebook.

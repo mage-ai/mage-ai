@@ -3,7 +3,9 @@ import { PipelineSettingsType } from './PipelineType';
 export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
   COMPUTE_MANAGEMENT = 'compute_management',
+  CUSTOM_DESIGN = 'custom_design',
   DATA_INTEGRATION_IN_BATCH_PIPELINE = 'data_integration_in_batch_pipeline',
+  DBT_V2 = 'dbt_v2',
   GLOBAL_HOOKS = 'global_hooks',
   INTERACTIONS = 'interactions',
   NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view',
@@ -65,7 +67,11 @@ export default interface ProjectType {
   openai_api_key?: string;
   pipelines?: ProjectPipelinesType;
   project_uuid?: string;
+  projects?: {
+    [name: string]: string;
+  };
   remote_variables_dir?: string;
+  root_project?: boolean;
   spark_config?: SparkConfigType;
   version?: string;
 }

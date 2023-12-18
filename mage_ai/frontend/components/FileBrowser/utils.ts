@@ -1,6 +1,7 @@
 import * as osPath from 'path';
 
 import BlockType, {
+  ALL_BLOCK_TYPES,
   BlockTypeEnum,
   BLOCK_TYPES,
   DRAGGABLE_BLOCK_TYPES,
@@ -17,6 +18,7 @@ import FileType, {
   METADATA_FILENAME,
 } from '@interfaces/FileType';
 import { cleanName, singularize } from '@utils/string';
+import { getBlockType } from '@components/FileEditor/utils';
 import { prependArray, removeAtIndex } from '@utils/array';
 
 export function getFullPath(
@@ -51,6 +53,35 @@ export function getFullPathWithoutRootFolder(
   return removeRootFromFilePath(fullPath);
 }
 
+export function validBlockFileExtension(filename: string): string {
+  const extensions = [
+    `\\.${FileExtensionEnum.PY}`,
+    `\\.${FileExtensionEnum.R}`,
+    `\\.${FileExtensionEnum.SQL}`,
+    `\\.${FileExtensionEnum.YAML}`,
+    `\\.${FileExtensionEnum.YML}`,
+  ].join('|');
+  const extensionRegex = new RegExp(`${extensions}$`);
+
+  const match = filename.match(extensionRegex)
+
+  return match?.length >= 1 ? match[0].replace('.', '') : null;
+}
+
+export function validBlockFromFilename(filename: string, blockType: BlockTypeEnum): boolean {
+  const fileExtension = validBlockFileExtension(filename);
+
+  return ![
+    '__init__.py',
+  ].includes(filename) && (
+    BlockTypeEnum.DBT !== blockType || ![
+      FileExtensionEnum.YAML,
+      FileExtensionEnum.YML,
+      // @ts-ignore
+    ].includes(fileExtension)
+  );
+}
+
 export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
@@ -64,32 +95,9 @@ export function getBlockFromFile(
     return null;
   }
 
-  let blockType;
-  // This happens when you open a file from the file browser and edit it on the notebook UI
-  if (parts.length === 1) {
-    parts = file?.path?.split(osPath.sep);
-    if (parts) {
-      if (parts[0] === BlockTypeEnum.CUSTOM) {
-        blockType = parts[0];
-      } else {
-        blockType = singularize(parts[0] || '');
-      }
-    }
-  } else {
-    // This assumes path default_repo/[block_type]s/..
-    if (parts[1] === BlockTypeEnum.CUSTOM) {
-      blockType = parts[1];
-    } else {
-      const v = parts[1];
-      if (BlockTypeEnum.DBT === v) {
-        blockType = v;
-      } else {
-        blockType = singularize(v || '');
-      }
-    }
-  }
+  let blockType = getBlockType(parts);
 
-  if (!parts || BlockTypeEnum.DBT === blockType) {
+  if (!parts) {
     return null;
   }
 
@@ -102,17 +110,8 @@ export function getBlockFromFile(
     fileName = parts[parts.length - 1];
   }
 
-  const extensions = [
-    `\\.${FileExtensionEnum.PY}`,
-    `\\.${FileExtensionEnum.R}`,
-    `\\.${FileExtensionEnum.SQL}`,
-    `\\.${FileExtensionEnum.YAML}`,
-    `\\.${FileExtensionEnum.YML}`,
-  ].join('|');
-  const extensionRegex = new RegExp(`${extensions}$`);
-
   const blockTypesToInclude = draggableBlockTypesOnly ? DRAGGABLE_BLOCK_TYPES : BLOCK_TYPES;
-  if (blockTypesToInclude.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
+  if (blockTypesToInclude.concat(BlockTypeEnum.DBT).includes(blockType) && validBlockFileExtension(fileName)) {
     const idx = fileName.lastIndexOf('.');
     const extension = fileName.slice(idx + 1);
 

@@ -2,6 +2,8 @@ from enum import Enum
 
 from mage_ai.authentication.permissions.constants import EntityName
 
+GLOBAL_HOOKS_FILENAME = 'global_hooks.yaml'
+
 DISABLED_RESOURCE_TYPES = [
     EntityName.ALL,
     EntityName.ALL_EXCEPT_RESERVED,
@@ -40,6 +42,7 @@ class HookOutputKey(str, Enum):
 
 class HookInputKey(str, Enum):
     HOOK = 'hook'
+    PROJECT = 'project'
     RESOURCE_ID = 'resource_id'
     RESOURCE_PARENT = 'resource_parent'
     RESOURCE_PARENT_ID = 'resource_parent_id'
@@ -52,6 +55,7 @@ VALID_KEYS_FOR_INPUT_OUTPUT_DATA_RESTRICTED = [key.value for key in HookOutputKe
 ]
 VALID_KEYS_FOR_INPUT_OUTPUT_DATA_UNRESTRICTED = [
     HookInputKey.HOOK.value,
+    HookInputKey.PROJECT.value,
     HookInputKey.RESOURCE_ID.value,
     HookInputKey.RESOURCE_PARENT_ID.value,
     HookInputKey.RESOURCE_PARENT_TYPE.value,

@@ -57,6 +57,7 @@ class BlockExecutorTest(BaseApiTestCase):
 
         for hook in hooks_match[1:]:
             hook.pipeline_settings = dict(uuid=self.pipeline1.uuid)
+            hook.project = dict(uuid='mage_platform')
 
         pipeline_schedule = PipelineSchedule.create(
             name=self.faker.unique.name(),
@@ -131,5 +132,8 @@ class BlockExecutorTest(BaseApiTestCase):
                         create_option = find(lambda tup, hook=hook: tup[0] == hook.uuid, arr)
                         metrics = create_option[1]['metrics']
                         self.assertEqual(metrics['downstream_blocks'], [blocks[0].uuid])
-                        self.assertEqual(metrics['hook'], hook.to_dict(include_all=True))
+                        self.assertEqual(
+                            metrics['hook'],
+                            hook.to_dict(include_all=True, include_project=True),
+                        )
                         self.assertEqual(metrics['hook_variables'], hook_variables)

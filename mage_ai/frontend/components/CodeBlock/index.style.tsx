@@ -120,7 +120,10 @@ export function getColorsForBlockType(
     || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {
     accent = (theme || dark).content.default;
     accentLight = (theme || dark).accent.contentDefaultTransparent;
-  } else if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType && !blockColor) {
+  } else if ([
+    BlockTypeEnum.CHART,
+    BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+  ].includes(blockType) && !blockColor) {
     accent = (theme || dark).monotone.white;
     accentLight = (theme || dark).monotone.whiteTransparent;
   }

@@ -940,6 +940,7 @@ function PipelineListPage() {
       }}
       // @ts-ignore
       query={query}
+      resetLimitOnFilterApply
       searchProps={{
         onChange: setSearchText,
         value: searchText,
@@ -959,6 +960,7 @@ function PipelineListPage() {
     router,
     searchText,
     selectedPipeline,
+    setSearchText,
     showInputModal,
     tags,
   ]);
@@ -1649,7 +1651,7 @@ function PipelineListPage() {
             const val = (idx + 1) * ROW_LIMIT;
 
             return (
-              <option value={val}>
+              <option key={val} value={val}>
                 {val}
               </option>
             );
@@ -1667,7 +1669,7 @@ function PipelineListPage() {
       dataUse = dataPipelinesFromHistory;
     }
     const count = dataUse?.metadata?.count || 0;
-    const limit = query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT
+    const limit = query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT;
     const offset = query?.[MetaQueryEnum.OFFSET] || 0;
     const totalPages = Math.ceil(count / limit);
 

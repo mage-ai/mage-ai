@@ -21,6 +21,7 @@ from tornado.options import options
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.dbt.cache import DBTCache
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
@@ -33,7 +34,6 @@ from mage_ai.data_preparation.repo_manager import (
     get_cluster_type,
     get_project_type,
     get_project_uuid,
-    get_variables_dir,
     init_project_uuid,
     init_repo,
 )
@@ -101,9 +101,11 @@ from mage_ai.settings.repo import (
     MAGE_CLUSTER_TYPE_ENV_VAR,
     MAGE_PROJECT_TYPE_ENV_VAR,
     get_repo_name,
+    get_variables_dir,
     set_repo_path,
 )
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import chmod
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -338,7 +340,7 @@ def make_app(template_dir: str = None, update_routes: bool = False):
         (r'/global-hooks', MainPageHandler),
         (r'/global-hooks/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/templates', MainPageHandler),
-        (r'/templates/(?P<uuid>\w+)', MainPageHandler),
+        (r'/templates/(?P<uuid>[\w\-\%2f\.]+)', MainPageHandler),
         (r'/version-control', MainPageHandler),
     ]
 
@@ -530,12 +532,22 @@ async def main(
     logger.info('Initializing block action object cache.')
     await BlockActionObjectCache.initialize_cache(replace=True)
 
-    project_model = Project()
-    if project_model and \
-            project_model.spark_config and \
-            project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
+    project_model = Project(root_project=True)
+    if project_model:
+        if project_model.spark_config and \
+                project_model.is_feature_enabled(FeatureUUID.COMPUTE_MANAGEMENT):
 
-        Application.clear_cache()
+            Application.clear_cache()
+
+        if project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+            try:
+                logger.info('Initializing dbt cache.')
+                dbt_cache = await DBTCache.initialize_cache_async(replace=True, root_project=True)
+                logger.info(f'dbt cached in {dbt_cache.file_path}')
+            except Exception as err:
+                print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                if is_debug():
+                    raise err
 
     try:
         from mage_ai.services.ssh.aws.emr.models import create_tunnel
@@ -599,7 +611,7 @@ def start_server(
             project_uuid=project_uuid,
         )
     set_repo_path(project)
-    init_project_uuid(overwrite_uuid=project_uuid)
+    init_project_uuid(overwrite_uuid=project_uuid, root_project=True)
 
     asyncio.run(UsageStatisticLogger().project_impression())
 

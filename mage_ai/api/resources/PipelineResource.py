@@ -52,6 +52,8 @@ from mage_ai.orchestration.pipeline_scheduler import (
 )
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
+from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform.utils import get_pipeline_from_platform_async
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
@@ -227,7 +229,9 @@ class PipelineResource(BaseResource):
                 filter(
                     a.pipeline_uuid.in_(pipeline_uuids),
                     or_(
-                        a.repo_path == get_repo_path(),
+                        a.repo_path.in_(Project().repo_path_for_database_query(
+                            'pipeline_schedules',
+                        )),
                         a.repo_path.is_(None),
                     )
                 )
@@ -423,14 +427,29 @@ class PipelineResource(BaseResource):
 
     @classmethod
     @safe_db_query
-    async def get_model(self, pk):
-        uuid = urllib.parse.unquote(pk)
-        return await Pipeline.get_async(uuid)
+    async def get_model(
+        self,
+        pk,
+        query: Dict = None,
+        resource_class=None,
+        resource_id: str = None,
+        **kwargs,
+    ):
+        all_projects = project_platform_activated()
+
+        pipeline_uuid = urllib.parse.unquote(pk)
+
+        if all_projects:
+            return await get_pipeline_from_platform_async(
+                pipeline_uuid,
+            )
+
+        return await Pipeline.get_async(pipeline_uuid, all_projects=all_projects)
 
     @classmethod
     @safe_db_query
     async def member(self, pk, user, **kwargs):
-        pipeline = await Pipeline.get_async(pk)
+        pipeline = await Pipeline.get_async(pk, all_projects=project_platform_activated())
 
         api_operation_action = kwargs.get('api_operation_action', None)
         if api_operation_action != DELETE:

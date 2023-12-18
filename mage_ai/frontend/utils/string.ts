@@ -140,14 +140,20 @@ export function removeUnderscore(string) {
 
 export function singularize(string) {
   const { length } = string;
+
   if (string.slice(length - 3, length) === 'ies') {
     return `${string.slice(0, length - 3)}y`;
   }
+
   if (string.slice(length - 2, length) === 'es' && string.slice(length - 3, length) !== 'ces') {
     return string.slice(0, length - 2);
   }
 
-  return string.slice(0, length - 1);
+  if (string[length - 1] === 's') {
+    return string.slice(0, length - 1);
+  }
+
+  return string;
 }
 
 export function titleize(word) {

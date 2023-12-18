@@ -28,7 +28,7 @@ import ColumnScroller, { StartDataType } from './ColumnScroller';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
-import FileType, { FileExtensionEnum } from '@interfaces/FileType';
+import FileType, { BlockFolderNameEnum, FileExtensionEnum } from '@interfaces/FileType';
 import GlobalDataProductType from '@interfaces/GlobalDataProductType';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import InteractionType from '@interfaces/InteractionType';
@@ -41,6 +41,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import useStatus from '@utils/models/status/useStatus';
 import {
   ANIMATION_DURATION,
   OverlayStyle,
@@ -81,12 +82,14 @@ import { SIDE_BY_SIDE_VERTICAL_PADDING } from '@components/CodeBlock/index.style
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
+import { buildAddBlockRequestPayload } from '@components/FileEditor/utils';
 import { buildBlockRefKey } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { isInputElement } from '@context/shared/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
+import { removeRootFromFilePath } from '@components/FileBrowser/utils';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
@@ -257,11 +260,7 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  // const startTime = performance.now();
-  // useEffect(() => {
-  //   const duration = performance.now() - startTime;
-  //   console.log('PipelineDetail render', duration);
-  // }, []);
+  const { status } = useStatus();
 
   const containerRef = useRef(null);
   const searchTextInputRef = useRef(null);
@@ -420,6 +419,7 @@ function PipelineDetail({
       project,
     ],
   );
+
   const { data: dataBlockTemplates } = api.block_templates.list({
     show_all: useV2AddNewBlock ? true : false,
   }, {
@@ -1051,6 +1051,84 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setSelectedStream,
   ]);
 
+  const addBlockFromFilePath = useCallback((filePath: string) => {
+    // filePath: default_repo/dbt/demo/models/example/model_1.sql
+    // finalFilePath: demo/models/example/model_1.sql
+    const projectPath =
+      `${status?.repo_path_relative_root}${path.sep}${BlockFolderNameEnum.DBT}${path.sep}`;
+    let finalFilePath = filePath;
+
+    // Only remove the project name and dbt folder from the file path if its in the current
+    // active project’s directory.
+    if (finalFilePath?.startsWith(projectPath)) {
+      finalFilePath = finalFilePath?.replace(projectPath, '');
+    }
+
+    if (creatingNewDBTModel) {
+      let blockName = addUnderscores(dbtModelName || randomNameGenerator());
+      const sqlExtension = `.${FileExtensionEnum.SQL}`;
+      if (blockName.endsWith(sqlExtension)) {
+        blockName = blockName.slice(0, -4);
+      }
+      // finalFilePath: demo/models/example/model_1.sql
+      finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
+    }
+
+    const newBlock: BlockRequestPayloadType = {
+      configuration: {
+        file_path: finalFilePath,
+        file_source: {
+          path: filePath,
+        },
+        limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
+      },
+      language: BlockLanguageEnum.SQL,
+      name: removeExtensionFromFilename(finalFilePath),
+      type: BlockTypeEnum.DBT,
+      // Used in project platform
+    };
+
+    if (creatingNewDBTModel) {
+      newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
+`;
+    }
+
+    const isAddingFromBlock =
+      typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
+    const block = blocks[isAddingFromBlock ? blocks.length - 1 : lastBlockIndex];
+    const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+
+    addNewBlockAtIndex({
+        ...newBlock,
+        upstream_blocks: upstreamBlocks,
+      }, (isAddingFromBlock
+        ? numberOfBlocks
+        : lastBlockIndex + 1
+      ) - (sideBySideEnabled ? 1 : 0),
+      setSelectedBlock,
+    );
+
+    closeAddDBTModelPopup();
+    setTextareaFocused(true);
+  }, [
+    addNewBlockAtIndex,
+    blocks,
+    closeAddDBTModelPopup,
+    creatingNewDBTModel,
+    dbtModelName,
+    lastBlockIndex,
+    numberOfBlocks,
+    setSelectedBlock,
+    setTextareaFocused,
+    sideBySideEnabled,
+    status,
+  ]);
+
+  const { data: dataFilesSQL, mutate: fetchFilesSQL } = api.files.list({
+    pattern: encodeURIComponent('\\.sql$'),
+  });
+  const filesSQL = useMemo(() => dataFilesSQL?.files || [], [dataFilesSQL]);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <PipelineContainerStyle ref={containerRef}>
@@ -1109,51 +1187,12 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             blocks={blocks}
             creatingNewDBTModel={creatingNewDBTModel}
             dbtModelName={dbtModelName}
-            files={files}
+            files={filesSQL}
             onClose={closeAddDBTModelPopup}
-            onOpenFile={(filePath: string) => {
-              let finalFilePath = filePath;
-              if (creatingNewDBTModel) {
-                let blockName = addUnderscores(dbtModelName || randomNameGenerator());
-                const sqlExtension = `.${FileExtensionEnum.SQL}`;
-                if (blockName.endsWith(sqlExtension)) {
-                  blockName = blockName.slice(0, -4);
-                }
-                finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
-              }
-
-              const newBlock: BlockRequestPayloadType = {
-                configuration: {
-                  file_path: finalFilePath,
-                  limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
-                },
-                language: BlockLanguageEnum.SQL,
-                name: removeExtensionFromFilename(finalFilePath),
-                type: BlockTypeEnum.DBT,
-              };
-              if (creatingNewDBTModel) {
-                newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
-`;
-              }
-
-              const isAddingFromBlock =
-                typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
-              const block = blocks[isAddingFromBlock ? blocks.length - 1 : lastBlockIndex];
-              const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
-
-              addNewBlockAtIndex({
-                  ...newBlock,
-                  upstream_blocks: upstreamBlocks,
-                }, (isAddingFromBlock
-                  ? numberOfBlocks
-                  : lastBlockIndex + 1
-                ) - (sideBySideEnabled ? 1 : 0),
-                setSelectedBlock,
-              );
-
-              closeAddDBTModelPopup();
-              setTextareaFocused(true);
-            }}
+            onOpenFile={addBlockFromFilePath}
+            onSelectBlockFile={(_a, _b, _c, {
+              path,
+            }) => addBlockFromFilePath(path)}
             setDbtModelName={setDbtModelName}
           />
         </ClickOutside>

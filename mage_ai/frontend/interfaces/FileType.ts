@@ -1,5 +1,9 @@
 import { BlockLanguageEnum } from './BlockType';
 
+export enum BlockFolderNameEnum {
+  DBT = 'dbt',
+}
+
 export enum FileExtensionEnum {
   CSV = 'csv',
   JSON = 'json',
@@ -49,6 +53,7 @@ export default interface FileType {
   name?: string;
   parent?: FileType;
   path?: string;
+  uuid?: string;
 }
 
 export const FOLDER_NAME_CHARTS = 'charts';

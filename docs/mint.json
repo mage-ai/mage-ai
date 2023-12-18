@@ -267,7 +267,8 @@
                 "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis",
-                "streaming/sources/nats"
+                "streaming/sources/nats",
+                "streaming/sources/rabbitmq"
               ]
             },
             {
@@ -355,6 +356,7 @@
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
+                "integrations/databases/Qdrant",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",

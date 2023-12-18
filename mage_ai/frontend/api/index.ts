@@ -32,12 +32,15 @@ export const BLOCK_LAYOUT_ITEMS: 'block_layout_items' = 'block_layout_items';
 export const BLOCK_OUTPUTS = 'block_outputs';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const CACHE_ITEMS: 'cache_items' = 'cache_items';
 export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const COMPUTE_CLUSTERS: 'compute_clusters' = 'compute_clusters';
 export const COMPUTE_CONNECTIONS: 'compute_connections' = 'compute_connections';
 export const COMPUTE_SERVICES: 'compute_services' = 'compute_services';
+export const CONFIGURATION_OPTIONS: 'configuration_options' = 'configuration_options';
+export const CUSTOM_DESIGNS: 'custom_designs' = 'custom_designs';
 export const CUSTOM_TEMPLATES: 'custom_templates' = 'custom_templates';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
@@ -104,7 +107,7 @@ export const WIDGETS: 'widgets' = 'widgets';
 export const WORKSPACES: 'workspaces' = 'workspaces';
 
 // Update this as routes get added
-const RESOURCES: any[][] = [
+const RESOURCES_PAIRS_ARRAY: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
   [AUTOCOMPLETE_ITEMS],
   [BACKFILLS, PIPELINES],
@@ -119,12 +122,15 @@ const RESOURCES: any[][] = [
   [BLOCK_OUTPUTS],
   [BLOCK_RUNS],
   [BLOCK_TEMPLATES],
+  [CACHE_ITEMS],
   [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [COMPUTE_CLUSTERS, COMPUTE_SERVICES],
   [COMPUTE_CONNECTIONS, COMPUTE_SERVICES],
   [COMPUTE_SERVICES],
+  [CONFIGURATION_OPTIONS, PIPELINES],
+  [CUSTOM_DESIGNS],
   [CUSTOM_TEMPLATES],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
@@ -197,9 +203,14 @@ const RESOURCES: any[][] = [
   [WORKSPACES],
 ];
 
+// @ts-ignore
+export const RESOURCES = RESOURCES_PAIRS_ARRAY.reduce((keys: string[]) => ({
+  [keys[0]]: keys,
+}), {});
+
 const apis: any = {};
 
-RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) => {
+RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, swrOptions]) => {
   if (!apis[resource]) {
     apis[resource] = {
       deleteAsync: async (id: string) => {

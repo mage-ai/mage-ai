@@ -23,8 +23,35 @@ class FileResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query, meta, user, **kwargs):
+        pattern = query.get('pattern', [None])
+        if pattern:
+            pattern = pattern[0]
+        if pattern:
+            pattern = urllib.parse.unquote(pattern)
+
+        exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
+        if exclude_dir_pattern:
+            exclude_dir_pattern = exclude_dir_pattern[0]
+        if exclude_dir_pattern:
+            exclude_dir_pattern = urllib.parse.unquote(exclude_dir_pattern)
+        elif exclude_dir_pattern is None:
+            exclude_dir_pattern = r'^\.|\/\.'
+
+        exclude_pattern = query.get('exclude_pattern', [None])
+        if exclude_pattern:
+            exclude_pattern = exclude_pattern[0]
+        if exclude_pattern:
+            exclude_pattern = urllib.parse.unquote(exclude_pattern)
+        elif exclude_pattern is None:
+            exclude_pattern = r'^\.|\/\.'
+
         return self.build_result_set(
-            [File.get_all_files(get_repo_path())],
+            [File.get_all_files(
+                get_repo_path(root_project=True),
+                exclude_dir_pattern=exclude_dir_pattern,
+                exclude_pattern=exclude_pattern,
+                pattern=pattern,
+            )],
             user,
             **kwargs,
         )
@@ -35,7 +62,7 @@ class FileResource(GenericResource):
         dir_path = payload['dir_path']
         pipeline_zip = payload.get('pipeline_zip', False)
         overwrite = payload.get('overwrite', False)
-        repo_path = get_repo_path()
+        repo_path = get_repo_path(root_project=True)
         content = None
 
         if 'file' in payload:
@@ -53,7 +80,7 @@ class FileResource(GenericResource):
             else:
                 file_path = File(filename, dir_path, repo_path).file_path
                 ensure_file_is_in_project(file_path)
-                file = File.create(
+                file = await File.create_async(
                     filename,
                     dir_path,
                     repo_path=repo_path,
@@ -99,7 +126,7 @@ class FileResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def get_model(self, pk):
+    def get_model(self, pk, **kwargs):
         file_path = urllib.parse.unquote(pk)
         return File.from_path(file_path, get_repo_path())
 

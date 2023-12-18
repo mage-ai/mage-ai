@@ -115,6 +115,10 @@ export interface ConfigurationDataIntegrationType {
   inputs?: ConfigurationDataIntegrationInputsType;
 }
 
+interface FileSourceType {
+  path: string;
+}
+
 export interface ConfigurationType {
   [CONFIG_KEY_DATA_PROVIDER]?: string;
   [CONFIG_KEY_DATA_PROVIDER_DATABASE]?: string;
@@ -142,6 +146,7 @@ export interface ConfigurationType {
   };
   dynamic?: boolean;
   file_path?: string;
+  file_source?: FileSourceType;
   global_data_product?: {
     outdated_after?: GlobalDataProductOutdatedAfterType;
     outdated_starting_at?: GlobalDataProductOutdatedStartingAtType;

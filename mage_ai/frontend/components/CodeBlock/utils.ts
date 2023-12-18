@@ -279,7 +279,6 @@ export const getMoreActionsItems = (
       if (!isDBT
         && BlockTypeEnum.GLOBAL_DATA_PRODUCT !== blockType
         && savePipelineContent
-        && (dynamic || otherDynamicBlocks.length === 0)
       ) {
         items.push({
           label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',

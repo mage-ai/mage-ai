@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.50',
+    version='0.9.54',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -91,6 +91,10 @@ setuptools.setup(
             'psycopg2==2.9.3',
             'psycopg2-binary==2.9.3',
             'sshtunnel==0.4.0',
+        ],
+        'qdrant': [
+            'qdrant-client>=1.6.9',
+            'sentence-transformers>=2.2.2',
         ],
         'redshift': [
             'boto3==1.26.60',
@@ -177,8 +181,10 @@ setuptools.setup(
             'pydruid==0.6.5',
             'pymongo==4.3.3',
             'pyodbc==4.0.35',
+            # 'qdrant-client>=1.6.9',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',
+            # 'sentence-transformers>=2.2.2',
             'snowflake-connector-python==3.2.1',
             'sshtunnel==0.4.0',
             'stomp.py==8.1.0',

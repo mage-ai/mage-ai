@@ -140,7 +140,9 @@ class BlockExecutor:
         """
         block_run = None
 
-        if self.project.is_feature_enabled(FeatureUUID.GLOBAL_HOOKS) and not self.block:
+        if Project.is_feature_enabled_in_root_or_active_project(
+            FeatureUUID.GLOBAL_HOOKS,
+        ) and not self.block:
             block_run = BlockRun.query.get(block_run_id) if block_run_id else None
             self.block_run = block_run
             if block_run and block_run.metrics and block_run.metrics.get('hook'):
@@ -1255,10 +1257,16 @@ class BlockExecutor:
             if status == BlockRun.BlockRunStatus.COMPLETED:
                 update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
 
-            if BlockRun.BlockRunStatus.FAILED == status and error_details:
-                update_kwargs['metrics'] = merge_dict(block_run.metrics or {}, dict(
-                    __error_details=error_details,
-                ))
+            # Cannot save raw value in DB; it breaks:
+            # sqlalchemy.exc.StatementError:
+            # (builtins.TypeError) Object of type Py4JJavaError is not JSON serializable
+            # [SQL: UPDATE block_run SET updated_at=CURRENT_TIMESTAMP, status=?, metrics=?
+            # WHERE block_run.id = ?]
+
+            # if BlockRun.BlockRunStatus.FAILED == status and error_details:
+            #     update_kwargs['metrics'] = merge_dict(block_run.metrics or {}, dict(
+            #         __error_details=error_details,
+            #     ))
 
             block_run.update(**update_kwargs)
             return

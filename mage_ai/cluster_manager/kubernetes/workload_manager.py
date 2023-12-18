@@ -83,7 +83,9 @@ class WorkloadManager:
         services = self.core_client.list_namespaced_service(self.namespace).items
         workloads_list = []
 
-        stateful_sets = self.apps_client.list_namespaced_stateful_set(self.namespace).items
+        stateful_sets = self.apps_client.list_namespaced_stateful_set(
+            self.namespace
+        ).items
         stateful_set_mapping = dict()
         for ss in stateful_sets:
             try:
@@ -123,11 +125,12 @@ class WorkloadManager:
                         try:
                             if node_name:
                                 items = self.core_client.list_node(
-                                    field_selector=f'metadata.name={node_name}').items
+                                    field_selector=f'metadata.name={node_name}'
+                                ).items
                                 node = items[0]
                                 ip = find(
                                     lambda a: a.type == 'ExternalIP',
-                                    node.status.addresses
+                                    node.status.addresses,
                                 ).address
                                 if ip:
                                     node_port = service.spec.ports[0].node_port
@@ -188,12 +191,7 @@ class WorkloadManager:
         ingress_name = workspace_config.ingress_name
 
         volumes = []
-        volume_mounts = [
-            {
-                'name': 'mage-data',
-                'mountPath': '/home/src'
-            }
-        ]
+        volume_mounts = [{'name': 'mage-data', 'mountPath': '/home/src'}]
 
         env_vars = self.__populate_env_vars(
             name,
@@ -207,7 +205,9 @@ class WorkloadManager:
         lifecycle_config = workspace_config.lifecycle_config or LifecycleConfig()
         if lifecycle_config.post_start:
             if lifecycle_config.post_start.hook_path:
-                post_start_file_name = os.path.basename(lifecycle_config.post_start.hook_path)
+                post_start_file_name = os.path.basename(
+                    lifecycle_config.post_start.hook_path
+                )
                 volume_mounts.append(
                     {
                         'name': 'lifecycle-hooks',
@@ -230,18 +230,13 @@ class WorkloadManager:
                         'exec': {
                             'command': post_start_command,
                         }
-                    }
+                    },
                 }
 
         mage_container_config = {
             'name': f'{name}-container',
             'image': 'mageai/mageai:latest',
-            'ports': [
-                {
-                    'containerPort': 6789,
-                    'name': 'web'
-                }
-            ],
+            'ports': [{'containerPort': 6789, 'name': 'web'}],
             'volumeMounts': volume_mounts,
             **container_config,
         }
@@ -266,7 +261,7 @@ class WorkloadManager:
                             'name': 'lifecycle-hooks',
                             'mountPath': '/app/initial-config.json',
                             'subPath': 'initial-config.json',
-                        }
+                        },
                     ],
                     'env': [
                         {
@@ -276,7 +271,7 @@ class WorkloadManager:
                         {
                             'name': KUBE_NAMESPACE,
                             'value': os.getenv(KUBE_NAMESPACE, 'default'),
-                        }
+                        },
                     ],
                 }
             )
@@ -294,32 +289,23 @@ class WorkloadManager:
                         '/cloud_sql_proxy',
                         '-log_debug_stdout',
                         f'-instances={os.getenv(CLOUD_SQL_CONNECTION_NAME)}=tcp:5432',
-                        f'-credential_file=/secrets/{credential_file_path}'
+                        f'-credential_file=/secrets/{credential_file_path}',
                     ],
-                    'securityContext': {
-                        'runAsNonRoot': True
-                    },
-                    'resources': {
-                        'requests': {
-                            'memory': '1Gi',
-                            'cpu': '1'
-                        }
-                    },
+                    'securityContext': {'runAsNonRoot': True},
+                    'resources': {'requests': {'memory': '1Gi', 'cpu': '1'}},
                     'volumeMounts': [
                         {
                             'name': 'service-account-volume',
                             'mountPath': '/secrets/',
-                            'readOnly': True
+                            'readOnly': True,
                         }
-                    ]
+                    ],
                 }
             )
             volumes.append(
                 {
                     'name': 'service-account-volume',
-                    'secret': {
-                        'secretName': os.getenv(SERVICE_ACCOUNT_SECRETS_NAME)
-                    }
+                    'secret': {'secretName': os.getenv(SERVICE_ACCOUNT_SECRETS_NAME)},
                 }
             )
 
@@ -343,8 +329,8 @@ class WorkloadManager:
                                 **({'mode': 0o0755} if key.endswith('.sh') else {}),
                             }
                             for key in config_map
-                        ]
-                    }
+                        ],
+                    },
                 }
             )
 
@@ -362,45 +348,28 @@ class WorkloadManager:
         stateful_set = {
             'apiVersion': 'apps/v1',
             'kind': 'StatefulSet',
-            'metadata': {
-                'name': name,
-                'labels': {
-                    'app': name
-                }
-            },
+            'metadata': {'name': name, 'labels': {'app': name}},
             'spec': {
-                'selector': {
-                    'matchLabels': {
-                        'app': name
-                    }
-                },
+                'selector': {'matchLabels': {'app': name}},
                 'replicas': 1,
                 'minReadySeconds': 10,
                 'template': {
-                    'metadata': {
-                        'labels': {
-                            'app': name
-                        }
-                    },
-                    'spec': stateful_set_template_spec
+                    'metadata': {'labels': {'app': name}},
+                    'spec': stateful_set_template_spec,
                 },
                 'volumeClaimTemplates': [
                     {
-                        'metadata': {
-                            'name': 'mage-data'
-                        },
+                        'metadata': {'name': 'mage-data'},
                         'spec': {
                             'accessModes': [storage_access_mode],
                             'storageClassName': storage_class_name,
                             'resources': {
-                                'requests': {
-                                    'storage': storage_request_size
-                                }
-                            }
-                        }
+                                'requests': {'storage': storage_request_size}
+                            },
+                        },
                     }
-                ]
-            }
+                ],
+            },
         }
 
         self.apps_client.create_namespaced_stateful_set(self.namespace, stateful_set)
@@ -409,8 +378,9 @@ class WorkloadManager:
 
         annotations = {}
         if os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG):
-            annotations[GCP_BACKEND_CONFIG_ANNOTATION] = \
-                os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG)
+            annotations[GCP_BACKEND_CONFIG_ANNOTATION] = os.getenv(
+                KUBE_SERVICE_GCP_BACKEND_CONFIG
+            )
 
         service = {
             'apiVersion': 'v1',
@@ -421,7 +391,7 @@ class WorkloadManager:
                     'app': name,
                     'dev-instance': '1',
                 },
-                'annotations': annotations
+                'annotations': annotations,
             },
             'spec': {
                 'ports': [
@@ -430,14 +400,14 @@ class WorkloadManager:
                         'port': 6789,
                     }
                 ],
-                'selector': {
-                    'app': name
-                },
-                'type': os.getenv(KUBE_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE)
-            }
+                'selector': {'app': name},
+                'type': os.getenv(KUBE_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE),
+            },
         }
 
-        k8s_service = self.core_client.create_namespaced_service(self.namespace, service)
+        k8s_service = self.core_client.create_namespaced_service(
+            self.namespace, service
+        )
 
         try:
             if ingress_name:
@@ -452,9 +422,12 @@ class WorkloadManager:
         self,
         ingress_name: str,
         service_name: str,
-        workspace_name: str,
+        workload_name: str,
     ) -> None:
-        ingress = self.networking_client.read_namespaced_ingress(ingress_name, self.namespace)
+        ingress = self.networking_client.read_namespaced_ingress(
+            ingress_name,
+            self.namespace,
+        )
         rule = ingress.spec.rules[0]
         paths = rule.http.paths
         paths.insert(
@@ -462,31 +435,83 @@ class WorkloadManager:
             client.V1HTTPIngressPath(
                 backend=client.V1IngressBackend(
                     service=client.V1IngressServiceBackend(
-                        name=service_name,
-                        port=client.V1ServiceBackendPort(
-                            number=6789
-                        )
+                        name=service_name, port=client.V1ServiceBackendPort(number=6789)
                     )
                 ),
-                path=f'/{workspace_name}',
+                path=f'/{workload_name}',
                 path_type='Prefix',
-            )
+            ),
         )
         ingress.spec.rules[0] = client.V1IngressRule(
             host=rule.host,
             http=client.V1HTTPIngressRuleValue(paths=paths),
         )
-        self.networking_client.patch_namespaced_ingress(ingress_name, self.namespace, ingress)
+        self.networking_client.patch_namespaced_ingress(
+            ingress_name, self.namespace, ingress
+        )
 
-    def delete_workload(self, name: str):
+    def get_url_from_ingress(self, ingress_name: str, workload_name: str) -> str:
+        ingress = self.networking_client.read_namespaced_ingress(
+            ingress_name,
+            self.namespace,
+        )
+        rule = ingress.spec.rules[0]
+        host = rule.host
+
+        tls_enabled = False
+        try:
+            tls = ingress.spec.tls[0]
+            tls_enabled = host in tls.hosts
+        except Exception:
+            pass
+
+        paths = rule.http.paths
+        for path in paths:
+            if path.backend.service.name == f'{workload_name}-service':
+                prefix = 'https' if tls_enabled else 'http'
+                return f'{prefix}://{host}{path.path}'
+
+    def remove_service_from_ingress_paths(
+        self,
+        ingress_name: str,
+        workload_name: str,
+    ) -> None:
+        ingress = self.networking_client.read_namespaced_ingress(
+            ingress_name, self.namespace
+        )
+        rule = ingress.spec.rules[0]
+        paths = rule.http.paths
+        for path in paths:
+            if path.backend.service.name == f'{workload_name}-service':
+                paths.remove(path)
+                break
+        ingress.spec.rules[0] = client.V1IngressRule(
+            host=rule.host,
+            http=client.V1HTTPIngressRuleValue(paths=paths),
+        )
+        self.networking_client.patch_namespaced_ingress(
+            ingress_name, self.namespace, ingress
+        )
+
+    def delete_workload(self, name: str, ingress_name: str = None):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
         try:
-            self.core_client.delete_namespaced_config_map(f'{name}-hooks', self.namespace)
+            self.core_client.delete_namespaced_config_map(
+                f'{name}-hooks', self.namespace
+            )
         except ApiException as ex:
             # The delete operation will return a 404 response if the config map does not exist
             if ex.status != 404:
                 raise
+
+        try:
+            if ingress_name:
+                self.remove_service_from_ingress_paths(ingress_name, name)
+        except Exception as ex:
+            raise Exception(
+                'Failed to delete workspace path from ingress, you may need to manually delete it'
+            ) from ex
 
     def get_workload_activity(self, name: str) -> Dict:
         pods = self.core_client.list_namespaced_pod(self.namespace).items
@@ -527,12 +552,16 @@ class WorkloadManager:
 
     def scale_down_workload(self, name: str) -> None:
         self.apps_client.patch_namespaced_stateful_set(
-            name, namespace=self.namespace, body={'spec': {'replicas': 0}},
+            name,
+            namespace=self.namespace,
+            body={'spec': {'replicas': 0}},
         )
 
     def restart_workload(self, name: str) -> None:
         self.apps_client.patch_namespaced_stateful_set(
-            name, namespace=self.namespace, body={'spec': {'replicas': 1}},
+            name,
+            namespace=self.namespace,
+            body={'spec': {'replicas': 1}},
         )
 
     def create_hooks_config_map(
@@ -546,7 +575,9 @@ class WorkloadManager:
         if pre_start_script_path:
             if not mage_container_config:
                 raise ConfigurationError('The container config can not be empty')
-            self.__validate_pre_start_script(pre_start_script_path, mage_container_config)
+            self.__validate_pre_start_script(
+                pre_start_script_path, mage_container_config
+            )
 
             with open(pre_start_script_path, 'r', encoding='utf-8') as f:
                 pre_start_script = f.read()
@@ -567,11 +598,10 @@ class WorkloadManager:
                 'data': config_map_data,
                 'metadata': {
                     'name': f'{name}-hooks',
-                }
+                },
             }
             self.core_client.create_namespaced_config_map(
-                namespace=self.namespace,
-                body=config_map
+                namespace=self.namespace, body=config_map
             )
 
         return config_map_data
@@ -588,7 +618,9 @@ class WorkloadManager:
         except Exception as ex:
             raise Exception(f'Pre-start script is invalid: {str(ex)}')
 
-        spec = importlib.util.spec_from_file_location('pre_start', pre_start_script_path)
+        spec = importlib.util.spec_from_file_location(
+            'pre_start', pre_start_script_path
+        )
         module = importlib.util.module_from_spec(spec)
 
         try:
@@ -602,7 +634,9 @@ class WorkloadManager:
                 f', error: {str(ex)}'
             )
         except Exception as ex:
-            raise ConfigurationError(f'Pre-start script validation failed with error: {str(ex)}')
+            raise ConfigurationError(
+                f'Pre-start script validation failed with error: {str(ex)}'
+            )
 
     def __populate_env_vars(
         self,
@@ -619,20 +653,26 @@ class WorkloadManager:
             }
         ]
         if set_base_path:
-            env_vars.append({
-                'name': 'MAGE_BASE_PATH',
-                'value': name,
-            })
+            env_vars.append(
+                {
+                    'name': 'MAGE_BASE_PATH',
+                    'value': name,
+                }
+            )
         if project_type:
-            env_vars.append({
-                'name': 'PROJECT_TYPE',
-                'value': project_type,
-            })
+            env_vars.append(
+                {
+                    'name': 'PROJECT_TYPE',
+                    'value': project_type,
+                }
+            )
         if project_uuid:
-            env_vars.append({
-                'name': 'PROJECT_UUID',
-                'value': project_uuid,
-            })
+            env_vars.append(
+                {
+                    'name': 'PROJECT_UUID',
+                    'value': project_uuid,
+                }
+            )
 
         connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
         if connection_url_secrets_name:
@@ -642,9 +682,9 @@ class WorkloadManager:
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': connection_url_secrets_name,
-                            'key': 'connection_url'
+                            'key': 'connection_url',
                         }
-                    }
+                    },
                 }
             )
 
@@ -653,50 +693,47 @@ class WorkloadManager:
             KUBE_NAMESPACE,
         ]:
             if os.getenv(var) is not None:
-                env_vars.append({
-                    'name': var,
-                    'value': str(os.getenv(var)),
-                })
+                env_vars.append(
+                    {
+                        'name': var,
+                        'value': str(os.getenv(var)),
+                    }
+                )
 
         # For connecting to CloudSQL PostgreSQL database.
         db_secrets_name = os.getenv(DB_SECRETS_NAME)
         if db_secrets_name:
-            env_vars.extend([
-                {
-                    'name': PG_DB_USER,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'username'
-                        }
-                    }
-                },
-                {
-                    'name': PG_DB_PASS,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'password'
-                        }
-                    }
-                },
-                {
-                    'name': PG_DB_NAME,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'database'
-                        }
-                    }
-                }
-            ])
+            env_vars.extend(
+                [
+                    {
+                        'name': PG_DB_USER,
+                        'valueFrom': {
+                            'secretKeyRef': {'name': db_secrets_name, 'key': 'username'}
+                        },
+                    },
+                    {
+                        'name': PG_DB_PASS,
+                        'valueFrom': {
+                            'secretKeyRef': {'name': db_secrets_name, 'key': 'password'}
+                        },
+                    },
+                    {
+                        'name': PG_DB_NAME,
+                        'valueFrom': {
+                            'secretKeyRef': {'name': db_secrets_name, 'key': 'database'}
+                        },
+                    },
+                ]
+            )
 
         if container_config and 'env' in container_config:
             env_vars += container_config['env']
 
         return env_vars
 
-    def __get_configurable_parameters(self, workspace_config: KubernetesWorkspaceConfig) -> Dict:
+    def __get_configurable_parameters(
+        self, workspace_config: KubernetesWorkspaceConfig
+    ) -> Dict:
         service_account_name_default = None
         storage_class_name_default = None
         storage_access_mode_default = None
@@ -729,8 +766,10 @@ class WorkloadManager:
         return dict(
             service_account_name=workspace_config.service_account_name
             or service_account_name_default,
-            storage_class_name=workspace_config.storage_class_name or storage_class_name_default,
-            storage_access_mode=workspace_config.storage_access_mode or storage_access_mode_default,
+            storage_class_name=workspace_config.storage_class_name
+            or storage_class_name_default,
+            storage_access_mode=workspace_config.storage_access_mode
+            or storage_access_mode_default,
             storage_request_size=storage_request_size,
         )
 
@@ -747,9 +786,7 @@ class WorkloadManager:
         pv = {
             'apiVersion': 'v1',
             'kind': 'PersistentVolume',
-            'metadata': {
-                'name': f'{name}-pv'
-            },
+            'metadata': {'name': f'{name}-pv'},
             'spec': {
                 'capacity': {
                     'storage': storage_request_size,
@@ -769,14 +806,14 @@ class WorkloadManager:
                                     {
                                         'key': 'kubernetes.io/hostname',
                                         'operator': 'In',
-                                        'values': hostnames
+                                        'values': hostnames,
                                     }
                                 ]
                             }
                         ]
                     }
-                }
-            }
+                },
+            },
         }
         persistent_volumes = self.core_client.list_persistent_volume().items
         for volume in persistent_volumes:

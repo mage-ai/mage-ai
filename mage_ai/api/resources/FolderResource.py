@@ -12,7 +12,9 @@ from mage_ai.settings.repo import get_repo_path
 
 
 def full_path(*args) -> str:
-    return os.path.join(get_repo_path(), *list(filter(lambda x: x and len(x) >= 1, args)))
+    return os.path.join(get_repo_path(
+        root_project=True,
+    ), *list(filter(lambda x: x and len(x) >= 1, args)))
 
 
 class FolderResource(GenericResource):

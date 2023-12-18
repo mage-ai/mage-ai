@@ -10,6 +10,7 @@ import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
@@ -20,7 +21,6 @@ from mage_ai.shared.hash import merge_dict
 
 
 class DBTBlockYAML(DBTBlock):
-
     @property
     def project_path(self) -> Union[str, os.PathLike]:
         """
@@ -29,9 +29,24 @@ class DBTBlockYAML(DBTBlock):
         Returns:
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
-        project_name = self.configuration.get('dbt_project_name')
-        if project_name:
-            return str(Path(self.base_project_path) / project_name)
+        # Example:
+        # demo
+        # default_repo/dbt/demo
+        project_name_init = self.configuration.get('dbt_project_name')
+        if project_name_init:
+            try:
+                diff = Path(project_name_init).relative_to(DBT_DIRECTORY_NAME)
+                project_name_init = diff
+            except ValueError:
+                pass
+
+            project_name = self.get_project_path_from_project_name(project_name_init)
+            if project_name:
+                return project_name
+
+            # Adds demo to /home/src/default_repo/dbt
+            # /home/src/default_repo/dbt/demo
+            return str(Path(self.get_base_project_from_source()) / project_name_init)
 
     def tags(self) -> List[str]:
         """
@@ -57,9 +72,9 @@ class DBTBlockYAML(DBTBlock):
         """
         projects = {}
 
-        project_dirs = Project(self.base_project_path).local_packages
-        for project_dir in project_dirs:
-            project_full_path = str(Path(self.base_project_path) / project_dir)
+        project_dirs = Project(self.get_base_project_from_source()).local_packages
+        for project_dir in (project_dirs or []):
+            project_full_path = str(Path(self.get_base_project_from_source()) / project_dir)
 
             project = Project(project_full_path).project
             project_name = project.get('name')

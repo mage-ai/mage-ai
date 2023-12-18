@@ -1,6 +1,7 @@
 import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
 import { useContext, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -24,19 +25,25 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
+import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
 import { Branch, Slack } from '@oracle/icons';
 import {
+  CUSTOM_LOGO_HEIGHT,
   HeaderStyle,
   LOGO_HEIGHT,
+  MediaStyle,
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getUser } from '@utils/session';
+import { onSuccess } from '@api/utils/response';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
+import { useError } from '@context/Error';
 
 export type BreadcrumbType = BreadcrumbTypeOrig;
 
@@ -60,6 +67,10 @@ function Header({
   project: projectProp,
   version: versionProp,
 }: HeaderProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'shared/Header',
+  });
+
   const themeContext = useContext(ThemeContext);
   const userFromLocalStorage = getUser();
 
@@ -89,9 +100,14 @@ function Header({
   } = useMemo(() => dataGitBranch?.['git_branch'] || {}, [dataGitBranch]);
 
   const {
-    data: dataProjects,
-  } = api.projects.list({}, { revalidateOnFocus: false }, { pauseFetch: !!projectProp });
-  const project = useMemo(() => projectProp || dataProjects?.projects?.[0], [dataProjects, projectProp]);
+    design,
+  } = useCustomDesign();
+
+  const {
+    project: projectInit,
+    rootProject,
+  } = useProject();
+  const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
 
   const loggedIn = AuthToken.isLoggedIn();
@@ -107,34 +123,145 @@ function Header({
     });
   };
 
-  const breadcrumbs = useMemo(() => breadcrumbsProp || [{
-    bold: true,
-    label: () => project?.name,
-    linkProps: {
-      href: '/',
-      sameColorText: true,
+  const [updateProject, { isLoading: isLoadingUpdateProject }]: any = useMutation(
+    api.projects.useUpdate(project?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
     },
-  }], [breadcrumbsProp, project]);
+  );
+
+  const breadcrumbProjects = [];
+  if (rootProject) {
+    breadcrumbProjects.push({
+      label: () => rootProject?.name,
+      linkProps: {
+        href: '/',
+      },
+    });
+  }
+
+  if (project) {
+    const crumb: BreadcrumbType = {
+      label: () => project?.name,
+    };
+
+    if (rootProject) {
+      crumb.loading = isLoadingUpdateProject;
+      crumb.options = Object.keys(rootProject?.projects || {}).map((projectName: string) => ({
+        onClick: () => {
+          updateProject({
+            project: {
+              activate_project: projectName,
+            },
+          });
+        },
+        selected: projectName === project?.name,
+        uuid: projectName,
+      }));
+    } else {
+      crumb.linkProps = {
+        href: '/',
+      };
+    }
+
+    breadcrumbProjects.push(crumb);
+  }
+
+  const breadcrumbs = useMemo(() => {
+    // breadcrumbsProp || [{
+    //   bold: true,
+    //   label: () => project?.name,
+    //   linkProps: {
+    //     href: '/',
+    //     sameColorText: true,
+    //   },
+    // }]
+
+    return [
+      ...breadcrumbProjects,
+      ...(breadcrumbsProp || []),
+    ];
+  }, [
+    breadcrumbProjects,
+    breadcrumbsProp,
+    project,
+  ]);
   const { pipeline: pipelineUUID } = router.query;
 
   const { latest_version: latestVersion } = project || {};
 
-  const logoLink = useMemo(() => (
-    <NextLink
-      as="/"
-      href="/"
-      passHref
-    >
-      <Link
-        block
-        height={LOGO_HEIGHT}
-        noHoverUnderline
-        noOutline
+  const [customMediaSize, setCustomMediaSize] = useState<{
+    height?: number;
+    width?: number;
+  }>(null);
+  const customDesignMedia = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const media = design?.components?.header?.media;
+      const image = new Image();
+      image.src = media?.url || media?.file_path;;
+      image.onload = () => {
+        setCustomMediaSize(image);
+      };
+
+      return image;
+    }
+  }, [
+    design,
+    setCustomMediaSize,
+  ]);
+
+  const logoLink = useMemo(() => {
+    let logoHeight = LOGO_HEIGHT;
+    let logoEl = <GradientLogoIcon height={LOGO_HEIGHT} />;
+
+    if (design?.components?.header?.media) {
+      const media = design?.components?.header?.media;
+      if (customMediaSize !== null) {
+        const ratio = (customMediaSize?.width || 1) / (customMediaSize?.height || 1);
+
+        logoHeight = CUSTOM_LOGO_HEIGHT;
+        logoEl = (
+          <MediaStyle
+            height={CUSTOM_LOGO_HEIGHT}
+            width={CUSTOM_LOGO_HEIGHT * ratio}
+            url={media?.url || media?.file_path}
+          />
+        );
+      }
+    }
+
+    return (
+      <NextLink
+        as="/"
+        href="/"
+        passHref
       >
-        <GradientLogoIcon height={LOGO_HEIGHT} />
-      </Link>
-    </NextLink>
-  ), []);
+        <Link
+          block
+          height={logoHeight}
+          noHoverUnderline
+          noOutline
+        >
+          {logoEl}
+        </Link>
+      </NextLink>
+    );
+  }, [
+    customMediaSize,
+    design,
+  ]);
 
   const userDropdown: FlyoutMenuItemType[] = [
     {
@@ -234,19 +361,7 @@ function Header({
           justifyContent="space-between"
         >
           <Flex alignItems="center">
-            {version && (
-              <Tooltip
-                height={LOGO_HEIGHT}
-                label={`Version ${version}`}
-                size={null}
-                visibleDelay={300}
-                widthFitContent
-              >
-                {logoLink}
-              </Tooltip>
-            )}
-
-            {!version && logoLink}
+            {logoLink}
 
             <Breadcrumbs
               breadcrumbs={breadcrumbs}

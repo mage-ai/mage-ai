@@ -1,14 +1,21 @@
 import os
+import re
 from datetime import datetime
-from typing import Dict, List, Tuple
+from pathlib import Path
+from typing import Callable, Dict, List, Tuple
 
 import aiofiles
 
+from mage_ai.cache.dbt.constants import IGNORE_DIRECTORY_NAMES
 from mage_ai.data_preparation.models.errors import (
     FileExistsError,
     FileNotInProjectError,
 )
+from mage_ai.data_preparation.models.project import Project
+from mage_ai.data_preparation.models.project.constants import FeatureUUID
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.utils import get_absolute_path
 
 FILE_VERSIONS_DIR = '.file_versions'
@@ -49,10 +56,15 @@ class File:
         return os.path.isfile(file_path)
 
     @classmethod
-    def create_parent_directories(self, file_path: str) -> bool:
+    def create_parent_directories(self, file_path: str, raise_exception: bool = False) -> bool:
         will_create = not self.file_exists(file_path)
         if will_create:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            try:
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            except FileExistsError as err:
+                if raise_exception:
+                    raise err
+                print(f'[WARNING] File.create_parent_directories: {err}.')
         return will_create
 
     @classmethod
@@ -66,7 +78,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ):
-        repo_path = repo_path or get_repo_path()
+        repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
         self.write(
@@ -92,7 +104,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ):
-        repo_path = repo_path or get_repo_path()
+        repo_path = repo_path or get_repo_path(file_path=os.path.join(dir_path, filename))
         file = File(filename, dir_path, repo_path)
 
         await self.write_async(
@@ -111,12 +123,49 @@ class File:
     def from_path(self, file_path, repo_path: str = None):
         repo_path_alt = repo_path
         if repo_path_alt is None:
-            repo_path_alt = get_repo_path()
+            repo_path_alt = get_repo_path(file_path=file_path)
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
 
     @classmethod
-    def get_all_files(self, repo_path):
-        return traverse(os.path.basename(repo_path), True, repo_path)
+    def get_all_files(
+        self,
+        repo_path,
+        exclude_dir_pattern: str = None,
+        exclude_pattern: str = None,
+        pattern: str = None,
+    ):
+        dir_selector = None
+        file_selector = None
+
+        if exclude_pattern is not None or pattern is not None:
+            def __select(x: Dict, pattern=pattern):
+                filename = x.get('name')
+                checks = []
+                if exclude_pattern:
+                    checks.append(not re.search(exclude_pattern, filename or ''))
+                if pattern:
+                    checks.append(re.search(pattern, filename or ''))
+                return all(checks)
+
+            file_selector = __select
+
+        if exclude_dir_pattern is not None:
+            def __select(x: Dict, pattern=pattern):
+                filename = x.get('name')
+                checks = []
+                if exclude_dir_pattern:
+                    checks.append(not re.search(exclude_dir_pattern, filename or ''))
+                return all(checks)
+
+            dir_selector = __select
+
+        return traverse(
+            os.path.basename(repo_path),
+            True,
+            repo_path,
+            dir_selector=dir_selector,
+            file_selector=file_selector,
+        )
 
     @classmethod
     def file_path_versions_dir(
@@ -220,8 +269,10 @@ class File:
                 kwargs['encoding'] = 'utf-8'
             with open(file_path, **kwargs) as f:
                 if content:
-                    f.write(content)
+                    f.write(content or '')
         self.validate_content(dir_path, filename, content)
+
+        update_caches(repo_path, dir_path, filename)
 
     @classmethod
     async def write_async(
@@ -249,7 +300,9 @@ class File:
             if write_type != 'wb':
                 kwargs['encoding'] = 'utf-8'
             async with aiofiles.open(file_path, **kwargs) as fp:
-                await fp.write(content)
+                await fp.write(content or '')
+
+        await update_caches_async(repo_path, dir_path, filename)
 
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
@@ -356,14 +409,25 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
+    if project_platform_activated():
+        return
+
     full_file_path = get_absolute_path(file_path)
-    full_repo_path = get_absolute_path(get_repo_path())
+    full_repo_path = get_absolute_path(get_repo_path(file_path=file_path))
     if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
         raise FileNotInProjectError(
             f'File at path: {file_path} is not in the project directory.')
 
 
-def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:
+def traverse(
+    name: str,
+    is_dir: bool,
+    path: str,
+    disabled=False,
+    depth=1,
+    dir_selector: Callable = None,
+    file_selector: Callable = None,
+) -> Dict:
     tree_entry = dict(name=name)
     if not is_dir:
         tree_entry['disabled'] = disabled
@@ -371,6 +435,35 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
     if depth >= MAX_DEPTH:
         return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
+
+    def __filter(
+        entry,
+        depth=depth,
+        dir_selector=dir_selector,
+        file_selector=file_selector,
+    ) -> bool:
+        if entry.name in BLACKLISTED_DIRS:
+            return False
+
+        if not file_selector:
+            return True
+
+        entry_path = entry.path
+        if entry.is_dir(follow_symlinks=False) or os.path.isdir(entry_path):
+            return True if dir_selector is None else dir_selector(dict(
+                depth=depth + 1,
+                name=str(entry.name),
+                path=entry.path,
+            ))
+        else:
+            return file_selector(dict(
+                depth=depth + 1,
+                name=str(entry.name),
+                path=entry.path,
+            ))
+
+        return True
+
     tree_entry['children'] = list(
         traverse(
             entry.name,
@@ -378,10 +471,61 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
             entry.path,
             can_access_children,
             depth + 1,
-        )
-        for entry in sorted(
-            filter(lambda entry: entry.name not in BLACKLISTED_DIRS, os.scandir(path)),
+            dir_selector=dir_selector,
+            file_selector=file_selector,
+        ) for entry in sorted(
+            filter(__filter, os.scandir(path)),
             key=lambda entry: entry.name,
         )
     )
+
     return tree_entry
+
+
+def __should_update_dbt_cache(dir_path: str, filename: str) -> bool:
+    project_model = Project(root_project=True)
+    if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+        # If the file is a SQL or YAML file
+        if (
+            filename.endswith('.sql') or
+            filename.endswith('.yml') or
+            filename.endswith('.yaml')
+        ):
+            base_dir_path = Path(dir_path).parts[0].lower()
+            # If the file doesn’t exist in a block’s folder (e.g. data_loaders/, pipelines/)
+            if base_dir_path not in IGNORE_DIRECTORY_NAMES:
+                # If project platform features isn’t enabled or the repo_path exists outside of
+                # the registered projects.
+                return True
+
+    return False
+
+
+async def update_caches_async(repo_path: str, dir_path: str, filename: str) -> None:
+    if __should_update_dbt_cache(dir_path, filename):
+        print(f'Updating dbt cache for {repo_path}.')
+
+        try:
+            from mage_ai.cache.dbt.cache import DBTCache
+
+            dbt_cache = await DBTCache.initialize_cache_async(root_project=True)
+            await dbt_cache.update_async(file_path=os.path.join(repo_path, dir_path, filename))
+        except Exception as err:
+            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            if is_debug():
+                raise err
+
+
+def update_caches(repo_path: str, dir_path: str, filename: str) -> None:
+    if __should_update_dbt_cache(dir_path, filename):
+        print(f'Updating dbt cache for {repo_path}.')
+
+        try:
+            from mage_ai.cache.dbt.cache import DBTCache
+
+            dbt_cache = DBTCache.initialize_cache(root_project=True)
+            dbt_cache.update(file_path=os.path.join(repo_path, dir_path, filename))
+        except Exception as err:
+            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            if is_debug():
+                raise err

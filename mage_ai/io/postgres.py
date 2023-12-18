@@ -164,6 +164,7 @@ class Postgres(BaseSQL):
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
+            table_name = table_name.replace('"', '')
             cur.execute(
                 f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
                 f'tablename = \'{table_name}\''

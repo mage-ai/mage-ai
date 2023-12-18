@@ -1,20 +1,39 @@
-from typing import Dict
+import os
+from typing import Dict, List
 
 import aiohttp
 
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.server.constants import VERSION
+from mage_ai.settings.platform import (
+    active_project_settings,
+    project_platform_activated,
+    project_platform_settings,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
+from mage_ai.shared.hash import dig
 
 
 class Project():
-    def __init__(self, repo_config=None):
-        parts = get_repo_path().split('/')
+    def __init__(self, repo_config=None, repo_path: str = None, root_project: bool = False):
+        self.root_project = root_project
+        self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
 
+        parts = self.repo_path.split('/')
         self.name = parts[-1]
-        self.repo_config = repo_config or get_repo_config()
+        self.settings = None
+
+        if not root_project and project_platform_activated():
+            self.settings = active_project_settings(get_default=True)
+            if self.settings and self.settings.get('uuid'):
+                self.name = self.settings.get('uuid')
+
+        self.repo_config = repo_config or get_repo_config(
+            repo_path=self.repo_path,
+            root_project=self.root_project,
+        )
         self.version = VERSION
 
     @property
@@ -56,7 +75,33 @@ class Project():
     def pipelines(self) -> Dict:
         return self.repo_config.pipelines
 
-    def is_feature_enabled(self, feature_name: FeatureUUID) -> str:
+    @classmethod
+    def is_feature_enabled_in_root_or_active_project(self, feature_name: FeatureUUID) -> bool:
+        if self(root_project=True).is_feature_enabled(feature_name):
+            return True
+
+        if project_platform_activated():
+            return self(root_project=False).is_feature_enabled(feature_name)
+
+        return False
+
+    def repo_path_for_database_query(self, key: str) -> List[str]:
+        if self.settings:
+            query_arr = dig(self.settings, ['database', 'query', key])
+            if query_arr:
+                return [os.path.join(*[part for part in [
+                    os.path.dirname(get_repo_path(root_project=True)),
+                    query_alias,
+                ] if len(part) >= 1]) for query_alias in query_arr] + [
+                    get_repo_path(root_project=False)
+                ]
+
+        return [self.repo_path]
+
+    def projects(self) -> Dict:
+        return project_platform_settings(mage_projects_only=True)
+
+    def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.repo_config.features.get(feature_name.value, False)
 
         if is_debug():

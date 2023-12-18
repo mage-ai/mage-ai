@@ -327,7 +327,7 @@ function AddNewBlocks({
       onClick: () => addNewBlock({
         configuration: {
           dbt: {
-            command: null,
+            command: 'run',
           },
         },
         language: BlockLanguageEnum.YAML,
@@ -354,6 +354,7 @@ function AddNewBlocks({
 
   if (useV2) {
     return (
+      // @ts-ignore
       <AddNewBlocksV2
         addNewBlock={addNewBlock}
         blockIdx={blockIdx}

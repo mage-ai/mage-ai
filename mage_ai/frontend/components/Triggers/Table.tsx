@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { createRef, useRef, useState } from 'react';
+import { createRef, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -22,6 +22,8 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
+import useStatus from '@utils/models/status/useStatus';
 import {
   Code,
   Edit,
@@ -86,6 +88,9 @@ function TriggersTable({
 }: TriggersTableProps) {
   const pipelineUUID = pipeline?.uuid;
   const router = useRouter();
+
+  const { projectPlatformActivated } = useProject();
+  const { status: statusProject } = useStatus();
 
   const toggleTriggerRefs = useRef({});
   const deleteButtonRefs = useRef({});
@@ -170,6 +175,15 @@ function TriggersTable({
       },
       {
         uuid: 'Type',
+      },
+    ]);
+  }
+
+  if (projectPlatformActivated) {
+    columnFlex.push(...[null]);
+    columns.push(...[
+      {
+        uuid: 'Project',
       },
     ]);
   }
@@ -332,6 +346,7 @@ function TriggersTable({
                 pipeline_uuid: triggerPipelineUUID,
                 last_pipeline_run_status: lastPipelineRunStatus,
                 name,
+                repo_path: repoPath,
                 schedule_interval: scheduleInterval,
                 status,
                 tags,
@@ -394,6 +409,21 @@ function TriggersTable({
                   >
                     {SCHEDULE_TYPE_TO_LABEL[pipelineSchedule.schedule_type]?.()}
                   </Text>,
+                ]);
+
+                if (projectPlatformActivated) {
+                  rows.push(...[
+                    <Text
+                      default
+                      key={`project_${idx}`}
+                      monospace
+                    >
+                      {repoPath?.replace(statusProject?.repo_path_root || '', '')?.slice(1)}
+                    </Text>,
+                  ]);
+                }
+
+                rows.push(...[
                   <FlexContainer
                     alignItems="center"
                     key={`trigger_name_${idx}`}

@@ -6,10 +6,10 @@ from pathlib import Path
 
 from faker import Faker
 
-from mage_ai.data_preparation.repo_manager import get_variables_dir, init_project_uuid
+from mage_ai.data_preparation.repo_manager import init_project_uuid
 from mage_ai.orchestration.db import TEST_DB, db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
-from mage_ai.settings.repo import set_repo_path
+from mage_ai.settings.repo import get_variables_dir, set_repo_path
 from mage_ai.shared.logger import LoggingLevel
 
 if sys.version_info.major <= 3 and sys.version_info.minor <= 7:

@@ -53,7 +53,8 @@ class Project(object):
         Returns:
             List[str]: dir names of local packages
         """
-        return [file.parent.stem for file in Path(self.__project_dir).glob('*/dbt_project.yml')]
+        if self.__project_dir:
+            return [file.parent.stem for file in Path(self.__project_dir).glob('*/dbt_project.yml')]
 
     @property
     def project(self) -> Dict[str, Any]:

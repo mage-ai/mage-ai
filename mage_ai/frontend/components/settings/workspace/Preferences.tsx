@@ -18,6 +18,7 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import { ContainerStyle } from './index.style';
 import { Edit } from '@oracle/icons';
 import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
@@ -49,8 +50,10 @@ function Preferences({
   const [projectAttributes, setProjectAttributes] = useState<ProjectType>(null);
   const [editingOpenAIKey, setEditingOpenAIKey] = useState<boolean>(false);
 
-  const { data, mutate: fetchProjects } = api.projects.list();
-  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
+  const {
+    project,
+    fetchProjects,
+  } = useProject();
   const {
     name: projectName,
     openai_api_key: openaiApiKey,

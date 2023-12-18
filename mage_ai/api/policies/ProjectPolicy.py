@@ -37,6 +37,7 @@ ProjectPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 ProjectPolicy.allow_write([
+    'activate_project',
     'emr_config',
     'features',
     'openai_api_key',
