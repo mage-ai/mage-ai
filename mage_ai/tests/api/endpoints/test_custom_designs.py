@@ -3,6 +3,7 @@ import os
 from unittest.mock import patch
 
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_detail_endpoint_tests,
@@ -116,17 +117,32 @@ class CustomDesignProjectPlatformAPIEndpointTest(
 
 def __assert_after_list2(self, result, **kwargs):
     with open(os.path.join(CURRENT_FILE_PATH, 'mocks', 'mock_design_project_platform.json')) as f:
+        arr = json.loads(f.read())
+        for item in arr:
+            item['project']['full_path'] = os.path.join(
+                base_repo_path(),
+                item['project']['full_path'],
+            )
+            item['project']['root_project_full_path'] = base_repo_path()
+
         self.assertEqual(
             result,
-            json.loads(f.read()),
+            arr,
         )
 
 
 def __assert_after_detail2(self, result, **kwargs):
     with open(os.path.join(CURRENT_FILE_PATH, 'mocks', 'mock_design_project_platform.json')) as f:
+        item = json.loads(f.read())[0]
+        item['project']['full_path'] = os.path.join(
+            base_repo_path(),
+            item['project']['full_path'],
+        )
+        item['project']['root_project_full_path'] = base_repo_path()
+
         self.assertEqual(
             result,
-            json.loads(f.read())[0],
+            item,
         )
 
 
