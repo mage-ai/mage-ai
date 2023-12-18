@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.block.platform.utils import (
     from_another_project,
     get_selected_directory_from_file_path,
 )
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.utils import base_repo_path
@@ -48,7 +48,10 @@ class ProjectPlatformAccessible:
                         file_source['path'] = path
                         config['file_source'] = file_source
 
-                        if BlockType.DBT == self.type and path:
+                        if path and \
+                                BlockType.DBT == self.type and \
+                                BlockLanguage.YAML != self.language:
+
                             # /home/src/default_repo/default_platform/
                             # tons_of_dbt_projects/diff_name
                             project_path = get_selected_directory_from_file_path(
