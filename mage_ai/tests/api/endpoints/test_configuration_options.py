@@ -1,3 +1,6 @@
+import json
+import os
+
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.settings.models.configuration_option import (
     ConfigurationOption,
@@ -8,29 +11,21 @@ from mage_ai.tests.api.endpoints.mixins import (
     BaseAPIEndpointTest,
     build_list_endpoint_tests,
 )
+from mage_ai.tests.shared.mixins import DBTMixin
+
+CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-class ConfigurationOptionAPIEndpointTest(BaseAPIEndpointTest):
+class ConfigurationOptionAPIEndpointTest(DBTMixin, BaseAPIEndpointTest):
     pass
 
 
 def __assert_after_list(self, result, **kwargs):
-    self.assertEqual(
-        result,
-        [
-            dict(
-                configuration_type=ConfigurationType.DBT,
-                metadata=None,
-                option=dict(
-                    mage=1,
-                    pipeline_uuid=self.pipeline.uuid,
-                ),
-                option_type=OptionType.PROJECTS,
-                resource_type=EntityName.Block,
-                uuid='mage',
-            ),
-        ],
-    )
+    with open(os.path.join(CURRENT_FILE_PATH, 'mocks', 'mock_dbt_configuration_options.json')) as f:
+        self.assertEqual(
+            result,
+            json.loads(f.read()),
+        )
 
 
 async def __fetch(
@@ -77,9 +72,6 @@ build_list_endpoint_tests(
         'option_type',
         'resource_type',
         'uuid',
-    ],
-    patch_function_settings=[
-        ('mage_ai.api.resources.ConfigurationOptionResource.ConfigurationOption.fetch', __fetch),
     ],
     assert_after=__assert_after_list,
     build_query=__build_query,

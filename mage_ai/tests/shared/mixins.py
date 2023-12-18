@@ -44,6 +44,8 @@ from mage_ai.tests.factory import (
     create_pipeline_with_blocks,
 )
 
+CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
+
 
 def build_content(query: Dict) -> str:
     return f"""
@@ -417,3 +419,22 @@ class ProjectPlatformMixin(AsyncDBTestCase):
 
     def tearDown(self):
         self.teardown_final()
+
+
+class DBTMixin(AsyncDBTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.dbt_directory = os.path.join(self.repo_path, 'dbt')
+        os.makedirs(self.dbt_directory, exist_ok=True)
+
+        source_dir = os.path.join(CURRENT_FILE_PATH, 'mocks', 'dbt')
+
+        if os.path.exists(self.dbt_directory):
+            shutil.rmtree(self.dbt_directory)
+        shutil.copytree(source_dir, self.dbt_directory)
+
+    def tearDown(self):
+        if os.path.exists(self.dbt_directory):
+            shutil.rmtree(self.dbt_directory)
+        super().tearDown()
