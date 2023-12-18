@@ -421,20 +421,31 @@ class ProjectPlatformMixin(AsyncDBTestCase):
         self.teardown_final()
 
 
+def setup_dbt_project(repo_path: str) -> str:
+    dbt_directory = os.path.join(repo_path, 'dbt')
+    os.makedirs(dbt_directory, exist_ok=True)
+
+    source_dir = os.path.join(CURRENT_FILE_PATH, 'mocks', 'dbt')
+
+    if os.path.exists(dbt_directory):
+        shutil.rmtree(dbt_directory)
+    shutil.copytree(source_dir, dbt_directory)
+
+    return dbt_directory
+
+
+def remove_dbt_project(project_path: str = None, repo_path: str = None):
+    dbt_directory = project_path or os.path.join(repo_path, 'dbt')
+    if os.path.exists(dbt_directory):
+        shutil.rmtree(dbt_directory)
+
+
 class DBTMixin(AsyncDBTestCase):
     def setUp(self):
         super().setUp()
 
-        self.dbt_directory = os.path.join(self.repo_path, 'dbt')
-        os.makedirs(self.dbt_directory, exist_ok=True)
-
-        source_dir = os.path.join(CURRENT_FILE_PATH, 'mocks', 'dbt')
-
-        if os.path.exists(self.dbt_directory):
-            shutil.rmtree(self.dbt_directory)
-        shutil.copytree(source_dir, self.dbt_directory)
+        self.dbt_directory = setup_dbt_project(self.repo_path)
 
     def tearDown(self):
-        if os.path.exists(self.dbt_directory):
-            shutil.rmtree(self.dbt_directory)
+        remove_dbt_project(repo_path=self.repo_path)
         super().tearDown()
