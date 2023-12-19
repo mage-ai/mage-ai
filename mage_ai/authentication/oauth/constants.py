@@ -12,6 +12,7 @@ GITHUB_STATE = '1337'
 
 class ProviderName(str, Enum):
     ACTIVE_DIRECTORY = 'active_directory'
+    AZURE_DEVOPS = 'azure_devops'
     BITBUCKET = 'bitbucket'
     GITHUB = 'github'
     GITLAB = 'gitlab'
@@ -25,6 +26,8 @@ VALID_OAUTH_PROVIDERS = [e.value for e in ProviderName]
 
 DEFAULT_GITHUB_HOSTNAME = 'https://github.com'
 
+# Github and GHE don't need to be added to this list because they are handled
+# separately for now.
 GIT_OAUTH_PROVIDERS = [
     ProviderName.BITBUCKET,
     ProviderName.GITLAB,

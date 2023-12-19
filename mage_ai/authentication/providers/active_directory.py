@@ -26,6 +26,7 @@ logger = Logger().new_server_logger(__name__)
 
 class ADProvider(SsoProvider, OauthProvider):
     provider = ProviderName.ACTIVE_DIRECTORY
+    scope = 'User.Read'
 
     def __init__(self):
         self.directory_id = get_settings_value(ACTIVE_DIRECTORY_DIRECTORY_ID)
@@ -72,7 +73,7 @@ class ADProvider(SsoProvider, OauthProvider):
                     f'{base_url}/oauth',
                 ),
                 response_type='code',
-                scope='User.Read',
+                scope=self.scope,
                 state=uuid.uuid4().hex,
             )
             query_strings = []
