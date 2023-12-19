@@ -18,4 +18,5 @@ class ProjectPresenter(BasePresenter):
         'settings',
         'spark_config',
         'version',
+        'workspace_config_defaults',
     ]

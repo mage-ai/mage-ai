@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -34,6 +34,7 @@ import { WindowContainerStyle, WindowContentStyle, WindowHeaderStyle } from '@co
 import { onSuccess } from '@api/utils/response';
 import { replaceSpaces } from '@utils/string';
 import { useModal } from '@context/Modal';
+import ProjectType, { WorkspaceConfigType } from '@interfaces/ProjectType';
 
 type ConfigureWorkspaceProps = {
   clusterType: string;
@@ -50,6 +51,23 @@ function ConfigureWorkspace({
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [workspaceConfig, setWorkspaceConfig] = useState(null);
   const [lifecycleConfig, setLifecycleConfig] = useState(null);
+
+  const { data } = api.projects.list({}, {
+    revalidateOnFocus: false,
+  });
+  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
+  const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(() => project?.workspace_config_defaults, [project]);
+
+  useEffect(() => {
+    if (defaultWorkspaceConfig) {
+      if (!lifecycleConfig) {
+        setLifecycleConfig(defaultWorkspaceConfig?.lifecycle_config);
+      }
+      if (!workspaceConfig) {
+        setWorkspaceConfig(defaultWorkspaceConfig?.k8s);
+      }
+    }
+  }, [defaultWorkspaceConfig, lifecycleConfig, workspaceConfig]);
 
   const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
     api.workspaces.useCreate(),

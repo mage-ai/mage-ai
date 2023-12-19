@@ -27,6 +27,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
         settings=project.settings,
         spark_config=project.spark_config,
         version=project.version,
+        workspace_config_defaults=project.workspace_config_defaults,
     ))
 
     if kwargs:

@@ -52,6 +52,30 @@ export interface SparkConfigType {
   use_custom_session?: boolean;
 }
 
+interface LifecycleConfigType {
+  termination_policy?: {
+    enable_auto_termination?: boolean;
+    max_idle_seconds?: number;
+  };
+  pre_start_script_path?: string;
+  post_start?: {
+    command?: string[];
+    hook_path?: string;
+  };
+}
+
+export interface WorkspaceConfigType {
+  lifecycle_config?: LifecycleConfigType;
+  k8s?: {
+    namespace: string;
+    ingress_name: string;
+    service_acount_name: string;
+    storage_access_mode: string;
+    storage_class_name: string;
+    storage_request_size: string;
+  };
+}
+
 export interface ProjectPipelinesType {
   settings?: PipelineSettingsType;
 }
@@ -74,4 +98,5 @@ export default interface ProjectType {
   root_project?: boolean;
   spark_config?: SparkConfigType;
   version?: string;
+  workspace_config_defaults?: WorkspaceConfigType;
 }

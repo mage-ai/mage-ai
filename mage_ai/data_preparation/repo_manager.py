@@ -123,6 +123,7 @@ class RepoConfig:
             self.openai_api_key = repo_config.get('openai_api_key')
             self.pipelines = repo_config.get('pipelines')
             self.retry_config = repo_config.get('retry_config')
+            self.workspace_config_defaults = repo_config.get('workspace_config_defaults')
 
             self.ldap_config = repo_config.get('ldap_config')
 
@@ -195,6 +196,7 @@ class RepoConfig:
             spark_config=self.spark_config,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
             variables_retention_period=self.variables_retention_period,
+            workspace_config_defaults=self.workspace_config_defaults
         )
 
     def save(self, **kwargs) -> None:
