@@ -15,7 +15,7 @@ class AzureDevopsClient(Client):
     def get_user(self):
         encoded_token = base64.b64encode(bytes(self.access_token, 'utf-8')).decode('utf-8')
         resp = requests.get(
-            f'https://{self.instance}/_apis/profile/profiles/me?api-version=7.1',
+            f'{self.instance}/_apis/profile/profiles/me?api-version=7.1',
             headers={
                 'Accept': 'application/json',
                 'Authorization': f'Basic {encoded_token}',
