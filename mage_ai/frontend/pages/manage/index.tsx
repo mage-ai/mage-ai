@@ -9,6 +9,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -245,6 +246,11 @@ function WorkspacePage() {
     [dataStatus],
   );
 
+  const { data } = api.projects.list({}, {
+    revalidateOnFocus: false,
+  });
+  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
+
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     { cluster_type: clusterType },
     {
@@ -266,11 +272,13 @@ function WorkspacePage() {
         fetchWorkspaces();
         hideModal();
       }}
+      project={project}
     />
   ), {
   }, [
     clusterType,
     fetchWorkspaces,
+    project,
   ], {
     background: true,
     disableClickOutside: true,

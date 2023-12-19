@@ -12,6 +12,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Panel from '@oracle/components/Panel/v2';
+import ProjectType, { WorkspaceConfigType } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -34,29 +35,27 @@ import { WindowContainerStyle, WindowContentStyle, WindowHeaderStyle } from '@co
 import { onSuccess } from '@api/utils/response';
 import { replaceSpaces } from '@utils/string';
 import { useModal } from '@context/Modal';
-import ProjectType, { WorkspaceConfigType } from '@interfaces/ProjectType';
 
 type ConfigureWorkspaceProps = {
   clusterType: string;
   onCancel: () => void;
   onCreate: () => void;
+  project?: ProjectType;
 };
 
 function ConfigureWorkspace({
   clusterType,
   onCancel,
   onCreate,
+  project,
 }: ConfigureWorkspaceProps) {
   const [error, setError] = useState<string>();
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [workspaceConfig, setWorkspaceConfig] = useState(null);
   const [lifecycleConfig, setLifecycleConfig] = useState(null);
 
-  const { data } = api.projects.list({}, {
-    revalidateOnFocus: false,
-  });
-  const project: ProjectType = useMemo(() => data?.projects?.[0], [data]);
-  const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(() => project?.workspace_config_defaults, [project]);
+  const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(
+    () => project?.workspace_config_defaults, [project]);
 
   useEffect(() => {
     if (defaultWorkspaceConfig) {
