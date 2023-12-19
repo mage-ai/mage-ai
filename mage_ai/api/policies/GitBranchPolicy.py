@@ -41,7 +41,9 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
+    'clone',
     'delete',
+    'fetch',
     'merge',
     'pull',
     'push',
