@@ -753,7 +753,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         )
         file_is_from_another_project = (
             file_path_from_source and
-            from_another_project(file_path_from_source)
+            from_another_project(
+                file_path=file_path_from_source,
+                other_file_path=pipeline.dir_path if pipeline else None,
+            )
         )
 
         if not file_is_from_another_project:
