@@ -1180,7 +1180,10 @@ function CodeBlock({
   const blockMetadata = useMemo(() => dataBlock?.block?.metadata || {}, [dataBlock]);
 
   const [updateBlock]: [any, any] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
+    api.blocks.pipelines.useUpdate(
+      encodeURIComponent(pipelineUUID),
+      encodeURIComponent(blockUUID),
+    ),
     {
       onError: (response: any) => {
         const {

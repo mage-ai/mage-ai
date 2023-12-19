@@ -427,17 +427,8 @@ class PipelineResource(BaseResource):
 
     @classmethod
     @safe_db_query
-    async def get_model(
-        self,
-        pk,
-        query: Dict = None,
-        resource_class=None,
-        resource_id: str = None,
-        **kwargs,
-    ):
+    async def __fetch_model(self, pipeline_uuid: str, **kqwargs):
         all_projects = project_platform_activated()
-
-        pipeline_uuid = urllib.parse.unquote(pk)
 
         if all_projects:
             return await get_pipeline_from_platform_async(
@@ -448,8 +439,18 @@ class PipelineResource(BaseResource):
 
     @classmethod
     @safe_db_query
+    async def get_model(
+        self,
+        pk,
+        **kwargs,
+    ):
+        pipeline_uuid = urllib.parse.unquote(pk)
+        return await self.__fetch_model(pipeline_uuid, **kwargs)
+
+    @classmethod
+    @safe_db_query
     async def member(self, pk, user, **kwargs):
-        pipeline = await Pipeline.get_async(pk, all_projects=project_platform_activated())
+        pipeline = await self.__fetch_model(pk, **kwargs)
 
         api_operation_action = kwargs.get('api_operation_action', None)
         if api_operation_action != DELETE:

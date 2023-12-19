@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -851,7 +852,7 @@ function DataIntegrationModal({
   ]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
+    api.blocks.pipelines.useUpdate(encodeURIComponent(pipelineUUID), encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

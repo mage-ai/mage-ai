@@ -211,7 +211,7 @@ function FileBrowser({
 
   const dataExporterBlock: BlockType = find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type);
   const [updateDestinationBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    api.blocks.pipelines.useUpdate(encodeURIComponent(pipeline?.uuid), encodeURIComponent(dataExporterBlock?.uuid)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

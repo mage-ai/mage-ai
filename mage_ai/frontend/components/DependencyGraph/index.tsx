@@ -531,7 +531,7 @@ function DependencyGraph({
     }
 
     return api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
+      encodeURIComponent(pipeline?.uuid),
       encodeURIComponent(blockToUpdate?.uuid),
     )({
       block: blockPayload,

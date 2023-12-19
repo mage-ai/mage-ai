@@ -657,8 +657,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       block: BlockType,
       upstreamBlocks: string[];
     }) => api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      block?.uuid,
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(block?.uuid),
     )({
       block: {
         upstream_blocks: upstreamBlocks,
