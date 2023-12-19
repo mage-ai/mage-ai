@@ -199,7 +199,21 @@ class DBTAdapter:
         profiles_path = self.__profiles.interpolate()
 
         # set dbt flags
-        user_config = read_user_config(profiles_path)
+        # Need to add profiles.yml file
+        try:
+            user_config = read_user_config(profiles_path)
+        except Exception as err:
+            print(f'[ERROR] DBTAdapter.open: {err}.')
+
+            if not profiles_path.endswith('profiles.yaml') and \
+                    not profiles_path.endswith('profiles.yml'):
+
+                try:
+                    user_config = read_user_config(os.path.join(profiles_path, 'profiles.yml'))
+                except Exception as err2:
+                    print(f'[ERROR] DBTAdapter.open: {err2}.')
+                    raise err
+
         adapter_config = DBTAdapterConfig(
             project_dir=self.project_path,
             profiles_dir=profiles_path,

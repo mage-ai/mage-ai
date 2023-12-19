@@ -135,19 +135,21 @@ class Profiles(object):
 
         # write interpolated profiles.yml
         interpoalted_profiles_full_path = interpolated_profiles_dir / PROFILES_FILE_NAME
-        if os.path.exists(interpoalted_profiles_full_path):
-            try:
-                with interpoalted_profiles_full_path.open('w') as f:
-                    yaml.safe_dump(self.profiles, f)
-            except Exception as e:
-                raise ProfilesError(
-                    f'Failed to write interpolated `{PROFILES_FILE_NAME}`' +
-                    f' to `{interpolated_profiles_dir}`: {e}'
-                )
+        if not os.path.exists(interpoalted_profiles_full_path):
+            os.makedirs(os.path.dirname(interpoalted_profiles_full_path), exist_ok=True)
 
-            self.__interpolated_profiles_dir = str(interpolated_profiles_dir)
-            self.is_interpolated = True
-            return self.__interpolated_profiles_dir
+        try:
+            with interpoalted_profiles_full_path.open('w') as f:
+                yaml.safe_dump(self.profiles, f)
+        except Exception as e:
+            raise ProfilesError(
+                f'Failed to write interpolated `{PROFILES_FILE_NAME}`' +
+                f' to `{interpolated_profiles_dir}`: {e}'
+            )
+
+        self.__interpolated_profiles_dir = str(interpolated_profiles_dir)
+        self.is_interpolated = True
+        return self.__interpolated_profiles_dir
 
     def __del__(self) -> None:
         self.clean()
