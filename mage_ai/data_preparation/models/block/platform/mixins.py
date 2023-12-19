@@ -79,7 +79,10 @@ class ProjectPlatformAccessible:
         return config
 
     def is_from_another_project(self) -> bool:
-        return self.project_platform_activated and from_another_project(self.__file_source_path())
+        return self.project_platform_activated and from_another_project(
+            self.__file_source_path(),
+            other_file_path=self.pipeline.dir_path if self.pipeline else None,
+        )
 
     def get_file_path_from_source(self) -> str:
         if not self.project_platform_activated:
