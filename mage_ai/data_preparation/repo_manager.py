@@ -64,6 +64,7 @@ class RepoConfig:
         self.s3_bucket = None
         self.s3_path_prefix = None
         self.logging_config = None
+        self.variables_dir = None
         self.variables_retention_period = None
 
         from mage_ai.data_preparation.shared.utils import get_template_vars
