@@ -9,7 +9,7 @@ import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { getFullPathWithoutRootFolder } from '../utils';
+import { getFullPathWithoutRootFolder, removeRootFromFilePath } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
@@ -53,7 +53,7 @@ function NewFile({
 
   useEffect(() => {
     if (selectedFolder) {
-      setDirectory(getFullPathWithoutRootFolder(selectedFolder));
+      setDirectory(removeRootFromFilePath(selectedFolder?.uuid));
     }
   }, [selectedFolder]);
 
