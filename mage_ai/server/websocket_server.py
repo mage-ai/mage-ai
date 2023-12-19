@@ -203,22 +203,26 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 if oauth_client:
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
                     if valid and oauth_token and oauth_token.user:
-                        if pipeline_uuid:
-                            valid = PipelineResource.policy_class()(
-                                PipelineResource(
-                                    pipeline,
+                        try:
+                            if pipeline_uuid:
+                                valid = PipelineResource.policy_class()(
+                                    PipelineResource(
+                                        pipeline,
+                                        oauth_token.user,
+                                    ),
                                     oauth_token.user,
-                                ),
-                                oauth_token.user,
-                            ).has_at_least_editor_role(action=OperationType.UPDATE)
-                        else:
-                            valid = ProjectResource.policy_class()(
-                                ProjectResource(
-                                    {},
+                                ).authorize_action(action=OperationType.UPDATE)
+                            else:
+                                valid = ProjectResource.policy_class()(
+                                    ProjectResource(
+                                        {},
+                                        oauth_token.user,
+                                    ),
                                     oauth_token.user,
-                                ),
-                                oauth_token.user,
-                            ).has_at_least_editor_role(action=OperationType.UPDATE)
+                                ).authorize_action(action=OperationType.UPDATE)
+                        except ApiError as err:
+                            print(f'[WARNING] WebSocketServer.on_message: {err}.')
+
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(

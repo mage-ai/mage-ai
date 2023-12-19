@@ -285,72 +285,51 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             self.__name__.replace(
                 'Policy', '')).lower()
 
-    def is_owner(self, **kwargs) -> bool:
+    def is_owner(self) -> bool:
         def _validate(
             user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-            kwargs=kwargs,
         ):
             return is_owner(
                 user,
                 entity=entity,
                 entity_id=entity_id,
-            ) or (
-                REQUIRE_USER_PERMISSIONS and kwargs and self.authorize_action(kwargs.get('action')))
+            )
 
         return self.__get_and_set_user_role_validation('is_owner', _validate)
 
-    def has_at_least_viewer_role(self, **kwargs) -> bool:
+    def has_at_least_admin_role(self) -> bool:
         def _validate(
             user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-            kwargs=kwargs,
-        ):
-            return has_at_least_viewer_role(
-                user,
-                entity=entity,
-                entity_id=entity_id,
-            ) or (
-                REQUIRE_USER_PERMISSIONS and kwargs and self.authorize_action(kwargs.get('action')))
-
-    def has_at_least_admin_role(self, **kwargs) -> bool:
-        def _validate(
-            user=self.current_user,
-            entity=self.entity[0],
-            entity_id=self.entity[1],
-            kwargs=kwargs,
         ):
             return has_at_least_admin_role(
                 user,
                 entity=entity,
                 entity_id=entity_id,
-            ) or (
-                REQUIRE_USER_PERMISSIONS and kwargs and self.authorize_action(kwargs.get('action')))
+            )
 
         return self.__get_and_set_user_role_validation('has_at_least_admin_role', _validate)
 
-    def has_at_least_editor_role(self, **kwargs) -> bool:
+    def has_at_least_editor_role(self) -> bool:
         def _validate(
             user=self.current_user,
             entity=self.entity[0],
             entity_id=self.entity[1],
-            kwargs=kwargs,
         ):
             return has_at_least_editor_role(
                 user,
                 entity=entity,
                 entity_id=entity_id,
-            ) or (
-                REQUIRE_USER_PERMISSIONS and kwargs and self.authorize_action(kwargs.get('action')))
+            )
 
         return self.__get_and_set_user_role_validation('has_at_least_editor_role', _validate)
 
     def has_at_least_editor_role_and_notebook_edit_access(
         self,
         disable_notebook_edit_access_override: int = None,
-        **kwargs,
     ) -> bool:
         disable_notebook = (
             disable_notebook_edit_access_override or
@@ -362,15 +341,13 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             entity=self.entity[0],
             entity_id=self.entity[1],
             disable_notebook=disable_notebook,
-            kwargs=kwargs,
         ):
             return has_at_least_editor_role_and_notebook_edit_access(
                 user,
                 entity=entity,
                 entity_id=entity_id,
                 disable_notebook_edit_access_override=disable_notebook,
-            ) or (
-                REQUIRE_USER_PERMISSIONS and kwargs and self.authorize_action(kwargs.get('action')))
+            )
 
         return self.__get_and_set_user_role_validation(
             'has_at_least_editor_role_and_notebook_edit_access',
@@ -380,7 +357,6 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
     def has_at_least_editor_role_and_pipeline_edit_access(
         self,
         disable_notebook_edit_access_override: int = None,
-        **kwargs,
     ) -> bool:
         disable_notebook = (
             disable_notebook_edit_access_override or
@@ -392,20 +368,30 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
             entity=self.entity[0],
             entity_id=self.entity[1],
             disable_notebook=disable_notebook,
-            kwargs=kwargs,
         ):
             return has_at_least_editor_role_and_pipeline_edit_access(
                 user,
                 entity=entity,
                 entity_id=entity_id,
                 disable_notebook_edit_access_override=disable_notebook,
-            ) or (
-                REQUIRE_USER_PERMISSIONS and kwargs and self.authorize_action(kwargs.get('action')))
+            )
 
         return self.__get_and_set_user_role_validation(
             'has_at_least_editor_role_and_pipeline_edit_access',
             _validate,
         )
+
+    def has_at_least_viewer_role(self) -> bool:
+        def _validate(
+            user=self.current_user,
+            entity=self.entity[0],
+            entity_id=self.entity[1],
+        ):
+            return has_at_least_viewer_role(
+                user,
+                entity=entity,
+                entity_id=entity_id,
+            )
 
         return self.__get_and_set_user_role_validation('has_at_least_viewer_role', _validate)
 
