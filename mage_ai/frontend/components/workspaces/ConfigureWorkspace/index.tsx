@@ -63,7 +63,11 @@ function ConfigureWorkspace({
         setLifecycleConfig(defaultWorkspaceConfig?.lifecycle_config);
       }
       if (!workspaceConfig) {
-        setWorkspaceConfig(defaultWorkspaceConfig?.k8s);
+        const config = {
+          ...defaultWorkspaceConfig?.k8s,
+          name: defaultWorkspaceConfig?.name,
+        };
+        setWorkspaceConfig(config);
       }
     }
   }, [defaultWorkspaceConfig, lifecycleConfig, workspaceConfig]);

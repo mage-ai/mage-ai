@@ -65,6 +65,7 @@ interface LifecycleConfigType {
 }
 
 export interface WorkspaceConfigType {
+  name?: string;
   lifecycle_config?: LifecycleConfigType;
   k8s?: {
     namespace: string;
