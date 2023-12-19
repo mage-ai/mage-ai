@@ -339,8 +339,8 @@ class PipelineResourceTest(BaseApiTestCase):
             lambda: True,
         ):
             with patch(
-                'mage_ai.api.resources.PipelineResource.Pipeline.get_async',
+                'mage_ai.api.resources.PipelineResource.get_pipeline_from_platform_async',
                 wraps=Pipeline.get_async,
             ) as mock:
                 await PipelineResource.member(self.pipeline1.uuid, None)
-                mock.assert_called_once_with(self.pipeline1.uuid, all_projects=True)
+                mock.assert_called_once_with(self.pipeline1.uuid)

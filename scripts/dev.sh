@@ -122,6 +122,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --data_dir)
+    MAGE_DATA_DIR=1
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -158,6 +163,7 @@ export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
 export ENABLE_PROJECT_PLATFORM=$ENABLE_PROJECT_PLATFORM
 export DEBUG=$DEBUG
+export MAGE_DATA_DIR=$MAGE_DATA_DIR
 
 UP_SERVICES="server app"
 

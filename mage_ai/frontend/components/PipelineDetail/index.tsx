@@ -125,6 +125,7 @@ type PipelineDetailProps = {
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   files: FileType[];
+  filesSQL?: FileType[];
   globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
   hiddenBlocks: {
@@ -219,6 +220,7 @@ function PipelineDetail({
   fetchPipeline,
   fetchSampleData,
   files,
+  filesSQL,
   globalDataProducts,
   globalVariables,
   hiddenBlocks,
@@ -655,8 +657,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       block: BlockType,
       upstreamBlocks: string[];
     }) => api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      block?.uuid,
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(block?.uuid),
     )({
       block: {
         upstream_blocks: upstreamBlocks,
@@ -1123,11 +1125,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     sideBySideEnabled,
     status,
   ]);
-
-  const { data: dataFilesSQL, mutate: fetchFilesSQL } = api.files.list({
-    pattern: encodeURIComponent('\\.sql$'),
-  });
-  const filesSQL = useMemo(() => dataFilesSQL?.files || [], [dataFilesSQL]);
 
   return (
     <DndProvider backend={HTML5Backend}>

@@ -197,7 +197,7 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
         with patch('mage_ai.data_preparation.models.block.load_template') as mock_load_template:
             with patch(
                 'mage_ai.data_preparation.models.block.from_another_project',
-                lambda x, file_path=file_path: file_path == x,
+                lambda file_path, other_file_path, x=file_path: file_path == x,
             ):
                 self.build_block(configuration=dict(
                     file_source=dict(
@@ -223,7 +223,7 @@ class BlockWithProjectPlatformActivatedTest(ProjectPlatformMixin, BlockWithProje
                     ):
                         with patch(
                             'mage_ai.data_preparation.models.block.from_another_project',
-                            lambda x, file_path=file_path: file_path == x,
+                            lambda file_path, other_file_path, x=file_path: file_path == x,
                         ):
                             self.build_block(
                                 block_type=BlockType.DBT,

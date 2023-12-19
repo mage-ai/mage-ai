@@ -181,22 +181,24 @@ def active_project_settings(
         settings = project_platform_settings(repo_path=repo_path, mage_projects_only=True)
 
     items = list(settings.items())
-    if items:
-        project_settings_tup = find(
-            lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
-            items,
+    if not items:
+        return
+
+    project_settings_tup = find(
+        lambda tup: tup and len(tup) >= 2 and (tup[1] or {}).get('active'),
+        items,
+    )
+
+    if not project_settings_tup and get_default:
+        project_settings_tup = items[0]
+
+    if project_settings_tup:
+        project_name, project_settings = project_settings_tup
+
+        return merge_dict(
+            project_settings or {},
+            dict(uuid=project_name),
         )
-
-        if not project_settings_tup and get_default:
-            project_settings_tup = items[0]
-
-        if project_settings_tup:
-            project_name, project_settings = project_settings_tup
-
-            return merge_dict(
-                project_settings or {},
-                dict(uuid=project_name),
-            )
 
 
 def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:

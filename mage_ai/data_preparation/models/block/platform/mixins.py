@@ -79,7 +79,10 @@ class ProjectPlatformAccessible:
         return config
 
     def is_from_another_project(self) -> bool:
-        return self.project_platform_activated and from_another_project(self.__file_source_path())
+        return self.project_platform_activated and from_another_project(
+            self.__file_source_path(),
+            other_file_path=self.pipeline.dir_path if self.pipeline else None,
+        )
 
     def get_file_path_from_source(self) -> str:
         if not self.project_platform_activated:
@@ -201,6 +204,7 @@ class ProjectPlatformAccessible:
         block_class,
         block_dict,
         node: Dict = None,
+        hydrate_configuration: bool = True,
     ):
         block_type = block_dict['block_type']
         configuration = block_dict['configuration'] or {}
@@ -209,7 +213,7 @@ class ProjectPlatformAccessible:
         pipeline = block_dict['pipeline']
         uuid = block_dict['uuid']
 
-        if self.project_platform_activated:
+        if hydrate_configuration and self.project_platform_activated:
             # self.project_path
             #   /home/src/default_platform/default_repo/dbt/demo
             # node['original_file_path']

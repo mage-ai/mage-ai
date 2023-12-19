@@ -33,7 +33,9 @@ function useProject({
 }: UseProjectProps = {
   pauseFetch: false,
 }): UseProjectType {
-  const { data: dataProjects, mutate: fetchProjects } = api.projects.list({}, {}, {
+  const { data: dataProjects, mutate: fetchProjects } = api.projects.list({}, {
+    revalidateOnFocus: false,
+  }, {
     pauseFetch,
   });
   const {

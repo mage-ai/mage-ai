@@ -837,6 +837,7 @@ class BlockResource(GenericResource):
 
         pipeline = kwargs.get('parent_model')
         if pipeline:
+            pk = urllib.parse.unquote(pk)
             block = pipeline.get_block(pk, block_type=block_type, extension_uuid=extension_uuid)
             if block:
                 return self(block, user, **kwargs)

@@ -707,6 +707,8 @@ function CodeBlock({
     option_type: OptionTypeEnum.PROJECTS,
     resource_type: ResourceTypeEnum.Block,
     resource_uuid: BlockLanguageEnum.SQL === blockLanguage ? blockUUID : null,
+  }, {
+    revalidateOnFocus: false,
   });
   const configurationOptions: ConfigurationOptionType[] =
     useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
@@ -1178,7 +1180,10 @@ function CodeBlock({
   const blockMetadata = useMemo(() => dataBlock?.block?.metadata || {}, [dataBlock]);
 
   const [updateBlock]: [any, any] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
+    api.blocks.pipelines.useUpdate(
+      encodeURIComponent(pipelineUUID),
+      encodeURIComponent(blockUUID),
+    ),
     {
       onError: (response: any) => {
         const {
