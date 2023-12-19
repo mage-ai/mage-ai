@@ -87,6 +87,9 @@ async def safe_write_async(filepath: str, content: str, write_func: Callable = N
 
 
 async def read_last_line_async(file_path: str) -> str:
+    if not file_path:
+        return
+
     # https://stackoverflow.com/questions/46258499/how-to-read-the-last-line-of-a-file-in-python
     async with aiofiles.open(file_path, mode='rb') as f:
         # catch OSError in case of a one line file

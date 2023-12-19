@@ -707,6 +707,8 @@ function CodeBlock({
     option_type: OptionTypeEnum.PROJECTS,
     resource_type: ResourceTypeEnum.Block,
     resource_uuid: BlockLanguageEnum.SQL === blockLanguage ? blockUUID : null,
+  }, {
+    revalidateOnFocus: false,
   });
   const configurationOptions: ConfigurationOptionType[] =
     useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);

@@ -282,12 +282,16 @@ function PipelineDetailPage({
   const {
     data: dataPipelineInteraction,
     mutate: fetchPipelineInteraction,
-  } = api.pipeline_interactions.detail(isInteractionsEnabled && pipelineUUID);
+  } = api.pipeline_interactions.detail(isInteractionsEnabled && pipelineUUID, {}, {
+    revalidateOnFocus: false,
+  });
 
   const {
     data: dataInteractions,
     mutate: fetchInteractions,
-  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID);
+  } = api.interactions.pipeline_interactions.list(isInteractionsEnabled && pipelineUUID, {}, {
+    revalidateOnFocus: false,
+  });
 
   const pipelineInteraction: PipelineInteractionType =
     useMemo(() => dataPipelineInteraction?.pipeline_interaction || {}, [
@@ -337,6 +341,11 @@ function PipelineDetailPage({
 
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
+  const { data: dataFilesSQL, mutate: fetchFilesSQL } = api.files.list({
+    pattern: encodeURIComponent('\\.sql$'),
+  });
+  const filesSQL = useMemo(() => dataFilesSQL?.files || [], [dataFilesSQL]);
+
   pipeline = useMemo(() => data?.pipeline, [data]);
 
   const isDataIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
@@ -873,19 +882,20 @@ function PipelineDetailPage({
             fetchPipeline().then(({
               pipeline: pipelineServer,
             }) => {
-              if (sideBySideEnabled) {
-                const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
-                const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
+              const blockUUIDsPrevious = pipeline?.blocks?.map(({ uuid }) => uuid);
+              const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
+              const changed = !equals(blockUUIDsPrevious || [], blockUUIDsServer || []);
+              if (changed) {
+                fetchFileTree();
+                fetchFilesSQL();
 
-                if (!equals(blockUUIDsPrevious || [], blockUUIDsServer || [])) {
+                if (sideBySideEnabled) {
                   setTimeout(() => {
                     resetColumnScroller();
                   }, 1);
                 }
               }
             });
-
-            fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -2556,7 +2566,9 @@ function PipelineDetailPage({
     uuid: 'browse_templates',
   });
 
-  const { data: dataGlobalProducts } = api.global_data_products.list();
+  const { data: dataGlobalProducts } = api.global_data_products.list({}, {
+    revalidateOnFocus: false,
+  });
   const globalDataProducts: GlobalDataProductType[] =
     useMemo(() => dataGlobalProducts?.global_data_products || [], [dataGlobalProducts]);
 
@@ -2875,6 +2887,7 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
+      filesSQL={filesSQL}
       globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       // @ts-ignore
@@ -2946,6 +2959,7 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSampleData,
     files,
+    filesSQL,
     globalDataProducts,
     globalVariables,
     hiddenBlocks,

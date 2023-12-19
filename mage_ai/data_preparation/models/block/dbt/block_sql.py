@@ -218,6 +218,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                             pipeline=self.pipeline,
                             uuid=self.uuid,
                         ),
+                        hydrate_configuration=False,
                     )
                 ]
 

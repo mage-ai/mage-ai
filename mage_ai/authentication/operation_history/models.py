@@ -105,7 +105,7 @@ class OperationHistoryReader:
     async def load_most_recent_history(self, timestamp: int = None) -> OperationHistory:
         try:
             file_path = self.build_file_path()
-            if self.storage.path_exists(file_path):
+            if file_path and self.storage.path_exists(file_path):
                 line = await read_last_line_async()
                 return OperationHistory(**json.loads(line))
         except Exception as err:

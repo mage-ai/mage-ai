@@ -13,7 +13,10 @@ import tornado.websocket
 from jupyter_client import KernelClient
 
 from mage_ai.api.errors import ApiError
-from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
+from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.resources.PipelineResource import PipelineResource
+from mage_ai.api.resources.ProjectResource import ProjectResource
+from mage_ai.api.utils import authenticate_client_and_token
 from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
     PIPELINE_CONFIG_FILE,
@@ -22,9 +25,8 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_project_uuid, get_repo_config
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.server.active_kernel import (
     get_active_kernel_client,
@@ -183,6 +185,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         token = message.get('token')
 
         pipeline_uuid = message.get('pipeline_uuid')
+        pipeline = None
+        if pipeline_uuid:
+            pipeline = Pipeline.get(
+                pipeline_uuid,
+                repo_path=get_repo_path(),
+                all_projects=project_platform_activated(),
+            )
+
         if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
             valid = not REQUIRE_USER_AUTHENTICATION
 
@@ -194,17 +204,21 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
                     if valid and oauth_token and oauth_token.user:
                         if pipeline_uuid:
-                            valid = has_at_least_editor_role(
+                            valid = PipelineResource.policy_class()(
+                                PipelineResource(
+                                    pipeline,
+                                    oauth_token.user,
+                                ),
                                 oauth_token.user,
-                                Entity.PIPELINE,
-                                pipeline_uuid,
-                            )
+                            ).has_at_least_editor_role(action=OperationType.UPDATE)
                         else:
-                            valid = has_at_least_editor_role(
+                            valid = ProjectResource.policy_class()(
+                                ProjectResource(
+                                    {},
+                                    oauth_token.user,
+                                ),
                                 oauth_token.user,
-                                Entity.PROJECT,
-                                get_project_uuid(),
-                            )
+                            ).has_at_least_editor_role(action=OperationType.UPDATE)
             if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(
@@ -226,13 +240,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         execute_pipeline = message.get('execute_pipeline')
         check_if_pipeline_running = message.get('check_if_pipeline_running')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
-        pipeline = None
-        if pipeline_uuid:
-            pipeline = Pipeline.get(
-                pipeline_uuid,
-                repo_path=get_repo_path(),
-                all_projects=project_platform_activated(),
-            )
 
         # Add default trigger runtime variables so the code can run successfully.
         global_vars = {}
