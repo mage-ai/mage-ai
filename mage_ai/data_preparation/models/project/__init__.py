@@ -3,8 +3,9 @@ from typing import Dict, List
 
 import aiohttp
 
+from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.data_preparation.repo_manager import get_cluster_type, get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import (
     active_project_settings,
@@ -35,6 +36,25 @@ class Project():
             root_project=self.root_project,
         )
         self.version = VERSION
+
+    @property
+    def workspace_config_defaults(self) -> Dict:
+        config = self.repo_config.workspace_config_defaults or {}
+        cluster_type = get_cluster_type()
+        try:
+            if cluster_type == ClusterType.K8S:
+                from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                    WorkloadManager,
+                )
+                workload_manager = WorkloadManager(os.getenv(KUBE_NAMESPACE))
+                k8s_default_values = workload_manager.get_default_values()
+
+                if not config.get('k8s'):
+                    config['k8s'] = k8s_default_values
+        except Exception:
+            pass
+
+        return config
 
     @property
     def help_improve_mage(self) -> bool:
