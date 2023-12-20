@@ -107,7 +107,7 @@ class FileResource(GenericResource):
     @safe_db_query
     def get_model(self, pk, **kwargs):
         file_path = urllib.parse.unquote(pk)
-        return File.from_path(file_path, get_repo_path())
+        return File.from_path(file_path, get_repo_path(root_project=True))
 
     @safe_db_query
     def delete(self, **kwargs):

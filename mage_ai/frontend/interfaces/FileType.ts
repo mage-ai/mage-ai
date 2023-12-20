@@ -50,6 +50,7 @@ export default interface FileType {
   children?: FileType[];
   content?: string;
   disabled?: boolean;
+  isNotFolder?: boolean;
   name?: string;
   parent?: FileType;
   path?: string;

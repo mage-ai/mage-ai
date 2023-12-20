@@ -1,4 +1,5 @@
 import math
+import os
 import urllib.parse
 from typing import Dict
 
@@ -850,6 +851,17 @@ class BlockResource(GenericResource):
                 error.update(message=message)
                 raise ApiError(error)
 
+        file_path = query.get('file_path', [None])
+        if file_path:
+            file_path = file_path[0]
+        if file_path:
+            block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+            if block:
+                return self(block, user, **kwargs)
+            else:
+                error.update(ApiError.RESOURCE_NOT_FOUND)
+                raise ApiError(error)
+
         block_type_and_uuid = urllib.parse.unquote(pk)
         parts = block_type_and_uuid.split('/')
 
@@ -858,7 +870,7 @@ class BlockResource(GenericResource):
             raise ApiError(error)
 
         block_type = parts[0]
-        block_uuid_with_extension = '/'.join(parts[1:])
+        block_uuid_with_extension = os.path.sep.join(parts[1:])
         parts2 = block_uuid_with_extension.split('.')
 
         language = None
