@@ -30,7 +30,9 @@ import {
   Table,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
-import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
+import {
+  CUSTOM_EVENT_NAME_FOLDER_EXPAND,
+} from '@utils/events/constants';
 import { FILE_EXTENSION_COLOR_MAPPING, FILE_EXTENSION_ICON_MAPPING } from './constants';
 import {
   ICON_SIZE,
@@ -86,6 +88,7 @@ type FolderProps = {
   containerRef: any;
   file: FileType;
   level: number;
+  reloadCount?: number;
   setCoordinates: (coordinates: {
     x: number;
     y: number;
@@ -164,6 +167,7 @@ function Folder({
   onlyShowChildren,
   openFile,
   openSidekickView,
+  reloadCount,
   renderAfterContent,
   selectFile,
   setContextItem,
@@ -205,7 +209,7 @@ function Folder({
     ? folderStates[uuid]
     : level === 0
   );
-  const refExpandCount = useRef(refExpandState.current ? 1 : 0);
+  const refExpandCount = useRef(0);
   const expanded = refExpandState.current;
 
   if (!name && !allowEmptyFolders) {
@@ -341,13 +345,14 @@ function Folder({
       isFileDisabled={isFileDisabled}
       isNotFolder={f?.isNotFolder}
       isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
-      key={`${uuid}/${f?.name || DEFAULT_NAME}`}
+      key={`${uuid}/${f?.name || DEFAULT_NAME}-${reloadCount}`}
       level={onlyShowChildren ? level : level + 1}
       onClickFile={onClickFile}
       onClickFolder={onClickFolder}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openSidekickView={openSidekickView}
+      reloadCount={reloadCount}
       renderAfterContent={renderAfterContent}
       selectFile={selectFile}
       setContextItem={setContextItem}
@@ -376,6 +381,7 @@ function Folder({
     onlyShowChildren,
     openFile,
     openSidekickView,
+    reloadCount,
     renderAfterContent,
     selectFile,
     setContextItem,
@@ -494,6 +500,35 @@ function Folder({
     theme,
     uuid,
   ]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (expanded && refExpandCount?.current === 0 && refChildren?.current?.id) {
+        refExpandCount.current = 1;
+
+        const domNode = document.getElementById(refChildren?.current?.id);
+        try {
+          const root = createRoot(domNode);
+          root.render(
+            children?.length >= 1
+              ? (
+                <DeferredRender idleTimeout={100 * level}>
+                  {buildChildrenFiles(children)}
+                </DeferredRender>
+              )
+              : !children?.length
+                ? isFolder
+                  // @ts-ignore
+                  ? buildChildrenFiles(childrenEmpty)
+                  : <div />
+                : null,
+          );
+        } catch(err) {
+          console.log(err);
+        }
+      }
+    }, 1);
+  }, []);
 
   return (
     <>
@@ -669,19 +704,7 @@ function Folder({
           className={expanded ? 'expanded_children' : 'collapsed_children'}
           id={uuid}
           ref={refChildren}
-        >
-          {children?.length >= 1 && expanded && (
-            <DeferredRender idleTimeout={100 * level}>
-              {buildChildrenFiles(children)}
-            </DeferredRender>
-          )}
-
-          {!children?.length
-            && isFolder
-            // @ts-ignore
-            && buildChildrenFiles(childrenEmpty)
-          }
-        </div>
+        />
       </ChildrenStyle>
     </>
   );

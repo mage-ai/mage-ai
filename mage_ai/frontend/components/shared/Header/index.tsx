@@ -37,9 +37,8 @@ import {
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
-import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
+import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getUser } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -83,6 +82,7 @@ function Header({
   const refUserMenu = useRef(null);
   const router = useRouter();
 
+  const loggedIn = AuthToken.isLoggedIn();
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
@@ -93,6 +93,8 @@ function Header({
     },
     {
       revalidateOnFocus: false,
+    }, {
+      pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
     });
   const {
     is_git_integration_enabled: gitIntegrationEnabled,
@@ -110,7 +112,6 @@ function Header({
   const project = useMemo(() => projectProp || projectInit, [projectInit, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
 
-  const loggedIn = AuthToken.isLoggedIn();
   const logout = () => {
     AuthToken.logout(() => {
       api.sessions.updateAsync(null, 1)

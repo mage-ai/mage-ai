@@ -35,7 +35,7 @@ export type FlyoutMenuItemType = {
   items?: FlyoutMenuItemType[];
   keyTextGroups?: NumberOrString[][];
   keyboardShortcutValidation?: (ks: KeyboardShortcutType, index?: number) => boolean;
-  label: () => string | any;
+  label?: () => string | any;
   leftAligned?: boolean;
   linkProps?: {
     as?: string;
@@ -229,7 +229,7 @@ function FlyoutMenu({
 
           const ElToUse = linkProps ? LinkAnchorStyle : LinkStyle;
 
-          const labelToRender = label();
+          const labelToRender = label ? label?.() : uuid;
 
           if (isGroupingTitle) {
             return (
