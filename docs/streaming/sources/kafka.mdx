@@ -14,8 +14,30 @@ include_metadata: false
 api_version: "0.10.2"
 batch_size: 100
 timeout_ms: 500
+auto_offset_reset: latest # Optional
+max_partition_fetch_bytes: 1048576 # Optional
+offset: None # Optional
+offset_value: None # Optional
+partitions: # Optional
+  - {"topic": "test", "partition": 1}
 ```
+### Offset Configuration
+If using the `offset` config, the `partitions` config is required.
 
+`offset` config has 4 optional values:
+  1. beginning
+  2. end
+  3. int
+  4. timestamp
+
+Both `beginning` and `end` set the consumer to consume data from the beginning and end of the queue, respectively.
+Also, they do not require `offset_value`
+
+`int` config set the consumer to consume data from the given offset value inside the queue.
+This value correspond to the numeric position inside each partition.
+
+`timestamp` config set the consumer to consume data from the given offset timestamp value inside the queue.
+This value correspond to the timestamp of the message (Unit should be milliseconds since beginning of the epoch)
 
 ## SSL authentication
 
