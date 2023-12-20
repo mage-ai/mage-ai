@@ -44,9 +44,7 @@ RUN \
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
 RUN \
-  tag=$(tail -n 1 /tmp/constants.py) && \
-  VERSION=$(echo "$tag" | tr -d "'") && \
-  pip3 install --no-cache-dir "mage-ai[all]==$VERSION" && \
+  pip3 install --no-cache-dir git+https://github.com/mage-ai/mage-ai.git@alpha#egg="mage-ai[all]" && \
   rm /tmp/constants.py
 
 ## Startup Script
