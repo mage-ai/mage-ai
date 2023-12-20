@@ -74,6 +74,8 @@ function FileBrowser({
   fetchFileTree,
   fetchPipeline,
   files,
+  onClickFile,
+  onClickFolder,
   onCreateFile,
   onSelectBlockFile,
   openFile,
@@ -325,6 +327,9 @@ function FileBrowser({
       file={file}
       key={file.name}
       level={0}
+      onClickFile={onClickFile}
+      onClickFolder={onClickFolder}
+      onCreateFile={onCreateFile}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       setCoordinates={setCoordinates}
@@ -335,6 +340,9 @@ function FileBrowser({
     />
   )), [
     files,
+    onClickFile,
+    onClickFolder,
+    onCreateFile,
     openFile,
 
     // These cause re-render
