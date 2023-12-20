@@ -48,7 +48,6 @@ type FileBrowserProps = {
   fetchFileTree?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
-  onCreateFile?: (file: FileType) => void;
   pipeline?: PipelineType;
   setErrors?: (opts: {
     errors: any;
@@ -74,7 +73,8 @@ function FileBrowser({
   fetchFileTree,
   fetchPipeline,
   files,
-  onCreateFile,
+  onClickFile,
+  onClickFolder,
   onSelectBlockFile,
   openFile,
   openSidekickView,
@@ -325,6 +325,8 @@ function FileBrowser({
       file={file}
       key={file.name}
       level={0}
+      onClickFile={onClickFile}
+      onClickFolder={onClickFolder}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       setCoordinates={setCoordinates}
@@ -335,6 +337,8 @@ function FileBrowser({
     />
   )), [
     files,
+    onClickFile,
+    onClickFolder,
     openFile,
 
     // These cause re-render
@@ -378,14 +382,12 @@ function FileBrowser({
       file={opts?.file}
       moveFile={opts?.moveFile}
       onCancel={hideModalNewFile}
-      onCreateFile={onCreateFile}
       selectedFolder={selectedFolder}
       setErrors={setErrors}
     />
   ), {
   }, [
     fetchFileTree,
-    onCreateFile,
     selectedFolder,
     setErrors,
   ], {
