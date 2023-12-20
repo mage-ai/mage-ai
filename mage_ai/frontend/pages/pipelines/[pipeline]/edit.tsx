@@ -719,7 +719,15 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
-  const [selectedBlockDetails, setSelectedBlockDetails] = useState<BlockType>(null);
+  const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
+    block?: {
+      type?: BlockTypeEnum | string;
+      uuid?: string;
+    };
+    file?: {
+      path?: string;
+    };
+  }>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -1290,7 +1298,7 @@ function PipelineDetailPage({
       const {
         type: blockType,
         uuid: blockUUID,
-      } = selectedBlockDetails || {
+      } = selectedBlockDetails?.block || {
         type: null,
         uuid: null,
       };

@@ -272,6 +272,7 @@ function FileEditor({
   const addToPipelineEl = addNewBlock
     && pipeline
     && file
+    // @ts-ignore
     && PIPELINE_BLOCK_EXTENSIONS.includes(fileExtension)
     && getBlockType(file?.path?.split(path.sep))
     && (
