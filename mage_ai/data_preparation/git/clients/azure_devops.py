@@ -13,12 +13,11 @@ class AzureDevopsClient(Client):
         self.instance = AZURE_DEVOPS_INSTANCE
 
     def get_user(self):
-        encoded_token = base64.b64encode(bytes(self.access_token, 'utf-8')).decode('utf-8')
         resp = requests.get(
-            f'{self.instance}/_apis/profile/profiles/me?api-version=7.1',
+            'https://graph.microsoft.com/v1.0/me',
             headers={
-                'Accept': 'application/json',
-                'Authorization': f'Basic {encoded_token}',
+                'Content-Type': 'application\\json',
+                'Authorization': f'Bearer {self.access_token}',
             },
             timeout=10,
         )

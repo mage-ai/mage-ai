@@ -7,7 +7,7 @@ from mage_ai.authentication.providers.active_directory import ADProvider
 
 class AzureDevopsProvider(ADProvider):
     provider = OAUTH_PROVIDER_AZURE_DEVOPS
-    scope = 'https://app.vssps.visualstudio.com/vso.code_write https://app.vssps.visualstudio.com/vso.profile'  # noqa: E501
+    scope = 'vso.tokenadministration vso.code_write vso.profile'  # noqa: E501
 
     def __init__(self):
         super().__init__()
