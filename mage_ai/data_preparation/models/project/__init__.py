@@ -36,6 +36,7 @@ class Project():
             root_project=self.root_project,
         )
         self.version = VERSION
+        self._features = None
 
     @property
     def workspace_config_defaults(self) -> Dict:
@@ -70,12 +71,31 @@ class Project():
 
     @property
     def features(self) -> Dict:
-        data = {}
-        features = self.repo_config.features
+        if self._features:
+            return self._features
+
+        self._features = {}
+        features = self.features_defined
 
         for uuid in FeatureUUID:
             key = uuid.value
-            data[key] = features.get(key) if features else None
+            self._features[key] = features.get(key) if features else None
+
+        return self._features
+
+    @features.setter
+    def features(self, x):
+        self._features = x
+
+    @property
+    def features_defined(self) -> Dict:
+        data = {}
+        features = self.repo_config.features if self.repo_config else {}
+
+        for uuid in FeatureUUID:
+            key = uuid.value
+            if features and key in features:
+                data[key] = features.get(key)
 
         return data
 

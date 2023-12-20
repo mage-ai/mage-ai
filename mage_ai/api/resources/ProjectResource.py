@@ -7,7 +7,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.platform import activate_project, project_platform_activated
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -17,6 +17,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
     model = merge_dict(project.repo_config.to_dict(), dict(
         emr_config=project.emr_config,
         features=project.features,
+        features_defined=project.features_defined,
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
@@ -40,16 +41,29 @@ class ProjectResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        project = await self.member(None, user, **kwargs)
-        collection = [project.model]
 
+        project = await self.member(None, user, **kwargs)
+
+        other_projects = []
         if not project.model.get('root_project') and project_platform_activated():
             root_project = await self.member(None, user, root_project=True, **kwargs)
             if root_project and root_project.model and root_project.model.get('projects'):
-                collection.append(root_project)
+                other_projects.append(root_project)
+
+        features = {}
+        if other_projects:
+            for project2 in other_projects:
+                combine_into(project2.features_defined or {}, features)
+
+        combine_into(project.features_defined or {}, features)
+
+        features2 = project.features or {}
+        combine_into(features, features2)
+
+        project.features = features2
 
         return self.build_result_set(
-            collection,
+            [project] + other_projects,
             user,
             **kwargs,
         )

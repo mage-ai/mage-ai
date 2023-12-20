@@ -511,7 +511,6 @@ function PipelineDetailPage({
     data?.pipeline?.updated_at,
     pipelineLastSaved,
     pipelineLastSavedState,
-    showStalePipelineMessageModal,
   ]);
 
   const qUrl = queryFromUrl();
@@ -720,6 +719,15 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
+  const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
+    block?: {
+      type?: BlockTypeEnum | string;
+      uuid?: string;
+    };
+    file?: {
+      path?: string;
+    };
+  }>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -736,11 +744,13 @@ function PipelineDetailPage({
         values: [],
       },
     });
+
     setMessages({});
     setPipelineContentTouched(false);
     setRunningBlocks([]);
     setSelectedBlock(null);
   }, []);
+
   useEffect(() => {
     if (pipelineUUID !== pipelineUUIDPrev) {
       callbackByBlockUUID.current = {};
@@ -886,8 +896,9 @@ function PipelineDetailPage({
               const blockUUIDsServer = pipelineServer?.blocks?.map(({ uuid }) => uuid);
               const changed = !equals(blockUUIDsPrevious || [], blockUUIDsServer || []);
               if (changed) {
-                fetchFileTree();
-                fetchFilesSQL();
+                // Don’t fetch the files because they can be adding existing files to the pipeline.
+                // fetchFileTree();
+                // fetchFilesSQL();
 
                 if (sideBySideEnabled) {
                   setTimeout(() => {
@@ -1175,7 +1186,6 @@ function PipelineDetailPage({
     pipelineLastSaved,
     pipelineLastSavedState,
     runningBlocks,
-    showStalePipelineMessageModal,
     sparkEnabled,
     updatePipeline,
     widgets,
@@ -1247,7 +1257,7 @@ function PipelineDetailPage({
 
   // Files
   const openFile = useCallback((filePath: string) => {
-    savePipelineContent();
+    // savePipelineContent();
 
     const filePathEncoded = encodeURIComponent(filePath);
     let filePaths = queryFromUrl()['file_paths[]'] || [];
@@ -1280,7 +1290,51 @@ function PipelineDetailPage({
   }, [
     // blockRefs,
     // blocks,
-    savePipelineContent,
+    // savePipelineContent,
+  ]);
+
+  useEffect(() => {
+    if (selectedBlockDetails) {
+      const {
+        type: blockType,
+        uuid: blockUUID,
+      } = selectedBlockDetails?.block || {
+        type: null,
+        uuid: null,
+      };
+
+      // Block is in pipeline
+      const block =
+        blocks.find(({ type, uuid }: BlockType) => type === blockType && uuid === blockUUID);
+
+      if (block) {
+        setSelectedBlock(block);
+        if (blockRefs?.current) {
+          const blockRef = blockRefs.current[buildBlockRefKey(block)];
+          blockRef?.current?.scrollIntoView();
+        }
+        goToWithQuery({
+          block_uuid: null,
+          file_path: null,
+          'file_paths[]': [],
+        });
+      } else if (blockType === BlockTypeEnum.CHART) {
+        const chart = widgets.find(({ uuid }) => uuid === blockUUID);
+        if (chart) {
+          setSelectedBlock(chart);
+          if (chartRefs?.current) {
+            const chartRef = chartRefs.current[chart.uuid];
+            chartRef?.current?.scrollIntoView();
+          }
+        }
+      } else if (selectedBlockDetails?.file?.path) {
+        openFile(selectedBlockDetails?.file?.path);
+      }
+    }
+  }, [
+    blocks,
+    selectedBlockDetails,
+    widgets,
   ]);
 
   const onUpdateFileSuccess = useCallback((fileContent: FileType, opts?: {
@@ -1550,9 +1604,11 @@ function PipelineDetailPage({
             ));
             fetchPipeline();
             setSelectedBlock(null);
-            if (type === BlockTypeEnum.SCRATCHPAD) {
-              fetchFileTree();
-            }
+
+            // If we delete a block from the pipeline, why do we need to fetch the files?
+            // if (type === BlockTypeEnum.SCRATCHPAD) {
+            //   fetchFileTree();
+            // }
 
             if (isInteractionsEnabled) {
               const blocksMapping = { ...blockInteractionsMapping };
@@ -1682,7 +1738,7 @@ function PipelineDetailPage({
           callback: () => {
             fetchAutocompleteItems();
             fetchPipeline();
-            fetchFileTree();
+            // fetchFileTree();
           },
           onErrorCallback: (response, errors) => {
             showDeleteConfirmation();
@@ -1732,6 +1788,9 @@ function PipelineDetailPage({
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name: string = randomNameGenerator(),
+    opts?: {
+      disableFetchingFiles?: boolean;
+    },
   ): Promise<any> => {
     let blockContent;
     if (block.converted_from_type && block.converted_from_uuid) {
@@ -1823,7 +1882,10 @@ function PipelineDetailPage({
                 window?.location?.reload();
               }
             } else {
-              fetchFileTree();
+              if (!opts?.disableFetchingFiles) {
+                fetchFileTree();
+              }
+
               fetchPipeline().then(({
                 pipeline: {
                   blocks: blocksNewInit,
@@ -2195,37 +2257,19 @@ function PipelineDetailPage({
     blockType: BlockTypeEnum,
     filePath: string,
   ) => {
-    // Block is in pipeline
-    const block =
-      blocks.find(({ type, uuid }: BlockType) => type === blockType && uuid === blockUUID);
-
-    if (block) {
-      setSelectedBlock(block);
-      if (blockRefs?.current) {
-        const blockRef = blockRefs.current[buildBlockRefKey(block)];
-        blockRef?.current?.scrollIntoView();
-      }
-      goToWithQuery({
-        block_uuid: null,
-        file_path: null,
-        'file_paths[]': [],
-      });
-    } else if (blockType === BlockTypeEnum.CHART) {
-      const chart = widgets.find(({ uuid }) => uuid === blockUUID);
-      if (chart) {
-        setSelectedBlock(chart);
-        if (chartRefs?.current) {
-          const chartRef = chartRefs.current[chart.uuid];
-          chartRef?.current?.scrollIntoView();
-        }
-      }
-    } else if (filePath) {
-      openFile(filePath);
-    }
+    setSelectedBlockDetails({
+      block: {
+        type: blockType,
+        uuid: blockUUID,
+      },
+      file: {
+        path: filePath,
+      },
+    });
   }, [
-    blocks,
-    openFile,
-    widgets,
+    // blocks,
+    // openFile, // Doesn’t change
+    // widgets,
   ]);
 
   useEffect(() => {
@@ -3150,24 +3194,29 @@ function PipelineDetailPage({
   );
 
   const fileTreeRef = useRef(null);
+
   const before = useMemo(() => (
     <FileBrowser
       addNewBlock={(
         b: BlockRequestPayloadType,
         cb: (block: BlockType) => void,
+        opts?: {
+          disableFetchingFiles?: boolean;
+        },
       ) => {
         addNewBlockAtIndex(
           b,
           blocks.length,
           cb,
           b.name,
+          opts,
         );
+
         if (filePathsFromUrl?.length >= 1) {
           router.push(`/pipelines/${pipelineUUID}/edit`);
         }
       }}
       blocks={blocks}
-      // deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
       fetchAutocompleteItems={fetchAutocompleteItems}
       fetchFileTree={fetchFileTree}
@@ -3175,10 +3224,6 @@ function PipelineDetailPage({
       files={files}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
-      openPipeline={(uuid: string) => {
-        resetState();
-        router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
-      }}
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={fileTreeRef}
@@ -3200,7 +3245,6 @@ function PipelineDetailPage({
     openSidekickView,
     pipeline,
     pipelineUUID,
-    resetState,
     router,
     setErrors,
     setSelectedBlock,

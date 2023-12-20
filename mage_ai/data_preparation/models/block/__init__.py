@@ -12,9 +12,11 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
+from pathlib import Path
 from queue import Queue
 from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
+import inflection
 import pandas as pd
 import simplejson
 import yaml
@@ -57,6 +59,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
     BlockColor,
     BlockLanguage,
@@ -84,6 +87,10 @@ from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.path_fixer import (
+    add_root_repo_path_to_relative_path,
+    get_path_parts,
+)
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
@@ -586,7 +593,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def file_path(self) -> str:
         file_path = self.get_file_path_from_source()
         if file_path:
-            return file_path
+            return add_root_repo_path_to_relative_path(file_path)
 
         return self.__build_file_path(
             self.repo_path or os.getcwd(),
@@ -758,14 +765,23 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 other_file_path=pipeline.dir_path if pipeline else None,
             )
         )
+        absolute_file_path = add_root_repo_path_to_relative_path(
+            file_path_from_source,
+        ) if file_path_from_source else None
 
-        if not file_is_from_another_project:
+        if not file_is_from_another_project and \
+                (not absolute_file_path or not os.path.exists(absolute_file_path)):
+
             if not replicated_block and \
                     (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
                     BlockType.GLOBAL_DATA_PRODUCT != block_type:
 
                 block_directory = self.file_directory_name(block_type)
-                block_dir_path = os.path.join(repo_path, block_directory)
+                if absolute_file_path:
+                    block_dir_path = os.path.dirname(absolute_file_path)
+                else:
+                    block_dir_path = os.path.join(repo_path, block_directory)
+
                 if not os.path.exists(block_dir_path):
                     os.mkdir(block_dir_path)
                     with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
@@ -898,6 +914,31 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             status=status,
         )
 
+    @classmethod
+    def get_block_from_file_path(self, file_path: str) -> 'Block':
+        parts = get_path_parts(file_path)
+
+        if parts and len(parts) >= 3:
+            # ('/home/src', 'default_repo', 'data_loaders/astral_violet.py')
+            root_project_full_path, path, file_path_base = parts
+
+            # ('data_loaders', 'astral_violet.py')
+            file_parts = Path(file_path_base).parts
+            block_type = inflection.singularize(str(file_parts[0]))
+            block_uuid = str(Path(*file_parts[1:]))
+
+            configuration = dict(file_source=dict(path=file_path))
+            extension = Path(file_path).suffix.replace('.', '')
+            language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(extension)
+
+            return self.get_block(
+                block_uuid,
+                block_uuid,
+                block_type,
+                configuration=configuration,
+                language=language,
+            )
+
     def all_upstream_blocks_completed(
         self,
         completed_block_uuids: Set[str],
@@ -948,6 +989,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
             return
+
+        # TODO (tommy dang): delete this block from all pipelines in all projects
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
         pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
         if not force:
@@ -957,6 +1000,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                         f'Block {self.uuid} has downstream dependencies in pipeline {p.uuid}. '
                         'Please remove the dependencies before deleting the block.'
                     )
+
         for p in pipelines:
             p.delete_block(
                 p.get_block(self.uuid, widget=widget),
@@ -964,6 +1008,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 commit=commit,
                 force=force,
             )
+
         os.remove(self.file_path)
 
     def execute_with_callback(
@@ -2339,7 +2384,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block(widget=widget)
         return self
 
-    async def update_content_async(self, content, widget=False) -> 'Block':
+    async def update_content_async(
+        self,
+        content,
+        error_if_file_missing: bool = True,
+        widget: bool = False,
+    ) -> 'Block':
+        if error_if_file_missing and not self.file.exists():
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
+
         block_content = await self.content_async()
         if content != block_content:
             self.status = BlockStatus.UPDATED
