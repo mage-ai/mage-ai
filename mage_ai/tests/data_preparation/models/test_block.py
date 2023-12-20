@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.block.errors import HasDownstreamDependenci
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.shared.path_fixer import add_root_repo_path_to_relative_path
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_integration_pipeline_with_blocks
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
@@ -763,4 +764,4 @@ class BlockProjectPlatformTests(ProjectPlatformMixin):
                     configuration=dict(file_source=dict(path=path))
                 )
 
-                self.assertEqual(block.file_path, path)
+                self.assertEqual(block.file_path, add_root_repo_path_to_relative_path(path))

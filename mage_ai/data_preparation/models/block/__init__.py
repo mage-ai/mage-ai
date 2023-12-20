@@ -2384,7 +2384,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block(widget=widget)
         return self
 
-    async def update_content_async(self, content, widget=False) -> 'Block':
+    async def update_content_async(
+        self,
+        content,
+        error_if_file_missing: bool = True,
+        widget: bool = False,
+    ) -> 'Block':
+        if error_if_file_missing and not self.file.exists():
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
+
         block_content = await self.content_async()
         if content != block_content:
             self.status = BlockStatus.UPDATED
