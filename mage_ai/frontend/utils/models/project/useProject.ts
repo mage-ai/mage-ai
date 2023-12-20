@@ -17,6 +17,7 @@ export type UseProjectType = {
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW: FeatureUUIDEnum;
     LOCAL_TIMEZONE: FeatureUUIDEnum;
     OPERATION_HISTORY: FeatureUUIDEnum;
+    PROJECT_PLATFORM: FeatureUUIDEnum;
   };
   fetchProjects: () => any;
   project: ProjectType;

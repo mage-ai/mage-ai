@@ -15,6 +15,7 @@ export enum FeatureUUIDEnum {
 }
 
 export enum ProjectTypeEnum {
+  DBT = 'dbt',
   MAIN = 'main',
   STANDALONE = 'standalone',
   SUB = 'sub',
@@ -63,11 +64,6 @@ interface LifecycleConfigType {
     command?: string[];
     hook_path?: string;
   };
-}
-
-export enum ProjectTypeEnum {
-  DBT = 'dbt',
-  STANDALONE = 'standalone',
 }
 
 export interface WorkspaceConfigType {

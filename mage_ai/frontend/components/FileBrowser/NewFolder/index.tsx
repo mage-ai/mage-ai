@@ -27,6 +27,10 @@ type NewFolderProps = {
     errors: any;
     response: any;
   }) => void;
+  showError?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
 };
 
 function NewFolder({
@@ -38,6 +42,7 @@ function NewFolder({
   projectType,
   selectedFolder,
   setErrors,
+  showError,
 }: NewFolderProps) {
   const refTextInput = useRef(null);
   const file = isEmptyObject(fileProp) ? null : fileProp;
@@ -71,10 +76,19 @@ function NewFolder({
             onCancel();
             onCreateFile?.(file);
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
@@ -89,10 +103,19 @@ function NewFolder({
             fetchFileTree?.();
             onCancel();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
