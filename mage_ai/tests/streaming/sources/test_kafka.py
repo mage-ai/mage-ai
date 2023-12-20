@@ -31,6 +31,8 @@ class KafkaTests(TestCase):
             group_id='test_group',
             bootstrap_servers='test_server',
             api_version='0.10.2',
+            auto_offset_reset='latest',
+            max_partition_fetch_bytes=1048576,
             enable_auto_commit=True,
         )
 
@@ -52,6 +54,8 @@ class KafkaTests(TestCase):
             group_id='test_group',
             bootstrap_servers='test_server',
             api_version='0.10.2',
+            auto_offset_reset='latest',
+            max_partition_fetch_bytes=1048576,
             enable_auto_commit=True,
         )
 
