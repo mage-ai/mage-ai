@@ -10,6 +10,7 @@ import BlockType, {
   SQL_BLOCK_TYPES,
 } from '@interfaces/BlockType';
 import FileType, {
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   CODE_BLOCK_FILE_EXTENSIONS,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
@@ -51,6 +52,13 @@ export function getFullPathWithoutRootFolder(
   const fullPath = getFullPath(file, currentPathInit, removeFilename);
 
   return removeRootFromFilePath(fullPath);
+}
+
+export function getFileExtension(filename: string): FileExtensionEnum {
+  const match = filename.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)
+  return match?.length >= 1
+    ? match[0].replace('.', '') as FileExtensionEnum
+    : null;
 }
 
 export function validBlockFileExtension(filename: string): string {

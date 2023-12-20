@@ -142,7 +142,6 @@ function FileSelectorPopup({
           openFile={onOpenFile}
           onSelectBlockFile={onSelectBlockFile}
           selectFile={setSelectedFilePath}
-          uncollapsed
           useRootFolder
         />
       </WindowContentStyle>

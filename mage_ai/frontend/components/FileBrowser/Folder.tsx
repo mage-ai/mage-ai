@@ -7,6 +7,7 @@ import FileType, {
   ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   FOLDER_NAME_CHARTS,
   FOLDER_NAME_PIPELINES,
+  FileExtensionEnum,
   SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
@@ -15,18 +16,22 @@ import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTempl
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   Charts,
-  Ellipsis,
   ChevronDown,
   ChevronRight,
+  Ellipsis,
   FileFill,
   FolderV2Filled as FolderIcon,
+  Logs,
   NavGraph,
   ParentEmpty,
   Pipeline,
+  PipelineV3,
   RoundedSquare,
+  Table,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
 import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
+import { FILE_EXTENSION_COLOR_MAPPING, FILE_EXTENSION_ICON_MAPPING } from './constants';
 import {
   ICON_SIZE,
   INDENT_WIDTH,
@@ -39,6 +44,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
   getBlockUUIDFromFile,
+  getFileExtension,
   getFullPath,
   getFullPathWithoutRootFolder,
   getNonPythonBlockFromFile,
@@ -55,6 +61,7 @@ export type FolderSharedProps = {
   allowSelectingFolders?: boolean;
   disableContextMenu?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
+  isInPipelinesFolder?: boolean;
   isNotFolder?: boolean;
   onlyShowChildren?: boolean;
   onSelectBlockFile?: (
@@ -148,6 +155,7 @@ function Folder({
   disableContextMenu,
   file,
   isFileDisabled,
+  isInPipelinesFolder,
   isNotFolder,
   level,
   onClickFile,
@@ -207,15 +215,6 @@ function Folder({
     ? getFullPath(file)
     : getFullPathWithoutRootFolder(file);
 
-  const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
-
-  const disabled = useMemo(() => isFileDisabled ? isFileDisabled(filePathToUse, children) : disabledProp, [
-    children,
-    disabledProp,,
-    filePathToUse,
-    isFileDisabled,
-  ]);
-
   const isFolder = useMemo(() => !!children && !isNotFolder, [children, isNotFolder]);
 
   const folderNameForBlock = useMemo(() => uuidCombinedUse?.find?.(
@@ -251,12 +250,34 @@ function Folder({
       folderNameForBlock,
     ]);
 
-  const IconEl = useMemo(() => {
+  const isPipelineFolder = name === FOLDER_NAME_PIPELINES;
+
+  const disabled = useMemo(() => isFileDisabled
+    ? isFileDisabled(filePathToUse, children)
+    : disabledProp
+      || (isInPipelinesFolder && name === '__init__.py')
+      || (folderNameForBlock && name === '__init__.py'),
+  [
+    children,
+    disabledProp,,
+    filePathToUse,
+    folderNameForBlock,
+    isFileDisabled,
+    isInPipelinesFolder,
+    name,
+  ]);
+
+  const {
+    IconEl,
+    fileIconColor,
+  } = useMemo(() => {
+    let fileIconColorInner;
     let IconElInner = FileFill;
+
     if (!isFolder && isNotFolder) {
       IconElInner = Ellipsis;
-    } else if (level === 1 && name === FOLDER_NAME_PIPELINES) {
-      IconElInner = Pipeline;
+    } else if (isPipelineFolder) {
+      IconElInner = PipelineV3
     } else if (name === FOLDER_NAME_CHARTS) {
       IconElInner = Charts;
     } else if (isFolder) {
@@ -267,14 +288,28 @@ function Folder({
       }
     } else if (!name && allowEmptyFolders) {
       IconElInner = Ellipsis;
+    } else if (isInPipelinesFolder && !isFolder && name === 'metadata.yaml') {
+      IconElInner = Pipeline;
+    } else if (name?.includes('.log')) {
+      IconElInner = Logs;
+    } else if (!isFolder) {
+      const fx = getFileExtension(name);
+      if (fx && fx in FILE_EXTENSION_ICON_MAPPING) {
+        IconElInner = FILE_EXTENSION_ICON_MAPPING[fx];
+        fileIconColorInner = FILE_EXTENSION_COLOR_MAPPING[fx];
+      }
     }
 
-    return IconElInner;
+    return {
+      IconEl: IconElInner,
+      fileIconColor: fileIconColorInner,
+   };
   }, [
     allowEmptyFolders,
     blockType,
     isFirstParentFolderForBlock,
     isFolder,
+    isInPipelinesFolder,
     isNotFolder,
     level,
     name,
@@ -305,6 +340,7 @@ function Folder({
       }}
       isFileDisabled={isFileDisabled}
       isNotFolder={f?.isNotFolder}
+      isInPipelinesFolder={isInPipelinesFolder || isPipelineFolder}
       key={`${uuid}/${f?.name || DEFAULT_NAME}`}
       level={onlyShowChildren ? level : level + 1}
       onClickFile={onClickFile}
@@ -331,6 +367,8 @@ function Folder({
     disableContextMenu,
     file,
     isFileDisabled,
+    isInPipelinesFolder,
+    isPipelineFolder,
     level,
     onClickFile,
     onClickFolder,
@@ -374,6 +412,7 @@ function Folder({
               {buildChildrenFiles(children)}
             </DeferredRender>
           )
+          // @ts-ignore
           : (isFolder ? buildChildrenFiles(childrenEmpty) : <div />),
       );
     }
@@ -544,7 +583,7 @@ function Folder({
               || children?.length >= 1
               || disableContextMenu
               || disabled
-              || isPipelineFolder
+              || isInPipelinesFolder
             ) {
               return;
             }
@@ -601,7 +640,7 @@ function Folder({
                 )
                 : (
                   <IconEl
-                    fill={isFirstParentFolderForBlock ? color : null}
+                    fill={fileIconColor || (isFirstParentFolderForBlock ? color : null)}
                     disabled={disabled}
                     size={ICON_SIZE}
                   />
@@ -637,7 +676,11 @@ function Folder({
             </DeferredRender>
           )}
 
-          {!children?.length && isFolder && buildChildrenFiles(childrenEmpty)}
+          {!children?.length
+            && isFolder
+            // @ts-ignore
+            && buildChildrenFiles(childrenEmpty)
+          }
         </div>
       </ChildrenStyle>
     </>

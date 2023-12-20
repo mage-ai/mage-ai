@@ -15,6 +15,8 @@ export function getFullPath(
       parts.push(currentPath);
     }
     return getFullPath(file.parent, parts.join(osPath.sep));
+  } else if (file?.path) {
+    return file?.path;
   }
 
   return currentPath;

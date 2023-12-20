@@ -765,14 +765,23 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 other_file_path=pipeline.dir_path if pipeline else None,
             )
         )
+        absolute_file_path = add_root_repo_path_to_relative_path(
+            file_path_from_source,
+        ) if file_path_from_source else None
 
-        if not file_is_from_another_project:
+        if not file_is_from_another_project and \
+                (not absolute_file_path or not os.path.exists(absolute_file_path)):
+
             if not replicated_block and \
                     (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
                     BlockType.GLOBAL_DATA_PRODUCT != block_type:
 
                 block_directory = self.file_directory_name(block_type)
-                block_dir_path = os.path.join(repo_path, block_directory)
+                if absolute_file_path:
+                    block_dir_path = os.path.dirname(absolute_file_path)
+                else:
+                    block_dir_path = os.path.join(repo_path, block_directory)
+
                 if not os.path.exists(block_dir_path):
                     os.mkdir(block_dir_path)
                     with open(os.path.join(block_dir_path, '__init__.py'), 'w'):

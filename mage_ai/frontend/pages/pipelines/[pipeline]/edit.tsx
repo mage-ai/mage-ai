@@ -1290,7 +1290,7 @@ function PipelineDetailPage({
       const {
         type: blockType,
         uuid: blockUUID,
-      } = selectedBlockDetails?.block || {
+      } = selectedBlockDetails || {
         type: null,
         uuid: null,
       };

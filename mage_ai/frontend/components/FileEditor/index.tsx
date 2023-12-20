@@ -16,8 +16,9 @@ import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import CodeEditor from '@components/CodeEditor';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileType, {
-  FileExtensionEnum,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
+  FileExtensionEnum,
+  PIPELINE_BLOCK_EXTENSIONS,
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -40,6 +41,7 @@ import {
 } from './utils';
 import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
+import { getFullPath } from '@utils/files';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { isJsonString } from '@utils/string';
 import { errorOrSuccess, onSuccess } from '@api/utils/response';
@@ -267,16 +269,11 @@ function FileEditor({
     },
   );
 
-  const addToPipelineEl = addNewBlock && pipeline && (
-    fileExtension === FileExtensionEnum.PY
-    || fileExtension === FileExtensionEnum.SQL
-    || (
-      (fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
-        && getNonPythonBlockFromFile(file, file?.path)
-      )
-    )
-    && getBlockType(file.path.split(path.sep)) !== BlockTypeEnum.SCRATCHPAD
-    && getBlockFromFile(file)
+  const addToPipelineEl = addNewBlock
+    && pipeline
+    && file
+    && PIPELINE_BLOCK_EXTENSIONS.includes(fileExtension)
+    && getBlockType(file?.path?.split(path.sep))
     && (
     <Button
       onClick={() => {
