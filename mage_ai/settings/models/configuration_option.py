@@ -7,10 +7,12 @@ from typing import Dict, Union
 
 import aiofiles
 import yaml
+from jinja2 import Template
 
 from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.files import get_full_file_paths_containing_item
@@ -20,7 +22,19 @@ from mage_ai.shared.models import BaseDataClass
 
 async def read_file(full_path: str) -> str:
     async with aiofiles.open(full_path, mode='r') as f:
-        return yaml.safe_load(await f.read()) or {}
+        content = await f.read()
+        try:
+            content_interpolated = Template(content).render(
+                variables=lambda x: x,
+                **get_template_vars(),
+            )
+        except Exception as err:
+            print(f'[WARNING] DBT.cache.read_content_async {full_path}: {err}.')
+            content_interpolated = content
+
+        config = yaml.safe_load(content_interpolated) or {}
+
+        return config
 
 
 class ConfigurationType(str, Enum):

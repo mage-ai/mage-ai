@@ -4,8 +4,10 @@ from typing import Dict, List
 
 import aiofiles
 import yaml
+from jinja2 import Template
 
 from mage_ai.cache.dbt.constants import PROFILES_FILENAME, PROJECT_FILENAMES
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import get_full_file_paths_containing_item
 from mage_ai.shared.multi import run_parallel_multiple_args
@@ -44,7 +46,16 @@ def get_models(dirname: str = None, project: Dict = None) -> List[str]:
 async def read_content_async(file_path: str) -> Dict:
     if os.path.exists(file_path):
         async with aiofiles.open(file_path, mode='r') as f:
-            config = yaml.safe_load(await f.read()) or {}
+            content = await f.read()
+            try:
+                content_interpolated = Template(content).render(
+                    variables=lambda x: x,
+                    **get_template_vars(),
+                )
+            except Exception as err:
+                print(f'[WARNING] DBT.cache.read_content_async {file_path}: {err}.')
+                content_interpolated = content
+            config = yaml.safe_load(content_interpolated) or {}
             config['file_path'] = remove_base_repo_path(file_path)
             config['uuid'] = os.path.dirname(remove_base_repo_path(file_path))
             return config
@@ -85,7 +96,16 @@ async def build_mapping_async(file_path: str) -> Dict:
 def read_content(file_path: str) -> Dict:
     if os.path.exists(file_path):
         with open(file_path, mode='r') as f:
-            config = yaml.safe_load(f.read()) or {}
+            content = f.read()
+            try:
+                content_interpolated = Template(content).render(
+                    variables=lambda x: x,
+                    **get_template_vars(),
+                )
+            except Exception as err:
+                print(f'[WARNING] DBT.cache.read_content_async {file_path}: {err}.')
+                content_interpolated = content
+            config = yaml.safe_load(content_interpolated) or {}
             config['file_path'] = remove_base_repo_path(file_path)
             return config
 
