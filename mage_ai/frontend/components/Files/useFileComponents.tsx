@@ -48,7 +48,7 @@ function useFileComponents({
   setSelectedBlock,
   tabsBefore,
   widgets,
-}) {
+} = {}) {
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [showError] = useError(null, {}, [], {
     uuid: 'FilesPage',
@@ -235,7 +235,7 @@ function useFileComponents({
 
   const fileBrowserMemo = useMemo(() => (
     <FileBrowser
-      addNewBlock
+      addNewBlock={addNewBlock}
       blocks={blocks}
       deleteWidget={deleteWidget}
       fetchAutocompleteItems={fetchAutocompleteItems}
