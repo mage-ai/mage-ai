@@ -601,7 +601,15 @@ function TripleLayout({
           width: mainWidth,
         }}
       >
-        {mainContainerHeader}
+        {mainContainerHeader
+          ?
+            typeof mainContainerHeader === 'function'
+              ? mainContainerHeader?.({
+                width: mainWidth,
+              })
+              : mainContainerHeader
+          : null
+        }
 
         <MainContentStyle
           headerOffset={contained

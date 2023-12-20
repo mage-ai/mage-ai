@@ -39,6 +39,7 @@ export default function useFileIcon({
   children,
   disabled: disabledProp,
   file,
+  filePath,
   isInPipelinesFolder,
   isFileDisabled,
   isNotFolder,
@@ -48,9 +49,17 @@ export default function useFileIcon({
   useRootFolder,
   uuid,
 }) {
-  const filePathToUse: string = useRootFolder
-    ? getFullPath(file)
-    : getFullPathWithoutRootFolder(file);
+  const filePathToUse: string = useMemo(() => filePath
+    ? filePath
+    : (useRootFolder
+      ? getFullPath(file)
+      : getFullPathWithoutRootFolder(file)
+    )
+  , [
+    file,
+    filePath,
+    useRootFolder,,
+  ]);
 
   const isFolder = useMemo(() => !!children && !isNotFolder, [children, isNotFolder]);
 

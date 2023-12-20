@@ -7,6 +7,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
+import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
 import { Close, FileFill } from '@oracle/icons';
 import { FileTabStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -42,6 +43,18 @@ function FileTab({
   themeContext,
 }: FileTabProps & FileTabPropsInternal) {
   const [focused, setFocused] = useState<boolean>(false);
+
+  const {
+    BlockIcon,
+    Icon,
+    color,
+    iconColor,
+    isBlockFile,
+  } = useFileIcon({
+    filePath,
+    name: filePath,
+    uuid: filePath,
+  });
 
   return (
     <FlexContainer
@@ -84,10 +97,21 @@ function FileTab({
               fullHeight
             >
               {!filesTouched[filePath] && (
-                <FileFill
-                  muted={!selected}
-                  size={UNIT * 1.5}
-                />
+                <>
+                  {isBlockFile
+                    ?
+                      <BlockIcon
+                        color={color}
+                        size={UNIT * 1}
+                        square
+                      />
+                    :
+                      <Icon
+                        fill={iconColor}
+                        size={UNIT * 1.5}
+                      />
+                  }
+                </>
               )}
 
               {filesTouched[filePath] && (
@@ -107,7 +131,7 @@ function FileTab({
 
               <Spacing mr={1} />
 
-              <Text muted={!selected} noWrapping>
+              <Text monospace muted={!selected} noWrapping small>
                 {renderTabTitle ? renderTabTitle(filePath) : filePath}
               </Text>
             </FlexContainer>
