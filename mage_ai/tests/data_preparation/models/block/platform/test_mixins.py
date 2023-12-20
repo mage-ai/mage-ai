@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlock, DBTBlo
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
 from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.path_fixer import add_root_repo_path_to_relative_path
 from mage_ai.tests.api.endpoints.mixins import BaseAPIEndpointTest
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
@@ -45,7 +46,7 @@ class BlockWithProjectPlatformShared:
             'get_file_path_from_source',
             lambda value=value: value,
         ):
-            self.assertEqual(self.block.file_path, value)
+            self.assertEqual(self.block.file_path, add_root_repo_path_to_relative_path(value))
 
         with patch.object(
             self.block,

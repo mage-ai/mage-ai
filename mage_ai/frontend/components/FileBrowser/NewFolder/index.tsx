@@ -9,6 +9,7 @@ import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getFullPathWithoutRootFolder, removeRootFromFilePath } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -147,6 +148,7 @@ function NewFolder({
           ? 'Move folder'
           : 'Rename folder'
         : 'New folder'}
+      minWidth={UNIT * 50}
     >
       <TextInput
         disabled={!!file && !moveFile}
