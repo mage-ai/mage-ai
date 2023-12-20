@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import React, {
   useCallback,
   useContext,
@@ -13,6 +14,7 @@ import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/B
 import FileType from '@interfaces/FileType';
 import FlyoutMenu, { DEFAULT_MENU_ITEM_HEIGHT } from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
+import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import NewFile from './NewFile';
 import NewFolder from './NewFolder';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -20,12 +22,17 @@ import PopupMenu from '@oracle/components/PopupMenu';
 import Text from '@oracle/elements/Text';
 import UploadFiles from './UploadFiles';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
-import { CUSTOM_EVENT_NAME_FOLDER_EXPAND } from '@utils/events/constants';
+import {
+  CUSTOM_EVENT_NAME_FOLDER_EXPAND,
+} from '@utils/events/constants';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
+import { DBT } from '@oracle/icons';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE } from '@interfaces/FileType';
 import { HEADER_Z_INDEX } from '@components/constants';
+import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
 import { createPortal } from 'react-dom';
@@ -33,6 +40,7 @@ import { find, sortByKey } from '@utils/array';
 import { getBlockFromFile, getFullPath, getFullPathWithoutRootFolder } from './utils';
 import { initiateDownload } from '@utils/downloads';
 import { onSuccess } from '@api/utils/response';
+import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 
 const MENU_WIDTH: number = UNIT * 20;
@@ -91,7 +99,25 @@ function FileBrowser({
   }>(null);
   const [draggingFile, setDraggingFile] = useState<FileType>(null);
   const [selectedFile, setSelectedFile] = useState<FileType>(null);
+  const [reloadCount, setReloadCount] = useState(0);
 
+  useEffect(() => {
+    setReloadCount(prev => prev + 1);
+  }, [files]);
+
+  const selectedFolder = useMemo(() => selectedFile && typeof selectedFile?.children !== 'undefined' && selectedFile, [
+    selectedFile,
+  ]);
+
+  const [showError] = useError(null, {}, [], {
+    uuid: 'FileBrowser',
+  });
+
+  const {
+    featureEnabled,
+    featureUUIDs,
+    project,
+  } = useProject();
   const { status } = useStatus();
 
   const [downloadFile] = useMutation(
@@ -103,10 +129,19 @@ function FileBrowser({
             const token = response.data.download.token;
             initiateDownload(token);
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         }
       )
     }
@@ -120,10 +155,19 @@ function FileBrowser({
           callback: () => {
             fetchFileTree?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
@@ -137,10 +181,19 @@ function FileBrowser({
           callback: () => {
             fetchFileTree?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
@@ -170,8 +223,8 @@ function FileBrowser({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchAutocompleteItems?.();
-            fetchPipeline?.();
+            // fetchAutocompleteItems?.();
+            // fetchPipeline?.();
             fetchFileTree?.();
           },
           onErrorCallback: ({
@@ -230,10 +283,19 @@ function FileBrowser({
           callback: () => {
             fetchPipeline?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
@@ -323,12 +385,13 @@ function FileBrowser({
     <Folder
       containerRef={ref}
       file={file}
-      key={file.name}
+      key={`${file.name}-${reloadCount}`}
       level={0}
       onClickFile={onClickFile}
       onClickFolder={onClickFolder}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
+      reloadCount={reloadCount}
       setCoordinates={setCoordinates}
       setDraggingFile={setDraggingFile}
       setSelectedFile={setSelectedFile}
@@ -340,12 +403,11 @@ function FileBrowser({
     onClickFile,
     onClickFolder,
     openFile,
-
     // These cause re-render
     // Don’t use this for now. Just open the block as a file.
     // This function will re-render whenever a block is added or removed to the pipeline.
     onSelectBlockFile,
-
+    reloadCount,
   ]);
 
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
@@ -353,9 +415,6 @@ function FileBrowser({
   ]);
   const draggingBlock  = useMemo(() => draggingFile && getBlockFromFile(draggingFile), [
     draggingFile,
-  ]);
-  const selectedFolder = useMemo(() => selectedFile && typeof selectedFile?.children !== 'undefined' && selectedFile, [
-    selectedFile,
   ]);
 
   const [showModal, hideModal] = useModal(() => (
@@ -399,20 +458,24 @@ function FileBrowser({
   const [showModalNewFolder, hideModalNewFolder] = useModal((opts: {
     file: FileType;
     moveFile?: boolean;
+    projectType?: ProjectTypeEnum;
   }) => (
     <NewFolder
       fetchFileTree={fetchFileTree}
       file={opts?.file}
       moveFile={opts?.moveFile}
       onCancel={hideModalNewFolder}
+      projectType={opts?.projectType}
       selectedFolder={selectedFolder}
       setErrors={setErrors}
+      showError={showError}
     />
   ), {
   }, [
     fetchFileTree,
     selectedFolder,
     setErrors,
+    showError,
   ], {
     background: true,
     disableClickOutside: true,
@@ -527,6 +590,26 @@ function FileBrowser({
           uuid: 'Collapse all subfolders',
         },
       ]);
+
+      if (featureEnabled?.(featureUUIDs?.PROJECT_PLATFORM)) {
+        items.push({
+          beforeIcon: <GradientLogoIcon width={UNIT * 1.5} />,
+          onClick: () => {
+            showModalNewFolder({ projectType: ProjectTypeEnum.STANDALONE });
+          },
+          uuid: 'New Mage project',
+        });
+      }
+
+      if (featureEnabled?.(featureUUIDs?.DBT_V2)) {
+        items.push({
+          beforeIcon: <DBT />,
+          onClick: () => {
+            showModalNewFolder({ projectType: ProjectTypeEnum.DBT });
+          },
+          uuid: 'New dbt project',
+        });
+      }
     } else if (selectedFile) {
       items.push(...[
         {
@@ -580,6 +663,7 @@ function FileBrowser({
           label: () => 'Delete file',
           onClick: () => {
             const fp = getFullPathWithoutRootFolder(selectedFile);
+
             if (typeof window !== 'undefined'
               && window.confirm(`Are you sure you want to delete file ${fp}?`)
             ) {
@@ -625,6 +709,9 @@ function FileBrowser({
     deleteFolder,
     deleteWidget,
     downloadFile,
+    featureEnabled,
+    featureUUIDs,
+    project,
     ref,
     showModal,
     showModalNewFile,

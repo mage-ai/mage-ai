@@ -11,9 +11,11 @@ export enum FeatureUUIDEnum {
   NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view',
   LOCAL_TIMEZONE = 'display_local_timezone',
   OPERATION_HISTORY = 'operation_history',
+  PROJECT_PLATFORM = 'project_platform',
 }
 
 export enum ProjectTypeEnum {
+  DBT = 'dbt',
   MAIN = 'main',
   STANDALONE = 'standalone',
   SUB = 'sub',

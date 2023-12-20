@@ -15,6 +15,7 @@ CustomDesignPolicy.allow_actions(
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
+        OauthScope.CLIENT_PUBLIC,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
@@ -25,6 +26,7 @@ CustomDesignPolicy.allow_read(
     CustomDesignPresenter.default_attributes + [],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
+        OauthScope.CLIENT_PUBLIC,
     ],
     on_action=[
         OperationType.DETAIL,
@@ -50,6 +52,7 @@ CustomDesignPolicy.allow_query(
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
+        OauthScope.CLIENT_PUBLIC,
     ],
     on_action=[
         OperationType.DETAIL,
