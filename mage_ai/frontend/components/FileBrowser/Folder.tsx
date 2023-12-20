@@ -183,8 +183,6 @@ function Folder({
     [childrenProp],
   );
 
-  console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF render', name)
-
   const uuidCombinedUse =
     useMemo(() => [].concat(uuidCombined || []).concat(name || DEFAULT_NAME), [
       name,
@@ -219,37 +217,6 @@ function Folder({
   ]);
 
   const isFolder = useMemo(() => !!children && !isNotFolder, [children, isNotFolder]);
-
-  useEffect(() => {
-    const handleExpand = ({
-      detail: {
-        collapsed,
-        file,
-        folder,
-      },
-    }) => {
-      if (isFolder && folder && uuid?.startsWith(folder?.uuid)) {
-        getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
-          [uuid]: !collapsed,
-        });
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.addEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
-    }
-
-    return () => {
-      if (typeof window !== 'undefined') {
-        // @ts-ignore
-        window.removeEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
-      }
-    };
-  }, [
-    isFolder,
-    uuid,
-  ]);
 
   const folderNameForBlock = useMemo(() => uuidCombinedUse?.find?.(
     (key) => {
@@ -384,6 +351,77 @@ function Folder({
     uuidCombinedUse,
   ]);
 
+  const toggleExpandsion = useCallback((
+    expand: boolean = null,
+    idleTimeout: number = null,
+  ) => {
+    if (typeof expand === 'undefined' || expand === null) {
+      refExpandState.current = !refExpandState.current;
+    } else {
+      refExpandState.current = expand;
+    }
+
+    refChildren.current.className = refExpandState.current ? 'expanded_children' : 'collapsed_children';
+    refChevron.current.className = refExpandState.current ? 'expanded' : 'collapsed';
+
+    if (refExpandCount.current === 0) {
+      const domNode = document.getElementById(refChildren.current.id);
+      const root = createRoot(domNode);
+      root.render(
+        children?.length >= 1
+          ? (
+            <DeferredRender idleTimeout={idleTimeout ? idleTimeout : 1}>
+              {buildChildrenFiles(children)}
+            </DeferredRender>
+          )
+          : (isFolder ? buildChildrenFiles(childrenEmpty) : <div />),
+      );
+    }
+
+    getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+      [uuid]: refExpandState.current,
+    });
+    refExpandCount.current += 1;
+  }, [
+    children,
+    isFolder,
+    uuid,
+  ]);
+
+  useEffect(() => {
+    const handleExpand = ({
+      detail: {
+        expand,
+        file,
+        folder,
+      },
+    }) => {
+      if (isFolder && folder && uuid?.startsWith(folder?.uuid)) {
+        getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
+          [uuid]: expand,
+        });
+        toggleExpandsion(expand, 100 * level);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_FOLDER_EXPAND, handleExpand);
+      }
+    };
+  }, [
+    isFolder,
+    level,
+    toggleExpandsion,
+    uuid,
+  ]);
+
   const childrenEmpty = useMemo(() => [{
     disabled: true,
     name: 'Empty',
@@ -449,28 +487,7 @@ function Folder({
               if (allowSelectingFolders) {
                 selectFile(filePathToUse);
               } else {
-                refExpandState.current = !refExpandState.current;
-                refChildren.current.className = refExpandState.current ? 'expanded_children' : 'collapsed_children';
-                refChevron.current.className = refExpandState.current ? 'expanded' : 'collapsed';
-
-                if (refExpandCount.current === 0) {
-                  const domNode = document.getElementById(refChildren.current.id);
-                  const root = createRoot(domNode);
-                  root.render(
-                    children?.length >= 1
-                      ? (
-                        <DeferredRender idleTimeout={1}>
-                          {buildChildrenFiles(children)}
-                        </DeferredRender>
-                      )
-                      : (isFolder ? buildChildrenFiles(childrenEmpty) : <div />),
-                  );
-                }
-
-                getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
-                  [uuid]: refExpandState.current,
-                });
-                refExpandCount.current += 1;
+                toggleExpandsion();
               }
               onClickFolder?.(filePathToUse);
             } else {

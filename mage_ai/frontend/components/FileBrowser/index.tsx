@@ -495,7 +495,7 @@ function FileBrowser({
           onClick: () => {
             const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_FOLDER_EXPAND, {
               detail: {
-                collapsed: false,
+                expand: true,
                 file: selectedFile,
                 folder: selectedFolder,
               },
@@ -512,7 +512,7 @@ function FileBrowser({
           onClick: () => {
             const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_FOLDER_EXPAND, {
               detail: {
-                collapsed: true,
+                expand: false,
                 file: selectedFile,
                 folder: selectedFolder,
               },
