@@ -34,7 +34,9 @@ import buildTableSidekick, {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
+import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import _ from 'lodash';
 import { datetimeInLocalTimezone } from '@utils/date';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -47,6 +49,19 @@ type PipelineBlockRunsProps = {
   pipeline: PipelineType;
   pipelineRun: PipelineRunType;
 };
+
+type BlockRunsFilter = {
+  status?: RunStatusEnum
+}
+
+function FilterBlockRuns (blockRuns: BlockRunType[], blockRunsFilter: BlockRunsFilter) {
+  const filteredBlockRuns = blockRuns.filter((blockRun) => {
+    const blockRunProperties = _.pick(blockRun, Object.keys(blockRunsFilter))
+    const accepted = _.isEqual(blockRunProperties, blockRunsFilter)
+    return accepted
+  })
+  return filteredBlockRuns
+}
 
 function PipelineBlockRuns({
   pipeline: pipelineProp,
@@ -103,6 +118,7 @@ function PipelineBlockRuns({
   };
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
+  const blockRunsFilter: BlockRunsFilter = _.omitBy({status: q?.status}, value => value === undefined);
   if (sortColumnIndexQuery) {
     const blockRunSortColumn = COL_IDX_TO_BLOCK_RUN_ATTR_MAPPING[sortColumnIndexQuery];
     const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
@@ -112,7 +128,13 @@ function PipelineBlockRuns({
     blockRunsRequestQuery,
     { refreshInterval: 5000 },
   );
-  const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
+  const blockRuns = useMemo(() => {
+    if (_.isEmpty(dataBlockRuns?.block_runs)){
+      return [];
+    }
+    const filteredBlockRuns = FilterBlockRuns(dataBlockRuns?.block_runs, blockRunsFilter)
+    return filteredBlockRuns
+    }, [dataBlockRuns])
 
   const blockUuids = blockRuns.map(({ block_uuid }) => block_uuid);
   const blockUuidArg = useMemo(() => blockUuids, [blockUuids]);
