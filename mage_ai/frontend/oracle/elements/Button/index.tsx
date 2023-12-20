@@ -189,7 +189,7 @@ const SHARED_STYLES = css<{
     border-width: 1px;
   `}
 
-  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
+  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && `
     border-radius: ${BORDER_RADIUS}px;
   `}
 

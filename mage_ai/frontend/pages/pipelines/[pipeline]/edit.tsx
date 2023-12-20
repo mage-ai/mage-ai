@@ -33,7 +33,6 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
-import FileTabs from '@components/PipelineDetail/FileTabs';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
@@ -76,6 +75,7 @@ import Spacing from '@oracle/elements/Spacing';
 import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import useFileComponents from '@components/Files/useFileComponents';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
@@ -117,6 +117,12 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import {
+  addOpenFilePath as addOpenFilePathLocalStorage,
+  getOpenFilePaths,
+  removeOpenFilePath as removeOpenFilePathLocalStorage,
+  setOpenFilePaths as setOpenFilePathsLocalStorage,
+} from '@storage/files';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
@@ -173,6 +179,7 @@ function PipelineDetailPage({
   } = useWindowSize();
   const { pipeline: pipelineUUIDFromUrl }: any = router.query;
   const pipelineUUID = pipelineProp.uuid || pipelineUUIDFromUrl;
+  const [notebookVisible, setNotebookVisible] = useState(true);
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
@@ -184,11 +191,6 @@ function PipelineDetailPage({
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
-  const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
-  const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
-  const [filesTouched, setFilesTouched] = useState<{
-    [filePath: string]: boolean;
-  }>({});
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
@@ -339,8 +341,6 @@ function PipelineDetailPage({
     },
   );
 
-  const { data: filesData, mutate: fetchFileTree } = api.files.list();
-  const files = useMemo(() => filesData?.files || [], [filesData]);
   const { data: dataFilesSQL, mutate: fetchFilesSQL } = api.files.list({
     pattern: encodeURIComponent('\\.sql$'),
   });
@@ -517,7 +517,7 @@ function PipelineDetailPage({
   const {
     [VIEW_QUERY_PARAM]: activeSidekickView,
     block_uuid: blockUUIDFromUrl,
-    file_path: filePathFromUrl,
+    // file_path: filePathFromUrl,
   } = qUrl;
   const filePathsFromUrl = useMemo(() => {
     let arr = qUrl['file_paths[]'] || [];
@@ -729,6 +729,26 @@ function PipelineDetailPage({
     };
   }>(null);
 
+  const onSelectBlockFile = useCallback((
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+  ) => {
+    setSelectedBlockDetails({
+      block: {
+        type: blockType,
+        uuid: blockUUID,
+      },
+      file: {
+        path: filePath,
+      },
+    });
+  }, [
+    // blocks,
+    // openFile, // Doesn’t change
+    // widgets,
+  ]);
+
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
   const [outputBlocks, setOutputBlocks] = useState<BlockType[]>(outputBlocksInit);
@@ -839,26 +859,115 @@ function PipelineDetailPage({
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
-  useEffect(() => {
-    if (!filePathFromUrl) {
-      setDisableShortcuts(false);
-    }
-    setSelectedFilePath(filePathFromUrl);
-  }, [
-    filePathFromUrl,
-    // This dependency is required or else the effect will not trigger on updated query parameters.
-    qUrl,
-  ]);
-  useEffect(() => {
-    if (!equals(filePathsFromUrl, selectedFilePaths)) {
-      setSelectedFilePaths(filePathsFromUrl);
-    }
-  }, [
-    filePathsFromUrl,
-    selectedFilePaths,
-    // This dependency is required or else the effect will not trigger on updated query parameters.
-    qUrl,
-  ]);
+  const [deleteWidget] = useMutation(
+    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            widget: {
+              uuid,
+            },
+          }) => {
+            setWidgets((widgetsPrevious) => removeAtIndex(
+              widgetsPrevious,
+              widgetsPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
+            ));
+            fetchPipeline();
+            fetchFiles();
+          },
+          onErrorCallback: (response: {
+            url_parameters: {
+              block_uuid: string;
+            };
+          }, errors) => {
+            const {
+              url_parameters: urlParameters,
+            } = response;
+            const {
+              messages,
+            } = errors;
+
+            setErrors({
+              errors,
+              response,
+            });
+
+            if (urlParameters?.block_uuid) {
+              setMessages(messagesPrev => ({
+                ...messagesPrev,
+                [urlParameters.block_uuid]: messages.map(msg => ({
+                  data: `${msg}\n`,
+                  error: `${msg}\n`,
+                  type: DataTypeEnum.TEXT_PLAIN,
+                })),
+              }));
+            }
+          },
+        },
+      ),
+    },
+  );
+
+  // Files components and functions
+  const {
+    browser: fileBrowser,
+    controller: fileController,
+    fetchFiles,
+    filePaths: openFilePaths,
+    files,
+    filesTouched,
+    menu,
+    openFile,
+    selectedFilePath,
+    tabs: fileTabs,
+    versions,
+    versionsVisible,
+  } = useFileComponents({
+    addNewBlock: (
+      b: BlockRequestPayloadType,
+      cb: (block: BlockType) => void,
+      opts?: {
+        disableFetchingFiles?: boolean;
+      },
+    ) => {
+      addNewBlockAtIndex(
+        b,
+        blocks.length,
+        cb,
+        b.name,
+        opts,
+      );
+
+      if (filePathsFromUrl?.length >= 1) {
+        router.push(`/pipelines/${pipelineUUID}/edit`);
+      }
+    },
+    blocks,
+    deleteWidget,
+    fetchAutocompleteItems,
+    fetchPipeline,
+    onOpenFile: () => setNotebookVisible(false),
+    onSelectFile: () => setNotebookVisible(false),
+    onSelectBlockFile,
+    openSidekickView,
+    pipeline,
+    selectedFilePath: pipelineUUID,
+    setSelectedBlock,
+    tabsBefore: [
+      {
+        label: () => notebookVisible ? pipelineUUID : `View ${pipelineUUID}`,
+        onClick: ({
+          onClickTab,
+        }) => {
+          onClickTab(pipelineUUID);
+          setNotebookVisible(true)
+        },
+        uuid: pipelineUUID,
+      },
+    ],
+    widgets,
+  });
 
   const [createPipeline] = useMutation(
     api.pipelines.useCreate(),
@@ -871,7 +980,7 @@ function PipelineDetailPage({
             },
           }) => {
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
-            fetchFileTree();
+            fetchFiles();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -897,7 +1006,7 @@ function PipelineDetailPage({
               const changed = !equals(blockUUIDsPrevious || [], blockUUIDsServer || []);
               if (changed) {
                 // Don’t fetch the files because they can be adding existing files to the pipeline.
-                // fetchFileTree();
+                // fetchFiles();
                 // fetchFilesSQL();
 
                 if (sideBySideEnabled) {
@@ -1255,44 +1364,6 @@ function PipelineDetailPage({
     uuid: `DataIntegrationModal/${pipelineUUID}`,
   });
 
-  // Files
-  const openFile = useCallback((filePath: string) => {
-    // savePipelineContent();
-
-    const filePathEncoded = encodeURIComponent(filePath);
-    let filePaths = queryFromUrl()['file_paths[]'] || [];
-    if (!Array.isArray(filePaths)) {
-      filePaths = [filePaths];
-    }
-    if (!filePaths.includes(filePathEncoded)) {
-      filePaths.push(filePathEncoded);
-    }
-
-    // const block = getBlockFromFilePath(filePath, blocks);
-
-    // if (block) {
-    //   setSelectedBlock(block);
-    //   if (blockRefs?.current) {
-    //     const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
-    //     blockRef?.current?.scrollIntoView();
-    //   }
-    // } else {
-    //   goToWithQuery({
-    //     file_path: filePathEncoded,
-    //     'file_paths[]': filePaths,
-    //   });
-    // }
-
-    goToWithQuery({
-      file_path: filePathEncoded,
-      'file_paths[]': filePaths,
-    });
-  }, [
-    // blockRefs,
-    // blocks,
-    // savePipelineContent,
-  ]);
-
   useEffect(() => {
     if (selectedBlockDetails) {
       const {
@@ -1313,11 +1384,11 @@ function PipelineDetailPage({
           const blockRef = blockRefs.current[buildBlockRefKey(block)];
           blockRef?.current?.scrollIntoView();
         }
-        goToWithQuery({
-          block_uuid: null,
-          file_path: null,
-          'file_paths[]': [],
-        });
+        // goToWithQuery({
+        //   block_uuid: null,
+        //   file_path: null,
+        //   'file_paths[]': [],
+        // });
       } else if (blockType === BlockTypeEnum.CHART) {
         const chart = widgets.find(({ uuid }) => uuid === blockUUID);
         if (chart) {
@@ -1394,7 +1465,9 @@ function PipelineDetailPage({
     let configFileLinks = [];
     const variablesDir = pipeline?.variables_dir;
     const remoteVariablesDir = pipeline?.remote_variables_dir;
-    if (data?.hasOwnProperty('error') && !filePathFromUrl) {
+    if (data?.hasOwnProperty('error')
+      // && !filePathFromUrl
+      ) {
       if (pipelineUUID !== 'undefined') {
         configFileLinks = [{
           label: 'Check pipeline configuration file for any issues',
@@ -1411,7 +1484,8 @@ function PipelineDetailPage({
     } else if (dataDataProviders?.hasOwnProperty('error')) {
       dataWithPotentialError = dataDataProviders;
     } else if ((variablesDir?.includes('None') || remoteVariablesDir?.includes('None'))
-      && !filePathFromUrl) {
+      // && !filePathFromUrl
+      ) {
       /*
        * If the variables_dir or remote_variables_dir uses an empty variable, the directory
        * may unintentionally become "None" or include "None" in its path. We check if "None" is
@@ -1436,7 +1510,7 @@ function PipelineDetailPage({
   }, [
     data,
     dataDataProviders,
-    filePathFromUrl,
+    // filePathFromUrl,
     openFile,
     pipeline?.remote_variables_dir,
     pipeline?.variables_dir,
@@ -1477,7 +1551,7 @@ function PipelineDetailPage({
         if (pipelineUUID !== uuid) {
           window.location.href = `${router.basePath}/pipelines/${uuid}/edit`;
         } else {
-          fetchFileTree();
+          fetchFiles();
           if (type !== pipeline?.type) {
             fetchPipeline();
           }
@@ -1499,7 +1573,7 @@ function PipelineDetailPage({
     }), [
     blocksInNotebook,
     blocksInSidekick,
-    fetchFileTree,
+    fetchFiles,
     fetchPipeline,
     openFile,
     pipeline?.type,
@@ -1607,7 +1681,7 @@ function PipelineDetailPage({
 
             // If we delete a block from the pipeline, why do we need to fetch the files?
             // if (type === BlockTypeEnum.SCRATCHPAD) {
-            //   fetchFileTree();
+            //   fetchFiles();
             // }
 
             if (isInteractionsEnabled) {
@@ -1620,55 +1694,6 @@ function PipelineDetailPage({
                 pipeline_interaction: pi,
               }) => setBlockInteractionsMapping(pi?.blocks));
             }
-          },
-          onErrorCallback: (response: {
-            url_parameters: {
-              block_uuid: string;
-            };
-          }, errors) => {
-            const {
-              url_parameters: urlParameters,
-            } = response;
-            const {
-              messages,
-            } = errors;
-
-            setErrors({
-              errors,
-              response,
-            });
-
-            if (urlParameters?.block_uuid) {
-              setMessages(messagesPrev => ({
-                ...messagesPrev,
-                [urlParameters.block_uuid]: messages.map(msg => ({
-                  data: `${msg}\n`,
-                  error: `${msg}\n`,
-                  type: DataTypeEnum.TEXT_PLAIN,
-                })),
-              }));
-            }
-          },
-        },
-      ),
-    },
-  );
-  const [deleteWidget] = useMutation(
-    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            widget: {
-              uuid,
-            },
-          }) => {
-            setWidgets((widgetsPrevious) => removeAtIndex(
-              widgetsPrevious,
-              widgetsPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
-            ));
-            fetchPipeline();
-            fetchFileTree();
           },
           onErrorCallback: (response: {
             url_parameters: {
@@ -1738,7 +1763,7 @@ function PipelineDetailPage({
           callback: () => {
             fetchAutocompleteItems();
             fetchPipeline();
-            // fetchFileTree();
+            // fetchFiles();
           },
           onErrorCallback: (response, errors) => {
             showDeleteConfirmation();
@@ -1883,7 +1908,7 @@ function PipelineDetailPage({
               }
             } else {
               if (!opts?.disableFetchingFiles) {
-                fetchFileTree();
+                fetchFiles();
               }
 
               fetchPipeline().then(({
@@ -1956,7 +1981,7 @@ function PipelineDetailPage({
     createBlock,
     featureEnabled,
     featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW,
-    fetchFileTree,
+    fetchFiles,
     fetchPipeline,
     isDataIntegration,
     openFile,
@@ -2102,7 +2127,7 @@ function PipelineDetailPage({
           },
         } = response;
         onCreateCallback?.(widget);
-        fetchFileTree();
+        fetchFiles();
         fetchPipeline();
 
         setActiveSidekickView(ViewKeyEnum.CHARTS);
@@ -2115,7 +2140,7 @@ function PipelineDetailPage({
       }),
     },
   )), [
-    fetchFileTree,
+    fetchFiles,
     fetchPipeline,
     createWidget,
     setActiveSidekickView,
@@ -2250,26 +2275,6 @@ function PipelineDetailPage({
     pipeline?.widgets,
     setMessages,
     widgets,
-  ]);
-
-  const onSelectBlockFile = useCallback((
-    blockUUID: string,
-    blockType: BlockTypeEnum,
-    filePath: string,
-  ) => {
-    setSelectedBlockDetails({
-      block: {
-        type: blockType,
-        uuid: blockUUID,
-      },
-      file: {
-        path: filePath,
-      },
-    });
-  }, [
-    // blocks,
-    // openFile, // Doesn’t change
-    // widgets,
   ]);
 
   useEffect(() => {
@@ -2725,7 +2730,7 @@ function PipelineDetailPage({
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       executePipeline={executePipeline}
-      fetchFileTree={fetchFileTree}
+      fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
       fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
@@ -2816,7 +2821,7 @@ function PipelineDetailPage({
     deleteWidget,
     editingBlock,
     executePipeline,
-    fetchFileTree,
+    fetchFiles,
     fetchPipeline,
     fetchSecrets,
     fetchVariables,
@@ -2927,7 +2932,7 @@ function PipelineDetailPage({
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       disableShortcuts={disableShortcuts}
-      fetchFileTree={fetchFileTree}
+      fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
@@ -2999,7 +3004,7 @@ function PipelineDetailPage({
     dataProviders,
     deleteBlock,
     disableShortcuts,
-    fetchFileTree,
+    fetchFiles,
     fetchPipeline,
     fetchSampleData,
     files,
@@ -3061,21 +3066,7 @@ function PipelineDetailPage({
           setSideBySideEnabled={setSideBySideEnabled}
           sideBySideEnabled={sideBySideEnabled}
           updatePipelineMetadata={updatePipelineMetadata}
-        >
-          {selectedFilePath && (
-            <Spacing ml={1}>
-              <FlexContainer alignItems="center" fullHeight>
-                <Button
-                  compact
-                  onClick={() => setSelectedFilePath(null)}
-                  small
-                >
-                  View pipeline
-                </Button>
-              </FlexContainer>
-            </Spacing>
-          )}
-        </FileHeaderMenu>
+        />
       );
     }
   }, [
@@ -3094,7 +3085,6 @@ function PipelineDetailPage({
     setActiveSidekickView,
     setMessages,
     setScrollTogether,
-    setSelectedFilePath,
     setSideBySideEnabled,
     sideBySideEnabled,
     updatePipelineMetadata,
@@ -3105,45 +3095,33 @@ function PipelineDetailPage({
       return (
         <>
           <KernelStatus
-            filePaths={selectedFilePaths}
-            filesTouched={filesTouched}
             isBusy={runningBlocks.length >= 1}
             kernel={kernel}
             pipeline={pipeline}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
-            selectedFilePath={selectedFilePath}
             setErrors={setErrors}
             setRunningBlocks={setRunningBlocks}
             updatePipelineMetadata={updatePipelineMetadata}
           >
-            {beforeHeader}
-          </KernelStatus>
+            <Spacing pr={1} />
 
-          {selectedFilePaths?.length > 0 &&
-            <PipelineHeaderStyle relativePosition secondary>
-              <FileTabs
-                filePaths={selectedFilePaths}
-                filesTouched={filesTouched}
-                savePipelineContent={savePipelineContent}
-                selectedFilePath={selectedFilePath}
-              />
-            </PipelineHeaderStyle>
-          }
+            {beforeHeader}
+
+            {fileTabs}
+          </KernelStatus>
         </>
       );
     }
   }, [
     beforeHeader,
-    filesTouched,
+    fileTabs,
     kernel,
     page,
     pipeline,
     restartKernel,
     runningBlocks,
     savePipelineContent,
-    selectedFilePath,
-    selectedFilePaths,
     setErrors,
     updatePipelineMetadata,
   ]);
@@ -3193,64 +3171,6 @@ function PipelineDetailPage({
     [blockSampleData, integrationStreams, selectedStream],
   );
 
-  const fileTreeRef = useRef(null);
-
-  const before = useMemo(() => (
-    <FileBrowser
-      addNewBlock={(
-        b: BlockRequestPayloadType,
-        cb: (block: BlockType) => void,
-        opts?: {
-          disableFetchingFiles?: boolean;
-        },
-      ) => {
-        addNewBlockAtIndex(
-          b,
-          blocks.length,
-          cb,
-          b.name,
-          opts,
-        );
-
-        if (filePathsFromUrl?.length >= 1) {
-          router.push(`/pipelines/${pipelineUUID}/edit`);
-        }
-      }}
-      blocks={blocks}
-      deleteWidget={deleteWidget}
-      fetchAutocompleteItems={fetchAutocompleteItems}
-      fetchFileTree={fetchFileTree}
-      fetchPipeline={fetchPipeline}
-      files={files}
-      onSelectBlockFile={onSelectBlockFile}
-      openFile={openFile}
-      openSidekickView={openSidekickView}
-      pipeline={pipeline}
-      ref={fileTreeRef}
-      setErrors={setErrors}
-      setSelectedBlock={setSelectedBlock}
-      widgets={widgets}
-    />
-  ), [
-    addNewBlockAtIndex,
-    blocks,
-    deleteWidget,
-    fetchAutocompleteItems,
-    fetchFileTree,
-    fetchPipeline,
-    filePathsFromUrl?.length,
-    files,
-    onSelectBlockFile,
-    openFile,
-    openSidekickView,
-    pipeline,
-    pipelineUUID,
-    router,
-    setErrors,
-    setSelectedBlock,
-    widgets,
-  ]);
-
   const blocksInPipeline = useMemo(() => (
     <BlocksInPipeline
       blockRefs={blockRefs}
@@ -3269,15 +3189,15 @@ function PipelineDetailPage({
 
   const beforeToShow = useMemo(() => {
     if (EDIT_BEFORE_TAB_ALL_FILES.uuid === selectedTab?.uuid) {
-      return before;
+      return fileBrowser;
     } else if (EDIT_BEFORE_TAB_FILES_IN_PIPELINE.uuid === selectedTab?.uuid) {
       return blocksInPipeline;
     }
 
     return null;
   }, [
-    before,
     blocksInPipeline,
+    fileBrowser,
     selectedTab,
   ]);
 
@@ -3381,7 +3301,6 @@ function PipelineDetailPage({
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={pipelineErrors || errors}
         footerOffset={mainContainerFooterRef?.current?.getBoundingClientRect()?.height}
-        headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
         mainContainerFooter={mainContainerFooterMemo}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
@@ -3395,9 +3314,9 @@ function PipelineDetailPage({
       >
         <div
           style={{
-            height: selectedFilePath ? 0 : null,
-            opacity: selectedFilePath ? 0 : null,
-            visibility: selectedFilePath ? 'hidden' : null,
+            height: notebookVisible ?  null : 0,
+            opacity: notebookVisible ?  null : 0,
+            visibility: notebookVisible ?  null : 'hidden',
           }}
         >
           <ApiReloader uuid={`PipelineDetail/${pipelineUUID}`}>
@@ -3405,52 +3324,20 @@ function PipelineDetailPage({
           </ApiReloader>
         </div>
 
-        {filePathsFromUrl?.map((filePath: string) => (
-          <div
-            key={filePath}
-            style={{
-              display: selectedFilePath === filePath
-                ? null
-                : 'none',
-            }}
-          >
-            <ApiReloader uuid={`FileEditor/${decodeURIComponent(filePath)}`}>
-              <FileEditor
-                active={selectedFilePath === filePath}
-                addNewBlock={(
-                  b: BlockRequestPayloadType,
-                  cb: (block: BlockType) => void,
-                ) => {
-                  addNewBlockAtIndex(
-                    {
-                      ...b,
-                      require_unique_name: false,
-                    },
-                    blocks.length,
-                    cb,
-                    b.name,
-                  );
-                  router.push(`/pipelines/${pipelineUUID}/edit`);
-                }}
-                fetchPipeline={fetchPipeline}
-                fetchVariables={fetchVariables}
-                filePath={filePath}
-                onUpdateFileSuccess={onUpdateFileSuccess}
-                openSidekickView={openSidekickView}
-                pipeline={pipeline}
-                selectedFilePath={selectedFilePath}
-                sendTerminalMessage={sendTerminalMessage}
-                setDisableShortcuts={setDisableShortcuts}
-                setErrors={setErrors}
-                setFilesTouched={setFilesTouched}
-                setSelectedBlock={setSelectedBlock}
-              />
-            </ApiReloader>
-          </div>
-        ))}
+        <div
+          style={{
+            height: notebookVisible ? 0 : null,
+            opacity: notebookVisible ? 0 : null,
+            visibility: notebookVisible ? 'hidden' : null,
+          }}
+        >
+          {fileController}
+        </div>
 
         <Spacing
-          pb={(filePathFromUrl || sideBySideEnabled)
+          pb={(
+            // filePathFromUrl ||
+            sideBySideEnabled)
             ? 0
             : Math.max(
               Math.floor((heightWindow * (2 / 3)) / UNIT),

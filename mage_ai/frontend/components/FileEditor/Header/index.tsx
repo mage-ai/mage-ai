@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -95,12 +96,18 @@ function FileHeaderMenu({
       onClickOutside={() => setHighlightedIndex(null)}
       open
       style={{
+        height: '100%',
         position: 'relative',
       }}
     >
-      <FlexContainer>
+      <FlexContainer alignItems="center" fullHeight fullWidth>
         <div style={{ position: 'relative' }}>
-          <LinkStyle
+          <Button
+            compact
+            noBackground
+            noBorder
+            highlightOnHoverAlt
+            padding="4px 12px"
             highlighted={highlightedIndex === 0}
             onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
@@ -109,7 +116,7 @@ function FileHeaderMenu({
             <Text>
               File
             </Text>
-          </LinkStyle>
+          </Button>
 
           <FlyoutMenu
             items={fileItems}
@@ -121,7 +128,12 @@ function FileHeaderMenu({
         </div>
 
         <div style={{ position: 'relative' }}>
-          <LinkStyle
+          <Button
+            compact
+            noBackground
+            noBorder
+            highlightOnHoverAlt
+            padding="4px 12px"
             highlighted={highlightedIndex === 1}
             onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
@@ -130,7 +142,7 @@ function FileHeaderMenu({
             <Text>
               Edit
             </Text>
-          </LinkStyle>
+          </Button>
 
           <FlyoutMenu
             items={editItems}

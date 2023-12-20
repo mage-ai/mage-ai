@@ -107,39 +107,43 @@ function FileTab({
 
               <Spacing mr={1} />
 
-              <Text muted={!selected}>
+              <Text muted={!selected} noWrapping>
                 {renderTabTitle ? renderTabTitle(filePath) : filePath}
               </Text>
             </FlexContainer>
           </Tooltip>
 
-          <Spacing mr={2} />
+          {onClickTabClose && (
+            <>
+              <Spacing mr={2} />
 
-          <Tooltip
-            label="Close"
-            size={null}
-            widthFitContent
-          >
-            <Link
-              autoHeight
-              block
-              noHoverUnderline
-              noOutline
-              onClick={(e) => {
-                pauseEvent(e);
-                onClickTabClose?.(filePath);
-              }}
-              preventDefault
-            >
-              {(focused || selected) && (
-                <Close
-                  muted={!selected}
-                  size={UNIT * 1.25}
-                />
-              )}
-              {!focused && !selected && <div style={{ width: UNIT * 1.25 }} />}
-            </Link>
-          </Tooltip>
+              <Tooltip
+                label="Close"
+                size={null}
+                widthFitContent
+              >
+                <Link
+                  autoHeight
+                  block
+                  noHoverUnderline
+                  noOutline
+                  onClick={(e) => {
+                    pauseEvent(e);
+                    onClickTabClose?.(filePath);
+                  }}
+                  preventDefault
+                >
+                  {(focused || selected) && (
+                    <Close
+                      muted={!selected}
+                      size={UNIT * 1.25}
+                    />
+                  )}
+                  {!focused && !selected && <div style={{ width: UNIT * 1.25 }} />}
+                </Link>
+              </Tooltip>
+            </>
+          )}
         </FlexContainer>
       </FileTabStyle>
     </FlexContainer>

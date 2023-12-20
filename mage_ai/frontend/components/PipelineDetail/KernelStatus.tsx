@@ -81,16 +81,11 @@ import { useModal } from '@context/Modal';
 
 type KernelStatusProps = {
   children?: any;
-  filePaths: string[];
-  filesTouched: {
-    [path: string]: boolean;
-  };
   isBusy: boolean;
   kernel: KernelType;
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
-  selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
@@ -98,14 +93,11 @@ type KernelStatusProps = {
 
 function KernelStatus({
   children,
-  filePaths: filePathsProp,
-  filesTouched,
   isBusy,
   kernel,
   pipeline,
   restartKernel,
   savePipelineContent,
-  selectedFilePath,
   setErrors,
   setRunningBlocks,
   updatePipelineMetadata,
@@ -138,8 +130,6 @@ function KernelStatus({
     alive,
     usage,
   } = kernel || {};
-  const [isEditingPipeline, setIsEditingPipeline] = useState(false);
-  const [newPipelineName, setNewPipelineName] = useState('');
   const [selectedSparkClusterType, setSelectedSparkClusterType] =
     useState(CloudProviderSparkClusterEnum.EMR);
   const [showSelectCluster, setShowSelectCluster] = useState(false);
@@ -190,12 +180,6 @@ function KernelStatus({
       dataSparkApplications,
     ]);
 
-  useEffect(() => {
-    if (pipeline?.uuid) {
-      setNewPipelineName(pipeline.uuid);
-    }
-  }, [pipeline?.uuid]);
-
   const uuidKeyboard = 'KernelStatus';
   const {
     registerOnKeyDown,
@@ -205,29 +189,6 @@ function KernelStatus({
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
-
-  registerOnKeyDown(
-    uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
-      if (isEditingPipeline
-        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
-        && String(keyHistory[1]) !== String(KEY_CODE_META)
-      ) {
-        if (pipeline?.uuid === newPipelineName) {
-          event.target.blur();
-        } else {
-          updatePipelineMetadata(newPipelineName);
-          setIsEditingPipeline(false);
-        }
-      }
-    },
-    [
-      isEditingPipeline,
-      newPipelineName,
-      setIsEditingPipeline,
-      updatePipelineMetadata,
-    ],
-  );
 
   const kernelPid = useMemo(() => usage?.pid, [usage?.pid]);
   const kernelPidPrevious = usePrevious(kernelPid);
@@ -806,45 +767,7 @@ function KernelStatus({
           fullHeight
           justifyContent="flex-start"
         >
-          <Spacing px={PADDING_UNITS}>
-            {selectedFilePath && (
-              <Link
-                noHoverUnderline
-                noOutline
-                onClick={selectedFilePath
-                  ? () => goToWithQuery({ file_path: null })
-                  : null
-                }
-                preventDefault
-              >
-                {children}
-              </Link>
-            )}
-
-            {!selectedFilePath && (
-              <FlexContainer alignItems="center">
-                {children}
-                {isEditingPipeline && (
-                  <>
-                    <Spacing ml={1} />
-                    <Link
-                      onClick={() => {
-                        updatePipelineMetadata(newPipelineName);
-                        setIsEditingPipeline(false);
-                      }}
-                      preventDefault
-                      sameColorAsText
-                      small
-                    >
-                      Update name
-                    </Link>
-                  </>
-                )}
-              </FlexContainer>
-            )}
-          </Spacing>
-
-
+          {children}
         </FlexContainer>
 
         <Spacing px={PADDING_UNITS}>
