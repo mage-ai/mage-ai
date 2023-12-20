@@ -208,7 +208,6 @@ function FilesPageComponent() {
       files={files}
       onClickFile={(path: string) => openFile(path)}
       onClickFolder={(path: string) => openFile(path, true)}
-      onCreateFile={({ path }: FileType) => openFile(path)}
       ref={fileTreeRef}
       setErrors={showError}
     />
