@@ -1085,9 +1085,9 @@ class GlobalHooks(BaseDataClass):
             user=user,
         )
 
-    def save(self, file_path: str = None) -> None:
+    def save(self, file_path: str = None, repo_path: str = None) -> None:
         if not file_path:
-            file_path = self.file_path()
+            file_path = self.file_path(repo_path=repo_path)
 
         content_original = None
         if os.path.exists(file_path):

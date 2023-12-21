@@ -1,14 +1,14 @@
 import Page from '@components/GlobalHooks/GlobalHookDetailPage';
 import PrivateRoute from '@components/shared/PrivateRoute';
 
-function GlobalHookDetailPage({ ...props }) {
+function PlatformGlobalHookDetailPage({ ...props }) {
   return (
     // @ts-ignore
-    <Page {...props} />
+    <Page rootProject {...props} />
   );
 }
 
-GlobalHookDetailPage.getInitialProps = async (ctx) => {
+PlatformGlobalHookDetailPage.getInitialProps = async (ctx) => {
   const {
     operation_type: operationType,
     resource_type: resourceType,
@@ -26,4 +26,4 @@ GlobalHookDetailPage.getInitialProps = async (ctx) => {
   };
 };
 
-export default PrivateRoute(GlobalHookDetailPage);
+export default PrivateRoute(PlatformGlobalHookDetailPage);
