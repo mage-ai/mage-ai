@@ -43,20 +43,26 @@ function FilesPageComponent() {
       contained
       headerOffset={headerOffset + HEADER_HEIGHT}
       mainContainerHeader={filePaths?.length >= 1
-        ? ({ width }) => {
+        ? ({ widthOffset }) => {
           return (
-            <div ref={refHeader}>
-              <FlexContainer alignItems="center">
-                <Spacing pl={1} />
-                {menu}
-                <Spacing pr={1} />
-
-                <FileTabsScroller width={width}>
-                  {tabs}
-                </FileTabsScroller>
-              </FlexContainer>
+            <div
+              ref={refHeader}
+              style={{
+                position: 'relative',
+                zIndex: 3,
+              }}
+            >
+              <Spacing p={1}>
+                <FlexContainer alignItems="center">
+                  {menu}
+                </FlexContainer>
+              </Spacing>
 
               <Divider light />
+
+              <FileTabsScroller widthOffset={widthOffset}>
+                {tabs}
+              </FileTabsScroller>
             </div>
           );
         }

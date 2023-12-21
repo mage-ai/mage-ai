@@ -14,6 +14,8 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
 
+const ICON_SIZE = UNIT * 1.25;
+
 export type FileTabProps = {
   filesTouched?: {
     [path: string]: boolean;
@@ -123,7 +125,7 @@ function FileTab({
                   <div style={{ padding: 1 }}>
                     <Circle
                       borderColor={(themeContext || dark).borders.danger}
-                      size={UNIT * 1.25}
+                      size={ICON_SIZE}
                     />
                   </div>
                 </Tooltip>
@@ -160,10 +162,10 @@ function FileTab({
                   {(focused || selected) && (
                     <Close
                       muted={!selected}
-                      size={UNIT * 1.25}
+                      size={ICON_SIZE}
                     />
                   )}
-                  {!focused && !selected && <div style={{ width: UNIT * 1.25 }} />}
+                  {!focused && !selected && <div style={{ width: ICON_SIZE }} />}
                 </Link>
               </Tooltip>
             </>

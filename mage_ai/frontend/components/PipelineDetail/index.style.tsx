@@ -81,7 +81,7 @@ export const FileTabStyle = styled.div<{
   `}
 
   ${props => props.selected && `
-    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 
   ${props => !props.selected && !props.last && `
