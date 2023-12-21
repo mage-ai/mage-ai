@@ -15,7 +15,11 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings.platform import activate_project, project_platform_activated
+from mage_ai.settings.platform import (
+    activate_project,
+    project_platform_activated,
+    update_settings,
+)
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -31,6 +35,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
         features_override=project.features_override,
         latest_version=await project.latest_version(),
         name=project.name,
+        platform_settings=project.platform_settings,
         project_uuid=project.project_uuid,
         projects=project.projects(),
         remote_variables_dir=project.remote_variables_dir,
@@ -140,9 +145,14 @@ class ProjectResource(GenericResource):
         if payload.get('activate_project'):
             activate_project(payload.get('activate_project'))
 
+        platform_settings = payload.get('platform_settings')
         root_project = payload.get('root_project')
-
         repo_config = get_repo_config(root_project=True if root_project else False)
+
+        if root_project and platform_settings:
+            update_settings(settings=platform_settings)
+            self.model = await build_project(repo_config)
+            return self
 
         data = {}
         should_log_project = self.model.get('help_improve_mage') or False

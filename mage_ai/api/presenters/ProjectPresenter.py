@@ -12,6 +12,7 @@ class ProjectPresenter(BasePresenter):
         'name',
         'openai_api_key',
         'pipelines',
+        'platform_settings',
         'project_uuid',
         'projects',
         'remote_variables_dir',

@@ -25,8 +25,10 @@ export enum SectionEnum {
 }
 
 export enum SectionItemEnum {
-  ROLES = 'Roles',
   PERMISSIONS = 'Permissions',
+  PREFERENCES = 'Preferences',
+  ROLES = 'Roles',
+  SETTINGS = 'Settings',
   USERS = 'Users',
 }
 
@@ -114,14 +116,14 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType, opts?: {
           linkProps: {
             href: '/settings/platform/preferences',
           },
-          uuid: SECTION_ITEM_UUID_PLATFORM_PREFERENCES,
+          uuid: SectionItemEnum.PREFERENCES,
         },
         {
           Icon: SettingsWithKnobs,
           linkProps: {
             href: '/settings/platform/settings',
           },
-          uuid: SECTION_ITEM_UUID_PLATFORM_SETTINGS,
+          uuid: SectionItemEnum.SETTINGS,
         },
       ],
       uuid: SectionEnum.PROJECT_PLATFORM,

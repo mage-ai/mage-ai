@@ -119,7 +119,7 @@ class Project():
     @property
     def features_override(self) -> Dict:
         if project_platform_activated() and self.__repo_config_root_project:
-            settings = platform_settings()
+            settings = self.platform_settings()
             if settings.get('features') and (settings.get('features') or {}).get('override'):
                 return self.__repo_config_root_project.features or {}
 
@@ -150,6 +150,10 @@ class Project():
             return self(root_project=False).is_feature_enabled(feature_name)
 
         return False
+
+    def platform_settings(self) -> Dict:
+        if project_platform_activated():
+            return platform_settings(mage_projects_only=True)
 
     def repo_path_for_database_query(self, key: str) -> List[str]:
         if self.settings:

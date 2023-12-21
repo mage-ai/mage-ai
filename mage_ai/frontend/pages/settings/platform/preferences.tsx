@@ -5,15 +5,12 @@ import Row from '@components/shared/Grid/Row';
 import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import {
-  SECTION_ITEM_UUID_PLATFORM_PREFERENCES,
-  SectionEnum,
-} from '@components/settings/Dashboard/constants';
+import { SectionItemEnum, SectionEnum } from '@components/settings/Dashboard/constants';
 
 function PreferencesPage() {
   return (
     <SettingsDashboard
-      uuidItemSelected={SECTION_ITEM_UUID_PLATFORM_PREFERENCES}
+      uuidItemSelected={SectionItemEnum.PREFERENCES}
       uuidWorkspaceSelected={SectionEnum.PROJECT_PLATFORM}
     >
       <Spacing p={PADDING_UNITS}>

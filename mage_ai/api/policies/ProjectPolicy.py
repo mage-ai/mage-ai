@@ -68,6 +68,7 @@ ProjectPolicy.allow_write([
     'features',
     'openai_api_key',
     'pipelines',
+    'platform_settings',
     'remote_variables_dir',
     'root_project',
     'spark_config',
