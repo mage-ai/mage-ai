@@ -29,7 +29,7 @@ function FilesPageComponent() {
     tabs,
     versions,
     versionsVisible,
-  } = useFileComponents({ showHiddenFilesToggle: true });
+  } = useFileComponents({ showHiddenFilesSetting: true });
 
   useEffect(() => {
     setTimeout(() => setHeaderOffset(refHeader?.current?.getBoundingClientRect()?.height || 0), 1);

@@ -1026,7 +1026,7 @@ function PipelineDetailPage({
     sendTerminalMessage,
     setDisableShortcuts,
     setSelectedBlock,
-    showHiddenFilesToggle: true,
+    showHiddenFilesSetting: true,
     uuid: pipelineUUID,
     widgets,
   });
