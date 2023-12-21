@@ -168,7 +168,7 @@ class DBTCache(BaseCache):
                             absolute_project_file_path(project_path),
                         ),
                     )
-                    project = (mapping.get(project_path) or {}).get('project')
+                project = (mapping.get(project_path) or {}).get('project')
                 models = get_models(project=project)
                 same_value = mapping[project_path].get('models') == models
                 mapping[project_path]['models'] = models
