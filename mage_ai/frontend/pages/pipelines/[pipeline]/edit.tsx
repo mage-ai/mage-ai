@@ -597,7 +597,6 @@ function PipelineDetailPage({
     },
   ) => {
     setAfterHidden(false);
-    setNotebookVisible(true);
     setTimeout(() => setActiveSidekickView(newView, pushHistory, opts), 1);
   }, [setActiveSidekickView]);
 
@@ -960,8 +959,14 @@ function PipelineDetailPage({
     deleteWidget,
     fetchAutocompleteItems,
     fetchPipeline,
-    onOpenFile: () => setNotebookVisible(false),
-    onSelectFile: () => setNotebookVisible(false),
+    onOpenFile: () => {
+      setAfterHidden(false);
+      setNotebookVisible(false);
+      setSelectedBlock(null);
+    },
+    onSelectFile: () => {
+      setSelectedBlock(null);
+    },
     onSelectBlockFile,
     openSidekickView,
     pipeline,
