@@ -21,7 +21,7 @@ from mage_ai.orchestration.db.models.schedules import (
 )
 from mage_ai.orchestration.job_manager import JobManager, JobType
 from mage_ai.orchestration.notification.sender import NotificationSender
-from mage_ai.orchestration.pipeline_scheduler_original import (
+from mage_ai.orchestration.pipeline_scheduler import (
     PipelineScheduler,
     check_sla,
     schedule_all,
