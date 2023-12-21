@@ -2,6 +2,7 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings import DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD
 
+
 def get_default_credentials(default_role):
     password_salt = generate_salt()
     return User.create(
