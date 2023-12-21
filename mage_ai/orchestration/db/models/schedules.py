@@ -420,9 +420,11 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         return next_execution_date
 
     @safe_db_query
-    def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
-        if project_platform_activated():
-            return self.should_schedule_project_platform(previous_runtimes=previous_runtimes)
+    def should_schedule(
+        self,
+        previous_runtimes: List[int] = None,
+        pipeline: Pipeline = None,
+    ) -> bool:
         """
         Determine whether a pipeline schedule should be executed based on its configuration and
         history.
@@ -441,6 +443,12 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             schedule interval, and previous runtimes. It returns True if the schedule should be
             executed and False otherwise.
         """
+        if project_platform_activated():
+            return self.should_schedule_project_platform(
+                previous_runtimes=previous_runtimes,
+                pipeline=pipeline,
+            )
+
         now = datetime.now(tz=pytz.UTC)
 
         if self.status != ScheduleStatus.ACTIVE:

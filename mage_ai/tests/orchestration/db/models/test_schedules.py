@@ -1791,6 +1791,10 @@ class BlockRunTests(DBTestCase):
             self.assertEqual(b.logs.get('path'), expected_file_path)
 
 
+@patch(
+    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+    lambda: True,
+)
 class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
     def test_repo_query(self):
         with patch(
@@ -1831,7 +1835,9 @@ class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
                 self.assertIn(ps.id, ids)
 
     def test_pipeline(self):
-        with patch('mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform') as mock:
+        with patch(
+            'mage_ai.orchestration.db.models.schedules_project_platform.get_pipeline_from_platform',
+        ) as mock:
             pipeline_uuid = self.faker.unique.name()
             repo_path = self.faker.unique.name()
 
@@ -1847,6 +1853,10 @@ class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin):
             )
 
 
+@patch(
+    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+    lambda: True,
+)
 class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
     def test_pipeline(self):
         pipeline_uuid = self.faker.unique.name()
@@ -1864,7 +1874,9 @@ class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
             create_block_runs=False,
         )
 
-        with patch('mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform') as mock:
+        with patch(
+            'mage_ai.orchestration.db.models.schedules_project_platform.get_pipeline_from_platform',
+        ) as mock:
             pipeline_run.pipeline
 
             mock.assert_called_once_with(
@@ -1926,11 +1938,12 @@ class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 return fake_logger_manager
 
         with patch(
-            'mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform_async',
+            'mage_ai.orchestration.db.models.schedules_project_platform.'
+            'get_pipeline_from_platform_async',
             __get_pipeline_from_platform_async,
         ):
             with patch(
-                'mage_ai.orchestration.db.models.schedules.LoggerManagerFactory',
+                'mage_ai.orchestration.db.models.schedules_project_platform.LoggerManagerFactory',
                 FakeLoggerManagerFactory,
             ):
                 await pipeline_run.logs_async()
@@ -1951,7 +1964,7 @@ class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
         )
 
         with patch(
-            'mage_ai.orchestration.db.models.schedules.get_global_variables',
+            'mage_ai.orchestration.db.models.schedules_project_platform.get_global_variables',
             wraps=lambda pipeline_uuid, pipeline: {},
         ) as mock:
             with patch(
