@@ -297,14 +297,6 @@ function AddNewBlocks({
 
   const itemsDBT = useMemo(() => [
     {
-      label: () => 'New model',
-      onClick: () => {
-        setCreatingNewDBTModel?.(true);
-        onClickAddSingleDBTModel?.(blockIdx);
-      },
-      uuid: 'dbt/new_model',
-    },
-    {
       label: () => 'Single model or snapshot (from file)',
       onClick: () => onClickAddSingleDBTModel?.(blockIdx),
       uuid: 'dbt/single_model',
@@ -334,6 +326,16 @@ function AddNewBlocks({
         type: BlockTypeEnum.DBT,
       }),
       uuid: 'dbt/generic_command',
+    },
+    {
+      isGroupingTitle: true,
+      label: () => 'Create new models',
+      uuid: 'dbt/new_model/group',
+    },
+    {
+      disabled: true,
+      label: () => 'Use the file browser to create new SQL files',
+      uuid: 'dbt/new_model',
     },
   ], [
     addNewBlock,

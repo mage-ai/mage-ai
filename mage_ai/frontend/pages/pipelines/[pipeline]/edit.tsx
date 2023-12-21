@@ -351,11 +351,6 @@ function PipelineDetailPage({
     },
   );
 
-  const { data: dataFilesSQL, mutate: fetchFilesSQL } = api.files.list({
-    pattern: encodeURIComponent('\\.sql$'),
-  });
-  const filesSQL = useMemo(() => dataFilesSQL?.files || [], [dataFilesSQL]);
-
   pipeline = useMemo(() => data?.pipeline, [data]);
 
   const isDataIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
@@ -1010,6 +1005,7 @@ function PipelineDetailPage({
     deleteWidget,
     fetchAutocompleteItems,
     fetchPipeline,
+    fetchVariables,
     onOpenFile: () => {
       setActiveSidekickView(null);
       setAfterHidden(false);
@@ -1020,16 +1016,15 @@ function PipelineDetailPage({
       setSelectedBlock(null);
     },
     onSelectBlockFile,
+    onUpdateFileSuccess,
     openSidekickView,
     pipeline,
     selectedFilePath: pipelineUUID,
-    setSelectedBlock,
-    widgets,
-
-    fetchVariables,
-    onUpdateFileSuccess,
     sendTerminalMessage,
     setDisableShortcuts,
+    setSelectedBlock,
+    uuid: pipelineUUID,
+    widgets,
   });
 
   const [createPipeline] = useMutation(
@@ -3002,7 +2997,6 @@ function PipelineDetailPage({
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       files={files}
-      filesSQL={filesSQL}
       globalDataProducts={globalDataProducts}
       globalVariables={globalVariables}
       // @ts-ignore
@@ -3074,7 +3068,6 @@ function PipelineDetailPage({
     fetchPipeline,
     fetchSampleData,
     files,
-    filesSQL,
     globalDataProducts,
     globalVariables,
     hiddenBlocks,

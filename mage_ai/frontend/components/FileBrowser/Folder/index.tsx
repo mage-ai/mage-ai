@@ -79,6 +79,7 @@ type FolderProps = {
   theme: ThemeType;
   timeout?: any;
   uuidCombined?: string[];
+  uuidContainer?: string;
 } & FolderSharedProps & ContextAreaProps;
 
 const ChildrenStyle = styled.div`
@@ -159,6 +160,7 @@ function Folder({
   timeout,
   useRootFolder,
   uuidCombined,
+  uuidContainer,
 }: FolderProps) {
   const refRoot = useRef(null);
 
@@ -260,6 +262,7 @@ function Folder({
       timeout={timeout}
       useRootFolder={useRootFolder}
       uuidCombined={uuidCombinedUse}
+      uuidContainer={uuidContainer}
     />
   )), [
     allowEmptyFolders,
@@ -290,7 +293,9 @@ function Folder({
     useRootFolder,
     uuid,
     uuidCombinedUse,
+    uuidContainer,
   ]);
+
 
   const toggleExpandsion = useCallback((
     expand: boolean = null,
@@ -304,12 +309,15 @@ function Folder({
 
     refChildren.current.className = refExpandState.current ? 'expanded_children' : 'collapsed_children';
     refChevron.current.className = refExpandState.current ? 'expanded' : 'collapsed';
+    console.log('wtffffffff', uuidContainer, refExpandCount.current)
 
     if (refExpandCount.current === 0) {
       if (!refRoot?.current) {
         const domNode = document.getElementById(refChildren.current.id);
         refRoot.current = createRoot(domNode);
       }
+
+      console.log(refChildren.current.id)
 
       refRoot?.current?.render(
         children?.length >= 1
@@ -605,7 +613,7 @@ function Folder({
       <ChildrenStyle>
         <div
           className={expanded ? 'expanded_children' : 'collapsed_children'}
-          id={uuid}
+          id={`${uuidContainer}-${uuid}`}
           ref={refChildren}
         />
       </ChildrenStyle>

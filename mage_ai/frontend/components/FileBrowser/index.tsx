@@ -52,6 +52,7 @@ type FileBrowserProps = {
   }) => void;
   blocks?: BlockType[];
   deleteWidget?: (b: BlockType) => void;
+  disableContextMenu?: boolean;
   fetchAutocompleteItems?: () => void;
   fetchFiles?: () => void;
   fetchPipeline?: () => void;
@@ -62,6 +63,7 @@ type FileBrowserProps = {
     response: any;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  uuid?: string;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 
@@ -77,6 +79,7 @@ function FileBrowser({
   addNewBlock,
   blocks = [],
   deleteWidget,
+  disableContextMenu,
   fetchAutocompleteItems,
   fetchFiles: fetchFileTree,
   fetchPipeline,
@@ -89,6 +92,7 @@ function FileBrowser({
   pipeline,
   setErrors,
   setSelectedBlock,
+  uuid,
   widgets = [],
 }: FileBrowserProps, ref) {
   const timeout = useRef(null);
@@ -384,6 +388,7 @@ function FileBrowser({
   const filesMemo = useMemo(() => files?.map((file: FileType) => (
     <Folder
       containerRef={ref}
+      disableContextMenu={disableContextMenu}
       file={file}
       key={`${file.name}-${reloadCount}`}
       level={0}
@@ -397,8 +402,10 @@ function FileBrowser({
       setSelectedFile={setSelectedFile}
       theme={themeContext}
       timeout={timeout}
+      uuidContainer={uuid}
     />
   )), [
+    disableContextMenu,
     files,
     onClickFile,
     onClickFolder,
@@ -408,6 +415,7 @@ function FileBrowser({
     // This function will re-render whenever a block is added or removed to the pipeline.
     onSelectBlockFile,
     reloadCount,
+    uuid,
   ]);
 
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
