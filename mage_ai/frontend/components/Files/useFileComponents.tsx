@@ -54,6 +54,7 @@ type UseFileComponentsProps = {
   fetchAutocompleteItems?: () => void;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
+  showHiddenFilesToggle?: boolean;
   onOpenFile?: (filePath: string, isFolder: boolean) => void;
   onSelectBlockFile?: (
     blockUUID: string,
@@ -94,6 +95,7 @@ function useFileComponents({
   fetchAutocompleteItems,
   fetchPipeline,
   fetchVariables,
+  showHiddenFilesToggle,
   onOpenFile,
   onSelectBlockFile,
   onSelectFile,
@@ -213,10 +215,10 @@ function useFileComponents({
   }, [showHiddenFiles]);
 
   const { data: filesData, mutate: fetchFiles } = api.files.list(
-    showHiddenFiles
+    (showHiddenFilesToggle && showHiddenFiles)
       ? {
         ...FILES_QUERY_INCLUDE_HIDDEN_FILES,
-        ...query
+        ...query,
       } : query,
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
@@ -317,6 +319,7 @@ function useFileComponents({
       fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
       files={files}
+      showHiddenFilesToggle={showHiddenFilesToggle}
       onClickFile={(path: string) => openFile(path)}
       onClickFolder={(path: string) => openFile(path, true)}
       onSelectBlockFile={onSelectBlockFile}
@@ -340,6 +343,7 @@ function useFileComponents({
     fetchPipeline,
     fileTreeRef,
     files,
+    showHiddenFilesToggle,
     onSelectBlockFile,
     openFile,
     openSidekickView,
