@@ -5,6 +5,7 @@ interface GitType {
 interface PlatformProjectType {
   git?: GitType;
   path?: string;
+  uuid?: string;
 }
 
 export default interface PlatformType {
