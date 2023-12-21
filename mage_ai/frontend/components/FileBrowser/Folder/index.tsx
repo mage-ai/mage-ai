@@ -406,10 +406,13 @@ function Folder({
       if (expanded && refExpandCount?.current === 0 && refChildren?.current?.id) {
         refExpandCount.current = 1;
 
-        const domNode = document.getElementById(refChildren?.current?.id);
         try {
-          const root = createRoot(domNode);
-          root.render(
+          if (!refRoot?.current) {
+            const domNode = document.getElementById(refChildren?.current?.id);
+            refRoot.current = createRoot(domNode);
+          }
+
+          refRoot?.current?.render(
             children?.length >= 1
               ? (
                 <DeferredRender idleTimeout={100 * level}>
