@@ -8,5 +8,6 @@ export const ScrollerStyle = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
+  height: 100%;
   overflow: auto;
 `;

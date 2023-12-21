@@ -756,41 +756,39 @@ function KernelStatus({
 
 
   return (
-    <PipelineHeaderStyle relativePosition>
+    <FlexContainer
+      alignItems="center"
+      fullHeight
+      justifyContent="space-between"
+    >
       <FlexContainer
         alignItems="center"
         fullHeight
-        justifyContent="space-between"
+        justifyContent="flex-start"
       >
-        <FlexContainer
-          alignItems="center"
-          fullHeight
-          justifyContent="flex-start"
-        >
-          {children}
-        </FlexContainer>
-
-        <Spacing px={PADDING_UNITS}>
-          <Flex alignItems="center">
-            <FlexContainer alignItems="center">
-              {kernelStatusMemo}
-
-              {computeConnectionStatusMemo && (
-                <Spacing ml={1}>
-                  {computeConnectionStatusMemo}
-                </Spacing>
-              )}
-
-              {computeStatusMemo && (
-                <Spacing ml={1}>
-                  {computeStatusMemo}
-                </Spacing>
-              )}
-            </FlexContainer>
-          </Flex>
-        </Spacing>
+        {children}
       </FlexContainer>
-    </PipelineHeaderStyle>
+
+      <Spacing px={PADDING_UNITS}>
+        <Flex alignItems="center">
+          <FlexContainer alignItems="center">
+            {kernelStatusMemo}
+
+            {computeConnectionStatusMemo && (
+              <Spacing ml={1}>
+                {computeConnectionStatusMemo}
+              </Spacing>
+            )}
+
+            {computeStatusMemo && (
+              <Spacing ml={1}>
+                {computeStatusMemo}
+              </Spacing>
+            )}
+          </FlexContainer>
+        </Flex>
+      </Spacing>
+    </FlexContainer>
   );
 }
 

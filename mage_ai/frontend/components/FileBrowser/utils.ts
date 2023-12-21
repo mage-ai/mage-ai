@@ -55,7 +55,7 @@ export function getFullPathWithoutRootFolder(
 }
 
 export function getFileExtension(filename: string): FileExtensionEnum {
-  const match = filename.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)
+  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)
   return match?.length >= 1
     ? match[0].replace('.', '') as FileExtensionEnum
     : null;

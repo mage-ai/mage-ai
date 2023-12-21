@@ -29,10 +29,12 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataIntegrationModal from '@components/DataIntegrationModal';
 import DataProviderType from '@interfaces/DataProviderType';
+import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
+import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
@@ -556,6 +558,8 @@ function PipelineDetailPage({
       newQuery.extension = opts?.extension;
     }
 
+    setNotebookVisible(true);
+
     goToWithQuery(newQuery, {
       preserveParams: [
         'addon',
@@ -585,6 +589,7 @@ function PipelineDetailPage({
     },
   ) => {
     setAfterHidden(false);
+    setNotebookVisible(true);
     setTimeout(() => setActiveSidekickView(newView, pushHistory, opts), 1);
   }, [setActiveSidekickView]);
 
@@ -954,18 +959,6 @@ function PipelineDetailPage({
     pipeline,
     selectedFilePath: pipelineUUID,
     setSelectedBlock,
-    tabsBefore: [
-      {
-        label: () => notebookVisible ? pipelineUUID : `View ${pipelineUUID}`,
-        onClick: ({
-          onClickTab,
-        }) => {
-          onClickTab(pipelineUUID);
-          setNotebookVisible(true)
-        },
-        uuid: pipelineUUID,
-      },
-    ],
     widgets,
   });
 
@@ -2880,6 +2873,67 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  const afterMemo = useMemo(() => {
+    return (
+      <>
+        <div
+          style={{
+            height: notebookVisible ? null : 0,
+            opacity: notebookVisible ? null : 0,
+            visibility: notebookVisible ? null : 'hidden',
+          }}
+        >
+          {sideKick}
+        </div>
+
+        <div
+          style={{
+            height: notebookVisible ? 0 : null,
+            opacity: notebookVisible ? 0 : null,
+            visibility: notebookVisible ? 'hidden' : null,
+          }}
+        >
+          {fileController}
+        </div>
+      </>
+    );
+  }, [
+    fileController,
+    notebookVisible,
+    sideKick,
+  ]);
+
+  const afterHeaderMemo = useMemo(() => {
+    if (!notebookVisible) {
+      return (
+        <FileTabsScroller>
+          {fileTabs}
+        </FileTabsScroller>
+      );
+    }
+
+    return (
+      <SidekickHeader
+        activeView={activeSidekickView}
+        pipeline={pipeline}
+        project={project}
+        secrets={secrets}
+        selectedBlock={selectedBlock}
+        setSelectedBlock={setSelectedBlock}
+        variables={globalVariables}
+      />
+    );
+  }, [
+    activeSidekickView,
+    fileTabs,
+    globalVariables,
+    pipeline,
+    project,
+    secrets,
+    selectedBlock,
+    setSelectedBlock,
+  ]);
+
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       // addNewBlockAtIndex={automaticallyNameBlocks
@@ -3090,10 +3144,12 @@ function PipelineDetailPage({
     updatePipelineMetadata,
   ]);
 
-  const mainContainerHeaderMemo = useMemo(() => {
+  const mainContainerHeaderMemo = useCallback(({
+    widthOffset,
+  }) => {
     if (page === PAGE_NAME_EDIT) {
       return (
-        <>
+        <PipelineHeaderStyle relativePosition>
           <KernelStatus
             isBusy={runningBlocks.length >= 1}
             kernel={kernel}
@@ -3107,10 +3163,8 @@ function PipelineDetailPage({
             <Spacing pr={1} />
 
             {beforeHeader}
-
-            {fileTabs}
           </KernelStatus>
-        </>
+        </PipelineHeaderStyle>
       );
     }
   }, [
@@ -3225,18 +3279,8 @@ function PipelineDetailPage({
       <Head title={pipeline?.name} />
 
       <PipelineLayout
-        after={sideKick}
-        afterHeader={(
-          <SidekickHeader
-            activeView={activeSidekickView}
-            pipeline={pipeline}
-            project={project}
-            secrets={secrets}
-            selectedBlock={selectedBlock}
-            setSelectedBlock={setSelectedBlock}
-            variables={globalVariables}
-          />
-        )}
+        after={afterMemo}
+        afterHeader={afterHeaderMemo}
         afterHeightOffset={HEADER_HEIGHT}
         afterHidden={afterHidden}
         afterInnerHeightMinus={afterFooterBottomOffset}
@@ -3312,27 +3356,9 @@ function PipelineDetailPage({
         setErrors={pipelineErrors ? setPipelineErrors : setErrors}
         setMainContainerWidth={setMainContainerWidth}
       >
-        <div
-          style={{
-            height: notebookVisible ?  null : 0,
-            opacity: notebookVisible ?  null : 0,
-            visibility: notebookVisible ?  null : 'hidden',
-          }}
-        >
-          <ApiReloader uuid={`PipelineDetail/${pipelineUUID}`}>
-            {pipelineDetailMemo}
-          </ApiReloader>
-        </div>
-
-        <div
-          style={{
-            height: notebookVisible ? 0 : null,
-            opacity: notebookVisible ? 0 : null,
-            visibility: notebookVisible ? 'hidden' : null,
-          }}
-        >
-          {fileController}
-        </div>
+        <ApiReloader uuid={`PipelineDetail/${pipelineUUID}`}>
+          {pipelineDetailMemo}
+        </ApiReloader>
 
         <Spacing
           pb={(

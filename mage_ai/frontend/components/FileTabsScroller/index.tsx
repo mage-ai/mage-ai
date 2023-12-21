@@ -23,7 +23,12 @@ function FileTabsScroller({
 
   return (
     <ScrollerStyle ref={refScroll} widthOffset={widthOffset}>
-      <div ref={refTabs}>
+      <div
+        ref={refTabs}
+        style={{
+          height: '100%',
+        }}
+      >
         {children}
       </div>
     </ScrollerStyle>

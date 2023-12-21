@@ -40,6 +40,7 @@ function FileTabs({
   return (
     <FlexContainer
       alignItems="center"
+      fullHeight
       justifyContent="flex-start"
     >
       {tabsBefore?.length >= 1 && tabsBefore?.map(({
