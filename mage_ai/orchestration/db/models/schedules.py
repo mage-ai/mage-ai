@@ -56,8 +56,13 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
+from mage_ai.orchestration.db.models.schedules_project_platform import (
+    PipelineRunProjectPlatformMixin,
+    PipelineScheduleProjectPlatformMixin,
+)
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
@@ -73,7 +78,7 @@ pipeline_schedule_event_matcher_association_table = Table(
 )
 
 
-class PipelineSchedule(BaseModel):
+class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     name = Column(String(255))
     description = Column(Text)
     pipeline_uuid = Column(String(255), index=True)
@@ -99,6 +104,9 @@ class PipelineSchedule(BaseModel):
 
     @classproperty
     def repo_query(cls):
+        if project_platform_activated():
+            return cls.repo_query_project_platform
+
         return cls.query.filter(
             or_(
                 PipelineSchedule.repo_path == get_repo_path(),
@@ -141,14 +149,23 @@ class PipelineSchedule(BaseModel):
 
     @property
     def pipeline(self) -> 'Pipeline':
+        if project_platform_activated():
+            return self.pipeline_project_platform
+
         return Pipeline.get(self.pipeline_uuid)
 
     @property
     def pipeline_in_progress_runs_count(self) -> int:
+        if project_platform_activated():
+            return self.pipeline_in_progress_runs_count_project_platform
+
         return len(PipelineRun.in_progress_runs([self.id]))
 
     @property
     def pipeline_runs_count(self) -> int:
+        if project_platform_activated():
+            return self.pipeline_runs_count_project_platform
+
         return len(self.fetch_pipeline_runs([self.id]))
 
     @property
@@ -166,6 +183,9 @@ class PipelineSchedule(BaseModel):
 
     @property
     def last_pipeline_run_status(self) -> str:
+        if project_platform_activated():
+            return self.last_pipeline_run_status_project_platform
+
         if len(self.fetch_pipeline_runs([self.id])) == 0:
             return None
         return sorted(self.fetch_pipeline_runs([self.id]), key=lambda x: x.created_at)[-1].status
@@ -400,6 +420,8 @@ class PipelineSchedule(BaseModel):
 
     @safe_db_query
     def should_schedule(self, previous_runtimes: List[int] = None) -> bool:
+        if project_platform_activated():
+            return self.should_schedule_project_platform(previous_runtimes=previous_runtimes)
         """
         Determine whether a pipeline schedule should be executed based on its configuration and
         history.
@@ -594,7 +616,7 @@ class PipelineSchedule(BaseModel):
         return round(sum(previous_runtimes) / len(previous_runtimes), 2)
 
 
-class PipelineRun(BaseModel):
+class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
     class PipelineRunStatus(str, enum.Enum):
         INITIAL = 'initial'
         RUNNING = 'running'
@@ -736,6 +758,9 @@ class PipelineRun(BaseModel):
         return pipeline_runs
 
     async def logs_async(self):
+        if project_platform_activated():
+            return await self.logs_async_project_platform()
+
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
@@ -1245,6 +1270,12 @@ class PipelineRun(BaseModel):
         return all(b.status in statuses for b in self.block_runs)
 
     def get_variables(self, extra_variables: Dict = None, pipeline_uuid: str = None) -> Dict:
+        if project_platform_activated():
+            return self.get_variables_project_platform(
+                extra_variables=extra_variables,
+                pipeline_uuid=pipeline_uuid,
+            )
+
         if extra_variables is None:
             extra_variables = dict()
 
