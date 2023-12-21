@@ -21,7 +21,7 @@ type NewFileProps = {
   onCancel: () => void;
   onCreateFile?: (file: FileType) => void;
   selectedFolder: FileType;
-  setErrors?: (opts: {
+  showError?: (opts: {
     errors: any;
     response: any;
   }) => void;
@@ -34,7 +34,7 @@ function NewFile({
   onCancel,
   onCreateFile,
   selectedFolder,
-  setErrors,
+  showError,
 }: NewFileProps) {
   const refTextInput = useRef(null);
   const file = isEmptyObject(fileProp) ? null : fileProp;
@@ -68,7 +68,7 @@ function NewFile({
             onCancel();
             onCreateFile?.(file);
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => showError({
             errors,
             response,
           }),
@@ -85,7 +85,7 @@ function NewFile({
             fetchFileTree?.();
             onCancel();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => showError({
             errors,
             response,
           }),
