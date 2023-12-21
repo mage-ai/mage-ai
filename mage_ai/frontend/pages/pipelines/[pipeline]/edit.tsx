@@ -37,6 +37,7 @@ import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabsScroller from '@components/FileTabsScroller';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+  FileQueryEnum,
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
