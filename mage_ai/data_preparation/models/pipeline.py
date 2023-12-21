@@ -324,7 +324,7 @@ class Pipeline:
                 uuid,
             ),
         )
-    
+
     @classmethod
     def get(
         self,
