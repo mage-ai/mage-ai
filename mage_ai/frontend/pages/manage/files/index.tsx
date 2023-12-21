@@ -9,21 +9,15 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import api from '@api';
-import { FILES_QUERY_INCLUDE_HIDDEN_FILES } from '@interfaces/FileType';
-import { LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES } from '@storage/files';
-import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
-import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { equals } from '@utils/array';
-import { get, set } from '@storage/localStorage';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl } from '@utils/url';
+import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
+import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 
 
 function FilesPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
-  const [showHiddenFiles, setShowHiddenFiles] = useState<boolean>(
-    get(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, false),
-  );
 
   const qUrl = queryFromUrl();
   const {
@@ -54,15 +48,7 @@ function FilesPage() {
     });
   }, []);
 
-  const toggleShowHiddenFiles = useCallback(() => {
-    const updatedShowHiddenFiles = !showHiddenFiles;
-    setShowHiddenFiles(updatedShowHiddenFiles);
-    set(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, updatedShowHiddenFiles);
-  }, [showHiddenFiles]);
-
-  const { data: filesData, mutate: fetchFileTree } = api.files.list(
-    showHiddenFiles ? FILES_QUERY_INCLUDE_HIDDEN_FILES : {},
-  );
+  const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
   const fileTreeRef = useRef(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
@@ -78,9 +64,7 @@ function FilesPage() {
         files={files}
         openFile={openFile}
         ref={fileTreeRef}
-        setErrors={setErrors}
-        setShowHiddenFiles={toggleShowHiddenFiles}
-        showHiddenFiles={showHiddenFiles}
+        showError={setErrors}
       />
     </Spacing>
   ), [
@@ -88,8 +72,6 @@ function FilesPage() {
     files,
     openFile,
     setErrors,
-    showHiddenFiles,
-    toggleShowHiddenFiles,
   ]);
 
   useEffect(() => {
