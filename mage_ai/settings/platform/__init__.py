@@ -163,10 +163,10 @@ def project_platform_activated() -> bool:
     return ENABLE_PROJECT_PLATFORM and os.path.exists(platform_settings_full_path())
 
 
-def platform_settings() -> Dict:
+def platform_settings(mage_projects_only: bool = False) -> Dict:
     config = __load_platform_settings(platform_settings_full_path()) or {}
     config['projects'] = merge_dict(
-        __get_projects_of_any_type() or {},
+        {} if mage_projects_only else (__get_projects_of_any_type() or {}),
         (config.get('projects') if config else {}) or {},
     )
     return config
@@ -202,7 +202,10 @@ def active_project_settings(
 
 
 def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
-    mapping = (__combined_platform_settings(repo_path=repo_path) or {}).get('projects')
+    mapping = (__combined_platform_settings(
+        repo_path=repo_path,
+        mage_projects_only=mage_projects_only,
+    ) or {}).get('projects')
 
     if mage_projects_only:
         select_keys = []
@@ -216,9 +219,28 @@ def project_platform_settings(repo_path: str = None, mage_projects_only: bool = 
     return mapping
 
 
-def __combined_platform_settings(repo_path: str = None) -> Dict:
-    child = (platform_settings() or {}).copy()
-    parent = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+def update_settings(settings: Dict) -> Dict:
+    projects = {}
+    for project_name, project_settings in (settings.get('projects') or {}).items():
+        uuid = project_settings.get('uuid') or project_name
+        projects[uuid] = extract(project_settings or {}, [
+            'path',
+        ])
+
+    settings['projects'] = projects
+    content = yaml.dump(settings)
+
+    safe_write(platform_settings_full_path(), content)
+
+
+def __combined_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
+    parent = (platform_settings() or {}).copy()
+    child = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+
+    if mage_projects_only:
+        keys = (parent.get('projects') or {}).keys()
+        child['projects'] = extract(child.get('projects') or {}, keys)
+
     combine_into(child, parent)
     return parent
 
@@ -251,7 +273,7 @@ def __get_projects_of_any_type() -> Dict:
     repo_path = base_repo_path()
     for path in os.listdir(repo_path):
         project_path = os.path.join(repo_path, path)
-        if not os.path.isdir(project_path):
+        if not os.path.isdir(project_path) or path.startswith('.'):
             continue
 
         is_project = False

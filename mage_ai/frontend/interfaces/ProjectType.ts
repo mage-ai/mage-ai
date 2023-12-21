@@ -1,3 +1,4 @@
+import PlatformType from './PlatformType';
 import { PipelineSettingsType } from './PipelineType';
 
 export enum FeatureUUIDEnum {
@@ -88,11 +89,18 @@ export default interface ProjectType {
   features?: {
     [key: string]: boolean;
   };
+  features_defined?: {
+    [key: string]: boolean;
+  };
+  features_override?: {
+    [key: string]: boolean;
+  };
   help_improve_mage?: boolean;
   latest_version?: string;
   name?: string;
   openai_api_key?: string;
   pipelines?: ProjectPipelinesType;
+  platform_settings?: PlatformType;
   project_uuid?: string;
   projects?: {
     [name: string]: string;

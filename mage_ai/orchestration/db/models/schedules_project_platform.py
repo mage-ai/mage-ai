@@ -63,7 +63,7 @@ class PipelineScheduleProjectPlatformMixin:
 
     @property
     def pipeline_in_progress_runs_count_project_platform(self) -> int:
-        from mage_ai.orchestration.db.models.pipeline_run import PipelineRun
+        from mage_ai.orchestration.db.models.schedules import PipelineRun
 
         return (
             PipelineRun.select(func.count(PipelineRun.id))
@@ -82,7 +82,7 @@ class PipelineScheduleProjectPlatformMixin:
 
     @property
     def pipeline_runs_count_project_platform(self) -> int:
-        from mage_ai.orchestration.db.models.pipeline_run import PipelineRun
+        from mage_ai.orchestration.db.models.schedules import PipelineRun
 
         return (
             PipelineRun.select(func.count(PipelineRun.id))
@@ -94,7 +94,7 @@ class PipelineScheduleProjectPlatformMixin:
 
     @property
     def last_pipeline_run_status_project_platform(self) -> str:
-        from mage_ai.orchestration.db.models.pipeline_run import PipelineRun
+        from mage_ai.orchestration.db.models.schedules import PipelineRun
 
         query_result = (
             PipelineRun.select(PipelineRun.id, PipelineRun.status)
@@ -169,7 +169,7 @@ class PipelineScheduleProjectPlatformMixin:
             if self.pipeline_runs_count == 0:
                 return True
             else:
-                from mage_ai.orchestration.db.models.pipeline_run import PipelineRun
+                from mage_ai.orchestration.db.models.schedules import PipelineRun
 
                 return self.last_pipeline_run_status not in [
                     PipelineRun.PipelineRunStatus.RUNNING,
