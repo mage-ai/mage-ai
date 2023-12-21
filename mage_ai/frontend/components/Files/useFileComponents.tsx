@@ -46,6 +46,7 @@ type UseFileComponentsProps = {
   ) => void;
   blocks?: BlockType[];
   deleteWidget?: (value: BlockType) => void;
+  disableContextMenu?: boolean;
   fetchAutocompleteItems?: () => void;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
@@ -70,10 +71,14 @@ type UseFileComponentsProps = {
     },
   ) => void;
   pipeline?: PipelineType;
+  query?: {
+    pattern?: string;
+  };
   selectedFilePath?: string;
   sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setSelectedBlock?: (value: BlockType) => void;
+  uuid?: string;
   widgets?: BlockType[];
 };
 
@@ -81,6 +86,7 @@ function useFileComponents({
   addNewBlock,
   blocks,
   deleteWidget,
+  disableContextMenu,
   fetchAutocompleteItems,
   fetchPipeline,
   fetchVariables,
@@ -90,15 +96,17 @@ function useFileComponents({
   onUpdateFileSuccess,
   openSidekickView,
   pipeline,
+  query,
   selectedFilePath: selectedFilePathDefault,
   sendTerminalMessage,
   setDisableShortcuts,
   setSelectedBlock,
+  uuid,
   widgets,
 }: UseFileComponentsProps = {}) {
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [showError] = useError(null, {}, [], {
-    uuid: 'FilesPage',
+    uuid: `useFileComponents/${uuid}`,
   });
 
   const fileTreeRef = useRef(null);
@@ -191,7 +199,7 @@ function useFileComponents({
     setOpenFilePaths,
   ]);
 
-  const { data: filesData, mutate: fetchFiles } = api.files.list();
+  const { data: filesData, mutate: fetchFiles } = api.files.list(query);
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
   const uuidKeyboard = 'Files/index';
@@ -285,6 +293,7 @@ function useFileComponents({
       addNewBlock={addNewBlock}
       blocks={blocks}
       deleteWidget={deleteWidget}
+      disableContextMenu={disableContextMenu}
       fetchAutocompleteItems={fetchAutocompleteItems}
       fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
@@ -295,14 +304,16 @@ function useFileComponents({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={fileTreeRef}
-      setErrors={showError}
+      showError={showError}
       setSelectedBlock={setSelectedBlock}
+      uuid={uuid}
       widgets={widgets}
     />
   ), [
     addNewBlock,
     blocks,
     deleteWidget,
+    disableContextMenu,
     fetchAutocompleteItems,
     fetchFiles,
     fetchPipeline,
@@ -314,6 +325,7 @@ function useFileComponents({
     pipeline,
     setSelectedBlock,
     showError,
+    uuid,
     widgets,
   ]);
 

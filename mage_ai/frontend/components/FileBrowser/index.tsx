@@ -52,16 +52,18 @@ type FileBrowserProps = {
   }) => void;
   blocks?: BlockType[];
   deleteWidget?: (b: BlockType) => void;
+  disableContextMenu?: boolean;
   fetchAutocompleteItems?: () => void;
   fetchFiles?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
-  setErrors?: (opts: {
+  showError?: (opts: {
     errors: any;
     response: any;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  uuid?: string;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 
@@ -77,6 +79,7 @@ function FileBrowser({
   addNewBlock,
   blocks = [],
   deleteWidget,
+  disableContextMenu,
   fetchAutocompleteItems,
   fetchFiles: fetchFileTree,
   fetchPipeline,
@@ -87,8 +90,9 @@ function FileBrowser({
   openFile,
   openSidekickView,
   pipeline,
-  setErrors,
+  showError,
   setSelectedBlock,
+  uuid,
   widgets = [],
 }: FileBrowserProps, ref) {
   const timeout = useRef(null);
@@ -109,10 +113,6 @@ function FileBrowser({
     selectedFile,
   ]);
 
-  const [showError] = useError(null, {}, [], {
-    uuid: 'FileBrowser',
-  });
-
   const {
     featureEnabled,
     featureUUIDs,
@@ -130,13 +130,6 @@ function FileBrowser({
             initiateDownload(token);
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -156,13 +149,6 @@ function FileBrowser({
             fetchFileTree?.();
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -182,13 +168,6 @@ function FileBrowser({
             fetchFileTree?.();
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -227,17 +206,24 @@ function FileBrowser({
             // fetchPipeline?.();
             fetchFileTree?.();
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-              message,
-            },
-          }) => {
+          onErrorCallback: (response, errors) => {
+            const {
+              error: {
+                exception,
+                message,
+              },
+            } = response;
+
             if (message.includes('raise HasDownstreamDependencies')) {
               showDeleteConfirmation({
                 block: selectedBlock,
                 file: selectedFile,
                 exception,
+              });
+            } else {
+              return showError({
+                errors,
+                response,
               });
             }
           },
@@ -284,13 +270,6 @@ function FileBrowser({
             fetchPipeline?.();
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -384,6 +363,7 @@ function FileBrowser({
   const filesMemo = useMemo(() => files?.map((file: FileType) => (
     <Folder
       containerRef={ref}
+      disableContextMenu={disableContextMenu}
       file={file}
       key={`${file.name}-${reloadCount}`}
       level={0}
@@ -397,8 +377,10 @@ function FileBrowser({
       setSelectedFile={setSelectedFile}
       theme={themeContext}
       timeout={timeout}
+      uuidContainer={uuid}
     />
   )), [
+    disableContextMenu,
     files,
     onClickFile,
     onClickFolder,
@@ -408,6 +390,7 @@ function FileBrowser({
     // This function will re-render whenever a block is added or removed to the pipeline.
     onSelectBlockFile,
     reloadCount,
+    uuid,
   ]);
 
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
@@ -442,13 +425,13 @@ function FileBrowser({
       moveFile={opts?.moveFile}
       onCancel={hideModalNewFile}
       selectedFolder={selectedFolder}
-      setErrors={setErrors}
+      showError={showError}
     />
   ), {
   }, [
     fetchFileTree,
     selectedFolder,
-    setErrors,
+    showError,
   ], {
     background: true,
     disableClickOutside: true,
@@ -467,14 +450,13 @@ function FileBrowser({
       onCancel={hideModalNewFolder}
       projectType={opts?.projectType}
       selectedFolder={selectedFolder}
-      setErrors={setErrors}
       showError={showError}
     />
   ), {
   }, [
     fetchFileTree,
     selectedFolder,
-    setErrors,
+    showError,
     showError,
   ], {
     background: true,

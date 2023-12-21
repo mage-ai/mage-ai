@@ -125,7 +125,6 @@ type PipelineDetailProps = {
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   files: FileType[];
-  filesSQL?: FileType[];
   globalDataProducts?: GlobalDataProductType[];
   globalVariables: PipelineVariableType[];
   hiddenBlocks: {
@@ -220,7 +219,6 @@ function PipelineDetail({
   fetchPipeline,
   fetchSampleData,
   files,
-  filesSQL,
   globalDataProducts,
   globalVariables,
   hiddenBlocks,
@@ -1182,9 +1180,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         >
           <FileSelectorPopup
             blocks={blocks}
-            creatingNewDBTModel={creatingNewDBTModel}
             dbtModelName={dbtModelName}
-            files={filesSQL}
             onClose={closeAddDBTModelPopup}
             onOpenFile={addBlockFromFilePath}
             onSelectBlockFile={(_a, _b, _c, {

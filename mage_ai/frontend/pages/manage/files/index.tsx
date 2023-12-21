@@ -64,7 +64,7 @@ function FilesPage() {
         files={files}
         openFile={openFile}
         ref={fileTreeRef}
-        setErrors={setErrors}
+        showError={setErrors}
       />
     </Spacing>
   ), [
