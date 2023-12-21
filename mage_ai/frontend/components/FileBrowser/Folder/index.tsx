@@ -309,15 +309,12 @@ function Folder({
 
     refChildren.current.className = refExpandState.current ? 'expanded_children' : 'collapsed_children';
     refChevron.current.className = refExpandState.current ? 'expanded' : 'collapsed';
-    console.log('wtffffffff', uuidContainer, refExpandCount.current)
 
     if (refExpandCount.current === 0) {
       if (!refRoot?.current) {
         const domNode = document.getElementById(refChildren.current.id);
         refRoot.current = createRoot(domNode);
       }
-
-      console.log(refChildren.current.id)
 
       refRoot?.current?.render(
         children?.length >= 1
