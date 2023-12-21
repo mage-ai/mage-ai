@@ -451,7 +451,6 @@ function FileBrowser({
       projectType={opts?.projectType}
       selectedFolder={selectedFolder}
       showError={showError}
-      showError={showError}
     />
   ), {
   }, [
