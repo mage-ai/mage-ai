@@ -185,7 +185,7 @@ function Folder({
       name,
       uuidCombined,,
     ]);
-  const uuid = useMemo(() => uuidCombinedUse?.join('/'), [uuidCombinedUse])
+  const uuid = useMemo(() => uuidCombinedUse?.join('/'), [uuidCombinedUse]);
 
   const folderStates = get(LOCAL_STORAGE_KEY_FOLDERS_STATE, {});
   const refChildren = useRef(null);
