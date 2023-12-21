@@ -2,42 +2,23 @@ import styled from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Circle from '@oracle/elements/Circle';
 import FileType, {
-  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   FOLDER_NAME_CHARTS,
-  FOLDER_NAME_PIPELINES,
-  FileExtensionEnum,
   SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
-import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
+import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
-import {
-  Charts,
-  ChevronDown,
-  ChevronRight,
-  Ellipsis,
-  FileFill,
-  FolderV2Filled as FolderIcon,
-  Logs,
-  NavGraph,
-  ParentEmpty,
-  Pipeline,
-  PipelineV3,
-  RoundedSquare,
-  Table,
-} from '@oracle/icons';
+import { ChevronDown, ChevronRight } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
 import {
   CUSTOM_EVENT_NAME_FOLDER_EXPAND,
 } from '@utils/events/constants';
-import { FILE_EXTENSION_COLOR_MAPPING, FILE_EXTENSION_ICON_MAPPING } from './constants';
 import {
   ICON_SIZE,
   INDENT_WIDTH,
-} from './index.style';
+} from '../index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
@@ -52,7 +33,7 @@ import {
   getNonPythonBlockFromFile,
   validBlockFileExtension,
   validBlockFromFilename,
-} from './utils';
+} from '../utils';
 import { range, sortByKey } from '@utils/array';
 import { singularize } from '@utils/string';
 
@@ -215,120 +196,34 @@ function Folder({
   if (!name && !allowEmptyFolders) {
     file.name = DEFAULT_NAME;
   }
-  const filePathToUse: string = useRootFolder
-    ? getFullPath(file)
-    : getFullPathWithoutRootFolder(file);
-
-  const isFolder = useMemo(() => !!children && !isNotFolder, [children, isNotFolder]);
-
-  const folderNameForBlock = useMemo(() => uuidCombinedUse?.find?.(
-    (key) => {
-      const keySingle = singularize(key);
-
-      return keySingle in ALL_BLOCK_TYPES;
-    },
-  ), [uuidCombinedUse]);
-  const blockType = useMemo(() => folderNameForBlock ? singularize(folderNameForBlock) : null, [
-    folderNameForBlock,
-  ]);
-  const isFirstParentFolderForBlock = useMemo(() => isFolder && folderNameForBlock && folderNameForBlock === name, [
-    folderNameForBlock,
-    isFolder,
-    name,
-  ]);
-  const isBlockFile = useMemo(() => folderNameForBlock
-    && !isFolder
-    && validBlockFileExtension(name)
-    && validBlockFromFilename(name, blockType), [
-      blockType,
-      folderNameForBlock,
-      isFolder,
-      name,
-    ]);
-
-  const color = useMemo(() => folderNameForBlock
-    ? getColorsForBlockType(blockType, { theme }).accent
-    : null,
-    [
-      blockType,
-      folderNameForBlock,
-    ]);
-
-  const isPipelineFolder = name === FOLDER_NAME_PIPELINES;
-
-  const disabled = useMemo(() => isFileDisabled
-    ? isFileDisabled(filePathToUse, children)
-    : disabledProp
-      || (isInPipelinesFolder && name === '__init__.py')
-      || (folderNameForBlock && name === '__init__.py'),
-  [
-    children,
-    disabledProp,,
-    filePathToUse,
-    folderNameForBlock,
-    isFileDisabled,
-    isInPipelinesFolder,
-    name,
-  ]);
 
   const {
-    IconEl,
-    fileIconColor,
-  } = useMemo(() => {
-    let fileIconColorInner;
-    let IconElInner = FileFill;
-
-    if (!isFolder && isNotFolder) {
-      IconElInner = Ellipsis;
-    } else if (isPipelineFolder) {
-      IconElInner = PipelineV3
-    } else if (name === FOLDER_NAME_CHARTS) {
-      IconElInner = Charts;
-    } else if (isFolder) {
-      if (isFirstParentFolderForBlock) {
-        IconElInner = BLOCK_TYPE_ICON_MAPPING?.[blockType] || FolderIcon;
-      } else {
-        IconElInner = FolderIcon;
-      }
-    } else if (!name && allowEmptyFolders) {
-      IconElInner = Ellipsis;
-    } else if (isInPipelinesFolder && !isFolder && name === 'metadata.yaml') {
-      IconElInner = Pipeline;
-    } else if (name?.includes('.log')) {
-      IconElInner = Logs;
-    } else if (!isFolder) {
-      const fx = getFileExtension(name);
-      if (fx && fx in FILE_EXTENSION_ICON_MAPPING) {
-        IconElInner = FILE_EXTENSION_ICON_MAPPING[fx];
-        fileIconColorInner = FILE_EXTENSION_COLOR_MAPPING[fx];
-      }
-    }
-
-    return {
-      IconEl: IconElInner,
-      fileIconColor: fileIconColorInner,
-   };
-  }, [
-    allowEmptyFolders,
+    BlockIcon,
+    Icon,
     blockType,
+    color,
+    disabled,
+    filePathToUse,
+    folderNameForBlock,
+    iconColor,
+    isBlockFile,
     isFirstParentFolderForBlock,
     isFolder,
+    isPipelineFolder,
+  } = useFileIcon({
+    allowEmptyFolders,
+    children,
+    disabled: disabledProp,
+    file,
     isInPipelinesFolder,
+    isFileDisabled,
     isNotFolder,
     level,
     name,
-  ]);
-
-  const BlockIconEl = useMemo(() => {
-    let BlockIconElInner = Circle;
-    if (BlockTypeEnum.CHART === blockType) {
-      BlockIconElInner = Charts;
-    }
-
-    return BlockIconElInner;
-  }, [
-    blockType,
-  ]);
+    theme,
+    useRootFolder,
+    uuid,
+  });
 
   const buildChildrenFiles = useCallback((
     arr: FileType[],
@@ -664,7 +559,7 @@ function Folder({
             >
               {(!!folderNameForBlock && !isFolder && !!isBlockFile)
                 ? (
-                  <BlockIconEl
+                  <BlockIcon
                     color={color}
                     size={(folderNameForBlock && !isFolder)
                       ? ICON_SIZE * 0.7
@@ -674,8 +569,8 @@ function Folder({
                   />
                 )
                 : (
-                  <IconEl
-                    fill={fileIconColor || (isFirstParentFolderForBlock ? color : null)}
+                  <Icon
+                    fill={iconColor || (isFirstParentFolderForBlock ? color : null)}
                     disabled={disabled}
                     size={ICON_SIZE}
                   />

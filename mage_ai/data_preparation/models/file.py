@@ -484,7 +484,7 @@ def traverse(
 
 def __should_update_dbt_cache(dir_path: str, filename: str) -> bool:
     project_model = Project(root_project=True)
-    if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+    if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2) and dir_path:
         # If the file is a SQL or YAML file
         if (
             filename.endswith('.sql') or

@@ -53,7 +53,7 @@ type FileBrowserProps = {
   blocks?: BlockType[];
   deleteWidget?: (b: BlockType) => void;
   fetchAutocompleteItems?: () => void;
-  fetchFileTree?: () => void;
+  fetchFiles?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
@@ -78,7 +78,7 @@ function FileBrowser({
   blocks = [],
   deleteWidget,
   fetchAutocompleteItems,
-  fetchFileTree,
+  fetchFiles: fetchFileTree,
   fetchPipeline,
   files,
   onClickFile,

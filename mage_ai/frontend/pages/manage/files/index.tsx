@@ -60,7 +60,7 @@ function FilesPage() {
   const before = useMemo(() => (
     <Spacing ml={1} mt={1}>
       <FileBrowser
-        fetchFileTree={fetchFileTree}
+        fetchFiles={fetchFileTree}
         files={files}
         openFile={openFile}
         ref={fileTreeRef}

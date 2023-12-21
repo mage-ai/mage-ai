@@ -1,14 +1,14 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
   highlighted?: boolean;
 };
 
 export const LinkStyle = styled.div<LinkProps>`
-  padding: ${UNIT}px;
+  padding: ${UNIT * 0.5}px ${1.5 * UNIT}px;
 
   &:hover {
     cursor: pointer;

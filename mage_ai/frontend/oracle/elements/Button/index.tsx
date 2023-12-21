@@ -70,6 +70,7 @@ export type ButtonProps = {
   notClickable?: boolean;
   outline?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onMouseEnter?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   pill?: boolean;
   pointerEventsEnabled?: boolean;
@@ -189,7 +190,7 @@ const SHARED_STYLES = css<{
     border-width: 1px;
   `}
 
-  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
+  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && `
     border-radius: ${BORDER_RADIUS}px;
   `}
 

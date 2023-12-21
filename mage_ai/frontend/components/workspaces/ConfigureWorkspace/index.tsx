@@ -133,7 +133,7 @@ function ConfigureWorkspace({
       <WindowContentStyle>
         <FileBrowser
           disableContextMenu
-          fetchFileTree={fetchFileTree}
+          fetchFiles={fetchFileTree}
           files={files}
           isFileDisabled={opts?.isFileDisabled}
           openFile={opts.onFileOpen}

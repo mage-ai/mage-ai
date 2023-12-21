@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Text from '@oracle/elements/Text';
+import { File as FileIcon } from '@oracle/icons';
 import {
   KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_META,
@@ -95,13 +97,18 @@ function FileHeaderMenu({
       onClickOutside={() => setHighlightedIndex(null)}
       open
       style={{
+        height: '100%',
         position: 'relative',
       }}
     >
-      <FlexContainer>
+      <FlexContainer alignItems="center" fullHeight fullWidth>
         <div style={{ position: 'relative' }}>
-          <LinkStyle
-            highlighted={highlightedIndex === 0}
+          <Button
+            compact
+            noBackground={highlightedIndex !== 0}
+            noBorder
+            highlightOnHoverAlt
+            padding="4px 12px"
             onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
             ref={refFile}
@@ -109,7 +116,7 @@ function FileHeaderMenu({
             <Text>
               File
             </Text>
-          </LinkStyle>
+          </Button>
 
           <FlyoutMenu
             items={fileItems}
@@ -121,8 +128,12 @@ function FileHeaderMenu({
         </div>
 
         <div style={{ position: 'relative' }}>
-          <LinkStyle
-            highlighted={highlightedIndex === 1}
+          <Button
+            compact
+            noBackground={highlightedIndex !== 1}
+            noBorder
+            highlightOnHoverAlt
+            padding="4px 12px"
             onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
             ref={refRun}
@@ -130,7 +141,7 @@ function FileHeaderMenu({
             <Text>
               Edit
             </Text>
-          </LinkStyle>
+          </Button>
 
           <FlyoutMenu
             items={editItems}
@@ -139,6 +150,22 @@ function FileHeaderMenu({
             parentRef={refRun}
             uuid="FileHeaderMenu/edit"
           />
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <Button
+            beforeIcon={<FileIcon muted={!fileVersionsVisible} />}
+            compact
+            noBackground={!fileVersionsVisible}
+            noBorder
+            highlightOnHoverAlt
+            padding="4px 12px"
+            onClick={() => setFilesVersionsVisible(!fileVersionsVisible)}
+          >
+            <Text>
+              {fileVersionsVisible ? 'Hide file versions' : 'Show file versions'}
+            </Text>
+          </Button>
         </div>
 
         {children}
