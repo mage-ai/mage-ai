@@ -2037,7 +2037,7 @@ class BlockRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
             __get_pipeline_from_platform_async,
         ):
             with patch(
-                'mage_ai.orchestration.db.models.schedules.LoggerManagerFactory',
+                'mage_ai.orchestration.db.models.schedules_project_platform.LoggerManagerFactory',
                 FakeLoggerManagerFactory,
             ):
                 await block_run.logs_async()
