@@ -160,6 +160,8 @@ function Folder({
   useRootFolder,
   uuidCombined,
 }: FolderProps) {
+  const refRoot = useRef(null);
+
   const {
     children: childrenProp,
     disabled: disabledProp,
@@ -304,9 +306,12 @@ function Folder({
     refChevron.current.className = refExpandState.current ? 'expanded' : 'collapsed';
 
     if (refExpandCount.current === 0) {
-      const domNode = document.getElementById(refChildren.current.id);
-      const root = createRoot(domNode);
-      root.render(
+      if (!refRoot?.current) {
+        const domNode = document.getElementById(refChildren.current.id);
+        refRoot.current = createRoot(domNode);
+      }
+
+      refRoot?.current?.render(
         children?.length >= 1
           ? (
             <DeferredRender idleTimeout={idleTimeout ? idleTimeout : 1}>

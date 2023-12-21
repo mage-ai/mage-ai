@@ -3,6 +3,7 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 
 function PlatformGlobalHookDetailPage({ ...props }) {
   return (
+    // @ts-ignore
     <Page rootProject {...props} />
   );
 }
