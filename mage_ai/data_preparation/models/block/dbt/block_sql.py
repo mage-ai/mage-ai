@@ -65,7 +65,9 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             if file_path:
                 return file_path
 
-        file_path = self.configuration.get('file_path')
+        file_path = self.configuration.get('file_path') or ''
+        if file_path and Path(file_path).parts[0] == 'dbt':
+            file_path = os.path.join(*Path(file_path).parts[1:]) or ''
 
         return str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 
@@ -82,9 +84,15 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             if project_path:
                 return project_path
 
+        try:
+            diff = Path(self.file_path).relative_to(self.base_project_path)
+            if diff:
+                diff = Path(diff).parts[0]
+        except ValueError:
+            diff = self.file_path
+
         return str(
-            Path(self.base_project_path) /
-            self.configuration.get('file_path', '').split(os.sep)[0]
+            Path(self.base_project_path) / diff,
         )
 
     @property
@@ -187,6 +195,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         # Get upstream nodes via dbt list
         with Profiles(self.project_path, self.pipeline.variables) as profiles:
             try:
+
                 args = [
                     'list',
                     # project-dir

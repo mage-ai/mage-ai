@@ -938,7 +938,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 block_uuid = str(Path(file_path_base).with_suffix(''))
 
             extension = Path(file_path).suffix.replace('.', '')
-            configuration = dict(file_source=dict(path=file_path))
+            configuration = dict(file_path=file_path, file_source=dict(path=file_path))
             language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(extension)
 
             return self.get_block(
