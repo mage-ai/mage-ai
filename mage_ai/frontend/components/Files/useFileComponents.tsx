@@ -106,7 +106,7 @@ function useFileComponents({
 }: UseFileComponentsProps = {}) {
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [showError] = useError(null, {}, [], {
-    uuid: 'FilesPage',
+    uuid: `useFileComponents/${uuid}`,
   });
 
   const fileTreeRef = useRef(null);
@@ -304,7 +304,7 @@ function useFileComponents({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={fileTreeRef}
-      setErrors={showError}
+      showError={showError}
       setSelectedBlock={setSelectedBlock}
       uuid={uuid}
       widgets={widgets}

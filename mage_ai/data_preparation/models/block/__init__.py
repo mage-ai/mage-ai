@@ -919,16 +919,26 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         parts = get_path_parts(file_path)
 
         if parts and len(parts) >= 3:
+            # If file_path == transformers/test4.py
+            # parts ==
+            # ('/home/src/default_repo/default_platform2/project3', 'transformers', 'test4.py')
+
+            # If project platform platform activated, then parts ==
             # ('/home/src', 'default_repo', 'data_loaders/astral_violet.py')
+
             root_project_full_path, path, file_path_base = parts
 
-            # ('data_loaders', 'astral_violet.py')
-            file_parts = Path(file_path_base).parts
-            block_type = inflection.singularize(str(file_parts[0]))
-            block_uuid = str(Path(*file_parts[1:]))
+            if project_platform_activated():
+                # ('data_loaders', 'astral_violet.py')
+                file_parts = Path(file_path_base).parts
+                block_type = inflection.singularize(str(file_parts[0]))
+                block_uuid = str(Path(*file_parts[1:]).with_suffix(''))
+            else:
+                block_type = inflection.singularize(str(path))
+                block_uuid = str(Path(file_path_base).with_suffix(''))
 
-            configuration = dict(file_source=dict(path=file_path))
             extension = Path(file_path).suffix.replace('.', '')
+            configuration = dict(file_source=dict(path=file_path))
             language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(extension)
 
             return self.get_block(

@@ -58,7 +58,7 @@ type FileBrowserProps = {
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
-  setErrors?: (opts: {
+  showError?: (opts: {
     errors: any;
     response: any;
   }) => void;
@@ -90,7 +90,7 @@ function FileBrowser({
   openFile,
   openSidekickView,
   pipeline,
-  setErrors,
+  showError,
   setSelectedBlock,
   uuid,
   widgets = [],
@@ -113,10 +113,6 @@ function FileBrowser({
     selectedFile,
   ]);
 
-  const [showError] = useError(null, {}, [], {
-    uuid: 'FileBrowser',
-  });
-
   const {
     featureEnabled,
     featureUUIDs,
@@ -134,13 +130,6 @@ function FileBrowser({
             initiateDownload(token);
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -160,13 +149,6 @@ function FileBrowser({
             fetchFileTree?.();
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -186,13 +168,6 @@ function FileBrowser({
             fetchFileTree?.();
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -231,17 +206,24 @@ function FileBrowser({
             // fetchPipeline?.();
             fetchFileTree?.();
           },
-          onErrorCallback: ({
-            error: {
-              exception,
-              message,
-            },
-          }) => {
+          onErrorCallback: (response, errors) => {
+            const {
+              error: {
+                exception,
+                message,
+              },
+            } = response;
+
             if (message.includes('raise HasDownstreamDependencies')) {
               showDeleteConfirmation({
                 block: selectedBlock,
                 file: selectedFile,
                 exception,
+              });
+            } else {
+              return showError({
+                errors,
+                response,
               });
             }
           },
@@ -288,13 +270,6 @@ function FileBrowser({
             fetchPipeline?.();
           },
           onErrorCallback: (response, errors) => {
-            if (setErrors) {
-              return setErrors({
-                errors,
-                response,
-              });
-            }
-
             return showError({
               errors,
               response,
@@ -450,13 +425,13 @@ function FileBrowser({
       moveFile={opts?.moveFile}
       onCancel={hideModalNewFile}
       selectedFolder={selectedFolder}
-      setErrors={setErrors}
+      showError={showError}
     />
   ), {
   }, [
     fetchFileTree,
     selectedFolder,
-    setErrors,
+    showError,
   ], {
     background: true,
     disableClickOutside: true,
@@ -475,14 +450,14 @@ function FileBrowser({
       onCancel={hideModalNewFolder}
       projectType={opts?.projectType}
       selectedFolder={selectedFolder}
-      setErrors={setErrors}
+      showError={showError}
       showError={showError}
     />
   ), {
   }, [
     fetchFileTree,
     selectedFolder,
-    setErrors,
+    showError,
     showError,
   ], {
     background: true,
