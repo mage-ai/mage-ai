@@ -1963,6 +1963,10 @@ class PipelineRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertEqual(mock.mock_calls[0][2]['pipeline'].uuid, pipeline_run.pipeline_uuid)
 
 
+@patch(
+    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+    lambda: True,
+)
 class BlockRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
     async def test_logs_async(self):
         value = self.faker.unique.name()
@@ -2028,7 +2032,8 @@ class BlockRunProjectPlatformTests(ProjectPlatformMixin, AsyncDBTestCase):
                 return fake_logger_manager
 
         with patch(
-            'mage_ai.orchestration.db.models.schedules.get_pipeline_from_platform_async',
+            'mage_ai.orchestration.db.models.schedules_project_platform.' +
+            'get_pipeline_from_platform_async',
             __get_pipeline_from_platform_async,
         ):
             with patch(

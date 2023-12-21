@@ -57,6 +57,7 @@ from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import Base, BaseModel, classproperty
 from mage_ai.orchestration.db.models.schedules_project_platform import (
+    BlockRunProjectPlatformMixin,
     PipelineRunProjectPlatformMixin,
     PipelineScheduleProjectPlatformMixin,
 )
@@ -1377,7 +1378,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         return variables
 
 
-class BlockRun(BaseModel):
+class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
     class BlockRunStatus(str, enum.Enum):
         INITIAL = 'initial'
         QUEUED = 'queued'
@@ -1408,6 +1409,9 @@ class BlockRun(BaseModel):
         ).get_logs()
 
     async def logs_async(self):
+        if project_platform_activated():
+            return await self.logs_async_project_platform()
+
         pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
