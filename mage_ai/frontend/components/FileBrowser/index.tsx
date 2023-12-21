@@ -715,7 +715,7 @@ function FileBrowser({
   return (
     <ContainerStyle ref={ref}>
       {(setShowHiddenFiles && typeof showHiddenFiles !== 'undefined') &&
-        <Spacing mb={1} mx={2}>
+        <Spacing mx={2} my={1}>
           <FlexContainer alignItems="center" justifyContent="right">
             <ToggleSwitch
               checked={showHiddenFiles}
