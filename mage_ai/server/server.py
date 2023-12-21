@@ -11,6 +11,7 @@ from time import sleep
 from typing import Optional, Union
 
 import pytz
+from mage_ai.server.default_credential_initializer import get_default_credentials
 import tornado.ioloop
 import tornado.web
 from tornado import autoreload
@@ -484,20 +485,12 @@ async def main(
         if not legacy_owner_user and len(owner_users) == 0:
             logger.info('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
-                user = User.create(
+                owner_user = User.create(
                     roles_new=[default_owner_role],
                     username=LDAP_ADMIN_USERNAME,
                 )
             else:
-                password_salt = generate_salt()
-                user = User.create(
-                    email='admin@example.com',
-                    password_hash=create_bcrypt_hash('admin', password_salt),
-                    password_salt=password_salt,
-                    roles_new=[default_owner_role],
-                    username='admin',
-                )
-            owner_user = user
+                owner_user = get_default_credentials(default_owner_role)
         else:
             if legacy_owner_user and not legacy_owner_user.roles_new:
                 User.batch_update_user_roles()
