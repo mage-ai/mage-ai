@@ -1,5 +1,7 @@
 import * as osPath from 'path';
 import React, {
+  Dispatch,
+  SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -12,14 +14,17 @@ import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import FileType from '@interfaces/FileType';
-import FlyoutMenu, { DEFAULT_MENU_ITEM_HEIGHT } from '@oracle/components/FlyoutMenu';
+import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import NewFile from './NewFile';
 import NewFolder from './NewFolder';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PopupMenu from '@oracle/components/PopupMenu';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import UploadFiles from './UploadFiles';
 import api from '@api';
 import useProject from '@utils/models/project/useProject';
@@ -63,6 +68,8 @@ type FileBrowserProps = {
     response: any;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  setShowHiddenFiles?: Dispatch<SetStateAction<boolean>>;
+  showHiddenFiles?: boolean;
   uuid?: string;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
@@ -92,6 +99,8 @@ function FileBrowser({
   pipeline,
   showError,
   setSelectedBlock,
+  setShowHiddenFiles,
+  showHiddenFiles,
   uuid,
   widgets = [],
 }: FileBrowserProps, ref) {
@@ -705,6 +714,22 @@ function FileBrowser({
 
   return (
     <ContainerStyle ref={ref}>
+      {(setShowHiddenFiles && typeof showHiddenFiles !== 'undefined') &&
+        <Spacing mb={1} mx={2}>
+          <FlexContainer alignItems="center" justifyContent="right">
+            <ToggleSwitch
+              checked={showHiddenFiles}
+              compact
+              onCheck={() => setShowHiddenFiles(prevState => !prevState)}
+            />
+            <Spacing pl={1} />
+            <Text muted>
+              Show hidden files
+            </Text>
+          </FlexContainer>
+        </Spacing>
+      }
+
       {filesMemo}
 
       {(selectedBlock || selectedFile || selectedFolder) && menuMemo}
