@@ -15,6 +15,7 @@ class RabbitMQConfig(BaseConfig):
     queue_name: str
     username: str = 'guest'
     password: str = 'guest'
+    url_protocol: str = 'amqp'
     amqp_url_virtual_host: str = r'%2f'
 
 
@@ -29,12 +30,13 @@ class RabbitMQSink(BaseSink):
         password = self.config.password
         connection_host = self.config.connection_host
         connection_port = self.config.connection_port
+        url_protocol = self.config.url_protocol
         vt_host = self.config.amqp_url_virtual_host
 
         self._print(f'Starting to initialize producer for queue {queue_name}')
 
         try:
-            generated_url = f"amqp://{username}:{password}@" \
+            generated_url = f"{url_protocol}://{username}:{password}@" \
                             f"{connection_host}:{connection_port}/{vt_host}"
 
             self._print(f'Trying to connect on {generated_url}')
