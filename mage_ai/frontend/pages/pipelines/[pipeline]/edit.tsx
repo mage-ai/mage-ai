@@ -960,6 +960,7 @@ function PipelineDetailPage({
     fetchAutocompleteItems,
     fetchPipeline,
     onOpenFile: () => {
+      setActiveSidekickView(null);
       setAfterHidden(false);
       setNotebookVisible(false);
       setSelectedBlock(null);
