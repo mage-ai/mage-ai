@@ -31,7 +31,7 @@ type SetupSectionRowProps = {
     }[];
   };
   textInput?: InputType;
-  title: string | any;
+  title?: string | any;
   toggleSwitch?: {
     checked?: boolean;
     onCheck?: Dispatch<SetStateAction<boolean>>;
