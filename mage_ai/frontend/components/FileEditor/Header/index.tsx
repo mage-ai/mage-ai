@@ -5,6 +5,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Text from '@oracle/elements/Text';
+import { File as FileIcon } from '@oracle/icons';
 import {
   KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_META,
@@ -151,6 +152,22 @@ function FileHeaderMenu({
             parentRef={refRun}
             uuid="FileHeaderMenu/edit"
           />
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <Button
+            beforeIcon={<FileIcon muted={!fileVersionsVisible} />}
+            compact
+            noBackground={!fileVersionsVisible}
+            noBorder
+            highlightOnHoverAlt
+            padding="4px 12px"
+            onClick={() => setFilesVersionsVisible(!fileVersionsVisible)}
+          >
+            <Text>
+              {fileVersionsVisible ? 'Hide file versions' : 'Show file versions'}
+            </Text>
+          </Button>
         </div>
 
         {children}
