@@ -94,7 +94,7 @@ function useCustomDesign(opts?: CustomDesignHookOptionsType): {
     encodeURIComponent(pathname),
     selectEntriesWithValues({
       operation: operation,
-      page_path: asPath,
+      page_path: encodeURIComponent(asPath),
       page_query: query ? JSON.stringify(query || '') : null,
       page_type: pageType,
       page_uuid: pageUUID,
