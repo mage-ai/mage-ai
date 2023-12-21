@@ -246,7 +246,7 @@ class Pipeline:
                     raise PipelineZipTooLargeError(
                         f'Pipeline zip exceeds size limit {PIPELINE_MAX_FILE_SIZE/1000}Kb')
 
-                # Ignore `__MACOSX` for zips created on MACOS systems
+                # Ignore `__MACOSX` for zips created on macOS systems
                 zip_contents = [path for path in zipf.namelist() if not path.startswith('__MACOSX')]
                 # Verify if zip conts are part of a root folder
                 prefix = os.path.commonpath(zip_contents)
