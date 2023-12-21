@@ -921,6 +921,57 @@ function PipelineDetailPage({
     },
   );
 
+  const onUpdateFileSuccess = useCallback((fileContent: FileType, opts?: {
+    blockUUID: string;
+  }) => {
+    const {
+      content,
+      path: filePath,
+    } = fileContent || {};
+
+    let block;
+
+    if (opts?.blockUUID) {
+      block = blocks?.find(({ uuid }) => uuid === opts?.blockUUID);
+    } else {
+      block = getBlockFromFilePath(filePath, blocks);
+    }
+
+    if (block) {
+      const {
+        type: blockType,
+        uuid: blockUUID,
+      } = block;
+      onChangeCodeBlock(blockType, blockUUID, content);
+
+      setBlocks((prev) => {
+        const blockIndex =
+          prev?.findIndex(({ type, uuid }) => type === blockType && uuid === blockUUID);
+
+        if (blockIndex >= 0) {
+          prev[blockIndex].content = content;
+        }
+
+        return prev;
+      });
+
+      setBlocksThatNeedToRefresh(prev => ({
+        ...prev,
+        [blockType]: {
+          // @ts-ignore
+          ...prev?.[blockType],
+          [blockUUID]: Number(new Date()),
+        },
+      }));
+
+      fetchPipeline();
+    }
+  }, [
+    blocks,
+    fetchPipeline,
+    onChangeCodeBlock,
+  ]);
+
   // Files components and functions
   const {
     browser: fileBrowser,
@@ -1418,57 +1469,6 @@ function PipelineDetailPage({
     blocks,
     selectedBlockDetails,
     widgets,
-  ]);
-
-  const onUpdateFileSuccess = useCallback((fileContent: FileType, opts?: {
-    blockUUID: string;
-  }) => {
-    const {
-      content,
-      path: filePath,
-    } = fileContent || {};
-
-    let block;
-
-    if (opts?.blockUUID) {
-      block = blocks?.find(({ uuid }) => uuid === opts?.blockUUID);
-    } else {
-      block = getBlockFromFilePath(filePath, blocks);
-    }
-
-    if (block) {
-      const {
-        type: blockType,
-        uuid: blockUUID,
-      } = block;
-      onChangeCodeBlock(blockType, blockUUID, content);
-
-      setBlocks((prev) => {
-        const blockIndex =
-          prev?.findIndex(({ type, uuid }) => type === blockType && uuid === blockUUID);
-
-        if (blockIndex >= 0) {
-          prev[blockIndex].content = content;
-        }
-
-        return prev;
-      });
-
-      setBlocksThatNeedToRefresh(prev => ({
-        ...prev,
-        [blockType]: {
-          // @ts-ignore
-          ...prev?.[blockType],
-          [blockUUID]: Number(new Date()),
-        },
-      }));
-
-      fetchPipeline();
-    }
-  }, [
-    blocks,
-    fetchPipeline,
-    onChangeCodeBlock,
   ]);
 
   // Check for pipeline or project config issues
