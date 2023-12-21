@@ -44,7 +44,7 @@ RUN \
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
 RUN \
-  pip3 install --no-cache-dir git+https://github.com/mage-ai/mage-ai.git@td--nested_projects_and_custom_code_paths#egg="mage-ai[all]" && \
+  pip3 install --no-cache-dir git+https://github.com/mage-ai/mage-ai.git@alpha#egg="mage-ai[all]" && \
   rm /tmp/constants.py
 
 ## Startup Script
