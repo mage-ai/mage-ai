@@ -1295,7 +1295,7 @@ class Pipeline:
         return file_path
 
     @classmethod
-    def __update_pipeline_yaml(self, tmp_dir, overwrite) -> tuple[List[tuple[str, str]], str]:
+    def __update_pipeline_yaml(self, tmp_dir, overwrite):
         """
         Updates the pipeline config yaml during the import process.
         Modifies pipeline and block names in case of name conflict.
