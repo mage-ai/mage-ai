@@ -71,7 +71,7 @@ class SyncOperationTests(BaseApiTestCase):
                 branch='main',
                 auth_type='https',
                 username='username',
-                email='admin@admin.com',
+                email='admin@example.com',
                 access_token='abc123',
                 user_git_settings=dict(
                     username='another_username',

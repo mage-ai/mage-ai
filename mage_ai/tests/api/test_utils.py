@@ -43,7 +43,7 @@ class UtilsTest(DBTestCase):
     def test_get_user_access_for_user_with_no_permissions(self):
         password_salt = generate_salt()
         user = User.create(
-            email='no_access@admin.com',
+            email='no_access@example.com',
             password_hash=create_bcrypt_hash('admin', password_salt),
             password_salt=password_salt,
             username='no_access',
@@ -66,7 +66,7 @@ class UtilsTest(DBTestCase):
     def test_get_user_access_for_global_owner(self):
         password_salt = generate_salt()
         user = User.create(
-            email='admin@admin.com',
+            email='admin@example.com',
             password_hash=create_bcrypt_hash('admin', password_salt),
             password_salt=password_salt,
             roles_new=[Role.query.filter(Role.name == 'Owner').first()],
