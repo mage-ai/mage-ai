@@ -81,12 +81,13 @@ LDAP_DEFAULT_ACCESS = os.getenv('LDAP_DEFAULT_ACCESS', None)
 LDAP_GROUP_FIELD = os.getenv('LDAP_GROUP_FIELD', 'memberOf')
 LDAP_ROLES_MAPPING = os.getenv('LDAP_ROLES_MAPPING', None)
 
-DEFAULT_ADMIN_EMAIL = os.getenv('DEFAULT_ADMIN_EMAIL', 'admin@example.com')
-try:
-    DEFAULT_ADMIN_PASSWORD = os.getenv('DEFAULT_ADMIN_PASSWORD', None)
-except ValueError:
-    print('A default passowrd value is expected.')
-    exit(1)
+if REQUIRE_USER_AUTHENTICATION:
+    DEFAULT_ADMIN_EMAIL = os.getenv('DEFAULT_ADMIN_EMAIL', 'admin@example.com')
+    try:
+        DEFAULT_ADMIN_PASSWORD = os.getenv('DEFAULT_ADMIN_PASSWORD', None)
+    except ValueError:
+        print('A default passowrd value is expected.')
+        exit(1)
 
 ACTIVE_DIRECTORY_DIRECTORY_ID = os.getenv('ACTIVE_DIRECTORY_DIRECTORY_ID', None)
 
