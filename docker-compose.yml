@@ -80,6 +80,7 @@ x-app_settings: &app_settings
     - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
     - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
     - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
+    - ./mage_ai/server/frontend_dist:/home/src/mage_ai/server/frontend_dist
   working_dir: /home/src/mage_ai/frontend
 services:
   server:
