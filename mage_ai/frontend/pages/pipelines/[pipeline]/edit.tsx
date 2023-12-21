@@ -1006,11 +1006,13 @@ function PipelineDetailPage({
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
-    onOpenFile: () => {
-      setActiveSidekickView(null);
-      setAfterHidden(false);
-      setNotebookVisible(false);
-      setSelectedBlock(null);
+    onOpenFile: (filePath: string, isFolder: boolean) => {
+      if (!isFolder) {
+        setActiveSidekickView(ViewKeyEnum.FILES);
+        setAfterHidden(false);
+        setNotebookVisible(false);
+        setSelectedBlock(null);
+      }
     },
     onSelectFile: () => {
       setSelectedBlock(null);
