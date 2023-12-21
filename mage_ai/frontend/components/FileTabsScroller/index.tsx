@@ -2,10 +2,15 @@ import { useEffect, useState, useRef } from 'react';
 
 import { ScrollerStyle } from './index.style';
 
+type FileTabsScrollerProps = {
+  children?: any;
+  widthOffset?: number;
+};
+
 function FileTabsScroller({
   children,
   widthOffset,
-}) {
+}: FileTabsScrollerProps) {
   const refScroll = useRef(null);
   const refTabs = useRef(null);
 
@@ -22,7 +27,7 @@ function FileTabsScroller({
   }, []);
 
   return (
-    <ScrollerStyle ref={refScroll} widthOffset={widthOffset}>
+    <ScrollerStyle ref={refScroll}>
       <div
         ref={refTabs}
         style={{

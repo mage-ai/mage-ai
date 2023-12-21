@@ -368,11 +368,10 @@ function FileHeaderMenu({
         <div style={{ position: 'relative' }}>
           <Button
             compact
-            noBackground
+            noBackground={highlightedIndex !== 0}
             noBorder
             highlightOnHoverAlt
             padding="4px 12px"
-            highlighted={highlightedIndex === 0}
             onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
             ref={refFile}
@@ -394,11 +393,10 @@ function FileHeaderMenu({
         <div style={{ position: 'relative' }}>
           <Button
             compact
-            noBackground
+            noBackground={highlightedIndex !== 2}
             noBorder
             highlightOnHoverAlt
             padding="4px 12px"
-            highlighted={highlightedIndex === 2}
             onClick={() => setHighlightedIndex(val => val === 2 ? null : 2)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 2 : null)}
             ref={refEdit}
@@ -420,11 +418,10 @@ function FileHeaderMenu({
         <div style={{ position: 'relative' }}>
           <Button
             compact
-            noBackground
+            noBackground={highlightedIndex !== 1}
             noBorder
             highlightOnHoverAlt
             padding="4px 12px"
-            highlighted={highlightedIndex === 1}
             onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
             ref={refRun}
@@ -449,11 +446,10 @@ function FileHeaderMenu({
           <div style={{ position: 'relative' }}>
             <Button
               compact
-              noBackground
+              noBackground={highlightedIndex !== 3}
               noBorder
               highlightOnHoverAlt
               padding="4px 12px"
-              highlighted={highlightedIndex === 3}
               onClick={() => setHighlightedIndex(val => val === 3 ? null : 3)}
               onMouseEnter={() => setHighlightedIndex(val => val !== null ? 3 : null)}
               ref={refView}
@@ -477,8 +473,10 @@ function FileHeaderMenu({
           <div style={{ position: 'relative' }}>
             <Button
               compact
-              small
-              highlighted={highlightedIndex === INDEX_COMPUTE}
+              noBackground={highlightedIndex !== INDEX_COMPUTE}
+              noBorder
+              highlightOnHoverAlt
+              padding="4px 12px"
               onClick={() => setHighlightedIndex(val => val === INDEX_COMPUTE ? null : INDEX_COMPUTE)}
               onMouseEnter={() => setHighlightedIndex(val => val !== null ? INDEX_COMPUTE : null)}
               ref={refCompute}

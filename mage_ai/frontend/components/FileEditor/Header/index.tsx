@@ -105,11 +105,10 @@ function FileHeaderMenu({
         <div style={{ position: 'relative' }}>
           <Button
             compact
-            noBackground
+            noBackground={highlightedIndex !== 0}
             noBorder
             highlightOnHoverAlt
             padding="4px 12px"
-            highlighted={highlightedIndex === 0}
             onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
             ref={refFile}
@@ -131,11 +130,10 @@ function FileHeaderMenu({
         <div style={{ position: 'relative' }}>
           <Button
             compact
-            noBackground
+            noBackground={highlightedIndex !== 1}
             noBorder
             highlightOnHoverAlt
             padding="4px 12px"
-            highlighted={highlightedIndex === 1}
             onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
             ref={refRun}

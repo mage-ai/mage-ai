@@ -2,7 +2,10 @@ import styled from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import FileType, { FOLDER_NAME_CHARTS } from '@interfaces/FileType';
+import FileType, {
+  FOLDER_NAME_CHARTS,
+  SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX,
+} from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import Text from '@oracle/elements/Text';
 import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';

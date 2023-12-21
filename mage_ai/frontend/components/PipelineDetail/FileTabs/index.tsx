@@ -10,7 +10,10 @@ import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 
 export type TabType = {
-  onClick: () => void;
+  label?: () => string;
+  onClick?: (opts?: {
+    onClickTab?: (filePath: string) => void;
+  }) => void;
   uuid: string;
 };
 

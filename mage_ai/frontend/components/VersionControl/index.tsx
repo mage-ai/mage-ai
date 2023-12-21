@@ -213,7 +213,7 @@ function VersionControl() {
         <FileBrowser
           allowEmptyFolders
           disableContextMenu
-          fetchFileTree={fetchBranch}
+          fetchFiles={fetchBranch}
           files={files}
           isFileDisabled={() => false}
           onClickFile={(path: string) => {

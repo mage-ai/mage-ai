@@ -3,6 +3,7 @@ import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
 
 import ApiReloader from '@components/ApiReloader';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Controller from '@components/FileEditor/Controller';
 import Dashboard from '@components/Dashboard';
 import FileBrowser from '@components/FileBrowser';
@@ -10,6 +11,7 @@ import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
 import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
+import PipelineType from '@interfaces/PipelineType';
 import api from '@api';
 import {
   HeaderStyle,
@@ -21,6 +23,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_R,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   addOpenFilePath as addOpenFilePathLocalStorage,
   getOpenFilePaths,
@@ -32,6 +35,47 @@ import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+
+type UseFileComponentsProps = {
+  addNewBlock?: (
+    b: BlockRequestPayloadType,
+    cb: (block: BlockType) => void,
+    opts?: {
+      disableFetchingFiles?: boolean;
+    },
+  ) => void;
+  blocks?: BlockType[];
+  deleteWidget?: (value: BlockType) => void;
+  fetchAutocompleteItems?: () => void;
+  fetchPipeline?: () => void;
+  fetchVariables?: () => void;
+  onOpenFile?: (filePath: string, isFolder: boolean) => void;
+  onSelectBlockFile?: (
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+  ) => void;
+  onSelectFile?: (filePath: string) => void;
+  onUpdateFileSuccess?: (fileContent: FileType, opts?: {
+    blockUUID: string;
+  }) => void;
+  openSidekickView?: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+    opts?: {
+      addon?: string;
+      blockUUID: string;
+      // http://localhost:3000/pipelines/delicate_field/edit?addon=conditionals&sideview=power_ups&extension=great_expectations
+      extension?: string;
+    },
+  ) => void;
+  pipeline?: PipelineType;
+  selectedFilePath?: string;
+  sendTerminalMessage?: (message: string, keep?: boolean) => void;
+  setDisableShortcuts?: (disableShortcuts: boolean) => void;
+  setSelectedBlock?: (value: BlockType) => void;
+  widgets?: BlockType[];
+};
 
 function useFileComponents({
   addNewBlock,
@@ -50,9 +94,8 @@ function useFileComponents({
   sendTerminalMessage,
   setDisableShortcuts,
   setSelectedBlock,
-  tabsBefore,
   widgets,
-} = {}) {
+}: UseFileComponentsProps = {}) {
   const [, setApiReloads] = useGlobalState('apiReloads');
   const [showError] = useError(null, {}, [], {
     uuid: 'FilesPage',
@@ -354,7 +397,6 @@ function useFileComponents({
         return filename;
       }}
       selectedFilePath={selectedFilePath}
-      tabsBefore={tabsBefore}
     />
   ), [
     filesTouched,
@@ -363,7 +405,6 @@ function useFileComponents({
     openFilenameMapping,
     removeOpenFilePath,
     selectedFilePath,
-    tabsBefore,
   ]);
 
   const fileVersionsMemo = useMemo(() => (

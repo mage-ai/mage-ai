@@ -33,7 +33,7 @@ function FilesPageComponent() {
 
   useEffect(() => {
     setTimeout(() => setHeaderOffset(refHeader?.current?.getBoundingClientRect()?.height || 0), 1);
-  }, []);
+  }, [filePaths]);
 
   return (
     <Dashboard
@@ -42,32 +42,29 @@ function FilesPageComponent() {
       before={browser}
       contained
       headerOffset={headerOffset + HEADER_HEIGHT}
-      mainContainerHeader={filePaths?.length >= 1
-        ? ({ widthOffset }) => {
-          return (
-            <div
-              ref={refHeader}
-              style={{
-                position: 'relative',
-                zIndex: 3,
-              }}
-            >
-              <Spacing p={1}>
-                <FlexContainer alignItems="center">
-                  {menu}
-                </FlexContainer>
-              </Spacing>
+      mainContainerHeader={({ widthOffset }) => {
+        return (
+          <div
+            ref={refHeader}
+            style={{
+              position: 'relative',
+              zIndex: 3,
+            }}
+          >
+            <Spacing p={1}>
+              <FlexContainer alignItems="center">
+                {menu}
+              </FlexContainer>
+            </Spacing>
 
-              <Divider light />
+            <Divider light />
 
-              <FileTabsScroller widthOffset={widthOffset}>
-                {tabs}
-              </FileTabsScroller>
-            </div>
-          );
-        }
-        : null
-      }
+            <FileTabsScroller widthOffset={widthOffset}>
+              {tabs}
+            </FileTabsScroller>
+          </div>
+        );
+      }}
       title="Files"
       uuid="Files/index"
     >

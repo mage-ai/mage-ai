@@ -27,7 +27,7 @@ export type FileTabProps = {
 };
 
 type FileTabPropsInternal = {
-  filePath: string;
+  filePath?: string;
   isLast?: boolean;
   selected?: boolean;
   themeContext: any;

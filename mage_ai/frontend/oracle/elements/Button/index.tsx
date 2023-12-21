@@ -70,6 +70,7 @@ export type ButtonProps = {
   notClickable?: boolean;
   outline?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onMouseEnter?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   pill?: boolean;
   pointerEventsEnabled?: boolean;

@@ -34,6 +34,22 @@ import {
 } from '../utils';
 import { singularize } from '@utils/string';
 
+type UseFileIconProps = {
+  allowEmptyFolders?: boolean;
+  children?: any;
+  disabled?: boolean;
+  file?: FileType;
+  filePath?: string;
+  isInPipelinesFolder?: boolean;
+  isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
+  isNotFolder?: boolean;
+  level?: number;
+  name?: string;
+  theme?: any;
+  useRootFolder?: boolean;
+  uuid?: string;
+};
+
 export default function useFileIcon({
   allowEmptyFolders,
   children,
@@ -48,7 +64,7 @@ export default function useFileIcon({
   theme,
   useRootFolder,
   uuid,
-}) {
+}: UseFileIconProps) {
   const filePathToUse: string = useMemo(() => filePath
     ? filePath
     : (useRootFolder
