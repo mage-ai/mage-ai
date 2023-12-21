@@ -54,7 +54,6 @@ type UseFileComponentsProps = {
   fetchAutocompleteItems?: () => void;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
-  showHiddenFilesToggle?: boolean;
   onOpenFile?: (filePath: string, isFolder: boolean) => void;
   onSelectBlockFile?: (
     blockUUID: string,
@@ -83,6 +82,7 @@ type UseFileComponentsProps = {
   sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setSelectedBlock?: (value: BlockType) => void;
+  showHiddenFilesSetting?: boolean;
   uuid?: string;
   widgets?: BlockType[];
 };
@@ -95,7 +95,6 @@ function useFileComponents({
   fetchAutocompleteItems,
   fetchPipeline,
   fetchVariables,
-  showHiddenFilesToggle,
   onOpenFile,
   onSelectBlockFile,
   onSelectFile,
@@ -107,6 +106,7 @@ function useFileComponents({
   sendTerminalMessage,
   setDisableShortcuts,
   setSelectedBlock,
+  showHiddenFilesSetting,
   uuid,
   widgets,
 }: UseFileComponentsProps = {}) {
@@ -215,7 +215,7 @@ function useFileComponents({
   }, [showHiddenFiles]);
 
   const { data: filesData, mutate: fetchFiles } = api.files.list(
-    (showHiddenFilesToggle && showHiddenFiles)
+    (showHiddenFilesSetting && showHiddenFiles)
       ? {
         ...FILES_QUERY_INCLUDE_HIDDEN_FILES,
         ...query,
@@ -319,7 +319,7 @@ function useFileComponents({
       fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
       files={files}
-      showHiddenFilesToggle={showHiddenFilesToggle}
+      showHiddenFilesSetting={showHiddenFilesSetting}
       onClickFile={(path: string) => openFile(path)}
       onClickFolder={(path: string) => openFile(path, true)}
       onSelectBlockFile={onSelectBlockFile}
@@ -343,7 +343,7 @@ function useFileComponents({
     fetchPipeline,
     fileTreeRef,
     files,
-    showHiddenFilesToggle,
+    showHiddenFilesSetting,
     onSelectBlockFile,
     openFile,
     openSidekickView,

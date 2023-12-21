@@ -62,7 +62,6 @@ type FileBrowserProps = {
   fetchFiles?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
-  showHiddenFilesToggle?: boolean;
   pipeline?: PipelineType;
   showError?: (opts: {
     errors: any;
@@ -70,6 +69,7 @@ type FileBrowserProps = {
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
   setShowHiddenFiles?: Dispatch<SetStateAction<boolean>>;
+  showHiddenFilesSetting?: boolean;
   showHiddenFiles?: boolean;
   uuid?: string;
   widgets?: BlockType[];
@@ -92,7 +92,6 @@ function FileBrowser({
   fetchFiles: fetchFileTree,
   fetchPipeline,
   files,
-  showHiddenFilesToggle,
   onClickFile,
   onClickFolder,
   onSelectBlockFile,
@@ -103,6 +102,7 @@ function FileBrowser({
   setSelectedBlock,
   setShowHiddenFiles,
   showHiddenFiles,
+  showHiddenFilesSetting,
   uuid,
   widgets = [],
 }: FileBrowserProps, ref) {
@@ -716,7 +716,7 @@ function FileBrowser({
 
   return (
     <ContainerStyle ref={ref}>
-      {(showHiddenFilesToggle && setShowHiddenFiles && typeof showHiddenFiles !== 'undefined') &&
+      {(showHiddenFilesSetting && setShowHiddenFiles && typeof showHiddenFiles !== 'undefined') &&
         <Spacing mx={2} my={1}>
           <FlexContainer alignItems="center" justifyContent="right">
             <ToggleSwitch
