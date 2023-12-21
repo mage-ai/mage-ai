@@ -167,6 +167,14 @@ function PipelineDetailPage({
 }: PipelineDetailPageProps) {
   const mainContainerFooterRef = useRef(null);
   const timeoutRef = useRef(null);
+
+  const {
+    lastMessage: lastTerminalMessage,
+    sendMessage: sendTerminalMessage,
+  } = useWebSocket(getWebSocket('terminal'), {
+    shouldReconnect: () => true,
+  });
+
   const {
     featureEnabled,
     featureUUIDs,
@@ -960,6 +968,11 @@ function PipelineDetailPage({
     selectedFilePath: pipelineUUID,
     setSelectedBlock,
     widgets,
+
+    fetchVariables,
+    onUpdateFileSuccess,
+    sendTerminalMessage,
+    setDisableShortcuts,
   });
 
   const [createPipeline] = useMutation(
@@ -2565,13 +2578,6 @@ function PipelineDetailPage({
     runBlockOrig,
     savePipelineContent,
   ]);
-
-  const {
-    lastMessage: lastTerminalMessage,
-    sendMessage: sendTerminalMessage,
-  } = useWebSocket(getWebSocket('terminal'), {
-    shouldReconnect: () => true,
-  });
 
   const [showBrowseTemplates, hideBrowseTemplates] = useModal(({
     addNew,

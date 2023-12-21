@@ -39,12 +39,16 @@ function useFileComponents({
   deleteWidget,
   fetchAutocompleteItems,
   fetchPipeline,
+  fetchVariables,
   onOpenFile,
   onSelectBlockFile,
   onSelectFile,
+  onUpdateFileSuccess,
   openSidekickView,
   pipeline,
   selectedFilePath: selectedFilePathDefault,
+  sendTerminalMessage,
+  setDisableShortcuts,
   setSelectedBlock,
   tabsBefore,
   widgets,
@@ -272,20 +276,38 @@ function useFileComponents({
 
   const controller = useMemo(() => (
     <Controller
+      addNewBlock={addNewBlock}
       disableRefreshWarning
+      fetchPipeline={fetchPipeline}
+      fetchVariables={fetchVariables}
+      onUpdateFileSuccess={onUpdateFileSuccess}
       openFilePaths={openFilePaths}
+      openSidekickView={openSidekickView}
+      pipeline={pipeline}
       saveFile={saveFile}
       selectedFilePath={selectedFilePath}
+      sendTerminalMessage={sendTerminalMessage}
       setContentByFilePath={setContentByFilePath}
+      setDisableShortcuts={setDisableShortcuts}
       setErrors={showError}
       setFilesTouched={setFilesTouched}
+      setSelectedBlock={setSelectedBlock}
     />
   ), [
+    addNewBlock,
+    fetchPipeline,
+    fetchVariables,
+    onUpdateFileSuccess,
     openFilePaths,
+    openSidekickView,
+    pipeline,
     saveFile,
     selectedFilePath,
+    sendTerminalMessage,
     setContentByFilePath,
+    setDisableShortcuts,
     setFilesTouched,
+    setSelectedBlock,
     showError,
   ]);
 

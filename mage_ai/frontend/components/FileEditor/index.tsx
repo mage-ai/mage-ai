@@ -65,7 +65,7 @@ type FileEditorProps = {
   sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
-  setFilesTouched: (data: {
+  setFilesTouched?: (data: {
     [path: string]: boolean;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
@@ -184,7 +184,7 @@ function FileEditor({
       }
     });
     // @ts-ignore
-    setFilesTouched((prev: {
+    setFilesTouched?.((prev: {
       [path: string]: boolean;
     }) => ({
       ...prev,
@@ -219,13 +219,21 @@ function FileEditor({
           // onDidChangeCursorPosition={onDidChangeCursorPosition}
           onChange={(value: string) => {
             setContent(value);
-            // @ts-ignore
-            setFilesTouched((prev: {
-              [path: string]: boolean;
-            }) => ({
-              ...prev,
-              [file?.path]: true,
-            }));
+            if (setFilesTouched) {
+              // @ts-ignore
+              setFilesTouched((prev: {
+                [path: string]: boolean;
+              }) => {
+                if (prev?.[file?.path]) {
+                  return prev;
+                }
+
+                return {
+                  ...prev,
+                  [file?.path]: true,
+                };
+              });
+            }
             setTouched(true);
           }}
           onSave={(value: string) => {
