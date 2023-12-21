@@ -704,6 +704,9 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
     @property
     def pipeline(self) -> 'Pipeline':
+        if project_platform_activated():
+            return self.pipeline_project_platform
+
         return Pipeline.get(self.pipeline_uuid)
 
     @property

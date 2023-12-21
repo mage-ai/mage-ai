@@ -84,6 +84,10 @@ class PipelineRunAPIEndpointTest(BaseAPIEndpointTest):
 
 
 @patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True)
+@patch(
+    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+    lambda: True,
+)
 class PipelineRunProjectPlatformTests(ProjectPlatformMixin, BaseAPIEndpointTest):
     async def test_collection_project_platform_activated(self):
         pipelines = []
