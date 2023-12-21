@@ -28,6 +28,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
         emr_config=project.emr_config,
         features=project.features,
         features_defined=project.features_defined,
+        features_override=project.features_override,
         latest_version=await project.latest_version(),
         name=project.name,
         project_uuid=project.project_uuid,
@@ -139,7 +140,9 @@ class ProjectResource(GenericResource):
         if payload.get('activate_project'):
             activate_project(payload.get('activate_project'))
 
-        repo_config = get_repo_config()
+        root_project = payload.get('root_project')
+
+        repo_config = get_repo_config(root_project=True if root_project else False)
 
         data = {}
         should_log_project = self.model.get('help_improve_mage') or False

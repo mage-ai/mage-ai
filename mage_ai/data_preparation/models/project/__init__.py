@@ -9,6 +9,7 @@ from mage_ai.data_preparation.repo_manager import get_cluster_type, get_repo_con
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import (
     active_project_settings,
+    platform_settings,
     project_platform_activated,
     project_platform_settings,
 )
@@ -37,6 +38,14 @@ class Project():
         )
         self.version = VERSION
         self._features = None
+
+        self.__repo_config_root_project = None
+
+        if project_platform_activated():
+            self.__repo_config_root_project = get_repo_config(
+                repo_path=get_repo_path(root_project=True),
+                root_project=True,
+            )
 
     @property
     def workspace_config_defaults(self) -> Dict:
@@ -92,6 +101,11 @@ class Project():
         data = {}
         features = self.repo_config.features if self.repo_config else {}
 
+        if project_platform_activated() and self.__repo_config_root_project:
+            settings = platform_settings()
+            if settings.get('features') and (settings.get('features') or {}).get('override'):
+                features.update(self.features_override)
+
         for uuid in FeatureUUID:
             key = uuid.value
             if FeatureUUID.PROJECT_PLATFORM == uuid:
@@ -101,6 +115,15 @@ class Project():
                     data[key] = features.get(key)
 
         return data
+
+    @property
+    def features_override(self) -> Dict:
+        if project_platform_activated() and self.__repo_config_root_project:
+            settings = platform_settings()
+            if settings.get('features') and (settings.get('features') or {}).get('override'):
+                return self.__repo_config_root_project.features or {}
+
+        return {}
 
     @property
     def emr_config(self) -> Dict:
@@ -145,7 +168,7 @@ class Project():
         return project_platform_settings(mage_projects_only=True)
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
-        feature_enabled = self.repo_config.features.get(feature_name.value, False)
+        feature_enabled = self.features.get(feature_name.value, False)
 
         if is_debug():
             print(f'[Project.is_feature_enabled]: {feature_name} | {feature_enabled}')

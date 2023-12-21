@@ -5,6 +5,8 @@ class ProjectPresenter(BasePresenter):
     default_attributes = [
         'emr_config',
         'features',
+        'features_defined',
+        'features_override',
         'help_improve_mage',
         'latest_version',
         'name',

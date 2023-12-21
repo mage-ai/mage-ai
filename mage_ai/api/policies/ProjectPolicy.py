@@ -69,6 +69,7 @@ ProjectPolicy.allow_write([
     'openai_api_key',
     'pipelines',
     'remote_variables_dir',
+    'root_project',
     'spark_config',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

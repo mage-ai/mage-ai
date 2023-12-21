@@ -88,6 +88,12 @@ export default interface ProjectType {
   features?: {
     [key: string]: boolean;
   };
+  features_defined?: {
+    [key: string]: boolean;
+  };
+  features_override?: {
+    [key: string]: boolean;
+  };
   help_improve_mage?: boolean;
   latest_version?: string;
   name?: string;

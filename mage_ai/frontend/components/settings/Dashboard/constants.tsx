@@ -1,20 +1,25 @@
 import UserType, { RoleValueEnum } from '@interfaces/UserType';
 import { REQUIRE_USER_AUTHENTICATION, REQUIRE_USER_PERMISSIONS } from '@utils/session';
 import {
+  BlocksSeparated,
   Locked,
   Settings,
+  SettingsWithKnobs,
   Sun,
   VisibleEye,
   WorkspacesIcon,
   WorkspacesUsersIcon,
 } from '@oracle/icons';
 
-export const SECTION_UUID_WORKSPACE = 'Workspace';
-export const SECTION_ITEM_UUID_PREFERENCES = 'Preferences';
 export const SECTION_ITEM_UUID_GIT_SETTINGS = 'Git settings';
+export const SECTION_ITEM_UUID_PREFERENCES = 'Preferences';
+export const SECTION_ITEM_UUID_PLATFORM_PREFERENCES = 'Preferences';
+export const SECTION_ITEM_UUID_PLATFORM_SETTINGS = 'Settings';
 export const SECTION_ITEM_UUID_USERS = 'Users';
+export const SECTION_UUID_WORKSPACE = 'Workspace';
 
 export enum SectionEnum {
+  PROJECT_PLATFORM = 'Platform',
   WORKSPACE = 'Workspace',
   USER_MANAGEMENT = 'User management',
 }
@@ -28,7 +33,15 @@ export enum SectionItemEnum {
 export const SECTION_UUID_ACCOUNT = 'Account';
 export const SECTION_ITEM_UUID_PROFILE = 'Profile';
 
-export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
+export const SECTIONS = ({ owner, roles, project_access }: UserType, opts?: {
+  projectPlatformActivated?: boolean;
+}) => {
+  const {
+    projectPlatformActivated,
+  } = opts || {
+    projectPlatformActivated: false,
+  };
+
   const workspaceItems = [
     {
       Icon: WorkspacesIcon,
@@ -90,6 +103,28 @@ export const SECTIONS = ({ owner, roles, project_access }: UserType) => {
     arr.push({
       items,
       uuid: SectionEnum.USER_MANAGEMENT,
+    });
+  }
+
+  if (projectPlatformActivated) {
+    arr.push({
+      items: [
+        {
+          Icon: BlocksSeparated,
+          linkProps: {
+            href: '/settings/platform/preferences',
+          },
+          uuid: SECTION_ITEM_UUID_PLATFORM_PREFERENCES,
+        },
+        {
+          Icon: SettingsWithKnobs,
+          linkProps: {
+            href: '/settings/platform/settings',
+          },
+          uuid: SECTION_ITEM_UUID_PLATFORM_SETTINGS,
+        },
+      ],
+      uuid: SectionEnum.PROJECT_PLATFORM,
     });
   }
 

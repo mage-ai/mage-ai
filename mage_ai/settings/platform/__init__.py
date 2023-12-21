@@ -202,7 +202,10 @@ def active_project_settings(
 
 
 def project_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
-    mapping = (__combined_platform_settings(repo_path=repo_path) or {}).get('projects')
+    mapping = (__combined_platform_settings(
+        repo_path=repo_path,
+        mage_projects_only=mage_projects_only,
+    ) or {}).get('projects')
 
     if mage_projects_only:
         select_keys = []
@@ -216,9 +219,14 @@ def project_platform_settings(repo_path: str = None, mage_projects_only: bool = 
     return mapping
 
 
-def __combined_platform_settings(repo_path: str = None) -> Dict:
-    child = (platform_settings() or {}).copy()
-    parent = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+def __combined_platform_settings(repo_path: str = None, mage_projects_only: bool = False) -> Dict:
+    parent = (platform_settings() or {}).copy()
+    child = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+
+    if mage_projects_only:
+        keys = (parent.get('projects') or {}).keys()
+        child['projects'] = extract(child.get('projects') or {}, keys)
+
     combine_into(child, parent)
     return parent
 
@@ -251,7 +259,7 @@ def __get_projects_of_any_type() -> Dict:
     repo_path = base_repo_path()
     for path in os.listdir(repo_path):
         project_path = os.path.join(repo_path, path)
-        if not os.path.isdir(project_path):
+        if not os.path.isdir(project_path) or path.startswith('.'):
             continue
 
         is_project = False
