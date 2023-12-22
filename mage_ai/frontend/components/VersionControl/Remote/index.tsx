@@ -291,7 +291,7 @@ function Remote({
                 removeRemote({
                   git_custom_branch: {
                     action_type: 'remove_remote',
-                    remote: {
+                    action_payload: {
                       name,
                     },
                   },
@@ -538,7 +538,7 @@ function Remote({
                     updateGitBranch({
                       git_custom_branch: {
                         action_type: 'add_remote',
-                        remote: {
+                        action_payload: {
                           name: remoteNameNew,
                           url: remoteURLNew,
                         },
@@ -666,11 +666,11 @@ function Remote({
                       // @ts-ignore
                       actionGitBranch({
                         git_custom_branch: {
-                          action_type: actionName,
-                          [actionName]: {
+                          action_payload: {
                             branch: actionBranchName,
                             remote: actionRemoteName,
                           },
+                          action_type: actionName,
                         },
                       });
                     }

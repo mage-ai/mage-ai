@@ -1,10 +1,6 @@
 from abc import ABC, abstractmethod
 
-from mage_ai.authentication.oauth.constants import (
-    OAUTH_PROVIDER_BITBUCKET,
-    OAUTH_PROVIDER_GHE,
-    OAUTH_PROVIDER_GITHUB,
-)
+from mage_ai.authentication.oauth.constants import ProviderName
 
 
 class Client(ABC):
@@ -13,15 +9,15 @@ class Client(ABC):
 
     @classmethod
     def get_client_for_provider(cls, provider: str):
-        if provider == OAUTH_PROVIDER_GITHUB:
+        if not provider or provider == ProviderName.GITHUB:
             from mage_ai.data_preparation.git.clients.github import GitHubClient
 
             return GitHubClient
-        elif provider == OAUTH_PROVIDER_BITBUCKET:
+        elif provider == ProviderName.BITBUCKET:
             from mage_ai.data_preparation.git.clients.bitbucket import BitbucketClient
 
             return BitbucketClient
-        elif provider == OAUTH_PROVIDER_GHE:
+        elif provider == ProviderName.GHE:
             from mage_ai.data_preparation.git.clients.ghe import GHEClient
 
             return GHEClient

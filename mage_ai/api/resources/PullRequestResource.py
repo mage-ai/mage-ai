@@ -2,7 +2,7 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git import api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
 from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
@@ -36,7 +36,7 @@ class PullRequestResource(GenericResource):
         if repository:
             repository = repository[0]
 
-            provider = OAUTH_PROVIDER_GITHUB
+            provider = ProviderName.GITHUB
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 

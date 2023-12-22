@@ -126,7 +126,9 @@ function Authentication({
       },
       {},
     ) || {};
-    mapping[OauthProviderEnum.GITHUB] = oauthGitHub;
+    if (oauthGitHub) {
+      mapping[OauthProviderEnum.GITHUB] = oauthGitHub;
+    }
     return mapping;
   }, [
     dataOauths,

@@ -3,6 +3,7 @@ from mage_ai.api.presenters.GitBranchPresenter import GitBranchPresenter
 
 class GitCustomBranchPresenter(GitBranchPresenter):
     default_attributes = [
+        'action_payload',
         'action_type',
         'error',
         'files',
