@@ -7,8 +7,15 @@ from mage_ai.data_preparation.sync import AuthType
 
 class GitCustomBranchResource(GitBranchResource):
     @classmethod
-    def get_git_manager(self, user, setup_repo: bool = False) -> Git:
-        return Git.get_manager(auth_type=AuthType.OAUTH, setup_repo=False, user=user)
+    def get_git_manager(
+        self, user, setup_repo: bool = False, config_overwrite: Dict = None
+    ) -> Git:
+        return Git.get_manager(
+            auth_type=AuthType.OAUTH,
+            config_overwrite=config_overwrite,
+            setup_repo=setup_repo,
+            user=user,
+        )
 
     @classmethod
     async def member(self, pk, user, **kwargs):

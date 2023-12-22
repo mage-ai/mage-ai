@@ -52,3 +52,7 @@ def remove_extension_from_filename(filename: str) -> str:
 
 def singularize(word: str) -> str:
     return inflection.singularize(word)
+
+
+def capitalize_remove_underscore_lower(word: str) -> str:
+    return word.replace('_', ' ').capitalize().lower()

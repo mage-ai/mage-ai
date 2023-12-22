@@ -9,11 +9,7 @@ from urllib.parse import urlsplit, urlunsplit
 from git.remote import RemoteProgress
 from git.repo.base import Repo
 
-from mage_ai.authentication.oauth.constants import (
-    OAUTH_PROVIDER_GHE,
-    OAUTH_PROVIDER_GITHUB,
-    get_ghe_hostname,
-)
+from mage_ai.authentication.oauth.constants import ProviderName, get_ghe_hostname
 from mage_ai.authentication.oauth.utils import access_tokens_for_client
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
 from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
@@ -29,7 +25,7 @@ def get_oauth_client_id(provider: str) -> str:
 
 def get_access_token_for_user(user: User, provider: str = None) -> Oauth2AccessToken:
     if not provider:
-        provider = OAUTH_PROVIDER_GHE if get_ghe_hostname() else OAUTH_PROVIDER_GITHUB
+        provider = ProviderName.GHE if get_ghe_hostname() else ProviderName.GITHUB
     access_tokens = access_tokens_for_client(get_oauth_client_id(provider), user=user)
     if access_tokens:
         return access_tokens[0]
@@ -40,6 +36,7 @@ def fetch(
     remote_url: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> RemoteProgress:
     from mage_ai.data_preparation.git import Git
 
@@ -48,7 +45,7 @@ def fetch(
     username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -74,6 +71,7 @@ def pull(
     branch_name: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> RemoteProgress:
     from mage_ai.data_preparation.git import Git
 
@@ -82,7 +80,7 @@ def pull(
     username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -108,6 +106,7 @@ def push(
     branch_name: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> RemoteProgress:
     from mage_ai.data_preparation.git import Git
 
@@ -116,7 +115,7 @@ def push(
     username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -142,6 +141,7 @@ def reset_hard(
     branch_name: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
@@ -149,7 +149,7 @@ def reset_hard(
     username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -171,6 +171,7 @@ def clone(
     remote_url: str,
     token: str,
     user: User = None,
+    config_overwrite: Dict = None,
 ) -> None:
     from mage_ai.data_preparation.git import Git
 
@@ -178,7 +179,7 @@ def clone(
     username = get_username(token, user=user, provider=provider)
 
     url = build_authenticated_remote_url(remote_url, username, token)
-    git_manager = Git.get_manager(user=user)
+    git_manager = Git.get_manager(user=user, config_overwrite=config_overwrite)
 
     remote = git_manager.repo.remotes[remote_name]
     url_original = list(remote.urls)[0]
@@ -230,7 +231,7 @@ def build_authenticated_remote_url(remote_url: str, username: str, token: str) -
     return urlunsplit(url)
 
 
-def get_username(token: str, user: User = None, provider: str = OAUTH_PROVIDER_GITHUB) -> str:
+def get_username(token: str, user: User = None, provider: str = ProviderName.GITHUB) -> str:
     resp = get_user(token, provider=provider)
     if resp.get('username') is None:
         from mage_ai.data_preparation.git import Git
@@ -240,7 +241,7 @@ def get_username(token: str, user: User = None, provider: str = OAUTH_PROVIDER_G
         return resp['username']
 
 
-def get_user(token: str, provider: str = OAUTH_PROVIDER_GITHUB) -> Dict:
+def get_user(token: str, provider: str = ProviderName.GITHUB) -> Dict:
     """
     https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-the-authenticated-user
     """

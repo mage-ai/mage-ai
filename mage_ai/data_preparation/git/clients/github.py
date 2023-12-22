@@ -27,6 +27,7 @@ class GitHubClient(Client):
 
         return dict(
             username=data.get('login'),
+            email=data.get('email'),
         )
 
     def get_branches(self, repository_name: str):
