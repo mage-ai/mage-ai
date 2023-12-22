@@ -52,7 +52,7 @@ aws-secretsmanager-caching==1.1.1.5
 boto3==1.26.60
 botocore==1.29.60
 chromadb>=0.4.17
-clickhouse-connect==0.5.20
+clickhouse-connect~=0.6.23
 db-dtypes==1.0.5
 duckdb==0.9.1
 google-api-core==2.11.0
@@ -77,7 +77,7 @@ psycopg2-binary==2.9.3
 pydruid==0.6.5
 pyodbc==4.0.35
 qdrant-client==1.6.9
-redshift-connector==2.0.909
+redshift-connector~=2.0.915
 sentence-transformers==2.2.2
 snowflake-connector-python==3.2.1
 sshtunnel==0.4.0
@@ -93,11 +93,11 @@ azure-mgmt-containerinstance==10.1.0
 azure-storage-blob==12.14.1
 
 # Streaming
-confluent-avro
+confluent-avro~=1.8.0
 influxdb_client==1.36.1
 kafka-python==2.0.2
 nats-py==2.6.0
-nkeys
+nkeys~=0.1.0
 opensearch-py==2.0.0
 requests_aws4auth==1.1.2
 pika==1.3.1
@@ -106,14 +106,13 @@ elasticsearch==8.9.0
 stomp.py==8.1.0
 
 # DBT
-dbt-bigquery==1.4.3
-dbt-clickhouse==1.4.0
-dbt-core==1.4.8
-dbt-dremio==1.5.0
-dbt-duckdb==1.4.2
-dbt-postgres==1.4.8
-dbt-redshift==1.4.0
-dbt-snowflake==1.4.4
-dbt-spark==1.4.0
-dbt-sqlserver==1.4.3
-dbt-trino==1.4.0
+dbt-bigquery==1.7.2
+dbt-clickhouse==1.7.1
+dbt-core==1.7.4
+dbt-duckdb==1.7.0
+dbt-postgres==1.7.4
+dbt-redshift==1.7.1
+dbt-snowflake==1.7.1
+dbt-spark==1.7.1
+dbt-sqlserver==1.3.1
+dbt-trino==1.7.1
