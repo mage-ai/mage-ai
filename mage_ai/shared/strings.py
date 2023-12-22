@@ -55,4 +55,4 @@ def singularize(word: str) -> str:
 
 
 def capitalize_remove_underscore_lower(word: str) -> str:
-    return word.replace('_', ' ').capitalize().lower()
+    return word.replace('_', ' ').lower().capitalize()
