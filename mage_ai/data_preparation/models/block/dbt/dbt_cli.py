@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 import simplejson
@@ -41,12 +41,7 @@ class DBTCli:
 
         self.result = []
 
-        self.__tags = dict(
-            profiles_dir=self.profiles_dir,
-            project_path=self.project_path,
-        )
-
-    def invoke(self, cli_args: List[str], **kwargs) -> dbtRunnerResult:
+    def invoke(self, cli_args: List[str], tags: Dict = None, **kwargs) -> dbtRunnerResult:
         dbt = dbtRunner()
 
         if self.profiles_dir and f'--{FLAG_PROFILES_DIR}' not in cli_args:
@@ -56,7 +51,7 @@ class DBTCli:
             cli_args += [f'--{FLAG_PROJECT_DIR}', self.project_path]
 
         log_args = ' '.join(map(str, cli_args))
-        self.__info(f'DBTCli.invoke with args: {log_args}', **self.__tags)
+        self.__info(f'DBTCli.invoke with args: {log_args}', tags)
 
         res = dbt.invoke(cli_args)
         self.result.append(res)
@@ -84,10 +79,10 @@ class DBTCli:
 
         return pd.DataFrame([row.dict() for row in table.rows])
 
-    def __info(self, message: str, **tags) -> None:
+    def __info(self, message: str, tags: Dict = None) -> None:
         if self.logger:
             if isinstance(self.logger, DictLogger):
-                self.logger.info(message, **tags)
+                self.logger.info(message, **(tags or {}))
             else:
                 self.logger.info(message)
         else:
