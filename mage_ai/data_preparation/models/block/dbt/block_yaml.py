@@ -267,6 +267,6 @@ class DBTBlockYAML(DBTBlock):
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
             ])
-            _res, success = DBTCli([task] + args, logger).invoke()
-            if not success:
+            res = DBTCli(logger=logger).invoke([task] + args)
+            if not res.success:
                 raise Exception('DBT exited with a non 0 exit status.')

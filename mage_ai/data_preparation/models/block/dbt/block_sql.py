@@ -208,7 +208,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                     '--resource-type', 'model',
                     '--resource-type', 'snapshot'
                 ]
-                res, _success = DBTCli(args).invoke()
+                res = DBTCli().invoke(args)
 
                 if res:
                     nodes_init = [simplejson.loads(node) for node in res]
@@ -442,12 +442,14 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
 
         # Interpolate profiles.yml and invoke dbt
         with Profiles(self.project_path, variables) as profiles:
+            cli = DBTCli(logger=logger)
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
             ])
             # run primary task, except for show
             if task != 'show':
-                _res, success = DBTCli([task] + args, logger).invoke()
+                res = cli.invoke([task] + args)
+                success = res.success
                 if not success:
                     raise Exception('DBT exited with a non 0 exit status.')
             # run show task, to get data for preview or downstream usage
@@ -457,8 +459,10 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             if needs_downstream_df or needs_preview_df:
                 # add limit to show task
                 args += (["--limit", str(limit)])
-                df, _res, success = DBTCli(['show'] + args, logger).to_pandas()
-                if not success:
+                res = cli.invoke(['show'] + args)
+                if res.success:
+                    df = cli.to_pandas(res)
+                else:
                     raise Exception('DBT exited with a non 0 exit status.')
 
         # provide df for downstream usage or data preview

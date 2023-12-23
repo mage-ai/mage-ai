@@ -199,7 +199,7 @@ class DBTBlock(Block):
                     '--vars', cls._variables_json(merge_dict(variables, template_vars)),
                     '--full-refresh'
                 ]
-                DBTCli(args, logger).invoke()
+                DBTCli(logger=logger).invoke(args)
 
             seed_path.unlink()
 
