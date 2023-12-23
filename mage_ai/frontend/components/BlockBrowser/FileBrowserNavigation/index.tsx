@@ -9,12 +9,11 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useFiles from '@utils/models/file/useFiles';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
-import { DBT } from '@oracle/icons';
 import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import { pluralize } from '@utils/string';
-import { sortByKey } from '@utils/array';
+import { buildModels } from '../utils';
+import { buildNavLinks } from './utils';
 import { useError } from '@context/Error';
 
 type FileBrowserNavigationProps = {
@@ -40,44 +39,51 @@ function FileBrowserNavigation({
     files,
   } = useFiles();
 
+  const selectedItem = useMemo(() => {
+    const uuids = selectedLinks?.slice(0, 2)?.map(({ uuid }) => uuid);
+
+    return cacheItems?.find(({
+      item,
+    }) => uuids?.includes(item?.project?.uuid));
+  }, [
+    cacheItems,
+    selectedLinks,
+  ]);
+
   const navLinks = useMemo(() => {
     if (selectedLinks?.find(({ uuid }) => BlockTypeEnum.DBT === uuid)) {
-      return [{
-        Icon: DBT,
-        label: () => 'All projects',
-        uuid: NavLinkUUIDEnum.ALL_PROJECTS,
-        // @ts-ignore
-      }].concat(sortByKey(cacheItems, ({ item }) => item?.project?.name)?.map(({
-        item,
-      }) => {
-        const project = item?.project;
 
-        return {
-          Icon: DBT,
+      if (selectedItem && selectedLinks?.length >= 3) {
+        const models = buildModels(selectedItem?.item?.project, selectedItem?.item?.models);
+
+        return models?.map(({
+          directory,
+          filePath,
+          name,
+        }) => ({
           label: () => (
             <Text monospace noWrapping>
-              {project?.name}
+              {name}
             </Text>
           ),
           description: () => (
             <FlexContainer flexDirection="column">
               <Text monospace muted noWrapping small>
-                {pluralize('model', item?.models?.length || 0)}
-              </Text>
-
-              <Text monospace muted noWrapping small>
-                {project?.uuid}
+                {directory}
               </Text>
             </FlexContainer>
           ),
-          uuid: project?.uuid,
-        };
-      }));
+          uuid: filePath,
+        }));
+      }
+
+      return buildNavLinks(cacheItems);
     }
 
     return NAV_LINKS;
   }, [
     cacheItems,
+    selectedItem,
     selectedLinks,
   ]);
 
@@ -114,12 +120,15 @@ function FileBrowserNavigation({
 
       {FileContextTab.BLOCKS === selectedTab?.uuid && (
         <BlockNavigation
-          navLinks={navLinks}
+          navLinks={navLinks || []}
           selectedLink={selectedLinks?.[0]}
           setSelectedLink={value => setSelectedLinks(prev => {
             if (prev?.length >= 2) {
               // @ts-ignore
-              return [value].concat((prev || []).slice(1));
+              return [value].concat((prev || []).slice(Math.max(
+                prev?.length >= 3 ? 1 : prev?.length - 1,
+                1,
+              )));
             }
 
             // @ts-ignore

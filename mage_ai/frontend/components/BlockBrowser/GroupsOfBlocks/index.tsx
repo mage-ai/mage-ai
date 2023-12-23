@@ -1,8 +1,9 @@
-import * as osPath from 'path';
+
 import { useMemo } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import BlockDetail from '../BlockDetail';
 import Button from '@oracle/elements/Button';
 import CacheItemType, { CacheItemTypeEnum, DBTCacheItemType } from '@interfaces/CacheItemType';
 import Divider from '@oracle/elements/Divider';
@@ -15,6 +16,8 @@ import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constan
 import { NavLinkUUIDEnum } from '../FileBrowserNavigation/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PaginateArrowRight } from '@oracle/icons';
+import { buildModels } from '../utils';
+import { buildNavLinks } from '../FileBrowserNavigation/utils';
 import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 
@@ -44,6 +47,17 @@ function GroupsOfBlocks({
     selectedLinks,
   ]);
 
+  const selectedItem = useMemo(() => {
+    const uuids = selectedLinks?.slice(0, 2)?.map(({ uuid }) => uuid);
+
+    return cacheItems?.find(({
+      item,
+    }) => uuids?.includes(item?.project?.uuid));
+  }, [
+    cacheItems,
+    selectedLinks,
+  ]);
+
   if (BlockTypeEnum.DBT === selectedBlockType) {
     const arr = sortByKey(cacheItems, ({ item }) => item?.project?.name).filter(({
       item,
@@ -58,35 +72,7 @@ function GroupsOfBlocks({
         project: null,
       };
 
-      const modelPaths = project?.['model-paths'] || [];
-      const regexes = new RegExp(modelPaths?.map((modelPath: string) => [
-        project?.uuid,
-        modelPath,
-        '',
-      ].join(osPath.sep))?.join('|'));
-
-      const models = sortByKey(modelsInit?.map((filePath: string) => {
-        const modelPath = filePath.replace(regexes, '');
-        const parts = modelPath?.split(osPath.sep);
-
-        let modelName;
-        let modelDirectory;
-
-        if (parts?.length >= 2) {
-          modelName = parts?.[parts?.length - 1];
-          modelDirectory = parts?.slice(0, parts?.length - 1)?.join(osPath.sep);
-        } else {
-          modelName = parts?.[0];
-        }
-
-        const modelNameParts = modelName?.split('.');
-
-        return {
-          directory: modelDirectory,
-          filePath: modelPath,
-          name: modelNameParts?.slice(0, modelNameParts?.length - 1)?.join('.'),
-        }
-      }), ({ name }) => name);
+      const models = buildModels(project, modelsInit);
 
       return (
         <>
@@ -131,15 +117,27 @@ function GroupsOfBlocks({
             onClickRow={(index: number) => {
               const row = models?.[index];
 
-              return setSelectedLinks(prev => [{
-                label: () => (
-                  <Text monospace>
-                    {row?.name}
-                  </Text>
-                ),
-                uuid: row?.filePath,
+              return setSelectedLinks((prev) => {
+                const navLink = {
+                  label: () => (
+                    <Text monospace>
+                      {row?.name}
+                    </Text>
+                  ),
+                  uuid: row?.filePath,
+                };
+
+
+                if (NavLinkUUIDEnum.ALL_PROJECTS === prev?.[0]?.uuid) {
+                  return [
+                    navLink,
+                    buildNavLinks(cacheItems)?.find(({ uuid }) => project?.uuid === uuid),
+                  ].concat(prev?.slice(1) || [])
+                }
+
                 // @ts-ignore
-              }].concat(prev));
+                return [navLink].concat(prev || [])
+              });
             }}
             rows={models?.map((row) => {
               const {
@@ -227,7 +225,15 @@ function GroupsOfBlocks({
           })}
         </Accordion>
       );
+    } else if (selectedItem && selectedLinks?.length >= 3) {
+      return (
+        <BlockDetail
+          cacheItem={selectedItem}
+          selectedLinks={selectedLinks}
+        />
+      );
     }
+
 
     return buildTable(arr?.[0]);
   }

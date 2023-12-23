@@ -102,9 +102,13 @@ function Browser({
   const [selectedLinks, setSelectedLinks] = useState<NavLinkType[]>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
-  const selectedItem = useMemo(() => cacheItems.find(({
-    item,
-  }) => item?.project?.uuid === selectedLinks?.[0]?.uuid)?.item, [
+  const selectedItem = useMemo(() => {
+    const uuids = selectedLinks?.slice(0, 2)?.map(({ uuid }) => uuid);
+
+    return cacheItems?.find(({
+      item,
+    }) => uuids?.includes(item?.project?.uuid));
+  }, [
     cacheItems,
     selectedLinks,
   ]);
@@ -214,7 +218,10 @@ function Browser({
         mainContainerHeader={(
           <BrowserHeader
             navigateBack={navigateBack}
-            selectedLinks={selectedLinks?.length >= 2 ? selectedLinks.slice(0, 1) : null}
+            selectedLinks={selectedLinks?.length >= 2
+              ? selectedLinks.slice(0, selectedLinks?.length - 1)
+              : null
+            }
           />
         )}
         mainContainerRef={mainContainerRef}

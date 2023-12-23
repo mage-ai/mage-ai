@@ -28,9 +28,13 @@ function BlocksDetails({
     selectedLinks,
   ]);
 
-  const selectedItem = useMemo(() => cacheItems.find(({
-    item,
-  }) => item?.project?.uuid === selectedLinks?.[0]?.uuid)?.item, [
+  const selectedItem = useMemo(() => {
+    const uuids = selectedLinks?.slice(0, 2)?.map(({ uuid }) => uuid);
+
+    return cacheItems?.find(({
+      item,
+    }) => uuids?.includes(item?.project?.uuid));
+  }, [
     cacheItems,
     selectedLinks,
   ]);
@@ -40,7 +44,7 @@ function BlocksDetails({
       models,
       profiles,
       project,
-    } = selectedItem;
+    } = selectedItem?.item;
     const outputs =
       sortByKey(Object.entries(profiles?.[project?.profile]?.outputs || {}), tup => tup[0]);
     const modelPaths = project?.['model-paths'] || [];
@@ -78,6 +82,7 @@ function BlocksDetails({
               uuid: 'value',
             },
           ]}
+          noHeader
           rows={[
             [
               <Text default monospace small>
@@ -128,7 +133,7 @@ function BlocksDetails({
           columnFlex={[null, null]}
           columns={[
             {
-              uuid: 'Target',
+              uuid: 'Targets',
             },
             {
               rightAligned: true,

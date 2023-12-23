@@ -71,7 +71,7 @@ function BrowserHeader({
             {navLinks?.map((selectedLink, idx: number) => {
               return (
                 <FlexContainer alignItems="center" key={selectedLink?.uuid}>
-                  {selectedTab && (
+                  {(selectedTab || idx >= 1) && (
                     <>
                       <Spacing mr={1} />
 
@@ -88,7 +88,7 @@ function BrowserHeader({
                     preventDefault
                   >
                     <FlexContainer alignItems="center">
-                      <Text bold muted={idx !== navLinksCount - 1}>
+                      <Text bold muted={idx !== navLinksCount - 1} noWrapping>
                         {BLOCK_TYPE_NAME_MAPPING[selectedLink?.uuid] || selectedLink?.label?.()}
                       </Text>
                     </FlexContainer>
