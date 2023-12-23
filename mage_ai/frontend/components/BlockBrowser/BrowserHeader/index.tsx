@@ -69,8 +69,18 @@ function BrowserHeader({
             )}
 
             {navLinks?.map((selectedLink, idx: number) => {
+              const {
+                Icon,
+                label,
+                uuid,
+              } = selectedLink || {
+                Icon: null,
+                label: null,
+                uuid: null,
+              };
+
               return (
-                <FlexContainer alignItems="center" key={selectedLink?.uuid}>
+                <FlexContainer alignItems="center" key={uuid}>
                   {(selectedTab || idx >= 1) && (
                     <>
                       <Spacing mr={1} />
@@ -88,8 +98,21 @@ function BrowserHeader({
                     preventDefault
                   >
                     <FlexContainer alignItems="center">
+                      {Icon && (
+                        <>
+                          <Icon default={idx >= 1 && navLinks?.length >= 3} />
+
+                          <Spacing mr={1} />
+                        </>
+                      )}
                       <Text bold muted={idx !== navLinksCount - 1} noWrapping>
-                        {BLOCK_TYPE_NAME_MAPPING[selectedLink?.uuid] || selectedLink?.label?.()}
+                        {BLOCK_TYPE_NAME_MAPPING[uuid]
+                          || label
+                            ? label?.({
+                              selectedLinks,
+                            })
+                            : uuid
+                        }
                       </Text>
                     </FlexContainer>
                   </Link>

@@ -37,7 +37,8 @@ export function buildModels({
       filePath: modelPath,
       fullPath: filePath,
       name: modelNameParts?.slice(0, modelNameParts?.length - 1)?.join('.'),
-    }
+      project,
+    };
   }), ({ name }) => name);
 }
 

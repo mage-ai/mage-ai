@@ -219,7 +219,7 @@ function Browser({
           <BrowserHeader
             navigateBack={navigateBack}
             selectedLinks={selectedLinks?.length >= 2
-              ? selectedLinks.slice(0, selectedLinks?.length - 1)
+              ? selectedLinks
               : null
             }
           />

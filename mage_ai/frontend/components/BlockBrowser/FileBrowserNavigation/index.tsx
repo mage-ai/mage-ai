@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import BlockNavigation from '@components/CustomTemplates/BrowseTemplates/Navigation/BlockNavigation';
 import CacheItemType from '@interfaces/CacheItemType';
 import FileBrowser from '@components/FileBrowser';
-import FileType from '@interfaces/FileType';
+import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -13,7 +13,7 @@ import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { buildModels } from '../utils';
-import { buildNavLinks, defaultSelectedLink, handleNextSelectedLinks } from './utils';
+import { buildNavLinks, buildNavLinkModels, defaultSelectedLink, handleNextSelectedLinks } from './utils';
 import { useError } from '@context/Error';
 
 type FileBrowserNavigationProps = {
@@ -57,25 +57,7 @@ function FileBrowserNavigation({
           ...(selectedItem?.item || {}),
         });
 
-        return models?.map(({
-          directory,
-          filePath,
-          name,
-        }) => ({
-          label: () => (
-            <Text monospace noWrapping>
-              {name}
-            </Text>
-          ),
-          description: () => (
-            <FlexContainer flexDirection="column">
-              <Text monospace muted noWrapping small>
-                {directory}
-              </Text>
-            </FlexContainer>
-          ),
-          uuid: filePath,
-        }));
+        return buildNavLinkModels(models)
       }
 
       return buildNavLinks(cacheItems);

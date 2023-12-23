@@ -15,9 +15,9 @@ import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { NavLinkUUIDEnum } from '../FileBrowserNavigation/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { PaginateArrowRight } from '@oracle/icons';
+import { FolderOutline, PaginateArrowRight } from '@oracle/icons';
 import { buildModels } from '../utils';
-import { buildNavLinks, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
+import { buildNavLinks, buildNavLinkModels, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
 import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 
@@ -122,16 +122,16 @@ function GroupsOfBlocks({
             onClickRow={(index: number) => {
               const row = models?.[index];
 
-              const value = {
-                label: () => (
-                  <Text monospace>
-                    {row?.name}
-                  </Text>
-                ),
-                uuid: row?.filePath,
-              };
+              const value = buildNavLinkModels([row])?.[0];
 
-              return setSelectedLinks(prev => handleNextSelectedLinks(value, prev, cacheItems));
+              const navLink = buildNavLinks(cacheItems)?.find(({
+                uuid,
+              }) => uuid === row?.project?.uuid);
+
+              return setSelectedLinks(prev => handleNextSelectedLinks([
+                value,
+                navLink,
+              ], prev, cacheItems));
             }}
             rows={models?.map((row) => {
               const {
@@ -200,6 +200,10 @@ function GroupsOfBlocks({
                 noPaddingContent
                 title={(
                   <FlexContainer alignItems="center">
+                    <FolderOutline size={2 * UNIT} />
+
+                    <Spacing mr={PADDING_UNITS} />
+
                     <FlexContainer flexDirection="column">
                       <Text monospace>
                         {name}

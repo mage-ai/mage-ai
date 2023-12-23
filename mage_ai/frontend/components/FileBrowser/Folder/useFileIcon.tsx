@@ -23,7 +23,7 @@ import {
   RoundedSquare,
   Table,
 } from '@oracle/icons';
-import { FILE_EXTENSION_COLOR_MAPPING, FILE_EXTENSION_ICON_MAPPING } from '../constants';
+import { FILE_EXTENSION_COLOR_MAPPING, FILE_EXTENSION_ICON_MAPPING } from '@components/FileBrowser/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getFileExtension,

@@ -20,7 +20,7 @@ import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constan
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TABS, TabEnum } from './constants';
 import { buildModels } from '../utils';
-import { buildNavLinks, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
+import { buildNavLinks, buildNavLinkModels, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
@@ -300,14 +300,7 @@ function BlockDetail({
                     });
                     const row = models?.[0];
 
-                    const value = {
-                      label: () => (
-                        <Text monospace>
-                          {row?.name}
-                        </Text>
-                      ),
-                      uuid: row?.filePath,
-                    };
+                    const value = buildNavLinkModels([row])?.[0];
 
                     return setSelectedLinks(prev => handleNextSelectedLinks(
                       value,
