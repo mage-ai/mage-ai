@@ -55,16 +55,18 @@ function BlocksDetails({
           <Text bold large>
             Project
           </Text>
+        </Spacing>
 
-          <Spacing mt={1}>
-            {project?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
-              <Spacing key={filePath} ml={idx * 2}>
-                <Text monospace muted small>
-                  {filePath}
-                </Text>
-              </Spacing>
-            ))}
-          </Spacing>
+        <Divider light short />
+
+        <Spacing p={PADDING_UNITS}>
+          {project?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
+            <Spacing key={filePath} ml={idx * 2}>
+              <Text monospace muted small>
+                {filePath}
+              </Text>
+            </Spacing>
+          ))}
         </Spacing>
 
         <Divider light />
@@ -115,16 +117,18 @@ function BlocksDetails({
           <Text bold large>
             Profiles
           </Text>
+        </Spacing>
 
-          <Spacing mt={1}>
-            {profiles?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
-              <Spacing key={filePath} ml={idx * 2}>
-                <Text monospace muted small>
-                  {filePath}
-                </Text>
-              </Spacing>
-            ))}
-          </Spacing>
+        <Divider light short />
+
+        <Spacing p={PADDING_UNITS}>
+          {profiles?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
+            <Spacing key={filePath} ml={idx * 2}>
+              <Text monospace muted small>
+                {filePath}
+              </Text>
+            </Spacing>
+          ))}
         </Spacing>
 
         <Divider light />

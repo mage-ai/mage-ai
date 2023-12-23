@@ -5,6 +5,7 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
 import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -19,11 +20,20 @@ import { buildModels } from '../utils';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
+  onClickAction?: (opts?: {
+    cacheItem: CacheItemType;
+    row?: {
+      directory?: string;
+      filePath?: string;
+      name?: string;
+    };
+  }) => void;
   selectedLinks?: NavLinkType[];
 };
 
 function BlockDetail({
   cacheItem,
+  onClickAction,
   selectedLinks,
 }: BlockDetailProps) {
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
@@ -73,24 +83,40 @@ function BlockDetail({
     return (
       <>
         <Spacing p={PADDING_UNITS}>
-          <FlexContainer alignItems="center">
-            <DBT size={UNIT * 2.5} />
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <Flex alignItems="center" flex={1}>
+              <DBT size={UNIT * 2.5} />
 
-            <Spacing mr={PADDING_UNITS} />
+              <Spacing mr={PADDING_UNITS} />
 
-            <FlexContainer flexDirection="column">
-              <Text large monospace>
-                {model?.name}
-              </Text>
+              <FlexContainer flexDirection="column">
+                <Text large monospace>
+                  {model?.name}
+                </Text>
 
-              {modelSchema?.schemaDetails?.description && (
-                <div style={{ marginTop: 2 }}>
-                  <Text muted>
-                    {modelSchema?.schemaDetails?.description}
-                  </Text>
-                </div>
-              )}
-            </FlexContainer>
+                {modelSchema?.schemaDetails?.description && (
+                  <div style={{ marginTop: 2 }}>
+                    <Text muted>
+                      {modelSchema?.schemaDetails?.description}
+                    </Text>
+                  </div>
+                )}
+              </FlexContainer>
+            </Flex>
+
+            {onClickAction && (
+              <Button
+                onClick={() => {
+                  return onClickAction({
+                    cacheItem,
+                    row: model,
+                  });
+                }}
+                primary
+              >
+                Add to pipeline
+              </Button>
+            )}
           </FlexContainer>
         </Spacing>
 

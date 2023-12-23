@@ -229,6 +229,7 @@ function GroupsOfBlocks({
       return (
         <BlockDetail
           cacheItem={selectedItem}
+          onClickAction={onClickAction}
           selectedLinks={selectedLinks}
         />
       );
