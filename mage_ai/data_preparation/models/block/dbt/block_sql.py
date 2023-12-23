@@ -195,7 +195,6 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         # Get upstream nodes via dbt list
         with Profiles(self.project_path, self.pipeline.variables) as profiles:
             try:
-
                 args = [
                     'list',
                     # project-dir
@@ -211,7 +210,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = DBTCli().invoke(args)
 
                 if res:
-                    nodes_init = [simplejson.loads(node) for node in res]
+                    nodes_init = [simplejson.loads(node) for node in res.result]
                 else:
                     return []
             except Exception as err:
