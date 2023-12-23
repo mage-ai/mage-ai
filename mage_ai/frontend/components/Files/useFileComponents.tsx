@@ -9,7 +9,9 @@ import Dashboard from '@components/Dashboard';
 import FileBrowser from '@components/FileBrowser';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
-import FileType from '@interfaces/FileType';
+import FileType, {
+  FILES_QUERY_INCLUDE_HIDDEN_FILES,
+} from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import PipelineType from '@interfaces/PipelineType';
 import api from '@api';
@@ -25,11 +27,13 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
+  LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES,
   addOpenFilePath as addOpenFilePathLocalStorage,
   getOpenFilePaths,
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
+import { get, set } from '@storage/localStorage';
 import { getFilenameFromFilePath } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -78,6 +82,7 @@ type UseFileComponentsProps = {
   sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setSelectedBlock?: (value: BlockType) => void;
+  showHiddenFilesSetting?: boolean;
   uuid?: string;
   widgets?: BlockType[];
 };
@@ -101,6 +106,7 @@ function useFileComponents({
   sendTerminalMessage,
   setDisableShortcuts,
   setSelectedBlock,
+  showHiddenFilesSetting,
   uuid,
   widgets,
 }: UseFileComponentsProps = {}) {
@@ -108,6 +114,9 @@ function useFileComponents({
   const [showError] = useError(null, {}, [], {
     uuid: `useFileComponents/${uuid}`,
   });
+  const [showHiddenFiles, setShowHiddenFiles] = useState<boolean>(
+    get(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, false),
+  );
 
   const fileTreeRef = useRef(null);
   const contentByFilePath = useRef(null);
@@ -199,7 +208,19 @@ function useFileComponents({
     setOpenFilePaths,
   ]);
 
-  const { data: filesData, mutate: fetchFiles } = api.files.list(query);
+  const toggleShowHiddenFiles = useCallback(() => {
+    const updatedShowHiddenFiles = !showHiddenFiles;
+    setShowHiddenFiles(updatedShowHiddenFiles);
+    set(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, updatedShowHiddenFiles);
+  }, [showHiddenFiles]);
+
+  const { data: filesData, mutate: fetchFiles } = api.files.list(
+    (showHiddenFilesSetting && showHiddenFiles)
+      ? {
+        ...FILES_QUERY_INCLUDE_HIDDEN_FILES,
+        ...query,
+      } : query,
+  );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
   const uuidKeyboard = 'Files/index';
@@ -298,6 +319,7 @@ function useFileComponents({
       fetchFiles={fetchFiles}
       fetchPipeline={fetchPipeline}
       files={files}
+      showHiddenFilesSetting={showHiddenFilesSetting}
       onClickFile={(path: string) => openFile(path)}
       onClickFolder={(path: string) => openFile(path, true)}
       onSelectBlockFile={onSelectBlockFile}
@@ -306,6 +328,8 @@ function useFileComponents({
       ref={fileTreeRef}
       showError={showError}
       setSelectedBlock={setSelectedBlock}
+      setShowHiddenFiles={toggleShowHiddenFiles}
+      showHiddenFiles={showHiddenFiles}
       uuid={uuid}
       widgets={widgets}
     />
@@ -319,12 +343,15 @@ function useFileComponents({
     fetchPipeline,
     fileTreeRef,
     files,
+    showHiddenFilesSetting,
     onSelectBlockFile,
     openFile,
     openSidekickView,
     pipeline,
     setSelectedBlock,
     showError,
+    showHiddenFiles,
+    toggleShowHiddenFiles,
     uuid,
     widgets,
   ]);

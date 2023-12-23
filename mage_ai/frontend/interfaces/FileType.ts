@@ -23,6 +23,20 @@ export enum SpecialFileEnum {
   REQS_TXT = 'requirements.txt',
 }
 
+export enum FileQueryEnum {
+  EXCLUDE_DIR_PATTERN = 'exclude_dir_pattern',
+  EXCLUDE_PATTERN = 'exclude_pattern',
+  PATTERN = 'pattern',
+}
+
+// This is regex for matching nothing (to include all files, including hidden ones)
+export const FILE_PATTERN_NO_MATCHES = 'a^';
+// We exclude no files (e.g. hidden files) by matching no file patterns.
+export const FILES_QUERY_INCLUDE_HIDDEN_FILES = {
+  [FileQueryEnum.EXCLUDE_PATTERN]: FILE_PATTERN_NO_MATCHES,
+  [FileQueryEnum.EXCLUDE_DIR_PATTERN]: FILE_PATTERN_NO_MATCHES,
+};
+
 export const CODE_BLOCK_FILE_EXTENSIONS = [
   FileExtensionEnum.PY,
   FileExtensionEnum.SQL,

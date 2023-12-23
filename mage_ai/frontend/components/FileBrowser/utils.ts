@@ -55,7 +55,7 @@ export function getFullPathWithoutRootFolder(
 }
 
 export function getFileExtension(filename: string): FileExtensionEnum {
-  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX)
+  const match = filename?.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX);
   return match?.length >= 1
     ? match[0].replace('.', '') as FileExtensionEnum
     : null;
@@ -71,7 +71,7 @@ export function validBlockFileExtension(filename: string): string {
   ].join('|');
   const extensionRegex = new RegExp(`${extensions}$`);
 
-  const match = filename.match(extensionRegex)
+  const match = filename.match(extensionRegex);
 
   return match?.length >= 1 ? match[0].replace('.', '') : null;
 }
@@ -97,13 +97,13 @@ export function getBlockFromFile(
 ) {
   // parts example:
   // ['default_repo', 'data_loaders', 'team', 'foo.py']
-  let parts = getFullPath(file, currentPathInit).split(osPath.sep);
+  const parts = getFullPath(file, currentPathInit).split(osPath.sep);
 
   if (!parts) {
     return null;
   }
 
-  let blockType = getBlockType(parts);
+  const blockType = getBlockType(parts);
 
   if (!parts) {
     return null;

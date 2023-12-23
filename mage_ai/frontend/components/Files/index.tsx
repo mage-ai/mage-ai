@@ -9,13 +9,6 @@ import useFileComponents from '@components/Files/useFileComponents';
 import FileTabsScroller from '@components/FileTabsScroller';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 
-import {
-  HeaderStyle,
-  MAIN_CONTENT_TOP_OFFSET,
-  MenuStyle,
-  TabsStyle,
-} from './index.style';
-
 function FilesPageComponent() {
   const refHeader = useRef(null);
   const [headerOffset, setHeaderOffset] = useState(null);
@@ -29,7 +22,7 @@ function FilesPageComponent() {
     tabs,
     versions,
     versionsVisible,
-  } = useFileComponents();
+  } = useFileComponents({ showHiddenFilesSetting: true });
 
   useEffect(() => {
     setTimeout(() => setHeaderOffset(refHeader?.current?.getBoundingClientRect()?.height || 0), 1);
@@ -42,29 +35,27 @@ function FilesPageComponent() {
       before={browser}
       contained
       headerOffset={headerOffset + HEADER_HEIGHT}
-      mainContainerHeader={({ widthOffset }) => {
-        return (
-          <div
-            ref={refHeader}
-            style={{
-              position: 'relative',
-              zIndex: 3,
-            }}
-          >
-            <Spacing p={1}>
-              <FlexContainer alignItems="center">
-                {menu}
-              </FlexContainer>
-            </Spacing>
+      mainContainerHeader={({ widthOffset }) => (
+        <div
+          ref={refHeader}
+          style={{
+            position: 'relative',
+            zIndex: 3,
+          }}
+        >
+          <Spacing p={1}>
+            <FlexContainer alignItems="center">
+              {menu}
+            </FlexContainer>
+          </Spacing>
 
-            <Divider light />
+          <Divider light />
 
-            <FileTabsScroller widthOffset={widthOffset}>
-              {tabs}
-            </FileTabsScroller>
-          </div>
-        );
-      }}
+          <FileTabsScroller widthOffset={widthOffset}>
+            {tabs}
+          </FileTabsScroller>
+        </div>
+      )}
       title="Files"
       uuid="Files/index"
     >

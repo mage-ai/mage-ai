@@ -1,5 +1,6 @@
-import * as osPath from 'path';
 import React, {
+  Dispatch,
+  SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -11,8 +12,9 @@ import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import FileHeaderMenu from './FileHeaderMenu';
 import FileType from '@interfaces/FileType';
-import FlyoutMenu, { DEFAULT_MENU_ITEM_HEIGHT } from '@oracle/components/FlyoutMenu';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import NewFile from './NewFile';
@@ -30,17 +32,15 @@ import {
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
 import { DBT } from '@oracle/icons';
-import { FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE } from '@interfaces/FileType';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
 import { createPortal } from 'react-dom';
-import { find, sortByKey } from '@utils/array';
-import { getBlockFromFile, getFullPath, getFullPathWithoutRootFolder } from './utils';
+import { find } from '@utils/array';
+import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
 import { initiateDownload } from '@utils/downloads';
 import { onSuccess } from '@api/utils/response';
-import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 
 const MENU_WIDTH: number = UNIT * 20;
@@ -63,6 +63,9 @@ type FileBrowserProps = {
     response: any;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  setShowHiddenFiles?: Dispatch<SetStateAction<boolean>>;
+  showHiddenFilesSetting?: boolean;
+  showHiddenFiles?: boolean;
   uuid?: string;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
@@ -92,10 +95,14 @@ function FileBrowser({
   pipeline,
   showError,
   setSelectedBlock,
+  setShowHiddenFiles,
+  showHiddenFiles,
+  showHiddenFilesSetting,
   uuid,
   widgets = [],
 }: FileBrowserProps, ref) {
   const timeout = useRef(null);
+  const refView = useRef(null);
   const themeContext = useContext(ThemeContext);
   const [coordinates, setCoordinates] = useState<{
     x: number;
@@ -104,6 +111,7 @@ function FileBrowser({
   const [draggingFile, setDraggingFile] = useState<FileType>(null);
   const [selectedFile, setSelectedFile] = useState<FileType>(null);
   const [reloadCount, setReloadCount] = useState(0);
+  const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
 
   useEffect(() => {
     setReloadCount(prev => prev + 1);
@@ -129,15 +137,13 @@ function FileBrowser({
             const token = response.data.download.token;
             initiateDownload(token);
           },
-          onErrorCallback: (response, errors) => {
-            return showError({
-              errors,
-              response,
-            });
-          },
-        }
-      )
-    }
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
   );
 
   const [deleteFile] = useMutation(
@@ -148,12 +154,10 @@ function FileBrowser({
           callback: () => {
             fetchFileTree?.();
           },
-          onErrorCallback: (response, errors) => {
-            return showError({
-              errors,
-              response,
-            });
-          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -167,12 +171,10 @@ function FileBrowser({
           callback: () => {
             fetchFileTree?.();
           },
-          onErrorCallback: (response, errors) => {
-            return showError({
-              errors,
-              response,
-            });
-          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -191,13 +193,11 @@ function FileBrowser({
       block: BlockType;
       file: FileType;
       force?: boolean;
-    }) => {
-      return api.blocks.useDelete(
-        encodeURIComponent(uuid), {
-          file_path: file ? encodeURIComponent(getFullPathWithoutRootFolder(file)) : null,
-          force,
-        })();
-    },
+    }) => api.blocks.useDelete(
+      encodeURIComponent(uuid), {
+        file_path: file ? encodeURIComponent(getFullPathWithoutRootFolder(file)) : null,
+        force,
+      })(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -269,12 +269,10 @@ function FileBrowser({
           callback: () => {
             fetchPipeline?.();
           },
-          onErrorCallback: (response, errors) => {
-            return showError({
-              errors,
-              response,
-            });
-          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -705,6 +703,13 @@ function FileBrowser({
 
   return (
     <ContainerStyle ref={ref}>
+      {(showHiddenFilesSetting && setShowHiddenFiles && typeof showHiddenFiles !== 'undefined') &&
+        <FileHeaderMenu
+          setShowHiddenFiles={setShowHiddenFiles}
+          showHiddenFiles={showHiddenFiles}
+        />
+      }
+
       {filesMemo}
 
       {(selectedBlock || selectedFile || selectedFolder) && menuMemo}
