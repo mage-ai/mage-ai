@@ -2,7 +2,9 @@ import asyncio
 import os
 import secrets
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+
+from dbt.cli.main import dbtRunnerResult
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
@@ -99,10 +101,10 @@ class DBTBlockYAMLTest(TestCase):
             str(Path('test_repo_path/dbt/test_project_name'))
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli.invoke')
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
-    def test_execute_block(self, Profiles, DBTCli: MagicMock):
-        DBTCli.return_value.invoke.return_value = (None, True)
+    def test_execute_block(self, Profiles, mock_invoke: MagicMock):
+        mock_invoke.return_value = dbtRunnerResult(success=True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
 
         self.dbt_block._execute_block(
@@ -121,7 +123,17 @@ class DBTBlockYAMLTest(TestCase):
             global_vars={}
         )
 
-        DBTCli.assert_called_once_with([
+        self.assertEqual(mock_invoke.mock_calls[0], call([
+            'deps',
+            '--select', 'model+',
+            '--exclude', 'model',
+            '--vars', '{"foo": "bar"}',
+            '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
+            '--full-refresh',
+            '--target', 'dev',
+            '--profiles-dir', 'test_profiles_dir'
+        ]))
+        self.assertEqual(mock_invoke.mock_calls[1], call([
             'build',
             '--select', 'model+',
             '--exclude', 'model',
@@ -130,12 +142,12 @@ class DBTBlockYAMLTest(TestCase):
             '--full-refresh',
             '--target', 'dev',
             '--profiles-dir', 'test_profiles_dir'
-        ], None)
+        ]))
 
-    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli.invoke')
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
-    def test_execute_block_with_interpolation(self, Profiles, DBTCli: MagicMock):
-        DBTCli.return_value.invoke.return_value = (None, True)
+    def test_execute_block_with_interpolation(self, Profiles, mock_invoke: MagicMock):
+        mock_invoke.return_value = dbtRunnerResult(success=True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
 
         key = secrets.token_urlsafe()
@@ -221,7 +233,25 @@ class DBTBlockYAMLTest(TestCase):
             ),
         )
 
-        DBTCli.assert_called_once_with([
+        self.assertEqual(mock_invoke.mock_calls[0], call([
+            'deps',
+            '--select',
+            'models/example/my_first_dbt_model.sql',
+            'models/example/my_second_dbt_model.sql',
+            '--vars',
+            '{"foo": "bar", "model1": "my_first_dbt_model", '
+            f'"test1": "{value}", "test2": "my_first_dbt_model", '
+            '"test3": "[1, 2, 3]", "test4": "3"}',
+            '--project-dir',
+            str(Path('test_repo_path/dbt/test_project_name')),
+            '--full-refresh',
+            '--target',
+            'dev',
+            '--profiles-dir',
+            'test_profiles_dir',
+        ]))
+
+        self.assertEqual(mock_invoke.mock_calls[1], call([
             'build',
             '--select',
             'models/example/my_first_dbt_model.sql',
@@ -237,7 +267,7 @@ class DBTBlockYAMLTest(TestCase):
             'dev',
             '--profiles-dir',
             'test_profiles_dir',
-        ], None)
+        ]))
 
 
 @patch(

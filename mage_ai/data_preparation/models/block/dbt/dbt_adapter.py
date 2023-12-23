@@ -30,6 +30,7 @@ class DBTAdapterConfig:
     profiles_dir: Union[str, os.PathLike]
     profile: Optional[str] = None
     target: Optional[str] = None
+    threads = None
 
 
 class DBTAdapter:

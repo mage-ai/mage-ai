@@ -114,10 +114,17 @@ class DBTAdapterTest(TestCase):
                     agate_table=table
                 )
 
+                csv_file_path = os.path.join(self.repo_path, 'test_dbt_adapter.csv')
+                df.to_csv(csv_file_path, index=False)
+
                 dbt_adapter.execute_macro(
                     'load_csv_rows',
                     context_overide=relation_context,
-                    model={'config': {}},
+                    model={
+                        'config': {},
+                        'original_file_path': 'test_dbt_adapter.csv',
+                        'root_path': self.repo_path,
+                    },
                     agate_table=table
                 )
 
@@ -125,7 +132,10 @@ class DBTAdapterTest(TestCase):
 
                 self.assertEqual(
                     df.to_dict(),
-                    {0: {'id': Decimal('1'), 'text': Decimal('2')}, 1: {'id': 'foo', 'text': 'bar'}}
+                    {
+                        0: {'id': Decimal('1'), 'text': Decimal('2')},
+                        1: {'id': 'foo', 'text': 'bar'},
+                    },
                 )
 
     def test_credentials(self):
