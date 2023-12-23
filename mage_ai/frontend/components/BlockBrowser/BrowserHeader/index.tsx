@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -14,63 +16,86 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 type BrowserHeaderPropsProps = {
   navigateBack?: () => void;
-  selectedLink?: NavLinkType;
+  selectedLinks?: NavLinkType[];
   selectedTab?: TabType;
 };
 
 function BrowserHeader({
   navigateBack,
-  selectedLink,
+  selectedLinks,
   selectedTab,
 }: BrowserHeaderPropsProps) {
+  const navLinks = useMemo(() => {
+    const arr = [...(selectedLinks || [])];
+    arr.reverse();
+
+    return arr;
+  }, [selectedLinks]);
+
+  const navLinksCount = useMemo(() => navLinks?.length || 0, [navLinks]);
+
   return (
     <HeaderStyle>
       <FlexContainer alignItems="center" fullHeight>
         <Spacing px={PADDING_UNITS}>
           <FlexContainer alignItems="center">
-
             {selectedTab && (
-              <Link
-                block
-                noHoverUnderline
-                onClick={() => navigateBack?.()}
-                preventDefault
-              >
-                <FlexContainer alignItems="center">
-                {!!selectedLink && (
-                  <>
-                    <ArrowLeft muted />
-
-                    <Spacing mr={1} />
-                  </>
-                )}
-
-                  <Text bold muted={!!selectedLink}>
-                    {capitalizeRemoveUnderscoreLower(
-                      NavLinkUUIDEnum.ALL_BLOCKS === selectedLink?.uuid
-                        ? FileContextTab.FILES
-                        : selectedTab?.uuid || '',
-                    )}
-                  </Text>
-                </FlexContainer>
-              </Link>
-            )}
-
-            {FileContextTab.BLOCKS === selectedTab?.uuid && selectedLink && (
               <>
-                <Spacing mr={1} />
+                <Link
+                  block
+                  noHoverUnderline
+                  onClick={() => navigateBack?.()}
+                  preventDefault
+                >
+                  <FlexContainer alignItems="center">
+                    <ArrowLeft muted />
+                  </FlexContainer>
+                </Link>
 
-                <ChevronRight muted />
-
-                <Spacing mr={1} />
-
-                <FlexContainer alignItems="center">
-                  <Text bold default={!selectedTab}>
-                    {BLOCK_TYPE_NAME_MAPPING[selectedLink?.uuid] || selectedLink?.label?.()}
-                  </Text>
-                </FlexContainer>
+                <Spacing pr={1} />
+                <Link
+                  block
+                  noHoverUnderline
+                  onClick={() => navigateBack?.(navLinksCount)}
+                  preventDefault
+                >
+                  <FlexContainer alignItems="center">
+                    <Text bold muted>
+                      {capitalizeRemoveUnderscoreLower(selectedTab?.uuid)}
+                    </Text>
+                  </FlexContainer>
+                </Link>
               </>
             )}
+
+            {navLinks?.map((selectedLink, idx: number) => {
+              return (
+                <>
+                  {selectedTab && (
+                    <>
+                      <Spacing mr={1} />
+
+                      <ChevronRight muted />
+
+                      <Spacing mr={1} />
+                    </>
+                  )}
+
+                  <Link
+                    block
+                    noHoverUnderline
+                    onClick={() => navigateBack?.((navLinksCount - 1) - idx)}
+                    preventDefault
+                  >
+                    <FlexContainer alignItems="center">
+                      <Text bold muted={idx !== navLinksCount - 1}>
+                        {BLOCK_TYPE_NAME_MAPPING[selectedLink?.uuid] || selectedLink?.label?.()}
+                      </Text>
+                    </FlexContainer>
+                  </Link>
+                </>
+              );
+            })}
           </FlexContainer>
         </Spacing>
       </FlexContainer>

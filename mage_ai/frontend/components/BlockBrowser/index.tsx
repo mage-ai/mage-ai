@@ -13,6 +13,7 @@ import FileBrowserNavigation from './FileBrowserNavigation';
 import FileBrowserNavigationHeader from './FileBrowserNavigation/Header';
 import Flex from '@oracle/components/Flex';
 import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
+import GroupsOfBlocks from './GroupsOfBlocks';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
@@ -82,9 +83,9 @@ function Browser() {
   const { data } = api.cache_items.list({
     item_type: CacheItemTypeEnum.DBT,
   });
-  const items: CacheItemType[] = useMemo(() => data?.cache_items, [data]);
+  const cacheItems: CacheItemType[] = useMemo(() => data?.cache_items, [data]);
 
-  const [selectedLink, setSelectedLink] = useState<NavLinkType>(null);
+  const [selectedLinks, setSelectedLinks] = useState<NavLinkType[]>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
   const after = useMemo(() => {
@@ -92,19 +93,29 @@ function Browser() {
   }, [
   ]);
 
-  const navigateBack = useCallback(() => {
-    if (selectedLink) {
-      if (NavLinkUUIDEnum.ALL_BLOCKS === selectedLink?.uuid) {
-        setSelectedLink(null);
-        setSelectedTab(TABS_MAPPING[FileContextTab.FILES]);
-      } else {
-        setSelectedLink(NAV_LINKS?.[0]);
-      }
+  const navigateBack = useCallback((numberOfSteps: number = null) => {
+    const arr = selectedLinks?.slice(numberOfSteps === null ? 1 : numberOfSteps);
+    if (arr?.length >= 1) {
+      setSelectedLinks(arr);
+    } else {
+      setSelectedLinks(null);
     }
   }, [
-    selectedLink,
-    setSelectedLink,
+    selectedLinks,
+    setSelectedLinks,
     setSelectedTab,
+  ]);
+
+  const mainContentMemo = useMemo(() => {
+    return (
+      <GroupsOfBlocks
+        cacheItems={cacheItems}
+        selectedLinks={selectedLinks}
+      />
+    );
+  }, [
+    cacheItems,
+    selectedLinks,
   ]);
 
   useEffect(() => {
@@ -135,17 +146,30 @@ function Browser() {
         afterWidth={afterWidth}
         before={(
           <FileBrowserNavigation
-            selectedLink={selectedLink}
+            cacheItems={cacheItems}
+            selectedLinks={selectedLinks}
             selectedTab={selectedTab}
-            setSelectedLink={setSelectedLink}
+            setSelectedLinks={setSelectedLinks}
           />
         )}
         beforeHeader={(
-          <FileBrowserNavigationHeader
-            ref={refHeaderBefore}
-            selectedTab={selectedTab}
-            setSelectedTab={setSelectedTab}
-          />
+          <div ref={refHeaderBefore}>
+            {selectedLinks && NavLinkUUIDEnum.ALL_BLOCKS !== selectedLinks?.[0]?.uuid
+              ? (
+                <BrowserHeader
+                  navigateBack={navigateBack}
+                  selectedLinks={selectedLinks}
+                  selectedTab={selectedTab}
+                />
+              )
+              : (
+                <FileBrowserNavigationHeader
+                  selectedTab={selectedTab}
+                  setSelectedTab={setSelectedTab}
+                />
+              )
+            }
+          </div>
         )}
         beforeHeightOffset={0}
         beforeContentHeightOffset={beforeHeaderHeight}
@@ -156,12 +180,10 @@ function Browser() {
         height={heightWindow}
         // hideAfterCompletely={!after || (isOnStreamsOverview && !streams?.length)}
         inline
-        // mainContainerHeader={subheaderEl}
         mainContainerHeader={(
           <BrowserHeader
             navigateBack={navigateBack}
-            selectedLink={selectedLink}
-            selectedTab={selectedTab}
+            selectedLinks={selectedLinks?.length >= 2 ? selectedLinks.slice(0, 1) : null}
           />
         )}
         mainContainerRef={mainContainerRef}
@@ -172,7 +194,7 @@ function Browser() {
         setBeforeWidth={setBeforeWidth}
         uuid={componentUUID}
       >
-
+        {mainContentMemo}
       </TripleLayout>
     </>
   );

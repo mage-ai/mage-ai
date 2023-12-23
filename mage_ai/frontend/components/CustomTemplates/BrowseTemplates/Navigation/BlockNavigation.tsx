@@ -31,6 +31,7 @@ function BlockNavigation({
       {navLinks.map((navLink: NavLinkType) => {
         const {
           Icon,
+          description,
           label,
           selectedBackgroundColor,
           selectedIconProps,
@@ -49,18 +50,28 @@ function BlockNavigation({
             selected={isSelected}
           >
             <FlexContainer alignItems="center">
-              <IconStyle
-                backgroundColor={isSelected && selectedBackgroundColor
-                  ? selectedBackgroundColor(themeContext)
-                  : null
-                }
-              >
-                {Icon ? <Icon {...IconProps} /> : <BlocksStacked {...IconProps} />}
-              </IconStyle>
+              {Icon && (
+                <IconStyle
+                  backgroundColor={isSelected && selectedBackgroundColor
+                    ? selectedBackgroundColor(themeContext)
+                    : null
+                  }
+                >
+                  <Icon {...IconProps} />
+                </IconStyle>
+              )}
 
-              <Text bold large>
-                {label ? label() : uuid}
-              </Text>
+              <FlexContainer alignItems="flex-start" flexDirection="column" justifyContent="center">
+                <Text bold large>
+                  {label ? label() : uuid}
+                </Text>
+
+                {description && (
+                  <Text muted small>
+                    {description?.()}
+                  </Text>
+                )}
+              </FlexContainer>
             </FlexContainer>
           </NavLinkStyle>
         );

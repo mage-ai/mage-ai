@@ -1,24 +1,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import BlockNavigation from '@components/CustomTemplates/BrowseTemplates/Navigation/BlockNavigation';
+import CacheItemType from '@interfaces/CacheItemType';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
+import Text from '@oracle/elements/Text';
 import useFiles from '@utils/models/file/useFiles';
+import { BlockTypeEnum } from '@interfaces/BlockType';
+import { DBT } from '@oracle/icons';
 import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import { sortByKey } from '@utils/array';
 import { useError } from '@context/Error';
 
 type FileBrowserNavigationProps = {
-  selectedLink?: NavLinkType;
+  cacheItems: CacheItemType[];
+  selectedLinks?: NavLinkType[];
   selectedTab: (value: TabType) => void;
-  setSelectedLink: (value: NavLinkType) => void;
+  setSelectedLinks: (value: NavLinkType[]) => void;
 };
 
 function FileBrowserNavigation({
-  selectedLink,
+  cacheItems,
+  selectedLinks,
   selectedTab,
-  setSelectedLink,
+  setSelectedLinks,
 }: FileBrowserNavigationProps) {
   const fileTreeRef = useRef(null);
   const {
@@ -30,11 +37,40 @@ function FileBrowserNavigation({
     uuid: 'FileBrowserNavigation',
   });
 
-  useEffect(() => {
-    if (FileContextTab.BLOCKS === selectedTab?.uuid) {
-      setSelectedLink?.(prev => prev ? prev : NAV_LINKS?.[0]);
+  const navLinks = useMemo(() => {
+    if (selectedLinks?.find(({ uuid }) => BlockTypeEnum.DBT === uuid)) {
+      return [{
+        Icon: DBT,
+        label: () => 'All projects',
+        uuid: NavLinkUUIDEnum.ALL_PROJECTS,
+        // @ts-ignore
+      }].concat(sortByKey(cacheItems, ({ item }) => item?.project?.name)?.map(({
+        item,
+      }) => {
+        const project = item?.project;
+
+        return {
+          Icon: DBT,
+          label: () => (
+            <Text monospace noWrapping>
+              {project?.name}
+            </Text>
+          ),
+          description: () => (
+            <Text monospace muted noWrapping small>
+              {project?.uuid}
+            </Text>
+          ),
+          uuid: project?.uuid,
+        };
+      }));
     }
-  }, [selectedTab]);
+
+    return NAV_LINKS;
+  }, [
+    cacheItems,
+    selectedLinks,
+  ]);
 
   return (
     <>
@@ -52,9 +88,15 @@ function FileBrowserNavigation({
 
       {FileContextTab.BLOCKS === selectedTab?.uuid && (
         <BlockNavigation
-          navLinks={NAV_LINKS}
-          selectedLink={selectedLink}
-          setSelectedLink={setSelectedLink}
+          navLinks={navLinks}
+          selectedLink={selectedLinks?.[0]}
+          setSelectedLink={value => setSelectedLinks(prev => {
+            if (prev?.length >= 2) {
+              return [value].concat((prev || []).slice(1));
+            }
+
+            return [value].concat(prev || []);
+          })}
         />
       )}
     </>

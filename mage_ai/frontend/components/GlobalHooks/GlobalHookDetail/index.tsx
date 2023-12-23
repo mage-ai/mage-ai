@@ -25,7 +25,6 @@ import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
