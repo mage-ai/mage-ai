@@ -75,7 +75,7 @@ class DBTCli:
         log_args = [str(a) for a in cli_args]
         message = 'dbt'
         if len(log_args) >= 1:
-            message += ' '.join(log_args)
+            message += ' '.join([message] + log_args)
 
         self.__info(message, tags)
 
