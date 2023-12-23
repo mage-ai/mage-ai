@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -21,6 +21,7 @@ import { buildModels } from '../utils';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
+  mainContainerHeight?: number;
   onClickAction?: (opts?: {
     cacheItem: CacheItemType;
     row?: {
@@ -34,9 +35,12 @@ type BlockDetailProps = {
 
 function BlockDetail({
   cacheItem,
+  mainContainerHeight,
   onClickAction,
   selectedLinks,
 }: BlockDetailProps) {
+  const refHeader = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
   const selectedLink = selectedLinks?.[0];
@@ -59,9 +63,6 @@ function BlockDetail({
     {
       item_type: CacheItemTypeEnum.DBT,
       project_path: item?.project?.uuid,
-    },
-    {
-      pauseFetch: TabEnum.LINEAGE !== selectedTab?.uuid,
     },
   );
   const itemDetail: CacheItemType = useMemo(() => dataDetail?.cache_item, [dataDetail]);
@@ -92,56 +93,62 @@ function BlockDetail({
     model,
   ]);
 
+  useEffect(() => {
+    setTimeout(() => setHeaderHeight(refHeader?.current?.getBoundingClientRect()?.height), 1);
+  }, []);
+
   if (CacheItemTypeEnum.DBT === cacheItem?.item_type) {
     return (
       <>
-        <Spacing p={PADDING_UNITS}>
-          <FlexContainer alignItems="center" justifyContent="space-between">
-            <Flex alignItems="center" flex={1}>
-              <DBT size={UNIT * 2.5} />
+        <div ref={refHeader}>
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="center" justifyContent="space-between">
+              <Flex alignItems="center" flex={1}>
+                <DBT size={UNIT * 2.5} />
 
-              <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
 
-              <FlexContainer flexDirection="column">
-                <Text large monospace>
-                  {model?.name}
-                </Text>
+                <FlexContainer flexDirection="column">
+                  <Text large monospace>
+                    {model?.name}
+                  </Text>
 
-                {modelSchema?.schemaDetails?.description && (
-                  <div style={{ marginTop: 2 }}>
-                    <Text muted>
-                      {modelSchema?.schemaDetails?.description}
-                    </Text>
-                  </div>
-                )}
-              </FlexContainer>
-            </Flex>
+                  {modelSchema?.schemaDetails?.description && (
+                    <div style={{ marginTop: 2 }}>
+                      <Text muted>
+                        {modelSchema?.schemaDetails?.description}
+                      </Text>
+                    </div>
+                  )}
+                </FlexContainer>
+              </Flex>
 
-            {onClickAction && (
-              <Button
-                onClick={() => {
-                  return onClickAction({
-                    cacheItem,
-                    row: model,
-                  });
-                }}
-                primary
-              >
-                Add to pipeline
-              </Button>
-            )}
-          </FlexContainer>
-        </Spacing>
+              {onClickAction && (
+                <Button
+                  onClick={() => {
+                    return onClickAction({
+                      cacheItem,
+                      row: model,
+                    });
+                  }}
+                  primary
+                >
+                  Add to pipeline
+                </Button>
+              )}
+            </FlexContainer>
+          </Spacing>
 
-        <ButtonTabs
-          large
-          onClickTab={tab => setSelectedTab?.(tab)}
-          selectedTabUUID={selectedTab?.uuid}
-          tabs={TABS}
-          underlineStyle
-        />
+          <ButtonTabs
+            large
+            onClickTab={tab => setSelectedTab?.(tab)}
+            selectedTabUUID={selectedTab?.uuid}
+            tabs={TABS}
+            underlineStyle
+          />
 
-        <Divider light />
+          <Divider light />
+        </div>
 
         {TabEnum.OVERVIEW === selectedTab?.uuid && (
           <>
@@ -269,7 +276,7 @@ function BlockDetail({
 
             <CodeEditor
               autoHeight
-              language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[models?.fileExtension]}
+              language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[model?.fileExtension]}
               padding={UNIT * 2}
               readOnly
               value={fileContent?.content}
@@ -279,14 +286,15 @@ function BlockDetail({
 
         {TabEnum.LINEAGE === selectedTab?.uuid && (
           <>
-            {itemDetail?.item?.lineage && (
+            {itemDetail?.item?.upstream_blocks && (
               <DependencyGraph
                 disabled
                 enablePorts={false}
-                height={UNIT * 100}
+                height={Math.max(mainContainerHeight, UNIT * 50)}
+                heightOffset={headerHeight}
                 pannable
                 pipeline={{
-                  blocks: itemDetail?.item?.lineage,
+                  blocks: itemDetail?.item?.upstream_blocks,
                 }}
                 zoomable
               />
@@ -301,6 +309,20 @@ function BlockDetail({
 
         {TabEnum.PIPELINES === selectedTab?.uuid && (
           <>
+          </>
+        )}
+
+        {TabEnum.CODE === selectedTab?.uuid && (
+          <>
+            {itemDetail?.item?.content_compiled && (
+              <CodeEditor
+                autoHeight
+                language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[model?.fileExtension]}
+                padding={UNIT * 2}
+                readOnly
+                value={itemDetail?.item?.content_compiled}
+              />
+            )}
           </>
         )}
       </>

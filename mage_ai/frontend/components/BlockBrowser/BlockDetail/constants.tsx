@@ -1,4 +1,5 @@
 export enum TabEnum {
+  CODE = 'Compiled code',
   DATA = 'Sample data',
   LINEAGE = 'Lineage',
   OVERVIEW = 'Overview',
@@ -17,5 +18,8 @@ export const TABS = [
   },
   {
     uuid: TabEnum.PIPELINES,
+  },
+  {
+    uuid: TabEnum.CODE,
   },
 ];

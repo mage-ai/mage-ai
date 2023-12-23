@@ -93,6 +93,7 @@ function Browser({
   ));
   const [beforeHeaderHeight, setBeforeHeaderHeight] = useState(null);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+  const [mainContainerHeight, setMainContainerHeight] = useState(null);
 
   const { data } = api.cache_items.list({
     item_type: CacheItemTypeEnum.DBT,
@@ -150,6 +151,7 @@ function Browser({
     return (
       <GroupsOfBlocks
         cacheItems={cacheItems}
+        mainContainerHeight={mainContainerHeight}
         onClickAction={onClickAction}
         selectedLinks={selectedLinks}
         setSelectedLinks={setSelectedLinks}
@@ -157,6 +159,7 @@ function Browser({
     );
   }, [
     cacheItems,
+    mainContainerHeight,
     onClickAction,
     selectedLinks,
     setSelectedLinks,
@@ -165,6 +168,7 @@ function Browser({
   useEffect(() => {
     setTimeout(() => {
       setBeforeHeaderHeight(refHeaderBefore?.current?.getBoundingClientRect()?.height);
+      setMainContainerHeight(mainContainerRef?.current?.getBoundingClientRect()?.height);
     }, 1);
   }, []);
 

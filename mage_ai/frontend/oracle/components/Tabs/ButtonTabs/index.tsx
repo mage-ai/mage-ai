@@ -36,6 +36,7 @@ function ButtonTabs({
   allowScroll,
   compact,
   contained,
+  large,
   noPadding,
   onClickTab,
   regularSizeText,
@@ -76,7 +77,7 @@ function ButtonTabs({
             bold
             default={!selected}
             noWrapping
-            small={!regularSizeText}
+            small={!regularSizeText && !large}
             uppercase={uppercase}
           >
             {displayText}
@@ -88,7 +89,7 @@ function ButtonTabs({
         arr.push(
           <div
             key={`spacing-${uuid}`}
-            style={{ marginLeft: (regularSizeText ? 2 : 1.5) * UNIT }}
+            style={{ marginLeft: ((regularSizeText || large) ? 2 : 1.5) * UNIT }}
           />,
         );
       }

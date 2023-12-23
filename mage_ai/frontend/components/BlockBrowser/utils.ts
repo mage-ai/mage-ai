@@ -24,7 +24,7 @@ export function buildModels(project, models) {
     }
 
     const modelNameParts = modelName?.split('.');
-    const fileExtension = modelNameParts?.[modelNameParts - 1];
+    const fileExtension = modelNameParts?.[modelNameParts?.length - 1];
 
     return {
       directory: modelDirectory,

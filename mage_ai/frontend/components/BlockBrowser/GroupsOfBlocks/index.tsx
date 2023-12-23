@@ -23,6 +23,7 @@ import { sortByKey } from '@utils/array';
 
 type GroupsOfBlocksProps = {
   cacheItems: CacheItemType[];
+  mainContainerHeight?: number;
   onClickAction?: (opts?: {
     cacheItem: CacheItemType;
     row?: {
@@ -37,6 +38,7 @@ type GroupsOfBlocksProps = {
 
 function GroupsOfBlocks({
   cacheItems,
+  mainContainerHeight,
   onClickAction,
   selectedLinks,
   setSelectedLinks,
@@ -229,6 +231,7 @@ function GroupsOfBlocks({
       return (
         <BlockDetail
           cacheItem={selectedItem}
+          mainContainerHeight={mainContainerHeight}
           onClickAction={onClickAction}
           selectedLinks={selectedLinks}
         />

@@ -1,3 +1,5 @@
+import BlockType from '@interfaces/BlockType';
+
 export enum CacheItemTypeEnum {
   DBT = 'dbt',
 }
@@ -46,10 +48,12 @@ interface DBTSchemaType {
 }
 
 export interface DBTCacheItemType {
-  models: string[];
+  content_compiled?: string;
+  models?: string[];
   profiles?: DBTProfileType;
   project?: DBTProjectType;
   schema?: DBTSchemaType[];
+  upstream_blocks?: BlockType[];
 }
 
 export default interface CacheItemType {

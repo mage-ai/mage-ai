@@ -59,8 +59,8 @@ class CacheItemResource(AsyncBaseResource):
             )
             lineage = [b.to_dict() for b in block.upstream_dbt_blocks(read_only=True)]
             model.item = dict(
-                compiled=block.content_compiled,
-                lineage=lineage,
+                content_compiled=block.content_compiled,
+                upstream_blocks=lineage,
             )
 
         return self(model, user, **kwargs)
