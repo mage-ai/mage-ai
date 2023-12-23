@@ -17,6 +17,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 -   [OracleDB](#oracledb)
 -   [PostgreSQL](#postgresql)
 -   [Snowflake](#snowflake)
+-   [Supabase Storage](#supabasestorage)
 
 Mage's data loading clients fall into two categories:
 
@@ -343,6 +344,94 @@ Loads data from object in S3 bucket into a Pandas data frame. This function will
         | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
+
+## SupabaseStorage
+
+`mage_ai.io.supabase_storage.SupabaseStorage`
+
+Handles data transfer between an `Supabase bucket` and the Mage app. The Supabase client supports importing and exporting with the following file formats:
+
+-   CSV
+-   JSON
+-   Parquet
+-   HDF5
+-   XML
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool)`
+
+Initializes the Supabase data loading client.
+
+-   **Args**
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to False.
+        `login_type (str)`: Select Supabase python client type (password, otp, oauth). Defaults to 'password'.
+        `url (str)`: Supabase URL. Defaults to 'http://localhost:8000'.
+        `api_key (str)`: Supabase user api key. Defaults to None.
+        `email (str)`: Supabase user email. Defaults to None.
+        `password (str)`: Supabase user password. Defaults to None.
+        `auth_provider (str)`: Supabase user OAuth Provider. Defaults to None.
+        `phone (str)`: Supabase user phone number. Defaults to None.
+        `options (dict)`: Supabase Sign in optional parameters. Defaults to None.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> SupabaseStorage`
+
+Creates Supabase data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`Supabase`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, bucket_name: str, object_key: str, format: FileFormat | str = None, **kwargs) -> None:`
+
+Exports data frame to an SupaBase bucket.
+
+If the format is HDF5, the default key under which the data frame is stored is the stem of the filename. For example, if the file to write the data frame to is 'storage/my_data_frame.hdf5', the key would be 'my_data_frame'. This can be overridden using the `key` keyword argument.
+
+-   **Args**:
+
+    -   `df (DataFrame)`: Data frame to export.
+    -   `bucket_name (str)`: Name of the bucket to export data frame to.
+    -   `object_key (str)`: Object key in Supabase bucket to export data frame to.
+    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to `None`, in which case the format is inferred.
+    -   `file_options (dict)`: File MIME type, Defaults to Supabase default ('text/plain')
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Writer                                                                                                         |
+        | ------- | --------------------------------------------------------------------------------------------------------------------- |
+        | CSV     | [_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)         |
+        | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
+        | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
+        | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+
+**_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
+
+Loads data from object in Supabase bucket into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
+
+-   **Args**:
+
+    -   `bucket_name (str)`: Name of the bucket to load data from.
+    -   `object_key (str)`: Key of the object in Supabase bucket to load data from.
+    -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Reader                                                                                         |
+        | ------- | ----------------------------------------------------------------------------------------------------- |
+        | CSV     | [_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)         |
+        | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
+        | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
+        | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
+
+-   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
+
 
 ## FileIO
 

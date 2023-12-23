@@ -83,6 +83,7 @@ snowflake-connector-python==3.2.1
 sshtunnel==0.4.0
 tables==3.7.0
 trino==0.321.0
+supabase==2.1.0
 
 # Azure
 azure-eventhub==5.11.2
