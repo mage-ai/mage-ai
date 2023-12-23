@@ -4,6 +4,8 @@ import BlockNavigation from '@components/CustomTemplates/BrowseTemplates/Navigat
 import CacheItemType from '@interfaces/CacheItemType';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useFiles from '@utils/models/file/useFiles';
 import { BlockTypeEnum } from '@interfaces/BlockType';
@@ -11,6 +13,7 @@ import { DBT } from '@oracle/icons';
 import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 import { useError } from '@context/Error';
 
@@ -57,9 +60,15 @@ function FileBrowserNavigation({
             </Text>
           ),
           description: () => (
-            <Text monospace muted noWrapping small>
-              {project?.uuid}
-            </Text>
+            <FlexContainer flexDirection="column">
+              <Text monospace muted noWrapping small>
+                {pluralize('model', item?.models?.length || 0)}
+              </Text>
+
+              <Text monospace muted noWrapping small>
+                {project?.uuid}
+              </Text>
+            </FlexContainer>
           ),
           uuid: project?.uuid,
         };

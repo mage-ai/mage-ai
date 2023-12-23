@@ -136,6 +136,7 @@ function Browser() {
     <>
       <TripleLayout
         after={after}
+        afterDividerContrast
         // afterFooter={afterFooter}
         // afterFooterBottomOffset={afterFooterBottom}
         // afterHeader={(
@@ -160,6 +161,7 @@ function Browser() {
             setSelectedLinks={setSelectedLinks}
           />
         )}
+        beforeDividerContrast
         beforeHeader={(
           <div ref={refHeaderBefore}>
             {selectedLinks && NavLinkUUIDEnum.ALL_BLOCKS !== selectedLinks?.[0]?.uuid
