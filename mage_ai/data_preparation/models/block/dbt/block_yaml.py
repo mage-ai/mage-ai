@@ -269,4 +269,4 @@ class DBTBlockYAML(DBTBlock):
             ])
             res = DBTCli(logger=logger).invoke([task] + args)
             if not res.success:
-                raise Exception('DBT exited with a non 0 exit status.')
+                raise res.exception

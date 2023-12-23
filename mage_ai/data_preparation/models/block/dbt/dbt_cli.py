@@ -1,20 +1,33 @@
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 import pandas as pd
 import simplejson
 from dbt.cli.main import dbtRunner, dbtRunnerResult
 
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.dbt.constants import (
-    FLAG_PROFILES_DIR,
-    FLAG_PROJECT_DIR,
-)
+from mage_ai.data_preparation.models.block.dbt.constants import Flag, LogLevel
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.server.logger import Logger
 from mage_ai.shared.parsers import encode_complex
 
-logger = Logger().new_server_logger(__name__)
+logger_default = Logger().new_server_logger(__name__)
+
+
+def build_logging_callback(logging_func: Callable, log_level: LogLevel = None):
+    def __callback(event, log_level=log_level, logging_func=logging_func):
+        # print('event.info', event.info)
+        # print('event.data', event.data)
+        # print(dir(event))
+        log_levels = {
+            LogLevel.INFO: True,
+        }
+        if log_level:
+            log_levels[log_level] = True
+
+        if event.info.level in log_levels:
+            logging_func(event.info.msg)
+
+    return __callback
 
 
 class DBTCli:
@@ -25,6 +38,8 @@ class DBTCli:
         project_path: str = None,
         **kwargs,
     ):
+        self.logger = logger or logger_default
+
         # e.g. /home/src/default_repo/dbt/demo
         # e.g. /home/src/default_repo/platform/dbt/demo
         # The file in this directory is dbt_project.yml
@@ -33,22 +48,29 @@ class DBTCli:
         # $ dbt run --profiles-dir path/to/directory
         self.profiles_dir = profiles_dir or self.project_path
 
-        if logger:
-            self.logger = DictLogger(logger)
-        else:
-            logger_manager = LoggerManagerFactory.get_logger_manager()
-            self.logger = DictLogger(logger_manager.logger)
-
         self.result = []
 
-    def invoke(self, cli_args: List[str], tags: Dict = None, **kwargs) -> dbtRunnerResult:
-        dbt = dbtRunner()
+    def invoke(
+        self,
+        cli_args: List[str],
+        log_level: LogLevel = None,
+        tags: Dict = None,
+        **kwargs,
+    ) -> dbtRunnerResult:
+        dbt = dbtRunner(
+            callbacks=[
+                build_logging_callback(
+                    self.__debug if LogLevel.DEBUG == log_level else self.__info,
+                    log_level=log_level,
+                ),
+            ],
+        )
 
-        if self.profiles_dir and f'--{FLAG_PROFILES_DIR}' not in cli_args:
-            cli_args += [f'--{FLAG_PROFILES_DIR}', self.profiles_dir]
+        if self.profiles_dir and f'--{Flag.PROFILES_DIR}' not in cli_args:
+            cli_args += [f'--{Flag.PROFILES_DIR}', self.profiles_dir]
 
-        if self.project_path and f'--{FLAG_PROJECT_DIR}' not in cli_args:
-            cli_args += [f'--{FLAG_PROJECT_DIR}', self.project_path]
+        if self.project_path and f'--{Flag.PROJECT_DIR}' not in cli_args:
+            cli_args += [f'--{Flag.PROJECT_DIR}', self.project_path]
 
         log_args = ' '.join(map(str, cli_args))
         self.__info(f'DBTCli.invoke with args: {log_args}', tags)
@@ -79,12 +101,18 @@ class DBTCli:
 
         return pd.DataFrame([row.dict() for row in table.rows])
 
-    def __info(self, message: str, tags: Dict = None) -> None:
+    def __debug(self, *args, **kwargs) -> None:
+        self.__log(LogLevel.DEBUG, *args, **kwargs)
+
+    def __info(self, *args, **kwargs) -> None:
+        self.__log(LogLevel.INFO, *args, **kwargs)
+
+    def __log(self, log_level: LogLevel, message: str, tags: Dict = None) -> None:
         if self.logger:
             if isinstance(self.logger, DictLogger):
-                self.logger.info(message, **(tags or {}))
+                getattr(self.logger, log_level)(message, **(tags or {}))
             else:
-                self.logger.info(message)
+                getattr(self.logger, log_level)(message)
         else:
             if tags:
                 tags_json = simplejson.dumps(

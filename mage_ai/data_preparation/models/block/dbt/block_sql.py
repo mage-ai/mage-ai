@@ -451,7 +451,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = cli.invoke([task] + args)
                 success = res.success
                 if not success:
-                    raise Exception('DBT exited with a non 0 exit status.')
+                    raise res.exception
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
             #
@@ -463,7 +463,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 if res.success:
                     df = cli.to_pandas(res)
                 else:
-                    raise Exception('DBT exited with a non 0 exit status.')
+                    raise res.exception
 
         # provide df for downstream usage or data preview
         self.store_variables(

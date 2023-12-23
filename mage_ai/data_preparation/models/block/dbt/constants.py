@@ -1,3 +1,5 @@
+from enum import Enum
+
 DBT_DIRECTORY_NAME = 'dbt'
 
 SQL_SERVER_ADAPTER_NAME = 'SQLServerAdapter'
@@ -10,5 +12,12 @@ SKIP_LIMIT_ADAPTER_NAMES = [
     SYNAPSE_ADAPTER_NAME,
 ]
 
-FLAG_PROFILES_DIR = 'profiles-dir'
-FLAG_PROJECT_DIR = 'project-dir'
+
+class Flag(str, Enum):
+    PROFILES_DIR = 'profiles-dir'
+    PROJECT_DIR = 'project-dir'
+
+
+class LogLevel(str, Enum):
+    DEBUG = 'debug'
+    INFO = 'info'
