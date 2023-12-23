@@ -137,13 +137,24 @@ function BlocksDetails({
         <Divider light short />
 
         <Spacing p={PADDING_UNITS}>
-          {profiles?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
-            <Spacing key={filePath} ml={idx * 2}>
-              <Text monospace muted small>
-                {filePath}
-              </Text>
-            </Spacing>
-          ))}
+          {profiles?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => {
+            const last = idx === projectFilePathPartsCount - 1;
+            const Icon = last ? List : FolderOutline;
+
+            return (
+              <Spacing key={filePath} ml={idx * 2}>
+                <FlexContainer alignItems="center">
+                  <Icon default={last} muted={!last} />
+
+                  <Spacing mr={1} />
+
+                  <Text default={last} monospace muted={!last} small>
+                    {filePath}
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+            );
+          })}
         </Spacing>
 
         <Divider light />

@@ -167,13 +167,3 @@ export function defaultSelectedLink(selectedLinks, navLinks) {
 
   return selectedLinks?.[0] || navLinks?.[0];
 }
-
-
-// if (!selectedLinks?.length) {
-//       setSelectedLinks(prev => [navLinks?.[0]]);
-//     } else if (selectedLinks?.length === 1 && selectedLinks?.[0]?.uuid in ALL_BLOCK_TYPES) {
-//       // @ts-ignore
-//       // setSelectedLinks(prev => [navLinks?.[0]].concat(
-//       //   prev?.[prev?.length - 1],
-//       // ));
-//     }
