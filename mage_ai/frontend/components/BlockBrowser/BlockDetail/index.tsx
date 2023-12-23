@@ -84,9 +84,11 @@ function BlockDetail({
               </Text>
 
               {modelSchema?.schemaDetails?.description && (
-                <Text muted>
-                  {modelSchema?.schemaDetails?.description}
-                </Text>
+                <div style={{ marginTop: 2 }}>
+                  <Text muted>
+                    {modelSchema?.schemaDetails?.description}
+                  </Text>
+                </div>
               )}
             </FlexContainer>
           </FlexContainer>
