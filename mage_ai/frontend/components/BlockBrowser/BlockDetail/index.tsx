@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
@@ -8,6 +9,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -18,9 +20,11 @@ import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constan
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TABS, TabEnum } from './constants';
 import { buildModels } from '../utils';
+import { buildNavLinks } from '../FileBrowserNavigation/utils';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
+  cacheItems: CacheItemType;
   mainContainerHeight?: number;
   onClickAction?: (opts?: {
     cacheItem: CacheItemType;
@@ -31,13 +35,16 @@ type BlockDetailProps = {
     };
   }) => void;
   selectedLinks?: NavLinkType[];
+  setSelectedLinks: (value: NavLinkType[]) => void;
 };
 
 function BlockDetail({
   cacheItem,
+  cacheItems,
   mainContainerHeight,
   onClickAction,
   selectedLinks,
+  setSelectedLinks,
 }: BlockDetailProps) {
   const refHeader = useRef(null);
   const [headerHeight, setHeaderHeight] = useState<number>(null);
@@ -45,7 +52,7 @@ function BlockDetail({
 
   const selectedLink = selectedLinks?.[0];
   const item = useMemo(() => cacheItem?.item, [cacheItem]);
-  const models = useMemo(() => buildModels(item?.project, item?.models), [
+  const models = useMemo(() => buildModels(item), [
     item,
   ]);
   const model = useMemo(() => models?.find(({ filePath }) => filePath === selectedLink?.uuid), [
@@ -66,6 +73,16 @@ function BlockDetail({
     },
   );
   const itemDetail: CacheItemType = useMemo(() => dataDetail?.cache_item, [dataDetail]);
+
+  const upstreamBlocks: BlockType[] = useMemo(() => itemDetail?.item?.upstream_blocks || [], [
+    itemDetail,
+  ]);
+  const upstreamBlocksWithoutCurrent = useMemo(() => upstreamBlocks?.filter(({
+    configuration,
+  }) => configuration?.file_path !== model?.fullPath && configuration?.file_source?.path !== model?.fullPath), [
+    model,
+    upstreamBlocks,
+  ]);
 
   useEffect(() => {
     setSelectedTab(prev => prev ? prev : TABS?.[0]);
@@ -153,9 +170,9 @@ function BlockDetail({
         {TabEnum.OVERVIEW === selectedTab?.uuid && (
           <>
             <Spacing p={PADDING_UNITS}>
-              <Text bold large>
+              <Headline level={5}>
                 Info
-              </Text>
+              </Headline>
             </Spacing>
 
             <Divider light short />
@@ -209,9 +226,9 @@ function BlockDetail({
             {modelSchema?.schemaDetails?.columns?.length >= 1 && (
               <>
                 <Spacing p={PADDING_UNITS}>
-                  <Text bold large>
+                  <Headline level={5}>
                     Schema
-                  </Text>
+                  </Headline>
                 </Spacing>
 
                 <Divider light short />
@@ -241,10 +258,104 @@ function BlockDetail({
               </>
             )}
 
+            {upstreamBlocksWithoutCurrent?.length >= 1 && (
+              <>
+                <Spacing p={PADDING_UNITS}>
+                  <Headline level={5}>
+                    Upstream model dependencies
+                  </Headline>
+                </Spacing>
+
+                <Divider light short />
+
+                <Table
+                  columnFlex={[1, 1, 1, null]}
+                  columns={[
+                    {
+                      uuid: 'Name',
+                    },
+                    {
+                      uuid: 'Model file',
+                    },
+                    {
+                      uuid: 'Directory',
+                    },
+                    {
+                      rightAligned: true,
+                      uuid: 'Project',
+                    },
+                  ]}
+                  onClickRow={(rowIndex: number) => {
+                    const block = upstreamBlocksWithoutCurrent?.[rowIndex];
+                    const configuration = block?.configuration;
+                    const cacheItem2 = cacheItems?.find(({
+                      uuid,
+                    }) => uuid === configuration?.file_source?.project_path);
+
+                    const models = buildModels({
+                      ...(cacheItem2?.item || {}),
+                      models: [
+                        configuration?.file_path || configuration?.file_source?.path,
+                      ],
+                    });
+                    const row = models?.[0];
+
+                    const navLink = {
+                      label: () => (
+                        <Text monospace>
+                          {row?.name}
+                        </Text>
+                      ),
+                      uuid: row?.filePath,
+                    };
+
+                    return setSelectedLinks((prev) => {
+
+                      return [
+                        navLink,
+                        buildNavLinks([cacheItem2])?.find(({
+                          uuid,
+                        }) => cacheItem2?.item?.project?.uuid === uuid),
+                        // @ts-ignore
+                      ].concat(prev?.slice(2) || []);
+                    });
+                  }}
+                  rows={upstreamBlocksWithoutCurrent?.map((block) => {
+                    const {
+                      configuration,
+                      uuid: blockUUID,
+                    } = block;
+                    const model = buildModels({
+                      ...(item || {}),
+                      models: [
+                        configuration?.file_path || configuration?.file_source?.path,
+                      ],
+                    })?.[0];
+
+                    return [
+                      <Text key={`model-${blockUUID}`} monospace small>
+                        {model?.name || blockUUID}
+                      </Text>,
+                      <Text default key={`model-file-${blockUUID}`} monospace small>
+                        {model?.filePath || configuration?.file_path || configuration?.file_source?.path}
+                      </Text>,
+                      <Text default key={`model-directory-${blockUUID}`} monospace small>
+                        {model?.directory}
+                      </Text>,
+
+                      <Text default key={`project-${blockUUID}`} monospace rightAligned small>
+                        {configuration?.file_source?.project_path}
+                      </Text>,
+                    ];
+                  })}
+                />
+              </>
+            )}
+
             <Spacing p={PADDING_UNITS}>
-              <Text bold large>
+              <Headline level={5}>
                 Code
-              </Text>
+              </Headline>
             </Spacing>
 
             <Divider light short />
@@ -286,7 +397,7 @@ function BlockDetail({
 
         {TabEnum.LINEAGE === selectedTab?.uuid && (
           <>
-            {itemDetail?.item?.upstream_blocks && (
+            {upstreamBlocks?.length >= 1 && (
               <DependencyGraph
                 disabled
                 enablePorts={false}
@@ -294,7 +405,7 @@ function BlockDetail({
                 heightOffset={headerHeight}
                 pannable
                 pipeline={{
-                  blocks: itemDetail?.item?.upstream_blocks,
+                  blocks: upstreamBlocks,
                 }}
                 zoomable
               />

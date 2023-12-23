@@ -74,7 +74,10 @@ function GroupsOfBlocks({
         project: null,
       };
 
-      const models = buildModels(project, modelsInit);
+      const models = buildModels({
+        models: modelsInit,
+        project,
+      });
 
       return (
         <>
@@ -129,16 +132,16 @@ function GroupsOfBlocks({
                   uuid: row?.filePath,
                 };
 
-
                 if (NavLinkUUIDEnum.ALL_PROJECTS === prev?.[0]?.uuid) {
                   return [
                     navLink,
                     buildNavLinks(cacheItems)?.find(({ uuid }) => project?.uuid === uuid),
-                  ].concat(prev?.slice(1) || [])
+                    // @ts-ignore
+                  ].concat(prev?.slice(1) || []);
                 }
 
                 // @ts-ignore
-                return [navLink].concat(prev || [])
+                return [navLink].concat(prev || []);
               });
             }}
             rows={models?.map((row) => {
@@ -231,9 +234,11 @@ function GroupsOfBlocks({
       return (
         <BlockDetail
           cacheItem={selectedItem}
+          cacheItems={cacheItems}
           mainContainerHeight={mainContainerHeight}
           onClickAction={onClickAction}
           selectedLinks={selectedLinks}
+          setSelectedLinks={setSelectedLinks}
         />
       );
     }

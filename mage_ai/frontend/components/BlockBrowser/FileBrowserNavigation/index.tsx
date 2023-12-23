@@ -54,7 +54,9 @@ function FileBrowserNavigation({
     if (selectedLinks?.find(({ uuid }) => BlockTypeEnum.DBT === uuid)) {
 
       if (selectedItem && selectedLinks?.length >= 3) {
-        const models = buildModels(selectedItem?.item?.project, selectedItem?.item?.models);
+        const models = buildModels({
+          ...(selectedItem?.item || {}),
+        });
 
         return models?.map(({
           directory,

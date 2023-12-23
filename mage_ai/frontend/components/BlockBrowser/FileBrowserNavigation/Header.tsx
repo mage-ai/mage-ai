@@ -24,7 +24,6 @@ function FileBrowserNavigationHeader({
     <HeaderStyle ref={ref}>
       <FlexContainer alignItems="flex-end" fullHeight>
         <ButtonTabs
-          large
           onClickTab={tab => setSelectedTab?.(tab)}
           selectedTabUUID={selectedTab?.uuid}
           tabs={tabs}

@@ -4,10 +4,12 @@ import { useMemo } from 'react';
 import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
+import { FolderOutline, List } from '@oracle/icons';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { NavLinkUUIDEnum } from '../FileBrowserNavigation/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -48,25 +50,38 @@ function BlocksDetails({
     const outputs =
       sortByKey(Object.entries(profiles?.[project?.profile]?.outputs || {}), tup => tup[0]);
     const modelPaths = project?.['model-paths'] || [];
+    const projectFilePathParts = project?.file_path?.split(osPath.sep) || [];
+    const projectFilePathPartsCount = projectFilePathParts?.length || 0;
 
     return (
       <>
         <Spacing p={PADDING_UNITS}>
-          <Text bold large>
+          <Headline level={5}>
             Project
-          </Text>
+          </Headline>
         </Spacing>
 
         <Divider light short />
 
         <Spacing p={PADDING_UNITS}>
-          {project?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
-            <Spacing key={filePath} ml={idx * 2}>
-              <Text monospace muted small>
-                {filePath}
-              </Text>
-            </Spacing>
-          ))}
+          {projectFilePathParts?.map((filePath: string, idx: number) => {
+            const last = idx === projectFilePathPartsCount - 1;
+            const Icon = last ? List : FolderOutline;
+
+            return (
+              <Spacing key={filePath} ml={idx * 2}>
+                <FlexContainer alignItems="center">
+                  <Icon default={last} muted={!last} />
+
+                  <Spacing mr={1} />
+
+                  <Text default={last} monospace muted={!last} small>
+                    {filePath}
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+            );
+          })}
         </Spacing>
 
         <Divider light />
@@ -114,9 +129,9 @@ function BlocksDetails({
         />
 
         <Spacing p={PADDING_UNITS}>
-          <Text bold large>
+          <Headline level={5}>
             Profiles
-          </Text>
+          </Headline>
         </Spacing>
 
         <Divider light short />

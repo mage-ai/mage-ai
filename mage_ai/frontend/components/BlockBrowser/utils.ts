@@ -1,7 +1,12 @@
 import * as osPath from 'path';
 import { sortByKey } from '@utils/array';
 
-export function buildModels(project, models) {
+export function buildModels({
+  models,
+  project,
+}: {
+  models: string[];
+}) {
   const modelPaths = project?.['model-paths'] || [];
   const regexes = new RegExp(modelPaths?.map((modelPath: string) => [
     project?.uuid,
