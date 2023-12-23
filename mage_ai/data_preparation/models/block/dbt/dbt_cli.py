@@ -16,7 +16,12 @@ from dbt.events.eventmgr import LoggerConfig
 from dbt.events.functions import EVENT_MANAGER
 from dbt.exceptions import DbtInternalError, DbtRuntimeError
 from dbt.graph import ResourceTypeSelector
-from dbt.main import (
+from dbt.node_types import NodeType
+from dbt.task.compile import CompileRunner, CompileTask
+from dbt.task.seed import SeedRunner
+
+# https://github.com/dbt-labs/dbt-core/blob/v1.4.6/core/dbt/main.py
+from main_ai.data_preparation.models.block.dbt.dbt_main import (
     DBTArgumentParser,
     _add_common_arguments,
     _add_defer_arguments,
@@ -44,9 +49,6 @@ from dbt.main import (
     adapter_management,
     read_user_config,
 )
-from dbt.node_types import NodeType
-from dbt.task.compile import CompileRunner, CompileTask
-from dbt.task.seed import SeedRunner
 
 from mage_ai.data_preparation.models.block.dbt.constants import SKIP_LIMIT_ADAPTER_NAMES
 
