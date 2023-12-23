@@ -59,7 +59,7 @@ function GroupsOfBlocks({
   ]);
 
   if (BlockTypeEnum.DBT === selectedBlockType) {
-    const arr = sortByKey(cacheItems, ({ item }) => item?.project?.name).filter(({
+    const arr = sortByKey(cacheItems || [], ({ item }) => item?.project?.name).filter(({
       item,
     }) => [NavLinkUUIDEnum.ALL_PROJECTS, item?.project?.uuid].includes(selectedLinks?.[0]?.uuid));
 

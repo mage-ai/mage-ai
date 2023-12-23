@@ -9,7 +9,10 @@ class CacheItemPolicy(BasePolicy):
 
 
 CacheItemPolicy.allow_actions(
-    [constants.LIST],
+    [
+        constants.DETAIL,
+        constants.LIST,
+    ],
     scopes=[OauthScope.CLIENT_PRIVATE],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
@@ -19,7 +22,10 @@ CacheItemPolicy.allow_actions(
 CacheItemPolicy.allow_read(
     CacheItemPresenter.default_attributes + [],
     scopes=[OauthScope.CLIENT_PRIVATE],
-    on_action=[constants.LIST],
+    on_action=[
+        constants.DETAIL,
+        constants.LIST,
+    ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
 )
@@ -28,9 +34,13 @@ CacheItemPolicy.allow_read(
 CacheItemPolicy.allow_query(
     [
         'item_type',
+        'project_path',
     ],
     scopes=[OauthScope.CLIENT_PRIVATE],
-    on_action=[constants.LIST],
+    on_action=[
+        constants.DETAIL,
+        constants.LIST,
+    ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
 )

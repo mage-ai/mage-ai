@@ -511,7 +511,7 @@ async def update_caches_async(repo_path: str, dir_path: str, filename: str) -> N
             dbt_cache = await DBTCache.initialize_cache_async(root_project=True)
             await dbt_cache.update_async(file_path=os.path.join(repo_path, dir_path, filename))
         except Exception as err:
-            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            print(f'[ERROR] File update DBTCache for {repo_path}, {dir_path}, {filename}: {err}.')
             if is_debug():
                 raise err
 
@@ -526,6 +526,6 @@ def update_caches(repo_path: str, dir_path: str, filename: str) -> None:
             dbt_cache = DBTCache.initialize_cache(root_project=True)
             dbt_cache.update(file_path=os.path.join(repo_path, dir_path, filename))
         except Exception as err:
-            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            print(f'[ERROR] File update DBTCache for {repo_path}, {dir_path}, {filename}: {err}.')
             if is_debug():
                 raise err

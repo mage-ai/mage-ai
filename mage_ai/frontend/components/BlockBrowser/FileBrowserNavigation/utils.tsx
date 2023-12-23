@@ -11,7 +11,7 @@ export function buildNavLinks(cacheItems) {
     label: () => 'All projects',
     uuid: NavLinkUUIDEnum.ALL_PROJECTS,
     // @ts-ignore
-  }].concat(sortByKey(cacheItems, ({ item }) => item?.project?.name)?.map(({
+  }].concat(sortByKey(cacheItems || [], ({ item }) => item?.project?.name)?.map(({
     item,
   }) => {
     const project = item?.project;

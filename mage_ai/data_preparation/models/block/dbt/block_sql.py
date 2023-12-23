@@ -193,7 +193,10 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
         """
         # Get upstream nodes via dbt list
-        with Profiles(self.project_path, self.pipeline.variables) as profiles:
+        with Profiles(
+            self.project_path,
+            self.pipeline.variables if self.pipeline else {},
+        ) as profiles:
             try:
                 args = [
                     'list',
@@ -293,7 +296,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             if not read_only:
                 if uuid == self.uuid:
                     block = self
-                else:
+                elif self.pipeline:
                     block = self.pipeline.get_block(
                         uuid,
                         self.type,

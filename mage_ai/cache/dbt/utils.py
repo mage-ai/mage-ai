@@ -32,12 +32,13 @@ def get_model_directories(dirname: str = None, project: Dict = None) -> List[str
         )
         paths = project.get('model-paths') or []
 
-    return paths
+    return dirname, paths
 
 
 def get_models(dirname: str = None, project: Dict = None) -> List[str]:
+    dirname, paths = get_model_directories(dirname=dirname, project=project)
     models = []
-    for model_dirname in get_model_directories(dirname=dirname, project=project):
+    for model_dirname in paths:
         arr = get_full_file_paths_containing_item(
             os.path.join(dirname, model_dirname),
             lambda fn: str(fn).endswith('.sql'),
@@ -48,8 +49,9 @@ def get_models(dirname: str = None, project: Dict = None) -> List[str]:
 
 
 def get_schema_file_paths(dirname: str = None, project: Dict = None) -> List[str]:
+    dirname, paths = get_model_directories(dirname=dirname, project=project)
     file_paths = []
-    for model_dirname in get_model_directories(dirname=dirname, project=project):
+    for model_dirname in paths:
         arr = get_full_file_paths_containing_item(
             os.path.join(dirname, model_dirname),
             lambda fn: str(fn).endswith('.yml') or str(fn).endswith('.yaml'),
@@ -130,10 +132,7 @@ def load_content(file_path: str):
     dirname = os.path.dirname(file_path)
     project = read_content(file_path)
     profiles = read_content(os.path.join(dirname, PROFILES_FILENAME))
-    models = get_models(
-        dirname=dirname,
-        project=project,
-    )
+    models = get_models(dirname=dirname, project=project)
 
     schema_file_paths = get_schema_file_paths(dirname=dirname, project=project)
     schema_dicts = run_parallel_multiple_args(load_content, schema_file_paths)

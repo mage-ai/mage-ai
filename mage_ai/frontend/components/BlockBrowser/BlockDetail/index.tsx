@@ -4,6 +4,7 @@ import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
 import CodeEditor from '@components/CodeEditor';
+import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -52,6 +53,18 @@ function BlockDetail({
   const fileContent: {
     content: string;
   } = useMemo(() => data?.file_content, [data]);
+
+  const { data: dataDetail } = api.cache_items.detail(
+    encodeURIComponent(model?.fullPath),
+    {
+      item_type: CacheItemTypeEnum.DBT,
+      project_path: item?.project?.uuid,
+    },
+    {
+      pauseFetch: TabEnum.LINEAGE !== selectedTab?.uuid,
+    },
+  );
+  const itemDetail: CacheItemType = useMemo(() => dataDetail?.cache_item, [dataDetail]);
 
   useEffect(() => {
     setSelectedTab(prev => prev ? prev : TABS?.[0]);
@@ -266,6 +279,18 @@ function BlockDetail({
 
         {TabEnum.LINEAGE === selectedTab?.uuid && (
           <>
+            {itemDetail?.item?.lineage && (
+              <DependencyGraph
+                disabled
+                enablePorts={false}
+                height={UNIT * 100}
+                pannable
+                pipeline={{
+                  blocks: itemDetail?.item?.lineage,
+                }}
+                zoomable
+              />
+            )}
           </>
         )}
 
