@@ -29,14 +29,12 @@ import dbt.tracking
 import dbt.version
 from dbt.adapters.factory import cleanup_connections, reset_adapters
 from dbt.config.profile import read_user_config
-from dbt.events.functions import (
+from dbt.events.functions import (  # setup_fallback_logger,
     LOG_VERSION,
     fire_event,
     setup_event_logger,
-    setup_fallback_logger,
 )
-from dbt.events.types import (
-    EventLevel,
+from dbt.events.types import (  # EventLevel,
     MainEncounteredError,
     MainKeyboardInterrupt,
     MainReportArgs,
@@ -183,9 +181,9 @@ def handle_and_check(args):
         # we want to respect that as soon as possible,
         # so that any non-error logging done before full log config is loaded and ready is
         # filtered accordingly.
-        setup_fallback_logger(
-            bool(flags.ENABLE_LEGACY_LOGGER), EventLevel.ERROR if flags.QUIET else EventLevel.INFO
-        )
+        # setup_fallback_logger(
+        #     bool(flags.ENABLE_LEGACY_LOGGER), EventLevel.ERROR if flags.QUIET else EventLevel.INFO
+        # )
 
         dbt.tracking.initialize_from_flags()
         # Set log_format from flags
