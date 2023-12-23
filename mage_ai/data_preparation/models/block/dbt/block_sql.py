@@ -445,6 +445,9 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
             ])
+
+            cli.invoke(['deps'] + args)
+
             # run primary task, except for show
             if task != 'show':
                 res = cli.invoke([task] + args)

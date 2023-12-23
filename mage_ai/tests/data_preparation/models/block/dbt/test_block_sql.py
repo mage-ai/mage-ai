@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from dbt.cli.main import dbtRunnerResult
 
@@ -142,7 +142,16 @@ class DBTBlockSQLTest(TestCase):
             global_vars={}
         )
 
-        mock_invoke.assert_called_once_with([
+        self.assertEqual(mock_invoke.mock_calls[0], call([
+            'deps',
+            '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
+            '--full-refresh',
+            '--select', 'model+',
+            '--vars', '{}',
+            '--target', 'test',
+            '--profiles-dir', 'test_profiles_dir'
+        ]))
+        self.assertEqual(mock_invoke.mock_calls[1], call([
             'run',
             '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
             '--full-refresh',
@@ -150,7 +159,7 @@ class DBTBlockSQLTest(TestCase):
             '--vars', '{}',
             '--target', 'test',
             '--profiles-dir', 'test_profiles_dir'
-        ])
+        ]))
 
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.open')

@@ -267,6 +267,11 @@ class DBTBlockYAML(DBTBlock):
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
             ])
-            res = DBTCli(logger=logger).invoke([task] + args)
+
+            cli = DBTCli(logger=logger)
+
+            cli.invoke(['deps'] + args)
+
+            res = cli.invoke([task] + args)
             if not res.success:
                 raise res.exception
