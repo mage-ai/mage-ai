@@ -20,8 +20,10 @@ from dbt.node_types import NodeType
 from dbt.task.compile import CompileRunner, CompileTask
 from dbt.task.seed import SeedRunner
 
+from mage_ai.data_preparation.models.block.dbt.constants import SKIP_LIMIT_ADAPTER_NAMES
+
 # https://github.com/dbt-labs/dbt-core/blob/v1.4.6/core/dbt/main.py
-from main_ai.data_preparation.models.block.dbt.dbt_main import (
+from mage_ai.data_preparation.models.block.dbt.dbt_main import (
     DBTArgumentParser,
     _add_common_arguments,
     _add_defer_arguments,
@@ -49,8 +51,6 @@ from main_ai.data_preparation.models.block.dbt.dbt_main import (
     adapter_management,
     read_user_config,
 )
-
-from mage_ai.data_preparation.models.block.dbt.constants import SKIP_LIMIT_ADAPTER_NAMES
 
 
 class DBTCli:
