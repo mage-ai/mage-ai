@@ -1,0 +1,157 @@
+import * as osPath from 'path';
+import { useMemo } from 'react';
+
+import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
+import Divider from '@oracle/elements/Divider';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
+import Text from '@oracle/elements/Text';
+import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
+import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
+import { NavLinkUUIDEnum } from '../FileBrowserNavigation/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { sortByKey } from '@utils/array';
+
+type BlocksDetailsProps = {
+  cacheItems: CacheItemType[];
+  selectedLinks?: NavLinkType[];
+};
+
+function BlocksDetails({
+  cacheItems,
+  selectedLinks,
+}: BlocksDetailsProps) {
+  const selectedBlockType = useMemo(() => selectedLinks?.find(({
+    uuid,
+  }) => uuid in ALL_BLOCK_TYPES)?.uuid as BlockTypeEnum, [
+    selectedLinks,
+  ]);
+
+  const selectedItem = useMemo(() => cacheItems.find(({
+    item,
+  }) => item?.project?.uuid === selectedLinks?.[0]?.uuid)?.item, [
+    cacheItems,
+    selectedLinks,
+  ]);
+
+  if (BlockTypeEnum.DBT === selectedBlockType && selectedItem) {
+    const {
+      models,
+      profiles,
+      project,
+    } = selectedItem;
+    const outputs =
+      sortByKey(Object.entries(profiles?.[project?.profile]?.outputs || {}), tup => tup[0]);
+    const modelPaths = project?.['model-paths'] || [];
+
+    return (
+      <>
+        <Spacing p={PADDING_UNITS}>
+          <Text bold large>
+            Project
+          </Text>
+
+          <Spacing mt={1}>
+            {project?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
+              <Spacing key={filePath} ml={idx * 2}>
+                <Text monospace muted small>
+                  {filePath}
+                </Text>
+              </Spacing>
+            ))}
+          </Spacing>
+        </Spacing>
+
+        <Divider light />
+
+        <Table
+          columnFlex={[null, null]}
+          columns={[
+            {
+              label: () => 'Detail',
+              uuid: 'details',
+            },
+            {
+              label: () => '',
+              rightAligned: true,
+              uuid: 'value',
+            },
+          ]}
+          rows={[
+            [
+              <Text default monospace small>
+                Name
+              </Text>,
+              <Text monospace rightAligned small>
+                {project?.name}
+              </Text>,
+            ],
+            [
+              <Text default monospace small>
+                Models paths
+              </Text>,
+              <Text monospace rightAligned small>
+                {modelPaths?.join(', ')}
+              </Text>,
+            ],
+            [
+              <Text default monospace small>
+                Models
+              </Text>,
+              <Text monospace rightAligned small>
+                {models?.length || 0}
+              </Text>,
+            ],
+          ]}
+        />
+
+        <Spacing p={PADDING_UNITS}>
+          <Text bold large>
+            Profiles
+          </Text>
+
+          <Spacing mt={1}>
+            {profiles?.file_path?.split(osPath.sep)?.map((filePath: string, idx: number) => (
+              <Spacing key={filePath} ml={idx * 2}>
+                <Text monospace muted small>
+                  {filePath}
+                </Text>
+              </Spacing>
+            ))}
+          </Spacing>
+        </Spacing>
+
+        <Divider light />
+
+        <Table
+          columnFlex={[null, null]}
+          columns={[
+            {
+              uuid: 'Target',
+            },
+            {
+              rightAligned: true,
+              uuid: 'Type',
+            },
+          ]}
+          rows={outputs?.map(([targetName, target]) => [
+            <Text default key={`target-${targetName}`} monospace small>
+              {targetName}
+            </Text>,
+            <Text key={`type-${target?.type}`} monospace rightAligned small>
+              {target?.type}
+            </Text>,
+          ])}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+    </>
+  );
+}
+
+export default BlocksDetails;

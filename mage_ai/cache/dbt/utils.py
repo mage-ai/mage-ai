@@ -174,6 +174,8 @@ def __clean_profiles(profiles: Dict) -> Dict:
 
         outputs = profile_dict.get('outputs') or {}
         for target in outputs.keys():
-            mapping[project_name]['outputs'][target] = {}
+            mapping[project_name]['outputs'][target] = dict(
+                type=mapping[project_name]['outputs'][target].get('type'),
+            )
 
     return mapping

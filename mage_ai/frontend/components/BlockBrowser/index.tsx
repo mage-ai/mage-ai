@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlocksDetails from './BlocksDetails';
 import Breadcrumbs from '@components/Breadcrumbs';
 import BrowserHeader from './BrowserHeader';
 import Button from '@oracle/elements/Button';
@@ -89,8 +90,15 @@ function Browser() {
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
   const after = useMemo(() => {
-
+    return (
+      <BlocksDetails
+        cacheItems={cacheItems}
+        selectedLinks={selectedLinks}
+      />
+    );
   }, [
+    cacheItems,
+    selectedLinks,
   ]);
 
   const navigateBack = useCallback((numberOfSteps: number = null) => {

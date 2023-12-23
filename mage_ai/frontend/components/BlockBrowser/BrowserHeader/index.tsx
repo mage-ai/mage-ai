@@ -70,7 +70,7 @@ function BrowserHeader({
 
             {navLinks?.map((selectedLink, idx: number) => {
               return (
-                <>
+                <FlexContainer alignItems="center" key={selectedLink?.uuid}>
                   {selectedTab && (
                     <>
                       <Spacing mr={1} />
@@ -93,7 +93,7 @@ function BrowserHeader({
                       </Text>
                     </FlexContainer>
                   </Link>
-                </>
+                </FlexContainer>
               );
             })}
           </FlexContainer>

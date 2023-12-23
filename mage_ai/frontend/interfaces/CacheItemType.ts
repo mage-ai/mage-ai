@@ -24,7 +24,7 @@ interface DBTProjectType {
   uuid: string;
 }
 
-interface DBTCacheItemType {
+export interface DBTCacheItemType {
   models: string[];
   profiles?: DBTProfileType;
   project?: DBTProjectType;
