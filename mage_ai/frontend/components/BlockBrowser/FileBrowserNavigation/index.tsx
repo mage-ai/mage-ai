@@ -13,7 +13,7 @@ import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { buildModels } from '../utils';
-import { buildNavLinks } from './utils';
+import { buildNavLinks, defaultSelectedLink, handleNextSelectedLinks } from './utils';
 import { useError } from '@context/Error';
 
 type FileBrowserNavigationProps = {
@@ -52,7 +52,6 @@ function FileBrowserNavigation({
 
   const navLinks = useMemo(() => {
     if (selectedLinks?.find(({ uuid }) => BlockTypeEnum.DBT === uuid)) {
-
       if (selectedItem && selectedLinks?.length >= 3) {
         const models = buildModels({
           ...(selectedItem?.item || {}),
@@ -95,17 +94,6 @@ function FileBrowserNavigation({
     selectedLinks,
   ]);
 
-  useEffect(() => {
-    if (selectedBlockType && selectedLinks?.length === 1) {
-      // @ts-ignore
-      setSelectedLinks(prev => [navLinks?.[0]].concat(prev));
-    }
-  }, [
-    navLinks,
-    selectedBlockType,
-    selectedLinks,
-  ]);
-
   return (
     <>
       {FileContextTab.FILES === selectedTab?.uuid && (
@@ -123,19 +111,12 @@ function FileBrowserNavigation({
       {FileContextTab.BLOCKS === selectedTab?.uuid && (
         <BlockNavigation
           navLinks={navLinks || []}
-          selectedLink={selectedLinks?.[0]}
-          setSelectedLink={value => setSelectedLinks(prev => {
-            if (prev?.length >= 2) {
-              // @ts-ignore
-              return [value].concat((prev || []).slice(Math.max(
-                prev?.length >= 3 ? 1 : prev?.length - 1,
-                1,
-              )));
-            }
-
-            // @ts-ignore
-            return [value].concat(prev || []);
-          })}
+          selectedLink={defaultSelectedLink(selectedLinks, navLinks)}
+          setSelectedLink={value => setSelectedLinks(prev => handleNextSelectedLinks(
+            value,
+            prev,
+            cacheItems,
+          ))}
         />
       )}
     </>

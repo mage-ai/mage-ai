@@ -17,7 +17,7 @@ import { NavLinkUUIDEnum } from '../FileBrowserNavigation/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PaginateArrowRight } from '@oracle/icons';
 import { buildModels } from '../utils';
-import { buildNavLinks } from '../FileBrowserNavigation/utils';
+import { buildNavLinks, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
 import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 
@@ -63,7 +63,7 @@ function GroupsOfBlocks({
   if (BlockTypeEnum.DBT === selectedBlockType) {
     const arr = sortByKey(cacheItems || [], ({ item }) => item?.project?.name).filter(({
       item,
-    }) => [NavLinkUUIDEnum.ALL_PROJECTS, item?.project?.uuid].includes(selectedLinks?.[0]?.uuid));
+    }) => selectedLinks?.length === 1 || selectedLinks?.[0]?.uuid === item?.project?.uuid);
 
     const buildTable = (cacheItem: CacheItemType) => {
       const {
@@ -122,27 +122,16 @@ function GroupsOfBlocks({
             onClickRow={(index: number) => {
               const row = models?.[index];
 
-              return setSelectedLinks((prev) => {
-                const navLink = {
-                  label: () => (
-                    <Text monospace>
-                      {row?.name}
-                    </Text>
-                  ),
-                  uuid: row?.filePath,
-                };
+              const value = {
+                label: () => (
+                  <Text monospace>
+                    {row?.name}
+                  </Text>
+                ),
+                uuid: row?.filePath,
+              };
 
-                if (NavLinkUUIDEnum.ALL_PROJECTS === prev?.[0]?.uuid) {
-                  return [
-                    navLink,
-                    buildNavLinks(cacheItems)?.find(({ uuid }) => project?.uuid === uuid),
-                    // @ts-ignore
-                  ].concat(prev?.slice(1) || []);
-                }
-
-                // @ts-ignore
-                return [navLink].concat(prev || []);
-              });
+              return setSelectedLinks(prev => handleNextSelectedLinks(value, prev, cacheItems));
             }}
             rows={models?.map((row) => {
               const {
@@ -185,7 +174,7 @@ function GroupsOfBlocks({
       );
     };
 
-    if (NavLinkUUIDEnum.ALL_PROJECTS === selectedLinks?.[0]?.uuid) {
+    if (selectedLinks?.length === 1) {
       return (
         <Accordion
           noBorder
@@ -230,7 +219,9 @@ function GroupsOfBlocks({
           })}
         </Accordion>
       );
-    } else if (selectedItem && selectedLinks?.length >= 3) {
+    } else if (selectedLinks?.length === 2) {
+      return buildTable(arr?.[0]);
+    } else if (selectedItem && selectedLinks?.length === 3) {
       return (
         <BlockDetail
           cacheItem={selectedItem}
@@ -242,9 +233,6 @@ function GroupsOfBlocks({
         />
       );
     }
-
-
-    return buildTable(arr?.[0]);
   }
 
   return (

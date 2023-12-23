@@ -20,7 +20,7 @@ import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constan
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TABS, TabEnum } from './constants';
 import { buildModels } from '../utils';
-import { buildNavLinks } from '../FileBrowserNavigation/utils';
+import { buildNavLinks, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
@@ -300,7 +300,7 @@ function BlockDetail({
                     });
                     const row = models?.[0];
 
-                    const navLink = {
+                    const value = {
                       label: () => (
                         <Text monospace>
                           {row?.name}
@@ -309,16 +309,11 @@ function BlockDetail({
                       uuid: row?.filePath,
                     };
 
-                    return setSelectedLinks((prev) => {
-
-                      return [
-                        navLink,
-                        buildNavLinks([cacheItem2])?.find(({
-                          uuid,
-                        }) => cacheItem2?.item?.project?.uuid === uuid),
-                        // @ts-ignore
-                      ].concat(prev?.slice(2) || []);
-                    });
+                    return setSelectedLinks(prev => handleNextSelectedLinks(
+                      value,
+                      prev,
+                      cacheItems,
+                    ));
                   }}
                   rows={upstreamBlocksWithoutCurrent?.map((block) => {
                     const {
@@ -333,7 +328,7 @@ function BlockDetail({
                     })?.[0];
 
                     return [
-                      <Text key={`model-${blockUUID}`} monospace small>
+                      <Text key={`model-${blockUUID}`} monospace dbt small>
                         {model?.name || blockUUID}
                       </Text>,
                       <Text default key={`model-file-${blockUUID}`} monospace small>

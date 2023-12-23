@@ -10,7 +10,7 @@ export enum FileContextTab {
 
 export enum NavLinkUUIDEnum {
   ALL_BLOCKS = 'all_blocks',
-  ALL_PROJECTS = 'all_projects',
+  ALL_BLOCKS_IN_TYPE = 'all_blocks_in_type',
 }
 
 export const NAV_LINKS = [

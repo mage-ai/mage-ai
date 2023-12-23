@@ -46,6 +46,7 @@ import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constan
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { get } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { handleNavigateBack } from './FileBrowserNavigation/utils';
 import { indexBy, intersection, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -135,12 +136,7 @@ function Browser({
   ]);
 
   const navigateBack = useCallback((numberOfSteps: number = null) => {
-    const arr = selectedLinks?.slice(numberOfSteps === null ? 1 : numberOfSteps);
-    if (arr?.length >= 1) {
-      setSelectedLinks(arr);
-    } else {
-      setSelectedLinks(null);
-    }
+    setSelectedLinks(prev => handleNavigateBack(numberOfSteps, prev));
   }, [
     selectedLinks,
     setSelectedLinks,
@@ -193,7 +189,7 @@ function Browser({
         beforeDividerContrast
         beforeHeader={(
           <div ref={refHeaderBefore}>
-            {selectedLinks && NavLinkUUIDEnum.ALL_BLOCKS !== selectedLinks?.[0]?.uuid
+            {selectedLinks?.length >= 1
               ? (
                 <BrowserHeader
                   navigateBack={navigateBack}
