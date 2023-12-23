@@ -55,17 +55,17 @@ chromadb>=0.4.17
 clickhouse-connect~=0.6.23
 db-dtypes==1.0.5
 duckdb==0.9.1
-google-api-core~=2.11.0
+google-api-core
 google-api-python-client==2.70.0
 google-cloud-bigquery~=3.0
-google-cloud-iam~=2.9.0
-google-cloud-pubsub~=2.16.0
-google-cloud-run~=0.5.0
+google-cloud-iam
+google-cloud-pubsub
+google-cloud-run
 google-cloud-storage==2.5.0
 gspread==5.7.2
 kubernetes>=28.1.0
 langchain>=0.0.222; python_version >= '3.8'
-mysql-connector-python~=8.0.31
+mysql-connector-python
 openai>=0.27.8, <1.0.0
 opentelemetry-exporter-prometheus==0.41b0
 opentelemetry-instrumentation-tornado==0.41b0
