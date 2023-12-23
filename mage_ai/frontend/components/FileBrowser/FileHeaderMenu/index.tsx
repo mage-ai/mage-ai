@@ -14,6 +14,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { FileHeaderMenuContainerStyle } from './index.style';
 import { PreviewHidden, PreviewOpen } from '@oracle/icons';
+import { SHARED_FILE_HEADER_BUTTON_PROPS } from '@components/PipelineDetail/FileHeaderMenu/constants';
 
 type FileHeaderMenuProps = {
   showHiddenFiles?: boolean;
@@ -65,13 +66,10 @@ function FileHeaderMenu({
         >
           <div style={{ position: 'relative' }}>
             <Button
-              compact
-              highlightOnHoverAlt
+              {...SHARED_FILE_HEADER_BUTTON_PROPS}
               noBackground={highlightedIndex !== 0}
-              noBorder
               onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
               onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
-              padding="4px 12px"
               ref={refView}
             >
               <Text default>

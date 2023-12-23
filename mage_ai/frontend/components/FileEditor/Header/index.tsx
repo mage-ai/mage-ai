@@ -15,6 +15,7 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { SHARED_FILE_HEADER_BUTTON_PROPS } from '@components/PipelineDetail/FileHeaderMenu/constants';
 import { isMac } from '@utils/os';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -103,11 +104,8 @@ function FileHeaderMenu({
       <FlexContainer alignItems="center" fullHeight fullWidth>
         <div style={{ position: 'relative' }}>
           <Button
-            compact
+            {...SHARED_FILE_HEADER_BUTTON_PROPS}
             noBackground={highlightedIndex !== 0}
-            noBorder
-            highlightOnHoverAlt
-            padding="4px 12px"
             onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
             ref={refFile}
@@ -128,11 +126,8 @@ function FileHeaderMenu({
 
         <div style={{ position: 'relative' }}>
           <Button
-            compact
+            {...SHARED_FILE_HEADER_BUTTON_PROPS}
             noBackground={highlightedIndex !== 1}
-            noBorder
-            highlightOnHoverAlt
-            padding="4px 12px"
             onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
             ref={refRun}
@@ -153,12 +148,9 @@ function FileHeaderMenu({
 
         <div style={{ position: 'relative' }}>
           <Button
+            {...SHARED_FILE_HEADER_BUTTON_PROPS}
             beforeIcon={<FileIcon muted={!fileVersionsVisible} />}
-            compact
             noBackground={!fileVersionsVisible}
-            noBorder
-            highlightOnHoverAlt
-            padding="4px 12px"
             onClick={() => setFilesVersionsVisible(!fileVersionsVisible)}
           >
             <Text>
