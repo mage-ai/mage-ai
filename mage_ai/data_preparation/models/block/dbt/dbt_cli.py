@@ -72,8 +72,12 @@ class DBTCli:
         if self.project_path and f'--{Flag.PROJECT_DIR}' not in cli_args:
             cli_args += [f'--{Flag.PROJECT_DIR}', self.project_path]
 
-        log_args = ' '.join(map(str, cli_args))
-        self.__info(f'DBTCli.invoke with args: {log_args}', tags)
+        log_args = [str(a) for a in cli_args]
+        message = 'dbt'
+        if len(log_args) >= 1:
+            message += ' '.join(log_args)
+
+        self.__info(message, tags)
 
         res = dbt.invoke(cli_args)
         self.result.append(res)
