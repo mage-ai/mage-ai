@@ -15,7 +15,6 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { isMac } from '@utils/os';
 import { useKeyboardContext } from '@context/Keyboard';
 
