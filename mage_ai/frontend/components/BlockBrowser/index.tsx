@@ -112,6 +112,8 @@ function Browser({
   useEffect(() => {
     if (selectedItem) {
       setAfterHidden(false);
+    } else {
+      setAfterHidden(true);
     }
   }, [selectedItem]);
 
@@ -146,12 +148,14 @@ function Browser({
         cacheItems={cacheItems}
         onClickAction={onClickAction}
         selectedLinks={selectedLinks}
+        setSelectedLinks={setSelectedLinks}
       />
     );
   }, [
     cacheItems,
     onClickAction,
     selectedLinks,
+    setSelectedLinks,
   ]);
 
   useEffect(() => {
@@ -165,20 +169,9 @@ function Browser({
       <TripleLayout
         after={after}
         afterDividerContrast
-        // afterFooter={afterFooter}
-        // afterFooterBottomOffset={afterFooterBottom}
-        // afterHeader={(
-        //   <Spacing px={1} ref={refAfterHeader}>
-        //     {afterHeader}
-        //   </Spacing>
-        // )}
-        afterHeaderOffset={0}
         afterHeightOffset={0}
         afterHidden={afterHidden}
-        // afterInnerHeightMinus={
-        //   // After header is always 48
-        //   48 + (afterFooter ? (afterFooterBottomOffset || 0) : 0)
-        // }
+        afterInnerHeightMinus={beforeHeaderHeight}
         afterMousedownActive={afterMousedownActive}
         afterWidth={afterWidth}
         before={(
@@ -216,7 +209,7 @@ function Browser({
         contained
         headerOffset={HEADER_HEIGHT}
         height={heightWindow}
-        // hideAfterCompletely={!after || (isOnStreamsOverview && !streams?.length)}
+        hideAfterCompletely={!selectedItem}
         inline
         mainContainerHeader={(
           <BrowserHeader

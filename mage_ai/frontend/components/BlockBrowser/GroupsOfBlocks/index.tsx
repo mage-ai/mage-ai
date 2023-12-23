@@ -29,12 +29,14 @@ type GroupsOfBlocksProps = {
     };
   }) => void;
   selectedLinks?: NavLinkType[];
+  setSelectedLinks: (value: NavLinkType[]) => void;
 };
 
 function GroupsOfBlocks({
   cacheItems,
   onClickAction,
   selectedLinks,
+  setSelectedLinks,
 }: GroupsOfBlocksProps) {
   const selectedBlockType = useMemo(() => selectedLinks?.find(({
     uuid,
@@ -126,10 +128,19 @@ function GroupsOfBlocks({
                 uuid: 'Action',
               },
             ]}
-            // onClickRow={(index: number) => onClickAction({
-            //   cacheItem: cacheItem,
-            //   row: models?.[index],
-            // })}
+            onClickRow={(index: number) => {
+              const row = models?.[index];
+
+              return setSelectedLinks(prev => [{
+                label: () => (
+                  <Text monospace>
+                    {row?.name}
+                  </Text>
+                ),
+                uuid: row?.filePath,
+                // @ts-ignore
+              }].concat(prev));
+            }}
             rows={models?.map((row) => {
               const {
                 directory,
