@@ -1,6 +1,6 @@
 attrs==17.4.0
 azure-storage-blob==12.14.1
-backoff==2.0.0
+backoff
 clickhouse_sqlalchemy
 couchbase==4.1.1
 deltalake==0.7.0
@@ -31,7 +31,7 @@ redshift-connector~=2.0.915
 requests~=2.31.0
 requests_mock==1.10.0
 simple_salesforce~=1.12.5
-simplejson==3.17.6
+simplejson
 singer_sdk~=0.34.1
 snowflake-connector-python==3.2.1
 sshtunnel==0.4.0
