@@ -52,7 +52,20 @@ import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 import { useWindowSize } from '@utils/sizes';
 
-function Browser() {
+type BrowserProps = {
+  onClickAction?: (opts?: {
+    cacheItem: CacheItemType;
+    row?: {
+      directory?: string;
+      filePath?: string;
+      name?: string;
+    };
+  }) => void;
+};
+
+function Browser({
+  onClickAction,
+}: BrowserProps) {
   const mainContainerRef = useRef(null);
   const refHeaderBefore = useRef(null);
 
@@ -89,6 +102,19 @@ function Browser() {
   const [selectedLinks, setSelectedLinks] = useState<NavLinkType[]>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
+  const selectedItem = useMemo(() => cacheItems.find(({
+    item,
+  }) => item?.project?.uuid === selectedLinks?.[0]?.uuid)?.item, [
+    cacheItems,
+    selectedLinks,
+  ]);
+
+  useEffect(() => {
+    if (selectedItem) {
+      setAfterHidden(false);
+    }
+  }, [selectedItem]);
+
   const after = useMemo(() => {
     return (
       <BlocksDetails
@@ -118,11 +144,13 @@ function Browser() {
     return (
       <GroupsOfBlocks
         cacheItems={cacheItems}
+        onClickAction={onClickAction}
         selectedLinks={selectedLinks}
       />
     );
   }, [
     cacheItems,
+    onClickAction,
     selectedLinks,
   ]);
 

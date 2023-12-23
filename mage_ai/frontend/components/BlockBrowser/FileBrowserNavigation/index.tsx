@@ -8,7 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useFiles from '@utils/models/file/useFiles';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import { DBT } from '@oracle/icons';
 import { FileContextTab, NavLinkUUIDEnum, NAV_LINKS } from './constants';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
@@ -30,15 +30,15 @@ function FileBrowserNavigation({
   selectedTab,
   setSelectedLinks,
 }: FileBrowserNavigationProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'FileBrowserNavigation',
+  });
+
   const fileTreeRef = useRef(null);
   const {
     fetch,
     files,
   } = useFiles();
-
-  const [showError] = useError(null, {}, [], {
-    uuid: 'FileBrowserNavigation',
-  });
 
   const navLinks = useMemo(() => {
     if (selectedLinks?.find(({ uuid }) => BlockTypeEnum.DBT === uuid)) {
@@ -81,6 +81,23 @@ function FileBrowserNavigation({
     selectedLinks,
   ]);
 
+  const selectedBlockType = useMemo(() => selectedLinks?.find(({
+    uuid,
+  }) => uuid in ALL_BLOCK_TYPES)?.uuid as BlockTypeEnum, [
+    selectedLinks,
+  ]);
+
+  useEffect(() => {
+    if (selectedBlockType && selectedLinks?.length === 1) {
+      // @ts-ignore
+      setSelectedLinks(prev => [navLinks?.[0]].concat(prev));
+    }
+  }, [
+    navLinks,
+    selectedBlockType,
+    selectedLinks,
+  ]);
+
   return (
     <>
       {FileContextTab.FILES === selectedTab?.uuid && (
@@ -101,9 +118,11 @@ function FileBrowserNavigation({
           selectedLink={selectedLinks?.[0]}
           setSelectedLink={value => setSelectedLinks(prev => {
             if (prev?.length >= 2) {
+              // @ts-ignore
               return [value].concat((prev || []).slice(1));
             }
 
+            // @ts-ignore
             return [value].concat(prev || []);
           })}
         />

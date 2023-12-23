@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import Button from '@oracle/elements/Button';
 import CacheItemType, { CacheItemTypeEnum, DBTCacheItemType } from '@interfaces/CacheItemType';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -14,15 +15,25 @@ import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constan
 import { NavLinkUUIDEnum } from '../FileBrowserNavigation/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PaginateArrowRight } from '@oracle/icons';
+import { pauseEvent } from '@utils/events';
 import { sortByKey } from '@utils/array';
 
 type GroupsOfBlocksProps = {
   cacheItems: CacheItemType[];
+  onClickAction?: (opts?: {
+    cacheItem: CacheItemType;
+    row?: {
+      directory?: string;
+      filePath?: string;
+      name?: string;
+    };
+  }) => void;
   selectedLinks?: NavLinkType[];
 };
 
 function GroupsOfBlocks({
   cacheItems,
+  onClickAction,
   selectedLinks,
 }: GroupsOfBlocksProps) {
   const selectedBlockType = useMemo(() => selectedLinks?.find(({
@@ -34,13 +45,13 @@ function GroupsOfBlocks({
   if (BlockTypeEnum.DBT === selectedBlockType) {
     const arr = sortByKey(cacheItems, ({ item }) => item?.project?.name).filter(({
       item,
-    }) => [NavLinkUUIDEnum.ALL_PROJECTS, item?.project?.uuid].includes(selectedLinks?.[0]?.uuid))
+    }) => [NavLinkUUIDEnum.ALL_PROJECTS, item?.project?.uuid].includes(selectedLinks?.[0]?.uuid));
 
-    const buildTable = (item: DBTCacheItemType) => {
+    const buildTable = (cacheItem: CacheItemType) => {
       const {
         models: modelsInit,
         project,
-      } = item || {
+      } = cacheItem?.item || {
         models: [],
         project: null,
       };
@@ -98,7 +109,7 @@ function GroupsOfBlocks({
           <Divider light />
 
           <Table
-            columnFlex={[null, 1, 1]}
+            columnFlex={[null, 1, 1, null]}
             columns={[
               {
                 uuid: 'Name',
@@ -109,12 +120,23 @@ function GroupsOfBlocks({
               {
                 uuid: 'File',
               },
+              {
+                label: () => '',
+                rightAligned: true,
+                uuid: 'Action',
+              },
             ]}
-            rows={models?.map(({
-              directory,
-              filePath,
-              name,
-            }) => {
+            // onClickRow={(index: number) => onClickAction({
+            //   cacheItem: cacheItem,
+            //   row: models?.[index],
+            // })}
+            rows={models?.map((row) => {
+              const {
+                directory,
+                filePath,
+                name,
+              } = row;
+
               return [
                 <Text key={`model-${name}`} monospace small>
                   {name}
@@ -125,6 +147,23 @@ function GroupsOfBlocks({
                 <Text default key={`model-${filePath}`} monospace small>
                   {filePath}
                 </Text>,
+                <FlexContainer justifyContent="flex-end">
+                  <Button
+                    compact
+                    onClick={(e) => {
+                      pauseEvent(e);
+
+                      return onClickAction({
+                        cacheItem,
+                        row,
+                      });
+                    }}
+                    secondary
+                    small
+                  >
+                    Add to pipeline
+                  </Button>
+                </FlexContainer>
               ];
             })}
           />
@@ -142,13 +181,11 @@ function GroupsOfBlocks({
             [String(idx)]: true,
           }), {})}
         >
-          {arr?.map(({
-            item,
-          }) => {
+          {arr?.map((cacheItem) => {
             const {
               name,
               uuid,
-            } = item?.project || {
+            } = cacheItem?.item?.project || {
               name: null,
               uuid: null,
             };
@@ -173,7 +210,7 @@ function GroupsOfBlocks({
                 titleXPadding={PADDING_UNITS * UNIT}
                 titleYPadding={PADDING_UNITS * UNIT}
               >
-                {buildTable(item)}
+                {buildTable(cacheItem)}
               </AccordionPanel>
             );
           })}
@@ -181,7 +218,7 @@ function GroupsOfBlocks({
       );
     }
 
-    return buildTable(arr?.[0]?.item);
+    return buildTable(arr?.[0]);
   }
 
   return (

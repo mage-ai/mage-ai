@@ -3,7 +3,9 @@ import Browser from '@components/BlockBrowser';
 function Test() {
   return (
     <div>
-      <Browser />
+      <Browser
+        onClickAction={opts => console.log(opts)}
+      />
     </div>
   );
 }
