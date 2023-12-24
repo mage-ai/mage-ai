@@ -175,19 +175,17 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
 `;
 
 export const CodeBlockWrapperStyle = styled.div`
-  &.enable-border-radius {
+  &.disable-border-radius {
     .code-block-header-sticky {
-      border-top-left-radius: 0px;
-      border-top-right-radius: 0px;
+      border-top-left-radius: 0px !important;
+      border-top-right-radius: 0px !important;
     }
  }
 
-  &.enable-border-radius {
-    .code-block-header-sticky {
-      border-top-left-radius: ${BORDER_RADIUS}px;
-      border-top-right-radius: ${BORDER_RADIUS}px;
-    }
- }
+  .code-block-header-sticky {
+    border-top-left-radius: ${BORDER_RADIUS}px;
+    border-top-right-radius: ${BORDER_RADIUS}px;
+  }
 `;
 
 export const ContainerStyle = styled.div`
