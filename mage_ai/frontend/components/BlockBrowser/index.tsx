@@ -66,11 +66,13 @@ import { indexBy, intersection, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pauseEvent } from '@utils/events';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowserProps = {
+  defaultBlockType?: BlockTypeEnum;
   focused?: boolean;
   onClickAction?: (opts?: {
     cacheItem: CacheItemType;
@@ -84,6 +86,7 @@ type BrowserProps = {
 };
 
 function Browser({
+  defaultBlockType,
   focused: focusedProp,
   onClickAction,
   setFocused: setFocusedProp,
@@ -239,6 +242,17 @@ function Browser({
     cacheItems,
     selectedLinks,
   ]);
+
+  useEffect(() => {
+    if (defaultBlockType) {
+      setSelectedTabState(TABS_MAPPING[FileContextTab.BLOCKS]);
+      setSelectedLinks([
+        NAV_LINKS?.find(({
+          uuid,
+        }) => ((uuid as unknown) as BlockTypeEnum) === defaultBlockType),
+      ]);
+    }
+  }, []);
 
   useEffect(() => {
     if (selectedItem) {
@@ -509,7 +523,7 @@ function Browser({
                           }) => uuid === cacheItem?.item?.project?.uuid));
                           arr.push(NAV_LINKS?.find(({
                             uuid,
-                          }) => uuid === BlockTypeEnum.DBT));
+                          }) => ((uuid as unknown) as BlockTypeEnum) === BlockTypeEnum.DBT));
                         }
 
                         setSelectedLinks(arr);

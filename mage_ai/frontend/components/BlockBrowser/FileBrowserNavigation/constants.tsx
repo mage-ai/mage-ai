@@ -19,6 +19,7 @@ export const NAV_LINKS = [
     label: () => 'All blocks',
     uuid: NavLinkUUIDEnum.ALL_BLOCKS,
   },
+  // @ts-ignore
 ].concat(NAV_LINKS_INIT?.filter(({
   uuid,
 }) => uuid in ALL_BLOCK_TYPES));

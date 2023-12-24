@@ -28,7 +28,7 @@ import { useError } from '@context/Error';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
-  cacheItems: CacheItemType;
+  cacheItems: CacheItemType[];
   mainContainerHeight?: number;
   onClickAction?: (opts?: {
     cacheItem: CacheItemType;
@@ -62,7 +62,10 @@ function BlockDetail({
 
   const selectedLink = selectedLinks?.[0];
   const item = useMemo(() => cacheItem?.item, [cacheItem]);
-  const models = useMemo(() => buildModels(item), [
+  const models = useMemo(() => buildModels({
+    models: item?.models,
+    project: item?.project,
+  }), [
     item,
   ]);
   const model = useMemo(() => models?.find(({ filePath }) => filePath === selectedLink?.uuid), [
@@ -150,6 +153,7 @@ function BlockDetail({
 
   useEffect(() => {
     if (TabEnum.DATA === selectedTab?.uuid) {
+      // @ts-ignore
       updateCacheItem({
         cache_item: {},
       });
@@ -339,15 +343,16 @@ function BlockDetail({
                     }) => uuid === configuration?.file_source?.project_path);
 
                     const models = buildModels({
-                      ...(cacheItem2?.item || {}),
                       models: [
                         configuration?.file_path || configuration?.file_source?.path,
                       ],
+                      project: cacheItem2?.item?.project,
                     });
                     const row = models?.[0];
 
                     const value = buildNavLinkModels([row])?.[0];
 
+                    // @ts-ignore
                     return setSelectedLinks(prev => handleNextSelectedLinks(
                       value,
                       prev,
@@ -360,10 +365,10 @@ function BlockDetail({
                       uuid: blockUUID,
                     } = block;
                     const model = buildModels({
-                      ...(item || {}),
                       models: [
                         configuration?.file_path || configuration?.file_source?.path,
                       ],
+                      project: item?.project,
                     })?.[0];
 
                     return [
@@ -440,6 +445,7 @@ function BlockDetail({
                 pannable
                 pipeline={{
                   blocks: upstreamBlocks,
+                  uuid: null,
                 }}
                 zoomable
               />

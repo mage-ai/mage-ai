@@ -3,6 +3,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import { FILE_EXTENSION_ICON_MAPPING } from '@components/FileBrowser/constants';
+import { FileExtensionEnum } from '@interfaces/FileType';
 import { FolderOutline } from '@oracle/icons';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { NavLinkUUIDEnum } from './constants';
@@ -150,8 +151,8 @@ export function handleNextSelectedLinks(valueInit, prev, cacheItems: CacheItemTy
 }
 
 export function handleNavigateBack(numberOfSteps: number, prev) {
-  const count = arr?.length || 0;
   const arr = prev?.slice(numberOfSteps === null ? 1 : numberOfSteps);
+  const count = arr?.length || 0;
 
   if (arr?.length >= 1) {
     return arr;

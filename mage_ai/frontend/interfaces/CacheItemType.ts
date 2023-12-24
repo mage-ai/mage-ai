@@ -20,9 +20,10 @@ interface DBTProfileType {
   uuid: string;
 }
 
-interface DBTProjectType {
+export interface DBTProjectType {
   file_path: string;
   name: string;
+  profile: string;
   uuid: string;
 }
 

@@ -145,6 +145,7 @@ function GroupsOfBlocks({
               uuid,
             }) => uuid === row?.project?.uuid);
 
+            // @ts-ignore
             return setSelectedLinks(prev => handleNextSelectedLinks([
               value,
               navLink,

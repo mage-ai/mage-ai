@@ -1,4 +1,6 @@
 import * as osPath from 'path';
+
+import { DBTProjectType } from '@interfaces/CacheItemType';
 import { sortByKey } from '@utils/array';
 
 export function buildModels({
@@ -6,6 +8,7 @@ export function buildModels({
   project,
 }: {
   models: string[];
+  project: DBTProjectType;
 }) {
   const modelPaths = project?.['model-paths'] || [];
   const regexes = new RegExp(modelPaths?.map((modelPath: string) => [

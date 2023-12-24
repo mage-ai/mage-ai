@@ -21,6 +21,7 @@ type ButtonTabsProps = {
   allowScroll?: boolean;
   compact?: boolean;
   contained?: boolean;
+  large?: boolean;
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
   regularSizeText?: boolean;

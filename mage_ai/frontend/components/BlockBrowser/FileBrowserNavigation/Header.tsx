@@ -17,6 +17,7 @@ function FileBrowserNavigationHeader({
   const tabs = getTabs();
 
   useEffect(() => {
+    // @ts-ignore
     setSelectedTab(prev => prev ? prev : tabs?.[0]);
   }, []);
 

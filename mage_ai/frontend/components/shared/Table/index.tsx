@@ -70,10 +70,14 @@ type TableProps = {
     href: string;
   };
   buildRowProps?: (rowIndex: number) => {
-    cellProps?: { [key: string]: string};
-    renderCell: (cell: any, colIndex: number) => any;
-    renderRow: (cells: any) => any;
-    rowProps?: { [key: string]: string};
+    cellProps?: {
+      [key: string]: string | any;
+    };
+    renderCell?: (cell: any, colIndex: number) => any;
+    renderRow?: (cells: any) => any;
+    rowProps?: {
+      [key: string]: string | any;
+    };
   };
   columnBorders?: boolean;
   columnFlex: number[];

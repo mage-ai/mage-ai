@@ -29,6 +29,7 @@ export type AccordionPanelProps = {
   noBorderRadius?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
+  refContainer?: any;
   singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;

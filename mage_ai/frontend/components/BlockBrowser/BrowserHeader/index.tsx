@@ -16,7 +16,7 @@ import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 type BrowserHeaderPropsProps = {
   children?: any;
-  navigateBack?: () => void;
+  navigateBack?: (value?: number) => void;
   selectedLinks?: NavLinkType[];
   selectedTab?: TabType;
 };

@@ -42,7 +42,9 @@ export const NAV_TABS = [
 export type NavLinkType = {
   Icon?: any;
   description?: () => string | any;
-  label?: () => string | any;
+  label?: (opts?: {
+    [key: string]: any;
+  }) => string | any;
   filterTemplates?: (customTemplates: CustomTemplateType) => CustomTemplateType[];
   selectedBackgroundColor?: (theme: any) => string;
   selectedIconProps?: {

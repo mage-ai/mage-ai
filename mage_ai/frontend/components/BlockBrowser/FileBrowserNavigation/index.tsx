@@ -19,7 +19,7 @@ import { useError } from '@context/Error';
 type FileBrowserNavigationProps = {
   cacheItems: CacheItemType[];
   selectedLinks?: NavLinkType[];
-  selectedTab: (value: TabType) => void;
+  selectedTab?: TabType;
   setSelectedLinks: (value: NavLinkType[]) => void;
 };
 
@@ -54,7 +54,8 @@ function FileBrowserNavigation({
     if (selectedLinks?.find(({ uuid }) => BlockTypeEnum.DBT === uuid)) {
       if (selectedItem && selectedLinks?.length >= 3) {
         const models = buildModels({
-          ...(selectedItem?.item || {}),
+          models: selectedItem?.item?.models,
+          project: selectedItem?.item?.project,
         });
 
         return buildNavLinkModels(models)
@@ -80,13 +81,12 @@ function FileBrowserNavigation({
     <>
       {FileContextTab.FILES === selectedTab?.uuid && (
         <FileBrowser
-          fetchFileTree={fetch}
+          fetchFiles={fetch}
           files={files}
           onClickFile={(path: string) => console.log(path)}
           onClickFolder={(path: string) => console.log(path, true)}
-          onCreateFile={({ path }: FileType) => console.log(path)}
           ref={fileTreeRef}
-          setErrors={showError}
+          showError={showError}
         />
       )}
 
@@ -94,6 +94,7 @@ function FileBrowserNavigation({
         <BlockNavigation
           navLinks={navLinks || []}
           selectedLink={defaultSelectedLink(selectedLinks, navLinks)}
+          // @ts-ignore
           setSelectedLink={value => setSelectedLinks(prev => handleNextSelectedLinks(
             value,
             prev,
