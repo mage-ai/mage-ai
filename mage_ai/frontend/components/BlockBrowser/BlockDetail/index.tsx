@@ -468,7 +468,7 @@ function BlockDetail({
                 {objectServer?.item?.logs?.length >= 1 && (
                   <Spacing mb={PADDING_UNITS}>
                     {objectServer?.item?.logs?.split('\n')?.map(line => (
-                      <Text default key={line} monospace pre>
+                      <Text key={line} monospace muted pre>
                         {line}
                       </Text>
                     ))}

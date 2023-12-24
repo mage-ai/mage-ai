@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import AutocompleteDropdown from '@components/AutocompleteDropdown';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import BlocksDetails from './BlocksDetails';
 import Breadcrumbs from '@components/Breadcrumbs';
@@ -30,12 +31,14 @@ import api from '@api';
 import {
   Close,
   CubeWithArrowDown,
+  Database,
   DocumentIcon,
   Search,
   SettingsWithKnobs,
   Sun,
   Table as TableIcon,
 } from '@oracle/icons';
+import { DropdownStyle, RowStyle, SearchStyle } from '@components/PipelineDetail/AddNewBlocks/v2/index.style';
 import {
   FileContextTab,
   NAV_LINKS,
@@ -43,6 +46,7 @@ import {
   TABS_MAPPING,
 } from './FileBrowserNavigation/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { ItemType, RenderItemProps } from '@components/AutocompleteDropdown/constants';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ESCAPE,
@@ -54,9 +58,10 @@ import {
 import { MainStyle } from './index.style';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { buildModels } from'./utils';
+import { buildNavLinkModels, buildNavLinks, handleNavigateBack } from './FileBrowserNavigation/utils';
 import { get } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { handleNavigateBack } from './FileBrowserNavigation/utils';
 import { indexBy, intersection, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -66,6 +71,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowserProps = {
+  focused?: boolean;
   onClickAction?: (opts?: {
     cacheItem: CacheItemType;
     row?: {
@@ -74,10 +80,13 @@ type BrowserProps = {
       name?: string;
     };
   }) => void;
+  setFocused?: (focused: boolean) => void;
 };
 
 function Browser({
+  focused: focusedProp,
   onClickAction,
+  setFocused: setFocusedProp,
 }: BrowserProps) {
   const mainContainerRef = useRef(null);
   const refHeaderBefore = useRef(null);
@@ -101,6 +110,25 @@ function Browser({
     uuid: componentUUID,
   });
 
+  const [focusedState, setFocusedState] = useState<boolean>(false);
+  const setFocused = useCallback((value: boolean) => {
+    if (setFocusedProp && typeof focusedProp !== undefined) {
+      setFocusedProp?.(value);
+    } else {
+      setFocusedState(value);
+    }
+  }, [
+    focusedProp,
+    setFocusedProp,
+  ]);
+  const focused = useMemo(() => typeof focusedProp === 'undefined'
+    ? focusedState
+    : focusedProp
+  , [
+    focusedProp,
+    focusedState,
+  ]);
+
   const [afterHidden, setAfterHidden] = useState<boolean>(true);
   const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, UNIT * 60));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
@@ -117,7 +145,9 @@ function Browser({
   });
   const cacheItems = useMemo(() => data?.cache_items || [], [data]);
 
+  const [searchText, setSearchTextState] = useState(null);
   const setSearchText = useCallback((value: string) => {
+    setSearchTextState(value);
     refSearchText.current = value;
     refCacheItemsFiltered.current = {};
 
@@ -278,22 +308,54 @@ function Browser({
     componentUUID,
   ]);
 
-  registerOnKeyDown?.(
-    componentUUID,
-    (event, keyMapping) => {
+  registerOnKeyDown?.(componentUUID, (event, keyMapping) => {
+    if (focused) {
       if (keyMapping[KEY_CODE_ESCAPE]) {
         setFocused(false);
         refSearch?.current?.blur();
-      } else if (
-        onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
-          || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
-      ) {
-        event.preventDefault();
-        refSearch?.current?.focus();
       }
-    },
-    [],
-  );
+    }
+
+    if (
+      onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
+        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
+    ) {
+      event.preventDefault();
+      refSearch?.current?.focus();
+    }
+  }, [
+    focused,
+    setFocused,
+  ]);
+
+  const autocompleteItems: ItemType[] = useMemo(() => {
+    const arr = [];
+
+    cacheItems?.forEach((cacheItem) => {
+      buildModels({
+        models: cacheItem?.item?.models || [],
+        project: cacheItem?.item?.project,
+      })?.forEach((model) => {
+        const itemObject = {
+          cacheItem,
+          model,
+        };
+
+        arr.push({
+          itemObject,
+          searchQueries: [
+            model?.fullPath,
+            model?.fullPath?.toLowerCase()?.replaceAll('_', ' ')?.replaceAll('-', ' '),
+            model?.name,
+            model?.name?.toLowerCase()?.replaceAll('_', ' ')?.replaceAll('-', ' '),
+          ],
+          value: model?.fullPath,
+        });
+      });
+    });
+
+    return arr;
+  }, [cacheItems]);
 
   return (
     <>
@@ -351,25 +413,112 @@ function Browser({
                 : null
               }
             >
-              <TextInput
-                afterIcon={(
-                  <KeyboardTextGroup
-                    addPlusSignBetweenKeys
-                    disabled
-                    keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_FORWARD_SLASH]]}
-                  />
-                )}
-                afterIconClick={() => {
-                  refSearch?.current?.focus();
-                }}
-                beforeIcon={<Search />}
-                compact
-                fullWidth
-                onChange={e => setSearchText(e.target.value)}
-                placeholder="Search a file..."
-                small
-                ref={refSearch}
-              />
+              <SearchStyle>
+                <TextInput
+                  afterIcon={(
+                    <KeyboardTextGroup
+                      addPlusSignBetweenKeys
+                      disabled
+                      keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_FORWARD_SLASH]]}
+                    />
+                  )}
+                  afterIconClick={() => {
+                    refSearch?.current?.focus();
+                  }}
+                  beforeIcon={<Search />}
+                  compact
+                  fullWidth
+                  onBlur={() => setTimeout(() => setFocused(false), 150)}
+                  onChange={e => setSearchText(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  placeholder="Search a file..."
+                  small
+                  ref={refSearch}
+                />
+
+                  <DropdownStyle
+                    maxHeight={UNIT * 100}
+                    topOffset={refSearch?.current?.getBoundingClientRect().height}
+                  >
+                    <AutocompleteDropdown
+                      itemGroups={[
+                        {
+                          items: focused ? autocompleteItems : [],
+                          renderItem: (
+                            {
+                              itemObject: {
+                                cacheItem,
+                                model,
+                              },
+                            }: ItemType,
+                            opts: RenderItemProps,
+                          ) => {
+                            const {
+                              filePath,
+                              project,
+                            } = model;
+                            const Icon = Database;
+
+                            return (
+                              <RowStyle
+                                {...opts}
+                                onClick={(e) => {
+                                  pauseEvent(e);
+                                  opts?.onClick?.(e);
+                                }}
+                              >
+                                <Flex
+                                  alignItems="center"
+                                  flex={1}
+                                  justifyContent="space-between"
+                                >
+                                  <FlexContainer alignItems="center">
+                                    <Icon default />
+
+                                    <Spacing mr={1} />
+
+                                    <Text default monospace overflowWrap small textOverflow>
+                                      {filePath}
+                                    </Text>
+                                  </FlexContainer>
+
+                                  <FlexContainer alignItems="center">
+                                    <Spacing mr={1} />
+
+                                    <Text monospace muted overflowWrap small textOverflow>
+                                      {project?.name}
+                                    </Text>
+                                  </FlexContainer>
+                                </Flex>
+                              </RowStyle>
+                            );
+                          },
+                        },
+                      ]}
+                      maxResults={12}
+                      onSelectItem={({
+                        itemObject,
+                      }: ItemType) => {
+                        const arr = [];
+                        const cacheItem =  itemObject?.cacheItem;
+
+                        if (CacheItemTypeEnum.DBT === cacheItem?.item_type) {
+                          arr.push(buildNavLinkModels([itemObject?.model])?.[0]);
+                          arr.push(buildNavLinks(cacheItems)?.find(({
+                            uuid,
+                          }) => uuid === cacheItem?.item?.project?.uuid));
+                          arr.push(NAV_LINKS?.find(({
+                            uuid,
+                          }) => uuid === BlockTypeEnum.DBT));
+                        }
+
+                        setSelectedLinks(arr);
+                      }}
+                      searchQuery={searchText}
+                      uuid={`${componentUUID}/AutocompleteDropdown`}
+                    />
+                  </DropdownStyle>
+              </SearchStyle>
             </BrowserHeader>
 
             <Divider light />

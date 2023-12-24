@@ -186,7 +186,6 @@ function AddNewBlocksV2({
     ],
   );
 
-
   const [createSearchResult] = useMutation(
     api.search_results.useCreate(),
     {

@@ -14,7 +14,7 @@ export function buildModels({
     '',
   ].join(osPath.sep))?.join('|'));
 
-  return sortByKey(models?.map((filePath: string) => {
+  return sortByKey((models || [])?.map((filePath: string) => {
     const modelPath = filePath.replace(regexes, '');
     const parts = modelPath?.split(osPath.sep);
 
