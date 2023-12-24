@@ -1579,10 +1579,10 @@ function CodeBlock({
     }
 
     return (
-      <>
+      <Spacing py={isDataIntegration ? 0 : PADDING_UNITS}>
         {editorEl}
         {callbackEl}
-      </>
+      </Spacing>
     );
   }, [
     autocompleteProviders,
@@ -3590,11 +3590,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                             </Link>
                           </Text>
                         </Spacing>)
-                        : (
-                          <Spacing py={isDataIntegration ? 0 : PADDING_UNITS}>
-                            {codeEditorEl}
-                          </Spacing>
-                        )
+                        : codeEditorEl
                       : markdownEl
                     )
                     : (

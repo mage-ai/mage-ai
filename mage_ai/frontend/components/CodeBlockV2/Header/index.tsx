@@ -14,7 +14,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
-import { ChevronDownV2, ChevronUpV2, Menu } from '@oracle/icons';
+import { ChevronDownV2, ChevronUpV2, Menu, PanelCollapseLeft } from '@oracle/icons';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   HeaderStyle,
@@ -32,10 +32,15 @@ function CodeBlockHeader({
   executionState,
   menuGroups,
   selected,
+  setSideMenuVisible,
+  sideMenuVisible,
   subtitle,
   theme,
   title,
-}: CodeBlockHeaderProps) {
+}: CodeBlockHeaderProps & {
+  sideMenuVisible?: boolean;
+  setSideMenuVisible?: (value: boolean) => void;
+}) {
   console.log('CodeBlockHeader RENDERRRRRRRRRRRRRRRR');
 
   const [subheaderVisible, setSubheaderVisible] = useState(false);
@@ -226,12 +231,13 @@ function CodeBlockHeader({
             noBackground
             noBorder
             noPadding
-            onClick={() => {
-              alert('OPEN LEFT SIDE PANEL');
-            }}
+            onClick={() => setSideMenuVisible(prev => !prev)}
             uuid={`KeyboardShortcutButton/${uuid}/header/menu/button`}
           >
-            <Menu size={ICON_SIZE} />
+            {sideMenuVisible
+              ? <PanelCollapseLeft size={ICON_SIZE} />
+              : <Menu size={ICON_SIZE} />
+            }
           </KeyboardShortcutButton>
 
           <Spacing mr={PADDING_UNITS} />

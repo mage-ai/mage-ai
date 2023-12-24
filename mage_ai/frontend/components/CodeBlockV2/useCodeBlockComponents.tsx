@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import CodeBlockEditor from './Editor';
 import CodeBlockHeader from './Header';
+import MainContent from './MainContent';
 import useDBT from './dbt/useCodeBlockProps';
 import useProject from '@utils/models/project/useProject';
 import { BlockTypeEnum } from '@interfaces/BlockType';
@@ -11,6 +12,8 @@ import { UseCodeBlockComponentProps, UseCodeBlockComponentType } from './constan
 export default function useCodeBlockComponents({
   ...props
 }: UseCodeBlockComponentProps): UseCodeBlockComponentType {
+  const [sideMenuVisible, setSideMenuVisible] = useState(false);
+
   const {
     autocompleteProviders,
     block,
@@ -90,6 +93,7 @@ export default function useCodeBlockComponents({
           selected={selected}
           setSelected={setSelected}
           setTextareaFocused={setTextareaFocused}
+          sideMenuVisible={sideMenuVisible}
           shortcuts={shortcuts}
           textareaFocused={textareaFocused}
           theme={theme}
@@ -114,9 +118,25 @@ export default function useCodeBlockComponents({
     selected,
     setSelected,
     setTextareaFocused,
+    sideMenuVisible,
     shortcuts,
     textareaFocused,
     theme,
+  ]);
+
+  const mainContentMemo = useMemo(() => {
+    if (!editor) {
+      return null;
+    }
+
+    return (
+      <MainContent sideMenuVisible={sideMenuVisible}>
+        {editor}
+      </MainContent>
+    );
+  }, [
+    editor,
+    sideMenuVisible,
   ]);
 
   const header = useMemo(() => {
@@ -132,6 +152,8 @@ export default function useCodeBlockComponents({
           interruptKernel={interruptKernel}
           runBlockAndTrack={runBlockAndTrack}
           selected={selected}
+          setSideMenuVisible={setSideMenuVisible}
+          sideMenuVisible={sideMenuVisible}
           status={status}
           theme={theme}
           {...(codeBlockProps?.header || {})}
@@ -146,12 +168,14 @@ export default function useCodeBlockComponents({
     interruptKernel,
     runBlockAndTrack,
     selected,
+    setSideMenuVisible,
+    sideMenuVisible,
     status,
     theme,
   ]);
 
   return {
-    editor,
+    editor: mainContentMemo,
     extraDetails: null,
     footer: null,
     header,

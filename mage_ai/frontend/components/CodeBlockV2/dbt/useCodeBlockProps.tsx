@@ -189,13 +189,59 @@ export default function useCodeBlockProps({
 
   const menuGroups = [
     {
-      uuid: 'Edit',
+      uuid: 'Augment',
+      items: [
+        {
+          uuid: 'Set block as dynamic',
+        },
+        {
+          uuid: 'Disable block as dynamic',
+        },
+        {
+          uuid: 'Reduce output',
+        },
+        {
+          uuid: 'Don’t reduce output',
+        },
+        {
+          uuid: 'Replicate block',
+        },
+      ],
+    },
+    {
+      uuid: 'Blocks',
       items: [
         {
           uuid: 'Add upstream block',
         },
         {
           uuid: 'Add downstream block',
+        },
+        {
+          uuid: 'Add conditional',
+        },
+        {
+          uuid: 'Add callback',
+        },
+        {
+          uuid: 'Add power up',
+        },
+        {
+          uuid: 'Add/Edit interactions',
+        },
+      ],
+    },
+    {
+      uuid: 'Edit',
+      items: [
+        {
+          uuid: 'Change name',
+        },
+        {
+          uuid: 'Change color',
+        },
+        {
+          uuid: 'All settings',
         },
         {
           uuid: 'Delete block',
