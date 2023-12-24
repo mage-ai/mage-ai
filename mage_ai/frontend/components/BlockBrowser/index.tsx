@@ -42,6 +42,7 @@ import {
   TABS_MAPPING,
 } from './FileBrowserNavigation/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { MainStyle } from './index.style';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { get } from '@storage/localStorage';
@@ -69,6 +70,10 @@ function Browser({
 }: BrowserProps) {
   const mainContainerRef = useRef(null);
   const refHeaderBefore = useRef(null);
+  const refSearch = useRef(null);
+  const refCacheItems = useRef({});
+  const refCacheItemsFiltered = useRef({});
+  const refSearchText = useRef(null);
 
   const componentUUID = useMemo(() => 'dbt/Browser', []);
   const localStorageKeyAfter =
@@ -99,10 +104,89 @@ function Browser({
   const { data } = api.cache_items.list({
     item_type: CacheItemTypeEnum.DBT,
   });
-  const cacheItems: CacheItemType[] = useMemo(() => data?.cache_items, [data]);
+  const cacheItems = useMemo(() => data?.cache_items || [], [data]);
 
-  const [selectedLinks, setSelectedLinks] = useState<NavLinkType[]>(null);
-  const [selectedTab, setSelectedTab] = useState<TabType>(null);
+  const setSearchText = useCallback((value: string) => {
+    refSearchText.current = value;
+    refCacheItemsFiltered.current = {};
+
+    cacheItems?.forEach((cacheItem) => {
+      if (CacheItemTypeEnum.DBT === cacheItem?.item_type) {
+        const node = refCacheItems?.current?.[cacheItem?.uuid];
+
+        const models = cacheItem?.item?.models?.filter((
+          modelName: string,
+        ) => {
+          const match = !refSearchText.current?.length
+            || modelName?.toLowerCase()?.replaceAll('_', ' ')?.replaceAll('-', ' ')?.includes(
+              refSearchText.current,
+            );
+
+          if (node) {
+            const node2 = node?.[modelName];
+
+            if (node2?.current) {
+              if (match) {
+                const classNames = (node2?.current?.className || '')?.split(' ') || [];
+                node2.current.className =
+                  // @ts-ignore
+                  classNames?.filter(cn => !['hide', 'show'].includes(cn)).concat('show')?.join(' ');
+              } else {
+                const classNames = (node2?.current?.className || '')?.split(' ') || [];
+                node2.current.className =
+                  // @ts-ignore
+                  classNames?.filter(cn => !['hide', 'show'].includes(cn)).concat('hide')?.join(' ');
+              }
+            }
+          }
+
+          return match;
+        });
+
+        if (models?.length >= 1) {
+          refCacheItemsFiltered.current[cacheItem.uuid] = {
+            ...(cacheItem || {}),
+            item: {
+              ...(cacheItem.item || {}),
+              models,
+            },
+          };
+
+          if (node?.cacheItem?.current) {
+            const classNames = (node?.cacheItem?.current?.className || '')?.split(' ') || [];
+            node.cacheItem.current.className =
+              // @ts-ignore
+              classNames?.filter(cn => !['hide', 'show'].includes(cn)).concat('show')?.join(' ');
+          }
+        } else {
+          if (node?.cacheItem?.current) {
+            const classNames = (node?.cacheItem?.current?.className || '')?.split(' ') || [];
+            node.cacheItem.current.className =
+              // @ts-ignore
+              classNames?.filter(cn => !['hide', 'show'].includes(cn)).concat('hide')?.join(' ');
+          }
+        }
+      }
+    });
+  }, [cacheItems]);
+
+  const [selectedLinks, setSelectedLinksState] = useState<NavLinkType[]>(null);
+  const [selectedTab, setSelectedTabState] = useState<TabType>(null);
+
+  const setSelectedLinks = useCallback((prev) => {
+    setSelectedLinksState(prev);
+    setSearchText(null);
+    if (refSearch?.current) {
+      refSearch.current.value = '';
+    }
+  }, [setSearchText]);
+  const setSelectedTab = useCallback((prev) => {
+    setSelectedTabState(prev);
+    setSearchText(null);
+    if (refSearch?.current) {
+      refSearch.current.value = '';
+    }
+  }, [setSearchText]);
 
   const selectedItem = useMemo(() => {
     const uuids = selectedLinks?.slice(0, 2)?.map(({ uuid }) => uuid);
@@ -145,18 +229,23 @@ function Browser({
 
   const mainContentMemo = useMemo(() => {
     return (
-      <GroupsOfBlocks
-        cacheItems={cacheItems}
-        mainContainerHeight={mainContainerHeight}
-        onClickAction={onClickAction}
-        selectedLinks={selectedLinks}
-        setSelectedLinks={setSelectedLinks}
-      />
+      <MainStyle>
+        <GroupsOfBlocks
+          cacheItems={cacheItems}
+          mainContainerHeight={mainContainerHeight}
+          onClickAction={onClickAction}
+          refCacheItems={refCacheItems}
+          selectedItem={selectedItem}
+          selectedLinks={selectedLinks}
+          setSelectedLinks={setSelectedLinks}
+        />
+      </MainStyle>
     );
   }, [
     cacheItems,
     mainContainerHeight,
     onClickAction,
+    selectedItem,
     selectedLinks,
     setSelectedLinks,
   ]);
@@ -216,13 +305,31 @@ function Browser({
         hideAfterCompletely={!selectedItem}
         inline
         mainContainerHeader={(
-          <BrowserHeader
-            navigateBack={navigateBack}
-            selectedLinks={selectedLinks?.length >= 2
-              ? selectedLinks
-              : null
-            }
-          />
+          <>
+            <BrowserHeader
+              navigateBack={navigateBack}
+              selectedTab={selectedLinks?.length >= 2
+                ? selectedLinks?.[1]
+                : null
+              }
+            >
+              <TextInput
+                afterIcon={refSearchText.current ? <Close /> : null}
+                afterIconClick={() => {
+                  refSearch?.current?.focus();
+                }}
+                beforeIcon={<Search />}
+                compact
+                fullWidth
+                onChange={e => setSearchText(e.target.value)}
+                placeholder="Search a file..."
+                small
+                ref={refSearch}
+              />
+            </BrowserHeader>
+
+            <Divider light />
+          </>
         )}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}

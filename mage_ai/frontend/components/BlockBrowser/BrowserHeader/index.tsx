@@ -15,12 +15,14 @@ import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 type BrowserHeaderPropsProps = {
+  children?: any;
   navigateBack?: () => void;
   selectedLinks?: NavLinkType[];
   selectedTab?: TabType;
 };
 
 function BrowserHeader({
+  children,
   navigateBack,
   selectedLinks,
   selectedTab,
@@ -37,90 +39,108 @@ function BrowserHeader({
   return (
     <HeaderStyle>
       <FlexContainer alignItems="center" fullHeight>
-        <Spacing px={PADDING_UNITS}>
-          <FlexContainer alignItems="center">
-            {selectedTab && (
-              <>
-                <Link
-                  block
-                  noHoverUnderline
-                  onClick={() => navigateBack?.()}
-                  preventDefault
-                >
-                  <FlexContainer alignItems="center">
-                    <ArrowLeft muted />
-                  </FlexContainer>
-                </Link>
+        <Spacing pl={PADDING_UNITS} />
 
-                <Spacing pr={1} />
+        <FlexContainer alignItems="center">
+          {selectedTab && (
+            <>
+              <Link
+                block
+                noHoverUnderline
+                onClick={() => navigateBack?.()}
+                preventDefault
+              >
+                <FlexContainer alignItems="center">
+                  <ArrowLeft muted />
+                </FlexContainer>
+              </Link>
+
+              <Spacing pr={1} />
+              <Link
+                block
+                noHoverUnderline
+                onClick={() => navigateBack?.(navLinksCount || 1)}
+                preventDefault
+              >
+                <FlexContainer alignItems="center">
+                  {selectedTab?.Icon && (
+                      <>
+                        <selectedTab.Icon />
+
+                        <Spacing mr={1} />
+                      </>
+                    )}
+
+                  <Text bold muted>
+                    {selectedTab?.label
+                      ? selectedTab?.label?.()
+                      : capitalizeRemoveUnderscoreLower(selectedTab?.uuid)
+                    }
+                  </Text>
+                </FlexContainer>
+              </Link>
+            </>
+          )}
+
+          {navLinks?.map((selectedLink, idx: number) => {
+            const {
+              Icon,
+              label,
+              uuid,
+            } = selectedLink || {
+              Icon: null,
+              label: null,
+              uuid: null,
+            };
+
+            return (
+              <FlexContainer alignItems="center" key={uuid}>
+                {(selectedTab || idx >= 1) && (
+                  <>
+                    <Spacing mr={1} />
+
+                    <ChevronRight muted />
+
+                    <Spacing mr={1} />
+                  </>
+                )}
+
                 <Link
                   block
                   noHoverUnderline
-                  onClick={() => navigateBack?.(navLinksCount)}
+                  onClick={() => navigateBack?.((navLinksCount - 1) - idx)}
                   preventDefault
                 >
                   <FlexContainer alignItems="center">
-                    <Text bold muted>
-                      {capitalizeRemoveUnderscoreLower(selectedTab?.uuid)}
+                    {Icon && (
+                      <>
+                        <Icon default={idx >= 1 && navLinks?.length >= 3} />
+
+                        <Spacing mr={1} />
+                      </>
+                    )}
+                    <Text bold muted={idx !== navLinksCount - 1} noWrapping>
+                      {BLOCK_TYPE_NAME_MAPPING[uuid]
+                        || label
+                          ? label?.({
+                            selectedLinks,
+                          })
+                          : uuid
+                      }
                     </Text>
                   </FlexContainer>
                 </Link>
-              </>
-            )}
+              </FlexContainer>
+            );
+          })}
 
-            {navLinks?.map((selectedLink, idx: number) => {
-              const {
-                Icon,
-                label,
-                uuid,
-              } = selectedLink || {
-                Icon: null,
-                label: null,
-                uuid: null,
-              };
+        </FlexContainer>
 
-              return (
-                <FlexContainer alignItems="center" key={uuid}>
-                  {(selectedTab || idx >= 1) && (
-                    <>
-                      <Spacing mr={1} />
+        {(selectedTab || selectedLinks?.length >= 1) && children && <Spacing mr={PADDING_UNITS} />}
 
-                      <ChevronRight muted />
+        {children}
 
-                      <Spacing mr={1} />
-                    </>
-                  )}
-
-                  <Link
-                    block
-                    noHoverUnderline
-                    onClick={() => navigateBack?.((navLinksCount - 1) - idx)}
-                    preventDefault
-                  >
-                    <FlexContainer alignItems="center">
-                      {Icon && (
-                        <>
-                          <Icon default={idx >= 1 && navLinks?.length >= 3} />
-
-                          <Spacing mr={1} />
-                        </>
-                      )}
-                      <Text bold muted={idx !== navLinksCount - 1} noWrapping>
-                        {BLOCK_TYPE_NAME_MAPPING[uuid]
-                          || label
-                            ? label?.({
-                              selectedLinks,
-                            })
-                            : uuid
-                        }
-                      </Text>
-                    </FlexContainer>
-                  </Link>
-                </FlexContainer>
-              );
-            })}
-          </FlexContainer>
-        </Spacing>
+        <Spacing pr={PADDING_UNITS} />
       </FlexContainer>
     </HeaderStyle>
   );

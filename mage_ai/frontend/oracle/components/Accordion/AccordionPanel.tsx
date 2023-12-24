@@ -22,6 +22,7 @@ export type AccordionPanelProps = {
   first?: boolean;
   hideScrollbar?: boolean;
   highlighted?: boolean;
+  id?: string;
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
@@ -216,6 +217,7 @@ const AccordionPanel = ({
   onClick,
   onEntered,
   onExited,
+  refContainer,
   singlePanel,
   smallTitle,
   title,
@@ -229,6 +231,7 @@ const AccordionPanel = ({
   <AccordionPanelStyle
     {...props}
     maxHeight={maxHeight}
+    ref={refContainer}
   >
     <TitleStyle
       first={first}

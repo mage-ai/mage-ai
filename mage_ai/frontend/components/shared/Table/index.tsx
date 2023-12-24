@@ -70,8 +70,10 @@ type TableProps = {
     href: string;
   };
   buildRowProps?: (rowIndex: number) => {
+    cellProps?: { [key: string]: string};
     renderCell: (cell: any, colIndex: number) => any;
     renderRow: (cells: any) => any;
+    rowProps?: { [key: string]: string};
   };
   columnBorders?: boolean;
   columnFlex: number[];
@@ -396,12 +398,16 @@ function Table({
   const rowEls = useMemo(() => rowsSorted?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
     const rowProps = buildRowProps?.(rowIndex) || {
+      cellProps: null,
       renderCell: null,
       renderRow: null,
+      rowProps: null,
     };
     const {
+      cellProps,
       renderCell,
       renderRow,
+      rowProps: rowPropsProp,
     } = rowProps;
 
     const cellEls = [];
@@ -431,6 +437,7 @@ function Table({
             stickyFirstColumn={stickyFirstColumn && colIndex === 0}
             width={calculateCellWidth(colIndex)}
             wrapColumns={wrapColumns}
+            {...(cellProps || {})}
           >
             {cell}
           </TableDataStyle>
@@ -494,6 +501,7 @@ function Table({
             }
             : null
           }
+          {...(rowPropsProp || {})}
         >
           {cellEls}
         </TableRowStyle>
