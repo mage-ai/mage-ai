@@ -124,13 +124,13 @@ function Editor({
     const part1 = parts?.slice(0, lineNumber - 1);
     const part2 = parts?.slice(lineNumber, parts?.length);
     // @ts-ignore
-    const combined = part1.concat([code, '']).concat(part2).join('\n');
+    const combined = part1.concat([code]).concat(part2).join('\n');
 
     setTimeout(() => refEditor.current.focus(), 1);
     setTimeout(() => {
       refEditor?.current?.setPosition({
         column: 1,
-        lineNumber: lineNumber + 1,
+        lineNumber,
       });
     }, 2);
 
