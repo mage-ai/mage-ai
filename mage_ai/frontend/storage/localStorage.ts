@@ -13,6 +13,7 @@ const LOCAL_STORAGE_KEY_OBJECT_COUNTS = 'object_counts';
 export const LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING = 'hide_kernel_warning';
 export const LOCAL_STORAGE_KEY_OAUTH_STATE = 'oauth_state';
 export const LOCAL_STORAGE_KEY_FOLDERS_STATE = 'folders_state';
+export const LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY = 'generate_code_history';
 
 function getCustomCodeKey(featureSetId: string) {
   return `${LOCAL_STORAGE_KEY_CUSTOM_CODE}_${featureSetId}`;

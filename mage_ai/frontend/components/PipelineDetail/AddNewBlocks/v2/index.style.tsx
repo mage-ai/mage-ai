@@ -102,13 +102,13 @@ export const DropdownStyle = styled.div<{
   border-radius: ${BORDER_RADIUS_SMALL}px;
   overflow: auto;
   position: absolute;
-  width: 100%;
   z-index: 5;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).popup};
     box-shadow: ${(props.theme.shadow || dark.shadow).popup};
     max-height: ${props?.maxHeight || UNIT * 40}px;
+    width: ${props.width || '100%'};
   `}
 
   ${props => props.topOffset && `
