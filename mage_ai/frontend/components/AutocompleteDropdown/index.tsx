@@ -18,6 +18,7 @@ import {
   KEY_CODE_SHIFT,
   KEY_CODE_TAB,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type AutocompleteDropdownSharedProps = {
@@ -164,6 +165,10 @@ function AutocompleteDropdown({
       ) {
         if (tabWithoutShift) {
           event.preventDefault();
+        }
+
+        if (keyMapping[KEY_CODE_ENTER]) {
+          pauseEvent(event);
         }
 
         onSelectItem(itemsFlattened[highlightedItemIndex]);

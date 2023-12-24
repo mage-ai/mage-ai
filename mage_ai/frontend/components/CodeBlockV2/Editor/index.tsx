@@ -262,7 +262,7 @@ function Editor({
           if (KEY_CODE_ESCAPE === e.keyCode) {
             pauseEvent(e);
             reset();
-          } else if (KEY_CODE_ENTER === e.keyCode) {
+          } else if (KEY_CODE_ENTER === e.keyCode && refInputValue.current?.length >= 1) {
             pauseEvent(e);
             generateCode();
           }
@@ -282,7 +282,7 @@ function Editor({
       {focusArea}
 
       <DropdownStyle
-        maxHeight={UNIT * 100}
+        maxHeight={UNIT * 80}
         topOffset={refInputContainer?.current?.getBoundingClientRect().height}
         width={`${refInputContainer?.current?.getBoundingClientRect().width - (UNIT * 3)}px`}
       >
@@ -305,20 +305,23 @@ function Editor({
                     }}
                   >
                     <FlexContainer flexDirection="column">
-                      <Text breakSpaces default monospace small>
+                      <Text breakSpaces default monospace xsmall>
                         {itemObject?.code}
                       </Text>
-
-                      <Text breakSpaces monospace muted xsmall>
-                        {itemObject?.description}
-                      </Text>
+                      {itemObject?.description && (
+                        <div style={{ marginTop: 2 }}>
+                          <Text breakSpaces monospace muted xsmall>
+                            {itemObject?.description}
+                          </Text>
+                        </div>
+                      )}
                     </FlexContainer>
                   </RowStyle>
                 );
               },
             },
           ]}
-          maxResults={12}
+          maxResults={10}
           onSelectItem={({
             itemObject,
           }: ItemType) => {
