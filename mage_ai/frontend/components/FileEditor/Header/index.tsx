@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createRef, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import Text from '@oracle/elements/Text';
 import { File as FileIcon } from '@oracle/icons';
 import {
@@ -21,9 +21,16 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
 
+export type MenuGroupType = {
+  items: FlyoutMenuItemType[];
+  label?: () => string;
+  uuid: string;
+};
+
 type FileHeaderMenuProps = {
   children?: any;
   fileVersionsVisible?: boolean;
+  menuGroups?: MenuGroupType[];
   onSave?: () => void;
   setFilesVersionsVisible: (visible: boolean) => void;
 };
@@ -31,10 +38,12 @@ type FileHeaderMenuProps = {
 function FileHeaderMenu({
   children,
   fileVersionsVisible,
+  menuGroups,
   onSave,
   setFilesVersionsVisible,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
+  const refMenuGroups = useRef({});
   const refFile = useRef(null);
   const refRun = useRef(null);
 
@@ -102,62 +111,99 @@ function FileHeaderMenu({
       }}
     >
       <FlexContainer alignItems="center" fullHeight fullWidth>
-        <div style={{ position: 'relative' }}>
-          <Button
-            {...SHARED_FILE_HEADER_BUTTON_PROPS}
-            noBackground={highlightedIndex !== 0}
-            onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
-            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
-            ref={refFile}
-          >
-            <Text>
-              File
-            </Text>
-          </Button>
+        {!menuGroups && (
+          <>
+            <div style={{ position: 'relative' }}>
+              <Button
+                {...SHARED_FILE_HEADER_BUTTON_PROPS}
+                noBackground={highlightedIndex !== 0}
+                onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
+                onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
+                ref={refFile}
+              >
+                <Text>
+                  File
+                </Text>
+              </Button>
 
-          <FlyoutMenu
-            items={fileItems}
-            onClickCallback={() => setHighlightedIndex(null)}
-            open={highlightedIndex === 0}
-            parentRef={refFile}
-            uuid="FileHeaderMenu/file"
-          />
-        </div>
+              <FlyoutMenu
+                items={fileItems}
+                onClickCallback={() => setHighlightedIndex(null)}
+                open={highlightedIndex === 0}
+                parentRef={refFile}
+                uuid="FileHeaderMenu/file"
+              />
+            </div>
 
-        <div style={{ position: 'relative' }}>
-          <Button
-            {...SHARED_FILE_HEADER_BUTTON_PROPS}
-            noBackground={highlightedIndex !== 1}
-            onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
-            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
-            ref={refRun}
-          >
-            <Text>
-              Edit
-            </Text>
-          </Button>
+            <div style={{ position: 'relative' }}>
+              <Button
+                {...SHARED_FILE_HEADER_BUTTON_PROPS}
+                noBackground={highlightedIndex !== 1}
+                onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
+                onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
+                ref={refRun}
+              >
+                <Text>
+                  Edit
+                </Text>
+              </Button>
 
-          <FlyoutMenu
-            items={editItems}
-            onClickCallback={() => setHighlightedIndex(null)}
-            open={highlightedIndex === 1}
-            parentRef={refRun}
-            uuid="FileHeaderMenu/edit"
-          />
-        </div>
+              <FlyoutMenu
+                items={editItems}
+                onClickCallback={() => setHighlightedIndex(null)}
+                open={highlightedIndex === 1}
+                parentRef={refRun}
+                uuid="FileHeaderMenu/edit"
+              />
+            </div>
 
-        <div style={{ position: 'relative' }}>
-          <Button
-            {...SHARED_FILE_HEADER_BUTTON_PROPS}
-            beforeIcon={<FileIcon muted={!fileVersionsVisible} />}
-            noBackground={!fileVersionsVisible}
-            onClick={() => setFilesVersionsVisible(!fileVersionsVisible)}
-          >
-            <Text>
-              {fileVersionsVisible ? 'Hide file versions' : 'Show file versions'}
-            </Text>
-          </Button>
-        </div>
+            <div style={{ position: 'relative' }}>
+              <Button
+                {...SHARED_FILE_HEADER_BUTTON_PROPS}
+                beforeIcon={<FileIcon muted={!fileVersionsVisible} />}
+                noBackground={!fileVersionsVisible}
+                onClick={() => setFilesVersionsVisible(!fileVersionsVisible)}
+              >
+                <Text>
+                  {fileVersionsVisible ? 'Hide file versions' : 'Show file versions'}
+                </Text>
+              </Button>
+            </div>
+          </>
+        )}
+
+        {menuGroups && menuGroups?.map(({
+          items,
+          label,
+          uuid,
+        }, idx: number) => {
+          const refMenuGroup = refMenuGroups?.current?.[uuid] || createRef();
+          refMenuGroups.current[uuid] = refMenuGroup;
+
+          return (
+            <div key={uuid} style={{ position: 'relative' }}>
+              <Button
+                {...SHARED_FILE_HEADER_BUTTON_PROPS}
+                noBackground={highlightedIndex !== idx}
+                onClick={() => setHighlightedIndex(val => val === idx ? null : idx)}
+                onMouseEnter={() => setHighlightedIndex(val => val !== null ? idx : null)}
+                ref={refMenuGroup}
+              >
+                <Text>
+                  {label ? label?.() : uuid}
+                </Text>
+              </Button>
+
+              <FlyoutMenu
+                items={items}
+                onClickCallback={() => setHighlightedIndex(null)}
+                open={highlightedIndex === idx}
+                parentRef={refMenuGroup}
+                uuid={`FileHeaderMenu/${uuid}/${idx}`}
+              />
+            </div>
+          );
+        })}
 
         {children}
       </FlexContainer>

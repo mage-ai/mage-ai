@@ -37,7 +37,7 @@ export const HeaderStyle = styled.div`
   padding: ${UNIT * 1}px;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.chartBlock};
+    background-color: ${(props.theme || dark).background.dashboard};
   `}
 `;
 
@@ -49,4 +49,9 @@ export const SubheaderButtonStyle = styled.div`
   position: absolute;
   right: 0;
   width: ${ICON_SIZE}px;
+`;
+
+export const SubheaderStyle = styled.div`
+  padding-bottom: ${UNIT / 2}px;
+  padding-top: ${UNIT / 2}px;
 `;

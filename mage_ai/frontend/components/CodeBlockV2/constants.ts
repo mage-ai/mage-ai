@@ -5,14 +5,19 @@ import StatusType from '@interfaces/StatusType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
+import { MenuGroupType } from '@components/FileEditor/Header';
 import { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
 import { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
 import { ProvidersType } from '@components/CodeEditor/autocomplete/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 
 export enum ButtonUUIDEnum {
+  BUILD = 'build',
   EXECUTE = 'execute',
   EXECUTE_CANCEL = 'execute_cancel',
+  RUN = 'run',
+  RUN_UPSTREAM = 'run_upstream',
+  TEST = 'test',
 }
 
 export type RunBlockAndTrackProps = {
@@ -22,7 +27,9 @@ export type RunBlockAndTrackProps = {
   runDownstream?: boolean;
   runIncompleteUpstream?: boolean;
   runSettings?: {
+    build_model?: boolean;
     run_model?: boolean;
+    test_model?: boolean;
   };
   runUpstream?: boolean;
   runTests?: boolean;
@@ -103,6 +110,7 @@ export type CodeBlockEditorProps = {
 
 export type CodeBlockHeaderProps = {
   buttons: ButtonType[];
+  menuGroups?: MenuGroupType[];
   subtitle?: string;
   title: string;
 } & UseCodeBlockComponentProps;

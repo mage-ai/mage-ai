@@ -6,7 +6,15 @@ import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
-import { AISparkle, PlayButtonFilled, PauseV2 } from '@oracle/icons';
+import {
+  AISparkle,
+  BlocksCombined,
+  Callback,
+  Monitor,
+  PauseV2,
+  PlayButtonFilled,
+  TreeWithArrowsUp,
+} from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { ICON_SIZE } from '../Header/index.style';
@@ -123,6 +131,157 @@ export default function useCodeBlockProps({
     visible: ({ active }) => active,
   };
 
+  const buttonRun = {
+    Icon: Callback,
+    description: 'Run model',
+    disabled: ({ active }) => active,
+    label: () => 'Run',
+    onClick: () => {
+      runBlockAndTrack({
+        block,
+        runSettings: {
+          run_model: true,
+        },
+      });
+    },
+    uuid: ButtonUUIDEnum.RUN,
+  };
+  const buttonTest = {
+    Icon: Monitor,
+    description: 'Test model',
+    disabled: ({ active }) => active,
+    label: () => 'Test',
+    onClick: () => {
+      runBlockAndTrack({
+        block,
+        test_model: true,
+      });
+    },
+    uuid: ButtonUUIDEnum.TEST,
+  };
+  const buttonBuild = {
+    Icon: BlocksCombined,
+    description: 'Build model',
+    disabled: ({ active }) => active,
+    label: () => 'Build',
+    onClick: () => {
+      runBlockAndTrack({
+        block,
+        build_model: true,
+      });
+    },
+    uuid: ButtonUUIDEnum.BUILD,
+  };
+
+  const buttonRunUpstream = {
+    Icon: TreeWithArrowsUp,
+    color: color?.accent,
+    description: 'Execute and run all upstream blocks',
+    disabled: ({ active }) => active,
+    onClick: () => {
+      runBlockAndTrack({
+        block,
+        runUpstream: true,
+      });
+    },
+    uuid: ButtonUUIDEnum.RUN_UPSTREAM,
+  };
+
+  const menuGroups = [
+    {
+      uuid: 'Edit',
+      items: [
+        {
+          uuid: 'Add upstream block',
+        },
+        {
+          uuid: 'Add downstream block',
+        },
+        {
+          uuid: 'Delete block',
+        },
+      ],
+    },
+    {
+      uuid: 'View',
+      items: [
+        {
+          uuid: 'Hide block',
+        },
+        {
+          isGroupingTitle: true,
+          uuid: 'Collapse / Expand',
+        },
+        {
+          uuid: 'Collapse code',
+        },
+        {
+          uuid: 'Expand code',
+        },
+        {
+          uuid: 'Collapse output',
+        },
+        {
+          uuid: 'Expand output',
+        },
+        {
+          isGroupingTitle: true,
+          uuid: 'Split view',
+        },
+        {
+          uuid: 'Show output below block',
+        },
+        {
+          uuid: 'Show output next to code (beta)',
+        },
+        {
+          uuid: 'Scroll output alongside code (beta)',
+        },
+      ],
+    },
+    {
+      uuid: 'Artifacts',
+      items: [
+        {
+          isGroupingTitle: true,
+          uuid: 'Document code',
+        },
+        {
+          uuid: 'Add code comments',
+        },
+        {
+          uuid: 'Add documentation with markdown blocks',
+        },
+        {
+          isGroupingTitle: true,
+          uuid: 'Visualize code',
+        },
+        {
+          uuid: 'Add a chart',
+        },
+      ],
+    },
+    {
+      uuid: 'Help',
+      items: [
+        {
+          uuid: 'Live chat 24/7',
+          linkProps: {
+            href: 'https://mage.ai/chat',
+            openNewWindow: true,
+          },
+        },
+        {
+          uuid: 'Developer documentation',
+          linkProps: {
+            href: 'https://docs.mage.ai',
+            openNewWindow: true,
+          },
+        },
+      ],
+    },
+  ];
+
   return {
     editor: {
 
@@ -130,8 +289,13 @@ export default function useCodeBlockProps({
     header: {
       buttons: [
         buttonExecute,
+        buttonRunUpstream,
+        buttonRun,
+        buttonTest,
+        buttonBuild,
         buttonExecuteCancel,
       ],
+      menuGroups,
       subtitle,
       title,
     },

@@ -1,9 +1,11 @@
 import * as osPath from 'path';
 import { CSSTransition } from 'react-transition-group';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import CodeBlockHeaderProps from '../constants';
+import Divider from '@oracle/elements/Divider';
+import FileEditorHeader from '@components/FileEditor/Header';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
@@ -12,13 +14,14 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
-import { ChevronDownV2, Menu } from '@oracle/icons';
+import { ChevronDownV2, ChevronUpV2, Menu } from '@oracle/icons';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   HeaderStyle,
   HeaderWrapperStyle,
   ICON_SIZE,
   SubheaderButtonStyle,
+  SubheaderStyle,
 } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -27,11 +30,14 @@ function CodeBlockHeader({
   block,
   buttons,
   executionState,
+  menuGroups,
   selected,
   subtitle,
   theme,
   title,
 }: CodeBlockHeaderProps) {
+  const [subheaderVisible, setSubheaderVisible] = useState(false);
+
   const {
     active = false,
     running = false,
@@ -49,7 +55,6 @@ function CodeBlockHeader({
   }, [
     executionState,
   ]);
-
 
   const {
     color: blockColor,
@@ -151,6 +156,7 @@ function CodeBlockHeader({
           noBorder={iconOnly}
           noPadding={iconOnly}
           onClick={onClick}
+          outline
           uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
           {iconEl}
@@ -161,15 +167,17 @@ function CodeBlockHeader({
 
       if (description) {
         el = (
-          <Tooltip
-            appearBefore
-            block
-            description={description}
-            size={null}
-            widthFitContent
-          >
-            {el}
-          </Tooltip>
+          <div style={{ position: 'relative' }}>
+            <Tooltip
+              appearAfter
+              block
+              label={description}
+              size={null}
+              widthFitContent
+            >
+              {el}
+            </Tooltip>
+          </div>
         );
       }
 
@@ -198,6 +206,14 @@ function CodeBlockHeader({
     selected,
     uuid,
     waiting,
+  ]);
+
+  const menuMemo = useMemo(() => menuGroups?.length >= 1 && (
+    <FileEditorHeader
+      menuGroups={menuGroups}
+    />
+  ), [
+    menuGroups,
   ]);
 
   return (
@@ -249,11 +265,21 @@ function CodeBlockHeader({
           <Spacing mr={PADDING_UNITS} />
 
           <Tooltip
+            appearBefore
             block
-            label={[
-              LANGUAGE_DISPLAY_MAPPING[language],
-              BLOCK_TYPE_NAME_MAPPING[type],
-            ].filter(i => i).join(' ')}
+            label={(
+              <FlexContainer alignItems="center">
+                <Text inline monospace>
+                  {LANGUAGE_DISPLAY_MAPPING[language]}
+                </Text>
+
+                <Spacing mr={1} />
+
+                <Text color={color?.accent} inline monospace>
+                  {BLOCK_TYPE_NAME_MAPPING[type]}
+                </Text>
+              </FlexContainer>
+            )}
             size={null}
             widthFitContent
           >
@@ -268,26 +294,29 @@ function CodeBlockHeader({
         </FlexContainer>
       </HeaderStyle>
 
-      <SubheaderButtonStyle>
-        <CSSTransition
-          classNames="chevron-down"
-          in
-          timeout={400}
-        >
-          <KeyboardShortcutButton
-            className="chevron-down-enter-done-visible"
-            noBackground
-            noBorder
-            noPadding
-            onClick={() => {
-              alert('OPEN SUBHEADER');
-            }}
-            uuid={`KeyboardShortcutButton/${uuid}/subheader/menu/button`}
+      {menuGroups?.length >= 1 && (
+        <SubheaderButtonStyle>
+          <CSSTransition
+            classNames="chevron-down"
+            in
+            timeout={400}
           >
-            <ChevronDownV2 default size={ICON_SIZE} />
-          </KeyboardShortcutButton>
-        </CSSTransition>
-      </SubheaderButtonStyle>
+            <KeyboardShortcutButton
+              className="chevron-down-enter-done-visible"
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => {
+                setSubheaderVisible(!subheaderVisible)
+              }}
+              uuid={`KeyboardShortcutButton/${uuid}/subheader/menu/button`}
+            >
+              {subheaderVisible && <ChevronUpV2 default size={ICON_SIZE} />}
+              {!subheaderVisible && <ChevronDownV2 default size={ICON_SIZE} />}
+            </KeyboardShortcutButton>
+          </CSSTransition>
+        </SubheaderButtonStyle>
+      )}
 
       {running && (
         <div style={{ position: 'absolute', width: '100%' }}>
@@ -297,6 +326,16 @@ function CodeBlockHeader({
             width="100%"
           />
         </div>
+      )}
+
+      {menuGroups?.length >= 1 && subheaderVisible && (
+        <>
+          <Divider light />
+
+          <SubheaderStyle>
+            {menuMemo}
+          </SubheaderStyle>
+        </>
       )}
     </HeaderWrapperStyle>
   );

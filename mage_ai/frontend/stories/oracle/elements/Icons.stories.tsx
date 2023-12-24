@@ -42,6 +42,7 @@ import {
   Check,
   ChevronDown,
   ChevronDownV2,
+  ChevronUpV2,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -163,6 +164,9 @@ import {
   ZoomOut,
   BatchSquaresStacked,
   FolderOutline,
+  BlocksCombined,
+  TreeWithArrowsDown,
+  TreeWithArrowsUp,
 } from '@oracle/icons';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
@@ -207,6 +211,7 @@ const ICONS = [
   Check,
   ChevronDown,
   ChevronDownV2,
+  ChevronUpV2,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -330,6 +335,9 @@ const ICONS = [
   ZoomOut,
   BatchSquaresStacked,
   FolderOutline,
+  BlocksCombined,
+  TreeWithArrowsDown,
+  TreeWithArrowsUp,
 ];
 
 const Icons = () => (

@@ -12,15 +12,6 @@ export default function useCodeBlockComponents({
   ...props
 }: UseCodeBlockComponentProps): UseCodeBlockComponentType {
   const {
-    featureEnabled,
-    featureUUIDs,
-  } = useProject();
-
-  if (!featureEnabled?.(featureUUIDs?.CODE_BLOCK_V2)) {
-    return {};
-  }
-
-  const {
     autocompleteProviders,
     block,
     content,
@@ -43,9 +34,19 @@ export default function useCodeBlockComponents({
     theme,
   } = props;
 
-  if (![PipelineTypeEnum.PYTHON, PipelineTypeEnum.PYSPARK].includes(pipeline?.type)) {
-    return {};
-  }
+  const {
+    featureEnabled,
+    featureUUIDs,
+  } = useProject();
+
+  const enabled = useMemo(() => [
+    PipelineTypeEnum.PYTHON,
+    PipelineTypeEnum.PYSPARK,
+  ].includes(pipeline?.type) && featureEnabled?.(featureUUIDs?.CODE_BLOCK_V2), [
+    featureEnabled,
+    featureUUIDs,
+    pipeline,
+  ]);
 
   const {
     type,
@@ -54,17 +55,26 @@ export default function useCodeBlockComponents({
   };
 
   const codeBlockProps = useMemo(() => {
+    if (!enabled) {
+      return null;
+    }
+
     if (BlockTypeEnum.DBT === type) {
       return useDBT(props);
     }
   }, [
     block,
+    enabled,
     executionState,
     selected,
     status,
   ]);
 
   const editor = useMemo(() => {
+    if (!enabled) {
+      return null;
+    }
+
     if (codeBlockProps?.editor) {
       return (
         <CodeBlockEditor
@@ -91,9 +101,14 @@ export default function useCodeBlockComponents({
     return null;
   }, [
     codeBlockProps,
+    enabled,
   ]);
 
   const header = useMemo(() => {
+    if (!enabled) {
+      return null;
+    }
+
     if (codeBlockProps?.header) {
       return (
         <CodeBlockHeader
@@ -110,8 +125,8 @@ export default function useCodeBlockComponents({
     }
   }, [
     codeBlockProps,
+    enabled,
   ]);
-
 
   return {
     editor,
