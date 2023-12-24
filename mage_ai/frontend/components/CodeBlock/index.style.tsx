@@ -211,8 +211,6 @@ export const BlockHeaderStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  padding-bottom: ${1 * UNIT}px;
-  padding-top: ${1 * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};

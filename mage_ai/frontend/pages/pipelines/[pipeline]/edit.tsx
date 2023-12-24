@@ -3063,7 +3063,6 @@ function PipelineDetailPage({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
-      project={project}
       restartKernel={restartKernel}
       runBlock={runBlock}
       runningBlocks={runningBlocks}
@@ -3134,7 +3133,6 @@ function PipelineDetailPage({
     openSidekickView,
     pipeline,
     pipelineContentTouched,
-    project,
     restartKernel,
     runBlock,
     runningBlocks,

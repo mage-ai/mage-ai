@@ -41,6 +41,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
 import {
   ANIMATION_DURATION,
@@ -147,7 +148,6 @@ type PipelineDetailProps = {
   }) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
-  project?: ProjectType;
   restartKernel: () => void;
   runBlock: (payload: {
     block: BlockType;
@@ -233,7 +233,6 @@ function PipelineDetail({
   openSidekickView,
   pipeline,
   pipelineContentTouched,
-  project,
   restartKernel,
   runBlock,
   runningBlocks = [],
@@ -262,6 +261,11 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
+  const {
+    featureEnabled,
+    featureUUIDs,
+    project,
+  } = useProject();
   const { status } = useStatus();
 
   const containerRef = useRef(null);
@@ -272,6 +276,7 @@ function PipelineDetail({
   const [focusedAddNewBlockSearch, setFocusedAddNewBlockSearch] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
+  const [entered, setEntered] = useState<boolean>(false);
   const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
   const [lastBlockIndex, setLastBlockIndex] = useState<number>(null);
   const [creatingNewDBTModel, setCreatingNewDBTModel] = useState<boolean>(false);
@@ -414,11 +419,13 @@ function PipelineDetail({
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
 
   const useV2AddNewBlock = useMemo(
-    () => PipelineTypeEnum.PYTHON === pipeline?.type
-      && project?.features?.[FeatureUUIDEnum.ADD_NEW_BLOCK_V2],
+    () => PipelineTypeEnum.PYTHON === pipeline?.type && featureEnabled?.(
+      featureUUIDs?.ADD_NEW_BLOCK_V2,
+    ),
     [
+      featureEnabled,
+      featureUUIDs,
       pipeline,
-      project,
     ],
   );
 
@@ -1093,6 +1100,12 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     status,
   ]);
 
+  useEffect(() => {
+    if (entered && project) {
+      setTimeout(() => setVisibleOverlay(false), ANIMATION_DURATION)
+    }
+  }, [entered, project]);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <PipelineContainerStyle ref={containerRef}>
@@ -1100,7 +1113,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           <CSSTransition
             classNames="pipeline-detail"
             in={visible}
-            onEntered={() => setTimeout(() => setVisibleOverlay(false), ANIMATION_DURATION)}
+            onEntered={() => setEntered(true)}
             timeout={1}
           >
             <OverlayStyle />
