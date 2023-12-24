@@ -6,18 +6,36 @@ import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
   AISparkle,
+  BatchSquaresStacked,
+  Conditional,
+  ChevronUp,
+  ChevronDown,
+  BatchPipeline,
+  Close,
   BlocksCombined,
+  Alphabet,
+  LayoutStacked,
+  LayoutSplit,
+  SettingsWithKnobs,
+  TreeWithArrowsDown,
+  PowerUps,
+  Trash,
   Callback,
+  Filter,
   Monitor,
+  Interactions,
   PauseV2,
+  Edit,
   PlayButtonFilled,
   TreeWithArrowsUp,
+  VisibleEye,
 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import { ICON_SIZE } from '../Header/index.style';
+import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -29,22 +47,46 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
+const MENU_ICON_PROPS = {
+  default: true,
+  size: MENU_ICON_SIZE,
+};
+
 export default function useCodeBlockProps({
   block,
+  codeCollapsed,
+  deleteBlock,
   executionState,
   interruptKernel,
+  openSidekickView,
+  outputCollapsed,
   runBlockAndTrack,
+  savePipelineContent,
+  scrollTogether,
+  setCodeCollapsed,
+  setHiddenBlocks,
+  setOutputCollapsed,
+  setScrollTogether,
+  setSideBySideEnabled,
+  sideBySideEnabled,
   theme,
-}: UseCodeBlockPropsType) {
+  updatePipeline,
+}: UseCodeBlockPropsType): UseCodeBlockComponentType {
   const {
     color: blockColor,
     configuration,
+    replicated_block: replicatedBlock,
     type,
     uuid,
   } = block;
+  const {
+    dynamic,
+    reduce_output: reduceOutput,
+  } = configuration || {};
 
   const color = getColorsForBlockType(type, {
     blockColor,
@@ -192,19 +234,64 @@ export default function useCodeBlockProps({
       uuid: 'Augment',
       items: [
         {
+          isGroupingTitle: true,
+          uuid: 'Dynamic',
+        },
+        {
+          beforeIcon: <TreeWithArrowsDown success={dynamic} {...MENU_ICON_PROPS} />,
+          disabled: dynamic,
           uuid: 'Set block as dynamic',
+          onClick: () => savePipelineContent({
+            block: {
+              ...block,
+              configuration: {
+                ...configuration,
+                dynamic: true,
+              },
+            },
+          }),
         },
         {
+          beforeIcon: <Close disabled={!dynamic} {...MENU_ICON_PROPS} />,
+          disabled: !dynamic,
           uuid: 'Disable block as dynamic',
+          onClick: () => savePipelineContent({
+            block: {
+              ...block,
+              configuration: {
+                ...configuration,
+                dynamic: false,
+              },
+            },
+          }),
         },
         {
+          beforeIcon: <Filter success={reduceOutput} {...MENU_ICON_PROPS} />,
           uuid: 'Reduce output',
+          disabled: reduceOutput,
+          onClick: () => savePipelineContent({
+            block: {
+              ...block,
+              configuration: {
+                ...configuration,
+                reduce_output: true,
+              },
+            },
+          }),
         },
         {
+          beforeIcon: <Close disabled={!reduceOutput} {...MENU_ICON_PROPS} />,
           uuid: 'Don’t reduce output',
-        },
-        {
-          uuid: 'Replicate block',
+          disabled: !reduceOutput,
+          onClick: () => savePipelineContent({
+            block: {
+              ...block,
+              configuration: {
+                ...configuration,
+                reduce_output: false,
+              },
+            },
+          }),
         },
       ],
     },
@@ -212,22 +299,38 @@ export default function useCodeBlockProps({
       uuid: 'Blocks',
       items: [
         {
-          uuid: 'Add upstream block',
+          beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS} />,
+          uuid: 'Add upstream models',
+          tooltip: () => 'Add upstream models for this model to the pipeline.',
+          onClick: () => updatePipeline({
+            pipeline: {
+              add_upstream_for_block_uuid: uuid,
+            },
+          }),
         },
         {
-          uuid: 'Add downstream block',
-        },
-        {
+          beforeIcon: <Conditional {...MENU_ICON_PROPS} />,
           uuid: 'Add conditional',
+          onClick: () => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+            addon: AddonBlockTypeEnum.CONDITIONAL,
+          }),
         },
         {
+          beforeIcon: <Callback {...MENU_ICON_PROPS} />,
           uuid: 'Add callback',
+          onClick: () => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+            addon: AddonBlockTypeEnum.CALLBACK,
+          }),
         },
         {
+          beforeIcon: <PowerUps {...MENU_ICON_PROPS} />,
           uuid: 'Add power up',
+          onClick: () => openSidekickView(ViewKeyEnum.EXTENSIONS, true),
         },
         {
+          beforeIcon: <Interactions {...MENU_ICON_PROPS} />,
           uuid: 'Add/Edit interactions',
+          onClick: () => openSidekickView(ViewKeyEnum.INTERACTIONS, true),
         },
       ],
     },
@@ -235,16 +338,34 @@ export default function useCodeBlockProps({
       uuid: 'Edit',
       items: [
         {
+          beforeIcon: <Alphabet {...MENU_ICON_PROPS} />,
           uuid: 'Change name',
+          onClick: () => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS, true),
         },
         {
+          beforeIcon: <Edit {...MENU_ICON_PROPS} />,
           uuid: 'Change color',
+          onClick: () => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS, true),
         },
         {
+          beforeIcon: <SettingsWithKnobs {...MENU_ICON_PROPS} />,
           uuid: 'All settings',
+          onClick: () => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS, true),
         },
         {
+          beforeIcon: <BatchSquaresStacked disabled={!!replicatedBlock} {...MENU_ICON_PROPS} />,
+          uuid: 'Replicate block',
+          disabled: !!replicatedBlock,
+          onClick: () => addNewBlock({
+            replicated_block: uuid,
+          }),
+        },
+        {
+          beforeIcon: <Trash {...MENU_ICON_PROPS} />,
           uuid: 'Delete block',
+          onClick: () => {
+            deleteBlock(block);
+          },
         },
       ],
     },
@@ -252,36 +373,60 @@ export default function useCodeBlockProps({
       uuid: 'View',
       items: [
         {
+          beforeIcon: <VisibleEye {...MENU_ICON_PROPS} />,
           uuid: 'Hide block',
+          onClick: () => {
+            setHiddenBlocks(prev => ({
+              ...prev,
+              [uuid]: block,
+            }));
+          },
         },
         {
-          isGroupingTitle: true,
-          uuid: 'Collapse / Expand',
-        },
-        {
+          disabled: codeCollapsed,
+          beforeIcon: <ChevronUp disabled={codeCollapsed} {...MENU_ICON_PROPS} />,
           uuid: 'Collapse code',
+          onClick: () => setCodeCollapsed(true),
         },
         {
+          disabled: !codeCollapsed,
+          beforeIcon: <ChevronDown disabled={!codeCollapsed} {...MENU_ICON_PROPS} />,
           uuid: 'Expand code',
+          onClick: () => setCodeCollapsed(false),
         },
         {
+          disabled: outputCollapsed,
+          beforeIcon: <ChevronUp disabled={outputCollapsed} {...MENU_ICON_PROPS} />,
           uuid: 'Collapse output',
+          onClick: () => setOutputCollapsed(true),
         },
         {
+          disabled: !outputCollapsed,
+          beforeIcon: <ChevronDown disabled={!outputCollapsed} {...MENU_ICON_PROPS} />,
           uuid: 'Expand output',
+          onClick: () => setOutputCollapsed(false),
         },
         {
           isGroupingTitle: true,
           uuid: 'Split view',
         },
         {
+          disabled: !sideBySideEnabled,
+          beforeIcon: <LayoutStacked disabled={!sideBySideEnabled} {...MENU_ICON_PROPS} />,
           uuid: 'Show output below block',
+          onClick: () => setSideBySideEnabled(false),
         },
         {
+          disabled: sideBySideEnabled,
+          beforeIcon: <LayoutSplit success={sideBySideEnabled} disabled={sideBySideEnabled} {...MENU_ICON_PROPS} />,
           uuid: 'Show output next to code (beta)',
+          onClick: () => setSideBySideEnabled(true),
         },
         {
+          disabled: !sideBySideEnabled || scrollTogether,
+          beforeIcon: <LayoutSplit success={scrollTogether} disabled={!sideBySideEnabled || scrollTogether} {...MENU_ICON_PROPS} />,
           uuid: 'Scroll output alongside code (beta)',
+          onClick: () => setScrollTogether(true),
         },
       ],
     },

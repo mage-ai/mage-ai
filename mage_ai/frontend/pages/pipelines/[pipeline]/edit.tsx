@@ -3081,6 +3081,8 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
+      setSideBySideEnabled={setSideBySideEnabled}
+      setScrollTogether={setScrollTogether}
       setTextareaFocused={setTextareaFocused}
       showBlockBrowserModal={showBlockBrowserModal}
       showBrowseTemplates={showBrowseTemplates}
@@ -3146,6 +3148,8 @@ function PipelineDetailPage({
     setPipelineContentTouched,
     setSelectedBlock,
     setTextareaFocused,
+    setSideBySideEnabled,
+    setScrollTogether,
     showAddBlockModal,
     showBlockBrowserModal,
     showBrowseTemplates,

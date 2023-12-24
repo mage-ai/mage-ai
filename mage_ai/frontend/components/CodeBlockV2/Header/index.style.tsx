@@ -5,6 +5,7 @@ import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const ICON_SIZE = UNIT * 2.5;
+export const MENU_ICON_SIZE = UNIT * 1.5;
 
 export const HeaderWrapperStyle = styled.div`
   &:hover {

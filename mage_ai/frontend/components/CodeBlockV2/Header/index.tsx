@@ -160,7 +160,7 @@ function CodeBlockHeader({
           }
           loading={loading}
           noBackground={iconOnly}
-          noBorder={iconOnly}
+          borderless={iconOnly}
           noPadding={iconOnly}
           onClick={onClick}
           outline
@@ -229,15 +229,23 @@ function CodeBlockHeader({
         <FlexContainer alignItems="center">
           <KeyboardShortcutButton
             noBackground
-            noBorder
             noPadding
             onClick={() => setSideMenuVisible(prev => !prev)}
+            outline
             uuid={`KeyboardShortcutButton/${uuid}/header/menu/button`}
           >
-            {sideMenuVisible
-              ? <PanelCollapseLeft size={ICON_SIZE} />
-              : <Menu size={ICON_SIZE} />
-            }
+            <Tooltip
+              appearAfter
+              block
+              label="Open menu"
+              size={ICON_SIZE}
+              widthFitContent
+            >
+              {sideMenuVisible
+                ? <PanelCollapseLeft active size={ICON_SIZE} />
+                : <Menu fill={color?.accent} size={ICON_SIZE} />
+              }
+            </Tooltip>
           </KeyboardShortcutButton>
 
           <Spacing mr={PADDING_UNITS} />
@@ -312,15 +320,15 @@ function CodeBlockHeader({
             <KeyboardShortcutButton
               className="chevron-down-enter-done-visible"
               noBackground
-              noBorder
+              borderless
               noPadding
               onClick={() => {
                 setSubheaderVisible(!subheaderVisible)
               }}
               uuid={`KeyboardShortcutButton/${uuid}/subheader/menu/button`}
             >
-              {subheaderVisible && <ChevronUpV2 default size={ICON_SIZE} />}
-              {!subheaderVisible && <ChevronDownV2 default size={ICON_SIZE} />}
+              {subheaderVisible && <ChevronUpV2 active size={ICON_SIZE} />}
+              {!subheaderVisible && <ChevronDownV2 fill={color?.accent} size={ICON_SIZE} />}
             </KeyboardShortcutButton>
           </CSSTransition>
         </SubheaderButtonStyle>

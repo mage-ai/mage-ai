@@ -176,6 +176,8 @@ type PipelineDetailProps = {
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
   setSelectedStream: (stream: string) => void;
+  setScrollTogether?: (prev: any) => void;
+  setSideBySideEnabled?: (prev: any) => void;
   setTextareaFocused: (value: boolean) => void;
   showBrowseTemplates?: (opts?: {
     addNew?: boolean;
@@ -251,6 +253,8 @@ function PipelineDetail({
   setSelectedOutputBlock,
   setSelectedStream,
   setTextareaFocused,
+  setScrollTogether,
+  setSideBySideEnabled,
   showBrowseTemplates,
   showBlockBrowserModal,
   showConfigureProjectModal,
@@ -656,6 +660,23 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
 
+  const [updatePipeline, { isLoading: isLoadingUpdatePipeline }] = useMutation(
+    api.pipelines.useUpdate(encodeURIComponent(pipeline?.uuid)),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline?.();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const [updateBlock] = useMutation(
     ({
       block,
@@ -966,6 +987,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           setSelectedBlock={setSelectedBlock}
           setSelectedOutputBlock={setSelectedOutputBlock}
           setTextareaFocused={setTextareaFocused}
+          setScrollTogether={setScrollTogether}
+          setSideBySideEnabled={setSideBySideEnabled}
           showBlockBrowserModal={showBlockBrowserModal}
           showBrowseTemplates={showBrowseTemplates}
           showConfigureProjectModal={showConfigureProjectModal}
@@ -974,6 +997,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           showUpdateBlockModal={showUpdateBlockModal}
           sideBySideEnabled={sideBySideEnabled}
           textareaFocused={selected && textareaFocused}
+          updatePipeline={updatePipeline}
           widgets={widgets}
           windowWidth={windowWidth}
         >
@@ -1051,6 +1075,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     setSelectedBlock,
     setSelectedOutputBlock,
     setTextareaFocused,
+    setScrollTogether,
+    setSideBySideEnabled,
     showBlockBrowserModal,
     showBrowseTemplates,
     showConfigureProjectModal,
@@ -1060,6 +1086,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     sideBySideEnabled,
     textareaFocused,
     updateBlock,
+    updatePipeline,
     widgets,
     windowWidth,
   ]);

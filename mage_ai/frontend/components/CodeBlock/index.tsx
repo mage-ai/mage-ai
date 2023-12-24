@@ -283,6 +283,8 @@ type CodeBlockProps = {
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedBlock?: (block: BlockType) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
+  setScrollTogether?: (prev: any) => void;
+  setSideBySideEnabled?: (prev: any) => void;
   showBrowseTemplates?: (opts?: {
     addNew?: boolean;
     blockType?: BlockTypeEnum;
@@ -302,6 +304,11 @@ type CodeBlockProps = {
     name: string,
   ) => void;
   sideBySideEnabled?: boolean;
+  updatePipeline: (payload: {
+    pipeline: {
+      add_upstream_for_block_uuid: string;
+    };
+  }) => Promise<any>;
   widgets?: BlockType[];
   windowWidth?: number;
 }
@@ -377,6 +384,8 @@ function CodeBlock({
   setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
+  setScrollTogether,
+  setSideBySideEnabled,
   showBlockBrowserModal,
   showBrowseTemplates,
   showConfigureProjectModal,
@@ -385,6 +394,7 @@ function CodeBlock({
   showUpdateBlockModal,
   sideBySideEnabled,
   textareaFocused,
+  updatePipeline,
   widgets,
   windowWidth,
 }: CodeBlockProps, ref) {
@@ -1355,7 +1365,12 @@ function CodeBlock({
   } = useCodeBlockComponents({
     autocompleteProviders,
     block,
+    codeCollapsed,
     content,
+    deleteBlock: (b) => {
+      deleteBlock(b);
+      setOutputCollapsed(false);
+    },
     executionState,
     height,
     interruptKernel,
@@ -1374,6 +1389,8 @@ function CodeBlock({
       }
       : null
     ,
+    openSidekickView,
+    outputCollapsed,
     pipeline,
     placeholder: isDBT && BlockLanguageEnum.YAML === blockLanguage
       ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
@@ -1387,9 +1404,17 @@ function CodeBlock({
         y: refColumn2?.current?.getBoundingClientRect()?.y,
       },
     }),
+    savePipelineContent,
+    scrollTogether,
     selected,
+    setCodeCollapsed,
+    setOutputCollapsed,
+    setScrollTogether,
+    setSideBySideEnabled,
+    setHiddenBlocks,
     setSelected,
     setTextareaFocused,
+    sideBySideEnabled,
     shortcuts: hideRunButton
       ? []
       : [
@@ -1409,6 +1434,7 @@ function CodeBlock({
     status,
     textareaFocused,
     theme: themeContext,
+    updatePipeline,
   });
 
   const codeEditorEl = useMemo(() => {

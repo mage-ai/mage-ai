@@ -28,6 +28,7 @@ export default function useCodeBlockComponents({
     pipeline,
     placeholder,
     runBlockAndTrack,
+    savePipelineContent,
     selected,
     setSelected,
     setTextareaFocused,
@@ -35,6 +36,7 @@ export default function useCodeBlockComponents({
     status,
     textareaFocused,
     theme,
+    updatePipeline,
   } = props;
 
   const {
@@ -66,11 +68,9 @@ export default function useCodeBlockComponents({
       return useDBT(props);
     }
   }, [
-    block,
     enabled,
-    executionState,
-    selected,
-    status,
+    props,
+    type,
   ]);
 
   const editor = useMemo(() => {

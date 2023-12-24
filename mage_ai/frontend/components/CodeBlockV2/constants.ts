@@ -2,6 +2,7 @@ import BlockType from '@interfaces/BlockType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import PipelineType from '@interfaces/PipelineType';
 import StatusType from '@interfaces/StatusType';
+import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -10,6 +11,7 @@ import { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
 import { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
 import { ProvidersType } from '@components/CodeEditor/autocomplete/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 
 export enum ButtonUUIDEnum {
   BUILD = 'build',
@@ -47,13 +49,40 @@ export type RunBlockAndTrackProps = {
 
 export type UseCodeBlockComponentProps = {
   block: BlockType;
+  codeCollapsed?: boolean;
+  deleteBlock: (block: BlockType) => void,
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+    addon: AddonBlockTypeEnum,
+    blockUUID: string;
+  }) => void;
+  outputCollapsed?: boolean;
   pipeline: PipelineType;
   runBlockAndTrack: (payload?: RunBlockAndTrackProps) => void;
+  savePipelineContent: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
+  scrollTogether?: boolean;
   selected?: boolean;
+  setCodeCollapsed?: (value: boolean) => void;
+  setHiddenBlocks: ((opts: {
+    [uuid: string]: BlockType;
+  }) => {
+    [uuid: string]: BlockType;
+  });
+  setOutputCollapsed?: (value: boolean) => void;
+  setScrollTogether?: (prev: any) => void;
+  setSideBySideEnabled?: (prev: any) => void;
+  sideBySideEnabled?: boolean;
   status: StatusType;
   theme: ThemeType;
+  updatePipeline: (payload: {
+    pipeline: {
+      add_upstream_for_block_uuid: string;
+    };
+  }) => Promise<any>;
 };
 
 export type ButtonType = {
@@ -89,9 +118,7 @@ export type ButtonType = {
   }) => boolean;
 };
 
-export interface UseCodeBlockPropsType {
-  header: CodeBlockHeaderProps;
-};
+export type UseCodeBlockPropsType = {} & UseCodeBlockComponentProps;
 
 export type CodeBlockEditorProps = {
   autocompleteProviders?: ProvidersType;
@@ -119,7 +146,7 @@ export interface UseCodeBlockComponentType {
   editor: any;
   extraDetails: any;
   footer: any;
-  header: any;
+  header: CodeBlockHeaderProps;
   headerTabs: any;
   output: any;
   outputTabs: any;
