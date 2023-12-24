@@ -1572,7 +1572,7 @@ function CodeBlock({
     pipeline,
   ]);
 
-  const dbtV2Enabled = useMemo(() => featureEnabled?.(featureUUIDs.DBT_V2), [
+  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
     featureEnabled,
     featureUUIDs,
   ]);
@@ -1586,7 +1586,7 @@ function CodeBlock({
   const buttonTabs = useMemo(() => {
     let buttonEl;
 
-    if (isDBT && !dbtV2Enabled) {
+    if (isDBT && !codeBlockV2) {
       buttonEl = (
         <ButtonTabs
           onClickTab={(tab: TabType) => {
@@ -1641,7 +1641,7 @@ function CodeBlock({
     block,
     blockType,
     color,
-    dbtV2Enabled,
+    codeBlockV2,
     fetchBlock,
     isDBT,
     selectedTab,
@@ -1908,7 +1908,7 @@ function CodeBlock({
     borderColorShareProps,
     buttonTabs,
     color,
-    dbtV2Enabled,
+    codeBlockV2,
     dispatchEventSyncColumnPositions,
     executionState,
     hasOutput,
@@ -2349,7 +2349,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             position: 'relative',
           }}
         >
-          {dbtV2Enabled && isDBT && codeBlockComponentHeader}
+          {codeBlockV2 && isDBT && codeBlockComponentHeader}
 
           <BlockHeaderStyle
             {...{
@@ -2364,7 +2364,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             }
             noSticky={sideBySideEnabled}
           >
-            {(!dbtV2Enabled || !isDBT) && (
+            {(!codeBlockV2 || !isDBT) && (
               <Spacing py={1}>
                 <FlexContainer alignItems="center" justifyContent="space-between">
                   <Spacing pr={1} />
@@ -2666,7 +2666,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 </SubheaderStyle>
               )}
 
-              {(!dbtV2Enabled || !isDBT)
+              {(!codeBlockV2 || !isDBT)
                 && !hideExtraConfiguration
                 && isDBT
                 && !codeCollapsed
@@ -3285,7 +3285,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 </CodeHelperStyle>
               )}
 
-              {(!dbtV2Enabled || !isDBT) && headerTabs}
+              {(!codeBlockV2 || !isDBT) && headerTabs}
 
               {blockUpstreamBlocks.length >= 1
                 && !codeCollapsed
