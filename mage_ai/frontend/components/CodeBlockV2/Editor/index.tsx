@@ -175,6 +175,8 @@ function Editor({
 
             setSelected(true);
             setTextareaFocused(true);
+
+            reset();
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -265,7 +267,7 @@ function Editor({
             generateCode();
           }
         }}
-        // onBlur={() => setTimeout(() => setFocused(false), 150)}
+        onBlur={() => setTimeout(() => setFocused(false), 150)}
         onChange={(e) => {
           refInputValue.current = e.target.value;
         }}
@@ -302,25 +304,15 @@ function Editor({
                       opts?.onClick?.(e);
                     }}
                   >
-                    <Flex
-                      alignItems="center"
-                      flex={1}
-                      justifyContent="space-between"
-                    >
-                      <FlexContainer alignItems="center" flex={1}>
-                        <Text default monospace small>
-                          {itemObject?.code}
-                        </Text>
-                      </FlexContainer>
+                    <FlexContainer flexDirection="column">
+                      <Text breakSpaces default monospace small>
+                        {itemObject?.code}
+                      </Text>
 
-                      <FlexContainer alignItems="center">
-                        <Spacing mr={1} />
-
-                        <Text monospace muted xsmall>
-                          {itemObject?.description}
-                        </Text>
-                      </FlexContainer>
-                    </Flex>
+                      <Text breakSpaces monospace muted xsmall>
+                        {itemObject?.description}
+                      </Text>
+                    </FlexContainer>
                   </RowStyle>
                 );
               },
@@ -374,7 +366,7 @@ function Editor({
 
         const top = lineNumber * lineHeight;
 
-        refButton.current.style.top = `${(top - lineHeight) - (ICON_SIZE / 4)}px`;
+        refButton.current.style.top = `${(top - lineHeight) - (ICON_SIZE / 2)}px`;
         refInputContainer.current.style.top = `${top}px`;
 
         const width = (refEditorContainer?.current?.getBoundingClientRect?.()?.width || 0) - WIDTH_OFFSET;

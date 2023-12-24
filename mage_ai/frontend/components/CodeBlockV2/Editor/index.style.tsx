@@ -14,7 +14,7 @@ export const EditorWrapperStyle = styled.div`
 export const ButtonStyle = styled.div`
   height: ${ICON_SIZE}px;
   position: absolute;
-  right: ${UNIT * 1}px;
+  left: ${UNIT / 2}px;
   width: ${ICON_SIZE}px;
   z-index: 100;
 `;
