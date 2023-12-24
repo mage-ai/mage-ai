@@ -124,6 +124,9 @@ export default function useCodeBlockProps({
   };
 
   return {
+    editor: {
+
+    },
     header: {
       buttons: [
         buttonExecute,

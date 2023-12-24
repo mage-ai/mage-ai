@@ -1,10 +1,13 @@
 import BlockType from '@interfaces/BlockType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
+import PipelineType from '@interfaces/PipelineType';
 import StatusType from '@interfaces/StatusType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
 import { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
+import { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
+import { ProvidersType } from '@components/CodeEditor/autocomplete/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 
 export enum ButtonUUIDEnum {
@@ -39,6 +42,7 @@ export type UseCodeBlockComponentProps = {
   block: BlockType;
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
+  pipeline: PipelineType;
   runBlockAndTrack: (payload?: RunBlockAndTrackProps) => void;
   selected?: boolean;
   status: StatusType;
@@ -83,17 +87,17 @@ export interface UseCodeBlockPropsType {
 };
 
 export type CodeBlockEditorProps = {
-  autocompleteProviders?: () => void;
+  autocompleteProviders?: ProvidersType;
   content?: string;
   height?: number;
-  onChange?: () => void;
+  onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
-  onDidChangeCursorPosition?: () => void;
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
   onMountCallback?: () => void;
   placeholder?: string;
-  setSelected?: () => void;
-  setTextareaFocused?: () => void;
-  shortcuts?: () => void;
+  setSelected?: (value: boolean) => void;
+  setTextareaFocused?: (value: boolean) => void;
+  shortcuts?: ((monaco: any, editor: any) => void)[];
   textareaFocused?: boolean;
 } & UseCodeBlockComponentProps;
 

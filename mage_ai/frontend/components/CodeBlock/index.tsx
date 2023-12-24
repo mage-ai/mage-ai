@@ -1337,6 +1337,79 @@ function CodeBlock({
     pipeline,
   ]);
 
+  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
+    featureEnabled,
+    featureUUIDs,
+  ]);
+
+  const {
+    editor: codeBlockEditor,
+    // extraDetails,
+    // footer,
+    header: codeBlockComponentHeader,
+    headerTabs: codeBlockComponentHeaderTabs,
+    // output,
+    outputTabs,
+    // tags,
+  } = useCodeBlockComponents({
+    autocompleteProviders,
+    block,
+    content,
+    executionState,
+    height,
+    interruptKernel,
+    onChange: (val: string) => {
+      setContent(val);
+      onChange?.(val);
+    },
+    onContentSizeChangeCallback: sideBySideEnabled
+      ? () => dispatchEventChanged()
+      : null,
+
+    onDidChangeCursorPosition,
+    onMountCallback: sideBySideEnabled
+      ? () => {
+        setMounted(true);
+      }
+      : null
+    ,
+    pipeline,
+    placeholder: isDBT && BlockLanguageEnum.YAML === blockLanguage
+      ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
+      : 'Start typing here...'
+    ,
+    runBlockAndTrack: payload => runBlockAndTrack({
+      ...payload,
+      syncColumnPositions: {
+        ...(payload?.syncColumnPositions || {}),
+        rect: refColumn1?.current?.getBoundingClientRect(),
+        y: refColumn2?.current?.getBoundingClientRect()?.y,
+      },
+    }),
+    selected,
+    setSelected,
+    setTextareaFocused,
+    shortcuts: hideRunButton
+      ? []
+      : [
+        (monaco, editor) => executeCode(monaco, () => {
+          if (!hideRunButton) {
+            runBlockAndTrack({
+              /*
+              * This block doesn't get updated when the upstream dependencies change,
+              * so we need to update the shortcuts in the CodeEditor component.
+              */
+              block,
+              code: editor.getValue(),
+            });
+          }
+        }),
+      ],
+    status,
+    textareaFocused,
+    theme: themeContext,
+  });
+
   const codeEditorEl = useMemo(() => {
     if (replicatedBlockUUID && !isDataIntegration) {
       return null;
@@ -1387,6 +1460,10 @@ function CodeBlock({
           </Spacing>
         </CodeHelperStyle>
       );
+    }
+
+    if (codeBlockV2 && codeBlockEditor) {
+      return codeBlockEditor;
     }
 
     let editorEl;
@@ -1515,6 +1592,8 @@ function CodeBlock({
     blockType,
     blocksMapping,
     callbackContent,
+    codeBlockEditor,
+    codeBlockV2,
     content,
     dbtProjectName,
     globalDataProduct,
@@ -1557,36 +1636,6 @@ function CodeBlock({
     blocks,
     pipeline,
   ]);
-
-  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
-    featureEnabled,
-    featureUUIDs,
-  ]);
-  const {
-    // editor,
-    // extraDetails,
-    // footer,
-    header: codeBlockComponentHeader,
-    headerTabs: codeBlockComponentHeaderTabs,
-    // output,
-    outputTabs,
-    // tags,
-  } = useCodeBlockComponents({
-    block,
-    executionState,
-    interruptKernel,
-    runBlockAndTrack: payload => runBlockAndTrack({
-      ...payload,
-      syncColumnPositions: {
-        ...(payload?.syncColumnPositions || {}),
-        rect: refColumn1?.current?.getBoundingClientRect(),
-        y: refColumn2?.current?.getBoundingClientRect()?.y,
-      },
-    }),
-    selected,
-    status,
-    theme: themeContext,
-  });
 
   const buttonTabs = useMemo(() => {
     let buttonEl;
