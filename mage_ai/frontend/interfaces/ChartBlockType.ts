@@ -117,6 +117,7 @@ export interface ConfigurationDataIntegrationType {
 
 interface FileSourceType {
   path: string;
+  project_path?: string;
 }
 
 export interface ConfigurationType {

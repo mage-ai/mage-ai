@@ -1,16 +1,13 @@
-import api from '@api';
-import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
+import Browser from '@components/BlockBrowser';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 
 function Test() {
-  const {
-    designs,
-  } = useCustomDesign();
-
-  console.log(designs)
-
   return (
     <div>
-
+      <Browser
+        defaultBlockType={BlockTypeEnum.DBT}
+        onClickAction={opts => console.log(opts)}
+      />
     </div>
   );
 }

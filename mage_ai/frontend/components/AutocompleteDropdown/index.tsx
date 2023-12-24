@@ -33,6 +33,7 @@ export type AutocompleteDropdownSharedProps = {
 
 export type AutocompleteDropdownProps = {
   itemGroups: ItemGroupType[];
+  maxResults?: number;
   noResultGroups?: ItemGroupType[];
   onHighlightItemIndexChange?: (idx: number) => void;
   setItemRefs?: (refs: any[]) => void;
@@ -50,6 +51,7 @@ function filterItem(item: ItemType, searchQuery: string) {
 function AutocompleteDropdown({
   highlightedItemIndexInitial = null,
   itemGroups: itemGroupsProp,
+  maxResults,
   noResultGroups,
   onHighlightItemIndexChange,
   onMouseEnterItem,
@@ -70,21 +72,29 @@ function AutocompleteDropdown({
     const itemsFlattenedInternal = [];
 
     const arr = itemGroupsProp.reduce((acc: ItemGroupType[], itemGroup: ItemGroupType) => {
-      const { items } = itemGroup;
+      if (!maxResults || itemsFlattenedInternal.length <= maxResults) {
+        const { items } = itemGroup;
 
-      const itemsFiltered = items
-        .filter((item: ItemType) => !searchQuery || filterItem(item, searchQuery));
+        let itemsFiltered = items
+          .filter((item: ItemType) => !searchQuery || filterItem(item, searchQuery));
 
-      if (itemsFiltered.length === 0) {
-        return acc;
+        if (itemsFiltered.length === 0) {
+          return acc;
+        }
+
+        if (maxResults) {
+          itemsFiltered = itemsFiltered?.slice(0, maxResults - itemsFlattenedInternal?.length);
+        }
+
+        itemsFlattenedInternal.push(...itemsFiltered);
+
+        return acc.concat({
+          ...itemGroup,
+          items: itemsFiltered,
+        });
       }
 
-      itemsFlattenedInternal.push(...itemsFiltered);
-
-      return acc.concat({
-        ...itemGroup,
-        items: itemsFiltered,
-      });
+      return acc;
     }, []);
 
     return {
@@ -93,6 +103,7 @@ function AutocompleteDropdown({
     };
   }, [
     itemGroupsProp,
+    maxResults,
     searchQuery,
   ]);
 

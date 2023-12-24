@@ -10,7 +10,10 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
-from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
+from mage_ai.data_preparation.models.block.dbt.constants import (
+    DBT_DIRECTORY_NAME,
+    LogLevel,
+)
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
@@ -193,7 +196,10 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
         """
         # Get upstream nodes via dbt list
-        with Profiles(self.project_path, self.pipeline.variables) as profiles:
+        with Profiles(
+            self.project_path,
+            self.pipeline.variables if self.pipeline else {},
+        ) as profiles:
             try:
                 args = [
                     'list',
@@ -293,7 +299,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             if not read_only:
                 if uuid == self.uuid:
                     block = self
-                else:
+                elif self.pipeline:
                     block = self.pipeline.get_block(
                         uuid,
                         self.type,
@@ -379,7 +385,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         task = self.__task(from_notebook, run_settings)
 
         # Set project-dir argument for invoking dbt
-        args = ["--project-dir", self.project_path]
+        args = ['--project-dir', self.project_path]
 
         # Get variables
         variables = merge_dict(global_vars, runtime_arguments or {})
@@ -476,6 +482,40 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         )
 
         return [df]
+
+    def sample_data(self, limit: int = None, log_level: LogLevel = None, logger: Logger = None):
+        limit = limit or self.configuration.get('limit', 1000)
+
+        args = [
+            'show',
+            '--project-dir',
+            self.project_path,
+            '--select',
+            Path(self.__get_original_file_path()).stem,
+            '--limit',
+            str(limit),
+        ]
+
+        target = self.configuration.get('dbt_profile_target')
+        if target:
+            target = Template(target).render(
+                variables=lambda x: '',
+                **get_template_vars()
+            )
+            args += ['--target', target]
+
+        with Profiles(self.project_path, None) as profiles:
+            cli = DBTCli(logger=logger)
+            args += ([
+                '--profiles-dir',
+                str(profiles.profiles_dir),
+            ])
+
+            res = cli.invoke(args, log_level=log_level)
+            if res.success:
+                return cli.to_pandas(res)
+            else:
+                raise res.exception
 
     def __create_upstream_tables(
         self,

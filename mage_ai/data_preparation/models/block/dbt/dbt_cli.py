@@ -21,10 +21,8 @@ def build_logging_callback(logging_func: Callable, log_level: LogLevel = None):
         log_levels = {
             LogLevel.INFO: True,
         }
-        if log_level:
-            log_levels[log_level] = True
 
-        if event.info.level in log_levels:
+        if LogLevel.DEBUG == log_level or event.info.level in log_levels:
             logging_func(event.info.msg)
 
     return __callback
@@ -72,10 +70,20 @@ class DBTCli:
         if self.project_path and f'--{Flag.PROJECT_DIR}' not in cli_args:
             cli_args += [f'--{Flag.PROJECT_DIR}', self.project_path]
 
-        log_args = [str(a) for a in cli_args]
         message = 'dbt'
-        if len(log_args) >= 1:
-            message = ' '.join([message] + log_args)
+        log_args = [message] + [str(a) for a in cli_args]
+        if len(log_args) >= 2:
+            pairs = []
+            pair = []
+            for line in log_args:
+                pair.append(str(line))
+                if len(pair) == 2:
+                    pairs.append((' ').join(pair))
+                    pair = []
+            if len(pair) >= 1:
+                pairs.append((' ').join(pair))
+
+            message = ' \\\n    '.join(pairs)
 
         self.__info(message, tags)
 
@@ -96,14 +104,15 @@ class DBTCli:
             model_file_path,  # e.g. models/example/my_first_dbt_model.sql
             '--limit',
             limit,
-        ])
+        ], **kwargs)
 
     def to_pandas(self, result: dbtRunnerResult) -> pd.DataFrame:
         results = result.result.results
-        run_result = results[0]
-        table = run_result.agate_table
+        if results:
+            run_result = results[0]
+            table = run_result.agate_table
 
-        return pd.DataFrame([row.dict() for row in table.rows])
+            return pd.DataFrame([row.dict() for row in table.rows])
 
     def __debug(self, *args, **kwargs) -> None:
         self.__log(LogLevel.DEBUG, *args, **kwargs)

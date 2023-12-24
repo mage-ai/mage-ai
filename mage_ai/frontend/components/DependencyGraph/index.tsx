@@ -365,11 +365,11 @@ function DependencyGraph({
       const mapping = {};
       const arr2 = [];
 
-      arr2.push(...pipeline?.blocks);
-      arr2.push(...pipeline?.callbacks);
-      arr2.push(...pipeline?.conditionals);
+      arr2.push(...(pipeline?.blocks || []));
+      arr2.push(...(pipeline?.callbacks || []));
+      arr2.push(...(pipeline?.conditionals || []));
 
-      Object.values(pipeline?.extensions).forEach(({ blocks }) => {
+      Object.values(pipeline?.extensions || {}).forEach(({ blocks }) => {
         arr2.push(...blocks);
       });
 

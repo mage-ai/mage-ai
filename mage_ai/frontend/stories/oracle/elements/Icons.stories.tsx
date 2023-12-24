@@ -158,6 +158,8 @@ import {
   WorkspacesUsersIcon,
   ZoomIn,
   ZoomOut,
+  BatchSquaresStacked,
+  FolderOutline,
 } from '@oracle/icons';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
@@ -320,6 +322,8 @@ const ICONS = [
   WorkspacesUsersIcon,
   ZoomIn,
   ZoomOut,
+  BatchSquaresStacked,
+  FolderOutline,
 ];
 
 const Icons = () => (
