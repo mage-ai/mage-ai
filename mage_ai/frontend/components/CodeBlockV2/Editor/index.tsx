@@ -1,8 +1,10 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useMutation } from 'react-query';
 
 import CodeEditor from '@components/CodeEditor';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import api from '@api';
 import { AISparkle, PanelCollapseRight } from '@oracle/icons';
 import { BORDER_WIDTH_THICK } from '@oracle/styles/units/borders';
 import {
@@ -16,14 +18,19 @@ import {
 import { CodeBlockEditorProps } from '../constants';
 import {
   KEY_CODE_CONTROL,
+  KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
-  KEY_CODE_FORWARD_SLASH,
+  KEY_CODE_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LEFT_PADDING } from '@components/CodeBlock/index.style';
+import { LLMUseCaseEnum } from '@interfaces/LLMType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { useError } from '@context/Error';
+import { useKeyboardContext } from '@context/Keyboard';
 
 const WIDTH_OFFSET = ((BORDER_WIDTH_THICK * 2) + (UNIT * 2) + LEFT_PADDING);
 
@@ -46,6 +53,12 @@ function Editor({
   theme,
 }: CodeBlockEditorProps) {
   console.log('CodeBlockEditor RENDERRRRRRRRRRRRRRRR');
+
+  const componentUUID = `CodeBlockEditorV2/${block?.uuid}/editor/button/AI`;
+  const [showError] = useError(null, {}, [], {
+    uuid: componentUUID,
+  });
+
   const refButton = useRef(null);
   const refEditor = useRef(null);
   const refInput = useRef(null);
@@ -63,12 +76,30 @@ function Editor({
     theme,
   });
 
+  const [createCode, { isLoading: isLoadingCreateCode }] = useMutation(
+    api.llms.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            llm,
+          }) => {
+            console.log(llm);
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const focusArea = useMemo(() => (
     <TextInputFocusAreaStyle
       onClick={() => refInput?.current?.focus()}
     />
-  ), [
-  ]);
+  ), []);
 
   const inputMemo = useMemo(() => (
     <InputStyle color={color?.accent} ref={refInputContainer}>
@@ -96,12 +127,20 @@ function Editor({
           <KeyboardShortcutButton
             backgroundColor={color?.accent}
             bold
+            loading={isLoadingCreateCode}
             noBorder
             onClick={(e) => {
               pauseEvent(e);
 
-              refButton.current.style.opacity = 1;
-              refInputContainer.current.style.display = 'none';
+              createCode({
+                llm: {
+                  request: {
+                    block_description: refInputValue.current,
+                    code_language: language,
+                  },
+                  use_case: LLMUseCaseEnum.GENERATE_CODE,
+                },
+              });
             }}
             pill
           >
@@ -114,23 +153,28 @@ function Editor({
         noBorder
         noBorderRadiusBottom
         noBorderRadiusTop
-        // Need setTimeout because when clicking a row, the onBlur will be triggered.
-        // If the onBlur triggers too soon, clicking a row does nothing.
         onKeyDown={(e) => {
           if (KEY_CODE_ESCAPE === e.keyCode) {
             pauseEvent(e);
             refButton.current.style.opacity = 1;
             refInputContainer.current.style.display = 'none';
+          } else if (KEY_CODE_ENTER === e.keyCode) {
+            pauseEvent(e);
+
+            createCode({
+              llm: {
+                request: {
+                  block_description: refInputValue.current,
+                  code_language: language,
+                },
+                use_case: LLMUseCaseEnum.GENERATE_CODE,
+              },
+            });
           }
-        }}
-        onBlur={() => {
-          refButton.current.style.opacity = 1;
-          refInputContainer.current.style.display = 'none';
         }}
         onChange={(e) => {
           refInputValue.current = e.target.value;
         }}
-        // onFocus={() => setFocused(true)}
         paddingHorizontal={0}
         paddingRight={UNIT * 16}
         paddingVertical={UNIT * 1.5}
@@ -142,6 +186,9 @@ function Editor({
     </InputStyle>
   ), [
     color,
+    createCode,
+    isLoadingCreateCode,
+    language,
   ]);
 
   const editor = useMemo(() => (
@@ -227,16 +274,40 @@ function Editor({
     textareaFocused,
   ]);
 
+  const {
+    disableGlobalKeyboardShortcuts,
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(componentUUID);
+  }, [unregisterOnKeyDown, componentUUID]);
+
+  registerOnKeyDown(
+    componentUUID,
+    (event, keyMapping, keyHistory) => {
+      if (selected && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_PERIOD], keyMapping)) {
+        refButton.current.style.opacity = 0;
+        refInputContainer.current.style.display = 'block';
+        setTimeout(() => refInput?.current?.focus?.(), 1);
+      }
+    },
+    [
+      selected,
+    ],
+  );
+
   return (
     <EditorWrapperStyle>
       <ButtonStyle ref={refButton}>
         <KeyboardShortcutButton
-          keyboardShortcutValidation={({
-            keyMapping,
-          }, index) => onlyKeysPresent([
-            KEY_CODE_CONTROL,
-            KEY_CODE_FORWARD_SLASH,
-          ], keyMapping)}
+          // keyboardShortcutValidation={({
+          //   keyMapping,
+          // }, index) => onlyKeysPresent([
+          //   KEY_CODE_CONTROL,
+          //   KEY_CODE_PERIOD,
+          // ], keyMapping)}
           noBackground
           noBorder
           noPadding
@@ -249,7 +320,7 @@ function Editor({
               setTimeout(() => refInput?.current?.focus?.(), 1);
             }
           }}
-          uuid={`KeyboardShortcutButton/${block?.uuid}/editor/button/AI`}
+          uuid={componentUUID}
         >
           <AISparkle size={ICON_SIZE} warning />
         </KeyboardShortcutButton>

@@ -40,6 +40,7 @@ export const KEY_CODE_Y = 89;
 export const KEY_CODE_META = 'metaKey';
 export const KEY_CODE_META_LEFT = 91;
 export const KEY_CODE_META_RIGHT = 93;
+export const KEY_CODE_PERIOD = 190;
 export const KEY_CODE_FORWARD_SLASH = 191;
 export const KEY_CODE_META_FIREFOX = 224;
 export const KEY_CODE_METAS = [
