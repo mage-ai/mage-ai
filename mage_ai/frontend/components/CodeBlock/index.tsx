@@ -1577,8 +1577,14 @@ function CodeBlock({
     featureUUIDs,
   ]);
   const {
+    // editor,
+    // extraDetails,
+    // footer,
     header: codeBlockComponentHeader,
-    tabs: codeBlockComponentTabs,
+    headerTabs: codeBlockComponentHeaderTabs,
+    // output,
+    outputTabs,
+    // tags,
   } = useCodeBlockComponents({
     block,
   });
@@ -1586,7 +1592,11 @@ function CodeBlock({
   const buttonTabs = useMemo(() => {
     let buttonEl;
 
-    if (isDBT && !codeBlockV2) {
+    if (codeBlockV2 && outputTabs) {
+      return null;
+    }
+
+    if (isDBT) {
       buttonEl = (
         <ButtonTabs
           onClickTab={(tab: TabType) => {
@@ -1644,6 +1654,7 @@ function CodeBlock({
     codeBlockV2,
     fetchBlock,
     isDBT,
+    outputTabs,
     selectedTab,
     sparkEnabled,
     themeContext,
@@ -2349,7 +2360,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             position: 'relative',
           }}
         >
-          {codeBlockV2 && isDBT && codeBlockComponentHeader}
+          {codeBlockV2 && codeBlockComponentHeader}
 
           <BlockHeaderStyle
             {...{
@@ -2364,7 +2375,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             }
             noSticky={sideBySideEnabled}
           >
-            {(!codeBlockV2 || !isDBT) && (
+            {(!codeBlockV2 || !codeBlockComponentHeader) && (
               <Spacing py={1}>
                 <FlexContainer alignItems="center" justifyContent="space-between">
                   <Spacing pr={1} />
@@ -2666,7 +2677,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 </SubheaderStyle>
               )}
 
-              {(!codeBlockV2 || !isDBT)
+              {(!codeBlockV2 || !codeBlockComponentHeader)
                 && !hideExtraConfiguration
                 && isDBT
                 && !codeCollapsed
@@ -3285,7 +3296,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 </CodeHelperStyle>
               )}
 
-              {(!codeBlockV2 || !isDBT) && headerTabs}
+              {(!codeBlockV2 || !codeBlockComponentHeaderTabs) && headerTabs}
 
               {blockUpstreamBlocks.length >= 1
                 && !codeCollapsed
