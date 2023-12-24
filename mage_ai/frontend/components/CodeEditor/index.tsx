@@ -49,6 +49,7 @@ import { defineTheme } from './utils';
 import { saveCode } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
+  editor: any;
   editorRect: {
     height?: number;
     top: number;
@@ -116,7 +117,7 @@ function CodeEditor({
   theme = DEFAULT_THEME,
   value,
   width = '100%',
-}: CodeEditorProps) {
+}: CodeEditorProps, ref) {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
@@ -219,11 +220,13 @@ function CodeEditor({
         const lineNumberTop = editor.getTopForLineNumber(lineNumber);
 
         onDidChangeCursorPosition({
+          editor,
           editorRect: {
             height: Number(height),
             top: Number(top),
           },
           position: {
+            lineNumber,
             lineNumberTop,
           },
         });
@@ -341,6 +344,7 @@ function CodeEditor({
     <ContainerStyle
       hideDuplicateMenuItems
       padding={padding}
+      ref={ref}
       style={{
         display: mounted ? null : 'none',
       }}
@@ -393,4 +397,4 @@ function CodeEditor({
   );
 }
 
-export default CodeEditor;
+export default React.forwardRef(CodeEditor);

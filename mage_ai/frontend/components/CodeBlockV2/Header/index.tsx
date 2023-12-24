@@ -80,7 +80,7 @@ function CodeBlockHeader({
     titleParts?.forEach((part: string, idx: number) => {
       if (idx >= 1) {
         arr.push(
-          <div key={`${part}-spacing`} style={{ paddingLeft: UNIT / 4, paddingRight: UNIT / 4 }}>
+          <div key={`${part}-spacing-${idx}`} style={{ paddingLeft: UNIT / 4, paddingRight: UNIT / 4 }}>
             <Text muted>
               /
             </Text>
