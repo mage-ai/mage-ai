@@ -1,16 +1,25 @@
 import * as osPath from 'path';
+import { CSSTransition } from 'react-transition-group';
 import { useMemo } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import CodeBlockHeaderProps from '../constants';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
-import { HeaderStyle, ICON_SIZE } from './index.style';
+import { ChevronDownV2, Menu } from '@oracle/icons';
+import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import {
+  HeaderStyle,
+  HeaderWrapperStyle,
+  ICON_SIZE,
+  SubheaderButtonStyle,
+} from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
@@ -23,7 +32,25 @@ function CodeBlockHeader({
   theme,
   title,
 }: CodeBlockHeaderProps) {
-  console.log('RENDER HEADER!');
+  const {
+    active = false,
+    running = false,
+    waiting = false,
+  }: {
+    active: boolean;
+    running: boolean;
+    waiting: boolean;
+  } = useMemo(() => {
+    return {
+      active: ExecutionStateEnum.IDLE !== executionState,
+      running: ExecutionStateEnum.BUSY === executionState,
+      waiting: ExecutionStateEnum.QUEUED === executionState,
+    };
+  }, [
+    executionState,
+  ]);
+
+
   const {
     color: blockColor,
     language,
@@ -86,7 +113,6 @@ function CodeBlockHeader({
       label,
       loading,
       onClick,
-      renderFromState,
       uuid: uuidButton,
       visible,
     }, idx: number) => {
@@ -101,7 +127,11 @@ function CodeBlockHeader({
           backgroundColor={color}
           bold
           compact
-          disabled={disabled}
+          disabled={disabled && disabled?.({
+            active,
+            running,
+            waiting,
+          })}
           key={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
           keyTextGroups={keyTextGroups}
           keyTextsPosition={keyTextsPosition}
@@ -129,13 +159,6 @@ function CodeBlockHeader({
         </KeyboardShortcutButton>
       );
 
-      if (renderFromState) {
-        const elState = renderFromState?.(executionState);
-        if (elState) {
-          el = elState;
-        }
-      }
-
       if (description) {
         el = (
           <Tooltip
@@ -150,13 +173,15 @@ function CodeBlockHeader({
         );
       }
 
-      if (visible) {
-        if (buttonsVisibleInner?.length >= 1) {
-          buttonsVisibleInner.push(
-            <Spacing key={`spacing/${uuid}/${uuidButton}/${idx}`} mr={PADDING_UNITS} />
-          );
-        }
+      if (!visible || visible?.({
+        active,
+        running,
+        waiting,
+      })) {
         buttonsVisibleInner.push(el);
+        buttonsVisibleInner.push(
+          <Spacing key={`spacing/${uuid}/${uuidButton}/${idx}`} mr={PADDING_UNITS} />
+        );
       } else {
         buttonsDropdownInner.push(el);
       }
@@ -167,16 +192,62 @@ function CodeBlockHeader({
       buttonsVisible: buttonsVisibleInner,
     };
   }, [
+    active,
     buttons,
-    executionState,
+    running,
     selected,
     uuid,
+    waiting,
   ]);
 
   return (
-    <HeaderStyle>
-      <FlexContainer alignItems="center" flexDirection="row" justifyContent="space-between">
+    <HeaderWrapperStyle style={{ position: 'relative' }}>
+      <HeaderStyle>
         <FlexContainer alignItems="center">
+          <KeyboardShortcutButton
+            noBackground
+            noBorder
+            noPadding
+            onClick={() => {
+              alert('OPEN LEFT SIDE PANEL');
+            }}
+            uuid={`KeyboardShortcutButton/${uuid}/header/menu/button`}
+          >
+            <Menu size={ICON_SIZE} />
+          </KeyboardShortcutButton>
+
+          <Spacing mr={PADDING_UNITS} />
+
+          {buttonsVisible}
+
+          {waiting && (
+            <>
+              <Loading
+                color={color?.accent}
+                colorLight={color?.accentLight}
+                loadingStyle={LoadingStyleEnum.BLOCKS}
+              />
+
+              <Spacing mr={PADDING_UNITS}/>
+            </>
+          )}
+        </FlexContainer>
+
+        <FlexContainer alignItems="center">
+          <FlexContainer flexDirection="column">
+            <FlexContainer alignItems="center" flexDirection="row" justifyContent="flex-end">
+              {titleEls}
+            </FlexContainer>
+
+            {subtitle && (
+              <Text default monospace small>
+                {subtitle}
+              </Text>
+            )}
+          </FlexContainer>
+
+          <Spacing mr={PADDING_UNITS} />
+
           <Tooltip
             block
             label={[
@@ -194,26 +265,40 @@ function CodeBlockHeader({
               <Icon active size={ICON_SIZE} />
             </Circle>
           </Tooltip>
-
-          <Spacing mr={PADDING_UNITS} />
-
-          <FlexContainer flexDirection="column">
-            <FlexContainer alignItems="center" flexDirection="row">
-              {titleEls}
-            </FlexContainer>
-            {subtitle && (
-              <Text default monospace small>
-                {subtitle}
-              </Text>
-            )}
-          </FlexContainer>
         </FlexContainer>
+      </HeaderStyle>
 
-        <FlexContainer alignItems="center">
-          {buttonsVisible}
-        </FlexContainer>
-      </FlexContainer>
-    </HeaderStyle>
+      <SubheaderButtonStyle>
+        <CSSTransition
+          classNames="chevron-down"
+          in
+          timeout={400}
+        >
+          <KeyboardShortcutButton
+            className="chevron-down-enter-done-visible"
+            noBackground
+            noBorder
+            noPadding
+            onClick={() => {
+              alert('OPEN SUBHEADER');
+            }}
+            uuid={`KeyboardShortcutButton/${uuid}/subheader/menu/button`}
+          >
+            <ChevronDownV2 default size={ICON_SIZE} />
+          </KeyboardShortcutButton>
+        </CSSTransition>
+      </SubheaderButtonStyle>
+
+      {running && (
+        <div style={{ position: 'absolute', width: '100%' }}>
+          <Loading
+            color={color?.accent}
+            colorLight={color?.accentLight}
+            width="100%"
+          />
+        </div>
+      )}
+    </HeaderWrapperStyle>
   );
 }
 

@@ -6,6 +6,7 @@ import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import { AISparkle, PlayButtonFilled, PauseV2 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { ICON_SIZE } from '../Header/index.style';
@@ -19,7 +20,6 @@ import {
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
-import { Close, PlayButton, PlayButtonFilled } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -53,21 +53,8 @@ export default function useCodeBlockProps({
   }
   const subtitle = configuration?.file_path || configuration?.file_source?.path;
 
-  const buttons = [];
-
   const buttonExecute = {
-    icon: <PlayButtonFilled size={ICON_SIZE} />,
     color: color?.accent,
-    keyTextsPosition: KeyTextsPostitionEnum.LEFT,
-    keyboardShortcutValidation: ({
-      keyHistory,
-      keyMapping,
-    }, index: number, {
-      selected,
-    }) => selected && (
-      onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
-        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
-    ),
     description: (
       <FlexContainer alignItems="center">
         <KeyboardTextGroup
@@ -82,33 +69,25 @@ export default function useCodeBlockProps({
         </Text>
       </FlexContainer>
     ),
-    disabled: false,
+    disabled: ({ active }) => active,
+    icon: <PlayButtonFilled size={ICON_SIZE} />,
+    keyTextsPosition: KeyTextsPostitionEnum.LEFT,
+    keyboardShortcutValidation: ({
+      keyHistory,
+      keyMapping,
+    }, index: number, {
+      selected,
+    }) => selected && (
+      onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
+        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
+    ),
     label: () => 'Compile & preview',
     onClick: () => {
       runBlockAndTrack({
         block,
       });
     },
-    renderFromState: (executionState: ExecutionStateEnum) => {
-      if (ExecutionStateEnum.QUEUED === executionState) {
-        return (
-          <Spinner
-            color={(themeContext || dark).content.active}
-            size={ICON_SIZE}
-            type="cylon"
-          />
-        );
-      } else if (ExecutionStateEnum.BUSY === executionState) {
-        return (
-          <Spinner
-            color={(theme || dark).content.active}
-            size={ICON_SIZE}
-          />
-        );
-      }
-    },
     uuid: ButtonUUIDEnum.EXECUTE,
-    visible: true,
   };
 
   const buttonExecuteCancel = {
@@ -128,12 +107,10 @@ export default function useCodeBlockProps({
       </FlexContainer>
     ),
     icon: (
-      <Circle
-        borderSize={1.5}
+      <PauseV2
+        active
         size={ICON_SIZE}
-      >
-        <Close size={UNIT * 1} />
-      </Circle>
+      />
     ),
     keyTextsPosition: KeyTextsPostitionEnum.RIGHT,
     keyboardShortcutValidation: ({
@@ -141,21 +118,17 @@ export default function useCodeBlockProps({
     }, index: number, {
       selected,
     }) => selected && keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I,
-    disabled: false,
     onClick: interruptKernel,
     uuid: ButtonUUIDEnum.EXECUTE_CANCEL,
-    visible: true,
+    visible: ({ active }) => active,
   };
-
-  buttons.push(buttonExecute);
-
-  if (ExecutionStateEnum.IDLE !== executionState) {
-    buttons.push(buttonExecuteCancel);
-  }
 
   return {
     header: {
-      buttons,
+      buttons: [
+        buttonExecute,
+        buttonExecuteCancel,
+      ],
       subtitle,
       title,
     },

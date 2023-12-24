@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+// import CodeBlockEditor from './Editor';
 import CodeBlockHeader from './Header';
 import useDBT from './dbt/useCodeBlockProps';
 import { BlockTypeEnum } from '@interfaces/BlockType';
@@ -23,10 +24,36 @@ export default function useCodeBlockComponents({
     type: null,
   };
 
-  const header = useMemo(() => {
+  const codeBlockProps = useMemo(() => {
     if (BlockTypeEnum.DBT === type) {
-      const codeBlockProps = useDBT(props);
+      return useDBT(props);
+    }
+  }, [
+    block,
+    executionState,
+    selected,
+    status,
+  ]);
 
+  const editor = useMemo(() => {
+    if (codeBlockProps?.editor) {
+      return (
+        <CodeBlockEditor
+          block={block}
+          selected={selected}
+          theme={theme}
+          {...(codeBlockProps?.editor || {})}
+        />
+      );
+    }
+
+    return null;
+  }, [
+    codeBlockProps,
+  ]);
+
+  const header = useMemo(() => {
+    if (codeBlockProps?.header) {
       return (
         <CodeBlockHeader
           block={block}
@@ -36,18 +63,17 @@ export default function useCodeBlockComponents({
           selected={selected}
           status={status}
           theme={theme}
-          {...codeBlockProps?.header}
+          {...(codeBlockProps?.header || {})}
         />
       );
     }
   }, [
-    executionState,
-    selected,
+    codeBlockProps,
   ]);
 
 
   return {
-    editor: null,
+    editor,
     extraDetails: null,
     footer: null,
     header,

@@ -49,7 +49,11 @@ export type ButtonType = {
   Icon?: any;
   color?: string;
   description?: string;
-  disabled?: boolean;
+  disabled?: (opts?: {
+    active?: boolean;
+    running?: boolean;
+    waiting?: boolean;
+  }) => boolean;
   icon?: any;
   keyTextGroups?: NumberOrString[][];
   keyTextsPosition?: KeyTextsPostitionEnum;
@@ -67,12 +71,31 @@ export type ButtonType = {
   onClick?: () => void;
   renderFromState?: (executionState: ExecutionStateEnum) => any;
   uuid: ButtonUUIDEnum;
-  visible?: boolean;
+  visible?: (opts?: {
+    active?: boolean;
+    running?: boolean;
+    waiting?: boolean;
+  }) => boolean;
 };
 
 export interface UseCodeBlockPropsType {
   header: CodeBlockHeaderProps;
 };
+
+export type CodeBlockEditorProps = {
+  autocompleteProviders?: () => void;
+  content?: string;
+  height?: number;
+  onChange?: () => void;
+  onContentSizeChangeCallback?: () => void;
+  onDidChangeCursorPosition?: () => void;
+  onMountCallback?: () => void;
+  placeholder?: string;
+  setSelected?: () => void;
+  setTextareaFocused?: () => void;
+  shortcuts?: () => void;
+  textareaFocused?: boolean;
+} & UseCodeBlockComponentProps;
 
 export type CodeBlockHeaderProps = {
   buttons: ButtonType[];

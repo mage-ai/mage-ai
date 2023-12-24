@@ -77,9 +77,11 @@ export function getColorsForBlockType(
 ): {
   accent?: string;
   accentLight?: string;
+  accentLight2?: string;
 } {
   let accent = (props?.theme?.borders || dark.borders).light;
   let accentLight = (props?.theme?.monotone || dark.monotone).grey500;
+  let accentLight2;
   const { blockColor, isSelected, theme } = props || {};
 
   if (isSelected) {
@@ -106,6 +108,7 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.DBT === blockType) {
     accent = (theme || dark).accent.dbt;
     accentLight = (theme || dark).accent.dbtLight;
+    accentLight2 = (theme || dark).accent.dbtLight2;
   } else if (BlockTypeEnum.EXTENSION === blockType || blockColor === BlockColorEnum.TEAL) {
     accent = (theme?.accent || dark.accent).teal;
     accentLight = (theme?.accent || dark.accent).tealLight;
@@ -131,6 +134,7 @@ export function getColorsForBlockType(
   return {
     accent,
     accentLight,
+    accentLight2,
   };
 }
 

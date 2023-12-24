@@ -108,7 +108,11 @@ class OpenAIClient(AIClient):
         )
         chain = LLMChain(llm=self.llm, prompt=filled_prompt)
         if is_json_response:
-            return json.loads(await chain.arun(variable_values))
+            resp = await chain.arun(variable_values)
+            if resp:
+                return json.loads(resp)
+            else:
+                return {}
         return await chain.arun(variable_values)
 
     def __parse_argument_value(self, value: str) -> str:
