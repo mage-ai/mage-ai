@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
@@ -16,13 +17,14 @@ import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { DBT } from '@oracle/icons';
+import { AddBlock, DBT } from '@oracle/icons';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TABS, TabEnum } from './constants';
 import { buildModels } from '../utils';
 import { buildNavLinks, buildNavLinkModels, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
 
@@ -50,6 +52,8 @@ function BlockDetail({
   selectedLinks,
   setSelectedLinks,
 }: BlockDetailProps) {
+  const theme = useContext(ThemeContext);
+
   const [showError] = useError(null, {}, [], {
     uuid: 'BlockBrowser/BlockDetail',
   });
@@ -192,15 +196,21 @@ function BlockDetail({
 
               {onClickAction && (
                 <Button
+                  backgroundColor={getColorsForBlockType(
+                    BlockTypeEnum.DBT,
+                    {
+                      theme,
+                    },
+                  ).accent}
+                  beforeIcon={<AddBlock />}
                   onClick={() => {
                     return onClickAction({
                       cacheItem,
                       row: model,
                     });
                   }}
-                  primary
                 >
-                  Add to pipeline
+                  Add to pipeline as a block
                 </Button>
               )}
             </FlexContainer>

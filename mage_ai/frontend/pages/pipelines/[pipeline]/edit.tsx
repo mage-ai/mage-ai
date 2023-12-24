@@ -24,6 +24,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import BlocksInPipeline from '@components/PipelineDetail/BlocksInPipeline';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
+import Browser from '@components/BlockBrowser';
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
@@ -81,6 +82,7 @@ import dark from '@oracle/styles/themes/dark';
 import useFileComponents from '@components/Files/useFileComponents';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
+import useStatus from '@utils/models/status/useStatus';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import {
   BLOCK_EXISTS_ERROR,
@@ -111,6 +113,7 @@ import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { NAV_TAB_BLOCKS } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ObjectType } from '@interfaces/BlockActionObjectType';
+import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { OpenDataIntegrationModalOptionsType } from '@components/DataIntegrationModal/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PipelineHeaderStyle } from '@components/PipelineDetail/index.style';
@@ -126,6 +129,7 @@ import {
   removeOpenFilePath as removeOpenFilePathLocalStorage,
   setOpenFilePaths as setOpenFilePathsLocalStorage,
 } from '@storage/files';
+import { buildBlockFromFilePath } from '@components/PipelineDetail/utils';
 import { buildBlockRefKey } from '@components/PipelineDetail/utils';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
@@ -183,6 +187,9 @@ function PipelineDetailPage({
     project,
     sparkEnabled,
   } = useProject();
+  const {
+    repo_path_relative_root: repoPathRelativeRoot,
+  } = useStatus();
   const themeContext = useContext(ThemeContext);
   const router = useRouter();
   const {
@@ -2945,6 +2952,47 @@ function PipelineDetailPage({
     setSelectedBlock,
   ]);
 
+  const [showBlockBrowserModal, hideBlockBrowserModal] = useModal(({
+    blockIndex,
+  }: OpenBlockBrowserModalType) => {
+    return (
+      <ErrorProvider>
+        <Browser
+          contained
+          defaultBlockType={BlockTypeEnum.DBT}
+          onClickAction={opts => {
+            addNewBlockAtIndex(
+              buildBlockFromFilePath({
+                blockIndex,
+                blocks,
+                filePath: opts?.row?.fullPath,
+                repoPathRelativeRoot,
+              }),
+              (typeof blockIndex === 'undefined' || blockIndex === null
+                ? blocks?.length
+                : blockIndex + 1
+              ) - (sideBySideEnabled ? 1 : 0),
+              (block: BlockType) => {
+                setSelectedBlock(block),
+                hideBlockBrowserModal();
+              },
+            );
+          }}
+        />
+      </ErrorProvider>
+    );
+  }, {}, [
+    addNewBlockAtIndex,
+    repoPathRelativeRoot,
+    sideBySideEnabled,
+  ], {
+    background: true,
+    disableClickOutside: false,
+    disableCloseButton: false,
+    disableEscape: true,
+    uuid: `BlockBrowser/${pipelineUUID}`,
+  });
+
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       // addNewBlockAtIndex={automaticallyNameBlocks
@@ -3035,6 +3083,7 @@ function PipelineDetailPage({
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
       setTextareaFocused={setTextareaFocused}
+      showBlockBrowserModal={showBlockBrowserModal}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
       showDataIntegrationModal={showDataIntegrationModal}
@@ -3100,6 +3149,7 @@ function PipelineDetailPage({
     setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
+    showBlockBrowserModal,
     showBrowseTemplates,
     showConfigureProjectModal,
     showDataIntegrationModal,

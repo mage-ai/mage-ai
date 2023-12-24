@@ -154,6 +154,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -303,6 +304,7 @@ type CodeBlockProps = {
   & CodeEditorSharedProps
   & CommandButtonsSharedProps
   & SetEditingBlockType
+  & OpenBlockBrowserModalType
   & OpenDataIntegrationModalType;
 
 function CodeBlock({
@@ -371,6 +373,7 @@ function CodeBlock({
   setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
+  showBlockBrowserModal,
   showBrowseTemplates,
   showConfigureProjectModal,
   showDataIntegrationModal,
@@ -2281,6 +2284,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       project={project}
       setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
       setCreatingNewDBTModel={setCreatingNewDBTModel}
+      showBlockBrowserModal={showBlockBrowserModal}
       showBrowseTemplates={showBrowseTemplates}
       showConfigureProjectModal={showConfigureProjectModal}
       showGlobalDataProducts={showGlobalDataProducts}
@@ -2300,6 +2304,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
     pipelineUUID,
     project,
     setAddNewBlockMenuOpenIdx,
+    showBlockBrowserModal,
     setCreatingNewDBTModel,
     showBrowseTemplates,
     showConfigureProjectModal,

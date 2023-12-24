@@ -38,6 +38,7 @@ import {
   Sun,
   Table as TableIcon,
 } from '@oracle/icons';
+import { ContainerStyle, MODAL_PADDING } from '@components/DataIntegrationModal/index.style';
 import { DropdownStyle, RowStyle, SearchStyle } from '@components/PipelineDetail/AddNewBlocks/v2/index.style';
 import {
   FileContextTab,
@@ -72,6 +73,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowserProps = {
+  contained?: boolean;
   defaultBlockType?: BlockTypeEnum;
   focused?: boolean;
   onClickAction?: (opts?: {
@@ -86,6 +88,7 @@ type BrowserProps = {
 };
 
 function Browser({
+  contained,
   defaultBlockType,
   focused: focusedProp,
   onClickAction,
@@ -108,6 +111,9 @@ function Browser({
     height: heightWindow,
     width: widthWindow,
   } = useWindowSize();
+
+  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
+  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
 
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
@@ -372,7 +378,7 @@ function Browser({
   }, [cacheItems]);
 
   return (
-    <>
+    <ContainerStyle maxWidth={contained ? widthModal : null}>
       <TripleLayout
         after={after}
         afterDividerContrast
@@ -415,7 +421,7 @@ function Browser({
         beforeWidth={beforeWidth}
         contained
         headerOffset={HEADER_HEIGHT}
-        height={heightWindow}
+        height={contained ? heightModal : heightWindow}
         hideAfterCompletely={!selectedItem}
         inline
         mainContainerHeader={(
@@ -446,6 +452,7 @@ function Browser({
                   onChange={e => setSearchText(e.target.value)}
                   onFocus={() => setFocused(true)}
                   placeholder="Search a file..."
+                  primary
                   small
                   ref={refSearch}
                 />
@@ -527,6 +534,9 @@ function Browser({
                         }
 
                         setSelectedLinks(arr);
+                        setSearchText(null);
+                        setFocused(false);
+                        refSearch?.current?.blur();
                       }}
                       searchQuery={searchText}
                       uuid={`${componentUUID}/AutocompleteDropdown`}
@@ -548,7 +558,7 @@ function Browser({
       >
         {mainContentMemo}
       </TripleLayout>
-    </>
+    </ContainerStyle>
   );
 }
 
