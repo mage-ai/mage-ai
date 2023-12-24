@@ -16,6 +16,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer, { JUSTIFY_SPACE_BETWEEN_PROPS } from '@oracle/components/FlexContainer';
 import GroupsOfBlocks from './GroupsOfBlocks';
 import Headline from '@oracle/elements/Headline';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Link from '@oracle/elements/Link';
 import Markdown from '@oracle/components/Markdown';
 import PipelineType from '@interfaces/PipelineType';
@@ -42,6 +43,14 @@ import {
   TABS_MAPPING,
 } from './FileBrowserNavigation/constants';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import {
+  KEY_CODE_CONTROL,
+  KEY_CODE_ESCAPE,
+  KEY_CODE_FORWARD_SLASH,
+  KEY_CODE_META,
+  KEY_SYMBOL_FORWARD_SLASH,
+  KEY_SYMBOL_META,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import { MainStyle } from './index.style';
 import { NavLinkType } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -51,7 +60,9 @@ import { handleNavigateBack } from './FileBrowserNavigation/utils';
 import { indexBy, intersection, remove, sortByKey } from '@utils/array';
 import { ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useError } from '@context/Error';
+import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowserProps = {
@@ -257,6 +268,33 @@ function Browser({
     }, 1);
   }, []);
 
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => unregisterOnKeyDown(componentUUID), [
+    unregisterOnKeyDown,
+    componentUUID,
+  ]);
+
+  registerOnKeyDown?.(
+    componentUUID,
+    (event, keyMapping) => {
+      if (keyMapping[KEY_CODE_ESCAPE]) {
+        setFocused(false);
+        refSearch?.current?.blur();
+      } else if (
+        onlyKeysPresent([KEY_CODE_META, KEY_CODE_FORWARD_SLASH], keyMapping)
+          || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_FORWARD_SLASH], keyMapping)
+      ) {
+        event.preventDefault();
+        refSearch?.current?.focus();
+      }
+    },
+    [],
+  );
+
   return (
     <>
       <TripleLayout
@@ -314,7 +352,13 @@ function Browser({
               }
             >
               <TextInput
-                afterIcon={refSearchText.current ? <Close /> : null}
+                afterIcon={(
+                  <KeyboardTextGroup
+                    addPlusSignBetweenKeys
+                    disabled
+                    keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_FORWARD_SLASH]]}
+                  />
+                )}
                 afterIconClick={() => {
                   refSearch?.current?.focus();
                 }}
