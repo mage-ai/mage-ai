@@ -66,7 +66,7 @@ export default function useCodeBlockProps({
     description: (
       <FlexContainer alignItems="center">
         <KeyboardTextGroup
-          addSpaceBetweenKeys
+          addPlusSignBetweenKeys
           keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
         />
 

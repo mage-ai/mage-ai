@@ -96,6 +96,7 @@ function CodeEditor({
   autoHeight,
   autoSave,
   block,
+  editorRef: editorRefProp,
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
@@ -118,7 +119,7 @@ function CodeEditor({
   value,
   width = '100%',
 }: CodeEditorProps, ref) {
-  const editorRef = useRef(null);
+  const editorRef = editorRefProp || useRef(null);
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
 
@@ -234,7 +235,7 @@ function CodeEditor({
     }
 
     setMounted(true);
-    onMountCallback?.();
+    onMountCallback?.(editor, monaco);
   }, [
     autoHeight,
     height,

@@ -100,8 +100,23 @@ export default function useCodeBlockComponents({
 
     return null;
   }, [
+    autocompleteProviders,
+    block,
     codeBlockProps,
+    content,
     enabled,
+    height,
+    onChange,
+    onContentSizeChangeCallback,
+    onDidChangeCursorPosition,
+    onMountCallback,
+    placeholder,
+    selected,
+    setSelected,
+    setTextareaFocused,
+    shortcuts,
+    textareaFocused,
+    theme,
   ]);
 
   const header = useMemo(() => {
@@ -124,8 +139,15 @@ export default function useCodeBlockComponents({
       );
     }
   }, [
+    block,
     codeBlockProps,
     enabled,
+    executionState,
+    interruptKernel,
+    runBlockAndTrack,
+    selected,
+    status,
+    theme,
   ]);
 
   return {

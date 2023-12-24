@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import CodeEditor from '@components/CodeEditor';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { AISparkle, PanelCollapseRight } from '@oracle/icons';
@@ -21,6 +22,8 @@ import {
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
   KEY_CODE_PERIOD,
+  KEY_SYMBOL_CONTROL,
+  KEY_SYMBOL_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LEFT_PADDING } from '@components/CodeBlock/index.style';
 import { LLMUseCaseEnum } from '@interfaces/LLMType';
@@ -52,15 +55,17 @@ function Editor({
   textareaFocused,
   theme,
 }: CodeBlockEditorProps) {
-  console.log('CodeBlockEditor RENDERRRRRRRRRRRRRRRR');
-
   const componentUUID = `CodeBlockEditorV2/${block?.uuid}/editor/button/AI`;
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
   });
 
+  const [editorState, setEditor] = useState();
+
   const refButton = useRef(null);
   const refEditor = useRef(null);
+  const refEditorContainer = useRef(null);
+  const refEditorLineNumber = useRef(null);
   const refInput = useRef(null);
   const refInputValue = useRef(null);
   const refInputContainer = useRef(null);
@@ -76,6 +81,27 @@ function Editor({
     theme,
   });
 
+  const reset = useCallback(() => {
+    refButton.current.style.opacity = 1;
+    refInputContainer.current.style.display = 'none';
+  }, []);
+  const start = useCallback(() => {
+    refButton.current.style.opacity = 0;
+    refInputContainer.current.style.display = 'block';
+    setTimeout(() => refInput?.current?.focus?.(), 1);
+  }, []);
+  const generateCode = useCallback(() => {
+    createCode({
+      llm: {
+        request: {
+          block_description: refInputValue.current,
+          code_language: language,
+        },
+        use_case: LLMUseCaseEnum.GENERATE_CODE,
+      },
+    });
+  });
+
   const [createCode, { isLoading: isLoadingCreateCode }] = useMutation(
     api.llms.useCreate(),
     {
@@ -84,7 +110,36 @@ function Editor({
           callback: ({
             llm,
           }) => {
-            console.log(llm);
+            let code;
+            if (typeof llm?.response === 'string') {
+              code = llm?.response;
+            } else {
+              code = llm?.response?.code;
+            }
+
+            const parts = content?.split('\n') || [];
+            const lineNumber = refEditorLineNumber?.current;
+            const part1 = parts?.slice(0, lineNumber - 1);
+            const part2 = parts?.slice(lineNumber, parts?.length);
+            // @ts-ignore
+            const combined = part1.concat([code, '']).concat(part2).join('\n');
+
+            onChange(combined);
+
+            refInput.current.value = '';
+            refInput.current.blur();
+            refInputValue.current = '';
+
+            setTimeout(() => refEditor.current.focus(), 1);
+            setTimeout(() => {
+              refEditor?.current?.setPosition({
+                column: 1,
+                lineNumber: lineNumber + 1,
+              });
+            }, 2);
+
+            setSelected(true)
+            setTextareaFocused(true)
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -94,6 +149,7 @@ function Editor({
       ),
     },
   );
+
 
   const focusArea = useMemo(() => (
     <TextInputFocusAreaStyle
@@ -110,9 +166,7 @@ function Editor({
           noPadding
           onClick={(e) => {
             pauseEvent(e);
-
-            refButton.current.style.opacity = 1;
-            refInputContainer.current.style.display = 'none';
+            reset();
           }}
         >
           <PanelCollapseRight default size={ICON_SIZE} />
@@ -122,7 +176,12 @@ function Editor({
       {focusArea}
 
       <TextInput
-        beforeIcon={<AISparkle size={2 * UNIT} />}
+        beforeIcon={(
+          <KeyboardTextGroup
+            addPlusSignBetweenKeys
+            keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_PERIOD]]}
+          />
+        )}
         buttonAfter={(
           <KeyboardShortcutButton
             backgroundColor={color?.accent}
@@ -131,16 +190,7 @@ function Editor({
             noBorder
             onClick={(e) => {
               pauseEvent(e);
-
-              createCode({
-                llm: {
-                  request: {
-                    block_description: refInputValue.current,
-                    code_language: language,
-                  },
-                  use_case: LLMUseCaseEnum.GENERATE_CODE,
-                },
-              });
+              generateCode();
             }}
             pill
           >
@@ -156,26 +206,16 @@ function Editor({
         onKeyDown={(e) => {
           if (KEY_CODE_ESCAPE === e.keyCode) {
             pauseEvent(e);
-            refButton.current.style.opacity = 1;
-            refInputContainer.current.style.display = 'none';
+            reset();
           } else if (KEY_CODE_ENTER === e.keyCode) {
             pauseEvent(e);
-
-            createCode({
-              llm: {
-                request: {
-                  block_description: refInputValue.current,
-                  code_language: language,
-                },
-                use_case: LLMUseCaseEnum.GENERATE_CODE,
-              },
-            });
+            generateCode();
           }
         }}
         onChange={(e) => {
           refInputValue.current = e.target.value;
         }}
-        paddingHorizontal={0}
+        paddingLeft={UNIT * 10}
         paddingRight={UNIT * 16}
         paddingVertical={UNIT * 1.5}
         placeholder="e.g. Read files from disk asynchronously"
@@ -197,6 +237,7 @@ function Editor({
       autocompleteProviders={autocompleteProviders}
       block={block}
       blockRef={blockRef}
+      editorRef={refEditor}
       height={height}
       language={language}
       onChange={(val: string) => {
@@ -210,6 +251,7 @@ function Editor({
 
         const editor = opts?.editor;
         const lineNumber = opts?.position?.lineNumber;
+        refEditorLineNumber.current = lineNumber;
 
         const editorHeight = editor?.getContentHeight();
         const linesCount = editor?.getModel()?.getLineCount();
@@ -220,33 +262,26 @@ function Editor({
         refButton.current.style.top = `${(top - lineHeight) - (ICON_SIZE / 4)}px`;
         refInputContainer.current.style.top = `${top}px`;
 
-        const width = (refEditor?.current?.getBoundingClientRect?.()?.width || 0)
-          - WIDTH_OFFSET
+        const width = (refEditorContainer?.current?.getBoundingClientRect?.()?.width || 0) - WIDTH_OFFSET;
         refInputContainer.current.style.width = `${width}px`;
-
-        // console.log(
-        //   editor?.getContentHeight(),
-        //   editor?.getContentWidth(),
-        //   editor?.getScrollHeight(),
-        //   editor?.getScrollLeft(),
-        //   editor?.getScrollTop(),
-        //   editor?.getScrollWidth(),
-        //   editor?.getModel()?.getLineCount(),
-        // );
       }}
-      onMountCallback={() => {
+      onMountCallback={(editor, monaco) => {
         if (onMountCallback) {
           onMountCallback?.();
         }
 
+        // refEditor.current = editor;
+        setEditor(editor)
+        editor.focus()
+
         setTimeout(() => {
-          const width = (refEditor?.current?.getBoundingClientRect?.()?.width || 0)
+          const width = (refEditorContainer?.current?.getBoundingClientRect?.()?.width || 0)
             - WIDTH_OFFSET;
           refInputContainer.current.style.width = `${width}px`;
         }, 1);
       }}
       placeholder={placeholder}
-      ref={refEditor}
+      ref={refEditorContainer}
       selected={selected}
       setSelected={setSelected}
       setTextareaFocused={setTextareaFocused}
@@ -288,9 +323,7 @@ function Editor({
     componentUUID,
     (event, keyMapping, keyHistory) => {
       if (selected && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_PERIOD], keyMapping)) {
-        refButton.current.style.opacity = 0;
-        refInputContainer.current.style.display = 'block';
-        setTimeout(() => refInput?.current?.focus?.(), 1);
+        start();
       }
     },
     [
@@ -302,22 +335,13 @@ function Editor({
     <EditorWrapperStyle>
       <ButtonStyle ref={refButton}>
         <KeyboardShortcutButton
-          // keyboardShortcutValidation={({
-          //   keyMapping,
-          // }, index) => onlyKeysPresent([
-          //   KEY_CODE_CONTROL,
-          //   KEY_CODE_PERIOD,
-          // ], keyMapping)}
           noBackground
           noBorder
           noPadding
           onClick={(e) => {
             if (selected) {
               pauseEvent(e);
-
-              refButton.current.style.opacity = 0;
-              refInputContainer.current.style.display = 'block';
-              setTimeout(() => refInput?.current?.focus?.(), 1);
+              start();
             }
           }}
           uuid={componentUUID}

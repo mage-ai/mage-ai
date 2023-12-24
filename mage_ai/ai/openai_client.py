@@ -110,7 +110,11 @@ class OpenAIClient(AIClient):
         if is_json_response:
             resp = await chain.arun(variable_values)
             if resp:
-                return json.loads(resp)
+                try:
+                    return json.loads(resp)
+                except json.decoder.JSONDecodeError as err:
+                    print(f'[ERROR] OpenAIClient.inference_with_prompt {resp}: {err}.')
+                    return resp
             else:
                 return {}
         return await chain.arun(variable_values)
