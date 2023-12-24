@@ -98,6 +98,7 @@ import {
   BlockDivider,
   BlockDividerInner,
   BlockHeaderStyle,
+  CodeBlockWrapperStyle,
   CodeContainerStyle,
   CodeHelperStyle,
   ContainerStyle,
@@ -2413,6 +2414,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
               ...borderColorShareProps,
               ...collected,
             }}
+            className="code-block-header-sticky"
             onClick={() => onClickSelectBlock()}
             ref={disableDrag ? null : drag}
             zIndex={!sideBySideEnabled
@@ -3636,7 +3638,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
   }
 
   const codeBlockMain = (
-    <div ref={ref}>
+    <CodeBlockWrapperStyle ref={ref}>
       <div
         ref={drop}
         style={{
@@ -3703,7 +3705,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
           {children}
         </div>
       </div>
-    </div>
+    </CodeBlockWrapperStyle>
   );
 
   const column1 = useMemo(() => {

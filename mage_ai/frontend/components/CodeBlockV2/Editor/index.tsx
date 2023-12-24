@@ -17,6 +17,8 @@ function Editor({
   shortcuts,
   textareaFocused,
 }: CodeBlockEditorProps) {
+  console.log('CodeBlockEditor RENDERRRRRRRRRRRRRRRR');
+
   const {
     language,
   } = block;

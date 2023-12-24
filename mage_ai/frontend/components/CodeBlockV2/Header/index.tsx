@@ -36,6 +36,8 @@ function CodeBlockHeader({
   theme,
   title,
 }: CodeBlockHeaderProps) {
+  console.log('CodeBlockHeader RENDERRRRRRRRRRRRRRRR');
+
   const [subheaderVisible, setSubheaderVisible] = useState(false);
 
   const {

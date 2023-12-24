@@ -342,19 +342,19 @@ function PipelineDetail({
   const [cursorHeight1, setCursorHeight1] = useState<number>(null);
   const column1ScrollMemo = useMemo(() => (
     <ColumnScroller
-        blocks={blocksFiltered}
-        columnIndex={0}
-        columns={2}
-        disabled={scrollTogether}
-        eventNameRefsMapping={{
-          [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
-        }}
-        invisible={!blocks?.length || !cursorHeight1 || scrollTogether}
-        mainContainerRect={mainContainerRect}
-        scrollTogether={scrollTogether}
-        setCursorHeight={setCursorHeight1}
-      />
-    ), [
+      blocks={blocksFiltered}
+      columnIndex={0}
+      columns={2}
+      disabled={scrollTogether}
+      eventNameRefsMapping={{
+        [CUSTOM_EVENT_CODE_BLOCK_CHANGED]: blockRefs,
+      }}
+      invisible={!blocks?.length || !cursorHeight1 || scrollTogether}
+      mainContainerRect={mainContainerRect}
+      scrollTogether={scrollTogether}
+      setCursorHeight={setCursorHeight1}
+    />
+  ), [
     blockRefs,
     blocksFiltered,
     cursorHeight1,
@@ -796,6 +796,46 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     showGlobalDataProducts,
     useV2AddNewBlock,
   ]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const { y } =mainContainerRef?.current?.getBoundingClientRect?.() || {};
+      Object.values(blockRefs?.current || {})?.forEach((node) => {
+        const { y: y2 } = node?.current?.getBoundingClientRect?.() || {};
+        if (y2 <= y) {
+          const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
+            'disable-border-radius',
+            'enable-border-radius',
+          ].includes(cn));
+          node.current.className = [
+            'disable-border-radius',
+            // @ts-ignore
+          ].concat(arr).join(' ');
+        } else {
+          const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
+            'disable-border-radius',
+            'enable-border-radius',
+          ].includes(cn));
+          node.current.className = [
+            'enable-border-radius',
+            // @ts-ignore
+          ].concat(arr).join(' ');
+        }
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      mainContainerRef?.current?.addEventListener('scroll', onScroll);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        mainContainerRef?.current?.removeEventListener('scroll', onScroll);
+      }
+    };
+  }, []);
 
   const codeBlocks = useMemo(() => {
     const arr = [];

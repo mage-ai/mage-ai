@@ -174,6 +174,22 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
   `}
 `;
 
+export const CodeBlockWrapperStyle = styled.div`
+  &.enable-border-radius {
+    .code-block-header-sticky {
+      border-top-left-radius: 0px;
+      border-top-right-radius: 0px;
+    }
+ }
+
+  &.enable-border-radius {
+    .code-block-header-sticky {
+      border-top-left-radius: ${BORDER_RADIUS}px;
+      border-top-right-radius: ${BORDER_RADIUS}px;
+    }
+ }
+`;
+
 export const ContainerStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
   position: relative;
@@ -207,8 +223,6 @@ export const BlockHeaderStyle = styled.div<{
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
-  border-top-left-radius: ${BORDER_RADIUS}px;
-  border-top-right-radius: ${BORDER_RADIUS}px;
   border-top-style: ${BORDER_STYLE};
   border-top-width: ${BORDER_WIDTH_THICK}px;
   border-left-style: ${BORDER_STYLE};
@@ -228,7 +242,7 @@ export const BlockHeaderStyle = styled.div<{
     // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
     // and the screen width is too small.
     position: sticky;
-    top: -5px;
+    top: 0px;
   `}
 
   ${props => props.noSticky && `
