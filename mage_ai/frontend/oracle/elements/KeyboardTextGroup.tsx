@@ -16,11 +16,11 @@ const SpacingStyle = styled.div<{
   `}
 
   ${props => !props.small && `
-    margin-left: ${UNIT * 0.25}px;
+    margin-left: ${UNIT * 0.5}px;
   `}
 
   ${props => props.marginRight && `
-    margin-right: ${UNIT * 0.25}px;
+    margin-right: ${UNIT * 0.5}px;
   `}
 `;
 
@@ -61,6 +61,7 @@ function KeyboardTextGroup({
         if (addPlusSignBetweenKeys) {
           combo.push(
             <Text
+              default={!disabled}
               disabled={disabled}
               key={`spacing-${keyText}-plus-sign`}
               monospace={monospace}

@@ -159,6 +159,7 @@ import {
 import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { RunBlockAndTrackProps } from '@components/CodeBlockV2/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
@@ -911,28 +912,7 @@ function CodeBlock({
     pauseFetch: (!selected && executionStatesFetchedCount >= 1) || !sparkEnabled,
   });
 
-  const runBlockAndTrack = useCallback((payload?: {
-    block: BlockType;
-    code?: string;
-    disableReset?: boolean;
-    runDownstream?: boolean;
-    runIncompleteUpstream?: boolean;
-    runSettings?: {
-      run_model?: boolean;
-    };
-    runUpstream?: boolean;
-    runTests?: boolean;
-    syncColumnPositions?: {
-      rect: {
-        height: number;
-        y: number;
-      };
-      y: number;
-    };
-    variables?: {
-      [key: string]: any;
-    };
-  }) => {
+  const runBlockAndTrack = useCallback((payload?: RunBlockAndTrackProps) => {
     if (sideBySideEnabled) {
       dispatchEventSyncColumnPositions({
         columnIndex: scrollTogether ? 2 : 1,
@@ -1235,25 +1215,29 @@ function CodeBlock({
         return;
       }
 
-      if (selected && !hideRunButton) {
-        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
-          || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
-        ) {
-          runBlockAndTrack({ block });
-        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
-          event.preventDefault();
-          addNewBlock({
-            language: blockLanguage,
-            type: blockType,
-            upstream_blocks: [blockUUID],
-          });
-          runBlockAndTrack({ block });
+      if (!codeBlockV2 || !codeBlockComponentHeader) {
+        if (selected && !hideRunButton) {
+          if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
+            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
+          ) {
+            runBlockAndTrack({ block });
+          } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
+            event.preventDefault();
+            addNewBlock({
+              language: blockLanguage,
+              type: blockType,
+              upstream_blocks: [blockUUID],
+            });
+            runBlockAndTrack({ block });
+          }
         }
       }
     },
     [
       addNewBlock,
       block,
+      codeBlockComponentHeader,
+      codeBlockV2,
       hideRunButton,
       runBlockAndTrack,
       selected,
@@ -1589,6 +1573,16 @@ function CodeBlock({
     // tags,
   } = useCodeBlockComponents({
     block,
+    executionState,
+    interruptKernel,
+    runBlockAndTrack: payload => runBlockAndTrack({
+      ...payload,
+      syncColumnPositions: {
+        ...(payload?.syncColumnPositions || {}),
+        rect: refColumn1?.current?.getBoundingClientRect(),
+        y: refColumn2?.current?.getBoundingClientRect()?.y,
+      },
+    }),
     selected,
     status,
     theme: themeContext,
