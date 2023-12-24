@@ -33,6 +33,7 @@ export default function useCodeBlockComponents({
     setSelected,
     setTextareaFocused,
     shortcuts,
+    showConfigureProjectModal,
     status,
     textareaFocused,
     theme,
@@ -42,6 +43,7 @@ export default function useCodeBlockComponents({
   const {
     featureEnabled,
     featureUUIDs,
+    project,
   } = useProject();
 
   const enabled = useMemo(() => [
@@ -89,14 +91,18 @@ export default function useCodeBlockComponents({
           onContentSizeChangeCallback={onContentSizeChangeCallback}
           onDidChangeCursorPosition={onDidChangeCursorPosition}
           onMountCallback={onMountCallback}
+          pipeline={pipeline}
           placeholder={placeholder}
+          project={project}
           selected={selected}
           setSelected={setSelected}
           setTextareaFocused={setTextareaFocused}
           sideMenuVisible={sideMenuVisible}
           shortcuts={shortcuts}
+          showConfigureProjectModal={showConfigureProjectModal}
           textareaFocused={textareaFocused}
           theme={theme}
+          updatePipeline={updatePipeline}
           {...(codeBlockProps?.editor || {})}
         />
       );
@@ -114,14 +120,18 @@ export default function useCodeBlockComponents({
     onContentSizeChangeCallback,
     onDidChangeCursorPosition,
     onMountCallback,
+    pipeline,
     placeholder,
+    project,
     selected,
     setSelected,
     setTextareaFocused,
     sideMenuVisible,
     shortcuts,
+    showConfigureProjectModal,
     textareaFocused,
     theme,
+    updatePipeline,
   ]);
 
   const mainContentMemo = useMemo(() => {

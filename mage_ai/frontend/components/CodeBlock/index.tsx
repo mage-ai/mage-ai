@@ -1414,6 +1414,7 @@ function CodeBlock({
     setHiddenBlocks,
     setSelected,
     setTextareaFocused,
+    showConfigureProjectModal,
     sideBySideEnabled,
     shortcuts: hideRunButton
       ? []

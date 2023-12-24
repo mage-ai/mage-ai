@@ -1,6 +1,7 @@
 import BlockType from '@interfaces/BlockType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import PipelineType from '@interfaces/PipelineType';
+import ProjectType from '@interfaces/ProjectType';
 import StatusType from '@interfaces/StatusType';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -75,6 +76,12 @@ export type UseCodeBlockComponentProps = {
   setOutputCollapsed?: (value: boolean) => void;
   setScrollTogether?: (prev: any) => void;
   setSideBySideEnabled?: (prev: any) => void;
+  showConfigureProjectModal?: (opts: {
+    cancelButtonText?: string;
+    header?: any;
+    onCancel?: () => void;
+    onSaveSuccess?: (project: ProjectType) => void;
+  }) => void;
   sideBySideEnabled?: boolean;
   status: StatusType;
   theme: ThemeType;

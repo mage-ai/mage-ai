@@ -9,12 +9,15 @@ import Text from '@oracle/elements/Text';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
   AISparkle,
+  Chat,
   BatchSquaresStacked,
+  Charts,
   Conditional,
   ChevronUp,
   ChevronDown,
   BatchPipeline,
   Close,
+  DocumentIcon,
   BlocksCombined,
   Alphabet,
   LayoutStacked,
@@ -431,24 +434,12 @@ export default function useCodeBlockProps({
       ],
     },
     {
-      uuid: 'Artifacts',
+      uuid: 'Visualizations',
       items: [
         {
-          isGroupingTitle: true,
-          uuid: 'Document code',
-        },
-        {
-          uuid: 'Add code comments',
-        },
-        {
-          uuid: 'Add documentation with markdown blocks',
-        },
-        {
-          isGroupingTitle: true,
-          uuid: 'Visualize code',
-        },
-        {
-          uuid: 'Add a chart',
+          beforeIcon: <Charts {...MENU_ICON_PROPS} />,
+          uuid: 'Add charts',
+          onClick: () => openSidekickView(ViewKeyEnum.CHARTS, true),
         },
       ],
     },
@@ -456,6 +447,7 @@ export default function useCodeBlockProps({
       uuid: 'Help',
       items: [
         {
+          beforeIcon: <Chat {...MENU_ICON_PROPS} />,
           uuid: 'Live chat 24/7',
           linkProps: {
             href: 'https://mage.ai/chat',
@@ -463,6 +455,7 @@ export default function useCodeBlockProps({
           },
         },
         {
+          beforeIcon: <DocumentIcon {...MENU_ICON_PROPS} />,
           uuid: 'Developer documentation',
           linkProps: {
             href: 'https://docs.mage.ai',

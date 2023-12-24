@@ -2,11 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import AutocompleteDropdown from '@components/AutocompleteDropdown';
+import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
+import ClickOutside from '@oracle/components/ClickOutside';
 import CodeEditor from '@components/CodeEditor';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import LLMType, { LLMUseCaseEnum } from '@interfaces/LLMType';
+import Link from '@oracle/elements/Link';
+import Panel from '@oracle/components/Panel';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -33,7 +40,6 @@ import {
   KEY_SYMBOL_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LEFT_PADDING } from '@components/CodeBlock/index.style';
-import { LLMUseCaseEnum } from '@interfaces/LLMType';
 import { LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY, get, set } from '@storage/localStorage';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -56,14 +62,20 @@ function Editor({
   onContentSizeChangeCallback,
   onDidChangeCursorPosition,
   onMountCallback,
+  pipeline,
   placeholder,
+  project,
   selected,
   setSelected,
   setTextareaFocused,
   shortcuts,
+  showConfigureProjectModal,
   textareaFocused,
   theme,
-}: CodeBlockEditorProps) {
+  updatePipeline,
+}: CodeBlockEditorProps & {
+  project: ProjectType;
+}) {
   const { width } = useWindowSize();
 
   const componentUUID = `CodeBlockEditorV2/${block?.uuid}/editor/button/AI`;
@@ -72,9 +84,11 @@ function Editor({
   });
 
   const [focused, setFocused] = useState<boolean>(false);
+  const [showAIActions, setShowAIActions] = useState<boolean>(false);
 
   const history = get(LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY, []);
 
+  const refAIActions = useRef(null);
   const refButton = useRef(null);
   const refEditor = useRef(null);
   const refEditorContainer = useRef(null);
@@ -187,6 +201,137 @@ function Editor({
     },
   );
 
+  const [createLLM, { isLoading: isLoadingCreateLLM }] = useMutation(
+    api.llms.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            llm,
+          }) => {
+
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const itemsAIActions = useMemo(() => {
+    const shouldShowModal = !project?.openai_api_key;
+    const showModal = (llm: LLMType) => {
+      showConfigureProjectModal?.({
+        header: (
+          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+            <Panel>
+              <Text warning>
+                You need to add an OpenAI API key to your project before you can
+                generate blocks using AI.
+              </Text>
+
+              <Spacing mt={1}>
+                <Text warning>
+                  Read <Link
+                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                    openNewWindow
+                  >
+                    OpenAI’s documentation
+                  </Link> to get your API key.
+                </Text>
+              </Spacing>
+            </Panel>
+          </Spacing>
+        ),
+        onSaveSuccess: (project: ProjectType) => {
+          if (project?.openai_api_key) {
+            // @ts-ignore
+            updatePipeline({
+              pipeline: {
+                llm,
+              },
+            });
+          }
+        },
+      });
+    };
+
+    const llm: LLMType = {
+      request: {
+        block_uuid: block?.uuid,
+        pipeline_uuid: pipeline?.uuid,
+      },
+    };
+
+    return [
+      {
+        label: () => 'Document block (beta)',
+        onClick: () => {
+          llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_BLOCK;
+
+          if (shouldShowModal) {
+            showModal(llm);
+          } else {
+            // @ts-ignore
+            updatePipeline({
+              pipeline: {
+                llm,
+              },
+            });
+          }
+        },
+        uuid: 'Document block',
+      },
+      {
+        label: () => 'Document pipeline and all blocks (beta)',
+        onClick: () => {
+          llm.use_case = LLMUseCaseEnum.GENERATE_DOC_FOR_PIPELINE;
+
+          if (shouldShowModal) {
+            showModal(llm);
+          } else {
+            // @ts-ignore
+            updatePipeline({
+              pipeline: {
+                llm,
+              },
+            });
+          }
+        },
+        uuid: 'Document pipeline and all blocks',
+      },
+      {
+        label: () => 'Add comments in code (beta)',
+        onClick: () => {
+          if (shouldShowModal) {
+            showModal(llm);
+          } else {
+            // @ts-ignore
+            createLLM({
+              llm: {
+                request: {
+                  block_code: content,
+                },
+                use_case: LLMUseCaseEnum.GENERATE_COMMENT_FOR_CODE,
+              },
+            });
+          }
+        },
+        uuid: 'Add comments in code',
+      },
+    ];
+  }, [
+    block,
+    content,
+    createLLM,
+    pipeline,
+    project,
+    showConfigureProjectModal,
+    updatePipeline,
+  ]);
+
   const focusArea = useMemo(() => (
     <TextInputFocusAreaStyle
       onClick={() => refInput?.current?.focus()}
@@ -238,19 +383,51 @@ function Editor({
           />
         )}
         buttonAfter={(
-          <KeyboardShortcutButton
-            backgroundColor={color?.accent}
-            bold
-            loading={isLoadingCreateCode}
-            noBorder
-            onClick={(e) => {
-              pauseEvent(e);
-              generateCode();
-            }}
-            pill
-          >
-            Generate code
-          </KeyboardShortcutButton>
+          <>
+            <ButtonGroup>
+              <KeyboardShortcutButton
+                backgroundColor={color?.accent}
+                bold
+                loading={isLoadingCreateCode}
+                noBorder
+                onClick={(e) => {
+                  pauseEvent(e);
+                  generateCode();
+                }}
+                pill
+              >
+                Generate code
+              </KeyboardShortcutButton>
+              <KeyboardShortcutButton
+                backgroundColor={color?.accentLight}
+                bold
+                loading={isLoadingCreateLLM}
+                noBorder
+                onClick={(e) => {
+                  pauseEvent(e);
+                  setShowAIActions(true);
+                }}
+                pill
+              >
+                Document code
+              </KeyboardShortcutButton>
+            </ButtonGroup>
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowAIActions(false)}
+              open={showAIActions}
+            >
+              <FlyoutMenu
+                items={itemsAIActions}
+                onClickCallback={() => setShowAIActions(false)}
+                open={showAIActions}
+                parentRef={refAIActions}
+                rightOffset={UNIT * 4.75}
+                topOffset={UNIT * 2}
+                uuid="FileHeaderMenu/AI_actions"
+              />
+            </ClickOutside>
+          </>
         )}
         fullWidth
         monospace
@@ -283,7 +460,7 @@ function Editor({
 
       <DropdownStyle
         maxHeight={UNIT * 80}
-        topOffset={refInputContainer?.current?.getBoundingClientRect().height}
+        topOffset={refInputContainer?.current?.getBoundingClientRect().height - 1}
         width={`${refInputContainer?.current?.getBoundingClientRect().width - (UNIT * 3)}px`}
       >
         <AutocompleteDropdown
