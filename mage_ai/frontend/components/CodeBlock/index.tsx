@@ -78,9 +78,10 @@ import Tooltip from '@oracle/components/Tooltip';
 import UpstreamBlockSettings from './UpstreamBlockSettings';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
-import useCodeBlockComponents from './useCodeBlockComponents';
+import useCodeBlockComponents from '@components/CodeBlockV2/useCodeBlockComponents';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
+import useStatus from '@utils/models/status/useStatus';
 import { ANIMATION_DURATION_CONTENT } from '@oracle/components/Accordion/AccordionPanel';
 import {
   ArrowDown,
@@ -396,6 +397,7 @@ function CodeBlock({
     featureUUIDs,
     sparkEnabled: sparkEnabledInit,
   } = useProject();
+  const { status } = useStatus();
 
   const [sparkEnabled, setSparkEnabled] = useState(false);
   const [executionStatesFetchedCount, setExecutionStatesFetched] = useState(0);
@@ -1587,6 +1589,9 @@ function CodeBlock({
     // tags,
   } = useCodeBlockComponents({
     block,
+    selected,
+    status,
+    theme: themeContext,
   });
 
   const buttonTabs = useMemo(() => {
@@ -2360,8 +2365,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             position: 'relative',
           }}
         >
-          {codeBlockV2 && codeBlockComponentHeader}
-
           <BlockHeaderStyle
             {...{
               ...borderColorShareProps,
@@ -2375,6 +2378,8 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             }
             noSticky={sideBySideEnabled}
           >
+            {codeBlockV2 && codeBlockComponentHeader}
+
             {(!codeBlockV2 || !codeBlockComponentHeader) && (
               <Spacing py={1}>
                 <FlexContainer alignItems="center" justifyContent="space-between">
