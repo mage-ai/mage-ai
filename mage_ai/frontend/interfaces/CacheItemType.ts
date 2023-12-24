@@ -49,6 +49,16 @@ interface DBTSchemaType {
 
 export interface DBTCacheItemType {
   content_compiled?: string;
+  data: {
+    sample_data: {
+      columns: string[];
+      rows: string[][];
+    };
+    shape: number[];
+    type: string;
+  };
+  exception?: string;
+  logs?: string;
   models?: string[];
   profiles?: DBTProfileType;
   project?: DBTProjectType;

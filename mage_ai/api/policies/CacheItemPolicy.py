@@ -12,6 +12,7 @@ CacheItemPolicy.allow_actions(
     [
         constants.DETAIL,
         constants.LIST,
+        constants.UPDATE,
     ],
     scopes=[OauthScope.CLIENT_PRIVATE],
     condition=lambda policy: policy.has_at_least_viewer_role(),
@@ -25,6 +26,7 @@ CacheItemPolicy.allow_read(
     on_action=[
         constants.DETAIL,
         constants.LIST,
+        constants.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
@@ -40,6 +42,7 @@ CacheItemPolicy.allow_query(
     on_action=[
         constants.DETAIL,
         constants.LIST,
+        constants.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,

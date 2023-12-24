@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -11,6 +12,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -21,6 +23,8 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TABS, TabEnum } from './constants';
 import { buildModels } from '../utils';
 import { buildNavLinks, buildNavLinkModels, handleNextSelectedLinks } from '../FileBrowserNavigation/utils';
+import { onSuccess } from '@api/utils/response';
+import { useError } from '@context/Error';
 
 type BlockDetailProps = {
   cacheItem: CacheItemType;
@@ -46,9 +50,15 @@ function BlockDetail({
   selectedLinks,
   setSelectedLinks,
 }: BlockDetailProps) {
+  const [showError] = useError(null, {}, [], {
+    uuid: 'BlockBrowser/BlockDetail',
+  });
+
   const refHeader = useRef(null);
   const [headerHeight, setHeaderHeight] = useState<number>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
+  const [objectServer, setObjectServer] = useState(null);
+  const sampleData = useMemo(() => objectServer?.item?.data?.sample_data, [objectServer]);
 
   const selectedLink = selectedLinks?.[0];
   const item = useMemo(() => cacheItem?.item, [cacheItem]);
@@ -65,13 +75,14 @@ function BlockDetail({
     content: string;
   } = useMemo(() => data?.file_content, [data]);
 
-  const { data: dataDetail } = api.cache_items.detail(
-    encodeURIComponent(model?.fullPath),
-    {
-      item_type: CacheItemTypeEnum.DBT,
-      project_path: item?.project?.uuid,
-    },
-  );
+  const requestQuery = useMemo(() => ({
+    item_type: CacheItemTypeEnum.DBT,
+    project_path: item?.project?.uuid,
+  }), [
+    item,
+  ]);
+
+  const { data: dataDetail } = api.cache_items.detail(encodeURIComponent(model?.fullPath), requestQuery);
   const itemDetail: CacheItemType = useMemo(() => dataDetail?.cache_item, [dataDetail]);
 
   const upstreamBlocks: BlockType[] = useMemo(() => itemDetail?.item?.upstream_blocks || [], [
@@ -110,9 +121,44 @@ function BlockDetail({
     model,
   ]);
 
+  const [updateCacheItem, { isLoading: isLoadingUpdateCacheItem }] = useMutation(
+    api.cache_items.useUpdate(encodeURIComponent(model?.fullPath), requestQuery),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            cache_item: objectServer,
+          }) => {
+            setObjectServer(objectServer);
+          },
+          onErrorCallback: (response, errors) => {
+            setObjectServer(null);
+
+            return showError({
+              errors,
+              response,
+            });
+          },
+        },
+      ),
+    },
+  );
+
   useEffect(() => {
     setTimeout(() => setHeaderHeight(refHeader?.current?.getBoundingClientRect()?.height), 1);
   }, []);
+
+  useEffect(() => {
+    if (TabEnum.DATA === selectedTab?.uuid) {
+      updateCacheItem({
+        cache_item: {},
+      });
+    }
+  }, [
+    model,
+    selectedTab,
+    updateCacheItem,
+  ]);
 
   if (CacheItemTypeEnum.DBT === cacheItem?.item_type) {
     return (
@@ -403,6 +449,62 @@ function BlockDetail({
 
         {TabEnum.DATA === selectedTab?.uuid && (
           <>
+            {isLoadingUpdateCacheItem && (
+              <Spacing p={PADDING_UNITS}>
+                <Spinner inverted />
+              </Spacing>
+            )}
+
+            {!isLoadingUpdateCacheItem && !sampleData?.rows?.length && (
+              <Spacing p={PADDING_UNITS}>
+                {!objectServer?.item?.exception?.length && (
+                  <Spacing mb={PADDING_UNITS}>
+                    <Text default>
+                      No sample data exists. Try running the model first.
+                    </Text>
+                  </Spacing>
+                )}
+
+                {objectServer?.item?.logs?.length >= 1 && (
+                  <Spacing mb={PADDING_UNITS}>
+                    {objectServer?.item?.logs?.split('\n')?.map(line => (
+                      <Text default key={line} monospace pre>
+                        {line}
+                      </Text>
+                    ))}
+                  </Spacing>
+                )}
+
+                {objectServer?.item?.exception?.length >= 1&& (
+                  <Spacing mb={PADDING_UNITS}>
+                    {objectServer?.item?.exception?.split('\n')?.map(line => (
+                      <Text key={line} monospace pre warning>
+                        {line}
+                      </Text>
+                    ))}
+                  </Spacing>
+                )}
+              </Spacing>
+            )}
+
+            {!isLoadingUpdateCacheItem && sampleData && sampleData?.rows?.length >= 1 && (
+              <Table
+                columnFlex={sampleData?.columns?.map(() => null)}
+                columns={sampleData?.columns?.map(column => ({
+                  uuid: column,
+                }))}
+                rows={sampleData?.rows?.map(row => row?.map((value, idx: number) => (
+                  <Text default key={`value-${value}-${idx}`} monospace small>
+                    {String(value) === String(false)
+                      ? 'false'
+                      : String(value) === String(true)
+                        ? 'true'
+                        : value
+                    }
+                  </Text>
+                )))}
+              />
+            )}
           </>
         )}
 
