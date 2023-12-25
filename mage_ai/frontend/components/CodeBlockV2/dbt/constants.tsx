@@ -13,7 +13,6 @@ export enum OutputTabEnum {
   COMPILED_CODE = 'compiled_code',
   LOGS = 'logs',
   OUTPUT = 'output',
-  SAMPLE_DATA = 'sample_data',
 }
 
 export function buildHeaderTabs({

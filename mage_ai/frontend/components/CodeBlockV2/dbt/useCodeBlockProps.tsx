@@ -2,16 +2,14 @@ import * as osPath from 'path';
 import { useCallback } from 'react';
 
 import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
-import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
 import Circle from '@oracle/elements/Circle';
 import Configuration from './Configuration';
-import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import Lineage from './Lineage';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
-import api from '@api';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
   AISparkle,
@@ -43,7 +41,6 @@ import {
   VisibleEye,
 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
-import { CONFIG_KEY_DBT_PROJECT_NAME } from '@interfaces/ChartBlockType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { HeaderTabEnum, buildHeaderTabs } from './constants';
 import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
@@ -102,18 +99,6 @@ export default function useCodeBlockProps({
     dynamic,
     reduce_output: reduceOutput,
   } = configuration || {};
-
-  const filePath = configuration?.file_path || configuration?.file_source?.path;
-  const requestQuery = {
-    item_type: CacheItemTypeEnum.DBT,
-    project_path: configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
-  };
-  const { data: dataDetail } = api.cache_items.detail(encodeURIComponent(filePath), requestQuery, {
-    pauseFetch: !configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
-  });
-  const itemDetail: CacheItemType = dataDetail?.cache_item;
-
-  const upstreamBlocks: BlockType[] = itemDetail?.item?.upstream_blocks || [];
 
   const color = getColorsForBlockType(type, {
     blockColor,
@@ -536,20 +521,7 @@ export default function useCodeBlockProps({
       // } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
       //   return;
       } else if (HeaderTabEnum.LINEAGE === tab?.uuid) {
-        console.log(block);
-        return upstreamBlocks?.length >= 1 && (
-          <DependencyGraph
-            disabled
-            enablePorts={false}
-            height={UNIT * 80}
-            pannable
-            pipeline={{
-              blocks: upstreamBlocks,
-              uuid: null,
-            }}
-            zoomable
-          />
-        );
+        return <Lineage block={block} />
       }
 
       return defaultContent;
