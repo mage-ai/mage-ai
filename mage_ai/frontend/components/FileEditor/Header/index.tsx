@@ -29,17 +29,21 @@ export type MenuGroupType = {
 
 type FileHeaderMenuProps = {
   children?: any;
+  defaultTextContent?: boolean;
   fileVersionsVisible?: boolean;
   menuGroups?: MenuGroupType[];
   onSave?: () => void;
+  rightOffset?: number;
   setFilesVersionsVisible: (visible: boolean) => void;
 };
 
 function FileHeaderMenu({
   children,
+  defaultTextContent,
   fileVersionsVisible,
   menuGroups,
   onSave,
+  rightOffset,
   setFilesVersionsVisible,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
@@ -189,7 +193,7 @@ function FileHeaderMenu({
                 onMouseEnter={() => setHighlightedIndex(val => val !== null ? idx : null)}
                 ref={refMenuGroup}
               >
-                <Text>
+                <Text default={defaultTextContent}>
                   {label ? label?.() : uuid}
                 </Text>
               </Button>
@@ -199,6 +203,7 @@ function FileHeaderMenu({
                 onClickCallback={() => setHighlightedIndex(null)}
                 open={highlightedIndex === idx}
                 parentRef={refMenuGroup}
+                rightOffset={rightOffset}
                 uuid={`FileHeaderMenu/${uuid}/${idx}`}
               />
             </div>

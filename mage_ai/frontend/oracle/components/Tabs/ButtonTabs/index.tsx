@@ -13,6 +13,7 @@ import { pauseEvent } from '@utils/events';
 export type TabType = {
   Icon?: any;
   IconSelected?: any;
+  icon?: any;
   label?: () => string | any;
   uuid: string;
 };
@@ -56,20 +57,36 @@ function ButtonTabs({
       const {
         Icon,
         IconSelected,
+        icon,
         label,
         uuid,
       } = tab;
       const selected = uuid === selectedTabUUID;
-      const IconToUse = selected ? (IconSelected || Icon) : Icon;
+      let iconEl;
+      if (icon) {
+        iconEl = React.cloneElement(icon, {
+          ...icon.props,
+          size: 2 * UNIT,
+        });
+      } else {
+        const IconToUse = selected ? (IconSelected || Icon) : Icon;
+        if (IconToUse) {
+          iconEl = (
+            <IconToUse
+              default={!selected}
+              size={2 * UNIT}
+            />
+          );
+        }
+      }
+
       const displayText = label ? label() : uuid;
       const el = (
         <FlexContainer alignItems="center">
-          {IconToUse && (
+          {iconEl && (
             <>
-              <IconToUse
-                default={!selected}
-                size={2 * UNIT}
-              />
+              {iconEl}
+
               <Spacing mr={1} />
             </>
           )}

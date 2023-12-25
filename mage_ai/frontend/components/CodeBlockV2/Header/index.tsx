@@ -1,7 +1,8 @@
 import * as osPath from 'path';
 import { CSSTransition } from 'react-transition-group';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Circle from '@oracle/elements/Circle';
 import CodeBlockHeaderProps from '../constants';
 import Divider from '@oracle/elements/Divider';
@@ -20,7 +21,9 @@ import {
   HeaderStyle,
   HeaderWrapperStyle,
   ICON_SIZE,
+  InfoStyle,
   SubheaderButtonStyle,
+  SubheaderMenuStyle,
   SubheaderStyle,
 } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -32,18 +35,33 @@ function CodeBlockHeader({
   executionState,
   menuGroups,
   selected,
+  selectedHeaderTab,
+  setSelectedHeaderTab,
   setSideMenuVisible,
   sideMenuVisible,
+  subheaderVisibleDefault,
   subtitle,
+  tabs,
   theme,
   title,
 }: CodeBlockHeaderProps & {
-  sideMenuVisible?: boolean;
+  selectedHeaderTab?: TabType;
+  setSelectedHeaderTab: (tab: TabType) => void;
   setSideMenuVisible?: (value: boolean) => void;
+  sideMenuVisible?: boolean;
 }) {
-  console.log('CodeBlockHeader RENDERRRRRRRRRRRRRRRR');
+  const {
+    color: blockColor,
+    language,
+    status,
+    type,
+    uuid,
+  } = block;
 
-  const [subheaderVisible, setSubheaderVisible] = useState(false);
+  const [subheaderVisible, setSubheaderVisible] = useState(subheaderVisibleDefault
+    ? subheaderVisibleDefault?.(block)
+    : false
+  );
 
   const {
     active = false,
@@ -63,13 +81,6 @@ function CodeBlockHeader({
     executionState,
   ]);
 
-  const {
-    color: blockColor,
-    language,
-    type,
-    uuid,
-  } = block;
-
   const color = getColorsForBlockType(type, {
     blockColor,
     theme,
@@ -86,7 +97,7 @@ function CodeBlockHeader({
       if (idx >= 1) {
         arr.push(
           <div key={`${part}-spacing-${idx}`} style={{ paddingLeft: UNIT / 4, paddingRight: UNIT / 4 }}>
-            <Text muted>
+            <Text noWrapping muted>
               /
             </Text>
           </div>
@@ -94,7 +105,7 @@ function CodeBlockHeader({
       }
 
       arr.push(
-        <Text key={part} default={idx < titlePartsCount - 1} weightStyle={4}>
+        <Text key={part} muted={idx < titlePartsCount - 1} noWrapping weightStyle={4}>
           {part}
         </Text>
       );
@@ -162,7 +173,14 @@ function CodeBlockHeader({
           noBackground={iconOnly}
           borderless={iconOnly}
           noPadding={iconOnly}
-          onClick={onClick}
+          onClick={() => {
+            if (onClick) {
+              onClick?.({
+                selectedHeaderTab,
+                setSelectedHeaderTab,
+              });
+            }
+          }}
           outline
           uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
@@ -216,15 +234,53 @@ function CodeBlockHeader({
   ]);
 
   const menuMemo = useMemo(() => menuGroups?.length >= 1 && (
-    <FileEditorHeader
-      menuGroups={menuGroups}
-    />
+    <FlexContainer
+      alignItems="center"
+      justifyContent="space-between"
+    >
+      {tabs?.length >= 1
+        ? (
+          <ButtonTabs
+            onClickTab={(tab: TabType) => {
+              setSelectedHeaderTab?.(tab);
+            }}
+            selectedTabUUID={selectedHeaderTab?.uuid}
+            tabs={tabs}
+            underlineColor={color?.accent}
+            underlineStyle
+          />
+        )
+        : <div />
+      }
+
+      {tabs?.length >= 1
+        ? <FileEditorHeader defaultTextContent menuGroups={menuGroups} rightOffset={0} />
+        : (
+          <SubheaderMenuStyle>
+            <FileEditorHeader defaultTextContent menuGroups={menuGroups} rightOffset={0} />
+          </SubheaderMenuStyle>
+        )
+      }
+    </FlexContainer>
   ), [
+    color,
     menuGroups,
+    selectedHeaderTab,
+    setSelectedHeaderTab,
+    tabs,
   ]);
 
+  useEffect(() => {
+    if (tabs?.length && !selectedHeaderTab) {
+      setSelectedHeaderTab?.(tabs[0]);
+    }
+  }, []);
+
   return (
-    <HeaderWrapperStyle style={{ position: 'relative' }}>
+    <HeaderWrapperStyle
+      style={{ position: 'relative' }}
+      subheaderVisible={subheaderVisible}
+    >
       <HeaderStyle>
         <FlexContainer alignItems="center">
           <KeyboardShortcutButton
@@ -265,14 +321,14 @@ function CodeBlockHeader({
           )}
         </FlexContainer>
 
-        <FlexContainer alignItems="center">
+        <InfoStyle>
           <FlexContainer flexDirection="column">
             <FlexContainer alignItems="center" flexDirection="row" justifyContent="flex-end">
               {titleEls}
             </FlexContainer>
 
             {subtitle && (
-              <Text default monospace small>
+              <Text monospace muted noWrapping small>
                 {subtitle}
               </Text>
             )}
@@ -307,7 +363,7 @@ function CodeBlockHeader({
               <Icon active size={ICON_SIZE} />
             </Circle>
           </Tooltip>
-        </FlexContainer>
+        </InfoStyle>
       </HeaderStyle>
 
       {menuGroups?.length >= 1 && (
@@ -327,8 +383,10 @@ function CodeBlockHeader({
               }}
               uuid={`KeyboardShortcutButton/${uuid}/subheader/menu/button`}
             >
-              {subheaderVisible && <ChevronUpV2 active size={ICON_SIZE} />}
-              {!subheaderVisible && <ChevronDownV2 fill={color?.accent} size={ICON_SIZE} />}
+              <Spacing py={1}>
+                {subheaderVisible && <ChevronUpV2 active size={ICON_SIZE} />}
+                {!subheaderVisible && <ChevronDownV2 fill={color?.accent} size={ICON_SIZE} />}
+              </Spacing>
             </KeyboardShortcutButton>
           </CSSTransition>
         </SubheaderButtonStyle>

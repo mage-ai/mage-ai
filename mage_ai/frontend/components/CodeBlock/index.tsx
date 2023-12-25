@@ -1412,6 +1412,7 @@ function CodeBlock({
     setScrollTogether,
     setSideBySideEnabled,
     setHiddenBlocks,
+    setErrors,
     setSelected,
     setTextareaFocused,
     showConfigureProjectModal,

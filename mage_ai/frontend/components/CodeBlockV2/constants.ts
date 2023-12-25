@@ -11,6 +11,7 @@ import { MenuGroupType } from '@components/FileEditor/Header';
 import { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
 import { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
 import { ProvidersType } from '@components/CodeEditor/autocomplete/constants';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 
@@ -68,6 +69,7 @@ export type UseCodeBlockComponentProps = {
   scrollTogether?: boolean;
   selected?: boolean;
   setCodeCollapsed?: (value: boolean) => void;
+  setErrors: (errors: ErrorsType) => void;
   setHiddenBlocks: ((opts: {
     [uuid: string]: BlockType;
   }) => {
@@ -115,7 +117,10 @@ export type ButtonType = {
   label?: () => string;
   loading?: boolean;
   menuItems?: FlyoutMenuItemType[];
-  onClick?: () => void;
+  onClick?: (opts?: {
+    selectedHeaderTab?: TabType;
+    setSelectedHeaderTab?: (tab: TabType) => void;
+  }) => void;
   renderFromState?: (executionState: ExecutionStateEnum) => any;
   uuid: ButtonUUIDEnum;
   visible?: (opts?: {
@@ -145,16 +150,22 @@ export type CodeBlockEditorProps = {
 export type CodeBlockHeaderProps = {
   buttons: ButtonType[];
   menuGroups?: MenuGroupType[];
+  subheaderVisibleDefault?: (block: BlockType) => boolean;
   subtitle?: string;
+  tabs?: TabType[];
   title: string;
 } & UseCodeBlockComponentProps;
+
+export type HeaderTabContntType = {
+  renderContent: (tab: TabType, defaultContent: any) => any;
+};
 
 export interface UseCodeBlockComponentType {
   editor: any;
   extraDetails: any;
   footer: any;
   header: CodeBlockHeaderProps;
-  headerTabs: any;
+  headerTabContent: HeaderTabContntType;
   output: any;
   outputTabs: any;
   tags: any;

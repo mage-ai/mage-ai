@@ -1,19 +1,47 @@
+import { useMemo } from 'react';
+
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ContainerStyle, EditorStyle, MenuStyle } from './index.style';
+import { HeaderTabType } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 
 type MainContentProps = {
   children: any;
+  selectedHeaderTab?: TabType;
   sideMenuVisible: boolean;
-};
+} & HeaderTabType;
 
 function MainContent({
   children,
+  renderTab,
+  selectedHeaderTab,
   sideMenuVisible,
 }: MainContentProps) {
+  const content = useMemo(() => {
+    const children2 = sideMenuVisible
+      ? children
+      : (
+        <EditorStyle solo>
+          {children}
+        </EditorStyle>
+      );
+
+    if (renderTab && selectedHeaderTab) {
+      return renderTab(selectedHeaderTab, children2);
+    }
+
+    return children2;
+  }, [
+    children,
+    renderTab,
+    selectedHeaderTab,
+    sideMenuVisible,
+  ]);
+
   return (
     <>
       <ContainerStyle>
@@ -30,17 +58,13 @@ function MainContent({
             </MenuStyle>
 
             <EditorStyle>
-              {children}
+              {content}
             </EditorStyle>
           </>
         )}
       </ContainerStyle>
 
-      {!sideMenuVisible && (
-        <EditorStyle solo>
-          {children}
-        </EditorStyle>
-      )}
+      {!sideMenuVisible && content}
     </>
   );
 }

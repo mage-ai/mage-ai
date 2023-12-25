@@ -605,11 +605,15 @@ function Editor({
   registerOnKeyDown(
     componentUUID,
     (event, keyMapping, keyHistory) => {
-      if (selected && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_PERIOD], keyMapping)) {
+      if (project?.openai_api_key
+        && selected
+        && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_PERIOD], keyMapping)
+      ) {
         start();
       }
     },
     [
+      project,
       selected,
     ],
   );
@@ -624,22 +628,24 @@ function Editor({
 
   return (
     <EditorWrapperStyle>
-      <ButtonStyle ref={refButton}>
-        <KeyboardShortcutButton
-          noBackground
-          noBorder
-          noPadding
-          onClick={(e) => {
-            if (selected) {
-              pauseEvent(e);
-              start();
-            }
-          }}
-          uuid={componentUUID}
-        >
-          <AISparkle size={ICON_SIZE} warning />
-        </KeyboardShortcutButton>
-      </ButtonStyle>
+      {!!project?.openai_api_key && (
+        <ButtonStyle ref={refButton}>
+          <KeyboardShortcutButton
+            noBackground
+            noBorder
+            noPadding
+            onClick={(e) => {
+              if (selected) {
+                pauseEvent(e);
+                start();
+              }
+            }}
+            uuid={componentUUID}
+          >
+            <AISparkle size={ICON_SIZE} warning />
+          </KeyboardShortcutButton>
+        </ButtonStyle>
+      )}
 
       {inputMemo}
 

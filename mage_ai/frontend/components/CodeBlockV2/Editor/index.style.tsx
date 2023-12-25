@@ -16,7 +16,7 @@ export const ButtonStyle = styled.div`
   position: absolute;
   left: ${UNIT / 2}px;
   width: ${ICON_SIZE}px;
-  z-index: 8;
+  z-index: 7;
 `;
 
 export const InputStyle = styled.div<{

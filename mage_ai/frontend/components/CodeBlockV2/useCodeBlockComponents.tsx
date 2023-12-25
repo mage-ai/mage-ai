@@ -12,6 +12,7 @@ import { UseCodeBlockComponentProps, UseCodeBlockComponentType } from './constan
 export default function useCodeBlockComponents({
   ...props
 }: UseCodeBlockComponentProps): UseCodeBlockComponentType {
+  const [selectedHeaderTab, setSelectedHeaderTab] = useState(null);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
 
   const {
@@ -140,12 +141,18 @@ export default function useCodeBlockComponents({
     }
 
     return (
-      <MainContent sideMenuVisible={sideMenuVisible}>
+      <MainContent
+        renderTab={codeBlockProps?.headerTabContent?.renderTab}
+        selectedHeaderTab={selectedHeaderTab}
+        sideMenuVisible={sideMenuVisible}
+      >
         {editor}
       </MainContent>
     );
   }, [
+    codeBlockProps,
     editor,
+    selectedHeaderTab,
     sideMenuVisible,
   ]);
 
@@ -162,6 +169,8 @@ export default function useCodeBlockComponents({
           interruptKernel={interruptKernel}
           runBlockAndTrack={runBlockAndTrack}
           selected={selected}
+          selectedHeaderTab={selectedHeaderTab}
+          setSelectedHeaderTab={setSelectedHeaderTab}
           setSideMenuVisible={setSideMenuVisible}
           sideMenuVisible={sideMenuVisible}
           status={status}
@@ -178,6 +187,8 @@ export default function useCodeBlockComponents({
     interruptKernel,
     runBlockAndTrack,
     selected,
+    selectedHeaderTab,
+    setSelectedHeaderTab,
     setSideMenuVisible,
     sideMenuVisible,
     status,
@@ -189,7 +200,7 @@ export default function useCodeBlockComponents({
     extraDetails: null,
     footer: null,
     header,
-    headerTabs: null,
+    headerTabContent: null,
     output: null,
     outputTabs: null,
     tags: null,

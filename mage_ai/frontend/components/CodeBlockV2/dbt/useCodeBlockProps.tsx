@@ -1,6 +1,9 @@
 import * as osPath from 'path';
+import { useCallback } from 'react';
 
+import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
+import Configuration from './Configuration';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
@@ -9,35 +12,36 @@ import Text from '@oracle/elements/Text';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
   AISparkle,
-  Chat,
-  BatchSquaresStacked,
-  Charts,
-  Conditional,
-  ChevronUp,
-  ChevronDown,
-  BatchPipeline,
-  Close,
-  DocumentIcon,
-  BlocksCombined,
   Alphabet,
-  LayoutStacked,
-  LayoutSplit,
-  SettingsWithKnobs,
-  TreeWithArrowsDown,
-  PowerUps,
-  Trash,
+  BatchPipeline,
+  BatchSquaresStacked,
+  BlocksCombined,
   Callback,
-  Filter,
-  Monitor,
-  Interactions,
-  PauseV2,
+  Charts,
+  Chat,
+  ChevronDown,
+  ChevronUp,
+  Close,
+  Conditional,
+  DocumentIcon,
   Edit,
+  Filter,
+  Interactions,
+  LayoutSplit,
+  LayoutStacked,
+  Monitor,
+  PauseV2,
   PlayButtonFilled,
+  PowerUps,
+  SettingsWithKnobs,
+  Trash,
+  TreeWithArrowsDown,
   TreeWithArrowsUp,
   VisibleEye,
 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import { HeaderTabEnum, buildHeaderTabs } from './constants';
 import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
 import {
   KEY_CODE_CONTROL,
@@ -49,8 +53,10 @@ import {
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { validate } from './utils';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
@@ -67,10 +73,12 @@ export default function useCodeBlockProps({
   interruptKernel,
   openSidekickView,
   outputCollapsed,
+  pipeline,
   runBlockAndTrack,
   savePipelineContent,
   scrollTogether,
   setCodeCollapsed,
+  setErrors,
   setHiddenBlocks,
   setOutputCollapsed,
   setScrollTogether,
@@ -106,6 +114,35 @@ export default function useCodeBlockProps({
   }
   const subtitle = configuration?.file_path || configuration?.file_source?.path;
 
+  const validateBeforeAction = useCallback(({
+    setSelectedHeaderTab,
+  }) => {
+    const errors = validate(block);
+    if (errors) {
+      errors.links = [
+        {
+          closeAfterClick: true,
+          label: 'Continue dbt configuration',
+          onClick: () => setSelectedHeaderTab?.(headerTabs?.find((
+            tab,
+          ) => HeaderTabEnum.CONFIGURATION === tab.uuid)),
+        },
+      ];
+      setErrors(errors);
+
+      return false;
+    }
+
+    return true;
+  }, [
+    block,
+    setErrors,
+  ]);
+
+  const headerTabs = buildHeaderTabs({
+    block,
+  });
+
   const buttonExecute = {
     color: color?.accent,
     description: (
@@ -118,7 +155,7 @@ export default function useCodeBlockProps({
         <Spacing mr={1} />
 
         <Text muted>
-          Compile and preview
+          Compile SQL and excute query for sample data.
         </Text>
       </FlexContainer>
     ),
@@ -135,10 +172,12 @@ export default function useCodeBlockProps({
         || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
     ),
     label: () => 'Compile & preview',
-    onClick: () => {
-      runBlockAndTrack({
-        block,
-      });
+    onClick: (opts) => {
+      if (validateBeforeAction(opts)) {
+        runBlockAndTrack({
+          block,
+        });
+      }
     },
     uuid: ButtonUUIDEnum.EXECUTE,
   };
@@ -181,53 +220,63 @@ export default function useCodeBlockProps({
     description: 'Run model',
     disabled: ({ active }) => active,
     label: () => 'Run',
-    onClick: () => {
-      runBlockAndTrack({
-        block,
-        runSettings: {
-          run_model: true,
-        },
-      });
+    onClick: (opts) => {
+      if (validateBeforeAction(opts)) {
+        runBlockAndTrack({
+          block,
+          runSettings: {
+            run_model: true,
+          },
+        });
+      }
     },
     uuid: ButtonUUIDEnum.RUN,
   };
+
   const buttonTest = {
     Icon: Monitor,
     description: 'Test model',
     disabled: ({ active }) => active,
     label: () => 'Test',
-    onClick: () => {
-      runBlockAndTrack({
-        block,
-        test_model: true,
-      });
+    onClick: (opts) => {
+      if (validateBeforeAction(opts)) {
+        runBlockAndTrack({
+          block,
+          test_model: true,
+        });
+      }
     },
     uuid: ButtonUUIDEnum.TEST,
   };
+
   const buttonBuild = {
     Icon: BlocksCombined,
     description: 'Build model',
     disabled: ({ active }) => active,
     label: () => 'Build',
-    onClick: () => {
-      runBlockAndTrack({
-        block,
-        build_model: true,
-      });
+    onClick: (opts) => {
+      if (validateBeforeAction(opts)) {
+        runBlockAndTrack({
+          block,
+          build_model: true,
+        });
+      }
     },
     uuid: ButtonUUIDEnum.BUILD,
   };
 
   const buttonRunUpstream = {
     Icon: TreeWithArrowsUp,
-    color: color?.accent,
     description: 'Execute and run all upstream blocks',
     disabled: ({ active }) => active,
-    onClick: () => {
-      runBlockAndTrack({
-        block,
-        runUpstream: true,
-      });
+    label: () => 'Run upstream',
+    onClick: (opts) => {
+      if (validateBeforeAction(opts)) {
+        runBlockAndTrack({
+          block,
+          runUpstream: true,
+        });
+      }
     },
     uuid: ButtonUUIDEnum.RUN_UPSTREAM,
   };
@@ -335,6 +384,11 @@ export default function useCodeBlockProps({
           uuid: 'Add/Edit interactions',
           onClick: () => openSidekickView(ViewKeyEnum.INTERACTIONS, true),
         },
+        {
+          beforeIcon: <Charts {...MENU_ICON_PROPS} />,
+          uuid: 'Add charts',
+          onClick: () => openSidekickView(ViewKeyEnum.CHARTS, true),
+        },
       ],
     },
     {
@@ -434,16 +488,6 @@ export default function useCodeBlockProps({
       ],
     },
     {
-      uuid: 'Visualizations',
-      items: [
-        {
-          beforeIcon: <Charts {...MENU_ICON_PROPS} />,
-          uuid: 'Add charts',
-          onClick: () => openSidekickView(ViewKeyEnum.CHARTS, true),
-        },
-      ],
-    },
-    {
       uuid: 'Help',
       items: [
         {
@@ -466,6 +510,26 @@ export default function useCodeBlockProps({
     },
   ];
 
+  const headerTabContent = {
+    renderTab: (tab: TabType, defaultContent: any) => {
+      if (HeaderTabEnum.CONFIGURATION === tab?.uuid) {
+        return (
+          <Configuration
+            block={block}
+            pipeline={pipeline}
+            savePipelineContent={savePipelineContent}
+          />
+        );
+      } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
+        return;
+      } else if (HeaderTabEnum.LINEAGE === tab?.uuid) {
+        return;
+      }
+
+      return defaultContent;
+    },
+  };
+
   return {
     editor: {
 
@@ -480,8 +544,19 @@ export default function useCodeBlockProps({
         buttonExecuteCancel,
       ],
       menuGroups,
+      subheaderVisibleDefault: (b: BlockType) => {
+        if (!status || StatusTypeEnum.NOT_EXECUTED === status) {
+          return true;
+        }
+
+        if (validate(b)) {
+          return True
+        }
+      },
       subtitle,
+      tabs: headerTabs,
       title,
     },
+    headerTabContent,
   };
 }

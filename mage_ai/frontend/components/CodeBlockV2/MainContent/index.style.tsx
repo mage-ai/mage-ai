@@ -15,7 +15,6 @@ export const ContainerStyle = styled.div`
 
 export const MenuStyle = styled.div`
   min-width: ${UNIT * 40}px;
-  width: 20%;
 `;
 
 export const EditorStyle = styled.div<{
@@ -30,6 +29,7 @@ export const EditorStyle = styled.div<{
   `}
 
   ${props => !props.solo && `
-    width: 80%;
+    max-width: 100%;
+    width: 100%;
   `}
 `;

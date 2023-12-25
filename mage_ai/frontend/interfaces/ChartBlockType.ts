@@ -25,6 +25,7 @@ export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
 export const CONFIG_KEY_DATA_PROVIDER_TABLE = 'data_provider_table';
 export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
 export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
+export const CONFIG_KEY_DBT_PROFILES_FILE_PATH = 'dbt_profiles_file_path';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
 export const CONFIG_KEY_LIMIT = 'limit';
 export const CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME = 'unique_upstream_table_name';
