@@ -104,8 +104,8 @@ ${props => `
   .loader {
     height: ${props?.height || (UNIT / 4)}px;
     width: ${props.width || '100%'};
-    --c:no-repeat linear-gradient(${props?.color || (props.theme || dark).accent.purple} 0 0);
-    background: var(--c),var(--c), ${props?.colorLight || (props.theme || dark).accent.purpleLight};
+    --c:no-repeat linear-gradient(${props?.color || (props.theme || dark).background.success} 0 0);
+    background: var(--c),var(--c), ${props?.colorLight || (props.theme || dark).background.successLight};
     background-size: 60% 100%;
     animation: l16 3s infinite;
   }

@@ -318,8 +318,8 @@ function CodeBlockHeader({
           {waiting && (
             <>
               <Loading
-                color={color?.accent}
-                colorLight={color?.accentLight}
+                // color={color?.accent}
+                // colorLight={color?.accentLight}
                 loadingStyle={LoadingStyleEnum.BLOCKS}
               />
 
@@ -402,8 +402,8 @@ function CodeBlockHeader({
       {running && (
         <div style={{ position: 'absolute', width: '100%' }}>
           <Loading
-            color={color?.accent}
-            colorLight={color?.accentLight}
+            // color={color?.accent}
+            // colorLight={color?.accentLight}
             width="100%"
           />
         </div>
