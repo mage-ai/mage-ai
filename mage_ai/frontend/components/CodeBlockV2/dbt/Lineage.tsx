@@ -47,3 +47,5 @@ function Lineage({
     </>
   );
 }
+
+export default Lineage;

@@ -828,19 +828,25 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             'disable-border-radius',
             'enable-border-radius',
           ].includes(cn));
-          node.current.className = [
-            'disable-border-radius',
-            // @ts-ignore
-          ].concat(arr).join(' ');
+
+          if (node?.current) {
+            node.current.className = [
+              'disable-border-radius',
+              // @ts-ignore
+            ].concat(arr).join(' ');
+          }
         } else {
           const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
             'disable-border-radius',
             'enable-border-radius',
           ].includes(cn));
-          node.current.className = [
-            'enable-border-radius',
-            // @ts-ignore
-          ].concat(arr).join(' ');
+
+          if (node?.current) {
+            node.current.className = [
+              'enable-border-radius',
+              // @ts-ignore
+            ].concat(arr).join(' ');
+          }
         }
       });
     };

@@ -17,8 +17,10 @@ export const SubheaderMenuStyle = styled.div<{
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: solid;
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  position: sticky;
-  z-index: 8;
+
+  // Can’t get the flyout menu in the header to appear above this sticky element.
+  // position: sticky;
+  // z-index: 8;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};

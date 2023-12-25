@@ -107,6 +107,17 @@ function CodeBlockOutput({
     messages,
   ]);
 
+  useEffect(() => {
+    if (hasError && !(OutputTabEnum.LOGS in (selectedOutputTabs || {}))) {
+      setSelectedOutputTabs?.(prev => ({
+        ...prev,
+        [OutputTabEnum.LOGS]: {
+          uuid: OutputTabEnum.LOGS,
+        },
+      }));
+    }
+  }, [hasError]);
+
   const isInProgress = !!runningBlocks?.find(({
     uuid,
   }) => uuid === block?.uuid) || messages?.length >= 1 && ExecutionStateEnum.IDLE !== executionState;
