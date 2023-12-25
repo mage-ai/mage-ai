@@ -9,6 +9,8 @@ import Text from '@oracle/elements/Text';
 import { CodeBlockOutputProps } from './constants';
 import { ContainerStyle } from '@components/CodeBlock/CodeOutput/index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import { OutputDisplayTypeEnum } from '@components/CodeBlock/CodeOutput/constants';
+import { OutputTabEnum } from '../dbt/constants';
 import { SubheaderMenuStyle } from './index.style';
 import {
   buildBorderProps,
@@ -164,6 +166,7 @@ function CodeBlockOutput({
           top={headerHeight}
         >
           <Divider light />
+
           {menuMemo}
         </SubheaderMenuStyle>
       )}
@@ -191,6 +194,10 @@ function CodeBlockOutput({
         //   : null
         // }
         openSidekickView={openSidekickView}
+        outputDisplayType={OutputTabEnum.OUTPUT === selectedOutputTab?.uuid
+          ? OutputDisplayTypeEnum.DATA
+          : OutputDisplayTypeEnum.LOGS
+        }
         outputRowNormalPadding
         pipeline={pipeline}
         ref={blockOutputRef}
