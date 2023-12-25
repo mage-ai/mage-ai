@@ -181,7 +181,7 @@ function CodeBlockHeader({
             }
           }}
           outline
-          small
+          // small
           uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
           {iconEl}
@@ -213,7 +213,7 @@ function CodeBlockHeader({
       })) {
         buttonsVisibleInner.push(el);
         buttonsVisibleInner.push(
-          <Spacing key={`spacing/${uuid}/${uuidButton}/${idx}`} mr={PADDING_UNITS} />
+          <div key={`spacing/${uuid}/${uuidButton}/${idx}`} style={{ marginRight: 12 }} />
         );
       } else {
         buttonsDropdownInner.push(el);
@@ -294,12 +294,12 @@ function CodeBlockHeader({
               appearAfter
               block
               label="Open menu"
-              size={ICON_SIZE}
+              size={UNIT * 3}
               widthFitContent
             >
               {sideMenuVisible
-                ? <PanelCollapseLeft active size={ICON_SIZE} />
-                : <Menu fill={color?.accent} size={ICON_SIZE} />
+                ? <PanelCollapseLeft active size={UNIT * 3} />
+                : <Menu fill={color?.accent} size={UNIT * 3} />
               }
             </Tooltip>
           </KeyboardShortcutButton>
@@ -384,8 +384,8 @@ function CodeBlockHeader({
               uuid={`KeyboardShortcutButton/${uuid}/subheader/menu/button`}
             >
               <Spacing py={1}>
-                {subheaderVisible && <ChevronUpV2 active size={ICON_SIZE} />}
-                {!subheaderVisible && <ChevronDownV2 fill={color?.accent} size={ICON_SIZE} />}
+                {subheaderVisible && <ChevronUpV2 active size={UNIT * 2.5} />}
+                {!subheaderVisible && <ChevronDownV2 fill={color?.accent} size={UNIT * 2.5} />}
               </Spacing>
             </KeyboardShortcutButton>
           </CSSTransition>
