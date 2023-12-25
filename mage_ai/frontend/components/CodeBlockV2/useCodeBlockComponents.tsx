@@ -16,7 +16,7 @@ export default function useCodeBlockComponents({
   const refHeader = useRef(null);
 
   const [selectedHeaderTab, setSelectedHeaderTab] = useState(null);
-  const [selectedOutputTab, setSelectedOutputTab] = useState(null);
+  const [selectedOutputTabs, setSelectedOutputTabs] = useState(null);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
   const [subheaderVisible, setSubheaderVisible] = useState(null);
 
@@ -254,11 +254,11 @@ export default function useCodeBlockComponents({
           runningBlocks={runningBlocks}
           scrollTogether={scrollTogether}
           selected={selected}
-          selectedOutputTab={selectedOutputTab}
+          selectedOutputTabs={selectedOutputTabs}
           setErrors={setErrors}
           setOutputBlocks={setOutputBlocks}
           setSelectedOutputBlock={setSelectedOutputBlock}
-          setSelectedOutputTab={setSelectedOutputTab}
+          setSelectedOutputTabs={setSelectedOutputTabs}
           sideBySideEnabled={sideBySideEnabled}
           subheaderVisible={subheaderVisible}
           theme={theme}
@@ -286,11 +286,11 @@ export default function useCodeBlockComponents({
     runningBlocks,
     scrollTogether,
     selected,
-    selectedOutputTab,
+    selectedOutputTabs,
     setErrors,
     setOutputBlocks,
     setSelectedOutputBlock,
-    setSelectedOutputTab,
+    setSelectedOutputTabs,
     sideBySideEnabled,
     subheaderVisible,
     theme,

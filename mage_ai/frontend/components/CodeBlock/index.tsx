@@ -1209,6 +1209,11 @@ function CodeBlock({
     },
   );
 
+  const codeBlockV2 = useMemo(() => true || featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
+    featureEnabled,
+    featureUUIDs,
+  ]);
+
   const uuidKeyboard = `CodeBlock/${blockUUID}`;
   const {
     registerOnKeyDown,

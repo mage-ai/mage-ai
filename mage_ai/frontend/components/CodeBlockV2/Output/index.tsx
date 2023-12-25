@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import CodeOutput from '@components/CodeBlock/CodeOutput';
 import Divider from '@oracle/elements/Divider';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
+import useCodeOutput from '@components/CodeBlock/CodeOutput/useCodeOutput';
 import { CodeBlockOutputProps } from './constants';
 import { ContainerStyle } from '@components/CodeBlock/CodeOutput/index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -46,11 +46,11 @@ function CodeBlockOutput({
   runningBlocks,
   scrollTogether,
   selected,
-  selectedOutputTab,
+  selectedOutputTabs,
   setErrors,
   setOutputBlocks,
   setSelectedOutputBlock,
-  setSelectedOutputTab,
+  setSelectedOutputTabs,
   sideBySideEnabled,
   subheaderVisible,
   tabs,
@@ -63,8 +63,11 @@ function CodeBlockOutput({
   }, [subheaderVisible]);
 
   useEffect(() => {
-    if (tabs?.length && !selectedOutputTab) {
-      setSelectedOutputTab?.(tabs[0]);
+    if (tabs?.length && !selectedOutputTabs) {
+      const tab = tabs[0];
+      setSelectedOutputTabs?.({
+        [tab?.uuid]: tab,
+      });
     }
   }, []);
 
@@ -129,10 +132,23 @@ function CodeBlockOutput({
       {tabs?.length >= 1
         ? (
           <ButtonTabs
+            multiSelection
             onClickTab={(tab: TabType) => {
-              setSelectedOutputTab?.(tab);
+              setSelectedOutputTabs?.(prev => {
+                const data = { ...(prev || {}) };
+
+                if (data && tab?.uuid in data) {
+                  delete data[tab?.uuid];
+                } else {
+                  data[tab?.uuid] = tab;
+                }
+
+                console.log(data)
+
+                return data;
+              });
             }}
-            selectedTabUUID={selectedOutputTab?.uuid}
+            selectedTabUUIDs={selectedOutputTabs}
             tabs={tabs}
             underlineColor={color?.accent}
             underlineStyle
@@ -153,10 +169,44 @@ function CodeBlockOutput({
   ), [
     color,
     menuGroups,
-    selectedOutputTab,
-    setSelectedOutputTab,
+    selectedOutputTabs,
+    setSelectedOutputTabs,
     tabs,
   ]);
+
+  const {
+    tableContent,
+    testMessages,
+    textContent,
+  } = useCodeOutput({
+    ...borderColorShareProps,
+    alwaysShowExtraInfo: true,
+    block,
+    blockIndex,
+    collapsed,
+    hasOutput,
+    isInProgress,
+    mainContainerWidth,
+    messages: messagesWithType,
+    messagesAll: messages,
+    openSidekickView: openSidekickView,
+    outputRowNormalPadding: true,
+    pipeline,
+    runCount,
+    runEndTime,
+    runStartTime,
+    scrollTogether,
+    selected: selected && (!isHidden || !sideBySideEnabled),
+    setErrors,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+    showBorderTop: sideBySideEnabled,
+    sideBySideEnabled,
+  });
+
+  console.log('textContent', textContent)
+  console.log('testMessages', testMessages)
+  console.log('tableContent', tableContent)
 
   return (
     <>
@@ -171,59 +221,8 @@ function CodeBlockOutput({
         </SubheaderMenuStyle>
       )}
 
-      <CodeOutput
-        {...borderColorShareProps}
-        alwaysShowExtraInfo
-        block={block}
-        blockIndex={blockIndex}
-        // blockMetadata={blockMetadata}
-        collapsed={collapsed}
-        hasOutput={hasOutput}
-        // hideOutput={hideOutput}
-        isInProgress={isInProgress}
-        mainContainerWidth={mainContainerWidth}
-        messages={messagesWithType}
-        messagesAll={messages}
-        // onClickSelectBlock={sideBySideEnabled
-        //   ? isHidden && setHiddenBlocks
-        //     ? () => setHiddenBlocks(prev => ({
-        //       ...prev,
-        //       [blockUUID]: !isHidden,
-        //     }))
-        //     : onClickSelectBlock
-        //   : null
-        // }
-        openSidekickView={openSidekickView}
-        outputDisplayType={OutputTabEnum.OUTPUT === selectedOutputTab?.uuid
-          ? OutputDisplayTypeEnum.DATA
-          : OutputDisplayTypeEnum.LOGS
-        }
-        outputRowNormalPadding
-        pipeline={pipeline}
-        ref={blockOutputRef}
-        runCount={runCount}
-        runEndTime={runEndTime}
-        runStartTime={runStartTime}
-        scrollTogether={scrollTogether}
-        selected={selected && (!isHidden || !sideBySideEnabled)}
-        // selectedTab={selectedTab}
-        // setCollapsed={!sideBySideEnabled
-        //   ? (val: boolean) => {
-        //     setOutputCollapsed(() => {
-        //       set(outputCollapsedUUID, val);
-        //       return val;
-        //     });
-        //   }
-        //   : null
-        // }
-        setErrors={setErrors}
-        setOutputBlocks={setOutputBlocks}
-        setSelectedOutputBlock={setSelectedOutputBlock}
-        // setSelectedTab={setSelectedTab}
-        showBorderTop={sideBySideEnabled}
-        sideBySideEnabled={sideBySideEnabled}
-        // sparkEnabled={sparkEnabled}
-      />
+      {selectedOutputTabs && OutputTabEnum.OUTPUT in selectedOutputTabs && tableContent}
+      {selectedOutputTabs && OutputTabEnum.LOGS in selectedOutputTabs && textContent}
     </>
   );
 }

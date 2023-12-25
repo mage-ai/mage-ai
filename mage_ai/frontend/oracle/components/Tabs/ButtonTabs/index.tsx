@@ -23,10 +23,14 @@ type ButtonTabsProps = {
   compact?: boolean;
   contained?: boolean;
   large?: boolean;
+  multiSelection?: boolean;
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
   regularSizeText?: boolean;
   selectedTabUUID?: string;
+  selectedTabUUIDs?: {
+    [tabUUID: string]: TabType;
+  };
   small?: boolean;
   tabs: TabType[];
   underlineColor?: string;
@@ -39,10 +43,12 @@ function ButtonTabs({
   compact,
   contained,
   large,
+  multiSelection,
   noPadding,
   onClickTab,
   regularSizeText,
   selectedTabUUID,
+  selectedTabUUIDs,
   small,
   tabs,
   underlineColor,
@@ -61,7 +67,8 @@ function ButtonTabs({
         label,
         uuid,
       } = tab;
-      const selected = uuid === selectedTabUUID;
+      const IconToUse = selected ? (IconSelected || Icon) : Icon;
+      const selected = selectedTabUUIDs ? uuid in selectedTabUUIDs : uuid === selectedTabUUID;
       let iconEl;
       if (icon) {
         iconEl = React.cloneElement(icon, {
