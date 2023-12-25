@@ -1,0 +1,461 @@
+import React, { useCallback, useMemo, useRef } from 'react';
+import Ansi from 'ansi-to-react';
+import InnerHTML from 'dangerously-set-html-content';
+import { useMutation } from 'react-query';
+
+import BlockType, {
+  BLOCK_TYPES_NO_DATA_TABLE,
+  BlockTypeEnum,
+  StatusTypeEnum,
+} from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
+import Circle from '@oracle/elements/Circle';
+import CodeEditor from '@components/CodeEditor';
+import DataTable from '@components/DataTable';
+import DependencyGraph from '@components/DependencyGraph';
+import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import KernelOutputType, {
+  DataTypeEnum,
+  DATA_TYPE_TEXTLIKE,
+} from '@interfaces/KernelOutputType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProgressBar from '@oracle/components/ProgressBar';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
+import usePrevious from '@utils/usePrevious';
+import { BorderColorShareProps } from '../index.style';
+import { Check, ChevronDown, ChevronUp, Expand, Save } from '@oracle/icons';
+import {
+  ContainerStyle,
+  ExtraInfoBorderStyle,
+  ExtraInfoContentStyle,
+  ExtraInfoStyle,
+  HTMLOutputStyle,
+  OutputRowStyle,
+} from './index.style';
+import { CUSTOM_EVENT_BLOCK_OUTPUT_CHANGED } from '@components/PipelineDetail/constants';
+import { FileExtensionEnum } from '@interfaces/FileType';
+import {
+  INTERNAL_OUTPUT_REGEX,
+  INTERNAL_OUTPUT_STRING,
+  INTERNAL_TEST_REGEX,
+  INTERNAL_TEST_STRING,
+} from '@utils/models/output';
+import { OutputDisplayTypeEnum } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ResponseTypeEnum } from '@api/constants';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { SIDE_BY_SIDE_VERTICAL_PADDING } from '../index.style';
+import {
+  TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
+  TAB_DBT_PREVIEW_UUID,
+  TAB_DBT_SQL_UUID,
+} from '../constants';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addDataOutputBlockUUID, openSaveFileDialog } from '@components/PipelineDetail/utils';
+import { isJsonString } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+
+type CodeOutputProps = {
+  alwaysShowExtraInfo?: boolean;
+  block: BlockType;
+  blockIndex?: number;
+  blockMetadata?: {
+    dbt: {
+      lineage: BlockType[];
+      sql: string;
+    };
+  };
+  buttonTabs?: any;
+  children?: any;
+  childrenBelowTabs?: any;
+  collapsed?: boolean;
+  contained?: boolean;
+  hasOutput?: boolean;
+  hideExtraInfo?: boolean;
+  hideOutput?: boolean;
+  isInProgress: boolean;
+  mainContainerWidth?: number;
+  messages: KernelOutputType[];
+  messagesAll?: KernelOutputType[];
+  onClickSelectBlock?: () => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  outputDisplayType?: OutputDisplayTypeEnum;
+  outputRowNormalPadding?: boolean;
+  pipeline?: PipelineType;
+  runCount?: number;
+  runEndTime?: number;
+  runStartTime?: number;
+  scrollTogether?: boolean;
+  selectedTab?: TabType;
+  setCollapsed?: (boolean) => void;
+  setErrors?: (errors: ErrorsType) => void;
+  setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock?: (block: BlockType) => void;
+  setSelectedTab?: (tab: TabType) => void;
+  showBorderTop?: boolean;
+  sideBySideEnabled?: boolean;
+  sparkEnabled?: boolean;
+} & BorderColorShareProps;
+
+const SHARED_TOOLTIP_PROPS = {
+  appearAbove: true,
+  appearBefore: true,
+  block: true,
+  size: null,
+  widthFitContent: true,
+};
+
+const SHARED_BUTTON_PROPS = {
+  basic: true,
+  iconOnly: true,
+  noPadding: true,
+  transparent: true,
+};
+
+export default function useCodeOutput({
+  alwaysShowExtraInfo,
+  block,
+  blockIndex,
+  blockMetadata,
+  buttonTabs,
+  children,
+  childrenBelowTabs,
+  collapsed,
+  contained = true,
+  dynamicBlock,
+  dynamicChildBlock,
+  hasError,
+  hasOutput,
+  hideExtraInfo,
+  hideOutput,
+  isInProgress,
+  mainContainerWidth,
+  messages,
+  messagesAll,
+  onClickSelectBlock,
+  openSidekickView,
+  outputDisplayType,
+  outputRowNormalPadding,
+  pipeline,
+  runCount,
+  runEndTime,
+  runStartTime,
+  scrollTogether,
+  selected,
+  selectedTab,
+  setCollapsed,
+  setErrors,
+  setOutputBlocks,
+  setSelectedOutputBlock,
+  setSelectedTab,
+  showBorderTop,
+  sideBySideEnabled,
+  sparkEnabled,
+}: CodeOutputProps, ref) {
+  const {
+    color: blockColor,
+    status,
+    type: blockType,
+    uuid: blockUUID,
+  } = block || {};
+
+  const combineTextData = useCallback((data) => (Array.isArray(data) ? data.join('\n') : data), [
+  ]);
+
+  const combinedMessages = useMemo(() => {
+    return messages?.length >= 1
+      ? messages.reduce((arr, curr) => {
+        const last = arr.at(-1);
+
+        if (DATA_TYPE_TEXTLIKE.includes(last?.type)
+          && last?.type === curr.type
+          && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+        ) {
+          if (Array.isArray(last.data)) {
+            last.data.concat(curr.data);
+          } else if (typeof last.data === 'string') {
+            const currentText = combineTextData(curr.data) || '';
+            last.data = [last.data, currentText].join('\n');
+          }
+        } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
+          && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+        ) {
+          arr.push({
+            ...curr,
+            data: combineTextData(curr.data),
+          });
+        } else {
+          arr.push({ ...curr });
+        }
+
+        return arr;
+      }, [])
+      : messagesAll || [];
+  }, [
+    combineTextData,
+    messages,
+    messagesAll,
+  ]);
+
+  const renderMessagesRaw = useMemo(() => !messages?.length && messagesAll?.length >= 1, [
+    messages,
+    messagesAll,
+  ]);
+
+  const createDataTableElement = useCallback(({
+    columns,
+    index,
+    rows,
+    shape,
+  }, {
+    borderTop,
+    selected: selectedProp,
+  }) => {
+    const columnHeadersContainEmptyString = columns?.some(header => header === '');
+    if (columnHeadersContainEmptyString) {
+      return (
+        <Spacing mx={5} my={3}>
+          <Text monospace warning>
+            Block output table could not be rendered due to empty string headers.
+            Please check your data’s column headers for empty strings.
+          </Text>
+        </Spacing>
+      );
+    }
+
+    return rows.length >= 1 && (
+      <DataTable
+        columns={columns}
+        disableScrolling={!selectedProp}
+        index={index}
+        key={`data-table-${index}`}
+        maxHeight={UNIT * 60}
+        noBorderBottom
+        noBorderLeft
+        noBorderRight
+        noBorderTop={!borderTop}
+        rows={rows}
+        // Remove border 2px and padding from each side
+        width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
+      />
+    );
+  }, [
+    mainContainerWidth,
+  ]);
+
+  const {
+    tableContent,
+    testMessages,
+    textContent,
+  } = useMemo(() => {
+    const arrContent = [];
+    const tableContent = [];
+    const testMessages = [];
+
+    combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
+      let dataInit;
+      let dataType;
+      const outputIsArray = Array.isArray(output);
+
+      if (renderMessagesRaw && outputIsArray) {
+        dataInit = {
+          columns: ['-'],
+          index: 0,
+          rows: output?.map(i => [isJsonString(i) ? JSON.parse(i) : i]),
+          shape: [output?.length, 1],
+        };
+        dataType = DataTypeEnum.TABLE;
+      } else if (typeof output === 'string') {
+        dataInit = output;
+        dataType = DataTypeEnum.TEXT_PLAIN;
+      } else {
+        dataInit = output?.data;
+        dataType = output?.type;
+      }
+
+      if (!outputIsArray && (!dataInit || dataInit?.length === 0)) {
+        return;
+      }
+
+      let dataArray1: string[] = [];
+      if (Array.isArray(dataInit)) {
+        dataArray1 = dataInit;
+      } else {
+        dataArray1 = [dataInit];
+      }
+      dataArray1 = dataArray1.filter(d => d);
+
+      const dataArray = [];
+      dataArray1.forEach((data: string | {
+        columns: string[];
+        rows: any[][];
+        shape: number[];
+      }) => {
+        if (dataType === DataTypeEnum.TEXT_HTML) {
+          dataArray.push(data);
+        } else if (data && typeof data === 'string') {
+          const lines = data.split('\n');
+          dataArray.push(...lines);
+        } else if (typeof dataArray === 'object') {
+          dataArray.push(data);
+        }
+      });
+
+      const dataArrayLength = dataArray.length;
+
+      const arr = [];
+
+      dataArray.forEach((data: string, idxInner: number) => {
+        let displayElement;
+        const outputRowSharedProps = {
+          contained,
+          first: idx === 0 && idxInner === 0,
+          last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
+          normalPadding: outputRowNormalPadding, sideBySideEnabled,
+        };
+
+        const borderTop = idx >= 1;
+
+        if (typeof data === 'string' && data.match(INTERNAL_TEST_REGEX)) {
+          const parts = data.split('\n');
+          const partsNonTest = [];
+          parts.forEach((part: string) => {
+            if (part.match(INTERNAL_TEST_REGEX)) {
+              const parts = part.split(INTERNAL_TEST_STRING);
+              const rawString = parts[parts.length - 1];
+              if (isJsonString(rawString)) {
+                testMessages.push(JSON.parse(rawString));
+              }
+            } else {
+              partsNonTest.push(part);
+            }
+
+            if (partsNonTest.length >= 1) {
+              data = partsNonTest.join('\n');
+            } else {
+              data = null;
+            }
+          });
+        }
+
+        if (data === null) {
+          return;
+        } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
+          const parts = data.split(INTERNAL_OUTPUT_STRING);
+          let rawString = parts[parts.length - 1];
+
+          // Sometimes the FloatProgress is appended to the end of the table data
+          // without a newline character \n
+          // e.g.
+          // \"type\": \"table\"}FloatProgress(value=0.0
+          const parts2 = rawString.split('FloatProgress');
+          if (parts.length >= 2) {
+            rawString = parts2[0];
+          }
+
+          if (isJsonString(rawString)) {
+            const {
+              data: dataDisplay,
+              type: typeDisplay,
+            } = JSON.parse(rawString);
+
+            if (DataTypeEnum.TABLE === typeDisplay) {
+
+              const tableEl = createDataTableElement(dataDisplay, {
+                borderTop,
+                selected,
+              });
+              tableContent.push(tableEl);
+            }
+          }
+        } else if (dataType === DataTypeEnum.TABLE) {
+          const tableEl = createDataTableElement(
+            isJsonString(data) ? JSON.parse(data) : data,
+            {
+              borderTop,
+              selected,
+            },
+          );
+          tableContent.push(tableEl);
+
+        } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+          const textArr = data?.split('\\n');
+
+          displayElement = (
+            <OutputRowStyle {...outputRowSharedProps}>
+              {textArr.map((t) => (
+                <Text key={t} monospace preWrap>
+                  {t?.length >= 1 && (
+                    <Ansi>
+                      {t}
+                    </Ansi>
+                  )}
+                  {!t?.length && (
+                    <>&nbsp;</>
+                  )}
+                </Text>
+              ))}
+            </OutputRowStyle>
+          );
+        } else if (dataType === DataTypeEnum.TEXT_HTML) {
+          if (data) {
+            displayElement = (
+              <OutputRowStyle {...outputRowSharedProps}>
+                <HTMLOutputStyle monospace>
+                  <InnerHTML html={data} />
+                </HTMLOutputStyle>
+              </OutputRowStyle>
+            );
+          }
+        } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
+          displayElement = (
+            <div style={{ backgroundColor: 'white' }}>
+              <img
+                alt={`Image ${idx} from code output`}
+                src={`data:image/png;base64, ${data}`}
+              />
+            </div>
+          );
+        }
+
+        if (displayElement) {
+          arr.push(
+            <div key={`code-output-${idx}-${idxInner}`}>
+              {displayElement}
+            </div>,
+          );
+        }
+      });
+
+      if (arr.length >= 1) {
+        arrContent.push(arr);
+      }
+    });
+
+    return {
+      tableContent: tableContent,
+      testMessages: testMessages,
+      textContent: arrContent,
+    };
+  }, [
+    combinedMessages,
+    createDataTableElement,
+    outputRowNormalPadding,
+    renderMessagesRaw,
+    sideBySideEnabled,
+  ]);
+
+  return {
+    tableContent,
+    testMessages,
+    textContent,
+  };
+}
