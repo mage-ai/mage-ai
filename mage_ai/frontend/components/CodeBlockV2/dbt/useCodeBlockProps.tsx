@@ -1,7 +1,7 @@
 import * as osPath from 'path';
 import { useCallback } from 'react';
 
-import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, BlockLanguageEnum, StatusTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import Configuration from './Configuration';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -71,6 +71,7 @@ const MENU_ICON_PROPS = {
 };
 
 export default function useCodeBlockProps({
+  addNewBlock,
   block,
   codeCollapsed,
   deleteBlock,
@@ -516,48 +517,49 @@ export default function useCodeBlockProps({
 
   const menuGroupsOutput = [
     {
-      uuid: 'View',
-      items: [
-        {
-          beforeIcon: <ArrowsAdjustingFrameSquare {...MENU_ICON_PROPS} />,
-          uuid: 'Set fixed height',
-        },
-      ],
-    },
-    {
       uuid: 'Explore data',
       items: [
         {
-          beforeIcon: <Save {...MENU_ICON_PROPS} />,
-          uuid: 'Download output data',
-        },
-        {
           beforeIcon: <DocumentIcon {...MENU_ICON_PROPS} />,
-          uuid: 'Explore data in scratchpad',
+          uuid: 'Play with data in a scratchpad',
+          onClick: () => addNewBlock({
+            content: `"""
+NOTE: Scratchpad blocks are used only for experimentation and testing out code.
+The code written here will not be executed as part of the pipeline.
+"""
+from mage_ai.data_preparation.variable_manager import get_variable
+
+
+df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
+`,
+            language: BlockLanguageEnum.PYTHON,
+            type: BlockTypeEnum.SCRATCHPAD,
+          }),
         },
         {
           beforeIcon: <Charts {...MENU_ICON_PROPS} />,
           uuid: 'Visualize output data',
+          onClick: () => openSidekickView(ViewKeyEnum.CHARTS, true),
         },
       ],
     },
-    {
-      uuid: 'Debug logs',
-      items: [
-        {
-          beforeIcon: <Save {...MENU_ICON_PROPS} />,
-          uuid: 'Download logs',
-        },
-        {
-          beforeIcon: <Copy {...MENU_ICON_PROPS} />,
-          uuid: 'Copy all logs to clipboard',
-        },
-        {
-          beforeIcon: <AlertTriangle {...MENU_ICON_PROPS} />,
-          uuid: 'Copy errors to clipboard',
-        },
-      ],
-    },
+    // {
+    //   uuid: 'Debug logs',
+    //   items: [
+    //     {
+    //       beforeIcon: <Save {...MENU_ICON_PROPS} />,
+    //       uuid: 'Download logs',
+    //     },
+    //     {
+    //       beforeIcon: <Copy {...MENU_ICON_PROPS} />,
+    //       uuid: 'Copy all logs to clipboard',
+    //     },
+    //     {
+    //       beforeIcon: <AlertTriangle {...MENU_ICON_PROPS} />,
+    //       uuid: 'Copy errors to clipboard',
+    //     },
+    //   ],
+    // },
   ];
 
   const headerTabContent = {

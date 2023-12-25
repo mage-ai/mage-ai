@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Ansi from 'ansi-to-react';
 import InnerHTML from 'dangerously-set-html-content';
 import { useMutation } from 'react-query';
 
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
   BlockTypeEnum,
@@ -166,6 +167,37 @@ export default function useCodeOutput({
     type: blockType,
     uuid: blockUUID,
   } = block || {};
+
+  const [blockOutputDownloadProgress, setBlockOutputDownloadProgress] = useState<string>(null);
+
+  const token = new AuthToken()?.decodedToken?.token;
+  const [
+    downloadBlockOutputAsCsvFile,
+    { isLoading: isLoadingDownloadBlockOutputAsCsvFile },
+  ]: any = useMutation(
+    () => api.block_outputs.pipelines.downloads.detailAsync(
+      pipeline?.uuid,
+      blockUUID,
+      { token },
+      {
+        onDownloadProgress: (p) => setBlockOutputDownloadProgress((Number(p?.loaded || 0) / 1000000).toFixed(3)),
+        responseType: ResponseTypeEnum.BLOB,
+      },
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+          response, {
+            callback: (blobResponse) => {
+              openSaveFileDialog(blobResponse, `${blockUUID}.${FileExtensionEnum.CSV}`);
+            },
+            onErrorCallback: (response, errors) => setErrors?.({
+              errors,
+              response,
+            }),
+          },
+        ),
+    },
+  );
 
   const combineTextData = useCallback((data) => (Array.isArray(data) ? data.join('\n') : data), [
   ]);
@@ -577,6 +609,29 @@ export default function useCodeOutput({
                       }}
                     >
                       <Expand muted size={UNIT * 1.75} />
+                    </Button>
+                  </Tooltip>
+
+                  <Spacing pl={2} />
+
+                  <Tooltip
+                    {...SHARED_TOOLTIP_PROPS}
+                    forceVisible={isLoadingDownloadBlockOutputAsCsvFile}
+                    label={isLoadingDownloadBlockOutputAsCsvFile
+                      ? `${blockOutputDownloadProgress || 0}mb downloaded...`
+                      : 'Save output as CSV file'
+                    }
+                  >
+                    <Button
+                      {...SHARED_BUTTON_PROPS}
+                      compact
+                      loading={isLoadingDownloadBlockOutputAsCsvFile}
+                      onClick={() => {
+                        setBlockOutputDownloadProgress(null);
+                        downloadBlockOutputAsCsvFile();
+                      }}
+                    >
+                      <Save muted size={UNIT * 1.75} />
                     </Button>
                   </Tooltip>
                 </FlexContainer>

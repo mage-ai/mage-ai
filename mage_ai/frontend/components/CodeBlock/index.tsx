@@ -1209,7 +1209,7 @@ function CodeBlock({
     },
   );
 
-  const codeBlockV2 = useMemo(() => true || featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
+  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
     featureEnabled,
     featureUUIDs,
   ]);
@@ -1363,6 +1363,7 @@ function CodeBlock({
     outputTabs,
     // tags,
   } = useCodeBlockComponents({
+    addNewBlock,
     autocompleteProviders,
     block,
     blocks,

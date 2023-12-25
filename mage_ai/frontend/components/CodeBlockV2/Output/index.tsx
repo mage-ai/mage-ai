@@ -89,6 +89,7 @@ function CodeBlockOutput({
   ]);
 
   const {
+    allContentCleaned,
     errors,
     errorsCleaned,
     info,
@@ -266,9 +267,12 @@ function CodeBlockOutput({
               {Object.keys(selectedOutputTabs || {})?.length === 1 && <Divider light />}
 
               <TextOutputDisplay
+                allContentCleaned={allContentCleaned}
                 contentAll={textContent}
                 contentNoErrors={textContentInfo}
                 contentWithErrors={textContentErrors}
+                errorsCleaned={errorsCleaned}
+                infoCleaned={infoCleaned}
               />
             </div>
           ),

@@ -13,6 +13,7 @@ export function getMessagesWithAndWithoutErrors(
   withError: KernelOutputType[];
   withoutError: KernelOutputType[];
 } {
+  const allContent = [];
   const withoutError = [];
   const withError = [];
 
@@ -20,8 +21,10 @@ export function getMessagesWithAndWithoutErrors(
   messagesWithType?.forEach((message) => {
     if (message?.error) {
       withError.push(message);
+      allContent.push(message?.error);
     } else {
       withoutError.push(message);
+      allContent.push(message?.data);
     }
   });
 
@@ -37,7 +40,16 @@ export function getMessagesWithAndWithoutErrors(
 
   const infoCleaned = info?.map(text => removASCII(removeANSI(text)));
 
+  const allContentCleaned = allContent?.reduce((
+    acc,
+    data,
+  ) => (Array.isArray(data) && data?.every(d => typeof d === 'string'))
+    ? acc.concat(data)
+    : acc
+  , [])?.map(text => removASCII(removeANSI(text)));
+
   return {
+    allContentCleaned,
     errors,
     errorsCleaned,
     info,

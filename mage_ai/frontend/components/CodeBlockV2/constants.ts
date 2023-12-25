@@ -66,6 +66,7 @@ type CodeBlockOutputOutputProps = {
 };
 
 export type UseCodeBlockComponentProps = {
+  addNewBlock?: (block: BlockType, downstreamBlocks?: BlockType[]) => Promise<any>;
   block: BlockType;
   blocks?: BlockType[];
   codeCollapsed?: boolean;
