@@ -91,7 +91,10 @@ def get_pipeline_config_path(pipeline_uuid: str) -> Tuple[str, str]:
             comparator=__select,
         )
         if full_filename:
-            paths = get_repo_paths_for_file_path(file_path=full_filename)
+            paths = get_repo_paths_for_file_path(
+                file_path=full_filename,
+                mage_projects_only=True,
+            )
             match_config_path = full_filename
             match_repo_path = (paths.get('full_path') if paths else None) or full_path
 
