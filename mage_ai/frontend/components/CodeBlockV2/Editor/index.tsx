@@ -450,7 +450,7 @@ function Editor({
         }}
         onFocus={() => setFocused(true)}
         paddingLeft={UNIT * 10}
-        paddingRight={UNIT * 16}
+        paddingRight={UNIT * 32}
         paddingVertical={UNIT * 1.5}
         placeholder="e.g. Read files from disk asynchronously"
         ref={refInput}

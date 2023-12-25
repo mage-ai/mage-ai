@@ -1365,6 +1365,7 @@ function CodeBlock({
   } = useCodeBlockComponents({
     autocompleteProviders,
     block,
+    blocks,
     codeCollapsed,
     content,
     deleteBlock: (b) => {
@@ -1391,6 +1392,21 @@ function CodeBlock({
     ,
     openSidekickView,
     outputCollapsed,
+    outputProps: {
+      blockIndex: blockIdx,
+      blockOutputRef,
+      collapsed: outputCollapsed,
+      errorMessages,
+      isHidden,
+      mainContainerWidth,
+      messages,
+      runCount,
+      runEndTime,
+      runStartTime,
+      runningBlocks,
+      setOutputBlocks,
+      setSelectedOutputBlock,
+    },
     pipeline,
     placeholder: isDBT && BlockLanguageEnum.YAML === blockLanguage
       ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
@@ -1408,12 +1424,12 @@ function CodeBlock({
     scrollTogether,
     selected,
     setCodeCollapsed,
+    setErrors,
+    setHiddenBlocks,
     setOutputCollapsed,
     setScrollTogether,
-    setSideBySideEnabled,
-    setHiddenBlocks,
-    setErrors,
     setSelected,
+    setSideBySideEnabled,
     setTextareaFocused,
     showConfigureProjectModal,
     sideBySideEnabled,
@@ -1911,16 +1927,7 @@ function CodeBlock({
     let outputChildren;
 
     if (codeBlockV2 && codeBlockComponentOutput) {
-      return (
-        <CodeContainerStyle
-          {...borderColorShareProps}
-          className={selected && textareaFocused ? 'selected' : null}
-          noPadding
-          hideBorderBottom
-        >
-          {codeBlockComponentOutput}
-        </CodeContainerStyle>
-      );
+      return codeBlockComponentOutput;
     } else if (sparkEnabled && ![
       BlockTypeEnum.CALLBACK,
       BlockTypeEnum.CONDITIONAL,

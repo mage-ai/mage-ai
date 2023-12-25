@@ -1,6 +1,6 @@
 import * as osPath from 'path';
+import React, { useEffect, useMemo, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
-import { useEffect, useMemo, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Circle from '@oracle/elements/Circle';
@@ -38,7 +38,9 @@ function CodeBlockHeader({
   selectedHeaderTab,
   setSelectedHeaderTab,
   setSideMenuVisible,
+  setSubheaderVisible,
   sideMenuVisible,
+  subheaderVisible,
   subheaderVisibleDefault,
   subtitle,
   tabs,
@@ -48,8 +50,10 @@ function CodeBlockHeader({
   selectedHeaderTab?: TabType;
   setSelectedHeaderTab: (tab: TabType) => void;
   setSideMenuVisible?: (value: boolean) => void;
+  setSubheaderVisible: (value: boolean) => void;
+  subheaderVisible: boolean;
   sideMenuVisible?: boolean;
-}) {
+}, ref) {
   const {
     color: blockColor,
     language,
@@ -58,10 +62,12 @@ function CodeBlockHeader({
     uuid,
   } = block;
 
-  const [subheaderVisible, setSubheaderVisible] = useState(subheaderVisibleDefault
-    ? subheaderVisibleDefault?.(block)
-    : false
-  );
+  useEffect(() => {
+    setSubheaderVisible(subheaderVisibleDefault
+      ? subheaderVisibleDefault?.(block)
+      : false
+    );
+  }, []);
 
   const {
     active = false,
@@ -278,6 +284,7 @@ function CodeBlockHeader({
 
   return (
     <HeaderWrapperStyle
+      ref={ref}
       style={{ position: 'relative' }}
       subheaderVisible={subheaderVisible}
     >
@@ -415,4 +422,4 @@ function CodeBlockHeader({
   );
 }
 
-export default CodeBlockHeader;
+export default React.forwardRef(CodeBlockHeader);

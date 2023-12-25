@@ -1,7 +1,15 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
+import Divider from '@oracle/elements/Divider';
+import FileEditorHeader from '@components/FileEditor/Header';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Text from '@oracle/elements/Text';
 import { CodeBlockOutputProps } from './constants';
+import { ContainerStyle } from '@components/CodeBlock/CodeOutput/index.style';
+import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import { SubheaderMenuStyle } from './index.style';
 import {
   buildBorderProps,
   buildConvertBlockMenuItems,
@@ -11,48 +19,168 @@ import {
   getUpstreamBlockUuids,
   hasErrorOrOutput,
 } from '@components/CodeBlock/utils';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getMessagesWithAndWithoutErrors } from '@utils/models/kernel/utils';
+import { isDynamic, isDynamicChild, reduceOutput, useDynamicUpstreamBlocks } from '@utils/models/block';
 
 function CodeBlockOutput({
   block,
+  blockIndex,
+  blockOutputRef,
+  blocks,
+  collapsed,
+  errorMessages,
+  executionState,
+  headerRef,
+  isHidden,
+  mainContainerWidth,
+  menuGroups,
+  messages,
+  openSidekickView,
+  pipeline,
+  runCount,
+  runEndTime,
+  runStartTime,
+  runningBlocks,
+  scrollTogether,
   selected,
+  selectedOutputTab,
+  setErrors,
+  setOutputBlocks,
+  setSelectedOutputBlock,
+  setSelectedOutputTab,
+  sideBySideEnabled,
+  subheaderVisible,
+  tabs,
+  theme,
 }: CodeBlockOutputProps) {
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  useEffect(() => {
+    setTimeout(() => setHeaderHeight(headerRef?.current?.getBoundingClientRect()?.height), 1);
+  }, [subheaderVisible]);
+
+  useEffect(() => {
+    if (tabs?.length && !selectedOutputTab) {
+      setSelectedOutputTab?.(tabs[0]);
+    }
+  }, []);
+
+  const color = getColorsForBlockType(block?.type, {
+    blockColor: block?.color,
+    theme,
+  });
+
+  const messagesWithType = useMemo(() => getMessagesWithType(messages, errorMessages), [
+    errorMessages,
+    messages,
+  ]);
+
+  const {
+    errors,
+    errorsCleaned,
+    info,
+    infoCleaned,
+    withError,
+    withoutError,
+  } = getMessagesWithAndWithoutErrors(messagesWithType, errorMessages);
+
+  const {
+    hasError,
+    hasOutput: hasOutputInit,
+  } = hasErrorOrOutput(messagesWithType);
+  const hasOutput = useMemo(() => hasOutputInit || messages?.length >= 1, [
+    hasOutputInit,
+    messages,
+  ]);
+
+  const isInProgress = !!runningBlocks?.find(({
+    uuid,
+  }) => uuid === block?.uuid) || messages?.length >= 1 && ExecutionStateEnum.IDLE !== executionState;
+
+  const {
+    reduceOutputUpstreamBlock,
+  } = useDynamicUpstreamBlocks([block], blocks)[0];
+
   const {
     borderColorShareProps,
     tags,
   } = useMemo(() => buildBorderProps({
     block,
-    // dynamic,
-    // dynamicUpstreamBlock,
-    // hasError,
-    // reduceOutput,
-    // reduceOutputUpstreamBlock,
+    dynamic: isDynamic(block),
+    dynamicUpstreamBlock: isDynamicChild(block),
+    hasError,
+    reduceOutput: reduceOutput(block),
+    reduceOutputUpstreamBlock,
     selected,
   }), [
     block,
-    // dynamic,
-    // dynamicUpstreamBlock,
-    // hasError,
-    // reduceOutput,
-    // reduceOutputUpstreamBlock,
+    hasError,
     selected,
+  ]);
+
+  const menuMemo = useMemo(() => menuGroups?.length >= 1 && (
+    <FlexContainer
+      alignItems="center"
+      justifyContent="space-between"
+    >
+      {tabs?.length >= 1
+        ? (
+          <ButtonTabs
+            onClickTab={(tab: TabType) => {
+              setSelectedOutputTab?.(tab);
+            }}
+            selectedTabUUID={selectedOutputTab?.uuid}
+            tabs={tabs}
+            underlineColor={color?.accent}
+            underlineStyle
+          />
+        )
+        : <div />
+      }
+
+      {tabs?.length >= 1
+        ? <FileEditorHeader defaultTextContent menuGroups={menuGroups} rightOffset={0} />
+        : (
+          <SubheaderMenuStyle>
+            <FileEditorHeader defaultTextContent menuGroups={menuGroups} rightOffset={0} />
+          </SubheaderMenuStyle>
+        )
+      }
+    </FlexContainer>
+  ), [
+    color,
+    menuGroups,
+    selectedOutputTab,
+    setSelectedOutputTab,
+    tabs,
   ]);
 
   return (
     <>
+      {hasOutput && (
+        <SubheaderMenuStyle
+          {...borderColorShareProps}
+          top={headerHeight}
+        >
+          <Divider light />
+          {menuMemo}
+        </SubheaderMenuStyle>
+      )}
+
       <CodeOutput
         {...borderColorShareProps}
-        // block={block}
-        // blockIndex={blockIdx}
+        alwaysShowExtraInfo
+        block={block}
+        blockIndex={blockIndex}
         // blockMetadata={blockMetadata}
-        // buttonTabs={sparkEnabled ? null : buttonTabs}
-        // childrenBelowTabs={childrenBelowTabs}
-        // collapsed={outputCollapsed}
-        // hasOutput={hasOutput}
+        collapsed={collapsed}
+        hasOutput={hasOutput}
         // hideOutput={hideOutput}
-        // isInProgress={isInProgress}
-        // mainContainerWidth={mainContainerWidth}
-        // messages={messagesWithType}
-        // messagesAll={messages}
+        isInProgress={isInProgress}
+        mainContainerWidth={mainContainerWidth}
+        messages={messagesWithType}
+        messagesAll={messages}
         // onClickSelectBlock={sideBySideEnabled
         //   ? isHidden && setHiddenBlocks
         //     ? () => setHiddenBlocks(prev => ({
@@ -62,15 +190,15 @@ function CodeBlockOutput({
         //     : onClickSelectBlock
         //   : null
         // }
-        // openSidekickView={openSidekickView}
-        // outputRowNormalPadding={sideBySideEnabled || isDataIntegration || sparkEnabled}
-        // pipeline={pipeline}
-        // ref={blockOutputRef}
-        // runCount={runCount}
-        // runEndTime={runEndTime}
-        // runStartTime={runStartTime}
-        // scrollTogether={scrollTogether}
-        // selected={selected && (!isHidden || !sideBySideEnabled)}
+        openSidekickView={openSidekickView}
+        outputRowNormalPadding
+        pipeline={pipeline}
+        ref={blockOutputRef}
+        runCount={runCount}
+        runEndTime={runEndTime}
+        runStartTime={runStartTime}
+        scrollTogether={scrollTogether}
+        selected={selected && (!isHidden || !sideBySideEnabled)}
         // selectedTab={selectedTab}
         // setCollapsed={!sideBySideEnabled
         //   ? (val: boolean) => {
@@ -81,12 +209,12 @@ function CodeBlockOutput({
         //   }
         //   : null
         // }
-        // setErrors={setErrors}
-        // setOutputBlocks={setOutputBlocks}
-        // setSelectedOutputBlock={setSelectedOutputBlock}
+        setErrors={setErrors}
+        setOutputBlocks={setOutputBlocks}
+        setSelectedOutputBlock={setSelectedOutputBlock}
         // setSelectedTab={setSelectedTab}
-        // showBorderTop={sideBySideEnabled}
-        // sideBySideEnabled={sideBySideEnabled}
+        showBorderTop={sideBySideEnabled}
+        sideBySideEnabled={sideBySideEnabled}
         // sparkEnabled={sparkEnabled}
       />
     </>

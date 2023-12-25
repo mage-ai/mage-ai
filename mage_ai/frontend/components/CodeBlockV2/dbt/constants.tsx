@@ -10,9 +10,8 @@ export enum HeaderTabEnum {
 }
 
 export enum OutputTabEnum {
-  COMPILED_CODE = 'compiled_code',
-  LOGS = 'logs',
-  OUTPUT = 'output',
+  LOGS = 'execution logs',
+  OUTPUT = 'output data',
 }
 
 export function buildHeaderTabs({
@@ -39,3 +38,19 @@ export function buildHeaderTabs({
     },
   ];
 }
+
+export function buildOutputTabs({
+  block,
+}: {
+  block: BlockType;
+}) {
+  return [
+    {
+      uuid: OutputTabEnum.OUTPUT,
+    },
+    {
+      uuid: OutputTabEnum.LOGS,
+    },
+  ];
+}
+

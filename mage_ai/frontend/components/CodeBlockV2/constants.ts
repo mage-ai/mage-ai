@@ -1,10 +1,10 @@
 import BlockType from '@interfaces/BlockType';
+import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import PipelineType from '@interfaces/PipelineType';
 import ProjectType from '@interfaces/ProjectType';
 import StatusType from '@interfaces/StatusType';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
-import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { KeyTextsPostitionEnum } from '@oracle/elements/Button/KeyboardShortcutButton';
 import { MenuGroupType } from '@components/FileEditor/Header';
@@ -49,8 +49,25 @@ export type RunBlockAndTrackProps = {
   };
 };
 
+type CodeBlockOutputOutputProps = {
+  blockIndex?: number;
+  blockOutputRef?: any;
+  collapsed?: boolean;
+  errorMessages?: KernelOutputType[];
+  isHidden?: boolean;
+  mainContainerWidth?: number;
+  messages?: KernelOutputType[];
+  runCount?: number;
+  runEndTime?: number;
+  runStartTime?: number;
+  runningBlocks?: BlockType[];
+  setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock?: (block: BlockType) => void;
+};
+
 export type UseCodeBlockComponentProps = {
   block: BlockType;
+  blocks?: BlockType[];
   codeCollapsed?: boolean;
   deleteBlock: (block: BlockType) => void,
   executionState: ExecutionStateEnum;
@@ -60,6 +77,7 @@ export type UseCodeBlockComponentProps = {
     blockUUID: string;
   }) => void;
   outputCollapsed?: boolean;
+  outputProps: CodeBlockOutputOutputProps;
   pipeline: PipelineType;
   runBlockAndTrack: (payload?: RunBlockAndTrackProps) => void;
   savePipelineContent: (payload?: {
@@ -149,7 +167,7 @@ export type CodeBlockEditorProps = {
 
 export type CodeBlockOutputProps = {
 
-} & UseCodeBlockComponentProps;
+} & CodeBlockOutputOutputProps & UseCodeBlockComponentProps;
 
 export type CodeBlockHeaderProps = {
   buttons: ButtonType[];

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 
 import CodeBlockEditor from './Editor';
 import CodeBlockHeader from './Header';
@@ -13,12 +13,17 @@ import { UseCodeBlockComponentProps, UseCodeBlockComponentType } from './constan
 export default function useCodeBlockComponents({
   ...props
 }: UseCodeBlockComponentProps): UseCodeBlockComponentType {
+  const refHeader = useRef(null);
+
   const [selectedHeaderTab, setSelectedHeaderTab] = useState(null);
+  const [selectedOutputTab, setSelectedOutputTab] = useState(null);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
+  const [subheaderVisible, setSubheaderVisible] = useState(null);
 
   const {
     autocompleteProviders,
     block,
+    blocks,
     content,
     executionState,
     height,
@@ -27,20 +32,41 @@ export default function useCodeBlockComponents({
     onContentSizeChangeCallback,
     onDidChangeCursorPosition,
     onMountCallback,
+    openSidekickView,
+    outputProps,
     pipeline,
     placeholder,
     runBlockAndTrack,
     savePipelineContent,
+    scrollTogether,
     selected,
+    setErrors,
     setSelected,
     setTextareaFocused,
     shortcuts,
     showConfigureProjectModal,
+    sideBySideEnabled,
     status,
     textareaFocused,
     theme,
     updatePipeline,
   } = props;
+
+  const {
+    blockIndex,
+    blockOutputRef,
+    collapsed,
+    errorMessages,
+    isHidden,
+    mainContainerWidth,
+    messages,
+    runCount,
+    runEndTime,
+    runStartTime,
+    runningBlocks,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+  } = outputProps || {};
 
   const {
     featureEnabled,
@@ -168,13 +194,16 @@ export default function useCodeBlockComponents({
           block={block}
           executionState={executionState}
           interruptKernel={interruptKernel}
+          ref={refHeader}
           runBlockAndTrack={runBlockAndTrack}
           selected={selected}
           selectedHeaderTab={selectedHeaderTab}
           setSelectedHeaderTab={setSelectedHeaderTab}
           setSideMenuVisible={setSideMenuVisible}
+          setSubheaderVisible={setSubheaderVisible}
           sideMenuVisible={sideMenuVisible}
           status={status}
+          subheaderVisible={subheaderVisible}
           theme={theme}
           {...(codeBlockProps?.header || {})}
         />
@@ -191,8 +220,10 @@ export default function useCodeBlockComponents({
     selectedHeaderTab,
     setSelectedHeaderTab,
     setSideMenuVisible,
+    setSubheaderVisible,
     sideMenuVisible,
     status,
+    subheaderVisible,
     theme,
   ]);
 
@@ -205,15 +236,64 @@ export default function useCodeBlockComponents({
       return (
         <CodeBlockOutput
           block={block}
+          blockIndex={blockIndex}
+          blockOutputRef={blockOutputRef}
+          blocks={blocks}
+          collapsed={collapsed}
+          errorMessages={errorMessages}
+          executionState={executionState}
+          headerRef={refHeader}
+          isHidden={isHidden}
+          mainContainerWidth={mainContainerWidth}
+          messages={messages}
+          openSidekickView={openSidekickView}
+          pipeline={pipeline}
+          runCount={runCount}
+          runEndTime={runEndTime}
+          runStartTime={runStartTime}
+          runningBlocks={runningBlocks}
+          scrollTogether={scrollTogether}
           selected={selected}
+          selectedOutputTab={selectedOutputTab}
+          setErrors={setErrors}
+          setOutputBlocks={setOutputBlocks}
+          setSelectedOutputBlock={setSelectedOutputBlock}
+          setSelectedOutputTab={setSelectedOutputTab}
+          sideBySideEnabled={sideBySideEnabled}
+          subheaderVisible={subheaderVisible}
+          theme={theme}
           {...(codeBlockProps?.output || {})}
         />
       );
     }
   }, [
     block,
+    blockIndex,
+    blockOutputRef,
+    blocks,
     codeBlockProps,
+    collapsed,
+    errorMessages,
+    executionState,
+    isHidden,
+    mainContainerWidth,
+    messages,
+    openSidekickView,
+    pipeline,
+    runCount,
+    runEndTime,
+    runStartTime,
+    runningBlocks,
+    scrollTogether,
     selected,
+    selectedOutputTab,
+    setErrors,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+    setSelectedOutputTab,
+    sideBySideEnabled,
+    subheaderVisible,
+    theme,
   ]);
 
   return {

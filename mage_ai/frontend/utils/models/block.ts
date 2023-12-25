@@ -1031,3 +1031,33 @@ export function getSelectedColumnsAndAllColumn(stream: StreamType): {
     selectedColumns,
   };
 }
+
+export function isDynamic(block: BlockType): boolean {
+  const {
+    configuration,
+    tags,
+  } = block || {};
+
+  return configuration?.dynamic || tags?.includes('dynamic');
+}
+
+export function isDynamicChild(block: BlockType): boolean {
+  const {
+    tags,
+  } = block || {};
+
+  return tags?.includes('dynamic_child');
+}
+
+export function isDynamicOrDynamicChild(block: BlockType): boolean {
+  return isDynamic(block) || isDynamicChild(block);
+}
+
+export function reduceOutput(block: BlockType): boolean {
+  const {
+    configuration,
+    tags,
+  } = block || {};
+
+  return configuration?.reduce_output || tags?.includes('reduce_output');
+}

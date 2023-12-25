@@ -64,6 +64,7 @@ import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 
 type CodeOutputProps = {
+  alwaysShowExtraInfo?: boolean;
   block: BlockType;
   blockIndex?: number;
   blockMetadata?: {
@@ -119,6 +120,7 @@ const SHARED_BUTTON_PROPS = {
 };
 
 function CodeOutput({
+  alwaysShowExtraInfo,
   block,
   blockIndex,
   blockMetadata,
@@ -302,8 +304,8 @@ function CodeOutput({
 
   const hasErrorPrev = usePrevious(hasError);
   useEffect(() => {
-    if (isDBT && !hasErrorPrev && hasError) {
-      setSelectedTab(TAB_DBT_LOGS_UUID);
+    if (isDBT && !hasErrorPrev && hasError && setSelectedTab) {
+      setSelectedTab?.(TAB_DBT_LOGS_UUID);
     }
   }, [
     hasError,
@@ -697,7 +699,13 @@ function CodeOutput({
     tableContent,
   ]);
 
-  if (!buttonTabs && !hasError && !hasOutput && !renderMessagesRaw && !children) {
+  if (!buttonTabs
+    && !hasError
+    && !hasOutput
+    && !renderMessagesRaw
+    && !children
+    && !alwaysShowExtraInfo
+  ) {
     return null;
   }
 
@@ -772,7 +780,7 @@ function CodeOutput({
           </>
         )}
 
-        {executedAndIdle && !hideExtraInfo && (
+        {(alwaysShowExtraInfo || (executedAndIdle && !hideExtraInfo)) && (
           <ExtraInfoStyle
             {...borderColorShareProps}
             blockType={blockType}

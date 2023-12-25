@@ -13,7 +13,9 @@ import Text from '@oracle/elements/Text';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
   AISparkle,
+  AlertTriangle,
   Alphabet,
+  ArrowsAdjustingFrameSquare,
   BatchPipeline,
   BatchSquaresStacked,
   BlocksCombined,
@@ -24,6 +26,7 @@ import {
   ChevronUp,
   Close,
   Conditional,
+  Copy,
   DocumentIcon,
   Edit,
   Filter,
@@ -34,6 +37,7 @@ import {
   PauseV2,
   PlayButtonFilled,
   PowerUps,
+  Save,
   SettingsWithKnobs,
   Trash,
   TreeWithArrowsDown,
@@ -42,7 +46,7 @@ import {
 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import { HeaderTabEnum, buildHeaderTabs } from './constants';
+import { HeaderTabEnum, buildHeaderTabs, buildOutputTabs } from './constants';
 import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
 import {
   KEY_CODE_CONTROL,
@@ -141,6 +145,8 @@ export default function useCodeBlockProps({
     block,
   });
 
+  const outputTabs = buildOutputTabs({ block });
+
   const buttonExecute = {
     color: color?.accent,
     description: (
@@ -169,7 +175,7 @@ export default function useCodeBlockProps({
       onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
         || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
     ),
-    label: () => 'Compile & preview',
+    label: () => 'Preview',
     onClick: (opts) => {
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
@@ -508,6 +514,52 @@ export default function useCodeBlockProps({
     },
   ];
 
+  const menuGroupsOutput = [
+    {
+      uuid: 'View',
+      items: [
+        {
+          beforeIcon: <ArrowsAdjustingFrameSquare {...MENU_ICON_PROPS} />,
+          uuid: 'Set fixed height',
+        },
+      ],
+    },
+    {
+      uuid: 'Explore data',
+      items: [
+        {
+          beforeIcon: <Save {...MENU_ICON_PROPS} />,
+          uuid: 'Download output data',
+        },
+        {
+          beforeIcon: <DocumentIcon {...MENU_ICON_PROPS} />,
+          uuid: 'Explore data in scratchpad',
+        },
+        {
+          beforeIcon: <Charts {...MENU_ICON_PROPS} />,
+          uuid: 'Visualize output data',
+        },
+      ],
+    },
+    {
+      uuid: 'Debug logs',
+      items: [
+        {
+          beforeIcon: <Save {...MENU_ICON_PROPS} />,
+          uuid: 'Download logs',
+        },
+        {
+          beforeIcon: <Copy {...MENU_ICON_PROPS} />,
+          uuid: 'Copy all logs to clipboard',
+        },
+        {
+          beforeIcon: <AlertTriangle {...MENU_ICON_PROPS} />,
+          uuid: 'Copy errors to clipboard',
+        },
+      ],
+    },
+  ];
+
   const headerTabContent = {
     renderTab: (tab: TabType, defaultContent: any) => {
       if (HeaderTabEnum.CONFIGURATION === tab?.uuid) {
@@ -541,12 +593,12 @@ export default function useCodeBlockProps({
       ],
       menuGroups,
       subheaderVisibleDefault: (b: BlockType) => {
-        if (!status || StatusTypeEnum.NOT_EXECUTED === status) {
+        if (!b?.status || StatusTypeEnum.NOT_EXECUTED === b?.status) {
           return true;
         }
 
         if (validate(b)) {
-          return True
+          return true
         }
       },
       subtitle,
@@ -555,7 +607,8 @@ export default function useCodeBlockProps({
     },
     headerTabContent,
     output: {
-
+      menuGroups: menuGroupsOutput,
+      tabs: outputTabs,
     },
   };
 }
