@@ -1353,11 +1353,6 @@ function CodeBlock({
     pipeline,
   ]);
 
-  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
-    featureEnabled,
-    featureUUIDs,
-  ]);
-
   const {
     editor: codeBlockEditor,
     // extraDetails,
