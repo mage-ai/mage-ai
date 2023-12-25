@@ -93,10 +93,18 @@ def repo_path_from_database_query_to_project_repo_path(
     return mapping
 
 
-def get_repo_paths_for_file_path(file_path: str, repo_path: str = None) -> Dict:
+def get_repo_paths_for_file_path(
+    file_path: str,
+    repo_path: str = None,
+    mage_projects_only: bool = False,
+) -> Dict:
     result = None
 
-    repo_paths_all = build_repo_path_for_all_projects(repo_path=repo_path)
+    repo_paths_all = build_repo_path_for_all_projects(
+        repo_path=repo_path,
+        mage_projects_only=mage_projects_only,
+    )
+
     for settings in repo_paths_all.values():
         full_path = settings['full_path']
         path = settings['path']
