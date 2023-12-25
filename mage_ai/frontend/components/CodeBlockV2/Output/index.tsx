@@ -7,6 +7,7 @@ import FileEditorHeader from '@components/FileEditor/Header';
 import FlexContainer from '@oracle/components/FlexContainer';
 import MultiColumnController from '@components/MultiColumnController';
 import Text from '@oracle/elements/Text';
+import TextOutputDisplay from './TextOutputDisplay';
 import useCodeOutput from '@components/CodeBlock/CodeOutput/useCodeOutput';
 import { BORDER_WIDTH_THICK } from '@oracle/styles/units/borders';
 import { CodeBlockOutputProps } from './constants';
@@ -180,12 +181,7 @@ function CodeBlockOutput({
     tabs,
   ]);
 
-  const {
-    extraInfo,
-    tableContentData,
-    testMessages,
-    textContent,
-  } = useCodeOutput({
+  const codeOutputProps = {
     ...borderColorShareProps,
     alwaysShowExtraInfo: true,
     block,
@@ -209,6 +205,27 @@ function CodeBlockOutput({
     setSelectedOutputBlock,
     showBorderTop: sideBySideEnabled,
     sideBySideEnabled,
+  };
+
+  const {
+    extraInfo,
+    tableContentData,
+    testMessages,
+    textContent,
+  } = useCodeOutput(codeOutputProps);
+
+  const {
+    textContent: textContentErrors,
+  } = useCodeOutput({
+    ...codeOutputProps,
+    messages: withError,
+  });
+
+  const {
+    textContent: textContentInfo,
+  } = useCodeOutput({
+    ...codeOutputProps,
+    messages: withoutError,
   });
 
   const columnsOfItems = useMemo(() => {
@@ -246,9 +263,13 @@ function CodeBlockOutput({
         {
           render: () => (
             <div ref={refLogs} style={{ width: '100%' }}>
-              <Divider light />
+              {Object.keys(selectedOutputTabs || {})?.length === 1 && <Divider light />}
 
-              {textContent}
+              <TextOutputDisplay
+                contentAll={textContent}
+                contentNoErrors={textContentInfo}
+                contentWithErrors={textContentErrors}
+              />
             </div>
           ),
         },
@@ -261,6 +282,8 @@ function CodeBlockOutput({
     selectedOutputTabs,
     tableContentData,
     textContent,
+    textContentErrors,
+    textContentInfo,
   ]);
 
   return (

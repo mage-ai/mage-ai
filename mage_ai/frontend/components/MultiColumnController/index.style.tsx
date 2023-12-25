@@ -25,16 +25,16 @@ export const VerticalDividerStyle = styled.div<{
 }>`
   ${transition()}
 
-  cursor: col-resize;
+  // cursor: col-resize;
   position: relative;
   width: ${DIVIDER_WIDTH}px;
   z-index: 5;
 
   ${props => `
-    background-color: ${props?.backgroundColor || (props.theme || dark).background.codeTextarea};
+    background-color: ${props?.backgroundColor || (props.theme || dark).borders.medium2};
 
-    &:hover {
-      background-color: ${props?.backgroundColorHover || props?.backgroundColor || (props.theme || dark).content.active};
-    }
+    // &:hover {
+    //   background-color: ${props?.backgroundColorHover || props?.backgroundColor || (props.theme || dark).content.active};
+    // }
   `}
 `;

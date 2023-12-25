@@ -72,8 +72,9 @@ function MultiColumnController({
 
         arr.push(
           <VerticalDividerStyle
-            backgroundColor={dividerBackgroundColor}
-            backgroundColorHover={dividerBackgroundColorHover}
+            // Add this back once resizing column widths is supported.
+            // backgroundColor={dividerBackgroundColor}
+            // backgroundColorHover={dividerBackgroundColorHover}
             key={keyDivider}
             ref={ref}
           />
