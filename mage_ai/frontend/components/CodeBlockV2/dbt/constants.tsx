@@ -30,10 +30,10 @@ export function buildHeaderTabs({
       icon: validate(block) ? <AlertTriangle danger /> : null,
       uuid: HeaderTabEnum.CONFIGURATION,
     },
-    {
-      // Icon: NavDashboard,
-      uuid: HeaderTabEnum.OVERVIEW,
-    },
+    // {
+    //   // Icon: NavDashboard,
+    //   uuid: HeaderTabEnum.OVERVIEW,
+    // },
     {
       // Icon: TreeWithArrowsUp,
       uuid: HeaderTabEnum.LINEAGE,

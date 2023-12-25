@@ -16,6 +16,7 @@ import {
   CONFIG_KEY_DBT_PROFILES_FILE_PATH,
   CONFIG_KEY_DBT_PROFILE_TARGET,
   CONFIG_KEY_DBT_PROJECT_NAME,
+  CONFIG_KEY_LIMIT,
 } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
@@ -33,11 +34,6 @@ function Configuration({
   pipeline,
   savePipelineContent,
 }: ConfigurationProps) {
-// - [ ]  Project: project_path: dbt_project_name
-// - [ ]  Profile: ...
-// - [ ]  Target: dbt_profile_target
-// - [ ]  Sample limit configuration.limit
-// - [ ]  File path: configuration.file_path, file_source.path
   const [attributes, setAttributes] = useState(block);
 
   const {
@@ -74,8 +70,6 @@ function Configuration({
 
   const targets = useMemo(() => profile?.targets, [profile]);
 
-  console.log(project)
-
   return (
     <Spacing p={PADDING_UNITS}>
       <SetupSection
@@ -83,6 +77,7 @@ function Configuration({
       >
         <SetupSectionRow
           title="Project"
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME]}
           selectInput={{
             monospace: true,
             onChange: e => setAttributes(prev => ({
@@ -105,6 +100,7 @@ function Configuration({
 
         <SetupSectionRow
           title="Profile"
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]}
           selectInput={{
             monospace: true,
             onChange: e => setAttributes(prev => ({
@@ -127,6 +123,7 @@ function Configuration({
 
         <SetupSectionRow
           title="Target"
+          invalid={!attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET]}
           selectInput={{
             monospace: true,
             onChange: e => setAttributes(prev => ({
@@ -142,6 +139,25 @@ function Configuration({
             })),
             placeholder: 'Select target',
             value: attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET],
+          }}
+        />
+
+        <SetupSectionRow
+          title="Preview query result limit"
+          description="Limit the number of rows that are fetched when compiling and previewing."
+          textInput={{
+            fullWidth: true,
+            monospace: true,
+            onChange: e => setAttributes(prev => ({
+              ...prev,
+              configuration: {
+                ...(prev?.configuration || {}),
+                [CONFIG_KEY_LIMIT]: e.target.value,
+              },
+            })),
+            type: 'number',
+            placeholder: 'e.g. 1000',
+            value: attributes?.configuration?.[CONFIG_KEY_LIMIT],
           }}
         />
       </SetupSection>

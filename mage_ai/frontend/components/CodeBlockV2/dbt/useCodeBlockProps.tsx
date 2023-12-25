@@ -2,13 +2,16 @@ import * as osPath from 'path';
 import { useCallback } from 'react';
 
 import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import CacheItemType, { CacheItemTypeEnum } from '@interfaces/CacheItemType';
 import Circle from '@oracle/elements/Circle';
 import Configuration from './Configuration';
+import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import api from '@api';
 import { AddonBlockTypeEnum } from '@interfaces/AddonBlockOptionType';
 import {
   AISparkle,
@@ -40,6 +43,7 @@ import {
   VisibleEye,
 } from '@oracle/icons';
 import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
+import { CONFIG_KEY_DBT_PROJECT_NAME } from '@interfaces/ChartBlockType';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { HeaderTabEnum, buildHeaderTabs } from './constants';
 import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
@@ -99,6 +103,18 @@ export default function useCodeBlockProps({
     reduce_output: reduceOutput,
   } = configuration || {};
 
+  const filePath = configuration?.file_path || configuration?.file_source?.path;
+  const requestQuery = {
+    item_type: CacheItemTypeEnum.DBT,
+    project_path: configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
+  };
+  const { data: dataDetail } = api.cache_items.detail(encodeURIComponent(filePath), requestQuery, {
+    pauseFetch: !configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
+  });
+  const itemDetail: CacheItemType = dataDetail?.cache_item;
+
+  const upstreamBlocks: BlockType[] = itemDetail?.item?.upstream_blocks || [];
+
   const color = getColorsForBlockType(type, {
     blockColor,
     theme,
@@ -114,9 +130,9 @@ export default function useCodeBlockProps({
   }
   const subtitle = configuration?.file_path || configuration?.file_source?.path;
 
-  const validateBeforeAction = useCallback(({
+  function validateBeforeAction({
     setSelectedHeaderTab,
-  }) => {
+  }) {
     const errors = validate(block);
     if (errors) {
       errors.links = [
@@ -134,10 +150,7 @@ export default function useCodeBlockProps({
     }
 
     return true;
-  }, [
-    block,
-    setErrors,
-  ]);
+  };
 
   const headerTabs = buildHeaderTabs({
     block,
@@ -283,7 +296,7 @@ export default function useCodeBlockProps({
 
   const menuGroups = [
     {
-      uuid: 'Augment',
+      uuid: 'Enhance',
       items: [
         {
           isGroupingTitle: true,
@@ -488,7 +501,7 @@ export default function useCodeBlockProps({
       ],
     },
     {
-      uuid: 'Help',
+      uuid: 'Support',
       items: [
         {
           beforeIcon: <Chat {...MENU_ICON_PROPS} />,
@@ -520,10 +533,23 @@ export default function useCodeBlockProps({
             savePipelineContent={savePipelineContent}
           />
         );
-      } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
-        return;
+      // } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
+      //   return;
       } else if (HeaderTabEnum.LINEAGE === tab?.uuid) {
-        return;
+        console.log(block);
+        return upstreamBlocks?.length >= 1 && (
+          <DependencyGraph
+            disabled
+            enablePorts={false}
+            height={UNIT * 80}
+            pannable
+            pipeline={{
+              blocks: upstreamBlocks,
+              uuid: null,
+            }}
+            zoomable
+          />
+        );
       }
 
       return defaultContent;

@@ -16,6 +16,7 @@ interface InputType {
   monospace?: boolean;
   onChange?: (event: any) => void;
   placeholder?: string;
+  type?: string;
   value?: string;
 }
 
