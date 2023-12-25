@@ -5,7 +5,7 @@ import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
-export const ICON_SIZE = UNIT * 2.5;
+export const ICON_SIZE = UNIT * 2;
 export const MENU_ICON_SIZE = UNIT * 1.5;
 
 export const HeaderWrapperStyle = styled.div<{

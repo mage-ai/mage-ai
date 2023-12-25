@@ -148,7 +148,6 @@ function CodeBlockHeader({
         <KeyboardShortcutButton
           addPlusSignBetweenKeys
           backgroundColor={color}
-          bold
           compact
           disabled={disabled && disabled?.({
             active,
@@ -182,6 +181,7 @@ function CodeBlockHeader({
             }
           }}
           outline
+          small
           uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
           {iconEl}
@@ -328,7 +328,7 @@ function CodeBlockHeader({
             </FlexContainer>
 
             {subtitle && (
-              <Text monospace muted noWrapping small>
+              <Text monospace muted noWrapping xsmall>
                 {subtitle}
               </Text>
             )}
@@ -357,7 +357,7 @@ function CodeBlockHeader({
           >
             <Circle
               color={color?.accent}
-              size={UNIT * 5}
+              size={UNIT * 4}
               square
             >
               <Icon active size={ICON_SIZE} />

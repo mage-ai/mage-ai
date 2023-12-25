@@ -1359,7 +1359,7 @@ function CodeBlock({
     // footer,
     header: codeBlockComponentHeader,
     headerTabs: codeBlockComponentHeaderTabs,
-    // output,
+    output: codeBlockComponentOutput,
     outputTabs,
     // tags,
   } = useCodeBlockComponents({
@@ -1908,10 +1908,20 @@ function CodeBlock({
     );
 
     const isOnOutputTab = TAB_SPARK_OUTPUT.uuid === selectedTab?.uuid;
-
     let outputChildren;
 
-    if (sparkEnabled && ![
+    if (codeBlockV2 && codeBlockComponentOutput) {
+      return (
+        <CodeContainerStyle
+          {...borderColorShareProps}
+          className={selected && textareaFocused ? 'selected' : null}
+          noPadding
+          hideBorderBottom
+        >
+          {codeBlockComponentOutput}
+        </CodeContainerStyle>
+      );
+    } else if (sparkEnabled && ![
       BlockTypeEnum.CALLBACK,
       BlockTypeEnum.CONDITIONAL,
       BlockTypeEnum.EXTENSION,
@@ -1988,15 +1998,16 @@ function CodeBlock({
     return outputEl();
   }, [
     block,
-    blockType,
     blockExecutionStates,
     blockIdx,
     blockMetadata,
     blockOutputRef,
+    blockType,
     borderColorShareProps,
     buttonTabs,
-    color,
+    codeBlockComponentOutput,
     codeBlockV2,
+    color,
     dispatchEventSyncColumnPositions,
     executionState,
     hasOutput,
@@ -2023,7 +2034,7 @@ function CodeBlock({
     selected,
     selectedTab,
     setErrors,
-  setHiddenBlocks,
+    setHiddenBlocks,
     setOutputBlocks,
     setOutputCollapsed,
     setSelectedOutputBlock,

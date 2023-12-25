@@ -147,6 +147,10 @@ export type CodeBlockEditorProps = {
   textareaFocused?: boolean;
 } & UseCodeBlockComponentProps;
 
+export type CodeBlockOutputProps = {
+
+} & UseCodeBlockComponentProps;
+
 export type CodeBlockHeaderProps = {
   buttons: ButtonType[];
   menuGroups?: MenuGroupType[];
@@ -165,7 +169,6 @@ export interface UseCodeBlockComponentType {
   extraDetails: any;
   footer: any;
   header: CodeBlockHeaderProps;
-  headerTabContent: HeaderTabContntType;
   output: any;
   outputTabs: any;
   tags: any;

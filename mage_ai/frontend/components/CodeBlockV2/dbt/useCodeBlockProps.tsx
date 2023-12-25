@@ -529,9 +529,7 @@ export default function useCodeBlockProps({
   };
 
   return {
-    editor: {
-
-    },
+    editor: {},
     header: {
       buttons: [
         buttonExecute,
@@ -556,5 +554,8 @@ export default function useCodeBlockProps({
       title,
     },
     headerTabContent,
+    output: {
+
+    },
   };
 }

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import CodeBlockEditor from './Editor';
 import CodeBlockHeader from './Header';
+import CodeBlockOutput from './Output';
 import MainContent from './MainContent';
 import useDBT from './dbt/useCodeBlockProps';
 import useProject from '@utils/models/project/useProject';
@@ -195,13 +196,32 @@ export default function useCodeBlockComponents({
     theme,
   ]);
 
+  const output = useMemo(() => {
+    if (!enabled) {
+      return null;
+    }
+
+    if (codeBlockProps?.output) {
+      return (
+        <CodeBlockOutput
+          block={block}
+          selected={selected}
+          {...(codeBlockProps?.output || {})}
+        />
+      );
+    }
+  }, [
+    block,
+    codeBlockProps,
+    selected,
+  ]);
+
   return {
     editor: mainContentMemo,
     extraDetails: null,
     footer: null,
     header,
-    headerTabContent: null,
-    output: null,
+    output,
     outputTabs: null,
     tags: null,
   };
