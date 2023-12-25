@@ -170,6 +170,8 @@ export default function useCodeOutput({
   const combineTextData = useCallback((data) => (Array.isArray(data) ? data.join('\n') : data), [
   ]);
 
+  const refDataFrameShape = useRef(null);
+
   const combinedMessages = useMemo(() => {
     return messages?.length >= 1
       ? messages.reduce((arr, curr) => {
@@ -210,7 +212,7 @@ export default function useCodeOutput({
     messagesAll,
   ]);
 
-  const createDataTableElement = useCallback(({
+  const createTableData = useCallback(({
     columns,
     index,
     rows,
@@ -219,46 +221,35 @@ export default function useCodeOutput({
     borderTop,
     selected: selectedProp,
   }) => {
-    const columnHeadersContainEmptyString = columns?.some(header => header === '');
-    if (columnHeadersContainEmptyString) {
-      return (
-        <Spacing mx={5} my={3}>
-          <Text monospace warning>
-            Block output table could not be rendered due to empty string headers.
-            Please check your data’s column headers for empty strings.
-          </Text>
-        </Spacing>
-      );
+    if (shape) {
+      refDataFrameShape.current = shape;
     }
 
-    return rows.length >= 1 && (
-      <DataTable
-        columns={columns}
-        disableScrolling={!selectedProp}
-        index={index}
-        key={`data-table-${index}`}
-        maxHeight={UNIT * 60}
-        noBorderBottom
-        noBorderLeft
-        noBorderRight
-        noBorderTop={!borderTop}
-        rows={rows}
-        // Remove border 2px and padding from each side
-        width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
-      />
-    );
+    const columnHeadersContainEmptyString = columns?.some(header => header === '');
+
+    return {
+      borderTop,
+      columnHeadersContainEmptyString,
+      columns,
+      index,
+      mainContainerWidth,
+      rows,
+      selected: selectedProp,
+      // Remove border 2px and padding from each side
+      width: mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH),
+    };
   }, [
     mainContainerWidth,
   ]);
 
   const {
-    tableContent,
+    tableContentData,
     testMessages,
     textContent,
   } = useMemo(() => {
     const arrContent = [];
-    const tableContent = [];
-    const testMessages = [];
+    const tableContentDataInner = [];
+    const testMessagesInner = [];
 
     combinedMessages?.forEach((output: KernelOutputType, idx: number) => {
       let dataInit;
@@ -332,7 +323,7 @@ export default function useCodeOutput({
               const parts = part.split(INTERNAL_TEST_STRING);
               const rawString = parts[parts.length - 1];
               if (isJsonString(rawString)) {
-                testMessages.push(JSON.parse(rawString));
+                testMessagesInner.push(JSON.parse(rawString));
               }
             } else {
               partsNonTest.push(part);
@@ -369,22 +360,22 @@ export default function useCodeOutput({
 
             if (DataTypeEnum.TABLE === typeDisplay) {
 
-              const tableEl = createDataTableElement(dataDisplay, {
+              const tableEl = createTableData(dataDisplay, {
                 borderTop,
                 selected,
               });
-              tableContent.push(tableEl);
+              tableContentDataInner.push(tableEl);
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-          const tableEl = createDataTableElement(
+          const tableEl = createTableData(
             isJsonString(data) ? JSON.parse(data) : data,
             {
               borderTop,
               selected,
             },
           );
-          tableContent.push(tableEl);
+          tableContentDataInner.push(tableEl);
 
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           const textArr = data?.split('\\n');
@@ -441,20 +432,165 @@ export default function useCodeOutput({
     });
 
     return {
-      tableContent: tableContent,
-      testMessages: testMessages,
+      tableContentData: tableContentDataInner,
+      testMessages: testMessagesInner,
       textContent: arrContent,
     };
   }, [
     combinedMessages,
-    createDataTableElement,
+    createTableData,
     outputRowNormalPadding,
     renderMessagesRaw,
     sideBySideEnabled,
   ]);
 
+  const borderColorShareProps = {
+    blockColor,
+    blockType,
+    dynamicBlock,
+    dynamicChildBlock,
+    hasError,
+    selected,
+  };
+
+  const columnCount = dataFrameShape?.[1] || 0;
+  const columnsPreviewMessage = columnCount > 30
+    ? ` (30 out of ${columnCount} columns displayed)`
+    : '';
+
+  const dataFrameShape = refDataFrameShape.current;
+
+  const extraInfo = (
+    <ExtraInfoStyle
+      {...borderColorShareProps}
+      blockType={blockType}
+      dynamicBlock={dynamicBlock}
+      dynamicChildBlock={dynamicChildBlock}
+      hasError={hasError}
+      selected={selected}
+    >
+      <ExtraInfoBorderStyle />
+
+      <FlexContainer justifyContent="space-between">
+        <Flex alignItems="center" px={1}>
+          {setCollapsed && (
+            <Button
+              {...SHARED_BUTTON_PROPS}
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              {collapsed ? (
+                <FlexContainer alignItems="center">
+                  <ChevronDown muted size={UNIT * 2} />&nbsp;
+                  <Text default>
+                    Expand output
+                  </Text>
+                </FlexContainer>
+              ) : (
+                <FlexContainer alignItems="center">
+                  <ChevronUp muted size={UNIT * 2} />
+                  {dataFrameShape && (
+                    <Spacing ml={2}>
+                      <Text>
+                        {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                      </Text>
+                    </Spacing>
+                  )}
+                </FlexContainer>
+              )}
+            </Button>
+          )}
+
+          {!setCollapsed && (
+            <FlexContainer alignItems="center">
+              {dataFrameShape && (
+                <Spacing pl={1}>
+                  <Text>
+                    {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
+                  </Text>
+                </Spacing>
+              )}
+            </FlexContainer>
+          )}
+        </Flex>
+
+        <ExtraInfoContentStyle>
+          <FlexContainer
+            alignItems="center"
+            fullWidth
+            justifyContent="flex-end"
+          >
+            <Tooltip
+              {...SHARED_TOOLTIP_PROPS}
+              label={runCount >= 1 && runStartTime
+                ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
+                : (
+                  hasError
+                    ? 'Block executed with errors'
+                    : 'Block executed successfully'
+                )
+              }
+            >
+              <FlexContainer alignItems="center">
+                {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
+                  <>
+                    <Text small>
+                      {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+                    </Text>
+
+                    <Spacing mr={1} />
+                  </>
+                )}
+
+                {!hasError && <Check size={UNIT * 2} success />}
+                {hasError && (
+                  <Circle
+                    danger
+                    size={UNIT * 2}
+                  >
+                    <Text bold monospace small>
+                      !
+                    </Text>
+                  </Circle>
+                )}
+              </FlexContainer>
+            </Tooltip>
+            {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
+              <Spacing pl={2}>
+                <FlexContainer alignItems="center">
+                  <Tooltip
+                    {...SHARED_TOOLTIP_PROPS}
+                    label="Expand table"
+                  >
+                    <Button
+                      {...SHARED_BUTTON_PROPS}
+                      onClick={() => {
+                        addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
+                        openSidekickView?.(ViewKeyEnum.DATA);
+                        setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
+                          if (!prevOutputBlocks.find(({ uuid }) => uuid === blockUUID)) {
+                            setSelectedOutputBlock?.(block);
+                            return prevOutputBlocks.concat(block);
+                          } else {
+                            return prevOutputBlocks;
+                          }
+                        });
+                      }}
+                    >
+                      <Expand muted size={UNIT * 1.75} />
+                    </Button>
+                  </Tooltip>
+                </FlexContainer>
+              </Spacing>
+            }
+          </FlexContainer>
+        </ExtraInfoContentStyle>
+      </FlexContainer>
+    </ExtraInfoStyle>
+  );
+
   return {
-    tableContent,
+    extraInfo,
+    tableContentData,
     testMessages,
     textContent,
   };

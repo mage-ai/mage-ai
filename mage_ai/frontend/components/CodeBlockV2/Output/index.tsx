@@ -1,17 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import DataTable from '@components/DataTable';
 import Divider from '@oracle/elements/Divider';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FlexContainer from '@oracle/components/FlexContainer';
+import MultiColumnController from '@components/MultiColumnController';
 import Text from '@oracle/elements/Text';
 import useCodeOutput from '@components/CodeBlock/CodeOutput/useCodeOutput';
+import { BORDER_WIDTH_THICK } from '@oracle/styles/units/borders';
 import { CodeBlockOutputProps } from './constants';
 import { ContainerStyle } from '@components/CodeBlock/CodeOutput/index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { OutputDisplayTypeEnum } from '@components/CodeBlock/CodeOutput/constants';
 import { OutputTabEnum } from '../dbt/constants';
-import { SubheaderMenuStyle } from './index.style';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { SubheaderMenuStyle, WrapperStyle } from './index.style';
 import {
   buildBorderProps,
   buildConvertBlockMenuItems,
@@ -57,6 +62,7 @@ function CodeBlockOutput({
   theme,
 }: CodeBlockOutputProps) {
   const [headerHeight, setHeaderHeight] = useState(0);
+  const refLogs = useRef(null);
 
   useEffect(() => {
     setTimeout(() => setHeaderHeight(headerRef?.current?.getBoundingClientRect()?.height), 1);
@@ -138,12 +144,12 @@ function CodeBlockOutput({
                 const data = { ...(prev || {}) };
 
                 if (data && tab?.uuid in data) {
-                  delete data[tab?.uuid];
+                  if (Object.keys(data)?.length >= 2) {
+                    delete data[tab?.uuid];
+                  }
                 } else {
                   data[tab?.uuid] = tab;
                 }
-
-                console.log(data)
 
                 return data;
               });
@@ -175,7 +181,8 @@ function CodeBlockOutput({
   ]);
 
   const {
-    tableContent,
+    extraInfo,
+    tableContentData,
     testMessages,
     textContent,
   } = useCodeOutput({
@@ -204,25 +211,87 @@ function CodeBlockOutput({
     sideBySideEnabled,
   });
 
-  console.log('textContent', textContent)
-  console.log('testMessages', testMessages)
-  console.log('tableContent', tableContent)
+  const columnsOfItems = useMemo(() => {
+    const columns = [];
+
+    if (OutputTabEnum.OUTPUT in (selectedOutputTabs || {})) {
+      columns.push(tableContentData?.map(data => ({
+        render: ({
+          numberOfColumns,
+          columnWidth,
+          width,
+        }) => (
+          <DataTable
+            columns={data?.columns}
+            disableScrolling={!selected}
+            index={data?.index}
+            key={`data-table-${data?.index}`}
+            maxHeight={textContent?.length >= 1
+              ? refLogs?.current?.getBoundingClientRect()?.height
+              : UNIT * 60
+            }
+            noBorderBottom
+            noBorderLeft
+            noBorderRight
+            noBorderTop={!data?.borderTop}
+            rows={data?.rows}
+            width={columnWidth}
+          />
+        ),
+      })));
+    }
+
+    if (OutputTabEnum.LOGS in (selectedOutputTabs || {})) {
+      columns.push([
+        {
+          render: () => (
+            <div ref={refLogs} style={{ width: '100%' }}>
+              <Divider light />
+
+              {textContent}
+            </div>
+          ),
+        },
+      ]);;
+    }
+
+    return columns;
+  }, [
+    selected,
+    selectedOutputTabs,
+    tableContentData,
+    textContent,
+  ]);
 
   return (
     <>
-      {hasOutput && (
-        <SubheaderMenuStyle
-          {...borderColorShareProps}
-          top={headerHeight}
-        >
-          <Divider light />
+      <SubheaderMenuStyle
+        {...borderColorShareProps}
+        top={headerHeight}
+      >
+        <Divider light />
 
-          {menuMemo}
-        </SubheaderMenuStyle>
-      )}
+        {menuMemo}
+      </SubheaderMenuStyle>
 
-      {selectedOutputTabs && OutputTabEnum.OUTPUT in selectedOutputTabs && tableContent}
-      {selectedOutputTabs && OutputTabEnum.LOGS in selectedOutputTabs && textContent}
+      <WrapperStyle
+        borderBottom={!extraInfo}
+        {...borderColorShareProps}
+      >
+        <MultiColumnController
+          columnsOfItems={columnsOfItems}
+          dividerBackgroundColor={color?.accentLight}
+          dividerBackgroundColorHover={color?.accent}
+          uuid={`${pipeline?.uuid}_${block?.uuid}`}
+          width={mainContainerWidth - (
+            (2 * PADDING_UNITS * UNIT) +
+            (2 * BORDER_WIDTH_THICK) +
+            SCROLLBAR_WIDTH
+          )}
+        />
+      </WrapperStyle>
+
+      {extraInfo}
     </>
   );
 }

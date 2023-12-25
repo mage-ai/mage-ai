@@ -1154,8 +1154,6 @@ function PipelineDetailPage({
       const messagesForBlock = messages[uuid]?.filter(m => !!m);
       const hasError = messagesForBlock?.find(({ error }) => error);
 
-      const messageTypeCounts = {};
-
       if (messagesForBlock && (!sparkEnabled || !runningBlocks?.length)) {
         const arr2 = [];
         let plainTextLineCount = 0;
@@ -1165,12 +1163,6 @@ function PipelineDetailPage({
             data,
             type,
           } = d;
-
-          if (!(type in messageTypeCounts)) {
-            messageTypeCounts[type] = 0;
-          }
-
-          messageTypeCounts[type] += 1;
 
           if (BlockTypeEnum.SCRATCHPAD === block.type
             || hasError
@@ -1199,39 +1191,18 @@ function PipelineDetailPage({
              * for a few extra lines that indicate passed tests, truncated output message, or
              * misc empty string. Otherwise, the print output may not be saved as intended.
              */
-            // if (!maxPrintOutputLines || plainTextLineCount < maxPrintOutputLines + 5) {
-            //   arr2.push(d);
-            // }
-
-            console.log('REMOVE THISSSSSSSSSSSSSSSSSSSSSS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-            arr2.push(d);
+            if (!maxPrintOutputLines || plainTextLineCount < maxPrintOutputLines + 5) {
+              arr2.push(d);
+            }
           }
         });
-
-        const messageTypeMajority =
-          sortByKey(Object.entries(messageTypeCounts || {}), ([messageType, count]) => count, {
-            ascending: false,
-          });
-
-
-        let variablePrefix = '';
-        if (DataTypeEnum.TEXT_PLAIN === messageTypeMajority?.[0]?.[0]) {
-          variablePrefix = 'text';
-        } else {
-          variablePrefix = 'output';
-        }
-        console.log('WTFFFFFFFFFFFFFFF!!!!!!!!!!!!!!!!!!!!!!', variablePrefix, messageTypeMajority, messageTypeCounts)
 
         // @ts-ignore
         outputs = arr2.map((d: KernelOutputType, idx: number) => ({
           text_data: JSON.stringify(d),
-          variable_uuid: `${variablePrefix}_${idx}`,
+          variable_uuid: `output_${idx}`,
         }));
       }
-
-      console.log('WFFFFFFFFFFFF messageTypeCountsmessageTypeCountsmessageTypeCountsmessageTypeCounts', messageTypeCounts)
-
-      // return
 
       const blockPayload: BlockType = {
         ...block,
