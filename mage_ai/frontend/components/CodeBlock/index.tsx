@@ -1314,6 +1314,7 @@ function CodeBlock({
     // footer,
   } = useCodeBlockComponents({
     addNewBlock,
+    allowCodeBlockShortcuts,
     autocompleteProviders,
     block,
     blocks,
@@ -1323,8 +1324,10 @@ function CodeBlock({
       deleteBlock(b);
       setOutputCollapsed(false);
     },
+    disableShortcuts,
     executionState,
     height,
+    hideRunButton,
     interruptKernel,
     onChange: (val: string) => {
       setContent(val);
@@ -1385,22 +1388,6 @@ function CodeBlock({
     setTextareaFocused,
     showConfigureProjectModal,
     sideBySideEnabled,
-    shortcuts: hideRunButton
-      ? []
-      : [
-        (monaco, editor) => executeCode(monaco, () => {
-          if (!hideRunButton) {
-            runBlockAndTrack({
-              /*
-              * This block doesn't get updated when the upstream dependencies change,
-              * so we need to update the shortcuts in the CodeEditor component.
-              */
-              block,
-              code: editor.getValue(),
-            });
-          }
-        }),
-      ],
     status,
     textareaFocused,
     theme: themeContext,

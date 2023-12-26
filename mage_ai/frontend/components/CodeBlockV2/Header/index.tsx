@@ -136,7 +136,7 @@ function CodeBlockHeader({
       Icon: IconButton,
       color,
       description,
-      disabled,
+      disabled: disabledFunc,
       icon,
       keyTextGroups,
       keyTextsPosition,
@@ -147,21 +147,34 @@ function CodeBlockHeader({
       uuid: uuidButton,
       visible,
     }, idx: number) => {
+      const disabled = disabledFunc && disabledFunc?.({
+        active,
+        running,
+        waiting,
+      });
       const iconOnly = (icon || IconButton) && !label;
       const iconEl = icon
-        ? icon
-        : IconButton && <IconButton fill={color} size={ICON_SIZE}/>;
+        ? React.cloneElement(icon, {
+          ...(icon?.props || {}),
+          ...(disabled ? {
+            color: null,
+            disabled,
+          } : {})
+        })
+        : IconButton && (
+          <IconButton
+            disabled={disabled}
+            fill={disabled ? null : color}
+            size={ICON_SIZE}
+          />
+        );
 
       let el = (
         <KeyboardShortcutButton
           addPlusSignBetweenKeys
-          backgroundColor={color}
+          backgroundColor={disabled ? null : color}
           compact
-          disabled={disabled && disabled?.({
-            active,
-            running,
-            waiting,
-          })}
+          disabled={disabled}
           key={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
           keyTextGroups={keyTextGroups}
           keyTextsPosition={keyTextsPosition}
@@ -189,7 +202,7 @@ function CodeBlockHeader({
             }
           }}
           outline
-          uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
+          uuid={`CodeBlockV2/Header/KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
           {iconEl}
           {iconEl && label && <Spacing mr={1} />}
@@ -264,6 +277,7 @@ function CodeBlockHeader({
   ]);
 
   const tags = useMemo(() => buildTags(block), [block]);
+  console.log(tags)
 
   const subhederMenuMemo = useMemo(() => {
     if (!menuGroupsMemo?.length && !tags?.length) {

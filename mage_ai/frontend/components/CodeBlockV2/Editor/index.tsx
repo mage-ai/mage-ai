@@ -74,6 +74,7 @@ function Editor({
   updatePipeline,
 }: CodeBlockEditorProps & {
   project: ProjectType;
+  shortcuts?: ((monaco: any, editor: any) => void)[];
 }) {
   const { width } = useWindowSize();
 

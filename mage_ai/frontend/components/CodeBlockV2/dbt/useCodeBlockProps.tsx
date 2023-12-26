@@ -62,6 +62,7 @@ import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { validate } from './utils';
+import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
@@ -72,10 +73,13 @@ const MENU_ICON_PROPS = {
 
 export default function useCodeBlockProps({
   addNewBlock,
+  allowCodeBlockShortcuts,
   block,
   codeCollapsed,
   deleteBlock,
+  disableShortcuts,
   executionState,
+  hideRunButton,
   interruptKernel,
   openSidekickView,
   outputCollapsed,
@@ -122,18 +126,23 @@ export default function useCodeBlockProps({
 
   function validateBeforeAction({
     setSelectedHeaderTab,
+  } = {
+    setSelectedHeaderTab: null,
   }) {
     const errors = validate(block);
     if (errors) {
-      errors.links = [
-        {
-          closeAfterClick: true,
-          label: 'Continue dbt configuration',
-          onClick: () => setSelectedHeaderTab?.(headerTabs?.find((
-            tab,
-          ) => HeaderTabEnum.CONFIGURATION === tab.uuid)),
-        },
-      ];
+      if (setSelectedHeaderTab) {
+        errors.links = [
+          {
+            closeAfterClick: true,
+            label: 'Continue dbt configuration',
+            onClick: () => setSelectedHeaderTab?.(headerTabs?.find((
+              tab,
+            ) => HeaderTabEnum.CONFIGURATION === tab.uuid)),
+          },
+        ];
+      }
+
       setErrors(errors);
 
       return false;
@@ -147,6 +156,8 @@ export default function useCodeBlockProps({
   });
 
   const outputTabs = buildOutputTabs({ block });
+
+  const shortcutsEnabled = allowCodeBlockShortcuts || !disableShortcuts;
 
   const buttonExecute = {
     color: color?.accent,
@@ -167,7 +178,7 @@ export default function useCodeBlockProps({
     disabled: ({ active }) => active,
     icon: <PlayButtonFilled size={ICON_SIZE} />,
     keyTextsPosition: KeyTextsPostitionEnum.LEFT,
-    keyboardShortcutValidation: ({
+    keyboardShortcutValidation: !shortcutsEnabled ? null : ({
       keyHistory,
       keyMapping,
     }, index: number, {
@@ -210,7 +221,7 @@ export default function useCodeBlockProps({
       />
     ),
     keyTextsPosition: KeyTextsPostitionEnum.RIGHT,
-    keyboardShortcutValidation: ({
+    keyboardShortcutValidation: !shortcutsEnabled ? null : ({
       keyHistory,
     }, index: number, {
       selected,
@@ -635,7 +646,24 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   };
 
   return {
-    editor: {},
+    editor: {
+      shortcuts: (hideRunButton && shortcutsEnabled)
+        ? []
+        : [
+          (monaco, editor) => executeCode(monaco, () => {
+            if (validateBeforeAction()) {
+              runBlockAndTrack({
+                /*
+                * This block doesn't get updated when the upstream dependencies change,
+                * so we need to update the shortcuts in the CodeEditor component.
+                */
+                block,
+                code: editor.getValue(),
+              });
+            }
+          }),
+        ]
+    },
     header: {
       buttons: [
         buttonExecute,
