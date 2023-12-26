@@ -7,11 +7,53 @@ export const ITEMS = [
     description: 'Configure your project.',
     title: 'Open project settings',
     type: CommandCenterTypeEnum.APPLICATION,
+    actions: [
+      {
+        page: {
+          path: '/settings/workspace/preferences',
+        },
+      },
+    ],
   },
   {
     description: 'Personalize your profile.',
     title: 'Edit profile',
     type: CommandCenterTypeEnum.APPLICATION,
+    actions: [
+      {
+        page: {
+          path: '/settings/account/profile',
+          openNewWindow: true,
+        },
+      },
+    ],
+  },
+  {
+    description: 'Technical documentation for Mage.',
+    title: 'Read developer documentation',
+    type: CommandCenterTypeEnum.APPLICATION,
+    actions: [
+      {
+        page: {
+          external: true,
+          path: 'https://docs.mage.ai',
+        },
+      },
+    ],
+  },
+  {
+    description: 'Learn best practices, share code snippets, and have fun.',
+    title: 'Get instant live support',
+    type: CommandCenterTypeEnum.APPLICATION,
+    actions: [
+      {
+        page: {
+          external: true,
+          path: 'https://mage.ai/chat',
+          openNewWindow: true,
+        },
+      },
+    ],
   },
   {
     title: 'Generate code',
@@ -47,16 +89,6 @@ export const ITEMS = [
     title: 'Daily run',
     description: 'Trigger for Build core data users pipeline.',
     type: CommandCenterTypeEnum.TRIGGER,
-  },
-  {
-    description: 'Configure your project.',
-    title: 'Open project settings 2',
-    type: CommandCenterTypeEnum.APPLICATION,
-  },
-  {
-    description: 'Personalize your profile.',
-    title: 'Edit profile 2',
-    type: CommandCenterTypeEnum.APPLICATION,
   },
   {
     title: 'Generate code 2',

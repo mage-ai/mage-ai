@@ -48,9 +48,7 @@ export function getIconColor(item: CommandCenterItemType, opts?: {
   };
 }
 
-export const ItemStyle = styled.div<{
-  focused?: boolean;
-}>`
+export const ItemStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
   cursor: pointer;
   padding: ${1.5 * UNIT}px;
@@ -59,13 +57,13 @@ export const ItemStyle = styled.div<{
     &:hover {
       background-color: ${(props.theme || dark).interactive.defaultBackgroundTransparent};
     }
-  `}
 
-  ${props => props.focused && `
-    background-color: ${(props.theme || dark).interactive.hoverBackgroundTransparent};
-
-    &:hover {
+    &.focused {
       background-color: ${(props.theme || dark).interactive.hoverBackgroundTransparent};
+
+      &:hover {
+        background-color: ${(props.theme || dark).interactive.hoverBackgroundTransparent};
+      }
     }
   `}
 `;

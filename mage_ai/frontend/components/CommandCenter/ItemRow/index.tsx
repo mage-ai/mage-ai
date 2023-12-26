@@ -14,14 +14,11 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getIcon } from './constants';
 
-
 type ItemRowProps = {
-  focused?: boolean;
   item: CommandCenterItemType;
 };
 
 function ItemRow({
-  focused,
   item,
 }: ItemRowProps, ref) {
   const {
@@ -35,7 +32,7 @@ function ItemRow({
   const iconColor = getIconColor(item);
 
   return (
-    <ItemStyle focused={focused} ref={ref}>
+    <ItemStyle ref={ref}>
       <FlexContainer alignItems="center" justifyContent="space-between">
         <Flex alignItems="center" flex={1}>
           <Icon

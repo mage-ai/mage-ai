@@ -1,4 +1,5 @@
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -29,13 +30,17 @@ import { sum } from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
 
 function CommandCenter() {
+  const router = useRouter();
+
   const refContainer = useRef(null);
   const refFocusedElement = useRef(null);
+  const refFocusedItemIndex = useRef(null);
   const refInput = useRef(null);
   const refItems = useRef({});
   const refItemsContainer = useRef(null);
+  const refReload = useRef(null);
 
-  const [focusedItemIndex, setFocusedItemIndex] = useState(null);
+  const [reload, setReload] = useState(0);
   const [items, setItems] = useState<CommandCenterTypeEnum[]>(ITEMS);
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
@@ -82,16 +87,105 @@ function CommandCenter() {
         itemsContainer.scrollTop = Math.max(diff, 0);
       }
 
-      setFocusedItemIndex(index);
+      const indexPrev = refFocusedItemIndex.current;
+      const itemPrev = items?.[indexPrev];
+      const nodePrev = refItems?.current?.[itemPrev?.uuid]?.current;
+      if (nodePrev) {
+        nodePrev.className = removeClassNames(
+          nodePrev?.className || '',
+          [
+            'focused',
+          ],
+        );
+      }
+
+      refFocusedItemIndex.current = index;
+      const itemNext = items?.[index];
+      const nodeNext = refItems?.current?.[itemNext?.uuid]?.current;
+      if (nodeNext) {
+        nodeNext.className = addClassNames(
+          nodeNext?.className || '',
+          [
+            'focused',
+          ],
+        );
+      }
     }
   }, [
     items,
   ]);
 
   const handleItemSelect = useCallback((item: CommandCenterItemType) => {
+    console.log('handleItemSelect', item);
 
+    const actions = [];
+
+    item?.actions?.forEach((action) => {
+      const {
+        interaction,
+        page,
+        request,
+      } = action || {
+        interaction: null,
+        page: null,
+        request: null,
+      };
+
+      if (page) {
+        const {
+          external,
+          openNewWindow,
+          path,
+        } = page || {
+          external: false,
+          openNewWindow: false,
+          path: null,
+        };
+
+        if (path) {
+          const actionFunction = () => {
+            if (external) {
+              if (openNewWindow && typeof window !== 'undefined') {
+                return window.open(path, '_blank');
+              } else {
+                return window.location.href = path;
+              }
+            } else {
+              if (openNewWindow && typeof window !== 'undefined') {
+                return window.open(path, '_blank');
+              } else {
+                return router.push(path);
+              }
+            }
+          };
+
+          actions.push(new Promise(() => actionFunction()));
+        }
+      }
+    });
+
+    const invokeActionAndCallback = (index: number) => {
+      console.log(`Invoking action: ${index}`);
+      return actions?.[index]?.then(() => {
+        if (index <= actions?.length - 1) {
+          return invokeActionAndCallback(index + 1);
+        }
+      });
+    };
+
+    if (actions?.length >= 1) {
+      invokeActionAndCallback(0);
+    }
   }, [
   ]);
+
+  useEffect(() => {
+    if (refReload?.current === null) {
+      refReload.current = 1;
+    } else {
+      setReload(prev => prev + 1);
+    }
+  }, []);
 
   const uuidKeyboard = 'CommandCenter';
   const {
@@ -100,12 +194,13 @@ function CommandCenter() {
     unregisterOnKeyDown,
   } = useKeyboardContext();
 
-
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
 
   registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
+    const focusedItemIndex = refFocusedItemIndex?.current;
+
     // If the main input is active.
     if (InputElementEnum.MAIN === refFocusedElement?.current) {
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
@@ -162,10 +257,7 @@ function CommandCenter() {
     }
 
   }, [
-    focusedItemIndex,
-    handleItemSelect,
-    handleNavigation,
-    itemsCount,
+    reload,
   ]);
 
   const itemsMemo = useMemo(() => items?.map((item, index: number) => {
@@ -174,14 +266,12 @@ function CommandCenter() {
 
     return (
       <ItemRow
-        focused={focusedItemIndex === index}
         item={item}
         key={item.uuid}
         ref={refItem}
       />
     );
   }), [
-    focusedItemIndex,
     items,
   ]);
 
@@ -195,8 +285,8 @@ function CommandCenter() {
           onFocus={() => {
             refFocusedElement.current = InputElementEnum.MAIN;
 
-            if (focusedItemIndex === null) {
-              setFocusedItemIndex(0);
+            if (refFocusedItemIndex?.current === null && items?.length >= 1) {
+              handleNavigation(0);
             }
           }}
           placeholder="Search actions, apps, files, blocks, pipelines, triggers"
