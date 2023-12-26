@@ -78,7 +78,7 @@ type CodeEditorProps = {
   language?: string;
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
-  onMountCallback?: () => void;
+  onMountCallback?: (editor?: any, monaco?: any) => void;
   onSave?: (value: string) => void;
   padding?: number;
   placeholder?: string;

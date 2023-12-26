@@ -411,6 +411,11 @@ function CodeBlock({
   } = useProject();
   const { status } = useStatus();
 
+  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
+    featureEnabled,
+    featureUUIDs,
+  ]);
+
   const [sparkEnabled, setSparkEnabled] = useState(false);
   const [executionStatesFetchedCount, setExecutionStatesFetched] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -1208,11 +1213,6 @@ function CodeBlock({
       ),
     },
   );
-
-  const codeBlockV2 = useMemo(() => featureEnabled?.(featureUUIDs.CODE_BLOCK_V2), [
-    featureEnabled,
-    featureUUIDs,
-  ]);
 
   useEffect(() => {
     let interval;
@@ -2469,7 +2469,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
           }}
         >
           {codeBlockV2 && codeBlockComponentHeader && buildHeaderInner(codeBlockComponentHeader)}
-          {(!codeBlockV2 || !codeBlockComponentHeader) && (
+          {(!codeBlockV2 || !codeBlockComponentHeader) && buildHeaderInner(
             <Spacing py={1}>
               <FlexContainer alignItems="center" justifyContent="space-between">
                 <Spacing pr={1} />

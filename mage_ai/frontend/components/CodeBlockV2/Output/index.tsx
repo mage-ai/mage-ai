@@ -226,19 +226,13 @@ function CodeBlockOutput({
     textContent,
   } = useCodeOutput(codeOutputProps);
 
-  const {
-    textContent: textContentErrors,
-  } = useCodeOutput({
-    ...codeOutputProps,
-    messages: withError,
-  });
+  const textContentErrors = withError?.length >= 1
+    ? useCodeOutput({ ...codeOutputProps, messages: withError })?.textContent
+    : null;
 
-  const {
-    textContent: textContentInfo,
-  } = useCodeOutput({
-    ...codeOutputProps,
-    messages: withoutError,
-  });
+  const textContentInfo = withoutError?.length >= 1
+    ? useCodeOutput({ ...codeOutputProps, messages: withoutError })?.textContent
+    : null;
 
   const columnsOfItems = useMemo(() => {
     const columns = [];

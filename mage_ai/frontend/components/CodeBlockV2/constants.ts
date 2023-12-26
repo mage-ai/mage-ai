@@ -1,6 +1,7 @@
 import BlockType from '@interfaces/BlockType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
+import LLMType from '@interfaces/LLMType';
 import PipelineType from '@interfaces/PipelineType';
 import ProjectType from '@interfaces/ProjectType';
 import StatusType from '@interfaces/StatusType';
@@ -109,7 +110,8 @@ export type UseCodeBlockComponentProps = {
   theme: ThemeType;
   updatePipeline: (payload: {
     pipeline: {
-      add_upstream_for_block_uuid: string;
+      add_upstream_for_block_uuid?: string;
+      llm?: LLMType;
     };
   }) => Promise<any>;
 };
@@ -159,7 +161,7 @@ export type CodeBlockEditorProps = {
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
   onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
-  onMountCallback?: () => void;
+  onMountCallback?: (editor?: any, monaco?: any) => void;
   placeholder?: string;
   setSelected?: (value: boolean) => void;
   setTextareaFocused?: (value: boolean) => void;

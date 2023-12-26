@@ -96,6 +96,7 @@ export const SearchStyle = styled.div`
 export const DropdownStyle = styled.div<{
   maxHeight?: number;
   topOffset?: number;
+  width?: string;
 }>`
   ${ScrollbarStyledCss}
 

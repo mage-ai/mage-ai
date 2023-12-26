@@ -112,8 +112,23 @@ function Browser({
     width: widthWindow,
   } = useWindowSize();
 
-  const heightModal = useMemo(() => heightWindow - (MODAL_PADDING * 2), [heightWindow]);
-  const widthModal = useMemo(() => widthWindow - (MODAL_PADDING * 2), [widthWindow]);
+  const [sizes, setSizes] = useState<{
+    height: number;
+    width: number;
+  }>({
+    height: null,
+    width: null,
+  });
+
+  useEffect(() => {
+    setSizes({
+      height: heightWindow - (MODAL_PADDING * 2),
+      width: widthWindow - (MODAL_PADDING * 2),
+    });
+  }, [
+    heightWindow,
+    widthWindow,
+  ]);
 
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
@@ -378,7 +393,7 @@ function Browser({
   }, [cacheItems]);
 
   return (
-    <ContainerStyle maxWidth={contained ? widthModal : null}>
+    <ContainerStyle maxWidth={contained ? sizes?.width : null}>
       <TripleLayout
         after={after}
         afterDividerContrast
@@ -421,7 +436,7 @@ function Browser({
         beforeWidth={beforeWidth}
         contained
         headerOffset={HEADER_HEIGHT}
-        height={contained ? heightModal : heightWindow}
+        height={contained ? sizes?.height : heightWindow}
         hideAfterCompletely={!selectedItem}
         inline
         mainContainerHeader={(

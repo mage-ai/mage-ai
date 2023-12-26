@@ -41,7 +41,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LEFT_PADDING } from '@components/CodeBlock/index.style';
 import { LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY, get, set } from '@storage/localStorage';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
@@ -55,7 +55,6 @@ const WIDTH_OFFSET = ((BORDER_WIDTH_THICK * 2) + (UNIT * 2) + LEFT_PADDING);
 function Editor({
   autocompleteProviders,
   block,
-  blockRef,
   content,
   height,
   onChange,
@@ -119,18 +118,6 @@ function Editor({
     refInputContainer.current.style.display = 'block';
     setTimeout(() => refInput?.current?.focus?.(), 1);
   }, []);
-
-  const generateCode = useCallback(() => {
-    createCode({
-      llm: {
-        request: {
-          block_description: refInputValue.current,
-          code_language: language,
-        },
-        use_case: LLMUseCaseEnum.GENERATE_CODE,
-      },
-    });
-  });
 
   const updateContentWithCode = useCallback((code: string) => {
     const parts = content?.split('\n') || [];
@@ -200,6 +187,19 @@ function Editor({
       ),
     },
   );
+
+  const generateCode = useCallback(() => {
+    // @ts-ignore
+    createCode({
+      llm: {
+        request: {
+          block_description: refInputValue.current,
+          code_language: language,
+        },
+        use_case: LLMUseCaseEnum.GENERATE_CODE,
+      },
+    });
+  }, [createCode]);
 
   const [createLLM, { isLoading: isLoadingCreateLLM }] = useMutation(
     api.llms.useCreate(),
@@ -362,12 +362,12 @@ function Editor({
       <CloseStyle>
         <KeyboardShortcutButton
           noBackground
-          noBorder
           noPadding
           onClick={(e) => {
             pauseEvent(e);
             reset();
           }}
+          uuid="close-menu"
         >
           <PanelCollapseRight default size={ICON_SIZE} />
         </KeyboardShortcutButton>
@@ -389,12 +389,12 @@ function Editor({
                 backgroundColor={color?.accent}
                 bold
                 loading={isLoadingCreateCode}
-                noBorder
                 onClick={(e) => {
                   pauseEvent(e);
                   generateCode();
                 }}
                 pill
+                uuid="generate-code"
               >
                 Generate code
               </KeyboardShortcutButton>
@@ -402,12 +402,12 @@ function Editor({
                 backgroundColor={color?.accentLight}
                 bold
                 loading={isLoadingCreateLLM}
-                noBorder
                 onClick={(e) => {
                   pauseEvent(e);
                   setShowAIActions(true);
                 }}
                 pill
+                uuid="document-code"
               >
                 Document code
               </KeyboardShortcutButton>
@@ -523,7 +523,6 @@ function Editor({
       autoHeight
       autocompleteProviders={autocompleteProviders}
       block={block}
-      blockRef={blockRef}
       editorRef={refEditor}
       height={height}
       language={language}
@@ -554,7 +553,7 @@ function Editor({
       }}
       onMountCallback={(editor, monaco) => {
         if (onMountCallback) {
-          onMountCallback?.();
+          onMountCallback?.(editor, monaco);
         }
 
         setTimeout(() => {
@@ -576,7 +575,6 @@ function Editor({
   ), [
     autocompleteProviders,
     block,
-    blockRef,
     content,
     height,
     language,
@@ -632,7 +630,6 @@ function Editor({
         <ButtonStyle ref={refButton}>
           <KeyboardShortcutButton
             noBackground
-            noBorder
             noPadding
             onClick={(e) => {
               if (selected) {
