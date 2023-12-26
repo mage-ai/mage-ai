@@ -1,4 +1,4 @@
-import { createRef, useEffect, useMemo, useRef, useState } from 'react';
+import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -14,6 +14,7 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
+  KEY_CODE_ESCAPE,
   KEY_CODE_META_LEFT,
   KEY_CODE_META_RIGHT,
   KEY_CODE_PERIOD,
@@ -35,6 +36,55 @@ function CommandCenter() {
   const [items, setItems] = useState<CommandCenterTypeEnum[]>(ITEMS);
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
+  const handleNavigation = useCallback((index: number) => {
+    const itemsContainer = refItemsContainer?.current;
+    // 400
+    const itemsContainerHeight = itemsContainer?.getBoundingClientRect()?.height;
+    // 44 * 14 = 616
+    const itemRowHeightTotal = sum(Object.values(
+      refItems?.current || {},
+    )?.map(refItem => refItem?.current?.getBoundingClientRect()?.height || 0));
+    // 216
+    const scrollTopTotal = itemRowHeightTotal - itemsContainerHeight;
+    // 0 -> 216
+    const currentScrollTop = itemsContainer?.scrollTop;
+
+    if (index !== null) {
+      const item = items?.[index];
+      let nodeYBottom = 0;
+      let nodeYTop = 0;
+
+      items?.slice(0, index + 1)?.forEach((itemInner, idx: number) => {
+        const nodeInner = refItems?.current?.[itemInner?.uuid]?.current;
+        const nodeHeight = nodeInner?.getBoundingClientRect()?.height || 0;
+
+        nodeYBottom += nodeHeight;
+        nodeYTop += nodeHeight;
+
+        if (idx === index) {
+          nodeYTop -= nodeHeight;
+        }
+      });
+
+      let diff = null;
+
+      // Scroll into view if the node is not currently in the ItemsContainer view.
+      if (nodeYBottom > itemsContainerHeight + currentScrollTop) {
+        diff = nodeYBottom - itemsContainerHeight;
+      } else if (nodeYTop < currentScrollTop) {
+        diff = currentScrollTop - (currentScrollTop - nodeYTop);
+      }
+
+      if (diff !== null) {
+        itemsContainer.scrollTop = Math.max(diff, 0);
+      }
+
+      setFocusedItemIndex(index);
+    }
+  }, [
+    items,
+  ]);
+
   const uuidKeyboard = 'CommandCenter';
   const {
     disableGlobalKeyboardShortcuts,
@@ -53,19 +103,17 @@ function CommandCenter() {
     ) {
       pauseEvent(event);
       refInput?.current?.focus();
-    } else if (InputElementEnum.MAIN === focusedInputElement) {
-      const itemsContainer = refItemsContainer?.current;
-      // 400
-      const itemsContainerHeight = itemsContainer?.getBoundingClientRect()?.height;
-      // 44 * 14 = 616
-      const itemRowHeightTotal = sum(Object.values(
-        refItems?.current || {},
-      )?.map(refItem => refItem?.current?.getBoundingClientRect()?.height || 0));
-      // 216
-      const scrollTopTotal = itemRowHeightTotal - itemsContainerHeight;
-      // 0 -> 216
-      const currentScrollTop = itemsContainer?.scrollTop;
+    } else if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
 
+      // If there is text in the input, clear it.
+      if (refInput?.current?.value?.length >= 1) {
+        refInput.current.value = '';
+        handleNavigation(0);
+      } else {
+        // If there is no text in the input, close.
+        refInput?.current?.blur();
+      }
+    } else if (InputElementEnum.MAIN === focusedInputElement) {
       let index = null;
       // Arrow down
       if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
@@ -81,43 +129,12 @@ function CommandCenter() {
         }
       }
 
-      if (index !== null) {
-        const item = items?.[index];
-        let nodeYBottom = 0;
-        let nodeYTop = 0;
-
-        items?.slice(0, index + 1)?.forEach((itemInner, idx: number) => {
-          const nodeInner = refItems?.current?.[itemInner?.uuid]?.current;
-          const nodeHeight = nodeInner?.getBoundingClientRect()?.height || 0;
-
-          nodeYBottom += nodeHeight;
-          nodeYTop += nodeHeight;
-
-          if (idx === index) {
-            nodeYTop -= nodeHeight;
-          }
-        });
-
-        let diff = null;
-
-        // Scroll into view if the node is not currently in the ItemsContainer view.
-        if (nodeYBottom > itemsContainerHeight + currentScrollTop) {
-          diff = nodeYBottom - itemsContainerHeight;
-        } else if (nodeYTop < currentScrollTop) {
-          diff = currentScrollTop - (currentScrollTop - nodeYTop);
-        }
-
-        if (diff !== null) {
-          itemsContainer.scrollTop = Math.max(diff, 0);
-        }
-
-        setFocusedItemIndex(index);
-      }
+      handleNavigation(index);
     }
   }, [
     focusedInputElement,
     focusedItemIndex,
-    items,
+    handleNavigation,
     itemsCount,
   ]);
 
@@ -142,6 +159,9 @@ function CommandCenter() {
     <ContainerStyle>
       <InputContainerStyle>
         <InputStyle
+          onChange={(e) => {
+            refInput.current.value = e.target.value;
+          }}
           onFocus={() => {
             setFocusedInputElement(InputElementEnum.MAIN);
 
