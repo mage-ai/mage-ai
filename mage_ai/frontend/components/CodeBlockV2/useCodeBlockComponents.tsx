@@ -43,7 +43,6 @@ export default function useCodeBlockComponents({
     setErrors,
     setSelected,
     setTextareaFocused,
-    shortcuts,
     showConfigureProjectModal,
     sideBySideEnabled,
     status,
@@ -127,7 +126,6 @@ export default function useCodeBlockComponents({
           setSelected={setSelected}
           setTextareaFocused={setTextareaFocused}
           sideMenuVisible={sideMenuVisible}
-          shortcuts={shortcuts}
           showConfigureProjectModal={showConfigureProjectModal}
           textareaFocused={textareaFocused}
           theme={theme}
@@ -157,7 +155,6 @@ export default function useCodeBlockComponents({
     setSelected,
     setTextareaFocused,
     sideMenuVisible,
-    shortcuts,
     showConfigureProjectModal,
     textareaFocused,
     theme,
