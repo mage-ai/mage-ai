@@ -39,14 +39,16 @@ enum CommandCenterActionInteractionEventEnum {
   SCROLL = 'scroll',
 }
 
+interface KeyValueType {
+  [key: string]: string | number | boolean | KeyValueType;
+}
+
 interface CommandCenterActionInteractionType {
   element: {
     className?: string;
     id?: string;
   };
-  eventOptions?:{
-    [key: string]: string | number | boolean;
-  };
+  eventOptions?:KeyValueType;
   eventType?: CommandCenterActionInteractionEventEnum;
 }
 
@@ -54,22 +56,13 @@ interface CommandCenterActionPageType {
   external?: boolean;
   openNewWindow?: boolean;
   path: string;
-  query?: {
-    [key: string]: string | number | boolean;
-  };
+  query?: KeyValueType;
 }
 
 interface CommandCenterActionRequestType {
-  meta?: {
-    [key: string]: string | number | boolean;
-  };
   operation: OperationTypeEnum;
-  payload?: {
-    [key: string]: string | number | boolean;
-  };
-  query?: {
-    [key: string]: string | number | boolean;
-  };
+  payload?: KeyValueType;
+  query?: KeyValueType;
   resource: string;
   resource_id: string | number;
   resource_parent: string;
@@ -84,6 +77,13 @@ interface CommandCenterActionType extends CommandCenterActionBaseType {
 }
 
 export interface CommandCenterItemType {
+  actionResults?: {
+    [index: number]: {
+      action: CommandCenterActionType;
+      response?: KeyValueType;
+      result?: any;
+    };
+  };
   actions?: CommandCenterActionType[];
   description?: string;
   items?: CommandCenterItemType[];

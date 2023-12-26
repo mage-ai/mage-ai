@@ -1,8 +1,10 @@
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import api from '@api';
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
 import {
   ContainerStyle,
@@ -23,14 +25,22 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { InputElementEnum } from './constants';
 import { ITEMS } from './mocks';
+import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
+import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { sum } from '@utils/array';
+import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+
+const COMPONENT_UUID = 'CommandCenter';
 
 function CommandCenter() {
   const router = useRouter();
+  const [showError] = useError(null, {}, [], {
+    uuid: COMPONENT_UUID,
+  });
 
   const refContainer = useRef(null);
   const refFocusedElement = useRef(null);
@@ -115,12 +125,74 @@ function CommandCenter() {
     items,
   ]);
 
+  const [invokeRequest, { isLoading: isLoadingRequest }] = useMutation(
+    ({
+      operation,
+      payload,
+      query,
+      resource,
+      resourceID,
+      resourceParent,
+      resourceParentID,
+    }) => {
+      let endpoint = api?.[resource];
+      if (resourceParent) {
+        endpoint = endpoint?.[resourceParent];
+      }
+
+      const ids = [];
+
+      if (resourceID) {
+        if (resourceParentID) {
+          ids.push(resourceParentID);
+        }
+
+        ids.push(resourceID);
+      }
+
+      let submitRequest = null;
+      if (OperationTypeEnum.CREATE === operation) {
+        submitRequest = () => endpoint?.useCreate(...ids, query)(payload);
+      } else if (OperationTypeEnum.UPDATE === operation) {
+        submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
+      } else if (OperationTypeEnum.DELETE === operation) {
+        submitRequest = () => endpoint?.useDelete(...ids, query)();
+      } else if (OperationTypeEnum.DETAIL) {
+        submitRequest = () => endpoint?.detailAsync(...ids, query)();
+      } else if (OperationTypeEnum.LIST) {
+        submitRequest = () => endpoint?.listAsync(...ids, query)();
+      }
+
+      if (submitRequest) {
+        return submitRequest();
+      }
+    },
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: resp => new Promise((resolve, reject) => resolve(resp)),
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const handleItemSelect = useCallback((item: CommandCenterItemType) => {
     console.log('handleItemSelect', item);
 
     const actions = [];
 
-    item?.actions?.forEach((action) => {
+    item?.actions?.forEach((action, index: number) => {
+      if (!item?.actionResults) {
+        item.actionResults = {};
+      }
+      item.actionResults[index] = {
+        action,
+      };
+
       const {
         delay,
         interaction,
@@ -147,19 +219,24 @@ function CommandCenter() {
 
         if (path) {
           actionFunction = () => {
+            let result = null;
             if (external) {
               if (openNewWindow && typeof window !== 'undefined') {
-                return window.open(path, '_blank');
+                result = window.open(path, '_blank');
               } else {
-                return window.location.href = path;
+                result = window.location.href = path;
               }
             } else {
               if (openNewWindow && typeof window !== 'undefined') {
-                return window.open(path, '_blank');
+                result = window.open(path, '_blank');
               } else {
-                return router.push(path);
+                result = router.push(path);
               }
             }
+
+            item.actionResults[index].result = result;
+
+            return result;
           };
         }
       } else if (interaction) {
@@ -184,15 +261,23 @@ function CommandCenter() {
               nodes.push(node);
             }
 
-            nodes?.forEach((node) => {
+            const result = nodes?.map((node) => {
               if (eventOptions) {
                 return node[eventType]?.(eventOptions);
               } else {
                 return node[eventType]?.();
               }
             });
+
+            item.actionResults[index].result = result;
+
+            return result;
           };
         }
+      } else if (request) {
+        actionFunction = () => invokeRequest(request).then((response) => {
+          item.actionResults[index].response = response;
+        });
       }
 
       if (actionFunction) {
@@ -217,6 +302,7 @@ function CommandCenter() {
       invokeActionAndCallback(0);
     }
   }, [
+    invokeRequest,
   ]);
 
   useEffect(() => {
@@ -227,7 +313,6 @@ function CommandCenter() {
     }
   }, []);
 
-  const uuidKeyboard = 'CommandCenter';
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
@@ -235,10 +320,10 @@ function CommandCenter() {
   } = useKeyboardContext();
 
   useEffect(() => () => {
-    unregisterOnKeyDown(uuidKeyboard);
-  }, [unregisterOnKeyDown, uuidKeyboard]);
+    unregisterOnKeyDown(COMPONENT_UUID);
+  }, [unregisterOnKeyDown, COMPONENT_UUID]);
 
-  registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
+  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
     const focusedItemIndex = refFocusedItemIndex?.current;
 
     // If the main input is active.

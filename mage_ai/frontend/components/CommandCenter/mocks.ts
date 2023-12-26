@@ -10,17 +10,17 @@ export const ITEMS = [
     actions: [
       {
         page: {
+          path: '/settings/account/profile',
+        },
+      },
+      {
+        delay: 3000,
+        page: {
           path: '/settings/workspace/preferences',
         },
       },
-      // {
-      //   delay: 5000,
-      //   page: {
-      //     path: '/settings/account/profile',
-      //   },
-      // },
       {
-        delay: 5000,
+        delay: 3000,
         interaction: {
           eventType: 'click',
           element: {
