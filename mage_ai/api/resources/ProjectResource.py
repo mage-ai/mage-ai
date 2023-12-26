@@ -6,7 +6,6 @@ import yaml
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
-from mage_ai.data_preparation.models.block.dbt.profiles import PROFILES_FILE_NAME
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import (
@@ -113,7 +112,7 @@ class ProjectResource(GenericResource):
             )
             proc.check_returncode()
 
-            with open(os.path.join(directory, project_uuid, PROFILES_FILE_NAME), 'w') as f:
+            with open(os.path.join(directory, project_uuid, 'profiles.yml'), 'w') as f:
                 content = yaml.safe_dump({
                     project_uuid: dict(
                         outputs=dict(
