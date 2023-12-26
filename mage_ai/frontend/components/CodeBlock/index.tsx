@@ -98,7 +98,7 @@ import {
   BlockDivider,
   BlockDividerInner,
   BlockHeaderStyle,
-  CodeBlockWrapperStyle,
+  CodeBlockV1WrapperStyle,
   CodeContainerStyle,
   CodeHelperStyle,
   ContainerStyle,
@@ -1214,53 +1214,6 @@ function CodeBlock({
     featureUUIDs,
   ]);
 
-  const uuidKeyboard = `CodeBlock/${blockUUID}`;
-  const {
-    registerOnKeyDown,
-    unregisterOnKeyDown,
-  } = useKeyboardContext();
-
-  useEffect(() => () => {
-    unregisterOnKeyDown(uuidKeyboard);
-  }, [unregisterOnKeyDown, uuidKeyboard]);
-
-  registerOnKeyDown(
-    uuidKeyboard,
-    (event, keyMapping) => {
-      if (disableShortcuts && !allowCodeBlockShortcuts) {
-        return;
-      }
-
-      if (!codeBlockV2 || !codeBlockComponentHeader) {
-        if (selected && !hideRunButton) {
-          if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
-            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
-          ) {
-            runBlockAndTrack({ block });
-          } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
-            event.preventDefault();
-            addNewBlock({
-              language: blockLanguage,
-              type: blockType,
-              upstream_blocks: [blockUUID],
-            });
-            runBlockAndTrack({ block });
-          }
-        }
-      }
-    },
-    [
-      addNewBlock,
-      block,
-      codeBlockComponentHeader,
-      codeBlockV2,
-      hideRunButton,
-      runBlockAndTrack,
-      selected,
-      updateBlock,
-    ],
-  );
-
   useEffect(() => {
     let interval;
 
@@ -1355,12 +1308,10 @@ function CodeBlock({
 
   const {
     editor: codeBlockEditor,
+    header: codeBlockComponentHeader,
+    output: codeBlockComponentOutput,
     // extraDetails,
     // footer,
-    header: codeBlockComponentHeader,
-    headerTabs: codeBlockComponentHeaderTabs,
-    output: codeBlockComponentOutput,
-    outputTabs,
     // tags,
   } = useCodeBlockComponents({
     addNewBlock,
@@ -1426,6 +1377,7 @@ function CodeBlock({
     selected,
     setCodeCollapsed,
     setErrors,
+    // @ts-ignore
     setHiddenBlocks,
     setOutputCollapsed,
     setScrollTogether,
@@ -1455,6 +1407,53 @@ function CodeBlock({
     theme: themeContext,
     updatePipeline,
   });
+
+  const uuidKeyboard = `CodeBlock/${blockUUID}`;
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping) => {
+      if (disableShortcuts && !allowCodeBlockShortcuts) {
+        return;
+      }
+
+      if (!codeBlockV2 || !codeBlockComponentHeader) {
+        if (selected && !hideRunButton) {
+          if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
+            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
+          ) {
+            runBlockAndTrack({ block });
+          } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
+            event.preventDefault();
+            addNewBlock({
+              language: blockLanguage,
+              type: blockType,
+              upstream_blocks: [blockUUID],
+            });
+            runBlockAndTrack({ block });
+          }
+        }
+      }
+    },
+    [
+      addNewBlock,
+      block,
+      codeBlockComponentHeader,
+      codeBlockV2,
+      hideRunButton,
+      runBlockAndTrack,
+      selected,
+      updateBlock,
+    ],
+  );
 
   const codeEditorEl = useMemo(() => {
     if (replicatedBlockUUID && !isDataIntegration) {
@@ -1686,10 +1685,6 @@ function CodeBlock({
   const buttonTabs = useMemo(() => {
     let buttonEl;
 
-    if (codeBlockV2 && outputTabs) {
-      return null;
-    }
-
     if (isDBT) {
       buttonEl = (
         <ButtonTabs
@@ -1745,10 +1740,8 @@ function CodeBlock({
     block,
     blockType,
     color,
-    codeBlockV2,
     fetchBlock,
     isDBT,
-    outputTabs,
     selectedTab,
     sparkEnabled,
     themeContext,
@@ -2449,6 +2442,25 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
       />
     );
   } else {
+    const buildHeaderInner = (childrenInner) => (
+      <BlockHeaderStyle
+        {...{
+          ...borderColorShareProps,
+          ...collected,
+        }}
+        className="code-block-header-sticky"
+        onClick={() => onClickSelectBlock()}
+        ref={disableDrag ? null : drag}
+        zIndex={!sideBySideEnabled
+          ? blocksLength + 1 - (blockIdx || 0)
+          : null
+        }
+        noSticky={sideBySideEnabled}
+      >
+        {childrenInner}
+      </BlockHeaderStyle>
+    );
+
     mainInner = (
       <>
         <div
@@ -2456,279 +2468,263 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             position: 'relative',
           }}
         >
-          <BlockHeaderStyle
-            {...{
-              ...borderColorShareProps,
-              ...collected,
-            }}
-            className="code-block-header-sticky"
-            onClick={() => onClickSelectBlock()}
-            ref={disableDrag ? null : drag}
-            zIndex={!sideBySideEnabled
-              ? blocksLength + 1 - (blockIdx || 0)
-              : null
-            }
-            noSticky={sideBySideEnabled}
-          >
-            {codeBlockV2 && codeBlockComponentHeader}
+          {codeBlockV2 && codeBlockComponentHeader && buildHeaderInner(codeBlockComponentHeader)}
+          {(!codeBlockV2 || !codeBlockComponentHeader) && (
+            <Spacing py={1}>
+              <FlexContainer alignItems="center" justifyContent="space-between">
+                <Spacing pr={1} />
 
-            {(!codeBlockV2 || !codeBlockComponentHeader) && (
-              <Spacing py={1}>
-                <FlexContainer alignItems="center" justifyContent="space-between">
-                  <Spacing pr={1} />
+                <Flex alignItems="center" flex={1}>
+                  <FlexContainer alignItems="center">
+                    <Badge monospace>
+                      {BlockTypeEnum.GLOBAL_DATA_PRODUCT === block?.type
+                        ? 'GDP'
+                        : ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]
+                      }
+                    </Badge>
 
-                  <Flex alignItems="center" flex={1}>
-                    <FlexContainer alignItems="center">
-                      <Badge monospace>
-                        {BlockTypeEnum.GLOBAL_DATA_PRODUCT === block?.type
-                          ? 'GDP'
-                          : ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]
-                        }
-                      </Badge>
+                    <Spacing mr={1} />
 
-                      <Spacing mr={1} />
+                    <Circle
+                      color={color}
+                      size={UNIT * 1.5}
+                      square
+                    />
 
-                      <Circle
+                    <Spacing mr={1} />
+
+                    <FlyoutMenuWrapper
+                      items={buildBlockMenu(block)}
+                      onClickCallback={closeBlockMenu}
+                      onClickOutside={closeBlockMenu}
+                      open={blockMenuVisible}
+                      parentRef={blockMenuRef}
+                      uuid="CodeBlock/block_menu"
+                    >
+                      <Text
                         color={color}
-                        size={UNIT * 1.5}
-                        square
-                      />
-
-                      <Spacing mr={1} />
-
-                      <FlyoutMenuWrapper
-                        items={buildBlockMenu(block)}
-                        onClickCallback={closeBlockMenu}
-                        onClickOutside={closeBlockMenu}
-                        open={blockMenuVisible}
-                        parentRef={blockMenuRef}
-                        uuid="CodeBlock/block_menu"
+                        monospace
+                        noWrapping
                       >
-                        <Text
-                          color={color}
-                          monospace
-                          noWrapping
-                        >
-                          {(
-                            isDBT
-                              ? BlockTypeEnum.DBT
-                              : BLOCK_TYPE_NAME_MAPPING[blockType]
-                          )?.toUpperCase()}
-                        </Text>
-                      </FlyoutMenuWrapper>
+                        {(
+                          isDBT
+                            ? BlockTypeEnum.DBT
+                            : BLOCK_TYPE_NAME_MAPPING[blockType]
+                        )?.toUpperCase()}
+                      </Text>
+                    </FlyoutMenuWrapper>
 
-                      {!hideHeaderInteractiveInformation && [
-                        BlockTypeEnum.CUSTOM,
-                        BlockTypeEnum.SCRATCHPAD,
-                      ].includes(blockType) && (
-                        <>
-                          &nbsp;
-                          <Button
-                            basic
-                            iconOnly
-                            noPadding
-                            onClick={() => setBlockMenuVisible(true)}
-                            transparent
-                          >
-                            <ArrowDown muted />
-                          </Button>
-                        </>
-                      )}
-                    </FlexContainer>
-
-                    {!hideHeaderInteractiveInformation && (
+                    {!hideHeaderInteractiveInformation && [
+                      BlockTypeEnum.CUSTOM,
+                      BlockTypeEnum.SCRATCHPAD,
+                    ].includes(blockType) && (
                       <>
-                        <Spacing mr={PADDING_UNITS} />
-
-                        <FileFill size={UNIT * 1.5} />
-
-                        <Spacing mr={1} />
-
-                        <FlexContainer alignItems="center">
-                          {isDBT && BlockLanguageEnum.YAML !== blockLanguage && (
-                            <Tooltip
-                              block
-                              label={getModelName(block, {
-                                fullPath: true,
-                              })}
-                              size={null}
-                            >
-                              <Text monospace muted>
-                                {getModelName(block)}
-                              </Text>
-                            </Tooltip>
-                          )}
-
-                          {(!isDBT || BlockLanguageEnum.YAML === blockLanguage) && (
-                            <Link
-                              default
-                              monospace
-                              noWrapping
-                              onClick={() => showUpdateBlockModal(block, blockName)}
-                              preventDefault
-                              sameColorAsText
-                            >
-                              {blockUUID}
-                            </Link>
-                          )}
-                        </FlexContainer>
-
-                        {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
-                          && mainContainerWidth > 800) && (
-                          <>
-                            <Spacing mr={PADDING_UNITS} />
-
-                            <Tooltip
-                              appearBefore
-                              block
-                              label={`
-                                ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0
-                                  ? 'Click to select 1 or more blocks to depend on.'
-                                  : 'Edit parent blocks.'
-                                }
-                              `}
-                              size={null}
-                              widthFitContent={numberOfParentBlocks >= 1}
-                            >
-                              <Button
-                                noBackground
-                                noBorder
-                                noPadding
-                                onClick={() => {
-                                  setSelected(true);
-                                  setEditingBlock({
-                                    upstreamBlocks: {
-                                      block,
-                                      values: blockUpstreamBlocks?.map(uuid => ({ uuid })),
-                                    },
-                                  });
-                                }}
-                                >
-                                <FlexContainer alignItems="center">
-                                  {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
-                                  {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
-
-                                  <Spacing mr={1} />
-
-                                  <Text
-                                    default
-                                    monospace={numberOfParentBlocks >= 1}
-                                    noWrapping
-                                    small
-                                    underline={numberOfParentBlocks === 0}
-                                  >
-                                    {numberOfParentBlocks === 0 && 'Edit parents'}
-                                    {numberOfParentBlocks >= 1 && pluralize('parent', numberOfParentBlocks)}
-                                  </Text>
-                                </FlexContainer>
-                              </Button>
-                            </Tooltip>
-                          </>
-                        )}
-
-                        {(blockPipelinesLength >= 2 && mainContainerWidth > 725) && (
-                          <>
-                            <Spacing mr={PADDING_UNITS} />
-
-                            <Tooltip
-                              block
-                              label={`This block is used in ${blockPipelinesLength} pipelines.`}
-                              size={null}
-                              widthFitContent
-                            >
-                              <FlexContainer alignItems="center">
-                                <DiamondShared size={14} />
-                                <Spacing ml={1} />
-                                <Link
-                                  default
-                                  monospace
-                                  noWrapping
-                                  onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
-                                  preventDefault
-                                  small
-                                >
-                                  {blockPipelinesLength} pipelines
-                                </Link>
-                              </FlexContainer>
-                            </Tooltip>
-                          </>
-                        )}
+                        &nbsp;
+                        <Button
+                          basic
+                          iconOnly
+                          noPadding
+                          onClick={() => setBlockMenuVisible(true)}
+                          transparent
+                        >
+                          <ArrowDown muted />
+                        </Button>
                       </>
                     )}
-                  </Flex>
+                  </FlexContainer>
 
-                  {runBlock && (
+                  {!hideHeaderInteractiveInformation && (
                     <>
-                      <Spacing pr={PADDING_UNITS} />
+                      <Spacing mr={PADDING_UNITS} />
 
-                      <CommandButtons
-                        addNewBlock={addNewBlock}
-                        addWidget={addWidget}
-                        block={block}
-                        blockContent={content}
-                        blocks={blocks}
-                        deleteBlock={deleteBlock}
-                        executionState={executionState}
-                        fetchFileTree={fetchFileTree}
-                        fetchPipeline={fetchPipeline}
-                        hideExtraButtons={hideExtraCommandButtons}
-                        interruptKernel={interruptKernel}
-                        isEditingBlock={isEditingBlock}
-                        openSidekickView={openSidekickView}
-                        pipeline={pipeline}
-                        project={project}
-                        runBlock={hideRunButton ? null : runBlockAndTrack}
-                        savePipelineContent={savePipelineContent}
-                        setBlockContent={(val: string) => {
-                          setContent(val);
-                          onChange?.(val);
-                        }}
-                        setErrors={setErrors}
-                        setIsEditingBlock={setIsEditingBlock}
-                        setOutputCollapsed={setOutputCollapsed}
-                        showConfigureProjectModal={showConfigureProjectModal}
-                      />
+                      <FileFill size={UNIT * 1.5} />
+
+                      <Spacing mr={1} />
+
+                      <FlexContainer alignItems="center">
+                        {isDBT && BlockLanguageEnum.YAML !== blockLanguage && (
+                          <Tooltip
+                            block
+                            label={getModelName(block, {
+                              fullPath: true,
+                            })}
+                            size={null}
+                          >
+                            <Text monospace muted>
+                              {getModelName(block)}
+                            </Text>
+                          </Tooltip>
+                        )}
+
+                        {(!isDBT || BlockLanguageEnum.YAML === blockLanguage) && (
+                          <Link
+                            default
+                            monospace
+                            noWrapping
+                            onClick={() => showUpdateBlockModal(block, blockName)}
+                            preventDefault
+                            sameColorAsText
+                          >
+                            {blockUUID}
+                          </Link>
+                        )}
+                      </FlexContainer>
+
+                      {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
+                        && mainContainerWidth > 800) && (
+                        <>
+                          <Spacing mr={PADDING_UNITS} />
+
+                          <Tooltip
+                            appearBefore
+                            block
+                            label={`
+                              ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0
+                                ? 'Click to select 1 or more blocks to depend on.'
+                                : 'Edit parent blocks.'
+                              }
+                            `}
+                            size={null}
+                            widthFitContent={numberOfParentBlocks >= 1}
+                          >
+                            <Button
+                              noBackground
+                              noBorder
+                              noPadding
+                              onClick={() => {
+                                setSelected(true);
+                                setEditingBlock({
+                                  upstreamBlocks: {
+                                    block,
+                                    values: blockUpstreamBlocks?.map(uuid => ({ uuid })),
+                                  },
+                                });
+                              }}
+                              >
+                              <FlexContainer alignItems="center">
+                                {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
+                                {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
+
+                                <Spacing mr={1} />
+
+                                <Text
+                                  default
+                                  monospace={numberOfParentBlocks >= 1}
+                                  noWrapping
+                                  small
+                                  underline={numberOfParentBlocks === 0}
+                                >
+                                  {numberOfParentBlocks === 0 && 'Edit parents'}
+                                  {numberOfParentBlocks >= 1 && pluralize('parent', numberOfParentBlocks)}
+                                </Text>
+                              </FlexContainer>
+                            </Button>
+                          </Tooltip>
+                        </>
+                      )}
+
+                      {(blockPipelinesLength >= 2 && mainContainerWidth > 725) && (
+                        <>
+                          <Spacing mr={PADDING_UNITS} />
+
+                          <Tooltip
+                            block
+                            label={`This block is used in ${blockPipelinesLength} pipelines.`}
+                            size={null}
+                            widthFitContent
+                          >
+                            <FlexContainer alignItems="center">
+                              <DiamondShared size={14} />
+                              <Spacing ml={1} />
+                              <Link
+                                default
+                                monospace
+                                noWrapping
+                                onClick={() => openSidekickView(ViewKeyEnum.BLOCK_SETTINGS)}
+                                preventDefault
+                                small
+                              >
+                                {blockPipelinesLength} pipelines
+                              </Link>
+                            </FlexContainer>
+                          </Tooltip>
+                        </>
+                      )}
                     </>
                   )}
+                </Flex>
 
-                  {!sideBySideEnabled && !hideExtraCommandButtons && (
-                    <>
-                      <Spacing pr={PADDING_UNITS} />
+                {runBlock && (
+                  <>
+                    <Spacing pr={PADDING_UNITS} />
 
-                      <Button
-                        basic
-                        iconOnly
-                        noPadding
-                        onClick={() => {
-                          setCodeCollapsed((collapsedPrev) => {
-                            set(codeCollapsedUUID, !collapsedPrev);
-                            return !collapsedPrev;
+                    <CommandButtons
+                      addNewBlock={addNewBlock}
+                      addWidget={addWidget}
+                      block={block}
+                      blockContent={content}
+                      blocks={blocks}
+                      deleteBlock={deleteBlock}
+                      executionState={executionState}
+                      fetchFileTree={fetchFileTree}
+                      fetchPipeline={fetchPipeline}
+                      hideExtraButtons={hideExtraCommandButtons}
+                      interruptKernel={interruptKernel}
+                      isEditingBlock={isEditingBlock}
+                      openSidekickView={openSidekickView}
+                      pipeline={pipeline}
+                      project={project}
+                      runBlock={hideRunButton ? null : runBlockAndTrack}
+                      savePipelineContent={savePipelineContent}
+                      setBlockContent={(val: string) => {
+                        setContent(val);
+                        onChange?.(val);
+                      }}
+                      setErrors={setErrors}
+                      setIsEditingBlock={setIsEditingBlock}
+                      setOutputCollapsed={setOutputCollapsed}
+                      showConfigureProjectModal={showConfigureProjectModal}
+                    />
+                  </>
+                )}
+
+                {!sideBySideEnabled && !hideExtraCommandButtons && (
+                  <>
+                    <Spacing pr={PADDING_UNITS} />
+
+                    <Button
+                      basic
+                      iconOnly
+                      noPadding
+                      onClick={() => {
+                        setCodeCollapsed((collapsedPrev) => {
+                          set(codeCollapsedUUID, !collapsedPrev);
+                          return !collapsedPrev;
+                        });
+
+                        if (!codeCollapsed) {
+                          setOutputCollapsed(() => {
+                            set(outputCollapsedUUID, true);
+                            return true;
                           });
-
-                          if (!codeCollapsed) {
-                            setOutputCollapsed(() => {
-                              set(outputCollapsedUUID, true);
-                              return true;
-                            });
-                          }
-                        }}
-                        transparent
-                      >
-                        {codeCollapsed
-                          ? <ChevronDown muted size={UNIT * 2} />
-                          : <ChevronUp muted size={UNIT * 2} />
                         }
-                      </Button>
-                    </>
-                  )}
+                      }}
+                      transparent
+                    >
+                      {codeCollapsed
+                        ? <ChevronDown muted size={UNIT * 2} />
+                        : <ChevronUp muted size={UNIT * 2} />
+                      }
+                    </Button>
+                  </>
+                )}
 
-                  <Flex>
-                    <div style={{ height: 1, width: UNIT }} />
-                  </Flex>
-                </FlexContainer>
-              </Spacing>
-            )}
-          </BlockHeaderStyle>
+                <Flex>
+                  <div style={{ height: 1, width: UNIT }} />
+                </Flex>
+              </FlexContainer>
+            </Spacing>
+          )}
 
           <ContainerStyle
             onClick={() => onClickSelectBlock()}
@@ -3393,7 +3389,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                 </CodeHelperStyle>
               )}
 
-              {(!codeBlockV2 || !codeBlockComponentHeaderTabs) && headerTabs}
+              {(!codeBlockV2 || !codeBlockComponentHeader) && headerTabs}
 
               {blockUpstreamBlocks.length >= 1
                 && !codeCollapsed
@@ -3681,7 +3677,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
   }
 
   const codeBlockMain = (
-    <CodeBlockWrapperStyle ref={ref}>
+    <CodeBlockV1WrapperStyle ref={ref}>
       <div
         ref={drop}
         style={{
@@ -3748,7 +3744,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
           {children}
         </div>
       </div>
-    </CodeBlockWrapperStyle>
+    </CodeBlockV1WrapperStyle>
   );
 
   const column1 = useMemo(() => {

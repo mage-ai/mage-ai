@@ -161,6 +161,9 @@ export default function useCodeOutput({
   sideBySideEnabled,
   sparkEnabled,
 }: CodeOutputProps, ref) {
+  const refDataFrameShape = useRef(null);
+  const dataFrameShape = refDataFrameShape.current;
+
   const {
     color: blockColor,
     status,
@@ -201,8 +204,6 @@ export default function useCodeOutput({
 
   const combineTextData = useCallback((data) => (Array.isArray(data) ? data.join('\n') : data), [
   ]);
-
-  const refDataFrameShape = useRef(null);
 
   const combinedMessages = useMemo(() => {
     return messages?.length >= 1
@@ -489,8 +490,6 @@ export default function useCodeOutput({
   const columnsPreviewMessage = columnCount > 30
     ? ` (30 out of ${columnCount} columns displayed)`
     : '';
-
-  const dataFrameShape = refDataFrameShape.current;
 
   const extraInfo = (
     <ExtraInfoStyle

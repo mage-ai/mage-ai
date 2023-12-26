@@ -174,7 +174,7 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
   `}
 `;
 
-export const CodeBlockWrapperStyle = styled.div`
+export const CodeBlockV1WrapperStyle = styled.div`
   &.disable-border-radius {
     .code-block-header-sticky {
       border-top-left-radius: 0px !important;

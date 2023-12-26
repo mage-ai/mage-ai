@@ -298,11 +298,7 @@ export default function useCodeBlockComponents({
 
   return {
     editor: mainContentMemo,
-    extraDetails: null,
-    footer: null,
     header,
     output,
-    outputTabs: null,
-    tags: null,
   };
 }
