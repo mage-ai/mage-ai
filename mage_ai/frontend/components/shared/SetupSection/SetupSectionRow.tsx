@@ -17,7 +17,7 @@ interface InputType {
   onChange?: (event: any) => void;
   placeholder?: string;
   type?: string;
-  value?: string;
+  value?: string | number;
 }
 
 type SetupSectionRowProps = {

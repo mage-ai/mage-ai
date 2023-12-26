@@ -9,7 +9,7 @@ import {
 } from '@components/CodeBlock//index.style';
 
 export const SubheaderMenuStyle = styled.div<{
-  top: number;
+  top?: number;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 

@@ -169,7 +169,7 @@ export default function useCodeBlockComponents({
 
     return (
       <MainContent
-        renderTab={codeBlockProps?.headerTabContent?.renderTab}
+        renderTabContent={codeBlockProps?.headerTabContent?.renderTabContent}
         selectedHeaderTab={selectedHeaderTab}
         sideMenuVisible={sideMenuVisible}
       >

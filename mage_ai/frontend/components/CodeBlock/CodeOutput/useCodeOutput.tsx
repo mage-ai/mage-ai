@@ -160,7 +160,7 @@ export default function useCodeOutput({
   showBorderTop,
   sideBySideEnabled,
   sparkEnabled,
-}: CodeOutputProps, ref) {
+}: CodeOutputProps) {
   const refDataFrameShape = useRef(null);
   const dataFrameShape = refDataFrameShape.current;
 

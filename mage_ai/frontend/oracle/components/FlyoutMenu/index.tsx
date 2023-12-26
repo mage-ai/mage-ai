@@ -44,7 +44,7 @@ export type FlyoutMenuItemType = {
   };
   openConfirmationDialogue?: boolean;
   isGroupingTitle?: boolean;
-  onClick?: () => void;
+  onClick?: (opts?: any) => void;
   tooltip?: () => string;
   uuid: string;
 };

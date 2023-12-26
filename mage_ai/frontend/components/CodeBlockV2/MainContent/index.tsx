@@ -5,7 +5,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ContainerStyle, EditorStyle, MenuStyle } from './index.style';
-import { HeaderTabType } from './constants';
+import { HeaderTabType } from '../constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 
@@ -17,7 +17,7 @@ type MainContentProps = {
 
 function MainContent({
   children,
-  renderTab,
+  renderTabContent,
   selectedHeaderTab,
   sideMenuVisible,
 }: MainContentProps) {
@@ -30,14 +30,14 @@ function MainContent({
         </EditorStyle>
       );
 
-    if (renderTab && selectedHeaderTab) {
-      return renderTab(selectedHeaderTab, children2);
+    if (renderTabContent && selectedHeaderTab) {
+      return renderTabContent(selectedHeaderTab, children2);
     }
 
     return children2;
   }, [
     children,
-    renderTab,
+    renderTabContent,
     selectedHeaderTab,
     sideMenuVisible,
   ]);

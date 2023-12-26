@@ -189,7 +189,6 @@ function CodeBlockHeader({
             }
           }}
           outline
-          // small
           uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
           {iconEl}
@@ -241,17 +240,40 @@ function CodeBlockHeader({
     waiting,
   ]);
 
+  const menuGroupsMemo = useMemo(() => {
+    const updateItems = (item) => {
+      const onClick = item?.onClick;
+      if (onClick) {
+        item.onClick = () => onClick?.({
+          selectedHeaderTab,
+          setSelectedHeaderTab,
+        });
+      }
+
+      if (item?.items?.length >= 1) {
+        item.items = item?.items?.map(updateItems);
+      }
+
+      return item;
+    };
+
+    return menuGroups?.map(updateItems);
+  }, [
+    menuGroups,
+    setSelectedHeaderTab,
+  ]);
+
   const tags = useMemo(() => buildTags(block), [block]);
 
   const subhederMenuMemo = useMemo(() => {
-    if (!menuGroups?.length || !tags?.length) {
+    if (!menuGroupsMemo?.length && !tags?.length) {
       return null;
     }
 
     const childEl = (
       <FileEditorHeader
         defaultTextContent
-        menuGroups={menuGroups}
+        menuGroups={menuGroupsMemo}
         rightOffset={0}
       />
     );
@@ -288,7 +310,7 @@ function CodeBlockHeader({
     );
   }, [
     color,
-    menuGroups,
+    menuGroupsMemo,
     selectedHeaderTab,
     setSelectedHeaderTab,
     tabs,

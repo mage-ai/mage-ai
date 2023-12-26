@@ -4,8 +4,9 @@ import { removASCII, removeANSI } from '@utils/string';
 
 export function getMessagesWithAndWithoutErrors(
   messages: KernelOutputType[],
-  errorMessages: KernelOutputType[],
+  errorMessages: string[],
 ): {
+  allContentCleaned: string[];
   errors: string[];
   errorsCleaned: string[];
   info: string[];

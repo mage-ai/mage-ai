@@ -192,7 +192,7 @@ export default function useCodeBlockProps({
     description: (
       <FlexContainer alignItems="center">
         <KeyboardTextGroup
-          addSpaceBetweenKeys
+          addPlusSignBetweenKeys
           keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}
         />
 
@@ -247,7 +247,9 @@ export default function useCodeBlockProps({
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
           block,
-          test_model: true,
+          runSettings: {
+            test_model: true,
+          },
         });
       }
     },
@@ -263,30 +265,77 @@ export default function useCodeBlockProps({
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
           block,
-          build_model: true,
+          runSettings: {
+            build_model: true,
+          },
         });
       }
     },
     uuid: ButtonUUIDEnum.BUILD,
   };
 
-  const buttonRunUpstream = {
-    Icon: TreeWithArrowsUp,
-    description: 'Run all upstream blocks then run this block',
-    disabled: ({ active }) => active,
-    label: () => 'Run up',
-    onClick: (opts) => {
-      if (validateBeforeAction(opts)) {
-        runBlockAndTrack({
-          block,
-          runUpstream: true,
-        });
-      }
-    },
-    uuid: ButtonUUIDEnum.RUN_UPSTREAM,
-  };
-
   const menuGroups = [
+    {
+      uuid: 'Execute',
+      items: [
+        {
+          beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS} />,
+          uuid: 'Run all upstream blocks then execute',
+          onClick: (opts) => {
+            if (validateBeforeAction(opts)) {
+              runBlockAndTrack({
+                block,
+                runUpstream: true,
+              });
+            }
+          },
+        },
+        {
+          beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS}/>,
+          uuid: 'Run incomplete upstream blocks then execute',
+          onClick: (opts) => {
+            if (validateBeforeAction(opts)) {
+              runBlockAndTrack({
+                block,
+                runIncompleteUpstream: true,
+              });
+            }
+          },
+        },
+        {
+          beforeIcon: <TreeWithArrowsDown {...MENU_ICON_PROPS} />,
+          uuid: 'Execute then run downstream blocks',
+          onClick: (opts) => {
+            if (validateBeforeAction(opts)) {
+              runBlockAndTrack({
+                block,
+                runDownstream: true,
+              });
+            }
+          },
+        },
+        {
+          beforeIcon: <Monitor {...MENU_ICON_PROPS} />,
+          label: () => (
+            <Text>
+              Run <Text color={color?.accent} inline monospace>
+                @tests
+              </Text> defined in block
+            </Text>
+          ),
+          leftAligned: true,
+          uuid: 'Run @tests defined in block',
+          onClick: (opts) => {
+            if (validateBeforeAction(opts)) {
+              runBlockAndTrack({
+                block,
+                runTests: true,
+              });
+            }
+          },
+        },
+      ],
+    },
     {
       uuid: 'Enhance',
       items: [
@@ -370,6 +419,7 @@ export default function useCodeBlockProps({
           uuid: 'Add conditional',
           onClick: () => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
             addon: AddonBlockTypeEnum.CONDITIONAL,
+            blockUUID: block?.uuid,
           }),
         },
         {
@@ -377,6 +427,7 @@ export default function useCodeBlockProps({
           uuid: 'Add callback',
           onClick: () => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
             addon: AddonBlockTypeEnum.CALLBACK,
+            blockUUID: block?.uuid,
           }),
         },
         {
@@ -563,7 +614,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   ];
 
   const headerTabContent = {
-    renderTab: (tab: TabType, defaultContent: any) => {
+    renderTabContent: (tab: TabType, defaultContent: any) => {
       if (HeaderTabEnum.CONFIGURATION === tab?.uuid) {
         return (
           <Configuration
@@ -587,7 +638,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     header: {
       buttons: [
         buttonExecute,
-        buttonRunUpstream,
         buttonRun,
         buttonTest,
         buttonBuild,

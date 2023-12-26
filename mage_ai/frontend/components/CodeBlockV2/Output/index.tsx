@@ -10,7 +10,7 @@ import Text from '@oracle/elements/Text';
 import TextOutputDisplay from './TextOutputDisplay';
 import useCodeOutput from '@components/CodeBlock/CodeOutput/useCodeOutput';
 import { BORDER_WIDTH_THICK } from '@oracle/styles/units/borders';
-import { CodeBlockOutputProps } from './constants';
+import { CodeBlockOutputProps } from '../constants';
 import { ContainerStyle } from '@components/CodeBlock/CodeOutput/index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { OutputDisplayTypeEnum } from '@components/CodeBlock/CodeOutput/constants';
@@ -109,6 +109,7 @@ function CodeBlockOutput({
 
   useEffect(() => {
     if (hasError && !(OutputTabEnum.LOGS in (selectedOutputTabs || {}))) {
+      // @ts-ignore
       setSelectedOutputTabs?.(prev => ({
         ...prev,
         [OutputTabEnum.LOGS]: {
@@ -153,6 +154,7 @@ function CodeBlockOutput({
           <ButtonTabs
             multiSelection
             onClickTab={(tab: TabType) => {
+              // @ts-ignore
               setSelectedOutputTabs?.(prev => {
                 const data = { ...(prev || {}) };
 

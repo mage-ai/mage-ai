@@ -1,4 +1,5 @@
 import BlockType from '@interfaces/BlockType';
+import ErrorsType from '@interfaces/ErrorsType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import LLMType from '@interfaces/LLMType';
@@ -54,7 +55,7 @@ type CodeBlockOutputOutputProps = {
   blockIndex?: number;
   blockOutputRef?: any;
   collapsed?: boolean;
-  errorMessages?: KernelOutputType[];
+  errorMessages?: string[];
   isHidden?: boolean;
   mainContainerWidth?: number;
   messages?: KernelOutputType[];
@@ -170,7 +171,18 @@ export type CodeBlockEditorProps = {
 } & UseCodeBlockComponentProps;
 
 export type CodeBlockOutputProps = {
-
+  headerRef: any;
+  menuGroups?: MenuGroupType[];
+  selectedOutputTabs?: {
+    [uuid: string]: TabType;
+  };
+  setSelectedOutputTabs: (data: {
+    [uuid: string]: TabType;
+  }) => {
+    [uuid: string]: TabType;
+  };
+  subheaderVisible?: boolean;
+  tabs?: TabType[];
 } & CodeBlockOutputOutputProps & UseCodeBlockComponentProps;
 
 export type CodeBlockHeaderProps = {
@@ -182,8 +194,8 @@ export type CodeBlockHeaderProps = {
   title: string;
 } & UseCodeBlockComponentProps;
 
-export type HeaderTabContntType = {
-  renderContent: (tab: TabType, defaultContent: any) => any;
+export type HeaderTabType = {
+  renderTabContent: (tab: TabType, defaultContent: any) => any;
 };
 
 export interface UseCodeBlockComponentType {
