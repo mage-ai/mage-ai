@@ -2733,7 +2733,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   <SubheaderStyle>
                     <Spacing p={1}>
                       <FlexContainer>
-                        {tags.map(({
+                        {tags?.map(({
                           description,
                           title,
                         }, idx) => (

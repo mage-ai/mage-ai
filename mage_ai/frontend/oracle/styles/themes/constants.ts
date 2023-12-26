@@ -7,8 +7,8 @@ export type ThemeType = {
     cyan: string;
     cyanTransparent: string;
     dbt: string;
+    dbtDark: string;
     dbtLight: string;
-    dbtLight2: string;
     info: string;
     infoTransparent: string;
     negative: string;

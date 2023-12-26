@@ -26,6 +26,7 @@ import {
   SubheaderButtonStyle,
   SubheaderMenuStyle,
   SubheaderStyle,
+  TagStyle,
 } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { buildTags } from '@components/CodeBlock/utils';
@@ -277,7 +278,6 @@ function CodeBlockHeader({
   ]);
 
   const tags = useMemo(() => buildTags(block), [block]);
-  console.log(menuGroupsMemo)
 
   const subhederMenuMemo = useMemo(() => {
     if (!menuGroupsMemo?.length && !tags?.length) {
@@ -293,35 +293,76 @@ function CodeBlockHeader({
     );
 
     return (
-      <FlexContainer
-        alignItems="center"
-        justifyContent="space-between"
-      >
-        {tabs?.length >= 1
-          ? (
-            <ButtonTabs
-              allowScroll
-              onClickTab={(tab: TabType) => {
-                setSelectedHeaderTab?.(tab);
-              }}
-              selectedTabUUID={selectedHeaderTab?.uuid}
-              tabs={tabs}
-              underlineColor={color?.accent}
-              underlineStyle
-            />
-          )
-          : <div />
-        }
+      <>
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          {tabs?.length >= 1
+            ? (
+              <ButtonTabs
+                allowScroll
+                onClickTab={(tab: TabType) => {
+                  setSelectedHeaderTab?.(tab);
+                }}
+                selectedTabUUID={selectedHeaderTab?.uuid}
+                tabs={tabs}
+                underlineColor={color?.accent}
+                underlineStyle
+              />
+            )
+            : <div />
+          }
 
-        {tabs?.length >= 1
-          ? childEl
-          : (
+          {tabs?.length >= 1
+            ? childEl
+            : (
+              <SubheaderMenuStyle>
+                {childEl}
+              </SubheaderMenuStyle>
+            )
+          }
+        </FlexContainer>
+
+        {tags?.length >= 1 && (
+          <>
+            <Divider light />
+
             <SubheaderMenuStyle>
-              {childEl}
+              <FlexContainer
+                alignItems="center"
+                fullWidth
+                justifyContent="space-between"
+              >
+                <div />
+
+                <FlexContainer alignItems="center" justifyContent="flex-end">
+                  {tags?.map(({
+                    description,
+                    title,
+                  }) => (
+                    <Tooltip
+                      appearBefore
+                      block
+                      key={title}
+                      label={description || title}
+                      size={null}
+                      visibleDelay={300}
+                      widthFitContent
+                    >
+                      <TagStyle backgroundColor={color?.accentLight}>
+                        <Text small>
+                          {title}
+                        </Text>
+                      </TagStyle>
+                    </Tooltip>
+                  ))}
+                </FlexContainer>
+              </FlexContainer>
             </SubheaderMenuStyle>
-          )
-        }
-      </FlexContainer>
+          </>
+        )}
+      </>
     );
   }, [
     color,
