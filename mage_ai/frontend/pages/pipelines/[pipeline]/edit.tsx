@@ -188,7 +188,7 @@ function PipelineDetailPage({
     sparkEnabled,
   } = useProject();
   const {
-    repo_path_relative_root: repoPathRelativeRoot,
+    status,
   } = useStatus();
   const themeContext = useContext(ThemeContext);
   const router = useRouter();
@@ -2954,7 +2954,9 @@ function PipelineDetailPage({
 
   const [showBlockBrowserModal, hideBlockBrowserModal] = useModal(({
     blockIndex,
-  }: OpenBlockBrowserModalType) => {
+  }: {
+    blockIndex?: number;
+  }) => {
     return (
       <ErrorProvider>
         <Browser
@@ -2966,7 +2968,7 @@ function PipelineDetailPage({
                 blockIndex,
                 blocks,
                 filePath: opts?.row?.fullPath,
-                repoPathRelativeRoot,
+                repoPathRelativeRoot: status?.repo_path_relative_root,
               }),
               (typeof blockIndex === 'undefined' || blockIndex === null
                 ? blocks?.length
@@ -2983,8 +2985,8 @@ function PipelineDetailPage({
     );
   }, {}, [
     addNewBlockAtIndex,
-    repoPathRelativeRoot,
     sideBySideEnabled,
+    status,
   ], {
     background: true,
     disableClickOutside: false,

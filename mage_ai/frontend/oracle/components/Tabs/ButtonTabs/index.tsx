@@ -67,8 +67,8 @@ function ButtonTabs({
         label,
         uuid,
       } = tab;
-      const IconToUse = selected ? (IconSelected || Icon) : Icon;
       const selected = selectedTabUUIDs ? uuid in selectedTabUUIDs : uuid === selectedTabUUID;
+      const IconToUse = selected ? (IconSelected || Icon) : Icon;
       let iconEl;
       if (icon) {
         iconEl = React.cloneElement(icon, {

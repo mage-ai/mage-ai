@@ -228,7 +228,7 @@ export function buildBlockFromFilePath({
   blockIndex?: number;
   blocks: BlockType[];
   filePath: string;
-  isNewBlock?: number;
+  isNewBlock?: boolean;
   name?: string;
   repoPathRelativeRoot: string;
 }) {

@@ -81,6 +81,7 @@ type BrowserProps = {
     row?: {
       directory?: string;
       filePath?: string;
+      fullPath?: string;
       name?: string;
     };
   }) => void;

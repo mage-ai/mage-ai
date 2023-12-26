@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum, TagEnum } from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import {
   BreadcrumbEnum,
@@ -1038,7 +1038,7 @@ export function isDynamic(block: BlockType): boolean {
     tags,
   } = block || {};
 
-  return configuration?.dynamic || tags?.includes('dynamic');
+  return configuration?.dynamic || tags?.includes(TagEnum.DYNAMIC);
 }
 
 export function isDynamicChild(block: BlockType): boolean {
@@ -1046,7 +1046,7 @@ export function isDynamicChild(block: BlockType): boolean {
     tags,
   } = block || {};
 
-  return tags?.includes('dynamic_child');
+  return tags?.includes(TagEnum.DYNAMIC_CHILD);
 }
 
 export function isDynamicOrDynamicChild(block: BlockType): boolean {
@@ -1059,5 +1059,5 @@ export function reduceOutput(block: BlockType): boolean {
     tags,
   } = block || {};
 
-  return configuration?.reduce_output || tags?.includes('reduce_output');
+  return configuration?.reduce_output || tags?.includes(TagEnum.REDUCE_OUTPUT);
 }

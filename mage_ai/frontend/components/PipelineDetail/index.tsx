@@ -822,26 +822,32 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     const onScroll = () => {
       const { y } =mainContainerRef?.current?.getBoundingClientRect?.() || {};
       Object.values(blockRefs?.current || {})?.forEach((node) => {
+        // @ts-ignore
         const { y: y2 } = node?.current?.getBoundingClientRect?.() || {};
         if (y2 <= y) {
+          // @ts-ignore
           const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
             'disable-border-radius',
             'enable-border-radius',
           ].includes(cn));
 
+          // @ts-ignore
           if (node?.current) {
+            // @ts-ignore
             node.current.className = [
               'disable-border-radius',
               // @ts-ignore
             ].concat(arr).join(' ');
           }
         } else {
+          // @ts-ignore
           const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
             'disable-border-radius',
             'enable-border-radius',
           ].includes(cn));
-
+          // @ts-ignore
           if (node?.current) {
+            // @ts-ignore
             node.current.className = [
               'enable-border-radius',
               // @ts-ignore

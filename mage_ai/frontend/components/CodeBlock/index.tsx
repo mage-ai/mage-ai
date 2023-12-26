@@ -304,7 +304,7 @@ type CodeBlockProps = {
     name: string,
   ) => void;
   sideBySideEnabled?: boolean;
-  updatePipeline: (payload: {
+  updatePipeline?: (payload: {
     pipeline: {
       add_upstream_for_block_uuid: string;
     };
