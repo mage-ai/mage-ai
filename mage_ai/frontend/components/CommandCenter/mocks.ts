@@ -116,6 +116,22 @@ export const ITEMS = [
     ],
   },
   {
+    title: 'Triggers for pipeline',
+    description: 'View all triggers for pipeline humble_star.',
+    type: CommandCenterTypeEnum.PIPELINE,
+    actions: [
+      {
+        request: {
+          operation: OperationTypeEnum.LIST,
+          resource: 'pipeline_schedules',
+          resource_parent: 'pipelines',
+          resource_parent_id: 'humble_star',
+          response_resource_key: 'pipeline_schedules',
+        },
+      },
+    ],
+  },
+  {
     title: 'Generate code',
     description: 'Use AI to create code.',
     type: CommandCenterTypeEnum.ACTION,

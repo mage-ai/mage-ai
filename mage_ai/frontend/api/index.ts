@@ -6,11 +6,11 @@ import {
   fetchCreate,
   fetchCreateWithParent,
   fetchCreateWithParentAndChild,
-  fetchUpdateWithParent,
   fetchDetailAsync,
   fetchListAsync,
   fetchListWithParentAsync,
   fetchUpdate,
+  fetchUpdateWithParent,
   useDelete,
   useDeleteWithParent,
   useDetail,
@@ -18,7 +18,9 @@ import {
   useDetailWithParent,
   useDetailWithParentAsync,
   useList,
+  useListAsync,
   useListWithParent,
+  useListWithParentAsync,
   useUpdate,
 } from './utils/use';
 import { handle } from '@api/utils/response';
@@ -255,6 +257,18 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
 
         return await handle(response);
       },
+      listAsync: async (
+        query?: any,
+        options?: FetcherOptionsType,
+      ) => {
+        const response = useListAsync(
+          resource,
+          query,
+          options,
+        );
+
+        return await handle(response);
+      },
       updateAsyncServer: async (ctx: any, id: string, body: any) => {
         const response = await useUpdate(ctx, resource, id, body);
 
@@ -330,9 +344,44 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       const response = await useDeleteWithParent(resource, parentResource, parentId, id, query);
 
       return await handle(response);
-    },
+    };
 
-    apis[resource][parentResource].listAsync = async (ctx: any, parentId: string, query: any = {}) => {
+    apis[resource][parentResource].detailAsync = async (
+      parentId: string,
+      id: string,
+      query?: any,
+      options?: FetcherOptionsType,
+    ) => {
+      const response = useDetailWithParentAsync(
+        resource,
+        id,
+        parentResource,
+        parentId,
+        query,
+        options,
+        null,
+      );
+
+      return await handle(response);
+    };
+
+    apis[resource][parentResource].listAsync = async (
+      parentId: string,
+      query?: any,
+      options?: FetcherOptionsType,
+    ) => {
+      const response = useListWithParentAsync(
+        resource,
+        parentResource,
+        parentId,
+        query,
+        options,
+      );
+
+      return await handle(response);
+    };
+
+    apis[resource][parentResource].listAsyncServer = async (ctx: any, parentId: string, query: any = {}) => {
       const response = await fetchListWithParentAsync(ctx, resource, parentResource, parentId, query);
 
       return await handle(response);
