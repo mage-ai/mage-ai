@@ -127,6 +127,7 @@ import {
   CONFIG_KEY_LIMIT,
   CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME,
   CONFIG_KEY_USE_RAW_SQL,
+  CONFIG_KEY_DISABLE_QUERY_OUTPUT,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
@@ -668,6 +669,7 @@ function CodeBlock({
     [CONFIG_KEY_LIMIT]: defaultLimitValue,
     [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: blockConfiguration[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
     [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
+    [CONFIG_KEY_DISABLE_QUERY_OUTPUT]: !!blockConfiguration[CONFIG_KEY_DISABLE_QUERY_OUTPUT],
   });
 
   const [errorMessages, setErrorMessages] = useState(null);
@@ -3114,6 +3116,52 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                             </FlexContainer>
                           </Tooltip>
                         </FlexContainer>
+
+                        {dataProviderConfig?.[CONFIG_KEY_USE_RAW_SQL] && (
+                          <>
+                            <Spacing mr={1} />
+
+                            <FlexContainer alignItems="center">
+                              <Tooltip
+                                block
+                                description={
+                                  <Text default inline>
+                                    After successfully running this block
+                                    <br />
+                                    a <Text default inline monospace>
+                                      SELECT
+                                    </Text> query will be executed
+                                    <br />
+                                    to fetch sample output data.
+                                    <br />
+                                    Check this box to disable this behavior.
+                                  </Text>
+                                }
+                                size={null}
+                                widthFitContent
+                              >
+                                <FlexContainer alignItems="center">
+                                  <Checkbox
+                                    checked={dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_OUTPUT]}
+                                    label={
+                                      <Text muted small>
+                                        Disable query output
+                                      </Text>
+                                    }
+                                    onClick={(e) => {
+                                      pauseEvent(e);
+                                      updateDataProviderConfig({
+                                        [CONFIG_KEY_DISABLE_QUERY_OUTPUT]: !dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_OUTPUT],
+                                      });
+                                    }}
+                                  />
+                                  <span>&nbsp;</span>
+                                  <Info muted />
+                                </FlexContainer>
+                              </Tooltip>
+                            </FlexContainer>
+                          </>
+                        )}
 
                         {!dataProviderConfig[CONFIG_KEY_USE_RAW_SQL] && (
                           <>
