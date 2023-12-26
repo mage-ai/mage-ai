@@ -9,6 +9,7 @@ from jinja2.exceptions import TemplateNotFound
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 
+from mage_ai.ai.ai_client import InferenceType
 from mage_ai.ai.hugging_face_client import HuggingFaceClient
 from mage_ai.ai.openai_client import OpenAIClient
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType
@@ -240,6 +241,7 @@ class LLMPipelineWizard:
         """
         variable_values = dict()
         variable_values['code_description'] = code_description
+        variable_values['code_language'] = block_language
         if block_language == BlockLanguage.PYTHON:
             customized_logic = await self.client.inference_with_prompt(
                 variable_values,
@@ -258,7 +260,8 @@ class LLMPipelineWizard:
         elif block_language == BlockLanguage.SQL:
             customized_logic = await self.client.inference_with_prompt(
                 variable_values,
-                PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL
+                PROMPT_FOR_CUSTOMIZED_CODE_IN_SQL,
+                inference_type=InferenceType.CODE_GENERATION
             )
             if 'sql_code' in customized_logic.keys():
                 block_code = f'{block_code}\n{customized_logic.get("sql_code")}'
@@ -279,7 +282,8 @@ class LLMPipelineWizard:
         if is_default_transformer_template(config):
             customized_logic = await self.client.inference_with_prompt(
                 variable_values,
-                PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
+                PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE,
+                inference_type=InferenceType.CODE_GENERATION,
             )
             if 'code' in customized_logic.keys():
                 config['existing_code'] = customized_logic.get('code')
@@ -306,7 +310,8 @@ class LLMPipelineWizard:
                 # ask LLM to fully generate the customized code.
                 customized_logic = await self.client.inference_with_prompt(
                     variable_values,
-                    PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE
+                    PROMPT_FOR_CUSTOMIZED_CODE_WITH_BASE_TEMPLATE,
+                    inference_type=InferenceType.CODE_GENERATION
                 )
                 if 'code' in customized_logic.keys():
                     block_code = fetch_transformer_default_template(
