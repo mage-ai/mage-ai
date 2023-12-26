@@ -107,7 +107,7 @@ export const SHARED_HIGHLIGHT_STYLES = css<ButtonHighlightProps>`
 
   ${props => props.highlightOnHoverAlt && `
     &:hover {
-      background-color: ${(props.theme.background || dark.background).dashboard} !important;
+      background-color: ${(props.theme || dark).borders.medium2} !important;
     }
   `}
 `;

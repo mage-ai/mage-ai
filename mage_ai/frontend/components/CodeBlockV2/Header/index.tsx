@@ -277,7 +277,7 @@ function CodeBlockHeader({
   ]);
 
   const tags = useMemo(() => buildTags(block), [block]);
-  console.log(tags)
+  console.log(menuGroupsMemo)
 
   const subhederMenuMemo = useMemo(() => {
     if (!menuGroupsMemo?.length && !tags?.length) {
@@ -300,6 +300,7 @@ function CodeBlockHeader({
         {tabs?.length >= 1
           ? (
             <ButtonTabs
+              allowScroll
               onClickTab={(tab: TabType) => {
                 setSelectedHeaderTab?.(tab);
               }}
