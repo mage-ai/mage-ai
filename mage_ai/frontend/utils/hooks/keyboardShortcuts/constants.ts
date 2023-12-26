@@ -3,6 +3,7 @@ export const KEY_CODE_ARROW_DOWN = 40;
 export const KEY_CODE_ARROW_LEFT = 37;
 export const KEY_CODE_ARROW_RIGHT = 39;
 export const KEY_CODE_ARROW_UP = 38;
+export const KEY_CODE_SPACE = 32;
 export const KEY_CODE_BRACKET_LEFT = 219;
 export const KEY_CODE_BRACKET_RIGHT = 221;
 export const KEY_CODE_BACKSPACE = 'Backspace';
