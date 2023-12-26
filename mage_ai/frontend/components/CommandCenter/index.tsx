@@ -132,6 +132,8 @@ function CommandCenter() {
         request: null,
       };
 
+      let actionFunction = null;
+
       if (page) {
         const {
           external,
@@ -144,7 +146,7 @@ function CommandCenter() {
         };
 
         if (path) {
-          const actionFunction = () => {
+          actionFunction = () => {
             if (external) {
               if (openNewWindow && typeof window !== 'undefined') {
                 return window.open(path, '_blank');
@@ -159,13 +161,46 @@ function CommandCenter() {
               }
             }
           };
-
-          actions.push(new Promise((resolve, reject) => {
-            setTimeout(() => {
-              resolve(actionFunction());
-            }, delay || 0);
-          }));
         }
+      } else if (interaction) {
+        const {
+          element,
+          eventType,
+          eventOptions,
+        } = interaction || {
+          element: null,
+          event: null,
+          eventOptions: null,
+        };
+
+        if (element && eventType) {
+          actionFunction = () => {
+            const nodes = [];
+            if (element?.id) {
+              const node = document.getElementById(element?.id);
+              nodes.push(node);
+            } else if (element?.className) {
+              const node = document.getElementsByClassName(element?.className);
+              nodes.push(node);
+            }
+
+            nodes?.forEach((node) => {
+              if (eventOptions) {
+                return node[eventType]?.(eventOptions);
+              } else {
+                return node[eventType]?.();
+              }
+            });
+          };
+        }
+      }
+
+      if (actionFunction) {
+        actions.push(new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(actionFunction());
+          }, delay || 0);
+        }));
       }
     });
 

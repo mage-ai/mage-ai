@@ -13,10 +13,19 @@ export const ITEMS = [
           path: '/settings/workspace/preferences',
         },
       },
+      // {
+      //   delay: 5000,
+      //   page: {
+      //     path: '/settings/account/profile',
+      //   },
+      // },
       {
         delay: 5000,
-        page: {
-          path: '/settings/account/profile',
+        interaction: {
+          eventType: 'click',
+          element: {
+            id: 'save-project-settings',
+          },
         },
       },
     ],

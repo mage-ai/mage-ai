@@ -44,10 +44,10 @@ interface CommandCenterActionInteractionType {
     className?: string;
     id?: string;
   };
-  event?: CommandCenterActionInteractionEventEnum;
   eventOptions?:{
     [key: string]: string | number | boolean;
   };
+  eventType?: CommandCenterActionInteractionEventEnum;
 }
 
 interface CommandCenterActionPageType {
