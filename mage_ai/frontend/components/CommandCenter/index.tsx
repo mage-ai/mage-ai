@@ -21,12 +21,14 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { InputElementEnum } from './constants';
 import { ITEMS } from './mocks';
+import { addClassNames, removeClassNames } from '@utils/elements';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { sum } from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
 
 function CommandCenter() {
+  const refContainer = useRef(null);
   const refInput = useRef(null);
   const refItems = useRef({});
   const refItemsContainer = useRef(null);
@@ -102,6 +104,12 @@ function CommandCenter() {
       || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
     ) {
       pauseEvent(event);
+      refContainer.current.className = removeClassNames(
+        refContainer?.current?.className || '',
+        [
+          'hide',
+        ],
+      );
       refInput?.current?.focus();
     } else if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
 
@@ -111,6 +119,12 @@ function CommandCenter() {
         handleNavigation(0);
       } else {
         // If there is no text in the input, close.
+        refContainer.current.className = addClassNames(
+          refContainer?.current?.className || '',
+          [
+            'hide',
+          ],
+        );
         refInput?.current?.blur();
       }
     } else if (InputElementEnum.MAIN === focusedInputElement) {
@@ -156,7 +170,7 @@ function CommandCenter() {
   ]);
 
   return (
-    <ContainerStyle>
+    <ContainerStyle ref={refContainer}>
       <InputContainerStyle>
         <InputStyle
           onChange={(e) => {

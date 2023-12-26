@@ -23,6 +23,12 @@ export const ContainerStyle = styled.div`
     box-shadow: ${(props.theme || dark).shadow.window};
     border: 1px solid ${(props.theme || dark).monotone.grey500};
   `}
+
+  &.hide {
+    bottom: 100%;
+    opacity: 0;
+    right: 100%;
+  }
 `;
 
 export const InputContainerStyle = styled.div`

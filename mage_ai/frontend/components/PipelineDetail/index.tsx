@@ -82,6 +82,7 @@ import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/c
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SIDE_BY_SIDE_VERTICAL_PADDING } from '@components/CodeBlock/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addClassNames, removeClassNames } from '@utils/elements';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { buildAddBlockRequestPayload } from '@components/FileEditor/utils';
@@ -820,38 +821,41 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
   useEffect(() => {
     const onScroll = () => {
-      const { y } =mainContainerRef?.current?.getBoundingClientRect?.() || {};
+      const { y } = mainContainerRef?.current?.getBoundingClientRect?.() || {};
       Object.values(blockRefs?.current || {})?.forEach((node) => {
         // @ts-ignore
         const { y: y2 } = node?.current?.getBoundingClientRect?.() || {};
         if (y2 <= y) {
           // @ts-ignore
-          const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
-            'disable-border-radius',
-            'enable-border-radius',
-          ].includes(cn));
-
-          // @ts-ignore
           if (node?.current) {
             // @ts-ignore
-            node.current.className = [
-              'disable-border-radius',
-              // @ts-ignore
-            ].concat(arr).join(' ');
+            node.current.className = addClassNames(
+              removeClassNames(
+                (node?.current?.className || ''),
+                [
+                  'enable-border-radius',
+                ],
+              ),
+              [
+                'disable-border-radius',
+              ],
+            );
           }
         } else {
           // @ts-ignore
-          const arr = (node?.current?.className || '')?.split(' ')?.filter(cn => ![
-            'disable-border-radius',
-            'enable-border-radius',
-          ].includes(cn));
-          // @ts-ignore
           if (node?.current) {
             // @ts-ignore
-            node.current.className = [
-              'enable-border-radius',
-              // @ts-ignore
-            ].concat(arr).join(' ');
+            node.current.className = addClassNames(
+              removeClassNames(
+                (node?.current?.className || ''),
+                [
+                  'disable-border-radius',
+                ],
+              ),
+              [
+                'enable-border-radius',
+              ],
+            );
           }
         }
       });
