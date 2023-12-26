@@ -77,6 +77,7 @@ interface CommandCenterActionRequestType {
 }
 
 interface CommandCenterActionType extends CommandCenterActionBaseType {
+  delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
   request?: CommandCenterActionRequestType;

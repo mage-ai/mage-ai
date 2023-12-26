@@ -122,6 +122,7 @@ function CommandCenter() {
 
     item?.actions?.forEach((action) => {
       const {
+        delay,
         interaction,
         page,
         request,
@@ -159,7 +160,11 @@ function CommandCenter() {
             }
           };
 
-          actions.push(new Promise(() => actionFunction()));
+          actions.push(new Promise((resolve, reject) => {
+            setTimeout(() => {
+              resolve(actionFunction());
+            }, delay || 0);
+          }));
         }
       }
     });

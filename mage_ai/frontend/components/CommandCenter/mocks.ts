@@ -13,6 +13,12 @@ export const ITEMS = [
           path: '/settings/workspace/preferences',
         },
       },
+      {
+        delay: 5000,
+        page: {
+          path: '/settings/account/profile',
+        },
+      },
     ],
   },
   {
