@@ -114,7 +114,7 @@ function Header({
 
   const logout = () => {
     AuthToken.logout(() => {
-      api.sessions.updateAsync(null, 1)
+      api.sessions.updateAsyncServer(null, 1)
         .then(() => {
           redirectToUrl('/sign-in');
         })

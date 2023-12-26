@@ -170,6 +170,20 @@ export function useDetailWithParent(
   };
 }
 
+export function useDetailAsync(
+  resource: string,
+  id: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(buildUrl(
+      resource,
+      id,
+    ),
+    { ...options, method: GET, query },
+  );
+}
+
 export function useDetailWithParentAsync(
   resource: string,
   id: string,

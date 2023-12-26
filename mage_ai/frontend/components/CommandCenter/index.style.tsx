@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
+import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
@@ -76,4 +77,20 @@ export const ItemsContainerStyle = styled.div<{
       display: block !important;
     }
   }
+
+  ${props => `
+    .${ItemRowClassNameEnum.ITEM_ROW} {
+      &:hover {
+        background-color: ${(props.theme || dark)?.interactive?.defaultBackgroundTransparent};
+      }
+
+      &.focused {
+        background-color: ${(props.theme || dark)?.interactive?.hoverBackgroundTransparent};
+
+        &:hover {
+          background-color: ${(props.theme || dark)?.interactive?.hoverBackgroundTransparent};
+        }
+      }
+    }
+  `}
 `;

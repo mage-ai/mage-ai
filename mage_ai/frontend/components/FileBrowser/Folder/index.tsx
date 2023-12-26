@@ -195,7 +195,7 @@ function Folder({
     : level === 0
   );
   const refExpandCount = useRef(0);
-  const expanded = refExpandState.current;
+  const expanded = refExpandState?.current;
 
   if (!name && !allowEmptyFolders) {
     file.name = DEFAULT_NAME;
@@ -307,12 +307,14 @@ function Folder({
       refExpandState.current = expand;
     }
 
-    refChildren.current.className = refExpandState.current ? 'expanded_children' : 'collapsed_children';
-    refChevron.current.className = refExpandState.current ? 'expanded' : 'collapsed';
+    if (refChildren?.current) {
+      refChildren.current.className = refExpandState?.current ? 'expanded_children' : 'collapsed_children';
+      refChevron.current.className = refExpandState?.current ? 'expanded' : 'collapsed';
 
-    if (refExpandCount.current === 0) {
+    }
+    if (refExpandCount?.current === 0) {
       if (!refRoot?.current) {
-        const domNode = document.getElementById(refChildren.current.id);
+        const domNode = document.getElementById(refChildren?.current?.id);
         refRoot.current = createRoot(domNode);
       }
 

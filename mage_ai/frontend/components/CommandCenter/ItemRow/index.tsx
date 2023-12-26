@@ -9,16 +9,19 @@ import {
   CommandCenterTypeEnum,
   TYPE_TITLE_MAPPING,
 } from '@interfaces/CommandCenterType';
+import { ItemRowClassNameEnum } from '../constants';
 import { ItemStyle, getIconColor } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getIcon } from './constants';
 
 type ItemRowProps = {
+  className: ItemRowClassNameEnum;
   item: CommandCenterItemType;
 };
 
 function ItemRow({
+  className,
   item,
 }: ItemRowProps, ref) {
   const {
@@ -32,7 +35,7 @@ function ItemRow({
   const iconColor = getIconColor(item);
 
   return (
-    <ItemStyle ref={ref}>
+    <ItemStyle className={className} ref={ref}>
       <FlexContainer alignItems="center" justifyContent="space-between">
         <Flex alignItems="center" flex={1}>
           <Icon

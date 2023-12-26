@@ -1,6 +1,7 @@
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
 import { FileExtensionEnum } from '@interfaces/FileType';
+import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
 export const ITEMS = [
   {
@@ -71,6 +72,50 @@ export const ITEMS = [
     ],
   },
   {
+    title: 'Daily run',
+    description: 'Trigger for Build core data users pipeline.',
+    type: CommandCenterTypeEnum.TRIGGER,
+    actions: [
+      {
+        request: {
+          operation: OperationTypeEnum.CREATE,
+          payload: {
+            name: 'test1',
+            schedule_interval: '@once',
+            schedule_type: 'time',
+            start_time: '2023-12-25 21:14',
+            status: 'active',
+            variables: {},
+          },
+          payload_resource_key: 'pipeline_schedule',
+          query: {},
+          resource: 'pipeline_schedules',
+          resource_id: null,
+          resource_parent: 'pipelines',
+          resource_parent_id: 'humble_star',
+          response_resource_key: 'pipeline_schedule',
+        },
+      },
+    ],
+  },
+  {
+    title: 'Blocks for pipeline',
+    description: 'View details of blocks in pipeline beautiful_prophecy.',
+    type: CommandCenterTypeEnum.PIPELINE,
+    actions: [
+      {
+        request: {
+          operation: OperationTypeEnum.DETAIL,
+          payload_resource_key: 'pipeline',
+          query: {},
+          resource: 'pipelines',
+          resource_id: 'beautiful_prophecy',
+          response_resource_key: 'pipeline',
+        },
+      },
+    ],
+  },
+  {
     title: 'Generate code',
     description: 'Use AI to create code.',
     type: CommandCenterTypeEnum.ACTION,
@@ -99,11 +144,6 @@ export const ITEMS = [
     title: 'Build core data users',
     description: 'Daily pipeline to build user dimension table.',
     type: CommandCenterTypeEnum.PIPELINE,
-  },
-  {
-    title: 'Daily run',
-    description: 'Trigger for Build core data users pipeline.',
-    type: CommandCenterTypeEnum.TRIGGER,
   },
   {
     title: 'Generate code 2',

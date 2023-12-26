@@ -14,6 +14,7 @@ import {
   useDelete,
   useDeleteWithParent,
   useDetail,
+  useDetailAsync,
   useDetailWithParent,
   useDetailWithParentAsync,
   useList,
@@ -235,12 +236,26 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
         },
         customOptions,
       ),
-      detailAsync: async (ctx: any, id: string, query: any = {}) => {
+      detailAsync: async (
+        id: string,
+        query?: any,
+        options?: FetcherOptionsType,
+      ) => {
+        const response = useDetailAsync(
+          resource,
+          id,
+          query,
+          options,
+        );
+
+        return await handle(response);
+      },
+      detailAsyncServer: async (ctx: any, id: string, query: any = {}) => {
         const response = await fetchDetailAsync(ctx, resource, id, query);
 
         return await handle(response);
       },
-      updateAsync: async (ctx: any, id: string, body: any) => {
+      updateAsyncServer: async (ctx: any, id: string, body: any) => {
         const response = await useUpdate(ctx, resource, id, body);
 
         return await handle(response);

@@ -18,28 +18,28 @@ export function getIconColor(item: CommandCenterItemType, opts?: {
 
   const itemType = item?.type;
 
-  let accent = (theme || dark).monotone.gray;
-  let accentLight = (theme || dark).monotone.grey500;
+  let accent = (theme || dark)?.monotone?.gray;
+  let accentLight = (theme || dark)?.monotone?.grey500;
 
   if (CommandCenterTypeEnum.ACTION == itemType) {
-    accent = (theme || dark).accent.negative;
-    accentLight = (theme || dark).accent.negativeTransparent;
+    accent = (theme || dark)?.accent?.negative;
+    accentLight = (theme || dark)?.accent?.negativeTransparent;
   } else if (CommandCenterTypeEnum.APPLICATION == itemType) {
-    accent = (theme || dark).accent.warning;
-    accentLight = (theme || dark).accent.warningTransparent;
+    accent = (theme || dark)?.accent?.warning;
+    accentLight = (theme || dark)?.accent?.warningTransparent;
   } else if (CommandCenterTypeEnum.BLOCK == itemType) {
     return getColorsForBlockType(item?.metadata?.block?.type, {
       theme,
     });
   } else if (CommandCenterTypeEnum.FILE == itemType) {
-    accent = (theme || dark).accent.sky;
-    accentLight = (theme || dark).accent.skyLight;
+    accent = (theme || dark)?.accent?.sky;
+    accentLight = (theme || dark)?.accent?.skyLight;
   } else if (CommandCenterTypeEnum.PIPELINE == itemType) {
-    accent = (theme || dark).accent.cyan;
-    accentLight = (theme || dark).accent.cyanLight;
+    accent = (theme || dark)?.accent?.cyan;
+    accentLight = (theme || dark)?.accent?.cyanLight;
   } else if (CommandCenterTypeEnum.TRIGGER == itemType) {
-    accent = (theme || dark).accent.rose;
-    accentLight = (theme || dark).accent.roseLight;
+    accent = (theme || dark)?.accent?.rose;
+    accentLight = (theme || dark)?.accent?.roseLight;
   }
 
   return {
@@ -52,18 +52,4 @@ export const ItemStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
   cursor: pointer;
   padding: ${1.5 * UNIT}px;
-
-  ${props => `
-    &:hover {
-      background-color: ${(props.theme || dark).interactive.defaultBackgroundTransparent};
-    }
-
-    &.focused {
-      background-color: ${(props.theme || dark).interactive.hoverBackgroundTransparent};
-
-      &:hover {
-        background-color: ${(props.theme || dark).interactive.hoverBackgroundTransparent};
-      }
-    }
-  `}
 `;

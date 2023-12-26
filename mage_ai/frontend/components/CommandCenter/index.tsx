@@ -1,11 +1,17 @@
-import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ThemeContext } from 'styled-components';
+import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { CommandCenterItemType } from '@interfaces/CommandCenterType';
+import {
+  CommandCenterActionRequestType,
+  CommandCenterItemType,
+  KeyValueType,
+} from '@interfaces/CommandCenterType';
 import {
   ContainerStyle,
   InputContainerStyle,
@@ -23,9 +29,10 @@ import {
   KEY_CODE_META_RIGHT,
   KEY_CODE_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { InputElementEnum } from './constants';
+import { InputElementEnum, ItemRowClassNameEnum } from './constants';
 import { ITEMS } from './mocks';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -35,8 +42,11 @@ import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const COMPONENT_UUID = 'CommandCenter';
+const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}/ItemsContainerStyle`;
 
 function CommandCenter() {
+  const theme: ThemeType = useContext(ThemeContext);
+
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
@@ -46,21 +56,47 @@ function CommandCenter() {
   const refFocusedElement = useRef(null);
   const refFocusedItemIndex = useRef(null);
   const refInput = useRef(null);
-  const refItems = useRef({});
-  const refItemsContainer = useRef(null);
+  const refItems = useRef([]);
+  const refItemNodes = useRef({});
+  const refItemNodesContainer = useRef(null);
   const refReload = useRef(null);
+  const refRoot = useRef(null);
 
   const [reload, setReload] = useState(0);
-  const [items, setItems] = useState<CommandCenterTypeEnum[]>(ITEMS);
-  const itemsCount = useMemo(() => items?.length || 0, [items]);
+
+  const renderItems = useCallback((items: CommandCenterItemType[]) => {
+    refItems.current = items;
+
+    if (!refRoot?.current) {
+      const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
+      refRoot.current = createRoot(domNode);
+    }
+
+    const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
+      const refItem = refItemNodes?.current?.[item?.uuid] || createRef();
+      refItemNodes.current[item?.uuid] = refItem;
+
+      return (
+        <ItemRow
+          className={ItemRowClassNameEnum.ITEM_ROW}
+          item={item}
+          key={item.uuid}
+          ref={refItem}
+          theme={theme}
+        />
+      );
+    });
+
+    refRoot?.current?.render(itemsEl);
+  }, [theme]);
 
   const handleNavigation = useCallback((index: number) => {
-    const itemsContainer = refItemsContainer?.current;
+    const itemsContainer = refItemNodesContainer?.current;
     // 400
     const itemsContainerHeight = itemsContainer?.getBoundingClientRect()?.height;
     // 44 * 14 = 616
     const itemRowHeightTotal = sum(Object.values(
-      refItems?.current || {},
+      refItemNodes?.current || {},
     )?.map(refItem => refItem?.current?.getBoundingClientRect()?.height || 0));
     // 216
     const scrollTopTotal = itemRowHeightTotal - itemsContainerHeight;
@@ -68,12 +104,12 @@ function CommandCenter() {
     const currentScrollTop = itemsContainer?.scrollTop;
 
     if (index !== null) {
-      const item = items?.[index];
+      const item = refItems?.current?.[index];
       let nodeYBottom = 0;
       let nodeYTop = 0;
 
-      items?.slice(0, index + 1)?.forEach((itemInner, idx: number) => {
-        const nodeInner = refItems?.current?.[itemInner?.uuid]?.current;
+      refItems?.current?.slice(0, index + 1)?.forEach((itemInner, idx: number) => {
+        const nodeInner = refItemNodes?.current?.[itemInner?.uuid]?.current;
         const nodeHeight = nodeInner?.getBoundingClientRect()?.height || 0;
 
         nodeYBottom += nodeHeight;
@@ -98,8 +134,8 @@ function CommandCenter() {
       }
 
       const indexPrev = refFocusedItemIndex.current;
-      const itemPrev = items?.[indexPrev];
-      const nodePrev = refItems?.current?.[itemPrev?.uuid]?.current;
+      const itemPrev = refItems?.current?.[indexPrev];
+      const nodePrev = refItemNodes?.current?.[itemPrev?.uuid]?.current;
       if (nodePrev) {
         nodePrev.className = removeClassNames(
           nodePrev?.className || '',
@@ -110,8 +146,8 @@ function CommandCenter() {
       }
 
       refFocusedItemIndex.current = index;
-      const itemNext = items?.[index];
-      const nodeNext = refItems?.current?.[itemNext?.uuid]?.current;
+      const itemNext = refItems?.current?.[index];
+      const nodeNext = refItemNodes?.current?.[itemNext?.uuid]?.current;
       if (nodeNext) {
         nodeNext.className = addClassNames(
           nodeNext?.className || '',
@@ -121,19 +157,25 @@ function CommandCenter() {
         );
       }
     }
-  }, [
-    items,
-  ]);
+  }, []);
 
   const [invokeRequest, { isLoading: isLoadingRequest }] = useMutation(
     ({
-      operation,
-      payload,
-      query,
-      resource,
-      resourceID,
-      resourceParent,
-      resourceParentID,
+      request: {
+        operation,
+        payload,
+        payload_resource_key: payloadResourceKey,
+        query,
+        resource,
+        resource_id: resourceID,
+        resource_parent: resourceParent,
+        resource_parent_id: resourceParentID,
+      },
+    }: {
+      focusedItemIndex: number;
+      index: number;
+      item: CommandCenterItemType;
+      request: CommandCenterActionRequestType;
     }) => {
       let endpoint = api?.[resource];
       if (resourceParent) {
@@ -142,25 +184,29 @@ function CommandCenter() {
 
       const ids = [];
 
-      if (resourceID) {
-        if (resourceParentID) {
-          ids.push(resourceParentID);
-        }
+      if (resourceParentID) {
+        ids.push(resourceParentID);
+      }
 
+      if (resourceID) {
         ids.push(resourceID);
       }
 
       let submitRequest = null;
       if (OperationTypeEnum.CREATE === operation) {
-        submitRequest = () => endpoint?.useCreate(...ids, query)(payload);
+        submitRequest = () => endpoint?.useCreate(...ids, query)({
+          [payloadResourceKey]: payload,
+        });
       } else if (OperationTypeEnum.UPDATE === operation) {
-        submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
+        submitRequest = () => endpoint?.useUpdate(...ids, query)({
+          [payloadResourceKey]: payload,
+        });
       } else if (OperationTypeEnum.DELETE === operation) {
         submitRequest = () => endpoint?.useDelete(...ids, query)();
       } else if (OperationTypeEnum.DETAIL) {
-        submitRequest = () => endpoint?.detailAsync(...ids, query)();
+        submitRequest = () => endpoint?.detailAsync(...ids, query);
       } else if (OperationTypeEnum.LIST) {
-        submitRequest = () => endpoint?.listAsync(...ids, query)();
+        submitRequest = () => endpoint?.listAsync(...ids, query);
       }
 
       if (submitRequest) {
@@ -168,9 +214,32 @@ function CommandCenter() {
       }
     },
     {
-      onSuccess: (response: any) => onSuccess(
+      onSuccess: (response: any, variables: {
+        focusedItemIndex: number;
+        index: number;
+        item: CommandCenterItemType;
+        request: CommandCenterActionRequestType;
+      }) => onSuccess(
         response, {
-          callback: resp => new Promise((resolve, reject) => resolve(resp)),
+          callback: (
+            resp: {
+              [key: string]: KeyValueType;
+            },
+          ) => {
+            const {
+              focusedItemIndex,
+              index,
+              request: {
+                operation,
+                response_resource_key: responseResourceKey,
+              }
+            } = variables;
+
+            const value = resp?.[responseResourceKey];
+            const key = OperationTypeEnum.LIST === operation ? 'models' : 'model';
+
+            refItems.current[focusedItemIndex].actionResults[index][key] = value;
+          },
           onErrorCallback: (response, errors) => showError({
             errors,
             response,
@@ -180,16 +249,17 @@ function CommandCenter() {
     },
   );
 
-  const handleItemSelect = useCallback((item: CommandCenterItemType) => {
-    console.log('handleItemSelect', item);
+  console.log(refItems)
 
+  const handleItemSelect = useCallback((item: CommandCenterItemType, focusedItemIndex: number) => {
     const actions = [];
 
+    if (!item?.actionResults) {
+      refItems.current[focusedItemIndex].actionResults = {};
+    }
+
     item?.actions?.forEach((action, index: number) => {
-      if (!item?.actionResults) {
-        item.actionResults = {};
-      }
-      item.actionResults[index] = {
+      refItems.current[focusedItemIndex].actionResults[index] = {
         action,
       };
 
@@ -234,7 +304,7 @@ function CommandCenter() {
               }
             }
 
-            item.actionResults[index].result = result;
+            refItems.current[focusedItemIndex].actionResults[index].result = result;
 
             return result;
           };
@@ -262,22 +332,38 @@ function CommandCenter() {
             }
 
             const result = nodes?.map((node) => {
-              if (eventOptions) {
-                return node[eventType]?.(eventOptions);
-              } else {
-                return node[eventType]?.();
+              if (node) {
+                if (eventOptions) {
+                  return node?.[eventType]?.(eventOptions);
+                } else {
+                  return node?.[eventType]?.();
+                }
               }
             });
 
-            item.actionResults[index].result = result;
+            refItems.current[focusedItemIndex].actionResults[index].result = result;
 
             return result;
           };
         }
       } else if (request) {
-        actionFunction = () => invokeRequest(request).then((response) => {
-          item.actionResults[index].response = response;
-        });
+        const {
+          operation,
+          resource,
+          response_resource_key: responseResourceKey,
+        } = request || {
+          operation: null,
+          resource: null,
+        };
+
+        if (operation && resource) {
+          actionFunction = () => invokeRequest({
+            focusedItemIndex,
+            index,
+            item,
+            request,
+          });
+        }
       }
 
       if (actionFunction) {
@@ -291,7 +377,7 @@ function CommandCenter() {
 
     const invokeActionAndCallback = (index: number) => {
       console.log(`Invoking action: ${index}`);
-      return actions?.[index]?.then(() => {
+      return actions?.[index]?.then((response, variables) => {
         if (index <= actions?.length - 1) {
           return invokeActionAndCallback(index + 1);
         }
@@ -346,13 +432,13 @@ function CommandCenter() {
         }
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
         // Pressing enter on an item
-        handleItemSelect(items?.[focusedItemIndex]);
+        handleItemSelect(refItems?.current?.[focusedItemIndex], focusedItemIndex);
       } else {
         let index = null;
         // Arrow down
         if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
           // If already on the last item, don’t change
-          if (focusedItemIndex <= itemsCount - 2) {
+          if (focusedItemIndex <= refItems?.current?.length - 2) {
             index = focusedItemIndex + 1;
           }
           // Arrow up
@@ -381,24 +467,11 @@ function CommandCenter() {
       }
     }
 
-  }, [
-    reload,
-  ]);
+  }, [reload]);
 
-  const itemsMemo = useMemo(() => items?.map((item, index: number) => {
-    const refItem = refItems?.current?.[item?.uuid] || createRef();
-    refItems.current[item?.uuid] = refItem;
-
-    return (
-      <ItemRow
-        item={item}
-        key={item.uuid}
-        ref={refItem}
-      />
-    );
-  }), [
-    items,
-  ]);
+  useEffect(() => {
+    renderItems(ITEMS)
+  }, [reload]);
 
   return (
     <ContainerStyle ref={refContainer}>
@@ -410,7 +483,7 @@ function CommandCenter() {
           onFocus={() => {
             refFocusedElement.current = InputElementEnum.MAIN;
 
-            if (refFocusedItemIndex?.current === null && items?.length >= 1) {
+            if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
               handleNavigation(0);
             }
           }}
@@ -419,9 +492,10 @@ function CommandCenter() {
         />
       </InputContainerStyle>
 
-      <ItemsContainerStyle ref={refItemsContainer}>
-        {itemsMemo}
-      </ItemsContainerStyle>
+      <ItemsContainerStyle
+        id={ITEMS_CONTAINER_UUID}
+        ref={refItemNodesContainer}
+      />
     </ContainerStyle>
   );
 }
