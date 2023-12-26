@@ -10,6 +10,15 @@ export enum CommandCenterTypeEnum {
   TRIGGER = 'trigger',
 }
 
+export const TYPE_TITLE_MAPPING = {
+  [CommandCenterTypeEnum.ACTION]: 'Cast',
+  [CommandCenterTypeEnum.APPLICATION]: 'Teleport',
+  [CommandCenterTypeEnum.BLOCK]: 'Enchant',
+  [CommandCenterTypeEnum.FILE]: 'Summon',
+  [CommandCenterTypeEnum.PIPELINE]: 'Enchant',
+  [CommandCenterTypeEnum.TRIGGER]: 'Enchant',
+};
+
 interface BlockMetadataType {
   type?: BlockTypeEnum;
 }

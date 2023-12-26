@@ -10,6 +10,7 @@ import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styl
 export const MAX_WIDTH = 100 * UNIT;
 
 export const ContainerStyle = styled.div`
+  backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   border-radius: ${BORDER_RADIUS_XLARGE}px;
   left: 50%;
   overflow: hidden;
@@ -19,7 +20,7 @@ export const ContainerStyle = styled.div`
   width: ${MAX_WIDTH}px;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.panel};
+    background-color: ${(props.theme || dark).background.panelTransparent};
     box-shadow: ${(props.theme || dark).shadow.window};
     border: 1px solid ${(props.theme || dark).monotone.grey500};
   `}

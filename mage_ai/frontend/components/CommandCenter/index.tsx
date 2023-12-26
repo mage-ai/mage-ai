@@ -14,6 +14,7 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
+  KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
   KEY_CODE_META_LEFT,
   KEY_CODE_META_RIGHT,
@@ -29,11 +30,11 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 function CommandCenter() {
   const refContainer = useRef(null);
+  const refFocusedElement = useRef(null);
   const refInput = useRef(null);
   const refItems = useRef({});
   const refItemsContainer = useRef(null);
 
-  const [focusedInputElement, setFocusedInputElement] = useState<InputElementEnum>(null);
   const [focusedItemIndex, setFocusedItemIndex] = useState(null);
   const [items, setItems] = useState<CommandCenterTypeEnum[]>(ITEMS);
   const itemsCount = useMemo(() => items?.length || 0, [items]);
@@ -87,6 +88,11 @@ function CommandCenter() {
     items,
   ]);
 
+  const handleItemSelect = useCallback((item: CommandCenterItemType) => {
+
+  }, [
+  ]);
+
   const uuidKeyboard = 'CommandCenter';
   const {
     disableGlobalKeyboardShortcuts,
@@ -94,60 +100,70 @@ function CommandCenter() {
     unregisterOnKeyDown,
   } = useKeyboardContext();
 
+
   useEffect(() => () => {
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
 
   registerOnKeyDown(uuidKeyboard, (event, keyMapping, keyHistory) => {
-    // Show the command center and focus on the text input.
-    if (onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
-      || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
-    ) {
-      pauseEvent(event);
-      refContainer.current.className = removeClassNames(
-        refContainer?.current?.className || '',
-        [
-          'hide',
-        ],
-      );
-      refInput?.current?.focus();
-    } else if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
-
-      // If there is text in the input, clear it.
-      if (refInput?.current?.value?.length >= 1) {
-        refInput.current.value = '';
-        handleNavigation(0);
+    // If the main input is active.
+    if (InputElementEnum.MAIN === refFocusedElement?.current) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
+        // If there is text in the input, clear it.
+        if (refInput?.current?.value?.length >= 1) {
+          refInput.current.value = '';
+          handleNavigation(0);
+        } else {
+          // If there is no text in the input, close.
+          refContainer.current.className = addClassNames(
+            refContainer?.current?.className || '',
+            [
+              'hide',
+            ],
+          );
+          refFocusedElement.current = null;
+          refInput?.current?.blur();
+        }
+      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
+        // Pressing enter on an item
+        handleItemSelect(items?.[focusedItemIndex]);
       } else {
-        // If there is no text in the input, close.
-        refContainer.current.className = addClassNames(
+        let index = null;
+        // Arrow down
+        if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+          // If already on the last item, don’t change
+          if (focusedItemIndex <= itemsCount - 2) {
+            index = focusedItemIndex + 1;
+          }
+          // Arrow up
+        } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+          // If already on the first item, don’t change
+          if (focusedItemIndex >= 1) {
+            index = focusedItemIndex - 1;
+          }
+        }
+
+        handleNavigation(index);
+      }
+    } else {
+      // Show the command center and focus on the text input.
+      if (onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
+        || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
+      ) {
+        pauseEvent(event);
+        refContainer.current.className = removeClassNames(
           refContainer?.current?.className || '',
           [
             'hide',
           ],
         );
-        refInput?.current?.blur();
+        refInput?.current?.focus();
       }
-    } else if (InputElementEnum.MAIN === focusedInputElement) {
-      let index = null;
-      // Arrow down
-      if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
-        // If already on the last item, don’t change
-        if (focusedItemIndex <= itemsCount - 2) {
-          index = focusedItemIndex + 1;
-        }
-        // Arrow up
-      } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
-        // If already on the first item, don’t change
-        if (focusedItemIndex >= 1) {
-          index = focusedItemIndex - 1;
-        }
-      }
-
-      handleNavigation(index);
     }
+
   }, [
-    focusedInputElement,
     focusedItemIndex,
+    handleItemSelect,
     handleNavigation,
     itemsCount,
   ]);
@@ -177,7 +193,7 @@ function CommandCenter() {
             refInput.current.value = e.target.value;
           }}
           onFocus={() => {
-            setFocusedInputElement(InputElementEnum.MAIN);
+            refFocusedElement.current = InputElementEnum.MAIN;
 
             if (focusedItemIndex === null) {
               setFocusedItemIndex(0);

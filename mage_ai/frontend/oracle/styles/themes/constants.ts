@@ -44,6 +44,7 @@ export type ThemeType = {
     output: string;
     page: string;
     panel: string;
+    panelTransparent: string;
     popup: string;
     row: string;
     row2: string;
@@ -136,11 +137,13 @@ export type ThemeType = {
   interactive: {
     activeBorder: string;
     dangerBorder: string;
+    defaultBackgroundTransparent: string;
     defaultBorder: string;
     disabledBorder: string;
     focusBackground: string;
     focusBorder: string;
     hoverBackground: string;
+    hoverBackgroundTransparent: string;
     hoverBorder: string;
     linkPrimary: string;
     linkSecondary: string;

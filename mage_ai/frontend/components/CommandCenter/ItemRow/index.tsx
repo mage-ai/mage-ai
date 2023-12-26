@@ -4,7 +4,11 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { CommandCenterItemType, CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
+import {
+  CommandCenterItemType,
+  CommandCenterTypeEnum,
+  TYPE_TITLE_MAPPING,
+} from '@interfaces/CommandCenterType';
 import { ItemStyle, getIconColor } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
@@ -55,7 +59,7 @@ function ItemRow({
         </Flex>
 
         <Text muted>
-          {capitalizeRemoveUnderscoreLower(type)}
+          {capitalizeRemoveUnderscoreLower(TYPE_TITLE_MAPPING[type] || type)}
         </Text>
       </FlexContainer>
     </ItemStyle>
