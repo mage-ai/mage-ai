@@ -1,4 +1,5 @@
 import { BlockTypeEnum } from '@interfaces/BlockType';
+import { FileExtensionEnum } from '@interfaces/FileType';
 
 export enum CommandCenterTypeEnum {
   ACTION = 'action',
@@ -13,10 +14,15 @@ interface BlockMetadataType {
   type?: BlockTypeEnum;
 }
 
+interface FileMetadataType {
+  extension?: FileExtensionEnum;
+}
+
 export interface CommandCenterItemType {
   description?: string;
   metadata?: {
     block?: BlockMetadataType;
+    file?: FileMetadataType;
   };
   subtype?: CommandCenterTypeEnum;
   title: string;

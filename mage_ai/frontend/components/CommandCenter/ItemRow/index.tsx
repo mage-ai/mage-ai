@@ -2,11 +2,12 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { CommandCenterItemType } from '@interfaces/CommandCenterType';
-import { ICONS_MAPPING } from './constants';
-import { ItemStyle } from './index.style';
+import { CommandCenterItemType, CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
+import { ItemStyle, getIconColor } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { getIcon } from './constants';
+
 
 type ItemRowProps = {
   item: CommandCenterItemType;
@@ -17,17 +18,22 @@ function ItemRow({
 }: ItemRowProps) {
   const {
     description,
+    metadata,
     title,
     type,
   } = item;
 
-  const Icon = ICONS_MAPPING[type];
+  const Icon = getIcon(item);
+  const iconColor = getIconColor(item);
 
   return (
     <ItemStyle>
       <FlexContainer alignItems="center" justifyContent="space-between">
         <Flex alignItems="center" flex={1}>
-          <Icon default size={2 * UNIT} />
+          <Icon
+            fill={iconColor?.accent}
+            size={2 * UNIT}
+          />
 
           <Spacing mr={1} />
 

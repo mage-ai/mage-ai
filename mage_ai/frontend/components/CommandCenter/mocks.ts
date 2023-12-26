@@ -1,5 +1,6 @@
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
+import { FileExtensionEnum } from '@interfaces/FileType';
 
 export const ITEMS = [
   {
@@ -30,6 +31,11 @@ export const ITEMS = [
   {
     title: 'export_users.py',
     description: 'default_repo/utils/growth/export_users.py',
+    metadata: {
+      file: {
+        extension: FileExtensionEnum.PY,
+      },
+    },
     type: CommandCenterTypeEnum.FILE,
   },
   {
@@ -39,6 +45,49 @@ export const ITEMS = [
   },
   {
     title: 'Daily run',
+    description: 'Trigger for Build core data users pipeline.',
+    type: CommandCenterTypeEnum.TRIGGER,
+  },
+  {
+    description: 'Configure your project.',
+    title: 'Open project settings 2',
+    type: CommandCenterTypeEnum.APPLICATION,
+  },
+  {
+    description: 'Personalize your profile.',
+    title: 'Edit profile 2',
+    type: CommandCenterTypeEnum.APPLICATION,
+  },
+  {
+    title: 'Generate code 2',
+    description: 'Use AI to create code.',
+    type: CommandCenterTypeEnum.ACTION,
+  },
+  {
+    title: 'Load titanic 2',
+    description: 'Python data loader block.',
+    metadata: {
+      block: {
+        type: BlockTypeEnum.DATA_LOADER,
+      },
+    },
+    type: CommandCenterTypeEnum.BLOCK,
+  },
+  {
+    title: 'transform_data.sql',
+    description: 'default_repo/risk/data/transform_data.sql',
+    file: {
+        extension: FileExtensionEnum.SQL,
+      },
+    type: CommandCenterTypeEnum.FILE,
+  },
+  {
+    title: 'Build core data users 2',
+    description: 'Daily pipeline to build user dimension table.',
+    type: CommandCenterTypeEnum.PIPELINE,
+  },
+  {
+    title: 'Daily run 2',
     description: 'Trigger for Build core data users pipeline.',
     type: CommandCenterTypeEnum.TRIGGER,
   },
