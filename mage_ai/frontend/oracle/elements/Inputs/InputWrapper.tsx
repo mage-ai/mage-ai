@@ -387,11 +387,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     padding-top: ${(UNIT * 0.75) + 12}px;
   `}
 
-  ${props => props.beforeIcon && !props.compact && `
+  ${props => props.beforeIcon && !props.paddingLeft && !props.compact && `
     padding-left: ${UNIT * 5}px !important;
   `}
 
-  ${props => props.afterIcon && !props.compact && `
+  ${props => props.afterIcon && !props.paddingRight && !props.compact && `
     padding-right: ${UNIT * 5}px !important;
   `}
 

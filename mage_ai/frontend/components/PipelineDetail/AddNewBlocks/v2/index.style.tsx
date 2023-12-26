@@ -107,7 +107,7 @@ export const DropdownStyle = styled.div<{
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).popup};
-    box-shadow: ${(props.theme.shadow || dark.shadow).popup};
+    box-shadow: ${(props.theme.shadow || dark.shadow).window};
     max-height: ${props?.maxHeight || UNIT * 40}px;
     width: ${props.width || '100%'};
   `}

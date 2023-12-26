@@ -74,15 +74,22 @@ export type UseCodeBlockComponentProps = {
   blockRef?: any;
   blocks?: BlockType[];
   codeCollapsed?: boolean;
+  content?: string;
   deleteBlock: (block: BlockType) => void,
   executionState: ExecutionStateEnum;
+  height?: number | string;
   interruptKernel: () => void;
+  onChange?: (value: string) => void;
+  onContentSizeChangeCallback?: () => void;
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
+  onMountCallback?: (editor?: any, monaco?: any) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     addon: AddonBlockTypeEnum,
     blockUUID: string;
   }) => void;
   outputCollapsed?: boolean;
   outputProps: CodeBlockOutputOutputProps;
+  placeholder?: string;
   pipeline: PipelineType;
   runBlockAndTrack: (payload?: RunBlockAndTrackProps) => void;
   savePipelineContent: (payload?: {
@@ -100,6 +107,7 @@ export type UseCodeBlockComponentProps = {
   });
   setOutputCollapsed?: (value: boolean) => void;
   setScrollTogether?: (prev: any) => void;
+  setSelected?: (value: boolean) => void;
   setSideBySideEnabled?: (prev: any) => void;
   showConfigureProjectModal?: (opts: {
     cancelButtonText?: string;
@@ -107,8 +115,11 @@ export type UseCodeBlockComponentProps = {
     onCancel?: () => void;
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
+  setTextareaFocused?: (value: boolean) => void;
+  shortcuts?: ((monaco: any, editor: any) => void)[];
   sideBySideEnabled?: boolean;
   status: StatusType;
+  textareaFocused?: boolean;
   theme: ThemeType;
   updatePipeline: (payload: {
     pipeline: {
@@ -157,17 +168,6 @@ export type ButtonType = {
 export type UseCodeBlockPropsType = {} & UseCodeBlockComponentProps;
 
 export type CodeBlockEditorProps = {
-  content?: string;
-  height?: number;
-  onChange?: (value: string) => void;
-  onContentSizeChangeCallback?: () => void;
-  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
-  onMountCallback?: (editor?: any, monaco?: any) => void;
-  placeholder?: string;
-  setSelected?: (value: boolean) => void;
-  setTextareaFocused?: (value: boolean) => void;
-  shortcuts?: ((monaco: any, editor: any) => void)[];
-  textareaFocused?: boolean;
 } & UseCodeBlockComponentProps;
 
 type CodeBlockOutputReturnProps = {
@@ -204,6 +204,16 @@ export type HeaderTabType = {
 };
 
 export interface UseCodeBlockComponentType {
+  editor?: any;
+  extraDetails?: any;
+  footer?: any;
+  header?: any;
+  headerTabContent?: any;
+  output?: any;
+  tags?: any;
+}
+
+export interface UseCodeBlockPropsReturnType {
   editor?: any;
   extraDetails?: any;
   footer?: any;

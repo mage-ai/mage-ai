@@ -44,7 +44,7 @@ import {
   TreeWithArrowsUp,
   VisibleEye,
 } from '@oracle/icons';
-import { ButtonUUIDEnum, UseCodeBlockComponentType, UseCodeBlockPropsType } from '../constants';
+import { ButtonUUIDEnum, UseCodeBlockPropsReturnType, UseCodeBlockPropsType } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { HeaderTabEnum, buildHeaderTabs, buildOutputTabs } from './constants';
 import { ICON_SIZE, MENU_ICON_SIZE } from '../Header/index.style';
@@ -92,7 +92,7 @@ export default function useCodeBlockProps({
   sideBySideEnabled,
   theme,
   updatePipeline,
-}: UseCodeBlockPropsType): UseCodeBlockComponentType {
+}: UseCodeBlockPropsType): UseCodeBlockPropsReturnType {
   const {
     color: blockColor,
     configuration,
