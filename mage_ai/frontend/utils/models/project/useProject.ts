@@ -9,6 +9,7 @@ export type UseProjectType = {
   // @ts-ignore
   featureUUIDs: {
     ADD_NEW_BLOCK_V2: FeatureUUIDEnum;
+    CODE_BLOCK_V2: FeatureUUIDEnum;
     COMPUTE_MANAGEMENT: FeatureUUIDEnum;
     CUSTOM_DESIGN: FeatureUUIDEnum;
     DBT_V2: FeatureUUIDEnum;

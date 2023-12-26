@@ -40,6 +40,7 @@ export const KEY_CODE_Y = 89;
 export const KEY_CODE_META = 'metaKey';
 export const KEY_CODE_META_LEFT = 91;
 export const KEY_CODE_META_RIGHT = 93;
+export const KEY_CODE_PERIOD = 190;
 export const KEY_CODE_FORWARD_SLASH = 191;
 export const KEY_CODE_META_FIREFOX = 224;
 export const KEY_CODE_METAS = [
@@ -128,6 +129,7 @@ export const KEY_SYMBOL_ESCAPE = 'esc';
 export const KEY_SYMBOL_FORWARD_SLASH = '/';
 export const KEY_SYMBOL_META = '⌘';
 export const KEY_SYMBOL_SHIFT = '⇧';
+export const KEY_SYMBOL_PERIOD = '.';
 export const KEY_SYMBOL_TAB = 'tab';
 
 export const KEY_ENTER = 'Enter';

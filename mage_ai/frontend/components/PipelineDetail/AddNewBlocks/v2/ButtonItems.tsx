@@ -40,6 +40,7 @@ import {
 import { ButtonWrapper, ICON_SIZE } from './index.style';
 import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -75,7 +76,7 @@ export type ButtonItemsProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
-};
+} & OpenBlockBrowserModalType;
 
 function ButtonItems({
   addNewBlock,
@@ -89,6 +90,7 @@ function ButtonItems({
   pipelineType,
   setAddNewBlockMenuOpenIdx,
   setButtonMenuOpenIndex,
+  showBlockBrowserModal,
   showBrowseTemplates,
   showGlobalDataProducts,
 }: ButtonItemsProps) {

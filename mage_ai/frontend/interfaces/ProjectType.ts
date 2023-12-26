@@ -3,6 +3,7 @@ import { PipelineSettingsType } from './PipelineType';
 
 export enum FeatureUUIDEnum {
   ADD_NEW_BLOCK_V2 = 'add_new_block_v2',
+  CODE_BLOCK_V2 = 'code_block_v2',
   COMPUTE_MANAGEMENT = 'compute_management',
   CUSTOM_DESIGN = 'custom_design',
   DATA_INTEGRATION_IN_BATCH_PIPELINE = 'data_integration_in_batch_pipeline',

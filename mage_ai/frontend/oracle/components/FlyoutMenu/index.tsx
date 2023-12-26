@@ -40,10 +40,11 @@ export type FlyoutMenuItemType = {
   linkProps?: {
     as?: string;
     href: string;
+    openNewWindow?: boolean;
   };
   openConfirmationDialogue?: boolean;
   isGroupingTitle?: boolean;
-  onClick?: () => void;
+  onClick?: (opts?: any) => void;
   tooltip?: () => string;
   uuid: string;
 };
@@ -140,7 +141,11 @@ function FlyoutMenu({
           if (item?.onClick) {
             item?.onClick?.();
           } else if (item?.linkProps) {
-            router.push(item?.linkProps?.href, item?.linkProps?.as);
+            if (item?.linkProps?.openNewWindow && typeof window !== 'undefined') {
+              window.open(item?.linkProps?.href, '_blank');
+            } else {
+              router.push(item?.linkProps?.href, item?.linkProps?.as);
+            }
           }
         }
         onClickCallback?.();
@@ -290,6 +295,10 @@ function FlyoutMenu({
                 }));
               }}
               ref={refArg.current[uuid]}
+              target={linkProps && linkProps?.openNewWindow
+                ? '_blank'
+                : null
+              }
             >
               <FlexContainer
                 alignItems="center"

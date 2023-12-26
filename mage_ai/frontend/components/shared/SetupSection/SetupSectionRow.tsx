@@ -16,7 +16,8 @@ interface InputType {
   monospace?: boolean;
   onChange?: (event: any) => void;
   placeholder?: string;
-  value?: string;
+  type?: string;
+  value?: string | number;
 }
 
 type SetupSectionRowProps = {

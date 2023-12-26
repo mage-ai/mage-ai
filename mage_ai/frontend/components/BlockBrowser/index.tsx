@@ -38,6 +38,7 @@ import {
   Sun,
   Table as TableIcon,
 } from '@oracle/icons';
+import { ContainerStyle, MODAL_PADDING } from '@components/DataIntegrationModal/index.style';
 import { DropdownStyle, RowStyle, SearchStyle } from '@components/PipelineDetail/AddNewBlocks/v2/index.style';
 import {
   FileContextTab,
@@ -72,6 +73,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 type BrowserProps = {
+  contained?: boolean;
   defaultBlockType?: BlockTypeEnum;
   focused?: boolean;
   onClickAction?: (opts?: {
@@ -79,6 +81,7 @@ type BrowserProps = {
     row?: {
       directory?: string;
       filePath?: string;
+      fullPath?: string;
       name?: string;
     };
   }) => void;
@@ -86,6 +89,7 @@ type BrowserProps = {
 };
 
 function Browser({
+  contained,
   defaultBlockType,
   focused: focusedProp,
   onClickAction,
@@ -108,6 +112,24 @@ function Browser({
     height: heightWindow,
     width: widthWindow,
   } = useWindowSize();
+
+  const [sizes, setSizes] = useState<{
+    height: number;
+    width: number;
+  }>({
+    height: null,
+    width: null,
+  });
+
+  useEffect(() => {
+    setSizes({
+      height: heightWindow - (MODAL_PADDING * 2),
+      width: widthWindow - (MODAL_PADDING * 2),
+    });
+  }, [
+    heightWindow,
+    widthWindow,
+  ]);
 
   const [showError] = useError(null, {}, [], {
     uuid: componentUUID,
@@ -372,7 +394,7 @@ function Browser({
   }, [cacheItems]);
 
   return (
-    <>
+    <ContainerStyle maxWidth={contained ? sizes?.width : null}>
       <TripleLayout
         after={after}
         afterDividerContrast
@@ -415,7 +437,7 @@ function Browser({
         beforeWidth={beforeWidth}
         contained
         headerOffset={HEADER_HEIGHT}
-        height={heightWindow}
+        height={contained ? sizes?.height : heightWindow}
         hideAfterCompletely={!selectedItem}
         inline
         mainContainerHeader={(
@@ -446,6 +468,7 @@ function Browser({
                   onChange={e => setSearchText(e.target.value)}
                   onFocus={() => setFocused(true)}
                   placeholder="Search a file..."
+                  primary
                   small
                   ref={refSearch}
                 />
@@ -527,6 +550,9 @@ function Browser({
                         }
 
                         setSelectedLinks(arr);
+                        setSearchText(null);
+                        setFocused(false);
+                        refSearch?.current?.blur();
                       }}
                       searchQuery={searchText}
                       uuid={`${componentUUID}/AutocompleteDropdown`}
@@ -548,7 +574,7 @@ function Browser({
       >
         {mainContentMemo}
       </TripleLayout>
-    </>
+    </ContainerStyle>
   );
 }
 

@@ -77,9 +77,11 @@ export function getColorsForBlockType(
 ): {
   accent?: string;
   accentLight?: string;
+  accentLight2?: string;
 } {
   let accent = (props?.theme?.borders || dark.borders).light;
   let accentLight = (props?.theme?.monotone || dark.monotone).grey500;
+  let accentLight2;
   const { blockColor, isSelected, theme } = props || {};
 
   if (isSelected) {
@@ -106,6 +108,7 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.DBT === blockType) {
     accent = (theme || dark).accent.dbt;
     accentLight = (theme || dark).accent.dbtLight;
+    accentLight2 = (theme || dark).accent.dbtLight2;
   } else if (BlockTypeEnum.EXTENSION === blockType || blockColor === BlockColorEnum.TEAL) {
     accent = (theme?.accent || dark.accent).teal;
     accentLight = (theme?.accent || dark.accent).tealLight;
@@ -131,6 +134,7 @@ export function getColorsForBlockType(
   return {
     accent,
     accentLight,
+    accentLight2,
   };
 }
 
@@ -170,6 +174,20 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
   `}
 `;
 
+export const CodeBlockV1WrapperStyle = styled.div`
+  &.disable-border-radius {
+    .code-block-header-sticky {
+      border-top-left-radius: 0px !important;
+      border-top-right-radius: 0px !important;
+    }
+ }
+
+  .code-block-header-sticky {
+    border-top-left-radius: ${BORDER_RADIUS}px;
+    border-top-right-radius: ${BORDER_RADIUS}px;
+  }
+`;
+
 export const ContainerStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
   position: relative;
@@ -203,16 +221,12 @@ export const BlockHeaderStyle = styled.div<{
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
-  border-top-left-radius: ${BORDER_RADIUS}px;
-  border-top-right-radius: ${BORDER_RADIUS}px;
   border-top-style: ${BORDER_STYLE};
   border-top-width: ${BORDER_WIDTH_THICK}px;
   border-left-style: ${BORDER_STYLE};
   border-left-width: ${BORDER_WIDTH_THICK}px;
   border-right-style: ${BORDER_STYLE};
   border-right-width: ${BORDER_WIDTH_THICK}px;
-  padding-bottom: ${1 * UNIT}px;
-  padding-top: ${1 * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};
@@ -226,7 +240,7 @@ export const BlockHeaderStyle = styled.div<{
     // This is to hide the horizontal scrollbar in the block header when sideBySide is enabled,
     // and the screen width is too small.
     position: sticky;
-    top: -5px;
+    top: 0px;
   `}
 
   ${props => props.noSticky && `
