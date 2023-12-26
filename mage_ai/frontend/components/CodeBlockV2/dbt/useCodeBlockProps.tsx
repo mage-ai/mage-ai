@@ -272,9 +272,9 @@ export default function useCodeBlockProps({
 
   const buttonRunUpstream = {
     Icon: TreeWithArrowsUp,
-    description: 'Execute and run all upstream blocks',
+    description: 'Run all upstream blocks then run this block',
     disabled: ({ active }) => active,
-    label: () => 'Run upstream',
+    label: () => 'Run up',
     onClick: (opts) => {
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({

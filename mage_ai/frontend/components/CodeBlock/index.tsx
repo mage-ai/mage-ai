@@ -1312,7 +1312,6 @@ function CodeBlock({
     output: codeBlockComponentOutput,
     // extraDetails,
     // footer,
-    // tags,
   } = useCodeBlockComponents({
     addNewBlock,
     autocompleteProviders,
@@ -2744,7 +2743,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
             >
               <HeaderHorizontalBorder />
 
-              {tags.length >= 1 && (
+              {(!codeBlockV2 || !codeBlockComponentHeader) && tags.length >= 1 && (
                 <SubheaderStyle>
                   <Spacing p={1}>
                     <FlexContainer>

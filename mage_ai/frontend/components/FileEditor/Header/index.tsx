@@ -34,7 +34,7 @@ type FileHeaderMenuProps = {
   menuGroups?: MenuGroupType[];
   onSave?: () => void;
   rightOffset?: number;
-  setFilesVersionsVisible: (visible: boolean) => void;
+  setFilesVersionsVisible?: (visible: boolean) => void;
 };
 
 function FileHeaderMenu({
@@ -69,7 +69,7 @@ function FileHeaderMenu({
   const editItems = useMemo(() => [
     {
       label: () => fileVersionsVisible ? 'Hide versions' : 'Show versions',
-      onClick: () => setFilesVersionsVisible(!fileVersionsVisible),
+      onClick: () => setFilesVersionsVisible?.(!fileVersionsVisible),
       uuid: 'versions',
     },
   ], [
@@ -166,7 +166,7 @@ function FileHeaderMenu({
                 {...SHARED_FILE_HEADER_BUTTON_PROPS}
                 beforeIcon={<FileIcon muted={!fileVersionsVisible} />}
                 noBackground={!fileVersionsVisible}
-                onClick={() => setFilesVersionsVisible(!fileVersionsVisible)}
+                onClick={() => setFilesVersionsVisible?.(!fileVersionsVisible)}
               >
                 <Text>
                   {fileVersionsVisible ? 'Hide file versions' : 'Show file versions'}

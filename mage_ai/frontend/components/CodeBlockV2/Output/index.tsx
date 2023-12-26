@@ -193,7 +193,7 @@ function CodeBlockOutput({
     tabs,
   ]);
 
-  const codeOutputProps = {
+  const codeOutputProps = useMemo(() => ({
     ...borderColorShareProps,
     alwaysShowExtraInfo: true,
     block,
@@ -217,7 +217,30 @@ function CodeBlockOutput({
     setSelectedOutputBlock,
     showBorderTop: sideBySideEnabled,
     sideBySideEnabled,
-  };
+  }), [
+    block,
+    blockIndex,
+    borderColorShareProps,
+    collapsed,
+    hasOutput,
+    isHidden,
+    isInProgress,
+    mainContainerWidth,
+    messages,
+    messagesWithType,
+    openSidekickView,
+    pipeline,
+    runCount,
+    runEndTime,
+    runStartTime,
+    scrollTogether,
+    selected,
+    setErrors,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+    sideBySideEnabled,
+    sideBySideEnabled,
+  ]);
 
   const {
     extraInfo,
@@ -226,42 +249,44 @@ function CodeBlockOutput({
     textContent,
   } = useCodeOutput(codeOutputProps);
 
-  const textContentErrors = withError?.length >= 1
-    ? useCodeOutput({ ...codeOutputProps, messages: withError })?.textContent
-    : null;
+  const {
+    textContent: textContentErrors,
+  } = useCodeOutput({ ...codeOutputProps, messages: withError?.length >= 1 ? withError : [] });
 
-  const textContentInfo = withoutError?.length >= 1
-    ? useCodeOutput({ ...codeOutputProps, messages: withoutError })?.textContent
-    : null;
+  const {
+    textContent: textContentInfo,
+  } = useCodeOutput({ ...codeOutputProps, messages: withoutError?.length >= 1 ? withoutError : [] });
 
   const columnsOfItems = useMemo(() => {
     const columns = [];
 
     if (OutputTabEnum.OUTPUT in (selectedOutputTabs || {})) {
-      columns.push(tableContentData?.map(data => ({
-        render: ({
-          numberOfColumns,
-          columnWidth,
-          width,
-        }) => (
-          <DataTable
-            columns={data?.columns}
-            disableScrolling={!selected}
-            index={data?.index}
-            key={`data-table-${data?.index}`}
-            maxHeight={textContent?.length >= 1
-              ? refLogs?.current?.getBoundingClientRect()?.height
-              : UNIT * 60
-            }
-            noBorderBottom
-            noBorderLeft
-            noBorderRight
-            noBorderTop={!data?.borderTop}
-            rows={data?.rows}
-            width={columnWidth}
-          />
-        ),
-      })));
+      if (tableContentData?.length >= 1) {
+        columns.push(tableContentData?.map(data => ({
+          render: ({
+            numberOfColumns,
+            columnWidth,
+            width,
+          }) => (
+            <DataTable
+              columns={data?.columns}
+              disableScrolling={!selected}
+              index={data?.index}
+              key={`data-table-${data?.index}`}
+              maxHeight={textContent?.length >= 1
+                ? refLogs?.current?.getBoundingClientRect()?.height
+                : UNIT * 60
+              }
+              noBorderBottom
+              noBorderLeft
+              noBorderRight
+              noBorderTop={!data?.borderTop}
+              rows={data?.rows}
+              width={columnWidth}
+            />
+          ),
+        })));
+      }
     }
 
     if (OutputTabEnum.LOGS in (selectedOutputTabs || {})) {

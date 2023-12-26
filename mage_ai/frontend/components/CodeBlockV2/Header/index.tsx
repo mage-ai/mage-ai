@@ -4,11 +4,11 @@ import { CSSTransition } from 'react-transition-group';
 
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Circle from '@oracle/elements/Circle';
-import CodeBlockHeaderProps from '../constants';
 import Divider from '@oracle/elements/Divider';
 import FileEditorHeader from '@components/FileEditor/Header';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import Loading, { LoadingStyleEnum } from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -16,6 +16,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
 import { ChevronDownV2, ChevronUpV2, Menu, PanelCollapseLeft } from '@oracle/icons';
+import { CodeBlockHeaderProps } from '../constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   HeaderStyle,
@@ -27,6 +28,7 @@ import {
   SubheaderStyle,
 } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { buildTags } from '@components/CodeBlock/utils';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 function CodeBlockHeader({
@@ -200,10 +202,10 @@ function CodeBlockHeader({
         el = (
           <div style={{ position: 'relative' }}>
             <Tooltip
-              appearAfter
               block
               label={description}
               size={null}
+              visibleDelay={300}
               widthFitContent
             >
               {el}
@@ -239,41 +241,58 @@ function CodeBlockHeader({
     waiting,
   ]);
 
-  const menuMemo = useMemo(() => menuGroups?.length >= 1 && (
-    <FlexContainer
-      alignItems="center"
-      justifyContent="space-between"
-    >
-      {tabs?.length >= 1
-        ? (
-          <ButtonTabs
-            onClickTab={(tab: TabType) => {
-              setSelectedHeaderTab?.(tab);
-            }}
-            selectedTabUUID={selectedHeaderTab?.uuid}
-            tabs={tabs}
-            underlineColor={color?.accent}
-            underlineStyle
-          />
-        )
-        : <div />
-      }
+  const tags = useMemo(() => buildTags(block), [block]);
 
-      {tabs?.length >= 1
-        ? <FileEditorHeader defaultTextContent menuGroups={menuGroups} rightOffset={0} />
-        : (
-          <SubheaderMenuStyle>
-            <FileEditorHeader defaultTextContent menuGroups={menuGroups} rightOffset={0} />
-          </SubheaderMenuStyle>
-        )
-      }
-    </FlexContainer>
-  ), [
+  const subhederMenuMemo = useMemo(() => {
+    if (!menuGroups?.length || !tags?.length) {
+      return null;
+    }
+
+    const childEl = (
+      <FileEditorHeader
+        defaultTextContent
+        menuGroups={menuGroups}
+        rightOffset={0}
+      />
+    );
+
+    return (
+      <FlexContainer
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        {tabs?.length >= 1
+          ? (
+            <ButtonTabs
+              onClickTab={(tab: TabType) => {
+                setSelectedHeaderTab?.(tab);
+              }}
+              selectedTabUUID={selectedHeaderTab?.uuid}
+              tabs={tabs}
+              underlineColor={color?.accent}
+              underlineStyle
+            />
+          )
+          : <div />
+        }
+
+        {tabs?.length >= 1
+          ? childEl
+          : (
+            <SubheaderMenuStyle>
+              {childEl}
+            </SubheaderMenuStyle>
+          )
+        }
+      </FlexContainer>
+    );
+  }, [
     color,
     menuGroups,
     selectedHeaderTab,
     setSelectedHeaderTab,
     tabs,
+    tags,
   ]);
 
   useEffect(() => {
@@ -290,7 +309,7 @@ function CodeBlockHeader({
     >
       <HeaderStyle>
         <FlexContainer alignItems="center">
-          <KeyboardShortcutButton
+          {/*<KeyboardShortcutButton
             noBackground
             noPadding
             onClick={() => setSideMenuVisible(prev => !prev)}
@@ -298,10 +317,10 @@ function CodeBlockHeader({
             uuid={`KeyboardShortcutButton/${uuid}/header/menu/button`}
           >
             <Tooltip
-              appearAfter
               block
               label="Open menu"
               size={UNIT * 3}
+              visibleDelay={300}
               widthFitContent
             >
               {sideMenuVisible
@@ -311,7 +330,7 @@ function CodeBlockHeader({
             </Tooltip>
           </KeyboardShortcutButton>
 
-          <Spacing mr={PADDING_UNITS} />
+          <Spacing mr={PADDING_UNITS} />*/}
 
           {buttonsVisible}
 
@@ -360,6 +379,7 @@ function CodeBlockHeader({
               </FlexContainer>
             )}
             size={null}
+            visibleDelay={300}
             widthFitContent
           >
             <Circle
@@ -414,7 +434,7 @@ function CodeBlockHeader({
           <Divider light />
 
           <SubheaderStyle>
-            {menuMemo}
+            {subhederMenuMemo}
           </SubheaderStyle>
         </>
       )}

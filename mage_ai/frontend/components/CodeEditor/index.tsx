@@ -74,6 +74,7 @@ type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
   block?: BlockType;
+  editorRef?: any;
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
