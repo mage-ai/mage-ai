@@ -258,6 +258,7 @@ export default function useCodeBlockComponents({
           setErrors={setErrors}
           setOutputBlocks={setOutputBlocks}
           setSelectedOutputBlock={setSelectedOutputBlock}
+          // @ts-ignore
           setSelectedOutputTabs={setSelectedOutputTabs}
           sideBySideEnabled={sideBySideEnabled}
           subheaderVisible={subheaderVisible}

@@ -14,6 +14,8 @@ type MultiColumnControllerProps = {
   dividerBackgroundColorHover?: string;
   columnsOfItems?: {
     render: (opts?: {
+      numberOfColumns?: number;
+      columnWidth?: number;
       width?: number;
     }) => any;
   }[][];

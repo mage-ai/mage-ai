@@ -75,8 +75,8 @@ export type UseCodeBlockComponentProps = {
   blocks?: BlockType[];
   codeCollapsed?: boolean;
   content?: string;
-  deleteBlock: (block: BlockType) => void,
-  executionState: ExecutionStateEnum;
+  deleteBlock?: (block: BlockType) => void,
+  executionState?: ExecutionStateEnum;
   height?: number | string;
   interruptKernel: () => void;
   onChange?: (value: string) => void;
@@ -88,19 +88,19 @@ export type UseCodeBlockComponentProps = {
     blockUUID: string;
   }) => void;
   outputCollapsed?: boolean;
-  outputProps: CodeBlockOutputOutputProps;
+  outputProps?: CodeBlockOutputOutputProps;
   placeholder?: string;
-  pipeline: PipelineType;
-  runBlockAndTrack: (payload?: RunBlockAndTrackProps) => void;
-  savePipelineContent: (payload?: {
+  pipeline?: PipelineType;
+  runBlockAndTrack?: (payload?: RunBlockAndTrackProps) => void;
+  savePipelineContent?: (payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
   scrollTogether?: boolean;
   selected?: boolean;
   setCodeCollapsed?: (value: boolean) => void;
-  setErrors: (errors: ErrorsType) => void;
-  setHiddenBlocks: ((opts: {
+  setErrors?: (errors: ErrorsType) => void;
+  setHiddenBlocks?: ((opts: {
     [uuid: string]: BlockType;
   }) => {
     [uuid: string]: BlockType;
@@ -118,10 +118,10 @@ export type UseCodeBlockComponentProps = {
   setTextareaFocused?: (value: boolean) => void;
   shortcuts?: ((monaco: any, editor: any) => void)[];
   sideBySideEnabled?: boolean;
-  status: StatusType;
+  status?: StatusType;
   textareaFocused?: boolean;
-  theme: ThemeType;
-  updatePipeline: (payload: {
+  theme?: ThemeType;
+  updatePipeline?: (payload: {
     pipeline: {
       add_upstream_for_block_uuid?: string;
       llm?: LLMType;
@@ -180,21 +180,19 @@ export type CodeBlockOutputProps = {
   selectedOutputTabs?: {
     [uuid: string]: TabType;
   };
-  setSelectedOutputTabs: (data: {
-    [uuid: string]: TabType;
-  }) => {
+  setSelectedOutputTabs: (prev: any) => {
     [uuid: string]: TabType;
   };
   subheaderVisible?: boolean;
 } & CodeBlockOutputReturnProps & CodeBlockOutputOutputProps & UseCodeBlockComponentProps;
 
 type CodeBlockHeaderReturnProps = {
-  buttons: ButtonType[];
+  buttons?: ButtonType[];
   menuGroups?: MenuGroupType[];
   subheaderVisibleDefault?: (block: BlockType) => boolean;
   subtitle?: string;
   tabs?: TabType[];
-  title: string;
+  title?: string;
 };
 
 export type CodeBlockHeaderProps = CodeBlockHeaderReturnProps & UseCodeBlockComponentProps;
