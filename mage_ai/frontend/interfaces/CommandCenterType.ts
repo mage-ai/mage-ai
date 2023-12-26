@@ -27,4 +27,5 @@ export interface CommandCenterItemType {
   subtype?: CommandCenterTypeEnum;
   title: string;
   type: CommandCenterTypeEnum;
+  uuid: string;
 }

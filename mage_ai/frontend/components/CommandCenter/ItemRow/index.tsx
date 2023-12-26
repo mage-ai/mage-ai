@@ -1,21 +1,25 @@
+import React from 'react';
+
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { CommandCenterItemType, CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
 import { ItemStyle, getIconColor } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getIcon } from './constants';
 
 
 type ItemRowProps = {
+  focused?: boolean;
   item: CommandCenterItemType;
 };
 
 function ItemRow({
+  focused,
   item,
-}: ItemRowProps) {
+}: ItemRowProps, ref) {
   const {
     description,
     metadata,
@@ -27,7 +31,7 @@ function ItemRow({
   const iconColor = getIconColor(item);
 
   return (
-    <ItemStyle>
+    <ItemStyle focused={focused} ref={ref}>
       <FlexContainer alignItems="center" justifyContent="space-between">
         <Flex alignItems="center" flex={1}>
           <Icon
@@ -35,13 +39,13 @@ function ItemRow({
             size={2 * UNIT}
           />
 
-          <Spacing mr={1} />
+          <div style={{ marginRight: 1.5 * UNIT }} />
 
           <Text weightStyle={4}>
             {title}
           </Text>
 
-          <Spacing mr={2} />
+          <Spacing mr={PADDING_UNITS} />
 
           {description && (
             <Text default>
@@ -58,4 +62,4 @@ function ItemRow({
   );
 }
 
-export default ItemRow;
+export default React.forwardRef(ItemRow);

@@ -27,6 +27,10 @@ export const ContainerStyle = styled.div`
 
 export const InputContainerStyle = styled.div`
   padding: ${SCROLLBAR_WIDTH}px;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme || dark).monotone.grey500};
+  `}
 `;
 
 export const InputStyle = styled.input`
@@ -51,14 +55,10 @@ export const ItemsContainerStyle = styled.div<{
 
   height: ${50 * UNIT}px;
   overflow: auto;
-  padding: ${SCROLLBAR_WIDTH}px;
-
-  ${props => `
-    border-top: 1px solid ${(props.theme || dark).monotone.grey500};
-  `}
+  margin: ${SCROLLBAR_WIDTH}px;
 
   &:hover {
-    padding-right: 0;
+    margin-right: 0;
 
     // for Internet Explorer, Edge
     -ms-overflow-style: block !important;

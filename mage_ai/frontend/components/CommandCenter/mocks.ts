@@ -91,4 +91,12 @@ export const ITEMS = [
     description: 'Trigger for Build core data users pipeline.',
     type: CommandCenterTypeEnum.TRIGGER,
   },
-];
+].map(item => ({
+  ...item,
+  uuid: [
+    item?.title,
+    item?.description,
+    item?.type,
+    item?.subtype,
+  ]?.map(v => v || '_')?.join('/'),
+}));
