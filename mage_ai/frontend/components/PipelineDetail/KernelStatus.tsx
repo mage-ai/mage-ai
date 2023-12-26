@@ -54,9 +54,7 @@ import { ComputeConnectionStateEnum } from '@interfaces/ComputeConnectionType';
 import { HeaderViewOptionsStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
-  KEY_CODE_META,
   KEY_SYMBOL_CONTROL,
-  KEY_SYMBOL_META,
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import {

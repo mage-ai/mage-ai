@@ -152,6 +152,7 @@ function CodeBlockOutput({
       {tabs?.length >= 1
         ? (
           <ButtonTabs
+            allowScroll
             multiSelection
             onClickTab={(tab: TabType) => {
               // @ts-ignore

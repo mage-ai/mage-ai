@@ -43,7 +43,6 @@ export default function useCodeBlockComponents({
     setErrors,
     setSelected,
     setTextareaFocused,
-    shortcuts,
     showConfigureProjectModal,
     sideBySideEnabled,
     status,
@@ -122,11 +121,11 @@ export default function useCodeBlockComponents({
           pipeline={pipeline}
           placeholder={placeholder}
           project={project}
+          runBlockAndTrack={runBlockAndTrack}
           selected={selected}
           setSelected={setSelected}
           setTextareaFocused={setTextareaFocused}
           sideMenuVisible={sideMenuVisible}
-          shortcuts={shortcuts}
           showConfigureProjectModal={showConfigureProjectModal}
           textareaFocused={textareaFocused}
           theme={theme}
@@ -151,11 +150,11 @@ export default function useCodeBlockComponents({
     pipeline,
     placeholder,
     project,
+    runBlockAndTrack,
     selected,
     setSelected,
     setTextareaFocused,
     sideMenuVisible,
-    shortcuts,
     showConfigureProjectModal,
     textareaFocused,
     theme,
@@ -195,7 +194,6 @@ export default function useCodeBlockComponents({
           executionState={executionState}
           interruptKernel={interruptKernel}
           ref={refHeader}
-          runBlockAndTrack={runBlockAndTrack}
           selected={selected}
           selectedHeaderTab={selectedHeaderTab}
           setSelectedHeaderTab={setSelectedHeaderTab}
@@ -215,7 +213,6 @@ export default function useCodeBlockComponents({
     enabled,
     executionState,
     interruptKernel,
-    runBlockAndTrack,
     selected,
     selectedHeaderTab,
     setSelectedHeaderTab,

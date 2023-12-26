@@ -26,6 +26,7 @@ import {
   SubheaderButtonStyle,
   SubheaderMenuStyle,
   SubheaderStyle,
+  TagStyle,
 } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { buildTags } from '@components/CodeBlock/utils';
@@ -136,7 +137,7 @@ function CodeBlockHeader({
       Icon: IconButton,
       color,
       description,
-      disabled,
+      disabled: disabledFunc,
       icon,
       keyTextGroups,
       keyTextsPosition,
@@ -147,21 +148,34 @@ function CodeBlockHeader({
       uuid: uuidButton,
       visible,
     }, idx: number) => {
+      const disabled = disabledFunc && disabledFunc?.({
+        active,
+        running,
+        waiting,
+      });
       const iconOnly = (icon || IconButton) && !label;
       const iconEl = icon
-        ? icon
-        : IconButton && <IconButton fill={color} size={ICON_SIZE}/>;
+        ? React.cloneElement(icon, {
+          ...(icon?.props || {}),
+          ...(disabled ? {
+            color: null,
+            disabled,
+          } : {})
+        })
+        : IconButton && (
+          <IconButton
+            disabled={disabled}
+            fill={disabled ? null : color}
+            size={ICON_SIZE}
+          />
+        );
 
       let el = (
         <KeyboardShortcutButton
           addPlusSignBetweenKeys
-          backgroundColor={color}
+          backgroundColor={disabled ? null : color}
           compact
-          disabled={disabled && disabled?.({
-            active,
-            running,
-            waiting,
-          })}
+          disabled={disabled}
           key={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
           keyTextGroups={keyTextGroups}
           keyTextsPosition={keyTextsPosition}
@@ -189,7 +203,7 @@ function CodeBlockHeader({
             }
           }}
           outline
-          uuid={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
+          uuid={`CodeBlockV2/Header/KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
         >
           {iconEl}
           {iconEl && label && <Spacing mr={1} />}
@@ -279,34 +293,76 @@ function CodeBlockHeader({
     );
 
     return (
-      <FlexContainer
-        alignItems="center"
-        justifyContent="space-between"
-      >
-        {tabs?.length >= 1
-          ? (
-            <ButtonTabs
-              onClickTab={(tab: TabType) => {
-                setSelectedHeaderTab?.(tab);
-              }}
-              selectedTabUUID={selectedHeaderTab?.uuid}
-              tabs={tabs}
-              underlineColor={color?.accent}
-              underlineStyle
-            />
-          )
-          : <div />
-        }
+      <>
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          {tabs?.length >= 1
+            ? (
+              <ButtonTabs
+                allowScroll
+                onClickTab={(tab: TabType) => {
+                  setSelectedHeaderTab?.(tab);
+                }}
+                selectedTabUUID={selectedHeaderTab?.uuid}
+                tabs={tabs}
+                underlineColor={color?.accent}
+                underlineStyle
+              />
+            )
+            : <div />
+          }
 
-        {tabs?.length >= 1
-          ? childEl
-          : (
+          {tabs?.length >= 1
+            ? childEl
+            : (
+              <SubheaderMenuStyle>
+                {childEl}
+              </SubheaderMenuStyle>
+            )
+          }
+        </FlexContainer>
+
+        {tags?.length >= 1 && (
+          <>
+            <Divider light />
+
             <SubheaderMenuStyle>
-              {childEl}
+              <FlexContainer
+                alignItems="center"
+                fullWidth
+                justifyContent="space-between"
+              >
+                <div />
+
+                <FlexContainer alignItems="center" justifyContent="flex-end">
+                  {tags?.map(({
+                    description,
+                    title,
+                  }) => (
+                    <Tooltip
+                      appearBefore
+                      block
+                      key={title}
+                      label={description || title}
+                      size={null}
+                      visibleDelay={300}
+                      widthFitContent
+                    >
+                      <TagStyle backgroundColor={color?.accentLight}>
+                        <Text small>
+                          {title}
+                        </Text>
+                      </TagStyle>
+                    </Tooltip>
+                  ))}
+                </FlexContainer>
+              </FlexContainer>
             </SubheaderMenuStyle>
-          )
-        }
-      </FlexContainer>
+          </>
+        )}
+      </>
     );
   }, [
     color,

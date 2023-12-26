@@ -69,6 +69,7 @@ type CodeBlockOutputOutputProps = {
 
 export type UseCodeBlockComponentProps = {
   addNewBlock?: (block: BlockType, downstreamBlocks?: BlockType[]) => Promise<any>;
+  allowCodeBlockShortcuts?: boolean;
   autocompleteProviders?: ProvidersType;
   block: BlockType;
   blockRef?: any;
@@ -76,8 +77,10 @@ export type UseCodeBlockComponentProps = {
   codeCollapsed?: boolean;
   content?: string;
   deleteBlock?: (block: BlockType) => void,
+  disableShortcuts?: boolean;
   executionState?: ExecutionStateEnum;
   height?: number | string;
+  hideRunButton?: boolean;
   interruptKernel: () => void;
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
@@ -116,7 +119,6 @@ export type UseCodeBlockComponentProps = {
     onSaveSuccess?: (project: ProjectType) => void;
   }) => void;
   setTextareaFocused?: (value: boolean) => void;
-  shortcuts?: ((monaco: any, editor: any) => void)[];
   sideBySideEnabled?: boolean;
   status?: StatusType;
   textareaFocused?: boolean;

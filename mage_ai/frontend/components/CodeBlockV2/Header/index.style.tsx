@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
@@ -96,4 +96,18 @@ export const SubheaderStyle = styled.div`
 export const SubheaderMenuStyle = styled.div`
   padding-bottom: ${UNIT / 2}px;
   padding-top: ${UNIT / 2}px;
+`;
+
+export const TagStyle = styled.div<{
+  backgroundColor?: string;
+}>`
+  align-items: center;
+  border-radius: ${BORDER_RADIUS_SMALL}px;
+  display: flex;
+  padding: 2px ${UNIT * 1}px;
+  margin-right: ${UNIT * 1}px;
+
+  ${props => `
+    background-color: ${props.backgroundColor || (props.theme || dark).background.chartBlock};
+  `}
 `;
