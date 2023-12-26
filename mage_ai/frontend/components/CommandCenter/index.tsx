@@ -8,6 +8,7 @@ import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import {
+  CommandCenterActionInteractionTypeEnum,
   CommandCenterActionRequestType,
   CommandCenterItemType,
   KeyValueType,
@@ -63,32 +64,6 @@ function CommandCenter() {
   const refRoot = useRef(null);
 
   const [reload, setReload] = useState(0);
-
-  const renderItems = useCallback((items: CommandCenterItemType[]) => {
-    refItems.current = items;
-
-    if (!refRoot?.current) {
-      const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
-      refRoot.current = createRoot(domNode);
-    }
-
-    const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
-      const refItem = refItemNodes?.current?.[item?.uuid] || createRef();
-      refItemNodes.current[item?.uuid] = refItem;
-
-      return (
-        <ItemRow
-          className={ItemRowClassNameEnum.ITEM_ROW}
-          item={item}
-          key={item.uuid}
-          ref={refItem}
-          theme={theme}
-        />
-      );
-    });
-
-    refRoot?.current?.render(itemsEl);
-  }, [theme]);
 
   const handleNavigation = useCallback((index: number) => {
     const itemsContainer = refItemNodesContainer?.current;
@@ -312,15 +287,17 @@ function CommandCenter() {
       } else if (interaction) {
         const {
           element,
-          eventType,
-          eventOptions,
+          options,
+          type,
         } = interaction || {
           element: null,
           event: null,
-          eventOptions: null,
+          options: null,
         };
 
-        if (element && eventType) {
+        if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
+          console.log(options)
+        } else if (element && type) {
           actionFunction = () => {
             const nodes = [];
             if (element?.id) {
@@ -333,10 +310,10 @@ function CommandCenter() {
 
             const result = nodes?.map((node) => {
               if (node) {
-                if (eventOptions) {
-                  return node?.[eventType]?.(eventOptions);
+                if (options) {
+                  return node?.[type]?.(options);
                 } else {
-                  return node?.[eventType]?.();
+                  return node?.[type]?.();
                 }
               }
             });
@@ -468,6 +445,40 @@ function CommandCenter() {
     }
 
   }, [reload]);
+
+  const renderItems = useCallback((items: CommandCenterItemType[]) => {
+    refItems.current = items;
+
+    if (!refRoot?.current) {
+      const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
+      refRoot.current = createRoot(domNode);
+    }
+
+    const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
+      const refItem = refItemNodes?.current?.[item?.uuid] || createRef();
+      refItemNodes.current[item?.uuid] = refItem;
+
+      return (
+        <ItemRow
+          className={ItemRowClassNameEnum.ITEM_ROW}
+          item={item}
+          key={item.uuid}
+          onClick={() => {
+            handleNavigation(index);
+            handleItemSelect(item, index);
+          }}
+          ref={refItem}
+          theme={theme}
+        />
+      );
+    });
+
+    refRoot?.current?.render(itemsEl);
+  }, [
+    handleItemSelect,
+    handleNavigation,
+    theme,
+  ]);
 
   useEffect(() => {
     renderItems(ITEMS)

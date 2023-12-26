@@ -34,29 +34,14 @@ interface CommandCenterActionBaseType {
   request?: any;
 }
 
-enum CommandCenterActionInteractionEventEnum {
+export enum CommandCenterActionInteractionTypeEnum {
   CLICK = 'click',
+  OPEN_FILE = 'open_file',
   SCROLL = 'scroll',
 }
 
 export interface KeyValueType {
   [key: string]: string | number | boolean | KeyValueType;
-}
-
-interface CommandCenterActionInteractionType {
-  element: {
-    className?: string;
-    id?: string;
-  };
-  eventOptions?:KeyValueType;
-  eventType?: CommandCenterActionInteractionEventEnum;
-}
-
-interface CommandCenterActionPageType {
-  external?: boolean;
-  openNewWindow?: boolean;
-  path: string;
-  query?: KeyValueType;
 }
 
 export interface CommandCenterActionRequestType {
@@ -69,6 +54,22 @@ export interface CommandCenterActionRequestType {
   resource_parent: string;
   resource_parent_id: string | number;
   response_resource_key: string;
+}
+
+export interface CommandCenterActionInteractionType {
+  element: {
+    className?: string;
+    id?: string;
+  };
+  options?: KeyValueType;
+  type?: CommandCenterActionInteractionTypeEnum;
+}
+
+interface CommandCenterActionPageType {
+  external?: boolean;
+  openNewWindow?: boolean;
+  path: string;
+  query?: KeyValueType;
 }
 
 interface CommandCenterActionType extends CommandCenterActionBaseType {

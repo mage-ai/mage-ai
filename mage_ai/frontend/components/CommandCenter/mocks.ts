@@ -1,5 +1,8 @@
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
+import {
+  CommandCenterActionInteractionTypeEnum,
+  CommandCenterTypeEnum,
+} from '@interfaces/CommandCenterType';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
@@ -23,10 +26,10 @@ export const ITEMS = [
       {
         delay: 3000,
         interaction: {
-          eventType: 'click',
           element: {
             id: 'save-project-settings',
           },
+          type: CommandCenterActionInteractionTypeEnum.CLICK,
         },
       },
     ],
@@ -147,14 +150,24 @@ export const ITEMS = [
     type: CommandCenterTypeEnum.BLOCK,
   },
   {
-    title: 'export_users.py',
-    description: 'default_repo/utils/growth/export_users.py',
+    title: 'Open file my_first_dbt_model.py',
+    description: 'default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
     metadata: {
       file: {
         extension: FileExtensionEnum.PY,
       },
     },
     type: CommandCenterTypeEnum.FILE,
+    actions: [
+      {
+        interaction: {
+          options: {
+            filePath: 'default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
+          },
+          type: CommandCenterActionInteractionTypeEnum.OPEN_FILE,
+        },
+      },
+    ],
   },
   {
     title: 'Build core data users',

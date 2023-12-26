@@ -18,11 +18,13 @@ import { getIcon } from './constants';
 type ItemRowProps = {
   className: ItemRowClassNameEnum;
   item: CommandCenterItemType;
+  onClick: () => void;
 };
 
 function ItemRow({
   className,
   item,
+  onClick,
 }: ItemRowProps, ref) {
   const {
     description,
@@ -35,7 +37,11 @@ function ItemRow({
   const iconColor = getIconColor(item);
 
   return (
-    <ItemStyle className={className} ref={ref}>
+    <ItemStyle
+      className={className}
+      onClick={onClick}
+      ref={ref}
+    >
       <FlexContainer alignItems="center" justifyContent="space-between">
         <Flex alignItems="center" flex={1}>
           <Icon
