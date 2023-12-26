@@ -69,6 +69,7 @@ type CodeBlockOutputOutputProps = {
 
 export type UseCodeBlockComponentProps = {
   addNewBlock?: (block: BlockType, downstreamBlocks?: BlockType[]) => Promise<any>;
+  autocompleteProviders?: ProvidersType;
   block: BlockType;
   blockRef?: any;
   blocks?: BlockType[];
@@ -120,7 +121,7 @@ export type UseCodeBlockComponentProps = {
 export type ButtonType = {
   Icon?: any;
   color?: string;
-  description?: string;
+  description?: string | any;
   disabled?: (opts?: {
     active?: boolean;
     running?: boolean;
@@ -156,7 +157,6 @@ export type ButtonType = {
 export type UseCodeBlockPropsType = {} & UseCodeBlockComponentProps;
 
 export type CodeBlockEditorProps = {
-  autocompleteProviders?: ProvidersType;
   content?: string;
   height?: number;
   onChange?: (value: string) => void;
@@ -170,9 +170,13 @@ export type CodeBlockEditorProps = {
   textareaFocused?: boolean;
 } & UseCodeBlockComponentProps;
 
+type CodeBlockOutputReturnProps = {
+  menuGroups?: MenuGroupType[];
+  tabs?: TabType[];
+};
+
 export type CodeBlockOutputProps = {
   headerRef: any;
-  menuGroups?: MenuGroupType[];
   selectedOutputTabs?: {
     [uuid: string]: TabType;
   };
@@ -182,28 +186,29 @@ export type CodeBlockOutputProps = {
     [uuid: string]: TabType;
   };
   subheaderVisible?: boolean;
-  tabs?: TabType[];
-} & CodeBlockOutputOutputProps & UseCodeBlockComponentProps;
+} & CodeBlockOutputReturnProps & CodeBlockOutputOutputProps & UseCodeBlockComponentProps;
 
-export type CodeBlockHeaderProps = {
+type CodeBlockHeaderReturnProps = {
   buttons: ButtonType[];
   menuGroups?: MenuGroupType[];
   subheaderVisibleDefault?: (block: BlockType) => boolean;
   subtitle?: string;
   tabs?: TabType[];
   title: string;
-} & UseCodeBlockComponentProps;
+};
+
+export type CodeBlockHeaderProps = CodeBlockHeaderReturnProps & UseCodeBlockComponentProps;
 
 export type HeaderTabType = {
   renderTabContent: (tab: TabType, defaultContent: any) => any;
 };
 
 export interface UseCodeBlockComponentType {
-  editor: any;
-  extraDetails: any;
-  footer: any;
-  header: CodeBlockHeaderProps;
-  output: any;
-  outputTabs: any;
-  tags: any;
+  editor?: any;
+  extraDetails?: any;
+  footer?: any;
+  header?: CodeBlockHeaderReturnProps;
+  headerTabContent?: HeaderTabType;
+  output?: CodeBlockOutputReturnProps;
+  tags?: any;
 }

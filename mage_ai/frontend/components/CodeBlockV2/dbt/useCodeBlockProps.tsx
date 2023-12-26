@@ -489,6 +489,7 @@ export default function useCodeBlockProps({
           beforeIcon: <VisibleEye {...MENU_ICON_PROPS} />,
           uuid: 'Hide block',
           onClick: () => {
+            // @ts-ignore
             setHiddenBlocks(prev => ({
               ...prev,
               [uuid]: block,
