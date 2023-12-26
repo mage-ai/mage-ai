@@ -13,7 +13,7 @@ type LoadingProps = {
   colorLight?: string;
   height?: number;
   loadingStyle?: LoadingStyleEnum;
-  width?: number;
+  width?: string | number;
 };
 
 const LoadingStyleBlocks = styled.div<LoadingProps>`
@@ -25,7 +25,12 @@ ${props => `
   .loader:before,
   .loader:after {
     content: "";
-    width: ${props.width || (UNIT * 2)}px;
+    width: ${typeof props.width === 'string'
+      ? props.width
+      : typeof props.width === 'number'
+        ? `${props.width}px`
+        : `${(UNIT * 2)}px`
+    };
     aspect-ratio: 1;
     box-shadow: 0 0 0 1px inset ${props?.color || (props.theme || dark).content.active};
     animation: l4 1.5s infinite;

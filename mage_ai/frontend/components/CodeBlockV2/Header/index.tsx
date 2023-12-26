@@ -336,9 +336,11 @@ function CodeBlockHeader({
 
           {waiting && (
             <>
+              <Spacing mr={PADDING_UNITS} />
+
               <Loading
-                // color={color?.accent}
-                // colorLight={color?.accentLight}
+                color={color?.accent}
+                colorLight={color?.accentLight}
                 loadingStyle={LoadingStyleEnum.BLOCKS}
               />
 
