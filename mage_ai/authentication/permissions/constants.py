@@ -18,6 +18,7 @@ class EntityName(str, Enum):
     Chart = 'Chart'
     ClientPage = 'ClientPage'
     Cluster = 'Cluster'
+    CommandCenterItem = 'CommandCenterItem'
     ComputeCluster = 'ComputeCluster'
     ComputeConnection = 'ComputeConnection'
     ComputeService = 'ComputeService'
