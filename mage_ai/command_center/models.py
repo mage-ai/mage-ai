@@ -8,6 +8,7 @@ from mage_ai.command_center.constants import (
     FileExtension,
     InteractionType,
 )
+from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.models import BaseDataClass
 
@@ -125,3 +126,82 @@ class Item(ItemBase):
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('items', Item)
         self.serialize_attribute_enum('type', CommandCenterItemType)
+
+
+@dataclass
+class IncludeExclude(BaseDataClass):
+    excludes: List[str] = None
+    includes: List[str] = None
+
+
+@dataclass
+class ModelSettings(BaseDataClass):
+    directories: List[IncludeExclude] = None
+    projects: List[IncludeExclude] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_classes('directories', IncludeExclude)
+        self.serialize_attribute_classes('projects', IncludeExclude)
+
+
+@dataclass
+class HistoryModelSettings(BaseDataClass):
+    length: int = None
+
+
+@dataclass
+class HistorySettings(BaseDataClass):
+    pages: HistoryModelSettings = None
+    searches: HistoryModelSettings = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('pages', HistoryModelSettings)
+        self.serialize_attribute_class('searches', HistoryModelSettings)
+
+
+@dataclass
+class KeyboardShortcutsSettings(BaseDataClass):
+    main: List[List[int]] = None
+
+
+@dataclass
+class PositionSettings(BaseDataClass):
+    height: int = None
+    width: int = None
+    x: int = None
+    y: int = None
+
+
+@dataclass
+class InterfaceSettings(BaseDataClass):
+    keyboard_shortcuts: KeyboardShortcutsSettings = None
+    position: PositionSettings = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('keyboard_shortcuts', KeyboardShortcutsSettings)
+        self.serialize_attribute_class('position', PositionSettings)
+
+
+@dataclass
+class CommandCenterSettings(BaseDataClass):
+    blocks: ModelSettings = None
+    files: ModelSettings = None
+    history: HistorySettings = None
+    interface: InterfaceSettings = None
+    pipelines: ModelSettings = None
+    triggers: ModelSettings = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('blocks', ModelSettings)
+        self.serialize_attribute_class('files', ModelSettings)
+        self.serialize_attribute_class('history', HistorySettings)
+        self.serialize_attribute_class('interface', InterfaceSettings)
+        self.serialize_attribute_class('pipelines', ModelSettings)
+        self.serialize_attribute_class('triggers', ModelSettings)
+
+    @classmethod
+    def load_from_file_path(self, file_path: str = None) -> 'CommandCenterSettings':
+        return self.load(**load_settings())
+
+    def save(self, file_path: str = None):
+        save_settings(self.to_dict(), file_path=file_path)

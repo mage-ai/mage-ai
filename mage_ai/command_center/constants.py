@@ -1,5 +1,7 @@
 from enum import Enum
 
+SETTINGS_FILENAME = '.command_center.yaml'
+
 
 class CommandCenterItemType(str, Enum):
     ACTION = 'action'
