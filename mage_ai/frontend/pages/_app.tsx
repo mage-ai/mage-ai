@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -18,6 +19,7 @@ import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
 import api from '@api';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
+import useProject from '@utils/models/project/useProject';
 import { ErrorProvider } from '@context/Error';
 import { LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING } from '@storage/constants';
 import { ModalProvider } from '@context/Modal';
@@ -32,6 +34,7 @@ import {
 } from '@utils/session';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { addPageHistory } from '@storage/CommandCenter/utils';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
 import {
   gridTheme as gridThemeDefault,
@@ -74,9 +77,36 @@ function MyApp(props: MyAppProps & AppProps) {
     version = 1,
   } = pageProps;
 
+  const {
+    featureEnabled,
+    featureUUIDs,
+  } = useProject();
+  const commandCenterEnabled = useMemo(() => featureEnabled?.(featureUUIDs?.COMMAND_CENTER), [
+    featureEnabled,
+    featureUUIDs,
+  ]);
+
+  const savePageHistory = useCallback(() => {
+    if (commandCenterEnabled) {
+      if (typeof document !== 'undefined') {
+        addPageHistory({
+          asPath: router?.asPath,
+          pathname: router?.pathname,
+          query: router?.query,
+          title: document?.title,
+        });
+      }
+    }
+  }, [commandCenterEnabled, router]);
+
+  useEffect(() => {
+    savePageHistory();
+  }, [savePageHistory]);
+
   useEffect(() => {
     const handleRouteChangeComplete = (url: URL) => {
       refLoadingBar?.current?.complete?.();
+      savePageHistory();
     };
 
     const handleRouteChangeStart = () => {
@@ -98,6 +128,7 @@ function MyApp(props: MyAppProps & AppProps) {
     keyHistory,
     keyMapping,
     router.events,
+    savePageHistory,
   ]);
 
   const {

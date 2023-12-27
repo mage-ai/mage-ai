@@ -106,3 +106,10 @@ export interface CommandCenterSearchHistoryType {
   items: CommandCenterItemType[];
   searchText: string;
 }
+
+export interface PageHistoryType {
+  asPath: string;
+  pathname: string;
+  query?: KeyValueType;
+  title: string;
+}

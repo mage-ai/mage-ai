@@ -14,6 +14,7 @@ from mage_ai.authentication.operation_history.constants import (
 )
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.io import read_last_line_async
@@ -49,10 +50,14 @@ class OperationHistory:
 
 class OperationHistoryReader:
     def __init__(self, repo_config=None, repo_path: str = None):
-        self.repo_path = repo_path or get_repo_path()
+        self.root_project = project_platform_activated()
+        self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
 
         if repo_config is None:
-            self.repo_config = get_repo_config(repo_path=self.repo_path)
+            self.repo_config = get_repo_config(
+                repo_path=self.repo_path,
+                root_project=self.root_project,
+            )
         elif isinstance(repo_config, dict):
             self.repo_config = RepoConfig.from_dict(repo_config)
         else:
@@ -99,6 +104,8 @@ class OperationHistoryReader:
         filename = datetime.fromtimestamp(
             timestamp or int(datetime.utcnow().timestamp()),
         ).strftime('%Y-%m-%d')
+
+        print('WTFFFFFFFFFFFFFFFFFFFFFFF', dir_path, filename)
 
         return os.path.join(dir_path, filename)
 
