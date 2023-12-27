@@ -59,6 +59,9 @@ class PipelineCache(BaseCache):
         if not pipeline_uuid:
             return None
 
+        if not self.root_project:
+            return pipeline_uuid
+
         if not repo_path:
             repo_path = get_repo_path(root_project=False)
 

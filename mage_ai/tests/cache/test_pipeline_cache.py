@@ -33,7 +33,7 @@ class PipelineCacheTest(BaseApiTestCase):
             ),
         )
 
-        self.cache = CustomPipelineCache()
+        self.cache = CustomPipelineCache(root_project=False)
         with open(os.path.join(CURRENT_FILE_PATH, 'example_pipeline.json')) as f:
             self.pipeline_json = json.loads(f.read())['pipeline']
 
@@ -171,10 +171,12 @@ class PipelineCacheTest(BaseApiTestCase):
             uuid=uuid.uuid4().hex,
         )
 
+        repo_path = self.repo_path
+
         class TestCustomPipeline:
             @classmethod
-            def get_all_pipelines(self, *args, **kwargs):
-                return [pipeline_dict['uuid']]
+            def get_all_pipelines_all_projects(cls, repo_path=repo_path, *args, **kwargs):
+                return [(pipeline_dict['uuid'], repo_path)]
 
             @classmethod
             async def load_metadata(self, pipeline_uuid, **kwargs):
