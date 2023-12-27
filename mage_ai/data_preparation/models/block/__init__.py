@@ -599,10 +599,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         file_path = self.get_file_path_from_source()
         if file_path:
             return add_root_repo_path_to_relative_path(file_path)
-        else:
+        elif self.configuration and self.configuration.get('file_path'):
+            file_path = self.configuration.get('file_path')
             parts = get_path_parts(file_path)
-            if parts and len(parts) == 3:
-                return os.path.join(*parts)
+            return os.path.join(*parts)
 
         if self.project_platform_activated:
             file_path = self.configuration.get('file_path')
