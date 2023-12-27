@@ -114,7 +114,7 @@ function ErrorPopup({
 
           {tracebackVisible &&
             <Spacing mt={1}>
-              {messages.map(msg => (
+              {messages.map((msg, idx) => (
                 <Text
                   // @ts-ignore
                   dangerouslySetInnerHTML={{
@@ -123,7 +123,7 @@ function ErrorPopup({
                   }}
                   default
                   disableWordBreak
-                  key={msg}
+                  key={`${msg}-${idx}`}
                   monospace
                 />
               ))}
@@ -146,7 +146,7 @@ function ErrorPopup({
 
           {stackTraceVisible && (
             <Spacing mt={1}>
-              {errors.map(msg => (
+              {errors.map((msg, idx) => (
                 <Text
                   // @ts-ignore
                   dangerouslySetInnerHTML={{
@@ -156,7 +156,7 @@ function ErrorPopup({
                   default
                   disableWordBreak
                   // @ts-ignore
-                  key={msg}
+                  key={`${msg}-${idx}`}
                   monospace
                 />
               ))}
@@ -165,8 +165,8 @@ function ErrorPopup({
         </Spacing>
       )}
 
-      {links?.map(({ closeAfterClick, href, label, onClick }) => (
-        <Spacing key={label} mt={2}>
+      {links?.map(({ closeAfterClick, href, label, onClick }, idx) => (
+        <Spacing key={`${label}-${idx}`} mt={2}>
           <Link
             href={href}
             large
