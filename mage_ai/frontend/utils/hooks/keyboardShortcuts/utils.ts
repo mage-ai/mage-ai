@@ -7,6 +7,7 @@ import {
   KEY_CODE_SHIFT,
   KEY_CODE_SHIFTS,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { ignoreKeys } from '@utils/hash';
 
 export function onlyKeysPresent(
   keys: (string | number)[],
@@ -22,9 +23,21 @@ export function onlyKeysPresent(
   const metaKeyCodesAsStrings = KEY_CODE_METAS.map(key => String(key));
   const shiftKeyCodesAsStrings = KEY_CODE_SHIFTS.map(key => String(key));
 
+  let keyMappingUse = {
+    ...keyMapping,
+  };
+
+  const allowKeyCodeMetaKey = keys?.some(key => metaKeyCodesAsStrings?.includes(String(key)))
+    && !keysHasMeta;
+
+  if (allowKeyCodeMetaKey && KEY_CODE_META in keyMappingUse) {
+    delete keyMappingUse[KEY_CODE_META];
+  }
+
   const otherKeysPressed = Object
-    .entries(keyMapping)
+    .entries(keyMappingUse)
     .find(([k, v]) => v
+      // Pressed key is a key in the keys argument
       // Pressed key isn’t a key in the keys argument
       && !keysAsStrings.includes(String(k))
       && (!keysHasMeta || !metaKeyCodesAsStrings.includes(String(k)))
@@ -33,5 +46,5 @@ export function onlyKeysPresent(
       && (!keysHasShift || !shiftKeyCodesAsStrings.includes(String(k)))
     );
 
-  return keys.every(k => keyMapping[k]) && !otherKeysPressed;
+  return keys.every(k => keyMappingUse[k]) && !otherKeysPressed;
 }

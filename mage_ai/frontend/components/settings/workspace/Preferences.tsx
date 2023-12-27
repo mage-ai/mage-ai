@@ -359,6 +359,7 @@ function Preferences({
 
       <FlexContainer alignItems="center">
         <Button
+          id="save-project-settings"
           loading={isLoadingUpdateProject}
           onClick={() => {
             updateProject({

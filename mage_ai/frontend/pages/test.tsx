@@ -1,13 +1,11 @@
-import Browser from '@components/BlockBrowser';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import CommandCenter from '@components/CommandCenter';
 
 function Test() {
+
+
   return (
     <div>
-      <Browser
-        defaultBlockType={BlockTypeEnum.DBT}
-        onClickAction={opts => console.log(opts)}
-      />
+      <CommandCenter />
     </div>
   );
 }
