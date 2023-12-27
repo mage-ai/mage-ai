@@ -55,6 +55,13 @@ def remove_base_repo_name(file_path: str) -> str:
         return file_path
 
 
+def remove_base_repo_path_or_name(file_path: str) -> str:
+    if os.path.isabs(file_path):
+        return str(remove_base_repo_path(file_path))
+    else:
+        return str(remove_base_repo_name(file_path))
+
+
 def remove_base_repo_directory_name(file_path: str) -> str:
     """
     Removes /home/src from

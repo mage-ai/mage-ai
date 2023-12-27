@@ -7,6 +7,7 @@ from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
 
 class BlockCache(BaseCache):
@@ -57,25 +58,25 @@ class BlockCache(BaseCache):
         if configuration:
             file_source = (configuration or {}).get('file_source') or {}
             if file_source and (file_source or {}).get('path'):
-                return (file_source or {}).get('path')
+                return remove_base_repo_path_or_name((file_source or {}).get('path'))
 
         repo_path = repo_path or get_repo_path(root_project=False)
 
         return ':'.join([
-            repo_path,
+            remove_base_repo_path_or_name(repo_path),
             os.path.join(block_type, block_uuid),
         ])
 
-    def get_pipelines(self, block) -> Dict:
-        pipelines_dict = {}
+    def get_pipelines(self, block) -> List[Dict]:
+        pipelines = {}
 
         mapping = self.get(self.cache_key)
         if mapping is not None:
             key = self.build_key(block)
             if key:
-                pipelines_dict = mapping.get(key, {})
+                pipelines = mapping.get(key, [])
 
-        return pipelines_dict
+        return pipelines
 
     def add_pipeline(self, block, pipeline) -> None:
         self.update_pipeline(block, pipeline, added_at=datetime.utcnow().timestamp())
@@ -192,11 +193,11 @@ class BlockCache(BaseCache):
                 if not key:
                     continue
                 if key not in mapping:
-                    mapping[key] = {}
-                mapping[key][pipeline_dict['uuid']] = build_pipeline_dict(
+                    mapping[key] = []
+                mapping[key].append(build_pipeline_dict(
                     pipeline_dict,
-                    repo_path=repo_path,
-                )
+                    repo_path=remove_base_repo_path_or_name(repo_path) if repo_path else repo_path,
+                ))
 
         if caches:
             for cache_class in caches:

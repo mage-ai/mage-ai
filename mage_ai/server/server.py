@@ -526,6 +526,8 @@ async def main(
         await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
     except Exception as err:
         print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
+        if is_debug():
+            raise err
 
     logger.info('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)

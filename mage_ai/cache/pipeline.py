@@ -6,6 +6,7 @@ from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_PIPELINE_DETAILS_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict, group_models_by_keys
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
 
 class PipelineCache(BaseCache):
@@ -61,7 +62,7 @@ class PipelineCache(BaseCache):
         if not repo_path:
             repo_path = get_repo_path(root_project=False)
 
-        return ':'.join([repo_path, pipeline_uuid])
+        return ':'.join([remove_base_repo_path_or_name(repo_path), pipeline_uuid])
 
     def get_model(self, model) -> Dict:
         model_dict = {}
@@ -181,7 +182,7 @@ class PipelineCache(BaseCache):
             mapping[key] = build_pipeline_dict(
                 pipeline_dict,
                 include_details=True,
-                repo_path=repo_path,
+                repo_path=remove_base_repo_path_or_name(repo_path) if repo_path else repo_path,
             )
 
         self.set(self.cache_key, mapping)
