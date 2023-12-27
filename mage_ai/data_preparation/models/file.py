@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Tuple
 import aiofiles
 
 from mage_ai.cache.dbt.constants import IGNORE_DIRECTORY_NAMES
+from mage_ai.cache.file import FileCache
 from mage_ai.data_preparation.models.errors import (
     FileExistsError,
     FileNotInProjectError,
@@ -274,6 +275,8 @@ class File:
 
         update_caches(repo_path, dir_path, filename)
 
+        FileCache().invalidate()
+
     @classmethod
     async def write_async(
         self,
@@ -303,6 +306,8 @@ class File:
                 await fp.write(content or '')
 
         await update_caches_async(repo_path, dir_path, filename)
+
+        FileCache().invalidate()
 
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
@@ -369,6 +374,8 @@ class File:
     def delete(self):
         os.remove(self.file_path)
 
+        FileCache().invalidate()
+
     def rename(self, dir_path: str, filename):
         full_path = os.path.join(self.repo_path, dir_path, filename)
 
@@ -394,6 +401,8 @@ class File:
 
         self.dir_path = dir_path
         self.filename = filename
+
+        FileCache().invalidate()
 
     def to_dict(self, include_content=False):
         data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))

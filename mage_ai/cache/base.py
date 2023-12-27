@@ -72,6 +72,11 @@ class BaseCache():
 
         return os.path.join(dir_path, key)
 
+    def invalidate(self, key: str = None) -> None:
+        path = self.build_path(key or self.cache_key)
+        if os.path.exists(path):
+            self._storage.remove(path)
+
     @property
     def file_path(self) -> str:
         return self.build_path(self.cache_key)
