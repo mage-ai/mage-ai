@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import ClickOutside from '@oracle/components/ClickOutside';
 import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
@@ -635,6 +634,25 @@ function CommandCenter() {
       refReload.current = (refReload?.current || 0) + 1;
     }
   }, [reload]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // @ts-ignore
+      if (refContainer?.current && refContainer?.current?.contains?.(e.target)) {
+        return;
+      } else {
+        close();
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    }
+  }, [close]);
 
   return (
     <ContainerStyle className="hide" ref={refContainer}>
