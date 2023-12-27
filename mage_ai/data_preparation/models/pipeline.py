@@ -1166,7 +1166,7 @@ class Pipeline:
 
             for block in self.blocks_by_uuid.values():
                 if old_uuid:
-                    cache.remove_pipeline(block, old_uuid)
+                    cache.remove_pipeline(block, old_uuid, self.repo_path)
                 cache.update_pipeline(block, self)
 
         if should_update_tag_cache:
@@ -1176,7 +1176,7 @@ class Pipeline:
 
             for tag_uuid in self.tags:
                 if old_uuid:
-                    cache.remove_pipeline(tag_uuid, old_uuid)
+                    cache.remove_pipeline(tag_uuid, old_uuid, self.repo_path)
                 cache.add_pipeline(tag_uuid, self)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:

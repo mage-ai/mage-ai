@@ -94,8 +94,8 @@ class BlockCache(BaseCache):
         if mapping is None:
             mapping = {}
 
-        pipelines_dict = mapping.get(old_key, {})
-        mapping[new_key] = pipelines_dict
+        pipelines = mapping.get(old_key, [])
+        mapping[new_key] = pipelines
         mapping.pop(old_key, None)
 
         self.set(self.cache_key, mapping)
@@ -122,16 +122,42 @@ class BlockCache(BaseCache):
         if mapping is None:
             mapping = {}
 
-        pipelines_dict = mapping.get(key, {})
+        pipelines_arr = mapping.get(key, [])
 
         for pipeline in pipelines:
-            pipeline_uuid = pipeline.get('uuid') if type(pipeline) is dict else pipeline.uuid
-            pipelines_dict[pipeline_uuid] = build_pipeline_dict(
+            pipeline_uuid = None
+            repo_path = None
+
+            if isinstance(pipeline, dict):
+                pipeline_uuid = pipeline.get('uuid')
+                repo_path = pipeline.get('repo_path')
+            else:
+                pipeline_uuid = pipeline.uuid
+                repo_path = pipeline.repo_path
+
+            if not repo_path:
+                repo_path = get_repo_path(root_project=False)
+
+            repo_path = remove_base_repo_path_or_name(repo_path)
+
+            def __filter(
+                cache_dict: Dict,
+                pipeline_uuid=pipeline_uuid,
+                repo_path=repo_path,
+            ) -> bool:
+                pipeline_dict = cache_dict.get('pipeline') or {}
+
+                return pipeline_dict.get('uuid') != pipeline_uuid and \
+                    pipeline_dict.get('repo_path') != repo_path
+
+            pipelines_arr = list(filter(__filter, pipelines_arr))
+            pipelines_arr.append(build_pipeline_dict(
                 pipeline,
                 added_at=added_at,
-            )
+                repo_path=repo_path,
+            ))
 
-        mapping[key] = pipelines_dict
+        mapping[key] = pipelines_arr
 
         self.set(self.cache_key, mapping)
 
@@ -148,18 +174,26 @@ class BlockCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    def remove_pipeline(self, block, pipeline_uuid: str) -> None:
-        key = self.build_key(block)
+    def remove_pipeline(self, block, pipeline_uuid: str, repo_path: str = None) -> None:
+        repo_path = repo_path or get_repo_path(root_project=False)
+
+        key = self.build_key(block, repo_path=repo_path)
         if not key:
             return
 
         mapping = self.get(self.cache_key)
         if mapping is None:
-            mapping = {}
+            mapping = []
 
-        pipelines_dict = mapping.get(key, {})
-        pipelines_dict.pop(pipeline_uuid, None)
-        mapping[key] = pipelines_dict
+        repo_path = remove_base_repo_path_or_name(repo_path)
+
+        def __filter(cache_dict: Dict, pipeline_uuid=pipeline_uuid, repo_path=repo_path) -> bool:
+            pipeline_dict = cache_dict.get('pipeline') or {}
+            return pipeline_dict.get('uuid') != pipeline_uuid and \
+                pipeline_dict.get('repo_path') != repo_path
+
+        pipelines = mapping.get(key, [])
+        mapping[key] = list(filter(__filter, pipelines))
 
         self.set(self.cache_key, mapping)
 

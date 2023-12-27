@@ -3124,7 +3124,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     language=self.language,
                     pipeline=self.pipeline,
                 )
-                cache.remove_pipeline(old_block, self.pipeline.uuid)
+                cache.remove_pipeline(old_block, self.pipeline.uuid, self.pipeline.repo_path)
             else:
                 cache.move_pipelines(self, dict(
                     type=self.type,
