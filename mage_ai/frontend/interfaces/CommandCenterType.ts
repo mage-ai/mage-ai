@@ -100,3 +100,9 @@ export interface CommandCenterItemType {
   type: CommandCenterTypeEnum;
   uuid: string;
 }
+
+export interface CommandCenterSearchHistoryType {
+  item: CommandCenterItemType;
+  items: CommandCenterItemType[];
+  searchText: string;
+}

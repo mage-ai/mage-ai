@@ -35,6 +35,7 @@ import { ITEMS } from './mocks';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addClassNames, removeClassNames } from '@utils/elements';
+import { addSearchHistory, getSearchHistory } from '@storage/CommandCenter/utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -56,12 +57,15 @@ function CommandCenter() {
   const refContainer = useRef(null);
   const refFocusedElement = useRef(null);
   const refFocusedItemIndex = useRef(null);
+  const refFocusedSearchHistoryIndex = useRef(null);
   const refInput = useRef(null);
   const refItems = useRef([]);
+  const refItemsInit = useRef(null);
   const refItemNodes = useRef({});
   const refItemNodesContainer = useRef(null);
   const refReload = useRef(null);
   const refRoot = useRef(null);
+  const refSelectedSearchHistoryIndex = useRef(null);
 
   const [reload, setReload] = useState(0);
 
@@ -293,6 +297,8 @@ function CommandCenter() {
           options: null,
         };
 
+        // TODO (dangerous): open the file and the file editor in an application on the same page;
+        // this will be supported when Application Center is launched.
         if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
           router.push({
             pathname: '/files',
@@ -358,7 +364,6 @@ function CommandCenter() {
     });
 
     const invokeActionAndCallback = (index: number) => {
-      console.log(`Invoking action: ${index}`);
       return actions?.[index]?.then((response, variables) => {
         if (index <= actions?.length - 1) {
           return invokeActionAndCallback(index + 1);
@@ -401,6 +406,15 @@ function CommandCenter() {
         if (refInput?.current?.value?.length >= 1) {
           pauseEvent(event);
           refInput.current.value = '';
+
+          if (refFocusedSearchHistoryIndex?.current !== null
+            || refSelectedSearchHistoryIndex?.current !== null
+          ) {
+            refFocusedSearchHistoryIndex.current = null;
+            refSelectedSearchHistoryIndex.current = null
+            renderItems(refItemsInit?.current || []);
+          }
+
           handleNavigation(0);
         } else {
           pauseEvent(event);
@@ -417,12 +431,25 @@ function CommandCenter() {
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
         pauseEvent(event);
         // Pressing enter on an item
-        handleItemSelect(refItems?.current?.[focusedItemIndex], focusedItemIndex);
+        const itemSelected = refItems?.current?.[focusedItemIndex];
+
+        const searchText = refInput?.current?.value;
+        if (searchText?.length >= 1) {
+          addSearchHistory(searchText, itemSelected, refItems?.current);
+        }
+
+        handleItemSelect(itemSelected, focusedItemIndex);
       } else {
         let index = null;
         // Arrow down
         if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
           pauseEvent(event);
+
+          if (refFocusedSearchHistoryIndex?.current !== null) {
+            refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
+            refFocusedSearchHistoryIndex.current = null;
+          }
+
           // If already on the last item, don’t change
           if (focusedItemIndex <= refItems?.current?.length - 2) {
             index = focusedItemIndex + 1;
@@ -433,6 +460,27 @@ function CommandCenter() {
           // If already on the first item, don’t change
           if (focusedItemIndex >= 1) {
             index = focusedItemIndex - 1;
+          } else if (refSelectedSearchHistoryIndex?.current === null) {
+            const arr = getSearchHistory() || [];
+            let index2 = refFocusedSearchHistoryIndex?.current === null
+              ? -1
+              : refFocusedSearchHistoryIndex?.current;
+
+            if (index2 < (arr?.length || 0) - 1) {
+              index2 += 1;
+              refFocusedSearchHistoryIndex.current = index2;
+
+              const searchItem = arr?.[index2];
+              if (searchItem) {
+                if (refInput?.current) {
+                  refInput.current.value = searchItem?.searchText;
+                }
+
+                if (searchItem?.items) {
+                  renderItems(searchItem?.items || []);
+                }
+              }
+            }
           }
         }
 
@@ -460,6 +508,10 @@ function CommandCenter() {
 
   const renderItems = useCallback((items: CommandCenterItemType[]) => {
     refItems.current = items;
+
+    if (refItemsInit?.current === null) {
+      refItemsInit.current = items;
+    }
 
     if (!refRoot?.current) {
       const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
@@ -502,6 +554,11 @@ function CommandCenter() {
         <InputStyle
           onChange={(e) => {
             refInput.current.value = e.target.value;
+
+            if (refFocusedSearchHistoryIndex?.current !== null) {
+              refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
+              refFocusedSearchHistoryIndex.current = null;
+            }
           }}
           onFocus={() => {
             refFocusedElement.current = InputElementEnum.MAIN;
