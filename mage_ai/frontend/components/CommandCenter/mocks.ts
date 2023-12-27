@@ -1,12 +1,13 @@
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
   CommandCenterActionInteractionTypeEnum,
+  CommandCenterItemType,
   CommandCenterTypeEnum,
 } from '@interfaces/CommandCenterType';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
-export const ITEMS = [
+export const ITEMS: CommandCenterItemType[] = [
   {
     description: 'Configure your project.',
     title: 'Open project settings',
@@ -207,7 +208,8 @@ export const ITEMS = [
     description: 'Trigger for Build core data users pipeline.',
     type: CommandCenterTypeEnum.TRIGGER,
   },
-].map(item => ({
+  // @ts-ignore
+].map((item: CommandCenterItemType) => ({
   ...item,
   uuid: [
     item?.title,

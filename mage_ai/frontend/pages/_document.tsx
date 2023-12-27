@@ -48,7 +48,7 @@ export default class MyDocument extends Document {
         <Head>
           <link href="/favicon.ico" rel="icon" />
         </Head>
-        <body style={{ backgroundImage: 'url(https://steamuserimages-a.akamaihd.net/ugc/965368466523576783/6FC151F69A2DA52CAB4B7E55D098CE609F38CB4D/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false)' }}>
+        <body>
           <Main />
           <NextScript />
         </body>

@@ -8,7 +8,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { transition } from '@oracle/styles/mixins';
 
-export function getIconColor(item: CommandCenterItemType, opts?: {
+export function getIconColor(item: CommandCenterItemType, opts: {
   theme?: ThemeType;
 } = {}): {
   accent?: string;

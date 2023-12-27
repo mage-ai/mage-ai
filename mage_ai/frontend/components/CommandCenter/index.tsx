@@ -1,4 +1,3 @@
-import { ThemeContext } from 'styled-components';
 import { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
@@ -35,7 +34,6 @@ import {
 import { InputElementEnum, ItemRowClassNameEnum } from './constants';
 import { ITEMS } from './mocks';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
-import { ThemeType } from '@oracle/styles/themes/constants';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { addSearchHistory, getSearchHistory } from '@storage/CommandCenter/utils';
 import { filterItems } from './utils';
@@ -50,8 +48,6 @@ const COMPONENT_UUID = 'CommandCenter';
 const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}/ItemsContainerStyle`;
 
 function CommandCenter() {
-  const theme: ThemeType = useContext(ThemeContext);
-
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
@@ -97,6 +93,7 @@ function CommandCenter() {
     // 44 * 14 = 616
     const itemRowHeightTotal = sum(Object.values(
       refItemNodes?.current || {},
+      // @ts-ignore
     )?.map(refItem => refItem?.current?.getBoundingClientRect()?.height || 0));
     // 216
     const scrollTopTotal = itemRowHeightTotal - itemsContainerHeight;
@@ -318,8 +315,8 @@ function CommandCenter() {
           router.push({
             pathname: '/files',
             query: {
-              file_path: options?.file_path
-                ? encodeURIComponent(options?.file_path)
+              file_path: typeof options?.file_path === 'string'
+                ? encodeURIComponent(String(options?.file_path))
                 : null,
             },
           });
@@ -430,7 +427,6 @@ function CommandCenter() {
             handleItemSelect(item, index);
           }}
           ref={refItem}
-          theme={theme}
         />
       );
     });
@@ -444,7 +440,6 @@ function CommandCenter() {
     handleItemSelect,
     handleNavigation,
     removeFocusFromCurrentItem,
-    theme,
   ]);
 
   const {

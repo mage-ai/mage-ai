@@ -5,6 +5,7 @@ export type ThemeType = {
     blueLight: string;
     contentDefaultTransparent: string;
     cyan: string;
+    cyanLight: string;
     cyanTransparent: string;
     dbt: string;
     dbtDark: string;

@@ -50,19 +50,19 @@ export interface CommandCenterActionRequestType {
   payload_resource_key?: string;
   query?: KeyValueType;
   resource: string;
-  resource_id: string | number;
-  resource_parent: string;
-  resource_parent_id: string | number;
+  resource_id?: string | number;
+  resource_parent?: string;
+  resource_parent_id?: string | number;
   response_resource_key: string;
 }
 
 export interface CommandCenterActionInteractionType {
-  element: {
+  element?: {
     className?: string;
     id?: string;
   };
   options?: KeyValueType;
-  type?: CommandCenterActionInteractionTypeEnum;
+  type: CommandCenterActionInteractionTypeEnum;
 }
 
 interface CommandCenterActionPageType {

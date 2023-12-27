@@ -831,6 +831,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             // @ts-ignore
             node.current.className = addClassNames(
               removeClassNames(
+                // @ts-ignore
                 (node?.current?.className || ''),
                 [
                   'enable-border-radius',
@@ -847,6 +848,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             // @ts-ignore
             node.current.className = addClassNames(
               removeClassNames(
+                // @ts-ignore
                 (node?.current?.className || ''),
                 [
                   'disable-border-radius',
