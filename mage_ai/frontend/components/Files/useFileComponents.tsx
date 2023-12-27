@@ -195,15 +195,29 @@ function useFileComponents({
 
   useEffect(() => {
     const arr = getOpenFilePaths();
-    setOpenFilePaths(arr);
-    setSelectedFilePath(selectedFilePathDefault ? selectedFilePathDefault : prev => {
-      if (!prev && arr?.length >= 1) {
+
+    let fp;
+    if (selectedFilePathDefault) {
+      fp = decodeURIComponent(selectedFilePathDefault);
+      if (!arr?.includes(fp)) {
+        arr.push(fp);
+        openFile(fp);
+      }
+    }
+
+    setSelectedFilePath((prev) => {
+      if (fp) {
+        return fp;
+      } else if (!prev && arr?.length >= 1) {
         return arr[0];
       }
 
       return prev;
     });
+
+    setOpenFilePaths(arr);
   }, [
+    openFile,
     selectedFilePathDefault,
     setOpenFilePaths,
   ]);

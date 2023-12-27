@@ -294,7 +294,14 @@ function CommandCenter() {
         };
 
         if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
-          console.log(options)
+          router.push({
+            pathname: '/files',
+            query: {
+              file_path: options?.file_path
+                ? encodeURIComponent(options?.file_path)
+                : null,
+            },
+          });
         } else if (element && type) {
           actionFunction = () => {
             const nodes = [];

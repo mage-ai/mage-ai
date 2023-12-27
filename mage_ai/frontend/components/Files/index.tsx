@@ -9,7 +9,13 @@ import useFileComponents from '@components/Files/useFileComponents';
 import FileTabsScroller from '@components/FileTabsScroller';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 
-function FilesPageComponent() {
+function FilesPageComponent({
+  query,
+}: {
+  query?: {
+    file_path: string;
+  };
+}) {
   const refHeader = useRef(null);
   const [headerOffset, setHeaderOffset] = useState(null);
 
@@ -22,7 +28,10 @@ function FilesPageComponent() {
     tabs,
     versions,
     versionsVisible,
-  } = useFileComponents({ showHiddenFilesSetting: true });
+  } = useFileComponents({
+    selectedFilePath: query?.file_path,
+    showHiddenFilesSetting: true,
+  });
 
   useEffect(() => {
     setTimeout(() => setHeaderOffset(refHeader?.current?.getBoundingClientRect()?.height || 0), 1);
