@@ -24,6 +24,8 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
+  KEY_CODE_BACKSPACE,
+  KEY_CODE_DELETE,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
   KEY_CODE_META_LEFT,
@@ -36,6 +38,7 @@ import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { addSearchHistory, getSearchHistory } from '@storage/CommandCenter/utils';
+import { filterItems } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -59,15 +62,33 @@ function CommandCenter() {
   const refFocusedItemIndex = useRef(null);
   const refFocusedSearchHistoryIndex = useRef(null);
   const refInput = useRef(null);
+  const refInputValuePrevious = useRef(null);
   const refItems = useRef([]);
   const refItemsInit = useRef(null);
   const refItemNodes = useRef({});
   const refItemNodesContainer = useRef(null);
   const refReload = useRef(null);
+  const refReloadCompleteCount = useRef(null);
   const refRoot = useRef(null);
   const refSelectedSearchHistoryIndex = useRef(null);
 
   const [reload, setReload] = useState(0);
+
+  const removeFocusFromCurrentItem = useCallback(() => {
+    const indexPrev = refFocusedItemIndex?.current;
+    if (indexPrev !== null) {
+      const itemPrev = refItems?.current?.[indexPrev];
+      const nodePrev = refItemNodes?.current?.[itemPrev?.uuid]?.current;
+      if (nodePrev) {
+        nodePrev.className = removeClassNames(
+          nodePrev?.className || '',
+          [
+            'focused',
+          ],
+        );
+      }
+    }
+  }, []);
 
   const handleNavigation = useCallback((index: number) => {
     const itemsContainer = refItemNodesContainer?.current;
@@ -112,16 +133,8 @@ function CommandCenter() {
         itemsContainer.scrollTop = Math.max(diff, 0);
       }
 
-      const indexPrev = refFocusedItemIndex.current;
-      const itemPrev = refItems?.current?.[indexPrev];
-      const nodePrev = refItemNodes?.current?.[itemPrev?.uuid]?.current;
-      if (nodePrev) {
-        nodePrev.className = removeClassNames(
-          nodePrev?.className || '',
-          [
-            'focused',
-          ],
-        );
+      if (refFocusedItemIndex?.current !== null) {
+        removeFocusFromCurrentItem();
       }
 
       refFocusedItemIndex.current = index;
@@ -136,7 +149,9 @@ function CommandCenter() {
         );
       }
     }
-  }, []);
+  }, [
+    removeFocusFromCurrentItem,
+  ]);
 
   const [invokeRequest, { isLoading: isLoadingRequest }] = useMutation(
     ({
@@ -379,134 +394,17 @@ function CommandCenter() {
   ]);
 
   useEffect(() => {
-    if (refReload?.current === null) {
+    if (refReload?.current === null || refReloadCompleteCount?.current === null) {
       refReload.current = 1;
+      refReloadCompleteCount.current = 0;
     } else {
       setReload(prev => prev + 1);
     }
   }, []);
 
-  const {
-    disableGlobalKeyboardShortcuts,
-    registerOnKeyDown,
-    unregisterOnKeyDown,
-  } = useKeyboardContext();
+  const renderItems = useCallback((items: CommandCenterItemType[]): Promise<any> => {
+    removeFocusFromCurrentItem();
 
-  useEffect(() => () => {
-    unregisterOnKeyDown(COMPONENT_UUID);
-  }, [unregisterOnKeyDown, COMPONENT_UUID]);
-
-  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
-    const focusedItemIndex = refFocusedItemIndex?.current;
-
-    // If the main input is active.
-    if (InputElementEnum.MAIN === refFocusedElement?.current) {
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
-        // If there is text in the input, clear it.
-        if (refInput?.current?.value?.length >= 1) {
-          pauseEvent(event);
-          refInput.current.value = '';
-
-          if (refFocusedSearchHistoryIndex?.current !== null
-            || refSelectedSearchHistoryIndex?.current !== null
-          ) {
-            refFocusedSearchHistoryIndex.current = null;
-            refSelectedSearchHistoryIndex.current = null
-            renderItems(refItemsInit?.current || []);
-          }
-
-          handleNavigation(0);
-        } else {
-          pauseEvent(event);
-          // If there is no text in the input, close.
-          refContainer.current.className = addClassNames(
-            refContainer?.current?.className || '',
-            [
-              'hide',
-            ],
-          );
-          refFocusedElement.current = null;
-          refInput?.current?.blur();
-        }
-      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
-        pauseEvent(event);
-        // Pressing enter on an item
-        const itemSelected = refItems?.current?.[focusedItemIndex];
-
-        const searchText = refInput?.current?.value;
-        if (searchText?.length >= 1) {
-          addSearchHistory(searchText, itemSelected, refItems?.current);
-        }
-
-        handleItemSelect(itemSelected, focusedItemIndex);
-      } else {
-        let index = null;
-        // Arrow down
-        if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
-          pauseEvent(event);
-
-          if (refFocusedSearchHistoryIndex?.current !== null) {
-            refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
-            refFocusedSearchHistoryIndex.current = null;
-          }
-
-          // If already on the last item, don’t change
-          if (focusedItemIndex <= refItems?.current?.length - 2) {
-            index = focusedItemIndex + 1;
-          }
-          // Arrow up
-        } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
-          pauseEvent(event);
-          // If already on the first item, don’t change
-          if (focusedItemIndex >= 1) {
-            index = focusedItemIndex - 1;
-          } else if (refSelectedSearchHistoryIndex?.current === null) {
-            const arr = getSearchHistory() || [];
-            let index2 = refFocusedSearchHistoryIndex?.current === null
-              ? -1
-              : refFocusedSearchHistoryIndex?.current;
-
-            if (index2 < (arr?.length || 0) - 1) {
-              index2 += 1;
-              refFocusedSearchHistoryIndex.current = index2;
-
-              const searchItem = arr?.[index2];
-              if (searchItem) {
-                if (refInput?.current) {
-                  refInput.current.value = searchItem?.searchText;
-                }
-
-                if (searchItem?.items) {
-                  renderItems(searchItem?.items || []);
-                }
-              }
-            }
-          }
-        }
-
-        if (index !== null) {
-          handleNavigation(index);
-        }
-      }
-    } else {
-      // Show the command center and focus on the text input.
-      if (onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
-        || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
-      ) {
-        pauseEvent(event);
-        refContainer.current.className = removeClassNames(
-          refContainer?.current?.className || '',
-          [
-            'hide',
-          ],
-        );
-        refInput?.current?.focus();
-      }
-    }
-
-  }, [reload]);
-
-  const renderItems = useCallback((items: CommandCenterItemType[]) => {
     refItems.current = items;
 
     if (refItemsInit?.current === null) {
@@ -538,14 +436,152 @@ function CommandCenter() {
     });
 
     refRoot?.current?.render(itemsEl);
+
+    setTimeout(() => handleNavigation(0), 1);
+
+    return new Promise((resolve, reject) => resolve?.(items));
   }, [
     handleItemSelect,
     handleNavigation,
+    removeFocusFromCurrentItem,
     theme,
   ]);
 
+  const {
+    disableGlobalKeyboardShortcuts,
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(COMPONENT_UUID);
+  }, [unregisterOnKeyDown, COMPONENT_UUID]);
+
+  registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
+    const focusedItemIndex = refFocusedItemIndex?.current;
+
+    // If the main input is active.
+    if (InputElementEnum.MAIN === refFocusedElement?.current) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
+        pauseEvent(event);
+
+        // If there is text in the input, clear it.
+        if (refInput?.current?.value?.length >= 1) {
+          refInput.current.value = '';
+
+          if (refFocusedSearchHistoryIndex?.current !== null
+            || refSelectedSearchHistoryIndex?.current !== null
+          ) {
+            refFocusedSearchHistoryIndex.current = null;
+            refSelectedSearchHistoryIndex.current = null
+          }
+
+          // Reset the items to the original list of items.
+          renderItems(refItemsInit?.current || []);
+        } else {
+          // If there is no text in the input, close.
+          refContainer.current.className = addClassNames(
+            refContainer?.current?.className || '',
+            [
+              'hide',
+            ],
+          );
+          refFocusedElement.current = null;
+          refInput?.current?.blur();
+        }
+      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
+        pauseEvent(event);
+        // Pressing enter on an item
+        const itemSelected = refItems?.current?.[focusedItemIndex];
+
+        const searchText = refInput?.current?.value;
+        if (searchText?.length >= 1) {
+          addSearchHistory(searchText, itemSelected, refItems?.current);
+        }
+
+        handleItemSelect(itemSelected, focusedItemIndex);
+      } else if (
+        onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping)
+          || onlyKeysPresent([KEY_CODE_DELETE], keyMapping)
+      ) {
+        // TBD
+      } else {
+        let index = null;
+        // Arrow down
+        if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+          pauseEvent(event);
+
+          if (refFocusedSearchHistoryIndex?.current !== null) {
+            refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
+            refFocusedSearchHistoryIndex.current = null;
+          }
+
+          // If already on the last item, don’t change
+          if (focusedItemIndex <= refItems?.current?.length - 2) {
+            index = focusedItemIndex + 1;
+          }
+          // Arrow up
+        } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+          pauseEvent(event);
+          // If already on the first item, don’t change
+
+          if (focusedItemIndex >= 1) {
+            index = focusedItemIndex - 1;
+          } else if (refSelectedSearchHistoryIndex?.current === null) {
+            const arr = getSearchHistory() || [];
+            let index2 = refFocusedSearchHistoryIndex?.current === null
+              ? -1
+              : refFocusedSearchHistoryIndex?.current;
+
+            if (index2 < (arr?.length || 0) - 1) {
+              index2 += 1;
+              refFocusedSearchHistoryIndex.current = index2;
+
+              const searchItem = arr?.[index2];
+              if (searchItem) {
+                if (refInput?.current) {
+                  refInput.current.value = searchItem?.searchText;
+                }
+
+                if (searchItem?.items) {
+                  renderItems(searchItem?.items || []);;
+                }
+              }
+            }
+          }
+        }
+
+        if (index !== null) {
+          handleNavigation(index);
+        }
+      }
+    } else {
+      // Show the command center and focus on the text input.
+      if (onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
+        || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
+      ) {
+        pauseEvent(event);
+        refContainer.current.className = removeClassNames(
+          refContainer?.current?.className || '',
+          [
+            'hide',
+          ],
+        );
+        refInput?.current?.focus();
+
+        if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
+          handleNavigation(0);
+        }
+      }
+    }
+
+  }, [reload]);
+
   useEffect(() => {
-    renderItems(ITEMS)
+    if (refReloadCompleteCount?.current < refReload?.current) {
+      renderItems(ITEMS);
+      refReloadCompleteCount.current = (refReloadCompleteCount?.current || 0) + 1;
+    }
   }, [reload]);
 
   return (
@@ -553,19 +589,30 @@ function CommandCenter() {
       <InputContainerStyle>
         <InputStyle
           onChange={(e) => {
-            refInput.current.value = e.target.value;
+            const searchText = e.target.value;
+            const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
 
-            if (refFocusedSearchHistoryIndex?.current !== null) {
+            refInputValuePrevious.current = searchText;
+
+            // There is no need to set refInput.current.value = searchText,
+            // this is already done when typing in the input element.
+            renderItems(
+              filterItems(searchText, refItemsInit?.current || []),
+            );
+
+            if (isRemoving) {
+              refSelectedSearchHistoryIndex.current = null;
+              refFocusedSearchHistoryIndex.current = null;
+            } else if (refFocusedSearchHistoryIndex?.current !== null) {
               refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
               refFocusedSearchHistoryIndex.current = null;
             }
           }}
           onFocus={() => {
             refFocusedElement.current = InputElementEnum.MAIN;
-
-            if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
-              handleNavigation(0);
-            }
+          }}
+          onBlur={() => {
+            refFocusedElement.current = null;
           }}
           placeholder="Search actions, apps, files, blocks, pipelines, triggers"
           ref={refInput}
