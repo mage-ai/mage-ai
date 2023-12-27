@@ -224,8 +224,6 @@ function CommandCenter() {
     },
   );
 
-  console.log(refItems)
-
   const handleItemSelect = useCallback((item: CommandCenterItemType, focusedItemIndex: number) => {
     const actions = [];
 
@@ -394,9 +392,11 @@ function CommandCenter() {
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
         // If there is text in the input, clear it.
         if (refInput?.current?.value?.length >= 1) {
+          pauseEvent(event);
           refInput.current.value = '';
           handleNavigation(0);
         } else {
+          pauseEvent(event);
           // If there is no text in the input, close.
           refContainer.current.className = addClassNames(
             refContainer?.current?.className || '',
@@ -408,6 +408,7 @@ function CommandCenter() {
           refInput?.current?.blur();
         }
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
+        pauseEvent(event);
         // Pressing enter on an item
         handleItemSelect(refItems?.current?.[focusedItemIndex], focusedItemIndex);
       } else {
@@ -428,7 +429,9 @@ function CommandCenter() {
           }
         }
 
-        handleNavigation(index);
+        if (index !== null) {
+          handleNavigation(index);
+        }
       }
     } else {
       // Show the command center and focus on the text input.

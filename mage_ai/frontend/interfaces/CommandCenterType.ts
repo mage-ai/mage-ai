@@ -41,7 +41,7 @@ export enum CommandCenterActionInteractionTypeEnum {
 }
 
 export interface KeyValueType {
-  [key: string]: string | number | boolean | KeyValueType;
+  [key: string]: string | string[] | number | number[] | boolean | boolean[] | KeyValueType | KeyValueType[];
 }
 
 export interface CommandCenterActionRequestType {

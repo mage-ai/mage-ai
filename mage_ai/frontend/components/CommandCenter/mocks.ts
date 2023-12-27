@@ -162,7 +162,9 @@ export const ITEMS = [
       {
         interaction: {
           options: {
-            filePath: 'default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
+            file_paths: [
+              'default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
+            ],
           },
           type: CommandCenterActionInteractionTypeEnum.OPEN_FILE,
         },
