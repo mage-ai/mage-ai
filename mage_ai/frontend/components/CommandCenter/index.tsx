@@ -414,12 +414,14 @@ function CommandCenter() {
         let index = null;
         // Arrow down
         if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+          pauseEvent(event);
           // If already on the last item, don’t change
           if (focusedItemIndex <= refItems?.current?.length - 2) {
             index = focusedItemIndex + 1;
           }
           // Arrow up
         } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+          pauseEvent(event);
           // If already on the first item, don’t change
           if (focusedItemIndex >= 1) {
             index = focusedItemIndex - 1;
