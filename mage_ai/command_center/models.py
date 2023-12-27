@@ -136,12 +136,12 @@ class IncludeExclude(BaseDataClass):
 
 @dataclass
 class ModelSettings(BaseDataClass):
-    directories: List[IncludeExclude] = None
-    projects: List[IncludeExclude] = None
+    directories: IncludeExclude = None
+    projects: IncludeExclude = None
 
     def __post_init__(self):
-        self.serialize_attribute_classes('directories', IncludeExclude)
-        self.serialize_attribute_classes('projects', IncludeExclude)
+        self.serialize_attribute_class('directories', IncludeExclude)
+        self.serialize_attribute_class('projects', IncludeExclude)
 
 
 @dataclass
