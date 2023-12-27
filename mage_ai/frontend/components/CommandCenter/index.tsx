@@ -454,6 +454,7 @@ function CommandCenter() {
             renderItems(
               combineLocalAndServerItems(
                 command_center_item?.items || [],
+                // @ts-ignore
                 fetchItemsLocal() || refItems?.items || [],
               ),
               refItemsInit?.current === null,

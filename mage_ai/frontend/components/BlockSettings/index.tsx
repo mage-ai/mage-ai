@@ -228,7 +228,7 @@ function BlockSettings({
     },
   );
   const blockDetails: {
-    pipelines: BlockPipelineType;
+    pipelines: BlockPipelineType[];
   } = useMemo(() => dataBlock?.block || {}, [dataBlock]);
   const blockPipelines: BlockPipelineType[] = useMemo(() => blockDetails?.pipelines
     ? blockDetails?.pipelines
