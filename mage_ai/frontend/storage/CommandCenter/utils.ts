@@ -5,14 +5,14 @@ import {
 } from '@interfaces/CommandCenterType';
 import {
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES,
-  LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCH,
+  LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES,
   MAX_ITEMS_HISTORY_PAGES,
-  MAX_ITEMS_HISTORY_SEARCH,
+  MAX_ITEMS_HISTORY_SEARCHES,
 } from './constants';
 import { get, set } from '@storage/localStorage';
 
 export function getSearchHistory(): CommandCenterSearchHistoryType[] {
-  return get(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCH, []);
+  return get(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES, []);
 }
 
 export function addSearchHistory(
@@ -30,7 +30,7 @@ export function addSearchHistory(
     });
   }
 
-  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCH, arr.slice(0, MAX_ITEMS_HISTORY_SEARCH));
+  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES, arr.slice(0, MAX_ITEMS_HISTORY_SEARCHES));
 
   return arr;
 }

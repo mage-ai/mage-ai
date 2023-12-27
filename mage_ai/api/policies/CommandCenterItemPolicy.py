@@ -10,7 +10,7 @@ class CommandCenterItemPolicy(BasePolicy):
 
 CommandCenterItemPolicy.allow_actions(
     [
-        OperationType.LIST,
+        OperationType.CREATE,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -26,24 +26,26 @@ CommandCenterItemPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.LIST,
+        OperationType.CREATE,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
 )
 
 
-CommandCenterItemPolicy.allow_query(
+CommandCenterItemPolicy.allow_write(
     [
         'component',
         'page',
+        'page_history',
         'search',
+        'search_history',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        OperationType.LIST,
+        OperationType.CREATE,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
     override_permission_condition=lambda _policy: True,
