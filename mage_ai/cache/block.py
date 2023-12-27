@@ -6,6 +6,7 @@ from typing import Dict, List, Union
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
 from mage_ai.cache.utils import build_pipeline_dict
+from mage_ai.settings.repo import get_repo_path
 
 
 class BlockCache(BaseCache):
@@ -14,16 +15,20 @@ class BlockCache(BaseCache):
     @classmethod
     async def initialize_cache(
         self,
-        replace: bool = False,
         caches: List[BaseCache] = None,
+        file_path: str = None,
+        replace: bool = False,
+        repo_path: str = None,
+        root_project: bool = True,
     ) -> 'BlockCache':
-        cache = self()
+        repo_path = repo_path or get_repo_path(root_project=root_project)
+        cache = self(repo_path=repo_path)
         if replace or not cache.exists():
-            await cache.initialize_cache_for_all_pipelines(caches=caches)
+            await cache.initialize_cache_for_all_pipelines(caches=caches, file_path=file_path)
 
         return cache
 
-    def build_key(self, block: Union[Dict]) -> str:
+    def build_key(self, block: Union[Dict], repo_path: str = None) -> str:
         """Generate cache key for block.
 
         Args:
@@ -35,16 +40,31 @@ class BlockCache(BaseCache):
         """
         block_type = ''
         block_uuid = ''
+        configuration = None
 
-        if type(block) is dict:
+        if isinstance(block, dict):
             block_type = block.get('type')
             block_uuid = block.get('uuid')
+            configuration = block.get('configuration') or {}
         else:
             block_type = block.type
             block_uuid = block.uuid
+            configuration = block.configuration or {}
+
         if not block_type or not block_uuid:
             return None
-        return os.path.join(block_type, block_uuid)
+
+        if configuration:
+            file_source = (configuration or {}).get('file_source') or {}
+            if file_source and (file_source or {}).get('path'):
+                return (file_source or {}).get('path')
+
+        repo_path = repo_path or get_repo_path(root_project=False)
+
+        return ':'.join([
+            repo_path,
+            os.path.join(block_type, block_uuid),
+        ])
 
     def get_pipelines(self, block) -> Dict:
         pipelines_dict = {}
@@ -142,25 +162,41 @@ class BlockCache(BaseCache):
 
         self.set(self.cache_key, mapping)
 
-    async def initialize_cache_for_all_pipelines(self, caches: List[BaseCache] = None) -> None:
+    async def initialize_cache_for_all_pipelines(
+        self,
+        caches: List[BaseCache] = None,
+        file_path: str = None,
+    ) -> None:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
-        pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
+        pipeline_uuids_and_repo_path = Pipeline.get_all_pipelines_all_projects(
+            self.repo_path,
+            include_repo_path=True,
+        )
 
         pipeline_dicts = await asyncio.gather(
-            *[Pipeline.load_metadata(uuid, raise_exception=False) for uuid in pipeline_uuids],
+            *[Pipeline.load_metadata(
+                uuid,
+                raise_exception=False,
+                repo_path=repo_path,
+            ) for uuid, repo_path in pipeline_uuids_and_repo_path],
         )
         pipeline_dicts = [p for p in pipeline_dicts if p is not None]
 
         mapping = {}
         for pipeline_dict in pipeline_dicts:
+            repo_path = pipeline_dict.get('repo_path')
+
             for block_dict in pipeline_dict.get('blocks', []):
-                key = self.build_key(block_dict)
+                key = self.build_key(block_dict, repo_path=repo_path)
                 if not key:
                     continue
                 if key not in mapping:
                     mapping[key] = {}
-                mapping[key][pipeline_dict['uuid']] = build_pipeline_dict(pipeline_dict)
+                mapping[key][pipeline_dict['uuid']] = build_pipeline_dict(
+                    pipeline_dict,
+                    repo_path=repo_path,
+                )
 
         if caches:
             for cache_class in caches:

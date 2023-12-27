@@ -198,6 +198,7 @@ class PipelineResource(BaseResource):
         else:
             for uuid in pipeline_uuids:
                 pipeline_dict = cache.get_model(dict(uuid=uuid))
+                print('HITTTTTTTTTTTTTTTTTTTTTT', uuid, pipeline_dict)
                 if pipeline_dict and pipeline_dict.get('pipeline'):
                     pipelines.append(Pipeline(uuid, config=pipeline_dict['pipeline']))
                 else:

@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 import shutil
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import aiofiles
 import dateutil.parser
@@ -310,6 +310,7 @@ class Pipeline:
             raise_exception (bool, optional): Whether to raise Exception.
                 If raise_exception = False, return None as the config when exception happens.
         """
+        include_repo_path = repo_path is not None
         repo_path = repo_path or get_repo_path()
         config_path = os.path.join(
             repo_path,
@@ -329,6 +330,9 @@ class Pipeline:
             if raise_exception:
                 raise e
             config = None
+
+        if include_repo_path and config:
+            config['repo_path'] = repo_path
 
         return config
 
@@ -390,7 +394,11 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def get_all_pipelines_all_projects(self, *args, **kwargs):
+    def get_all_pipelines_all_projects(
+        self,
+        *args,
+        **kwargs,
+    ) -> Union[List[str], List[Tuple[str, str]]]:
         if project_platform_activated():
             repo_paths = [d.get(
                 'full_path',
@@ -409,7 +417,8 @@ class Pipeline:
         repo_path: str = None,
         repo_paths: List[str] = None,
         disable_pipelines_folder_creation: bool = False,
-    ) -> List[str]:
+        include_repo_path: bool = False,
+    ) -> Union[List[str], List[Tuple[str, str]]]:
         arr = []
 
         paths = []
@@ -427,7 +436,7 @@ class Pipeline:
 
             if pipelines_folder_exists:
                 arr.extend([
-                    d
+                    (d, path) if include_repo_path else d
                     for d in os.listdir(pipelines_folder)
                     if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
                 ])

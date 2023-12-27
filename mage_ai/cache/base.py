@@ -13,7 +13,7 @@ from mage_ai.settings.repo import get_repo_path, get_variables_dir
 class BaseCache():
     cache_key = None
 
-    def __init__(self, repo_path: str = None, repo_config=None, root_project: bool = False):
+    def __init__(self, repo_path: str = None, repo_config=None, root_project: bool = True):
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
 

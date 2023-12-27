@@ -25,6 +25,7 @@ def build_pipeline_dict(
     pipeline: Union[Dict],
     added_at: str = None,
     include_details: bool = False,
+    repo_path: str = None,
 ) -> Dict:
     pipeline_output_dict = dict(
         description=None,
@@ -34,6 +35,9 @@ def build_pipeline_dict(
         updated_at=None,
         uuid=None,
     )
+
+    if repo_path:
+        pipeline_output_dict['repo_path'] = repo_path
 
     if isinstance(pipeline, dict):
         pipeline_output_dict.update(extract(pipeline, PIPELINE_KEYS))
