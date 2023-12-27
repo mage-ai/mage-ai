@@ -10,7 +10,9 @@ import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styl
 
 export const MAX_WIDTH = 100 * UNIT;
 
-export const ContainerStyle = styled.div`
+export const ContainerStyle = styled.div<{
+  className?: string;
+}>`
   backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
   border-radius: ${BORDER_RADIUS_XLARGE}px;
   left: 50%;

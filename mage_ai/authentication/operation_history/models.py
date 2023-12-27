@@ -1,3 +1,4 @@
+
 import asyncio
 import json
 import os
@@ -104,8 +105,6 @@ class OperationHistoryReader:
         filename = datetime.fromtimestamp(
             timestamp or int(datetime.utcnow().timestamp()),
         ).strftime('%Y-%m-%d')
-
-        print('WTFFFFFFFFFFFFFFFFFFFFFFF', dir_path, filename)
 
         return os.path.join(dir_path, filename)
 

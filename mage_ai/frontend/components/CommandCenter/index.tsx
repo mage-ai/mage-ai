@@ -35,7 +35,11 @@ import { InputElementEnum, ItemRowClassNameEnum } from './constants';
 import { ITEMS } from './mocks';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
-import { addSearchHistory, getSearchHistory } from '@storage/CommandCenter/utils';
+import {
+  addSearchHistory,
+  getPageHistoryAsItems,
+  getSearchHistory,
+} from '@storage/CommandCenter/utils';
 import { filterItems } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -64,11 +68,10 @@ function CommandCenter() {
   const refItemNodes = useRef({});
   const refItemNodesContainer = useRef(null);
   const refReload = useRef(null);
-  const refReloadCompleteCount = useRef(null);
   const refRoot = useRef(null);
   const refSelectedSearchHistoryIndex = useRef(null);
 
-  const [reload, setReload] = useState(0);
+  const [reload, setReload] = useState(null);
 
   const removeFocusFromCurrentItem = useCallback(() => {
     const indexPrev = refFocusedItemIndex?.current;
@@ -390,15 +393,6 @@ function CommandCenter() {
     invokeRequest,
   ]);
 
-  useEffect(() => {
-    if (refReload?.current === null || refReloadCompleteCount?.current === null) {
-      refReload.current = 1;
-      refReloadCompleteCount.current = 0;
-    } else {
-      setReload(prev => prev + 1);
-    }
-  }, []);
-
   const renderItems = useCallback((items: CommandCenterItemType[]): Promise<any> => {
     removeFocusFromCurrentItem();
 
@@ -499,7 +493,12 @@ function CommandCenter() {
         onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping)
           || onlyKeysPresent([KEY_CODE_DELETE], keyMapping)
       ) {
-        // TBD
+        if (refSelectedSearchHistoryIndex?.current !== null) {
+          refSelectedSearchHistoryIndex.current = null;
+        }
+        if (refFocusedSearchHistoryIndex?.current !== null) {
+          refFocusedSearchHistoryIndex.current = null;
+        }
       } else {
         let index = null;
         // Arrow down
@@ -567,20 +566,31 @@ function CommandCenter() {
         if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
           handleNavigation(0);
         }
+
+        if (refReload?.current >= 1) {
+          setReload(prev => prev === null ? 0 : prev + 1);
+        }
       }
     }
 
   }, [reload]);
 
   useEffect(() => {
-    if (refReloadCompleteCount?.current < refReload?.current) {
-      renderItems(ITEMS);
-      refReloadCompleteCount.current = (refReloadCompleteCount?.current || 0) + 1;
+    if (refReload?.current === null) {
+      setReload(prev => prev === null ? 0 : prev + 1);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (reload !== null) {
+      // @ts-ignore
+      renderItems(ITEMS.concat(getPageHistoryAsItems() || []));
+      refReload.current = (refReload?.current || 0) + 1;
     }
   }, [reload]);
 
   return (
-    <ContainerStyle ref={refContainer}>
+    <ContainerStyle className="hide" ref={refContainer}>
       <InputContainerStyle>
         <InputStyle
           onChange={(e) => {

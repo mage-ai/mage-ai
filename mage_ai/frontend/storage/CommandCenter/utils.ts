@@ -1,6 +1,7 @@
 import {
   CommandCenterItemType,
   CommandCenterSearchHistoryType,
+  CommandCenterTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
 import {
@@ -37,6 +38,26 @@ export function addSearchHistory(
 
 export function getPageHistory(): PageHistoryType[] {
   return get(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, []);
+}
+
+export function getPageHistoryAsItems(): CommandCenterItemType[] {
+  return (getPageHistory() || [])?.map(({
+    asPath,
+    pathname,
+    title,
+  }: PageHistoryType) => ({
+    actions: [
+      {
+        page: {
+          path: asPath,
+        },
+      },
+    ],
+    description: pathname,
+    title,
+    type: CommandCenterTypeEnum.APPLICATION,
+    uuid: asPath,
+  }));
 }
 
 export function addPageHistory(page: PageHistoryType) {
