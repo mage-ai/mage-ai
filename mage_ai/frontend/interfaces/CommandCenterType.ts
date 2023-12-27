@@ -58,7 +58,7 @@ export interface CommandCenterActionRequestType {
 
 export interface CommandCenterActionInteractionType {
   element?: {
-    className?: string;
+    class_name?: string;
     id?: string;
   };
   options?: KeyValueType;

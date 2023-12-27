@@ -326,8 +326,8 @@ function CommandCenter() {
             if (element?.id) {
               const node = document.getElementById(element?.id);
               nodes.push(node);
-            } else if (element?.className) {
-              const node = document.getElementsByClassName(element?.className);
+            } else if (element?.class_name) {
+              const node = document.getElementsByClassName(element?.class_name);
               nodes.push(node);
             }
 
