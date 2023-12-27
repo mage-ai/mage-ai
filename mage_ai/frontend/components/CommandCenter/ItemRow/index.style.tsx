@@ -5,6 +5,7 @@ import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { CommandCenterItemType, CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { dig } from '@utils/hash';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { transition } from '@oracle/styles/mixins';
 
@@ -16,30 +17,41 @@ export function getIconColor(item: CommandCenterItemType, opts: {
 } {
   const theme = opts?.theme;
 
-  const itemType = item?.type;
+  const {
+    color_uuid: colorUUID,
+    type: itemType,
+  } = item || {
+    color: null,
+    type: null,
+  };
 
-  let accent = (theme || dark)?.monotone?.gray;
-  let accentLight = (theme || dark)?.monotone?.grey500;
+  const themeUse = (theme || dark);
 
-  if (CommandCenterTypeEnum.ACTION == itemType) {
-    accent = (theme || dark)?.accent?.negative;
-    accentLight = (theme || dark)?.accent?.negativeTransparent;
+  let accent = themeUse?.monotone?.gray;
+  let accentLight = themeUse?.monotone?.grey500;
+
+  if (colorUUID) {
+    accent = dig(themeUse, colorUUID);
+    accentLight = dig(themeUse, colorUUID);
+  } else if (CommandCenterTypeEnum.ACTION == itemType) {
+    accent = themeUse?.accent?.negative;
+    accentLight = themeUse?.accent?.negativeTransparent;
   } else if (CommandCenterTypeEnum.APPLICATION == itemType) {
-    accent = (theme || dark)?.accent?.warning;
-    accentLight = (theme || dark)?.accent?.warningTransparent;
+    accent = themeUse?.accent?.warning;
+    accentLight = themeUse?.accent?.warningTransparent;
   } else if (CommandCenterTypeEnum.BLOCK == itemType) {
     return getColorsForBlockType(item?.metadata?.block?.type, {
       theme,
     });
   } else if (CommandCenterTypeEnum.FILE == itemType) {
-    accent = (theme || dark)?.accent?.sky;
-    accentLight = (theme || dark)?.accent?.skyLight;
+    accent = themeUse?.accent?.sky;
+    accentLight = themeUse?.accent?.skyLight;
   } else if (CommandCenterTypeEnum.PIPELINE == itemType) {
-    accent = (theme || dark)?.accent?.cyan;
-    accentLight = (theme || dark)?.accent?.cyanLight;
+    accent = themeUse?.accent?.cyan;
+    accentLight = themeUse?.accent?.cyanLight;
   } else if (CommandCenterTypeEnum.TRIGGER == itemType) {
-    accent = (theme || dark)?.accent?.rose;
-    accentLight = (theme || dark)?.accent?.roseLight;
+    accent = themeUse?.accent?.rose;
+    accentLight = themeUse?.accent?.roseLight;
   }
 
   return {

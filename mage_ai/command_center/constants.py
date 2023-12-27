@@ -9,6 +9,7 @@ class CommandCenterItemType(str, Enum):
     BLOCK = 'block'
     FILE = 'file'
     PIPELINE = 'pipeline'
+    SUPPORT = 'support'
     TRIGGER = 'trigger'
 
 

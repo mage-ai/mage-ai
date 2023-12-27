@@ -8,16 +8,17 @@ export enum CommandCenterTypeEnum {
   BLOCK = 'block',
   FILE = 'file',
   PIPELINE = 'pipeline',
+  SUPPORT = 'support',
   TRIGGER = 'trigger',
 }
 
 export const TYPE_TITLE_MAPPING = {
-  [CommandCenterTypeEnum.ACTION]: 'Cast',
-  [CommandCenterTypeEnum.APPLICATION]: 'Teleport',
-  [CommandCenterTypeEnum.BLOCK]: 'Enchant',
-  [CommandCenterTypeEnum.FILE]: 'Summon',
-  [CommandCenterTypeEnum.PIPELINE]: 'Enchant',
-  [CommandCenterTypeEnum.TRIGGER]: 'Enchant',
+  [CommandCenterTypeEnum.ACTION]: 'Cast spell',
+  [CommandCenterTypeEnum.APPLICATION]: 'Teleport to app',
+  [CommandCenterTypeEnum.BLOCK]: 'Enchant block',
+  [CommandCenterTypeEnum.FILE]: 'Summon file',
+  [CommandCenterTypeEnum.PIPELINE]: 'Enchant pipeline',
+  [CommandCenterTypeEnum.TRIGGER]: 'Enchant trigger',
 };
 
 interface BlockMetadataType {
@@ -90,6 +91,8 @@ export interface CommandCenterItemType {
   };
   actions?: CommandCenterActionType[];
   description?: string;
+  color_uuid?: string;
+  icon?: string;
   items?: CommandCenterItemType[];
   metadata?: {
     block?: BlockMetadataType;

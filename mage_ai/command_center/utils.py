@@ -1,6 +1,8 @@
 from typing import Dict, List
 
+from mage_ai.command_center.applications.factory import ApplicationFactory
 from mage_ai.command_center.models import Item
+from mage_ai.command_center.support.factory import Factory as SupportFactory
 
 
 async def search_items(
@@ -10,4 +12,4 @@ async def search_items(
     search: str = None,
     search_history: List[Dict] = None,
 ) -> List[Item]:
-    return []
+    return SupportFactory.build_items() + ApplicationFactory.build_items()

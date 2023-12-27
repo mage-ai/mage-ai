@@ -13,6 +13,7 @@ import { ItemRowClassNameEnum } from '../constants';
 import { ItemStyle, getIconColor } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { getDisplayCategory } from '../utils';
 import { getIcon } from './constants';
 
 type ItemRowProps = {
@@ -36,6 +37,9 @@ function ItemRow({
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
 
+  const applicationWithDescriptionPath =
+    CommandCenterTypeEnum.APPLICATION === type && description?.startsWith('/');
+
   return (
     <ItemStyle
       className={className}
@@ -58,14 +62,18 @@ function ItemRow({
           <Spacing mr={PADDING_UNITS} />
 
           {description && (
-            <Text default>
+            <Text
+              default
+              monospace={applicationWithDescriptionPath}
+              small={applicationWithDescriptionPath}
+            >
               {description}
             </Text>
           )}
         </Flex>
 
         <Text muted>
-          {capitalizeRemoveUnderscoreLower(TYPE_TITLE_MAPPING[type] || type)}
+          {getDisplayCategory(item)}
         </Text>
       </FlexContainer>
     </ItemStyle>
