@@ -1,5 +1,5 @@
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
-import { indexBy } from '@utils/hash';
+import { indexBy } from '@utils/array';
 
 export function filterItems(
   searchText: string,

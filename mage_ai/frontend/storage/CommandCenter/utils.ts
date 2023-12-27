@@ -8,10 +8,24 @@ import { ITEMS } from '@components/CommandCenter/mocks';
 import {
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES,
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES,
+  LOCAL_STORAGE_COMMAND_CENTER_SETTINGS,
   MAX_ITEMS_HISTORY_PAGES,
   MAX_ITEMS_HISTORY_SEARCHES,
 } from './constants';
 import { get, set } from '@storage/localStorage';
+
+export function getSetSettings(settings = null) {
+  const data = {
+    ...(get(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, settings) || {}),
+    ...(settings || {}),
+  };
+
+  if (settings) {
+    set(LOCAL_STORAGE_COMMAND_CENTER_SETTINGS, data);
+  }
+
+  return data;
+}
 
 export function getSearchHistory(): CommandCenterSearchHistoryType[] {
   return get(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES, []);
@@ -32,7 +46,10 @@ export function addSearchHistory(
     });
   }
 
-  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES, arr.slice(0, MAX_ITEMS_HISTORY_SEARCHES));
+  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES, arr.slice(
+    0,
+    getSetSettings()?.history?.searches?.length || MAX_ITEMS_HISTORY_SEARCHES,
+  ));
 
   return arr;
 }
@@ -67,7 +84,10 @@ export function addPageHistory(page: PageHistoryType) {
     (getPageHistory() || []).filter(({ asPath }) => asPath !== page?.asPath)
   );
 
-  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, arr.slice(0, MAX_ITEMS_HISTORY_PAGES));
+  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, arr.slice(
+    0,
+    getSetSettings()?.history?.pages?.length || MAX_ITEMS_HISTORY_PAGES,
+  ));
 
   return arr;
 }

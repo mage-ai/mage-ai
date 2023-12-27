@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import ClickOutside from '@oracle/components/ClickOutside';
 import ItemRow from './ItemRow';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
@@ -39,8 +40,9 @@ import {
   fetchItems as fetchItemsLocal,
   getPageHistoryAsItems,
   getSearchHistory,
+  getSetSettings,
 } from '@storage/CommandCenter/utils';
-import { h, filterItems } from './utils';
+import { combineLocalAndServerItems, filterItems } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -70,6 +72,7 @@ function CommandCenter() {
   const refReload = useRef(null);
   const refRoot = useRef(null);
   const refSelectedSearchHistoryIndex = useRef(null);
+  const refSettings = useRef(null);
 
   const [reload, setReload] = useState(null);
 
@@ -393,12 +396,13 @@ function CommandCenter() {
     invokeRequest,
   ]);
 
-  const renderItems = useCallback((items: CommandCenterItemType[]): Promise<any> => {
-    removeFocusFromCurrentItem();
-
+  const renderItems = useCallback((
+    items: CommandCenterItemType[],
+    setInit: boolean = false,
+  ): Promise<any> => {
     refItems.current = items;
 
-    if (refItemsInit?.current === null) {
+    if (setInit && refItemsInit?.current === null) {
       refItemsInit.current = items;
     }
 
@@ -427,8 +431,6 @@ function CommandCenter() {
 
     refRoot?.current?.render(itemsEl);
 
-    setTimeout(() => handleNavigation(0), 1);
-
     return new Promise((resolve, reject) => resolve?.(items));
   }, [
     handleItemSelect,
@@ -450,10 +452,14 @@ function CommandCenter() {
           callback: ({
             command_center_item,
           }) => {
-            renderItems(combineLocalAndServerItems(
-              command_center_item?.items || [],
-              refItems?.items || [],
-            ));
+            renderItems(
+              combineLocalAndServerItems(
+                command_center_item?.items || [],
+                fetchItemsLocal() || refItems?.items || [],
+              ),
+              refItemsInit?.current === null,
+            );
+            refSettings.current = getSetSettings(command_center_item?.settings || {});
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -462,7 +468,18 @@ function CommandCenter() {
         },
       ),
     },
-  )
+  );
+
+  const close = useCallback(() => {
+    refContainer.current.className = addClassNames(
+      refContainer?.current?.className || '',
+      [
+        'hide',
+      ],
+    );
+    refFocusedElement.current = null;
+    refInput?.current?.blur();
+  }, []);
 
   const {
     disableGlobalKeyboardShortcuts,
@@ -497,14 +514,7 @@ function CommandCenter() {
           renderItems(refItemsInit?.current || []);
         } else {
           // If there is no text in the input, close.
-          refContainer.current.className = addClassNames(
-            refContainer?.current?.className || '',
-            [
-              'hide',
-            ],
-          );
-          refFocusedElement.current = null;
-          refInput?.current?.blur();
+          close();
         }
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
         pauseEvent(event);
@@ -566,7 +576,9 @@ function CommandCenter() {
                 }
 
                 if (searchItem?.items) {
-                  renderItems(searchItem?.items || []);;
+                  removeFocusFromCurrentItem();
+                  renderItems(searchItem?.items || []);
+                  setTimeout(() => handleNavigation(0), 1);
                 }
               }
             }
@@ -579,8 +591,14 @@ function CommandCenter() {
       }
     } else {
       // Show the command center and focus on the text input.
-      if (onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
-        || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
+
+      const ks = refSettings?.current?.interface?.keyboard_shortcuts?.main;
+      if (
+        (ks?.length >= 1 && onlyKeysPresent(ks, keyMapping))
+        || (!ks?.length && (
+          onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
+            || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
+        ))
       ) {
         pauseEvent(event);
         refContainer.current.className = removeClassNames(
@@ -591,11 +609,11 @@ function CommandCenter() {
         );
         refInput?.current?.focus();
 
-        if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
-          handleNavigation(0);
-        }
-
         fetchItemsServer();
+
+        if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
+          setTimeout(() => handleNavigation(0), 1);
+        }
       }
     }
 
@@ -613,6 +631,7 @@ function CommandCenter() {
   useEffect(() => {
     if (reload !== null) {
       renderItems(fetchItemsLocal());
+      fetchItemsServer();
       refReload.current = (refReload?.current || 0) + 1;
     }
   }, [reload]);
@@ -627,11 +646,15 @@ function CommandCenter() {
 
             refInputValuePrevious.current = searchText;
 
+            removeFocusFromCurrentItem();
+
             // There is no need to set refInput.current.value = searchText,
             // this is already done when typing in the input element.
             renderItems(
               filterItems(searchText, refItemsInit?.current || []),
             );
+
+            setTimeout(() => handleNavigation(0), 1);
 
             if (isRemoving) {
               refSelectedSearchHistoryIndex.current = null;

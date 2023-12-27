@@ -5,7 +5,6 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.command_center.constants import SETTINGS_FILENAME
-from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.io import safe_write
 
 
@@ -32,4 +31,7 @@ def save_settings(settings: Dict, full_path: str = None) -> Dict:
 
 
 def __settings_full_path() -> str:
-    return os.path.join(base_repo_path(), SETTINGS_FILENAME)
+    from mage_ai.settings.repo import get_variables_dir
+
+    variables_dir = get_variables_dir(root_project=True)
+    return os.path.join(variables_dir, SETTINGS_FILENAME)

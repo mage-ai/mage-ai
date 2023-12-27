@@ -183,25 +183,33 @@ class InterfaceSettings(BaseDataClass):
 
 
 @dataclass
-class CommandCenterSettings(BaseDataClass):
+class CacheSettings(BaseDataClass):
     blocks: ModelSettings = None
     files: ModelSettings = None
-    history: HistorySettings = None
-    interface: InterfaceSettings = None
     pipelines: ModelSettings = None
     triggers: ModelSettings = None
 
     def __post_init__(self):
         self.serialize_attribute_class('blocks', ModelSettings)
         self.serialize_attribute_class('files', ModelSettings)
-        self.serialize_attribute_class('history', HistorySettings)
-        self.serialize_attribute_class('interface', InterfaceSettings)
         self.serialize_attribute_class('pipelines', ModelSettings)
         self.serialize_attribute_class('triggers', ModelSettings)
 
+
+@dataclass
+class CommandCenterSettings(BaseDataClass):
+    cache: CacheSettings = None
+    history: HistorySettings = None
+    interface: InterfaceSettings = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('cache', CacheSettings)
+        self.serialize_attribute_class('history', HistorySettings)
+        self.serialize_attribute_class('interface', InterfaceSettings)
+
     @classmethod
     def load_from_file_path(self, file_path: str = None) -> 'CommandCenterSettings':
-        return self.load(**load_settings())
+        return self.load(**(load_settings() or {}))
 
     def save(self, file_path: str = None):
         save_settings(self.to_dict(), file_path=file_path)
