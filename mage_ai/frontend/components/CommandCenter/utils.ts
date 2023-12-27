@@ -1,4 +1,5 @@
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
+import { indexBy } from '@utils/hash';
 
 export function filterItems(
   searchText: string,
@@ -14,4 +15,14 @@ export function filterItems(
     description,
     title,
   }) => title?.toLowerCase()?.includes(value) || description?.toLowerCase()?.includes(value));
+}
+
+export function combineLocalAndServerItems(
+  itemsServer: CommandCenterItemType[],
+  itemsLocal: CommandCenterItemType[],
+): CommandCenterItemType[] {
+  const mapping = indexBy(itemsServer || [], ({ uuid }) => uuid) || {};
+
+  // @ts-ignore
+  return (itemsServer || [])?.concat((itemsLocal || [])?.filter(({ uuid }) => !(uuid in mapping)));
 }

@@ -4,6 +4,7 @@ import {
   CommandCenterTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
+import { ITEMS } from '@components/CommandCenter/mocks';
 import {
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES,
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES,
@@ -69,4 +70,9 @@ export function addPageHistory(page: PageHistoryType) {
   set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, arr.slice(0, MAX_ITEMS_HISTORY_PAGES));
 
   return arr;
+}
+
+export function fetchItems(): CommandCenterItemType[] {
+  // @ts-ignore
+  return (getPageHistoryAsItems() || []).concat(ITEMS);
 }

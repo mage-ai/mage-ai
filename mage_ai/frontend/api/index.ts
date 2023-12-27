@@ -39,6 +39,7 @@ export const CACHE_ITEMS: 'cache_items' = 'cache_items';
 export const CLIENT_PAGES: 'client_pages' = 'client_pages';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
+export const COMMAND_CENTER_ITEMS: 'command_center_items' = 'command_center_items';
 export const COMPUTE_CLUSTERS: 'compute_clusters' = 'compute_clusters';
 export const COMPUTE_CONNECTIONS: 'compute_connections' = 'compute_connections';
 export const COMPUTE_SERVICES: 'compute_services' = 'compute_services';
@@ -129,6 +130,7 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [CLIENT_PAGES],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
+  [COMMAND_CENTER_ITEMS],
   [COMPUTE_CLUSTERS, COMPUTE_SERVICES],
   [COMPUTE_CONNECTIONS, COMPUTE_SERVICES],
   [COMPUTE_SERVICES],

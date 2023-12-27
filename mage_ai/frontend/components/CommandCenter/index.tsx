@@ -32,15 +32,15 @@ import {
   KEY_CODE_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { InputElementEnum, ItemRowClassNameEnum } from './constants';
-import { ITEMS } from './mocks';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
   addSearchHistory,
+  fetchItems as fetchItemsLocal,
   getPageHistoryAsItems,
   getSearchHistory,
 } from '@storage/CommandCenter/utils';
-import { filterItems } from './utils';
+import { h, filterItems } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -436,6 +436,34 @@ function CommandCenter() {
     removeFocusFromCurrentItem,
   ]);
 
+  const [fetchItemsServer, { isLoading: isLoadingFetchItemsServer }] = useMutation(
+    () => api.command_center_items.useCreate()({
+      command_center_item: {
+        page_history: getPageHistoryAsItems(),
+        search: refInput?.current?.value,
+        search_history: getSearchHistory(),
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            command_center_item,
+          }) => {
+            renderItems(combineLocalAndServerItems(
+              command_center_item?.items || [],
+              refItems?.items || [],
+            ));
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  )
+
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
@@ -567,13 +595,14 @@ function CommandCenter() {
           handleNavigation(0);
         }
 
-        if (refReload?.current >= 1) {
-          setReload(prev => prev === null ? 0 : prev + 1);
-        }
+        fetchItemsServer();
       }
     }
 
-  }, [reload]);
+  }, [
+    fetchItemsServer,
+    reload,
+  ]);
 
   useEffect(() => {
     if (refReload?.current === null) {
@@ -583,8 +612,7 @@ function CommandCenter() {
 
   useEffect(() => {
     if (reload !== null) {
-      // @ts-ignore
-      renderItems(ITEMS.concat(getPageHistoryAsItems() || []));
+      renderItems(fetchItemsLocal());
       refReload.current = (refReload?.current || 0) + 1;
     }
   }, [reload]);
