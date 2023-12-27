@@ -160,14 +160,14 @@ export const ITEMS: CommandCenterItemType[] = [
   //   },
   //   type: CommandCenterTypeEnum.FILE,
   //   actions: [
-  //     {
-  //       interaction: {
-  //         options: {
-  //           file_path: 'default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
-  //         },
-  //         type: CommandCenterActionInteractionTypeEnum.OPEN_FILE,
-  //       },
-  //     },
+      // {
+      //   interaction: {
+      //     options: {
+      //       file_path: 'default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
+      //     },
+      //     type: CommandCenterActionInteractionTypeEnum.OPEN_FILE,
+      //   },
+      // },
   //   ],
   // },
   // {

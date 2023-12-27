@@ -16,6 +16,8 @@ class Factory(BaseFactory):
                     dict(
                         page=dict(
                             path=item_dict['path'],
+                            external=True,
+                            open_new_window=True,
                         ),
                     ),
                 ],

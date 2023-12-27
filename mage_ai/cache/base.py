@@ -75,7 +75,7 @@ class BaseCache():
     def invalidate(self, key: str = None) -> None:
         path = self.build_path(key or self.cache_key)
         if os.path.exists(path):
-            self._storage.remove(path)
+            self.storage.remove(path)
 
     @property
     def file_path(self) -> str:

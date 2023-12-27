@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Dict, List, Union
 
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.authentication.permissions.constants import EntityName
 from mage_ai.command_center.constants import (
     CommandCenterItemType,
     FileExtension,
@@ -10,6 +9,7 @@ from mage_ai.command_center.constants import (
 )
 from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.presenters.interactions.models import InteractionInput
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -41,19 +41,25 @@ class Page(BaseDataClass):
 @dataclass
 class Request(BaseDataClass):
     operation: OperationType
-    resource: EntityName
+    resource: str
     response_resource_key: str
     payload: Dict = None
+    payload_keys_user_input_required: Dict = None
     payload_resource_key: str = None
     query: Dict = None
     resource_id: Union[str, int] = None
-    resource_parent: EntityName = None
+    resource_parent: str = None
     resource_parent_id: Union[str, int] = None
 
     def __post_init__(self):
         self.serialize_attribute_enum('operation', OperationType)
-        self.serialize_attribute_enum('resource', EntityName)
-        self.serialize_attribute_enum('resource_parent', EntityName)
+
+        if isinstance(self.payload_keys_user_input_required, dict):
+            mapping = {}
+            for key, value in self.payload_keys_user_input_required.items():
+                if isinstance(value, dict):
+                    mapping[key] = InteractionInput.load(**value)
+            self.payload_keys_user_input_required = mapping
 
 
 @dataclass
@@ -61,6 +67,7 @@ class Action(BaseDataClass):
     delay: int = None
     interaction: Interaction = None
     page: Page = None
+    parent_action_result_key_value_mapping: Dict = None
     request: Request = None
 
     def __post_init__(self):

@@ -73,6 +73,8 @@ function CommandCenter() {
   const refSelectedSearchHistoryIndex = useRef(null);
   const refSettings = useRef(null);
 
+  const refKeyDownCode = useRef(null);
+
   const [reload, setReload] = useState(null);
 
   const removeFocusFromCurrentItem = useCallback(() => {
@@ -273,7 +275,7 @@ function CommandCenter() {
       if (page) {
         const {
           external,
-          openNewWindow,
+          open_new_window: openNewWindow,
           path,
         } = page || {
           external: false,
@@ -484,12 +486,19 @@ function CommandCenter() {
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
+    registerOnKeyUp,
     unregisterOnKeyDown,
+    unregisterOnKeyUp,
   } = useKeyboardContext();
 
   useEffect(() => () => {
     unregisterOnKeyDown(COMPONENT_UUID);
-  }, [unregisterOnKeyDown, COMPONENT_UUID]);
+    unregisterOnKeyUp(COMPONENT_UUID);
+  }, [unregisterOnKeyDown, unregisterOnKeyUp, COMPONENT_UUID]);
+
+  registerOnKeyUp(COMPONENT_UUID, () => {
+    refKeyDownCode.current = null;
+  }, []);
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
     const focusedItemIndex = refFocusedItemIndex?.current;
@@ -557,9 +566,14 @@ function CommandCenter() {
           pauseEvent(event);
           // If already on the first item, don’t change
 
+          const firstKeyDown = refKeyDownCode?.current === null;
+          refKeyDownCode.current = keyHistory?.[0];
+
           if (focusedItemIndex >= 1) {
             index = focusedItemIndex - 1;
-          } else if (refSelectedSearchHistoryIndex?.current === null) {
+          } else if ((firstKeyDown || refFocusedSearchHistoryIndex?.current !== null)
+            && refSelectedSearchHistoryIndex?.current === null
+          ) {
             const arr = getSearchHistory() || [];
             let index2 = refFocusedSearchHistoryIndex?.current === null
               ? -1

@@ -1,5 +1,6 @@
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { FileExtensionEnum } from '@interfaces/FileType';
+import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
 export enum CommandCenterTypeEnum {
@@ -48,6 +49,9 @@ export interface KeyValueType {
 export interface CommandCenterActionRequestType {
   operation: OperationTypeEnum;
   payload?: KeyValueType;
+  payload_keys_user_input_required?: {
+    [key: string]: InteractionInputType;
+  };
   payload_resource_key?: string;
   query?: KeyValueType;
   resource: string;
@@ -68,7 +72,7 @@ export interface CommandCenterActionInteractionType {
 
 interface CommandCenterActionPageType {
   external?: boolean;
-  openNewWindow?: boolean;
+  open_new_window?: boolean;
   path: string;
   query?: KeyValueType;
 }
@@ -77,6 +81,9 @@ interface CommandCenterActionType extends CommandCenterActionBaseType {
   delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
+  parent_action_result_key_value_mapping?: {
+    [keyFromParent: string]: string;
+  }
   request?: CommandCenterActionRequestType;
 }
 

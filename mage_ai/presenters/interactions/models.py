@@ -51,6 +51,8 @@ class InteractionInputStyle:
 
 @dataclass
 class InteractionInput:
+    description: str = None
+    label: str = None
     options: List[InteractionInputOption] = field(default_factory=list)
     style: InteractionInputStyle = None
     type: InteractionInputType = None
