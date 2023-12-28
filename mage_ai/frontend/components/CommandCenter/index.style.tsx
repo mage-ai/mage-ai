@@ -62,7 +62,7 @@ export const InputContainerStyle = styled.div`
 export const InputStyle = styled.input`
   ${LARGE}
 
-  &.context-active {
+  &.active {
     ${SHARED_HIDDEN_STYLES}
   }
 
@@ -86,7 +86,7 @@ const SHARED_CONTAINER_STYLES = css`
   overflow: auto;
   margin: ${SCROLLBAR_WIDTH}px;
 
-  &.context-inactive:hover {
+  &.inactive:hover {
     margin-right: 0;
 
     // for Internet Explorer, Edge
@@ -119,7 +119,7 @@ const SHARED_CONTAINER_STYLES = css`
 export const ItemsContainerStyle = styled.div`
   ${SHARED_CONTAINER_STYLES}
 
-  &.context-active {
+  &.active {
     ${SHARED_HIDDEN_STYLES}
   }
 `;
@@ -127,7 +127,7 @@ export const ItemsContainerStyle = styled.div`
 export const ItemContextContainerStyle = styled.div`
   ${SHARED_CONTAINER_STYLES}
 
-  &.context-inactive {
+  &.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
 `;
@@ -137,7 +137,7 @@ export const HeaderStyle = styled.div`
   display: flex;
   height: ${HEADER_CONTENT_HEIGHT}px;
 
-  &.context-inactive {
+  &.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
 `;

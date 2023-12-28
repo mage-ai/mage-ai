@@ -3,6 +3,10 @@ import { FileExtensionEnum } from '@interfaces/FileType';
 import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
+export enum ItemApplicationTypeEnum {
+  FORM = 'form',
+}
+
 export enum CommandCenterTypeEnum {
   ACTION = 'action',
   APPLICATION = 'application',
@@ -49,10 +53,6 @@ export interface KeyValueType {
 export interface CommandCenterActionRequestType {
   operation: OperationTypeEnum;
   payload?: KeyValueType;
-  payload_keys_user_input_required?: {
-    [key: string]: InteractionInputType;
-  };
-  payload_resource_key?: string;
   query?: KeyValueType;
   resource: string;
   resource_id?: string | number;
@@ -81,10 +81,22 @@ export interface CommandCenterActionType extends CommandCenterActionBaseType {
   delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
-  parent_action_result_key_value_mapping?: {
-    [keyFromParent: string]: string;
-  }
   request?: CommandCenterActionRequestType;
+}
+
+interface FormInputType extends InteractionInputType {
+  action_uuid?: string;
+  description?: string;
+  label?: string;
+  icon_uuid?: string;
+  name?: string;
+  placeholder?: string;
+  required?: boolean;
+}
+
+export interface ItemApplicationType {
+  application_type: ItemApplicationTypeEnum;
+  settings: FormInputType[];
 }
 
 export interface CommandCenterItemType {
@@ -97,6 +109,7 @@ export interface CommandCenterItemType {
     };
   };
   actions?: CommandCenterActionType[];
+  application?: ItemApplicationType;
   description?: string;
   color_uuid?: string;
   icon_uuid?: string;

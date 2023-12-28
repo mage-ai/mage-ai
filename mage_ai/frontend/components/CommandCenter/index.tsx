@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
-import InteractionForm from './InteractionForm';
+import ItemApplication from './ItemApplication';
 import ItemRow from './ItemRow';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -70,103 +70,95 @@ function CommandCenter() {
     uuid: COMPONENT_UUID,
   });
 
-  const refContainer = useRef(null);
   const refFocusedElement = useRef(null);
-  const refFocusedItemIndex = useRef(null);
-  const refFocusedSearchHistoryIndex = useRef(null);
-  const refInput = useRef(null);
-  const refInputValuePrevious = useRef(null);
-  const refItems = useRef([]);
-  const refItemsInit = useRef(null);
-  const refItemNodes = useRef({});
-  const refItemNodesContainer = useRef(null);
   const refReload = useRef(null);
-  const refRootItemContext = useRef(null);
-  const refRootItems = useRef(null);
-  const refSelectedSearchHistoryIndex = useRef(null);
   const refSettings = useRef(null);
 
-  const refContext = useRef(null);
+  const refContainer = useRef(null);
   const refHeader = useRef(null);
-  const refItemContextContainer = useRef(null);
+  const refInput = useRef(null);
+  const refInputValuePrevious = useRef(null);
 
-  function addItemContext({
-    action,
-    item,
-  }: {
-    action: CommandCenterActionType;
-    item: CommandCenterItemType;
-  }) {
-    if (refContext?.current === null) {
-      refContext.current = [];
+  const refRootItems = useRef(null);
+  const refItems = useRef([]);
+  const refItemsInit = useRef(null);
+  const refItemsNodes = useRef({});
+  const refItemsNodesContainer = useRef(null);
+
+  const refFocusedItemIndex = useRef(null);
+  const refFocusedSearchHistoryIndex = useRef(null);
+  const refSelectedSearchHistoryIndex = useRef(null);
+
+  const refRootApplications = useRef(null);
+  const refApplications = useRef(null);
+  const refApplicationsNodesContainer = useRef(null);
+
+  function addApplication(item: CommandCenterItemType) {
+    if (refApplications?.current === null) {
+      refApplications.current = [];
     }
-    refContext.current.push({
-      action,
-      item,
-    });
+
+    refApplications.current.push(item);
 
     [
       refHeader,
       refInput,
-      refItemContextContainer,
-      refItemNodesContainer,
+      refApplicationsNodesContainer,
+      refItemsNodesContainer,
     ].forEach((r) => {
       if (r?.current) {
         r.current.className = addClassNames(
           r?.current?.className || '',
           [
-            'context-active',
+            'active',
           ],
         );
         r.current.className = removeClassNames(
           r?.current?.className || '',
           [
-            'context-inactive',
+            'inactive',
           ],
         );
       }
     });
 
-    if (!refRootItemContext?.current) {
+    if (!refRootApplications?.current) {
       const domNode = document.getElementById(ITEM_CONTEXT_CONTAINER_ID);
-      refRootItemContext.current = createRoot(domNode);
+      refRootApplications.current = createRoot(domNode);
     }
 
-    refRootItemContext?.current?.render(
-      <InteractionForm
-        action={action}
-        item={item}
-      />
+    refRootApplications?.current?.render(
+      <ItemApplication item={item} />
     );
   }
 
-  function removeItemContext() {
-    const count = refContext?.current?.length || 0;
-    if (refContext?.current === null || !count) {
+  function removeApplication() {
+    const count = refApplications?.current?.length || 0;
+    if (refApplications?.current === null || !count) {
       return;
     }
 
-    refContext.current = refContext?.current?.slice(1, count);
+    refApplications.current = refApplications?.current?.slice(1, count);
 
     if (count === 1) {
       [
         refHeader,
-        refItemContextContainer,
-        refItemNodesContainer,
         refInput,
+        refItemsNodesContainer,
+        refApplicationsNodesContainer,
       ].forEach((r) => {
         if (r?.current) {
           r.current.className = addClassNames(
             r?.current?.className || '',
             [
-              'context-inactive',
+              'inactive',
             ],
           );
 
           r.current.className = removeClassNames(
             r?.current?.className || '',
             [
-              'context-active',
+              'active',
             ],
           );
         }
@@ -176,8 +168,8 @@ function CommandCenter() {
     }
   }
 
-  function hasItemContext(): boolean {
-    return refContext?.current?.length >= 1;
+  function isApplicationActive(): boolean {
+    return refApplications?.current?.length >= 1;
   }
 
   const refKeyDownCode = useRef(null);
@@ -188,7 +180,7 @@ function CommandCenter() {
     const indexPrev = refFocusedItemIndex?.current;
     if (indexPrev !== null) {
       const itemPrev = refItems?.current?.[indexPrev];
-      const nodePrev = refItemNodes?.current?.[itemPrev?.uuid]?.current;
+      const nodePrev = refItemsNodes?.current?.[itemPrev?.uuid]?.current;
       if (nodePrev) {
         nodePrev.className = removeClassNames(
           nodePrev?.className || '',
@@ -201,12 +193,12 @@ function CommandCenter() {
   }, []);
 
   const handleNavigation = useCallback((index: number) => {
-    const itemsContainer = refItemNodesContainer?.current;
+    const itemsContainer = refItemsNodesContainer?.current;
     // 400
     const itemsContainerHeight = itemsContainer?.getBoundingClientRect()?.height;
     // 44 * 14 = 616
     const itemRowHeightTotal = sum(Object.values(
-      refItemNodes?.current || {},
+      refItemsNodes?.current || {},
       // @ts-ignore
     )?.map(refItem => refItem?.current?.getBoundingClientRect()?.height || 0));
     // 216
@@ -220,7 +212,7 @@ function CommandCenter() {
       let nodeYTop = 0;
 
       refItems?.current?.slice(0, index + 1)?.forEach((itemInner, idx: number) => {
-        const nodeInner = refItemNodes?.current?.[itemInner?.uuid]?.current;
+        const nodeInner = refItemsNodes?.current?.[itemInner?.uuid]?.current;
         const nodeHeight = nodeInner?.getBoundingClientRect()?.height || 0;
 
         nodeYBottom += nodeHeight;
@@ -250,7 +242,7 @@ function CommandCenter() {
 
       refFocusedItemIndex.current = index;
       const itemNext = refItems?.current?.[index];
-      const nodeNext = refItemNodes?.current?.[itemNext?.uuid]?.current;
+      const nodeNext = refItemsNodes?.current?.[itemNext?.uuid]?.current;
       if (nodeNext) {
         nodeNext.className = addClassNames(
           nodeNext?.className || '',
@@ -354,7 +346,10 @@ function CommandCenter() {
     },
   );
 
-  const handleItemSelect = useCallback((item: CommandCenterItemType, focusedItemIndex: number) => {
+  const executeAction = useCallback((
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+  ) => {
     const actions = [];
 
     if (!item?.actionResults) {
@@ -504,6 +499,17 @@ function CommandCenter() {
     invokeRequest,
   ]);
 
+  const handleSelectItemRow = useCallback((
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+  ) => {
+    if (item?.application) {
+      addApplication(item);
+    } else {
+      return executeAction(item, focusedItemIndex);
+    }
+  }, [executeAction]);
+
   const renderItems = useCallback((
     items: CommandCenterItemType[],
     setInit: boolean = false,
@@ -520,8 +526,8 @@ function CommandCenter() {
     }
 
     const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
-      const refItem = refItemNodes?.current?.[item?.uuid] || createRef();
-      refItemNodes.current[item?.uuid] = refItem;
+      const refItem = refItemsNodes?.current?.[item?.uuid] || createRef();
+      refItemsNodes.current[item?.uuid] = refItem;
 
       return (
         <ItemRow
@@ -530,7 +536,7 @@ function CommandCenter() {
           key={item.uuid}
           onClick={() => {
             handleNavigation(index);
-            handleItemSelect(item, index);
+            handleSelectItemRow(item, index);
           }}
           ref={refItem}
         />
@@ -541,7 +547,7 @@ function CommandCenter() {
 
     return new Promise((resolve, reject) => resolve?.(items));
   }, [
-    handleItemSelect,
+    handleSelectItemRow,
     handleNavigation,
     removeFocusFromCurrentItem,
   ]);
@@ -610,11 +616,11 @@ function CommandCenter() {
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
 
     // If in a context of a selected item.
-    if (hasItemContext()) {
+    if (isApplicationActive()) {
       // Leave the current context and go back.
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
         pauseEvent(event);
-        removeItemContext();
+        removeApplication();
       }
 
       // If the main input is active.
@@ -653,7 +659,7 @@ function CommandCenter() {
           addSearchHistory(searchText, itemSelected, refItems?.current);
         }
 
-        handleItemSelect(itemSelected, focusedItemIndex);
+        handleSelectItemRow(itemSelected, focusedItemIndex);
       } else if (
         onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping)
           || onlyKeysPresent([KEY_CODE_DELETE], keyMapping)
@@ -741,11 +747,11 @@ function CommandCenter() {
         );
         refInput?.current?.focus();
 
-        fetchItemsServer();
-
         if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
           setTimeout(() => handleNavigation(0), 1);
         }
+
+        fetchItemsServer();
       }
     }
 
@@ -794,7 +800,7 @@ function CommandCenter() {
     >
       <InputContainerStyle>
         <HeaderStyle
-          className="context-inactive"
+          className="inactive"
           id={HEADER_ID}
           ref={refHeader}
         >
@@ -802,7 +808,7 @@ function CommandCenter() {
             borderLess
             iconOnly
             noBackground
-            onClick={() => removeItemContext()}
+            onClick={() => removeApplication()}
             outline
           >
             <ArrowLeft size={2 * UNIT} />
@@ -818,7 +824,7 @@ function CommandCenter() {
         </HeaderStyle>
 
         <InputStyle
-          className="context-inactive"
+          className="inactive"
           id={MAIN_TEXT_INPUT_ID}
           onChange={(e) => {
             const searchText = e.target.value;
@@ -856,16 +862,16 @@ function CommandCenter() {
       </InputContainerStyle>
 
       <ItemsContainerStyle
-        className="context-inactive"
+        className="inactive"
         id={ITEMS_CONTAINER_UUID}
-        ref={refItemNodesContainer}
+        ref={refItemsNodesContainer}
       >
       </ItemsContainerStyle>
 
       <ItemContextContainerStyle
-        className="context-inactive"
+        className="inactive"
         id={ITEM_CONTEXT_CONTAINER_ID}
-        ref={refItemContextContainer}
+        ref={refApplicationsNodesContainer}
       />
     </ContainerStyle>
   );

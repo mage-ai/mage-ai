@@ -10,7 +10,11 @@ from mage_ai.command_center.constants import (
 )
 from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.presenters.interactions.models import InteractionInput
+from mage_ai.presenters.interactions.constants import InteractionInputType
+from mage_ai.presenters.interactions.models import (
+    InteractionInputOption,
+    InteractionInputStyle,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
@@ -113,7 +117,7 @@ class ItemBase(BaseDataClass):
 
 
 @dataclass
-class FormInput(InteractionInput):
+class FormInput(BaseDataClass):
     action_uuid: str = None
     description: str = None
     label: str = None
@@ -121,6 +125,14 @@ class FormInput(InteractionInput):
     name: str = None
     placeholder: str = None
     required: bool = False
+    options: List[InteractionInputOption] = None
+    style: InteractionInputStyle = None
+    type: InteractionInputType = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('style', InteractionInputStyle)
+        self.serialize_attribute_classes('options', InteractionInputOption)
+        self.serialize_attribute_enum('type', InteractionInputType)
 
 
 @dataclass
@@ -136,23 +148,23 @@ class Application(BaseDataClass):
             for settings in self.settings:
                 if isinstance(settings, dict):
                     if ApplicationType.FORM == self.application_type:
-                        arr.append(FormInput(**settings))
+                        arr.append(FormInput.load(**settings))
 
             self.settings = arr
 
     def to_dict(self, **kwargs) -> Dict:
-        settings = []
+        arr = []
 
         if isinstance(self.settings, list):
-            for value in settings:
-                if isinstance(value, BaseDataClass):
-                    settings.append(value.to_dict(**kwargs))
+            for value in self.settings:
+                if isinstance(value, dict):
+                    arr.append(value)
                 else:
-                    settings.append(value)
+                    arr.append(value.to_dict(**kwargs))
 
         return merge_dict(
             super().to_dict(**kwargs),
-            dict(settings=settings),
+            dict(settings=arr),
         )
 
 
