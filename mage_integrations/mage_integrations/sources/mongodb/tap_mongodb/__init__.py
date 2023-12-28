@@ -411,8 +411,8 @@ def build_client(config, logger=None):
     verify_mode = config.get('verify_mode', 'true') == 'true'
     use_ssl = config.get('ssl') == 'true'
 
-    # Reduced server selection timeout  to 10 seconds
-    server_selection_timeout = 10
+    # Reduced server selection timeout  to 20 seconds
+    server_selection_timeout = 20
 
     connection_params = {
         'host': config['host'],
