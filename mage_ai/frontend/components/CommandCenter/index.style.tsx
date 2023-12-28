@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
+import { ITEM_ROW_HEIGHT } from './ItemRow/index.style';
 import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -17,6 +18,7 @@ export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
 export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
 export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
 
+export const SHARED_PADDING = SCROLLBAR_WIDTH;
 export const MAX_WIDTH = 100 * UNIT;
 const HEADER_CONTENT_HEIGHT = 5 * UNIT;
 const FOOTER_CONTENT_HEIGHT = 5.5 * UNIT;
@@ -99,9 +101,12 @@ const SHARED_CONTAINER_STYLES = css`
   ${ScrollbarStyledCss}
   ${hideScrollBar()}
 
-  height: ${50 * UNIT}px;
+  height: ${(ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2)}px;
+  margin-left: ${SCROLLBAR_WIDTH}px;
+  margin-right: ${SCROLLBAR_WIDTH}px;
   overflow: auto;
-  margin: ${SCROLLBAR_WIDTH}px;
+  padding-bottom: ${SCROLLBAR_WIDTH}px;
+  padding-top: ${SCROLLBAR_WIDTH}px;
 
   &.inactive:hover {
     margin-right: 0;

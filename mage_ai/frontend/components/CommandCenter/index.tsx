@@ -40,6 +40,7 @@ import {
   ItemsContainerStyle,
   LoadingStyle,
   MAIN_TEXT_INPUT_ID,
+  SHARED_PADDING,
 } from './index.style';
 import {
   KEY_CODE_ARROW_DOWN,
@@ -94,9 +95,10 @@ function CommandCenter() {
   const refContainer = useRef(null);
   const refHeader = useRef(null);
   const refLoading = useRef(null);
-  const refFooter = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
+  const refRootFooter = useRef(null);
+  const refFooter = useRef(null);
 
   const refRootItems = useRef(null);
   const refItems = useRef([]);
@@ -258,7 +260,7 @@ function CommandCenter() {
 
   const [reload, setReload] = useState(null);
 
-  const removeFocusFromCurrentItem = useCallback(() => {
+  function removeFocusFromCurrentItem() {
     const indexPrev = refFocusedItemIndex?.current;
     if (indexPrev !== null) {
       const itemPrev = refItems?.current?.[indexPrev];
@@ -272,12 +274,13 @@ function CommandCenter() {
         );
       }
     }
-  }, []);
+  }
 
-  const handleNavigation = useCallback((index: number) => {
+  function handleNavigation(index: number) {
     const itemsContainer = refItemsNodesContainer?.current;
     // 400
-    const itemsContainerHeight = itemsContainer?.getBoundingClientRect()?.height;
+    const itemsContainerHeight =
+      itemsContainer?.getBoundingClientRect()?.height - (SHARED_PADDING * 2);
     // 44 * 14 = 616
     const itemRowHeightTotal = sum(Object.values(
       refItemsNodes?.current || {},
@@ -334,9 +337,7 @@ function CommandCenter() {
         );
       }
     }
-  }, [
-    removeFocusFromCurrentItem,
-  ]);
+  }
 
   const [
     invokeRequest,
@@ -514,7 +515,9 @@ function CommandCenter() {
               }
             }
 
-            refItems.current[focusedItemIndex].actionResults[index].result = result;
+            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[index]) {
+              refItems.current[focusedItemIndex].actionResults[index].result = result;
+            }
 
             return result;
           };
@@ -652,9 +655,15 @@ function CommandCenter() {
           className={ItemRowClassNameEnum.ITEM_ROW}
           item={item}
           key={item.uuid}
-          onClick={() => {
-            handleNavigation(index);
-            handleSelectItemRow(item, index);
+          onClick={(e) => {
+            pauseEvent(e);
+            if (refFocusedItemIndex?.current === index) {
+              handleSelectItemRow(item, index);
+            } else {
+              handleNavigation(index);
+            }
+
+            refInput?.current?.focus();
           }}
           ref={refItem}
         />
@@ -667,7 +676,6 @@ function CommandCenter() {
   }, [
     handleSelectItemRow,
     handleNavigation,
-    removeFocusFromCurrentItem,
   ]);
 
   const [fetchItemsServer, { isLoading: isLoadingFetchItemsServer }] = useMutation(
@@ -1075,7 +1083,8 @@ function CommandCenter() {
         className="inactive"
         id={FOOTER_ID}
         ref={refFooter}
-      />
+      >
+      </FooterStyle>
 
       <ApplicationFooterStyle
         className="inactive"

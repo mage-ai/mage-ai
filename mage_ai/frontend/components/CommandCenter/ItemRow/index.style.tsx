@@ -9,6 +9,8 @@ import { dig } from '@utils/hash';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { transition } from '@oracle/styles/mixins';
 
+export const ITEM_ROW_HEIGHT = 44;
+
 export function getIconColor(item: CommandCenterItemType, opts: {
   theme?: ThemeType;
 } = {}): {
@@ -74,5 +76,6 @@ export const ItemStyle = styled.div<{
 }>`
   border-radius: ${BORDER_RADIUS}px;
   cursor: pointer;
+  height: ${ITEM_ROW_HEIGHT}px;
   padding: ${1.5 * UNIT}px;
 `;
