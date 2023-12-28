@@ -2,6 +2,7 @@ from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
     ApplicationType,
+    ButtonActionType,
     InteractionType,
     ItemType,
     ObjectType,
@@ -15,6 +16,17 @@ ITEMS = [
         title='Create a new file',
         application=dict(
             application_type=ApplicationType.FORM,
+            buttons=[
+                dict(
+                    label='Create new file',
+                    tooltip='Save changes and create the new file.',
+                    keyboard_shortcuts=[[13]],
+                    action_types=[
+                        ButtonActionType.EXECUTE,
+                        ButtonActionType.RESET_FORM,
+                    ],
+                ),
+            ],
             settings=[
                 dict(
                     label='Directory',

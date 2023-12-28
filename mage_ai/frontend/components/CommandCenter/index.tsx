@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import ApplicationFooter from './ApplicationFooter';
 import Button from '@oracle/elements/Button';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import ItemApplication from './ItemApplication';
@@ -21,9 +22,12 @@ import {
   ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
 import {
+  APPLICATION_FOOTER_ID,
   ApplicationContainerStyle,
+  ApplicationFooterStyle,
   COMPONENT_UUID,
   ContainerStyle,
+  FOOTER_ID,
   FooterStyle,
   HEADER_ID,
   HeaderStyle,
@@ -34,6 +38,7 @@ import {
   ItemsContainerStyle,
   MAIN_TEXT_INPUT_ID,
 } from './index.style';
+import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -80,6 +85,7 @@ function CommandCenter() {
 
   const refContainer = useRef(null);
   const refHeader = useRef(null);
+  const refFooter = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
 
@@ -94,8 +100,10 @@ function CommandCenter() {
   const refSelectedSearchHistoryIndex = useRef(null);
 
   const refRootApplications = useRef(null);
+  const refRootApplicationsFooter = useRef(null);
   const refApplications = useRef(null);
   const refApplicationsNodesContainer = useRef(null);
+  const refApplicationsFooter = useRef(null);
 
   function addApplication(
     item: CommandCenterItemType,
@@ -113,6 +121,8 @@ function CommandCenter() {
       refInput,
       refApplicationsNodesContainer,
       refItemsNodesContainer,
+      refFooter,
+      refApplicationsFooter,
     ].forEach((r) => {
       if (r?.current) {
         r.current.className = addClassNames(
@@ -130,6 +140,7 @@ function CommandCenter() {
       }
     });
 
+    // Application
     if (!refRootApplications?.current) {
       const domNode = document.getElementById(ITEM_CONTEXT_CONTAINER_ID);
       refRootApplications.current = createRoot(domNode);
@@ -137,6 +148,20 @@ function CommandCenter() {
 
     refRootApplications?.current?.render(
       <ItemApplication
+        executeAction={executeAction}
+        focusedItemIndex={focusedItemIndex}
+        item={item}
+      />
+    );
+
+    // Footer for application
+    if (!refRootApplicationsFooter?.current) {
+      const domNode = document.getElementById(APPLICATION_FOOTER_ID);
+      refRootApplicationsFooter.current = createRoot(domNode);
+    }
+
+    refRootApplicationsFooter?.current?.render(
+      <ApplicationFooter
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
@@ -158,6 +183,8 @@ function CommandCenter() {
         refInput,
         refItemsNodesContainer,
         refApplicationsNodesContainer,
+        refFooter,
+        refApplicationsFooter,
       ].forEach((r) => {
         if (r?.current) {
           r.current.className = addClassNames(
@@ -685,14 +712,42 @@ function CommandCenter() {
         openCommandCenter();
       }
     } else if (isApplicationActive()) {
+      const item = refApplications?.current?.[0];
       // If in a context of a selected item.
       // Leave the current context and go back.
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
         pauseEvent(event);
         removeApplication();
+      } else if (item?.application) {
+        item?.application?.buttons?.forEach((button) => {
+          const {
+            keyboard_shortcuts: keyboardShortcuts,
+          } = button;
+
+          keyboardShortcuts?.forEach((keyCodes) => {
+            console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF', onlyKeysPresent(keyCodes, keyMapping))
+            if (onlyKeysPresent(keyCodes, keyMapping)) {
+              pauseEvent(event);
+
+              button?.action_types
+
+              const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER, {
+                detail: {
+                  actionType: 'reset_form',
+                },
+              });
+
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(eventCustom);
+              }
+
+              return;
+            }
+          });
+        });
       }
-      // If the main input is active.
     } else if (InputElementEnum.MAIN === refFocusedElement?.current) {
+      // If the main input is active.
       const focusedItemIndex = refFocusedItemIndex?.current;
 
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
@@ -915,8 +970,17 @@ function CommandCenter() {
         ref={refApplicationsNodesContainer}
       />
 
-      <FooterStyle>
-      </FooterStyle>
+      <FooterStyle
+        className="inactive"
+        id={FOOTER_ID}
+        ref={refFooter}
+      />
+
+      <ApplicationFooterStyle
+        className="inactive"
+        id={APPLICATION_FOOTER_ID}
+        ref={refApplicationsFooter}
+      />
     </ContainerStyle>
   );
 }

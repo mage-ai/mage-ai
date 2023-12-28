@@ -193,7 +193,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.compact && `
-    padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
+    padding: ${UNIT * 0.75}px ${UNIT * 1}px;
   `}
 
   ${props => props.withIcon && `
@@ -297,7 +297,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.compact && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${BORDER_RADIUS}px;
   `}
 
   ${props => !props.borderRadiusLeft && !props.borderRadiusRight && props.pill && !props.spacious && `

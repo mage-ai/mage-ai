@@ -47,3 +47,9 @@ class InteractionType(str, Enum):
 
 class ApplicationType(str, Enum):
     FORM = 'form'
+
+
+class ButtonActionType(str, Enum):
+    CANCEL = 'cancel'  # Go back out of the current application.
+    EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
+    RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.

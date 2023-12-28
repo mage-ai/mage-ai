@@ -10,6 +10,8 @@ import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styl
 
 export const COMPONENT_UUID = 'command-center';
 
+export const APPLICATION_FOOTER_ID = `${COMPONENT_UUID}-application-footer`;
+export const FOOTER_ID = `${COMPONENT_UUID}-footer`;
 export const HEADER_ID = `${COMPONENT_UUID}-header`;
 export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
 export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
@@ -17,7 +19,7 @@ export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
 
 export const MAX_WIDTH = 100 * UNIT;
 const HEADER_CONTENT_HEIGHT = 5 * UNIT;
-const FOOTER_CONTENT_HEIGHT = 5 * UNIT;
+const FOOTER_CONTENT_HEIGHT = 5.5 * UNIT;
 
 const SHARED_HIDDEN_STYLES = css`
   bottom: 0;
@@ -145,12 +147,30 @@ export const HeaderStyle = styled.div`
   }
 `;
 
-export const FooterStyle = styled.div`
+const FOOTER_STYLES = css`
   align-items: center;
   display: flex;
   height: ${FOOTER_CONTENT_HEIGHT}px;
+  padding-left: ${SCROLLBAR_WIDTH + UNIT}px;
+  padding-right: ${SCROLLBAR_WIDTH + UNIT}px;
 
   ${props => `
     background-color: ${(props.theme || dark)?.background?.row};
   `}
+`;
+
+export const FooterStyle = styled.div`
+  ${FOOTER_STYLES}
+
+  &.active {
+    ${SHARED_HIDDEN_STYLES}
+  }
+`;
+
+export const ApplicationFooterStyle = styled.div`
+  ${FOOTER_STYLES}
+
+  &.inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
 `;

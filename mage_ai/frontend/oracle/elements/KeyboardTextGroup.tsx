@@ -50,7 +50,7 @@ function KeyboardTextGroup({
   const els = [];
   const previousKeys = [];
 
-  keyTextGroups.forEach((keyTextGroup: NumberOrString[], idx1: number) => {
+  keyTextGroups?.forEach((keyTextGroup: NumberOrString[], idx1: number) => {
     const combo = [];
 
     keyTextGroup.forEach((keyText: NumberOrString, idx2: number) => {

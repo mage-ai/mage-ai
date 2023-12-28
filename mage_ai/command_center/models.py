@@ -4,6 +4,7 @@ from typing import Dict, List, Union
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import (
     ApplicationType,
+    ButtonActionType,
     FileExtension,
     InteractionType,
     ItemType,
@@ -122,11 +123,25 @@ class FormInput(BaseDataClass):
 
 
 @dataclass
+class Button(BaseDataClass):
+    action_types: List[ButtonActionType]
+    label: str
+    color_uuid: str = None
+    keyboard_shortcuts: List[List[int]] = None
+    tooltip: str = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enums('action_types', ButtonActionType)
+
+
+@dataclass
 class Application(BaseDataClass):
     application_type: ApplicationType
+    buttons: List[Button] = None
     settings: List[Union[FormInput, Dict]] = None
 
     def __post_init__(self):
+        self.serialize_attribute_classes('buttons', Button)
         self.serialize_attribute_enum('application_type', ApplicationType)
 
         if isinstance(self.settings, list):

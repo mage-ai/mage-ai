@@ -3,6 +3,12 @@ import { FileExtensionEnum } from '@interfaces/FileType';
 import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
+export enum ButtonActionTypeEnum {
+  CANCEL = 'cancel',
+  EXECUTE = 'execute',
+  RESET_FORM = 'reset_form',
+}
+
 export enum ItemApplicationTypeEnum {
   FORM = 'form',
 }
@@ -111,8 +117,17 @@ interface FormInputType extends InteractionInputType {
   required?: boolean;
 }
 
+interface ButtonActionType {
+  action_types: ButtonActionTypeEnum[];
+  color_uuid?: string;
+  keyboard_shortcuts?: number[][] | string[][];
+  label: string
+  tooltip?: string;
+}
+
 export interface ItemApplicationType {
   application_type: ItemApplicationTypeEnum;
+  buttons?: ButtonActionType[];
   settings: FormInputType[];
 }
 
