@@ -537,11 +537,11 @@ function Remote({
                     // @ts-ignore
                     updateGitBranch({
                       git_custom_branch: {
-                        action_type: 'add_remote',
                         action_payload: {
                           name: remoteNameNew,
                           url: remoteURLNew,
                         },
+                        action_type: 'add_remote',
                       },
                     });
                   }}
