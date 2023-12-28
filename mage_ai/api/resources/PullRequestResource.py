@@ -56,11 +56,20 @@ class PullRequestResource(GenericResource):
         for key in [
             'base_branch',
             'compare_branch',
+            'body',
             'title',
         ]:
             if key not in payload:
                 error.update(dict(message=f'Value for {key} is required but empty.'))
                 raise ApiError(error)
+
+        if payload.get('base_branch') == payload.get('compare_branch'):
+            error.update(
+                dict(
+                    message='Base branch and compare branch cannot be the same.',
+                )
+            )
+            raise ApiError(error)
 
         repository = payload.get('repository')
         if not repository:
