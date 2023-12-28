@@ -109,6 +109,44 @@ function CommandCenter() {
   const refApplicationsNodesContainer = useRef(null);
   const refApplicationsFooter = useRef(null);
 
+  function removeApplication() {
+    const count = refApplications?.current?.length || 0;
+    if (refApplications?.current === null || !count) {
+      return;
+    }
+
+    refApplications.current = refApplications?.current?.slice(1, count);
+
+    if (count === 1) {
+      [
+        refHeader,
+        refInput,
+        refItemsNodesContainer,
+        refApplicationsNodesContainer,
+        refFooter,
+        refApplicationsFooter,
+      ].forEach((r) => {
+        if (r?.current) {
+          r.current.className = addClassNames(
+            r?.current?.className || '',
+            [
+              'inactive',
+            ],
+          );
+
+          r.current.className = removeClassNames(
+            r?.current?.className || '',
+            [
+              'active',
+            ],
+          );
+        }
+      });
+
+      refInput?.current?.focus();
+    }
+  }
+
   function addApplication(
     item: CommandCenterItemType,
     focusedItemIndex: number,
@@ -159,6 +197,7 @@ function CommandCenter() {
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
+        removeApplication={removeApplication}
       />
     );
 
@@ -173,46 +212,9 @@ function CommandCenter() {
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
+        removeApplication={removeApplication}
       />
     );
-  }
-
-  function removeApplication() {
-    const count = refApplications?.current?.length || 0;
-    if (refApplications?.current === null || !count) {
-      return;
-    }
-
-    refApplications.current = refApplications?.current?.slice(1, count);
-
-    if (count === 1) {
-      [
-        refHeader,
-        refInput,
-        refItemsNodesContainer,
-        refApplicationsNodesContainer,
-        refFooter,
-        refApplicationsFooter,
-      ].forEach((r) => {
-        if (r?.current) {
-          r.current.className = addClassNames(
-            r?.current?.className || '',
-            [
-              'inactive',
-            ],
-          );
-
-          r.current.className = removeClassNames(
-            r?.current?.className || '',
-            [
-              'active',
-            ],
-          );
-        }
-      });
-
-      refInput?.current?.focus();
-    }
   }
 
   function isApplicationActive(): boolean {
@@ -411,6 +413,10 @@ function CommandCenter() {
     const actionSettings = [];
 
     if (!item?.actionResults) {
+      if (!refItems?.current?.[focusedItemIndex]) {
+        refItems.current[focusedItemIndex] = item;
+      }
+
       refItems.current[focusedItemIndex].actionResults = {};
     }
 
@@ -720,10 +726,8 @@ function CommandCenter() {
         openCommandCenter();
       }
     } else if (isApplicationActive()) {
-      const {
-        executeAction: executeActionApplication,
-        item,
-      } = refApplications?.current?.[0] || {};
+      const app = refApplications?.current?.[0] || {};
+      const { item } = app || {};
 
       // If in a context of a selected item.
       // Leave the current context and go back.
@@ -740,7 +744,11 @@ function CommandCenter() {
             if (onlyKeysPresent(keyCodes, keyMapping)) {
               pauseEvent(event);
 
-              return executeButtonActions(button, executeActionApplication, item);
+              return executeButtonActions({
+                button,
+                removeApplication,
+                ...app,
+              });
             }
           });
         });

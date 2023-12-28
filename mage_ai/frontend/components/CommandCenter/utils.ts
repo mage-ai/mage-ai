@@ -71,11 +71,19 @@ export function updateActionFromUpstreamResults(
   return actionCopy;
 }
 
-export function executeButtonActions(
-  button: ButtonActionType,
-  executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>,
-  item: CommandCenterItemType,
-) {
+export function executeButtonActions({
+  button,
+  executeAction,
+  focusedItemIndex,
+  item,
+  removeApplication,
+}: {
+  button: ButtonActionType;
+  executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
+  focusedItemIndex: number;
+  item: CommandCenterItemType;
+  removeApplication: () => void;
+}) {
   const actionTypes = button?.action_types || [];
 
   const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
@@ -95,10 +103,11 @@ export function executeButtonActions(
         actionFunction = (result: KeyValueType = {}) => window.dispatchEvent(eventCustom);
       }
     } else if (ButtonActionTypeEnum.EXECUTE === actionType) {
-      actionFunction = executeActionApplication;
+      actionFunction = (result: KeyValueType = {}) => executeAction(item, focusedItemIndex);
     } else if (ButtonActionTypeEnum.CLOSE_APPLICATION === actionType) {
       actionFunction = (result: KeyValueType = {}) => removeApplication();
     }
+
 
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
 

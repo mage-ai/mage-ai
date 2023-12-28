@@ -20,7 +20,7 @@ ITEMS = [
                 dict(
                     label='Cancel',
                     tooltip='Discard changes and go back.',
-                    keyboard_shortcuts=[[27]],
+                    keyboard_shortcuts=[['metaKey', 27]],
                     action_types=[
                         ButtonActionType.RESET_FORM,
                         ButtonActionType.CLOSE_APPLICATION,

@@ -17,7 +17,9 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 function ApplicationFooter({
   executeAction,
+  focusedItemIndex,
   item,
+  removeApplication,
 }: ApplicationProps) {
   const {
     application,
@@ -70,9 +72,13 @@ function ApplicationFooter({
                 keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
                 noBackground={idx === 0 && buttonsCount >= 2}
                 noBorder
-                onClick={() => {
-                  executeButtonActions(button, executeAction, item);
-                }}
+                onClick={() => executeButtonActions({
+                  button,
+                  executeAction,
+                  focusedItemIndex,
+                  item,
+                  removeApplication,
+                })}
               >
                 {label}
               </KeyboardShortcutButton>
