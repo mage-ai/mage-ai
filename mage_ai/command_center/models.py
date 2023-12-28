@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import (
+    ApplicationType,
     CommandCenterItemType,
     FileExtension,
     InteractionType,
@@ -10,6 +11,7 @@ from mage_ai.command_center.constants import (
 from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.presenters.interactions.models import InteractionInput
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -44,8 +46,6 @@ class Request(BaseDataClass):
     resource: str
     response_resource_key: str
     payload: Dict = None
-    payload_keys_user_input_required: Dict = None
-    payload_resource_key: str = None
     query: Dict = None
     resource_id: Union[str, int] = None
     resource_parent: str = None
@@ -54,21 +54,15 @@ class Request(BaseDataClass):
     def __post_init__(self):
         self.serialize_attribute_enum('operation', OperationType)
 
-        if isinstance(self.payload_keys_user_input_required, dict):
-            mapping = {}
-            for key, value in self.payload_keys_user_input_required.items():
-                if isinstance(value, dict):
-                    mapping[key] = InteractionInput.load(**value)
-            self.payload_keys_user_input_required = mapping
-
 
 @dataclass
 class Action(BaseDataClass):
     delay: int = None
     interaction: Interaction = None
     page: Page = None
-    parent_action_result_key_value_mapping: Dict = None
     request: Request = None
+    upstream_action_value_key_mapping: Dict = None
+    uuid: str = None
 
     def __post_init__(self):
         self.serialize_attribute_class('interaction', Interaction)
@@ -119,11 +113,56 @@ class ItemBase(BaseDataClass):
 
 
 @dataclass
+class FormInput(InteractionInput):
+    action_uuid: str = None
+    description: str = None
+    label: str = None
+    icon_uuid: str = None
+    name: str = None
+    placeholder: str = None
+    required: bool = False
+
+
+@dataclass
+class Application(BaseDataClass):
+    application_type: ApplicationType
+    settings: List[Union[FormInput, Dict]] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('application_type', ApplicationType)
+
+        if isinstance(self.settings, list):
+            arr = []
+            for settings in self.settings:
+                if isinstance(settings, dict):
+                    if ApplicationType.FORM == self.application_type:
+                        arr.append(FormInput(**settings))
+
+            self.settings = arr
+
+    def to_dict(self, **kwargs) -> Dict:
+        settings = []
+
+        if isinstance(self.settings, list):
+            for value in settings:
+                if isinstance(value, BaseDataClass):
+                    settings.append(value.to_dict(**kwargs))
+                else:
+                    settings.append(value)
+
+        return merge_dict(
+            super().to_dict(**kwargs),
+            dict(settings=settings),
+        )
+
+
+@dataclass
 class Item(ItemBase):
     title: str
     type: CommandCenterItemType
     uuid: str
     actions: List[Action] = None
+    application: Application = None
     color_uuid: str = None
     description: str = None
     icon_uuid: str = None
@@ -132,6 +171,7 @@ class Item(ItemBase):
     subtype: CommandCenterItemType = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('application', Application)
         self.serialize_attribute_class('metadata', Metadata)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('items', Item)

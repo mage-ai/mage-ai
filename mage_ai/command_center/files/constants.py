@@ -1,30 +1,49 @@
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.api.utils import has_at_least_editor_role
-from mage_ai.command_center.constants import CommandCenterItemType, InteractionType
+from mage_ai.api.policies.FilePolicy import FilePolicy
+from mage_ai.command_center.constants import (
+    ApplicationType,
+    CommandCenterItemType,
+    InteractionType,
+)
 from mage_ai.presenters.interactions.constants import InteractionInputType
 
 ITEMS = [
     dict(
         title='Create a new file',
-        type=CommandCenterItemType.ACTION,
+        subtype=CommandCenterItemType.ACTION,
+        application=dict(
+            application_type=ApplicationType.FORM,
+            settings=[
+                dict(
+                    label='Directory',
+                    description='Where do you want to save this file?',
+                    placeholder='e.g. utils',
+                    icon_uuid='FolderOutline',
+                    name='file.dir_path',
+                    type=InteractionInputType.TEXT_FIELD,
+                    action_uuid='files_form',
+                    required=True,
+                ),
+                dict(
+                    label='File name',
+                    description='The name of the file.',
+                    icon_uuid='File',
+                    placeholder='e.g. magic_powers.py',
+                    name='file.name',
+                    type=InteractionInputType.TEXT_FIELD,
+                    action_uuid='files_form',
+                    required=True,
+                ),
+            ],
+        ),
         actions=[
             dict(
                 request=dict(
                     operation=OperationType.CREATE,
                     resource='files',
-                    response_resource_key='file',
-                    payload_keys_user_input_required=dict(
-                        dir_path=dict(
-                            label='Directory',
-                            type=InteractionInputType.TEXT_FIELD,
-                        ),
-                        name=dict(
-                            label='File name',
-                            type=InteractionInputType.TEXT_FIELD,
-                        ),
-                    ),
-                    payload_resource_key='file',
+                    response_resource_key='file'
                 ),
+                uuid='files_form',
             ),
             dict(
                 interaction=dict(
@@ -36,11 +55,14 @@ ITEMS = [
                 parent_action_result_key_value_mapping={
                     'file.path': 'interaction.options.file_path',
                 },
+                upstream_action_value_key_mapping=dict(
+                    files_form={
+                        'file.path': 'interaction.options.file_path',
+                    }
+                ),
             ),
         ],
-        condition=lambda opts: has_at_least_editor_role(
-            user=opts.get('user'),
-        ),
+        condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),
     ),
     dict(
         title='Create a new folder',

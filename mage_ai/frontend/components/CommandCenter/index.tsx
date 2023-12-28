@@ -355,34 +355,6 @@ function CommandCenter() {
   );
 
   const handleItemSelect = useCallback((item: CommandCenterItemType, focusedItemIndex: number) => {
-    return   addItemContext({
-      item: {
-
-      },
-      action: {
-        request: {
-          payload_keys_user_input_required: {
-              "dir_path": {
-                "label": "Directory",
-                "required": true,
-                "description": "Where do you want to save this file?",
-                "placeholder": "e.g. utils",
-                'icon_uuid': 'FolderOutline',
-                "type": "text_field",
-              },
-              "name": {
-                "label": "Name",
-                "description": "The name of the file.",
-                "required": true,
-                'icon_uuid': 'File',
-                "placeholder": "e.g. magic_powers.py",
-                "type": "text_field",
-              }
-          },
-        }
-      }
-    });
-
     const actions = [];
 
     if (!item?.actionResults) {

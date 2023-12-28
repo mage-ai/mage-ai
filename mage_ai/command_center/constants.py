@@ -30,3 +30,7 @@ class InteractionType(str, Enum):
     CLICK = 'click'
     OPEN_FILE = 'open_file'
     SCROLL = 'scroll'
+
+
+class ApplicationType(str, Enum):
+    FORM = 'form'

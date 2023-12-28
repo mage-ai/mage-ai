@@ -9,7 +9,7 @@ from mage_ai.orchestration.db.models.oauth import User
 class CommandCenterItemResource(AsyncBaseResource):
     @classmethod
     async def create(self, payload: Dict, user: User, **kwargs) -> 'CommandCenterItemResource':
-        items = await search_items(**payload)
+        items = await search_items(user=user, **payload)
         settings = CommandCenterSettings.load_from_file_path()
 
         return self(dict(items=items, settings=settings), user, **kwargs)
