@@ -164,6 +164,10 @@ export const HeaderStyle = styled.div`
   }
 `;
 
+export const FooterWraperStyle = styled.div`
+  position: relative;
+`;
+
 const FOOTER_STYLES = css`
   align-items: center;
   display: flex;

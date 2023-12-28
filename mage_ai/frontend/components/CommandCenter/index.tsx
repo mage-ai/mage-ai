@@ -32,6 +32,7 @@ import {
   ContainerStyle,
   FOOTER_ID,
   FooterStyle,
+  FooterWraperStyle,
   HEADER_ID,
   HeaderContainerStyle,
   HeaderStyle,
@@ -1102,13 +1103,6 @@ function CommandCenter() {
             ref={refInput}
           />
         </HeaderContainerStyle>
-
-        <LoadingStyle
-          className="inactive"
-          ref={refLoading}
-        >
-          <Loading width="100%" />
-        </LoadingStyle>
       </InputContainerStyle>
 
       <ItemsContainerStyle
@@ -1124,41 +1118,50 @@ function CommandCenter() {
         ref={refApplicationsNodesContainer}
       />
 
-      <FooterStyle
-        className="inactive"
-        id={FOOTER_ID}
-        ref={refFooter}
-      >
-        <Footer
-          closeCommandCenter={closeCommandCenter}
-          handleNavigation={(increment: number) => {
-            if (increment >= 1) {
-              handleNavigation(Math.min(
-                refItems?.current?.length - 1,
-                refFocusedItemIndex?.current + increment,
-              ));
-            } else if (increment <= -1) {
-              handleNavigation(Math.max(
-                0,
-                refFocusedItemIndex?.current + increment,
-              ));
-            }
-          }}
-          handleSelectItemRow={() => handleSelectItemRow(
-            refItems?.current?.[refFocusedItemIndex?.current],
-            refFocusedItemIndex?.current,
-          )}
-          refFooterButtonEnter={refFooterButtonEnter}
-          refFooterButtonEscape={refFooterButtonEscape}
-          refFooterButtonUp={refFooterButtonUp}
-        />
-      </FooterStyle>
+      <FooterWraperStyle>
+        <LoadingStyle
+          className="inactive"
+          ref={refLoading}
+        >
+          <Loading width="100%" />
+        </LoadingStyle>
 
-      <ApplicationFooterStyle
-        className="inactive"
-        id={APPLICATION_FOOTER_ID}
-        ref={refApplicationsFooter}
-      />
+        <FooterStyle
+          className="inactive"
+          id={FOOTER_ID}
+          ref={refFooter}
+        >
+          <Footer
+            closeCommandCenter={closeCommandCenter}
+            handleNavigation={(increment: number) => {
+              if (increment >= 1) {
+                handleNavigation(Math.min(
+                  refItems?.current?.length - 1,
+                  refFocusedItemIndex?.current + increment,
+                ));
+              } else if (increment <= -1) {
+                handleNavigation(Math.max(
+                  0,
+                  refFocusedItemIndex?.current + increment,
+                ));
+              }
+            }}
+            handleSelectItemRow={() => handleSelectItemRow(
+              refItems?.current?.[refFocusedItemIndex?.current],
+              refFocusedItemIndex?.current,
+            )}
+            refFooterButtonEnter={refFooterButtonEnter}
+            refFooterButtonEscape={refFooterButtonEscape}
+            refFooterButtonUp={refFooterButtonUp}
+          />
+        </FooterStyle>
+
+        <ApplicationFooterStyle
+          className="inactive"
+          id={APPLICATION_FOOTER_ID}
+          ref={refApplicationsFooter}
+        />
+      </FooterWraperStyle>
     </ContainerStyle>
   );
 }
