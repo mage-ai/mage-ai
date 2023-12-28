@@ -41,7 +41,7 @@ function ApplicationFooter({
 
         <div style={{ marginRight: 1.5 * UNIT }} />
 
-        <Text weightStyle={4}>
+        <Text default weightStyle={4}>
           {title}
         </Text>
 
