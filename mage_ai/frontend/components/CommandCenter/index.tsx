@@ -21,15 +21,16 @@ import {
   ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
 import {
+  ApplicationContainerStyle,
   COMPONENT_UUID,
   ContainerStyle,
+  FooterStyle,
   HEADER_ID,
   HeaderStyle,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
   InputStyle,
-  ItemContextContainerStyle,
   ItemsContainerStyle,
   MAIN_TEXT_INPUT_ID,
 } from './index.style';
@@ -72,6 +73,7 @@ function CommandCenter() {
     uuid: COMPONENT_UUID,
   });
 
+  const refActive = useRef(false);
   const refFocusedElement = useRef(null);
   const refReload = useRef(null);
   const refSettings = useRef(null);
@@ -611,16 +613,37 @@ function CommandCenter() {
     },
   );
 
-  const close = useCallback(() => {
+  function closeCommandCenter() {
     refContainer.current.className = addClassNames(
       refContainer?.current?.className || '',
       [
         'hide',
       ],
     );
+
     refFocusedElement.current = null;
     refInput?.current?.blur();
-  }, []);
+    refActive.current = false;
+  }
+
+  function openCommandCenter() {
+    refContainer.current.className = removeClassNames(
+      refContainer?.current?.className || '',
+      [
+        'hide',
+      ],
+    );
+
+    refInput?.current?.focus();
+
+    if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
+      setTimeout(() => handleNavigation(0), 1);
+    }
+
+    refActive.current = true;
+
+    fetchItemsServer();
+  }
 
   const {
     disableGlobalKeyboardShortcuts,
@@ -640,15 +663,34 @@ function CommandCenter() {
   }, []);
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
+    function starSequenceValid(): boolean {
+      // Show the command center and focus on the text input.
+      const ks = refSettings?.current?.interface?.keyboard_shortcuts?.main;
 
-    // If in a context of a selected item.
-    if (isApplicationActive()) {
+      if (ks?.length >= 1) {
+        return onlyKeysPresent(ks, keyMapping);
+      } else {
+        return onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
+          || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping);
+      }
+
+      return false;
+    }
+
+    if (starSequenceValid()) {
+      pauseEvent(event);
+      if (!!refActive?.current) {
+        closeCommandCenter();
+      } else {
+        openCommandCenter();
+      }
+    } else if (isApplicationActive()) {
+      // If in a context of a selected item.
       // Leave the current context and go back.
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
         pauseEvent(event);
         removeApplication();
       }
-
       // If the main input is active.
     } else if (InputElementEnum.MAIN === refFocusedElement?.current) {
       const focusedItemIndex = refFocusedItemIndex?.current;
@@ -673,7 +715,7 @@ function CommandCenter() {
           setTimeout(() => handleNavigation(0), 1);
         } else {
           // If there is no text in the input, close.
-          close();
+          closeCommandCenter();
         }
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
         pauseEvent(event);
@@ -753,34 +795,7 @@ function CommandCenter() {
           handleNavigation(index);
         }
       }
-    } else {
-      // Show the command center and focus on the text input.
-
-      const ks = refSettings?.current?.interface?.keyboard_shortcuts?.main;
-      if (
-        (ks?.length >= 1 && onlyKeysPresent(ks, keyMapping))
-        || (!ks?.length && (
-          onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
-            || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping)
-        ))
-      ) {
-        pauseEvent(event);
-        refContainer.current.className = removeClassNames(
-          refContainer?.current?.className || '',
-          [
-            'hide',
-          ],
-        );
-        refInput?.current?.focus();
-
-        if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
-          setTimeout(() => handleNavigation(0), 1);
-        }
-
-        fetchItemsServer();
-      }
     }
-
   }, [
     fetchItemsServer,
     reload,
@@ -806,7 +821,7 @@ function CommandCenter() {
       if (refContainer?.current && refContainer?.current?.contains?.(e.target)) {
         return;
       } else {
-        close();
+        closeCommandCenter();
       }
     };
 
@@ -817,11 +832,11 @@ function CommandCenter() {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     }
-  }, [close]);
+  }, []);
 
   return (
     <ContainerStyle
-      className="hide"
+      // className="hide"
       ref={refContainer}
     >
       <InputContainerStyle>
@@ -894,11 +909,14 @@ function CommandCenter() {
       >
       </ItemsContainerStyle>
 
-      <ItemContextContainerStyle
+      <ApplicationContainerStyle
         className="inactive"
         id={ITEM_CONTEXT_CONTAINER_ID}
         ref={refApplicationsNodesContainer}
       />
+
+      <FooterStyle>
+      </FooterStyle>
     </ContainerStyle>
   );
 }

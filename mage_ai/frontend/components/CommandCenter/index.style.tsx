@@ -17,10 +17,13 @@ export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
 
 export const MAX_WIDTH = 100 * UNIT;
 const HEADER_CONTENT_HEIGHT = 5 * UNIT;
+const FOOTER_CONTENT_HEIGHT = 5 * UNIT;
 
 const SHARED_HIDDEN_STYLES = css`
+  bottom: 0;
   opacity: 0;
-  position: absolute;
+  position: fixed;
+  right: 0;
   visibility: hidden;
   z-index: -1;
 `;
@@ -124,7 +127,7 @@ export const ItemsContainerStyle = styled.div`
   }
 `;
 
-export const ItemContextContainerStyle = styled.div`
+export const ApplicationContainerStyle = styled.div`
   ${SHARED_CONTAINER_STYLES}
 
   &.inactive {
@@ -140,4 +143,14 @@ export const HeaderStyle = styled.div`
   &.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
+`;
+
+export const FooterStyle = styled.div`
+  align-items: center;
+  display: flex;
+  height: ${FOOTER_CONTENT_HEIGHT}px;
+
+  ${props => `
+    background-color: ${(props.theme || dark)?.background?.row};
+  `}
 `;
