@@ -72,6 +72,7 @@ import {
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
+import { setNested } from '@utils/hash';
 import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -108,6 +109,7 @@ function CommandCenter() {
   const refApplications = useRef(null);
   const refApplicationsNodesContainer = useRef(null);
   const refApplicationsFooter = useRef(null);
+  const refApplicationState = useRef(null);
 
   function removeApplication() {
     const count = refApplications?.current?.length || 0;
@@ -194,10 +196,12 @@ function CommandCenter() {
 
     refRootApplications?.current?.render(
       <ItemApplication
+        applicationState={refApplicationState}
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
         removeApplication={removeApplication}
+
       />
     );
 
@@ -209,6 +213,7 @@ function CommandCenter() {
 
     refRootApplicationsFooter?.current?.render(
       <ApplicationFooter
+        applicationState={refApplicationState}
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
@@ -420,7 +425,15 @@ function CommandCenter() {
       refItems.current[focusedItemIndex].actionResults = {};
     }
 
-    item?.actions?.forEach((action, index: number) => {
+    item?.actions?.forEach((actionInit, index: number) => {
+      let action = { ...actionInit };
+      const applicationState = (refApplicationState?.current || {})?.[action?.uuid];
+      if (applicationState) {
+        Object.entries(applicationState || {})?.forEach(([key, value]) => {
+          setNested(action, key, value);
+        });
+      }
+
       refItems.current[focusedItemIndex].actionResults[index] = {
         action,
       };

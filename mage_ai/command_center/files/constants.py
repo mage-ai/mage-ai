@@ -68,6 +68,12 @@ ITEMS = [
             dict(
                 request=dict(
                     operation=OperationType.CREATE,
+                    payload=dict(
+                        file=dict(
+                            overwrite=False,
+                        ),
+                        file_json_only=True,
+                    ),
                     resource='files',
                     response_resource_key='file'
                 ),

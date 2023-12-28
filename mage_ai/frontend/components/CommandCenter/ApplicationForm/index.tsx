@@ -1,4 +1,4 @@
-import { createRef, useEffect, useMemo, useRef, useState } from 'react';
+import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import * as AllIcons from '@oracle/icons';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -30,6 +30,7 @@ function nothingFocused(refInputs) {
 }
 
 function ApplicationForm({
+  applicationState,
   executeAction,
   focusedItemIndex,
   item,
@@ -38,10 +39,25 @@ function ApplicationForm({
 
   const settings = item?.application?.settings || [];
 
-  const [attributes, setAttributes] = useState<GlobalHookType>(null);
+  const [attributes, setAttributesState] = useState<GlobalHookType>(null);
   const [attributesTouched, setAttributesTouched] = useState<{
     [key: string]: boolean;
   }>(null);
+
+  const setAttributes = useCallback((prev1) => setAttributesState((prev2) => {
+    const val = prev1(prev2);
+
+    if (!applicationState?.current) {
+      applicationState.current = {};
+    }
+
+    applicationState.current = {
+      ...(applicationState?.current || {}),
+      ...val,
+    };
+
+    return val;
+  }), []);
 
   if (settings?.length >= 1 && nothingFocused(refInputs)) {
     // Get the 1st input that doesn’t have a value.
@@ -96,10 +112,12 @@ function ApplicationForm({
 
   const formMemo = useMemo(() => settings?.map((formInput, idx) => {
     const {
+      action_uuid: actionUUID,
       description,
       icon_uuid: iconUUID,
       label,
       monospace,
+      name,
       placeholder,
       required,
       type,
@@ -124,23 +142,28 @@ function ApplicationForm({
       rowProps.textInput = {
         ...(icon ? { afterIcon: icon } : {}),
         monospace,
+        name,
         onChange: (e) => {
-          setAttributesTouched((prev) => {
-            const data = { ...prev };
-            setNested(data, key, true);
-            return data;
-          });
+          setAttributesTouched(prev => ({
+              ...prev,
+              [actionUUID]: {
+                ...(prev?.[actionUUID] || {}),
+                [name]: true,
+              },
+            }));
 
-          return setAttributes((prev) => {
-            const data = { ...prev };
-            setNested(data, key, e.target.value);
-            return data;
-          });
+          return setAttributes(prev => ({
+            ...prev,
+            [actionUUID]: {
+              ...(prev?.[actionUUID] || {}),
+              [name]: e.target.value,
+            },
+          }));
         },
         placeholder,
         ref,
         tabIndex: idx + 1,
-        value: dig(attributes || {}, key) || '',
+        value: attributes?.[actionUUID]?.[name] || '',
       };
     }
 
@@ -150,8 +173,8 @@ function ApplicationForm({
         description={description}
         key={key}
         invalid={required
-          && dig(attributesTouched || {}, key)
-          && !dig(attributes || {}, key)
+          && attributesTouched?.[actionUUID]?.[name]
+          && !attributes?.[actionUUID]?.[name]
         }
         title={label}
       />

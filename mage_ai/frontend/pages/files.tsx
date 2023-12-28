@@ -8,7 +8,6 @@ function FilesPage({
     file_path: string;
   };
 }) {
-  console.log()
   return (
     <FilesPageComponent query={query} />
   );

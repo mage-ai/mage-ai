@@ -108,7 +108,6 @@ export function executeButtonActions({
       actionFunction = (result: KeyValueType = {}) => removeApplication();
     }
 
-
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
 
     return result?.then((resultsInner) => {
