@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List
 
 from mage_ai.command_center.applications.constants import ITEMS
@@ -12,7 +13,7 @@ class ApplicationFactory(BaseFactory):
             item_type=ItemType.NAVIGATE,
             object_type=ObjectType.APPLICATION,
             title=item.get('title'),
-            description=item.get('path'),
+            description=item.get('path').strip(os.path.sep),
             condition=item.get('condition'),
             actions=[
                 dict(

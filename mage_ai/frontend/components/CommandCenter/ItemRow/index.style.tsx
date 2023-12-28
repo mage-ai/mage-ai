@@ -36,8 +36,8 @@ export function getIconColor(item: CommandCenterItemType, opts: {
     accent = dig(themeUse, colorUUID);
     accentLight = dig(themeUse, colorUUID);
   } else if (ObjectTypeEnum.APPLICATION == objectType) {
-    accent = themeUse?.accent?.warning;
-    accentLight = themeUse?.accent?.warningTransparent;
+    accent = themeUse?.accent?.sky;
+    accentLight = themeUse?.accent?.skyLight;
   } else if (ObjectTypeEnum.BLOCK == objectType) {
     return getColorsForBlockType(item?.metadata?.block?.type, {
       theme,
@@ -49,8 +49,8 @@ export function getIconColor(item: CommandCenterItemType, opts: {
     accent = themeUse?.background?.success;
     accentLight = themeUse?.background?.successLight;
   } else if (ObjectTypeEnum.FILE == objectType) {
-    accent = themeUse?.accent?.sky;
-    accentLight = themeUse?.accent?.skyLight;
+    accent = themeUse?.accent?.warning;
+    accentLight = themeUse?.accent?.warningTransparent;
   } else if (ObjectTypeEnum.FOLDER == objectType) {
     accent = themeUse?.chart?.tertiary;
     accentLight = themeUse?.accent?.skyLight;

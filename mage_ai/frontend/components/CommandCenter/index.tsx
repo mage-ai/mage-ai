@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 import ApplicationFooter from './ApplicationFooter';
 import Button from '@oracle/elements/Button';
+import Footer from './Footer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import ItemApplication from './ItemApplication';
 import ItemRow from './ItemRow';
@@ -21,6 +22,7 @@ import {
   ItemTypeEnum,
   KeyValueType,
   ObjectTypeEnum,
+  getButtonLabel,
 } from '@interfaces/CommandCenterType';
 import {
   APPLICATION_FOOTER_ID,
@@ -97,8 +99,12 @@ function CommandCenter() {
   const refLoading = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
+
   const refRootFooter = useRef(null);
   const refFooter = useRef(null);
+  const refFooterButtonEnter = useRef(null);
+  const refFooterButtonEscape = useRef(null);
+  const refFooterButtonUp = useRef(null);
 
   const refRootItems = useRef(null);
   const refItems = useRef([]);
@@ -335,6 +341,37 @@ function CommandCenter() {
             'focused',
           ],
         );
+      }
+
+      if (refFooterButtonUp?.current) {
+        if (index === 0
+          && refFocusedSearchHistoryIndex?.current === null
+          && refSelectedSearchHistoryIndex.current === null
+        ) {
+          refFooterButtonUp.current.innerText = 'Recent';
+        } else {
+          refFooterButtonUp.current.innerText = 'Up';
+        }
+      }
+
+      if (refFooterButtonEscape?.current) {
+        if (refFocusedSearchHistoryIndex?.current !== null
+          || refSelectedSearchHistoryIndex.current !== null
+        ) {
+          refFooterButtonEscape.current.innerText = 'All';
+        } else if (refApplications?.current !== null) {
+          refFooterButtonEscape.current.innerText = 'Back';
+        } else {
+          refFooterButtonEscape.current.innerText = 'Close';
+        }
+      }
+
+      if (refFooterButtonEnter?.current) {
+        if (item) {
+          refFooterButtonEnter.current.innerText = getButtonLabel(item) || 'Select';
+        } else {
+          refFooterButtonEnter.current.innerText = 'Select';
+        }
       }
     }
   }
@@ -886,11 +923,14 @@ function CommandCenter() {
           // If already on the last item, don’t change
           if (focusedItemIndex <= refItems?.current?.length - 2) {
             index = focusedItemIndex + 1;
+          } else {
+            index = focusedItemIndex;
           }
           // Arrow up
         } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
           pauseEvent(event);
-          // If already on the first item, don’t change
+          // If already on the first item, don’t change.
+          // Next time they go up, show recently searched items.
 
           const firstKeyDown = refKeyDownCode?.current === null;
           refKeyDownCode.current = keyHistory?.[0];
@@ -977,6 +1017,11 @@ function CommandCenter() {
 
       if (isOutside) {
         closeCommandCenter();
+      } else {
+        if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
+          handleNavigation(0);
+        }
+        refInput?.current?.focus();
       }
     };
 
@@ -1084,6 +1129,29 @@ function CommandCenter() {
         id={FOOTER_ID}
         ref={refFooter}
       >
+        <Footer
+          closeCommandCenter={closeCommandCenter}
+          handleNavigation={(increment: number) => {
+            if (increment >= 1) {
+              handleNavigation(Math.min(
+                refItems?.current?.length - 1,
+                refFocusedItemIndex?.current + increment,
+              ));
+            } else if (increment <= -1) {
+              handleNavigation(Math.max(
+                0,
+                refFocusedItemIndex?.current + increment,
+              ));
+            }
+          }}
+          handleSelectItemRow={() => handleSelectItemRow(
+            refItems?.current?.[refFocusedItemIndex?.current],
+            refFocusedItemIndex?.current,
+          )}
+          refFooterButtonEnter={refFooterButtonEnter}
+          refFooterButtonEscape={refFooterButtonEscape}
+          refFooterButtonUp={refFooterButtonUp}
+        />
       </FooterStyle>
 
       <ApplicationFooterStyle

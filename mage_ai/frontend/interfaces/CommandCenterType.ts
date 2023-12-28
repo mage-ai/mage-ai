@@ -2,6 +2,7 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
+import { removeUnderscore } from '@utils/string';
 
 export enum ButtonActionTypeEnum {
   CLOSE_APPLICATION = 'close_application',
@@ -39,12 +40,61 @@ export enum ObjectTypeEnum {
 export const TYPE_TITLE_MAPPING = {
   [ItemTypeEnum.ACTION]: 'Cast',
   [ItemTypeEnum.CREATE]: 'Conjure',
-  [ItemTypeEnum.DETAIL]: 'Scry',
-  [ItemTypeEnum.LIST]: 'Scry',
+  [ItemTypeEnum.DETAIL]: 'Enchant',
+  [ItemTypeEnum.LIST]: 'Enchant',
   [ItemTypeEnum.NAVIGATE]: 'Teleport',
   [ItemTypeEnum.OPEN]: 'Summon',
   [ItemTypeEnum.SUPPORT]: 'Heal',
 };
+
+export const OBJECT_TITLE_MAPPING = {
+  [ObjectTypeEnum.APPLICATION]: ObjectTypeEnum.APPLICATION,
+  [ObjectTypeEnum.BLOCK]: ObjectTypeEnum.BLOCK,
+  [ObjectTypeEnum.CHAT]: ObjectTypeEnum.CHAT,
+  [ObjectTypeEnum.CODE]: ObjectTypeEnum.CODE,
+  [ObjectTypeEnum.DOCUMENT]: ObjectTypeEnum.DOCUMENT,
+  [ObjectTypeEnum.FILE]: ObjectTypeEnum.FILE,
+  [ObjectTypeEnum.FOLDER]: ObjectTypeEnum.FOLDER,
+  [ObjectTypeEnum.GIT]: ObjectTypeEnum.GIT,
+  [ObjectTypeEnum.PIPELINE]: ObjectTypeEnum.PIPELINE,
+  [ObjectTypeEnum.TRIGGER]: ObjectTypeEnum.TRIGGER,
+};
+
+export const OBJECT_TITLE_MAPPING_SHORT = {
+  ...OBJECT_TITLE_MAPPING,
+  [ObjectTypeEnum.APPLICATION]: 'app',
+  [ObjectTypeEnum.DOCUMENT]: 'docs',
+};
+
+export function getButtonLabel(item): string {
+  const {
+    item_type: itemType,
+    object_type: objectType,
+  } = item;
+
+  const parts = [];
+  const objectLabel = removeUnderscore(
+    OBJECT_TITLE_MAPPING_SHORT[item?.object_type] || '',
+  ).toLowerCase();
+  const itemTitle = TYPE_TITLE_MAPPING[itemType];
+
+  if (ItemTypeEnum.ACTION === itemType) {
+    parts.push(...[itemTitle, 'spell']);
+  } else if ([
+      ItemTypeEnum.CREATE,
+      ItemTypeEnum.DETAIL,
+      ItemTypeEnum.LIST,
+      ItemTypeEnum.OPEN,
+    ].includes(itemType)) {
+    parts.push(...[itemTitle, objectLabel]);
+  } else if (ItemTypeEnum.NAVIGATE === itemType) {
+    parts.push(...[itemTitle, 'to', objectLabel]);
+  } else if (ItemTypeEnum.SUPPORT === itemType) {
+    parts.push(...['Get help from', objectLabel]);
+  }
+
+  return parts?.filter(i => i?.length >= 1).join(' ');
+}
 
 interface BlockMetadataType {
   type?: BlockTypeEnum;

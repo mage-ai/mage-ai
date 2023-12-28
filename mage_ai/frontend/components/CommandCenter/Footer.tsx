@@ -1,0 +1,117 @@
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import KeyboardShortcutButton, {
+  KeyTextsPostitionEnum,
+} from '@oracle/elements/Button/KeyboardShortcutButton';
+import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import {
+  KEY_SYMBOL_ARROW_DOWN,
+  KEY_SYMBOL_ARROW_UP,
+  KEY_SYMBOL_ENTER,
+  KEY_SYMBOL_ESCAPE,
+} from '@utils/hooks/keyboardShortcuts/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { pauseEvent } from '@utils/events';
+
+type FooterProps = {
+  closeCommandCenter: () => void;
+  handleNavigation: (increment: number) => void;
+  handleSelectItemRow: () => void;
+  refFooterButtonEnter: any;
+  refFooterButtonEscape: any;
+  refFooterButtonUp: any;
+};
+
+function Footer({
+  closeCommandCenter,
+  handleNavigation,
+  handleSelectItemRow,
+  refFooterButtonEnter,
+  refFooterButtonEscape,
+  refFooterButtonUp,
+}: FooterProps) {
+  return (
+    <FlexContainer alignItems="center" fullWidth justifyContent="space-between">
+      <Flex alignItems="center" flex={1}>
+
+      </Flex>
+
+      <FlexContainer alignItems="center">
+        <FlexContainer alignItems="center">
+          <KeyboardShortcutButton
+            addPlusSignBetweenKeys
+            bold
+            compact
+            default
+            keyTextGroups={[[KEY_SYMBOL_ARROW_UP]]}
+            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+            noBackground
+            noBorder
+            onClick={(e) => {
+              pauseEvent(e);
+              handleNavigation(-1);
+            }}
+          >
+            <span ref={refFooterButtonUp}>Up</span>
+          </KeyboardShortcutButton>
+
+          <KeyboardShortcutButton
+            addPlusSignBetweenKeys
+            bold
+            compact
+            default
+            keyTextGroups={[[KEY_SYMBOL_ARROW_DOWN]]}
+            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+            noBackground
+            noBorder
+            onClick={(e) => {
+              pauseEvent(e);
+              handleNavigation(1);
+            }}
+          >
+            Down
+          </KeyboardShortcutButton>
+
+          <KeyboardShortcutButton
+            addPlusSignBetweenKeys
+            bold
+            compact
+            default
+            keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
+            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+            noBackground
+            noBorder
+            onClick={(e) => {
+              pauseEvent(e);
+              closeCommandCenter();
+            }}
+          >
+            <span ref={refFooterButtonEscape}>Close</span>
+          </KeyboardShortcutButton>
+
+          <Spacing mr={1} />
+
+          <KeyboardShortcutButton
+            addPlusSignBetweenKeys
+            bold
+            compact
+            keyTextGroups={[[KEY_SYMBOL_ENTER]]}
+            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+            noBorder
+            onClick={(e) => {
+              pauseEvent(e);
+              handleSelectItemRow();
+            }}
+          >
+            <span ref={refFooterButtonEnter}>Select</span>
+          </KeyboardShortcutButton>
+        </FlexContainer>
+      </FlexContainer>
+    </FlexContainer>
+  );
+}
+
+export default Footer;
