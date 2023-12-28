@@ -20,6 +20,7 @@ function ApplicationFooter({
   focusedItemIndex,
   item,
   removeApplication,
+  refError,
 }: ApplicationProps) {
   const {
     application,
@@ -77,6 +78,7 @@ function ApplicationFooter({
                   executeAction,
                   focusedItemIndex,
                   item,
+                  refError,
                   removeApplication,
                 })}
               >

@@ -3,7 +3,6 @@ from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
-    InteractionType,
     ItemType,
     ObjectType,
 )
@@ -79,17 +78,17 @@ ITEMS = [
                 ),
                 uuid='create_file',
             ),
-            dict(
-                interaction=dict(
-                    type=InteractionType.OPEN_FILE,
-                ),
-                upstream_action_value_key_mapping=dict(
-                    create_file={
-                        'data.file.path': 'interaction.options.file_path',
-                    }
-                ),
-                uuid='open_file',
-            ),
+            # dict(
+            #     interaction=dict(
+            #         type=InteractionType.OPEN_FILE,
+            #     ),
+            #     upstream_action_value_key_mapping=dict(
+            #         create_file={
+            #             'data.file.path': 'interaction.options.file_path',
+            #         }
+            #     ),
+            #     uuid='open_file',
+            # ),
         ],
         condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),
     ),

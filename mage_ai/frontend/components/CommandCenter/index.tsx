@@ -8,6 +8,7 @@ import Button from '@oracle/elements/Button';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import ItemApplication from './ItemApplication';
 import ItemRow from './ItemRow';
+import Loading from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
@@ -30,12 +31,14 @@ import {
   FOOTER_ID,
   FooterStyle,
   HEADER_ID,
+  HeaderContainerStyle,
   HeaderStyle,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
   InputStyle,
   ItemsContainerStyle,
+  LoadingStyle,
   MAIN_TEXT_INPUT_ID,
 } from './index.style';
 import {
@@ -79,7 +82,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 function CommandCenter() {
   const router = useRouter();
-  const [showError] = useError(null, {}, [], {
+  const [showError, hideError, refError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
   });
 
@@ -90,6 +93,7 @@ function CommandCenter() {
 
   const refContainer = useRef(null);
   const refHeader = useRef(null);
+  const refLoading = useRef(null);
   const refFooter = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
@@ -110,6 +114,28 @@ function CommandCenter() {
   const refApplicationsNodesContainer = useRef(null);
   const refApplicationsFooter = useRef(null);
   const refApplicationState = useRef(null);
+
+  function startLoading() {
+    if (refLoading?.current) {
+      refLoading.current.className = removeClassNames(
+        refLoading?.current?.className || '',
+        [
+          'inactive',
+        ],
+      );
+    }
+  }
+
+  function stopLoading() {
+    if (refLoading?.current) {
+      refLoading.current.className = addClassNames(
+        refLoading?.current?.className || '',
+        [
+          'inactive',
+        ],
+      );
+    }
+  }
 
   function removeApplication() {
     const count = refApplications?.current?.length || 0;
@@ -200,6 +226,7 @@ function CommandCenter() {
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
+        refError={refError}
         removeApplication={removeApplication}
 
       />
@@ -217,6 +244,7 @@ function CommandCenter() {
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
+        refError={refError}
         removeApplication={removeApplication}
       />
     );
@@ -403,7 +431,9 @@ function CommandCenter() {
             const value = resp?.[responseResourceKey];
             const key = OperationTypeEnum.LIST === operation ? 'models' : 'model';
 
-            refItems.current[focusedItemIndex].actionResults[index][key] = value;
+            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[index]) {
+              refItems.current[focusedItemIndex].actionResults[index][key] = value;
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -434,9 +464,15 @@ function CommandCenter() {
         });
       }
 
-      refItems.current[focusedItemIndex].actionResults[index] = {
-        action,
-      };
+      if (!refItems?.current?.[focusedItemIndex]?.actionResults) {
+        try {
+          refItems.current[focusedItemIndex].actionResults[index] = {
+            action,
+          };
+        } catch (error) {
+          console.error('CommandCenter/index.executeAction: ', error);
+        }
+      }
 
       const {
         interaction,
@@ -667,6 +703,17 @@ function CommandCenter() {
     },
   );
 
+  useEffect(() => {
+    if (isLoadingFetchItemsServer || isLoadingRequest) {
+      startLoading();
+    } else {
+      stopLoading();
+    }
+  }, [
+    isLoadingFetchItemsServer,
+    isLoadingRequest,
+  ]);
+
   function closeCommandCenter() {
     refContainer.current.className = addClassNames(
       refContainer?.current?.className || '',
@@ -744,10 +791,10 @@ function CommandCenter() {
 
       // If in a context of a selected item.
       // Leave the current context and go back.
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping) && !refError?.current) {
         pauseEvent(event);
         removeApplication();
-      } else if (item?.application) {
+      } else if (item?.application && !refError?.current) {
         item?.application?.buttons?.forEach((button) => {
           const {
             keyboard_shortcuts: keyboardShortcuts,
@@ -759,6 +806,7 @@ function CommandCenter() {
 
               return executeButtonActions({
                 button,
+                refError,
                 removeApplication,
                 ...app,
               });
@@ -770,7 +818,7 @@ function CommandCenter() {
       // If the main input is active.
       const focusedItemIndex = refFocusedItemIndex?.current;
 
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping) && !refError?.current) {
         pauseEvent(event);
 
         // If there is text in the input, clear it.
@@ -792,7 +840,10 @@ function CommandCenter() {
           // If there is no text in the input, close.
           closeCommandCenter();
         }
-      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping) && focusedItemIndex !== null) {
+      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)
+        && focusedItemIndex !== null
+        && !refError?.current
+      ) {
         pauseEvent(event);
         // Pressing enter on an item
         const itemSelected = refItems?.current?.[focusedItemIndex];
@@ -892,10 +943,31 @@ function CommandCenter() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
+      let isOutside = true;
       // @ts-ignore
-      if (refContainer?.current && refContainer?.current?.contains?.(e.target)) {
-        return;
-      } else {
+      if (refContainer?.current) {
+        if (refContainer?.current?.contains?.(e.target)) {
+          isOutside = false;
+        } else {
+          const {
+            clientX,
+            clientY,
+          } = e;
+          const {
+            height,
+            width,
+            x,
+            y,
+          } = refContainer?.current?.getBoundingClientRect() || {};
+
+          isOutside = clientX > (x + width)
+            || clientX < x
+            || clientY > (y + height)
+            || clientY < y;
+        }
+      }
+
+      if (isOutside) {
         closeCommandCenter();
       }
     };
@@ -915,66 +987,75 @@ function CommandCenter() {
       ref={refContainer}
     >
       <InputContainerStyle>
-        <HeaderStyle
-          className="inactive"
-          id={HEADER_ID}
-          ref={refHeader}
-        >
-          <Button
-            borderLess
-            iconOnly
-            noBackground
-            onClick={() => removeApplication()}
-            outline
+        <HeaderContainerStyle>
+          <HeaderStyle
+            className="inactive"
+            id={HEADER_ID}
+            ref={refHeader}
           >
-            <ArrowLeft size={2 * UNIT} />
-          </Button>
+            <Button
+              borderLess
+              iconOnly
+              noBackground
+              onClick={() => removeApplication()}
+              outline
+            >
+              <ArrowLeft size={2 * UNIT} />
+            </Button>
 
-          <Spacing mr={1} />
+            <Spacing mr={1} />
 
-          <KeyboardTextGroup
-            addPlusSignBetweenKeys
-            keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
-            monospace
+            <KeyboardTextGroup
+              addPlusSignBetweenKeys
+              keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
+              monospace
+            />
+          </HeaderStyle>
+
+          <InputStyle
+            className="inactive"
+            id={MAIN_TEXT_INPUT_ID}
+            onChange={(e) => {
+              const searchText = e.target.value;
+              const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
+
+              refInputValuePrevious.current = searchText;
+
+              removeFocusFromCurrentItem();
+
+              // There is no need to set refInput.current.value = searchText,
+              // this is already done when typing in the input element.
+              renderItems(
+                filterItems(searchText, refItemsInit?.current || []),
+              );
+
+              setTimeout(() => handleNavigation(0), 1);
+
+              if (isRemoving) {
+                refSelectedSearchHistoryIndex.current = null;
+                refFocusedSearchHistoryIndex.current = null;
+              } else if (refFocusedSearchHistoryIndex?.current !== null) {
+                refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
+                refFocusedSearchHistoryIndex.current = null;
+              }
+            }}
+            onFocus={() => {
+              refFocusedElement.current = InputElementEnum.MAIN;
+            }}
+            onBlur={() => {
+              refFocusedElement.current = null;
+            }}
+            placeholder="Search actions, apps, files, blocks, pipelines, triggers"
+            ref={refInput}
           />
-        </HeaderStyle>
+        </HeaderContainerStyle>
 
-        <InputStyle
+        <LoadingStyle
           className="inactive"
-          id={MAIN_TEXT_INPUT_ID}
-          onChange={(e) => {
-            const searchText = e.target.value;
-            const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
-
-            refInputValuePrevious.current = searchText;
-
-            removeFocusFromCurrentItem();
-
-            // There is no need to set refInput.current.value = searchText,
-            // this is already done when typing in the input element.
-            renderItems(
-              filterItems(searchText, refItemsInit?.current || []),
-            );
-
-            setTimeout(() => handleNavigation(0), 1);
-
-            if (isRemoving) {
-              refSelectedSearchHistoryIndex.current = null;
-              refFocusedSearchHistoryIndex.current = null;
-            } else if (refFocusedSearchHistoryIndex?.current !== null) {
-              refSelectedSearchHistoryIndex.current = refFocusedSearchHistoryIndex.current;
-              refFocusedSearchHistoryIndex.current = null;
-            }
-          }}
-          onFocus={() => {
-            refFocusedElement.current = InputElementEnum.MAIN;
-          }}
-          onBlur={() => {
-            refFocusedElement.current = null;
-          }}
-          placeholder="Search actions, apps, files, blocks, pipelines, triggers"
-          ref={refInput}
-        />
+          ref={refLoading}
+        >
+          <Loading width="100%" />
+        </LoadingStyle>
       </InputContainerStyle>
 
       <ItemsContainerStyle

@@ -56,12 +56,24 @@ export const ContainerStyle = styled.div<{
 `;
 
 export const InputContainerStyle = styled.div`
-  padding: ${SCROLLBAR_WIDTH}px;
   height: ${HEADER_CONTENT_HEIGHT + (SCROLLBAR_WIDTH * 2)}px;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme || dark).monotone.grey500};
   `}
+`;
+
+export const HeaderContainerStyle = styled.div`
+  padding: ${SCROLLBAR_WIDTH}px;
+`;
+
+export const LoadingStyle = styled.div`
+  position: absolute;
+  width: 100%;
+
+  &.inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
 `;
 
 export const InputStyle = styled.input`

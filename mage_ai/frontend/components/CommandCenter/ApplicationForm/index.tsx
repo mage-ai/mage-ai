@@ -45,7 +45,7 @@ function ApplicationForm({
   }>(null);
 
   const setAttributes = useCallback((prev1) => setAttributesState((prev2) => {
-    const val = prev1(prev2);
+    const val = prev1 ? prev1?.(prev2) : prev1;
 
     if (!applicationState?.current) {
       applicationState.current = {};
@@ -89,7 +89,7 @@ function ApplicationForm({
         item: itemEvent,
       },
     }) => {
-      if (itemEvent?.uuid !== item?.uuid) {
+      if (itemEvent?.uuid === item?.uuid) {
         if (ButtonActionTypeEnum.RESET_FORM === actionType) {
           setAttributes(null);
           setAttributesTouched(null);

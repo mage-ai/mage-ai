@@ -76,6 +76,7 @@ export function executeButtonActions({
   executeAction,
   focusedItemIndex,
   item,
+  refError,
   removeApplication,
 }: {
   button: ButtonActionType;
@@ -111,7 +112,7 @@ export function executeButtonActions({
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
 
     return result?.then((resultsInner) => {
-      if (index + 1 <= actionTypes?.length - 1) {
+      if (index + 1 <= actionTypes?.length - 1 && !refError?.current) {
         return invokeActionAndCallback(index + 1, {
           ...(results || {}),
           ...(resultsInner || {}),
