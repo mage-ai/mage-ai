@@ -80,6 +80,7 @@ class Git:
                 self.__setup_repo()
 
         if self.repo and self.git_config:
+            print('Setting git config...')
             self.__set_git_config()
 
         if self.remote_repo_link and self.repo:
@@ -804,7 +805,6 @@ class Git:
         token = None
         if os.getenv(GIT_ACCESS_TOKEN_VAR):
             token = os.getenv(GIT_ACCESS_TOKEN_VAR)
-            print('token1:', token)
         elif self.git_config and self.git_config.access_token_secret_name:
             token = get_secret_value(
                 self.git_config.access_token_secret_name,
