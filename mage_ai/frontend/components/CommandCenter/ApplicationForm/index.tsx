@@ -5,29 +5,19 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import { ApplicationProps } from '../ItemApplication/constants';
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
 import { InteractionInputTypeEnum } from '@interfaces/InteractionType';
-
-type InteractionFormProps = {
-  item: CommandCenterItemType;
-};
-
-function buildKey({
-  action_uuid: actionUUID,
-  name,
-}: {
-  action_uuid: string;
-  name: string;
-}): List[str] {
-  return [actionUUID, name]?.filter(v => v)?.join(':');
-}
+import { dig, setNested } from '@utils/hash';
 
 function InteractionForm({
+  executeAction,
+  focusedItemIndex,
   item,
-}: InteractionFormProps) {
-  const settings = item?.application?.settings || [];
-
+}: ApplicationProps) {
   const refInputs = useRef({});
+
+  const settings = item?.application?.settings || [];
 
   const [attributes, setAttributes] = useState<GlobalHookType>(null);
   const [attributesTouched, setAttributesTouched] = useState<{
@@ -35,8 +25,11 @@ function InteractionForm({
   }>(false);
 
   useEffect(() => {
-    const key = buildKey(settings?.[0] || {});
-    refInputs?.current?.[key]?.current?.focus();
+    if (settings?.length >= 1) {
+      const setting = settings?.[0] || {};
+      const key = [setting?.action_uuid, setting?.name].join('.');
+      setTimeout(() => refInputs?.current?.[key]?.current?.focus(), 1);
+    }
   }, []);
 
   return (
@@ -46,12 +39,13 @@ function InteractionForm({
         description,
         icon_uuid: iconUUID,
         label,
+        monospace,
         name,
         placeholder,
         required,
         type,
       }, idx) => {
-        const key = `${actionUUID}:${name}`;
+        const key = [actionUUID, name].join('.');
         const ref = refInputs?.current?.[key] || createRef();
         refInputs.current[key] = ref;
 
@@ -61,6 +55,7 @@ function InteractionForm({
           icon = <Icon />;
         }
 
+        // @ts-ignore
         const rowProps = {
           textInput: null,
         };
@@ -68,21 +63,24 @@ function InteractionForm({
         if (InteractionInputTypeEnum.TEXT_FIELD === type) {
           rowProps.textInput = {
             ...(icon ? { afterIcon: icon } : {}),
+            monospace,
             onChange: (e) => {
-              setAttributesTouched(prev => ({
-                ...prev,
-                [key]: true,
-              }));
+              setAttributesTouched((prev) => {
+                const data = { ...prev };
+                setNested(data, key, true);
+                return data;
+              });
 
-              return setAttributes(prev => ({
-                ...prev,
-                [key]: e.target.value,
-              }));
+              return setAttributes((prev) => {
+                const data = { ...prev };
+                setNested(data, key, e.target.value);
+                return data;
+              });
             },
             placeholder,
             ref,
             tabIndex: idx + 1,
-            value: attributes?.[key],
+            value: dig(attributes || {}, name),
           };
         }
 
@@ -91,7 +89,10 @@ function InteractionForm({
             {...rowProps}
             description={description}
             key={key}
-            invalid={required && attributesTouched?.[key] && !attributes?.[key]}
+            invalid={required
+              && dig(attributesTouched || {}, key)
+              && !dig(attributes || {}, key)
+            }
             title={label}
           />
         );

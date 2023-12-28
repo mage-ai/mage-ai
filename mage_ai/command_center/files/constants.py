@@ -18,23 +18,28 @@ ITEMS = [
             settings=[
                 dict(
                     label='Directory',
-                    description='Where do you want to save this file?',
+                    description=(
+                        'The location to create the file in. '
+                        'Must be relative to the top level directory.'
+                    ),
                     placeholder='e.g. utils',
                     icon_uuid='FolderOutline',
-                    name='file.dir_path',
+                    name='request.payload.file.dir_path',
                     type=InteractionInputType.TEXT_FIELD,
-                    action_uuid='files_form',
                     required=True,
+                    monospace=True,
+                    action_uuid='create_file',
                 ),
                 dict(
                     label='File name',
-                    description='The name of the file.',
+                    description='A descriptive name of the file to be created.',
                     icon_uuid='File',
                     placeholder='e.g. magic_powers.py',
-                    name='file.name',
+                    name='request.payload.file.name',
                     type=InteractionInputType.TEXT_FIELD,
-                    action_uuid='files_form',
                     required=True,
+                    monospace=True,
+                    action_uuid='create_file',
                 ),
             ],
         ),
@@ -45,17 +50,14 @@ ITEMS = [
                     resource='files',
                     response_resource_key='file'
                 ),
-                uuid='files_form',
+                uuid='create_file',
             ),
             dict(
                 interaction=dict(
-                    options=dict(
-                        file_path='default_repo/dbt/demo/models/example/my_first_dbt_model.sql',
-                    ),
                     type=InteractionType.OPEN_FILE,
                 ),
                 upstream_action_value_key_mapping=dict(
-                    files_form={
+                    create_file={
                         'data.file.path': 'interaction.options.file_path',
                     }
                 ),

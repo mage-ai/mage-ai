@@ -1,18 +1,15 @@
 import ApplicationForm from '../ApplicationForm';
+import { ApplicationProps } from './constants';
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
 import { ItemApplicationTypeEnum } from '@interfaces/CommandCenterType';
 
-type ItemApplicationProps = {
-  item: CommandCenterItemType;
-};
-
 function ItemApplication({
-  item,
-}: ItemApplicationProps) {
-  const applicationType = item?.application?.application_type;
+  ...props
+}: ApplicationProps) {
+  const applicationType = props?.item?.application?.application_type;
 
   if (ItemApplicationTypeEnum.FORM === applicationType) {
-    return <ApplicationForm item={item} />
+    return <ApplicationForm {...props} />
   }
 
   return null;

@@ -105,6 +105,7 @@ interface FormInputType extends InteractionInputType {
   description?: string;
   label?: string;
   icon_uuid?: string;
+  monospace?: boolean;
   name?: string;
   placeholder?: string;
   required?: boolean;

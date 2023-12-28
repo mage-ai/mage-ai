@@ -107,6 +107,7 @@ class FormInput(BaseDataClass):
     description: str = None
     label: str = None
     icon_uuid: str = None
+    monospace: bool = False
     name: str = None
     placeholder: str = None
     required: bool = False

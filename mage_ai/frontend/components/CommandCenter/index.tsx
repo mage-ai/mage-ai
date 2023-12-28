@@ -95,7 +95,11 @@ function CommandCenter() {
   const refApplications = useRef(null);
   const refApplicationsNodesContainer = useRef(null);
 
-  function addApplication(item: CommandCenterItemType) {
+  function addApplication(
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>,
+  ) {
     if (refApplications?.current === null) {
       refApplications.current = [];
     }
@@ -130,7 +134,11 @@ function CommandCenter() {
     }
 
     refRootApplications?.current?.render(
-      <ItemApplication item={item} />
+      <ItemApplication
+        executeAction={executeAction}
+        focusedItemIndex={focusedItemIndex}
+        item={item}
+      />
     );
   }
 
@@ -522,7 +530,7 @@ function CommandCenter() {
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
     if (item?.application) {
-      addApplication(item);
+      addApplication(item, focusedItemIndex, executeAction);
     } else {
       return executeAction(item, focusedItemIndex);
     }
