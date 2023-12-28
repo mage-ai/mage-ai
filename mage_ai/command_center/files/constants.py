@@ -54,14 +54,12 @@ ITEMS = [
                     ),
                     type=InteractionType.OPEN_FILE,
                 ),
-                parent_action_result_key_value_mapping={
-                    'file.path': 'interaction.options.file_path',
-                },
                 upstream_action_value_key_mapping=dict(
                     files_form={
-                        'file.path': 'interaction.options.file_path',
+                        'data.file.path': 'interaction.options.file_path',
                     }
                 ),
+                uuid='open_file',
             ),
         ],
         condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),

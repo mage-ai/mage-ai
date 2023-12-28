@@ -96,6 +96,8 @@ export interface CommandCenterActionType extends CommandCenterActionBaseType {
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
   request?: CommandCenterActionRequestType;
+  upstream_action_value_key_mapping?: KeyValueType;
+  uuid: string;
 }
 
 interface FormInputType extends InteractionInputType {

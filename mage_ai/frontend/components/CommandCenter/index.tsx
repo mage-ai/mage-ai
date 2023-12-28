@@ -16,7 +16,9 @@ import {
   CommandCenterActionRequestType,
   CommandCenterActionType,
   CommandCenterItemType,
+  ItemTypeEnum,
   KeyValueType,
+  ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
 import {
   COMPONENT_UUID,
@@ -56,7 +58,7 @@ import {
   getSearchHistory,
   getSetSettings,
 } from '@storage/CommandCenter/utils';
-import { combineLocalAndServerItems, filterItems } from './utils';
+import { combineLocalAndServerItems, filterItems, updateActionFromUpstreamResults } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -256,24 +258,36 @@ function CommandCenter() {
     removeFocusFromCurrentItem,
   ]);
 
-  const [invokeRequest, { isLoading: isLoadingRequest }] = useMutation(
+  const [
+    invokeRequest,
+    {
+      isLoading: isLoadingRequest,
+    },
+  ] = useMutation(
     ({
-      request: {
-        operation,
-        payload,
-        payload_resource_key: payloadResourceKey,
-        query,
-        resource,
-        resource_id: resourceID,
-        resource_parent: resourceParent,
-        resource_parent_id: resourceParentID,
-      },
+      action,
+      results,
     }: {
+      action: CommandCenterActionType;
       focusedItemIndex: number;
       index: number;
       item: CommandCenterItemType;
-      request: CommandCenterActionRequestType;
+      results: KeyValueType;
     }) => {
+      const actionCopy = updateActionFromUpstreamResults(action, results);
+
+      const {
+        request: {
+          operation,
+          payload,
+          query,
+          resource,
+          resource_id: resourceID,
+          resource_parent: resourceParent,
+          resource_parent_id: resourceParentID,
+        },
+      } = actionCopy;
+
       let endpoint = api?.[resource];
       if (resourceParent) {
         endpoint = endpoint?.[resourceParent];
@@ -291,13 +305,9 @@ function CommandCenter() {
 
       let submitRequest = null;
       if (OperationTypeEnum.CREATE === operation) {
-        submitRequest = () => endpoint?.useCreate(...ids, query)({
-          [payloadResourceKey]: payload,
-        });
+        submitRequest = () => endpoint?.useCreate(...ids, query)(payload);
       } else if (OperationTypeEnum.UPDATE === operation) {
-        submitRequest = () => endpoint?.useUpdate(...ids, query)({
-          [payloadResourceKey]: payload,
-        });
+        submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
       } else if (OperationTypeEnum.DELETE === operation) {
         submitRequest = () => endpoint?.useDelete(...ids, query)();
       } else if (OperationTypeEnum.DETAIL) {
@@ -311,12 +321,16 @@ function CommandCenter() {
       }
     },
     {
-      onSuccess: (response: any, variables: {
-        focusedItemIndex: number;
-        index: number;
-        item: CommandCenterItemType;
-        request: CommandCenterActionRequestType;
-      }) => onSuccess(
+      onSuccess: (
+        response: any,
+        variables: {
+          action: CommandCenterActionType;
+          focusedItemIndex: number;
+          index: number;
+          item: CommandCenterItemType;
+          results: KeyValueType;
+        },
+      ) => onSuccess(
         response, {
           callback: (
             resp: {
@@ -326,10 +340,12 @@ function CommandCenter() {
             const {
               focusedItemIndex,
               index,
-              request: {
-                operation,
-                response_resource_key: responseResourceKey,
-              }
+              action: {
+                request: {
+                  operation,
+                  response_resource_key: responseResourceKey,
+                }
+              },
             } = variables;
 
             const value = resp?.[responseResourceKey];
@@ -346,11 +362,8 @@ function CommandCenter() {
     },
   );
 
-  const executeAction = useCallback((
-    item: CommandCenterItemType,
-    focusedItemIndex: number,
-  ) => {
-    const actions = [];
+  function executeAction(item: CommandCenterItemType, focusedItemIndex: number) {
+    const actionSettings = [];
 
     if (!item?.actionResults) {
       refItems.current[focusedItemIndex].actionResults = {};
@@ -362,7 +375,6 @@ function CommandCenter() {
       };
 
       const {
-        delay,
         interaction,
         page,
         request,
@@ -372,7 +384,7 @@ function CommandCenter() {
         request: null,
       };
 
-      let actionFunction = null;
+      let actionFunction = (results: KeyValueType = {}) => {};
 
       if (page) {
         const {
@@ -386,7 +398,7 @@ function CommandCenter() {
         };
 
         if (path) {
-          actionFunction = () => {
+          actionFunction = (results: KeyValueType = {}) => {
             let result = null;
             if (external) {
               if (openNewWindow && typeof window !== 'undefined') {
@@ -410,27 +422,33 @@ function CommandCenter() {
       } else if (interaction) {
         const {
           element,
-          options,
           type,
         } = interaction || {
           element: null,
           event: null,
-          options: null,
         };
 
         // TODO (dangerous): open the file and the file editor in an application on the same page;
         // this will be supported when Application Center is launched.
         if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
-          router.push({
-            pathname: '/files',
-            query: {
-              file_path: typeof options?.file_path === 'string'
-                ? encodeURIComponent(String(options?.file_path))
-                : null,
-            },
-          });
+          actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+
+            const { options } = actionCopy?.interaction || { options: null };
+
+            return router.push({
+              pathname: '/files',
+              query: {
+                file_path: typeof options?.file_path === 'string'
+                  ? encodeURIComponent(String(options?.file_path))
+                  : null,
+              },
+            });
+          };
         } else if (element && type) {
-          actionFunction = () => {
+          const { options } = interaction || { options: null };
+
+          actionFunction = (results: KeyValueType = {}) => {
             const nodes = [];
             if (element?.id) {
               const node = document.getElementById(element?.id);
@@ -455,60 +473,60 @@ function CommandCenter() {
             return result;
           };
         }
-      } else if (request) {
-        const {
-          operation,
-          resource,
-          response_resource_key: responseResourceKey,
-        } = request || {
-          operation: null,
-          resource: null,
-        };
-
-        if (operation && resource) {
-          actionFunction = () => invokeRequest({
-            focusedItemIndex,
-            index,
-            item,
-            request,
-          });
-        }
+      } else if (request?.operation && request?.resource) {
+        actionFunction = (results: KeyValueType = {}) => invokeRequest({
+          action,
+          focusedItemIndex,
+          index,
+          item,
+          results,
+        });
       }
 
-      if (actionFunction) {
-        actions.push(new Promise((resolve, reject) => {
-          setTimeout(() => {
-            resolve(actionFunction());
-          }, delay || 0);
-        }));
-      }
+      actionSettings.push({
+        action,
+        actionFunction,
+      });
     });
 
-    const invokeActionAndCallback = (index: number) => {
-      return actions?.[index]?.then((response, variables) => {
-        if (index <= actions?.length - 1) {
-          return invokeActionAndCallback(index + 1);
+    const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
+      const {
+        action,
+        actionFunction,
+      } = actionSettings?.[index];
+      const {
+        delay,
+        uuid,
+      } = action;
+
+      const result = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(actionFunction(results));
+        }, delay || 0);
+      });
+
+      return result?.then((resultsInner) => {
+        if (index + 1 <= actionSettings?.length - 1) {
+          return invokeActionAndCallback(index + 1, {
+            ...results,
+            [uuid]: resultsInner,
+          });
         }
       });
     };
 
-    if (actions?.length >= 1) {
-      invokeActionAndCallback(0);
+    if (actionSettings?.length >= 1) {
+      return invokeActionAndCallback(0);
     }
-  }, [
-    invokeRequest,
-  ]);
+  }
 
-  const handleSelectItemRow = useCallback((
-    item: CommandCenterItemType,
-    focusedItemIndex: number,
-  ) => {
+  function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
     if (item?.application) {
       addApplication(item);
     } else {
       return executeAction(item, focusedItemIndex);
     }
-  }, [executeAction]);
+  }
 
   const renderItems = useCallback((
     items: CommandCenterItemType[],

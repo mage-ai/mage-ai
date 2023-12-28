@@ -19,6 +19,7 @@ class ApplicationFactory(BaseFactory):
                     page=dict(
                         path=item.get('path'),
                     ),
+                    uuid=item.get('title'),
                 ),
             ],
         ) for item in ITEMS]
