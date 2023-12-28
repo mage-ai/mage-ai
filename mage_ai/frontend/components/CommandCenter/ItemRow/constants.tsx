@@ -11,10 +11,10 @@ import {
 } from '@oracle/icons';
 
 export function getIcon(item: CommandCenterItemType) {
-  const { icon } = item;
+  const { icon_uuid: iconUUID } = item;
 
-  if (icon && icon in AllIcons) {
-    return AllIcons?.[icon];
+  if (iconUUID && iconUUID in AllIcons) {
+    return AllIcons?.[iconUUID];
   }
 
   const mapping = {

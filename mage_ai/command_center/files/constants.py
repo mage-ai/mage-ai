@@ -45,6 +45,6 @@ ITEMS = [
     dict(
         title='Create a new folder',
         type=CommandCenterItemType.ACTION,
-        icon='FolderV2Filled',
+        icon_uuid='FolderOutline',
     ),
 ]

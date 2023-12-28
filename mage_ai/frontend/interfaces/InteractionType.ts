@@ -51,6 +51,8 @@ export interface InteractionInputStyleType {
 }
 
 export interface InteractionInputType {
+  description?: string;
+  label?: string;
   options?: InteractionInputOptionType[];
   style?: InteractionInputStyleType;
   type?: InteractionInputTypeEnum;

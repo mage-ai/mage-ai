@@ -38,7 +38,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => !props.borderless && `
-    box-shadow: ${(props.theme.shadow || dark.shadow).tiny};
+    box-shadow: ${(props.theme.shadow || dark.shadow).small};
     padding-bottom: 3px;
     padding-top: 3px;
   `}
@@ -86,7 +86,7 @@ function KeyboardText({
       style.borderColor = (themeContext?.monotone || dark.monotone)?.muted;
     } else {
       // @ts-ignore
-      style.borderColor = (themeContext?.content || dark.content)?.default;
+      style.borderColor = (themeContext || dark)?.monotone?.grey500;
     }
     style.borderRadius = BORDER_RADIUS_SMALL;
     style.borderStyle = 'solid';

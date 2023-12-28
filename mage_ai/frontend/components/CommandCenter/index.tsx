@@ -3,20 +3,33 @@ import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import Button from '@oracle/elements/Button';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import InteractionForm from './InteractionForm';
 import ItemRow from './ItemRow';
+import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import { ArrowLeft } from '@oracle/icons';
 import {
   CommandCenterActionInteractionTypeEnum,
   CommandCenterActionRequestType,
+  CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
 } from '@interfaces/CommandCenterType';
 import {
+  COMPONENT_UUID,
   ContainerStyle,
+  HEADER_ID,
+  HeaderStyle,
+  ITEMS_CONTAINER_UUID,
+  ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
   InputStyle,
+  ItemContextContainerStyle,
   ItemsContainerStyle,
+  MAIN_TEXT_INPUT_ID,
 } from './index.style';
 import {
   KEY_CODE_ARROW_DOWN,
@@ -30,7 +43,9 @@ import {
   KEY_CODE_META_LEFT,
   KEY_CODE_META_RIGHT,
   KEY_CODE_PERIOD,
+  KEY_SYMBOL_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { InputElementEnum, ItemRowClassNameEnum } from './constants';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
@@ -49,9 +64,6 @@ import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 
-const COMPONENT_UUID = 'CommandCenter';
-const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}/ItemsContainerStyle`;
-
 function CommandCenter() {
   const router = useRouter();
   const [showError] = useError(null, {}, [], {
@@ -69,9 +81,104 @@ function CommandCenter() {
   const refItemNodes = useRef({});
   const refItemNodesContainer = useRef(null);
   const refReload = useRef(null);
-  const refRoot = useRef(null);
+  const refRootItemContext = useRef(null);
+  const refRootItems = useRef(null);
   const refSelectedSearchHistoryIndex = useRef(null);
   const refSettings = useRef(null);
+
+  const refContext = useRef(null);
+  const refHeader = useRef(null);
+  const refItemContextContainer = useRef(null);
+
+  function addItemContext({
+    action,
+    item,
+  }: {
+    action: CommandCenterActionType;
+    item: CommandCenterItemType;
+  }) {
+    if (refContext?.current === null) {
+      refContext.current = [];
+    }
+    refContext.current.push({
+      action,
+      item,
+    });
+
+    [
+      refHeader,
+      refInput,
+      refItemContextContainer,
+      refItemNodesContainer,
+    ].forEach((r) => {
+      if (r?.current) {
+        r.current.className = addClassNames(
+          r?.current?.className || '',
+          [
+            'context-active',
+          ],
+        );
+        r.current.className = removeClassNames(
+          r?.current?.className || '',
+          [
+            'context-inactive',
+          ],
+        );
+      }
+    });
+
+    if (!refRootItemContext?.current) {
+      const domNode = document.getElementById(ITEM_CONTEXT_CONTAINER_ID);
+      refRootItemContext.current = createRoot(domNode);
+    }
+
+    refRootItemContext?.current?.render(
+      <InteractionForm
+        action={action}
+        item={item}
+      />
+    );
+  }
+
+  function removeItemContext() {
+    const count = refContext?.current?.length || 0;
+    if (refContext?.current === null || !count) {
+      return;
+    }
+
+    refContext.current = refContext?.current?.slice(1, count);
+
+    if (count === 1) {
+      [
+        refHeader,
+        refItemContextContainer,
+        refItemNodesContainer,
+        refInput,
+      ].forEach((r) => {
+        if (r?.current) {
+          r.current.className = addClassNames(
+            r?.current?.className || '',
+            [
+              'context-inactive',
+            ],
+          );
+
+          r.current.className = removeClassNames(
+            r?.current?.className || '',
+            [
+              'context-active',
+            ],
+          );
+        }
+      });
+
+      refInput?.current?.focus();
+    }
+  }
+
+  function hasItemContext(): boolean {
+    return refContext?.current?.length >= 1;
+  }
 
   const refKeyDownCode = useRef(null);
 
@@ -248,6 +355,34 @@ function CommandCenter() {
   );
 
   const handleItemSelect = useCallback((item: CommandCenterItemType, focusedItemIndex: number) => {
+    return   addItemContext({
+      item: {
+
+      },
+      action: {
+        request: {
+          payload_keys_user_input_required: {
+              "dir_path": {
+                "label": "Directory",
+                "required": true,
+                "description": "Where do you want to save this file?",
+                "placeholder": "e.g. utils",
+                'icon_uuid': 'FolderOutline',
+                "type": "text_field",
+              },
+              "name": {
+                "label": "Name",
+                "description": "The name of the file.",
+                "required": true,
+                'icon_uuid': 'File',
+                "placeholder": "e.g. magic_powers.py",
+                "type": "text_field",
+              }
+          },
+        }
+      }
+    });
+
     const actions = [];
 
     if (!item?.actionResults) {
@@ -407,9 +542,9 @@ function CommandCenter() {
       refItemsInit.current = items;
     }
 
-    if (!refRoot?.current) {
+    if (!refRootItems?.current) {
       const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
-      refRoot.current = createRoot(domNode);
+      refRootItems.current = createRoot(domNode);
     }
 
     const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
@@ -430,7 +565,7 @@ function CommandCenter() {
       );
     });
 
-    refRoot?.current?.render(itemsEl);
+    refRootItems?.current?.render(itemsEl);
 
     return new Promise((resolve, reject) => resolve?.(items));
   }, [
@@ -501,10 +636,19 @@ function CommandCenter() {
   }, []);
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
-    const focusedItemIndex = refFocusedItemIndex?.current;
 
-    // If the main input is active.
-    if (InputElementEnum.MAIN === refFocusedElement?.current) {
+    // If in a context of a selected item.
+    if (hasItemContext()) {
+      // Leave the current context and go back.
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
+        pauseEvent(event);
+        removeItemContext();
+      }
+
+      // If the main input is active.
+    } else if (InputElementEnum.MAIN === refFocusedElement?.current) {
+      const focusedItemIndex = refFocusedItemIndex?.current;
+
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
         pauseEvent(event);
 
@@ -520,7 +664,9 @@ function CommandCenter() {
           }
 
           // Reset the items to the original list of items.
+          removeFocusFromCurrentItem();
           renderItems(refItemsInit?.current || []);
+          setTimeout(() => handleNavigation(0), 1);
         } else {
           // If there is no text in the input, close.
           close();
@@ -670,9 +816,38 @@ function CommandCenter() {
   }, [close]);
 
   return (
-    <ContainerStyle className="hide" ref={refContainer}>
+    <ContainerStyle
+      className="hide"
+      ref={refContainer}
+    >
       <InputContainerStyle>
+        <HeaderStyle
+          className="context-inactive"
+          id={HEADER_ID}
+          ref={refHeader}
+        >
+          <Button
+            borderLess
+            iconOnly
+            noBackground
+            onClick={() => removeItemContext()}
+            outline
+          >
+            <ArrowLeft size={2 * UNIT} />
+          </Button>
+
+          <Spacing mr={1} />
+
+          <KeyboardTextGroup
+            addPlusSignBetweenKeys
+            keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
+            monospace
+          />
+        </HeaderStyle>
+
         <InputStyle
+          className="context-inactive"
+          id={MAIN_TEXT_INPUT_ID}
           onChange={(e) => {
             const searchText = e.target.value;
             const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
@@ -709,8 +884,16 @@ function CommandCenter() {
       </InputContainerStyle>
 
       <ItemsContainerStyle
+        className="context-inactive"
         id={ITEMS_CONTAINER_UUID}
         ref={refItemNodesContainer}
+      >
+      </ItemsContainerStyle>
+
+      <ItemContextContainerStyle
+        className="context-inactive"
+        id={ITEM_CONTEXT_CONTAINER_ID}
+        ref={refItemContextContainer}
       />
     </ContainerStyle>
   );

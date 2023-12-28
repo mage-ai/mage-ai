@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
@@ -8,7 +8,22 @@ import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 
+export const COMPONENT_UUID = 'command-center';
+
+export const HEADER_ID = `${COMPONENT_UUID}-header`;
+export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
+export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
+export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
+
 export const MAX_WIDTH = 100 * UNIT;
+const HEADER_CONTENT_HEIGHT = 5 * UNIT;
+
+const SHARED_HIDDEN_STYLES = css`
+  opacity: 0;
+  position: absolute;
+  visibility: hidden;
+  z-index: -1;
+`;
 
 export const ContainerStyle = styled.div<{
   className?: string;
@@ -37,6 +52,7 @@ export const ContainerStyle = styled.div<{
 
 export const InputContainerStyle = styled.div`
   padding: ${SCROLLBAR_WIDTH}px;
+  height: ${HEADER_CONTENT_HEIGHT + (SCROLLBAR_WIDTH * 2)}px;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme || dark).monotone.grey500};
@@ -46,9 +62,14 @@ export const InputContainerStyle = styled.div`
 export const InputStyle = styled.input`
   ${LARGE}
 
+  &.context-active {
+    ${SHARED_HIDDEN_STYLES}
+  }
+
   background: none;
   border: none;
   font-family: ${FONT_FAMILY_MEDIUM};
+  height: ${HEADER_CONTENT_HEIGHT}px;
   padding: ${1 * UNIT}px;
   width: 100%;
 
@@ -57,9 +78,7 @@ export const InputStyle = styled.input`
   `}
 `;
 
-export const ItemsContainerStyle = styled.div<{
-  hideScrollBar?: boolean;
-}>`
+const SHARED_CONTAINER_STYLES = css`
   ${ScrollbarStyledCss}
   ${hideScrollBar()}
 
@@ -67,7 +86,7 @@ export const ItemsContainerStyle = styled.div<{
   overflow: auto;
   margin: ${SCROLLBAR_WIDTH}px;
 
-  &:hover {
+  &.context-inactive:hover {
     margin-right: 0;
 
     // for Internet Explorer, Edge
@@ -95,4 +114,30 @@ export const ItemsContainerStyle = styled.div<{
       }
     }
   `}
+`;
+
+export const ItemsContainerStyle = styled.div`
+  ${SHARED_CONTAINER_STYLES}
+
+  &.context-active {
+    ${SHARED_HIDDEN_STYLES}
+  }
+`;
+
+export const ItemContextContainerStyle = styled.div`
+  ${SHARED_CONTAINER_STYLES}
+
+  &.context-inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
+`;
+
+export const HeaderStyle = styled.div`
+  align-items: center;
+  display: flex;
+  height: ${HEADER_CONTENT_HEIGHT}px;
+
+  &.context-inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
 `;

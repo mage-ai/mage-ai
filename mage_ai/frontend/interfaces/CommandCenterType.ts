@@ -77,7 +77,7 @@ interface CommandCenterActionPageType {
   query?: KeyValueType;
 }
 
-interface CommandCenterActionType extends CommandCenterActionBaseType {
+export interface CommandCenterActionType extends CommandCenterActionBaseType {
   delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
@@ -99,7 +99,7 @@ export interface CommandCenterItemType {
   actions?: CommandCenterActionType[];
   description?: string;
   color_uuid?: string;
-  icon?: string;
+  icon_uuid?: string;
   items?: CommandCenterItemType[];
   metadata?: {
     block?: BlockMetadataType;

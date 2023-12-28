@@ -126,7 +126,7 @@ class Item(ItemBase):
     actions: List[Action] = None
     color_uuid: str = None
     description: str = None
-    icon: str = None
+    icon_uuid: str = None
     items: List[ItemBase] = None
     metadata: Metadata = None
     subtype: CommandCenterItemType = None

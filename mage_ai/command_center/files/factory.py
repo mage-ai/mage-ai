@@ -14,7 +14,7 @@ class Factory(BaseFactory):
             arr.append(Item.load(
                 actions=item_dict.get('actions'),
                 description=item_dict.get('description'),
-                icon=item_dict.get('icon'),
+                icon_uuid=item_dict.get('icon_uuid'),
                 subtype=CommandCenterItemType.ACTION,
                 title=item_dict.get('title'),
                 type=CommandCenterItemType.FILE,
