@@ -35,14 +35,16 @@ class CreateWithInteractionsComponent(BaseComponent):
         pipelines = kwargs.get('pipelines') or []
 
         if pipelines and len(pipelines) >= 1:
-            if Project(pipelines[0].repo_config).is_feature_enabled(FeatureUUID.INTERACTIONS):
-                results = await asyncio.gather(
-                    *[__validate_pipeline_interactions_permissions(
-                        pipeline,
-                    ) for pipeline in pipelines]
-                )
+            pipeline = pipelines[0]
+            if pipeline and pipeline.repo_config:
+                if Project(pipeline.repo_config).is_feature_enabled(FeatureUUID.INTERACTIONS):
+                    results = await asyncio.gather(
+                        *[__validate_pipeline_interactions_permissions(
+                            pipeline,
+                        ) for pipeline in pipelines]
+                    )
 
-                return all(results)
+                    return all(results)
 
         return False
 

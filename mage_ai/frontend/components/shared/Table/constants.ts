@@ -23,7 +23,7 @@ export const TIMEZONE_TOOLTIP_PROPS = {
   tooltipMessage: `Timezone: ${LOCAL_TIMEZONE}`,
 };
 
-export const getTableRowUuid = 
+export const getTableRowUuid =
   ({ uuid, rowIndex }: { uuid: string, rowIndex: number }) => `${uuid}-row-${rowIndex}`;
 
 /*

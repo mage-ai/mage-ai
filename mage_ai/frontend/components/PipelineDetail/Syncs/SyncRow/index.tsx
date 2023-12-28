@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import BlockRunType, { RunStatus as RunStatusBlockRun } from '@interfaces/BlockRunType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -12,23 +11,24 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import { Check } from '@oracle/icons';
 import {
   BarStyle,
   RowStyle,
   StatusStyle,
 } from './index.style';
+import { Check } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import {
-  numberWithCommas,
-  pluralize,
-  prettyUnitOfTime,
-} from '@utils/string';
+import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import {
   getRecordsData,
   pipelineRunProgress,
   pipelineRunRuntime,
 } from '@utils/models/pipelineRun';
+import {
+  numberWithCommas,
+  prettyUnitOfTime,
+} from '@utils/string';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type SyncRowProps = {
   onSelect: (id: number) => void;
@@ -42,7 +42,6 @@ function SyncRow({
   selected,
 }: SyncRowProps) {
   const {
-    block_runs: blockRuns,
     created_at: createdAt,
     status,
   } = pipelineRun;
@@ -52,8 +51,8 @@ function SyncRow({
     pipeline: {},
     source: null,
   }, [pipelineRun]);
-  const metricsBlocks = useMemo(() => metrics.blocks || {}, [metrics]);
   const metricsPipeline = useMemo(() => metrics.pipeline || {}, [metrics]);
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const destination: string = metrics.destination;
   const source: string = metrics.source;
@@ -98,7 +97,7 @@ function SyncRow({
         <Flex flex={1} flexDirection="column">
           <Spacing ml={3} py={3}>
             <Headline bold level={5} monospace>
-              {createdAt}
+              {displayLocalOrUtcTime(createdAt, displayLocalTimezone)}
             </Headline>
 
             <Spacing fullWidth={false} mt={2}>
@@ -128,7 +127,7 @@ function SyncRow({
 
             {Object.values(errors).length >= 1 && (
               <Spacing mt={1}>
-                {Object.entries(errors).map(([stream, obj], idx) => (
+                {Object.entries(errors).map(([stream, obj]) => (
                   <Text
                     key={stream}
                     monospace

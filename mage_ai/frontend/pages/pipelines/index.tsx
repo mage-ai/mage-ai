@@ -15,6 +15,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
+import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import Panel from '@oracle/components/Panel';
 import PipelineType, {
   FILTERABLE_PIPELINE_STATUSES,
@@ -27,6 +28,7 @@ import PipelineType, {
 import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { SortedColumnType } from '@components/shared/Table';
@@ -37,6 +39,7 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+import useProject from '@utils/models/project/useProject';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
@@ -64,6 +67,7 @@ import {
   setFilters,
   setGroupBys,
 } from '@storage/pipelines';
+import { META_QUERY_KEYS, MetaQueryEnum } from '@api/constants';
 import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { OBJECT_TYPE_PIPELINES } from '@interfaces/CustomTemplateType';
 import {
@@ -92,8 +96,8 @@ import { filterQuery, queryFromUrl } from '@utils/url';
 import { get, set } from '@storage/localStorage';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
-import { indexBy, sortByKey } from '@utils/array';
-import { isEmptyObject } from '@utils/hash';
+import { indexBy, range, sortByKey } from '@utils/array';
+import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
@@ -107,7 +111,7 @@ const TAB_RECENT = {
 };
 const TAB_ALL = {
   Icon: PipelineV3,
-  label: () => 'All pipelines',
+  label: (opts) => opts?.count ? `All pipelines › ${opts?.count || 0}` : 'All pipelines',
   uuid: 'all',
 };
 const TABS = [
@@ -115,6 +119,9 @@ const TABS = [
   TAB_RECENT,
 ];
 const QUERY_PARAM_TAB = 'tab';
+const NON_ARRAY_QUERY_KEYS = [
+  PipelineQueryEnum.SEARCH,
+];
 
 const sharedOpenButtonProps = {
   borderRadius: `${BORDER_RADIUS_SMALL}px`,
@@ -129,6 +136,13 @@ function PipelineListPage() {
   const router = useRouter();
   const refButtonTabs = useRef(null);
   const refTable = useRef(null);
+  const refPaginate = useRef(null);
+  const timeout = useRef(null);
+
+  const {
+    fetchProjects,
+    project,
+  } = useProject();
 
   const [buttonTabsHeight, setButtonTabsHeight] = useState<number>(null);
 
@@ -136,17 +150,38 @@ function PipelineListPage() {
   const [pipelineRowsSorted, setPipelineRowsSorted] = useState<React.ReactElement[][]>(null);
   const [pipelineRowsSortedFromHistory, setPipelineRowsSortedFromHistory] =
     useState<React.ReactElement[][]>(null);
-  const [searchText, setSearchText] = useState<string>(null);
+  const [searchText, setSearchTextState] = useState<string>(null);
+  const setSearchText = useCallback((searchQuery: string) => {
+    setSearchTextState(searchQuery);
+
+    clearTimeout(timeout.current);
+
+    timeout.current = setTimeout(() => goToWithQuery({
+      [PipelineQueryEnum.SEARCH]: searchQuery,
+    }), 500);
+  }, [
+    setSearchTextState,
+  ]);
+
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const q = queryFromUrl();
-  const query = filterQuery(q, [
-    PipelineQueryEnum.STATUS,
-    PipelineQueryEnum.TAG,
-    PipelineQueryEnum.TYPE,
+  const query = {
+    [MetaQueryEnum.LIMIT]: ROW_LIMIT,
+    ...filterQuery(q, [
+      PipelineQueryEnum.SEARCH,
+      PipelineQueryEnum.STATUS,
+      PipelineQueryEnum.TAG,
+      PipelineQueryEnum.TYPE,
+      ...META_QUERY_KEYS,
+    ]),
+  };
+
+  const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
+    q,
   ]);
 
   useEffect(() => {
@@ -156,8 +191,6 @@ function PipelineListPage() {
     refButtonTabs,
   ]);
 
-  const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
-  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
   const displayLocalTimezone = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
@@ -171,6 +204,8 @@ function PipelineListPage() {
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
     include_schedules: 1,
+  }, {
+    revalidateOnFocus: false,
   });
 
   const fromHistoryDays = useMemo(() => q?.[PipelineQueryEnum.HISTORY_DAYS] || 7, [q]);
@@ -185,21 +220,22 @@ function PipelineListPage() {
       : fromHistoryDays,
     include_schedules: 1,
   }, {}, {
-    pauseFetch: !operationHistoryEnabled,
+    pauseFetch: !operationHistoryEnabled || !selectedTabUUID || TAB_RECENT.uuid !== selectedTabUUID,
   });
 
   const filterPipelinesBySearchText = useCallback((arr: PipelineType[]): PipelineType[] => {
-    let pipelinesFinal: PipelineType[] = arr || [];
-    if (searchText) {
-      const lowercaseSearchText = searchText.toLowerCase();
-      pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
-         name?.toLowerCase().includes(lowercaseSearchText)
-          || uuid?.toLowerCase().includes(lowercaseSearchText)
-          || description?.toLowerCase().includes(lowercaseSearchText),
-      );
-    }
+    return arr;
+    // let pipelinesFinal: PipelineType[] = arr || [];
+    // if (searchText) {
+    //   const lowercaseSearchText = searchText.toLowerCase();
+    //   pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
+    //      name?.toLowerCase().includes(lowercaseSearchText)
+    //       || uuid?.toLowerCase().includes(lowercaseSearchText)
+    //       || description?.toLowerCase().includes(lowercaseSearchText),
+    //   );
+    // }
 
-    return pipelinesFinal;
+    // return pipelinesFinal;
   }, [
     searchText,
   ]);
@@ -290,10 +326,6 @@ function PipelineListPage() {
   ), [sortColumnIndexQuery, sortDirectionQuery]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
 
-  const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
-    q,
-  ]);
-
   const [downloadPipeline] = useMutation(
     ({
       pipelineUUID,
@@ -320,6 +352,16 @@ function PipelineListPage() {
         }),
     }
   );
+
+  useEffect(() => {
+    if (query?.[PipelineQueryEnum.SEARCH] && searchText === null) {
+      setSearchTextState(query?.[PipelineQueryEnum.SEARCH]);
+    }
+  }, [
+    query,
+    searchText,
+    setSearchTextState,
+  ]);
 
   useEffect(() => {
     let queryFinal = {};
@@ -375,21 +417,33 @@ function PipelineListPage() {
 
       if (f) {
         Object.entries(f).forEach(([k, v]) => {
-          filtersQuery[k] = [];
+          if (typeof v !== 'undefined' && v !== null) {
+            // @ts-ignore
+            if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
+              filtersQuery[k] = v;
+            } else {
+              filtersQuery[k] = [];
 
-          Object.entries(v).forEach(([k2, v2]) => {
-            if (v2) {
-              filtersQuery[k].push(k2);
+              Object.entries(v).forEach(([k2, v2]) => {
+                if (v2) {
+                  filtersQuery[k].push(k2);
+                }
+              });
             }
-          });
+          }
         });
       }
 
       if (!isEmptyObject(filtersQuery)) {
-        queryFinal = {
+        queryFinal = {};
+        Object.entries({
           ...queryFinal,
           ...filtersQuery,
-        };
+        } || {}).forEach(([k, v]) => {
+          if (typeof v !== 'undefined' && v !== null) {
+            queryFinal[k] = v;
+          }
+        });
       }
     } else {
       const f = {};
@@ -397,22 +451,31 @@ function PipelineListPage() {
         f[k] = {};
 
         let v2 = v;
-        if (!Array.isArray(v2)) {
-          v2 = [v2];
-        }
 
-        if (v2 && Array.isArray(v2)) {
-          v2?.forEach((v3) => {
-            f[k][v3] = true;
-          });
+        if (typeof v !== 'undefined' && v !== null) {
+          // @ts-ignore
+          if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
+              f[k] = v2;
+          } else {
+            if (!Array.isArray(v2)) {
+              // @ts-ignore
+              v2 = [v2];
+            }
+
+            if (v2 && Array.isArray(v2)) {
+              v2?.forEach((v3) => {
+                f[k][v3] = true;
+              });
+            }
+          }
         }
       });
 
-      setFilters(f);
+      setFilters(selectEntriesWithValues(f));
     }
 
     if (!isEmptyObject(queryFinal)) {
-      goToWithQuery(queryFinal, {
+      goToWithQuery(selectEntriesWithValues(queryFinal), {
         pushHistory: false,
       });
     }
@@ -859,7 +922,9 @@ function PipelineListPage() {
           setFilters({});
         }
       }}
+      // @ts-ignore
       query={query}
+      resetLimitOnFilterApply
       searchProps={{
         onChange: setSearchText,
         value: searchText,
@@ -879,6 +944,7 @@ function PipelineListPage() {
     router,
     searchText,
     selectedPipeline,
+    setSearchText,
     showInputModal,
     tags,
   ]);
@@ -1539,18 +1605,97 @@ function PipelineListPage() {
       selectedTabUUID,
     ]);
 
+  const limitMemo = useMemo(() => {
+    const limit = query?.[MetaQueryEnum.LIMIT];
+
+    return (
+      <FlexContainer alignItems="center">
+        <Text muted small>
+          Per page
+        </Text>
+
+        <Spacing mr={1} />
+
+        <Select
+          compact
+          onChange={e => goToWithQuery({
+            [MetaQueryEnum.LIMIT]: e.target.value,
+          }, {
+            pushHistory: true,
+          })}
+          small
+          value={limit}
+        >
+          {limit && ((limit > (5 * ROW_LIMIT)) || (limit % ROW_LIMIT)) && (
+            <option value={limit}>
+              {limit}
+            </option>
+          )}
+          {range(5).map((i, idx) => {
+            const val = (idx + 1) * ROW_LIMIT;
+
+            return (
+              <option key={val} value={val}>
+                {val}
+              </option>
+            );
+          })}
+        </Select>
+      </FlexContainer>
+    );
+  }, [
+    query,
+  ]);
+
+  const paginateMemo = useMemo(() => {
+    let dataUse = data;
+    if (operationHistoryEnabled && TAB_RECENT.uuid === selectedTabUUID) {
+      dataUse = dataPipelinesFromHistory;
+    }
+    const count = dataUse?.metadata?.count || 0;
+    const limit = query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT;
+    const offset = query?.[MetaQueryEnum.OFFSET] || 0;
+    const totalPages = Math.ceil(count / limit);
+
+    return (
+      <Spacing p={PADDING_UNITS}>
+        <Paginate
+          maxPages={MAX_PAGES}
+          onUpdate={(p) => {
+            const newPage = Number(p);
+            goToWithQuery({
+              [MetaQueryEnum.OFFSET]: newPage * limit,
+            });
+          }}
+          page={Math.floor(offset / limit)}
+          totalPages={totalPages}
+        />
+      </Spacing>
+    );
+  }, [
+    data,
+    dataPipelinesFromHistory,
+    operationHistoryEnabled,
+    query,
+    selectedTabUUID,
+  ]);
+
   return (
     <Dashboard
       errors={errors}
       setErrors={setErrors}
-      subheaderChildren={toolbarEl}
+      subheaderChildren={(
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          {toolbarEl}
+
+          {limitMemo}
+        </FlexContainer>
+      )}
       title="Pipelines"
       uuid="pipelines/index"
     >
       {operationHistoryEnabled && (
         <Spacing
-          pb={!groupByQuery ? PADDING_UNITS : 0}
-          pt={PADDING_UNITS}
           px={PADDING_UNITS}
           ref={refButtonTabs}
         >
@@ -1558,12 +1703,25 @@ function PipelineListPage() {
             noPadding
             onClickTab={({ uuid }) => goToWithQuery({
               [QUERY_PARAM_TAB]: uuid,
+              [MetaQueryEnum.LIMIT]: null,
+              [MetaQueryEnum.OFFSET]: null,
             }, {
               pushHistory: true,
             })}
             regularSizeText
             selectedTabUUID={selectedTabUUID}
-            tabs={TABS}
+            tabs={TABS.map(({
+              Icon,
+              label,
+              uuid,
+            }) => ({
+              Icon,
+              label: () => label({
+                count: data?.metadata?.count,
+              }),
+              uuid,
+            }))}
+            underlineStyle
           />
         </Spacing>
       )}
@@ -1587,7 +1745,7 @@ function PipelineListPage() {
         hide={showNoPipelinesForTab}
         includePadding={!!groupByQuery}
         // Height of table = viewport height - (header height + subheader height)
-        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 0)}px)`}
+        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 0) + refPaginate?.current?.getBoundingClientRect?.()?.height}px)`}
       >
         {(!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID)
           && pipelinesTableMemo
@@ -1598,6 +1756,10 @@ function PipelineListPage() {
           && pipelinesFromHistoryTableMemo
         }
       </TableContainerStyle>
+
+      <div ref={refPaginate}>
+        {paginateMemo}
+      </div>
     </Dashboard>
   );
 }

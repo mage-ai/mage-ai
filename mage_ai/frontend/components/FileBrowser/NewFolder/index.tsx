@@ -9,7 +9,9 @@ import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { getFullPathWithoutRootFolder } from '../utils';
+import { ProjectTypeEnum } from '@interfaces/ProjectType';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { getFullPathWithoutRootFolder, removeRootFromFilePath } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
@@ -19,8 +21,13 @@ type NewFolderProps = {
   moveFile?: boolean;
   onCancel: () => void;
   onCreateFile?: (file: FileType) => void;
+  projectType?: ProjectTypeEnum;
   selectedFolder: FileType;
   setErrors?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
+  showError?: (opts: {
     errors: any;
     response: any;
   }) => void;
@@ -32,8 +39,10 @@ function NewFolder({
   moveFile,
   onCancel,
   onCreateFile,
+  projectType,
   selectedFolder,
   setErrors,
+  showError,
 }: NewFolderProps) {
   const refTextInput = useRef(null);
   const file = isEmptyObject(fileProp) ? null : fileProp;
@@ -53,7 +62,7 @@ function NewFolder({
 
   useEffect(() => {
     if (selectedFolder) {
-      setDirectory(getFullPathWithoutRootFolder(selectedFolder, null, true));
+      setDirectory(removeRootFromFilePath(selectedFolder?.uuid));
     }
   }, [selectedFolder]);
 
@@ -67,14 +76,24 @@ function NewFolder({
             onCancel();
             onCreateFile?.(file);
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
   );
+
   const [updateFolder] = useMutation(
     api.folders.useUpdate(file && encodeURIComponent(getFullPathWithoutRootFolder(file))),
     {
@@ -84,10 +103,46 @@ function NewFolder({
             fetchFileTree?.();
             onCancel();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
+        },
+      ),
+    },
+  );
+
+  const [createProject, { isLoading: isLoadingCreateProject }] = useMutation(
+    api.projects.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchFileTree?.();
+            onCancel();
+          },
+          onErrorCallback: (response, errors) => {
+            if (setErrors) {
+              return setErrors({
+                errors,
+                response,
+              });
+            }
+
+            return showError({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
@@ -101,6 +156,7 @@ function NewFolder({
             bold
             disabled={!filename}
             inline
+            loading={isLoadingCreateProject}
             onClick={() => {
               if (file) {
                 // @ts-ignore
@@ -108,6 +164,15 @@ function NewFolder({
                   folder: {
                     name: filename,
                     path: directory,
+                  },
+                });
+              } else if (projectType) {
+                // @ts-ignore
+                return createProject({
+                  project: {
+                    repo_path: directory,
+                    type: projectType,
+                    uuid: filename,
                   },
                 });
               } else {
@@ -125,11 +190,16 @@ function NewFolder({
             tabIndex={0}
             uuid="NewFolder/create_folder"
           >
-            {file
-              ? moveFile
-                ? 'Move'
-                : 'Rename'
-              : 'Create'} folder
+            {projectType && 'Create project'}
+            {!projectType && (
+              <>
+                {file
+                  ? moveFile
+                    ? 'Move'
+                    : 'Rename'
+                  : 'Create'} folder
+              </>
+            )}
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>
@@ -146,11 +216,20 @@ function NewFolder({
         ? moveFile
           ? 'Move folder'
           : 'Rename folder'
-        : 'New folder'}
+        : projectType
+          ? (ProjectTypeEnum.STANDALONE === projectType
+            ? 'New Mage project'
+            : ProjectTypeEnum.DBT === projectType
+              ? 'New dbt project'
+              : 'New project'
+          )
+          : 'New folder'
+        }
+      minWidth={UNIT * 50}
     >
       <TextInput
         disabled={!!file && !moveFile}
-        label="Directory"
+        label={projectType ? 'Project directory' : 'Directory'}
         monospace
         onChange={e => setDirectory(e.target.value)}
         setContentOnMount
@@ -160,7 +239,7 @@ function NewFolder({
       <Spacing mt={2}>
         <TextInput
           disabled={!!moveFile}
-          label="Folder name"
+          label={projectType ? 'Project name' : 'Folder name'}
           monospace
           onChange={e => setFilename(e.target.value)}
           ref={refTextInput}

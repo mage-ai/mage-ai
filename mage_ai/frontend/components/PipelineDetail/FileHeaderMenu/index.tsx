@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -29,7 +30,7 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { LinkStyle } from './index.style';
+import { SHARED_FILE_HEADER_BUTTON_PROPS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
@@ -242,7 +243,7 @@ function FileHeaderMenu({
       onClick: () => {
         setSideBySideEnabled(false);
       },
-      uuid: 'Show output next to code',
+      uuid: 'Show output below block',
     },
     {
       label: () => (
@@ -365,8 +366,9 @@ function FileHeaderMenu({
     >
       <FlexContainer>
         <div style={{ position: 'relative' }}>
-          <LinkStyle
-            highlighted={highlightedIndex === 0}
+          <Button
+            {...SHARED_FILE_HEADER_BUTTON_PROPS}
+            noBackground={highlightedIndex !== 0}
             onClick={() => setHighlightedIndex(val => val === 0 ? null : 0)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 0 : null)}
             ref={refFile}
@@ -374,7 +376,7 @@ function FileHeaderMenu({
             <Text>
               File
             </Text>
-          </LinkStyle>
+          </Button>
 
           <FlyoutMenu
             items={fileItems}
@@ -386,29 +388,9 @@ function FileHeaderMenu({
         </div>
 
         <div style={{ position: 'relative' }}>
-          <LinkStyle
-            highlighted={highlightedIndex === 1}
-            onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
-            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
-            ref={refRun}
-          >
-            <Text>
-              Run
-            </Text>
-          </LinkStyle>
-
-          <FlyoutMenu
-            items={runItems}
-            onClickCallback={() => setHighlightedIndex(null)}
-            open={highlightedIndex === 1}
-            parentRef={refRun}
-            uuid="FileHeaderMenu/run_items"
-          />
-        </div>
-
-        <div style={{ position: 'relative' }}>
-          <LinkStyle
-            highlighted={highlightedIndex === 2}
+          <Button
+            {...SHARED_FILE_HEADER_BUTTON_PROPS}
+            noBackground={highlightedIndex !== 2}
             onClick={() => setHighlightedIndex(val => val === 2 ? null : 2)}
             onMouseEnter={() => setHighlightedIndex(val => val !== null ? 2 : null)}
             ref={refEdit}
@@ -416,7 +398,7 @@ function FileHeaderMenu({
             <Text>
               Edit
             </Text>
-          </LinkStyle>
+          </Button>
 
           <FlyoutMenu
             items={editItems}
@@ -427,12 +409,35 @@ function FileHeaderMenu({
           />
         </div>
 
+        <div style={{ position: 'relative' }}>
+          <Button
+            {...SHARED_FILE_HEADER_BUTTON_PROPS}
+            noBackground={highlightedIndex !== 1}
+            onClick={() => setHighlightedIndex(val => val === 1 ? null : 1)}
+            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 1 : null)}
+            ref={refRun}
+          >
+            <Text>
+              Run
+            </Text>
+          </Button>
+
+          <FlyoutMenu
+            items={runItems}
+            onClickCallback={() => setHighlightedIndex(null)}
+            open={highlightedIndex === 1}
+            parentRef={refRun}
+            uuid="FileHeaderMenu/run_items"
+          />
+        </div>
+
         {PipelineTypeEnum.INTEGRATION !== pipeline?.type
           && featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
           && (
           <div style={{ position: 'relative' }}>
-            <LinkStyle
-              highlighted={highlightedIndex === 3}
+            <Button
+              {...SHARED_FILE_HEADER_BUTTON_PROPS}
+              noBackground={highlightedIndex !== 3}
               onClick={() => setHighlightedIndex(val => val === 3 ? null : 3)}
               onMouseEnter={() => setHighlightedIndex(val => val !== null ? 3 : null)}
               ref={refView}
@@ -440,7 +445,7 @@ function FileHeaderMenu({
               <Text>
                 View
               </Text>
-            </LinkStyle>
+            </Button>
 
             <FlyoutMenu
               items={viewItems}
@@ -454,8 +459,9 @@ function FileHeaderMenu({
 
         {featureEnabled?.(featureUUIDs.COMPUTE_MANAGEMENT) && (
           <div style={{ position: 'relative' }}>
-            <LinkStyle
-              highlighted={highlightedIndex === INDEX_COMPUTE}
+            <Button
+              {...SHARED_FILE_HEADER_BUTTON_PROPS}
+              noBackground={highlightedIndex !== INDEX_COMPUTE}
               onClick={() => setHighlightedIndex(val => val === INDEX_COMPUTE ? null : INDEX_COMPUTE)}
               onMouseEnter={() => setHighlightedIndex(val => val !== null ? INDEX_COMPUTE : null)}
               ref={refCompute}
@@ -463,7 +469,7 @@ function FileHeaderMenu({
               <Text>
                 Compute
               </Text>
-            </LinkStyle>
+            </Button>
 
             <FlyoutMenu
               items={computeItems}

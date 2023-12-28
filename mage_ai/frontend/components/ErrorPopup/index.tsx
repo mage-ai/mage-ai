@@ -16,6 +16,7 @@ type ErrorPopupProps = {
   displayMessage?: string;
   errors?: ErrorType;
   links?: {
+    closeAfterClick?: boolean;
     href?: string;
     label: string;
     onClick?: () => void;
@@ -164,12 +165,20 @@ function ErrorPopup({
         </Spacing>
       )}
 
-      {links?.map(({ href, label, onClick }) => (
+      {links?.map(({ closeAfterClick, href, label, onClick }) => (
         <Spacing key={label} mt={2}>
           <Link
             href={href}
             large
-            onClick={onClick}
+            onClick={onClick
+              ? () => {
+                onClick?.();
+                if (closeAfterClick && onClose) {
+                  onClose?.();
+                }
+              }
+              : null
+            }
             openNewWindow={!!href}
             underline
             warning

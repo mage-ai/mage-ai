@@ -102,8 +102,13 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    --require-user-authentication)
+    --require-user-permissions)
     REQUIRE_USER_PERMISSIONS=1
+    shift # past argument
+    shift # past value
+    ;;
+    --enable-project-platform)
+    ENABLE_PROJECT_PLATFORM=1
     shift # past argument
     shift # past value
     ;;
@@ -114,6 +119,11 @@ case $key in
     ;;
     --spark)
     SPARK=1
+    shift # past argument
+    shift # past value
+    ;;
+    --data_dir)
+    MAGE_DATA_DIR=1
     shift # past argument
     shift # past value
     ;;
@@ -151,7 +161,9 @@ export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
 export OPENAI_API_KEY=$OPENAI_API_KEY
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
+export ENABLE_PROJECT_PLATFORM=$ENABLE_PROJECT_PLATFORM
 export DEBUG=$DEBUG
+export MAGE_DATA_DIR=$MAGE_DATA_DIR
 
 UP_SERVICES="server app"
 

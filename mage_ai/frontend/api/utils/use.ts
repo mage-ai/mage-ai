@@ -170,6 +170,75 @@ export function useDetailWithParent(
   };
 }
 
+export function useListAsync(
+  resource: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(
+    buildUrl(
+      resource,
+      null,
+      null,
+      null,
+      query,
+      null,
+    ),
+    {
+      ...options,
+      method: GET,
+      query,
+    },
+  );
+}
+
+export function useListWithParentAsync(
+  resource: string,
+  parentResource: string,
+  parentId: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(
+    buildUrl(
+      parentResource,
+      parentId,
+      resource,
+      null,
+      query,
+      null,
+    ),
+    {
+      ...options,
+      method: GET,
+      query,
+    },
+  );
+}
+
+export function useDetailAsync(
+  resource: string,
+  id: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(
+    buildUrl(
+      resource,
+      id,
+      null,
+      null,
+      query,
+      null,
+    ),
+    {
+      ...options,
+      method: GET,
+      query,
+    },
+  );
+}
+
 export function useDetailWithParentAsync(
   resource: string,
   id: string,

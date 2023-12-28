@@ -22,12 +22,14 @@ export type AccordionPanelProps = {
   first?: boolean;
   hideScrollbar?: boolean;
   highlighted?: boolean;
+  id?: string;
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
   noBorderRadius?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
+  refContainer?: any;
   singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
@@ -154,7 +156,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     padding-top: ${props.titleYPadding}px;
   `}
 
-  ${props => typeof props.titleXPadding === 'undefined' && `
+  ${props => typeof props.titleYPadding === 'undefined' && `
     padding-bottom: ${2 * UNIT}px;
     padding-top: ${2 * UNIT}px;
   `}
@@ -216,6 +218,7 @@ const AccordionPanel = ({
   onClick,
   onEntered,
   onExited,
+  refContainer,
   singlePanel,
   smallTitle,
   title,
@@ -229,6 +232,7 @@ const AccordionPanel = ({
   <AccordionPanelStyle
     {...props}
     maxHeight={maxHeight}
+    ref={refContainer}
   >
     <TitleStyle
       first={first}

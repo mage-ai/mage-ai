@@ -7,7 +7,11 @@ class SinkFactory:
     @classmethod
     def get_sink(self, config: Dict, **kwargs):
         connector_type = config['connector_type']
-        if connector_type == SinkType.AMAZON_S3:
+        if connector_type == SinkType.ACTIVEMQ:
+            from mage_ai.streaming.sinks.activemq import ActiveMQSink
+
+            return ActiveMQSink(config, **kwargs)
+        elif connector_type == SinkType.AMAZON_S3:
             from mage_ai.streaming.sinks.amazon_s3 import AmazonS3Sink
 
             return AmazonS3Sink(config, **kwargs)

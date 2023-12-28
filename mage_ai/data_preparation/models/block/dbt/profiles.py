@@ -135,6 +135,9 @@ class Profiles(object):
 
         # write interpolated profiles.yml
         interpoalted_profiles_full_path = interpolated_profiles_dir / PROFILES_FILE_NAME
+        if not os.path.exists(interpoalted_profiles_full_path):
+            os.makedirs(os.path.dirname(interpoalted_profiles_full_path), exist_ok=True)
+
         try:
             with interpoalted_profiles_full_path.open('w') as f:
                 yaml.safe_dump(self.profiles, f)

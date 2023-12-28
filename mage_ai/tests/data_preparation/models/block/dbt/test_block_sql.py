@@ -1,37 +1,50 @@
 import asyncio
+import json
+import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+
+from dbt.cli.main import dbtRunnerResult
 
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.data_preparation.models.block.platform.test_mixins import (
+    BlockWithProjectPlatformShared,
+)
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
+
+
+def build_block():
+    pipeline = MagicMock()
+    pipeline.uuid = 'test'
+    pipeline.repo_path = 'test_repo_path'
+    pipeline.get_block.return_value = None
+
+    return DBTBlock(
+        name='test_dbt_block_sql',
+        uuid='test_dbt_block_sql',
+        block_type=BlockType.DBT,
+        language=BlockLanguage.SQL,
+        pipeline=pipeline,
+        configuration={
+            'dbt_profile_target': 'test',
+            'file_path': str(Path('test_project_name/test_models/model.sql')),
+            'dbt': {
+                'command': 'build',
+                'disable_tests': True
+            }
+        }
+    )
 
 
 class DBTBlockSQLTest(TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-
-        pipeline = MagicMock()
-        pipeline.uuid = 'test'
-        pipeline.repo_path = 'test_repo_path'
-        pipeline.get_block.return_value = None
-
-        self.dbt_block = DBTBlock(
-            name='test_dbt_block_sql',
-            uuid='test_dbt_block_sql',
-            block_type=BlockType.DBT,
-            language=BlockLanguage.SQL,
-            pipeline=pipeline,
-            configuration={
-                'dbt_profile_target': 'test',
-                'file_path': str(Path('test_project_name/test_models/model.sql')),
-                'dbt': {
-                    'command': 'build',
-                    'disable_tests': True
-                }
-            }
-        )
+        self.dbt_block = build_block()
 
     @classmethod
     def tearDownClass(self):
@@ -96,16 +109,16 @@ class DBTBlockSQLTest(TestCase):
             str(Path('test_repo_path/dbt/test_project_name'))
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli.invoke')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
     def test_execute_block(
         self,
         Profiles: MagicMock,
         Project: MagicMock,
-        DBTCli: MagicMock
+        mock_invoke: MagicMock,
     ):
-        DBTCli.return_value.invoke.return_value = (None, True)
+        mock_invoke.return_value = dbtRunnerResult(True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
         Project.return_value.project = {
             'model-paths': ['models', 'test_models']
@@ -129,7 +142,16 @@ class DBTBlockSQLTest(TestCase):
             global_vars={}
         )
 
-        DBTCli.assert_called_once_with([
+        self.assertEqual(mock_invoke.mock_calls[0], call([
+            'deps',
+            '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
+            '--full-refresh',
+            '--select', 'model+',
+            '--vars', '{}',
+            '--target', 'test',
+            '--profiles-dir', 'test_profiles_dir'
+        ]))
+        self.assertEqual(mock_invoke.mock_calls[1], call([
             'run',
             '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
             '--full-refresh',
@@ -137,7 +159,7 @@ class DBTBlockSQLTest(TestCase):
             '--vars', '{}',
             '--target', 'test',
             '--profiles-dir', 'test_profiles_dir'
-        ], None)
+        ]))
 
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.open')
@@ -154,27 +176,28 @@ class DBTBlockSQLTest(TestCase):
             'SELECT * FROM test'
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli.invoke')
     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
     def test_upstream_dbt_blocks(
         self,
         Profiles: MagicMock,
-        DBTCli: MagicMock,
+        mock_invoke: MagicMock,
     ):
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
-        DBTCli.return_value.invoke.return_value = (
-            [
+        mock_invoke.return_value = dbtRunnerResult(
+            success=True,
+            exception=None,
+            result=[
                 '{"unique_id":"test1", "original_file_path":"test1_file_path.sql", ' +
                 '"depends_on": {"nodes":[]}}',
                 '{"unique_id":"test2", "original_file_path":"test2_file_path.sql", ' +
                 '"depends_on": {"nodes":["test1"]}}'
             ],
-            True
         )
 
         blocks = [block.to_dict() for block in self.dbt_block.upstream_dbt_blocks()].__iter__()
 
-        DBTCli.assert_called_once_with([
+        mock_invoke.assert_called_once_with([
             'list',
             '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
             '--profiles-dir', 'test_profiles_dir',
@@ -216,3 +239,91 @@ class DBTBlockSQLTest(TestCase):
             },
             block
         )
+
+
+@patch(
+    'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+    lambda: True,
+)
+@patch(
+    'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
+    lambda: True,
+)
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+class DBTBlockSQLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
+    def test_file_path(self):
+        block = build_block()
+        block.configuration['file_source'] = dict(path='mage_data/dbt/demo/models/fire.sql')
+        self.assertEqual(block.file_path, 'mage_data/dbt/demo/models/fire.sql')
+
+    def test_project_path(self):
+        block = build_block()
+        block.configuration['file_source'] = dict(
+            path='mage_data/dbt/demo/models/fire.sql',
+            project_path='mage_data/dbt/demo',
+        )
+        self.assertEqual(block.project_path, os.path.join(base_repo_path(), 'mage_data/dbt/demo'))
+
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli.invoke')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
+    def test_upstream_dbt_blocks(self, Profiles, mock_invoke):
+        mock_invoke.return_value = dbtRunnerResult(success=True, result=[
+            json.dumps(dict(
+                depends_on=dict(nodes=[]),
+                original_file_path='models/water.sql',
+                unique_id='water',
+            )),
+            json.dumps(dict(
+                depends_on=dict(nodes=['water']),
+                original_file_path='models/ice.sql',
+                unique_id='ice',
+            )),
+        ])
+        Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
+
+        os.makedirs(os.path.join(base_repo_path(), 'mage_data/dbt/demo/models'), exist_ok=True)
+        for key in [
+            'fire',
+            'ice',
+            'water',
+        ]:
+            with open(
+                os.path.join(base_repo_path(), f'mage_data/dbt/demo/models/{key}.sql'),
+                'w',
+            ) as f:
+                f.write('')
+        with open(os.path.join(base_repo_path(), 'mage_data/dbt/dbt_project.yml'), 'w') as f:
+            f.write('')
+
+        block = build_block()
+        block.configuration['file_source'] = dict(
+            path='mage_data/dbt/demo/models/fire.sql',
+            project_path='mage_data/dbt/demo',
+        )
+        blocks = block.upstream_dbt_blocks()
+
+        self.assertEqual(len(blocks), 2)
+
+        block1, block2 = blocks
+        self.assertTrue(isinstance(block1, DBTBlockSQL))
+        self.assertEqual(block1.type, BlockType.DBT)
+        self.assertEqual(block1.configuration, dict(
+            file_path='mage_data/dbt/demo/models/water.sql',
+            file_source=dict(
+                path='mage_data/dbt/demo/models/water.sql',
+                project_path='mage_data/dbt',
+            ),
+        ))
+        self.assertEqual(block1.language, BlockLanguage.SQL)
+
+        self.assertTrue(isinstance(block2, DBTBlockSQL))
+        self.assertEqual(block2.type, BlockType.DBT)
+        self.assertEqual(block2.configuration, dict(
+            file_path='mage_data/dbt/demo/models/ice.sql',
+            file_source=dict(
+                path='mage_data/dbt/demo/models/ice.sql',
+                project_path='mage_data/dbt',
+            ),
+        ))
+        self.assertEqual(block2.language, BlockLanguage.SQL)
+        self.assertEqual(block2.upstream_blocks, [block1])

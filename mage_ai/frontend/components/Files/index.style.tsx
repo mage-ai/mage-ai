@@ -21,7 +21,7 @@ export const HeaderStyle = styled.div`
 `;
 
 export const MenuStyle = styled.div`
-  height: ${MENU_HEIGHT}px;
+  // height: ${MENU_HEIGHT}px;
   position: relative;
   z-index: 1;
 

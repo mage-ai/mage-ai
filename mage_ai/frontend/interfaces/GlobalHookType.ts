@@ -52,7 +52,9 @@ export enum PredicateObjectTypeEnum {
   RESOURCE = 'resource',
   RESOURCES = 'resources',
   RESOURCE_ID = 'resource_id',
+  RESOURCE_PARENT = 'resource_parent',
   RESOURCE_PARENT_ID = 'resource_parent_id',
+  RESOURCE_PARENT_TYPE = 'resource_parent_type',
   USER = 'user',
 }
 

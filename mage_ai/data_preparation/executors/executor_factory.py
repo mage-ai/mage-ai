@@ -124,15 +124,17 @@ class ExecutorFactory:
         )
         if executor_type is None:
             block = pipeline.get_block(block_uuid, check_template=True)
-            if pipeline.type == PipelineType.PYSPARK and (
-                block.type != BlockType.SENSOR or is_pyspark_code(block.content)
-            ):
-                executor_type = ExecutorType.PYSPARK
-            else:
-                executor_type = block.get_executor_type()
-                if executor_type == ExecutorType.LOCAL_PYTHON:
-                    # Use default executor type
-                    executor_type = self.get_default_executor_type()
+            if block:
+                if pipeline.type == PipelineType.PYSPARK and (
+                    block.type != BlockType.SENSOR or is_pyspark_code(block.content)
+                ):
+                    executor_type = ExecutorType.PYSPARK
+                else:
+                    executor_type = block.get_executor_type()
+                    if executor_type == ExecutorType.LOCAL_PYTHON:
+                        # Use default executor type
+                        executor_type = self.get_default_executor_type()
+
         if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_block_executor import (
                 PySparkBlockExecutor,

@@ -83,6 +83,9 @@ default:
   POSTGRES_PASSWORD: password
   POSTGRES_HOST: hostname
   POSTGRES_PORT: 5432
+  # Qdrant
+  QDRANT_COLLECTION: collection
+  QDRANT_PATH: path
   # Redshift
   REDSHIFT_SCHEMA: public # Optional
   REDSHIFT_DBNAME: redshift_db_name

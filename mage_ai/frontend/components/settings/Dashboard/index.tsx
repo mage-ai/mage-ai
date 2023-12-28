@@ -1,5 +1,6 @@
 import Dashboard from '@components/Dashboard';
 import VerticalSectionLinks from '@components/VerticalSectionLinks';
+import useProject from '@utils/models/project/useProject';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BreadcrumbType } from '@components/shared/Header';
 import { SECTIONS } from './constants';
@@ -36,6 +37,9 @@ function SettingsDashboard({
   uuidWorkspaceSelected,
 }: SettingsDashboardProps) {
   const user = getUser() || {};
+  const {
+    projectPlatformActivated,
+  } = useProject();
 
   return (
     <Dashboard
@@ -55,7 +59,9 @@ function SettingsDashboard({
               uuid,
               uuidWorkspace,
             }) => uuidWorkspaceSelected === uuidWorkspace && uuidItemSelected === uuid}
-            sections={SECTIONS(user)}
+            sections={SECTIONS(user, {
+              projectPlatformActivated,
+            })}
           />
         </BeforeStyle>
       )}

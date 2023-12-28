@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -12,6 +12,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Panel from '@oracle/components/Panel/v2';
+import ProjectType, { WorkspaceConfigType } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -39,17 +40,37 @@ type ConfigureWorkspaceProps = {
   clusterType: string;
   onCancel: () => void;
   onCreate: () => void;
+  project?: ProjectType;
 };
 
 function ConfigureWorkspace({
   clusterType,
   onCancel,
   onCreate,
+  project,
 }: ConfigureWorkspaceProps) {
   const [error, setError] = useState<string>();
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [workspaceConfig, setWorkspaceConfig] = useState(null);
   const [lifecycleConfig, setLifecycleConfig] = useState(null);
+
+  const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(
+    () => project?.workspace_config_defaults, [project]);
+
+  useEffect(() => {
+    if (defaultWorkspaceConfig) {
+      if (!lifecycleConfig) {
+        setLifecycleConfig(defaultWorkspaceConfig?.lifecycle_config);
+      }
+      if (!workspaceConfig) {
+        const config = {
+          ...defaultWorkspaceConfig?.k8s,
+          name: defaultWorkspaceConfig?.name,
+        };
+        setWorkspaceConfig(config);
+      }
+    }
+  }, [defaultWorkspaceConfig, lifecycleConfig, workspaceConfig]);
 
   const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
     api.workspaces.useCreate(),
@@ -112,7 +133,7 @@ function ConfigureWorkspace({
       <WindowContentStyle>
         <FileBrowser
           disableContextMenu
-          fetchFileTree={fetchFileTree}
+          fetchFiles={fetchFileTree}
           files={files}
           isFileDisabled={opts?.isFileDisabled}
           openFile={opts.onFileOpen}

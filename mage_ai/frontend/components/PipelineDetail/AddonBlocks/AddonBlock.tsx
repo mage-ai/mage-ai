@@ -179,7 +179,7 @@ function AddonBlock({
       block: BlockType,
       upstream_blocks: string[];
     }) => api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
+      encodeURIComponent(pipeline?.uuid),
       encodeURIComponent(block?.uuid),
       {
         query: {

@@ -91,6 +91,7 @@ export default interface PipelineScheduleType {
   pipeline_in_progress_runs_count?: number;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;
+  repo_path?: string;
   runtime_average?: number;
   schedule_interval?: string;
   schedule_type?: ScheduleTypeEnum;

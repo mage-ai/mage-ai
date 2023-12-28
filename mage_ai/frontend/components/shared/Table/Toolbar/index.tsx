@@ -75,8 +75,10 @@ type ToolbarProps = {
   query?: {
     [keyof: string]: string[];
   };
+  resetLimitOnFilterApply?: boolean;
   resetPageOnFilterApply?: boolean;
   secondaryButtonProps?: {
+    beforeIcon?: JSX.Element;
     disabled?: boolean;
     isLoading?: boolean;
     label?: string;
@@ -105,6 +107,7 @@ function Toolbar({
   onClickFilterDefaults,
   onFilterApply,
   query = {},
+  resetLimitOnFilterApply,
   resetPageOnFilterApply,
   secondaryButtonProps,
   searchProps,
@@ -195,6 +198,7 @@ function Toolbar({
   ]);
 
   const {
+    beforeIcon: secondaryButtonBeforeIcon,
     disabled: secondaryButtonDisabled,
     label: secondaryButtonLabel,
     onClick: onClickSecondaryButton,
@@ -203,6 +207,7 @@ function Toolbar({
   } = secondaryButtonProps || {};
   const secondaryButtonEl = useMemo(() => (
     <KeyboardShortcutButton
+      beforeElement={secondaryButtonBeforeIcon}
       bold
       disabled={secondaryButtonDisabled}
       greyBorder
@@ -219,6 +224,7 @@ function Toolbar({
   ), [
     isLoadingSecondaryButton,
     onClickSecondaryButton,
+    secondaryButtonBeforeIcon,
     secondaryButtonDisabled,
     secondaryButtonLabel,
     secondaryButtonTooltip,
@@ -245,6 +251,7 @@ function Toolbar({
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
       query={query}
+      resetLimitOnApply={resetLimitOnFilterApply}
       resetPageOnApply={resetPageOnFilterApply}
       setOpen={setFilterButtonMenuOpen}
       toggleValueMapping={filterValueLabelMapping}
@@ -276,6 +283,8 @@ function Toolbar({
     onClickFilterDefaults,
     onFilterApply,
     query,
+    resetLimitOnFilterApply,
+    resetPageOnFilterApply,
   ]);
 
   const {

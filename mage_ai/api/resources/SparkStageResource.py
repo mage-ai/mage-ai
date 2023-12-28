@@ -21,7 +21,7 @@ class SparkStageResource(GenericResource, SparkApplicationChild):
         )
 
     @classmethod
-    async def get_model(self, pk) -> Stage:
+    async def get_model(self, pk, **kwargs) -> Stage:
         return Stage.load(stage_id=pk)
 
     @classmethod

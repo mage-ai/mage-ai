@@ -3,6 +3,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class DownloadPresenter(BasePresenter):
     default_attributes = [
+        'token',
         'uri',
     ]
 

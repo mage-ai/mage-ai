@@ -49,6 +49,7 @@ import { defineTheme } from './utils';
 import { saveCode } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
+  editor: any;
   editorRect: {
     height?: number;
     top: number;
@@ -73,11 +74,12 @@ type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
   block?: BlockType;
+  editorRef?: any;
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
   onContentSizeChangeCallback?: () => void;
-  onMountCallback?: () => void;
+  onMountCallback?: (editor?: any, monaco?: any) => void;
   onSave?: (value: string) => void;
   padding?: number;
   placeholder?: string;
@@ -95,6 +97,7 @@ function CodeEditor({
   autoHeight,
   autoSave,
   block,
+  editorRef: editorRefProp,
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
@@ -116,8 +119,8 @@ function CodeEditor({
   theme = DEFAULT_THEME,
   value,
   width = '100%',
-}: CodeEditorProps) {
-  const editorRef = useRef(null);
+}: CodeEditorProps, ref) {
+  const editorRef = editorRefProp || useRef(null);
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
 
@@ -219,11 +222,13 @@ function CodeEditor({
         const lineNumberTop = editor.getTopForLineNumber(lineNumber);
 
         onDidChangeCursorPosition({
+          editor,
           editorRect: {
             height: Number(height),
             top: Number(top),
           },
           position: {
+            lineNumber,
             lineNumberTop,
           },
         });
@@ -231,7 +236,7 @@ function CodeEditor({
     }
 
     setMounted(true);
-    onMountCallback?.();
+    onMountCallback?.(editor, monaco);
   }, [
     autoHeight,
     height,
@@ -341,6 +346,7 @@ function CodeEditor({
     <ContainerStyle
       hideDuplicateMenuItems
       padding={padding}
+      ref={ref}
       style={{
         display: mounted ? null : 'none',
       }}
@@ -393,4 +399,4 @@ function CodeEditor({
   );
 }
 
-export default CodeEditor;
+export default React.forwardRef(CodeEditor);

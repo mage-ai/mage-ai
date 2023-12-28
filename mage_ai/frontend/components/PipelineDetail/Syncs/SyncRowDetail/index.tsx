@@ -20,11 +20,7 @@ import {
 } from '@oracle/icons';
 import { RunStatus as RunStatusBlockRun } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import {
-  numberWithCommas,
-  pluralize,
-  prettyUnitOfTime,
-} from '@utils/string';
+import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import {
   getBlockRunsByStream,
   getRecordsData,
@@ -34,8 +30,15 @@ import {
   pipelineRunProgress,
   pipelineRunRuntime,
 } from '@utils/models/pipelineRun';
+import {
+  numberWithCommas,
+  pluralize,
+  prettyUnitOfTime,
+} from '@utils/string';
 import { pauseEvent } from '@utils/events';
 import { range, sortByKey, sum } from '@utils/array';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { utcStringToElapsedTime } from '@utils/date';
 
 type SyncRowDetailProps = {
   onClickRow: (rowIndex: number) => void
@@ -49,6 +52,7 @@ function SyncRowDetail({
   selectedStream,
 }: SyncRowDetailProps) {
   const router = useRouter();
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const [runtime, setRuntime] = useState<number>(null);
   const [runtimeStream, setRuntimeStream] = useState<number>(null);
@@ -111,7 +115,7 @@ function SyncRowDetail({
     }
 
     return 0;
-  }, [etaForStream, pipelineRun, selectedStream]);
+  }, [etaByStream, pipelineRun, selectedStream]);
 
   const progressBar = useMemo(() => (
     <FlexContainer>
@@ -335,9 +339,7 @@ function SyncRowDetail({
     recordsInserted,
     recordsProcessed,
     recordsUpdated,
-    runtimeFinal,
-    runtimeText,
-    status,
+    selectedStream,
   ]);
 
   const tableMemo = useMemo(() => {
@@ -394,11 +396,27 @@ function SyncRowDetail({
             >
               {stream}
             </Text>,
-            <Text default key="started_at" monospace>
-              {startedAt ? startedAt.split('.')[0] : '-'}
+            <Text
+              default
+              key="started_at"
+              monospace
+              title={startedAt ? utcStringToElapsedTime(startedAt) : null}
+            >
+              {startedAt
+                ? displayLocalOrUtcTime(startedAt, displayLocalTimezone)
+                : <>&#8212;</>
+              }
             </Text>,
-            <Text default key="completed_at" monospace>
-              {completedAt ? completedAt.split('.')[0] : '-'}
+            <Text
+              default
+              key="completed_at"
+              monospace
+              title={completedAt ? utcStringToElapsedTime(completedAt) : null}
+            >
+              {completedAt
+                ? displayLocalOrUtcTime(completedAt, displayLocalTimezone)
+                : <>&#8212;</>
+              }
             </Text>,
             <Text default key="runtime">
               {[RunStatusBlockRun.INITIAL, RunStatusBlockRun.RUNNING].includes(status) ? '-' : timeText}
@@ -409,8 +427,8 @@ function SyncRowDetail({
                 <FlexContainer>
                   {range(51).map((i, idx) => (
                     <BarStyle
-                      fill={progressForStream > 0 && Math.round(progressForStream * 50) >= idx}
                       even={idx % 2 === 0}
+                      fill={progressForStream > 0 && Math.round(progressForStream * 50) >= idx}
                       key={idx}
                       small
                     />
@@ -438,9 +456,11 @@ function SyncRowDetail({
       />
     );
   }, [
+    displayLocalTimezone,
     errors,
-    etaByStream,
+    onClickRow,
     pipelineRun,
+    router,
     selectedStream,
   ]);
 
@@ -475,7 +495,7 @@ function SyncRowDetail({
       const arr = [
         <Text bold key={col} monospace muted small>
           {col}
-        </Text>
+        </Text>,
       ];
 
       [sourceState, destinationState].forEach((obj, idx) => {
@@ -486,7 +506,7 @@ function SyncRowDetail({
         arr.push(
           <Text key={`${col}-${idx}`} monospace small>
             {obj[col]}
-          </Text>
+          </Text>,
         );
       });
 
@@ -552,7 +572,7 @@ function SyncRowDetail({
       const arr = [
         <Text bold key={col} monospace muted small>
           {col}
-        </Text>
+        </Text>,
       ];
 
       [sourceRecord, destinationRecord].forEach((obj, idx) => {

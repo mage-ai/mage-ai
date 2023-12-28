@@ -83,10 +83,10 @@ function KeyboardText({
   if (!borderless) {
     if (disabled) {
       // @ts-ignore
-      style.borderColor = (themeContext?.monotone || dark.monotone)?.grey400;
+      style.borderColor = (themeContext?.monotone || dark.monotone)?.muted;
     } else {
       // @ts-ignore
-      style.borderColor = (themeContext?.content || dark.content)?.active;
+      style.borderColor = (themeContext?.content || dark.content)?.default;
     }
     style.borderRadius = BORDER_RADIUS_SMALL;
     style.borderStyle = 'solid';
@@ -97,6 +97,7 @@ function KeyboardText({
   return (
     <Text
       center
+      default={!(disabled || mutedDisabled)}
       inline
       monospace={monospace}
       muted={disabled || mutedDisabled}

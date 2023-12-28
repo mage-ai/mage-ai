@@ -23,6 +23,7 @@ export default interface ErrorsType {
   displayMessage?: string;
   errors?: ErrorType;
   links?: {
+    closeAfterClick?: boolean;
     href?: string;
     label: string;
     onClick?: () => void;

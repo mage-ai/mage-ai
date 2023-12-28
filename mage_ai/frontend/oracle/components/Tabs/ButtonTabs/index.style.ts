@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const UNDERLINE_HEIGHT = 2;
 
@@ -10,6 +11,8 @@ export const TabsContainerStyle = styled.div<{
   allowScroll?: boolean;
   noPadding?: boolean;
 }>`
+  ${hideScrollBar()}
+
   padding-left: ${PADDING_UNITS * UNIT}px;
   padding-right: ${PADDING_UNITS * UNIT}px;
 

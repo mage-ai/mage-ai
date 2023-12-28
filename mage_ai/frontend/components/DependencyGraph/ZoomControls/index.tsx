@@ -45,7 +45,7 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
     if (!containerRef?.current) return;
 
     const resizeObserver = new ResizeObserver(() => {
-      const containerWidth = containerRef.current.offsetWidth;
+      const containerWidth = containerRef?.current?.offsetWidth;
       setMinimizeControls(containerWidth < MIN_CONTAINER_WIDTH);
     });
     resizeObserver.observe(containerRef.current);

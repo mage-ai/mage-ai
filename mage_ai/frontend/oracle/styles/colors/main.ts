@@ -58,3 +58,4 @@ export const BLUE_GRADIENT = 'linear-gradient(98.99deg, #2ECDF7 8.49%, #0066FF 1
 
 export const DBT_ORANGE = '#fc6949';
 export const DBT_ORANGE_TRANSPARENT = 'rgba(252, 105, 73, 0.5)';
+export const DBT_ORANGE_TRANSPARENT_DARK = 'rgba(252, 105, 73, 0.3)';

@@ -10,12 +10,19 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.dbt.constants import (
+    DBT_DIRECTORY_NAME,
+    LogLevel,
+)
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.models.block.dbt.utils import (
     get_source_name,
     get_source_table_name_for_block,
+)
+from mage_ai.data_preparation.models.block.platform.mixins import (
+    ProjectPlatformAccessible,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
@@ -25,8 +32,7 @@ from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
 
 
-class DBTBlockSQL(DBTBlock):
-
+class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
     @property
     def content_compiled(self) -> Optional[str]:
         """
@@ -37,7 +43,7 @@ class DBTBlockSQL(DBTBlock):
         """
         project = Project(self.project_path).project
         target_path = project.get('target-path', 'target')
-        file_path = self.configuration.get('file_path')
+        file_path = self.__get_original_file_path()
         compiled_path = Path(self.project_path) / target_path / 'compiled' / file_path
 
         compiled_sql = None
@@ -57,9 +63,16 @@ class DBTBlockSQL(DBTBlock):
         Returns:
             Union[str, os.PathLike]: The file path of the DBT block.
         """
-        file_path = self.configuration.get('file_path')
+        if self.project_platform_activated:
+            file_path = self.get_file_path_from_source()
+            if file_path:
+                return file_path
 
-        return str((Path(self.repo_path)) / 'dbt' / file_path)
+        file_path = self.configuration.get('file_path') or ''
+        if file_path and Path(file_path).parts[0] == 'dbt':
+            file_path = os.path.join(*Path(file_path).parts[1:]) or ''
+
+        return str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 
     @property
     def project_path(self) -> Union[str, os.PathLike]:
@@ -69,9 +82,20 @@ class DBTBlockSQL(DBTBlock):
         Returns:
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
+        if self.project_platform_activated:
+            project_path = self.get_project_path_from_source()
+            if project_path:
+                return project_path
+
+        try:
+            diff = Path(self.file_path).relative_to(self.base_project_path)
+            if diff:
+                diff = Path(diff).parts[0]
+        except ValueError:
+            diff = self.file_path
+
         return str(
-            Path(self.base_project_path) /
-            self.configuration.get('file_path', '').split(os.sep)[0]
+            Path(self.base_project_path) / diff,
         )
 
     @property
@@ -91,7 +115,7 @@ class DBTBlockSQL(DBTBlock):
         }
         search_paths = {_path: k for k, v in search_paths.items() for _path in v}
 
-        node_path = self.configuration.get('file_path')
+        node_path = self.__get_original_file_path()
         node_path_parts = node_path.split(os.sep)
         node_path_type_part = node_path_parts[1]
 
@@ -137,7 +161,7 @@ class DBTBlockSQL(DBTBlock):
         node_type = self.__node_type
 
         return {
-            'dbt': {
+            DBT_DIRECTORY_NAME: {
                 'block': {
                     'snapshot': node_type == 'snapshot'
                 },
@@ -172,34 +196,64 @@ class DBTBlockSQL(DBTBlock):
             List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
         """
         # Get upstream nodes via dbt list
-        with Profiles(self.project_path, self.pipeline.variables) as profiles:
-            args = [
-                'list',
-                '--project-dir', self.project_path,
-                '--profiles-dir', str(profiles.profiles_dir),
-                '--select', '+' + Path(self.configuration.get('file_path')).stem,
-                '--output', 'json',
-                '--output-keys', 'unique_id original_file_path depends_on',
-                '--resource-type', 'model',
-                '--resource-type', 'snapshot'
-            ]
-            res, _success = DBTCli(args).invoke()
-        if res:
-            nodes = [simplejson.loads(node) for node in res]
-        else:
-            return []
+        with Profiles(
+            self.project_path,
+            self.pipeline.variables if self.pipeline else {},
+        ) as profiles:
+            try:
+                args = [
+                    'list',
+                    # project-dir
+                    # /home/src/default_repo/default_platform/default_repo/dbt/demo
+                    '--project-dir', self.project_path,
+                    '--profiles-dir', str(profiles.profiles_dir),
+                    '--select', '+' + Path(self.__get_original_file_path()).stem,
+                    '--output', 'json',
+                    '--output-keys', 'unique_id original_file_path depends_on',
+                    '--resource-type', 'model',
+                    '--resource-type', 'snapshot'
+                ]
+                res = DBTCli().invoke(args)
+
+                if res:
+                    nodes_init = [simplejson.loads(node) for node in res.result]
+                else:
+                    return []
+            except Exception as err:
+                print(f'[ERROR] DBTBlockSQL.upstream_dbt_blocks: {err}.')
+                return [
+                    self.build_dbt_block(
+                        block_class=DBTBlock,
+                        block_dict=dict(
+                            block_type=self.type,
+                            configuration=self.configuration,
+                            language=self.language,
+                            name=self.uuid,
+                            pipeline=self.pipeline,
+                            uuid=self.uuid,
+                        ),
+                        hydrate_configuration=False,
+                    )
+                ]
 
         # transform List into dict and remove unnecessary fields
-        file_path = self.configuration.get('file_path')
+        file_path = self.__get_original_file_path()
         path_parts = file_path.split(os.sep)
         project_dir = path_parts[0]
-        nodes = {
+
+        nodes_default = {
             node['unique_id']: {
+                # file_path:
+                # default_repo/dbt/demo/models/example/model.sql
+                # default_platform/default_repo/dbt/demo/models/example/model.sql
                 'file_path': os.path.join(project_dir, node['original_file_path']),
+                'original_file_path': node['original_file_path'],
                 'upstream_nodes': set(node['depends_on']['nodes'])
             }
-            for node in nodes
+            for node in nodes_init
         }
+
+        nodes = self.hydrate_dbt_nodes(nodes_default, nodes_init)
 
         # calculate downstream_nodes
         for unique_id, node in nodes.items():
@@ -210,18 +264,20 @@ class DBTBlockSQL(DBTBlock):
                     nodes[upstream_node]['downstream_nodes'] = downstream_nodes
 
         # map dbt unique_id to mage uuid
-        uuids = {
+        uuids_default = {
             unique_id: clean_name(
                 remove_extension_from_filename(node['file_path']),
                 allow_characters=[os.sep]
             )
             for unique_id, node in nodes.items()
         }
+        uuids = self.node_uuids_mapping(uuids_default, nodes)
 
         # replace dbt unique_ids with mage uuids
         nodes = {
             uuids[unique_id]: {
                 'file_path': node['file_path'],
+                'original_file_path': node['original_file_path'],
                 'upstream_nodes': {
                     uuids[upstream_node]
                     for upstream_node in node.get('upstream_nodes', set())
@@ -243,19 +299,23 @@ class DBTBlockSQL(DBTBlock):
             if not read_only:
                 if uuid == self.uuid:
                     block = self
-                else:
+                elif self.pipeline:
                     block = self.pipeline.get_block(
                         uuid,
                         self.type,
                     )
             # if not found create the block
-            block = block or DBTBlock(
-                name=uuid,
-                uuid=uuid,
-                block_type=self.type,
-                language=self.language,
-                pipeline=self.pipeline,
-                configuration=dict(file_path=node['file_path'])
+            block = block or self.build_dbt_block(
+                block_class=DBTBlock,
+                block_dict=dict(
+                    block_type=self.type,
+                    configuration=dict(file_path=node['file_path']),
+                    language=self.language,
+                    name=uuid,
+                    pipeline=self.pipeline,
+                    uuid=uuid,
+                ),
+                node=node,
             )
             # reset upstream dbt blocks
             block.upstream_blocks = [
@@ -325,7 +385,7 @@ class DBTBlockSQL(DBTBlock):
         task = self.__task(from_notebook, run_settings)
 
         # Set project-dir argument for invoking dbt
-        args = ["--project-dir", self.project_path]
+        args = ['--project-dir', self.project_path]
 
         # Get variables
         variables = merge_dict(global_vars, runtime_arguments or {})
@@ -348,7 +408,7 @@ class DBTBlockSQL(DBTBlock):
         suffix = ''
         if runtime_configuration.get('suffix'):
             suffix = runtime_configuration['suffix']
-        args += ['--select', f'{prefix}{Path(self.configuration.get("file_path")).stem}{suffix}']
+        args += ['--select', f"{prefix}{Path(self.__get_original_file_path()).stem}{suffix}"]
 
         # Create --vars
         args += ['--vars', self._variables_json(variables)]
@@ -387,14 +447,19 @@ class DBTBlockSQL(DBTBlock):
 
         # Interpolate profiles.yml and invoke dbt
         with Profiles(self.project_path, variables) as profiles:
+            cli = DBTCli(logger=logger)
             args += ([
                 "--profiles-dir", str(profiles.profiles_dir)
             ])
+
+            cli.invoke(['deps'] + args)
+
             # run primary task, except for show
             if task != 'show':
-                _res, success = DBTCli([task] + args, logger).invoke()
+                res = cli.invoke([task] + args)
+                success = res.success
                 if not success:
-                    raise Exception('DBT exited with a non 0 exit status.')
+                    raise res.exception
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
             #
@@ -402,9 +467,11 @@ class DBTBlockSQL(DBTBlock):
             if needs_downstream_df or needs_preview_df:
                 # add limit to show task
                 args += (["--limit", str(limit)])
-                df, _res, success = DBTCli(['show'] + args, logger).to_pandas()
-                if not success:
-                    raise Exception('DBT exited with a non 0 exit status.')
+                res = cli.invoke(['show'] + args)
+                if res.success:
+                    df = cli.to_pandas(res)
+                else:
+                    raise res.exception
 
         # provide df for downstream usage or data preview
         self.store_variables(
@@ -415,6 +482,40 @@ class DBTBlockSQL(DBTBlock):
         )
 
         return [df]
+
+    def sample_data(self, limit: int = None, log_level: LogLevel = None, logger: Logger = None):
+        limit = limit or self.configuration.get('limit', 1000)
+
+        args = [
+            'show',
+            '--project-dir',
+            self.project_path,
+            '--select',
+            Path(self.__get_original_file_path()).stem,
+            '--limit',
+            str(limit),
+        ]
+
+        target = self.configuration.get('dbt_profile_target')
+        if target:
+            target = Template(target).render(
+                variables=lambda x: '',
+                **get_template_vars()
+            )
+            args += ['--target', target]
+
+        with Profiles(self.project_path, None) as profiles:
+            cli = DBTCli(logger=logger)
+            args += ([
+                '--profiles-dir',
+                str(profiles.profiles_dir),
+            ])
+
+            res = cli.invoke(args, log_level=log_level)
+            if res.success:
+                return cli.to_pandas(res)
+            else:
+                raise res.exception
 
     def __create_upstream_tables(
         self,
@@ -546,3 +647,11 @@ class DBTBlockSQL(DBTBlock):
                 arr.append(b)
 
         return arr
+
+    def __get_original_file_path(self):
+        if self.project_platform_activated:
+            file_path = self.get_file_path_from_source()
+            if file_path:
+                return file_path
+
+        return self.configuration.get('file_path')

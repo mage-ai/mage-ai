@@ -16,7 +16,8 @@ import {
   ToggleValueStyle,
 } from './index.style';
 import { ChevronRight } from '@oracle/icons';
-import { goToWithFilters } from '@utils/routing';
+import { GoToWithFiltersProps, goToWithFilters } from '@utils/routing';
+import { MetaQueryEnum } from '@api/constants';
 import { capitalize, removeUnderscore } from '@utils/string';
 
 type ToggleMenuProps = {
@@ -37,6 +38,7 @@ type ToggleMenuProps = {
   };
   parentRef: React.RefObject<any>;
   query: { [keyof: string]: string[] };
+  resetLimitOnApply?: boolean;
   resetPageOnApply?: boolean;
   setOpen: (open: boolean) => void;
   toggleValueMapping?: {
@@ -56,6 +58,7 @@ function ToggleMenu({
   options = {},
   parentRef,
   query,
+  resetLimitOnApply,
   resetPageOnApply,
   setOpen,
   toggleValueMapping,
@@ -158,14 +161,20 @@ function ToggleMenu({
                   updatedQuery,
                 );
 
+                const filterQueryOptions: GoToWithFiltersProps = {
+                  addingMultipleValues: true,
+                  pushHistory: true,
+                  resetLimitParams: resetLimitOnApply,
+                  resetPage: resetPageOnApply,
+                };
+                if (query?.[MetaQueryEnum.LIMIT]) {
+                  filterQueryOptions.itemsPerPage = +query?.[MetaQueryEnum.LIMIT];
+                }
                 goToWithFilters(
                   query,
                   updatedQuery,
-                  {
-                    addingMultipleValues: true,
-                    pushHistory: true,
-                    resetPage: resetPageOnApply,
-                  });
+                  filterQueryOptions,
+                );
               }}
               secondary
             >

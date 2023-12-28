@@ -229,6 +229,13 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
     dict(
         block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Qdrant',
+        path='data_loaders/qdrant.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
         description='Fetch data from an API request.',
         language=BlockLanguage.PYTHON,
         name='API',
@@ -586,6 +593,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='PostgreSQL',
         path='data_exporters/postgres.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Qdrant',
+        path='data_exporters/qdrant.py',
     ),
     # Sensors
     dict(

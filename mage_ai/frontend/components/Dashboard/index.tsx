@@ -11,6 +11,7 @@ import TripleLayout from '@components/TripleLayout';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import useProject from '@utils/models/project/useProject';
 import {
   ContainerStyle,
   VERTICAL_NAVIGATION_WIDTH,
@@ -42,6 +43,7 @@ type DashboardProps = {
   appendBreadcrumbs?: boolean;
   breadcrumbs?: BreadcrumbType[];
   children?: any;
+  contained?: boolean;
   errors?: ErrorsType;
   headerMenuItems?: MenuItemType[];
   headerOffset?: number;
@@ -64,6 +66,7 @@ function Dashboard({
   beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
   children,
+  contained,
   errors,
   headerMenuItems,
   headerOffset,
@@ -99,32 +102,26 @@ function Dashboard({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [, setMainContainerWidth] = useState<number>(null);
 
-  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
-  const projects = dataProjects?.projects;
+  const {
+    project,
+  } = useProject();
 
-  const breadcrumbProject = {
-    label: () => projects?.[0]?.name,
-    linkProps: {
-      href: '/',
-    },
-  };
   const breadcrumbs = [];
   if (breadcrumbsProp) {
-    if (addProjectBreadcrumbToCustomBreadcrumbs) {
-      breadcrumbs.push(breadcrumbProject);
-    }
+    // if (addProjectBreadcrumbToCustomBreadcrumbs) {
+    //   breadcrumbs.push(...breadcrumbProjects);
+    // }
 
     breadcrumbs.push(...breadcrumbsProp);
   }
 
-  if ((!breadcrumbsProp?.length || appendBreadcrumbs) && projects?.length >= 1) {
+  if ((!breadcrumbsProp?.length || appendBreadcrumbs) && project) {
     if (!breadcrumbsProp?.length) {
       breadcrumbs.unshift({
         bold: !appendBreadcrumbs,
         label: () => title,
       });
     }
-    breadcrumbs.unshift(breadcrumbProject);
   }
 
   useEffect(() => {
@@ -179,9 +176,8 @@ function Dashboard({
 
       <Header
         breadcrumbs={breadcrumbs}
+        // excludeProject={!addProjectBreadcrumbToCustomBreadcrumbs}
         menuItems={headerMenuItems}
-        project={projects?.[0]}
-        version={projects?.[0]?.version}
       />
 
       <ContainerStyle ref={ref}>
@@ -210,6 +206,7 @@ function Dashboard({
             beforeHeightOffset={HEADER_HEIGHT}
             beforeMousedownActive={beforeMousedownActive}
             beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            contained={contained}
             headerOffset={headerOffset}
             hideAfterCompletely={!setAfterHidden || hideAfterCompletely}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}

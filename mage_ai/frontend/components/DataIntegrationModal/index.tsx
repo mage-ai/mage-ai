@@ -851,7 +851,7 @@ function DataIntegrationModal({
   ]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(pipelineUUID, encodeURIComponent(blockUUID)),
+    api.blocks.pipelines.useUpdate(encodeURIComponent(pipelineUUID), encodeURIComponent(blockUUID)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

@@ -6,16 +6,14 @@ if 'custom' not in globals():
 
 {% block content %}
 @custom
-def transform_custom(data, *args, **kwargs):
+def transform_custom(*args, **kwargs):
     """
-    Args:
-        data: The output from the upstream parent block (if applicable)
-        args: The output from any additional upstream blocks
+    args: The output from any upstream parent blocks (if applicable)
 
     Returns:
         Anything (e.g. data frame, dictionary, array, int, str, etc.)
     """
     # Specify your custom logic here
 {{ code }}
-    return data
+    return {}
 {% endblock %}

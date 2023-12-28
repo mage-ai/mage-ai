@@ -89,6 +89,7 @@ def execute_sql_code(
     """
     configuration = configuration if configuration else block.configuration
     use_raw_sql = configuration.get('use_raw_sql')
+    disable_query_output = configuration.get('disable_query_output', False) or False
 
     if not config_file_loader:
         config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -106,7 +107,7 @@ def execute_sql_code(
     block.set_global_vars(global_vars)
 
     table_name = block.table_name
-    should_query = block.type in PREVIEWABLE_BLOCK_TYPES
+    should_query = block.type in PREVIEWABLE_BLOCK_TYPES and not disable_query_output
 
     limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
     # Limit rows when running the block in the pipeline run

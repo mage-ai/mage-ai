@@ -140,14 +140,20 @@ export function removeUnderscore(string) {
 
 export function singularize(string) {
   const { length } = string;
+
   if (string.slice(length - 3, length) === 'ies') {
     return `${string.slice(0, length - 3)}y`;
   }
+
   if (string.slice(length - 2, length) === 'es' && string.slice(length - 3, length) !== 'ces') {
     return string.slice(0, length - 2);
   }
 
-  return string.slice(0, length - 1);
+  if (string[length - 1] === 's') {
+    return string.slice(0, length - 1);
+  }
+
+  return string;
 }
 
 export function titleize(word) {
@@ -336,4 +342,15 @@ export function formatNumberToDuration(duration: number): string {
 export function alphabet(): string[] {
   const alpha = Array.from(Array(26)).map((e, i) => i + 65);
   return alpha.map((x) => String.fromCharCode(x));
+}
+
+export function removASCII(text: string): string {
+  return text?.replace(/[^\x00-\x7F]/g, "");
+}
+
+export function removeANSI(text: string): string {
+  return text?.replace(
+    /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+    '',
+  );
 }

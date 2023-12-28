@@ -3,6 +3,7 @@ from time import sleep
 from typing import Dict, Optional
 
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import ScheduleStatus
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
@@ -119,5 +120,8 @@ def create_and_start_pipeline_run(
                 )
             else:
                 raise err
+
+    if ScheduleStatus.ACTIVE != pipeline_schedule.status:
+        pipeline_schedule.update(status=ScheduleStatus.ACTIVE)
 
     return pipeline_run

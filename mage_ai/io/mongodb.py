@@ -80,7 +80,7 @@ class MongoDB(BaseIO):
             data (Union[DataFrame, List[Dict]): Data frame or List of Dictionary to export.
             collection (str): MongoDB collection name.
         """
-        if not data:
+        if data is None:
             return
         collection = collection or self.collection
         if collection is None:

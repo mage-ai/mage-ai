@@ -11,7 +11,7 @@ from mage_ai.shared.hash import extract, merge_dict
 class PipelineInteractionResource(GenericResource):
     @classmethod
     @safe_db_query
-    async def get_model(self, pk):
+    async def get_model(self, pk, **kwargs):
         uuid = urllib.parse.unquote(pk)
         pipeline = await Pipeline.get_async(uuid)
         return PipelineInteractions(pipeline)

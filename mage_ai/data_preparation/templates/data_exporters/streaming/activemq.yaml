@@ -1,0 +1,6 @@
+connector_type: 'activemq'
+connection_host: 'localhost'
+connection_port: 61613
+queue_name: 'default'
+username: 'admin'
+password: 'admin'

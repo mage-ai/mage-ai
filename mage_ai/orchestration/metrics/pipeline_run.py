@@ -1,8 +1,7 @@
 import json
 import re
+from copy import deepcopy
 from typing import Dict, List, Tuple
-
-from sqlalchemy import or_
 
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
@@ -14,14 +13,39 @@ from mage_ai.shared.hash import merge_dict
 KEY_DESTINATION = 'destinations'
 KEY_SOURCE = 'sources'
 
+SHARED_METRIC_KEYS = [
+    'block_tags',
+    'error',
+    'errors',
+    'message',
+]
 
-def calculate_metrics(
+KEY_TO_METRICS = {
+    KEY_DESTINATION: SHARED_METRIC_KEYS
+    + [
+        'record',
+        'records',
+        'records_affected',
+        'records_inserted',
+        'records_updated',
+        'state',
+    ],
+    KEY_SOURCE: SHARED_METRIC_KEYS
+    + [
+        'record',
+        'records',
+    ],
+}
+
+
+def calculate_pipeline_run_metrics(
     pipeline_run: PipelineRun,
     logger=None,
     logging_tags: Dict = None,
 ) -> Dict:
     if not pipeline_run:
         return
+
     if logging_tags is None:
         logging_tags = dict()
     if logger:
@@ -41,56 +65,152 @@ def calculate_metrics(
             logger.error(
                 f'Failed to calculate metrics for pipeline run {pipeline_run.id}.',
                 **logging_tags,
-                error=e
+                error=e,
             )
 
 
-def __calculate_metrics(pipeline_run: PipelineRun):
+def calculate_source_metrics(
+    pipeline_run: PipelineRun,
+    block_run: BlockRun,
+    stream: str,
+    logger=None,
+    logging_tags: Dict = None,
+):
+    return __calculate_block_metrics(
+        pipeline_run,
+        block_run,
+        stream,
+        KEY_SOURCE,
+        logger=logger,
+        logging_tags=logging_tags,
+    )
+
+
+def calculate_destination_metrics(
+    pipeline_run: PipelineRun,
+    block_run: BlockRun,
+    stream: str,
+    logger=None,
+    logging_tags: Dict = None,
+) -> Dict:
+    return __calculate_block_metrics(
+        pipeline_run,
+        block_run,
+        stream,
+        KEY_DESTINATION,
+        logger=logger,
+        logging_tags=logging_tags,
+    )
+
+
+def __calculate_block_metrics(
+    pipeline_run: PipelineRun,
+    block_run: BlockRun,
+    stream: str,
+    key: str,
+    logger=None,
+    logging_tags: Dict = None,
+) -> Dict:
+    """
+    Calculate metrics for an integration block. Depending on the "key" argument, the
+    source or destination metrics will be update for the specified stream.
+
+    Args:
+        pipeline_run (PipelineRun): The pipeline run being run.
+        block_run (BlockRun): The block run to calculate metrics for. Metrics are calculated
+            by parsing the block run logs.
+        stream (str): The stream to calculate metrics for.
+        key (str): The key to use when updating the metrics.
+        logger (optional): The logger to use for logging.
+        logging_tags (Dict, optional): The logging tags to use for logging.
+
+    Returns:
+        Dict: The calculated metrics.
+    """
+    if logging_tags is None:
+        logging_tags = dict()
+    if logger:
+        logger.info(
+            f'Calculate {key} metrics for stream {stream} started.',
+            **logging_tags,
+        )
+    try:
+        pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
+
+        logs_arr = block_run.logs['content'].split('\n')
+        logs_by_uuid = {key: [logs_arr]}
+        metrics = get_metrics(
+            {stream: logs_by_uuid},
+            [(key, KEY_TO_METRICS.get(key, []))],
+        )
+
+        existing_metrics = deepcopy(pipeline_run.metrics or {})
+
+        # Each source/destination block calculate metrics for only the block run itself
+        # so we need to add the newly calculated metrics to the existing metrics.
+        updated_block_metrics = existing_metrics.get('blocks', {})
+
+        if stream not in updated_block_metrics:
+            updated_block_metrics[stream] = {}
+
+        if key not in updated_block_metrics[stream]:
+            updated_block_metrics[stream][key] = {}
+
+        for key_metric, value in metrics[stream][key].items():
+            if key_metric not in updated_block_metrics[stream][key]:
+                updated_block_metrics[stream][key][key_metric] = 0
+
+            if isinstance(value, int):
+                updated_block_metrics[stream][key][key_metric] += value
+            else:
+                updated_block_metrics[stream][key][key_metric] = value
+
+        existing_metrics['blocks'] = updated_block_metrics
+
+        new_metrics = merge_dict(
+            existing_metrics,
+            dict(
+                destination=pipeline.destination_uuid,
+                source=pipeline.source_uuid,
+            ),
+        )
+
+        pipeline_run.update(metrics=new_metrics)
+
+        if logger:
+            logger.info(
+                f'Calculate {key} metrics for stream {stream} completed.',
+                **merge_dict(logging_tags, dict(metrics=pipeline_run.metrics)),
+            )
+        return pipeline_run.metrics
+    except Exception as e:
+        if logger:
+            logger.error(
+                f'Failed to calculate {key} metrics for stream {stream}.',
+                **logging_tags,
+                error=e,
+            )
+
+
+def __calculate_metrics(pipeline_run: PipelineRun) -> Dict:
+    """
+    Calculate metrics for an integration pipeline run. Only the "pipeline" field
+    in the metrics will be updated by calling this method.
+
+    Metrics are calculated by parsing the logging tags of the integration pipeline run.
+
+    Args:
+        pipeline_run (PipelineRun): The pipeline run to calculate metrics for.
+
+    Returns:
+        Dict: The calculated metrics.
+    """
     pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
     if PipelineType.INTEGRATION != pipeline.type:
         return
 
-    stream_ors = []
-    for s in pipeline.streams():
-        stream = s['tap_stream_id']
-        stream_ors += [
-            BlockRun.block_uuid.contains(f'{pipeline.data_loader.uuid}:{stream}'),
-            BlockRun.block_uuid.contains(f'{pipeline.data_exporter.uuid}:{stream}'),
-        ]
-    all_block_runs = BlockRun.query.filter(
-        BlockRun.pipeline_run_id == pipeline_run.id,
-        or_(*stream_ors),
-    ).all()
-
-    block_runs_by_stream = {}
-    for br in all_block_runs:
-        block_uuid = br.block_uuid
-        parts = block_uuid.split(':')
-        stream = parts[1]
-        if stream not in block_runs_by_stream:
-            block_runs_by_stream[stream] = []
-        block_runs_by_stream[stream].append(br)
-
-    for s in pipeline.streams():
-        stream = s['tap_stream_id']
-
-        destinations = []
-        sources = []
-
-        block_runs = block_runs_by_stream.get(stream, [])
-        for br in block_runs:
-            logs_arr = br.logs['content'].split('\n')
-
-            if f'{pipeline.data_loader.uuid}:{stream}' in br.block_uuid:
-                sources.append(logs_arr)
-            elif f'{pipeline.data_exporter.uuid}:{stream}' in br.block_uuid:
-                destinations.append(logs_arr)
-
-        block_runs_by_stream[stream] = dict(
-            destinations=destinations,
-            sources=sources,
-        )
+    streams = [s['tap_stream_id'] for s in pipeline.streams()]
 
     shared_metric_keys = [
         'block_tags',
@@ -99,21 +219,7 @@ def __calculate_metrics(pipeline_run: PipelineRun):
         'message',
     ]
 
-    block_metrics_by_stream = get_metrics(block_runs_by_stream, [
-        (KEY_SOURCE, shared_metric_keys + [
-            'record',
-            'records',
-        ]),
-        (KEY_DESTINATION, shared_metric_keys + [
-            'record',
-            'records',
-            'records_affected',
-            'records_inserted',
-            'records_updated',
-            'state',
-        ]),
-    ])
-
+    pipeline_metrics_by_stream = {}
     pipeline_logs_by_stream = {}
     pipeline_logs = pipeline_run.logs['content'].split('\n')
     for pipeline_log in pipeline_logs:
@@ -127,25 +233,37 @@ def __calculate_metrics(pipeline_run: PipelineRun):
 
         pipeline_logs_by_stream[stream].append(pipeline_log)
 
-    pipeline_metrics_by_stream = {}
-    for s in pipeline.streams():
-        stream = s['tap_stream_id']
+    for stream in streams:
         logs = pipeline_logs_by_stream.get(stream, [])
 
-        pipeline_metrics_by_stream[stream] = get_metrics(dict(pipeline=dict(pipeline=[logs])), [
-            ('pipeline', shared_metric_keys + [
-                'bookmarks',
-                'number_of_batches',
-                'record_counts',
-            ]),
-        ])['pipeline']['pipeline']
+        pipeline_metrics_by_stream[stream] = get_metrics(
+            dict(pipeline=dict(pipeline=[logs])),
+            [
+                (
+                    'pipeline',
+                    shared_metric_keys
+                    + [
+                        'bookmarks',
+                        'number_of_batches',
+                        'record_counts',
+                    ],
+                ),
+            ],
+        )['pipeline']['pipeline']
 
-    pipeline_run.update(metrics=dict(
-        blocks=block_metrics_by_stream,
-        destination=pipeline.destination_uuid,
-        pipeline=pipeline_metrics_by_stream,
-        source=pipeline.source_uuid,
-    ))
+    existing_metrics = pipeline_run.metrics or {}
+    existing_blocks_metrics = existing_metrics.get(
+        'blocks', {stream: {} for stream in streams}
+    )
+
+    pipeline_run.update(
+        metrics=dict(
+            blocks=existing_blocks_metrics,
+            destination=pipeline.destination_uuid,
+            pipeline=pipeline_metrics_by_stream,
+            source=pipeline.source_uuid,
+        )
+    )
 
     return pipeline_run.metrics
 
@@ -191,7 +309,9 @@ def parse_line(line: str) -> Dict:
     return tags
 
 
-def get_metrics(logs_by_uuid: Dict, key_and_key_metrics: List[Tuple[str, List[str]]]) -> Dict:
+def get_metrics(
+    logs_by_uuid: Dict, key_and_key_metrics: List[Tuple[str, List[str]]]
+) -> Dict:
     metrics = {}
 
     for uuid in logs_by_uuid.keys():

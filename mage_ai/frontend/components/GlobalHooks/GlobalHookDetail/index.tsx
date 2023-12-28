@@ -25,7 +25,6 @@ import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -50,7 +49,7 @@ import {
 import { datetimeInLocalTimezone } from '@utils/date';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getUser } from '@utils/session';
-import { indexBy, sortByKey } from '@utils/array';
+import { indexBy, removeAtIndex, sortByKey } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { renderPredicate } from '../utils';
 import { selectKeys, selectEntriesWithValues } from '@utils/hash';
@@ -61,6 +60,7 @@ type GlobalHookDetailProps = {
   isNew?: boolean;
   operationType?: string;
   resourceType?: string;
+  rootProject?: boolean;
   uuid?: string;
 };
 
@@ -68,6 +68,7 @@ function GlobalHookDetail({
   isNew,
   operationType: operationTypeProp,
   resourceType: resourceTypeProp,
+  rootProject,
   uuid: globalHookUUID,
 }: GlobalHookDetailProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -92,6 +93,7 @@ function GlobalHookDetail({
     include_snapshot_validation: 1,
     operation_type: typeof operationType === 'undefined' ? null : operationType,
     resource_type: typeof resourceType === 'undefined' ? null : resourceType,
+    ...(rootProject ? { root_project: rootProject } : {}),
   }), [
     operationType,
     resourceType,
@@ -136,7 +138,7 @@ function GlobalHookDetail({
             global_hook: objectServer,
           }) => {
             router.replace(
-              `/global-hooks/${objectServer.uuid}?operation_type=${objectServer.operation_type}&resource_type=${objectServer.resource_type}`,
+              `/${rootProject ? 'platform/' : ''}global-hooks/${objectServer.uuid}?operation_type=${objectServer.operation_type}&resource_type=${objectServer.resource_type}`,
             );
           },
           ...onSuccessProps,
@@ -232,7 +234,7 @@ function GlobalHookDetail({
                 toastId: `global-hooks-success-${objectServer.uuid}`,
               },
             );
-            router.replace('/global-hooks');
+            router.replace(`/${rootProject ? 'platform/' : ''}global-hooks`);
           },
           ...onSuccessProps,
         },
@@ -491,7 +493,6 @@ function GlobalHookDetail({
               <>
                 <Button
                   compact
-                  small
                   onClick={() => {
                     updateOutputAtIndex({
                       ...output,
@@ -499,6 +500,7 @@ function GlobalHookDetail({
                       keys: (keys || []).concat(keyMore),
                     }, idx);
                   }}
+                  small
                 >
                   Add key {keyMore}
                 </Button>
@@ -506,6 +508,21 @@ function GlobalHookDetail({
                 <Spacing mr={PADDING_UNITS} />
               </>
             )}
+          </SetupSectionRow>
+
+          <SetupSectionRow
+            title="Remove block output"
+          >
+            <Button
+              compact
+              onClick={() => setAttributes(prev => ({
+                ...prev,
+                outputs: removeAtIndex(prev?.outputs || [], idx),
+              }))}
+              small
+            >
+              Remove
+            </Button>
           </SetupSectionRow>
         </AccordionPanel>
       );
@@ -630,32 +647,34 @@ function GlobalHookDetail({
           title="Operation type"
         />
 
-        <Accordion
-          noBorder
-          noBoxShadow
-          visibleMappingForced={{
-            0: true,
-          }}
-        >
-          <AccordionPanel
-            noBorderRadius
-            noPaddingContent
-            title="Targeting"
-            titleXPadding={PADDING_UNITS * UNIT}
-            titleYPadding={PADDING_UNITS * UNIT}
+        {!isNew && (
+          <Accordion
+            noBorder
+            noBoxShadow
+            visibleMappingForced={{
+              0: true,
+            }}
           >
-            <Spacing p={PADDING_UNITS}>
-              <Text default>
-                Add targeting conditions to determine what subset of {attributes?.resource_type
-                  ? pluralize(camelCaseToNormalWithSpaces(attributes?.resource_type), 2, null, true)
-                  : 'resources'
-                } this hook should run for.
-              </Text>
-            </Spacing>
+            <AccordionPanel
+              noBorderRadius
+              noPaddingContent
+              title="Targeting"
+              titleXPadding={PADDING_UNITS * UNIT}
+              titleYPadding={PADDING_UNITS * UNIT}
+            >
+              <Spacing p={PADDING_UNITS}>
+                <Text default>
+                  Add targeting conditions to determine what subset of {attributes?.resource_type
+                    ? pluralize(camelCaseToNormalWithSpaces(attributes?.resource_type), 2, null, true)
+                    : 'resources'
+                  } this hook should run for.
+                </Text>
+              </Spacing>
 
-            {predicatesMemo}
-          </AccordionPanel>
-        </Accordion>
+              {predicatesMemo}
+            </AccordionPanel>
+          </Accordion>
+        )}
       </SetupSection>
 
       {!isNew && (
@@ -752,7 +771,7 @@ function GlobalHookDetail({
               }}
             >
               {attributes?.pipeline?.uuid && (
-                <div>
+                <Spacing mr={2}>
                   <NextLink
                     as={`/pipelines/${attributes?.pipeline?.uuid}/edit`}
                     href={'/pipelines/[pipeline]/edit'}
@@ -765,7 +784,7 @@ function GlobalHookDetail({
                       View pipeline
                     </Link>
                   </NextLink>
-                </div>
+                </Spacing>
               )}
             </SetupSectionRow>
 
@@ -1143,7 +1162,7 @@ function GlobalHookDetail({
             <Button
               beforeIcon={<PaginateArrowLeft />}
               disabled={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook || isLoadingDelete}
-              onClick={() => router.push('/global-hooks')}
+              onClick={() => router.push(`/${rootProject ? 'platform/' : ''}global-hooks`)}
               secondary
             >
               {attributesTouched
@@ -1167,7 +1186,8 @@ function GlobalHookDetail({
                       uuid: attributes?.uuid,
                     }
                     : {}
-                  )
+                  ),
+                  root_project: rootProject,
                 },
               })}
               primary

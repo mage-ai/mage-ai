@@ -43,6 +43,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.MONGODB
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
+        DataSourceTypeEnum.ACTIVEMQ,
         DataSourceTypeEnum.AZURE_DATA_LAKE,
         DataSourceTypeEnum.BIGQUERY,
         DataSourceTypeEnum.CLICKHOUSE,

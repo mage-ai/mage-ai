@@ -183,6 +183,7 @@ function BlockSettings({
     ignoreKeys(blockAttributes?.configuration || configuration, [
       'data_integration',
       'file_path',
+      'file_source',
       'global_data_product',
     ]),
     [blockAttributes?.configuration, configuration],

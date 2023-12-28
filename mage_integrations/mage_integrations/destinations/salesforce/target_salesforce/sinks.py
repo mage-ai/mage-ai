@@ -124,7 +124,8 @@ class SalesforceSink(BatchSink):
 
         try:
             if action == "upsert":
-                results = sf_object_action(batched_data, "Id")
+                results = sf_object_action(batched_data,
+                                           self.config.get('external_id_name', 'Id'))
             else:
                 results = sf_object_action(batched_data)
         except exceptions.SalesforceMalformedRequest as e:

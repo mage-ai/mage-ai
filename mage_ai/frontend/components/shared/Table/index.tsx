@@ -24,6 +24,7 @@ import {
   SortQueryEnum,
   getTableRowUuid,
 } from './constants';
+import { MetaQueryEnum } from '@api/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SortAscending, SortDescending } from '@oracle/icons';
 import {
@@ -36,6 +37,7 @@ import {
 } from './index.style';
 import { goToWithQuery } from '@utils/routing';
 import { isInteractiveElement } from '@context/shared/utils';
+import { selectEntriesWithValues } from '@utils/hash';
 import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
 
@@ -68,8 +70,14 @@ type TableProps = {
     href: string;
   };
   buildRowProps?: (rowIndex: number) => {
-    renderCell: (cell: any, colIndex: number) => any;
-    renderRow: (cells: any) => any;
+    cellProps?: {
+      [key: string]: string | any;
+    };
+    renderCell?: (cell: any, colIndex: number) => any;
+    renderRow?: (cells: any) => any;
+    rowProps?: {
+      [key: string]: string | any;
+    };
   };
   columnBorders?: boolean;
   columnFlex: number[];
@@ -77,6 +85,7 @@ type TableProps = {
   columns?: ColumnType[];
   compact?: boolean;
   defaultSortColumnIndex?: number;
+  disableSort?: boolean;
   getObjectAtRowIndex?: (rowIndex: number) => any;
   getUUIDFromRow?: (row: React.ReactElement[]) => string;
   getUniqueRowIdentifier?: (row: React.ReactElement[]) => string;
@@ -124,6 +133,7 @@ function Table({
   columns = [],
   compact,
   defaultSortColumnIndex,
+  disableSort,
   getObjectAtRowIndex,
   getUUIDFromRow,
   getUniqueRowIdentifier,
@@ -279,7 +289,7 @@ function Table({
     rightClickMenuWidth,
   ]);
 
-  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn)
+  const rowsSorted = useMemo(() => ((setRowsSorted && sortedColumn && !disableSort)
     ?
       sortByKey(
         rows,
@@ -315,6 +325,7 @@ function Table({
     : rows
   ), [
     defaultSortColumnIndex,
+    disableSort,
     getUUIDFromRow,
     rows,
     setRowsSorted,
@@ -358,14 +369,22 @@ function Table({
         set(localStorageKeySortDirection, sortDirection);
       }
 
+      const column = columns?.[sortColIdx]?.uuid;
+
       goToWithQuery({
-        [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
-        [SortQueryEnum.SORT_DIRECTION]: sortDirection,
+        ...selectEntriesWithValues({
+          [SortQueryEnum.SORT_COL_IDX]: sortColIdx,
+          [SortQueryEnum.SORT_DIRECTION]: sortDirection,
+        }),
+        [MetaQueryEnum.ORDER_BY]: column
+          ? `${sortedColumnDirection === SortDirectionEnum.DESC ? '-' : ''}${column}`
+          : null,
       }, {
         pushHistory: true,
       });
     }
   }, [
+    columns,
     defaultSortColumnIndex,
     localStorageKeySortColIdx,
     localStorageKeySortDirection,
@@ -383,12 +402,16 @@ function Table({
   const rowEls = useMemo(() => rowsSorted?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
     const rowProps = buildRowProps?.(rowIndex) || {
+      cellProps: null,
       renderCell: null,
       renderRow: null,
+      rowProps: null,
     };
     const {
+      cellProps,
       renderCell,
       renderRow,
+      rowProps: rowPropsProp,
     } = rowProps;
 
     const cellEls = [];
@@ -418,6 +441,7 @@ function Table({
             stickyFirstColumn={stickyFirstColumn && colIndex === 0}
             width={calculateCellWidth(colIndex)}
             wrapColumns={wrapColumns}
+            {...(cellProps || {})}
           >
             {cell}
           </TableDataStyle>
@@ -481,6 +505,7 @@ function Table({
             }
             : null
           }
+          {...(rowPropsProp || {})}
         >
           {cellEls}
         </TableRowStyle>
@@ -608,6 +633,7 @@ function Table({
                     lightBackground
                     maxWidth={tooltipWidth}
                     muted
+                    relativePosition
                     widthFitContent={fitTooltipContentWidth}
                   />
                 </Spacing>

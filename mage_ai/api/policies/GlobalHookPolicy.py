@@ -10,6 +10,7 @@ WRITEABLE_ATTRIBUTES = [
     'pipeline',
     'predicate',
     'resource_type',
+    'root_project',
     'run_settings',
     'stages',
     'strategies',
@@ -92,6 +93,7 @@ GlobalHookPolicy.allow_query(
         'include_snapshot_validation',
         'operation_type[]',
         'resource_type[]',
+        'root_project',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -111,6 +113,7 @@ GlobalHookPolicy.allow_query(
         'include_snapshot_validation',
         'operation_type',
         'resource_type',
+        'root_project',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

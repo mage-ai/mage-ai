@@ -55,7 +55,7 @@ class GitFileResource(GenericResource):
                 error = str(err)
 
         return self(dict(
-            content=file.content(),
+            content=file.content() if os.isfile(file.file_path) else None,
             content_from_base=content_from_base,
             content_from_compare=content_from_compare,
             error=error,

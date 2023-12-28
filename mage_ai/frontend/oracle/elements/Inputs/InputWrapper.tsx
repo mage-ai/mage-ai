@@ -50,6 +50,7 @@ export type InputWrapperProps = {
   compact?: boolean
   danger?: boolean;
   defaultColor?: boolean;
+  defaultTextColor?: boolean;
   disablePointerEvents?: boolean;
   disabled?: boolean;
   dynamicSizing?: boolean;
@@ -88,6 +89,7 @@ export type InputWrapperProps = {
   onKeyDown?: (e: any) => void;
   onKeyPress?: (e: any) => void;
   paddingHorizontal?: number;
+  paddingLeft?: number;
   paddingRight?: number;
   paddingVertical?: number;
   passwordrules?: string;
@@ -385,11 +387,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     padding-top: ${(UNIT * 0.75) + 12}px;
   `}
 
-  ${props => props.beforeIcon && !props.compact && `
+  ${props => props.beforeIcon && !props.paddingLeft && !props.compact && `
     padding-left: ${UNIT * 5}px !important;
   `}
 
-  ${props => props.afterIcon && !props.compact && `
+  ${props => props.afterIcon && !props.paddingRight && !props.compact && `
     padding-right: ${UNIT * 5}px !important;
   `}
 
@@ -450,6 +452,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   ${props => typeof props.paddingVertical !== 'undefined' && `
     padding-bottom: ${props.paddingVertical}px;
     padding-top: ${props.paddingVertical}px;
+  `}
+
+  ${props => typeof props.paddingLeft !== 'undefined' && `
+    padding-left: ${props.paddingLeft}px !important;
   `}
 
   ${props => typeof props.paddingRight !== 'undefined' && `
@@ -652,6 +658,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
 
   ${props => typeof props?.buttonBeforeWidth !== 'undefined' && `
     padding-left: ${props.buttonBeforeWidth}px !important;
+  `}
+
+  ${props => props.defaultTextColor && `
+    color: ${(props.theme.content || dark.content).default} !important;
   `}
 `;
 

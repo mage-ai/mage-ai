@@ -16,7 +16,8 @@ interface InputType {
   monospace?: boolean;
   onChange?: (event: any) => void;
   placeholder?: string;
-  value?: string;
+  type?: string;
+  value?: string | number;
 }
 
 type SetupSectionRowProps = {
@@ -31,7 +32,7 @@ type SetupSectionRowProps = {
     }[];
   };
   textInput?: InputType;
-  title: string | any;
+  title?: string | any;
   toggleSwitch?: {
     checked?: boolean;
     onCheck?: Dispatch<SetStateAction<boolean>>;

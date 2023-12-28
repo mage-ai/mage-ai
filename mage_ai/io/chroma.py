@@ -61,7 +61,6 @@ class Chroma(BaseIO):
             DataFrame: Data frame object loaded from the chroma query fuction.
             Chroma query function requries dictionary contains number of results matched.
         """
-        print(f"Testing data: {data}")
         converted_array = []
         if data[column_name] is None:
             for _ in range(item_length):
@@ -132,6 +131,8 @@ class Chroma(BaseIO):
         df: DataFrame,
         document_column: str,
         collection: str = None,
+        id_column: str = None,
+        metadata_column: str = None,
         **kwargs,
     ) -> None:
         """
@@ -143,11 +144,19 @@ class Chroma(BaseIO):
             df (DataFrame): Data frame to export.
             document_column (str): name of the document.
         """
-        docs = df[f'{document_column}'].tolist()
-        ids = [str(x) for x in df.index.tolist()]
+        docs = df[document_column].tolist()
+        if id_column is None:
+            ids = [str(x) for x in df.index.tolist()]
+        else:
+            ids = df[id_column].apply(str).tolist()
         collection_client = self.client.get_or_create_collection(
                 name=self.collection if collection is None else collection)
-        return collection_client.add(
+        insert_kwargs = dict(
             documents=docs,
             ids=ids,
+        )
+        if metadata_column:
+            insert_kwargs['metadatas'] = df[metadata_column].tolist()
+        return collection_client.add(
+            **insert_kwargs
         )

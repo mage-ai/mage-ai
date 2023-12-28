@@ -22,7 +22,13 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
-function GlobalHooksList() {
+type GlobalHooksListProps = {
+  rootProject?: boolean;
+};
+
+function GlobalHooksList({
+  rootProject,
+}: GlobalHooksListProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const themeContext: ThemeType = useContext(ThemeContext);
   const router = useRouter();
@@ -32,6 +38,7 @@ function GlobalHooksList() {
   const { data } = api.global_hooks.list({
     _format: 'with_pipeline_details',
     include_snapshot_validation: 1,
+    ...(rootProject ? { root_project: rootProject } : {}),
   });
   const globalHooks: GlobalHookType[] = useMemo(() => data?.global_hooks || [], [data]);
 
@@ -74,7 +81,7 @@ function GlobalHooksList() {
             uuid,
           } = globalHook;
 
-          router.push(`/global-hooks/${uuid}?operation_type=${operationType}&resource_type=${resourceType}`)
+          router.push(`/${rootProject ? 'platform/' : ''}global-hooks/${uuid}?operation_type=${operationType}&resource_type=${resourceType}`)
         }}
         // renderExpandedRowWithObject={(rowIndex: number) => {
         //   const globalHook = globalHooks?.[rowIndex];

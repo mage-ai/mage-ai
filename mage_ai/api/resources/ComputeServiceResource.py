@@ -17,7 +17,7 @@ class ComputeServiceResource(GenericResource):
         )
 
     @classmethod
-    def get_model(self, _pk):
+    def get_model(self, _pk, **kwargs):
         return ComputeService.build(Project())
 
     @classmethod

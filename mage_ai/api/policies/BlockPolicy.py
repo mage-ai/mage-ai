@@ -142,6 +142,14 @@ BlockPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 BlockPolicy.allow_query([
+    'block_uuid[]',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+BlockPolicy.allow_query([
     'block_type',
     'data_integration_type',
     'data_integration_uuid',
@@ -158,6 +166,7 @@ BlockPolicy.allow_query([
 
 BlockPolicy.allow_query([
     'extension_uuid',
+    'file_path',
     'force',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

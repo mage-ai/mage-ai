@@ -46,6 +46,7 @@ PullRequestPolicy.allow_write([
     'base_branch',
     'body',
     'compare_branch',
+    'remote_url',
     'repository',
     'title',
 ], scopes=[
@@ -57,6 +58,7 @@ PullRequestPolicy.allow_write([
 
 PullRequestPolicy.allow_query([
     'repository',
+    'remote_url',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

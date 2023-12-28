@@ -1,8 +1,10 @@
 import math
+import os
 import urllib.parse
 from typing import Dict
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
@@ -12,6 +14,9 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    dynamically_created_child_block_runs,
+)
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     is_dynamic_block,
@@ -48,6 +53,12 @@ class BlockResource(GenericResource):
     def collection(self, query_arg, meta, user, **kwargs):
         parent_model = kwargs.get('parent_model')
 
+        block_uuids = query_arg.get('block_uuid[]', [])
+        if block_uuids:
+            block_uuids = block_uuids[0]
+        if block_uuids:
+            block_uuids = set(block_uuids.split(','))
+
         block_count_by_base_uuid = {}
         block_dicts_by_uuid = {}
         data_integration_sets_by_uuid = {}
@@ -57,7 +68,8 @@ class BlockResource(GenericResource):
 
         if isinstance(parent_model, Pipeline):
             for block_uuid, block in parent_model.blocks_by_uuid.items():
-                block_dicts_by_uuid[block_uuid] = block.to_dict()
+                if not block_uuids or block_uuid in block_uuids:
+                    block_dicts_by_uuid[block_uuid] = block.to_dict()
 
         if isinstance(parent_model, PipelineRun):
             block_mapping = {}
@@ -70,6 +82,8 @@ class BlockResource(GenericResource):
 
                 for block_run in parent_model.block_runs:
                     block_run_block_uuid = block_run.block_uuid
+                    if block_uuids and block_run_block_uuid not in block_uuids:
+                        continue
                     block = pipeline.get_block(block_run_block_uuid)
                     if not block:
                         continue
@@ -119,17 +133,37 @@ class BlockResource(GenericResource):
                     **kwargs,
                 )
 
-            for block_run in parent_model.block_runs:
+            block_runs = parent_model.block_runs
+
+            for block_run in block_runs:
+                # Handle dynamic blocks and data integration blocks
                 block_run_block_uuid = block_run.block_uuid
+                block = pipeline.get_block(block_run_block_uuid)
+                metrics = block_run.metrics
+
+                # If block is dynamic child and the original block’s block run, skip.
+                if block and is_dynamic_block_child(block) and block.uuid == block_run_block_uuid:
+                    # Show the block if no other dynamic child block runs have been created:
+                    if dynamically_created_child_block_runs(pipeline, block, block_runs):
+                        continue
+
                 if block_run_block_uuid not in block_mapping:
                     block_mapping[block_run_block_uuid] = dict(
                         block_run=block_run,
                         uuids=[],
                     )
 
-                # Handle dynamic blocks and data integration blocks
-                block = pipeline.get_block(block_run_block_uuid)
                 if not block:
+                    if metrics.get('hook'):
+                        block_dicts_by_uuid[block_run_block_uuid] = dict(
+                            configuration=metrics.get('hook_variables'),
+                            downstream_blocks=metrics.get('downstream_blocks') or [],
+                            tags=[
+                                'global hook',
+                            ],
+                            upstream_blocks=[],
+                            uuid=block_run_block_uuid,
+                        )
                     continue
 
                 if block.uuid not in block_count_by_base_uuid:
@@ -141,7 +175,6 @@ class BlockResource(GenericResource):
                     block_dict['tags'] = []
                 block_dict['uuid'] = block_run_block_uuid
 
-                metrics = block_run.metrics
                 if metrics and block.is_data_integration():
                     child = metrics.get('child')
                     controller = metrics.get('controller')
@@ -257,20 +290,24 @@ class BlockResource(GenericResource):
                     if parts_length >= 2:
                         block_dict['description'] = ':'.join(parts[1:])
 
-                        e_i = parts_length - 1
-                        parts_new = parts[1:e_i]
+                    #     e_i = parts_length - 1
+                    #     parts_new = parts[1:e_i]
 
-                        for upstream_block in block.upstream_blocks:
-                            if is_dynamic_block_child(upstream_block):
-                                parts_new = [upstream_block.uuid] + parts_new
-                                block_mapping[block_run_block_uuid]['uuids'].append(
-                                    ':'.join(parts_new),
+                    #     for upstream_block in block.upstream_blocks:
+                    #         if is_dynamic_block_child(upstream_block):
+                    #             parts_new = [upstream_block.uuid] + parts_new
+                    #             block_mapping[block_run_block_uuid]['uuids'].append(
+                    #                 ':'.join(parts_new),
+                    #             )
+
+                    if metrics:
+                        for key in [
+                            'dynamic_upstream_block_uuids',
+                        ]:
+                            if metrics.get(key):
+                                block_mapping[block_run_block_uuid]['uuids'].extend(
+                                    metrics.get(key) or [],
                                 )
-
-                    if metrics.get('dynamic_upstream_block_uuids'):
-                        block_mapping[block_run_block_uuid]['uuids'].extend(
-                            metrics.get('dynamic_upstream_block_uuids') or [],
-                        )
 
                     # If it should reduce, then all the children have 1 downstream.
                     if should_reduce_output(block):
@@ -279,20 +316,29 @@ class BlockResource(GenericResource):
                                 block_mapping[db.uuid] = dict(uuids=[])
 
                             block_mapping[db.uuid]['uuids'].append(block_run_block_uuid)
-                    else:
-                        # If not reduce, then there will be multiple instances of
-                        # its downstream blocks.
-                        for db in block.downstream_blocks:
-                            db_uuid = ':'.join([db.uuid] + parts[1:])
-                            if db_uuid not in block_mapping:
-                                block_mapping[db_uuid] = dict(uuids=[])
-                            block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
+                    # else:
+                    #     # If not reduce, then there will be multiple instances of
+                    #     # its downstream blocks.
+                    #     for db in block.downstream_blocks:
+                    #         db_uuid = ':'.join([db.uuid] + parts[1:])
+                    #         if db_uuid not in block_mapping:
+                    #             block_mapping[db_uuid] = dict(uuids=[])
+                    #         block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
 
                 if block.replicated_block:
                     block_dict['name'] = block.uuid
                     block_dict['description'] = block.replicated_block
 
                 block_dict['tags'] += block.tags()
+
+                # This is primary used to show global hooks that run before the pipeline execution.
+                if metrics and \
+                        metrics.get('upstream_blocks') and \
+                        (not block or not is_dynamic_block_child(block)):
+
+                    block_dict['upstream_blocks'] = (block_dict.get('upstream_blocks') or []) + (
+                        metrics.get('upstream_blocks') or []
+                    )
 
                 block_dicts_by_uuid[block_run_block_uuid] = block_dict
 
@@ -471,7 +517,29 @@ class BlockResource(GenericResource):
                                 block_dicts_by_uuid[block_uuid]['upstream_blocks']
                                 if uuid != ub_block.uuid]
 
+                upstream_block_uuids_to_replace = {}
+
                 for up_block_uuid in block_dicts_by_uuid[block_uuid]['upstream_blocks']:
+                    up_block = pipeline.get_block(up_block_uuid)
+
+                    # If the current block is a dynamic child and its upstream is a dynamic child:
+                    if up_block and is_dynamic_block_child(up_block) and \
+                            is_dynamic_block_child(block):
+
+                        if not dynamically_created_child_block_runs(
+                            pipeline,
+                            block,
+                            block_runs,
+                        ):
+                            up_block_runs = dynamically_created_child_block_runs(
+                                pipeline,
+                                up_block,
+                                block_runs,
+                            )
+                            if len(up_block_runs) >= 1:
+                                upstream_block_uuids_to_replace[up_block_uuid] = \
+                                    [br.block_uuid for br in up_block_runs]
+
                     if up_block_uuid not in block_dicts_by_uuid:
                         continue
 
@@ -483,7 +551,6 @@ class BlockResource(GenericResource):
                                 block_uuid,
                             )
 
-                    up_block = pipeline.get_block(up_block_uuid)
                     if up_block and is_dynamic_block(up_block):
                         for db_block_uuid in \
                                 block_dicts_by_uuid[up_block_uuid]['downstream_blocks']:
@@ -495,6 +562,11 @@ class BlockResource(GenericResource):
                                     [uuid for uuid in
                                         block_dicts_by_uuid[up_block_uuid]['downstream_blocks']
                                         if uuid != db_block.uuid]
+
+                for up_uuid, uuids in upstream_block_uuids_to_replace.items():
+                    arr = block_dicts_by_uuid[block_uuid]['upstream_blocks']
+                    block_dicts_by_uuid[block_uuid]['upstream_blocks'] = \
+                        [uuid for uuid in arr if uuid != up_uuid] + uuids
 
             # Adjust the runtime for these blocks because it has a start_at
             # but we don’t actually start running the block until later.
@@ -574,6 +646,38 @@ class BlockResource(GenericResource):
             user,
             **kwargs,
         )
+
+    @classmethod
+    async def process_collection(self, query_arg, meta, user, **kwargs):
+        total_results = self.collection(query_arg, meta, user, **kwargs)
+        total_count = len(total_results)
+
+        limit = int((meta or {}).get(META_KEY_LIMIT, 0))
+        offset = int((meta or {}).get(META_KEY_OFFSET, 0))
+
+        final_results = total_results
+        has_next = False
+        if limit > 0:
+            start_idx = offset
+            end_idx = start_idx + limit
+
+            results = total_results[start_idx:(end_idx + 1)]
+
+            results_size = len(results)
+            has_next = results_size > limit
+            final_end_idx = results_size - 1 if has_next else results_size
+            final_results = results[0:final_end_idx]
+
+        result_set = self.build_result_set(
+            final_results,
+            user,
+            **kwargs,
+        )
+        result_set.metadata = {
+            'count': total_count,
+            'next': has_next,
+        }
+        return result_set
 
     @classmethod
     @safe_db_query
@@ -696,7 +800,7 @@ class BlockResource(GenericResource):
             if payload.get('converted_from'):
                 content = convert_to_block(block, content)
 
-            block.update_content(content)
+            await block.update_content_async(content)
 
         if pipeline:
             cache = await BlockCache.initialize_cache()
@@ -734,6 +838,7 @@ class BlockResource(GenericResource):
 
         pipeline = kwargs.get('parent_model')
         if pipeline:
+            pk = urllib.parse.unquote(pk)
             block = pipeline.get_block(pk, block_type=block_type, extension_uuid=extension_uuid)
             if block:
                 return self(block, user, **kwargs)
@@ -746,6 +851,17 @@ class BlockResource(GenericResource):
                 error.update(message=message)
                 raise ApiError(error)
 
+        file_path = query.get('file_path', [None])
+        if file_path:
+            file_path = file_path[0]
+        if file_path:
+            block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+            if block:
+                return self(block, user, **kwargs)
+            else:
+                error.update(ApiError.RESOURCE_NOT_FOUND)
+                raise ApiError(error)
+
         block_type_and_uuid = urllib.parse.unquote(pk)
         parts = block_type_and_uuid.split('/')
 
@@ -754,7 +870,7 @@ class BlockResource(GenericResource):
             raise ApiError(error)
 
         block_type = parts[0]
-        block_uuid_with_extension = '/'.join(parts[1:])
+        block_uuid_with_extension = os.path.sep.join(parts[1:])
         parts2 = block_uuid_with_extension.split('.')
 
         language = None

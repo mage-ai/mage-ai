@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 class PipelinePresenter(BasePresenter):
     default_attributes = [
         'blocks',
+        'cache_block_output_in_memory',
         'concurrency_config',
         'created_at',
         'data_integration',

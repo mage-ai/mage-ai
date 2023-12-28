@@ -267,12 +267,14 @@
                 "streaming/sources/influxdb",
                 "streaming/sources/kafka",
                 "streaming/sources/kinesis",
-                "streaming/sources/nats"
+                "streaming/sources/nats",
+                "streaming/sources/rabbitmq"
               ]
             },
             {
               "group": "Destinations",
               "pages": [
+                "streaming/destinations/activemq",
                 "streaming/destinations/amazon-s3",
                 "streaming/destinations/bigquery",
                 "streaming/destinations/clickhouse",
@@ -354,6 +356,7 @@
                 "integrations/databases/MySQL",
                 "integrations/databases/Pinot",
                 "integrations/databases/PostgreSQL",
+                "integrations/databases/Qdrant",
                 "integrations/databases/Redshift",
                 "integrations/databases/S3",
                 "integrations/databases/Snowflake",
@@ -511,7 +514,8 @@
             "guides/blocks/custom-blocks",
             "guides/blocks/markdown-blocks",
             "guides/blocks/r-blocks",
-            "guides/blocks/replicate-blocks"
+            "guides/blocks/replicate-blocks",
+            "guides/blocks/detach-blocks"
           ]
         },
         {

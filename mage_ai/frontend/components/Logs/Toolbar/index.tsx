@@ -13,12 +13,11 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import usePrevious from '@utils/usePrevious';
 import { LogRangeEnum } from '@interfaces/LogType';
 import {
-  LIMIT_PARAM,
-  OFFSET_PARAM,
   LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
   SPECIFIC_LOG_RANGES,
 } from './constants';
+import { MetaQueryEnum } from '@api/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
 import {
@@ -50,8 +49,8 @@ type LogToolbarProps = {
 };
 
 const SHARED_LOG_QUERY_PARAMS = {
-  [LIMIT_PARAM]: LOG_FILE_COUNT_INTERVAL,
-  [OFFSET_PARAM]: 0,
+  [MetaQueryEnum.LIMIT]: LOG_FILE_COUNT_INTERVAL,
+  [MetaQueryEnum.OFFSET]: 0,
 };
 
 export const SHARED_BUTTON_PROPS = {

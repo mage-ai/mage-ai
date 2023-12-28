@@ -12,9 +12,11 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
+from pathlib import Path
 from queue import Queue
 from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
+import inflection
 import pandas as pd
 import simplejson
 import yaml
@@ -34,6 +36,10 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 )
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
+from mage_ai.data_preparation.models.block.platform.mixins import (
+    ProjectPlatformAccessible,
+)
+from mage_ai.data_preparation.models.block.platform.utils import from_another_project
 from mage_ai.data_preparation.models.block.spark.mixins import SparkBlock
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -53,6 +59,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
     BlockColor,
     BlockLanguage,
@@ -73,12 +80,17 @@ from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.services.spark.config import SparkConfig
 from mage_ai.services.spark.spark import get_spark_session
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
 from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.path_fixer import (
+    add_root_repo_path_to_relative_path,
+    get_path_parts,
+)
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
@@ -263,7 +275,7 @@ def run_blocks_sync(
                 blocks.put(downstream_block)
 
 
-class Block(DataIntegrationMixin, SparkBlock):
+class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def __init__(
         self,
         name: str,
@@ -281,6 +293,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = None,
         has_callback: bool = False,
+        hook=None,
         repo_config=None,
         timeout: int = None,
     ) -> None:
@@ -297,7 +310,8 @@ class Block(DataIntegrationMixin, SparkBlock):
         self.pipeline = pipeline
         self.language = language or BlockLanguage.PYTHON
         self.color = block_color
-        self.configuration = configuration
+        # Need to set this before using the custom @setter.configuration
+        self._configuration = configuration
         self.has_callback = has_callback
         self.timeout = timeout
         self.retry_config = retry_config
@@ -348,10 +362,19 @@ class Block(DataIntegrationMixin, SparkBlock):
         self._repo_config = repo_config
         self._spark_session_current = None
         self.global_vars = None
+        self.hook = hook
+        self._project_platform_activated = None
+
+        # Needs to after self._project_platform_activated = None
+        self.configuration = configuration
 
     @property
     def uuid(self) -> str:
         return self._uuid
+
+    @property
+    def configuration(self) -> Dict:
+        return self._configuration
 
     @property
     def repo_config(self):
@@ -371,6 +394,10 @@ class Block(DataIntegrationMixin, SparkBlock):
     @uuid.setter
     def uuid(self, x) -> None:
         self._uuid = x
+
+    @configuration.setter
+    def configuration(self, x) -> None:
+        self._configuration = self.clean_file_paths(x) if x else x
 
     @property
     def content(self) -> str:
@@ -545,19 +572,43 @@ class Block(DataIntegrationMixin, SparkBlock):
     def repo_path(self) -> str:
         return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
-    @property
-    def file_path(self) -> str:
-        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
-        block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
+    @classmethod
+    def __build_file_path(
+        self,
+        repo_path: str,
+        block_uuid: str,
+        block_type: BlockType,
+        language: BlockLanguage,
+    ) -> str:
+        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+        block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
 
         return os.path.join(
-            self.repo_path or os.getcwd(),
+            repo_path or os.getcwd(),
             block_directory,
-            f'{self.uuid}.{file_extension}',
+            f'{block_uuid}.{file_extension}',
+        )
+
+    @property
+    def file_path(self) -> str:
+        file_path = self.get_file_path_from_source()
+        if file_path:
+            return add_root_repo_path_to_relative_path(file_path)
+
+        return self.__build_file_path(
+            self.repo_path or os.getcwd(),
+            self.uuid,
+            self.type,
+            self.language,
         )
 
     @property
     def file(self) -> File:
+        if self.project_platform_activated:
+            file = self.build_file()
+            if file:
+                return file
+
         return File.from_path(self.file_path)
 
     @property
@@ -699,41 +750,79 @@ class Block(DataIntegrationMixin, SparkBlock):
         # Only create a file on the filesystem if the block type isn’t a global data product
         # because global data products reference a data product which already has its
         # own files.
-        if not replicated_block and \
-                (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
-                BlockType.GLOBAL_DATA_PRODUCT != block_type:
 
-            block_directory = self.file_directory_name(block_type)
-            block_dir_path = os.path.join(repo_path, block_directory)
-            if not os.path.exists(block_dir_path):
-                os.mkdir(block_dir_path)
-                with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
-                    pass
+        # Don’t create a file if it’s from another project.
 
-            file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
-            file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
-            if os.path.exists(file_path):
-                already_exists = True
-                if (pipeline is not None and pipeline.has_block(
+        file_path_from_source = (
+            configuration and
+            configuration.get('file_source') and
+            (configuration.get('file_source') or {}).get('path')
+        )
+        file_is_from_another_project = (
+            file_path_from_source and
+            from_another_project(
+                file_path=file_path_from_source,
+                other_file_path=pipeline.dir_path if pipeline else None,
+            )
+        )
+        absolute_file_path = add_root_repo_path_to_relative_path(
+            file_path_from_source,
+        ) if file_path_from_source else None
+
+        if not file_is_from_another_project and \
+                (not absolute_file_path or not os.path.exists(absolute_file_path)):
+
+            if not replicated_block and \
+                    (BlockType.DBT != block_type or BlockLanguage.YAML == language) and \
+                    BlockType.GLOBAL_DATA_PRODUCT != block_type:
+
+                block_directory = self.file_directory_name(block_type)
+                if absolute_file_path:
+                    block_dir_path = os.path.dirname(absolute_file_path)
+                else:
+                    block_dir_path = os.path.join(repo_path, block_directory)
+
+                if not os.path.exists(block_dir_path):
+                    os.mkdir(block_dir_path)
+                    with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                        pass
+
+                file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+                file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
+                if os.path.exists(file_path):
+                    already_exists = True
+                    if (pipeline is not None and pipeline.has_block(
+                        uuid,
+                        block_type=block_type,
+                        extension_uuid=extension_uuid,
+                    )) or require_unique_name:
+                        """
+                        The BLOCK_EXISTS_ERROR constant is used on the frontend to identify when
+                        a user is trying to create a new block with an existing block name, and
+                        link them to the existing block file so the user can choose to add the
+                        existing block to their pipeline.
+                        """
+                        raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
+                                        Please use a different name.')
+                else:
+                    load_template(
+                        block_type,
+                        config,
+                        file_path,
+                        language=language,
+                        pipeline_type=pipeline.type if pipeline is not None else None,
+                    )
+
+        if project_platform_activated():
+            configuration = configuration or {}
+            if not configuration.get('file_source'):
+                configuration['file_source'] = {}
+            if not configuration['file_source'].get('path'):
+                configuration['file_source']['path'] = self.__build_file_path(
+                    get_repo_path(absolute_path=False, root_project=False),
                     uuid,
-                    block_type=block_type,
-                    extension_uuid=extension_uuid,
-                )) or require_unique_name:
-                    """
-                    The BLOCK_EXISTS_ERROR constant is used on the frontend to identify when
-                    a user is trying to create a new block with an existing block name, and
-                    link them to the existing block file so the user can choose to add the
-                    existing block to their pipeline.
-                    """
-                    raise Exception(f'{BLOCK_EXISTS_ERROR} Block {uuid} already exists. \
-                                    Please use a different name.')
-            else:
-                load_template(
                     block_type,
-                    config,
-                    file_path,
-                    language=language,
-                    pipeline_type=pipeline.type if pipeline is not None else None,
+                    language,
                 )
 
         block = self.block_class_from_type(block_type, pipeline=pipeline)(
@@ -750,7 +839,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         block.already_exists = already_exists
 
         if BlockType.DBT == block.type:
-            if block.file_path and not block.file.exists():
+            if block.file_path and not block.file.exists() and not file_is_from_another_project:
                 block.file.create_parent_directories(block.file_path)
                 block.file.update_content('')
 
@@ -825,6 +914,41 @@ class Block(DataIntegrationMixin, SparkBlock):
             status=status,
         )
 
+    @classmethod
+    def get_block_from_file_path(self, file_path: str) -> 'Block':
+        parts = get_path_parts(file_path)
+
+        if parts and len(parts) >= 3:
+            # If file_path == transformers/test4.py
+            # parts ==
+            # ('/home/src/default_repo/default_platform2/project3', 'transformers', 'test4.py')
+
+            # If project platform platform activated, then parts ==
+            # ('/home/src', 'default_repo', 'data_loaders/astral_violet.py')
+
+            root_project_full_path, path, file_path_base = parts
+
+            if project_platform_activated():
+                # ('data_loaders', 'astral_violet.py')
+                file_parts = Path(file_path_base).parts
+                block_type = inflection.singularize(str(file_parts[0]))
+                block_uuid = str(Path(*file_parts[1:]).with_suffix(''))
+            else:
+                block_type = inflection.singularize(str(path))
+                block_uuid = str(Path(file_path_base).with_suffix(''))
+
+            extension = Path(file_path).suffix.replace('.', '')
+            configuration = dict(file_path=file_path, file_source=dict(path=file_path))
+            language = FILE_EXTENSION_TO_BLOCK_LANGUAGE.get(extension)
+
+            return self.get_block(
+                block_uuid,
+                block_uuid,
+                block_type,
+                configuration=configuration,
+                language=language,
+            )
+
     def all_upstream_blocks_completed(
         self,
         completed_block_uuids: Set[str],
@@ -875,6 +999,8 @@ class Block(DataIntegrationMixin, SparkBlock):
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
             return
+
+        # TODO (tommy dang): delete this block from all pipelines in all projects
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
         pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
         if not force:
@@ -884,6 +1010,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                         f'Block {self.uuid} has downstream dependencies in pipeline {p.uuid}. '
                         'Please remove the dependencies before deleting the block.'
                     )
+
         for p in pipelines:
             p.delete_block(
                 p.get_block(self.uuid, widget=widget),
@@ -891,6 +1018,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 commit=commit,
                 force=force,
             )
+
         os.remove(self.file_path)
 
     def execute_with_callback(
@@ -978,6 +1106,7 @@ class Block(DataIntegrationMixin, SparkBlock):
     def execute_sync(
         self,
         analyze_outputs: bool = False,
+        block_run_outputs_cache: Dict[str, List] = None,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
@@ -992,6 +1121,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_block_uuid: str = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
@@ -1039,6 +1169,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 )
 
             output = self.execute_block(
+                block_run_outputs_cache=block_run_outputs_cache,
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
                 execution_partition=execution_partition,
@@ -1049,6 +1180,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
                 data_integration_runtime_settings=data_integration_runtime_settings,
@@ -1218,6 +1350,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
     def execute_block(
         self,
+        block_run_outputs_cache: Dict[str, List] = None,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
@@ -1229,6 +1362,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
         data_integration_runtime_settings: str = None,
@@ -1266,17 +1400,20 @@ class Block(DataIntegrationMixin, SparkBlock):
                         execution_partition,
                         global_vars,
                         dynamic_block_index=dynamic_block_index,
+                        dynamic_block_indexes=dynamic_block_indexes,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         from_notebook=from_notebook,
                     )
             else:
                 input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                     input_args,
-                    execution_partition,
-                    global_vars,
+                    block_run_outputs_cache=block_run_outputs_cache,
                     dynamic_block_index=dynamic_block_index,
+                    dynamic_block_indexes=dynamic_block_indexes,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    execution_partition=execution_partition,
                     from_notebook=from_notebook,
+                    global_vars=global_vars,
                 )
 
             outputs_from_input_vars = {}
@@ -1299,6 +1436,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 outputs_from_input_vars,
                 custom_code=custom_code,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 from_notebook=from_notebook,
@@ -1355,6 +1493,7 @@ class Block(DataIntegrationMixin, SparkBlock):
         outputs_from_input_vars,
         custom_code: str = None,
         dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: List[str] = None,
         execution_partition: str = None,
         from_notebook: bool = False,
@@ -1378,6 +1517,7 @@ class Block(DataIntegrationMixin, SparkBlock):
 
         if self.get_data_integration_settings(
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             from_notebook=from_notebook,
             global_vars=global_vars,
@@ -1389,6 +1529,7 @@ class Block(DataIntegrationMixin, SparkBlock):
                 outputs_from_input_vars=outputs_from_input_vars,
                 custom_code=custom_code,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 execution_partition=execution_partition,
                 execution_partition_previous=execution_partition_previous,
@@ -1524,7 +1665,8 @@ class Block(DataIntegrationMixin, SparkBlock):
 
             return block_function_updated
         except Exception as err:
-            print(f'[WARNING] Block.initialize_decorator_modules: {err}')
+            if is_debug():
+                print(f'[WARNING] Block.initialize_decorator_modules: {err}')
             print('Falling back to default block execution...')
 
         return block_function
@@ -1535,24 +1677,50 @@ class Block(DataIntegrationMixin, SparkBlock):
     def fetch_input_variables(
         self,
         input_args,
-        execution_partition: str = None,
-        global_vars: Dict = None,
-        dynamic_block_index: int = None,
-        dynamic_upstream_block_uuids: List[str] = None,
-        from_notebook: bool = False,
-        upstream_block_uuids: List[str] = None,
+        block_run_outputs_cache: Dict[str, List] = None,
         data_integration_settings_mapping: Dict = None,
+        dynamic_block_index: int = None,
+        dynamic_block_indexes: Dict = None,
+        dynamic_upstream_block_uuids: List[str] = None,
+        execution_partition: str = None,
+        from_notebook: bool = False,
+        global_vars: Dict = None,
+        upstream_block_uuids: List[str] = None,
     ) -> Tuple[List, List, List]:
+        """
+        Fetch input variables for the current block's execution.
+
+        Args:
+            input_args: The input arguments required for the block's execution.
+            block_run_outputs_cache (Optional[Dict[str, List]]): A dictionary mapping block run
+                UUIDs to their outputs.
+            data_integration_settings_mapping (Optional[Dict]): A dictionary containing data
+                integration settings.
+            dynamic_block_index (Optional[int]): The index of the dynamic block, if applicable.
+            dynamic_upstream_block_uuids (Optional[List[str]]): The UUIDs of the dynamic upstream
+                blocks.
+            execution_partition (Optional[str]): The execution partition for the block.
+            from_notebook (Optional[bool]): A boolean indicating whether the execution is
+                triggered from a notebook.
+            global_vars (Optional[Dict]): A dictionary containing global variables.
+            upstream_block_uuids (Optional[List[str]]): List of UUIDs of upstream blocks.
+
+        Returns:
+            Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
+                upstream block UUIDs.
+        """
         variables = fetch_input_variables(
             self.pipeline,
             upstream_block_uuids or self.upstream_block_uuids,
             input_args,
-            execution_partition,
-            global_vars,
-            dynamic_block_index,
-            dynamic_upstream_block_uuids,
-            from_notebook=from_notebook,
+            block_run_outputs_cache=block_run_outputs_cache,
             data_integration_settings_mapping=data_integration_settings_mapping,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
+            from_notebook=from_notebook,
+            global_vars=global_vars,
         )
 
         return variables
@@ -1927,7 +2095,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    def __save_outputs_prepare(self, outputs) -> Dict:
+    def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
         for o in outputs:
             if o is None:
@@ -1938,16 +2106,30 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
                     (not is_output_variable(o['variable_uuid']) or
-                        BlockType.SCRATCHPAD == self.type):
+                        BlockType.SCRATCHPAD == self.type or
+                        override_output_variable):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
         self._outputs_loaded = True
         return variable_mapping
 
-    def save_outputs(self, outputs, override=False) -> None:
-        variable_mapping = self.__save_outputs_prepare(outputs)
-        self.store_variables(variable_mapping, override=override)
+    def save_outputs(
+        self,
+        outputs,
+        override: bool = False,
+        execution_partition: str = None,
+        override_output_variable: bool = False,
+    ) -> None:
+        variable_mapping = self.__save_outputs_prepare(
+            outputs,
+            override_output_variable=override_output_variable,
+        )
+        self.store_variables(
+            variable_mapping,
+            execution_partition=execution_partition,
+            override=override,
+        )
 
     async def save_outputs_async(
         self,
@@ -2212,7 +2394,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block(widget=widget)
         return self
 
-    async def update_content_async(self, content, widget=False) -> 'Block':
+    async def update_content_async(
+        self,
+        content,
+        error_if_file_missing: bool = True,
+        widget: bool = False,
+    ) -> 'Block':
+        if error_if_file_missing and not self.file.exists():
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
+
         block_content = await self.content_async()
         if content != block_content:
             self.status = BlockStatus.UPDATED
@@ -2292,6 +2482,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        outputs: List[Any] = None,
         update_tests: bool = True,
         dynamic_block_uuid: str = None,
     ) -> None:
@@ -2321,12 +2512,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         else:
             test_functions = self.test_functions
 
-        outputs = self.get_raw_outputs(
-            dynamic_block_uuid or self.uuid,
-            execution_partition=execution_partition,
-            from_notebook=from_notebook,
-            global_vars=global_vars,
-        )
+        if outputs is None:
+            outputs = self.get_raw_outputs(
+                dynamic_block_uuid or self.uuid,
+                execution_partition=execution_partition,
+                from_notebook=from_notebook,
+                global_vars=global_vars,
+            )
 
         if logger and 'logger' not in global_vars:
             global_vars['logger'] = logger
@@ -3095,8 +3287,8 @@ class ConditionalBlock(AddonBlock):
             if parent_block is not None:
                 input_vars, kwargs_vars, _ = parent_block.fetch_input_variables(
                     None,
-                    execution_partition,
-                    global_vars,
+                    execution_partition=execution_partition,
+                    global_vars=global_vars,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 )
@@ -3126,6 +3318,7 @@ class CallbackBlock(AddonBlock):
         callback: str,
         callback_kwargs: Dict = None,
         dynamic_block_index: Union[int, None] = None,
+        dynamic_block_indexes: Dict = None,
         dynamic_upstream_block_uuids: Union[List[str], None] = None,
         execution_partition: str = None,
         global_vars: Dict = None,
@@ -3171,11 +3364,12 @@ class CallbackBlock(AddonBlock):
             # Fetch input variables
             input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
                 None,
-                execution_partition,
-                global_vars,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_block_indexes=dynamic_block_indexes,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                execution_partition=execution_partition,
                 from_notebook=from_notebook,
+                global_vars=global_vars,
                 upstream_block_uuids=[parent_block.uuid] if parent_block else None,
             )
 

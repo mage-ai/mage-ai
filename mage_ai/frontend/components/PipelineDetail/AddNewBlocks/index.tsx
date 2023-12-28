@@ -10,6 +10,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Tooltip from '@oracle/components/Tooltip';
+import useProject from '@utils/models/project/useProject';
 import { Add, HexagonAll, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
@@ -27,6 +28,7 @@ import {
   ROW_ACTION_GROUPINGS,
 } from '@interfaces/TransformerActionType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   createActionMenuGroupings,
@@ -72,7 +74,7 @@ type AddNewBlocksProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
-};
+} & OpenBlockBrowserModalType;
 
 const DATA_LOADER_BUTTON_INDEX = 0;
 const TRANSFORMER_BUTTON_INDEX = 1;
@@ -104,10 +106,16 @@ function AddNewBlocks({
   setAddNewBlockMenuOpenIdx,
   setCreatingNewDBTModel,
   setFocusedAddNewBlockSearch,
+  showBlockBrowserModal,
   showBrowseTemplates,
   showConfigureProjectModal,
   showGlobalDataProducts,
 }: AddNewBlocksProps) {
+  const {
+    featureEnabled,
+    featureUUIDs,
+  } = useProject();
+
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
   const transformerButtonRef = useRef(null);
@@ -297,16 +305,16 @@ function AddNewBlocks({
 
   const itemsDBT = useMemo(() => [
     {
-      label: () => 'New model',
-      onClick: () => {
-        setCreatingNewDBTModel?.(true);
-        onClickAddSingleDBTModel?.(blockIdx);
-      },
-      uuid: 'dbt/new_model',
-    },
-    {
       label: () => 'Single model or snapshot (from file)',
-      onClick: () => onClickAddSingleDBTModel?.(blockIdx),
+      onClick: () => {
+        if (featureEnabled?.(featureUUIDs.DBT_V2)) {
+          showBlockBrowserModal({
+            blockIndex: blockIdx,
+          });
+        } else {
+          onClickAddSingleDBTModel?.(blockIdx);
+        }
+      },
       uuid: 'dbt/single_model',
     },
     {
@@ -327,7 +335,7 @@ function AddNewBlocks({
       onClick: () => addNewBlock({
         configuration: {
           dbt: {
-            command: null,
+            command: 'run',
           },
         },
         language: BlockLanguageEnum.YAML,
@@ -335,11 +343,24 @@ function AddNewBlocks({
       }),
       uuid: 'dbt/generic_command',
     },
+    {
+      isGroupingTitle: true,
+      label: () => 'Create new models',
+      uuid: 'dbt/new_model/group',
+    },
+    {
+      disabled: true,
+      label: () => 'Use the file browser to create new SQL files',
+      uuid: 'dbt/new_model',
+    },
   ], [
     addNewBlock,
     blockIdx,
+    featureEnabled,
+    featureUUIDs,
     onClickAddSingleDBTModel,
     setCreatingNewDBTModel,
+    showBlockBrowserModal,
   ]);
 
   const useV2 = useMemo(
@@ -354,6 +375,7 @@ function AddNewBlocks({
 
   if (useV2) {
     return (
+      // @ts-ignore
       <AddNewBlocksV2
         addNewBlock={addNewBlock}
         blockIdx={blockIdx}

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
+from unittest.mock import patch
 
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -21,6 +22,7 @@ from mage_ai.tests.api.endpoints.mixins import (
     build_update_endpoint_tests,
 )
 from mage_ai.tests.factory import create_pipeline_with_blocks
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 class PipelineScheduleAPIEndpointTest(BaseAPIEndpointTest):
@@ -86,6 +88,49 @@ class PipelineScheduleAPIEndpointTest(BaseAPIEndpointTest):
             self.pipeline_schedule2.id: 1,
             self.pipeline_schedule3.id: 1,
         }
+
+
+@patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True)
+class PipelineScheduleProjectPlatformTests(ProjectPlatformMixin, BaseAPIEndpointTest):
+    async def test_collection_project_platform_activated(self):
+        pipelines = []
+        pipeline_schedules = []
+        for settings in self.repo_paths.values():
+            pipeline = create_pipeline_with_blocks(
+                self.faker.unique.name(),
+                settings['full_path'],
+            )
+            pipelines.append(pipeline)
+
+            pipeline_schedule = PipelineSchedule.create(
+                name=self.faker.unique.name(),
+                pipeline_uuid=self.pipeline.uuid,
+                repo_path=settings['full_path'],
+                schedule_interval=ScheduleInterval.MONTHLY,
+                schedule_type=ScheduleType.TIME,
+                start_time=datetime.utcnow(),
+                status=ScheduleStatus.INACTIVE,
+            )
+            pipeline_schedules.append(pipeline_schedule)
+
+        results = await self.build_test_list_endpoint(
+            resource='pipeline_schedules',
+            authentication=1,
+            list_count=2,
+            patch_function_settings=[
+                ('mage_ai.settings.platform.project_platform_activated', lambda: True),
+                (
+                    'mage_ai.orchestration.db.models.schedules.project_platform_activated',
+                    lambda: True,
+                ),
+            ],
+        )
+
+        for pipeline_schedule in pipeline_schedules:
+            self.assertIn(
+                pipeline_schedule.id,
+                [result['id'] for result in results],
+            )
 
 
 # No parent

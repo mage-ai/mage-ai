@@ -49,6 +49,7 @@ export enum ButtonTypeEnum {
 
 export type KeyboardShortcutButtonProps = {
   Icon?: any;
+  addPlusSignBetweenKeys?: boolean;
   afterElement?: any;
   beforeElement?: any;
   background?: string;
@@ -424,6 +425,7 @@ const AnchorStyle = styled.a<KeyboardShortcutButtonProps>`
 
 function KeyboardShortcutButton({
   Icon,
+  addPlusSignBetweenKeys,
   afterElement,
   beforeElement,
   bold,
@@ -456,17 +458,28 @@ function KeyboardShortcutButton({
   const keyTextsRender = useMemo(() => {
     if (!keyTextGroups) return null;
 
-    const spacingProps = { [keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? 'ml' : 'mr']: children ? 1 : 0 };
+    const spacingProps = {
+      [keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? 'ml' : 'mr']: children ? 1 : 0
+    };
 
     return (
-      <Spacing {...spacingProps}>
+      <div
+        style={{
+          ...(keyTextsPosition === KeyTextsPostitionEnum.RIGHT ? {
+            marginLeft: 4,
+          } : {
+            marginRight: 4,
+          }),
+        }}
+      >
         <KeyboardTextGroup
+          addPlusSignBetweenKeys={addPlusSignBetweenKeys}
           borderless={inverted}
           disabled={disabled}
           keyTextGroups={keyTextGroups}
           mutedDisabled={mutedDisabled}
         />
-      </Spacing>
+      </div>
     );
   }, [children, disabled, inverted, keyTextGroups, keyTextsPosition, mutedDisabled]);
 
@@ -512,7 +525,7 @@ function KeyboardShortcutButton({
             {beforeElement && !loading && (
               <>
                 {beforeElement}
-                <Spacing mr={1}/>
+                <div style={{ marginRight: 4 }} />
               </>
             )}
 
@@ -526,7 +539,7 @@ function KeyboardShortcutButton({
                 />
               )}
 
-              {Icon && children && <Spacing mr={1} />}
+              {Icon && children && <div style={{ marginRight: 4 }} />}
 
               {loading && (
                 <Spinner
@@ -538,14 +551,14 @@ function KeyboardShortcutButton({
             </Flex>
 
             {keyTextsPosition === KeyTextsPostitionEnum.RIGHT && keyTextsRender && (
-              <Spacing ml={1}>
+              <div style={{ marginLeft: 4 }}>
                 {keyTextsRender}
-              </Spacing>
+              </div>
             )}
 
             {afterElement && !loading && (
               <>
-                <Spacing ml={afterElement ? 1 : 0} />
+                <div style={{ marginLeft: afterElement ? 4 : 0 }} />
                 {afterElement}
               </>
             )}

@@ -94,20 +94,22 @@ export const SearchStyle = styled.div`
 `;
 
 export const DropdownStyle = styled.div<{
+  maxHeight?: number;
   topOffset?: number;
+  width?: string;
 }>`
   ${ScrollbarStyledCss}
 
   border-radius: ${BORDER_RADIUS_SMALL}px;
-  max-height: ${UNIT * 40}px;
   overflow: auto;
   position: absolute;
-  width: 100%;
-  z-index: 1;
+  z-index: 5;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).popup};
-    box-shadow: ${(props.theme.shadow || dark.shadow).popup};
+    box-shadow: ${(props.theme.shadow || dark.shadow).window};
+    max-height: ${props?.maxHeight || UNIT * 40}px;
+    width: ${props.width || '100%'};
   `}
 
   ${props => props.topOffset && `

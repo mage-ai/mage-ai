@@ -19,6 +19,7 @@ export type LinkProps = {
 };
 
 export type KeyboardShortcutSharedProps = {
+  className?: string;
   disabled?: boolean;
   eventActionName?: string;
   eventComponentName?: string;

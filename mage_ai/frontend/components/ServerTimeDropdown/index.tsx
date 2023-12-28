@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ServerTimeButton from './ServerTimeButton';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import { BREAKPOINT_MEDIUM } from '@styles/theme';
 import { 
   DropdownCellStyle, 
@@ -14,19 +18,32 @@ import {
   ToggleDropdownCellStyle,
   ToggleGroupStyle, 
 } from './index.style';
+import { FeatureUUIDEnum } from '@interfaces/ProjectType';
+import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import {
+  LOCAL_TIMEZONE_TOOLTIP_PROPS,
+  shouldDisplayLocalTimezone,
+  storeLocalTimezoneSetting,
+} from '@components/settings/workspace/utils';
 import { PURPLE2 } from '@oracle/styles/colors/main';
 import { abbreviatedTimezone, currentTimes, TimeZoneEnum, TIME_ZONE_NAMES } from '@utils/date';
+import { onSuccess } from '@api/utils/response';
 import { 
-  shouldDisplayLocalServerTime, 
   shouldIncludeServerTimeSeconds, 
-  storeDisplayLocalServerTime, 
   storeIncludeServerTimeSeconds, 
 } from '../../storage/serverTime';
+import { useError } from '@context/Error';
 
 const DISPLAYED_TIME_ZONES = [TimeZoneEnum.UTC, TimeZoneEnum.LOCAL];
 
-function ServerTimeDropdown() {
-  const [displayLocalServerTime, setDisplayLocalServerTime] = useState<boolean>(shouldDisplayLocalServerTime());
+type ServerTimeDropdownProps = {
+  projectName: string;
+};
+
+function ServerTimeDropdown({
+  projectName,
+}: ServerTimeDropdownProps) {
+  const [displayLocalTimezone, setDisplayLocalTimezone] = useState<boolean>(shouldDisplayLocalTimezone());
   const [includeServerTimeSeconds, setIncludeServerTimeSeconds] = useState<boolean>(shouldIncludeServerTimeSeconds());
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [times, setTimes] = useState<Map<TimeZoneEnum, string>>(
@@ -34,11 +51,28 @@ function ServerTimeDropdown() {
   );
   const [top, setTop] = useState<number>(0);
 
-  const defaultTimeZone = displayLocalServerTime
+  const defaultTimeZone = displayLocalTimezone
     ? TimeZoneEnum.LOCAL 
     : TimeZoneEnum.UTC;
 
   const isSmallBreakpoint = window.innerWidth < BREAKPOINT_MEDIUM;
+
+  const [showError] = useError(null, {}, [], {
+    uuid: 'components/ServerTimeDropdown',
+  });
+  const [updateProject]: any = useMutation(
+    api.projects.useUpdate(projectName),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   const handleButtonClick = useCallback(() => {
     setShowDropdown(prevState => !prevState);
@@ -62,7 +96,15 @@ function ServerTimeDropdown() {
   }, [includeServerTimeSeconds]);
 
   const toggleDisplayLocalServerTime = () => {
-    setDisplayLocalServerTime(storeDisplayLocalServerTime(!displayLocalServerTime));
+    const displayLocalTimeUpdated = !displayLocalTimezone;
+    setDisplayLocalTimezone(storeLocalTimezoneSetting(displayLocalTimeUpdated));
+    updateProject({
+      project: {
+        features: {
+          [FeatureUUIDEnum.LOCAL_TIMEZONE]: displayLocalTimeUpdated,
+        },
+      },
+    });
   };
   const toggleIncludeServerTimeSeconds = () => {
     setIncludeServerTimeSeconds(storeIncludeServerTimeSeconds(!includeServerTimeSeconds));
@@ -70,14 +112,16 @@ function ServerTimeDropdown() {
 
   const toggleOptions = [
     {
-      checked: displayLocalServerTime,
-      label: 'Show as local time',
+      checked: displayLocalTimezone,
+      label: 'Display local timezone (requires refresh)',
       onCheck: toggleDisplayLocalServerTime,
+      uuid: FeatureUUIDEnum.LOCAL_TIMEZONE,
     },
     {
       checked: includeServerTimeSeconds,
-      label: 'Include seconds',
+      label: 'Include seconds in current time',
       onCheck: toggleIncludeServerTimeSeconds,
+      uuid: 'current_time_seconds',
     },
   ];
 
@@ -143,7 +187,17 @@ function ServerTimeDropdown() {
                     onCheck={option.onCheck} 
                     purpleBackground
                   />
+                  
                   <Text>{option.label}</Text>
+
+                  {option.uuid === FeatureUUIDEnum.LOCAL_TIMEZONE &&
+                    <Tooltip
+                      {...LOCAL_TIMEZONE_TOOLTIP_PROPS}
+                      appearAbove
+                      appearBefore
+                      size={ICON_SIZE_SMALL}
+                    />
+                  }
                 </ToggleDropdownCellStyle>
               ))}
             </ToggleGroupStyle>

@@ -60,6 +60,7 @@ export enum PipelineQueryEnum {
   GROUP = 'group_by',
   HISTORY_DAYS = 'from_history_days',
   NO_TAGS = 'no_tags',
+  SEARCH = 'search',
   STATUS = 'status[]',
   TAG = 'tag[]',
   TYPE = 'type[]',

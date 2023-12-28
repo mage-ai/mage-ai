@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { createRef, useRef, useState } from 'react';
+import { createRef, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -22,6 +22,8 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
+import useStatus from '@utils/models/status/useStatus';
 import {
   Code,
   Edit,
@@ -86,6 +88,9 @@ function TriggersTable({
 }: TriggersTableProps) {
   const pipelineUUID = pipeline?.uuid;
   const router = useRouter();
+
+  const { projectPlatformActivated } = useProject();
+  const { status: statusProject } = useStatus();
 
   const toggleTriggerRefs = useRef({});
   const deleteButtonRefs = useRef({});
@@ -174,6 +179,15 @@ function TriggersTable({
     ]);
   }
 
+  if (projectPlatformActivated) {
+    columnFlex.push(...[null]);
+    columns.push(...[
+      {
+        uuid: 'Project',
+      },
+    ]);
+  }
+
   columnFlex.push(...[1, 2]);
   columns.push(...[
     {
@@ -234,7 +248,7 @@ function TriggersTable({
     columnFlex.splice(5, 0, null);
   }
 
-  const [showDisableTriggerModal, hideDisableTriggerModal] = useModal(({ 
+  const [showDisableTriggerModal, hideDisableTriggerModal] = useModal(({
     inProgressRunsCount,
     left,
     pipelineScheduleId,
@@ -242,9 +256,9 @@ function TriggersTable({
     top,
     topOffset,
   }) => (
-    <DisableTriggerModal 
+    <DisableTriggerModal
       inProgressRunsCount={inProgressRunsCount}
-      left={left} 
+      left={left}
       onAllow={(pipelineScheduleId) => {
         hideDisableTriggerModal();
         updatePipelineSchedule({
@@ -265,9 +279,9 @@ function TriggersTable({
           status: ScheduleStatusEnum.INACTIVE,
         });
       }}
-      pipelineScheduleId={pipelineScheduleId} 
+      pipelineScheduleId={pipelineScheduleId}
       pipelineUuid={pipelineUuid}
-      top={top} 
+      top={top}
       topOffset={topOffset}
     />
   ), {
@@ -276,11 +290,11 @@ function TriggersTable({
     uuid: 'disable_trigger',
   });
 
-  const handleTogglePipeline = ({ 
-    event, 
+  const handleTogglePipeline = ({
+    event,
     inProgressRunsCount,
     pipelineIsActive,
-    pipelineScheduleId, 
+    pipelineScheduleId,
     pipelineUuid,
   }) => {
     pauseEvent(event);
@@ -332,6 +346,7 @@ function TriggersTable({
                 pipeline_uuid: triggerPipelineUUID,
                 last_pipeline_run_status: lastPipelineRunStatus,
                 name,
+                repo_path: repoPath,
                 schedule_interval: scheduleInterval,
                 status,
                 tags,
@@ -376,11 +391,11 @@ function TriggersTable({
                       <ToggleSwitch
                         checked={isActive}
                         compact
-                        onCheck={(event) => handleTogglePipeline({ 
-                          event, 
+                        onCheck={(event) => handleTogglePipeline({
+                          event,
                           inProgressRunsCount,
                           pipelineIsActive: isActive,
-                          pipelineScheduleId: id, 
+                          pipelineScheduleId: id,
                           pipelineUuid: triggerPipelineUUID,
                         })}
                         purpleBackground
@@ -394,6 +409,21 @@ function TriggersTable({
                   >
                     {SCHEDULE_TYPE_TO_LABEL[pipelineSchedule.schedule_type]?.()}
                   </Text>,
+                ]);
+
+                if (projectPlatformActivated) {
+                  rows.push(...[
+                    <Text
+                      default
+                      key={`project_${idx}`}
+                      monospace
+                    >
+                      {repoPath?.replace(statusProject?.repo_path_root || '', '')?.slice(1)}
+                    </Text>,
+                  ]);
+                }
+
+                rows.push(...[
                   <FlexContainer
                     alignItems="center"
                     key={`trigger_name_${idx}`}
@@ -480,7 +510,7 @@ function TriggersTable({
                   {lastPipelineRunStatus || 'N/A'}
                 </Text>,
                 <Text default key={`trigger_run_count_${idx}`} monospace>
-                  {pipelineRunsCount}
+                  {pipelineRunsCount || '0'}
                 </Text>,
               ]);
 

@@ -16,8 +16,9 @@ import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import CodeEditor from '@components/CodeEditor';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileType, {
-  FileExtensionEnum,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
+  FileExtensionEnum,
+  PIPELINE_BLOCK_EXTENSIONS,
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -40,6 +41,7 @@ import {
 } from './utils';
 import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
+import { getFullPath } from '@utils/files';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { isJsonString } from '@utils/string';
 import { errorOrSuccess, onSuccess } from '@api/utils/response';
@@ -63,7 +65,7 @@ type FileEditorProps = {
   sendTerminalMessage?: (message: string, keep?: boolean) => void;
   setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
-  setFilesTouched: (data: {
+  setFilesTouched?: (data: {
     [path: string]: boolean;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
@@ -182,7 +184,7 @@ function FileEditor({
       }
     });
     // @ts-ignore
-    setFilesTouched((prev: {
+    setFilesTouched?.((prev: {
       [path: string]: boolean;
     }) => ({
       ...prev,
@@ -217,13 +219,21 @@ function FileEditor({
           // onDidChangeCursorPosition={onDidChangeCursorPosition}
           onChange={(value: string) => {
             setContent(value);
-            // @ts-ignore
-            setFilesTouched((prev: {
-              [path: string]: boolean;
-            }) => ({
-              ...prev,
-              [file?.path]: true,
-            }));
+            if (setFilesTouched) {
+              // @ts-ignore
+              setFilesTouched((prev: {
+                [path: string]: boolean;
+              }) => {
+                if (prev?.[file?.path]) {
+                  return prev;
+                }
+
+                return {
+                  ...prev,
+                  [file?.path]: true,
+                };
+              });
+            }
             setTouched(true);
           }}
           onSave={(value: string) => {
@@ -252,7 +262,10 @@ function FileEditor({
     ? find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type)
     : null;
   const [updateDestinationBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    api.blocks.pipelines.useUpdate(
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(dataExporterBlock?.uuid),
+    ),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -264,16 +277,12 @@ function FileEditor({
     },
   );
 
-  const addToPipelineEl = addNewBlock && pipeline && (
-    fileExtension === FileExtensionEnum.PY
-    || fileExtension === FileExtensionEnum.SQL
-    || (
-      (fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
-        && getNonPythonBlockFromFile(file, file?.path)
-      )
-    )
-    && getBlockType(file.path.split(path.sep)) !== BlockTypeEnum.SCRATCHPAD
-    && getBlockFromFile(file)
+  const addToPipelineEl = addNewBlock
+    && pipeline
+    && file
+    // @ts-ignore
+    && PIPELINE_BLOCK_EXTENSIONS.includes(fileExtension)
+    && getBlockType(file?.path?.split(path.sep))
     && (
     <Button
       onClick={() => {

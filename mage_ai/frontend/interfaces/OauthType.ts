@@ -4,6 +4,7 @@ import OktaSignIn from '@components/Sessions/OktaSignIn';
 
 export enum OauthProviderEnum {
   ACTIVE_DIRECTORY = 'active_directory',
+  BITBUCKET = 'bitbucket',
   GITHUB = 'github',
   GOOGLE = 'google',
   OKTA = 'okta',
@@ -16,6 +17,9 @@ export const OAUTH_PROVIDER_SIGN_IN_MAPPING = {
 };
 
 export default interface OauthType {
-  access_token?: string;
-  provider: string;
+  provider?: string;
+  authenticated?: boolean;
+  expires?: string;
+  url?: string;
+  redirect_query_params?: any;
 }

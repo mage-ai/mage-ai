@@ -7,11 +7,14 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
+import useFileIcon from '@components/FileBrowser/Folder/useFileIcon';
 import { Close, FileFill } from '@oracle/icons';
 import { FileTabStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
+
+const ICON_SIZE = UNIT * 1.25;
 
 export type FileTabProps = {
   filesTouched?: {
@@ -24,7 +27,7 @@ export type FileTabProps = {
 };
 
 type FileTabPropsInternal = {
-  filePath: string;
+  filePath?: string;
   isLast?: boolean;
   selected?: boolean;
   themeContext: any;
@@ -42,6 +45,18 @@ function FileTab({
   themeContext,
 }: FileTabProps & FileTabPropsInternal) {
   const [focused, setFocused] = useState<boolean>(false);
+
+  const {
+    BlockIcon,
+    Icon,
+    color,
+    iconColor,
+    isBlockFile,
+  } = useFileIcon({
+    filePath,
+    name: filePath,
+    uuid: filePath,
+  });
 
   return (
     <FlexContainer
@@ -84,10 +99,21 @@ function FileTab({
               fullHeight
             >
               {!filesTouched[filePath] && (
-                <FileFill
-                  muted={!selected}
-                  size={UNIT * 1.5}
-                />
+                <>
+                  {isBlockFile
+                    ?
+                      <BlockIcon
+                        color={color}
+                        size={UNIT * 1}
+                        square
+                      />
+                    :
+                      <Icon
+                        fill={iconColor}
+                        size={UNIT * 1.5}
+                      />
+                  }
+                </>
               )}
 
               {filesTouched[filePath] && (
@@ -99,7 +125,7 @@ function FileTab({
                   <div style={{ padding: 1 }}>
                     <Circle
                       borderColor={(themeContext || dark).borders.danger}
-                      size={UNIT * 1.25}
+                      size={ICON_SIZE}
                     />
                   </div>
                 </Tooltip>
@@ -107,39 +133,43 @@ function FileTab({
 
               <Spacing mr={1} />
 
-              <Text muted={!selected}>
+              <Text monospace muted={!selected} noWrapping small>
                 {renderTabTitle ? renderTabTitle(filePath) : filePath}
               </Text>
             </FlexContainer>
           </Tooltip>
 
-          <Spacing mr={2} />
+          {onClickTabClose && (
+            <>
+              <Spacing mr={2} />
 
-          <Tooltip
-            label="Close"
-            size={null}
-            widthFitContent
-          >
-            <Link
-              autoHeight
-              block
-              noHoverUnderline
-              noOutline
-              onClick={(e) => {
-                pauseEvent(e);
-                onClickTabClose?.(filePath);
-              }}
-              preventDefault
-            >
-              {(focused || selected) && (
-                <Close
-                  muted={!selected}
-                  size={UNIT * 1.25}
-                />
-              )}
-              {!focused && !selected && <div style={{ width: UNIT * 1.25 }} />}
-            </Link>
-          </Tooltip>
+              <Tooltip
+                label="Close"
+                size={null}
+                widthFitContent
+              >
+                <Link
+                  autoHeight
+                  block
+                  noHoverUnderline
+                  noOutline
+                  onClick={(e) => {
+                    pauseEvent(e);
+                    onClickTabClose?.(filePath);
+                  }}
+                  preventDefault
+                >
+                  {(focused || selected) && (
+                    <Close
+                      muted={!selected}
+                      size={ICON_SIZE}
+                    />
+                  )}
+                  {!focused && !selected && <div style={{ width: ICON_SIZE }} />}
+                </Link>
+              </Tooltip>
+            </>
+          )}
         </FlexContainer>
       </FileTabStyle>
     </FlexContainer>

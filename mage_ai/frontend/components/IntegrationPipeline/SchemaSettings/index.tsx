@@ -72,8 +72,8 @@ function SchemaSettings({
     { isLoading: isLoadingUpdateDestinationBlockState },
   ] = useMutation(
     api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      dataExporterBlock?.uuid,
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(dataExporterBlock?.uuid),
       { query: { update_state: true } },
     ),
     {

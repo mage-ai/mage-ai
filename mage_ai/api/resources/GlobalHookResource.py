@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.global_hooks.models import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys
 
@@ -34,7 +35,14 @@ class GlobalHookResource(AsyncBaseResource):
         if isinstance(resource_types, str):
             resource_types = [EntityName(m) for m in resource_types.split(',') if m]
 
-        global_hooks = GlobalHooks.load_from_file()
+        root_project = query.get('root_project', [False])
+        if root_project:
+            root_project = root_project[0]
+
+        global_hooks = GlobalHooks.load_from_file(
+            all_global_hooks=False,
+            repo_path=base_repo_path() if root_project else None,
+        )
 
         return self.build_result_set(
             global_hooks.hooks(
@@ -47,6 +55,14 @@ class GlobalHookResource(AsyncBaseResource):
 
     @classmethod
     async def create(self, payload: Dict, user: User, **kwargs) -> 'GlobalHookResource':
+        query = kwargs.get('query') or {}
+
+        root_project = query.get('root_project', [False])
+        if root_project:
+            root_project = root_project[0]
+        if not root_project:
+            root_project = payload.get('root_project')
+
         if user and user.id:
             payload['metadata'] = dict(
                 user=dict(
@@ -54,7 +70,7 @@ class GlobalHookResource(AsyncBaseResource):
                 ),
             )
 
-        hook = Hook.load(**payload)
+        hook = Hook.load(**ignore_keys(payload, ['root_project']))
 
         if not hook.uuid or not hook.resource_type or not hook.operation_type:
             missing = []
@@ -78,7 +94,10 @@ class GlobalHookResource(AsyncBaseResource):
             )
             raise ApiError(error)
 
-        global_hooks = GlobalHooks.load_from_file()
+        global_hooks = GlobalHooks.load_from_file(
+            all_global_hooks=False,
+            repo_path=base_repo_path() if root_project else None,
+        )
         if global_hooks.get_hook(
             operation_type=hook.operation_type,
             resource_type=hook.resource_type,
@@ -92,7 +111,7 @@ class GlobalHookResource(AsyncBaseResource):
             raise ApiError(error)
 
         global_hooks.add_hook(hook, snapshot=True)
-        global_hooks.save()
+        global_hooks.save(repo_path=base_repo_path() if root_project else None)
 
         return self(hook, user, **kwargs)
 
@@ -103,6 +122,10 @@ class GlobalHookResource(AsyncBaseResource):
         resource_type = query.get('resource_type', [None])
         if resource_type:
             resource_type = resource_type[0]
+
+        root_project = query.get('root_project', [False])
+        if root_project:
+            root_project = root_project[0]
 
         operation_type = query.get('operation_type', [None])
         if operation_type:
@@ -116,7 +139,10 @@ class GlobalHookResource(AsyncBaseResource):
         if include_resource_types:
             include_resource_types = include_resource_types[0]
 
-        global_hooks = GlobalHooks.load_from_file()
+        global_hooks = GlobalHooks.load_from_file(
+            all_global_hooks=False,
+            repo_path=base_repo_path() if root_project else None,
+        )
         hook = global_hooks.get_hook(
             operation_type=HookOperation(operation_type) if operation_type else operation_type,
             resource_type=EntityName(resource_type) if resource_type else resource_type,
@@ -129,19 +155,38 @@ class GlobalHookResource(AsyncBaseResource):
         return self(hook, user, **kwargs)
 
     async def update(self, payload: Dict, **kwargs):
-        global_hooks = GlobalHooks.load_from_file()
+        query = kwargs.get('query') or {}
+
+        root_project = query.get('root_project', [False])
+        if root_project:
+            root_project = root_project[0]
+
+        global_hooks = GlobalHooks.load_from_file(
+            all_global_hooks=False,
+            repo_path=base_repo_path() if root_project else None,
+        )
         self.model = global_hooks.add_hook(
             self.model,
-            payload=ignore_keys(payload, ['snapshot']),
+            payload=ignore_keys(payload, ['root_project', 'snapshot']),
             snapshot=payload.get('snapshot') or False,
             update=True,
         )
-        global_hooks.save()
+        global_hooks.save(repo_path=base_repo_path() if root_project else None)
 
     async def delete(self, **kwargs):
-        global_hooks = GlobalHooks.load_from_file()
+        query = kwargs.get('query') or {}
+
+        root_project = query.get('root_project', [False])
+        if root_project:
+            root_project = root_project[0]
+
+        global_hooks = GlobalHooks.load_from_file(
+            all_global_hooks=False,
+            repo_path=base_repo_path() if root_project else None,
+        )
+
         global_hooks.remove_hook(self.model)
-        global_hooks.save()
+        global_hooks.save(repo_path=base_repo_path() if root_project else None)
 
 
 async def __load_pipelines(resource: GlobalHookResource):

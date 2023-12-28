@@ -167,7 +167,7 @@ function RunPipelinePopup({
         </>
       }
     >
-      {!tabs?.length || TAB_RUNTIME_VARIABLES.uuid === selectedTab?.uuid && (
+      {(!tabs?.length || TAB_RUNTIME_VARIABLES.uuid === selectedTab?.uuid) && (
         <>
           {tabs?.length >= 1 && (
             <Spacing p={PADDING_UNITS}>

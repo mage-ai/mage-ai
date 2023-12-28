@@ -13,7 +13,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
+import Paginate, { MAX_PAGES } from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, {
   COMPLETED_STATUSES,
@@ -41,6 +41,8 @@ import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
+const ROW_LIMIT = 100;
+
 type PipelineBlockRunsProps = {
   pipeline: PipelineType;
   pipelineRun: PipelineRunType;
@@ -58,10 +60,6 @@ function PipelineBlockRuns({
   const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
-
-  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {}, {
-    refreshInterval: 5000,
-  });
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -115,6 +113,14 @@ function PipelineBlockRuns({
     { refreshInterval: 5000 },
   );
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
+
+  const blockUuids = blockRuns.map(({ block_uuid }) => block_uuid);
+  const blockUuidArg = useMemo(() => blockUuids, [blockUuids]);
+
+  const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {
+    _limit: ROW_LIMIT,
+    block_uuid: blockUuidArg,
+  }, {});
 
   const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
     api.pipeline_runs.useUpdate(pipelineRunId),
@@ -213,7 +219,7 @@ function PipelineBlockRuns({
   const buildSidekick = useCallback(props => buildTableSidekick({
     ...props,
     blockRuns,
-    blocksOverride: dataBlocks?.blocks,
+    blocksOverride: totalBlockRuns <= ROW_LIMIT && dataBlocks?.blocks,
     loadingData: loadingOutput,
     outputs: dataOutput?.outputs,
     selectedRun,
@@ -228,6 +234,7 @@ function PipelineBlockRuns({
     selectedRun,
     selectedTabSidekick,
     setSelectedTabSidekick,
+    totalBlockRuns,
   ]);
 
   return (

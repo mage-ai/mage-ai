@@ -1,4 +1,4 @@
-from mage_ai.shared.hash import get_json_value, set_value
+from mage_ai.shared.hash import combine_into, get_json_value, set_value
 from mage_ai.tests.base_test import TestCase
 
 
@@ -36,3 +36,31 @@ class HashTests(TestCase):
                 ),
             ),
         )
+
+    def test_combine_into(self):
+        parent = dict(
+            mage=dict(power=2, level=2),
+            fire=dict(
+                power=3,
+                water=dict(
+                    level=3,
+                ),
+            ),
+        )
+        child = dict(
+            mage=dict(power=1),
+            fire=dict(power=2),
+            ice=3,
+        )
+        combine_into(child, parent)
+
+        self.assertEqual(parent, dict(
+            mage=dict(power=1, level=2),
+            fire=dict(
+                power=2,
+                water=dict(
+                    level=3,
+                ),
+            ),
+            ice=3,
+        ))

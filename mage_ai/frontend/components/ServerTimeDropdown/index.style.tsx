@@ -77,4 +77,5 @@ export const ToggleGroupStyle = styled.div`
 export const ToggleDropdownCellStyle = styled(DropdownCellStyle)`
   justify-content: flex-start;
   gap: 12px;
+  padding-right: ${UNIT * 1.25}px;
 `;

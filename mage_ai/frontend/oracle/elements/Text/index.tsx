@@ -33,6 +33,7 @@ export type TextProps = {
   cyan?: boolean;
   cursor?: string;
   danger?: boolean;
+  dbt?: boolean;
   default?: boolean;
   disableWordBreak?: boolean;
   disabled?: boolean;
@@ -238,6 +239,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.cyan && `
     color: ${(props.theme || dark).accent.cyan};
+  `}
+
+  ${props => props.dbt && `
+    color: ${(props.theme || dark).accent.dbt};
   `}
 
   ${props => props.sky && `

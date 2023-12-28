@@ -18,6 +18,7 @@ password  |  User/password password| optional|
 security_token | User/password generated security token. Reset under your Account Settings| optional|
 domain | Your Salesforce instance domain. Use 'login' (default) or 'test' (sandbox), or Salesforce My domain.| Required|
 action | How to handle incomming records by default (insert/update/upsert/delete/hard_delete). Default is "insert"| Required|
+external_id_name | External Id name if required to `upsert` records. Default is "Id"| optional|
 allow_failures | Allows the target to continue persisting if a record fails to commit. Default is "False"| optional| 
 table_name | Allows the target to use a different source to this destination. (Read "limitations" section)| optional|
 
@@ -28,3 +29,10 @@ To obtain OAuth credentials, follow this [guide](https://github.com/mage-ai/mage
 ## Limitations
 
 To effectively use a different source to this destination, you must specify the "table_name" parameter on the Configuration section. The table_name <b>must</b> consist of a Salesforce section name (E.G Accounts).
+
+## Allow Failures
+
+If `allow_failures` is set to True, only records that were <b> eligible </b> to be written but were not will be skipped.
+Being eligible means that the record correspond to a given Salesforce object schema and is being executed with a valid action.
+
+Else, if the given Salesforce Bulk result does not correspond to "success" AND `allow_failures` is False, a raise will be called. 

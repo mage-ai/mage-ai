@@ -14,16 +14,13 @@ MAX_RETRIES = 4
 
 class Rest():
 
-    def __init__(self, sf, limit=False):
+    def __init__(self, sf):
         self.sf = sf
-        self.limit = limit
 
     def query(self, catalog_entry, state):
         start_date = self.sf.get_start_date(state, catalog_entry)
         query = self.sf._build_query_string(catalog_entry, start_date)
 
-        if self.limit is True:
-            query = query + ' LIMIT 10'
         return self._query_recur(query, catalog_entry, start_date)
 
     # pylint: disable=too-many-arguments
@@ -35,8 +32,8 @@ class Rest():
             end_date=None,
             retries=MAX_RETRIES):
         params = {"q": query}
-        url = "{}/services/data/v52.0/queryAll".format(self.sf.instance_url)
-        headers = self.sf._get_standard_headers()
+        url = "{}/services/data/v53.0/queryAll".format(self.sf.instance_url)
+        headers = self.sf.auth.rest_headers
 
         sync_start = singer_utils.now()
         if end_date is None:
@@ -78,8 +75,13 @@ class Rest():
                 raise ex
 
         if retryable:
-            end_date = self.sf.get_window_end_date(singer_utils.strptime_with_tz(start_date_str),
-                                                   end_date)
+            start_date = singer_utils.strptime_with_tz(start_date_str)
+            half_day_range = (end_date - start_date) // 2
+            end_date = end_date - half_day_range
+
+            if half_day_range.days == 0:
+                raise TapSalesforceException(
+                    "Attempting to query by 0 day range, this would cause infinite looping.")
 
             query = self.sf._build_query_string(catalog_entry, singer_utils.strftime(start_date),
                                                 singer_utils.strftime(end_date))
@@ -103,5 +105,5 @@ class Rest():
 
             if next_records_url is None:
                 break
-
-            url = "{}{}".format(self.sf.instance_url, next_records_url)
+            else:
+                url = "{}{}".format(self.sf.instance_url, next_records_url)

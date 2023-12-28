@@ -1,11 +1,12 @@
 import os
 from typing import Dict, List
 
-from github import Auth, Github
-
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
 from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
+from mage_ai.data_preparation.git.clients.base import Client as GitClient
+from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
 from mage_ai.data_preparation.preferences import get_preferences
 
 
@@ -34,19 +35,24 @@ class GitBranchResource(GenericResource):
         if include_remote_branches:
             include_remote_branches = include_remote_branches[0]
 
+        remote_url = query.get('remote_url', None)
+        if remote_url:
+            remote_url = remote_url[0]
+
         repository = query.get('repository', None)
         if repository:
             repository = repository[0]
 
-            access_token = api.get_access_token_for_user(user)
-            if access_token:
-                auth = Auth.Token(access_token.token)
-                g = Github(auth=auth)
-                repo = g.get_repo(repository)
-                branches = repo.get_branches()
+            provider = OAUTH_PROVIDER_GITHUB
+            if remote_url:
+                provider = get_provider_from_remote_url(remote_url)
 
-                for branch in branches:
-                    arr.append(dict(name=branch.name))
+            access_token = api.get_access_token_for_user(user, provider=provider)
+            if access_token:
+                branches = GitClient.get_client_for_provider(provider)(
+                    access_token.token
+                ).get_branches(repository)
+                arr = [dict(name=branch) for branch in branches]
         else:
             git_manager = self.get_git_manager(user=user)
             arr += [dict(name=branch) for branch in git_manager.branches]

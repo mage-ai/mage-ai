@@ -52,12 +52,12 @@ import {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { capitalize } from '@utils/string';
 import { datetimeInLocalTimezone } from '@utils/date';
+import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
 import { getRunStatusTextProps } from '@components/shared/Table/constants';
-import { getTimeInUTCString } from '@components/Triggers/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
@@ -300,10 +300,7 @@ function BackfillDetail({
             monospace
             small
           >
-            {displayLocalTimezone
-              ? datetimeInLocalTimezone(startDatetime, displayLocalTimezone)
-              : getTimeInUTCString(startDatetime)
-            }
+            {displayLocalOrUtcTime(startDatetime, displayLocalTimezone)}
           </Text>,
         ],
         [
@@ -322,10 +319,7 @@ function BackfillDetail({
             monospace
             small
           >
-            {displayLocalTimezone
-              ? datetimeInLocalTimezone(endDatetime, displayLocalTimezone)
-              : getTimeInUTCString(endDatetime)
-            }
+            {displayLocalOrUtcTime(endDatetime, displayLocalTimezone)}
           </Text>,
         ],
         [

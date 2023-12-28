@@ -66,6 +66,5 @@ class S3LoggerManager(LoggerManager):
         """
         return self.get_logs()
 
-    def output_logs_to_destination(self):
-        key = self.get_log_filepath()
-        self.s3_client.upload(key, self.stream.getvalue())
+    def upload_logs(self, key: str, logs: str):
+        self.s3_client.upload(key, logs)

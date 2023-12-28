@@ -17,9 +17,6 @@ export const LOCAL_STORAGE_KEY_DISPLAY_LOCAL_TIMEZONE = 'display_local_timezone'
 
 export const LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING = 'hide_public_demo_warning';
 
-export const LOCAL_STORAGE_KEY_DISPLAY_LOCAL_SERVER_TIME =
-  'display_local_server_time';
-
 export const LOCAL_STORAGE_KEY_INCLUDE_SERVER_TIME_SECONDS =
   'include_server_time_seconds';
 

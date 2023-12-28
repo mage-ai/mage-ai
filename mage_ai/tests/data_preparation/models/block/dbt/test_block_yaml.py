@@ -2,12 +2,19 @@ import asyncio
 import os
 import secrets
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+
+from dbt.cli.main import dbtRunnerResult
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.data_preparation.models.block.platform.test_mixins import (
+    BlockWithProjectPlatformShared,
+)
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 def build_block(pipeline, content: str) -> DBTBlock:
@@ -94,10 +101,10 @@ class DBTBlockYAMLTest(TestCase):
             str(Path('test_repo_path/dbt/test_project_name'))
         )
 
-    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli.invoke')
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
-    def test_execute_block(self, Profiles, DBTCli: MagicMock):
-        DBTCli.return_value.invoke.return_value = (None, True)
+    def test_execute_block(self, Profiles, mock_invoke: MagicMock):
+        mock_invoke.return_value = dbtRunnerResult(success=True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
 
         self.dbt_block._execute_block(
@@ -116,7 +123,17 @@ class DBTBlockYAMLTest(TestCase):
             global_vars={}
         )
 
-        DBTCli.assert_called_once_with([
+        self.assertEqual(mock_invoke.mock_calls[0], call([
+            'deps',
+            '--select', 'model+',
+            '--exclude', 'model',
+            '--vars', '{"foo": "bar"}',
+            '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
+            '--full-refresh',
+            '--target', 'dev',
+            '--profiles-dir', 'test_profiles_dir'
+        ]))
+        self.assertEqual(mock_invoke.mock_calls[1], call([
             'build',
             '--select', 'model+',
             '--exclude', 'model',
@@ -125,12 +142,12 @@ class DBTBlockYAMLTest(TestCase):
             '--full-refresh',
             '--target', 'dev',
             '--profiles-dir', 'test_profiles_dir'
-        ], None)
+        ]))
 
-    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.DBTCli.invoke')
     @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
-    def test_execute_block_with_interpolation(self, Profiles, DBTCli: MagicMock):
-        DBTCli.return_value.invoke.return_value = (None, True)
+    def test_execute_block_with_interpolation(self, Profiles, mock_invoke: MagicMock):
+        mock_invoke.return_value = dbtRunnerResult(success=True)
         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
 
         key = secrets.token_urlsafe()
@@ -216,7 +233,25 @@ class DBTBlockYAMLTest(TestCase):
             ),
         )
 
-        DBTCli.assert_called_once_with([
+        self.assertEqual(mock_invoke.mock_calls[0], call([
+            'deps',
+            '--select',
+            'models/example/my_first_dbt_model.sql',
+            'models/example/my_second_dbt_model.sql',
+            '--vars',
+            '{"foo": "bar", "model1": "my_first_dbt_model", '
+            f'"test1": "{value}", "test2": "my_first_dbt_model", '
+            '"test3": "[1, 2, 3]", "test4": "3"}',
+            '--project-dir',
+            str(Path('test_repo_path/dbt/test_project_name')),
+            '--full-refresh',
+            '--target',
+            'dev',
+            '--profiles-dir',
+            'test_profiles_dir',
+        ]))
+
+        self.assertEqual(mock_invoke.mock_calls[1], call([
             'build',
             '--select',
             'models/example/my_first_dbt_model.sql',
@@ -232,4 +267,60 @@ class DBTBlockYAMLTest(TestCase):
             'dev',
             '--profiles-dir',
             'test_profiles_dir',
-        ], None)
+        ]))
+
+
+@patch(
+    'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
+    lambda: True,
+)
+@patch(
+    'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
+    lambda: True,
+)
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
+class DBTBlockYAMLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
+    def test_project_path(self):
+        block = build_block(MagicMock(), '')
+        block.configuration['dbt_project_name'] = 'mage_data/dbt/demo'
+        self.assertEqual(block.project_path, os.path.join(base_repo_path(), 'mage_data/dbt/demo'))
+
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Profiles')
+    @patch('mage_ai.data_preparation.models.block.dbt.block_yaml.Project')
+    def test_metadata_async(self, Project, Profiles):
+        Project.return_value.local_packages = ['test_project_name']
+        Project.return_value.project = {
+            'name': 'test_project_name',
+            'profile': 'test_project_name'
+        }
+        Profiles.return_value.profiles = {
+            'test_project_name': {
+                'target': 'test',
+                'outputs': {
+                    'test': None,
+                    'dev': None,
+                    'prod': None
+                }
+            }
+        }
+
+        block = build_block(MagicMock(), '')
+        # block.configuration['dbt_project_name'] = 'demo'
+        metadata = asyncio.run(block.metadata_async())
+
+        self.assertEqual(
+            metadata,
+            {
+                'dbt': {
+                    'block': {},
+                    'project': None,
+                    'projects': {
+                        'test_project_name': {
+                            'project_name': 'test_project_name',
+                            'target': 'test',
+                            'targets': ['dev', 'prod', 'test']
+                        }
+                    }
+                }
+            }
+        )

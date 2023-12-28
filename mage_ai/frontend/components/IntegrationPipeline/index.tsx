@@ -485,7 +485,10 @@ function IntegrationPipeline({
   ]);
 
   const [updateDestinationBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    api.blocks.pipelines.useUpdate(
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(dataExporterBlock?.uuid),
+    ),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

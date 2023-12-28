@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import ErrorsType from '@interfaces/ErrorsType';
 import TriggerDetail from '@components/Triggers/Detail';
