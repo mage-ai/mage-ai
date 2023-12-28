@@ -141,9 +141,9 @@ class Variable:
             # If parquet file exists for given variable, set the variable type to GEO_DATAFRAME
             self.variable_type = VariableType.GEO_DATAFRAME
         if self.variable_type == VariableType.DATAFRAME:
-            self.__delete_parquet()
+            self.__delete_parquet(DATAFRAME_PARQUET_FILE)
         if self.variable_type == VariableType.GEO_DATAFRAME:
-            self.__delete_geoparquet()
+            self.__delete_parquet(GEO_DATAFRAME_PARQUET_FILE)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__delete_dataframe_analysis()
         return self.__delete_json()
@@ -307,15 +307,8 @@ class Variable:
         if self.storage.isdir(self.variable_path):
             self.storage.remove_dir(self.variable_path)
 
-    def __delete_parquet(self) -> None:
-        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
-
-        if self.storage.path_exists(file_path):
-            self.storage.remove(file_path)
-            self.storage.remove_dir(self.variable_path)
-
-    def __delete_geoparquet(self) -> None:
-        file_path = os.path.join(self.variable_path, GEO_DATAFRAME_PARQUET_FILE)
+    def __delete_parquet(self, file_name: str) -> None:
+        file_path = os.path.join(self.variable_path, file_name)
 
         if self.storage.path_exists(file_path):
             self.storage.remove(file_path)
