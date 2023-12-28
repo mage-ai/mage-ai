@@ -36,5 +36,5 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.TRIGGER]: Schedule,
   };
 
-  return mapping[item?.type];
+  return mapping[item?.object_type];
 };

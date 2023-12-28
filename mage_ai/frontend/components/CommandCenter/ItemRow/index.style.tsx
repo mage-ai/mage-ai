@@ -19,7 +19,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
 
   const {
     color_uuid: colorUUID,
-    type: itemType,
+    object_type: objectType,
   } = item || {
     color: null,
     type: null,
@@ -33,29 +33,32 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   if (colorUUID) {
     accent = dig(themeUse, colorUUID);
     accentLight = dig(themeUse, colorUUID);
-  } else if (ObjectTypeEnum.APPLICATION == itemType) {
+  } else if (ObjectTypeEnum.APPLICATION == objectType) {
     accent = themeUse?.accent?.warning;
     accentLight = themeUse?.accent?.warningTransparent;
-  } else if (ObjectTypeEnum.BLOCK == itemType) {
+  } else if (ObjectTypeEnum.BLOCK == objectType) {
     return getColorsForBlockType(item?.metadata?.block?.type, {
       theme,
     });
-  } else if (ObjectTypeEnum.CODE == itemType) {
+  } else if (ObjectTypeEnum.CODE == objectType) {
     accent = themeUse?.accent?.negative;
     accentLight = themeUse?.accent?.negativeTransparent;
-  } else if (ObjectTypeEnum.CHAT === itemType || ObjectTypeEnum.DOCUMENT === itemType) {
+  } else if (ObjectTypeEnum.CHAT === objectType || ObjectTypeEnum.DOCUMENT === objectType) {
     accent = themeUse?.background?.success;
     accentLight = themeUse?.background?.successLight;
-  } else if (ObjectTypeEnum.FILE == itemType || ObjectTypeEnum.FOLDER == itemType) {
+  } else if (ObjectTypeEnum.FILE == objectType) {
     accent = themeUse?.accent?.sky;
     accentLight = themeUse?.accent?.skyLight;
-  } else if (ObjectTypeEnum.GIT == itemType) {
+  } else if (ObjectTypeEnum.FOLDER == objectType) {
+    accent = themeUse?.chart?.tertiary;
+    accentLight = themeUse?.accent?.skyLight;
+  } else if (ObjectTypeEnum.GIT == objectType) {
     accent = themeUse?.accent?.rose;
     accentLight = themeUse?.accent?.roseLight;
-  } else if (ObjectTypeEnum.PIPELINE == itemType) {
+  } else if (ObjectTypeEnum.PIPELINE == objectType) {
     accent = themeUse?.accent?.cyan;
     accentLight = themeUse?.accent?.cyanLight;
-  } else if (ObjectTypeEnum.TRIGGER == itemType) {
+  } else if (ObjectTypeEnum.TRIGGER == objectType) {
     accent = themeUse?.accent?.rose;
     accentLight = themeUse?.accent?.roseLight;
   }
