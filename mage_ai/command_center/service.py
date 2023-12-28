@@ -1,9 +1,10 @@
 from typing import Dict, List
 
 from mage_ai.command_center.applications.factory import ApplicationFactory
-from mage_ai.command_center.files.factory import Factory as FileFactory
+from mage_ai.command_center.factory import BaseFactory
+from mage_ai.command_center.files.factory import FileFactory
 from mage_ai.command_center.models import Item
-from mage_ai.command_center.support.factory import Factory as SupportFactory
+from mage_ai.command_center.support.constants import ITEMS as ITEMS_SUPPRT
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
 
@@ -17,7 +18,7 @@ async def search_items(
     user: User = None,
 ) -> List[Item]:
     return flatten([
-        FileFactory.build_items(user=user),
-        SupportFactory.build_items(user=user),
-        ApplicationFactory.build_items(user=user),
+        FileFactory.process(user=user),
+        BaseFactory.process(ITEMS_SUPPRT, user=user),
+        ApplicationFactory.process(user=user),
     ])

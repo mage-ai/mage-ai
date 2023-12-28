@@ -2,7 +2,7 @@ from typing import Dict
 
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
 from mage_ai.command_center.models import CommandCenterSettings
-from mage_ai.command_center.utils import search_items
+from mage_ai.command_center.service import search_items
 from mage_ai.orchestration.db.models.oauth import User
 
 

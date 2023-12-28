@@ -3,13 +3,26 @@ from enum import Enum
 SETTINGS_FILENAME = '.command_center.yaml'
 
 
-class CommandCenterItemType(str, Enum):
-    ACTION = 'action'
+class ItemType(str, Enum):
+    ACTION = 'action'  # Cast spell
+    CREATE = 'create'  # Conjure
+    DETAIL = 'detail'  # Enchant
+    LIST = 'list'  # Enchant
+    NAVIGATE = 'navigate'  # Teleport
+    OPEN = 'open'  # Summon - open shows a view on the same page vs navigating to another page
+    SUPPORT = 'support'  # Reinforcements
+
+
+class ObjectType(str, Enum):
     APPLICATION = 'application'
     BLOCK = 'block'
+    CHAT = 'chat'
+    CODE = 'code'
+    DOCUMENT = 'document'
     FILE = 'file'
+    FOLDER = 'folder'
+    GIT = 'git'
     PIPELINE = 'pipeline'
-    SUPPORT = 'support'
     TRIGGER = 'trigger'
 
 

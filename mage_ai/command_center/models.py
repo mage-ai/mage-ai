@@ -4,9 +4,10 @@ from typing import Dict, List, Union
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import (
     ApplicationType,
-    CommandCenterItemType,
     FileExtension,
     InteractionType,
+    ItemType,
+    ObjectType,
 )
 from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import BlockType
@@ -101,22 +102,6 @@ class Metadata(BaseDataClass):
 
 
 @dataclass
-class ItemBase(BaseDataClass):
-    title: str
-    type: CommandCenterItemType
-    uuid: str
-    actions: List[Action] = None
-    description: str = None
-    items: List[Dict] = None
-    metadata: Metadata = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('metadata', Metadata)
-        self.serialize_attribute_classes('actions', Action)
-        self.serialize_attribute_enum('type', CommandCenterItemType)
-
-
-@dataclass
 class FormInput(BaseDataClass):
     action_uuid: str = None
     description: str = None
@@ -166,29 +151,6 @@ class Application(BaseDataClass):
             super().to_dict(**kwargs),
             dict(settings=arr),
         )
-
-
-@dataclass
-class Item(ItemBase):
-    title: str
-    type: CommandCenterItemType
-    uuid: str
-    actions: List[Action] = None
-    application: Application = None
-    color_uuid: str = None
-    description: str = None
-    icon_uuid: str = None
-    items: List[ItemBase] = None
-    metadata: Metadata = None
-    subtype: CommandCenterItemType = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('application', Application)
-        self.serialize_attribute_class('metadata', Metadata)
-        self.serialize_attribute_classes('actions', Action)
-        self.serialize_attribute_classes('items', Item)
-        self.serialize_attribute_enum('subtype', CommandCenterItemType)
-        self.serialize_attribute_enum('type', CommandCenterItemType)
 
 
 @dataclass
@@ -276,3 +238,44 @@ class CommandCenterSettings(BaseDataClass):
 
     def save(self, file_path: str = None):
         save_settings(self.to_dict(), file_path=file_path)
+
+
+@dataclass
+class ItemBase(BaseDataClass):
+    item_type: ItemType
+    object_type: ObjectType
+    title: str
+    uuid: str
+    actions: List[Action] = None
+    application: Application = None
+    color_uuid: str = None
+    description: str = None
+    icon_uuid: str = None
+    items: List[Dict] = None
+    metadata: Metadata = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('application', Application)
+        self.serialize_attribute_class('metadata', Metadata)
+        self.serialize_attribute_classes('actions', Action)
+        self.serialize_attribute_enum('item_type', ItemType)
+        self.serialize_attribute_enum('object_type', ObjectType)
+
+
+@dataclass
+class Item(ItemBase):
+    item_type: ItemType
+    object_type: ObjectType
+    title: str
+    uuid: str
+    actions: List[Action] = None
+    application: Application = None
+    color_uuid: str = None
+    description: str = None
+    icon_uuid: str = None
+    items: List[ItemBase] = None
+    metadata: Metadata = None
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.serialize_attribute_classes('items', Item)

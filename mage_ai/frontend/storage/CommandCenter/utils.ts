@@ -1,7 +1,7 @@
 import {
   CommandCenterItemType,
   CommandCenterSearchHistoryType,
-  CommandCenterTypeEnum,
+  ObjectTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
 import { ITEMS } from '@components/CommandCenter/mocks';
@@ -73,7 +73,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
     ],
     description: pathname,
     title,
-    type: CommandCenterTypeEnum.APPLICATION,
+    type: ObjectTypeEnum.APPLICATION,
     uuid: asPath,
   }));
 }

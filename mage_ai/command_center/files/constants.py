@@ -2,15 +2,17 @@ from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
     ApplicationType,
-    CommandCenterItemType,
     InteractionType,
+    ItemType,
+    ObjectType,
 )
 from mage_ai.presenters.interactions.constants import InteractionInputType
 
 ITEMS = [
     dict(
+        item_type=ItemType.CREATE,
+        object_type=ObjectType.FILE,
         title='Create a new file',
-        subtype=CommandCenterItemType.ACTION,
         application=dict(
             application_type=ApplicationType.FORM,
             settings=[
@@ -65,8 +67,8 @@ ITEMS = [
         condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),
     ),
     dict(
+        item_type=ItemType.CREATE,
+        object_type=ObjectType.FOLDER,
         title='Create a new folder',
-        type=CommandCenterItemType.ACTION,
-        icon_uuid='FolderOutline',
     ),
 ]

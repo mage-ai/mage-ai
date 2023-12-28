@@ -7,23 +7,37 @@ export enum ItemApplicationTypeEnum {
   FORM = 'form',
 }
 
-export enum CommandCenterTypeEnum {
+export enum ItemTypeEnum {
   ACTION = 'action',
+  CREATE = 'create',
+  DETAIL = 'detail',
+  LIST = 'list',
+  NAVIGATE = 'navigate',
+  OPEN = 'open',
+  SUPPORT = 'support',
+}
+
+export enum ObjectTypeEnum {
   APPLICATION = 'application',
   BLOCK = 'block',
+  CHAT = 'chat',
+  CODE = 'code',
+  DOCUMENT = 'document',
   FILE = 'file',
+  FOLDER = 'folder',
+  GIT = 'git',
   PIPELINE = 'pipeline',
-  SUPPORT = 'support',
   TRIGGER = 'trigger',
 }
 
 export const TYPE_TITLE_MAPPING = {
-  [CommandCenterTypeEnum.ACTION]: 'Cast spell',
-  [CommandCenterTypeEnum.APPLICATION]: 'Teleport to app',
-  [CommandCenterTypeEnum.BLOCK]: 'Enchant block',
-  [CommandCenterTypeEnum.FILE]: 'Summon file',
-  [CommandCenterTypeEnum.PIPELINE]: 'Enchant pipeline',
-  [CommandCenterTypeEnum.TRIGGER]: 'Enchant trigger',
+  [ItemTypeEnum.ACTION]: 'Cast',
+  [ItemTypeEnum.CREATE]: 'Conjure',
+  [ItemTypeEnum.DETAIL]: 'Scry',
+  [ItemTypeEnum.LIST]: 'Scry',
+  [ItemTypeEnum.NAVIGATE]: 'Teleport',
+  [ItemTypeEnum.OPEN]: 'Summon',
+  [ItemTypeEnum.SUPPORT]: 'Heal',
 };
 
 interface BlockMetadataType {
@@ -113,14 +127,14 @@ export interface CommandCenterItemType {
   description?: string;
   color_uuid?: string;
   icon_uuid?: string;
+  item_type: ItemTypeEnum;
   items?: CommandCenterItemType[];
   metadata?: {
     block?: BlockMetadataType;
     file?: FileMetadataType;
   };
-  subtype?: CommandCenterTypeEnum;
+  object_type: ObjectTypeEnum;
   title: string;
-  type: CommandCenterTypeEnum;
   uuid: string;
 }
 

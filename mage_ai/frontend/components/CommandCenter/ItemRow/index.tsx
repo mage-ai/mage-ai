@@ -6,7 +6,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import {
   CommandCenterItemType,
-  CommandCenterTypeEnum,
+  ObjectTypeEnum,
   TYPE_TITLE_MAPPING,
 } from '@interfaces/CommandCenterType';
 import { ItemRowClassNameEnum } from '../constants';
@@ -38,7 +38,7 @@ function ItemRow({
   const iconColor = getIconColor(item);
 
   const applicationWithDescriptionPath =
-    CommandCenterTypeEnum.APPLICATION === type && description?.startsWith('/');
+    ObjectTypeEnum.APPLICATION === type && description?.startsWith('/');
 
   return (
     <ItemStyle

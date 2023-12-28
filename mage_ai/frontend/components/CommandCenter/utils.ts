@@ -1,6 +1,5 @@
 import {
   CommandCenterItemType,
-  CommandCenterTypeEnum,
   TYPE_TITLE_MAPPING,
 } from '@interfaces/CommandCenterType';
 import { indexBy } from '@utils/array';
@@ -32,14 +31,5 @@ export function combineLocalAndServerItems(
 }
 
 export function getDisplayCategory(item: CommandCenterItemType): string {
-  const {
-    subtype,
-    type,
-  } = item;
-
-  if (CommandCenterTypeEnum.APPLICATION === type && CommandCenterTypeEnum.SUPPORT === subtype) {
-    return 'Reinforcements';
-  }
-
-  return TYPE_TITLE_MAPPING[type];
+  return TYPE_TITLE_MAPPING[item?.item_type];
 }

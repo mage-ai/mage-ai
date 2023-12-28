@@ -1,11 +1,16 @@
 import * as AllIcons from '@oracle/icons';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
-import { CommandCenterItemType, CommandCenterTypeEnum } from '@interfaces/CommandCenterType';
+import { CommandCenterItemType, ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import {
   BlockGeneric,
+  BranchAlt,
+  Chat,
+  Code,
+  DocumentIcon,
   File as FileIcon,
-  NavDashboard,
+  FolderOutline,
   Lightning,
+  NavDashboard,
   PipelineV3,
   Schedule,
 } from '@oracle/icons';
@@ -18,12 +23,17 @@ export function getIcon(item: CommandCenterItemType) {
   }
 
   const mapping = {
-    [CommandCenterTypeEnum.ACTION]: Lightning,
-    [CommandCenterTypeEnum.APPLICATION]: NavDashboard,
-    [CommandCenterTypeEnum.BLOCK]: BlockGeneric,
-    [CommandCenterTypeEnum.FILE]: FileIcon,
-    [CommandCenterTypeEnum.PIPELINE]: PipelineV3,
-    [CommandCenterTypeEnum.TRIGGER]: Schedule,
+    [ObjectTypeEnum.ACTION]: Lightning,
+    [ObjectTypeEnum.APPLICATION]: NavDashboard,
+    [ObjectTypeEnum.BLOCK]: BlockGeneric,
+    [ObjectTypeEnum.CHAT]: Chat,
+    [ObjectTypeEnum.CODE]: Code,
+    [ObjectTypeEnum.DOCUMENT]: DocumentIcon,
+    [ObjectTypeEnum.FILE]: FileIcon,
+    [ObjectTypeEnum.FOLDER]: FolderOutline,
+    [ObjectTypeEnum.GIT]: BranchAlt,
+    [ObjectTypeEnum.PIPELINE]: PipelineV3,
+    [ObjectTypeEnum.TRIGGER]: Schedule,
   };
 
   return mapping[item?.type];
