@@ -1,9 +1,12 @@
 import {
+ ButtonActionType,
+ ButtonActionTypeEnum,
   CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
   TYPE_TITLE_MAPPING,
 } from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { dig, setNested } from '@utils/hash';
 import { indexBy } from '@utils/array';
 
@@ -66,4 +69,50 @@ export function updateActionFromUpstreamResults(
   }
 
   return actionCopy;
+}
+
+export function executeButtonActions(
+  button: ButtonActionType,
+  executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>,
+  item: CommandCenterItemType,
+) {
+  const actionTypes = button?.action_types || [];
+
+  const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
+    const actionType = actionTypes?.[index];
+
+    let actionFunction = (result: KeyValueType = {}) => {};
+
+    if (ButtonActionTypeEnum.RESET_FORM === actionType) {
+      if (typeof window !== 'undefined') {
+        const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER, {
+          detail: {
+            actionType: 'reset_form',
+            item,
+          },
+        });
+
+        actionFunction = (result: KeyValueType = {}) => window.dispatchEvent(eventCustom);
+      }
+    } else if (ButtonActionTypeEnum.EXECUTE === actionType) {
+      actionFunction = executeActionApplication;
+    } else if (ButtonActionTypeEnum.CLOSE_APPLICATION === actionType) {
+      actionFunction = (result: KeyValueType = {}) => removeApplication();
+    }
+
+    const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
+
+    return result?.then((resultsInner) => {
+      if (index + 1 <= actionTypes?.length - 1) {
+        return invokeActionAndCallback(index + 1, {
+          ...(results || {}),
+          ...(resultsInner || {}),
+        });
+      }
+    });
+  };
+
+  if (actionTypes?.length >= 1) {
+    return invokeActionAndCallback(0);
+  }
 }

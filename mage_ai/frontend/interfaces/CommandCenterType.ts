@@ -4,7 +4,7 @@ import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 
 export enum ButtonActionTypeEnum {
-  CANCEL = 'cancel',
+  CLOSE_APPLICATION = 'close_application',
   EXECUTE = 'execute',
   RESET_FORM = 'reset_form',
 }

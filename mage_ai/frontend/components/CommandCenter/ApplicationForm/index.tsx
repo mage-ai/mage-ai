@@ -69,12 +69,15 @@ function ApplicationForm({
   useEffect(() => {
     const handleAction = ({
       detail: {
-        actionType
+        actionType,
+        item: itemEvent,
       },
     }) => {
-      if (ButtonActionTypeEnum.RESET_FORM === actionType) {
-        setAttributes(null);
-        setAttributesTouched(null);
+      if (itemEvent?.uuid !== item?.uuid) {
+        if (ButtonActionTypeEnum.RESET_FORM === actionType) {
+          setAttributes(null);
+          setAttributesTouched(null);
+        }
       }
     };
 
@@ -89,7 +92,7 @@ function ApplicationForm({
         window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER, handleAction);
       }
     };
-  }, []);
+  }, [item]);
 
   const formMemo = useMemo(() => settings?.map((formInput, idx) => {
     const {

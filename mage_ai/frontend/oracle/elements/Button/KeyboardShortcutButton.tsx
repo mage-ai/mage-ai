@@ -63,6 +63,7 @@ export type KeyboardShortcutButtonProps = {
   centerText?: boolean;
   children?: any;
   compact?: boolean;
+  default?: boolean;
   earth?: boolean;
   fitContentWidth?: boolean;
   fire?: boolean;
@@ -272,6 +273,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
 
   ${props => props.muted && `
     color: ${(props.theme.monotone || dark.monotone).grey300};
+  `}
+
+  ${props => props.default && `
+    color: ${(props.theme.content || dark.content).default};
   `}
 
   ${props => props.warning && `

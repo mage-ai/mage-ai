@@ -86,7 +86,7 @@ function KeyboardText({
       style.borderColor = (themeContext?.monotone || dark.monotone)?.muted;
     } else {
       // @ts-ignore
-      style.borderColor = (themeContext || dark)?.monotone?.grey500;
+      style.borderColor = (themeContext || dark)?.monotone?.grey400;
     }
     style.borderRadius = BORDER_RADIUS_SMALL;
     style.borderStyle = 'solid';
@@ -97,7 +97,7 @@ function KeyboardText({
   return (
     <Text
       center
-      default={!(disabled || mutedDisabled)}
+      // default={!(disabled || mutedDisabled)}
       inline
       monospace={monospace}
       muted={disabled || mutedDisabled}

@@ -18,6 +18,15 @@ ITEMS = [
             application_type=ApplicationType.FORM,
             buttons=[
                 dict(
+                    label='Cancel',
+                    tooltip='Discard changes and go back.',
+                    keyboard_shortcuts=[[27]],
+                    action_types=[
+                        ButtonActionType.RESET_FORM,
+                        ButtonActionType.CLOSE_APPLICATION,
+                    ],
+                ),
+                dict(
                     label='Create new file',
                     tooltip='Save changes and create the new file.',
                     keyboard_shortcuts=[[13]],

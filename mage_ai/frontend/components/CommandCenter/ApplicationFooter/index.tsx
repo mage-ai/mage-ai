@@ -10,11 +10,13 @@ import Text from '@oracle/elements/Text';
 import { ApplicationProps } from '../ItemApplication/constants';
 import { KEY_CODE_KEY_SYMBOL_MAPPING } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { executeButtonActions } from '../utils';
 import { getIcon } from '../ItemRow/constants';
 import { getIconColor } from '../ItemRow/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 function ApplicationFooter({
+  executeAction,
   item,
 }: ApplicationProps) {
   const {
@@ -24,6 +26,7 @@ function ApplicationFooter({
 
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
+  const buttonsCount = application?.buttons?.length ?? 0;
 
   return (
     <FlexContainer alignItems="center" fullWidth justifyContent="space-between">
@@ -43,31 +46,39 @@ function ApplicationFooter({
       </Flex>
 
       <FlexContainer alignItems="center">
-        {application?.buttons?.map(({
-          action_types: actionTypes,
-          color_uuid: colorUUID,
-          keyboard_shortcuts: keyboardShortcuts,
-          label,
-          tooltip,
-        }) => (
-          <FlexContainer alignItems="center" key={label}>
-            <KeyboardShortcutButton
-              addPlusSignBetweenKeys
-              bold
-              compact
-              keyTextGroups={keyboardShortcuts?.map(
-                arr => arr?.map(keyCode => KEY_CODE_KEY_SYMBOL_MAPPING[keyCode]),
-              )}
-              keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
-              noBorder
-              onClick={() => {
-                console.log('enter')
-              }}
-            >
-              {label}
-            </KeyboardShortcutButton>
-          </FlexContainer>
-        ))}
+        {application?.buttons?.map((button, idx: number) => {
+          const {
+            action_types: actionTypes,
+            color_uuid: colorUUID,
+            keyboard_shortcuts: keyboardShortcuts,
+            label,
+            tooltip,
+          } = button;
+
+          return (
+            <FlexContainer alignItems="center" key={label}>
+              {idx >= 1 && <Spacing mr={PADDING_UNITS} />}
+
+              <KeyboardShortcutButton
+                addPlusSignBetweenKeys
+                bold
+                compact
+                default={idx === 0 && buttonsCount >= 2}
+                keyTextGroups={keyboardShortcuts?.map(
+                  arr => arr?.map(keyCode => KEY_CODE_KEY_SYMBOL_MAPPING[keyCode]),
+                )}
+                keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+                noBackground={idx === 0 && buttonsCount >= 2}
+                noBorder
+                onClick={() => {
+                  executeButtonActions(button, executeAction, item);
+                }}
+              >
+                {label}
+              </KeyboardShortcutButton>
+            </FlexContainer>
+          );
+        })}
       </FlexContainer>
     </FlexContainer>
   );

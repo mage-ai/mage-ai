@@ -38,7 +38,6 @@ import {
   ItemsContainerStyle,
   MAIN_TEXT_INPUT_ID,
 } from './index.style';
-import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -64,7 +63,12 @@ import {
   getSearchHistory,
   getSetSettings,
 } from '@storage/CommandCenter/utils';
-import { combineLocalAndServerItems, filterItems, updateActionFromUpstreamResults } from './utils';
+import {
+  combineLocalAndServerItems,
+  executeButtonActions,
+  filterItems,
+  updateActionFromUpstreamResults,
+} from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -114,7 +118,11 @@ function CommandCenter() {
       refApplications.current = [];
     }
 
-    refApplications.current.push(item);
+    refApplications.current.push({
+      executeAction,
+      focusedItemIndex,
+      item,
+    });
 
     [
       refHeader,
@@ -712,7 +720,11 @@ function CommandCenter() {
         openCommandCenter();
       }
     } else if (isApplicationActive()) {
-      const item = refApplications?.current?.[0];
+      const {
+        executeAction: executeActionApplication,
+        item,
+      } = refApplications?.current?.[0] || {};
+
       // If in a context of a selected item.
       // Leave the current context and go back.
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping)) {
@@ -725,23 +737,10 @@ function CommandCenter() {
           } = button;
 
           keyboardShortcuts?.forEach((keyCodes) => {
-            console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF', onlyKeysPresent(keyCodes, keyMapping))
             if (onlyKeysPresent(keyCodes, keyMapping)) {
               pauseEvent(event);
 
-              button?.action_types
-
-              const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER, {
-                detail: {
-                  actionType: 'reset_form',
-                },
-              });
-
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(eventCustom);
-              }
-
-              return;
+              return executeButtonActions(button, executeActionApplication, item);
             }
           });
         });
