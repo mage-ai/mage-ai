@@ -347,9 +347,8 @@ class PipelineRunProjectPlatformMixin:
 
 
 class BlockRunProjectPlatformMixin:
-    async def logs_async_project_platform(self):
-        repo_path = None
-        if self.pipeline_run and self.pipeline_run.pipeline_schedule:
+    async def logs_async_project_platform(self, repo_path: str = None):
+        if not repo_path and self.pipeline_run and self.pipeline_run.pipeline_schedule:
             repo_path = self.pipeline_run.pipeline_schedule.repo_path
 
         pipeline = await get_pipeline_from_platform_async(

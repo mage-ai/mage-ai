@@ -1416,9 +1416,9 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
             repo_config=pipeline.repo_config,
         ).get_logs()
 
-    async def logs_async(self):
+    async def logs_async(self, repo_path: str = None):
         if project_platform_activated():
-            return await self.logs_async_project_platform()
+            return await self.logs_async_project_platform(repo_path=repo_path)
 
         pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
         return await LoggerManagerFactory.get_logger_manager(
