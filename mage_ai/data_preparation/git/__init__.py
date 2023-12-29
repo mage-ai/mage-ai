@@ -80,7 +80,6 @@ class Git:
                 self.__setup_repo()
 
         if self.repo and self.git_config:
-            print('Setting git config...')
             self.__set_git_config()
 
         if self.remote_repo_link and self.repo:

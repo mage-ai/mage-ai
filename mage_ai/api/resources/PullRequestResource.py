@@ -59,7 +59,7 @@ class PullRequestResource(GenericResource):
             'body',
             'title',
         ]:
-            if key not in payload:
+            if key not in payload or payload.get(key) is None:
                 error.update(dict(message=f'Value for {key} is required but empty.'))
                 raise ApiError(error)
 
