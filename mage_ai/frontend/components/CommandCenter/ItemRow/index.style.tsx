@@ -21,10 +21,12 @@ export function getIconColor(item: CommandCenterItemType, opts: {
 
   const {
     color_uuid: colorUUID,
+    metadata,
     object_type: objectType,
   } = item || {
-    color: null,
-    type: null,
+    color_uuid: null,
+    metadata: null,
+    object_type: null,
   };
 
   const themeUse = (theme || dark);
@@ -63,6 +65,12 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   } else if (ObjectTypeEnum.TRIGGER == objectType) {
     accent = themeUse?.accent?.rose;
     accentLight = themeUse?.accent?.roseLight;
+  }
+
+  if (metadata?.action_timestamp) {
+    const temp = accentLight;
+    accentLight = accent;
+    accent = temp;
   }
 
   return {

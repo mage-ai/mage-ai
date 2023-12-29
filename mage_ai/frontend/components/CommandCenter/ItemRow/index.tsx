@@ -7,7 +7,6 @@ import Text from '@oracle/elements/Text';
 import {
   CommandCenterItemType,
   ObjectTypeEnum,
-  TYPE_TITLE_MAPPING,
 } from '@interfaces/CommandCenterType';
 import { ItemRowClassNameEnum } from '../constants';
 import { ItemStyle, getIconColor } from './index.style';
@@ -73,7 +72,7 @@ function ItemRow({
         </Flex>
 
         <Text muted>
-          {getDisplayCategory(item)}
+          {getDisplayCategory(item, true)}
         </Text>
       </FlexContainer>
     </ItemStyle>

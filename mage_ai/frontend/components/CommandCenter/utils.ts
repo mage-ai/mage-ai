@@ -1,10 +1,12 @@
 import {
- ButtonActionType,
- ButtonActionTypeEnum,
+  ButtonActionType,
+  ButtonActionTypeEnum,
   CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
+  OBJECT_TITLE_MAPPING_SHORT,
   TYPE_TITLE_MAPPING,
+  TYPE_TITLE_MAPPING_NORMAL,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { dig, setNested } from '@utils/hash';
@@ -26,7 +28,13 @@ export function filterItems(
   }) => title?.toLowerCase()?.includes(value) || description?.toLowerCase()?.includes(value));
 }
 
-export function getDisplayCategory(item: CommandCenterItemType): string {
+export function getDisplayCategory(item: CommandCenterItemType, normal: boolean = false): string {
+  if (normal) {
+    return [
+      TYPE_TITLE_MAPPING_NORMAL[item?.item_type],
+      OBJECT_TITLE_MAPPING_SHORT[item?.object_type],
+    ].join(' ');
+  }
   return TYPE_TITLE_MAPPING[item?.item_type];
 }
 

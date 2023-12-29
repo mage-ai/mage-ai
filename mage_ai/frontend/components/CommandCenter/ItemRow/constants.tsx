@@ -16,10 +16,17 @@ import {
 } from '@oracle/icons';
 
 export function getIcon(item: CommandCenterItemType) {
-  const { icon_uuid: iconUUID } = item;
+  const {
+    icon_uuid: iconUUID,
+    metadata,
+  } = item;
 
   if (iconUUID && iconUUID in AllIcons) {
     return AllIcons?.[iconUUID];
+  }
+
+  if (metadata?.action_timestamp) {
+    return Schedule;
   }
 
   const mapping = {

@@ -47,6 +47,16 @@ export const TYPE_TITLE_MAPPING = {
   [ItemTypeEnum.SUPPORT]: 'Heal',
 };
 
+export const TYPE_TITLE_MAPPING_NORMAL = {
+  [ItemTypeEnum.ACTION]: 'Action',
+  [ItemTypeEnum.CREATE]: 'Create',
+  [ItemTypeEnum.DETAIL]: 'View',
+  [ItemTypeEnum.LIST]: 'View',
+  [ItemTypeEnum.NAVIGATE]: 'Launch',
+  [ItemTypeEnum.OPEN]: 'Open',
+  [ItemTypeEnum.SUPPORT]: 'Support',
+};
+
 export const OBJECT_TITLE_MAPPING = {
   [ObjectTypeEnum.APPLICATION]: ObjectTypeEnum.APPLICATION,
   [ObjectTypeEnum.BLOCK]: ObjectTypeEnum.BLOCK,
@@ -198,8 +208,14 @@ export interface CommandCenterItemType {
   item_type: ItemTypeEnum;
   items?: CommandCenterItemType[];
   metadata?: {
+    action_timestamp?: number;
     block?: BlockMetadataType;
     file?: FileMetadataType;
+    page?: {
+      asPath: string;
+      pathname: string;
+      query?: KeyValueType;
+    };
   };
   object_type: ObjectTypeEnum;
   title: string;

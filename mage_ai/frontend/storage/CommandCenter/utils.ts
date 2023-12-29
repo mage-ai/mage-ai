@@ -15,9 +15,10 @@ import {
   MAX_ITEMS_HISTORY_SEARCHES,
 } from './constants';
 import {
-  DATE_FORMAT_LONG_NO_SEC,
+  DATE_FORMAT_FULL,
+  TIME_FORMAT_NO_SEC,
   dateFromFromUnixTimestamp,
-  datetimeInLocalTimezone,
+  momentInLocalTimezone,
 } from '@utils/date';
 import { get, set } from '@storage/localStorage';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
@@ -80,13 +81,15 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
       : pathname;
 
     if (timestamp) {
-      const datetimeString = datetimeInLocalTimezone(
+      const dt = momentInLocalTimezone(
         dateFromFromUnixTimestamp(timestamp, {
           withMilliseconds: true,
-        })?.format(DATE_FORMAT_LONG_NO_SEC),
+        }),
         displayLocalTimezone,
-      )
-      description = `${description} recently opened on ${datetimeString}`;
+      );
+
+      description =
+        `opened on ${dt?.format(DATE_FORMAT_FULL)} at ${dt?.format(TIME_FORMAT_NO_SEC)}`;
     }
 
     return {
@@ -103,6 +106,9 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
           uuid: asPath,
         },
       ],
+      metadata: {
+        action_timestamp: timestamp,
+      },
     };
   });
 }
