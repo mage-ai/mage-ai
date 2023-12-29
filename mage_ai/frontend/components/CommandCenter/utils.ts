@@ -26,16 +26,6 @@ export function filterItems(
   }) => title?.toLowerCase()?.includes(value) || description?.toLowerCase()?.includes(value));
 }
 
-export function combineLocalAndServerItems(
-  itemsServer: CommandCenterItemType[],
-  itemsLocal: CommandCenterItemType[],
-): CommandCenterItemType[] {
-  const mapping = indexBy(itemsServer || [], ({ uuid }) => uuid) || {};
-
-  // @ts-ignore
-  return (itemsServer || [])?.concat((itemsLocal || [])?.filter(({ uuid }) => !(uuid in mapping)));
-}
-
 export function getDisplayCategory(item: CommandCenterItemType): string {
   return TYPE_TITLE_MAPPING[item?.item_type];
 }

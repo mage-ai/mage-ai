@@ -1,10 +1,12 @@
+import * as osPath from 'path';
+
 import {
   CommandCenterItemType,
   CommandCenterSearchHistoryType,
+  ItemTypeEnum,
   ObjectTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
-import { ITEMS } from '@components/CommandCenter/mocks';
 import {
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES,
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES,
@@ -12,7 +14,13 @@ import {
   MAX_ITEMS_HISTORY_PAGES,
   MAX_ITEMS_HISTORY_SEARCHES,
 } from './constants';
+import {
+  DATE_FORMAT_LONG_NO_SEC,
+  dateFromFromUnixTimestamp,
+  datetimeInLocalTimezone,
+} from '@utils/date';
 import { get, set } from '@storage/localStorage';
+import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export function getSetSettings(settings = null) {
   const data = {
@@ -59,28 +67,52 @@ export function getPageHistory(): PageHistoryType[] {
 }
 
 export function getPageHistoryAsItems(): CommandCenterItemType[] {
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
+
   return (getPageHistory() || [])?.map(({
     asPath,
     pathname,
+    timestamp,
     title,
-  }: PageHistoryType) => ({
-    actions: [
-      {
-        page: {
-          path: asPath,
+  }: PageHistoryType) => {
+    let description = pathname?.[0] === osPath.sep
+      ? pathname?.slice(1, pathname?.length || 0)
+      : pathname;
+
+    if (timestamp) {
+      const datetimeString = datetimeInLocalTimezone(
+        dateFromFromUnixTimestamp(timestamp, {
+          withMilliseconds: true,
+        })?.format(DATE_FORMAT_LONG_NO_SEC),
+        displayLocalTimezone,
+      )
+      description = `${description} recently opened on ${datetimeString}`;
+    }
+
+    return {
+      uuid: asPath,
+      item_type: ItemTypeEnum.NAVIGATE,
+      object_type: ObjectTypeEnum.APPLICATION,
+      title,
+      description,
+      actions: [
+        {
+          page: {
+            path: asPath,
+          },
+          uuid: asPath,
         },
-      },
-    ],
-    description: pathname,
-    title,
-    type: ObjectTypeEnum.APPLICATION,
-    uuid: asPath,
-  }));
+      ],
+    };
+  });
 }
 
 export function addPageHistory(page: PageHistoryType) {
   // @ts-ignore
-  const arr: PageHistoryType[] = [page].concat(
+  const arr: PageHistoryType[] = [{
+    ...page,
+    timestamp: Number(new Date()),
+  }].concat(
     (getPageHistory() || []).filter(({ asPath }) => asPath !== page?.asPath)
   );
 
@@ -90,9 +122,4 @@ export function addPageHistory(page: PageHistoryType) {
   ));
 
   return arr;
-}
-
-export function fetchItems(): CommandCenterItemType[] {
-  // @ts-ignore
-  return (getPageHistoryAsItems() || []).concat(ITEMS);
 }

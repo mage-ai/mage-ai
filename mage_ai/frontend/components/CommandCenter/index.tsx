@@ -13,6 +13,7 @@ import Loading from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import useCache from '@storage/CommandCenter/useCache';
 import { ArrowLeft } from '@oracle/icons';
 import {
   CommandCenterActionInteractionTypeEnum,
@@ -65,13 +66,12 @@ import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
   addSearchHistory,
-  fetchItems as fetchItemsLocal,
   getPageHistoryAsItems,
   getSearchHistory,
   getSetSettings,
 } from '@storage/CommandCenter/utils';
+import { combineAndSetCachedItems } from '@storage/CommandCenter/cache';
 import {
-  combineLocalAndServerItems,
   executeButtonActions,
   filterItems,
   updateActionFromUpstreamResults,
@@ -669,10 +669,7 @@ function CommandCenter() {
     }
   }
 
-  const renderItems = useCallback((
-    items: CommandCenterItemType[],
-    setInit: boolean = false,
-  ): Promise<any> => {
+  function renderItems(items: CommandCenterItemType[], setInit: boolean = false): Promise<any> {
     refItems.current = items;
 
     if (setInit && refItemsInit?.current === null) {
@@ -711,52 +708,42 @@ function CommandCenter() {
     refRootItems?.current?.render(itemsEl);
 
     return new Promise((resolve, reject) => resolve?.(items));
-  }, [
-    handleSelectItemRow,
-    handleNavigation,
-  ]);
+  }
 
-  const [fetchItemsServer, { isLoading: isLoadingFetchItemsServer }] = useMutation(
-    () => api.command_center_items.useCreate()({
-      command_center_item: {
-        page_history: getPageHistoryAsItems(),
-        search: refInput?.current?.value,
-        search_history: getSearchHistory(),
-      },
-    }),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            command_center_item,
-          }) => {
-            renderItems(
-              combineLocalAndServerItems(
-                command_center_item?.items || [],
-                // @ts-ignore
-                fetchItemsLocal() || refItems?.items || [],
-              ),
-              refItemsInit?.current === null,
-            );
-            refSettings.current = getSetSettings(command_center_item?.settings || {});
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
+  function combineFilterRender(items: CommandCenterItemType[] = null, setInit: boolean = false) {
+    // What is this used for?
+    // refItems?.current
+    const combined = combineAndSetCachedItems(items);
+    const filtered = filterItems(refInput?.current?.value, combined);
+
+    return renderItems(filtered, setInit);
+  }
+
+  const {
+    fetch: fetchItems,
+    isLoading: isLoadingFetch,
+  } = useCache({
+    searchRef: refInput,
+    onSuccessCallback: ({
+      command_center_item,
+    }) => {
+      combineFilterRender(command_center_item?.items, refItemsInit?.current === null);
+      refSettings.current = getSetSettings(command_center_item?.settings || {});
     },
-  );
+    onErrorCallback: (response, errors) => showError({
+      errors,
+      response,
+    }),
+  });
 
   useEffect(() => {
-    if (isLoadingFetchItemsServer || isLoadingRequest) {
+    if (isLoadingFetch || isLoadingRequest) {
       startLoading();
     } else {
       stopLoading();
     }
   }, [
-    isLoadingFetchItemsServer,
+    isLoadingFetch,
     isLoadingRequest,
   ]);
 
@@ -789,7 +776,7 @@ function CommandCenter() {
 
     refActive.current = true;
 
-    fetchItemsServer();
+    fetchItems();
   }
 
   const {
@@ -972,7 +959,7 @@ function CommandCenter() {
       }
     }
   }, [
-    fetchItemsServer,
+    fetchItems,
     reload,
   ]);
 
@@ -984,8 +971,8 @@ function CommandCenter() {
 
   useEffect(() => {
     if (reload !== null) {
-      renderItems(fetchItemsLocal());
-      fetchItemsServer();
+      combineFilterRender();
+      fetchItems();
       refReload.current = (refReload?.current || 0) + 1;
     }
   }, [reload]);
@@ -1067,21 +1054,20 @@ function CommandCenter() {
           </HeaderStyle>
 
           <InputStyle
+            autoComplete="off"
             className="inactive"
             id={MAIN_TEXT_INPUT_ID}
             onChange={(e) => {
+              // There is no need to set refInput.current.value = searchText,
+              // this is already done when typing in the input element.
               const searchText = e.target.value;
               const isRemoving = searchText?.length < refInputValuePrevious?.current?.length;
 
               refInputValuePrevious.current = searchText;
 
               removeFocusFromCurrentItem();
-
-              // There is no need to set refInput.current.value = searchText,
-              // this is already done when typing in the input element.
-              renderItems(
-                filterItems(searchText, refItemsInit?.current || []),
-              );
+              combineFilterRender(refItemsInit?.current);
+              fetchItems(300);
 
               setTimeout(() => handleNavigation(0), 1);
 
