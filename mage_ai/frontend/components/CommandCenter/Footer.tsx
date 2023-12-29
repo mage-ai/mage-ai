@@ -45,6 +45,23 @@ function Footer({
             addPlusSignBetweenKeys
             bold
             compact
+            keyTextGroups={[[KEY_SYMBOL_ENTER]]}
+            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+            noBorder
+            onClick={(e) => {
+              pauseEvent(e);
+              handleSelectItemRow();
+            }}
+          >
+            <span ref={refFooterButtonEnter}>Select</span>
+          </KeyboardShortcutButton>
+
+          <Spacing mr={1} />
+
+          <KeyboardShortcutButton
+            addPlusSignBetweenKeys
+            bold
+            compact
             default
             keyTextGroups={[[KEY_SYMBOL_ARROW_UP]]}
             keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
@@ -90,23 +107,6 @@ function Footer({
             }}
           >
             <span ref={refFooterButtonEscape}>Close</span>
-          </KeyboardShortcutButton>
-
-          <Spacing mr={1} />
-
-          <KeyboardShortcutButton
-            addPlusSignBetweenKeys
-            bold
-            compact
-            keyTextGroups={[[KEY_SYMBOL_ENTER]]}
-            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
-            noBorder
-            onClick={(e) => {
-              pauseEvent(e);
-              handleSelectItemRow();
-            }}
-          >
-            <span ref={refFooterButtonEnter}>Select</span>
           </KeyboardShortcutButton>
         </FlexContainer>
       </FlexContainer>
