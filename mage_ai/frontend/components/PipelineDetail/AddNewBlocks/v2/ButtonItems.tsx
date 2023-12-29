@@ -645,6 +645,24 @@ function ButtonItems({
     tooltip?: string;
     uuid: string;
   }) => {
+    const buttonEl = (
+      <Button
+        beforeIcon={beforeIcon || Icon && (
+          <Icon
+            secondary={index === buttonMenuOpenIndex}
+            size={ICON_SIZE}
+          />
+        )}
+        noBackground
+        noBorder
+        noPadding
+        onClick={(e) => {
+          onClick?.(e);
+        }}
+      >
+        {label?.() || uuid}
+      </Button>
+    );
     return (
       <ButtonWrapper
         compact={compact}
@@ -660,29 +678,18 @@ function ButtonItems({
           parentRef={refsMapping[index]}
           uuid={uuid}
         >
-          <Tooltip
-            block
-            label={tooltip}
-            size={null}
-            widthFitContent
-          >
-            <Button
-              beforeIcon={beforeIcon || Icon && (
-                <Icon
-                  secondary={index === buttonMenuOpenIndex}
-                  size={ICON_SIZE}
-                />
-              )}
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                onClick?.(e);
-              }}
+          {tooltip && (
+            <Tooltip
+              block
+              label={typeof tooltip === 'string' ? tooltip : tooltip?.()}
+              size={null}
+              widthFitContent
             >
-              {label?.() || uuid}
-            </Button>
-          </Tooltip>
+              {buttonEl}
+            </Tooltip>
+          )}
+
+          {!tooltip && buttonEl}
         </FlyoutMenuWrapper>
       </ButtonWrapper>
     );
