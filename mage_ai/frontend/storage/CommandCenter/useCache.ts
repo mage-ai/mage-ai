@@ -3,7 +3,6 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import api from '@api';
-import { getCachedItemsUUIDs } from './cache';
 import { getPageHistoryAsItems, getSearchHistory } from './utils';
 import { onSuccess } from '@api/utils/response';
 
@@ -32,7 +31,6 @@ export default function useCache({
         page_history: getPageHistoryAsItems(),
         search: searchRef?.current?.value,
         search_history: getSearchHistory(),
-        uuids: getCachedItemsUUIDs(),
       },
     }),
     {

@@ -10,6 +10,11 @@ class ApplicationFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
         items = []
 
+        for item_dict in (self.page_history or []):
+            item_scored = self.filter_score(item_dict)
+            if item_scored:
+                items.append(item_scored)
+
         for item in ITEMS:
             item_dict = dict(
                 item_type=ItemType.NAVIGATE,

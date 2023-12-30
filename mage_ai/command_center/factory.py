@@ -43,7 +43,7 @@ class BaseFactory(ABC):
         factory_or_items: List[Union['BaseFactory', List[Dict]]],
         **kwargs,
     ) -> List[Item]:
-        async def process(
+        async def process_factory_items(
             class_or_items: Union['BaseFactory', List[Dict]],
             cls=self,
             kwargs=kwargs,
@@ -58,7 +58,7 @@ class BaseFactory(ABC):
             return await factory_class(**kwargs).process(items_dicts)
 
         return flatten(await asyncio.gather(
-            *[process(class_or_items) for class_or_items in factory_or_items]
+            *[process_factory_items(class_or_items) for class_or_items in factory_or_items]
         ))
 
     @property
@@ -87,7 +87,6 @@ class BaseFactory(ABC):
         return score
 
     def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
-
         condition = item_dict.get('condition')
         if (not condition or condition(dict(project=self.project, user=self.user))) and \
                 (not self.__uuids_mapping or self.get_item_uuid(

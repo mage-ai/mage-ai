@@ -10,7 +10,7 @@ import {
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { dig, setNested } from '@utils/hash';
-import { indexBy } from '@utils/array';
+import { indexBy, sortByKey } from '@utils/array';
 
 export function filterItems(
   searchText: string,
@@ -26,6 +26,12 @@ export function filterItems(
     description,
     title,
   }) => title?.toLowerCase()?.includes(value) || description?.toLowerCase()?.includes(value));
+}
+
+export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {
+  return sortByKey(items || [], 'score', {
+    ascending: false,
+  });
 }
 
 export function getDisplayCategory(item: CommandCenterItemType, normal: boolean = false): string {

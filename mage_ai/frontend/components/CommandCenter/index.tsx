@@ -70,10 +70,11 @@ import {
   getSearchHistory,
   getSetSettings,
 } from '@storage/CommandCenter/utils';
-import { combineAndSetCachedItems } from '@storage/CommandCenter/cache';
+import { addCachedItems, getCachedItems } from '@storage/CommandCenter/cache';
 import {
   executeButtonActions,
   filterItems,
+  rankItems,
   updateActionFromUpstreamResults,
 } from './utils';
 import { onSuccess } from '@api/utils/response';
@@ -180,6 +181,7 @@ function CommandCenter() {
         }
       });
 
+      refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
       refInput?.current?.focus();
     }
   }
@@ -669,10 +671,16 @@ function CommandCenter() {
     }
   }
 
-  function renderItems(items: CommandCenterItemType[], setInit: boolean = false): Promise<any> {
+  function renderItems(
+    items: CommandCenterItemType[],
+    opts: {
+      shouldFilter?: boolean;
+      shouldSetInit?: boolean;
+    } = {},
+  ): Promise<any> {
     refItems.current = items;
 
-    if (setInit && refItemsInit?.current === null) {
+    if (opts?.shouldSetInit && refItemsInit?.current === null) {
       refItemsInit.current = items;
     }
 
@@ -681,7 +689,12 @@ function CommandCenter() {
       refRootItems.current = createRoot(domNode);
     }
 
-    const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
+    const itemsProcessed = rankItems(opts?.shouldFilter
+      ? filterItems(refInput?.current?.value, items)
+      : items
+    );
+
+    const itemsEl = itemsProcessed?.map((item: CommandCenterItemType, index: number) => {
       const refItem = refItemsNodes?.current?.[item?.uuid] || createRef();
       refItemsNodes.current[item?.uuid] = refItem;
 
@@ -707,16 +720,7 @@ function CommandCenter() {
 
     refRootItems?.current?.render(itemsEl);
 
-    return new Promise((resolve, reject) => resolve?.(items));
-  }
-
-  function combineFilterRender(items: CommandCenterItemType[] = null, setInit: boolean = false) {
-    // What is this used for?
-    // refItems?.current
-    const combined = combineAndSetCachedItems(items);
-    const filtered = filterItems(refInput?.current?.value, combined);
-
-    return renderItems(filtered, setInit);
+    return new Promise((resolve, reject) => resolve?.(itemsProcessed));
   }
 
   const {
@@ -726,7 +730,11 @@ function CommandCenter() {
     onSuccessCallback: ({
       command_center_item,
     }) => {
-      combineFilterRender(command_center_item?.items, refItemsInit?.current === null);
+      const items = command_center_item?.items || [];
+      addCachedItems(items)
+      renderItems(items, {
+        shouldSetInit: refItemsInit?.current === null,
+      });
       refSettings.current = getSetSettings(command_center_item?.settings || {});
     },
     onErrorCallback: (response, errors) => showError({
@@ -971,7 +979,7 @@ function CommandCenter() {
 
   useEffect(() => {
     if (reload !== null) {
-      combineFilterRender();
+      renderItems(getCachedItems(), { shouldFilter: true });
       fetchItems();
       refReload.current = (refReload?.current || 0) + 1;
     }
@@ -1066,7 +1074,7 @@ function CommandCenter() {
               refInputValuePrevious.current = searchText;
 
               removeFocusFromCurrentItem();
-              combineFilterRender(refItemsInit?.current);
+              renderItems(refItemsInit?.current, { shouldFilter: true });
               fetchItems(300);
 
               setTimeout(() => handleNavigation(0), 1);

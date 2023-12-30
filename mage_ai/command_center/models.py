@@ -94,8 +94,10 @@ class FileMetadata(BaseDataClass):
 
 @dataclass
 class Metadata(BaseDataClass):
+    action_timestamp: int = None
     block: BlockMetadata = None
     file: FileMetadata = None
+    page: Dict = None
 
     def __post_init__(self):
         self.serialize_attribute_class('block', BlockMetadata)
