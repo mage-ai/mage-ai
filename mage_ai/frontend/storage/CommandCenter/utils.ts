@@ -90,7 +90,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
       );
 
       description =
-        `opened on ${dt?.format(DATE_FORMAT_FULL)} at ${dt?.format(TIME_FORMAT_NO_SEC)}`;
+        `recently opened on ${dt?.format(DATE_FORMAT_FULL)} at ${dt?.format(TIME_FORMAT_NO_SEC)}`;
     }
 
     return {
