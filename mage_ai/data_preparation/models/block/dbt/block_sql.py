@@ -111,6 +111,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
 
                 # demo/models/example/my_second_dbt_model.sql -> demo
                 project_name = Path(diff).parts[0]
+
                 return os.path.join(self.base_project_path, project_name)
 
         try:

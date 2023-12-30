@@ -90,18 +90,27 @@ def get_path_parts(file_path: str) -> Tuple[str, str, str]:
     full_path_relative = paths['full_path_relative']
     path = paths['path']
 
+    paths_to_remove = []
     file_path_base = None
+
+    if os.path.isabs(file_path):
+        paths_to_remove = [
+            paths['full_path'],
+            path,
+        ]
+    else:
+        paths_to_remove = [
+            full_path_relative,
+            path,
+        ]
 
     # The file path either has both the root project name and the nested project name
     # or just has the nested project name in it.
-    for path2 in [
-        full_path_relative,
-        path,
-    ]:
+    for path_inner in paths_to_remove:
         if file_path_base:
             break
         try:
-            file_path_base = Path(file_path).relative_to(path2)
+            file_path_base = Path(file_path).relative_to(path_inner)
         except ValueError:
             pass
 

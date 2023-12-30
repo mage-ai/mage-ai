@@ -3,6 +3,7 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.block import Block
@@ -111,6 +112,18 @@ class FileResource(GenericResource):
 
     @safe_db_query
     def delete(self, **kwargs):
+        try:
+            block_resource = BlockResource.member(
+                self.model.file_path,
+                self.current_user,
+                query=dict(file_path=[
+                    self.model.file_path,
+                ]),
+            )
+            if block_resource:
+                block_resource.delete()
+        except ApiError:
+            pass
         return self.model.delete()
 
     @safe_db_query

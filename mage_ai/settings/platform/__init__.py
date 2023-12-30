@@ -98,6 +98,9 @@ def get_repo_paths_for_file_path(
     repo_path: str = None,
     mage_projects_only: bool = False,
 ) -> Dict:
+    if not file_path:
+        return
+
     result = None
 
     repo_paths_all = build_repo_path_for_all_projects(
@@ -105,28 +108,61 @@ def get_repo_paths_for_file_path(
         mage_projects_only=mage_projects_only,
     )
 
+    matches = []
+
     for settings in repo_paths_all.values():
         full_path = settings['full_path']
         path = settings['path']
+
         root_path = base_repo_name()
         path_with_root = os.path.join(root_path, path)
 
-        try:
-            if (
-                str(file_path).startswith(full_path) or
-                (
-                    str(file_path).startswith(root_path) and
-                    Path(file_path).relative_to(path_with_root)
-                ) or
-                (
-                    str(file_path).startswith(path) and
-                    Path(file_path).relative_to(path)
-                )
-            ):
-                result = settings
-                break
-        except ValueError:
-            pass
+        root_path_relative = settings['root_project_name']
+        path_with_root_path_relative = os.path.join(root_path_relative, path)
+
+        score = 0
+        if os.path.isabs(file_path):
+            if str(file_path).startswith(full_path):
+                # path:
+                # platform/magic
+                # platform
+                # platform/magic -> prioritize this
+                score += 2 + len(Path(path).parts)
+
+            try:
+                if str(file_path).startswith(root_path) and \
+                        Path(file_path).relative_to(path_with_root):
+
+                    score += 1
+            except ValueError:
+                try:
+                    if str(file_path).startswith(path) and Path(file_path).relative_to(path):
+                        score += 1
+                except ValueError:
+                    pass
+        else:
+            # file_path is a relative path.
+            # file_path -> default_repo/dbt/demo/models/example/my_first_dbt_model.sql
+            if str(file_path).startswith(path):
+                score += 2 + len(Path(path).parts)
+
+            try:
+                if str(file_path).startswith(root_path_relative) and \
+                        Path(file_path).relative_to(path_with_root_path_relative):
+
+                    score += 1
+            except ValueError:
+                try:
+                    if str(file_path).startswith(path) and Path(file_path).relative_to(path):
+                        score += 1
+                except ValueError:
+                    pass
+
+        if score >= 1:
+            matches.append((score, settings))
+
+    if matches:
+        result = sorted(matches, key=lambda tup: tup[0], reverse=True)[0][1]
 
     return result
 
