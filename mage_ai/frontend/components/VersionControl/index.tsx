@@ -9,7 +9,7 @@ import Dashboard from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
-  import GitBranchType from '@interfaces/GitBranchType';
+import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
 import Remote from './Remote';

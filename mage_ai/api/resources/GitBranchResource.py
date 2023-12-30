@@ -82,8 +82,6 @@ class GitBranchResource(GenericResource):
             setup_repo = True
         git_manager = self.get_git_manager(user=user, setup_repo=setup_repo)
 
-        repo_path_directory = os.path.basename(os.path.dirname(git_manager.repo_path))
-
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
             return self(dict(
@@ -91,7 +89,6 @@ class GitBranchResource(GenericResource):
                 is_git_integration_enabled=preferences.is_git_integration_enabled(),
                 modified_files=[],
                 name=git_manager.current_branch,
-                repo_path_directory=repo_path_directory,
                 staged_files=[],
                 sync_config=get_preferences().sync_config,
                 untracked_files=[],
@@ -106,7 +103,6 @@ class GitBranchResource(GenericResource):
             is_git_integration_enabled=preferences.is_git_integration_enabled(),
             modified_files=modified_files,
             name=git_manager.current_branch,
-            repo_path_directory=repo_path_directory,
             staged_files=staged_files,
             sync_config=get_preferences().sync_config,
             untracked_files=untracked_files,
