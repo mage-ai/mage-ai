@@ -28,7 +28,7 @@ import { roundNumber } from '@utils/string';
 const ICON_SIZE = UNIT * 1.25;
 
 type StatusFooterProps = {
-  pipeline: PipelineTypeEnum;
+  pipelineType: PipelineTypeEnum;
   pipelineContentTouched?: boolean;
   pipelineLastSaved?: number;
   saveStatus?: string;
@@ -36,13 +36,13 @@ type StatusFooterProps = {
 };
 
 function StatusFooter({
-  pipeline,
+  pipelineType,
   pipelineContentTouched,
   pipelineLastSaved,
   saveStatus,
   width,
 }: StatusFooterProps, ref) {
-  const { kernel } = useKernel({ pipelineType: pipeline?.type });
+  const { kernel } = useKernel({ pipelineType });
   const {
     alive,
     usage,

@@ -181,6 +181,10 @@ function PipelineDetailPage({
     shouldReconnect: () => true,
   });
 
+  const { fetch: fetchKernels } = useKernel({
+    refreshInterval: null,
+    revalidateOnFocus: false,
+  });
   const {
     featureEnabled,
     featureUUIDs,
@@ -996,7 +1000,6 @@ function PipelineDetailPage({
     versions,
     versionsVisible,
   } = useFileComponents({
-    active: notebookVisible ? false : (selectedBlock ? false : true),
     addNewBlock: (
       b: BlockRequestPayloadType,
       cb: (block: BlockType) => void,

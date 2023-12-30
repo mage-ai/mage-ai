@@ -6,17 +6,22 @@ import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/Pipe
 
 function useKernel({
   pipelineType,
+  refreshInterval = 5000,
+  revalidateOnFocus,
 }: {
   pipelineType?: PipelineTypeEnum;
+  refreshInterval?: number;
+  revalidateOnFocus?: boolean;
 } = {}): {
+  fetch: () => void;
   kernel: KernelType;
 } {
   const {
     data: dataKernels,
     mutate: fetchKernels,
   } = api.kernels.list({}, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
+    refreshInterval,
+    revalidateOnFocus,
   });
   const kernel = useMemo(() => {
     const kernels = dataKernels?.kernels;
@@ -30,6 +35,7 @@ function useKernel({
   ]);
 
   return {
+    fetch: fetchKernels,
     kernel,
   };
 }

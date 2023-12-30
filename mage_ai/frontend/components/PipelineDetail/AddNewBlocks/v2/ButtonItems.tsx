@@ -642,7 +642,7 @@ function ButtonItems({
     items?: FlyoutMenuItemType[];
     label?: () => string;
     onClick?: (e?: any) => void;
-    tooltip?: string;
+    tooltip?: string | (() => void);
     uuid: string;
   }) => {
     const buttonEl = (
@@ -678,18 +678,19 @@ function ButtonItems({
           parentRef={refsMapping[index]}
           uuid={uuid}
         >
-          {tooltip && (
-            <Tooltip
-              block
-              label={typeof tooltip === 'string' ? tooltip : tooltip?.()}
-              size={null}
-              widthFitContent
-            >
-              {buttonEl}
-            </Tooltip>
-          )}
-
-          {!tooltip && buttonEl}
+          {tooltip
+            ? (
+              <Tooltip
+                block
+                label={(tooltip && typeof tooltip === 'function') ? tooltip() : tooltip}
+                size={null}
+                widthFitContent
+              >
+                {buttonEl}
+              </Tooltip>
+            )
+            : buttonEl
+          }
         </FlyoutMenuWrapper>
       </ButtonWrapper>
     );
