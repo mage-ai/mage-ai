@@ -200,11 +200,6 @@ function PipelineDetailPage({
   const pipelineUUID = pipelineProp.uuid || pipelineUUIDFromUrl;
   const [notebookVisible, setNotebookVisible] = useState(true);
 
-  const [afterHidden, setAfterHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
-
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
@@ -215,6 +210,39 @@ function PipelineDetailPage({
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
   const [includeSparkOutputs, setIncludeSparkOutputs] = useState<boolean>(true);
+
+  const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
+  const [editingBlock, setEditingBlock] = useState<{
+    upstreamBlocks: {
+      block: BlockType;
+      values: BlockType[];
+    };
+  }>({
+    upstreamBlocks: null,
+  });
+  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
+  const [selectedBlock, setSelectedBlockState] = useState<BlockType>(null);
+  const setSelectedBlock = useCallback((block: BlockType) => {
+    setSelectedBlockState(block);
+    if (block && disableShortcuts) {
+      setDisableShortcuts(false);
+    }
+  }, [disableShortcuts]);
+
+  const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
+    block?: {
+      type?: BlockTypeEnum | string;
+      uuid?: string;
+    };
+    file?: {
+      path?: string;
+    };
+  }>(null);
+
+  const [afterHidden, setAfterHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  const [beforeHidden, setBeforeHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
@@ -713,27 +741,6 @@ function PipelineDetailPage({
     widgetTempData,
   ]);
 
-  const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
-  const [editingBlock, setEditingBlock] = useState<{
-    upstreamBlocks: {
-      block: BlockType;
-      values: BlockType[];
-    };
-  }>({
-    upstreamBlocks: null,
-  });
-  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
-  const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
-  const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
-    block?: {
-      type?: BlockTypeEnum | string;
-      uuid?: string;
-    };
-    file?: {
-      path?: string;
-    };
-  }>(null);
-
   const onSelectBlockFile = useCallback((
     blockUUID: string,
     blockType: BlockTypeEnum,
@@ -989,6 +996,7 @@ function PipelineDetailPage({
     versions,
     versionsVisible,
   } = useFileComponents({
+    active: notebookVisible ? false : (selectedBlock ? false : true),
     addNewBlock: (
       b: BlockRequestPayloadType,
       cb: (block: BlockType) => void,

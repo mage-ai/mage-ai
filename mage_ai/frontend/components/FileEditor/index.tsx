@@ -130,12 +130,6 @@ function FileEditor({
   const [touched, setTouched] = useState<boolean>(false);
 
   useEffect(() => {
-    if (active && setDisableShortcuts) {
-      setDisableShortcuts?.(true);
-    }
-  }, [active, setDisableShortcuts]);
-
-  useEffect(() => {
     if (selectedFilePath) {
       containerRef?.current?.scrollIntoView();
     }
@@ -235,6 +229,18 @@ function FileEditor({
               });
             }
             setTouched(true);
+          }}
+          onMountCallback={(editor) => {
+            if (setDisableShortcuts) {
+              editor.onDidFocusEditorWidget = () => {
+                setDisableShortcuts?.(true);
+              };
+            }
+            if (setDisableShortcuts) {
+              editor.onDidBlurEditorWidget = () => {
+                setDisableShortcuts?.(false);
+              };
+            }
           }}
           onSave={(value: string) => {
             saveFile(value, file);
