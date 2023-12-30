@@ -443,7 +443,7 @@ function CodeBlockHeader({
             </FlexContainer>
 
             {subtitle && (
-              <Text monospace muted noWrapping xsmall>
+              <Text monospace muted noWrapping rightAligned xsmall>
                 {subtitle}
               </Text>
             )}

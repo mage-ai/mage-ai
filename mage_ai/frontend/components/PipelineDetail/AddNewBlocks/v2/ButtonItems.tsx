@@ -570,7 +570,7 @@ function ButtonItems({
           DataIntegrationTypeEnum.SOURCES,
         ].join('/')]: 504,
       },
-      label: () => 'Templates',
+      label: () => 'All blocks',
       tooltip: () => 'Add a block from a template',
     },
     [ITEM_BROWSE_TEMPLATES]: {

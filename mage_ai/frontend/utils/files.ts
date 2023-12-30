@@ -21,3 +21,7 @@ export function getFullPath(
 
   return currentPath;
 }
+
+export function removeFileExtension(filename: string): string {
+  return filename.replace(/\.[^/.]+$/, '');
+}
