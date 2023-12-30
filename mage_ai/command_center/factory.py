@@ -9,7 +9,7 @@ from mage_ai.command_center.models import Item
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
-from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
+from mage_ai.shared.hash import ignore_keys, merge_dict
 
 DEFAULT_RATIO = 80
 
@@ -24,7 +24,6 @@ class BaseFactory(ABC):
         search_history: List[Dict] = None,
         search_ratio: int = DEFAULT_RATIO,
         user: User = None,
-        uuids: List[str] = None,
     ):
         self.component = component
         self.page = page
@@ -33,9 +32,6 @@ class BaseFactory(ABC):
         self.search_history = search_history
         self.search_ratio = search_ratio
         self.user = user
-        self.uuids = uuids
-
-        self.__uuids_mapping = index_by(lambda x: x, self.uuids or [])
 
     @classmethod
     async def create_items(
@@ -88,11 +84,7 @@ class BaseFactory(ABC):
 
     def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
         condition = item_dict.get('condition')
-        if (not condition or condition(dict(project=self.project, user=self.user))) and \
-                (not self.__uuids_mapping or self.get_item_uuid(
-                    item_dict,
-                ) in self.__uuids_mapping):
-
+        if (not condition or condition(dict(project=self.project, user=self.user))):
             score = 0
             if self.search:
                 score = fuzz.partial_token_sort_ratio(

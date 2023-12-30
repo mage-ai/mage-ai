@@ -73,6 +73,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
   return (getPageHistory() || [])?.map(({
     asPath,
     pathname,
+    query,
     timestamp,
     title,
   }: PageHistoryType, idx: number) => {
@@ -93,7 +94,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
     }
 
     return {
-      uuid: `${asPath}-${timestamp}-${idx}`,
+      uuid: asPath,
       item_type: ItemTypeEnum.NAVIGATE,
       object_type: ObjectTypeEnum.APPLICATION,
       title,
@@ -108,6 +109,11 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
       ],
       metadata: {
         action_timestamp: timestamp,
+        page: {
+          asPath,
+          pathname,
+          query,
+        },
       },
     };
   });

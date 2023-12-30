@@ -3,24 +3,36 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import api from '@api';
+import { getCachedItems } from './cache';
 import { getPageHistoryAsItems, getSearchHistory } from './utils';
 import { onSuccess } from '@api/utils/response';
 
-export default function useCache({
-  onErrorCallback,
-  onSuccessCallback,
-  searchRef,
-  uuids,
-}: {
-
+export default function useCache(fetchUUID: () => number | string, opts: {
+  onErrorCallback?: (resp: any, err: {
+    code: number;
+    messages: string[];
+  }) => void;
+  onSuccessCallback?: (response: any, opts: any) => Promise<any>;
   searchRef: any;
-  uuids: string[];
-}) {
+} = {}): {
+  fetch: (delay?: number) => Promise<any>;
+  isLoading: boolean;
+} {
+  const {
+    onErrorCallback,
+    onSuccessCallback,
+    searchRef,
+  } = opts || {
+    onErrorCallback: null,
+    onSuccessCallback: null,
+    searchRef: null,
+  };
+
   const timeout = useRef(null);
   const router = useRouter();
 
   const [fetch, { isLoading }] = useMutation(
-    () => api.command_center_items.useCreate()({
+    (uuid?: number | string) => api.command_center_items.useCreate()({
       command_center_item: {
         component: null,
         page: {
@@ -34,9 +46,9 @@ export default function useCache({
       },
     }),
     {
-      onSuccess: (response: any) => onSuccess(
+      onSuccess: (response: any, uuid: number | string) => onSuccess(
         response, {
-          callback: onSuccessCallback,
+          callback: resp => onSuccessCallback(resp, uuid),
           onErrorCallback,
         },
       ),
@@ -47,9 +59,13 @@ export default function useCache({
     clearTimeout(timeout.current);
 
     return new Promise((resolve) => {
-      timeout.current = setTimeout(() => resolve(fetch()), delay);
+      timeout.current = setTimeout(() => {
+        const uuid = fetchUUID();
+
+        return resolve(fetch(uuid));
+      }, delay);
     });
-  }, [fetch]);
+  }, [fetch, fetchUUID]);
 
   return {
     fetch: fetchDelay,

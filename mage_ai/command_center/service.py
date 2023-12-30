@@ -21,7 +21,6 @@ async def search_items(
     search: str = None,
     search_history: List[Dict] = None,
     user: User = None,
-    uuids: List[str] = None,
 ) -> List[Item]:
     return await BaseFactory.create_items(
         FACTORIES_OR_ITEMS,
@@ -31,5 +30,4 @@ async def search_items(
         search=search,
         search_history=search_history,
         user=user,
-        uuids=uuids,
     )

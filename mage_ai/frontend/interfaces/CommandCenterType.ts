@@ -214,8 +214,8 @@ export interface CommandCenterItemType {
     page?: {
       asPath: string;
       pathname: string;
-      query?: KeyValueType;
-    };
+      query: KeyValueType;
+    }
   };
   object_type: ObjectTypeEnum;
   score?: number;

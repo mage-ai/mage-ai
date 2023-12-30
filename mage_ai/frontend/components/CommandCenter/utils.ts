@@ -12,6 +12,8 @@ import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { dig, setNested } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 
+const FILTER_KEYS = ['title', 'description', 'uuid', 'item_type', 'object_type'];
+
 export function filterItems(
   searchText: string,
   items: CommandCenterItemType[],
@@ -22,10 +24,9 @@ export function filterItems(
 
   const value = (searchText || '')?.toLowerCase();
 
-  return (items || [])?.filter(({
-    description,
-    title,
-  }) => title?.toLowerCase()?.includes(value) || description?.toLowerCase()?.includes(value));
+  return (items || [])?.filter(
+    item => FILTER_KEYS.map(key => item?.[key] || '').join(' ')?.toLowerCase()?.includes(value),
+  );
 }
 
 export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {

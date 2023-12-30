@@ -40,7 +40,6 @@ CommandCenterItemPolicy.allow_write(
         'page_history',
         'search',
         'search_history',
-        'uuids',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

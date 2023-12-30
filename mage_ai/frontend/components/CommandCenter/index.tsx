@@ -66,7 +66,6 @@ import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
   addSearchHistory,
-  getPageHistoryAsItems,
   getSearchHistory,
   getSetSettings,
 } from '@storage/CommandCenter/utils';
@@ -101,6 +100,7 @@ function CommandCenter() {
   const refLoading = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
+  const refFetchCount = useRef(0);
 
   const refRootFooter = useRef(null);
   const refFooter = useRef(null);
@@ -269,23 +269,36 @@ function CommandCenter() {
 
   const [reload, setReload] = useState(null);
 
-  function removeFocusFromCurrentItem() {
+  function getCurrentFocusedItem(): CommandCenterItemType {
     const indexPrev = refFocusedItemIndex?.current;
     if (indexPrev !== null) {
-      const itemPrev = refItems?.current?.[indexPrev];
-      const nodePrev = refItemsNodes?.current?.[itemPrev?.uuid]?.current;
-      if (nodePrev) {
-        nodePrev.className = removeClassNames(
-          nodePrev?.className || '',
-          [
-            'focused',
-          ],
-        );
-      }
+      return refItems?.current?.[indexPrev];
     }
   }
 
-  function handleNavigation(index: number) {
+  function getCurrentFocusedNode(): any {
+    const itemPrev = getCurrentFocusedItem();
+
+    if (itemPrev !== null) {
+      return refItemsNodes?.current?.[itemPrev?.uuid]?.current;
+    }
+  }
+
+  function removeFocusFromCurrentItem(currentNode: any = null) {
+    const nodePrev = currentNode || getCurrentFocusedNode();
+    if (nodePrev) {
+      nodePrev.className = removeClassNames(
+        nodePrev?.className || '',
+        [
+          'focused',
+        ],
+      );
+    }
+  }
+
+  function handleNavigation(index: number, opts: {
+    disableFocusRemoval?: boolean;
+  } = {}) {
     const itemsContainer = refItemsNodesContainer?.current;
     // 400
     const itemsContainerHeight =
@@ -330,20 +343,28 @@ function CommandCenter() {
         itemsContainer.scrollTop = Math.max(diff, 0);
       }
 
-      if (refFocusedItemIndex?.current !== null) {
-        removeFocusFromCurrentItem();
+      let isSameItem = false;
+      const itemNext = refItems?.current?.[index];
+
+      if (!opts?.disableFocusRemoval && refFocusedItemIndex?.current !== null) {
+        const itemPrev = refItems?.current?.[refFocusedItemIndex?.current];
+        isSameItem = itemNext?.uuid === itemPrev?.uuid;
+        if (!isSameItem) {
+          removeFocusFromCurrentItem();
+        }
       }
 
       refFocusedItemIndex.current = index;
-      const itemNext = refItems?.current?.[index];
       const nodeNext = refItemsNodes?.current?.[itemNext?.uuid]?.current;
       if (nodeNext) {
-        nodeNext.className = addClassNames(
-          nodeNext?.className || '',
-          [
-            'focused',
-          ],
-        );
+        if (!nodeNext?.className?.includes('focused')) {
+          nodeNext.className = addClassNames(
+            nodeNext?.className || '',
+            [
+              'focused',
+            ],
+          );
+        }
       }
 
       if (refFooterButtonUp?.current) {
@@ -675,32 +696,43 @@ function CommandCenter() {
     items: CommandCenterItemType[],
     opts: {
       shouldFilter?: boolean;
-      shouldSetInit?: boolean;
     } = {},
   ): Promise<any> {
-    refItems.current = items;
+    const currentFocusedItem = getCurrentFocusedItem();
+    const currentFocusedNode = getCurrentFocusedNode();
 
-    if (opts?.shouldSetInit && refItemsInit?.current === null) {
-      refItemsInit.current = items;
-    }
+    refItems.current = rankItems(opts?.shouldFilter
+      ? filterItems(refInput?.current?.value, items)
+      : items
+    );
 
     if (!refRootItems?.current) {
       const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
       refRootItems.current = createRoot(domNode);
     }
 
-    const itemsProcessed = rankItems(opts?.shouldFilter
-      ? filterItems(refInput?.current?.value, items)
-      : items
-    );
+    const nextFocusedItem = refItems?.current?.[0];
+    // If the 1st item in the items that are about to rendered isn’t the same as the
+    // previously focused item, remove the focused class from its node.
+    if (currentFocusedNode && nextFocusedItem?.uuid !== currentFocusedItem?.uuid) {
+      removeFocusFromCurrentItem(currentFocusedNode);
+    }
 
-    const itemsEl = itemsProcessed?.map((item: CommandCenterItemType, index: number) => {
+    if (refFocusedItemIndex?.current !== 0) {
+      refFocusedItemIndex.current = 0;
+    }
+
+    const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
       const refItem = refItemsNodes?.current?.[item?.uuid] || createRef();
       refItemsNodes.current[item?.uuid] = refItem;
+      const className = [ItemRowClassNameEnum.ITEM_ROW];
+      if (index === 0) {
+        className.push('focused');
+      }
 
       return (
         <ItemRow
-          className={ItemRowClassNameEnum.ITEM_ROW}
+          className={className.join(' ')}
           item={item}
           key={item.uuid}
           onClick={(e) => {
@@ -719,23 +751,40 @@ function CommandCenter() {
     });
 
     refRootItems?.current?.render(itemsEl);
+    handleNavigation(0, {
+      disableFocusRemoval: true,
+    });
 
-    return new Promise((resolve, reject) => resolve?.(itemsProcessed));
+    return new Promise((resolve, reject) => resolve?.(refItems?.current));
   }
 
   const {
     fetch: fetchItems,
     isLoading: isLoadingFetch,
-  } = useCache({
+  } = useCache(() => {
+    const count = (refFetchCount?.current || 0) + 1;
+    refFetchCount.current = count;
+    return count;
+  }, {
     onSuccessCallback: ({
       command_center_item,
-    }) => {
-      const items = command_center_item?.items || [];
-      addCachedItems(items)
-      renderItems(items, {
-        shouldSetInit: refItemsInit?.current === null,
-      });
-      refSettings.current = getSetSettings(command_center_item?.settings || {});
+    }, uuid: string) => {
+      if (refFetchCount?.current === uuid) {
+        const items = addCachedItems(
+          command_center_item?.items || [],
+          {
+            filterCachedItems: cachedItems => filterItems(refInput?.current?.value, cachedItems),
+          },
+        );
+
+        if (refItemsInit?.current === null) {
+          refItemsInit.current = items;
+        }
+
+        refSettings.current = getSetSettings(command_center_item?.settings || {});
+
+        renderItems(items);
+      }
     },
     onErrorCallback: (response, errors) => showError({
       errors,
@@ -800,20 +849,20 @@ function CommandCenter() {
     unregisterOnKeyUp(COMPONENT_UUID);
   }, [unregisterOnKeyDown, unregisterOnKeyUp, COMPONENT_UUID]);
 
-  registerOnKeyUp(COMPONENT_UUID, () => {
+  registerOnKeyUp(COMPONENT_UUID, (keyMapping) => {
     refKeyDownCode.current = null;
   }, []);
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
     function starSequenceValid(): boolean {
       // Show the command center and focus on the text input.
-      const ks = refSettings?.current?.interface?.keyboard_shortcuts?.main;
+      const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main;
 
       if (ks?.length >= 1) {
-        return onlyKeysPresent(ks, keyMapping);
+        return ks?.every(k => keyMapping?.[k]);
       } else {
-        return onlyKeysPresent([KEY_CODE_META_RIGHT, KEY_CODE_PERIOD], keyMapping)
-          || onlyKeysPresent([KEY_CODE_META_LEFT, KEY_CODE_PERIOD], keyMapping);
+        return [KEY_CODE_META_RIGHT, KEY_CODE_PERIOD].every(k => keyMapping?.[k])
+          || [KEY_CODE_META_LEFT, KEY_CODE_PERIOD].every(k => keyMapping?.[k]);
       }
 
       return false;
@@ -874,9 +923,7 @@ function CommandCenter() {
           }
 
           // Reset the items to the original list of items.
-          removeFocusFromCurrentItem();
           renderItems(refItemsInit?.current || []);
-          setTimeout(() => handleNavigation(0), 1);
         } else {
           // If there is no text in the input, close.
           closeCommandCenter();
@@ -952,9 +999,7 @@ function CommandCenter() {
                 }
 
                 if (searchItem?.items) {
-                  removeFocusFromCurrentItem();
                   renderItems(searchItem?.items || []);
-                  setTimeout(() => handleNavigation(0), 1);
                 }
               }
             }
@@ -1032,7 +1077,7 @@ function CommandCenter() {
 
   return (
     <ContainerStyle
-      // className="hide"
+      className="hide"
       ref={refContainer}
     >
       <InputContainerStyle>
@@ -1073,11 +1118,8 @@ function CommandCenter() {
 
               refInputValuePrevious.current = searchText;
 
-              removeFocusFromCurrentItem();
-              renderItems(refItemsInit?.current, { shouldFilter: true });
-              fetchItems(300);
-
-              setTimeout(() => handleNavigation(0), 1);
+              renderItems(refItemsInit?.current || refItems?.current, { shouldFilter: true });
+              fetchItems(100);
 
               if (isRemoving) {
                 refSelectedSearchHistoryIndex.current = null;
