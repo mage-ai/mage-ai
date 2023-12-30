@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -63,6 +64,12 @@ function VersionControl() {
     include_remote_branches: 1,
   });
   const branches: GitBranchType[] = useMemo(() => dataBranches?.git_custom_branches, [dataBranches]);
+
+  useEffect(() => {
+    if (!branchBase && branches?.length >= 1 && branches[0]?.name) {
+      setBranchBase(branches[0]?.name);
+    }
+  }, [branchBase, branches]);
 
   const { data: dataBranch, mutate: fetchBranch } = api.git_custom_branches.detail('current', {
     _format: 'with_files',

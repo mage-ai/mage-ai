@@ -20,6 +20,7 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import useProject from '@utils/models/project/useProject';
 import {
   ACTION_CLONE,
   ACTION_FETCH,
@@ -69,6 +70,8 @@ function Remote({
 }: RemoteProps) {
   const router = useRouter();
 
+  const { project } = useProject();
+
   const refInputRepoPath = useRef(null);
 
   const [actionBranchName, setActionBranchName] = useState<string>(null);
@@ -86,10 +89,10 @@ function Remote({
   const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
 
   useEffect(() => {
-    if (branch?.sync_config?.repo_path && repoPath === null) {
-      setRepoPath(branch?.sync_config?.repo_path);
+    if (!repoPath && (branch?.sync_config?.repo_path || project?.repo_path)) {
+      setRepoPath(branch?.sync_config?.repo_path || project?.repo_path);
     }
-  }, [branch, repoPath]);
+  }, [branch, project, repoPath]);
 
   const branches = useMemo(() => remotes?.find(({
     name,
@@ -391,9 +394,9 @@ function Remote({
             {!gitInitialized && (
               <Text muted>
                 Enter the directory you want to initialize git in.
-                For example, <Text bold inline monospace muted>
-                  /home/src/default_repo
-                </Text>.
+                <br />
+                The current project directoy is filled in for you.
+                If you want to use that, click the save button.
               </Text>
             )}
 
@@ -643,8 +646,57 @@ function Remote({
                     </Select>
                   </Spacing>
                 )}
-
               </FlexContainer>
+
+              {ACTION_CLONE === actionName && (
+                <Spacing mt={PADDING_UNITS}>
+                  <Text muted small>
+                    Cloning a branch will copy all the files and folders from the remote repository
+                    and put them into the Git directory configured above:
+                    <br />
+                    <Text default inline monospace small>
+                      {branch?.sync_config?.repo_path}
+                    </Text>.
+                  </Text>
+
+                  <Spacing mt={1}>
+                    <Text muted small>
+                      Cloning won’t automatically create a folder that is named after the remote repository.
+                    </Text>
+                  </Spacing>
+
+                  <Spacing mt={1}>
+                    <Text muted small>
+                      For example, if you have a file named <Text default inline monospace small>
+                        magic.py
+                      </Text> in a remote repository named <Text default inline monospace small>
+                        project_romeo
+                      </Text>
+                      <br />
+                      then that file will be cloned here <Text default inline monospace small>
+                        {branch?.sync_config?.repo_path}/magic.py
+                      </Text>
+                      <br />
+                      as opposed to <Text default inline monospace small>
+                        {branch?.sync_config?.repo_path}/project_romeo/magic.py
+                      </Text>.
+                    </Text>
+                  </Spacing>
+
+                  <Spacing mt={1}>
+                    <Text muted small>
+                      If you want to clone the content of a remote repository into a folder
+                      named after the remote repository, then change the Git init directoy above to
+                      <br />
+                      <Text default inline monospace small>
+                        {branch?.sync_config?.repo_path}/<Text inline monospace small>
+                          [remote repository name]
+                        </Text>
+                      </Text>
+                    </Text>
+                  </Spacing>
+                </Spacing>
+              )}
 
               <Spacing mt={PADDING_UNITS}>
                 <Button
