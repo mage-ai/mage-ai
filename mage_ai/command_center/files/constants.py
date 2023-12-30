@@ -97,5 +97,74 @@ ITEMS = [
         item_type=ItemType.CREATE,
         object_type=ObjectType.FOLDER,
         title='Create a new folder',
+        application=dict(
+            application_type=ApplicationType.FORM,
+            buttons=[
+                dict(
+                    label='Cancel',
+                    tooltip='Discard changes and go back.',
+                    keyboard_shortcuts=[['metaKey', 27]],
+                    action_types=[
+                        ButtonActionType.RESET_FORM,
+                        ButtonActionType.CLOSE_APPLICATION,
+                    ],
+                ),
+                dict(
+                    label='Create new folder',
+                    tooltip='Save changes and create the new folder.',
+                    keyboard_shortcuts=[[13]],
+                    action_types=[
+                        ButtonActionType.EXECUTE,
+                        ButtonActionType.RESET_FORM,
+                    ],
+                ),
+            ],
+            settings=[
+                dict(
+                    label='Directory',
+                    description='The parent directory of this folder.',
+                    placeholder='e.g. utils',
+                    icon_uuid='FolderOutline',
+                    name='request.payload.folder.path',
+                    type=InteractionInputType.TEXT_FIELD,
+                    required=True,
+                    monospace=True,
+                    action_uuid='create_folder',
+                ),
+                dict(
+                    label='Folder name',
+                    description='A descriptive name of the folder to be created.',
+                    icon_uuid='Alphabet',
+                    placeholder='e.g. transformers',
+                    name='request.payload.folder.name',
+                    type=InteractionInputType.TEXT_FIELD,
+                    required=True,
+                    monospace=True,
+                    action_uuid='create_folder',
+                ),
+            ],
+        ),
+        actions=[
+            dict(
+                request=dict(
+                    operation=OperationType.CREATE,
+                    payload=dict(
+                        folder=dict(
+                            overwrite=False,
+                        ),
+                    ),
+                    resource='folders',
+                    response_resource_key='folder'
+                ),
+                uuid='create_folder',
+            ),
+            dict(
+                page=dict(
+                    path='/files',
+                ),
+                uuid='navigate_folder',
+            ),
+        ],
+        condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),
     ),
 ]
