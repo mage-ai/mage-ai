@@ -42,6 +42,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import useComputeService from '@utils/models/computeService/useComputeService'
+import useKernel from '@utils/models/kernel/useKernel';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import {
@@ -80,7 +81,6 @@ import { useModal } from '@context/Modal';
 type KernelStatusProps = {
   children?: any;
   isBusy: boolean;
-  kernel: KernelType;
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
@@ -92,7 +92,6 @@ type KernelStatusProps = {
 function KernelStatus({
   children,
   isBusy,
-  kernel,
   pipeline,
   restartKernel,
   savePipelineContent,
@@ -101,6 +100,7 @@ function KernelStatus({
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const router = useRouter();
+  const { kernel } = useKernel({ pipelineType: pipeline?.type });
   const {
     featureEnabled,
     featureUUIDs,
@@ -121,6 +121,7 @@ function KernelStatus({
     clustersRefreshInterval: 5000,
     computeServiceRefreshInterval: 5000,
     connectionsRefreshInterval: 5000,
+    pauseFetch: !sparkEnabled,
   });
 
   const themeContext: ThemeType = useContext(ThemeContext);

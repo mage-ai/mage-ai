@@ -55,7 +55,6 @@ export const getBlockType = (path: string[]): BlockTypeEnum => {
     }
   }
 
-
   return value as BlockTypeEnum;
 };
 

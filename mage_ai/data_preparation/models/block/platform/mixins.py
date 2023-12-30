@@ -7,7 +7,11 @@ from mage_ai.data_preparation.models.block.platform.utils import (
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
-from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform import (
+    get_repo_paths_for_file_path,
+    project_platform_activated,
+)
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
     add_root_repo_path_to_relative_path,
@@ -235,6 +239,24 @@ class ProjectPlatformAccessible:
             language=language,
             pipeline=pipeline,
         )
+
+    def get_repo_path_from_configuration(self) -> str:
+        # Example:
+        # default_repo/dbt/demo/models/example/model.sql
+        # main_app/platform/dbt/demo/models/model.sql
+
+        file_path = self.get_file_path_from_source()
+        if file_path:
+            file_path = add_root_repo_path_to_relative_path(file_path)
+        elif self.configuration.get('file_path'):
+            file_path = self.configuration.get('file_path')
+
+        if file_path:
+            paths = get_repo_paths_for_file_path(file_path)
+            if paths:
+                return paths.get('full_path')
+
+        return get_repo_path(root_project=False)
 
     def __file_source(self) -> str:
         return self.configuration.get('file_source') if self.configuration else None

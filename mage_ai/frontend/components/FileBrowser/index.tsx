@@ -621,18 +621,16 @@ function FileBrowser({
           onClick: () => {
             if (selectedBlock.type === BlockTypeEnum.CHART) {
               if (typeof window !== 'undefined'
-                && window.confirm(`Are you sure you want to delete widget ${selectedBlock.uuid}?`)
+                && window.confirm(`Are you sure you want to delete ${selectedBlock.uuid}?`)
               ) {
                 deleteWidget(selectedBlock);
               }
             } else {
+              const fp = getFullPathWithoutRootFolder(selectedFile);
               if (typeof window !== 'undefined'
-                && window.confirm(`Are you sure you want to delete block ${selectedBlock.uuid}?`)
+                && window.confirm(`Are you sure you want to delete ${fp}?`)
               ) {
-                deleteBlockFile({
-                  block: selectedBlock,
-                  file: selectedFile,
-                });
+                deleteFile(encodeURIComponent(fp));
               }
             }
           },

@@ -237,7 +237,7 @@ class LogResource(GenericResource):
             model2.block_uuid = row.block_uuid
             model2.pipeline_run = model
 
-            logs = await model2.logs_async()
+            logs = await model2.logs_async(repo_path=pipeline.repo_path if pipeline else None)
             block_log_file_path = logs.get('path')
             if block_log_file_path not in processed_block_run_log_files:
                 block_run_logs.append(logs)

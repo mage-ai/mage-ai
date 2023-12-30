@@ -626,7 +626,13 @@ function CodeBlock({
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
-  const [content, setContent] = useState(defaultValue);
+
+  const refContent = useRef(defaultValue);
+  const content = refContent?.current;
+  const setContent = useCallback((value: string) => {
+    refContent.current = value;
+  }, []);
+
   const [currentTime, setCurrentTime] = useState<number>(null);
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
@@ -734,6 +740,7 @@ function CodeBlock({
     resource_uuid: BlockLanguageEnum.SQL === blockLanguage ? blockUUID : null,
   }, {
     revalidateOnFocus: false,
+    pauseFetch: !isDBT,
   });
   const configurationOptions: ConfigurationOptionType[] =
     useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
@@ -1308,6 +1315,61 @@ function CodeBlock({
     pipeline,
   ]);
 
+  const deleteBlockCallback = useCallback((b) => {
+    deleteBlock(b);
+    setOutputCollapsed(false);
+  }, [deleteBlock, setOutputCollapsed]);
+  const onChangeCallback = useCallback((val: string) => {
+    setContent(val);
+    onChange?.(val);
+  }, [onChange, setContent]);
+  const onContentSizeChangeCallbackCallback = useCallback(() => sideBySideEnabled
+    ? () => dispatchEventChanged()
+    : null, [dispatchEventChanged, sideBySideEnabled]);
+  const onMountCallbackCallback = useCallback(() => sideBySideEnabled
+      ? () => {
+        setMounted(true);
+      }
+      : null
+    , [setMounted, sideBySideEnabled]);
+  const runBlockAndTrackCallback = useCallback(payload => runBlockAndTrack({
+    ...payload,
+    syncColumnPositions: {
+      ...(payload?.syncColumnPositions || {}),
+      rect: refColumn1?.current?.getBoundingClientRect(),
+      y: refColumn2?.current?.getBoundingClientRect()?.y,
+    },
+  }), [runBlockAndTrack]);
+  const outputPropsMemo = useMemo(() => ({
+    blockIndex: blockIdx,
+    blockOutputRef,
+    collapsed: outputCollapsed,
+    errorMessages,
+    isHidden,
+    mainContainerWidth,
+    messages,
+    runCount,
+    runEndTime,
+    runStartTime,
+    runningBlocks,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+  }), [
+    blockIdx,
+    blockOutputRef,
+    outputCollapsed,
+    errorMessages,
+    isHidden,
+    mainContainerWidth,
+    messages,
+    runCount,
+    runEndTime,
+    runStartTime,
+    runningBlocks,
+    setOutputBlocks,
+    setSelectedOutputBlock,
+  ]);
+
   const {
     editor: codeBlockEditor,
     header: codeBlockComponentHeader,
@@ -1322,60 +1384,25 @@ function CodeBlock({
     blocks,
     codeCollapsed,
     content,
-    deleteBlock: (b) => {
-      deleteBlock(b);
-      setOutputCollapsed(false);
-    },
+    deleteBlock: deleteBlockCallback,
     disableShortcuts,
     executionState,
     height,
     hideRunButton,
     interruptKernel,
-    onChange: (val: string) => {
-      setContent(val);
-      onChange?.(val);
-    },
-    onContentSizeChangeCallback: sideBySideEnabled
-      ? () => dispatchEventChanged()
-      : null,
-
+    onChange: onChangeCallback,
+    onContentSizeChangeCallback: onContentSizeChangeCallbackCallback,
     onDidChangeCursorPosition,
-    onMountCallback: sideBySideEnabled
-      ? () => {
-        setMounted(true);
-      }
-      : null
-    ,
+    onMountCallback: onMountCallbackCallback,
     openSidekickView,
     outputCollapsed,
-    outputProps: {
-      blockIndex: blockIdx,
-      blockOutputRef,
-      collapsed: outputCollapsed,
-      errorMessages,
-      isHidden,
-      mainContainerWidth,
-      messages,
-      runCount,
-      runEndTime,
-      runStartTime,
-      runningBlocks,
-      setOutputBlocks,
-      setSelectedOutputBlock,
-    },
+    outputProps: outputPropsMemo,
     pipeline,
     placeholder: isDBT && BlockLanguageEnum.YAML === blockLanguage
       ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
       : 'Start typing here...'
     ,
-    runBlockAndTrack: payload => runBlockAndTrack({
-      ...payload,
-      syncColumnPositions: {
-        ...(payload?.syncColumnPositions || {}),
-        rect: refColumn1?.current?.getBoundingClientRect(),
-        y: refColumn2?.current?.getBoundingClientRect()?.y,
-      },
-    }),
+    runBlockAndTrack: runBlockAndTrackCallback,
     savePipelineContent,
     scrollTogether,
     selected,

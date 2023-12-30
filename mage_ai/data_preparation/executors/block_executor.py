@@ -75,6 +75,7 @@ class BlockExecutor:
             block_uuid=clean_name(self.block_uuid),
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
+            repo_path=self.pipeline.repo_path,
         )
         self.logger = DictLogger(self.logger_manager.logger)
         self.project = Project(self.pipeline.repo_config)

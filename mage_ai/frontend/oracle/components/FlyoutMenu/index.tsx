@@ -239,7 +239,7 @@ function FlyoutMenu({
           if (isGroupingTitle) {
             return (
               <TitleContainerStyle
-                key={uuid}
+                key={`${uuid}-${idx0}`}
                 roundedStyle={roundedStyle}
               >
                 {typeof labelToRender === 'string' && (
@@ -259,7 +259,7 @@ function FlyoutMenu({
               disabled={disabled}
               highlighted={highlightedIndices[0] === idx0}
               indent={indent}
-              key={uuid}
+              key={`${uuid}-${idx0}`}
               largePadding={roundedStyle}
               onClick={(e) => {
                 if (!linkProps) {
@@ -319,7 +319,7 @@ function FlyoutMenu({
                         disabled={disabled}
                         noWrapping
                       >
-                        <div role="menuitem">{labelToRender}</div>
+                        <span role="menuitem">{labelToRender}</span>
                       </Text>
                     )}
                   </Flex>
@@ -358,6 +358,7 @@ function FlyoutMenu({
                 block
                 center
                 description={tooltip()}
+                key={`${uuid}-${idx0}`}
                 size={null}
                 widthFitContent
               >
@@ -370,7 +371,7 @@ function FlyoutMenu({
             return (
               <NextLink
                 {...linkProps}
-                key={uuid}
+                key={`${uuid}-${idx0}`}
                 passHref
               >
                 {el}

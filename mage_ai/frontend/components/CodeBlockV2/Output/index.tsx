@@ -277,7 +277,7 @@ function CodeBlockOutput({
               index={data?.index}
               key={`data-table-${data?.index}`}
               maxHeight={textContent?.length >= 1
-                ? refLogs?.current?.getBoundingClientRect()?.height
+                ? (refLogs?.current?.getBoundingClientRect()?.height || UNIT * 60)
                 : UNIT * 60
               }
               noBorderBottom

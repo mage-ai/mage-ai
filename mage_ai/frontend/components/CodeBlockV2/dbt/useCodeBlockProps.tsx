@@ -65,6 +65,7 @@ import { validate } from './utils';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { removeFileExtension } from '@utils/files';
 
 const MENU_ICON_PROPS = {
   default: true,
@@ -122,7 +123,11 @@ export default function useCodeBlockProps({
       title = title?.slice(1);
     }
   }
-  const subtitle = configuration?.file_path || configuration?.file_source?.path;
+  let subtitle = null;
+  const filePath = configuration?.file_path || configuration?.file_source?.path;
+  if (filePath && removeFileExtension(filePath) !== title) {
+    subtitle = filePath;
+  }
 
   function validateBeforeAction({
     setSelectedHeaderTab,

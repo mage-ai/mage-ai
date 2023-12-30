@@ -76,6 +76,8 @@ function Editor({
   project: ProjectType;
   shortcuts?: ((monaco: any, editor: any) => void)[];
 }) {
+  console.log('EditorV2 render', block?.uuid, new Date());
+
   const { width } = useWindowSize();
 
   const componentUUID = `CodeBlockEditorV2/${block?.uuid}/editor/button/AI`;

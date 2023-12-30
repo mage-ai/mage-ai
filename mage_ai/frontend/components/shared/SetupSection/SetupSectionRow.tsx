@@ -118,8 +118,8 @@ function SetupSectionRow({
               {selectInput?.options?.map(({
                 label,
                 value,
-              }) => (
-                <option key={value} value={value}>
+              }, idx: number) => (
+                <option key={`${value}-${label}-${idx}`} value={value}>
                   {label || value}
                 </option>
               ))}

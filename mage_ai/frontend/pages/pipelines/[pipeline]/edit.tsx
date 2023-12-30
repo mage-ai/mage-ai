@@ -80,6 +80,7 @@ import StatusFooter from '@components/PipelineDetail/StatusFooter';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import useFileComponents from '@components/Files/useFileComponents';
+import useKernel from '@utils/models/kernel/useKernel';
 import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import useStatus from '@utils/models/status/useStatus';
@@ -180,6 +181,10 @@ function PipelineDetailPage({
     shouldReconnect: () => true,
   });
 
+  const { fetch: fetchKernels } = useKernel({
+    refreshInterval: null,
+    revalidateOnFocus: false,
+  });
   const {
     featureEnabled,
     featureUUIDs,
@@ -199,11 +204,6 @@ function PipelineDetailPage({
   const pipelineUUID = pipelineProp.uuid || pipelineUUIDFromUrl;
   const [notebookVisible, setNotebookVisible] = useState(true);
 
-  const [afterHidden, setAfterHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
-
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState<ErrorsType>(null);
@@ -214,6 +214,39 @@ function PipelineDetailPage({
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
   const [includeSparkOutputs, setIncludeSparkOutputs] = useState<boolean>(true);
+
+  const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
+  const [editingBlock, setEditingBlock] = useState<{
+    upstreamBlocks: {
+      block: BlockType;
+      values: BlockType[];
+    };
+  }>({
+    upstreamBlocks: null,
+  });
+  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
+  const [selectedBlock, setSelectedBlockState] = useState<BlockType>(null);
+  const setSelectedBlock = useCallback((block: BlockType) => {
+    setSelectedBlockState(block);
+    if (block && disableShortcuts) {
+      setDisableShortcuts(false);
+    }
+  }, [disableShortcuts]);
+
+  const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
+    block?: {
+      type?: BlockTypeEnum | string;
+      uuid?: string;
+    };
+    file?: {
+      path?: string;
+    };
+  }>(null);
+
+  const [afterHidden, setAfterHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  const [beforeHidden, setBeforeHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
 
   const _ = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
@@ -292,7 +325,8 @@ function PipelineDetailPage({
       ),
     },
     {
-      refreshInterval: 60000,
+      refreshInterval: null,
+      revalidateOnFocus: false,
     },
     {
       key: `/pipelines/${pipelineUUID}/edit`,
@@ -474,23 +508,7 @@ function PipelineDetailPage({
     setHiddenBlocksState,
   ]);
 
-  const {
-    data: dataKernels,
-    mutate: fetchKernels,
-  } = api.kernels.list({}, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
-  });
-  const kernel = useMemo(() => {
-    const kernels = dataKernels?.kernels;
 
-    return kernels?.find(({ name }) =>
-      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type],
-    ) || kernels?.[0];
-  }, [
-    dataKernels,
-    pipeline,
-  ]);
 
   const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
   const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(moment().utc().unix());
@@ -539,7 +557,8 @@ function PipelineDetailPage({
     }
     return arr;
   }, [qUrl]);
-  const setActiveSidekickView = useCallback((
+
+  function setActiveSidekickView(
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
     opts?: {
@@ -547,7 +566,7 @@ function PipelineDetailPage({
       blockUUID: string;
       extension?: string;
     },
-  ) => {
+  ) {
     const newQuery: {
       [VIEW_QUERY_PARAM]: ViewKeyEnum;
       addon?: string;
@@ -581,13 +600,13 @@ function PipelineDetailPage({
       pushHistory,
       replaceParams: true,
     });
-  }, []);
+  }
 
   useEffect(() => {
     if (!activeSidekickView) {
       setActiveSidekickView(ViewKeyEnum.TREE, false);
     }
-  }, [activeSidekickView, setActiveSidekickView]);
+  }, [activeSidekickView]);
 
   const openSidekickView = useCallback((
     newView: ViewKeyEnum,
@@ -601,7 +620,7 @@ function PipelineDetailPage({
   ) => {
     setAfterHidden(false);
     setTimeout(() => setActiveSidekickView(newView, pushHistory, opts), 1);
-  }, [setActiveSidekickView]);
+  }, []);
 
   const blockRefs = useRef({});
   const chartRefs = useRef({});
@@ -633,7 +652,7 @@ function PipelineDetailPage({
         [uuid]: value,
       },
     };
-  }, [contentByBlockUUID]);
+  }, []);
   const onChangeCallbackBlock = useCallback((type: string, uuid: string, value: string) => {
     setCallbackByBlockUUID(type, uuid, value);
     setPipelineContentTouched(true);
@@ -645,9 +664,12 @@ function PipelineDetailPage({
   );
   const onChangeCodeBlock = useCallback((type: string, uuid: string, value: string) => {
     setContentByBlockUUID(type, uuid, value);
-    setPipelineContentTouched(true);
+    if (!pipelineContentTouched) {
+      setPipelineContentTouched(true);
+    }
   },
     [
+      pipelineContentTouched,
       setContentByBlockUUID,
       setPipelineContentTouched,
     ],
@@ -722,27 +744,6 @@ function PipelineDetailPage({
     setPipelineContentTouched,
     widgetTempData,
   ]);
-
-  const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
-  const [editingBlock, setEditingBlock] = useState<{
-    upstreamBlocks: {
-      block: BlockType;
-      values: BlockType[];
-    };
-  }>({
-    upstreamBlocks: null,
-  });
-  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
-  const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
-  const [selectedBlockDetails, setSelectedBlockDetails] = useState<{
-    block?: {
-      type?: BlockTypeEnum | string;
-      uuid?: string;
-    };
-    file?: {
-      path?: string;
-    };
-  }>(null);
 
   const onSelectBlockFile = useCallback((
     blockUUID: string,
@@ -862,7 +863,7 @@ function PipelineDetailPage({
       setAfterHidden(false);
       setActiveSidekickView(ViewKeyEnum.TREE);
     }
-  }, [editingBlock.upstreamBlocks, setActiveSidekickView]);
+  }, [editingBlock.upstreamBlocks]);
 
   // Autocomplete items
   const {
@@ -975,6 +976,15 @@ function PipelineDetailPage({
     onChangeCodeBlock,
   ]);
 
+  const onOpenFileCallbackMemo = useCallback((filePath: string, isFolder: boolean) => {
+    if (!isFolder) {
+      setActiveSidekickView(ViewKeyEnum.FILES);
+      setAfterHidden(false);
+      setNotebookVisible(false);
+      setSelectedBlock(null);
+    }
+  }, []);
+
   // Files components and functions
   const {
     browser: fileBrowser,
@@ -1014,14 +1024,7 @@ function PipelineDetailPage({
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
-    onOpenFile: (filePath: string, isFolder: boolean) => {
-      if (!isFolder) {
-        setActiveSidekickView(ViewKeyEnum.FILES);
-        setAfterHidden(false);
-        setNotebookVisible(false);
-        setSelectedBlock(null);
-      }
-    },
+    onOpenFile: onOpenFileCallbackMemo,
     onSelectFile: () => {
       setSelectedBlock(null);
     },
@@ -1797,7 +1800,7 @@ function PipelineDetailPage({
   );
 
   const [updateKernel]: any = useMutation(
-    api.kernels.useUpdate(kernel?.id),
+    api.kernels.useUpdate('__auto_detect'),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -2008,11 +2011,6 @@ function PipelineDetailPage({
     sideBySideEnabled,
   ]);
 
-  // const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(false);
-  // useEffect(() => {
-  //   setAutomaticallyNameBlocks(!!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS));
-  // }, []);
-
   const [showAddBlockModal, hideAddBlockModal] = useModal(({
     block,
     idx,
@@ -2161,7 +2159,6 @@ function PipelineDetailPage({
     fetchFiles,
     fetchPipeline,
     createWidget,
-    setActiveSidekickView,
   ]);
 
   useEffect(() => {
@@ -2870,7 +2867,6 @@ function PipelineDetailPage({
     selectedBlock,
     selectedFilePath,
     sendTerminalMessage,
-    setActiveSidekickView,
     setAnyInputFocused,
     setBlockInteractionsMapping,
     setEditingBlock,
@@ -2995,45 +2991,47 @@ function PipelineDetailPage({
     uuid: `BlockBrowser/${pipelineUUID}`,
   });
 
+  const addNewBlockAtIndexPipelineDetailMemo = useCallback((
+    block,
+    idx,
+    onCreateCallback,
+    name,
+  ) => new Promise(() => {
+    if (ObjectType.BLOCK_FILE === block?.block_action_object?.object_type
+      || (
+      BlockTypeEnum.DBT === block?.type
+        && BlockLanguageEnum.SQL === block?.language
+        && !block?.block_action_object
+    )) {
+      addNewBlockAtIndex(block, idx, onCreateCallback, name);
+    } else {
+      // @ts-ignore
+      showAddBlockModal({ block, idx, name, onCreateCallback });
+    }
+  }), [addNewBlockAtIndex, showAddBlockModal]);
+
+  const showUpdateBlockModalCallbackMemo = useCallback((
+    block,
+    name = randomNameGenerator(),
+  ) => new Promise(() => showAddBlockModal({
+    block,
+    isUpdatingBlock: true,
+    name,
+  })), [showAddBlockModal]);
+
+  const addWidgetCallbackMemo = useCallback((
+    widget: BlockType,
+    {
+      onCreateCallback,
+    }: {
+      onCreateCallback?: (block: BlockType) => void;
+    },
+  ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback), [addWidgetAtIndex, widgets]);
+
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      // addNewBlockAtIndex={automaticallyNameBlocks
-      //   ? addNewBlockAtIndex
-      //   : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
-      //       if (BlockTypeEnum.DBT === block?.type && BlockLanguageEnum.SQL === block?.language) {
-      //         addNewBlockAtIndex(block, idx, onCreateCallback, name);
-      //       } else {
-      //         // @ts-ignore
-      //         showAddBlockModal({ block, idx, name, onCreateCallback });
-      //       }
-      //     })
-      // }
-      addNewBlockAtIndex={(
-        block,
-        idx,
-        onCreateCallback,
-        name,
-      ) => new Promise(() => {
-        if (ObjectType.BLOCK_FILE === block?.block_action_object?.object_type
-          || (
-          BlockTypeEnum.DBT === block?.type
-            && BlockLanguageEnum.SQL === block?.language
-            && !block?.block_action_object
-        )) {
-          addNewBlockAtIndex(block, idx, onCreateCallback, name);
-        } else {
-          // @ts-ignore
-          showAddBlockModal({ block, idx, name, onCreateCallback });
-        }
-      })}
-      addWidget={(
-        widget: BlockType,
-        {
-          onCreateCallback,
-        }: {
-          onCreateCallback?: (block: BlockType) => void;
-        },
-      ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+      addNewBlockAtIndex={addNewBlockAtIndexPipelineDetailMemo}
+      addWidget={addWidgetCallbackMemo}
       afterHidden={afterHidden}
       allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
@@ -3091,26 +3089,18 @@ function PipelineDetailPage({
       showConfigureProjectModal={showConfigureProjectModal}
       showDataIntegrationModal={showDataIntegrationModal}
       showGlobalDataProducts={showGlobalDataProducts}
-      showUpdateBlockModal={(
-        block,
-        name = randomNameGenerator(),
-      ) => new Promise(() => showAddBlockModal({
-        block,
-        isUpdatingBlock: true,
-        name,
-      }))}
+      showUpdateBlockModal={showUpdateBlockModalCallbackMemo}
       sideBySideEnabled={sideBySideEnabled}
       textareaFocused={textareaFocused}
       widgets={widgets}
     />
   ), [
-    addNewBlockAtIndex,
-    addWidgetAtIndex,
+    addNewBlockAtIndexPipelineDetailMemo,
+    addWidgetCallbackMemo,
     afterHidden,
     allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
-    // automaticallyNameBlocks,
     beforeHidden,
     blockRefs,
     blockInteractionsMapping,
@@ -3152,12 +3142,12 @@ function PipelineDetailPage({
     setTextareaFocused,
     setSideBySideEnabled,
     setScrollTogether,
-    showAddBlockModal,
     showBlockBrowserModal,
     showBrowseTemplates,
     showConfigureProjectModal,
     showDataIntegrationModal,
     showGlobalDataProducts,
+    showUpdateBlockModalCallbackMemo,
     sideBySideEnabled,
     textareaFocused,
     widgets,
@@ -3172,7 +3162,6 @@ function PipelineDetailPage({
           executePipeline={executePipeline}
           interruptKernel={interruptKernel}
           isPipelineExecuting={isPipelineExecuting}
-          kernel={kernel}
           pipeline={pipeline}
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
@@ -3192,14 +3181,12 @@ function PipelineDetailPage({
     executePipeline,
     interruptKernel,
     isPipelineExecuting,
-    kernel,
     page,
     pipeline,
     restartKernel,
     savePipelineContent,
     scrollTogether,
     selectedFilePath,
-    setActiveSidekickView,
     setMessages,
     setScrollTogether,
     setSideBySideEnabled,
@@ -3215,7 +3202,6 @@ function PipelineDetailPage({
         <PipelineHeaderStyle relativePosition>
           <KernelStatus
             isBusy={runningBlocks.length >= 1}
-            kernel={kernel}
             pipeline={pipeline}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
@@ -3233,7 +3219,6 @@ function PipelineDetailPage({
   }, [
     beforeHeader,
     fileTabs,
-    kernel,
     page,
     pipeline,
     restartKernel,
@@ -3247,7 +3232,7 @@ function PipelineDetailPage({
     if (page === PAGE_NAME_EDIT) {
       return (
         <StatusFooter
-          kernel={kernel}
+          pipelineType={pipeline?.type}
           pipelineContentTouched={pipelineContentTouched}
           pipelineLastSaved={pipelineLastSaved}
           ref={mainContainerFooterRef}
@@ -3257,9 +3242,9 @@ function PipelineDetailPage({
       );
     }
   }, [
-    kernel,
     mainContainerWidth,
     page,
+    pipeline,
     pipelineContentTouched,
     pipelineLastSaved,
     saveStatus,

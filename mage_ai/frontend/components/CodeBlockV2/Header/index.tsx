@@ -105,7 +105,10 @@ function CodeBlockHeader({
     titleParts?.forEach((part: string, idx: number) => {
       if (idx >= 1) {
         arr.push(
-          <div key={`${part}-spacing-${idx}`} style={{ paddingLeft: UNIT / 4, paddingRight: UNIT / 4 }}>
+          <div
+            key={`${part}-spacing-${idx}`}
+            style={{ paddingLeft: UNIT / 4, paddingRight: UNIT / 4 }}
+          >
             <Text noWrapping muted>
               /
             </Text>
@@ -114,7 +117,12 @@ function CodeBlockHeader({
       }
 
       arr.push(
-        <Text key={part} muted={idx < titlePartsCount - 1} noWrapping weightStyle={4}>
+        <Text
+          key={`${part}-text-${idx}`}
+          muted={idx < titlePartsCount - 1}
+          noWrapping
+          weightStyle={4}
+        >
           {part}
         </Text>
       );
@@ -170,13 +178,14 @@ function CodeBlockHeader({
           />
         );
 
+      const key = `KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`;
       let el = (
         <KeyboardShortcutButton
           addPlusSignBetweenKeys
           backgroundColor={disabled ? null : color}
           compact
           disabled={disabled}
-          key={`KeyboardShortcutButton/${uuid}/${uuidButton}/${idx}`}
+          key={key}
           keyTextGroups={keyTextGroups}
           keyTextsPosition={keyTextsPosition}
           keyboardShortcutValidation={keyboardShortcutValidation
@@ -213,7 +222,7 @@ function CodeBlockHeader({
 
       if (description) {
         el = (
-          <div style={{ position: 'relative' }}>
+          <div key={key} style={{ position: 'relative' }}>
             <Tooltip
               block
               label={description}
@@ -351,7 +360,7 @@ function CodeBlockHeader({
                       widthFitContent
                     >
                       <TagStyle backgroundColor={color?.accentLight}>
-                        <Text small>
+                        <Text monospace small>
                           {title}
                         </Text>
                       </TagStyle>
@@ -434,7 +443,7 @@ function CodeBlockHeader({
             </FlexContainer>
 
             {subtitle && (
-              <Text monospace muted noWrapping xsmall>
+              <Text monospace muted noWrapping rightAligned xsmall>
                 {subtitle}
               </Text>
             )}
