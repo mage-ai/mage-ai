@@ -451,6 +451,13 @@ class Git:
         if message:
             self.repo.index.commit(message)
 
+    def update_config(self, settings: Dict) -> None:
+        for key, value in settings.items():
+            self.repo.config_writer().set_value(
+                *key.split('.'),
+                value,
+            ).release()
+
     def remotes(self, limit: int = 40, user: User = None) -> List[Dict]:
         arr = []
 

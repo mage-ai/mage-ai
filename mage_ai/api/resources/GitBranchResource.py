@@ -82,6 +82,8 @@ class GitBranchResource(GenericResource):
             setup_repo = True
         git_manager = self.get_git_manager(user=user, setup_repo=setup_repo)
 
+        repo_path_directory = os.path.basename(os.path.dirname(git_manager.repo_path))
+
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
             return self(dict(
@@ -89,6 +91,7 @@ class GitBranchResource(GenericResource):
                 is_git_integration_enabled=preferences.is_git_integration_enabled(),
                 modified_files=[],
                 name=git_manager.current_branch,
+                repo_path_directory=repo_path_directory,
                 staged_files=[],
                 sync_config=get_preferences().sync_config,
                 untracked_files=[],
@@ -103,12 +106,15 @@ class GitBranchResource(GenericResource):
             is_git_integration_enabled=preferences.is_git_integration_enabled(),
             modified_files=modified_files,
             name=git_manager.current_branch,
+            repo_path_directory=repo_path_directory,
             staged_files=staged_files,
             sync_config=get_preferences().sync_config,
             untracked_files=untracked_files,
         ), user, **kwargs)
 
     async def update(self, payload, **kwargs):
+        query = kwargs.get('query') or {}
+
         git_manager = self.get_git_manager(user=self.current_user)
         action_type = payload.get('action_type')
         files = payload.get('files', None)
@@ -117,6 +123,14 @@ class GitBranchResource(GenericResource):
 
         access_token = api.get_access_token_for_user(self.current_user)
         http_access_token = git_manager.get_access_token()
+
+        remote_url = query.get('remote_url', None)
+        if remote_url:
+            remote_url = remote_url[0]
+
+        provider = OAUTH_PROVIDER_GITHUB
+        if remote_url:
+            provider = get_provider_from_remote_url(remote_url)
 
         token = None
         if access_token:
@@ -141,6 +155,13 @@ class GitBranchResource(GenericResource):
                     'message': 'Message is empty, please add a message for your commit.',
                 })
                 raise ApiError(error)
+
+            if token:
+                username = api.get_username(token, user=self.current_user, provider=provider)
+                if username:
+                    git_manager.update_config({
+                        'user.name': username,
+                    })
             git_manager.commit(message, files)
         elif action_type == 'push':
             push = payload.get('push', None)
@@ -360,6 +381,8 @@ class GitBranchResource(GenericResource):
         untracked_files: List[str],
         limit: int = None
     ) -> Dict:
+        git_manager = self.get_git_manager(user=self.current_user)
+
         arr = []
 
         if modified_files and isinstance(modified_files, list):
@@ -373,8 +396,16 @@ class GitBranchResource(GenericResource):
             arr = arr[:limit]
 
         files = {}
-        for filename in arr:
-            # filename: default_repo/transformers/load.py
+        for filename_init in arr:
+            # Git repo_path: /home/src/project_romeo/test
+            # filename_init: examples/load.py
+            # filename: test/examples/load.py
+
+            filename = os.path.join(
+                os.path.basename(git_manager.repo_path),
+                filename_init,
+            )
+
             parts = filename.split(os.sep)
             number_of_parts = len(parts)
 

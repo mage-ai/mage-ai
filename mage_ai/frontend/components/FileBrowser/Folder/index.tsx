@@ -476,6 +476,7 @@ function Folder({
               onClickFolder?.(filePathToUse);
             } else {
               if (onClickFile) {
+                console.log('filePathToUse', filePathToUse)
                 onClickFile(filePathToUse);
               } else if (nonPythonBlockFromFile) {
                 onSelectBlockFile?.(

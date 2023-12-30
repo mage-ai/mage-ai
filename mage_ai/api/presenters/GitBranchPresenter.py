@@ -12,6 +12,7 @@ class GitBranchPresenter(BasePresenter):
         'modified_files',
         'name',
         'progress',
+        'repo_path_directory',
         'staged_files',
         'status',
         'sync_config',
