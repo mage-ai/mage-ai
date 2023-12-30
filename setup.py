@@ -99,6 +99,7 @@ setuptools.setup(
         'redshift': [
             'boto3==1.26.60',
             'redshift-connector==2.0.915',
+            'lxml==4.9.4',
         ],
         's3': [
             'boto3==1.26.60',
@@ -184,6 +185,7 @@ setuptools.setup(
             'pyodbc==4.0.35',
             'qdrant-client==1.6.9',
             'redshift-connector==2.0.915',
+            'lxml==4.9.4',
             'requests_aws4auth==1.1.2',
             'sentence-transformers==2.2.2',
             'snowflake-connector-python==3.2.1',
