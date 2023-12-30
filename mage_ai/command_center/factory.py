@@ -1,8 +1,7 @@
 import asyncio
 from abc import ABC
 from collections.abc import Iterable
-from functools import reduce
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 from thefuzz import fuzz
 
@@ -67,7 +66,7 @@ class BaseFactory(ABC):
         return Project(root_project=True)
 
     # Subclasses MUST override this
-    async def fetch_items(self, **kwargs) -> List[Tuple[int, Dict]]:
+    async def fetch_items(self, **kwargs) -> List[Dict]:
         raise Exception
 
     # Subclasses can override this
@@ -84,13 +83,12 @@ class BaseFactory(ABC):
         return ' '.join(arr)
 
     # Subclasses can override this
-    def add_score(self, item_dict: Dict, score: int = None) -> int:
-        if item_dict:
-            return score
+    def score_item(self, _item_dict: Dict, score: int = None) -> int:
+        return score
 
-    def filter_score(self, item_dict: Dict) -> Union[None, Tuple[int, Dict]]:
+    def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
+
         condition = item_dict.get('condition')
-
         if (not condition or condition(dict(project=self.project, user=self.user))) and \
                 (not self.__uuids_mapping or self.get_item_uuid(
                     item_dict,
@@ -105,48 +103,33 @@ class BaseFactory(ABC):
                 if score < self.search_ratio:
                     return None
 
-            return (self.add_score(item_dict, score=score), item_dict)
+            return merge_dict(item_dict, dict(score=self.score_item(item_dict, score=score)))
 
         return None
 
     async def process(self, items_dicts: List[Dict] = None) -> List[Item]:
         items_dicts_scored = []
         if items_dicts:
-            def __select(acc: List[Dict], item_dict: Dict, factory=self) -> Dict:
-                pair = factory.filter_score(item_dict)
-                if pair is not None:
-                    acc.append(pair)
-                return acc
-
-            items_dicts_scored = reduce(__select, items_dicts, [])
+            for item_dict in items_dicts:
+                item_scored = self.filter_score(item_dict)
+                if item_scored:
+                    items_dicts_scored.append(item_scored)
         else:
             items_dicts_scored = await self.fetch_items()
 
         return self.__post_process_items(self.__build_items(items_dicts_scored))
 
-    def __build_items(self, items_dicts_scores: List[Tuple[int, Dict]]) -> List[Item]:
-        arr = []
-        for pair in items_dicts_scores:
-            if pair is None:
-                continue
+    def __build_items(self, items_dicts_scored: List[Dict]) -> List[Item]:
+        return [Item.load(**merge_dict(ignore_keys(item_dict, [
+            'condition',
+        ]), dict(
+            title=item_dict.get('title') or item_dict.get('uuid'),
+            uuid=item_dict.get('uuid') or item_dict.get('title'),
+        ))) for item_dict in items_dicts_scored if item_dict]
 
-            score, item_dict = pair
-
-            arr.append((
-                score,
-                Item.load(**merge_dict(ignore_keys(item_dict, [
-                    'condition',
-                ]), dict(
-                    title=item_dict.get('title') or item_dict.get('uuid'),
-                    uuid=item_dict.get('uuid') or item_dict.get('title'),
-                )))
-            ))
-
-        return arr
-
-    def __post_process_items(self, items_scores: List[Tuple[int, Item]]) -> List[Item]:
-        return [pair[1] for pair in sorted(
-            items_scores,
-            key=lambda pair: pair[0],
+    def __post_process_items(self, items: List[Item]) -> List[Item]:
+        return [item for item in sorted(
+            items,
+            key=lambda i: i.score,
             reverse=True,
         )]

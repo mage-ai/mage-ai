@@ -218,6 +218,7 @@ export interface CommandCenterItemType {
     };
   };
   object_type: ObjectTypeEnum;
+  score?: number;
   title: string;
   uuid: string;
 }

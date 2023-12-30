@@ -18,7 +18,7 @@ export function combineAndSetCachedItems(
   // @ts-ignore
   const combined = (itemsUse || [])?.concat(cachedItems || []);
 
-  setCachedItems(combined);
+  // setCachedItems(combined);
 
   // @ts-ignore
   return combined.concat(getPageHistoryAsItems() || []);

@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from mage_ai.command_center.applications.constants import ITEMS
 from mage_ai.command_center.constants import ItemType, ObjectType
@@ -7,7 +7,7 @@ from mage_ai.command_center.factory import BaseFactory
 
 
 class ApplicationFactory(BaseFactory):
-    async def fetch_items(self, **kwargs) -> List[Tuple[int, Dict]]:
+    async def fetch_items(self, **kwargs) -> List[Dict]:
         items = []
 
         for item in ITEMS:
@@ -26,8 +26,8 @@ class ApplicationFactory(BaseFactory):
                     ),
                 ],
             )
-            values = self.filter_score(item_dict)
-            if values:
-                items.append(values)
+            item_scored = self.filter_score(item_dict)
+            if item_scored:
+                items.append(item_scored)
 
         return items

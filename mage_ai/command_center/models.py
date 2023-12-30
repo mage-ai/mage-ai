@@ -269,6 +269,7 @@ class ItemBase(BaseDataClass):
     icon_uuid: str = None
     items: List[Dict] = None
     metadata: Metadata = None
+    score: int = 0
 
     def __post_init__(self):
         self.serialize_attribute_class('application', Application)
@@ -291,6 +292,7 @@ class Item(ItemBase):
     icon_uuid: str = None
     items: List[ItemBase] = None
     metadata: Metadata = None
+    score: int = 0
 
     def __post_init__(self):
         super().__post_init__()
