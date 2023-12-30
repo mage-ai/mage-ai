@@ -28,6 +28,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.path_fixer import remove_base_repo_path
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
 
@@ -72,6 +73,9 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         if file_path and Path(file_path).parts[0] == 'dbt':
             file_path = os.path.join(*Path(file_path).parts[1:]) or ''
 
+        if self.project_platform_activated:
+            return file_path
+
         return str((Path(self.repo_path)) / DBT_DIRECTORY_NAME / file_path)
 
     @property
@@ -86,6 +90,28 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             project_path = self.get_project_path_from_source()
             if project_path:
                 return project_path
+            else:
+                # file_path: 'default_repo/dbt/demo/models/example/my_second_dbt_model.sql'
+                # base_project_path: '/home/src/default_repo/default_platform/default_repo/dbt'
+
+                # Changes /home/src/default_repo/default_platform/default_repo/dbt ->
+                # default_repo/dbt
+                base_project_path_without_base_repo_path = remove_base_repo_path(
+                    self.base_project_path,
+                )
+                try:
+                    # default_repo/dbt/demo/models/example/my_second_dbt_model.sql
+                    # default_repo/dbt
+                    # diff -> demo/models/example/my_second_dbt_model.sql
+                    diff = Path(self.file_path).relative_to(
+                        base_project_path_without_base_repo_path,
+                    )
+                except ValueError:
+                    diff = self.file_path
+
+                # demo/models/example/my_second_dbt_model.sql -> demo
+                project_name = Path(diff).parts[0]
+                return os.path.join(self.base_project_path, project_name)
 
         try:
             diff = Path(self.file_path).relative_to(self.base_project_path)

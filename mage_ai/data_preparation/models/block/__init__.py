@@ -570,6 +570,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def repo_path(self) -> str:
+        if self.project_platform_activated:
+            repo_path = self.get_repo_path_from_configuration()
+            if repo_path:
+                return repo_path
+
         return self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
     @classmethod
@@ -594,6 +599,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         file_path = self.get_file_path_from_source()
         if file_path:
             return add_root_repo_path_to_relative_path(file_path)
+
+        if self.project_platform_activated:
+            file_path = self.configuration.get('file_path')
+            if file_path:
+                return add_root_repo_path_to_relative_path(file_path)
 
         return self.__build_file_path(
             self.repo_path or os.getcwd(),

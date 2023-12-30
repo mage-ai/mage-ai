@@ -10,6 +10,7 @@ import KeyboardText from '@oracle/elements/KeyboardText';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import useKernel from '@utils/models/kernel/useKernel';
 import { AlertTriangle, File as FileIcon, HexagonAll, Lightning } from '@oracle/icons';
 import {
   KEY_CODE_ENTER,
@@ -19,6 +20,7 @@ import {
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { StatusFooterStyle } from './index.style';
 import { isMac } from '@utils/os';
 import { roundNumber } from '@utils/string';
@@ -26,7 +28,7 @@ import { roundNumber } from '@utils/string';
 const ICON_SIZE = UNIT * 1.25;
 
 type StatusFooterProps = {
-  kernel: KernelType;
+  pipeline: PipelineTypeEnum;
   pipelineContentTouched?: boolean;
   pipelineLastSaved?: number;
   saveStatus?: string;
@@ -34,12 +36,13 @@ type StatusFooterProps = {
 };
 
 function StatusFooter({
-  kernel,
+  pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
   saveStatus,
   width,
 }: StatusFooterProps, ref) {
+  const { kernel } = useKernel({ pipelineType: pipeline?.type });
   const {
     alive,
     usage,

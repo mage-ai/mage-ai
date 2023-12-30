@@ -157,6 +157,10 @@ function BlockSettings({
   } = api.pipelines.detail(
     GlobalDataProductObjectTypeEnum.PIPELINE === globalDataProduct?.object_type
       && globalDataProduct?.object_uuid,
+    {},
+    {
+      revalidateOnFocus: false,
+    },
   );
   const globalDataProductPipeline = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
 

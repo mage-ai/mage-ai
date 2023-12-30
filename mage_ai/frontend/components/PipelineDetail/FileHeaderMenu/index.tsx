@@ -12,6 +12,7 @@ import PipelineType, {
 } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import useKernel from '@utils/models/kernel/useKernel';
 import useProject from '@utils/models/project/useProject';
 import {
   Check,
@@ -48,7 +49,6 @@ type FileHeaderMenuProps = {
   executePipeline: () => void;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
-  kernel: KernelType;
   pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
@@ -73,7 +73,6 @@ function FileHeaderMenu({
   executePipeline,
   interruptKernel,
   isPipelineExecuting,
-  kernel,
   pipeline,
   restartKernel,
   savePipelineContent,
@@ -92,6 +91,7 @@ function FileHeaderMenu({
   const refView = useRef(null);
   const refCompute = useRef(null);
 
+  const { kernel } = useKernel({ pipelineType: pipeline?.type });
   const {
     featureEnabled,
     featureUUIDs,

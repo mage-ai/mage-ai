@@ -37,7 +37,13 @@ class KernelResource(GenericResource):
             if kernel.has_kernel:
                 kernels_by_id[kernel.kernel_id] = kernel
 
-        kernel = kernels_by_id.get(pk) or kernel_managers[DEFAULT_KERNEL_NAME]
+        kernel = kernels_by_id.get(pk)
+        if not kernel:
+            kernels = self.collection(None, None, user, **kwargs)
+            if kernels:
+                kernel = kernels[0]
+        if not kernel:
+            kernel = kernel_managers[DEFAULT_KERNEL_NAME]
 
         return self(kernel, user, **kwargs)
 

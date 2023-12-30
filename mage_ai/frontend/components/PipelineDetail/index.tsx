@@ -918,6 +918,12 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         key = `${key}:${refreshTimestamp}`;
       }
 
+      const onChangeCallbackMemo = (value: string) => onChangeCodeBlock(type, uuid, value);
+      const deleteBlockCallbackMemo = (b: BlockType) => {
+        deleteBlock(b);
+        setAnyInputFocused(false);
+      };
+
       arr.push(
         <CodeBlock
           addNewBlock={(
@@ -961,10 +967,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           cursorHeight3={cursorHeight3}
           dataProviders={dataProviders}
           defaultValue={block.content}
-          deleteBlock={(b: BlockType) => {
-            deleteBlock(b);
-            setAnyInputFocused(false);
-          }}
+          deleteBlock={deleteBlockCallbackMemo}
           disableShortcuts={disableShortcuts}
           executionState={executionState}
           fetchFileTree={fetchFileTree}
@@ -981,7 +984,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           messages={messages[uuid]}
           noDivider={noDivider}
           onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
-          onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
+          onChange={onChangeCallbackMemo}
           onClickAddSingleDBTModel={onClickAddSingleDBTModel}
           onDrop={onDrop}
           openSidekickView={openSidekickView}
