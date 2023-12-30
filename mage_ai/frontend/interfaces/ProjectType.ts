@@ -107,6 +107,7 @@ export default interface ProjectType {
     [name: string]: string;
   };
   remote_variables_dir?: string;
+  repo_path: string;
   root_project?: boolean;
   spark_config?: SparkConfigType;
   version?: string;
