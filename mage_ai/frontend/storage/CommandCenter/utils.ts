@@ -75,7 +75,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
     pathname,
     timestamp,
     title,
-  }: PageHistoryType) => {
+  }: PageHistoryType, idx: number) => {
     let description = pathname?.[0] === osPath.sep
       ? pathname?.slice(1, pathname?.length || 0)
       : pathname;
@@ -93,7 +93,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
     }
 
     return {
-      uuid: `${asPath}-${description}`,
+      uuid: `${asPath}-${timestamp}-${idx}`,
       item_type: ItemTypeEnum.NAVIGATE,
       object_type: ObjectTypeEnum.APPLICATION,
       title,

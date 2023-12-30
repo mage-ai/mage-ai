@@ -109,7 +109,7 @@ export function momentInLocalTimezone(
       .local();
   }
 
-  return datetime;
+  return momentObj;
 }
 
 /**

@@ -723,7 +723,6 @@ function CommandCenter() {
     fetch: fetchItems,
     isLoading: isLoadingFetch,
   } = useCache({
-    searchRef: refInput,
     onSuccessCallback: ({
       command_center_item,
     }) => {
@@ -734,6 +733,7 @@ function CommandCenter() {
       errors,
       response,
     }),
+    searchRef: refInput,
   });
 
   useEffect(() => {

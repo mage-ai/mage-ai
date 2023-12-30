@@ -24,6 +24,12 @@ export function combineAndSetCachedItems(
   return combined.concat(getPageHistoryAsItems() || []);
 }
 
+export function getCachedItemsUUIDs(): string[] {
+  return (getCachedItems() || [])?.map(({
+    uuid,
+  }) => uuid);
+}
+
 function getCachedItems(): CommandCenterItemType[] {
   return get(LOCAL_STORAGE_COMMAND_CENTER_ITEMS);
 }

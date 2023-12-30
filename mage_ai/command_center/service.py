@@ -4,9 +4,14 @@ from mage_ai.command_center.applications.factory import ApplicationFactory
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.files.factory import FileFactory
 from mage_ai.command_center.models import Item
-from mage_ai.command_center.support.constants import ITEMS as ITEMS_SUPPRT
+from mage_ai.command_center.support.constants import ITEMS as ITEMS_SUPPORT
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.shared.array import flatten
+
+FACTORIES_OR_ITEMS = [
+    FileFactory,
+    ITEMS_SUPPORT,
+    ApplicationFactory,
+]
 
 
 async def search_items(
@@ -16,9 +21,15 @@ async def search_items(
     search: str = None,
     search_history: List[Dict] = None,
     user: User = None,
+    uuids: List[str] = None,
 ) -> List[Item]:
-    return flatten([
-        FileFactory.process(user=user),
-        BaseFactory.process(ITEMS_SUPPRT, user=user),
-        ApplicationFactory.process(user=user),
-    ])
+    return await BaseFactory.create_items(
+        FACTORIES_OR_ITEMS,
+        component=component,
+        page=page,
+        page_history=page_history,
+        search=search,
+        search_history=search_history,
+        user=user,
+        uuids=uuids,
+    )
