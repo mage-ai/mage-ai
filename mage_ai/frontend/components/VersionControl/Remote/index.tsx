@@ -89,7 +89,7 @@ function Remote({
   const accessTokenExists = useMemo(() => branch?.access_token_exists, [branch]);
 
   useEffect(() => {
-    if (!repoPath) {
+    if (!repoPath && (branch?.sync_config?.repo_path || project?.repo_path)) {
       setRepoPath(branch?.sync_config?.repo_path || project?.repo_path);
     }
   }, [branch, project, repoPath]);
