@@ -93,7 +93,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
     }
 
     return {
-      uuid: asPath,
+      uuid: `${asPath}-${description}`,
       item_type: ItemTypeEnum.NAVIGATE,
       object_type: ObjectTypeEnum.APPLICATION,
       title,
