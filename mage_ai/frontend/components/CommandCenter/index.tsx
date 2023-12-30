@@ -90,6 +90,8 @@ function CommandCenter() {
     uuid: COMPONENT_UUID,
   });
 
+  const refAbortController = useRef(null);
+
   const refActive = useRef(false);
   const refFocusedElement = useRef(null);
   const refReload = useRef(null);
@@ -514,7 +516,9 @@ function CommandCenter() {
         refItems.current[focusedItemIndex] = item;
       }
 
-      refItems.current[focusedItemIndex].actionResults = {};
+      if (refItems?.current && refItems?.current?.[focusedItemIndex]) {
+        refItems.current[focusedItemIndex].actionResults = {};
+      }
     }
 
     item?.actions?.forEach((actionInit, index: number) => {
@@ -766,6 +770,7 @@ function CommandCenter() {
     refFetchCount.current = count;
     return count;
   }, {
+    abortControllerRef: refAbortController,
     onSuccessCallback: ({
       command_center_item,
     }, uuid: string) => {
@@ -1119,7 +1124,7 @@ function CommandCenter() {
               refInputValuePrevious.current = searchText;
 
               renderItems(refItemsInit?.current || refItems?.current, { shouldFilter: true });
-              fetchItems(100);
+              fetchItems(300);
 
               if (isRemoving) {
                 refSelectedSearchHistoryIndex.current = null;

@@ -42,7 +42,7 @@ class Interaction(BaseDataClass):
 class Page(BaseDataClass):
     path: str
     external: bool = False
-    openNewWindow: bool = False
+    open_new_window: bool = False
     query: Dict = None
 
 
@@ -86,7 +86,11 @@ class BlockMetadata(BaseDataClass):
 
 @dataclass
 class FileMetadata(BaseDataClass):
-    extension: FileExtension
+    full_path: str
+    modified_at: str
+    modified_timestamp: int
+    size: int
+    extension: FileExtension = None
 
     def __post_init__(self):
         self.serialize_attribute_enum('extension', FileExtension)

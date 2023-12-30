@@ -71,7 +71,7 @@ def get_absolute_paths_from_all_files(
     comparator: Callable = None,
     include_hidden_files: bool = False,
     parse_values: Callable = None,
-) -> List[Tuple[str, int]]:
+) -> List[Tuple[str, int, str]]:
     dir_path = os.path.join(starting_full_path_directory, './**/*')
 
     arr = []
@@ -82,7 +82,7 @@ def get_absolute_paths_from_all_files(
                 (not include_hidden_files or not absolute_path.startswith('.')) and \
                 (not comparator or comparator(absolute_path)):
 
-            value = (absolute_path, os.path.getsize(filename))
+            value = (absolute_path, os.path.getsize(filename), round(os.path.getmtime(filename)))
             arr.append(parse_values(value) if parse_values else value)
 
     return arr

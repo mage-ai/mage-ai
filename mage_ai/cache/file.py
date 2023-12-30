@@ -10,6 +10,8 @@ from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import get_absolute_paths_from_all_files
 
+FILENAME_DELIMITER = '\t'
+
 
 class FileCache(BaseCache):
     cache_key = CACHE_KEY_FILES
@@ -66,18 +68,23 @@ class FileCache(BaseCache):
 
         return self.initialize_cache(paths, replace=replace)
 
+    async def load(self) -> List[str]:
+        content = await self.storage.read_async(self.build_path(self.cache_key))
+        if content:
+            return content.split(FILENAME_DELIMITER)
+
     def build_cache(self, absolute_paths: List[str]) -> List[str]:
         base_path = base_repo_path()
 
         def __parse_values(tup, base_path=base_path):
-            file_path, file_size = tup
+            file_path, file_size, file_modified_time = tup
             try:
                 diff = Path(file_path).relative_to(base_path)
             except Exception as err:
                 print(f'[ERROR] FileCache.build_cache: {err}.')
                 diff = file_path
 
-            return f'{diff},{file_size}'
+            return f'{diff},{file_size},{file_modified_time}'
 
         arr = []
         for absolute_path in absolute_paths:
@@ -89,7 +96,7 @@ class FileCache(BaseCache):
         arr.sort()
         self._temp_data = arr
 
-        self.set(self.cache_key, '\n'.join(arr))
+        self.set(self.cache_key, FILENAME_DELIMITER.join(arr))
 
         return arr
 

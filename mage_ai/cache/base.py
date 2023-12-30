@@ -40,9 +40,12 @@ class BaseCache():
     def exists(self) -> bool:
         return self.get(self.cache_key) is not None
 
-    def get(self, key: str, refresh: bool = False, **kwargs) -> Union[Dict, List]:
+    def get(self, key: str = None, refresh: bool = False, **kwargs) -> Union[Dict, List]:
         if refresh or not self._temp_data:
-            self._temp_data = self.storage.read_json_file(self.build_path(key), None)
+            self._temp_data = self.storage.read_json_file(
+                self.build_path(key or self.cache_key),
+                None,
+            )
 
         if self._temp_data:
             return self._temp_data

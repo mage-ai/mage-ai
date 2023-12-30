@@ -8,6 +8,7 @@ import { getPageHistoryAsItems, getSearchHistory } from './utils';
 import { onSuccess } from '@api/utils/response';
 
 export default function useCache(fetchUUID: () => number | string, opts: {
+  abortControllerRef: any;
   onErrorCallback?: (resp: any, err: {
     code: number;
     messages: string[];
@@ -19,10 +20,12 @@ export default function useCache(fetchUUID: () => number | string, opts: {
   isLoading: boolean;
 } {
   const {
+    abortControllerRef,
     onErrorCallback,
     onSuccessCallback,
     searchRef,
   } = opts || {
+    abortControllerRef: null,
     onErrorCallback: null,
     onSuccessCallback: null,
     searchRef: null,
@@ -32,7 +35,9 @@ export default function useCache(fetchUUID: () => number | string, opts: {
   const router = useRouter();
 
   const [fetch, { isLoading }] = useMutation(
-    (uuid?: number | string) => api.command_center_items.useCreate()({
+    (uuid?: number | string) => api.command_center_items.useCreate({
+      signal: abortControllerRef?.current?.signal,
+    })({
       command_center_item: {
         component: null,
         page: {
@@ -61,6 +66,10 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     return new Promise((resolve) => {
       timeout.current = setTimeout(() => {
         const uuid = fetchUUID();
+        if (abortControllerRef?.current !== null) {
+          abortControllerRef?.current?.abort();
+        }
+        abortControllerRef.current = new AbortController();
 
         return resolve(fetch(uuid));
       }, delay);

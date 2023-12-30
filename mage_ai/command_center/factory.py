@@ -108,7 +108,14 @@ class BaseFactory(ABC):
         else:
             items_dicts_scored = await self.fetch_items()
 
-        return self.__post_process_items(self.__build_items(items_dicts_scored))
+        return await self.__post_process_items(self.__build_items(items_dicts_scored))
+
+    async def rank_items(self, items_or_dicts: List[Union[Dict, Item]]) -> List[Union[Dict, Item]]:
+        return [item for item in sorted(
+            items_or_dicts,
+            key=lambda i: i.score if isinstance(i, Item) else i.get('score'),
+            reverse=True,
+        )]
 
     def __build_items(self, items_dicts_scored: List[Dict]) -> List[Item]:
         return [Item.load(**merge_dict(ignore_keys(item_dict, [
@@ -118,9 +125,5 @@ class BaseFactory(ABC):
             uuid=item_dict.get('uuid') or item_dict.get('title'),
         ))) for item_dict in items_dicts_scored if item_dict]
 
-    def __post_process_items(self, items: List[Item]) -> List[Item]:
-        return [item for item in sorted(
-            items,
-            key=lambda i: i.score,
-            reverse=True,
-        )]
+    async def __post_process_items(self, items: List[Item]) -> List[Item]:
+        return await self.rank_items(items)
