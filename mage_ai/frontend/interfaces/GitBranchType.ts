@@ -40,7 +40,6 @@ export default interface GitBranchType {
   modified_files?: string[];
   name: string;
   remotes?: GitRemoteType[];
-  repo_path_directory: string;
   staged_files?: string[];
   status?: string;
   sync_config?: SyncConfigType;
