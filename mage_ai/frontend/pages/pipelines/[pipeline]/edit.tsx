@@ -556,7 +556,7 @@ function PipelineDetailPage({
     return arr;
   }, [qUrl]);
 
-  function setActiveSidekickView((
+  function setActiveSidekickView(
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
     opts?: {
@@ -992,7 +992,7 @@ function PipelineDetailPage({
     );
   }, [addNewBlockAtIndex]);
 
-  const onOpenFileCallback = useCallback((filePath: string, isFolder: boolean) => {
+  const onOpenFileCallbackMemo = useCallback((filePath: string, isFolder: boolean) => {
     if (!isFolder) {
       setActiveSidekickView(ViewKeyEnum.FILES);
       setAfterHidden(false);
@@ -1026,7 +1026,7 @@ function PipelineDetailPage({
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
-    onOpenFile: onOpenFileCallback,
+    onOpenFile: onOpenFileCallbackMemo,
     onSelectFile: onSelectFileCallback,
     onSelectBlockFile,
     onUpdateFileSuccess,
@@ -3032,14 +3032,6 @@ function PipelineDetailPage({
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndexPipelineDetailMemo}
       addWidget={addWidgetCallbackMemo}
-      addWidget={(
-        widget: BlockType,
-        {
-          onCreateCallback,
-        }: {
-          onCreateCallback?: (block: BlockType) => void;
-        },
-      ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
       afterHidden={afterHidden}
       allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
@@ -3109,7 +3101,6 @@ function PipelineDetailPage({
     allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
-    // automaticallyNameBlocks,
     beforeHidden,
     blockRefs,
     blockInteractionsMapping,
@@ -3151,12 +3142,12 @@ function PipelineDetailPage({
     setTextareaFocused,
     setSideBySideEnabled,
     setScrollTogether,
-    showUpdateBlockModalCallbackMemo,
     showBlockBrowserModal,
     showBrowseTemplates,
     showConfigureProjectModal,
     showDataIntegrationModal,
     showGlobalDataProducts,
+    showUpdateBlockModalCallbackMemo,
     sideBySideEnabled,
     textareaFocused,
     widgets,
