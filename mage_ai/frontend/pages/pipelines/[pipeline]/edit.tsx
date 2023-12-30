@@ -508,8 +508,6 @@ function PipelineDetailPage({
     setHiddenBlocksState,
   ]);
 
-
-
   const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
   const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(moment().utc().unix());
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
@@ -558,7 +556,7 @@ function PipelineDetailPage({
     return arr;
   }, [qUrl]);
 
-  function setActiveSidekickView(
+  function setActiveSidekickView((
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
     opts?: {
@@ -976,13 +974,35 @@ function PipelineDetailPage({
     onChangeCodeBlock,
   ]);
 
-  const onOpenFileCallbackMemo = useCallback((filePath: string, isFolder: boolean) => {
+  let addNewBlockAtIndex;
+
+  const addNewBlockCallback = useCallback((
+    b: BlockRequestPayloadType,
+    cb: (block: BlockType) => void,
+    opts?: {
+      disableFetchingFiles?: boolean;
+    },
+  ) => {
+    addNewBlockAtIndex(
+      b,
+      blocks.length,
+      cb,
+      b.name,
+      opts,
+    );
+  }, [addNewBlockAtIndex]);
+
+  const onOpenFileCallback = useCallback((filePath: string, isFolder: boolean) => {
     if (!isFolder) {
       setActiveSidekickView(ViewKeyEnum.FILES);
       setAfterHidden(false);
       setNotebookVisible(false);
       setSelectedBlock(null);
     }
+  }, []);
+
+  const onSelectFileCallback = useCallback(() => {
+    setSelectedBlock(null);
   }, []);
 
   // Files components and functions
@@ -1000,34 +1020,14 @@ function PipelineDetailPage({
     versions,
     versionsVisible,
   } = useFileComponents({
-    addNewBlock: (
-      b: BlockRequestPayloadType,
-      cb: (block: BlockType) => void,
-      opts?: {
-        disableFetchingFiles?: boolean;
-      },
-    ) => {
-      addNewBlockAtIndex(
-        b,
-        blocks.length,
-        cb,
-        b.name,
-        opts,
-      );
-
-      if (filePathsFromUrl?.length >= 1) {
-        router.push(`/pipelines/${pipelineUUID}/edit`);
-      }
-    },
+    addNewBlock: addNewBlockCallback,
     blocks,
     deleteWidget,
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
-    onOpenFile: onOpenFileCallbackMemo,
-    onSelectFile: () => {
-      setSelectedBlock(null);
-    },
+    onOpenFile: onOpenFileCallback,
+    onSelectFile: onSelectFileCallback,
     onSelectBlockFile,
     onUpdateFileSuccess,
     openSidekickView,
@@ -1829,7 +1829,7 @@ function PipelineDetailPage({
   }, [updateKernel]);
 
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
-  const addNewBlockAtIndex = useCallback((
+  addNewBlockAtIndex = useCallback((
     block: BlockRequestPayloadType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
@@ -3032,6 +3032,14 @@ function PipelineDetailPage({
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndexPipelineDetailMemo}
       addWidget={addWidgetCallbackMemo}
+      addWidget={(
+        widget: BlockType,
+        {
+          onCreateCallback,
+        }: {
+          onCreateCallback?: (block: BlockType) => void;
+        },
+      ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
       afterHidden={afterHidden}
       allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
@@ -3101,6 +3109,7 @@ function PipelineDetailPage({
     allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
+    // automaticallyNameBlocks,
     beforeHidden,
     blockRefs,
     blockInteractionsMapping,
@@ -3142,12 +3151,12 @@ function PipelineDetailPage({
     setTextareaFocused,
     setSideBySideEnabled,
     setScrollTogether,
+    showUpdateBlockModalCallbackMemo,
     showBlockBrowserModal,
     showBrowseTemplates,
     showConfigureProjectModal,
     showDataIntegrationModal,
     showGlobalDataProducts,
-    showUpdateBlockModalCallbackMemo,
     sideBySideEnabled,
     textareaFocused,
     widgets,
