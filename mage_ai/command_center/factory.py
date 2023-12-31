@@ -95,17 +95,17 @@ class BaseFactory(ABC):
         return score
 
     def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
+        score = 0
+        if self.search:
+            score = fuzz.partial_token_sort_ratio(
+                self.search,
+                self.get_searchable_text(item_dict),
+            )
+            if score < self.search_ratio:
+                return None
+
         condition = item_dict.get('condition')
         if (not condition or condition(dict(project=self.project, user=self.user))):
-            score = 0
-            if self.search:
-                score = fuzz.partial_token_sort_ratio(
-                    self.search,
-                    self.get_searchable_text(item_dict),
-                )
-                if score < self.search_ratio:
-                    return None
-
             return merge_dict(item_dict, dict(score=self.score_item(item_dict, score=score)))
 
         return None

@@ -1,9 +1,10 @@
 import os
+from datetime import datetime
 from typing import Dict, List
 
 from mage_ai.command_center.applications.constants import ITEMS
 from mage_ai.command_center.constants import ItemType, ObjectType
-from mage_ai.command_center.factory import BaseFactory
+from mage_ai.command_center.factory import DEFAULT_RATIO, BaseFactory
 
 
 class ApplicationFactory(BaseFactory):
@@ -46,7 +47,8 @@ class ApplicationFactory(BaseFactory):
         return items
 
     def score_item(self, item_dict: Dict, score: int = None) -> int:
-        action_timestamp = (item_dict.get('metadata') or {}).get('action_timestamp')
-        if action_timestamp:
-            return score + action_timestamp
+        timestamp = ((item_dict.get('metadata') or {}).get('page') or {}).get('timestamp')
+        if timestamp:
+            now = datetime.utcnow().timestamp()
+            return score + (DEFAULT_RATIO * (now / timestamp))
         return score

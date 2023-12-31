@@ -22,6 +22,7 @@ import {
 } from '@utils/date';
 import { get, set } from '@storage/localStorage';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { unique } from '@utils/array';
 
 export function getSetSettings(settings = null) {
   const data = {
@@ -71,7 +72,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   return (getPageHistory() || [])?.map(({
-    asPath,
+    path,
     pathname,
     query,
     timestamp,
@@ -83,9 +84,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
 
     if (timestamp) {
       const dt = momentInLocalTimezone(
-        dateFromFromUnixTimestamp(timestamp, {
-          withMilliseconds: true,
-        }),
+        dateFromFromUnixTimestamp(timestamp),
         displayLocalTimezone,
       );
 
@@ -94,7 +93,7 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
     }
 
     return {
-      uuid: asPath,
+      uuid: path,
       item_type: ItemTypeEnum.NAVIGATE,
       object_type: ObjectTypeEnum.APPLICATION,
       title,
@@ -102,26 +101,27 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
       actions: [
         {
           page: {
-            path: asPath,
+            path,
           },
-          uuid: asPath,
+          uuid: path,
         },
       ],
       metadata: {
-        action_timestamp: timestamp,
         page: {
-          asPath,
+          path,
           pathname,
           query,
+          timestamp,
+          title,
         },
       },
       display_settings_by_attribute: {
-          description: {
-              text_styles: {
-                  monospace: true,
-                  small: true,
-              },
+        description: {
+          text_styles: {
+            monospace: true,
+            small: true,
           },
+        },
       },
     };
   });
@@ -131,9 +131,9 @@ export function addPageHistory(page: PageHistoryType) {
   // @ts-ignore
   const arr: PageHistoryType[] = [{
     ...page,
-    timestamp: Number(new Date()),
+    timestamp: Number(new Date()) / 1000,
   }].concat(
-    (getPageHistory() || []).filter(({ asPath }) => asPath !== page?.asPath)
+    (getPageHistory() || []).filter(({ path }) => path !== page?.path)
   );
 
   set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, arr.slice(
@@ -142,4 +142,10 @@ export function addPageHistory(page: PageHistoryType) {
   ));
 
   return arr;
+}
+
+export function combineUnique(itemsSets: CommandCenterItemType[][]) {
+  // @ts-ignore
+  const combined = itemsSets?.reduce((acc, items) => acc.concat(items || []), []);
+  return unique(combined, ({ uuid }) => uuid);
 }

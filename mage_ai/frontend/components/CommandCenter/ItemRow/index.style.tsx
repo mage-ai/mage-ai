@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { CommandCenterItemType, ObjectTypeEnum } from '@interfaces/CommandCenterType';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { dig } from '@utils/hash';
@@ -10,6 +11,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { transition } from '@oracle/styles/mixins';
 
 export const ITEM_ROW_HEIGHT = 44;
+export const MAX_WIDTH = 100 * UNIT;
 
 export function getIconColor(item: CommandCenterItemType, opts: {
   theme?: ThemeType;
@@ -69,7 +71,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
     accentLight = themeUse?.accent?.roseLight;
   }
 
-  if (metadata?.action_timestamp) {
+  if (metadata?.page?.timestamp) {
     const temp = accentLight;
     accentLight = accent;
     accent = temp;
@@ -87,5 +89,8 @@ export const ItemStyle = styled.div<{
   border-radius: ${BORDER_RADIUS}px;
   cursor: pointer;
   height: ${ITEM_ROW_HEIGHT}px;
+  left: ${SCROLLBAR_WIDTH}px;
+  max-width: ${MAX_WIDTH - (SCROLLBAR_WIDTH * 2)}px;
   padding: ${1.5 * UNIT}px;
+  position: relative;
 `;

@@ -90,7 +90,7 @@ function MyApp(props: MyAppProps & AppProps) {
     if (commandCenterEnabled) {
       if (typeof document !== 'undefined') {
         addPageHistory({
-          asPath: router?.asPath,
+          path: router?.asPath,
           pathname: router?.pathname,
           query: router?.query,
           title: document?.title,

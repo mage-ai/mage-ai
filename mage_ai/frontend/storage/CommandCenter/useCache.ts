@@ -41,9 +41,10 @@ export default function useCache(fetchUUID: () => number | string, opts: {
       command_center_item: {
         component: null,
         page: {
-          as_path: router?.asPath,
+          path: router?.asPath,
           pathname: router?.pathname,
           query: router?.query,
+          title: typeof document !== 'undefined' ? document?.title : null,
         },
         page_history: getPageHistoryAsItems(),
         search: searchRef?.current?.value,

@@ -109,15 +109,24 @@ class FileMetadata(BaseDataClass):
 
 
 @dataclass
+class PageMetadata(BaseDataClass):
+    path: str = None
+    pathname: str = None
+    query: Dict = None
+    timestamp: int = None
+    title: str = None
+
+
+@dataclass
 class Metadata(BaseDataClass):
-    action_timestamp: int = None
     block: BlockMetadata = None
     file: FileMetadata = None
-    page: Dict = None
+    page: PageMetadata = None
 
     def __post_init__(self):
         self.serialize_attribute_class('block', BlockMetadata)
         self.serialize_attribute_class('file', FileMetadata)
+        self.serialize_attribute_class('page', PageMetadata)
 
 
 @dataclass
@@ -157,10 +166,12 @@ class Button(BaseDataClass):
 @dataclass
 class Application(BaseDataClass):
     application_type: ApplicationType
+    action: Action = None
     buttons: List[Button] = None
     settings: List[Union[FormInput, Dict]] = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('action', Action)
         self.serialize_attribute_classes('buttons', Button)
         self.serialize_attribute_enum('application_type', ApplicationType)
 

@@ -46,6 +46,7 @@ class InteractionType(str, Enum):
 
 
 class ApplicationType(str, Enum):
+    DETAIL = 'detail'
     FORM = 'form'
 
 

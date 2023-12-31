@@ -26,7 +26,7 @@ export function getIcon(item: CommandCenterItemType) {
     return AllIcons?.[iconUUID];
   }
 
-  if (metadata?.action_timestamp) {
+  if (metadata?.page?.timestamp) {
     return Schedule;
   }
 

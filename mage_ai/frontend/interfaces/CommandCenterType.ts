@@ -12,6 +12,7 @@ export enum ButtonActionTypeEnum {
 
 export enum ItemApplicationTypeEnum {
   FORM = 'form',
+  DETAIL = 'detail',
 }
 
 export enum ItemTypeEnum {
@@ -196,6 +197,7 @@ interface ButtonActionType {
 }
 
 export interface ItemApplicationType {
+  action?: CommandCenterActionType;
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
   settings: FormInputType[];
@@ -205,6 +207,14 @@ interface AttributeDisplaySettingsType {
   description?: DisplaySettingsType;
   icon?: DisplaySettingsType;
   item?: DisplaySettingsType;
+}
+
+export interface PageHistoryType {
+  path: string;
+  pathname: string;
+  query?: KeyValueType;
+  timestamp?: number;
+  title: string;
 }
 
 export interface CommandCenterItemType {
@@ -223,14 +233,9 @@ export interface CommandCenterItemType {
   item_type: ItemTypeEnum;
   items?: CommandCenterItemType[];
   metadata?: {
-    action_timestamp?: number;
     block?: BlockMetadataType;
     file?: FileMetadataType;
-    page?: {
-      asPath: string;
-      pathname: string;
-      query: KeyValueType;
-    }
+    page?: PageHistoryType
   };
   object_type: ObjectTypeEnum;
   score?: number;
@@ -242,11 +247,4 @@ export interface CommandCenterSearchHistoryType {
   item: CommandCenterItemType;
   items: CommandCenterItemType[];
   searchText: string;
-}
-
-export interface PageHistoryType {
-  asPath: string;
-  pathname: string;
-  query?: KeyValueType;
-  title: string;
 }

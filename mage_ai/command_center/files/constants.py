@@ -1,3 +1,6 @@
+import urllib.parse
+from typing import Dict
+
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
@@ -95,7 +98,10 @@ ITEMS = [
                 uuid='open_file',
             ),
         ],
-        condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
     ),
     dict(
         item_type=ItemType.CREATE,
@@ -173,6 +179,46 @@ ITEMS = [
                 uuid='navigate_folder',
             ),
         ],
-        condition=lambda opts: FilePolicy(None, opts.get('user')).has_at_least_editor_role(),
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
     ),
 ]
+
+
+def add_application_actions(item_dict: Dict) -> Dict:
+    uuid = item_dict.get('uuid')
+
+    return dict(
+        application=dict(
+            application_type=ApplicationType.DETAIL,
+            action=dict(
+                request=dict(
+                    operation=OperationType.DETAIL,
+                    resource='file_contents',
+                    resource_id=urllib.parse.quote_plus(uuid),
+                    response_resource_key='file_content',
+                ),
+                uuid='file_content_detail',
+            ),
+            buttons=[
+                dict(
+                    label='Open file',
+                    keyboard_shortcuts=[[13]],
+                    action_types=[
+                        ButtonActionType.EXECUTE,
+                    ],
+                ),
+            ],
+        ),
+        actions=[
+            dict(
+                interaction=dict(
+                    options=dict(file_path=uuid),
+                    type=InteractionType.OPEN_FILE,
+                ),
+                uuid='open_file',
+            ),
+        ],
+    )

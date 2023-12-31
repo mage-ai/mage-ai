@@ -52,8 +52,8 @@ function ItemRow({
       onClick={onClick}
       ref={ref}
     >
-      <FlexContainer alignItems="center" justifyContent="space-between">
-        <Flex alignItems="center" flex={1}>
+      <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
+        <Flex alignItems="center" flex={1} fullHeight>
           <Icon
             fill={iconColor?.accent}
             size={2 * UNIT}

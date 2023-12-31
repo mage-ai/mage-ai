@@ -62,10 +62,12 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { InputElementEnum, ItemRowClassNameEnum } from './constants';
+import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
   addSearchHistory,
+  combineUnique,
   getSearchHistory,
   getSetSettings,
 } from '@storage/CommandCenter/utils';
@@ -192,6 +194,9 @@ function CommandCenter() {
     item: CommandCenterItemType,
     focusedItemIndex: number,
     executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>,
+    opts: {
+      itemsRef?: any;
+    } & InvokeRequestActionType = {},
   ) {
     if (refApplications?.current === null) {
       refApplications.current = [];
@@ -235,13 +240,13 @@ function CommandCenter() {
 
     refRootApplications?.current?.render(
       <ItemApplication
+        {...opts}
         applicationState={refApplicationState}
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
         refError={refError}
         removeApplication={removeApplication}
-
       />
     );
 
@@ -411,13 +416,7 @@ function CommandCenter() {
     ({
       action,
       results,
-    }: {
-      action: CommandCenterActionType;
-      focusedItemIndex: number;
-      index: number;
-      item: CommandCenterItemType;
-      results: KeyValueType;
-    }) => {
+    }: InvokeRequestOptionsType) => {
       const actionCopy = updateActionFromUpstreamResults(action, results);
 
       const {
@@ -483,20 +482,25 @@ function CommandCenter() {
           ) => {
             const {
               focusedItemIndex,
-              index,
+              index = 0,
               action: {
                 request: {
                   operation,
                   response_resource_key: responseResourceKey,
-                }
+                },
+                uuid,
               },
             } = variables;
 
             const value = resp?.[responseResourceKey];
-            const key = OperationTypeEnum.LIST === operation ? 'models' : 'model';
 
-            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[index]) {
-              refItems.current[focusedItemIndex].actionResults[index][key] = value;
+            const items = refItems?.current || [];
+            if (items) {
+              const item = items?.[focusedItemIndex];
+              if (item) {
+                setNested(item, `actionResults.${uuid || index}.${responseResourceKey}`, value);
+                refItems.current[focusedItemIndex] = item;
+              }
             }
           },
           onErrorCallback: (response, errors) => showError({
@@ -532,7 +536,7 @@ function CommandCenter() {
 
       if (!refItems?.current?.[focusedItemIndex]?.actionResults) {
         try {
-          refItems.current[focusedItemIndex].actionResults[index] = {
+          refItems.current[focusedItemIndex].actionResults[action?.uuid || index] = {
             action,
           };
         } catch (error) {
@@ -544,10 +548,12 @@ function CommandCenter() {
         interaction,
         page,
         request,
+        uuid: actionUUID,
       } = action || {
         interaction: null,
         page: null,
         request: null,
+        uuid: null,
       };
 
       let actionFunction = (results: KeyValueType = {}) => {};
@@ -580,8 +586,8 @@ function CommandCenter() {
               }
             }
 
-            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[index]) {
-              refItems.current[focusedItemIndex].actionResults[index].result = result;
+            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[actionUUID || index]) {
+              refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
             }
 
             return result;
@@ -636,7 +642,7 @@ function CommandCenter() {
               }
             });
 
-            refItems.current[focusedItemIndex].actionResults[index].result = result;
+            refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
 
             return result;
           };
@@ -690,7 +696,10 @@ function CommandCenter() {
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
     if (item?.application) {
-      addApplication(item, focusedItemIndex, executeAction);
+      addApplication(item, focusedItemIndex, executeAction, {
+        invokeRequest,
+        itemsRef: refItems,
+      });
     } else {
       return executeAction(item, focusedItemIndex);
     }
@@ -1123,7 +1132,16 @@ function CommandCenter() {
 
               refInputValuePrevious.current = searchText;
 
-              renderItems(refItemsInit?.current || refItems?.current, { shouldFilter: true });
+              renderItems(
+                combineUnique([
+                  refItemsInit?.current || [],
+                  refItems?.current || [],
+                  getCachedItems() || [],
+                ]),
+                {
+                  shouldFilter: true,
+                },
+              );
               fetchItems(300);
 
               if (isRemoving) {

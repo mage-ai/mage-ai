@@ -7,7 +7,8 @@ from typing import Dict, List
 from mage_ai.cache.file import FileCache
 from mage_ai.command_center.constants import ItemType, ObjectType
 from mage_ai.command_center.factory import BaseFactory
-from mage_ai.command_center.files.constants import ITEMS
+from mage_ai.command_center.files.constants import ITEMS, add_application_actions
+from mage_ai.shared.hash import merge_dict
 
 
 class FileFactory(BaseFactory):
@@ -17,7 +18,7 @@ class FileFactory(BaseFactory):
         for item_dict in ITEMS:
             item_scored = self.filter_score(item_dict)
             if item_scored:
-                items.append(item_scored)
+                items.append(item_dict)
 
         files = []
 
@@ -63,6 +64,7 @@ class FileFactory(BaseFactory):
                     ),
                 ),
             )
+
             scored = factory.filter_score(item_dict)
             if scored:
                 files.append(scored)
@@ -84,6 +86,10 @@ class FileFactory(BaseFactory):
 
             now = datetime.utcnow().timestamp()
             files = await self.rank_items(files)
+            files = [merge_dict(
+                item_dict,
+                add_application_actions(item_dict),
+            ) for item_dict in files]
             print(f'[FileFactory] Rank items: {datetime.utcnow().timestamp() - now}')
 
         return files[:10] + items

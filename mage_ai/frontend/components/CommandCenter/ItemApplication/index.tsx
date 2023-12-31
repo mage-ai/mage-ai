@@ -1,4 +1,5 @@
 import ApplicationForm from '../ApplicationForm';
+import ApplicationItemDetail from '../ApplicationItemDetail';
 import { ApplicationProps } from './constants';
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
 import { ItemApplicationTypeEnum } from '@interfaces/CommandCenterType';
@@ -8,7 +9,9 @@ function ItemApplication({
 }: ApplicationProps) {
   const applicationType = props?.item?.application?.application_type;
 
-  if (ItemApplicationTypeEnum.FORM === applicationType) {
+  if (ItemApplicationTypeEnum.DETAIL === applicationType) {
+    return <ApplicationItemDetail {...props} />
+  } else if (ItemApplicationTypeEnum.FORM === applicationType) {
     return <ApplicationForm {...props} />
   }
 

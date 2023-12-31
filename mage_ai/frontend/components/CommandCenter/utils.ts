@@ -11,8 +11,29 @@ import {
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { dig, setNested } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
+import { stringSimilarity } from '@utils/string';
 
 const FILTER_KEYS = ['title', 'description', 'uuid', 'item_type', 'object_type'];
+
+function getSearchableText(item: CommandCenterItemType): string {
+  const arr = [];
+  FILTER_KEYS.forEach((key) => {
+    let value = item?.[key];
+    if (value) {
+      value = value?.toLowerCase();
+      const parts = value?.split('.');
+      if (parts?.length === 2) {
+        arr.push(parts?.[0]);
+        arr.push(parts?.[1]);
+      }
+      arr.push(value);
+    }
+  });
+
+  const text = arr?.join(' ') || '';
+
+  return text + ' ' + text?.replaceAll('_', ' ');
+}
 
 export function filterItems(
   searchText: string,
@@ -24,9 +45,27 @@ export function filterItems(
 
   const value = (searchText || '')?.toLowerCase();
 
-  return (items || [])?.filter(
-    item => FILTER_KEYS.map(key => item?.[key] || '').join(' ')?.toLowerCase()?.includes(value),
-  );
+  return (items || [])?.reduce((acc, item) => {
+    const valueCount = value?.length || 1;
+    const text = getSearchableText(item);
+    const score = stringSimilarity(
+      value,
+      text,
+      2,
+    );
+
+    const threshold = 0.01 * (1 / (valueCount / (valueCount**2)));
+
+    if (text?.includes(value)) {
+      // @ts-ignore
+      return acc.concat({
+        ...item,
+        score: (score / threshold),
+      });
+    }
+
+    return acc;
+  }, []);
 }
 
 export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {
