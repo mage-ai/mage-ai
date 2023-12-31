@@ -1,9 +1,11 @@
+import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
   ButtonActionTypeEnum,
   CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
+  ObjectTypeEnum,
   OBJECT_TITLE_MAPPING_SHORT,
   TYPE_TITLE_MAPPING,
   TYPE_TITLE_MAPPING_NORMAL,
@@ -80,11 +82,19 @@ export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType
 
 export function getDisplayCategory(item: CommandCenterItemType, normal: boolean = false): string {
   if (normal) {
+    const part1 = TYPE_TITLE_MAPPING_NORMAL[item?.item_type];
+    let part2 = OBJECT_TITLE_MAPPING_SHORT[item?.object_type];
+
+    if (ObjectTypeEnum.BLOCK === item?.object_type) {
+      part2 = BLOCK_TYPE_NAME_MAPPING[item?.metadata?.block?.type]?.toLowerCase() || part2;
+    }
+
     return [
-      TYPE_TITLE_MAPPING_NORMAL[item?.item_type],
-      OBJECT_TITLE_MAPPING_SHORT[item?.object_type],
+      part1,
+      part2,
     ].join(' ');
   }
+
   return TYPE_TITLE_MAPPING[item?.item_type];
 }
 

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 import CodeEditor from '@components/CodeEditor';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ApplicationProps } from '../ItemApplication/constants';
@@ -25,8 +27,10 @@ function ApplicationItemDetail({
   itemsRef,
   refError,
   removeApplication,
+  router,
 }: ApplicationProps) {
   const refUUID = useRef(null);
+  console.log(router)
 
   const application = item?.application;
   const action = application?.action;
@@ -84,7 +88,7 @@ function ApplicationItemDetail({
             </Text>
           </SetupSectionRow>
 
-          <SetupSectionRow title="Full path">
+          <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
               <Text monospace rightAligned>
                 {model?.path}
@@ -108,6 +112,97 @@ function ApplicationItemDetail({
             <Text monospace rightAligned>
               {dt?.format(DATE_FORMAT_FULL)} at {dt?.format(TIME_FORMAT_NO_SEC)}
             </Text>
+          </SetupSectionRow>
+        </Spacing>
+
+        {editor}
+      </>
+    );
+  } else if (ObjectTypeEnum.BLOCK === item?.object_type) {
+    const {
+      name,
+      file_path: filePath,
+      pipelines,
+      uuid: blockUUID,
+    } = item?.metadata?.block || {
+      file_path: null,
+      name: null,
+      pipelines: null,
+      uuid: null,
+    };
+
+    const editor = (
+      <CodeEditor
+        autoHeight
+        language={model?.language}
+        padding={UNIT * 2}
+        readOnly
+        value={model?.content}
+      />
+    );
+
+    const pipelinesCount = pipelines?.length || 0;
+
+    const pipelineUUIDs = [];
+    pipelines?.forEach(({
+      uuid
+    }, idx) => {
+      pipelineUUIDs.push(
+        <Link
+          block
+          key={`${uuid}-${idx}-link`}
+          preventDefault
+          href="#"
+          monospace
+          onClick={(e) => {
+            e.preventDefault();
+            router.push(`/pipelines/${uuid}/edit`, null, {
+              shallow: true,
+            });
+          }}
+          style={{
+            marginLeft: 12,
+          }}
+        >
+          {uuid}
+        </Link>
+      );
+    });
+
+    return (
+      <>
+        <Spacing p={PADDING_UNITS}>
+          <SetupSectionRow title="Name">
+            <Text monospace rightAligned>
+              {model?.name || name || blockUUID}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="File path">
+            <div style={{ maxWidth: '70%' }}>
+              <Text monospace rightAligned>
+                {model?.configuration?.file_source?.path
+                  || model?.configuration?.file_path
+                  || filePath
+                }
+              </Text>
+            </div>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Language">
+            <Text monospace rightAligned>
+              {model?.language}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Pipelines">
+            <FlexContainer
+              flexWrap="wrap"
+              justifyContent="flex-end"
+              style={{ maxWidth: '70%' }}
+            >
+              {pipelineUUIDs}
+            </FlexContainer>
           </SetupSectionRow>
         </Spacing>
 

@@ -247,6 +247,7 @@ function CommandCenter() {
         item={item}
         refError={refError}
         removeApplication={removeApplication}
+        router={router}
       />
     );
 

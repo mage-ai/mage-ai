@@ -28,6 +28,12 @@ export function getIcon(item: CommandCenterItemType) {
 
   if (metadata?.page?.timestamp) {
     return Schedule;
+  } else if (ObjectTypeEnum.BLOCK === item?.object_type) {
+    const Icon = BLOCK_TYPE_ICON_MAPPING[item?.metadata?.block?.type];
+
+    if (Icon) {
+      return Icon;
+    }
   }
 
   const mapping = {

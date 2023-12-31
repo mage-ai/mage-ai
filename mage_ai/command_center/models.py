@@ -10,7 +10,11 @@ from mage_ai.command_center.constants import (
     ObjectType,
 )
 from mage_ai.command_center.settings import load_settings, save_settings
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    PipelineType,
+)
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.presenters.interactions.models import (
     InteractionInputOption,
@@ -92,10 +96,29 @@ class Action(BaseDataClass):
 
 
 @dataclass
-class BlockMetadata(BaseDataClass):
-    type: BlockType
+class PipelineMetadata(BaseDataClass):
+    description: str = None
+    name: str = None
+    repo_path: str = None
+    tags: str = None
+    type: PipelineType = None
+    updated_at: str = None
+    uuid: str = None
 
     def __post_init__(self):
+        self.serialize_attribute_enum('type', PipelineType)
+
+
+@dataclass
+class BlockMetadata(BaseDataClass):
+    file_path: str = None
+    language: BlockLanguage = None
+    pipelines: List[PipelineMetadata] = None
+    type: BlockType = None
+
+    def __post_init__(self):
+        self.serialize_attribute_classes('pipelines', PipelineMetadata)
+        self.serialize_attribute_enum('language', BlockLanguage)
         self.serialize_attribute_enum('type', BlockType)
 
 
@@ -122,11 +145,13 @@ class Metadata(BaseDataClass):
     block: BlockMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
+    pipeline: PipelineMetadata = None
 
     def __post_init__(self):
         self.serialize_attribute_class('block', BlockMetadata)
         self.serialize_attribute_class('file', FileMetadata)
         self.serialize_attribute_class('page', PageMetadata)
+        self.serialize_attribute_class('pipeline', PipelineMetadata)
 
 
 @dataclass

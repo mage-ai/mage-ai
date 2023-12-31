@@ -42,7 +42,6 @@ function ItemRow({
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
 
-
   const applicationWithDescriptionPath =
     ObjectTypeEnum.APPLICATION === type && description?.startsWith('/');
 

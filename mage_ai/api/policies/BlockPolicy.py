@@ -154,6 +154,7 @@ BlockPolicy.allow_query([
     'data_integration_type',
     'data_integration_uuid',
     'destination_table',
+    'file_path',
     'include_block_catalog',
     'include_block_metadata',
     'include_documentation',

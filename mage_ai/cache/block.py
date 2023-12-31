@@ -3,9 +3,11 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
+import inflection
+
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
-from mage_ai.cache.utils import build_pipeline_dict
+from mage_ai.cache.utils import build_block_dict, build_pipeline_dict
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
@@ -42,39 +44,39 @@ class BlockCache(BaseCache):
         block_type = ''
         block_uuid = ''
         configuration = None
+        file_path = None
+        repo_path = repo_path or get_repo_path(root_project=False)
 
         if isinstance(block, dict):
             block_type = block.get('type')
             block_uuid = block.get('uuid')
             configuration = block.get('configuration') or {}
+            file_path = os.path.join(
+                repo_path,
+                inflection.pluralize(block_type),
+                block_uuid,
+            )
         else:
             block_type = block.type
             block_uuid = block.uuid
             configuration = block.configuration or {}
-
-        if not block_type or not block_uuid:
-            return None
+            file_path = block.file_path
 
         if configuration:
             file_source = (configuration or {}).get('file_source') or {}
             if file_source and (file_source or {}).get('path'):
                 return remove_base_repo_path_or_name((file_source or {}).get('path'))
 
-        repo_path = repo_path or get_repo_path(root_project=False)
-
-        return ':'.join([
-            remove_base_repo_path_or_name(repo_path),
-            os.path.join(block_type, block_uuid),
-        ])
+        return remove_base_repo_path_or_name(file_path)
 
     def get_pipelines(self, block) -> List[Dict]:
-        pipelines = {}
+        pipelines = []
 
         mapping = self.get(self.cache_key)
         if mapping is not None:
             key = self.build_key(block)
             if key:
-                pipelines = mapping.get(key, [])
+                return (mapping.get(key) or {}).get('pipelines', [])
 
         return pipelines
 
@@ -122,7 +124,7 @@ class BlockCache(BaseCache):
         if mapping is None:
             mapping = {}
 
-        pipelines_arr = mapping.get(key, [])
+        pipelines_arr = (mapping.get(key) or {}).get('pipelines', [])
 
         for pipeline in pipelines:
             pipeline_uuid = None
@@ -157,7 +159,10 @@ class BlockCache(BaseCache):
                 repo_path=repo_path,
             ))
 
-        mapping[key] = pipelines_arr
+        mapping[key] = dict(
+            block=build_block_dict(block),
+            pipelines=pipelines_arr,
+        )
 
         self.set(self.cache_key, mapping)
 
@@ -192,8 +197,12 @@ class BlockCache(BaseCache):
             return pipeline_dict.get('uuid') != pipeline_uuid and \
                 pipeline_dict.get('repo_path') != repo_path
 
-        pipelines = mapping.get(key, [])
-        mapping[key] = list(filter(__filter, pipelines))
+        pipelines = (mapping.get(key) or {}).get('pipelines', [])
+
+        mapping[key] = dict(
+            block=build_block_dict(block),
+            pipelines=list(filter(__filter, pipelines)),
+        )
 
         self.set(self.cache_key, mapping)
 
@@ -227,8 +236,12 @@ class BlockCache(BaseCache):
                 if not key:
                     continue
                 if key not in mapping:
-                    mapping[key] = []
-                mapping[key].append(build_pipeline_dict(
+                    mapping[key] = dict(
+                        block=build_block_dict(block_dict),
+                        pipelines=[],
+                    )
+
+                mapping[key]['pipelines'].append(build_pipeline_dict(
                     pipeline_dict,
                     repo_path=remove_base_repo_path_or_name(repo_path) if repo_path else repo_path,
                 ))

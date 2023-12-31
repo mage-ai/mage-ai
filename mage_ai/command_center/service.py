@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 from mage_ai.command_center.applications.factory import ApplicationFactory
+from mage_ai.command_center.blocks.factory import BlockFactory
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.files.factory import FileFactory
 from mage_ai.command_center.models import Item
@@ -11,6 +12,7 @@ FACTORIES_OR_ITEMS = [
     FileFactory,
     ITEMS_SUPPORT,
     ApplicationFactory,
+    BlockFactory,
 ]
 
 

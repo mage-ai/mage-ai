@@ -22,4 +22,5 @@ export type ApplicationProps = {
   itemsRef?: any;
   refError?: any;
   removeApplication: () => void;
+  router: any;
 } & InvokeRequestActionType;
