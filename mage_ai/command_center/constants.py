@@ -54,5 +54,6 @@ class ApplicationType(str, Enum):
 class ButtonActionType(str, Enum):
     ADD_APPLICATION = 'add_application'
     CLOSE_APPLICATION = 'close_application'  # Go back out of the current application.
+    CUSTOM_ACTIONS = 'custom_actions'
     EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
     RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.

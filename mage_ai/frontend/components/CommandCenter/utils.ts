@@ -168,6 +168,12 @@ export function executeButtonActions({
       actionFunction = (result: KeyValueType = {}) => executeAction(item, focusedItemIndex);
     } else if (ButtonActionTypeEnum.CLOSE_APPLICATION === actionType) {
       actionFunction = (result: KeyValueType = {}) => removeApplication();
+    } else if (ButtonActionTypeEnum.CUSTOM_ACTIONS === actionType) {
+      actionFunction = (result: KeyValueType = {}) => executeAction(
+        item,
+        focusedItemIndex,
+        button?.actions,
+      );
     }
 
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));

@@ -61,6 +61,35 @@ from mage_ai.shared.strings import is_number
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
+@safe_db_query
+def query_pipeline_schedules(pipeline_uuids: List[str]):
+    a = aliased(PipelineSchedule, name='a')
+    result = (
+        PipelineSchedule.
+        select(*[
+            a.created_at,
+            a.id,
+            a.name,
+            a.pipeline_uuid,
+            a.schedule_interval,
+            a.schedule_type,
+            a.start_time,
+            a.status,
+            a.updated_at,
+        ]).
+        filter(
+            a.pipeline_uuid.in_(pipeline_uuids),
+            or_(
+                a.repo_path.in_(Project().repo_path_for_database_query(
+                    'pipeline_schedules',
+                )),
+                a.repo_path.is_(None),
+            )
+        )
+    ).all()
+    return group_by(lambda x: x.pipeline_uuid, result)
+
+
 class PipelineResource(BaseResource):
     @classmethod
     @safe_db_query
@@ -209,34 +238,6 @@ class PipelineResource(BaseResource):
             )
 
         pipelines = [p for p in pipelines if p is not None]
-
-        @safe_db_query
-        def query_pipeline_schedules(pipeline_uuids):
-            a = aliased(PipelineSchedule, name='a')
-            result = (
-                PipelineSchedule.
-                select(*[
-                    a.created_at,
-                    a.id,
-                    a.name,
-                    a.pipeline_uuid,
-                    a.schedule_interval,
-                    a.schedule_type,
-                    a.start_time,
-                    a.status,
-                    a.updated_at,
-                ]).
-                filter(
-                    a.pipeline_uuid.in_(pipeline_uuids),
-                    or_(
-                        a.repo_path.in_(Project().repo_path_for_database_query(
-                            'pipeline_schedules',
-                        )),
-                        a.repo_path.is_(None),
-                    )
-                )
-            ).all()
-            return group_by(lambda x: x.pipeline_uuid, result)
 
         mapping = {}
         if include_schedules:
@@ -477,6 +478,16 @@ class PipelineResource(BaseResource):
             from mage_ai.cache.block import BlockCache
 
             await BlockCache.initialize_cache()
+
+        include_schedules = query.get('include_schedules', [False])
+        if include_schedules:
+            include_schedules = include_schedules[0]
+
+        if include_schedules:
+            mapping = query_pipeline_schedules([pipeline.uuid])
+
+            if mapping.get(pipeline.uuid):
+                pipeline.schedules = mapping[pipeline.uuid] or []
 
         return self(pipeline, user, **kwargs)
 

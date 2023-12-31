@@ -5,7 +5,9 @@ import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { removeUnderscore } from '@utils/string';
 
 export enum ButtonActionTypeEnum {
+  ADD_APPLICATION = 'add_application',
   CLOSE_APPLICATION = 'close_application',
+  CUSTOM_ACTIONS = 'custom_actions',
   EXECUTE = 'execute',
   RESET_FORM = 'reset_form',
 }

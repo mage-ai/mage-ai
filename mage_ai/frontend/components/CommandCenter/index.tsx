@@ -621,7 +621,11 @@ function CommandCenter() {
     },
   );
 
-  function executeAction(item: CommandCenterItemType, focusedItemIndex: number) {
+  function executeAction(
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    actions: CommandCenterActionType[] = null,
+  ) {
     const actionSettings = [];
 
     if (!item?.actionResults) {
@@ -634,7 +638,7 @@ function CommandCenter() {
       }
     }
 
-    item?.actions?.forEach((actionInit, index: number) => {
+    (actions || item?.actions || [])?.forEach((actionInit, index: number) => {
       let action = { ...actionInit };
       const applicationState = (refApplicationState?.current || {})?.[action?.uuid];
       if (applicationState) {

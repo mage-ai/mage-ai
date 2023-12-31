@@ -4,18 +4,22 @@ import CodeEditor from '@components/CodeEditor';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
+import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import { ApplicationProps } from '../ItemApplication/constants';
 import {
   DATE_FORMAT_FULL,
   TIME_FORMAT_NO_SEC,
   dateFromFromUnixTimestamp,
+  datetimeInLocalTimezone,
   momentInLocalTimezone,
 } from '@utils/date';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PIPELINE_TYPE_LABEL_MAPPING } from '@interfaces/PipelineType';
 import { SetupSectionRow } from '@components/shared/SetupSection';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { pluralize } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
@@ -50,6 +54,8 @@ function ApplicationItemDetail({
     });
   }, [action, focusedItemIndex, invokeRequest, item]);
 
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
+
   if (ObjectTypeEnum.FILE === item?.object_type) {
     const {
       extension,
@@ -72,8 +78,6 @@ function ApplicationItemDetail({
         value={model?.content}
       />
     );
-
-    const displayLocalTimezone = shouldDisplayLocalTimezone();
     const dt = momentInLocalTimezone(
       dateFromFromUnixTimestamp(modifiedTimestamp),
       displayLocalTimezone,
@@ -207,6 +211,120 @@ function ApplicationItemDetail({
         </Spacing>
 
         {editor}
+      </>
+    );
+  } else if (ObjectTypeEnum.PIPELINE === item?.object_type) {
+    const {
+      blocks,
+      description,
+      name,
+      schedules,
+      tags,
+      type,
+      updated_at: updatedAt,
+      uuid,
+    } = model || item?.metadata?.pipeline || {};
+    const {
+      repo_path: repoPath,
+    } = item?.metadata?.pipeline || {};
+
+    const dt = updatedAt && datetimeInLocalTimezone(
+      updatedAt,
+      displayLocalTimezone,
+    );
+
+    const blocksCount = blocks?.length || 0;
+
+    const blockUUIDs = [];
+    blocks?.forEach(({
+      color: blockColor,
+      type: blockType,
+      uuid: blockUUID,
+    }, idx) => {
+      const {
+        accent
+      } = getColorsForBlockType(blockType, {
+        blockColor,
+      }) || {
+        accent: null,
+      };
+
+      blockUUIDs.push(
+        <Link
+          block
+          color={accent}
+          key={`${blockUUID}-${idx}-link`}
+          preventDefault
+          href="#"
+          monospace
+          onClick={(e) => {
+            e.preventDefault();
+            router.push(`/pipelines/${uuid}/edit?block_uuid=${blockUUID}`, null, {
+              shallow: true,
+            });
+          }}
+          style={{
+            marginLeft: 12,
+          }}
+        >
+          {blockUUID}
+        </Link>
+      );
+    });
+
+    return (
+      <>
+        <Spacing p={PADDING_UNITS}>
+          <SetupSectionRow title="Name">
+            <Text monospace rightAligned>
+              {name || uuid}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Description">
+            <div style={{ maxWidth: '70%' }}>
+              <Text disableWordBreak monospace rightAligned>
+                {description}
+              </Text>
+            </div>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Type">
+            <Text monospace rightAligned>
+              {PIPELINE_TYPE_LABEL_MAPPING[type]}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Project">
+            <Text monospace rightAligned>
+              {repoPath}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Tags">
+            <TagsContainer
+              tags={tags?.map(t => ({ uuid: t }))}
+            />
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Blocks">
+            <Text monospace rightAligned>
+              {blockUUIDs}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Triggers">
+            <Text monospace rightAligned>
+              {schedules?.length || 0}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Updated at">
+            <Text monospace rightAligned>
+              {dt}
+            </Text>
+          </SetupSectionRow>
+        </Spacing>
       </>
     );
   }

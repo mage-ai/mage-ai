@@ -2,7 +2,12 @@ import urllib.parse
 from typing import Dict, List, Tuple
 
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.command_center.constants import ApplicationType, ItemType, ObjectType
+from mage_ai.command_center.constants import (
+    ApplicationType,
+    ButtonActionType,
+    ItemType,
+    ObjectType,
+)
 from mage_ai.data_preparation.models.constants import PIPELINE_TYPE_DISPLAY_NAME_MAPPING
 
 
@@ -18,6 +23,7 @@ def add_application_actions(item_dict: Dict) -> Dict:
             response_resource_key='pipeline',
             query=dict(
                 include_block_pipelines=True,
+                include_schedules=True,
                 includes_outputs=True,
                 includes_outputs_spark=True,
             ),
@@ -39,6 +45,9 @@ def add_application_actions(item_dict: Dict) -> Dict:
                     dict(
                         label='Open pipeline',
                         keyboard_shortcuts=[[13]],
+                        action_types=[
+                            ButtonActionType.CUSTOM_ACTIONS,
+                        ],
                         actions=[
                             dict(
                                 page=dict(
