@@ -192,8 +192,15 @@ function CommandCenter() {
 
   function addHeaderTitle() {
     if (refApplications?.current?.length >= 2 && refHeaderTitle?.current !== null) {
-      refHeaderTitle.current.innerText = refApplications?.current?.[1]?.item?.title || '';
-      activateClassNamesForRefs([refHeaderTitle]);
+      const itemTitlePrev = refApplications?.current?.[1]?.item?.title;
+      const itemTitle = getCurrentApplicationConfiguration()?.item?.title;
+      if (itemTitle !== itemTitlePrev) {
+        refHeaderTitle.current.innerText = itemTitlePrev;
+        activateClassNamesForRefs([refHeaderTitle]);
+      } else {
+        refHeaderTitle.current.innerText = '';
+        activateClassNamesForRefs([refHeaderTitle], true);
+      }
     }
   }
 
