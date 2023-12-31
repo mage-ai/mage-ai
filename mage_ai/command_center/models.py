@@ -193,6 +193,7 @@ class Button(BaseDataClass):
 @dataclass
 class Application(BaseDataClass):
     application_type: ApplicationType
+    uuid: str
     action: Action = None
     buttons: List[Button] = None
     settings: List[Union[FormInput, Dict]] = None
@@ -333,7 +334,7 @@ class ItemBase(BaseDataClass):
     title: str
     uuid: str
     actions: List[Action] = None
-    application: Application = None
+    applications: List[Application] = None
     display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
     items: List[Dict] = None
@@ -341,10 +342,10 @@ class ItemBase(BaseDataClass):
     score: int = 0
 
     def __post_init__(self):
-        self.serialize_attribute_class('application', Application)
         self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
         self.serialize_attribute_class('metadata', Metadata)
         self.serialize_attribute_classes('actions', Action)
+        self.serialize_attribute_classes('applications', Application)
         self.serialize_attribute_enum('item_type', ItemType)
         self.serialize_attribute_enum('object_type', ObjectType)
 
@@ -356,7 +357,7 @@ class Item(ItemBase):
     title: str
     uuid: str
     actions: List[Action] = None
-    application: Application = None
+    applications: List[Application] = None
     display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
     items: List[ItemBase] = None

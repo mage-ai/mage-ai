@@ -17,60 +17,63 @@ ITEMS = [
         item_type=ItemType.CREATE,
         object_type=ObjectType.FILE,
         title='Create a new file',
-        application=dict(
-            application_type=ApplicationType.FORM,
-            buttons=[
-                dict(
-                    label='Cancel',
-                    tooltip='Discard changes and go back.',
-                    keyboard_shortcuts=[['metaKey', 27]],
-                    action_types=[
-                        ButtonActionType.RESET_FORM,
-                        ButtonActionType.CLOSE_APPLICATION,
-                    ],
-                ),
-                dict(
-                    label='Create new file',
-                    tooltip='Save changes and create the new file.',
-                    keyboard_shortcuts=[[13]],
-                    action_types=[
-                        ButtonActionType.EXECUTE,
-                        ButtonActionType.RESET_FORM,
-                    ],
-                ),
-            ],
-            settings=[
-                dict(
-                    label='Directory',
-                    description=(
-                        'The location to create the file in. '
-                        'Must be relative to the top level directory.'
+        applications=[
+            dict(
+                application_type=ApplicationType.FORM,
+                buttons=[
+                    dict(
+                        label='Cancel',
+                        tooltip='Discard changes and go back.',
+                        keyboard_shortcuts=[['metaKey', 27]],
+                        action_types=[
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                        ],
                     ),
-                    placeholder='e.g. utils',
-                    display_settings=dict(
-                        icon_uuid='FolderOutline',
+                    dict(
+                        label='Create new file',
+                        tooltip='Save changes and create the new file.',
+                        keyboard_shortcuts=[[13]],
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                            ButtonActionType.RESET_FORM,
+                        ],
                     ),
-                    name='request.payload.file.dir_path',
-                    type=InteractionInputType.TEXT_FIELD,
-                    required=True,
-                    monospace=True,
-                    action_uuid='create_file',
-                ),
-                dict(
-                    label='File name',
-                    description='A descriptive name of the file to be created.',
-                    display_settings=dict(
-                        icon_uuid='File',
+                ],
+                settings=[
+                    dict(
+                        label='Directory',
+                        description=(
+                            'The location to create the file in. '
+                            'Must be relative to the top level directory.'
+                        ),
+                        placeholder='e.g. utils',
+                        display_settings=dict(
+                            icon_uuid='FolderOutline',
+                        ),
+                        name='request.payload.file.dir_path',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        monospace=True,
+                        action_uuid='create_file',
                     ),
-                    placeholder='e.g. magic_powers.py',
-                    name='request.payload.file.name',
-                    type=InteractionInputType.TEXT_FIELD,
-                    required=True,
-                    monospace=True,
-                    action_uuid='create_file',
-                ),
-            ],
-        ),
+                    dict(
+                        label='File name',
+                        description='A descriptive name of the file to be created.',
+                        display_settings=dict(
+                            icon_uuid='File',
+                        ),
+                        placeholder='e.g. magic_powers.py',
+                        name='request.payload.file.name',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        monospace=True,
+                        action_uuid='create_file',
+                    ),
+                ],
+                uuid='new_file',
+            ),
+        ],
         actions=[
             dict(
                 request=dict(
@@ -107,57 +110,60 @@ ITEMS = [
         item_type=ItemType.CREATE,
         object_type=ObjectType.FOLDER,
         title='Create a new folder',
-        application=dict(
-            application_type=ApplicationType.FORM,
-            buttons=[
-                dict(
-                    label='Cancel',
-                    tooltip='Discard changes and go back.',
-                    keyboard_shortcuts=[['metaKey', 27]],
-                    action_types=[
-                        ButtonActionType.RESET_FORM,
-                        ButtonActionType.CLOSE_APPLICATION,
-                    ],
-                ),
-                dict(
-                    label='Create new folder',
-                    tooltip='Save changes and create the new folder.',
-                    keyboard_shortcuts=[[13]],
-                    action_types=[
-                        ButtonActionType.EXECUTE,
-                        ButtonActionType.RESET_FORM,
-                    ],
-                ),
-            ],
-            settings=[
-                dict(
-                    label='Directory',
-                    description='The parent directory of this folder.',
-                    placeholder='e.g. utils',
-                    display_settings=dict(
-                        icon_uuid='FolderOutline',
+        applications=[
+            dict(
+                application_type=ApplicationType.FORM,
+                buttons=[
+                    dict(
+                        label='Cancel',
+                        tooltip='Discard changes and go back.',
+                        keyboard_shortcuts=[['metaKey', 27]],
+                        action_types=[
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                        ],
                     ),
-                    name='request.payload.folder.path',
-                    type=InteractionInputType.TEXT_FIELD,
-                    required=True,
-                    monospace=True,
-                    action_uuid='create_folder',
-                ),
-                dict(
-                    label='Folder name',
-                    description='A descriptive name of the folder to be created.',
-                    display_settings=dict(
-                        icon_uuid='Alphabet',
+                    dict(
+                        label='Create new folder',
+                        tooltip='Save changes and create the new folder.',
+                        keyboard_shortcuts=[[13]],
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                            ButtonActionType.RESET_FORM,
+                        ],
                     ),
-                    placeholder='e.g. transformers',
-                    name='request.payload.folder.name',
-                    type=InteractionInputType.TEXT_FIELD,
-                    required=True,
-                    monospace=True,
-                    action_uuid='create_folder',
-                ),
-            ],
-        ),
+                ],
+                settings=[
+                    dict(
+                        label='Directory',
+                        description='The parent directory of this folder.',
+                        placeholder='e.g. utils',
+                        display_settings=dict(
+                            icon_uuid='FolderOutline',
+                        ),
+                        name='request.payload.folder.path',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        monospace=True,
+                        action_uuid='create_folder',
+                    ),
+                    dict(
+                        label='Folder name',
+                        description='A descriptive name of the folder to be created.',
+                        display_settings=dict(
+                            icon_uuid='Alphabet',
+                        ),
+                        placeholder='e.g. transformers',
+                        name='request.payload.folder.name',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        monospace=True,
+                        action_uuid='create_folder',
+                    ),
+                ],
+                uuid='new_folder',
+            ),
+        ],
         actions=[
             dict(
                 request=dict(
@@ -191,27 +197,30 @@ def add_application_actions(item_dict: Dict) -> Dict:
     uuid = item_dict.get('uuid')
 
     return dict(
-        application=dict(
-            application_type=ApplicationType.DETAIL,
-            action=dict(
-                request=dict(
-                    operation=OperationType.DETAIL,
-                    resource='file_contents',
-                    resource_id=urllib.parse.quote_plus(uuid),
-                    response_resource_key='file_content',
+        applications=[
+            dict(
+                application_type=ApplicationType.DETAIL,
+                action=dict(
+                    request=dict(
+                        operation=OperationType.DETAIL,
+                        resource='file_contents',
+                        resource_id=urllib.parse.quote_plus(uuid),
+                        response_resource_key='file_content',
+                    ),
+                    uuid='file_content_detail',
                 ),
-                uuid='file_content_detail',
+                buttons=[
+                    dict(
+                        label='Open file',
+                        keyboard_shortcuts=[[13]],
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                        ],
+                    ),
+                ],
+                uuid='model_detail',
             ),
-            buttons=[
-                dict(
-                    label='Open file',
-                    keyboard_shortcuts=[[13]],
-                    action_types=[
-                        ButtonActionType.EXECUTE,
-                    ],
-                ),
-            ],
-        ),
+        ],
         actions=[
             dict(
                 interaction=dict(

@@ -24,6 +24,7 @@ class FileCache(BaseCache):
     ) -> 'FileCache':
         repo_path = get_repo_path(root_project=True)
         cache = self(repo_path=repo_path)
+
         if replace or not cache.exists():
             cache.build_cache(absolute_paths)
 
@@ -67,6 +68,9 @@ class FileCache(BaseCache):
         paths = [os.path.join(base_path, path) for path in paths]
 
         return self.initialize_cache(paths, replace=replace)
+
+    def exists(self) -> bool:
+        return os.path.exists(self.build_path(self.cache_key))
 
     async def load(self) -> List[str]:
         content = await self.storage.read_async(self.build_path(self.cache_key))

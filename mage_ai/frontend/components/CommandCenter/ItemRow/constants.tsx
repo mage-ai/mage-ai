@@ -20,7 +20,7 @@ export function getIcon(item: CommandCenterItemType) {
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
   } = item;
-  const iconUUID = displaySettingsByAttribute?.item?.icon?.icon_uuid;
+  const iconUUID = displaySettingsByAttribute?.icon?.icon_uuid;
 
   if (iconUUID && iconUUID in AllIcons) {
     return AllIcons?.[iconUUID];

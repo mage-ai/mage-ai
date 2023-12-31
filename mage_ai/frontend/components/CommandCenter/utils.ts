@@ -5,9 +5,10 @@ import {
   CommandCenterActionPageType,
   CommandCenterActionType,
   CommandCenterItemType,
+  ItemApplicationType,
   KeyValueType,
-  ObjectTypeEnum,
   OBJECT_TITLE_MAPPING_SHORT,
+  ObjectTypeEnum,
   TYPE_TITLE_MAPPING,
   TYPE_TITLE_MAPPING_NORMAL,
 } from '@interfaces/CommandCenterType';
@@ -132,6 +133,7 @@ export function updateActionFromUpstreamResults(
 }
 
 export function executeButtonActions({
+  application,
   button,
   executeAction,
   focusedItemIndex,
@@ -139,6 +141,7 @@ export function executeButtonActions({
   refError,
   removeApplication,
 }: {
+  application: ItemApplicationType;
   button: ButtonActionType;
   executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
   focusedItemIndex: number;

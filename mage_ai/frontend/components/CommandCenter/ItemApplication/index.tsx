@@ -7,7 +7,15 @@ import { ItemApplicationTypeEnum } from '@interfaces/CommandCenterType';
 function ItemApplication({
   ...props
 }: ApplicationProps) {
-  const applicationType = props?.item?.application?.application_type;
+  const {
+    applicationsRef,
+    item,
+  } = props || {
+    applicationsRef: null,
+    item: null,
+  };
+  const application = item?.applications?.[applicationsRef?.current?.length - 1];
+  const applicationType = application?.application_type;
 
   if (ItemApplicationTypeEnum.DETAIL === applicationType) {
     return <ApplicationItemDetail {...props} />

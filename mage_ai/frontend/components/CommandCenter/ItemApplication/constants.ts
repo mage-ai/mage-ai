@@ -16,6 +16,13 @@ export type ApplicationProps = {
   applicationState: {
     current: KeyValueType;
   };
+  applicationsRef: {
+    current: {
+      executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
+      focusedItemIndex: number;
+      item: CommandCenterItemType;
+    }[];
+  };
   executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
   focusedItemIndex: number;
   item: CommandCenterItemType;

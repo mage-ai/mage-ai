@@ -52,8 +52,6 @@ export function onlyKeysPresent(
       && !keys?.includes(k)
     );
 
-  console.log(otherKeysPressed, opts?.allowExtraKeys)
-
   return keys.every(k => keyMappingUse[k])
     && (otherKeysPressed?.length || 0) <= (opts?.allowExtraKeys || 0);
 }

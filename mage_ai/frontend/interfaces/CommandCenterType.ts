@@ -11,8 +11,9 @@ export enum ButtonActionTypeEnum {
 }
 
 export enum ItemApplicationTypeEnum {
-  FORM = 'form',
   DETAIL = 'detail',
+  DETAIL_LIST = 'detail_list',
+  FORM = 'form',
 }
 
 export enum ItemTypeEnum {
@@ -228,7 +229,7 @@ export interface CommandCenterItemType {
     };
   };
   actions?: CommandCenterActionType[];
-  application?: ItemApplicationType;
+  applications?: ItemApplicationType[];
   display_settings_by_attribute?: AttributeDisplaySettingsType;
   description?: string;
   item_type: ItemTypeEnum;

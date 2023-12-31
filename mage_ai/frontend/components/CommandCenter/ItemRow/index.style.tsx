@@ -31,7 +31,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
     object_type: null,
   };
 
-  const colorUUID = displaySettingsByAttribute?.item?.icon?.color_uuid;
+  const colorUUID = displaySettingsByAttribute?.icon?.color_uuid;
 
   const themeUse = (theme || dark);
 

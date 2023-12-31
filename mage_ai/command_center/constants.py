@@ -47,10 +47,12 @@ class InteractionType(str, Enum):
 
 class ApplicationType(str, Enum):
     DETAIL = 'detail'
+    DETAIL_LIST = 'detail_list'
     FORM = 'form'
 
 
 class ButtonActionType(str, Enum):
+    ADD_APPLICATION = 'add_application'
     CLOSE_APPLICATION = 'close_application'  # Go back out of the current application.
     EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
     RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.

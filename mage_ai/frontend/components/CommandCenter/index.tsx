@@ -243,6 +243,7 @@ function CommandCenter() {
       <ItemApplication
         {...opts}
         applicationState={refApplicationState}
+        applicationsRef={refApplications}
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
@@ -261,6 +262,7 @@ function CommandCenter() {
     refRootApplicationsFooter?.current?.render(
       <ApplicationFooter
         applicationState={refApplicationState}
+        applicationsRef={refApplications}
         executeAction={executeAction}
         focusedItemIndex={focusedItemIndex}
         item={item}
@@ -700,7 +702,7 @@ function CommandCenter() {
   }
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
-    if (item?.application) {
+    if (item?.applications?.length) {
       addApplication(item, focusedItemIndex, executeAction, {
         invokeRequest,
         itemsRef: refItems,
@@ -895,16 +897,20 @@ function CommandCenter() {
         openCommandCenter();
       }
     } else if (isApplicationActive()) {
-      const app = refApplications?.current?.[0] || {};
-      const { item } = app || {};
+      const applicationIndex = refApplications?.current?.length - 1;
+      const currentApplicationConfig = refApplications?.current?.[0] || {};
+      const {
+        item,
+      } = currentApplicationConfig || {};
+      const application = item?.applications?.[applicationIndex];
 
       // If in a context of a selected item.
       // Leave the current context and go back.
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }) && !refError?.current) {
         pauseEvent(event);
         removeApplication();
-      } else if (item?.application && !refError?.current) {
-        item?.application?.buttons?.forEach((button) => {
+      } else if (application && !refError?.current) {
+        application?.buttons?.forEach((button) => {
           const {
             keyboard_shortcuts: keyboardShortcuts,
           } = button;
@@ -914,10 +920,11 @@ function CommandCenter() {
               pauseEvent(event);
 
               return executeButtonActions({
+                application,
                 button,
                 refError,
                 removeApplication,
-                ...app,
+                ...currentApplicationConfig,
               });
             }
           });

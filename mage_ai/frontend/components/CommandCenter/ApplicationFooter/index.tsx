@@ -16,6 +16,7 @@ import { getIconColor } from '../ItemRow/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 function ApplicationFooter({
+  applicationsRef,
   executeAction,
   focusedItemIndex,
   item,
@@ -23,10 +24,11 @@ function ApplicationFooter({
   refError,
 }: ApplicationProps) {
   const {
-    application,
+    applications,
     title,
   } = item;
 
+  const application = applications?.[applicationsRef?.current?.length - 1];
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
   const buttonsCount = application?.buttons?.length ?? 0;

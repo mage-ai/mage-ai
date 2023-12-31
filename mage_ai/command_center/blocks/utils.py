@@ -30,21 +30,24 @@ def add_application_actions(item_dict: Dict) -> Dict:
         ))
 
     return dict(
-        application=dict(
-            application_type=ApplicationType.DETAIL,
-            action=dict(
-                request=dict(
-                    operation=OperationType.DETAIL,
-                    resource='blocks',
-                    resource_id=urllib.parse.quote_plus(uuid),
-                    response_resource_key='block',
-                    query=dict(
-                        file_path=urllib.parse.quote_plus(file_path),
+        applications=[
+            dict(
+                application_type=ApplicationType.DETAIL,
+                action=dict(
+                    request=dict(
+                        operation=OperationType.DETAIL,
+                        resource='blocks',
+                        resource_id=urllib.parse.quote_plus(uuid),
+                        response_resource_key='block',
+                        query=dict(
+                            file_path=urllib.parse.quote_plus(file_path),
+                        ),
                     ),
+                    uuid='block_detail',
                 ),
-                uuid='block_detail',
+                buttons=buttons,
+                uuid='model_detail',
             ),
-            buttons=buttons,
-        ),
+        ],
         actions=actions,
     )
