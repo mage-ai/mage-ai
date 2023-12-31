@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import CodeEditor from '@components/CodeEditor';
+import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
@@ -285,55 +286,72 @@ function ApplicationItemDetail({
 
     contentEL = (
       <>
-        <SetupSectionRow title="Name">
-          <Text rightAligned>
-            {name || uuid}
-          </Text>
-        </SetupSectionRow>
-
-        <SetupSectionRow title="Description">
-          <div style={{ maxWidth: '70%' }}>
-            <Text disableWordBreak rightAligned>
-              {description}
+        <Spacing mb={PADDING_UNITS}>
+          <SetupSectionRow title="Name">
+            <Text rightAligned>
+              {name || uuid}
             </Text>
-          </div>
-        </SetupSectionRow>
+          </SetupSectionRow>
 
-        <SetupSectionRow title="Type">
-          <Text default monospace rightAligned>
-            {PIPELINE_TYPE_LABEL_MAPPING[type]}
-          </Text>
-        </SetupSectionRow>
+          <SetupSectionRow title="Description">
+            <div style={{ maxWidth: '70%' }}>
+              <Text disableWordBreak rightAligned muted={!description} monospace={!description}>
+                {description || '-'}
+              </Text>
+            </div>
+          </SetupSectionRow>
 
-        <SetupSectionRow title="Project">
-          <Text default monospace rightAligned>
-            {repoPath}
-          </Text>
-        </SetupSectionRow>
+          <SetupSectionRow title="Type">
+            <Text default monospace rightAligned>
+              {PIPELINE_TYPE_LABEL_MAPPING[type]}
+            </Text>
+          </SetupSectionRow>
 
-        <SetupSectionRow title="Tags">
-          <TagsContainer
-            tags={tags?.map(t => ({ uuid: t }))}
-          />
-        </SetupSectionRow>
+          <SetupSectionRow title="Project">
+            <Text default monospace muted={!repoPath} rightAligned>
+              {repoPath || '-'}
+            </Text>
+          </SetupSectionRow>
 
-        <SetupSectionRow title="Updated at">
-          <Text default monospace rightAligned>
-            {dt}
-          </Text>
-        </SetupSectionRow>
+          <SetupSectionRow title="Tags">
+            {tags?.length >= 1 && (
+              <TagsContainer
+                tags={tags?.map(t => ({ uuid: t }))}
+              />
+            )}
+            {!tags?.length && <Text monospace muted>-</Text>}
+          </SetupSectionRow>
 
-        <SetupSectionRow title="Triggers">
-          <Text default monospace rightAligned>
-            {schedules?.length || 0}
-          </Text>
-        </SetupSectionRow>
+          <SetupSectionRow title="Updated at">
+            <Text default monospace rightAligned>
+              {dt}
+            </Text>
+          </SetupSectionRow>
 
-        <SetupSectionRow title="Blocks">
-          <Text monospace rightAligned>
-            {blockUUIDs}
-          </Text>
-        </SetupSectionRow>
+          <SetupSectionRow title="Triggers">
+            <Text default monospace rightAligned>
+              {schedules?.length || 0}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Blocks">
+            <Text monospace rightAligned>
+              {blockUUIDs}
+            </Text>
+          </SetupSectionRow>
+        </Spacing>
+
+        <DependencyGraph
+          disabled
+          enablePorts={false}
+          height={UNIT * 50}
+          pannable={false}
+          pipeline={{
+            blocks,
+            uuid,
+          }}
+          zoomable={false}
+        />
       </>
     );
   } else if (ObjectTypeEnum.TRIGGER === item?.object_type) {
@@ -367,6 +385,7 @@ function ApplicationItemDetail({
       nextPipelineRunDate,
       displayLocalTimezone,
     );
+    const project = repoPath?.split(status?.repo_path_root)[1]?.slice(1);
 
     contentEL = (
       <>
@@ -378,8 +397,8 @@ function ApplicationItemDetail({
 
         <SetupSectionRow title="Description">
           <div style={{ maxWidth: '70%' }}>
-            <Text disableWordBreak muted={!description} rightAligned>
-              {description}
+            <Text disableWordBreak muted muted={!description} monospace={!description} rightAligned>
+              {description || '-'}
             </Text>
           </div>
         </SetupSectionRow>
@@ -409,9 +428,12 @@ function ApplicationItemDetail({
         </SetupSectionRow>
 
         <SetupSectionRow title="Tags">
-          <TagsContainer
-            tags={tags?.map(t => ({ uuid: t }))}
-          />
+          {tags?.length >= 1 && (
+            <TagsContainer
+              tags={tags?.map(t => ({ uuid: t }))}
+            />
+          )}
+          {!tags?.length && <Text monospace muted>-</Text>}
         </SetupSectionRow>
 
         <SetupSectionRow title="Pipeline">
@@ -432,20 +454,23 @@ function ApplicationItemDetail({
         </SetupSectionRow>
 
         <SetupSectionRow title="Project">
-          <Text default monospace muted={!repoPath} rightAligned>
-            {repoPath?.split(status?.repo_path_root)[1]?.slice(1)}
+          <Text default monospace={!repoPath} muted={!repoPath} rightAligned>
+            {repoPath?.length >= 1
+              ?  project?.length >= 1 ? project : status?.repo_path_relative
+              : '-'
+            }
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Start">
           <Text default monospace muted={!startTimeString} rightAligned>
-            {startTimeString}
+            {startTimeString || '-'}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Next run">
           <Text default monospace muted={!nextRunString} rightAligned>
-            {nextRunString}
+            {nextRunString || '-'}
           </Text>
         </SetupSectionRow>
 

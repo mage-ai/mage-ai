@@ -59,10 +59,12 @@ function ItemRow({
     >
       <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
         <Flex alignItems="center" flex={1} fullHeight>
-          <Icon
-            fill={iconColor?.accent}
-            size={2 * UNIT}
-          />
+          {Icon && (
+            <Icon
+              fill={iconColor?.accent}
+              size={2 * UNIT}
+            />
+          )}
 
           <div style={{ marginRight: 1.5 * UNIT }} />
 

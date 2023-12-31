@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 from typing import Dict, List
 
@@ -6,7 +7,7 @@ from sqlalchemy import or_
 
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.command_center.blocks.utils import build_and_score as build_and_score_block
-from mage_ai.command_center.constants import ApplicationType
+from mage_ai.command_center.constants import ApplicationType, ObjectType
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.pipelines.constants import ITEMS
 from mage_ai.command_center.pipelines.utils import (
@@ -22,6 +23,7 @@ from mage_ai.command_center.triggers.utils import (
 from mage_ai.command_center.triggers.utils import build_run_once_and_score
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
+from mage_ai.settings.utils import base_repo_dirname
 from mage_ai.shared.hash import merge_dict
 
 
@@ -30,6 +32,7 @@ class PipelineFactory(BaseFactory):
         items = []
 
         if self.item and \
+                ObjectType.PIPELINE == self.item.object_type and \
                 self.application and \
                 ApplicationType.DETAIL_LIST == self.application.application_type:
 
@@ -40,7 +43,7 @@ class PipelineFactory(BaseFactory):
             pipeline = await Pipeline.get_async(
                 metadata.uuid,
                 all_projects=True,
-                repo_path=metadata.repo_path,
+                repo_path=os.path.join(base_repo_dirname(), metadata.repo_path),
             )
 
             item_dict = self.item.to_dict()

@@ -175,6 +175,7 @@ export function useListAsync(
   query: any = {},
   options: FetcherOptionsType = {},
 ) {
+  console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFF', query)
   return buildFetchV2(
     buildUrl(
       resource,

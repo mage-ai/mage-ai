@@ -24,18 +24,19 @@ export type ApplicationConfiguration = {
 } & InvokeRequestActionType;
 
 export function getInputPlaceholder({
-  applicationType,
+  application,
   item,
 }: {
-  applicationType?: ItemApplicationTypeEnum;
+  application?: ItemApplicationType;
   item?: CommandCenterItemType;
 } = {}) {
-  if (ObjectTypeEnum.PIPELINE === item?.object_type) {
-    if (ItemApplicationTypeEnum.DETAIL_LIST === applicationType) {
+  if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
+    if (ObjectTypeEnum.PIPELINE === item?.object_type) {
       return `Search blocks and triggers in ${item?.title}`;
+    } else if (ObjectTypeEnum.TRIGGER === item?.object_type) {
+      return `Search runs or run ${item?.title || 'this'} trigger once`;
     }
   }
 
   return 'Search actions, apps, files, blocks, pipelines, triggers';
 }
-

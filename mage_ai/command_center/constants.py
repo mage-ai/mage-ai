@@ -23,6 +23,7 @@ class ObjectType(str, Enum):
     FOLDER = 'folder'
     GIT = 'git'
     PIPELINE = 'pipeline'
+    PIPELINE_RUN = 'pipeline_run'
     TRIGGER = 'trigger'
 
 

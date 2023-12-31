@@ -11,6 +11,7 @@ from mage_ai.command_center.constants import (
     ItemType,
     ObjectType,
 )
+from mage_ai.command_center.models import TriggerMetadata
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     SCHEDULE_TYPE_TO_LABEL,
@@ -44,6 +45,11 @@ def add_application_actions(item_dict: Dict) -> Dict:
 
     return dict(
         applications=[
+            dict(
+                application_type=ApplicationType.DETAIL_LIST,
+                action=application_action,
+                uuid='model_detail_list',
+            ),
             dict(
                 application_type=ApplicationType.DETAIL,
                 action=application_action,
@@ -99,7 +105,6 @@ async def build_and_score(
                 sla=model.sla,
                 start_time=model.start_time,
                 status=model.status,
-                variables=model.variables,
             ),
         ),
         display_settings_by_attribute=dict(
@@ -135,6 +140,7 @@ async def build_create_and_score(factory, model: Pipeline) -> Dict:
         ),
         display_settings_by_attribute=dict(
             icon=dict(
+                color_uuid='accent.negative',
                 icon_uuid='Lightning',
             ),
         ),
@@ -266,6 +272,7 @@ async def build_run_once_and_score(factory, model: Pipeline) -> Dict:
         ),
         display_settings_by_attribute=dict(
             icon=dict(
+                color_uuid='accent.negative',
                 icon_uuid='Lightning',
             ),
         ),
@@ -340,6 +347,106 @@ async def build_run_once_and_score(factory, model: Pipeline) -> Dict:
                     ),
                     parameters=dict(
                         pipeline_schedule_id=None,
+                    ),
+                ),
+                uuid='open_model',
+            ),
+        ],
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+    )
+
+    scored = factory.filter_score(item_dict)
+    return scored
+
+
+async def build_create_pipeline_run_once(factory, model: TriggerMetadata) -> Dict:
+    item_dict = dict(
+        item_type=ItemType.CREATE,
+        object_type=ObjectType.PIPELINE_RUN,
+        title='Run trigger once',
+        description=f'Create a 1 time run for trigger {model.name or model.id}',
+        uuid=f'{model.id}_{ItemType.CREATE}_{ObjectType.PIPELINE_RUN}',
+        metadata=dict(
+            trigger=model.to_dict(),
+        ),
+        display_settings_by_attribute=dict(
+            icon=dict(
+                color_uuid='accent.negative',
+                icon_uuid='Lightning',
+            ),
+        ),
+        applications=[
+            dict(
+                application_type=ApplicationType.FORM,
+                buttons=[
+                    dict(
+                        label='Cancel',
+                        tooltip='Discard changes and go back.',
+                        keyboard_shortcuts=[['metaKey', 27]],
+                        action_types=[
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                        ],
+                    ),
+                    dict(
+                        label='Run now',
+                        tooltip='Run this trigger now.',
+                        keyboard_shortcuts=[[18, 13]],
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                            ButtonActionType.RESET_FORM,
+                        ],
+                    ),
+                ],
+                settings=[
+                    dict(
+                        label='Variables (optional)',
+                        description='JSON containing variables for this pipeline run.',
+                        name='request.payload.pipeline_run.variables',
+                        type=InteractionInputType.CODE,
+                        action_uuid='create_model',
+                        style=dict(
+                            language='json',
+                        ),
+                    ),
+                ],
+                uuid='model_create',
+            ),
+        ],
+        actions=[
+            dict(
+                request=dict(
+                    operation=OperationType.CREATE,
+                    payload=dict(
+                        pipeline_run=dict(
+                            pipeline_schedule_id=model.id,
+                            pipeline_uuid=model.pipeline_uuid,
+                            variables=None,
+                        ),
+                    ),
+                    resource='pipeline_runs',
+                    response_resource_key='pipeline_run',
+                    resource_parent='pipeline_schedules',
+                    resource_parent_id=model.id,
+                ),
+                uuid='create_model',
+            ),
+            dict(
+                upstream_action_value_key_mapping=dict(
+                    create_model={
+                        'data.pipeline_run.id': 'page.parameters.pipeline_run_id',
+                    }
+                ),
+                page=dict(
+                    path=(
+                        f'/pipelines/{urllib.parse.quote_plus(model.pipeline_uuid)}'
+                        '/runs/:pipeline_run_id'
+                    ),
+                    parameters=dict(
+                        pipeline_run_id=None,
                     ),
                 ),
                 uuid='open_model',

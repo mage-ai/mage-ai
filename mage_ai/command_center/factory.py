@@ -62,9 +62,13 @@ class BaseFactory(ABC):
         application = kwargs.get('application')
         item = kwargs.get('item')
         if application and item:
-            if ObjectType.PIPELINE == item.get('object_type'):
+            object_type = item.get('object_type')
+            if ObjectType.PIPELINE == object_type:
                 from mage_ai.command_center.pipelines.factory import PipelineFactory
                 factory_or_items = [PipelineFactory]
+            elif ObjectType.TRIGGER == object_type:
+                from mage_ai.command_center.triggers.factory import TriggerFactory
+                factory_or_items = [TriggerFactory]
 
         return flatten(await asyncio.gather(
             *[process_factory_items(class_or_items) for class_or_items in factory_or_items]

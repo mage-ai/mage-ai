@@ -3,13 +3,14 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { HeaderSubtitleStyle } from './index.style';
-import { OBJECT_TITLE_MAPPING } from '@interfaces/CommandCenterType';
+import { ItemApplicationTypeEnum, OBJECT_TITLE_MAPPING } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { getIcon } from './ItemRow/constants';
 import { getIconColor } from './ItemRow/index.style';
 
 function ApplicationHeaderTitle({
+  application,
   applicationsRef,
   item,
 }: ApplicationProps) {
@@ -51,11 +52,13 @@ function ApplicationHeaderTitle({
         <Spacing mr={PADDING_UNITS} />
       </Flex>
 
-      <HeaderSubtitleStyle>
-        <Text muted>
-          {capitalizeRemoveUnderscoreLower(OBJECT_TITLE_MAPPING[item?.object_type] || '')}
-        </Text>
-      </HeaderSubtitleStyle>
+      {ItemApplicationTypeEnum.DETAIL_LIST !== application?.application_type && (
+        <HeaderSubtitleStyle>
+          <Text muted>
+            {capitalizeRemoveUnderscoreLower(OBJECT_TITLE_MAPPING[item?.object_type] || '')}
+          </Text>
+        </HeaderSubtitleStyle>
+      )}
     </FlexContainer>
   );
 }

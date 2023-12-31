@@ -13,6 +13,8 @@ import {
   NavDashboard,
   PipelineV3,
   Schedule,
+  ScheduleClockWithBorderDots,
+  Streaming,
 } from '@oracle/icons';
 
 export function getIcon(item: CommandCenterItemType) {
@@ -27,7 +29,7 @@ export function getIcon(item: CommandCenterItemType) {
   }
 
   if (metadata?.page?.timestamp) {
-    return Schedule;
+    return ScheduleClockWithBorderDots;
   } else if (ObjectTypeEnum.BLOCK === item?.object_type) {
     const Icon = BLOCK_TYPE_ICON_MAPPING[item?.metadata?.block?.type];
 
@@ -47,6 +49,7 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.FOLDER]: FolderOutline,
     [ObjectTypeEnum.GIT]: BranchAlt,
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
+    [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
     [ObjectTypeEnum.TRIGGER]: Schedule,
   };
 

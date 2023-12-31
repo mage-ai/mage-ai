@@ -38,6 +38,7 @@ export enum ObjectTypeEnum {
   FOLDER = 'folder',
   GIT = 'git',
   PIPELINE = 'pipeline',
+  PIPELINE_RUN = 'pipeline_run',
   TRIGGER = 'trigger',
 }
 
@@ -81,6 +82,7 @@ export const OBJECT_TITLE_MAPPING = {
   [ObjectTypeEnum.FOLDER]: ObjectTypeEnum.FOLDER,
   [ObjectTypeEnum.GIT]: ObjectTypeEnum.GIT,
   [ObjectTypeEnum.PIPELINE]: ObjectTypeEnum.PIPELINE,
+  [ObjectTypeEnum.PIPELINE_RUN]: ObjectTypeEnum.PIPELINE_RUN,
   [ObjectTypeEnum.TRIGGER]: ObjectTypeEnum.TRIGGER,
 };
 
@@ -88,6 +90,7 @@ export const OBJECT_TITLE_MAPPING_SHORT = {
   ...OBJECT_TITLE_MAPPING,
   [ObjectTypeEnum.APPLICATION]: 'app',
   [ObjectTypeEnum.DOCUMENT]: 'docs',
+  [ObjectTypeEnum.PIPELINE_RUN]: 'run',
 };
 
 export function getButtonLabel(item): string {

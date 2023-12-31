@@ -66,15 +66,18 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   } else if (ObjectTypeEnum.PIPELINE == objectType) {
     accent = themeUse?.accent?.cyan;
     accentLight = themeUse?.accent?.cyanLight;
+  } else if (ObjectTypeEnum.PIPELINE_RUN == objectType) {
+    accent = themeUse?.accent?.teal;
+    accentLight = themeUse?.accent?.tealLight;
   } else if (ObjectTypeEnum.TRIGGER == objectType) {
     accent = themeUse?.accent?.rose;
     accentLight = themeUse?.accent?.roseLight;
   }
 
+  // Recently viewed pages
   if (metadata?.page?.timestamp) {
-    const temp = accentLight;
-    accentLight = accent;
-    accent = temp;
+    accent = themeUse?.content?.active;
+    accentLight = themeUse?.content?.default;
   }
 
   return {

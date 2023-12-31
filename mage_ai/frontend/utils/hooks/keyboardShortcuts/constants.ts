@@ -1,4 +1,9 @@
 export const KEY_CODE_ALT = 18;
+export const KEY_CODE_ALT_STRING = 'altKey';
+export const KEY_CODE_ALTS = [
+  KEY_CODE_ALT,
+  KEY_CODE_ALT_STRING,
+];
 export const KEY_CODE_ARROW_DOWN = 40;
 export const KEY_CODE_ARROW_LEFT = 37;
 export const KEY_CODE_ARROW_RIGHT = 39;
@@ -121,6 +126,7 @@ export const KEY_SYMBOL_W = 'W';
 export const KEY_SYMBOL_X = 'X';
 export const KEY_SYMBOL_Y = 'Y';
 export const KEY_SYMBOL_Z = 'Z';
+export const KEY_SYMBOL_ALT = 'alt';
 export const KEY_SYMBOL_BRACKET_LEFT = '[';
 export const KEY_SYMBOL_BRACKET_RIGHT = ']';
 export const KEY_SYMBOL_CONTROL = 'ctrl';
@@ -163,6 +169,8 @@ export const KEY_CODE_KEY_SYMBOL_MAPPING = {
   [KEY_CODE_X]: KEY_SYMBOL_X,
   [KEY_CODE_Y]: KEY_SYMBOL_Y,
   [KEY_CODE_Z]: KEY_SYMBOL_Z,
+  [KEY_CODE_ALT]: KEY_SYMBOL_ALT,
+  [KEY_CODE_ALT_STRING]: KEY_SYMBOL_ALT,
   [KEY_CODE_ARROW_DOWN]: KEY_SYMBOL_ARROW_DOWN,
   [KEY_CODE_ARROW_LEFT]: KEY_SYMBOL_ARROW_LEFT,
   [KEY_CODE_ARROW_RIGHT]: KEY_SYMBOL_ARROW_RIGHT,

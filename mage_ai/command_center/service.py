@@ -7,6 +7,7 @@ from mage_ai.command_center.files.factory import FileFactory
 from mage_ai.command_center.models import Application, Item
 from mage_ai.command_center.pipelines.factory import PipelineFactory
 from mage_ai.command_center.support.constants import ITEMS as ITEMS_SUPPORT
+from mage_ai.command_center.triggers.factory import TriggerFactory
 from mage_ai.orchestration.db.models.oauth import User
 
 FACTORIES_OR_ITEMS = [
@@ -14,6 +15,7 @@ FACTORIES_OR_ITEMS = [
     BlockFactory,
     ApplicationFactory,
     FileFactory,
+    TriggerFactory,
     ITEMS_SUPPORT,
 ]
 

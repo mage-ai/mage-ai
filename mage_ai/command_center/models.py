@@ -13,6 +13,7 @@ from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
+    ExecutorType,
     PipelineType,
 )
 from mage_ai.data_preparation.models.triggers import (
@@ -20,6 +21,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleStatus,
     ScheduleType,
 )
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.presenters.interactions.models import (
     InteractionInputOption,
@@ -152,6 +154,7 @@ class TriggerMetadata(BaseDataClass):
     description: str = None
     global_data_product_uuid: str = None
     id: int = None
+    name: str = None
     pipeline_uuid: str = None
     repo_path: str = None
     schedule_interval: ScheduleInterval = None
@@ -169,11 +172,31 @@ class TriggerMetadata(BaseDataClass):
 
 
 @dataclass
+class PipelineRunMetadata(BaseDataClass):
+    backfill_id: int = None
+    completed_at: str = None
+    execution_date: str = None
+    executor_type: ExecutorType = None
+    id: int = None
+    metrics: Dict = None
+    passed_sla: bool = None
+    pipeline_schedule_id: int = None
+    pipeline_uuid: str = None
+    started_at: str = None
+    status: PipelineRun.PipelineRunStatus = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('executor_type', ExecutorType)
+        self.serialize_attribute_enum('status', PipelineRun.PipelineRunStatus)
+
+
+@dataclass
 class Metadata(BaseDataClass):
     block: BlockMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
     pipeline: PipelineMetadata = None
+    pipeline_run: PipelineRunMetadata = None
     trigger: TriggerMetadata = None
 
     def __post_init__(self):
@@ -181,6 +204,7 @@ class Metadata(BaseDataClass):
         self.serialize_attribute_class('file', FileMetadata)
         self.serialize_attribute_class('page', PageMetadata)
         self.serialize_attribute_class('pipeline', PipelineMetadata)
+        self.serialize_attribute_class('pipeline_run', PipelineRunMetadata)
         self.serialize_attribute_class('trigger', TriggerMetadata)
 
 

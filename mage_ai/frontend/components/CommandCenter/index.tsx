@@ -218,6 +218,12 @@ function CommandCenter() {
     }
   }
 
+  function updateInputProperties() {
+    const currentApplicationConfig = getCurrentApplicationConfiguration();
+    refInput.current.value = '';
+    refInput.current.placeholder = getInputPlaceholder(currentApplicationConfig);
+  }
+
   function addApplication(
     applicationConfiguration: ApplicationConfiguration,
     opts: {
@@ -293,16 +299,15 @@ function CommandCenter() {
         search: null,
       });
 
-      const pipeline = item?.metadata?.pipeline;
-      refInput.current.value = '';
-      refInput.current.placeholder = getInputPlaceholder({
-        applicationType: application?.application_type,
-        item,
-      });
+      if (refApplications?.current?.length >= 2) {
+        addHeaderTitle();
+      }
 
       activateClassNamesForRefs([
         refHeader,
       ]);
+
+      updateInputProperties();
     }
 
     activateClassNamesForRefs([
@@ -350,6 +355,8 @@ function CommandCenter() {
 
       refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
       refInput?.current?.focus();
+
+      updateInputProperties();
     }
 
     let resetCallback;
@@ -569,9 +576,9 @@ function CommandCenter() {
         submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
       } else if (OperationTypeEnum.DELETE === operation) {
         submitRequest = () => endpoint?.useDelete(...ids, query)();
-      } else if (OperationTypeEnum.DETAIL) {
+      } else if (OperationTypeEnum.DETAIL === operation) {
         submitRequest = () => endpoint?.detailAsync(...ids, query);
-      } else if (OperationTypeEnum.LIST) {
+      } else if (OperationTypeEnum.LIST === operation) {
         submitRequest = () => endpoint?.listAsync(...ids, query);
       }
 
@@ -1058,7 +1065,7 @@ function CommandCenter() {
 
       // If in a context of a selected item.
       // Leave the current context and go back.
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }) && !refError?.current) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 0 }) && !refError?.current) {
         pauseEvent(event);
         stopHandling = true;
         removeApplication();
@@ -1071,7 +1078,7 @@ function CommandCenter() {
           } = button;
 
           keyboardShortcuts?.forEach((keyCodes) => {
-            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 1 })) {
+            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 0 })) {
               pauseEvent(event);
 
               if (!actionExecuted) {
@@ -1101,7 +1108,7 @@ function CommandCenter() {
       // If the main input is active.
       const focusedItemIndex = refFocusedItemIndex?.current;
 
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }) && !refError?.current) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 0 }) && !refError?.current) {
         pauseEvent(event);
 
         // If there is text in the input, clear it.
@@ -1121,7 +1128,7 @@ function CommandCenter() {
           // If there is no text in the input, close.
           closeCommandCenter();
         }
-      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping, { allowExtraKeys: 1 })
+      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping, { allowExtraKeys: 0 })
         && focusedItemIndex !== null
         && !refError?.current
       ) {
@@ -1136,8 +1143,8 @@ function CommandCenter() {
 
         handleSelectItemRow(itemSelected, focusedItemIndex);
       } else if (
-        onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 1 })
-          || onlyKeysPresent([KEY_CODE_DELETE], keyMapping, { allowExtraKeys: 1 })
+        onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 0 })
+          || onlyKeysPresent([KEY_CODE_DELETE], keyMapping, { allowExtraKeys: 0 })
       ) {
         if (refSelectedSearchHistoryIndex?.current !== null) {
           refSelectedSearchHistoryIndex.current = null;

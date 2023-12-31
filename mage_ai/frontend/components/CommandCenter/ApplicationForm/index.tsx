@@ -231,6 +231,9 @@ function ApplicationForm({
               value: isJsonString(value) ? JSON.parse(value) : value,
             },
           })}
+          onMountCallback={(editor) => {
+            ref.current = editor;
+          }}
           padding={UNIT * 2}
           selected
           tabSize={2}

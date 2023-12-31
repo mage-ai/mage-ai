@@ -79,7 +79,7 @@ export function getColorsForBlockType(
   accentDark?: string;
   accentLight?: string;
 } {
-  let accent = (props?.theme?.borders || dark.borders).light;
+  let accent = (props?.theme || dark)?.content?.muted;
   let accentLight = (props?.theme?.monotone || dark.monotone).grey500;
   let accentDark;
   const { blockColor, isSelected, theme } = props || {};

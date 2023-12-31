@@ -57,9 +57,14 @@ def remove_base_repo_name(file_path: str) -> str:
 
 def remove_base_repo_path_or_name(file_path: str) -> str:
     if os.path.isabs(file_path):
-        return str(remove_base_repo_path(file_path))
+        value = str(remove_base_repo_path(file_path))
     else:
-        return str(remove_base_repo_name(file_path))
+        value = str(remove_base_repo_name(file_path))
+
+    if len(value) == 0 or value == '.':
+        return base_repo_name()
+    else:
+        return value
 
 
 def remove_base_repo_directory_name(file_path: str) -> str:

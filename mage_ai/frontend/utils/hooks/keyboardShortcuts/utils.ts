@@ -1,5 +1,7 @@
 import { KeyMappingType } from '@interfaces/KeyboardShortcutType';
 import {
+  KEY_CODE_ALT_STRING,
+  KEY_CODE_ALTS,
   KEY_CODE_CONTROL,
   KEY_CODE_CONTROLS,
   KEY_CODE_META,
@@ -20,10 +22,12 @@ export function onlyKeysPresent(
 ): boolean {
   const keysAsStrings = keys.map(key => String(key));
 
+  const keysHasAlt = keys.includes(KEY_CODE_ALT_STRING);
   const keysHasControl = keys.includes(KEY_CODE_CONTROL);
   const keysHasMeta = keys.includes(KEY_CODE_META);
   const keysHasShift = keys.includes(KEY_CODE_SHIFT);
 
+  const altKeyCodesAsStrings = KEY_CODE_ALTS.map(key => String(key));
   const controlKeyCodesAsStrings = KEY_CODE_CONTROLS.map(key => String(key));
   const metaKeyCodesAsStrings = KEY_CODE_METAS.map(key => String(key));
   const shiftKeyCodesAsStrings = KEY_CODE_SHIFTS.map(key => String(key));
@@ -38,6 +42,14 @@ export function onlyKeysPresent(
   if (allowKeyCodeMetaKey && KEY_CODE_META in keyMappingUse) {
     delete keyMappingUse[KEY_CODE_META];
   }
+
+  const allowKeyCodeAltKey = keys?.some(key => altKeyCodesAsStrings?.includes(String(key)))
+    && !keysHasAlt;
+
+  if (allowKeyCodeAltKey && KEY_CODE_ALT_STRING in keyMappingUse) {
+    delete keyMappingUse[KEY_CODE_ALT_STRING];
+  }
+
 
   const otherKeysPressed = Object
     .entries(keyMappingUse)
