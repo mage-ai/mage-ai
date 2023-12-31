@@ -4,10 +4,12 @@ import CodeEditor from '@components/CodeEditor';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
 import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
 import useStatus from '@utils/models/status/useStatus';
+import { AlertTriangle, Check } from '@oracle/icons';
 import { ApplicationContentStyle } from '../index.style';
 import { ApplicationProps } from '../ItemApplication/constants';
 import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
@@ -22,12 +24,20 @@ import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PIPELINE_TYPE_LABEL_MAPPING } from '@interfaces/PipelineType';
-import { SetupSectionRow } from '@components/shared/SetupSection';
+import { RunStatus, RUN_STATUS_TO_LABEL, RUNNING_STATUSES } from '@interfaces/PipelineRunType';
 import { ScheduleStatusEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { capitalize, pluralize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortByKey } from '@utils/array';
+
+const ICON_SIZE = 2.5 * UNIT;
+const TEXT_PROPS = {
+  default: true,
+  large: true,
+  monospace: true,
+  rightAligned: true,
+};
 
 function ApplicationItemDetail({
   application,
@@ -93,39 +103,41 @@ function ApplicationItemDetail({
 
     contentEL = (
       <>
-        <Spacing mb={PADDING_UNITS}>
+        <SetupSection>
           <SetupSectionRow title="Filename">
-            <Text monospace rightAligned>
+            <Text {...TEXT_PROPS} default={false}>
               {model?.name}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
-              <Text default monospace rightAligned>
+              <Text {...TEXT_PROPS} overflowWrap>
                 {model?.path}
               </Text>
             </div>
           </SetupSectionRow>
 
           <SetupSectionRow title="Language">
-            <Text default rightAligned>
+            <Text {...TEXT_PROPS}>
               {LANGUAGE_DISPLAY_MAPPING[language] || language}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Size">
-            <Text default monospace rightAligned>
+            <Text {...TEXT_PROPS}>
               {pluralize('byte', size, true)}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Modified">
-            <Text default monospace rightAligned>
+            <Text {...TEXT_PROPS}>
               {dt?.format(DATE_FORMAT_FULL)} at {dt?.format(TIME_FORMAT_NO_SEC)}
             </Text>
           </SetupSectionRow>
-        </Spacing>
+        </SetupSection>
+
+        <div style={{ marginBottom: PADDING_UNITS * UNIT }} />
 
         {editor}
       </>
@@ -159,33 +171,33 @@ function ApplicationItemDetail({
 
     contentEL = (
       <>
-        <Spacing mb={PADDING_UNITS}>
+        <SetupSection>
           <SetupSectionRow title="Name">
-            <Text monospace rightAligned>
+            <Text {...TEXT_PROPS} default={false}>
               {model?.name || name || blockUUID}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Type">
             <Text
+              {...TEXT_PROPS}
               color={getColorsForBlockType(blockType, {
                 blockColor,
               })?.accent}
-              rightAligned
             >
               {BLOCK_TYPE_NAME_MAPPING[blockType]}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Language">
-            <Text default rightAligned>
+            <Text {...TEXT_PROPS}>
               {LANGUAGE_DISPLAY_MAPPING[model?.language]}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
-              <Text default monospace rightAligned>
+              <Text {...TEXT_PROPS} overflowWrap>
                 {model?.configuration?.file_source?.path
                   || model?.configuration?.file_path
                   || filePath
@@ -198,7 +210,6 @@ function ApplicationItemDetail({
             <FlexContainer
               flexDirection="column"
               alignItems="flex-end"
-              style={{ maxWidth: '70%' }}
             >
               {sortByKey(pipelines, ({ uuid }) => uuid)?.map(({
                 uuid
@@ -207,6 +218,7 @@ function ApplicationItemDetail({
                   key={`${uuid}-${idx}-link`}
                   preventDefault
                   href="#"
+                  large
                   monospace
                   onClick={(e) => {
                     e.preventDefault();
@@ -214,13 +226,18 @@ function ApplicationItemDetail({
                       shallow: true,
                     });
                   }}
+                  style={{
+                    marginTop: idx >= 1 ? 4 : 0,
+                  }}
                 >
                   {uuid}
                 </Link>
               ))}
             </FlexContainer>
           </SetupSectionRow>
-        </Spacing>
+        </SetupSection>
+
+        <div style={{ marginBottom: PADDING_UNITS * UNIT }} />
 
         {editor}
       </>
@@ -245,70 +262,31 @@ function ApplicationItemDetail({
       displayLocalTimezone,
     );
 
-    const blocksCount = blocks?.length || 0;
-
-    const blockUUIDs = [];
-    blocks?.forEach(({
-      color: blockColor,
-      type: blockType,
-      uuid: blockUUID,
-    }, idx) => {
-      const {
-        accent
-      } = getColorsForBlockType(blockType, {
-        blockColor,
-      }) || {
-        accent: null,
-      };
-
-      blockUUIDs.push(
-        <Link
-          block
-          color={accent}
-          key={`${blockUUID}-${idx}-link`}
-          preventDefault
-          href="#"
-          monospace
-          onClick={(e) => {
-            e.preventDefault();
-            router.push(`/pipelines/${uuid}/edit?block_uuid=${blockUUID}`, null, {
-              shallow: true,
-            });
-          }}
-          style={{
-            marginLeft: 12,
-          }}
-        >
-          {blockUUID}
-        </Link>
-      );
-    });
-
     contentEL = (
       <>
-        <Spacing mb={PADDING_UNITS}>
+        <SetupSection>
           <SetupSectionRow title="Name">
-            <Text rightAligned>
+            <Text large rightAligned>
               {name || uuid}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Description">
             <div style={{ maxWidth: '70%' }}>
-              <Text disableWordBreak rightAligned muted={!description} monospace={!description}>
+              <Text {...TEXT_PROPS} disableWordBreak muted={!description} monospace={!description}>
                 {description || '-'}
               </Text>
             </div>
           </SetupSectionRow>
 
           <SetupSectionRow title="Type">
-            <Text default monospace rightAligned>
+            <Text {...TEXT_PROPS}>
               {PIPELINE_TYPE_LABEL_MAPPING[type]}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Project">
-            <Text default monospace muted={!repoPath} rightAligned>
+            <Text {...TEXT_PROPS} muted={!repoPath}>
               {repoPath || '-'}
             </Text>
           </SetupSectionRow>
@@ -323,23 +301,59 @@ function ApplicationItemDetail({
           </SetupSectionRow>
 
           <SetupSectionRow title="Updated at">
-            <Text default monospace rightAligned>
+            <Text {...TEXT_PROPS}>
               {dt}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Triggers">
-            <Text default monospace rightAligned>
+            <Text {...TEXT_PROPS}>
               {schedules?.length || 0}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Blocks">
-            <Text monospace rightAligned>
-              {blockUUIDs}
-            </Text>
+            <FlexContainer alignItems="flex-end" flexDirection="column">
+              {blocks?.map(({
+                color: blockColor,
+                type: blockType,
+                uuid: blockUUID,
+              }, idx) => {
+                const {
+                  accent
+                } = getColorsForBlockType(blockType, {
+                  blockColor,
+                }) || {
+                  accent: null,
+                };
+
+                return (
+                  <Link
+                    block
+                    color={accent}
+                    key={`${blockUUID}-${idx}-link`}
+                    preventDefault
+                    href="#"
+                    large
+                    monospace
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/pipelines/${uuid}/edit?block_uuid=${blockUUID}`, null, {
+                        shallow: true,
+                      });
+                    }}
+                    rightAligned
+                    style={{
+                      marginTop: idx >= 1 ? 4 : null,
+                    }}
+                  >
+                    {blockUUID}
+                  </Link>
+                );
+              })}
+            </FlexContainer>
           </SetupSectionRow>
-        </Spacing>
+        </SetupSection>
 
         <DependencyGraph
           disabled
@@ -388,39 +402,38 @@ function ApplicationItemDetail({
     const project = repoPath?.split(status?.repo_path_root)[1]?.slice(1);
 
     contentEL = (
-      <>
+      <SetupSection>
         <SetupSectionRow title="Name">
-          <Text muted={!name} rightAligned>
+          <Text large muted={!name} rightAligned>
             {name}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Description">
           <div style={{ maxWidth: '70%' }}>
-            <Text disableWordBreak muted muted={!description} monospace={!description} rightAligned>
+            <Text {...TEXT_PROPS} disableWordBreak muted={!description} monospace={!description}>
               {description || '-'}
             </Text>
           </div>
         </SetupSectionRow>
 
         <SetupSectionRow title="Type">
-          <Text default muted={!scheduleType} rightAligned>
+          <Text {...TEXT_PROPS} monospace={false} muted={!scheduleType}>
             {capitalize(SCHEDULE_TYPE_TO_LABEL[scheduleType]?.() || '')}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Frequency">
-          <Text default monospace muted={!scheduleInterval} rightAligned>
+          <Text {...TEXT_PROPS} muted={!scheduleInterval}>
             {scheduleInterval}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Status">
           <Text
+            {...TEXT_PROPS}
             danger={ScheduleStatusEnum.INACTIVE === statusTrigger}
-            monospace
             muted={!statusTrigger}
-            rightAligned
             success={ScheduleStatusEnum.ACTIVE === statusTrigger}
           >
             {capitalize(statusTrigger || '')}
@@ -441,6 +454,7 @@ function ApplicationItemDetail({
             block
             preventDefault
             href="#"
+            large
             monospace
             onClick={(e) => {
               e.preventDefault();
@@ -454,7 +468,7 @@ function ApplicationItemDetail({
         </SetupSectionRow>
 
         <SetupSectionRow title="Project">
-          <Text default monospace={!repoPath} muted={!repoPath} rightAligned>
+          <Text {...TEXT_PROPS} monospace={!repoPath} muted={!repoPath}>
             {repoPath?.length >= 1
               ?  project?.length >= 1 ? project : status?.repo_path_relative
               : '-'
@@ -463,29 +477,123 @@ function ApplicationItemDetail({
         </SetupSectionRow>
 
         <SetupSectionRow title="Start">
-          <Text default monospace muted={!startTimeString} rightAligned>
+          <Text {...TEXT_PROPS} muted={!startTimeString}>
             {startTimeString || '-'}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Next run">
-          <Text default monospace muted={!nextRunString} rightAligned>
+          <Text {...TEXT_PROPS} muted={!nextRunString}>
             {nextRunString || '-'}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Runs">
-          <Text default monospace muted={!pipelineRunsCount} rightAligned>
+          <Text {...TEXT_PROPS} muted={!pipelineRunsCount}>
             {pipelineRunsCount || 0}
           </Text>
         </SetupSectionRow>
 
         <SetupSectionRow title="Average time">
-          <Text monospace muted={!runtimeAverage} rightAligned>
+          <Text {...TEXT_PROPS} muted={!runtimeAverage}>
             {runtimeAverage || '-'}
           </Text>
         </SetupSectionRow>
-      </>
+      </SetupSection>
+    );
+  } else if (ObjectTypeEnum.PIPELINE_RUN === item?.object_type) {
+    const {
+
+    } = model || {
+    };
+    const {
+      pipeline_run: run,
+      trigger,
+    } = item?.metadata || {
+      pipeline_run: {},
+      trigger: {},
+    };
+
+    const {
+      completed_at: completedAt,
+      execution_date: executionDate,
+      id,
+      passed_sla: passedSla,
+      pipeline_schedule_id: triggerID,
+      pipeline_uuid: pipelineUUID,
+      started_at: startedAt,
+      status,
+    } = run || {};
+    const {
+      name,
+    } = trigger || {};
+
+    contentEL = (
+      <SetupSection>
+        <SetupSectionRow title={`Trigger ${triggerID}`}>
+          <Text {...TEXT_PROPS} default={false} muted={!name}>
+            {name}
+          </Text>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Run ID">
+          <Text {...TEXT_PROPS} muted={!id} rightAligned>
+            {id}
+          </Text>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Pipeline">
+          <Link
+            block
+            preventDefault
+            href="#"
+            large
+            monospace
+            onClick={(e) => {
+              e.preventDefault();
+              router.push(`/pipelines/${pipelineUUID}/edit`, null, {
+                shallow: true,
+              });
+            }}
+          >
+            {pipelineUUID}
+          </Link>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Status">
+          <Text
+            {...TEXT_PROPS}
+            danger={RunStatus.FAILED === status}
+            muted={!status}
+            success={RunStatus.COMPLETED === status}
+            warning={RunStatus.CANCELLED === status}
+          >
+            {RUN_STATUS_TO_LABEL[status] || '-'}
+          </Text>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Execution date">
+          <Text {...TEXT_PROPS} muted={!executionDate}>
+            {executionDate || '-'}
+          </Text>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Started at">
+          <Text {...TEXT_PROPS} muted={!startedAt}>
+            {startedAt || '-'}
+          </Text>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Completed at">
+          <Text {...TEXT_PROPS} muted={!completedAt}>
+            {completedAt || '-'}
+          </Text>
+        </SetupSectionRow>
+
+        <SetupSectionRow title="Passed SLA">
+          {passedSla ? <AlertTriangle danger size={ICON_SIZE} /> : <Check size={ICON_SIZE} success />}
+        </SetupSectionRow>
+      </SetupSection>
     );
   }
 

@@ -141,7 +141,10 @@ class BaseFactory(ABC):
     async def rank_items(self, items_or_dicts: List[Union[Dict, Item]]) -> List[Union[Dict, Item]]:
         return [item for item in sorted(
             items_or_dicts,
-            key=lambda i: (i.score if isinstance(i, Item) else i.get('score')) or - 100,
+            key=lambda i: (i.score if isinstance(
+                i,
+                Item,
+            ) else i.get('score') if i else -100) or - 100,
             reverse=True,
         )]
 

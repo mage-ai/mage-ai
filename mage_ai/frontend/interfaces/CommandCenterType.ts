@@ -255,6 +255,33 @@ export interface CommandCenterItemType {
     file?: FileMetadataType;
     page?: PageHistoryType;
     pipeline?: PipelineMetadataType;
+    pipeline_run?: {
+      backfill_id?: number;
+      completed_at?: string;
+      execution_date?: string;
+      executor_type?: string;
+      id?: number;
+      metrics?: KeyValueType;
+      passed_sla?: boolean;
+      pipeline_schedule_id?: number;
+      pipeline_uuid?: string;
+      started_at?: string;
+      status?: string;
+    };
+    trigger?: {
+      description?: string;
+      global_data_product_uuid?: string;
+      id?: number;
+      name?: string;
+      pipeline_uuid?: string;
+      repo_path?: string;
+      schedule_interval?: string;
+      schedule_type?: string;
+      settings?: string;
+      sla?: string;
+      start_time?: string;
+      status?: string;
+    };
   };
   object_type: ObjectTypeEnum;
   score?: number;

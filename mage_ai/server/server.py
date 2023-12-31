@@ -556,8 +556,9 @@ async def main(
             try:
                 logger.info('Initializing file cache.')
                 file_cache = FileCache.initialize_cache_with_settings(replace=True)
+                count = len(file_cache._temp_data) if file_cache._temp_data else 0
                 logger.info(
-                    f'{len(file_cache._temp_data)} files cached in {file_cache.file_path}.',
+                    f'{count} files cached in {file_cache.file_path}.',
                 )
             except Exception as err:
                 print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')

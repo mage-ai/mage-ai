@@ -67,13 +67,13 @@ async def build_and_score(
     description = str(model.status)
 
     if model.completed_at:
-        description = f'{description} on {model.completed_at}'
+        description = f'{description} on {model.completed_at.isoformat()}'
     elif model.started_at:
-        description = f'{description} after starting on {model.started_at}'
+        description = f'{description} after starting on {model.started_at.isoformat()}'
     elif model.execution_partition:
         description = f'{description} with execution partition {model.execution_partition}'
     elif model.execution_date:
-        description = f'{description} with execution date {model.execution_date}'
+        description = f'{description} with execution date {model.execution_date.isoformat()}'
 
     item_dict = dict(
         item_type=ItemType.DETAIL,
@@ -84,15 +84,16 @@ async def build_and_score(
         metadata=dict(
             pipeline_run=dict(
                 backfill_id=model.backfill_id,
-                completed_at=model.completed_at,
-                execution_date=model.execution_date,
+                completed_at=model.completed_at.isoformat() if model.completed_at else None,
+                execution_date=model.execution_date.isoformat() if model.execution_date else None,
+                execution_partition=model.execution_partition,
                 executor_type=model.executor_type,
                 id=model.id,
                 metrics=model.metrics,
                 passed_sla=model.passed_sla,
                 pipeline_schedule_id=model.pipeline_schedule_id,
                 pipeline_uuid=model.pipeline_uuid,
-                started_at=model.started_at,
+                started_at=model.started_at.isoformat() if model.started_at else None,
                 status=model.status,
             ),
             trigger=dict(

@@ -97,6 +97,7 @@ async def build_and_score(
                 description=model.description,
                 global_data_product_uuid=model.global_data_product_uuid,
                 id=model.id,
+                name=model.name,
                 pipeline_uuid=model.pipeline_uuid,
                 repo_path=model.repo_path,
                 schedule_interval=model.schedule_interval,

@@ -45,9 +45,9 @@ export const ContainerStyle = styled.div<{
   width: ${MAX_WIDTH + (1 * 2)}px;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.panelTransparent};
+    background-color: ${(props.theme || dark).background.dashboard};
     box-shadow: ${(props.theme || dark).shadow.window};
-    border: 1px solid ${(props.theme || dark).monotone.grey500};
+    border: 1px solid ${(props.theme || dark).monotone.grey400};
   `}
 
   &.hide {
@@ -61,7 +61,7 @@ export const InputContainerStyle = styled.div`
   height: ${HEADER_CONTENT_HEIGHT + (SCROLLBAR_WIDTH * 2)}px;
 
   ${props => `
-    border-bottom: 1px solid ${(props.theme || dark).monotone.grey500};
+    border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
   `}
 `;
 
@@ -212,7 +212,7 @@ const FOOTER_STYLES = css`
   padding-right: ${SCROLLBAR_WIDTH + UNIT}px;
 
   ${props => `
-    background-color: ${(props.theme || dark)?.background?.row};
+    background-color: ${(props.theme || dark)?.background?.panelTransparent};
   `}
 `;
 

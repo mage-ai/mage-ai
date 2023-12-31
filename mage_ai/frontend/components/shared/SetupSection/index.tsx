@@ -11,40 +11,50 @@ import Text from '@oracle/elements/Text';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 type SetupSectionProps = {
+  borderless?: boolean;
   children: any;
+  dark?: boolean;
   description?: any;
   headerChildren?: any;
-  title: string | any;
+  title?: string | any;
 };
 
 function SetupSection({
+  borderless,
   children,
+  dark,
   description,
   headerChildren,
   title,
 }: SetupSectionProps) {
   return (
-    <Panel noPadding>
-      <Spacing p={PADDING_UNITS}>
-        <FlexContainer alignItems="center">
-          <Flex flex={1} flexDirection="column">
-            <Headline level={4}>
-              {title}
-            </Headline>
+    <Panel
+      borderless={borderless}
+      dark={dark}
+      noPadding
+    >
+      {title && (
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Flex flex={1} flexDirection="column">
+              <Headline level={4}>
+                {title}
+              </Headline>
 
-            {description && typeof description === 'string' && (
-              <Spacing mt={1}>
-                <Text muted>
-                  {description}
-                </Text>
-              </Spacing>
-            )}
-            {description && typeof description !== 'string' && description}
-          </Flex>
+              {description && typeof description === 'string' && (
+                <Spacing mt={1}>
+                  <Text muted>
+                    {description}
+                  </Text>
+                </Spacing>
+              )}
+              {description && typeof description !== 'string' && description}
+            </Flex>
 
-          {headerChildren}
-        </FlexContainer>
-      </Spacing>
+            {headerChildren}
+          </FlexContainer>
+        </Spacing>
+      )}
 
       {React.Children.map(children, (child, idx: number) => (
         <div key={`${title}-${idx}`}>

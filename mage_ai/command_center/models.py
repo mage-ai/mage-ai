@@ -32,13 +32,19 @@ from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
-class TextStyles(BaseDataClass):
+class CommandCenterBaseClass(BaseDataClass):
+    def to_dict(self, ignore_empty: bool = True, **kwargs) -> Dict:
+        return super().to_dict(ignore_empty=True, **kwargs)
+
+
+@dataclass
+class TextStyles(CommandCenterBaseClass):
     monospace: bool = False
     small: bool = False
 
 
 @dataclass
-class DisplaySettings(BaseDataClass):
+class DisplaySettings(CommandCenterBaseClass):
     color_uuid: str = None
     icon_uuid: str = None
     text_styles: TextStyles = None
@@ -48,13 +54,13 @@ class DisplaySettings(BaseDataClass):
 
 
 @dataclass
-class InteractionElement(BaseDataClass):
+class InteractionElement(CommandCenterBaseClass):
     class_name: str = None
     id: str = None
 
 
 @dataclass
-class Interaction(BaseDataClass):
+class Interaction(CommandCenterBaseClass):
     type: InteractionType
     element: InteractionElement = None
     options: Dict = None
@@ -65,7 +71,7 @@ class Interaction(BaseDataClass):
 
 
 @dataclass
-class Page(BaseDataClass):
+class Page(CommandCenterBaseClass):
     path: str
     external: bool = False
     open_new_window: bool = False
@@ -74,7 +80,7 @@ class Page(BaseDataClass):
 
 
 @dataclass
-class Request(BaseDataClass):
+class Request(CommandCenterBaseClass):
     operation: OperationType
     resource: str
     response_resource_key: str
@@ -89,7 +95,7 @@ class Request(BaseDataClass):
 
 
 @dataclass
-class Action(BaseDataClass):
+class Action(CommandCenterBaseClass):
     delay: int = None
     interaction: Interaction = None
     page: Page = None
@@ -104,7 +110,7 @@ class Action(BaseDataClass):
 
 
 @dataclass
-class PipelineMetadata(BaseDataClass):
+class PipelineMetadata(CommandCenterBaseClass):
     blocks: List[Dict] = None
     description: str = None
     name: str = None
@@ -119,7 +125,7 @@ class PipelineMetadata(BaseDataClass):
 
 
 @dataclass
-class BlockMetadata(BaseDataClass):
+class BlockMetadata(CommandCenterBaseClass):
     file_path: str = None
     language: BlockLanguage = None
     pipelines: List[PipelineMetadata] = None
@@ -132,7 +138,7 @@ class BlockMetadata(BaseDataClass):
 
 
 @dataclass
-class FileMetadata(BaseDataClass):
+class FileMetadata(CommandCenterBaseClass):
     full_path: str
     modified_at: str
     modified_timestamp: int
@@ -141,7 +147,7 @@ class FileMetadata(BaseDataClass):
 
 
 @dataclass
-class PageMetadata(BaseDataClass):
+class PageMetadata(CommandCenterBaseClass):
     path: str = None
     pathname: str = None
     query: Dict = None
@@ -150,7 +156,7 @@ class PageMetadata(BaseDataClass):
 
 
 @dataclass
-class TriggerMetadata(BaseDataClass):
+class TriggerMetadata(CommandCenterBaseClass):
     description: str = None
     global_data_product_uuid: str = None
     id: int = None
@@ -163,7 +169,6 @@ class TriggerMetadata(BaseDataClass):
     sla: str = None
     start_time: str = None
     status: ScheduleStatus = None
-    variables: Dict = None
 
     def __post_init__(self):
         self.serialize_attribute_enum('schedule_interval', ScheduleInterval)
@@ -172,10 +177,11 @@ class TriggerMetadata(BaseDataClass):
 
 
 @dataclass
-class PipelineRunMetadata(BaseDataClass):
+class PipelineRunMetadata(CommandCenterBaseClass):
     backfill_id: int = None
     completed_at: str = None
     execution_date: str = None
+    execution_partition: str = None
     executor_type: ExecutorType = None
     id: int = None
     metrics: Dict = None
@@ -191,7 +197,7 @@ class PipelineRunMetadata(BaseDataClass):
 
 
 @dataclass
-class Metadata(BaseDataClass):
+class Metadata(CommandCenterBaseClass):
     block: BlockMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
@@ -209,7 +215,7 @@ class Metadata(BaseDataClass):
 
 
 @dataclass
-class FormInput(BaseDataClass):
+class FormInput(CommandCenterBaseClass):
     action_uuid: str = None
     description: str = None
     display_settings: DisplaySettings = None
@@ -231,7 +237,7 @@ class FormInput(BaseDataClass):
 
 
 @dataclass
-class Button(BaseDataClass):
+class Button(CommandCenterBaseClass):
     label: str
     action_types: List[ButtonActionType] = None
     actions: List[Action] = None
@@ -246,7 +252,7 @@ class Button(BaseDataClass):
 
 
 @dataclass
-class Application(BaseDataClass):
+class Application(CommandCenterBaseClass):
     application_type: ApplicationType
     uuid: str
     action: Action = None
@@ -284,13 +290,13 @@ class Application(BaseDataClass):
 
 
 @dataclass
-class IncludeExclude(BaseDataClass):
+class IncludeExclude(CommandCenterBaseClass):
     excludes: List[str] = None
     includes: List[str] = None
 
 
 @dataclass
-class ModelSettings(BaseDataClass):
+class ModelSettings(CommandCenterBaseClass):
     directories: IncludeExclude = None
     projects: IncludeExclude = None
 
@@ -300,12 +306,12 @@ class ModelSettings(BaseDataClass):
 
 
 @dataclass
-class HistoryModelSettings(BaseDataClass):
+class HistoryModelSettings(CommandCenterBaseClass):
     length: int = None
 
 
 @dataclass
-class HistorySettings(BaseDataClass):
+class HistorySettings(CommandCenterBaseClass):
     pages: HistoryModelSettings = None
     searches: HistoryModelSettings = None
 
@@ -315,12 +321,12 @@ class HistorySettings(BaseDataClass):
 
 
 @dataclass
-class KeyboardShortcutsSettings(BaseDataClass):
+class KeyboardShortcutsSettings(CommandCenterBaseClass):
     main: List[List[int]] = None
 
 
 @dataclass
-class PositionSettings(BaseDataClass):
+class PositionSettings(CommandCenterBaseClass):
     height: int = None
     width: int = None
     x: int = None
@@ -328,7 +334,7 @@ class PositionSettings(BaseDataClass):
 
 
 @dataclass
-class InterfaceSettings(BaseDataClass):
+class InterfaceSettings(CommandCenterBaseClass):
     keyboard_shortcuts: KeyboardShortcutsSettings = None
     position: PositionSettings = None
 
@@ -338,7 +344,7 @@ class InterfaceSettings(BaseDataClass):
 
 
 @dataclass
-class CacheSettings(BaseDataClass):
+class CacheSettings(CommandCenterBaseClass):
     blocks: ModelSettings = None
     files: ModelSettings = None
     pipelines: ModelSettings = None
@@ -352,7 +358,7 @@ class CacheSettings(BaseDataClass):
 
 
 @dataclass
-class CommandCenterSettings(BaseDataClass):
+class CommandCenterSettings(CommandCenterBaseClass):
     cache: CacheSettings = None
     history: HistorySettings = None
     interface: InterfaceSettings = None
@@ -371,7 +377,7 @@ class CommandCenterSettings(BaseDataClass):
 
 
 @dataclass
-class AttributeDisplaySettings(BaseDataClass):
+class AttributeDisplaySettings(CommandCenterBaseClass):
     description: DisplaySettings = None
     icon: DisplaySettings = None
     item: DisplaySettings = None
@@ -383,7 +389,7 @@ class AttributeDisplaySettings(BaseDataClass):
 
 
 @dataclass
-class ItemBase(BaseDataClass):
+class ItemBase(CommandCenterBaseClass):
     item_type: ItemType
     object_type: ObjectType
     title: str

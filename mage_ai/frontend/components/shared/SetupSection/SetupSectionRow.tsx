@@ -82,7 +82,7 @@ function SetupSectionRow({
   }, [textInput]);
 
   return (
-    <Spacing p={PADDING_UNITS}>
+    <div style={{ padding: PADDING_UNITS * UNIT }}>
       <FlexContainer alignItems="center">
         <FlexContainer flexDirection="column" style={{ paddingRight: PADDING_UNITS * UNIT }}>
           <Text
@@ -145,7 +145,7 @@ function SetupSectionRow({
           )}
         </Flex>
       </FlexContainer>
-    </Spacing>
+    </div>
   );
 }
 

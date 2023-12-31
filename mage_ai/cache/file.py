@@ -66,6 +66,8 @@ class FileCache(BaseCache):
                 paths.append(path)
 
         paths = [os.path.join(base_path, path) for path in paths]
+        if not paths:
+            paths = [base_path]
 
         return self.initialize_cache(paths, replace=replace)
 
@@ -97,10 +99,13 @@ class FileCache(BaseCache):
                 parse_values=__parse_values,
             ))
 
-        arr.sort()
-        self._temp_data = arr
+        if arr and len(arr) >= 1:
+            arr.sort()
+            self._temp_data = arr
 
-        self.set(self.cache_key, FILENAME_DELIMITER.join(arr))
+            self.set(self.cache_key, FILENAME_DELIMITER.join(arr))
+        else:
+            print('[WARNING] FileCache.build_cache: 0 files cached, this may be a mistake.')
 
         return arr
 
