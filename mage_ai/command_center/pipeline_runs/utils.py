@@ -95,6 +95,10 @@ async def build_and_score(
                 started_at=model.started_at,
                 status=model.status,
             ),
+            trigger=dict(
+                description=parent_model.description,
+                name=parent_model.name,
+            ),
         ),
         display_settings_by_attribute=dict(
             description=dict(
