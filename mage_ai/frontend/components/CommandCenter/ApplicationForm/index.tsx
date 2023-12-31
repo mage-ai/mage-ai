@@ -12,6 +12,7 @@ import {
   FormInputType,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
+import { FormStyle } from './index.style';
 import { InteractionInputTypeEnum } from '@interfaces/InteractionType';
 import { dig, setNested } from '@utils/hash';
 
@@ -187,9 +188,9 @@ function ApplicationForm({
   ]);
 
   return (
-    <>
+    <FormStyle>
       {formMemo}
-    </>
+    </FormStyle>
   );
 }
 

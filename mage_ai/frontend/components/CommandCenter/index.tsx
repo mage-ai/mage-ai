@@ -718,6 +718,7 @@ function CommandCenter() {
       ? filterItems(refInput?.current?.value, items)
       : items
     );
+    console.log(refItems.current)
 
     if (!refRootItems?.current) {
       const domNode = document.getElementById(ITEMS_CONTAINER_UUID);

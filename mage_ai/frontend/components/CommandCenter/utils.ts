@@ -69,9 +69,13 @@ export function filterItems(
 }
 
 export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {
-  return sortByKey(items || [], 'score', {
-    ascending: false,
-  });
+  return sortByKey(
+    items || [],
+    ({ score, title }) => `${1 / score}${title}`,
+    {
+      ascending: true,
+    },
+  );
 }
 
 export function getDisplayCategory(item: CommandCenterItemType, normal: boolean = false): string {

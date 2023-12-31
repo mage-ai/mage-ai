@@ -40,6 +40,10 @@ class FileFactory(BaseFactory):
                 for _i in range(min(1, parts_count - 4)):
                     dir_name = os.path.join('..', dir_name)
 
+            extension = Path(full_path or '').suffix
+            if extension:
+                extension = extension.replace('.', '')
+
             item_dict = dict(
                 item_type=ItemType.DETAIL,
                 object_type=ObjectType.FILE,
@@ -48,7 +52,7 @@ class FileFactory(BaseFactory):
                 uuid=full_path,
                 metadata=dict(
                     file=dict(
-                        extension=Path(full_path or '').suffix,
+                        extension=extension,
                         full_path=full_path,
                         modified_at=modified_at,
                         modified_timestamp=modified_timestamp,

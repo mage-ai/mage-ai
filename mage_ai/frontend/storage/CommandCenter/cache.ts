@@ -2,6 +2,7 @@ import { CommandCenterItemType } from '@interfaces/CommandCenterItemType';
 import { LOCAL_STORAGE_COMMAND_CENTER_ITEMS } from './constants';
 import { combineUnique, getPageHistoryAsItems } from './utils';
 import { get, set } from '@storage/localStorage';
+import { ignoreKeys } from '@utils/hash';
 import { indexBy } from '@utils/array';
 
 export function getCachedItems(): CommandCenterItemType[] {
@@ -19,7 +20,7 @@ export function addCachedItems(items: CommandCenterItemType[], opts: {
     itemsCached || [],
   ]);
 
-  set(LOCAL_STORAGE_COMMAND_CENTER_ITEMS, itemsUnique);
+  set(LOCAL_STORAGE_COMMAND_CENTER_ITEMS, itemsUnique?.map(item => ignoreKeys(item, ['score'])));
 
   const filterCachedItems = opts?.filterCachedItems;
   if (filterCachedItems) {

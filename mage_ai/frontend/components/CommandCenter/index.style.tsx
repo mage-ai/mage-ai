@@ -102,8 +102,6 @@ const SHARED_CONTAINER_STYLES = css`
 
   height: ${(ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2)}px;
   overflow: auto;
-  padding-bottom: ${SCROLLBAR_WIDTH}px;
-  padding-top: ${SCROLLBAR_WIDTH}px;
   max-width: ${MAX_WIDTH}px;
 
   &.inactive:hover {
@@ -136,6 +134,9 @@ const SHARED_CONTAINER_STYLES = css`
 
 export const ItemsContainerStyle = styled.div`
   ${SHARED_CONTAINER_STYLES}
+
+  padding-bottom: ${SCROLLBAR_WIDTH}px;
+  padding-top: ${SCROLLBAR_WIDTH}px;
 
   &.active {
     ${SHARED_HIDDEN_STYLES}
