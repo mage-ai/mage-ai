@@ -47,12 +47,12 @@ def add_application_actions(item_dict: Dict) -> Dict:
         applications=[
             dict(
                 application_type=ApplicationType.DETAIL_LIST,
-                action=application_action,
+                actions=[application_action],
                 uuid='model_detail_list',
             ),
             dict(
                 application_type=ApplicationType.DETAIL,
-                action=application_action,
+                actions=[application_action],
                 buttons=[
                     dict(
                         label='Open trigger',

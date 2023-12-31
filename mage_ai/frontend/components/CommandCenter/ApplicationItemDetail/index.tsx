@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import CodeEditor from '@components/CodeEditor';
 import DependencyGraph from '@components/DependencyGraph';
@@ -21,7 +21,7 @@ import {
   momentInLocalTimezone,
 } from '@utils/date';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
-import { ObjectTypeEnum } from '@interfaces/CommandCenterType';
+import { KeyValueType, ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PIPELINE_TYPE_LABEL_MAPPING } from '@interfaces/PipelineType';
 import { RunStatus, RUN_STATUS_TO_LABEL, RUNNING_STATUSES } from '@interfaces/PipelineRunType';
@@ -54,22 +54,56 @@ function ApplicationItemDetail({
   const refUUID = useRef(null);
   const { status } = useStatus();
 
-  const action = application?.action;
+  const actions = application?.actions;
 
   const [modelState, setModel] = useState(null);
   const model = refUUID?.current === item?.uuid ? modelState : null;
 
-  useEffect(() => {
-    invokeRequest({
-      action,
-      focusedItemIndex,
-      item,
-    }).then(() => {
-      const itemRef = itemsRef?.current?.[focusedItemIndex];
-      refUUID.current = item?.uuid;
-      setModel(itemRef?.actionResults?.[action?.uuid]?.[action?.request?.response_resource_key]);
+  const invokeActionAndCallback = useCallback((index: number, results: KeyValueType = {}) => {
+    if (!actions?.length) {
+      return;
+    }
+
+    const action = actions?.[index];
+
+    const result = new Promise((resolve) => {
+      return resolve(invokeRequest({
+        action,
+        focusedItemIndex,
+        index,
+        item,
+        results,
+      }).then(({
+        data,
+      }) => {
+        const itemRef = itemsRef?.current?.[focusedItemIndex];
+        refUUID.current = item?.uuid;
+
+        setModel(prev => ({
+          ...prev,
+          ...data,
+        }));
+      }));
     });
-  }, [action, focusedItemIndex, invokeRequest, item]);
+
+    return result?.then((resultsInner) => {
+      if (index + 1 <= actions?.length - 1) {
+        return invokeActionAndCallback(index + 1, {
+          ...(results || {}),
+          ...(resultsInner || {}),
+        });
+      }
+    });
+  }, [
+    actions,
+    focusedItemIndex,
+    invokeRequest,
+    item,
+  ]);
+
+  useEffect(() => {
+    invokeActionAndCallback(0);
+  }, [invokeActionAndCallback]);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   let contentEL;
@@ -84,6 +118,15 @@ function ApplicationItemDetail({
       modified_timestamp: null,
       size: null,
     };
+    const {
+      content,
+      name,
+      path,
+    } = model?.file_content || {
+      content: null,
+      name: null,
+      path: null,
+    };
 
     const language = FILE_EXTENSION_TO_LANGUAGE_MAPPING[item?.metadata?.file?.extension];
 
@@ -93,7 +136,7 @@ function ApplicationItemDetail({
         language={language}
         padding={UNIT * 2}
         readOnly
-        value={model?.content}
+        value={content}
       />
     );
     const dt = momentInLocalTimezone(
@@ -106,14 +149,14 @@ function ApplicationItemDetail({
         <SetupSection>
           <SetupSectionRow title="Filename">
             <Text {...TEXT_PROPS} default={false}>
-              {model?.name}
+              {name}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
               <Text {...TEXT_PROPS} overflowWrap>
-                {model?.path}
+                {path}
               </Text>
             </div>
           </SetupSectionRow>
@@ -158,14 +201,25 @@ function ApplicationItemDetail({
       type: null,
       uuid: null,
     };
+    const {
+      configuration,
+      content,
+      language,
+      name: nameBlock,
+    } = model?.block || {
+      configuration: null,
+      content: null,
+      language: null,
+      name: null,
+    };
 
     const editor = (
       <CodeEditor
         autoHeight
-        language={model?.language}
+        language={language}
         padding={UNIT * 2}
         readOnly
-        value={model?.content}
+        value={content}
       />
     );
 
@@ -174,7 +228,7 @@ function ApplicationItemDetail({
         <SetupSection>
           <SetupSectionRow title="Name">
             <Text {...TEXT_PROPS} default={false}>
-              {model?.name || name || blockUUID}
+              {nameBlock || name || blockUUID}
             </Text>
           </SetupSectionRow>
 
@@ -191,15 +245,15 @@ function ApplicationItemDetail({
 
           <SetupSectionRow title="Language">
             <Text {...TEXT_PROPS}>
-              {LANGUAGE_DISPLAY_MAPPING[model?.language]}
+              {LANGUAGE_DISPLAY_MAPPING[language]}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
               <Text {...TEXT_PROPS} overflowWrap>
-                {model?.configuration?.file_source?.path
-                  || model?.configuration?.file_path
+                {configuration?.file_source?.path
+                  || configuration?.file_path
                   || filePath
                 }
               </Text>
@@ -252,7 +306,7 @@ function ApplicationItemDetail({
       type,
       updated_at: updatedAt,
       uuid,
-    } = model || item?.metadata?.pipeline || {};
+    } = model?.pipeline || item?.metadata?.pipeline || {};
     const {
       repo_path: repoPath,
     } = item?.metadata?.pipeline || {};
@@ -383,13 +437,13 @@ function ApplicationItemDetail({
       start_time: startTime,
       status: statusTrigger,
       variables,
-    } = model || item?.metadata?.pipeline || {};
+    } = model?.pipeline_schedule || item?.metadata?.pipeline || {};
     const {
       next_pipeline_run_date: nextPipelineRunDate,
       pipeline_runs_count: pipelineRunsCount,
       runtime_average: runtimeAverage,
       tags,
-    } = model || {};
+    } = model?.pipeline_schedule || {};
 
     const startTimeString = startTime && datetimeInLocalTimezone(
       startTime,
@@ -502,10 +556,6 @@ function ApplicationItemDetail({
       </SetupSection>
     );
   } else if (ObjectTypeEnum.PIPELINE_RUN === item?.object_type) {
-    const {
-
-    } = model || {
-    };
     const {
       pipeline_run: run,
       trigger,

@@ -255,12 +255,12 @@ class Button(CommandCenterBaseClass):
 class Application(CommandCenterBaseClass):
     application_type: ApplicationType
     uuid: str
-    action: Action = None
+    actions: List[Action] = None
     buttons: List[Button] = None
     settings: List[Union[FormInput, Dict]] = None
 
     def __post_init__(self):
-        self.serialize_attribute_class('action', Action)
+        self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('buttons', Button)
         self.serialize_attribute_enum('application_type', ApplicationType)
 

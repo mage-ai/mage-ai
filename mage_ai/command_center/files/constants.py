@@ -200,15 +200,17 @@ def add_application_actions(item_dict: Dict) -> Dict:
         applications=[
             dict(
                 application_type=ApplicationType.DETAIL,
-                action=dict(
-                    request=dict(
-                        operation=OperationType.DETAIL,
-                        resource='file_contents',
-                        resource_id=urllib.parse.quote_plus(uuid),
-                        response_resource_key='file_content',
+                actions=[
+                    dict(
+                        request=dict(
+                            operation=OperationType.DETAIL,
+                            resource='file_contents',
+                            resource_id=urllib.parse.quote_plus(uuid),
+                            response_resource_key='file_content',
+                        ),
+                        uuid='file_content_detail',
                     ),
-                    uuid='file_content_detail',
-                ),
+                ],
                 buttons=[
                     dict(
                         label='Open file',

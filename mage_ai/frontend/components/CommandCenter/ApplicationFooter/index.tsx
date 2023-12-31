@@ -53,7 +53,6 @@ function ApplicationFooter({
       <FlexContainer alignItems="center">
         {application?.buttons?.map((button, idx: number) => {
           const {
-            action_types: actionTypes,
             display_settings: displaySettings,
             keyboard_shortcuts: keyboardShortcuts,
             label,
@@ -77,6 +76,7 @@ function ApplicationFooter({
                 noBackground={idx === 0 && buttonsCount >= 2}
                 noBorder
                 onClick={() => executeButtonActions({
+                  application,
                   button,
                   executeAction,
                   focusedItemIndex,

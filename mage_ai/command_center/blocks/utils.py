@@ -40,18 +40,20 @@ def add_application_actions(item_dict: Dict) -> Dict:
         applications=[
             dict(
                 application_type=ApplicationType.DETAIL,
-                action=dict(
-                    request=dict(
-                        operation=OperationType.DETAIL,
-                        resource='blocks',
-                        resource_id=urllib.parse.quote_plus(uuid or ''),
-                        response_resource_key='block',
-                        query=dict(
-                            file_path=urllib.parse.quote_plus(file_path or ''),
+                actions=[
+                    dict(
+                        request=dict(
+                            operation=OperationType.DETAIL,
+                            resource='blocks',
+                            resource_id=urllib.parse.quote_plus(uuid or ''),
+                            response_resource_key='block',
+                            query=dict(
+                                file_path=urllib.parse.quote_plus(file_path or ''),
+                            ),
                         ),
+                        uuid='block_detail',
                     ),
-                    uuid='block_detail',
-                ),
+                ],
                 buttons=buttons,
                 uuid='model_detail',
             ),
