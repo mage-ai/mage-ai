@@ -165,6 +165,7 @@ interface CommandCenterActionPageType {
   external?: boolean;
   open_new_window?: boolean;
   path: string;
+  parameters?: KeyValueType;
   query?: KeyValueType;
 }
 

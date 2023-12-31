@@ -60,6 +60,29 @@ function ApplicationForm({
     return val;
   }), []);
 
+  useEffect(() => {
+    if (attributes === null) {
+      let attributesDefault = {};
+
+      settings?.forEach((formInput) => {
+        const {
+          action_uuid: actionUUID,
+          name,
+          value,
+        } = formInput;
+
+        if (value) {
+          attributesDefault[actionUUID] = {
+            ...(attributesDefault[actionUUID] || {}),
+            [name]: value,
+          };
+        }
+      });
+
+      setAttributes(() => attributesDefault);
+    }
+  }, []);
+
   if (settings?.length >= 1 && nothingFocused(refInputs)) {
     // Get the 1st input that doesn’t have a value.
     let formInput = settings?.find((formInput) => {
@@ -119,6 +142,7 @@ function ApplicationForm({
       label,
       monospace,
       name,
+      options,
       placeholder,
       required,
       type,
@@ -140,32 +164,39 @@ function ApplicationForm({
       textInput: null,
     };
 
-    if (InteractionInputTypeEnum.TEXT_FIELD === type) {
-      rowProps.textInput = {
-        ...(icon ? { afterIcon: icon } : {}),
-        monospace,
-        name,
-        onChange: (e) => {
-          setAttributesTouched(prev => ({
-              ...prev,
-              [actionUUID]: {
-                ...(prev?.[actionUUID] || {}),
-                [name]: true,
-              },
-            }));
-
-          return setAttributes(prev => ({
+    const inputProps = {
+      ...(icon ? { afterIcon: icon } : {}),
+      monospace,
+      name,
+      onChange: (e) => {
+        setAttributesTouched(prev => ({
             ...prev,
             [actionUUID]: {
               ...(prev?.[actionUUID] || {}),
-              [name]: e.target.value,
+              [name]: true,
             },
           }));
-        },
-        placeholder,
-        ref,
-        tabIndex: idx + 1,
-        value: attributes?.[actionUUID]?.[name] || '',
+
+        return setAttributes(prev => ({
+          ...prev,
+          [actionUUID]: {
+            ...(prev?.[actionUUID] || {}),
+            [name]: e.target.value,
+          },
+        }));
+      },
+      placeholder,
+      ref,
+      tabIndex: idx + 1,
+      value: attributes?.[actionUUID]?.[name] || '',
+    };
+
+    if (InteractionInputTypeEnum.TEXT_FIELD === type) {
+      rowProps.textInput = inputProps;
+    } else if (InteractionInputTypeEnum.DROPDOWN_MENU === type) {
+      rowProps.selectInput = {
+        ...inputProps,
+        options,
       };
     }
 

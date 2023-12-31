@@ -5,6 +5,7 @@ from mage_ai.command_center.blocks.factory import BlockFactory
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.files.factory import FileFactory
 from mage_ai.command_center.models import Item
+from mage_ai.command_center.pipelines.constants import ITEMS as ITEMS_PIPELINES
 from mage_ai.command_center.support.constants import ITEMS as ITEMS_SUPPORT
 from mage_ai.orchestration.db.models.oauth import User
 
@@ -13,6 +14,7 @@ FACTORIES_OR_ITEMS = [
     ITEMS_SUPPORT,
     ApplicationFactory,
     BlockFactory,
+    ITEMS_PIPELINES,
 ]
 
 

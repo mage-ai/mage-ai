@@ -12,6 +12,11 @@ import { ignoreKeys } from '@utils/hash';
 export function onlyKeysPresent(
   keys: (string | number)[],
   keyMapping: KeyMappingType,
+  opts: {
+    allowExtraKeys?: number;
+  } = {
+    allowExtraKeys: 0,
+  },
 ): boolean {
   const keysAsStrings = keys.map(key => String(key));
 
@@ -36,7 +41,7 @@ export function onlyKeysPresent(
 
   const otherKeysPressed = Object
     .entries(keyMappingUse)
-    .find(([k, v]) => v
+    .filter(([k, v]) => v
       // Pressed key is a key in the keys argument
       // Pressed key isn’t a key in the keys argument
       && !keysAsStrings.includes(String(k))
@@ -44,7 +49,11 @@ export function onlyKeysPresent(
       // Pressed key isn’t a meta key or pressed key is not in the keys argument
       && (!keysHasControl || !controlKeyCodesAsStrings.includes(String(k)))
       && (!keysHasShift || !shiftKeyCodesAsStrings.includes(String(k)))
+      && !keys?.includes(k)
     );
 
-  return keys.every(k => keyMappingUse[k]) && !otherKeysPressed;
+  console.log(otherKeysPressed, opts?.allowExtraKeys)
+
+  return keys.every(k => keyMappingUse[k])
+    && (otherKeysPressed?.length || 0) <= (opts?.allowExtraKeys || 0);
 }

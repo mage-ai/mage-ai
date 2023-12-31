@@ -2,6 +2,7 @@ import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
   ButtonActionTypeEnum,
+  CommandCenterActionPageType,
   CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
@@ -13,6 +14,7 @@ import {
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { dig, setNested } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
+import { queryString } from '@utils/url';
 import { stringSimilarity } from '@utils/string';
 
 const FILTER_KEYS = ['title', 'description', 'uuid', 'item_type', 'object_type'];
@@ -182,4 +184,21 @@ export function executeButtonActions({
   if (actionTypes?.length >= 1) {
     return invokeActionAndCallback(0);
   }
+}
+
+export function interpolatePagePath(page: CommandCenterActionPageType): string {
+  const {
+    parameters,
+    path,
+    query,
+  } = page;
+
+  const queryS = query ? queryString(query) : '';
+  let pathUse = path;
+
+  Object.entries(parameters || {})?.forEach(([key, value]) => {
+    pathUse = pathUse?.replaceAll(`:${key}`, value);
+  });
+
+  return [pathUse, queryS].filter(s => s).join('?');
 }

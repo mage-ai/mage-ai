@@ -156,3 +156,10 @@ SINGULAR_FOLDER_BLOCK_TYPES = [
 
 BLOCK_TYPE_DIRECTORY_NAME = \
     {v: f'{v.value}s' for v in BlockType if v not in SINGULAR_FOLDER_BLOCK_TYPES}
+
+
+PIPELINE_TYPE_DISPLAY_NAME_MAPPING = {
+    PipelineType.INTEGRATION: 'Data integration',
+    PipelineType.PYTHON: 'Batch',
+    PipelineType.STREAMING: 'Streaming',
+}

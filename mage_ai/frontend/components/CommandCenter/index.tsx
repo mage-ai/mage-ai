@@ -75,6 +75,7 @@ import { addCachedItems, getCachedItems } from '@storage/CommandCenter/cache';
 import {
   executeButtonActions,
   filterItems,
+  interpolatePagePath,
   rankItems,
   updateActionFromUpstreamResults,
 } from './utils';
@@ -563,15 +564,18 @@ function CommandCenter() {
         const {
           external,
           open_new_window: openNewWindow,
-          path,
+          path: pathInit,
         } = page || {
           external: false,
           openNewWindow: false,
           path: null,
         };
 
-        if (path) {
+        if (pathInit) {
           actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+            const path = interpolatePagePath(actionCopy?.page);
+
             let result = null;
             if (external) {
               if (openNewWindow && typeof window !== 'undefined') {
@@ -719,7 +723,6 @@ function CommandCenter() {
       ? filterItems(refInput?.current?.value, items)
       : items
     );
-    console.log(refItems.current)
 
     if (!refRootItems?.current) {
       const domNode = document.getElementById(ITEMS_CONTAINER_UUID);
@@ -870,7 +873,7 @@ function CommandCenter() {
   }, []);
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
-    function starSequenceValid(): boolean {
+    function startSequenceValid(): boolean {
       // Show the command center and focus on the text input.
       const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main;
 
@@ -884,7 +887,7 @@ function CommandCenter() {
       return false;
     }
 
-    if (starSequenceValid()) {
+    if (startSequenceValid()) {
       pauseEvent(event);
       if (!!refActive?.current) {
         closeCommandCenter();
@@ -897,7 +900,7 @@ function CommandCenter() {
 
       // If in a context of a selected item.
       // Leave the current context and go back.
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping) && !refError?.current) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }) && !refError?.current) {
         pauseEvent(event);
         removeApplication();
       } else if (item?.application && !refError?.current) {
@@ -907,7 +910,7 @@ function CommandCenter() {
           } = button;
 
           keyboardShortcuts?.forEach((keyCodes) => {
-            if (onlyKeysPresent(keyCodes, keyMapping)) {
+            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 1 })) {
               pauseEvent(event);
 
               return executeButtonActions({
@@ -924,7 +927,7 @@ function CommandCenter() {
       // If the main input is active.
       const focusedItemIndex = refFocusedItemIndex?.current;
 
-      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping) && !refError?.current) {
+      if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }) && !refError?.current) {
         pauseEvent(event);
 
         // If there is text in the input, clear it.
@@ -944,7 +947,7 @@ function CommandCenter() {
           // If there is no text in the input, close.
           closeCommandCenter();
         }
-      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)
+      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping, { allowExtraKeys: 1 })
         && focusedItemIndex !== null
         && !refError?.current
       ) {
@@ -959,8 +962,8 @@ function CommandCenter() {
 
         handleSelectItemRow(itemSelected, focusedItemIndex);
       } else if (
-        onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping)
-          || onlyKeysPresent([KEY_CODE_DELETE], keyMapping)
+        onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 1 })
+          || onlyKeysPresent([KEY_CODE_DELETE], keyMapping, { allowExtraKeys: 1 })
       ) {
         if (refSelectedSearchHistoryIndex?.current !== null) {
           refSelectedSearchHistoryIndex.current = null;
@@ -971,7 +974,7 @@ function CommandCenter() {
       } else {
         let index = null;
         // Arrow down
-        if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+        if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping, { allowExtraKeys: 0 })) {
           pauseEvent(event);
 
           if (refFocusedSearchHistoryIndex?.current !== null) {
@@ -986,7 +989,7 @@ function CommandCenter() {
             index = focusedItemIndex;
           }
           // Arrow up
-        } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+        } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping, { allowExtraKeys: 0 })) {
           pauseEvent(event);
           // If already on the first item, don’t change.
           // Next time they go up, show recently searched items.

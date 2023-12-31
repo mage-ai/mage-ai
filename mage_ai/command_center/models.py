@@ -62,6 +62,7 @@ class Page(BaseDataClass):
     path: str
     external: bool = False
     open_new_window: bool = False
+    parameters: Dict = None
     query: Dict = None
 
 
@@ -167,6 +168,7 @@ class FormInput(BaseDataClass):
     options: List[InteractionInputOption] = None
     style: InteractionInputStyle = None
     type: InteractionInputType = None
+    value: str = None
 
     def __post_init__(self):
         self.serialize_attribute_class('display_settings', DisplaySettings)
