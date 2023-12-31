@@ -2,13 +2,20 @@ import urllib.parse
 from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
     ItemType,
     ObjectType,
 )
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import (
+    SCHEDULE_TYPE_TO_LABEL,
+    ScheduleType,
+)
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
+from mage_ai.presenters.interactions.constants import InteractionInputType
 
 
 def add_application_actions(item_dict: Dict) -> Dict:
@@ -103,6 +110,141 @@ async def build_and_score(
 
     if add_application:
         item_dict.update(add_application_actions(item_dict))
+
+    scored = factory.filter_score(item_dict)
+    if scored:
+        items.append(scored)
+
+
+async def build_create_and_score(
+    factory,
+    model: Pipeline,
+    items: List[Dict],
+):
+    item_dict = dict(
+        item_type=ItemType.CREATE,
+        object_type=ObjectType.TRIGGER,
+        title='Create new trigger',
+        description=f'Crate a new trigger for pipeline {model.name or model.uuid}',
+        uuid=f'{model.uuid}_{ItemType.CREATE}_{ObjectType.TRIGGER}',
+        metadata=dict(
+            pipeline=dict(
+                repo_path=model.repo_path,
+                uuid=model.uuid,
+            ),
+        ),
+        display_settings_by_attribute=dict(
+            icon=dict(
+                icon_uuid='Lightning',
+            ),
+        ),
+        applications=[
+            dict(
+                application_type=ApplicationType.FORM,
+                buttons=[
+                    dict(
+                        label='Cancel',
+                        tooltip='Discard changes and go back.',
+                        keyboard_shortcuts=[['metaKey', 27]],
+                        action_types=[
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                        ],
+                    ),
+                    dict(
+                        label='Create trigger',
+                        tooltip='Save changes and create the new trigger.',
+                        keyboard_shortcuts=[[13]],
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                            ButtonActionType.RESET_FORM,
+                        ],
+                    ),
+                ],
+                settings=[
+                    dict(
+                        label='Name',
+                        placeholder='e.g. Daily ETL',
+                        display_settings=dict(
+                            icon_uuid='Alphabet',
+                        ),
+                        name='request.payload.pipeline_schedule.name',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        action_uuid='create_model',
+                    ),
+                    dict(
+                        label='Description',
+                        placeholder='e.g. Runs daily for global users.',
+                        display_settings=dict(
+                            icon_uuid='Alphabet',
+                        ),
+                        name='request.payload.pipeline_schedule.description',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        action_uuid='create_model',
+                    ),
+                    dict(
+                        label='Type',
+                        description='The type of trigger to create.',
+                        placeholder='e.g. Schedule',
+                        name='request.payload.pipeline_schedule.schedule_type',
+                        type=InteractionInputType.DROPDOWN_MENU,
+                        options=[dict(
+                            label=SCHEDULE_TYPE_TO_LABEL[schedule_type],
+                            value=schedule_type,
+                        ) for schedule_type in ScheduleType if (
+                            schedule_type in SCHEDULE_TYPE_TO_LABEL
+                        )],
+                        value=ScheduleType.TIME.value,
+                        required=True,
+                        action_uuid='create_model',
+                    ),
+                ],
+                uuid='model_create',
+            ),
+        ],
+        actions=[
+            dict(
+                request=dict(
+                    operation=OperationType.CREATE,
+                    payload=dict(
+                        pipeline_schedule=dict(
+                            description=None,
+                            name=None,
+                            schedule_type=None,
+                        ),
+                    ),
+                    resource='pipeline_schedules',
+                    response_resource_key='pipeline_schedule',
+                    resource_parent='pipelines',
+                    resource_parent_id=urllib.parse.quote_plus(model.uuid),
+                ),
+                uuid='create_model',
+            ),
+            dict(
+                upstream_action_value_key_mapping=dict(
+                    create_model={
+                        'data.pipeline_schedule.id': 'page.parameters.pipeline_schedule_id',
+                    }
+                ),
+                page=dict(
+                    path=(
+                        f'/pipelines/{urllib.parse.quote_plus(model.uuid)}'
+                        '/triggers/:pipeline_schedule_id/edit'
+                    ),
+                    parameters=dict(
+                        pipeline_schedule_id=None,
+                    ),
+                ),
+                uuid='open_model',
+            ),
+        ],
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+    )
 
     scored = factory.filter_score(item_dict)
     if scored:

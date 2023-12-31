@@ -181,6 +181,7 @@ export const HeaderStyle = styled.div`
   flex: 1;
   flex-shrink: 0;
   height: ${HEADER_CONTENT_HEIGHT}px;
+  white-space: nowrap;
 
   &.inactive {
     ${SHARED_HIDDEN_STYLES}
