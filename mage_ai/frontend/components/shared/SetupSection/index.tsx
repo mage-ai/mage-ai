@@ -16,6 +16,7 @@ type SetupSectionProps = {
   dark?: boolean;
   description?: any;
   headerChildren?: any;
+  noBackground?: boolean;
   title?: string | any;
 };
 
@@ -25,12 +26,14 @@ function SetupSection({
   dark,
   description,
   headerChildren,
+  noBackground,
   title,
 }: SetupSectionProps) {
   return (
     <Panel
       borderless={borderless}
       dark={dark}
+      noBackground={noBackground}
       noPadding
     >
       {title && (

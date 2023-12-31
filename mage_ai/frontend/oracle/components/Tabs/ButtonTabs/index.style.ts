@@ -41,7 +41,7 @@ export const SelectedUnderlineStyle = styled.div<{
   `}
 
   ${props => props.selected && !props.backgroundColor && `
-    background-color: ${(props.theme || dark).accent.blue};
+    background-color: ${(props.theme || dark)?.accent?.blue};
   `}
 
   ${props => props.selected && props.backgroundColor && `

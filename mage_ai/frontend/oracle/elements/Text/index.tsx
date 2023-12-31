@@ -247,7 +247,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.sky && `
-    color: ${(props.theme || dark).interactive.linkTextLight};
+    color: ${(props.theme || dark)?.interactive?.linkTextLight};
   `}
 
   ${props => props.black && `

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CodeEditor from '@components/CodeEditor';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -28,6 +30,7 @@ import { RunStatus, RUN_STATUS_TO_LABEL, RUNNING_STATUSES } from '@interfaces/Pi
 import { ScheduleStatusEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { capitalize, pluralize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getIconColor } from '../ItemRow/index.style';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { sortByKey } from '@utils/array';
 
@@ -58,6 +61,7 @@ function ApplicationItemDetail({
 
   const [modelState, setModel] = useState(null);
   const model = refUUID?.current === item?.uuid ? modelState : null;
+  const [selectedTab, setSelectedTab] = useState<TabType>(null);
 
   const invokeActionAndCallback = useCallback((index: number, results: KeyValueType = {}) => {
     if (!actions?.length) {
@@ -104,6 +108,54 @@ function ApplicationItemDetail({
   useEffect(() => {
     invokeActionAndCallback(0);
   }, [invokeActionAndCallback]);
+
+  const tabs = useMemo(() => {
+    const arr = [];
+
+    if (ObjectTypeEnum.PIPELINE_RUN === item?.object_type) {
+      arr.push(...[
+        {
+          uuid: 'Overview',
+        },
+        {
+          uuid: 'Block runs',
+        },
+        {
+          uuid: 'Graph',
+        },
+      ]);
+    }
+
+    return arr;
+  }, [item]);
+
+  const buttonTabsMemo = useMemo(() => {
+    if (!tabs?.length) {
+      return null;
+    }
+
+    const itemColor = getIconColor(item);
+
+    return (
+      <ButtonTabs
+        allowScroll
+        contained
+        onClickTab={(tab: TabType) => {
+          setSelectedTab?.(tab);
+        }}
+        selectedTabUUID={selectedTab?.uuid}
+        tabs={tabs}
+        underlineColor={itemColor?.accent}
+        underlineStyle
+      />
+    );
+  }, [item, selectedTab, tabs]);
+
+  useEffect(() => {
+    if (tabs?.length >= 1 && !selectedTab) {
+      setSelectedTab(tabs?.[0]);
+    }
+  }, [selectedTab, tabs]);
 
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   let contentEL;
@@ -573,77 +625,107 @@ function ApplicationItemDetail({
       pipeline_uuid: pipelineUUID,
       started_at: startedAt,
       status,
-    } = run || {};
+    } = model?.pipeline_run || run || {};
     const {
       name,
     } = trigger || {};
 
     contentEL = (
-      <SetupSection>
-        <SetupSectionRow title={`Trigger ${triggerID}`}>
-          <Text {...TEXT_PROPS} default={false} muted={!name}>
-            {name}
-          </Text>
-        </SetupSectionRow>
+      <>
+        {buttonTabsMemo}
 
-        <SetupSectionRow title="Run ID">
-          <Text {...TEXT_PROPS} muted={!id} rightAligned>
-            {id}
-          </Text>
-        </SetupSectionRow>
+        {'Overview' === selectedTab?.uuid && (
+          <SetupSection borderless noBackground>
+            <SetupSectionRow title={`Trigger ${triggerID}`}>
+              <Text {...TEXT_PROPS} default={false} muted={!name}>
+                {name}
+              </Text>
+            </SetupSectionRow>
 
-        <SetupSectionRow title="Pipeline">
-          <Link
-            block
-            preventDefault
-            href="#"
-            large
-            monospace
-            onClick={(e) => {
-              e.preventDefault();
-              router.push(`/pipelines/${pipelineUUID}/edit`, null, {
-                shallow: true,
-              });
+            <SetupSectionRow title="Run ID">
+              <Text {...TEXT_PROPS} muted={!id} rightAligned>
+                {id}
+              </Text>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Pipeline">
+              <Link
+                block
+                preventDefault
+                href="#"
+                large
+                monospace
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push(`/pipelines/${pipelineUUID}/edit`, null, {
+                    shallow: true,
+                  });
+                }}
+              >
+                {pipelineUUID}
+              </Link>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Status">
+              <Text
+                {...TEXT_PROPS}
+                danger={RunStatus.FAILED === status}
+                muted={!status}
+                success={RunStatus.COMPLETED === status}
+                warning={RunStatus.CANCELLED === status}
+              >
+                {RUN_STATUS_TO_LABEL[status] || '-'}
+              </Text>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Execution date">
+              <Text {...TEXT_PROPS} muted={!executionDate}>
+                {executionDate || '-'}
+              </Text>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Started at">
+              <Text {...TEXT_PROPS} muted={!startedAt}>
+                {startedAt || '-'}
+              </Text>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Completed at">
+              <Text {...TEXT_PROPS} muted={!completedAt}>
+                {completedAt || '-'}
+              </Text>
+            </SetupSectionRow>
+
+            <SetupSectionRow title="Passed SLA">
+              {passedSla ? <AlertTriangle danger size={ICON_SIZE} /> : <Check size={ICON_SIZE} success />}
+            </SetupSectionRow>
+          </SetupSection>
+        )}
+
+        {'Block runs' === selectedTab?.uuid && model?.block_runs?.length >= 1 && (
+          <BlockRunsTable
+            blockRuns={model?.block_runs}
+            pipeline={{
+              blocks: model?.blocks,
+              uuid: pipelineUUID,
             }}
-          >
-            {pipelineUUID}
-          </Link>
-        </SetupSectionRow>
+          />
+        )}
 
-        <SetupSectionRow title="Status">
-          <Text
-            {...TEXT_PROPS}
-            danger={RunStatus.FAILED === status}
-            muted={!status}
-            success={RunStatus.COMPLETED === status}
-            warning={RunStatus.CANCELLED === status}
-          >
-            {RUN_STATUS_TO_LABEL[status] || '-'}
-          </Text>
-        </SetupSectionRow>
-
-        <SetupSectionRow title="Execution date">
-          <Text {...TEXT_PROPS} muted={!executionDate}>
-            {executionDate || '-'}
-          </Text>
-        </SetupSectionRow>
-
-        <SetupSectionRow title="Started at">
-          <Text {...TEXT_PROPS} muted={!startedAt}>
-            {startedAt || '-'}
-          </Text>
-        </SetupSectionRow>
-
-        <SetupSectionRow title="Completed at">
-          <Text {...TEXT_PROPS} muted={!completedAt}>
-            {completedAt || '-'}
-          </Text>
-        </SetupSectionRow>
-
-        <SetupSectionRow title="Passed SLA">
-          {passedSla ? <AlertTriangle danger size={ICON_SIZE} /> : <Check size={ICON_SIZE} success />}
-        </SetupSectionRow>
-      </SetupSection>
+        {'Graph' === selectedTab?.uuid && model?.blocks?.length >= 1 && (
+          <DependencyGraph
+            disabled
+            enablePorts={false}
+            height={UNIT * 50}
+            pannable={false}
+            pipeline={{
+              blocks: model?.blocks,
+              uuid: pipelineUUID,
+            }}
+            zoomable={false}
+          />
+        )}
+      </>
     );
   }
 

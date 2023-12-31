@@ -26,9 +26,6 @@ def add_application_actions(item_dict: Dict) -> Dict:
                             resource='pipeline_runs',
                             resource_id=model_id,
                             response_resource_key='pipeline_run',
-                            query=dict(
-                                _format='with_basic_details',
-                            ),
                         ),
                         uuid='model_detail',
                     ),
@@ -37,7 +34,6 @@ def add_application_actions(item_dict: Dict) -> Dict:
                             operation=OperationType.LIST,
                             resource='block_runs',
                             response_resource_key='block_runs',
-                            # Query is being dropped
                             query=dict(
                                 _limit=100,
                                 _offset=0,
