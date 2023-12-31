@@ -115,6 +115,14 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
           query,
         },
       },
+      display_settings_by_attribute: {
+          description: {
+              text_styles: {
+                  monospace: true,
+                  small: true,
+              },
+          },
+      },
     };
   });
 }

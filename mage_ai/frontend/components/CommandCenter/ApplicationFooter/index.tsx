@@ -52,11 +52,12 @@ function ApplicationFooter({
         {application?.buttons?.map((button, idx: number) => {
           const {
             action_types: actionTypes,
-            color_uuid: colorUUID,
+            display_settings: displaySettings,
             keyboard_shortcuts: keyboardShortcuts,
             label,
             tooltip,
           } = button;
+          const colorUUID = displaySettings?.color_uuid;
 
           return (
             <FlexContainer alignItems="center" key={label}>

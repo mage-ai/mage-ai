@@ -44,7 +44,9 @@ ITEMS = [
                         'Must be relative to the top level directory.'
                     ),
                     placeholder='e.g. utils',
-                    icon_uuid='FolderOutline',
+                    display_settings=dict(
+                        icon_uuid='FolderOutline',
+                    ),
                     name='request.payload.file.dir_path',
                     type=InteractionInputType.TEXT_FIELD,
                     required=True,
@@ -54,7 +56,9 @@ ITEMS = [
                 dict(
                     label='File name',
                     description='A descriptive name of the file to be created.',
-                    icon_uuid='File',
+                    display_settings=dict(
+                        icon_uuid='File',
+                    ),
                     placeholder='e.g. magic_powers.py',
                     name='request.payload.file.name',
                     type=InteractionInputType.TEXT_FIELD,
@@ -124,7 +128,9 @@ ITEMS = [
                     label='Directory',
                     description='The parent directory of this folder.',
                     placeholder='e.g. utils',
-                    icon_uuid='FolderOutline',
+                    display_settings=dict(
+                        icon_uuid='FolderOutline',
+                    ),
                     name='request.payload.folder.path',
                     type=InteractionInputType.TEXT_FIELD,
                     required=True,
@@ -134,7 +140,9 @@ ITEMS = [
                 dict(
                     label='Folder name',
                     description='A descriptive name of the folder to be created.',
-                    icon_uuid='Alphabet',
+                    display_settings=dict(
+                        icon_uuid='Alphabet',
+                    ),
                     placeholder='e.g. transformers',
                     name='request.payload.folder.name',
                     type=InteractionInputType.TEXT_FIELD,

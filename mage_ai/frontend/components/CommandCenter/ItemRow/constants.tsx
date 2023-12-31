@@ -17,9 +17,10 @@ import {
 
 export function getIcon(item: CommandCenterItemType) {
   const {
-    icon_uuid: iconUUID,
+    display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
   } = item;
+  const iconUUID = displaySettingsByAttribute?.item?.icon?.icon_uuid;
 
   if (iconUUID && iconUUID in AllIcons) {
     return AllIcons?.[iconUUID];

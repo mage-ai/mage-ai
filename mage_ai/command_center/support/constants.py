@@ -6,7 +6,11 @@ ITEMS = [
         object_type=ObjectType.DOCUMENT,
         title='Read developer documentation',
         description='Technical documentation for Mage.',
-        color_uuid='background.success',
+        display_settings_by_attribute=dict(
+            icon=dict(
+                color_uuid='background.success',
+            ),
+        ),
         actions=[
             dict(
                 page=dict(
@@ -23,7 +27,11 @@ ITEMS = [
         object_type=ObjectType.CHAT,
         title='Get instant live support',
         description='Learn best practices, share code snippets, and have fun.',
-        color_uuid='background.success',
+        display_settings_by_attribute=dict(
+            icon=dict(
+                color_uuid='background.success',
+            ),
+        ),
         actions=[
             dict(
                 page=dict(

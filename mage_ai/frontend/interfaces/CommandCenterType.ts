@@ -37,6 +37,16 @@ export enum ObjectTypeEnum {
   TRIGGER = 'trigger',
 }
 
+interface TextStylesType {
+  monospace?: boolean;
+}
+
+interface DisplaySettingsType {
+  color_uuid?: string;
+  icon_uuid?: string;
+  text_styles?: TextStylesType;
+}
+
 export const TYPE_TITLE_MAPPING = {
   [ItemTypeEnum.ACTION]: 'Cast',
   [ItemTypeEnum.CREATE]: 'Conjure',
@@ -169,8 +179,8 @@ export interface CommandCenterActionType extends CommandCenterActionBaseType {
 interface FormInputType extends InteractionInputType {
   action_uuid?: string;
   description?: string;
+  display_settings?: DisplaySettingsType;
   label?: string;
-  icon_uuid?: string;
   monospace?: boolean;
   name?: string;
   placeholder?: string;
@@ -179,7 +189,7 @@ interface FormInputType extends InteractionInputType {
 
 interface ButtonActionType {
   action_types: ButtonActionTypeEnum[];
-  color_uuid?: string;
+  display_settings?: DisplaySettingsType;
   keyboard_shortcuts?: number[][] | string[][];
   label: string
   tooltip?: string;
@@ -189,6 +199,12 @@ export interface ItemApplicationType {
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
   settings: FormInputType[];
+}
+
+interface AttributeDisplaySettingsType {
+  description?: DisplaySettingsType;
+  icon?: DisplaySettingsType;
+  item?: DisplaySettingsType;
 }
 
 export interface CommandCenterItemType {
@@ -202,9 +218,8 @@ export interface CommandCenterItemType {
   };
   actions?: CommandCenterActionType[];
   application?: ItemApplicationType;
+  display_settings_by_attribute?: AttributeDisplaySettingsType;
   description?: string;
-  color_uuid?: string;
-  icon_uuid?: string;
   item_type: ItemTypeEnum;
   items?: CommandCenterItemType[];
   metadata?: {

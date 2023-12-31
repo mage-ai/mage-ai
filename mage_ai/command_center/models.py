@@ -5,7 +5,6 @@ from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
-    FileExtension,
     InteractionType,
     ItemType,
     ObjectType,
@@ -19,6 +18,22 @@ from mage_ai.presenters.interactions.models import (
 )
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
+
+
+@dataclass
+class TextStyles(BaseDataClass):
+    monospace: bool = False
+    small: bool = False
+
+
+@dataclass
+class DisplaySettings(BaseDataClass):
+    color_uuid: str = None
+    icon_uuid: str = None
+    text_styles: TextStyles = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('text_styles', TextStyles)
 
 
 @dataclass
@@ -90,10 +105,7 @@ class FileMetadata(BaseDataClass):
     modified_at: str
     modified_timestamp: int
     size: int
-    extension: FileExtension = None
-
-    def __post_init__(self):
-        self.serialize_attribute_enum('extension', FileExtension)
+    extension: str = None
 
 
 @dataclass
@@ -112,8 +124,8 @@ class Metadata(BaseDataClass):
 class FormInput(BaseDataClass):
     action_uuid: str = None
     description: str = None
+    display_settings: DisplaySettings = None
     label: str = None
-    icon_uuid: str = None
     monospace: bool = False
     name: str = None
     placeholder: str = None
@@ -123,6 +135,7 @@ class FormInput(BaseDataClass):
     type: InteractionInputType = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('display_settings', DisplaySettings)
         self.serialize_attribute_class('style', InteractionInputStyle)
         self.serialize_attribute_classes('options', InteractionInputOption)
         self.serialize_attribute_enum('type', InteractionInputType)
@@ -132,11 +145,12 @@ class FormInput(BaseDataClass):
 class Button(BaseDataClass):
     action_types: List[ButtonActionType]
     label: str
-    color_uuid: str = None
+    display_settings: DisplaySettings = None
     keyboard_shortcuts: List[List[int]] = None
     tooltip: str = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('display_settings', DisplaySettings)
         self.serialize_attribute_enums('action_types', ButtonActionType)
 
 
@@ -263,6 +277,18 @@ class CommandCenterSettings(BaseDataClass):
 
 
 @dataclass
+class AttributeDisplaySettings(BaseDataClass):
+    description: DisplaySettings = None
+    icon: DisplaySettings = None
+    item: DisplaySettings = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('description', DisplaySettings)
+        self.serialize_attribute_class('icon', DisplaySettings)
+        self.serialize_attribute_class('item', DisplaySettings)
+
+
+@dataclass
 class ItemBase(BaseDataClass):
     item_type: ItemType
     object_type: ObjectType
@@ -270,15 +296,15 @@ class ItemBase(BaseDataClass):
     uuid: str
     actions: List[Action] = None
     application: Application = None
-    color_uuid: str = None
+    display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
-    icon_uuid: str = None
     items: List[Dict] = None
     metadata: Metadata = None
     score: int = 0
 
     def __post_init__(self):
         self.serialize_attribute_class('application', Application)
+        self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
         self.serialize_attribute_class('metadata', Metadata)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_enum('item_type', ItemType)
@@ -293,9 +319,8 @@ class Item(ItemBase):
     uuid: str
     actions: List[Action] = None
     application: Application = None
-    color_uuid: str = None
+    display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
-    icon_uuid: str = None
     items: List[ItemBase] = None
     metadata: Metadata = None
     score: int = 0

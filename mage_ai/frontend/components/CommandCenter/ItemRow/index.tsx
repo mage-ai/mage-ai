@@ -28,13 +28,20 @@ function ItemRow({
 }: ItemRowProps, ref) {
   const {
     description,
+    display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
     title,
     type,
   } = item;
+  const {
+    description: descriptionDisplaySettings,
+  } = displaySettingsByAttribute || {
+    description: null,
+  };
 
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
+
 
   const applicationWithDescriptionPath =
     ObjectTypeEnum.APPLICATION === type && description?.startsWith('/');
@@ -63,8 +70,8 @@ function ItemRow({
           {description && (
             <Text
               default
-              monospace={applicationWithDescriptionPath}
-              small={applicationWithDescriptionPath}
+              monospace={descriptionDisplaySettings?.text_styles?.monospace}
+              small={descriptionDisplaySettings?.text_styles?.small}
             >
               {description}
             </Text>

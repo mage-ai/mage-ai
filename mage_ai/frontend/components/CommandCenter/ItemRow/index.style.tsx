@@ -20,14 +20,16 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   const theme = opts?.theme;
 
   const {
-    color_uuid: colorUUID,
+    display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
     object_type: objectType,
   } = item || {
-    color_uuid: null,
+    display_settings_by_attribute: null,
     metadata: null,
     object_type: null,
   };
+
+  const colorUUID = displaySettingsByAttribute?.item?.icon?.color_uuid;
 
   const themeUse = (theme || dark);
 

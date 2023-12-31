@@ -21,6 +21,14 @@ class ApplicationFactory(BaseFactory):
                 object_type=ObjectType.APPLICATION,
                 title=item.get('title'),
                 description=item.get('path').strip(os.path.sep),
+                display_settings_by_attribute=dict(
+                    description=dict(
+                        text_styles=dict(
+                            monospace=True,
+                            small=True,
+                        ),
+                    ),
+                ),
                 condition=item.get('condition'),
                 actions=[
                     dict(

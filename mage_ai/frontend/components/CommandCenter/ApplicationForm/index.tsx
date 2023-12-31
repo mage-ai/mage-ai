@@ -114,7 +114,7 @@ function ApplicationForm({
     const {
       action_uuid: actionUUID,
       description,
-      icon_uuid: iconUUID,
+      display_settings: displaySettings,
       label,
       monospace,
       name,
@@ -122,6 +122,7 @@ function ApplicationForm({
       required,
       type,
     } = formInput;
+    const iconUUID = displaySettings?.icon_uuid;
 
     const key = buildKey(formInput);
     const ref = refInputs?.current?.[key] || createRef();

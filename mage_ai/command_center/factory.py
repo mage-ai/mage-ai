@@ -1,6 +1,7 @@
 import asyncio
 from abc import ABC
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Dict, List, Union
 
 from thefuzz import fuzz
@@ -11,7 +12,7 @@ from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import ignore_keys, merge_dict
 
-DEFAULT_RATIO = 80
+DEFAULT_RATIO = 65
 
 
 class BaseFactory(ABC):
@@ -74,9 +75,20 @@ class BaseFactory(ABC):
         arr = []
         for key in ['title', 'description', 'uuid', 'item_type', 'object_type']:
             if item_dict.get(key):
-                arr.append(item_dict.get(key))
+                value = item_dict.get(key)
+                if value:
+                    value = value.lower()
+                    extension = Path(value).suffix
+                    if extension:
+                        arr.append(Path(value).stem)
+                        arr.append(extension)
+                    arr.append(value)
 
-        return ' '.join(arr)
+        text = ' '.join(arr)
+        return ' '.join([
+            text,
+            text.replace('_', ' '),
+        ])
 
     # Subclasses can override this
     def score_item(self, _item_dict: Dict, score: int = None) -> int:
