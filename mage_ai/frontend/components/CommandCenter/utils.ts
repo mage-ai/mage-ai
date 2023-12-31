@@ -7,6 +7,7 @@ import {
   CommandCenterActionType,
   CommandCenterItemType,
   ItemApplicationType,
+  ItemTypeEnum,
   KeyValueType,
   OBJECT_TITLE_MAPPING_SHORT,
   ObjectTypeEnum,
@@ -14,10 +15,10 @@ import {
   TYPE_TITLE_MAPPING_NORMAL,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
+import { capitalize, stringSimilarity } from '@utils/string';
 import { dig, setNested } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { queryString } from '@utils/url';
-import { stringSimilarity } from '@utils/string';
 
 const FILTER_KEYS = ['title', 'description', 'uuid', 'item_type', 'object_type'];
 
@@ -88,6 +89,10 @@ export function getDisplayCategory(item: CommandCenterItemType, normal: boolean 
 
     if (ObjectTypeEnum.BLOCK === item?.object_type) {
       part2 = BLOCK_TYPE_NAME_MAPPING[item?.metadata?.block?.type]?.toLowerCase() || part2;
+    }
+
+    if (ItemTypeEnum.DETAIL === item?.item_type) {
+      return capitalize(part2 || '');
     }
 
     return [

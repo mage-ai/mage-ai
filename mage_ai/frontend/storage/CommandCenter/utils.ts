@@ -118,7 +118,6 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
       display_settings_by_attribute: {
         description: {
           text_styles: {
-            monospace: true,
             small: true,
           },
         },

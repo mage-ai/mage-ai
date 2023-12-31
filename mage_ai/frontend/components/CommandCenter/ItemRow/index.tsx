@@ -78,7 +78,7 @@ function ItemRow({
             <Text
               default
               monospace={descriptionDisplaySettings?.text_styles?.monospace}
-              small={descriptionDisplaySettings?.text_styles?.small}
+              small={!descriptionDisplaySettings?.text_styles?.regular}
             >
               {descriptionUse}
             </Text>
