@@ -14,6 +14,7 @@ export const COMPONENT_UUID = 'command-center';
 export const APPLICATION_FOOTER_ID = `${COMPONENT_UUID}-application-footer`;
 export const FOOTER_ID = `${COMPONENT_UUID}-footer`;
 export const HEADER_ID = `${COMPONENT_UUID}-header`;
+export const HEADER_TITLE_ID = `${COMPONENT_UUID}-header-title`;
 export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
 export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
 export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
@@ -161,6 +162,10 @@ export const HeaderStyle = styled.div`
   height: ${HEADER_CONTENT_HEIGHT}px;
 
   &.inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
+
+  #${HEADER_TITLE_ID}.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
 `;

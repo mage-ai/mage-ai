@@ -1,3 +1,4 @@
+import React from 'react';
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
@@ -380,8 +381,9 @@ const Text = ({
   children,
   muted: mutedProp,
   raw,
+  weightStyle = 3,
   ...props
-}: TextProps) => {
+}: TextProps, ref) => {
   let muted = false;
 
   if (mutedProp === true) {
@@ -393,6 +395,7 @@ const Text = ({
     ...props,
     ...({}),
     muted,
+    weightStyle,
   };
 
   if (raw) {
@@ -400,19 +403,17 @@ const Text = ({
       <El
         {...combinedProps}
         dangerouslySetInnerHTML={{ __html: children }}
+        ref={ref}
       />
     );
   }
 
   return (
-    <El {...combinedProps}>
+    <El {...combinedProps} ref={ref}>
       {children}
     </El>
   );
 };
 
-Text.defaultProps = {
-  weightStyle: 3,
-};
 
-export default Text;
+export default React.forwardRef(Text);

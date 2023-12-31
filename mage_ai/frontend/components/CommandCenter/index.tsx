@@ -11,6 +11,7 @@ import ItemApplication from './ItemApplication';
 import ItemRow from './ItemRow';
 import Loading from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import useCache from '@storage/CommandCenter/useCache';
@@ -37,6 +38,7 @@ import {
   FooterStyle,
   FooterWraperStyle,
   HEADER_ID,
+  HEADER_TITLE_ID,
   HeaderContainerStyle,
   HeaderStyle,
   ITEMS_CONTAINER_UUID,
@@ -105,6 +107,7 @@ function CommandCenter() {
 
   const refContainer = useRef(null);
   const refHeader = useRef(null);
+  const refHeaderTitle = useRef(null);
   const refLoading = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
@@ -168,58 +171,74 @@ function CommandCenter() {
     )?.application?.application_type;
   }
 
-  function activateClassNamesForRefs(refsArray: any[]) {
+  function activateClassNamesForRefs(refsArray: any[], reverse: boolean = false) {
     refsArray.forEach((r) => {
       if (r?.current) {
         r.current.className = addClassNames(
           r?.current?.className || '',
           [
-            'active',
+            reverse ? 'inactive' : 'active',
           ],
         );
         r.current.className = removeClassNames(
           r?.current?.className || '',
           [
-            'inactive',
+            reverse ? 'active' : 'inactive',
           ],
         );
       }
     });
   }
 
-  function addApplication({
-    executeAction,
-    focusedItemIndex,
-    invokeRequest,
-    item,
-    itemsRef,
-  }: ApplicationConfiguration) {
-    console.log('ADD APP', item)
-    if (refApplications?.current === null) {
-      refApplications.current = [];
+  function addHeaderTitle() {
+    if (refApplications?.current?.length >= 2 && refHeaderTitle?.current !== null) {
+      refHeaderTitle.current.innerText = refApplications?.current?.[1]?.item?.title || '';
+      activateClassNamesForRefs([refHeaderTitle]);
+    }
+  }
+
+  function removeHeaderTitle() {
+    if (refHeaderTitle?.current !== null) {
+      refHeaderTitle.current.innerText = '';
+      activateClassNamesForRefs([refHeaderTitle], true);
+    }
+  }
+
+  function addApplication(
+    applicationConfiguration: ApplicationConfiguration,
+    opts: {
+      skipAdding?: boolean;
+    } = {
+      skipAdding: false,
+    }) {
+
+    const currentApplicationConfig = { ...applicationConfiguration };
+
+    if (!opts?.skipAdding) {
+      if (refApplications?.current === null) {
+        refApplications.current = [];
+      }
+
+      currentApplicationConfig.application = getCurrentApplicationForItem(
+        currentApplicationConfig?.item,
+        refApplications?.current || [],
+        {
+          beforeAddingNextApplication: true,
+        },
+      );
+
+      // @ts-ignore
+      refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
     }
 
-    const application = getCurrentApplicationForItem(
-      item,
-      refApplications?.current || [],
-      {
-        beforeAddingNextApplication: true,
-      },
-    );
-    const currentApplicationConfig = {
+    const {
       application,
-      executeAction,
-      focusedItemIndex,
-      invokeRequest,
       item,
-      itemsRef,
-    };
+    } = currentApplicationConfig;
 
-    console.log('GOING TO ADD', currentApplicationConfig, isCurrentApplicationDetailList(currentApplicationConfig));
+    const activeApplicationsCount = refApplications?.current?.length || 0;
 
-    // @ts-ignore
-    refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
-
+    // Detail, Form
     if ([
       ItemApplicationTypeEnum.DETAIL,
       ItemApplicationTypeEnum.FORM,
@@ -244,12 +263,13 @@ function CommandCenter() {
           {...currentApplicationConfig}
           applicationState={refApplicationState}
           applicationsRef={refApplications}
-          itemsRef={itemsRef}
           refError={refError}
           removeApplication={removeApplication}
           router={router}
         />
       );
+
+      addHeaderTitle();
     } else if (isCurrentApplicationDetailList(currentApplicationConfig)) {
       renderItems([
         item,
@@ -272,8 +292,8 @@ function CommandCenter() {
     }
 
     activateClassNamesForRefs([
-      refFooter,
       refApplicationsFooter,
+      refFooter,
     ]);
 
     // Footer for application
@@ -296,15 +316,27 @@ function CommandCenter() {
   function removeApplication() {
     const count = refApplications?.current?.length || 0;
 
-    console.log('REMOVE APPLICATION', count);
-
     if (refApplications?.current === null || !count) {
       return;
     }
 
     const removedApplicationConfig = refApplications.current?.[0] || {};
-
     refApplications.current = refApplications?.current?.slice(1, count);
+
+    function resetClassNames() {
+      activateClassNamesForRefs([
+        refHeader,
+        refHeaderTitle,
+        refInput,
+        refItemsNodesContainer,
+        refApplicationsNodesContainer,
+        refFooter,
+        refApplicationsFooter,
+      ], true);
+
+      refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
+      refInput?.current?.focus();
+    }
 
     let resetCallback;
     let shouldReset = count === 1;
@@ -313,55 +345,22 @@ function CommandCenter() {
       // Remove the next application from the stack, then re-add it so that all the
       // class name handling is triggered.
       const currentApplicationConfig = refApplications.current?.[0] || {};
-      refApplications.current = refApplications?.current?.slice(1, count);
 
       if (isCurrentApplicationDetailList(currentApplicationConfig)) {
-        shouldReset = true;
-        resetCallback = () => {
-          addApplication(currentApplicationConfig);
-        };
-      } else {
-        addApplication(currentApplicationConfig);
+        resetClassNames();
       }
-    }
 
-    if (shouldReset) {
-      // No more applications are active.
-      [
-        refHeader,
-        refInput,
-        refItemsNodesContainer,
-        refApplicationsNodesContainer,
-        refFooter,
-        refApplicationsFooter,
-      ].forEach((r) => {
-        if (r?.current) {
-          r.current.className = addClassNames(
-            r?.current?.className || '',
-            [
-              'inactive',
-            ],
-          );
+      removeHeaderTitle();
 
-          r.current.className = removeClassNames(
-            r?.current?.className || '',
-            [
-              'active',
-            ],
-          );
-        }
+      addApplication(currentApplicationConfig, {
+        skipAdding: true,
       });
-
-      refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
-      refInput?.current?.focus();
+    } else if (count === 1) {
+      resetClassNames();
 
       if (isCurrentApplicationDetailList(removedApplicationConfig)) {
         refItemsApplicationDetailList.current = null;
         fetchItems();
-      }
-
-      if (resetCallback) {
-        resetCallback?.();
       }
     }
   }
@@ -1026,8 +1025,6 @@ function CommandCenter() {
 
     let stopHandling = false;
 
-    console.log(startSequenceValid(), isApplicationActive(), keyMapping)
-
     if (startSequenceValid()) {
       pauseEvent(event);
       if (!!refActive?.current) {
@@ -1040,8 +1037,6 @@ function CommandCenter() {
       const {
         application,
       } = currentApplicationConfig || {};
-
-      console.log(onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }), !refError?.current)
 
       // If in a context of a selected item.
       // Leave the current context and go back.
@@ -1286,6 +1281,8 @@ function CommandCenter() {
             />
 
             <Spacing mr={1} />
+
+            <Text id={HEADER_TITLE_ID} ref={refHeaderTitle} />
           </HeaderStyle>
 
           <InputStyle
