@@ -154,6 +154,25 @@ export const ApplicationContainerStyle = styled.div`
   &.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
+
+  &:hover {
+    // for Internet Explorer, Edge
+    -ms-overflow-style: block !important;
+    // for Firefox
+    scrollbar-width: block !important;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: block !important;
+    }
+  }
+`;
+
+export const ApplicationContentStyle = styled.div`
+  left: ${SCROLLBAR_WIDTH}px;
+  max-width: ${MAX_WIDTH - (SCROLLBAR_WIDTH * 2)}px;
+  padding-bottom: ${1 * UNIT}px;
+  padding-top: ${1 * UNIT}px;
+  position: relative;
 `;
 
 export const HeaderStyle = styled.div`

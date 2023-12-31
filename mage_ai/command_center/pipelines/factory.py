@@ -2,10 +2,10 @@ import asyncio
 from datetime import datetime
 from typing import Dict, List
 
+from sqlalchemy import or_
+
 from mage_ai.cache.pipeline import PipelineCache
-from mage_ai.command_center.blocks.utils import (
-    build_and_score as build_and_score_blocks,
-)
+from mage_ai.command_center.blocks.utils import build_and_score as build_and_score_block
 from mage_ai.command_center.constants import ApplicationType
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.pipelines.constants import ITEMS
@@ -13,7 +13,11 @@ from mage_ai.command_center.pipelines.utils import (
     add_application_actions,
     build_and_score,
 )
+from mage_ai.command_center.triggers.utils import (
+    build_and_score as build_and_score_trigger,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 from mage_ai.shared.hash import merge_dict
 
 
@@ -27,18 +31,42 @@ class PipelineFactory(BaseFactory):
 
             from mage_ai.cache.block import BlockCache
 
-            item_dict = self.item.to_dict()
-            scored = self.filter_score(item_dict)
-            if scored:
-                scored['score'] = 999
-                items.append(scored)
-
+            # Pipeline
             metadata = self.item.metadata.pipeline
             pipeline = await Pipeline.get_async(
                 metadata.uuid,
                 all_projects=True,
                 repo_path=metadata.repo_path,
             )
+
+            item_dict = self.item.to_dict()
+            scored = self.filter_score(item_dict)
+            if scored:
+                scored['score'] = 999
+                items.append(scored)
+
+            # Triggers
+            schedules = PipelineSchedule.query.filter(
+                PipelineSchedule.pipeline_uuid == pipeline.uuid,
+                or_(
+                    PipelineSchedule.repo_path == pipeline.repo_path,
+                    PipelineSchedule.repo_path.in_(self.project.repo_path_for_database_query(
+                        'pipeline_schedules',
+                    )),
+                    PipelineSchedule.repo_path.is_(None),
+                ),
+            ).all()
+
+            await asyncio.gather(
+                *[build_and_score_trigger(
+                    self,
+                    data,
+                    items,
+                    add_application=True,
+                ) for data in schedules]
+            )
+
+            # Blocks
             cache = await BlockCache.initialize_cache()
             mapping = cache.get(cache.cache_key)
 
@@ -49,7 +77,7 @@ class PipelineFactory(BaseFactory):
                 data_array.append((key, value or {}))
 
             await asyncio.gather(
-                *[build_and_score_blocks(
+                *[build_and_score_block(
                     self,
                     data,
                     items,

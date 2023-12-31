@@ -110,6 +110,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
     'next_pipeline_run_date',
+    'pipeline_runs_count',
     'runtime_average',
     'tags',
 ], scopes=[

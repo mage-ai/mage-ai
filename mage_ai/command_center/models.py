@@ -15,6 +15,11 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
 )
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+)
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.presenters.interactions.models import (
     InteractionInputOption,
@@ -143,17 +148,40 @@ class PageMetadata(BaseDataClass):
 
 
 @dataclass
+class TriggerMetadata(BaseDataClass):
+    description: str = None
+    global_data_product_uuid: str = None
+    id: int = None
+    pipeline_uuid: str = None
+    repo_path: str = None
+    schedule_interval: ScheduleInterval = None
+    schedule_type: ScheduleType = None
+    settings: Dict = None
+    sla: str = None
+    start_time: str = None
+    status: ScheduleStatus = None
+    variables: Dict = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('schedule_interval', ScheduleInterval)
+        self.serialize_attribute_enum('schedule_type', ScheduleType)
+        self.serialize_attribute_enum('status', ScheduleStatus)
+
+
+@dataclass
 class Metadata(BaseDataClass):
     block: BlockMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
     pipeline: PipelineMetadata = None
+    trigger: TriggerMetadata = None
 
     def __post_init__(self):
         self.serialize_attribute_class('block', BlockMetadata)
         self.serialize_attribute_class('file', FileMetadata)
         self.serialize_attribute_class('page', PageMetadata)
         self.serialize_attribute_class('pipeline', PipelineMetadata)
+        self.serialize_attribute_class('trigger', TriggerMetadata)
 
 
 @dataclass
