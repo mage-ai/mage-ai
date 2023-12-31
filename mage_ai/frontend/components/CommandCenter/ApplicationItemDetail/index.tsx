@@ -9,6 +9,7 @@ import Text from '@oracle/elements/Text';
 import useStatus from '@utils/models/status/useStatus';
 import { ApplicationContentStyle } from '../index.style';
 import { ApplicationProps } from '../ItemApplication/constants';
+import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
 import {
   DATE_FORMAT_FULL,
   TIME_FORMAT_NO_SEC,
@@ -99,26 +100,26 @@ function ApplicationItemDetail({
 
           <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
-              <Text monospace rightAligned>
+              <Text default monospace rightAligned>
                 {model?.path}
               </Text>
             </div>
           </SetupSectionRow>
 
           <SetupSectionRow title="Language">
-            <Text monospace rightAligned>
-              {language}
+            <Text default rightAligned>
+              {LANGUAGE_DISPLAY_MAPPING[language] || language}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Size">
-            <Text monospace rightAligned>
+            <Text default monospace rightAligned>
               {pluralize('byte', size, true)}
             </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Modified">
-            <Text monospace rightAligned>
+            <Text default monospace rightAligned>
               {dt?.format(DATE_FORMAT_FULL)} at {dt?.format(TIME_FORMAT_NO_SEC)}
             </Text>
           </SetupSectionRow>
@@ -129,14 +130,18 @@ function ApplicationItemDetail({
     );
   } else if (ObjectTypeEnum.BLOCK === item?.object_type) {
     const {
+      color: blockColor,
       name,
       file_path: filePath,
       pipelines,
+      type: blockType,
       uuid: blockUUID,
     } = item?.metadata?.block || {
+      color: null,
       file_path: null,
       name: null,
       pipelines: null,
+      type: null,
       uuid: null,
     };
 
@@ -187,21 +192,32 @@ function ApplicationItemDetail({
             </Text>
           </SetupSectionRow>
 
+          <SetupSectionRow title="Type">
+            <Text
+              color={getColorsForBlockType(blockType, {
+                blockColor,
+              })?.accent}
+              rightAligned
+            >
+              {BLOCK_TYPE_NAME_MAPPING[blockType]}
+            </Text>
+          </SetupSectionRow>
+
+          <SetupSectionRow title="Language">
+            <Text default rightAligned>
+              {LANGUAGE_DISPLAY_MAPPING[model?.language]}
+            </Text>
+          </SetupSectionRow>
+
           <SetupSectionRow title="File path">
             <div style={{ maxWidth: '70%' }}>
-              <Text monospace rightAligned>
+              <Text default monospace rightAligned>
                 {model?.configuration?.file_source?.path
                   || model?.configuration?.file_path
                   || filePath
                 }
               </Text>
             </div>
-          </SetupSectionRow>
-
-          <SetupSectionRow title="Language">
-            <Text monospace rightAligned>
-              {model?.language}
-            </Text>
           </SetupSectionRow>
 
           <SetupSectionRow title="Pipelines">

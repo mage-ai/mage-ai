@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import ApplicationHeaderTitle from './ApplicationHeaderTitle';
 import ApplicationFooter from './ApplicationFooter';
 import Button from '@oracle/elements/Button';
 import Footer from './Footer';
@@ -41,6 +42,7 @@ import {
   HEADER_TITLE_ID,
   HeaderContainerStyle,
   HeaderStyle,
+  HeaderTitleStyle,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
@@ -106,14 +108,16 @@ function CommandCenter() {
   const refSettings = useRef(null);
 
   const refContainer = useRef(null);
+
+  const refRootHeaderTitle = useRef(null);
   const refHeader = useRef(null);
   const refHeaderTitle = useRef(null);
+
   const refLoading = useRef(null);
   const refInput = useRef(null);
   const refInputValuePrevious = useRef(null);
   const refFetchCount = useRef(0);
 
-  const refRootFooter = useRef(null);
   const refFooter = useRef(null);
   const refFooterButtonEnter = useRef(null);
   const refFooterButtonEscape = useRef(null);
@@ -191,22 +195,25 @@ function CommandCenter() {
   }
 
   function addHeaderTitle() {
-    if (refApplications?.current?.length >= 2 && refHeaderTitle?.current !== null) {
-      const itemTitlePrev = refApplications?.current?.[1]?.item?.title;
-      const itemTitle = getCurrentApplicationConfiguration()?.item?.title;
-      if (itemTitle !== itemTitlePrev) {
-        refHeaderTitle.current.innerText = itemTitlePrev;
-        activateClassNamesForRefs([refHeaderTitle]);
-      } else {
-        refHeaderTitle.current.innerText = '';
-        activateClassNamesForRefs([refHeaderTitle], true);
-      }
+    // Header title
+    if (!refRootHeaderTitle?.current) {
+      const domNode = document.getElementById(HEADER_TITLE_ID);
+      refRootHeaderTitle.current = createRoot(domNode);
     }
+    const currentApplicationConfig = getCurrentApplicationConfiguration();
+
+    refRootHeaderTitle?.current?.render(
+      <ApplicationHeaderTitle
+        {...currentApplicationConfig}
+        applicationsRef={refApplications}
+      />
+    );
+
+    activateClassNamesForRefs([refHeaderTitle]);
   }
 
   function removeHeaderTitle() {
     if (refHeaderTitle?.current !== null) {
-      refHeaderTitle.current.innerText = '';
       activateClassNamesForRefs([refHeaderTitle], true);
     }
   }
@@ -1293,7 +1300,7 @@ function CommandCenter() {
 
             <Spacing mr={1} />
 
-            <Text id={HEADER_TITLE_ID} ref={refHeaderTitle} />
+            <HeaderTitleStyle id={HEADER_TITLE_ID} ref={refHeaderTitle} />
           </HeaderStyle>
 
           <InputStyle

@@ -90,7 +90,7 @@ export const InputStyle = styled.input`
   background: none;
   border: none;
   display: flex;
-  flex: 1;
+  flex: 99;
   font-family: ${FONT_FAMILY_MEDIUM};
   height: ${HEADER_CONTENT_HEIGHT}px;
   padding: ${1 * UNIT}px;
@@ -178,6 +178,8 @@ export const ApplicationContentStyle = styled.div`
 export const HeaderStyle = styled.div`
   align-items: center;
   display: flex;
+  flex: 1;
+  flex-shrink: 0;
   height: ${HEADER_CONTENT_HEIGHT}px;
 
   &.inactive {
@@ -187,6 +189,14 @@ export const HeaderStyle = styled.div`
   #${HEADER_TITLE_ID}.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
+`;
+
+export const HeaderTitleStyle = styled.div`
+  flex: 1;
+  position: relative;
+`;
+
+export const HeaderSubtitleStyle = styled.div`
 `;
 
 export const FooterWraperStyle = styled.div`
