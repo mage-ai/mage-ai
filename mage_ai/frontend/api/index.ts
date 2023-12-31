@@ -439,12 +439,6 @@ RESOURCES_PAIRS_ARRAY.forEach(([resource, parentResource, grandchildResource, sw
       const response = await useDelete(resource, id, query);
 
       return await handle(response);
-    },
-
-    apis[resource].listAsync = async (ctx: any, query: any = {}) => {
-      const response = await fetchListAsync(ctx, resource, query);
-
-      return await handle(response);
     };
 
     apis[resource].list = (

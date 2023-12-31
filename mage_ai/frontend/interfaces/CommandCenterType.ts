@@ -215,7 +215,7 @@ interface ButtonActionType {
 }
 
 export interface ItemApplicationType {
-  action?: CommandCenterActionType;
+  actions?: CommandCenterActionType[];
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
   settings: FormInputType[];

@@ -15,25 +15,51 @@ def add_application_actions(item_dict: Dict) -> Dict:
     model_id = model['id']
     pipeline_uuid = model['pipeline_uuid']
 
-    application_action = dict(
-        request=dict(
-            operation=OperationType.LIST,
-            resource='block_runs',
-            response_resource_key='block_runs',
-            query=dict(
-                _limit=100,
-                _offset=0,
-                pipeline_run_id=model_id,
-            ),
-        ),
-        uuid='model_detail',
-    )
-
     return dict(
         applications=[
             dict(
                 application_type=ApplicationType.DETAIL,
-                actions=[application_action],
+                actions=[
+                    dict(
+                        request=dict(
+                            operation=OperationType.DETAIL,
+                            resource='pipeline_runs',
+                            resource_id=model_id,
+                            response_resource_key='pipeline_run',
+                            query=dict(
+                                _format='with_basic_details',
+                            ),
+                        ),
+                        uuid='model_detail',
+                    ),
+                    dict(
+                        request=dict(
+                            operation=OperationType.LIST,
+                            resource='block_runs',
+                            response_resource_key='block_runs',
+                            # Query is being dropped
+                            query=dict(
+                                _limit=100,
+                                _offset=0,
+                                pipeline_run_id=model_id,
+                            ),
+                        ),
+                        uuid='list_block_runs',
+                    ),
+                    dict(
+                        request=dict(
+                            operation=OperationType.LIST,
+                            resource='blocks',
+                            response_resource_key='blocks',
+                            resource_parent='pipeline_runs',
+                            resource_parent_id=model_id,
+                            query=dict(
+                                _limit=100,
+                            ),
+                        ),
+                        uuid='list_blocks',
+                    ),
+                ],
                 buttons=[
                     dict(
                         label='Open run',
