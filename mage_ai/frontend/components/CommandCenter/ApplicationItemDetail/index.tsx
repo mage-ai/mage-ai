@@ -26,6 +26,7 @@ import { ScheduleStatusEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/Pipeline
 import { capitalize, pluralize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { sortByKey } from '@utils/array';
 
 function ApplicationItemDetail({
   application,
@@ -155,34 +156,6 @@ function ApplicationItemDetail({
       />
     );
 
-    const pipelinesCount = pipelines?.length || 0;
-
-    const pipelineUUIDs = [];
-    pipelines?.forEach(({
-      uuid
-    }, idx) => {
-      pipelineUUIDs.push(
-        <Link
-          block
-          key={`${uuid}-${idx}-link`}
-          preventDefault
-          href="#"
-          monospace
-          onClick={(e) => {
-            e.preventDefault();
-            router.push(`/pipelines/${uuid}/edit`, null, {
-              shallow: true,
-            });
-          }}
-          style={{
-            marginLeft: 12,
-          }}
-        >
-          {uuid}
-        </Link>
-      );
-    });
-
     contentEL = (
       <>
         <Spacing mb={PADDING_UNITS}>
@@ -222,11 +195,28 @@ function ApplicationItemDetail({
 
           <SetupSectionRow title="Pipelines">
             <FlexContainer
-              flexWrap="wrap"
-              justifyContent="flex-end"
+              flexDirection="column"
+              alignItems="flex-end"
               style={{ maxWidth: '70%' }}
             >
-              {pipelineUUIDs}
+              {sortByKey(pipelines, ({ uuid }) => uuid)?.map(({
+                uuid
+              }, idx) => (
+                <Link
+                  key={`${uuid}-${idx}-link`}
+                  preventDefault
+                  href="#"
+                  monospace
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/pipelines/${uuid}/edit`, null, {
+                      shallow: true,
+                    });
+                  }}
+                >
+                  {uuid}
+                </Link>
+              ))}
             </FlexContainer>
           </SetupSectionRow>
         </Spacing>
