@@ -20,7 +20,10 @@ export function addCachedItems(items: CommandCenterItemType[], opts: {
     itemsCached || [],
   ]);
 
-  set(LOCAL_STORAGE_COMMAND_CENTER_ITEMS, itemsUnique?.map(item => ignoreKeys(item, ['score'])));
+  set(
+    LOCAL_STORAGE_COMMAND_CENTER_ITEMS,
+    itemsUnique?.map(item => ignoreKeys(item, ['score'])).slice(0, 300),
+  );
 
   const filterCachedItems = opts?.filterCachedItems;
   if (filterCachedItems) {

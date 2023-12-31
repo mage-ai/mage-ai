@@ -98,10 +98,11 @@ class Action(BaseDataClass):
 
 @dataclass
 class PipelineMetadata(BaseDataClass):
+    blocks: List[Dict] = None
     description: str = None
     name: str = None
     repo_path: str = None
-    tags: str = None
+    tags: List[str] = None
     type: PipelineType = None
     updated_at: str = None
     uuid: str = None
@@ -179,14 +180,16 @@ class FormInput(BaseDataClass):
 
 @dataclass
 class Button(BaseDataClass):
-    action_types: List[ButtonActionType]
     label: str
+    action_types: List[ButtonActionType] = None
+    actions: List[Action] = None
     display_settings: DisplaySettings = None
     keyboard_shortcuts: List[List[int]] = None
     tooltip: str = None
 
     def __post_init__(self):
         self.serialize_attribute_class('display_settings', DisplaySettings)
+        self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_enums('action_types', ButtonActionType)
 
 
@@ -333,6 +336,7 @@ class ItemBase(BaseDataClass):
     object_type: ObjectType
     title: str
     uuid: str
+    action_results: Dict = None
     actions: List[Action] = None
     applications: List[Application] = None
     display_settings_by_attribute: AttributeDisplaySettings = None
@@ -356,6 +360,7 @@ class Item(ItemBase):
     object_type: ObjectType
     title: str
     uuid: str
+    action_results: Dict = None
     actions: List[Action] = None
     applications: List[Application] = None
     display_settings_by_attribute: AttributeDisplaySettings = None

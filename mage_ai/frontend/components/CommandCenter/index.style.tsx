@@ -65,6 +65,8 @@ export const InputContainerStyle = styled.div`
 `;
 
 export const HeaderContainerStyle = styled.div`
+  align-items: center;
+  display: flex;
   padding: ${SCROLLBAR_WIDTH}px;
 `;
 
@@ -86,6 +88,8 @@ export const InputStyle = styled.input`
 
   background: none;
   border: none;
+  display: flex;
+  flex: 1;
   font-family: ${FONT_FAMILY_MEDIUM};
   height: ${HEADER_CONTENT_HEIGHT}px;
   padding: ${1 * UNIT}px;

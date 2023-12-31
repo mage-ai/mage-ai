@@ -35,7 +35,9 @@ CommandCenterItemPolicy.allow_read(
 
 CommandCenterItemPolicy.allow_write(
     [
+        'application',
         'component',
+        'item',
         'page',
         'page_history',
         'search',

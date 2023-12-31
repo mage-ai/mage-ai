@@ -20,6 +20,7 @@ import { pluralize } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 function ApplicationItemDetail({
+  application,
   applicationsRef,
   executeAction,
   focusedItemIndex,
@@ -32,7 +33,6 @@ function ApplicationItemDetail({
 }: ApplicationProps) {
   const refUUID = useRef(null);
 
-  const application = item?.applications?.[applicationsRef?.current?.length - 1];
   const action = application?.action;
 
   const [modelState, setModel] = useState(null);

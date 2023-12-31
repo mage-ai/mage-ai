@@ -1,3 +1,4 @@
+import { ApplicationConfiguration } from './constants';
 import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
@@ -51,22 +52,19 @@ export function filterItems(
   const value = (searchText || '')?.toLowerCase();
 
   return (items || [])?.reduce((acc, item) => {
-    const valueCount = value?.length || 1;
+    // const valueCount = value?.length || 1;
     const text = getSearchableText(item);
-    const score = stringSimilarity(
-      value,
-      text,
-      2,
-    );
+    // const score = stringSimilarity(
+    //   value,
+    //   text,
+    //   2,
+    // );
 
-    const threshold = 0.01 * (1 / (valueCount / (valueCount**2)));
+    // const threshold = 0.01 * (1 / (valueCount / (valueCount**2)));
 
     if (text?.includes(value)) {
       // @ts-ignore
-      return acc.concat({
-        ...item,
-        score: (score / threshold),
-      });
+      return acc.concat(item);
     }
 
     return acc;
@@ -204,4 +202,24 @@ export function interpolatePagePath(page: CommandCenterActionPageType): string {
   });
 
   return [pathUse, queryS].filter(s => s).join('?');
+}
+
+export function getCurrentApplicationForItem(
+  item: CommandCenterItemType,
+  applicationsConfigurations: ApplicationConfiguration[],
+  opts: {
+    beforeAddingNextApplication?: boolean;
+  } = {
+    beforeAddingNextApplication: false,
+  },
+): ItemApplicationType {
+  const configsForItem = applicationsConfigurations?.filter(({
+    item: itemInner,
+  }) => itemInner?.uuid === item?.uuid);
+  let index = configsForItem?.length || 0;
+  if (!opts?.beforeAddingNextApplication) {
+    index -= 1;
+  }
+
+  return item?.applications?.[index];
 }

@@ -45,6 +45,12 @@ function ItemRow({
   const applicationWithDescriptionPath =
     ObjectTypeEnum.APPLICATION === type && description?.startsWith('/');
 
+  const descriptionCount = description?.length || 0;
+  let descriptionUse = description;
+  if (descriptionCount > 50) {
+    descriptionUse = `${descriptionUse?.slice(0, 50)}..`;
+  }
+
   return (
     <ItemStyle
       className={className}
@@ -72,7 +78,7 @@ function ItemRow({
               monospace={descriptionDisplaySettings?.text_styles?.monospace}
               small={descriptionDisplaySettings?.text_styles?.small}
             >
-              {description}
+              {descriptionUse}
             </Text>
           )}
         </Flex>

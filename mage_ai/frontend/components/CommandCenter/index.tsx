@@ -20,6 +20,8 @@ import {
   CommandCenterActionRequestType,
   CommandCenterActionType,
   CommandCenterItemType,
+  ItemApplicationType,
+  ItemApplicationTypeEnum,
   ItemTypeEnum,
   KeyValueType,
   ObjectTypeEnum,
@@ -61,7 +63,7 @@ import {
   KEY_SYMBOL_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { InputElementEnum, ItemRowClassNameEnum } from './constants';
+import { ApplicationConfiguration, InputElementEnum, ItemRowClassNameEnum, getInputPlaceholder } from './constants';
 import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
@@ -75,6 +77,7 @@ import { addCachedItems, getCachedItems } from '@storage/CommandCenter/cache';
 import {
   executeButtonActions,
   filterItems,
+  getCurrentApplicationForItem,
   interpolatePagePath,
   rankItems,
   updateActionFromUpstreamResults,
@@ -116,6 +119,7 @@ function CommandCenter() {
   const refRootItems = useRef(null);
   const refItems = useRef([]);
   const refItemsInit = useRef(null);
+  const refItemsApplicationDetailList = useRef(null);
   const refItemsNodes = useRef({});
   const refItemsNodesContainer = useRef(null);
 
@@ -152,15 +156,177 @@ function CommandCenter() {
     }
   }
 
+  function getCurrentApplicationConfiguration(): ApplicationConfiguration {
+    return refApplications?.current?.[0];
+  }
+
+  function isCurrentApplicationDetailList(
+    applicationConfigurationToCheck: ApplicationConfiguration = null,
+  ): boolean {
+    return ItemApplicationTypeEnum.DETAIL_LIST === (
+      applicationConfigurationToCheck || getCurrentApplicationConfiguration()
+    )?.application?.application_type;
+  }
+
+  function activateClassNamesForRefs(refsArray: any[]) {
+    refsArray.forEach((r) => {
+      if (r?.current) {
+        r.current.className = addClassNames(
+          r?.current?.className || '',
+          [
+            'active',
+          ],
+        );
+        r.current.className = removeClassNames(
+          r?.current?.className || '',
+          [
+            'inactive',
+          ],
+        );
+      }
+    });
+  }
+
+  function addApplication({
+    executeAction,
+    focusedItemIndex,
+    invokeRequest,
+    item,
+    itemsRef,
+  }: ApplicationConfiguration) {
+    console.log('ADD APP', item)
+    if (refApplications?.current === null) {
+      refApplications.current = [];
+    }
+
+    const application = getCurrentApplicationForItem(
+      item,
+      refApplications?.current || [],
+      {
+        beforeAddingNextApplication: true,
+      },
+    );
+    const currentApplicationConfig = {
+      application,
+      executeAction,
+      focusedItemIndex,
+      invokeRequest,
+      item,
+      itemsRef,
+    };
+
+    console.log('GOING TO ADD', currentApplicationConfig, isCurrentApplicationDetailList(currentApplicationConfig));
+
+    // @ts-ignore
+    refApplications.current = [currentApplicationConfig].concat(refApplications.current || []);
+
+    if ([
+      ItemApplicationTypeEnum.DETAIL,
+      ItemApplicationTypeEnum.FORM,
+    ].includes(application?.application_type)) {
+      activateClassNamesForRefs([
+        refHeader,
+        refInput,
+        refApplicationsNodesContainer,
+        refItemsNodesContainer,
+        refFooter,
+        refApplicationsFooter,
+      ]);
+
+      // Application
+      if (!refRootApplications?.current) {
+        const domNode = document.getElementById(ITEM_CONTEXT_CONTAINER_ID);
+        refRootApplications.current = createRoot(domNode);
+      }
+
+      refRootApplications?.current?.render(
+        <ItemApplication
+          {...currentApplicationConfig}
+          applicationState={refApplicationState}
+          applicationsRef={refApplications}
+          itemsRef={itemsRef}
+          refError={refError}
+          removeApplication={removeApplication}
+          router={router}
+        />
+      );
+    } else if (isCurrentApplicationDetailList(currentApplicationConfig)) {
+      renderItems([
+        item,
+      ]);
+
+      fetchItems({
+        search: null,
+      });
+
+      const pipeline = item?.metadata?.pipeline;
+      refInput.current.value = '';
+      refInput.current.placeholder = getInputPlaceholder({
+        applicationType: application?.application_type,
+        item,
+      });
+
+      activateClassNamesForRefs([
+        refHeader,
+      ]);
+    }
+
+    activateClassNamesForRefs([
+      refFooter,
+      refApplicationsFooter,
+    ]);
+
+    // Footer for application
+    if (!refRootApplicationsFooter?.current) {
+      const domNode = document.getElementById(APPLICATION_FOOTER_ID);
+      refRootApplicationsFooter.current = createRoot(domNode);
+    }
+
+    refRootApplicationsFooter?.current?.render(
+      <ApplicationFooter
+        {...currentApplicationConfig}
+        applicationState={refApplicationState}
+        applicationsRef={refApplications}
+        refError={refError}
+        removeApplication={removeApplication}
+      />
+    );
+  }
+
   function removeApplication() {
     const count = refApplications?.current?.length || 0;
+
+    console.log('REMOVE APPLICATION', count);
+
     if (refApplications?.current === null || !count) {
       return;
     }
 
+    const removedApplicationConfig = refApplications.current?.[0] || {};
+
     refApplications.current = refApplications?.current?.slice(1, count);
 
-    if (count === 1) {
+    let resetCallback;
+    let shouldReset = count === 1;
+
+    if (count >= 2) {
+      // Remove the next application from the stack, then re-add it so that all the
+      // class name handling is triggered.
+      const currentApplicationConfig = refApplications.current?.[0] || {};
+      refApplications.current = refApplications?.current?.slice(1, count);
+
+      if (isCurrentApplicationDetailList(currentApplicationConfig)) {
+        shouldReset = true;
+        resetCallback = () => {
+          addApplication(currentApplicationConfig);
+        };
+      } else {
+        addApplication(currentApplicationConfig);
+      }
+    }
+
+    if (shouldReset) {
+      // No more applications are active.
       [
         refHeader,
         refInput,
@@ -188,88 +354,16 @@ function CommandCenter() {
 
       refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
       refInput?.current?.focus();
-    }
-  }
 
-  function addApplication(
-    item: CommandCenterItemType,
-    focusedItemIndex: number,
-    executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>,
-    opts: {
-      itemsRef?: any;
-    } & InvokeRequestActionType = {},
-  ) {
-    if (refApplications?.current === null) {
-      refApplications.current = [];
-    }
-
-    refApplications.current.push({
-      executeAction,
-      focusedItemIndex,
-      item,
-    });
-
-    [
-      refHeader,
-      refInput,
-      refApplicationsNodesContainer,
-      refItemsNodesContainer,
-      refFooter,
-      refApplicationsFooter,
-    ].forEach((r) => {
-      if (r?.current) {
-        r.current.className = addClassNames(
-          r?.current?.className || '',
-          [
-            'active',
-          ],
-        );
-        r.current.className = removeClassNames(
-          r?.current?.className || '',
-          [
-            'inactive',
-          ],
-        );
+      if (isCurrentApplicationDetailList(removedApplicationConfig)) {
+        refItemsApplicationDetailList.current = null;
+        fetchItems();
       }
-    });
 
-    // Application
-    if (!refRootApplications?.current) {
-      const domNode = document.getElementById(ITEM_CONTEXT_CONTAINER_ID);
-      refRootApplications.current = createRoot(domNode);
+      if (resetCallback) {
+        resetCallback?.();
+      }
     }
-
-    refRootApplications?.current?.render(
-      <ItemApplication
-        {...opts}
-        applicationState={refApplicationState}
-        applicationsRef={refApplications}
-        executeAction={executeAction}
-        focusedItemIndex={focusedItemIndex}
-        item={item}
-        refError={refError}
-        removeApplication={removeApplication}
-        router={router}
-      />
-    );
-
-    // Footer for application
-    if (!refRootApplicationsFooter?.current) {
-      const domNode = document.getElementById(APPLICATION_FOOTER_ID);
-      refRootApplicationsFooter.current = createRoot(domNode);
-    }
-
-    refRootApplicationsFooter?.current?.render(
-      <ApplicationFooter
-        applicationState={refApplicationState}
-        applicationsRef={refApplications}
-        executeAction={executeAction}
-        focusedItemIndex={focusedItemIndex}
-        item={item}
-        refError={refError}
-        removeApplication={removeApplication}
-      />
-    );
   }
 
   function isApplicationActive(): boolean {
@@ -376,6 +470,11 @@ function CommandCenter() {
             ],
           );
         }
+      }
+
+      // Reset this in case it was never reset.
+      if (refFocusedSearchHistoryIndex?.current === null && refSelectedSearchHistoryIndex?.current !== null) {
+        refSelectedSearchHistoryIndex.current = null;
       }
 
       if (refFooterButtonUp?.current) {
@@ -702,8 +801,12 @@ function CommandCenter() {
   }
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
-    if (item?.applications?.length) {
-      addApplication(item, focusedItemIndex, executeAction, {
+    const applicationsCount = item?.applications?.length || 0;
+    if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
+      addApplication({
+        item,
+        focusedItemIndex,
+        executeAction,
         invokeRequest,
         itemsRef: refItems,
       });
@@ -779,7 +882,7 @@ function CommandCenter() {
   }
 
   const {
-    fetch: fetchItems,
+    fetch: fetchItemsInit,
     isLoading: isLoadingFetch,
   } = useCache(() => {
     const count = (refFetchCount?.current || 0) + 1;
@@ -787,19 +890,35 @@ function CommandCenter() {
     return count;
   }, {
     abortControllerRef: refAbortController,
-    onSuccessCallback: ({
-      command_center_item,
-    }, uuid: string) => {
+    onSuccessCallback: (
+      {
+        command_center_item,
+      },
+      {
+        disableRenderingCache,
+        uuid,
+      }: {
+        disableRenderingCache?: boolean;
+        uuid: number | string;
+      },
+    ) => {
       if (refFetchCount?.current === uuid) {
         const items = addCachedItems(
           command_center_item?.items || [],
           {
-            filterCachedItems: cachedItems => filterItems(refInput?.current?.value, cachedItems),
+            filterCachedItems: cachedItems => !disableRenderingCache && filterItems(
+              refInput?.current?.value,
+              cachedItems,
+            ),
           },
         );
 
         if (refItemsInit?.current === null) {
           refItemsInit.current = items;
+        }
+
+        if (isCurrentApplicationDetailList() && refItemsApplicationDetailList?.current === null) {
+          refItemsApplicationDetailList.current = items;
         }
 
         refSettings.current = getSetSettings(command_center_item?.settings || {});
@@ -813,6 +932,21 @@ function CommandCenter() {
     }),
     searchRef: refInput,
   });
+
+  function fetchItems(opts = {}) {
+    let fetchOptions = { ...opts };
+
+    const currentApplicationConfig = getCurrentApplicationConfiguration() || {};
+    if (isCurrentApplicationDetailList(currentApplicationConfig)) {
+      fetchOptions = {
+        ...fetchOptions,
+        ...currentApplicationConfig,
+        disableRenderingCache: true,
+      };
+    }
+
+    return fetchItemsInit(fetchOptions);
+  }
 
   useEffect(() => {
     if (isLoadingFetch || isLoadingRequest) {
@@ -847,14 +981,15 @@ function CommandCenter() {
     );
 
     refInput?.current?.focus();
-
-    if (refFocusedItemIndex?.current === null && refItems?.current?.length >= 1) {
-      setTimeout(() => handleNavigation(0), 1);
-    }
-
     refActive.current = true;
 
-    fetchItems();
+    if (refItems?.current?.length >= 1) {
+      if (refFocusedItemIndex?.current === null) {
+        handleNavigation(0);
+      }
+    } else {
+      fetchItems();
+    }
   }
 
   const {
@@ -889,6 +1024,10 @@ function CommandCenter() {
       return false;
     }
 
+    let stopHandling = false;
+
+    console.log(startSequenceValid(), isApplicationActive(), keyMapping)
+
     if (startSequenceValid()) {
       pauseEvent(event);
       if (!!refActive?.current) {
@@ -897,19 +1036,22 @@ function CommandCenter() {
         openCommandCenter();
       }
     } else if (isApplicationActive()) {
-      const applicationIndex = refApplications?.current?.length - 1;
-      const currentApplicationConfig = refApplications?.current?.[0] || {};
+      const currentApplicationConfig = getCurrentApplicationConfiguration() || {};
       const {
-        item,
+        application,
       } = currentApplicationConfig || {};
-      const application = item?.applications?.[applicationIndex];
+
+      console.log(onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }), !refError?.current)
 
       // If in a context of a selected item.
       // Leave the current context and go back.
       if (onlyKeysPresent([KEY_CODE_ESCAPE], keyMapping, { allowExtraKeys: 1 }) && !refError?.current) {
         pauseEvent(event);
+        stopHandling = true;
         removeApplication();
       } else if (application && !refError?.current) {
+        let actionExecuted = false;
+
         application?.buttons?.forEach((button) => {
           const {
             keyboard_shortcuts: keyboardShortcuts,
@@ -919,18 +1061,30 @@ function CommandCenter() {
             if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 1 })) {
               pauseEvent(event);
 
+              if (!actionExecuted) {
+                actionExecuted = true;
+                stopHandling = true;
+              }
+
               return executeButtonActions({
-                application,
+                ...currentApplicationConfig,
                 button,
                 refError,
                 removeApplication,
-                ...currentApplicationConfig,
               });
             }
           });
         });
+
+        if (!actionExecuted) {
+          if (isCurrentApplicationDetailList(currentApplicationConfig)) {
+            stopHandling = false;
+          }
+        }
       }
-    } else if (InputElementEnum.MAIN === refFocusedElement?.current) {
+    }
+
+    if (InputElementEnum.MAIN === refFocusedElement?.current && !stopHandling) {
       // If the main input is active.
       const focusedItemIndex = refFocusedItemIndex?.current;
 
@@ -1130,6 +1284,8 @@ function CommandCenter() {
               keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
               monospace
             />
+
+            <Spacing mr={1} />
           </HeaderStyle>
 
           <InputStyle
@@ -1144,17 +1300,19 @@ function CommandCenter() {
 
               refInputValuePrevious.current = searchText;
 
-              renderItems(
-                combineUnique([
-                  refItemsInit?.current || [],
-                  refItems?.current || [],
-                  getCachedItems() || [],
-                ]),
+              renderItems(isCurrentApplicationDetailList()
+                ? refItemsApplicationDetailList?.current || []
+                : combineUnique([
+                    refItemsInit?.current || [],
+                    refItems?.current || [],
+                    getCachedItems() || [],
+                  ]),
                 {
                   shouldFilter: true,
                 },
               );
-              fetchItems(300);
+
+              fetchItems({ delay: 300 });
 
               if (isRemoving) {
                 refSelectedSearchHistoryIndex.current = null;
@@ -1170,7 +1328,7 @@ function CommandCenter() {
             onBlur={() => {
               refFocusedElement.current = null;
             }}
-            placeholder="Search actions, apps, files, blocks, pipelines, triggers"
+            placeholder={getInputPlaceholder()}
             ref={refInput}
           />
         </HeaderContainerStyle>

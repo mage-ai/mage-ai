@@ -122,6 +122,17 @@ interface BlockMetadataType {
   type?: BlockTypeEnum;
 }
 
+interface PipelineMetadataType {
+  blocks: BlockMetadataType[];
+  description: string;
+  name: string;
+  repo_path: string;
+  tags: string[];
+  type: string;
+  updated_at: string;
+  uuid: string;
+}
+
 interface FileMetadataType {
   extension?: FileExtensionEnum;
 }
@@ -237,7 +248,8 @@ export interface CommandCenterItemType {
   metadata?: {
     block?: BlockMetadataType;
     file?: FileMetadataType;
-    page?: PageHistoryType
+    page?: PageHistoryType;
+    pipeline?: PipelineMetadataType;
   };
   object_type: ObjectTypeEnum;
   score?: number;

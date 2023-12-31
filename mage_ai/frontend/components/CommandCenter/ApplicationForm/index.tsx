@@ -31,6 +31,7 @@ function nothingFocused(refInputs) {
 }
 
 function ApplicationForm({
+  application,
   applicationState,
   applicationsRef,
   executeAction,
@@ -39,7 +40,6 @@ function ApplicationForm({
 }: ApplicationProps) {
   const refInputs = useRef({});
 
-  const application = item?.applications?.[applicationsRef?.current?.length - 1];
   const settings = application?.settings || [];
 
   const [attributes, setAttributesState] = useState<GlobalHookType>(null);

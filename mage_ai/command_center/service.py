@@ -4,22 +4,24 @@ from mage_ai.command_center.applications.factory import ApplicationFactory
 from mage_ai.command_center.blocks.factory import BlockFactory
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.files.factory import FileFactory
-from mage_ai.command_center.models import Item
-from mage_ai.command_center.pipelines.constants import ITEMS as ITEMS_PIPELINES
+from mage_ai.command_center.models import Application, Item
+from mage_ai.command_center.pipelines.factory import PipelineFactory
 from mage_ai.command_center.support.constants import ITEMS as ITEMS_SUPPORT
 from mage_ai.orchestration.db.models.oauth import User
 
 FACTORIES_OR_ITEMS = [
+    PipelineFactory,
+    BlockFactory,
+    ApplicationFactory,
     FileFactory,
     ITEMS_SUPPORT,
-    ApplicationFactory,
-    BlockFactory,
-    ITEMS_PIPELINES,
 ]
 
 
 async def search_items(
+    application: Application = None,
     component: str = None,
+    item: Item = None,
     page: str = None,
     page_history: List[Dict] = None,
     search: str = None,
@@ -28,7 +30,9 @@ async def search_items(
 ) -> List[Item]:
     return await BaseFactory.create_items(
         FACTORIES_OR_ITEMS,
+        application=application,
         component=component,
+        item=item,
         page=page,
         page_history=page_history,
         search=search,

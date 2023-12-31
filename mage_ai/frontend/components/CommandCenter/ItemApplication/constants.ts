@@ -1,4 +1,4 @@
-import { CommandCenterItemType, KeyValueType } from '@interfaces/CommandCenterType';
+import { CommandCenterItemType, ItemApplicationType, KeyValueType } from '@interfaces/CommandCenterType';
 
 export type InvokeRequestOptionsType = {
   action: CommandCenterActionType;
@@ -13,6 +13,7 @@ export type InvokeRequestActionType = {
 };
 
 export type ApplicationProps = {
+  application: ItemApplicationType;
   applicationState: {
     current: KeyValueType;
   };

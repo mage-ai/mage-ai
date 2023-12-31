@@ -8,13 +8,13 @@ function ItemApplication({
   ...props
 }: ApplicationProps) {
   const {
+    application,
     applicationsRef,
     item,
   } = props || {
     applicationsRef: null,
     item: null,
   };
-  const application = item?.applications?.[applicationsRef?.current?.length - 1];
   const applicationType = application?.application_type;
 
   if (ItemApplicationTypeEnum.DETAIL === applicationType) {

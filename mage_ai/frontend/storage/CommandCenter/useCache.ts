@@ -3,6 +3,10 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import api from '@api';
+import {
+  CommandCenterItemType,
+  ItemApplicationType,
+} from '@interfaces/CommandCenterType';
 import { getCachedItems } from './cache';
 import { getPageHistoryAsItems, getSearchHistory } from './utils';
 import { onSuccess } from '@api/utils/response';
@@ -35,11 +39,23 @@ export default function useCache(fetchUUID: () => number | string, opts: {
   const router = useRouter();
 
   const [fetch, { isLoading }] = useMutation(
-    (uuid?: number | string) => api.command_center_items.useCreate({
+    ({
+      application,
+      item,
+      search,
+    }: {
+      application?: ItemApplicationType;
+      disableRenderingCache?: boolean;
+      item?: CommandCenterItemType;
+      search?: string;
+      uuid: number | string,
+    }) => api.command_center_items.useCreate({
       signal: abortControllerRef?.current?.signal,
     })({
       command_center_item: {
+        application,
         component: null,
+        item,
         page: {
           path: router?.asPath,
           pathname: router?.pathname,
@@ -47,21 +63,38 @@ export default function useCache(fetchUUID: () => number | string, opts: {
           title: typeof document !== 'undefined' ? document?.title : null,
         },
         page_history: getPageHistoryAsItems(),
-        search: searchRef?.current?.value,
+        search: typeof search === 'undefined' ? searchRef?.current?.value : search,
         search_history: getSearchHistory(),
       },
     }),
     {
-      onSuccess: (response: any, uuid: number | string) => onSuccess(
+      onSuccess: (
+        response: any,
+        variables: {
+          disableRenderingCache?: boolean;
+          uuid: number | string;
+        },
+      ) => onSuccess(
         response, {
-          callback: resp => onSuccessCallback(resp, uuid),
+          callback: resp => onSuccessCallback(
+            resp,
+            variables,
+          ),
           onErrorCallback,
         },
       ),
     },
   );
 
-  const fetchDelay = useCallback((delay: number = 0) => {
+  const fetchDelay = useCallback((opts: {
+    delay?: number;
+  } = {}) => {
+    const {
+      delay,
+    } = opts || {
+      delay: 0,
+    };
+
     clearTimeout(timeout.current);
 
     return new Promise((resolve) => {
@@ -72,7 +105,10 @@ export default function useCache(fetchUUID: () => number | string, opts: {
         }
         abortControllerRef.current = new AbortController();
 
-        return resolve(fetch(uuid));
+        return resolve(fetch({
+          ...opts,
+          uuid,
+        }));
       }, delay);
     });
   }, [fetch, fetchUUID]);

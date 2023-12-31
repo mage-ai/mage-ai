@@ -1,8 +1,15 @@
 import urllib.parse
-from typing import Dict
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.command_center.constants import ApplicationType, ButtonActionType
+from mage_ai.command_center.constants import (
+    ApplicationType,
+    ButtonActionType,
+    ItemType,
+    ObjectType,
+)
+from mage_ai.command_center.utils import shorten_directory
 
 
 def add_application_actions(item_dict: Dict) -> Dict:
@@ -37,10 +44,10 @@ def add_application_actions(item_dict: Dict) -> Dict:
                     request=dict(
                         operation=OperationType.DETAIL,
                         resource='blocks',
-                        resource_id=urllib.parse.quote_plus(uuid),
+                        resource_id=urllib.parse.quote_plus(uuid or ''),
                         response_resource_key='block',
                         query=dict(
-                            file_path=urllib.parse.quote_plus(file_path),
+                            file_path=urllib.parse.quote_plus(file_path or ''),
                         ),
                     ),
                     uuid='block_detail',
@@ -51,3 +58,64 @@ def add_application_actions(item_dict: Dict) -> Dict:
         ],
         actions=actions,
     )
+
+
+async def build_and_score(
+    factory,
+    data_input: Tuple[str, Dict],
+    items: List[Dict],
+    add_application: bool = False,
+):
+    uuid, data = data_input
+    block = data.get('block') or {}
+    pipelines = [d.get('pipeline') for d in (data.get('pipelines') or [])]
+
+    file_path = block.get('file_path') or f'{uuid}'
+    if not Path(file_path).suffix:
+        file_path = f'{file_path}.py'
+
+    path_dict = shorten_directory(file_path)
+    directory = path_dict.get('directory')
+
+    if block.get('name'):
+        parts = Path(block.get('name')).parts
+    else:
+        parts = Path(uuid).parts
+    title = parts[len(parts) - 1]
+
+    description = directory
+    if len(pipelines) == 1:
+        description = f'{description} in 1 pipeline'
+    else:
+        description = f'{description} in {len(pipelines)} pipelines'
+
+    item_dict = dict(
+        item_type=ItemType.DETAIL,
+        object_type=ObjectType.BLOCK,
+        title=title,
+        description=description,
+        uuid=uuid,
+        metadata=dict(
+            block=dict(
+                file_path=file_path,
+                language=block.get('language'),
+                pipelines=pipelines,
+                type=block.get('type'),
+            ),
+        ),
+        display_settings_by_attribute=dict(
+            description=dict(
+                text_styles=dict(
+                    monospace=True,
+                    small=True,
+                ),
+            ),
+        ),
+    )
+
+    if add_application:
+        item_dict.update(add_application_actions(item_dict))
+
+    scored = factory.filter_score(item_dict)
+    if scored:
+        items.append(scored)

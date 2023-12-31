@@ -6,7 +6,8 @@ from typing import Dict, List, Union
 
 from thefuzz import fuzz
 
-from mage_ai.command_center.models import Item
+from mage_ai.command_center.constants import ObjectType
+from mage_ai.command_center.models import Application, Item
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
@@ -18,7 +19,9 @@ DEFAULT_RATIO = 65
 class BaseFactory(ABC):
     def __init__(
         self,
+        application: Dict = None,
         component: str = None,
+        item: Dict = None,
         page: str = None,
         page_history: List[Dict] = None,
         search: str = None,
@@ -26,7 +29,9 @@ class BaseFactory(ABC):
         search_ratio: int = DEFAULT_RATIO,
         user: User = None,
     ):
+        self.application = Application.load(**application) if application else application
         self.component = component
+        self.item = Item.load(**item) if item else item
         self.page = page
         self.page_history = page_history
         self.search = search
@@ -53,6 +58,13 @@ class BaseFactory(ABC):
             items_dicts = class_or_items if is_iterable else None
 
             return await factory_class(**kwargs).process(items_dicts)
+
+        application = kwargs.get('application')
+        item = kwargs.get('item')
+        if application and item:
+            if ObjectType.PIPELINE == item.get('object_type'):
+                from mage_ai.command_center.pipelines.factory import PipelineFactory
+                factory_or_items = [PipelineFactory]
 
         return flatten(await asyncio.gather(
             *[process_factory_items(class_or_items) for class_or_items in factory_or_items]
@@ -125,7 +137,7 @@ class BaseFactory(ABC):
     async def rank_items(self, items_or_dicts: List[Union[Dict, Item]]) -> List[Union[Dict, Item]]:
         return [item for item in sorted(
             items_or_dicts,
-            key=lambda i: i.score if isinstance(i, Item) else i.get('score'),
+            key=lambda i: (i.score if isinstance(i, Item) else i.get('score')) or - 100,
             reverse=True,
         )]
 
