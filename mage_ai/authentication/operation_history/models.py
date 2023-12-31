@@ -112,7 +112,7 @@ class OperationHistoryReader:
         try:
             file_path = self.build_file_path()
             if file_path and self.storage.path_exists(file_path):
-                line = await read_last_line_async()
+                line = await read_last_line_async(file_path)
                 return OperationHistory(**json.loads(line))
         except Exception as err:
             if is_debug():

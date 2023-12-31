@@ -2,6 +2,7 @@ import { BlockLanguageEnum } from './BlockType';
 
 export enum InteractionInputTypeEnum {
   CHECKBOX = 'checkbox',
+  CODE = 'code',
   DROPDOWN_MENU = 'dropdown_menu',
   SWITCH = 'switch',
   TEXT_FIELD = 'text_field',

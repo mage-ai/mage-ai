@@ -1,5 +1,7 @@
 import urllib.parse
+from datetime import datetime
 from typing import Dict, List
+from uuid import uuid4
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.FilePolicy import FilePolicy
@@ -12,6 +14,8 @@ from mage_ai.command_center.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     SCHEDULE_TYPE_TO_LABEL,
+    ScheduleInterval,
+    ScheduleStatus,
     ScheduleType,
 )
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
@@ -77,7 +81,7 @@ async def build_and_score(
         object_type=ObjectType.TRIGGER,
         title=model.name,
         description=model.description or ' '.join([s for s in [
-            model.schedule_type,
+            SCHEDULE_TYPE_TO_LABEL.get(model.schedule_type),
             model.schedule_interval,
             model.status,
         ] if s]),
@@ -116,16 +120,12 @@ async def build_and_score(
         items.append(scored)
 
 
-async def build_create_and_score(
-    factory,
-    model: Pipeline,
-    items: List[Dict],
-):
+async def build_create_and_score(factory, model: Pipeline) -> Dict:
     item_dict = dict(
         item_type=ItemType.CREATE,
         object_type=ObjectType.TRIGGER,
         title='Create new trigger',
-        description=f'Crate a new trigger for pipeline {model.name or model.uuid}',
+        description=f'Create a new trigger for pipeline {model.name or model.uuid}',
         uuid=f'{model.uuid}_{ItemType.CREATE}_{ObjectType.TRIGGER}',
         metadata=dict(
             pipeline=dict(
@@ -248,4 +248,108 @@ async def build_create_and_score(
 
     scored = factory.filter_score(item_dict)
     if scored:
-        items.append(scored)
+        return
+
+
+async def build_run_once_and_score(factory, model: Pipeline) -> Dict:
+    item_dict = dict(
+        item_type=ItemType.CREATE,
+        object_type=ObjectType.TRIGGER,
+        title='Trigger pipeline once',
+        description=f'Run pipeline {model.name or model.uuid} once',
+        uuid=f'{model.uuid}_{ItemType.CREATE}_{ObjectType.TRIGGER}',
+        metadata=dict(
+            pipeline=dict(
+                repo_path=model.repo_path,
+                uuid=model.uuid,
+            ),
+        ),
+        display_settings_by_attribute=dict(
+            icon=dict(
+                icon_uuid='Lightning',
+            ),
+        ),
+        applications=[
+            dict(
+                application_type=ApplicationType.FORM,
+                buttons=[
+                    dict(
+                        label='Cancel',
+                        tooltip='Discard changes and go back.',
+                        keyboard_shortcuts=[['metaKey', 27]],
+                        action_types=[
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                        ],
+                    ),
+                    dict(
+                        label='Trigger pipeline',
+                        tooltip='Run pipeline now.',
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                            ButtonActionType.RESET_FORM,
+                        ],
+                    ),
+                ],
+                settings=[
+                    dict(
+                        label='Variables (optional)',
+                        description='JSON containing variables for this pipeline run.',
+                        name='request.payload.pipeline_schedule.variables',
+                        type=InteractionInputType.CODE,
+                        action_uuid='create_model',
+                        style=dict(
+                            language='json',
+                        ),
+                    ),
+                ],
+                uuid='model_create',
+            ),
+        ],
+        actions=[
+            dict(
+                request=dict(
+                    operation=OperationType.CREATE,
+                    payload=dict(
+                        pipeline_schedule=dict(
+                            name=f'Run once {uuid4().hex[:5]}',
+                            schedule_interval=ScheduleInterval.ONCE,
+                            schedule_type=ScheduleType.TIME,
+                            start_time=datetime.now().isoformat(),
+                            status=ScheduleStatus.ACTIVE,
+                            variables=None,
+                        ),
+                    ),
+                    resource='pipeline_schedules',
+                    response_resource_key='pipeline_schedule',
+                    resource_parent='pipelines',
+                    resource_parent_id=urllib.parse.quote_plus(model.uuid),
+                ),
+                uuid='create_model',
+            ),
+            dict(
+                upstream_action_value_key_mapping=dict(
+                    create_model={
+                        'data.pipeline_schedule.id': 'page.parameters.pipeline_schedule_id',
+                    }
+                ),
+                page=dict(
+                    path=(
+                        f'/pipelines/{urllib.parse.quote_plus(model.uuid)}'
+                        '/triggers/:pipeline_schedule_id'
+                    ),
+                    parameters=dict(
+                        pipeline_schedule_id=None,
+                    ),
+                ),
+                uuid='open_model',
+            ),
+        ],
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+    )
+
+    scored = factory.filter_score(item_dict)
+    return scored

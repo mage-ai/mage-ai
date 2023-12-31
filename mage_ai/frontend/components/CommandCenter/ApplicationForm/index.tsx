@@ -1,6 +1,7 @@
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import * as AllIcons from '@oracle/icons';
+import CodeEditor from '@components/CodeEditor';
 import FlexContainer from '@oracle/components/FlexContainer';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Text from '@oracle/elements/Text';
@@ -14,7 +15,9 @@ import {
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { FormStyle } from './index.style';
 import { InteractionInputTypeEnum } from '@interfaces/InteractionType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { dig, setNested } from '@utils/hash';
+import { isJsonString } from '@utils/string';
 
 function buildKey({ action_uuid: actionUUID, name }: FormInputType): string {
   return [actionUUID, name].join('.');
@@ -147,6 +150,7 @@ function ApplicationForm({
       options,
       placeholder,
       required,
+      style,
       type,
     } = formInput;
     const iconUUID = displaySettings?.icon_uuid;
@@ -161,6 +165,15 @@ function ApplicationForm({
       icon = <Icon />;
     }
 
+    const {
+      multiline,
+      language,
+    } = style || {
+      multiline: false,
+      language: null,
+    };
+    let content;
+
     // @ts-ignore
     const rowProps = {
       textInput: null,
@@ -168,8 +181,14 @@ function ApplicationForm({
 
     const inputProps = {
       ...(icon ? { afterIcon: icon } : {}),
+      alignRight: !multiline,
       monospace,
+      multiline,
       name,
+      noBackground: !multiline,
+      noBorder: !multiline,
+      paddingHorizontal: multiline ? 2 * UNIT : null,
+      paddingVertical: multiline ? 2 * UNIT : null,
       onChange: (e) => {
         setAttributesTouched(prev => ({
             ...prev,
@@ -189,6 +208,7 @@ function ApplicationForm({
       },
       placeholder,
       ref,
+      rows: multiline ? 12 : null,
       tabIndex: idx + 1,
       value: attributes?.[actionUUID]?.[name] || '',
     };
@@ -200,6 +220,27 @@ function ApplicationForm({
         ...inputProps,
         options,
       };
+    } else if (InteractionInputTypeEnum.CODE === type) {
+      content = (
+        <CodeEditor
+          autoHeight
+          containerWidth="100%"
+          language={language}
+          onChange={value => inputProps.onChange({
+            target: {
+              value: isJsonString(value) ? JSON.parse(value) : value,
+            },
+          })}
+          padding={UNIT * 2}
+          selected
+          tabSize={2}
+          textareaFocused
+          value={typeof inputProps?.value === 'string'
+            ? inputProps?.value
+            : JSON.stringify(inputProps?.value, null, 2)
+          }
+        />
+      );
     }
 
     return (
@@ -212,7 +253,9 @@ function ApplicationForm({
           && !attributes?.[actionUUID]?.[name]
         }
         title={label}
-      />
+      >
+        {content}
+      </SetupSectionRow>
     );
   }), [
     attributes,

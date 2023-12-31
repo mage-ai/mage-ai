@@ -19,6 +19,7 @@ from mage_ai.command_center.triggers.utils import (
 from mage_ai.command_center.triggers.utils import (
     build_create_and_score as build_create_and_score_trigger,
 )
+from mage_ai.command_center.triggers.utils import build_run_once_and_score
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 from mage_ai.shared.hash import merge_dict
@@ -49,7 +50,8 @@ class PipelineFactory(BaseFactory):
                 items.append(scored)
 
             # Triggers
-            items.append(await build_create_and_score_trigger(self, pipeline, items))
+            items.append(await build_create_and_score_trigger(self, pipeline))
+            items.append(await build_run_once_and_score(self, pipeline))
 
             schedules = PipelineSchedule.query.filter(
                 PipelineSchedule.pipeline_uuid == pipeline.uuid,

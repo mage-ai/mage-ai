@@ -36,6 +36,7 @@ class InteractionInputOption:
 @dataclass
 class InteractionInputStyle:
     input_type: InteractionInputStyleInputType = None
+    language: str = None
     multiline: bool = None
 
     def __post_init__(self):

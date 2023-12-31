@@ -74,6 +74,7 @@ type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
   block?: BlockType;
+  containerWidth?: number | string;
   editorRef?: any;
   fontSize?: number;
   language?: string;
@@ -97,6 +98,7 @@ function CodeEditor({
   autoHeight,
   autoSave,
   block,
+  containerWidth,
   editorRef: editorRefProp,
   fontSize = DEFAULT_FONT_SIZE,
   height,
@@ -349,6 +351,7 @@ function CodeEditor({
       ref={ref}
       style={{
         display: mounted ? null : 'none',
+        width: containerWidth,
       }}
     >
       {placeholder && !value?.length && (
