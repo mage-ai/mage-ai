@@ -159,7 +159,9 @@ export function buildSettingsItemWithApplication(): {
   };
 
   return {
+    // @ts-ignore
     application,
+    // @ts-ignore
     item,
   };
 }

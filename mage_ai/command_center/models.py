@@ -41,6 +41,7 @@ class CommandCenterBaseClass(BaseDataClass):
 @dataclass
 class TextStyles(CommandCenterBaseClass):
     monospace: bool = False
+    regular: bool = False
     small: bool = False
 
 

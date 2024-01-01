@@ -50,6 +50,8 @@ export enum ObjectTypeEnum {
 
 interface TextStylesType {
   monospace?: boolean;
+  regular?: boolean;
+  small?: boolean;
 }
 
 interface DisplaySettingsType {

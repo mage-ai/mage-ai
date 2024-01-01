@@ -16,9 +16,9 @@ import { getDisplayCategory } from '../utils';
 import { getIcon } from './constants';
 
 type ItemRowProps = {
-  className: ItemRowClassNameEnum;
+  className: string;
   item: CommandCenterItemType;
-  onClick: () => void;
+  onClick: (e: Event) => void;
 };
 
 function ItemRow({
@@ -31,7 +31,6 @@ function ItemRow({
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
     title,
-    type,
   } = item;
   const {
     description: descriptionDisplaySettings,
@@ -42,9 +41,6 @@ function ItemRow({
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
 
-  const applicationWithDescriptionPath =
-    ObjectTypeEnum.APPLICATION === type && description?.startsWith('/');
-
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
   if (descriptionCount > 40) {
@@ -54,11 +50,12 @@ function ItemRow({
   return (
     <ItemStyle
       className={className}
+      // @ts-ignore
       onClick={onClick}
       ref={ref}
     >
       <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
-        <Flex alignItems="center" flex={1} fullHeight>
+        <Flex alignItems="center" flex={1}>
           {Icon && (
             <Icon
               fill={iconColor?.accent}

@@ -210,8 +210,9 @@ function CommandCenter() {
 
     refRootHeaderTitle?.current?.render(
       <ApplicationHeaderTitle
-        {...currentApplicationConfig}
+        application={currentApplicationConfig?.application}
         applicationsRef={refApplications}
+        item={currentApplicationConfig?.item}
       />
     );
 

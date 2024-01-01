@@ -87,7 +87,8 @@ export function getIconColor(item: CommandCenterItemType, opts: {
 }
 
 export const ItemStyle = styled.div<{
-  onClick: () => void;
+  className: string;
+  onClick: (e: Event) => void;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   cursor: pointer;

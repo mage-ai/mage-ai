@@ -13,7 +13,7 @@ export type InvokeRequestActionType = {
   invokeRequest?: (options: InvokeRequestOptionsType) => Promise<any>;
 };
 
-type CurrentType = {
+export type CurrentType = {
   focusedItemIndex: number;
   item: CommandCenterItemType;
 } & ExecuteActionableType;

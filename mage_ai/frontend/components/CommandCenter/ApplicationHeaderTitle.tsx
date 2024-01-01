@@ -1,8 +1,9 @@
+import { CommandCenterItemType, ItemApplicationType } from '@interfaces/CommandCenterType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { ApplicationProps } from './ItemApplication/constants';
+import { ApplicationProps, CurrentType } from './ItemApplication/constants';
 import { HeaderSubtitleStyle } from './index.style';
 import { ItemApplicationTypeEnum, OBJECT_TITLE_MAPPING } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -14,7 +15,13 @@ function ApplicationHeaderTitle({
   application,
   applicationsRef,
   item,
-}: ApplicationProps) {
+}: {
+  application: ItemApplicationType;
+  applicationsRef: {
+    current: CurrentType[];
+  };
+  item: CommandCenterItemType;
+}) {
   let title;
   let Icon;
   let iconColor;
