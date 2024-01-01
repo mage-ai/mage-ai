@@ -18,6 +18,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
   FileExtensionEnum,
+  OriginalContentMappingType,
   PIPELINE_BLOCK_EXTENSIONS,
   SpecialFileEnum,
 } from '@interfaces/FileType';
@@ -47,6 +48,7 @@ import { isJsonString } from '@utils/string';
 import { errorOrSuccess, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
+import { useWindowSize } from '@utils/sizes';
 
 type FileEditorProps = {
   active: boolean;
@@ -55,10 +57,12 @@ type FileEditorProps = {
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
   filePath: string;
+  codeEditorMaximumHeightOffset?: number;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
+  originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   saveFile?: (value: string, file: FileType) => void;
   selectedFilePath: string;
@@ -78,10 +82,12 @@ function FileEditor({
   fetchPipeline,
   fetchVariables,
   filePath,
+  codeEditorMaximumHeightOffset,
   hideHeaderButtons,
   onContentChange,
   onUpdateFileSuccess,
   openSidekickView,
+  originalContent,
   pipeline,
   saveFile: saveFileProp,
   selectedFilePath,
@@ -95,6 +101,8 @@ function FileEditor({
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
+
+  const { height: heightTotal } = useWindowSize();
 
   const token = useMemo(() => new AuthToken(), []);
   const oauthWebsocketData = useMemo(() => ({
@@ -203,11 +211,19 @@ function FileEditor({
     [regex, file],
   );
 
+  const originalValues = useMemo(() => originalContent?.[file?.path], [
+    file,
+    originalContent,
+  ]);
+
   const codeEditorEl = useMemo(() => {
     if (file?.path) {
+      const showDiffs = !!originalValues && originalValues?.content_from_base;
+
       return (
         <CodeEditor
           autoHeight
+          height={codeEditorMaximumHeightOffset ? heightTotal - codeEditorMaximumHeightOffset : null}
           language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
           // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
           // onDidChangeCursorPosition={onDidChangeCursorPosition}
@@ -245,8 +261,11 @@ function FileEditor({
           onSave={(value: string) => {
             saveFile(value, file);
           }}
+          originalValue={originalValues?.content_from_base}
           padding={10}
+          readOnly={!!showDiffs}
           selected
+          showDiffs={!!showDiffs}
           textareaFocused
           value={isJsonString(file?.content)
             ? JSON.stringify(JSON.parse(file?.content), null, 2)
@@ -257,8 +276,11 @@ function FileEditor({
       );
     }
   }, [
+    codeEditorMaximumHeightOffset,
     file,
     fileExtension,
+    heightTotal,
+    originalValues,
     saveFile,
     setContent,
     setFilesTouched,

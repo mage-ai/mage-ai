@@ -25,6 +25,7 @@ GitFilePolicy.allow_read(GitFilePresenter.default_attributes + [], scopes=[
 GitFilePolicy.allow_query([
     'base_branch',
     'compare_branch',
+    'derive',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

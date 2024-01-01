@@ -1,5 +1,5 @@
 import * as ReactDOM from 'react-dom';
-import Editor, { loader } from '@monaco-editor/react';
+import Editor, { DiffEditor, loader } from '@monaco-editor/react';
 import React, {
   useCallback,
   useEffect,
@@ -82,10 +82,12 @@ type CodeEditorProps = {
   onContentSizeChangeCallback?: () => void;
   onMountCallback?: (editor?: any, monaco?: any) => void;
   onSave?: (value: string) => void;
+  originalValue?: string;
   padding?: number;
   placeholder?: string;
   readOnly?: boolean;
   shortcuts?: ((monaco: any, editor: any) => void)[];
+  showDiffs?: boolean;
   showLineNumbers?: boolean;
   tabSize?: number;
   theme?: any;
@@ -108,6 +110,7 @@ function CodeEditor({
   onDidChangeCursorPosition,
   onMountCallback,
   onSave,
+  originalValue,
   padding,
   placeholder,
   readOnly,
@@ -115,6 +118,7 @@ function CodeEditor({
   setSelected,
   setTextareaFocused,
   shortcuts: shortcutsProp,
+  showDiffs,
   showLineNumbers = true,
   tabSize = 4,
   textareaFocused,
@@ -162,48 +166,56 @@ function CodeEditor({
       shortcuts.push(func(monaco, editor));
     });
 
-    // Keyboard shortcuts for saving content: Command + S
-    if (onSave) {
-      shortcuts.push(saveCode(monaco, () => {
-        onSave(editor.getValue());
-      }));
+    if (!showDiffs) {
+      // Keyboard shortcuts for saving content: Command + S
+      if (onSave) {
+        shortcuts.push(saveCode(monaco, () => {
+          onSave(editor.getValue());
+        }));
+      }
     }
 
     addKeyboardShortcut(monaco, editor, shortcuts);
 
-    editor.getModel().updateOptions({
-      tabSize,
-    });
+    if (!showDiffs) {
+      editor.getModel().updateOptions({
+        tabSize,
+      });
+    }
 
     if (autoHeight && !height) {
       editor._domElement.style.height =
         `${calculateHeightFromContent(value || '')}px`;
     }
 
-    editor.onDidFocusEditorWidget(() => {
-      /*
-       * Added onClick handler for selecting block in CodeContainerStyle component.
-       * Disabled the setSelected call below because if a user updates the block name
-       * or color from the Block Settings in the Sidekick, clicking on the code editor
-       * specifically uses an outdated block as the "selectedBlock" due to scoping issues
-       * when mounting the code editor here.
-       */
-      // setSelected?.(true);
-      setTextareaFocused?.(true);
-    });
+    if (!showDiffs) {
+      editor.onDidFocusEditorWidget(() => {
+        /*
+         * Added onClick handler for selecting block in CodeContainerStyle component.
+         * Disabled the setSelected call below because if a user updates the block name
+         * or color from the Block Settings in the Sidekick, clicking on the code editor
+         * specifically uses an outdated block as the "selectedBlock" due to scoping issues
+         * when mounting the code editor here.
+         */
+        // setSelected?.(true);
+        setTextareaFocused?.(true);
+      });
+    }
 
-    editor.onDidContentSizeChange(({
-      contentHeight,
-      contentHeightChanged,
-    }) => {
-      if (autoHeight && contentHeightChanged) {
-        editor._domElement.style.height = `${contentHeight + (SINGLE_LINE_HEIGHT * 2)}px`;
-      }
+    if (!showDiffs) {
+      editor.onDidContentSizeChange(({
+        contentHeight,
+        contentHeightChanged,
+      }) => {
+        if (autoHeight && contentHeightChanged) {
+          editor._domElement.style.height = `${contentHeight + (SINGLE_LINE_HEIGHT * 2)}px`;
+        }
 
-      if (onContentSizeChangeCallback) {
-        onContentSizeChangeCallback?.();
-      }
-    });
+        if (onContentSizeChangeCallback) {
+          onContentSizeChangeCallback?.();
+        }
+      });
+    }
 
     if (selected && textareaFocused) {
       setTimeout(() => {
@@ -250,6 +262,7 @@ function CodeEditor({
     setMounted,
     setTextareaFocused,
     shortcutsProp,
+    showDiffs,
     tabSize,
     textareaFocused,
     value,
@@ -344,6 +357,8 @@ function CodeEditor({
     textareaFocusedPrevious,
   ]);
 
+  const EditorElement = showDiffs ? DiffEditor : Editor;
+
   return (
     <ContainerStyle
       hideDuplicateMenuItems
@@ -361,10 +376,11 @@ function CodeEditor({
           </Text>
         </PlaceholderStyle>
       )}
-      <Editor
+      <EditorElement
         beforeMount={handleEditorWillMount}
         height={height}
         language={language || DEFAULT_LANGUAGE}
+        modified={showDiffs ? value : undefined}
         onChange={(val: string) => {
           onChange?.(val);
         }}
@@ -392,9 +408,18 @@ function CodeEditor({
           useShadowDOM: false,
           wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
+          // Options for DiffEditor
+          colorDecorators: true,
+          diffAlgorithm: 'advanced',
+          enableSplitViewResizing: true,
+          renderIndicators: true,
+          renderLineHighlight: 'all',
+          renderMarginRevertIcon: true,
+          renderSideBySide: true,
         }}
+        original={showDiffs ? originalValue : undefined}
         theme={loadedTheme || 'vs-dark'}
-        value={value}
+        value={showDiffs ? undefined : value}
         width={width}
       />
       <div ref={refBottomOfEditor} />

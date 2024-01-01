@@ -6,9 +6,11 @@ function Controller({
   disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
+  codeEditorMaximumHeightOffset,
   onUpdateFileSuccess,
   openFilePaths,
   openSidekickView,
+  originalContent,
   pipeline,
   saveFile,
   selectedFilePath,
@@ -38,12 +40,14 @@ function Controller({
               fetchPipeline={fetchPipeline}
               fetchVariables={fetchVariables}
               filePath={filePath ? encodeURIComponent(filePath) : null}
+              codeEditorMaximumHeightOffset={codeEditorMaximumHeightOffset}
               hideHeaderButtons
               onContentChange={(content: string) => setContentByFilePath({
                 [filePath]: content,
               })}
               onUpdateFileSuccess={onUpdateFileSuccess}
               openSidekickView={openSidekickView}
+              originalContent={originalContent}
               pipeline={pipeline}
               sendTerminalMessage={sendTerminalMessage}
               setDisableShortcuts={setDisableShortcuts}

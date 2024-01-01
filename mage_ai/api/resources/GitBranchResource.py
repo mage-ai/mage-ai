@@ -8,6 +8,7 @@ from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
 from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
 from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.shared.path_fixer import remove_base_repo_path
 
 
 def build_file_object(obj):
@@ -391,8 +392,11 @@ class GitBranchResource(GenericResource):
         if limit:
             arr = arr[:limit]
 
+        files_absolute_path = {}
+
         files = {}
         for filename_init in arr:
+
             # Git repo_path: /home/src/project_romeo/test
             # filename_init: examples/load.py
             # filename: test/examples/load.py
@@ -426,7 +430,13 @@ class GitBranchResource(GenericResource):
                     obj[part] = obj_final
                     obj_final = obj
 
-            files[parts[0]] = obj_final
+            key = parts[0]
+            files[key] = obj_final
+            files_absolute_path[filename_init] = remove_base_repo_path(
+                os.path.join(git_manager.repo_path, filename_init),
+            )
+
+        self.model['files_absolute_path'] = files_absolute_path
 
         return build_file_object(files)
 

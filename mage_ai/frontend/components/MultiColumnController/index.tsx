@@ -7,7 +7,9 @@ import {
 } from '@storage/localStorage';
 import FlexContainer from '@oracle/components/FlexContainer';
 import { ColumnStyle, DIVIDER_WIDTH, DRAGGABLE_WIDTH, VerticalDividerStyle } from './index.style';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { range, sortByKey, sum } from '@utils/array';
+import { useWindowSize } from '@utils/sizes';
 
 type MultiColumnControllerProps = {
   dividerBackgroundColor?: string;
@@ -19,6 +21,8 @@ type MultiColumnControllerProps = {
       width?: number;
     }) => any;
   }[][];
+  fullHeight?: boolean;
+  heightOffset?: number;
   uuid: string;
   width?: number;
 };
@@ -27,9 +31,17 @@ function MultiColumnController({
   dividerBackgroundColor,
   dividerBackgroundColorHover,
   columnsOfItems,
+  fullHeight,
+  heightOffset,
   uuid,
   width: widthProp,
 }: MultiColumnControllerProps) {
+  const { height: heightTotal } = useWindowSize();
+  const heightColumn = useMemo(() => heightTotal - (heightOffset || 0), [
+    heightOffset,
+    heightTotal,
+  ]);
+
   const [columnWidthPercentages, setColumnWidthPercentages] = useState(get(
     `${LOCAL_STORAGE_KEY_MULTI_COLUMN_WIDTHS_PREFIX}_${uuid}`,
     {},
@@ -95,8 +107,8 @@ function MultiColumnController({
         column.push(
           <div key={key} ref={ref} style={{ width: '100%' }}>
             {item?.render({
+              columnWidth: fullHeight ? columnWidth - SCROLLBAR_WIDTH : columnWidth,
               numberOfColumns,
-              columnWidth,
               width,
             })}
           </div>
@@ -113,6 +125,7 @@ function MultiColumnController({
         <ColumnStyle
           key={key2}
           ref={ref}
+          height={fullHeight ? heightColumn : null}
           width={columnWidth}
         >
           {column}
@@ -126,6 +139,8 @@ function MultiColumnController({
     dividerBackgroundColor,
     dividerBackgroundColorHover,
     columnsOfItems,
+    fullHeight,
+    heightColumn,
     numberOfColumns,
     width,
   ]);

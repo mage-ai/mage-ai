@@ -1,17 +1,35 @@
 import os
 import urllib.parse
+from pathlib import Path
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.git import Git
 from mage_ai.data_preparation.models.file import File
+from mage_ai.settings.utils import base_repo_path
 
 
 class GitFileResource(GenericResource):
     @classmethod
     async def member(self, pk, user, **kwargs):
+        query = kwargs.get('query', {})
+
         git_manager = Git.get_manager(user=user)
 
         file_path = urllib.parse.unquote(pk)
+
+        derive = query.get('derive', [False])
+        if derive:
+            derive = derive[0]
+
+        if derive:
+            try:
+                diff = Path(git_manager.repo_path).relative_to(base_repo_path())
+            except ValueError:
+                diff = git_manager.repo_path
+            try:
+                file_path = str(Path(file_path).relative_to(diff))
+            except ValueError:
+                pass
 
         file_path_absolute = os.path.join(git_manager.repo_path, file_path)
         file = File.from_path(file_path_absolute)
@@ -21,7 +39,6 @@ class GitFileResource(GenericResource):
         modified_files = git_manager.modified_files
         is_modified = file_path in modified_files
 
-        query = kwargs.get('query', {})
         base_branch = query.get('base_branch', [git_manager.current_branch])
         if base_branch:
             base_branch = base_branch[0]
