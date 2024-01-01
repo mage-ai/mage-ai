@@ -57,6 +57,7 @@ type FileBrowserProps = {
   fetchFiles?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
+  onCreateFile?: (file: FileType) => void;
   pipeline?: PipelineType;
   renderAfterContent?: (file: FileType) => any;
   showError?: (opts: {
@@ -90,6 +91,7 @@ function FileBrowser({
   files,
   onClickFile,
   onClickFolder,
+  onCreateFile,
   onSelectBlockFile,
   openFile,
   openSidekickView,
@@ -426,12 +428,14 @@ function FileBrowser({
       file={opts?.file}
       moveFile={opts?.moveFile}
       onCancel={hideModalNewFile}
+      onCreateFile={onCreateFile}
       selectedFolder={selectedFolder}
       showError={showError}
     />
   ), {
   }, [
     fetchFileTree,
+    onCreateFile,
     selectedFolder,
     showError,
   ], {

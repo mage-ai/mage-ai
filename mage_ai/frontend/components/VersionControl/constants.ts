@@ -17,13 +17,13 @@ export const TAB_BRANCHES = {
   uuid: 'Branches',
 };
 export const TAB_FILES = {
-  uuid: 'Files',
+  uuid: 'Commit',
 };
 export const TAB_PUSH = {
-  uuid: 'Push',
+  uuid: 'Push & Pull Requests',
 };
 export const TAB_REMOTE = {
-  uuid: 'Setup',
+  uuid: 'Remote & Auth',
 };
 
 export const TABS: TabType[] = [

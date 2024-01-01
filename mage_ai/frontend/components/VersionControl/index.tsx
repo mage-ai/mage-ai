@@ -16,6 +16,7 @@ import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
 import MultiColumnController from '@components/MultiColumnController';
 import Remote from './Remote';
+import StyledScrollbarContainer from '@components/shared/StyledScrollbarContainer';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -63,8 +64,19 @@ function VersionControl() {
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS[0]);
   const [selectedTabsBefore, setSelectedTabsBefore] = useState<TabType>({
-    'All files': {
-      uuid: 'All files',
+    'All projects': {
+      uuid: 'All projects',
+    },
+    'Git directory': {
+      uuid: 'Git directory',
+    },
+  });
+  const [selectedTabsAfter, setSelectedTabsAfter] = useState<TabType>({
+    'Open files': {
+      uuid: 'Open files',
+    },
+    'Files changed': {
+      uuid: 'Files changed',
     },
   });
 
@@ -408,24 +420,17 @@ function VersionControl() {
     dataBranch,
   ]);
   const mainContainerHeaderMemo = useMemo(() => (
-    <>
-      <div
-        style={{
-          marginBottom: UNIT * 0.5,
-          marginTop: UNIT * 0.5,
+    <div style={{ marginTop: 5 }}>
+      <ButtonTabs
+        onClickTab={({ uuid }) => {
+          goToWithQuery({ tab: uuid });
         }}
-      >
-        <ButtonTabs
-          compact
-          onClickTab={({ uuid }) => {
-            goToWithQuery({ tab: uuid });
-          }}
-          selectedTabUUID={selectedTab?.uuid}
-          tabs={tabsToUse}
-        />
-      </div>
+        selectedTabUUID={selectedTab?.uuid}
+        tabs={tabsToUse}
+        underlineStyle
+      />
       <Divider light />
-    </>
+    </div>
   ), [selectedTab, tabsToUse]);
 
   const remoteMemo = useMemo(() => (
@@ -540,10 +545,10 @@ function VersionControl() {
       selectedTabUUIDs={selectedTabsBefore}
       tabs={[
         {
-          uuid: 'All files',
+          uuid: 'All projects',
         },
         {
-          uuid: 'Modified files',
+          uuid: 'Git directory',
         },
       ]}
       underlineStyle
@@ -552,6 +557,38 @@ function VersionControl() {
     selectedTabsBefore,
   ]);
 
+  const afterTabsMemo = useMemo(() => (
+    <ButtonTabs
+      allowScroll
+      onClickTab={(tab: TabType) => {
+        setSelectedTabsAfter(prev => ({
+          ...ignoreKeys(prev, [tab?.uuid]),
+          ...(prev?.[tab?.uuid] ? {} : {
+            [tab?.uuid]: tab,
+          }),
+        }));
+      }}
+      selectedTabUUIDs={selectedTabsAfter}
+      tabs={[
+        {
+          uuid: 'Files changed',
+        },
+        {
+          uuid: 'Open files',
+        },
+      ]}
+      underlineStyle
+    />
+  ), [
+    selectedTabsAfter,
+  ]);
+
+  const onUpdateFileSuccess = useCallback(() => {
+    fetchFileGit();
+  }, [fetchFileGit]);
+  const onCreateFile = useCallback(() => {
+    fetchBranch();
+  }, [fetchBranch]);
 
   const {
     browser,
@@ -562,6 +599,8 @@ function VersionControl() {
     tabs: tabsFileComponent,
   } = useFileComponents({
     showHiddenFilesSetting: true,
+    onCreateFile,
+    onUpdateFileSuccess,
   });
 
   useEffect(() => {
@@ -573,7 +612,7 @@ function VersionControl() {
   const beforeMemo = useMemo(() => {
     const columnsOfItems = [];
 
-    if ('All files' in selectedTabsBefore) {
+    if ('All projects' in selectedTabsBefore) {
       columnsOfItems.push([
         {
           render: ({
@@ -587,7 +626,7 @@ function VersionControl() {
       ]);
     }
 
-    if ('Modified files' in selectedTabsBefore) {
+    if ('Git directory' in selectedTabsBefore) {
       columnsOfItems.push([
         {
           render: () => (
@@ -632,33 +671,71 @@ function VersionControl() {
   ]);
 
   const afterMemo = useMemo(() => {
-    if (!selectedFilePathFileComponent) {
-      return fileDiffMemo;
+    const columnsOfItems = [];
+
+    if ('Files changed' in selectedTabsAfter) {
+      columnsOfItems.push([
+        {
+          render: ({
+            columnWidth,
+          }) => (
+            <div style={{ width: `${columnWidth}px` }}>
+              {fileDiffMemo}
+            </div>
+          ),
+        }
+      ]);
     }
 
-    return controller;
+
+    if ('Open files' in selectedTabsAfter) {
+      columnsOfItems.push([
+        {
+          render: ({
+            columnWidth,
+          }) => (
+            <>
+              <StyledScrollbarContainer width={columnWidth}>
+                {tabsFileComponent}
+              </StyledScrollbarContainer>
+              {controller}
+            </>
+          ),
+        }
+      ]);
+    }
+    return (
+      <MultiColumnController
+        columnsOfItems={columnsOfItems}
+        fullHeight
+        heightOffset={HEADER_HEIGHT * 2}
+        uuid="version-control-open-changed-files"
+        width={afterWidth}
+      />
+    );
   }, [
+    afterWidth,
+    controller,
     fileDiffMemo,
-    selectedFilePathFileComponent,
+    selectedTabsAfter,
     tabsFileComponent,
   ]);
 
   return (
     <Dashboard
       after={afterMemo}
-      afterHeader={selectedFilePathFileComponent ? tabsFileComponent : null}
+      afterHeader={afterTabsMemo}
       afterHidden={afterHidden}
       afterWidth={afterWidth}
       before={beforeMemo}
       beforeHeader={buttonTabsMemo}
-      mainContainerHeader={mainContainerHeaderMemo}
-      title="Version control"
-      uuid="Version control/index"
       beforeWidth={beforeWidth}
-
+      mainContainerHeader={mainContainerHeaderMemo}
       setAfterHidden={setAfterHidden}
       setAfterWidth={setAfterWidth}
       setBeforeWidth={setBeforeWidth}
+      title="Version control"
+      uuid="Version control/index"
     >
       <Spacing p={PADDING_UNITS}>
         {!dataBranch && <Spinner inverted />}

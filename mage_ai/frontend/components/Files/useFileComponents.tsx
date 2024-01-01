@@ -54,6 +54,7 @@ type UseFileComponentsProps = {
   fetchAutocompleteItems?: () => void;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
+  onCreateFile?: (file: FileType) => void;
   onOpenFile?: (filePath: string, isFolder: boolean) => void;
   onSelectBlockFile?: (
     blockUUID: string,
@@ -95,6 +96,7 @@ function useFileComponents({
   fetchAutocompleteItems,
   fetchPipeline,
   fetchVariables,
+  onCreateFile,
   onOpenFile,
   onSelectBlockFile,
   onSelectFile,
@@ -296,6 +298,10 @@ function useFileComponents({
             setContentByFilePath({
               [file?.path]: null,
             });
+
+            if (onUpdateFileSuccess) {
+              onUpdateFileSuccess?.(file);
+            }
           },
           onErrorCallback: (response, errors) => showError({
             errors,
@@ -336,6 +342,7 @@ function useFileComponents({
       showHiddenFilesSetting={showHiddenFilesSetting}
       onClickFile={(path: string) => openFile(path)}
       onClickFolder={(path: string) => openFile(path, true)}
+      onCreateFile={onCreateFile}
       onSelectBlockFile={onSelectBlockFile}
       openSidekickView={openSidekickView}
       pipeline={pipeline}
@@ -358,6 +365,7 @@ function useFileComponents({
     fileTreeRef,
     files,
     showHiddenFilesSetting,
+    onCreateFile,
     onSelectBlockFile,
     openFile,
     openSidekickView,
