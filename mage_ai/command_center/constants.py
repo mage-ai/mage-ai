@@ -3,6 +3,11 @@ from enum import Enum
 SETTINGS_FILENAME = '.command_center.yaml'
 
 
+class ItemTagEnum(str, Enum):
+    PINNED = 'pinned'
+    RECENT = 'recent'
+
+
 class ItemType(str, Enum):
     ACTION = 'action'  # Cast spell
     CREATE = 'create'  # Conjure

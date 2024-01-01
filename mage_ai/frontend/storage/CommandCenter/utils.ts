@@ -3,16 +3,16 @@ import * as osPath from 'path';
 import {
   CommandCenterItemType,
   CommandCenterSearchHistoryType,
+  ItemTagEnum,
   ItemTypeEnum,
   ObjectTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
 import {
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES,
+  LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PICKS,
   LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES,
   LOCAL_STORAGE_COMMAND_CENTER_SETTINGS,
-  MAX_ITEMS_HISTORY_PAGES,
-  MAX_ITEMS_HISTORY_SEARCHES,
 } from './constants';
 import {
   DATE_FORMAT_FULL,
@@ -58,7 +58,7 @@ export function addSearchHistory(
 
   set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_SEARCHES, arr.slice(
     0,
-    getSetSettings()?.history?.searches?.length || MAX_ITEMS_HISTORY_SEARCHES,
+    getSetSettings()?.history?.searches?.size || 0,
   ));
 
   return arr;
@@ -98,6 +98,9 @@ export function getPageHistoryAsItems(): CommandCenterItemType[] {
       object_type: ObjectTypeEnum.APPLICATION,
       title,
       description,
+      tags: [
+        ItemTagEnum.RECENT,
+      ],
       actions: [
         {
           page: {
@@ -137,7 +140,7 @@ export function addPageHistory(page: PageHistoryType) {
 
   set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, arr.slice(
     0,
-    getSetSettings()?.history?.pages?.length || MAX_ITEMS_HISTORY_PAGES,
+    getSetSettings()?.history?.pages?.size || 0,
   ));
 
   return arr;
@@ -147,4 +150,33 @@ export function combineUnique(itemsSets: CommandCenterItemType[][]) {
   // @ts-ignore
   const combined = itemsSets?.reduce((acc, items) => acc.concat(items || []), []);
   return unique(combined, ({ uuid }) => uuid);
+}
+
+function buildPickKey(item: CommandCenterItemType): string {
+  return [
+    item?.item_type || '',
+    item?.object_type || '',
+    item?.tags?.join(',') || '',
+  ].join(':')
+}
+
+export function getPicksHistory(): string {
+  return get(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PICKS, '');
+}
+
+export function addPickHistory(item: CommandCenterItemType): string {
+  const delimiter = '\t';
+  const value = (getPicksHistory() || '');
+  const parts = (value?.split(delimiter) || [])?.slice(
+    0,
+    (getSetSettings()?.history?.picks?.size || 1) - 1,
+  );
+
+  const key = buildPickKey(item);
+  // @ts-ignore
+  const final = [key].concat(parts)?.join(delimiter);
+
+  set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PICKS, final);
+
+  return final;
 }

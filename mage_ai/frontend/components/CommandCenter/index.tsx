@@ -72,6 +72,7 @@ import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplica
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import {
+  addPickHistory,
   addSearchHistory,
   combineUnique,
   getSearchHistory,
@@ -825,6 +826,7 @@ function CommandCenter() {
   }
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
+    addPickHistory(item);
     const applicationsCount = item?.applications?.length || 0;
     if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
       addApplication({

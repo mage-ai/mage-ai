@@ -40,6 +40,7 @@ CommandCenterItemPolicy.allow_write(
         'item',
         'page',
         'page_history',
+        'picks',
         'search',
         'search_history',
     ],

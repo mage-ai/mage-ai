@@ -24,6 +24,7 @@ class BaseFactory(ABC):
         item: Dict = None,
         page: str = None,
         page_history: List[Dict] = None,
+        picks: str = None,
         search: str = None,
         search_history: List[Dict] = None,
         search_ratio: int = DEFAULT_RATIO,
@@ -34,6 +35,7 @@ class BaseFactory(ABC):
         self.item = Item.load(**item) if item else item
         self.page = page
         self.page_history = page_history
+        self.picks = picks
         self.search = search
         self.search_history = search_history
         self.search_ratio = search_ratio

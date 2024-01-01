@@ -4,6 +4,11 @@ import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { removeUnderscore } from '@utils/string';
 
+export enum ItemTagEnum {
+  PINNED = 'pinned',
+  RECENT = 'recent',
+}
+
 export enum ButtonActionTypeEnum {
   ADD_APPLICATION = 'add_application',
   CLOSE_APPLICATION = 'close_application',
@@ -285,6 +290,7 @@ export interface CommandCenterItemType {
   };
   object_type: ObjectTypeEnum;
   score?: number;
+  tags?: ItemTagEnum;
   title: string;
   uuid: string;
 }

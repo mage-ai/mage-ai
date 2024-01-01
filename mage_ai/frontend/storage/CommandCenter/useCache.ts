@@ -8,7 +8,7 @@ import {
   ItemApplicationType,
 } from '@interfaces/CommandCenterType';
 import { getCachedItems } from './cache';
-import { getPageHistoryAsItems, getSearchHistory } from './utils';
+import { getPageHistoryAsItems, getPicksHistory, getSearchHistory } from './utils';
 import { onSuccess } from '@api/utils/response';
 
 export default function useCache(fetchUUID: () => number | string, opts: {
@@ -63,6 +63,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
           title: typeof document !== 'undefined' ? document?.title : null,
         },
         page_history: getPageHistoryAsItems(),
+        picks: getPicksHistory(),
         search: typeof search === 'undefined' ? searchRef?.current?.value : search,
         search_history: getSearchHistory(),
       },

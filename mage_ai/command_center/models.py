@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
 from mage_ai.api.operations.constants import OperationType
@@ -6,6 +6,7 @@ from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
     InteractionType,
+    ItemTagEnum,
     ItemType,
     ObjectType,
 )
@@ -307,16 +308,18 @@ class ModelSettings(CommandCenterBaseClass):
 
 @dataclass
 class HistoryModelSettings(CommandCenterBaseClass):
-    length: int = None
+    size: int = None
 
 
 @dataclass
 class HistorySettings(CommandCenterBaseClass):
     pages: HistoryModelSettings = None
+    picks: HistoryModelSettings = None
     searches: HistoryModelSettings = None
 
     def __post_init__(self):
         self.serialize_attribute_class('pages', HistoryModelSettings)
+        self.serialize_attribute_class('picks', HistoryModelSettings)
         self.serialize_attribute_class('searches', HistoryModelSettings)
 
 
@@ -360,7 +363,11 @@ class CacheSettings(CommandCenterBaseClass):
 @dataclass
 class CommandCenterSettings(CommandCenterBaseClass):
     cache: CacheSettings = None
-    history: HistorySettings = None
+    history: HistorySettings = field(default_factory=lambda: dict(
+        pages=dict(size=5),
+        picks=dict(size=100),
+        searches=dict(size=12),
+    ))
     interface: InterfaceSettings = None
 
     def __post_init__(self):
@@ -401,6 +408,7 @@ class ItemBase(CommandCenterBaseClass):
     description: str = None
     items: List[Dict] = None
     metadata: Metadata = None
+    tags: List[ItemTagEnum] = None
     score: int = 0
 
     def __post_init__(self):
@@ -410,6 +418,7 @@ class ItemBase(CommandCenterBaseClass):
         self.serialize_attribute_classes('applications', Application)
         self.serialize_attribute_enum('item_type', ItemType)
         self.serialize_attribute_enum('object_type', ObjectType)
+        self.serialize_attribute_enums('tags', ItemTagEnum)
 
 
 @dataclass
