@@ -16,6 +16,7 @@ import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
@@ -23,18 +24,20 @@ import ProjectType from '@interfaces/ProjectType';
 import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
-import { Branch, Slack } from '@oracle/icons';
+import { Branch, AISparkle, Slack } from '@oracle/icons';
 import {
   CUSTOM_LOGO_HEIGHT,
   HeaderStyle,
   LOGO_HEIGHT,
   MediaStyle,
 } from './index.style';
+import { KEY_SYMBOL_META, KEY_SYMBOL_PERIOD } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
@@ -106,6 +109,8 @@ function Header({
   } = useCustomDesign();
 
   const {
+    featureEnabled,
+    featureUUIDs,
     project: projectInit,
     rootProject,
   } = useProject();
@@ -369,7 +374,42 @@ function Header({
             />
           </Flex>
 
+
           <Flex alignItems="center">
+            {false && (
+              <Flex alignItems="center">
+                <TextInput
+                  afterIcon={(
+                    <div style={{ bottom: 1, position: 'relative' }}>
+                      <KeyboardTextGroup
+                        addPlusSignBetweenKeys
+                        keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_PERIOD]]}
+                        monospace
+                      />
+                    </div>
+                  )}
+                  darkStyle
+                  hoverPointer
+                  minWidth={UNIT * 30}
+                  onClick={(e) => {
+                    e?.target?.blur();
+                  }}
+                  onFocus={(e) => {
+                    e?.target?.blur();
+                  }}
+                  paddingLeft={UNIT * 1.5}
+                  paddingRight={UNIT * 2}
+                  paddingVertical={0}
+                  placeholder="Launch command center"
+                  small
+                  style={{
+                    height: 4.5 * UNIT,
+                  }}
+                />
+                <Spacing mr={1} />
+              </Flex>
+            )}
+
             {gitIntegrationEnabled && branch && (
               <Spacing ml={1}>
                 <KeyboardShortcutButton

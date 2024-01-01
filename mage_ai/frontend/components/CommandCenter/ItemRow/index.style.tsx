@@ -11,7 +11,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { transition } from '@oracle/styles/mixins';
 
 export const ITEM_ROW_HEIGHT = 44;
-export const MAX_WIDTH = 100 * UNIT;
+export const MAX_WIDTH = 94 * UNIT;
 
 export function getIconColor(item: CommandCenterItemType, opts: {
   theme?: ThemeType;

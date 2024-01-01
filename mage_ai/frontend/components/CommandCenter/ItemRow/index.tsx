@@ -47,8 +47,8 @@ function ItemRow({
 
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
-  if (descriptionCount > 50) {
-    descriptionUse = `${descriptionUse?.slice(0, 50)}..`;
+  if (descriptionCount > 40) {
+    descriptionUse = `${descriptionUse?.slice(0, 40)}..`;
   }
 
   return (

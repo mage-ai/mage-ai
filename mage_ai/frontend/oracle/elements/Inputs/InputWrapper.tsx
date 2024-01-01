@@ -49,6 +49,7 @@ export type InputWrapperProps = {
   buttonBeforeWidth?: number;
   compact?: boolean
   danger?: boolean;
+  darkStyle?: boolean;
   defaultColor?: boolean;
   defaultTextColor?: boolean;
   disablePointerEvents?: boolean;
@@ -60,6 +61,7 @@ export type InputWrapperProps = {
   fullWidth?: boolean;
   greyBorder?: boolean;
   holder?: string;
+  hoverPointer?: boolean;
   info?: boolean;
   inputWidth?: number;
   invertedTheme?: boolean;
@@ -662,6 +664,18 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
 
   ${props => props.defaultTextColor && `
     color: ${(props.theme.content || dark.content).default} !important;
+  `}
+
+  ${props => props.darkStyle && `
+    border: 1px solid ${(props.theme || dark).monotone.grey400};
+    box-shadow: ${(props.theme || dark).shadow.small};
+    background-color: ${(props.theme || dark).background.dashboard};
+  `}
+
+  ${props => props.hoverPointer && `
+    &:hover {
+      cursor: pointer;
+    }
   `}
 `;
 

@@ -111,7 +111,7 @@ function KeyboardText({
         mutedDisabled={mutedDisabled}
         spacingLeft={spacingLeft}
       >
-        {keyText}
+        <div style={{ position: 'relative', top: 1 }}>{keyText}</div>
       </ElStyle>
     </Text>
   );

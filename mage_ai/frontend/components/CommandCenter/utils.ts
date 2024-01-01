@@ -88,7 +88,7 @@ export function getDisplayCategory(item: CommandCenterItemType, normal: boolean 
     let part2 = OBJECT_TITLE_MAPPING_SHORT[item?.object_type];
 
     if (ObjectTypeEnum.BLOCK === item?.object_type) {
-      part2 = BLOCK_TYPE_NAME_MAPPING[item?.metadata?.block?.type]?.toLowerCase() || part2;
+      part2 = BLOCK_TYPE_NAME_MAPPING[item?.metadata?.block?.type] || part2;
     }
 
     if (ItemTypeEnum.DETAIL === item?.item_type) {

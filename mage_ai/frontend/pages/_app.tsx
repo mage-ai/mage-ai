@@ -14,6 +14,7 @@ import { ThemeProvider } from 'styled-components';
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
 import AuthToken from '@api/utils/AuthToken';
+import CommandCenter from '@components/CommandCenter';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
@@ -268,6 +269,7 @@ function MyApp(props: MyAppProps & AppProps) {
                     }}
                   />
                 )}
+                {commandCenterEnabled && <CommandCenter />}
               </ErrorProvider>
             </SheetProvider>
           </ModalProvider>

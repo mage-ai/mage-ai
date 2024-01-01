@@ -2052,3 +2052,22 @@ export const ScheduleClockWithBorderDots = build([
   fill: 'none',
   viewBox: '0 0 20 20',
 });
+
+export const MageMLogo = build([
+  {
+    d: 'M15.7636 2.5L20.0003 2.5L12.1068 17.5L7.87012 17.5L15.7636 2.5Z',
+    opacity: '0.4',
+    fill: 'white',
+  },
+  {
+    d: 'M12.1066 2.5L7.89349 2.5L0 17.5L4.23669 17.5L7.86982 10.596V17.5H12.1065V2.50009L12.1066 2.5Z',
+    fill: 'white',
+  },
+  {
+    d: 'M15.7633 2.5H20V17.5H15.7633V2.5Z',
+    fill: 'white',
+  },
+], {
+  fill: 'none',
+  viewBox: '0 0 20 20',
+});
