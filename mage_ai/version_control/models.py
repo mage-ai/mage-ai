@@ -104,9 +104,34 @@ class Branch(BaseVersionControl):
 
         return self.run(' '.join(commands))
 
+
+@dataclass
+class File(BaseVersionControl):
+    name: str = None
+
+    def list(self) -> str:
+        return self.run('status')
+
+    def create(self):
+        return self.run(f'add {self.name}')
+
+    def detail(self):
+        return self.run(f'diff {self.name}')
+
+    def update(self, commit: str = None, reset: bool = False):
+        if commit:
+            return self.run(f'commit -m {commit}')
+        elif reset:
+            return self.run(f'reset {self.name}')
+
+    def delete(self):
+        return self.run(f'checkout {self.name}')
+
+
 @dataclass
 class Project(BaseVersionControl):
     branch: Branch = None
+    file: File = None
     remote: Remote = None
     uuid: str = None
 
@@ -114,6 +139,7 @@ class Project(BaseVersionControl):
         self.remote = Remote(project=self)
         self.branch = Branch(project=self)
         self.branch.remote = self.remote
+        self.file = File(project=self)
 
     @classmethod
     def load_all(self) -> List['Project']:
@@ -165,3 +191,9 @@ class Project(BaseVersionControl):
         if 'version_control' in settings and self.uuid in settings.get('version_control'):
             settings['version_control'].pop(self.uuid, None)
         update_settings(settings)
+
+    def configure(self, email: str = None, name: str = None):
+        if email:
+            self.run(f'config --global user.email "{email}"')
+        if name:
+            self.run(f'config --global user.name "{name}"')
