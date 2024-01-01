@@ -17,10 +17,16 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     code: number;
     messages: string[];
   }) => void;
-  onSuccessCallback?: (response: any, opts: any) => Promise<any>;
+  onSuccessCallback?: (response: any, opts: any) => void;
   searchRef: any;
 } = {}): {
-  fetch: (delay?: number) => Promise<any>;
+  fetch: (opts?: {
+    application?: ItemApplicationType;
+    disableRenderingCache?: boolean;
+    item?: CommandCenterItemType;
+    search?: string;
+    uuid?: number | string;
+  }) => Promise<any>;
   isLoading: boolean;
 } {
   const {
@@ -48,7 +54,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
       disableRenderingCache?: boolean;
       item?: CommandCenterItemType;
       search?: string;
-      uuid: number | string,
+      uuid?: number | string;
     }) => api.command_center_items.useCreate({
       signal: abortControllerRef?.current?.signal,
     })({

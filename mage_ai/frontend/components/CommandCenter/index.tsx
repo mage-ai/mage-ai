@@ -71,7 +71,7 @@ import {
   KEY_SYMBOL_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { ApplicationConfiguration, InputElementEnum, ItemRowClassNameEnum, getInputPlaceholder } from './constants';
+import { ApplicationConfiguration, ExecuteActionableType, InputElementEnum, ItemRowClassNameEnum, getInputPlaceholder } from './constants';
 import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { addClassNames, removeClassNames } from '@utils/elements';
@@ -101,7 +101,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 function CommandCenter() {
   const router = useRouter();
-  const [showError, hideError, refError] = useError(null, {}, [], {
+  const [showError, _, refError] = useError(null, {}, [], {
     uuid: COMPONENT_UUID,
   });
 
@@ -231,7 +231,12 @@ function CommandCenter() {
   }
 
   function addApplication(
-    applicationConfiguration: ApplicationConfiguration,
+    applicationConfiguration: {
+      application: ItemApplicationType;
+      focusedItemIndex: number;
+      item: CommandCenterItemType;
+      itemsRef?: any;
+    } & InvokeRequestActionType & ExecuteActionableType,
     opts: {
       skipAdding?: boolean;
     } = {
@@ -335,6 +340,7 @@ function CommandCenter() {
         applicationsRef={refApplications}
         refError={refError}
         removeApplication={removeApplication}
+        router={router}
       />
     );
   }
@@ -837,6 +843,7 @@ function CommandCenter() {
     const applicationsCount = item?.applications?.length || 0;
     if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
       addApplication({
+        application: null,
         item,
         focusedItemIndex,
         executeAction,
@@ -881,7 +888,7 @@ function CommandCenter() {
     const itemsEl = refItems?.current?.map((item: CommandCenterItemType, index: number) => {
       const refItem = refItemsNodes?.current?.[item?.uuid] || createRef();
       refItemsNodes.current[item?.uuid] = refItem;
-      const className = [ItemRowClassNameEnum.ITEM_ROW];
+      const className = [String(ItemRowClassNameEnum.ITEM_ROW)];
       if (index === 0) {
         className.push('focused');
       }
@@ -969,7 +976,7 @@ function CommandCenter() {
   function fetchItems(opts = {}) {
     let fetchOptions = { ...opts };
 
-    const currentApplicationConfig = getCurrentApplicationConfiguration() || {};
+    const currentApplicationConfig = getCurrentApplicationConfiguration();
     if (isCurrentApplicationDetailList(currentApplicationConfig)) {
       fetchOptions = {
         ...fetchOptions,
@@ -1067,10 +1074,8 @@ function CommandCenter() {
         openCommandCenter();
       }
     } else if (isApplicationActive()) {
-      const currentApplicationConfig = getCurrentApplicationConfiguration() || {};
-      const {
-        application,
-      } = currentApplicationConfig || {};
+      const currentApplicationConfig = getCurrentApplicationConfiguration();
+      const application = (currentApplicationConfig || {})?.application;
 
       // If in a context of a selected item.
       // Leave the current context and go back.

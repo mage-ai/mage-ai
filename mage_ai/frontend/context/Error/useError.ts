@@ -27,7 +27,7 @@ export const useError = (
   errorProps: ErrorProps = {},
   inputs: DependencyList = [],
   opts: UseErrorOptionsType = {},
-): [ShowError, HideError] => {
+): [ShowError, HideError, any] => {
   if (component && !isFunctionalComponent(component)) {
     throw new Error(
       'Only stateless components can be used as an argument to useError. ' +

@@ -44,6 +44,7 @@ export enum ObjectTypeEnum {
   GIT = 'git',
   PIPELINE = 'pipeline',
   PIPELINE_RUN = 'pipeline_run',
+  SETTINGS = 'settings',
   TRIGGER = 'trigger',
 }
 
@@ -183,7 +184,7 @@ export interface CommandCenterActionInteractionType {
   type: CommandCenterActionInteractionTypeEnum;
 }
 
-interface CommandCenterActionPageType {
+export interface CommandCenterActionPageType {
   external?: boolean;
   open_new_window?: boolean;
   path: string;
@@ -211,8 +212,9 @@ interface FormInputType extends InteractionInputType {
   required?: boolean;
 }
 
-interface ButtonActionType {
+export interface ButtonActionType {
   action_types: ButtonActionTypeEnum[];
+  actions?: CommandCenterActionType[];
   display_settings?: DisplaySettingsType;
   keyboard_shortcuts?: number[][] | string[][];
   label: string

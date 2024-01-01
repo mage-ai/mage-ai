@@ -1,4 +1,5 @@
-import { CommandCenterItemType, ItemApplicationType, KeyValueType } from '@interfaces/CommandCenterType';
+import { CommandCenterActionType, CommandCenterItemType, ItemApplicationType, KeyValueType } from '@interfaces/CommandCenterType';
+import { ExecuteActionableType } from '../constants';
 
 export type InvokeRequestOptionsType = {
   action: CommandCenterActionType;
@@ -12,23 +13,23 @@ export type InvokeRequestActionType = {
   invokeRequest?: (options: InvokeRequestOptionsType) => Promise<any>;
 };
 
+type CurrentType = {
+  focusedItemIndex: number;
+  item: CommandCenterItemType;
+} & ExecuteActionableType;
+
 export type ApplicationProps = {
   application: ItemApplicationType;
   applicationState: {
     current: KeyValueType;
   };
   applicationsRef: {
-    current: {
-      executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
-      focusedItemIndex: number;
-      item: CommandCenterItemType;
-    }[];
+    current: CurrentType[];
   };
-  executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
   focusedItemIndex: number;
   item: CommandCenterItemType;
   itemsRef?: any;
   refError?: any;
   removeApplication: () => void;
   router: any;
-} & InvokeRequestActionType;
+} & InvokeRequestActionType & ExecuteActionableType;

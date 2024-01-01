@@ -3,6 +3,7 @@ import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Text from '@oracle/elements/Text';
 import {
   ButtonActionTypeEnum,
+  CommandCenterActionType,
   CommandCenterItemType,
   ItemApplicationType,
   ItemApplicationTypeEnum,
@@ -19,6 +20,7 @@ import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { getSetSettings } from '@storage/CommandCenter/utils';
 
 export enum ItemRowClassNameEnum {
+  FOCUSED = 'focused',
   ITEM_ROW = 'item-row',
   ITEM_ROW_CATEGORY = 'item-row-category',
 }
@@ -27,13 +29,20 @@ export enum InputElementEnum {
   MAIN = 'main',
 }
 
+export type ExecuteActionableType = {
+  executeAction: (
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    actions?: CommandCenterActionType[],
+  ) => Promise<any>;
+}
+
 export type ApplicationConfiguration = {
   application: ItemApplicationType;
-  executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
   focusedItemIndex: number;
   item: CommandCenterItemType;
   itemsRef?: any;
-} & InvokeRequestActionType;
+} & InvokeRequestActionType & ExecuteActionableType;
 
 export function getInputPlaceholder({
   application,
@@ -123,7 +132,7 @@ export function buildSettingsItemWithApplication() {
 
   const item = {
     item_type: ItemTypeEnum.ACTION,
-    object_type: ObjectTypeEnum.SUPPORT,
+    object_type: ObjectTypeEnum.SETTINGS,
     title: 'Command center settings',
     description: 'Customize your command center.',
     applications: [

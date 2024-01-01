@@ -1,4 +1,4 @@
-import { ApplicationConfiguration } from './constants';
+import { ApplicationConfiguration, ExecuteActionableType } from './constants';
 import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
@@ -146,12 +146,11 @@ export function executeButtonActions({
 }: {
   application: ItemApplicationType;
   button: ButtonActionType;
-  executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
   focusedItemIndex: number;
   item: CommandCenterItemType;
   refError: any;
   removeApplication: () => void;
-}) {
+} & ExecuteActionableType) {
   const actionTypes = button?.action_types || [];
 
   const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
@@ -184,7 +183,7 @@ export function executeButtonActions({
 
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));
 
-    return result?.then((resultsInner) => {
+    return result?.then((resultsInner: any) => {
       if (index + 1 <= actionTypes?.length - 1 && !refError?.current) {
         return invokeActionAndCallback(index + 1, {
           ...(results || {}),
@@ -210,7 +209,7 @@ export function interpolatePagePath(page: CommandCenterActionPageType): string {
   let pathUse = path;
 
   Object.entries(parameters || {})?.forEach(([key, value]) => {
-    pathUse = pathUse?.replaceAll(`:${key}`, value);
+    pathUse = pathUse?.replaceAll(`:${key}`, String(value));
   });
 
   return [pathUse, queryS].filter(s => s).join('?');
