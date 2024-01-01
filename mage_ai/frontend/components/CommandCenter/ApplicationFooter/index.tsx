@@ -74,7 +74,6 @@ function ApplicationFooter({
                 )}
                 keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
                 noBackground={idx === 0 && buttonsCount >= 2}
-                noBorder
                 onClick={() => executeButtonActions({
                   application,
                   button,
@@ -84,6 +83,7 @@ function ApplicationFooter({
                   refError,
                   removeApplication,
                 })}
+                uuid={`${item?.uuid}-${application?.uuid}-${idx}-button`}
               >
                 {label}
               </KeyboardShortcutButton>

@@ -224,6 +224,7 @@ export interface ItemApplicationType {
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
   settings: FormInputType[];
+  uuid: string;
 }
 
 interface AttributeDisplaySettingsType {

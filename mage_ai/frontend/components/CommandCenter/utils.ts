@@ -149,6 +149,7 @@ export function executeButtonActions({
   executeAction: (item: CommandCenterItemType, focusedItemIndex: number) => Promise<any>;
   focusedItemIndex: number;
   item: CommandCenterItemType;
+  refError: any;
   removeApplication: () => void;
 }) {
   const actionTypes = button?.action_types || [];
