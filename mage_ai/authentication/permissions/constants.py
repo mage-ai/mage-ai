@@ -85,6 +85,10 @@ class EntityName(str, Enum):
     User = 'User'
     UserRole = 'UserRole'
     Variable = 'Variable'
+    VersionControlBranch = 'VersionControlBranch'
+    VersionControlFile = 'VersionControlFile'
+    VersionControlProject = 'VersionControlProject'
+    VersionControlRemote = 'VersionControlRemote'
     Widget = 'Widget'
     Workspace = 'Workspace'
 
