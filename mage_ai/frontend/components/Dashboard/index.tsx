@@ -41,6 +41,7 @@ export type DashboardSharedProps = {
 type DashboardProps = {
   addProjectBreadcrumbToCustomBreadcrumbs?: boolean;
   appendBreadcrumbs?: boolean;
+  beforeHeader?: any;
   breadcrumbs?: BreadcrumbType[];
   children?: any;
   contained?: boolean;
@@ -49,6 +50,8 @@ type DashboardProps = {
   headerOffset?: number;
   hideAfterCompletely?: boolean;
   mainContainerHeader?: any;
+  setAfterWidth?: (value: number) => void;
+  setBeforeWidth?: (value: number) => void;
   setErrors?: (errors: ErrorsType) => void;
   subheaderChildren?: any;
   title: string;

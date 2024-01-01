@@ -263,9 +263,9 @@ function FileEditor({
           }}
           originalValue={originalValues?.content_from_base}
           padding={10}
-          readOnly={showDiffs}
+          readOnly={!!showDiffs}
           selected
-          showDiffs={showDiffs}
+          showDiffs={!!showDiffs}
           textareaFocused
           value={isJsonString(file?.content)
             ? JSON.stringify(JSON.parse(file?.content), null, 2)

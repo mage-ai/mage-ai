@@ -65,15 +65,17 @@ function VersionControl() {
   });
 
   const [afterHidden, setAfterHidden] = useState(true);
-  const [afterWidth, setAfterWidth] = useState(null);
-  const [beforeWidth, setBeforeWidth] = useState(null);
+  const [afterWidth, setAfterWidth] = useState(30 * UNIT);
+  const [beforeWidth, setBeforeWidth] = useState(30 * UNIT);
 
   const [originalContent, setOriginalContent] = useState({});
 
   const [branchBase, setBranchBase] = useState<string>(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS[0]);
-  const [selectedTabsBefore, setSelectedTabsBefore] = useState<TabType>({
+  const [selectedTabsBefore, setSelectedTabsBefore] = useState<{
+    [key: string]: TabType;
+  }>({
     'All projects': {
       uuid: 'All projects',
     },
@@ -557,6 +559,7 @@ function VersionControl() {
       filePath: string;
       query?: {
         base_branch: string;
+        derive?: boolean;
       };
     }) => api.git_files.detailAsync(encodeURIComponent(filePath), query),
   );
@@ -571,6 +574,7 @@ function VersionControl() {
         },
       }).then(resp => setOriginalContent(prev => ({
         ...prev,
+        // @ts-ignore
         [selectedFilePath2]: resp?.data?.git_file,
       })));
     }
