@@ -95,9 +95,9 @@ export function buildSettingsItemWithApplication() {
               />
 
               <Text inline muted small>
-                &nbsp;&nbsp;(<Text inlined monospace muted small>
+                &nbsp;&nbsp;(<Text inline monospace muted small>
                   metaKey
-                </Text> + <Text inlined monospace muted small>period</Text>).
+                </Text> + <Text inline monospace muted small>period</Text>).
               </Text>
             </FlexContainer>
 
