@@ -27,6 +27,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
 }): {
   fetch: (opts?: {
     application?: ItemApplicationType;
+    delay?: number;
     disableRenderingCache?: boolean;
     item?: CommandCenterItemType;
     search?: string;
@@ -56,6 +57,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
       search,
     }: {
       application?: ItemApplicationType;
+      delay?: number;
       disableRenderingCache?: boolean;
       item?: CommandCenterItemType;
       search?: string;
@@ -99,7 +101,12 @@ export default function useCache(fetchUUID: () => number | string, opts: {
   );
 
   const fetchDelay = useCallback((opts: {
+    application?: ItemApplicationType;
     delay?: number;
+    disableRenderingCache?: boolean;
+    item?: CommandCenterItemType;
+    search?: string;
+    uuid?: number | string;
   } = {}) => {
     const {
       delay,

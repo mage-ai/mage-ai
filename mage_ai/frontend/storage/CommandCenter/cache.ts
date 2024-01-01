@@ -1,4 +1,4 @@
-import { CommandCenterItemType } from '@interfaces/CommandCenterItemType';
+import { CommandCenterItemType } from '@interfaces/CommandCenterType';
 import { LOCAL_STORAGE_COMMAND_CENTER_ITEMS } from './constants';
 import { combineUnique, getPageHistoryAsItems } from './utils';
 import { get, set } from '@storage/localStorage';

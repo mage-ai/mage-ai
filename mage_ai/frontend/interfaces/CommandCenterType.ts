@@ -303,7 +303,7 @@ export interface CommandCenterItemType {
   };
   object_type: ObjectTypeEnum;
   score?: number;
-  tags?: ItemTagEnum;
+  tags?: ItemTagEnum[];
   title: string;
   uuid: string;
 }

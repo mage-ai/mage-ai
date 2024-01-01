@@ -21,6 +21,7 @@ export type UseErrorViewsProps = {
     label: string;
     onClick?: () => void;
   }[];
+  onClose?: () => void;
   response?: ErrorResponseType;
 };
 

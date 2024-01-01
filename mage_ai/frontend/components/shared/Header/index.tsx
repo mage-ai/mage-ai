@@ -392,40 +392,6 @@ function Header({
 
 
           <Flex alignItems="center">
-            {false && (
-              <Flex alignItems="center">
-                <TextInput
-                  afterIcon={(
-                    <div style={{ bottom: 1, position: 'relative' }}>
-                      <KeyboardTextGroup
-                        addPlusSignBetweenKeys
-                        keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_PERIOD]]}
-                        monospace
-                      />
-                    </div>
-                  )}
-                  darkStyle
-                  hoverPointer
-                  minWidth={UNIT * 30}
-                  onClick={(e) => {
-                    e?.target?.blur();
-                  }}
-                  onFocus={(e) => {
-                    e?.target?.blur();
-                  }}
-                  paddingLeft={UNIT * 1.5}
-                  paddingRight={UNIT * 2}
-                  paddingVertical={0}
-                  placeholder="Launch command center"
-                  small
-                  style={{
-                    height: 4.5 * UNIT,
-                  }}
-                />
-                <Spacing mr={1} />
-              </Flex>
-            )}
-
             {gitIntegrationEnabled && branch && (
               <Spacing ml={1}>
                 <KeyboardShortcutButton

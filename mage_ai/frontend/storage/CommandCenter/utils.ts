@@ -134,9 +134,8 @@ export function addPageHistory(page: PageHistoryType) {
   const arr: PageHistoryType[] = [{
     ...page,
     timestamp: Number(new Date()) / 1000,
-  }].concat(
-    (getPageHistory() || []).filter(({ path }) => path !== page?.path)
-  );
+  }];
+  arr.push(...(getPageHistory() || []).filter(({ path }) => path !== page?.path));
 
   set(LOCAL_STORAGE_COMMAND_CENTER_HISTORY_PAGES, arr.slice(
     0,
