@@ -15,13 +15,20 @@ class BaseVersionControl(BaseDataClass):
     project: Any = None
 
     def run(self, command: str) -> List[str]:
-        proc = subprocess.run([
+        args = [
             'git',
             '-C',
-            self.project.repo_path,
-        ] + command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self.repo_path,
+        ] + command.split(' ')
+        print(f'[VersionControl] Run: {" ".join(args)}')
+
+        proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         return proc.stdout.decode().split('\n')
+
+    @property
+    def repo_path(self) -> str:
+        return self.project.repo_path
 
 
 @dataclass
@@ -32,23 +39,81 @@ class Remote(BaseVersionControl):
     def list(self) -> List[str]:
         return self.run('remote -v')
 
-    def create(self, name: str, url: str):
-        self.name = name
-        self.url = url
+    def create(self):
+        return self.run(f'remote add {self.name} {self.url}')
 
-        return self.run(f'remote add {name} {url}')
+    def delete(self):
+        return self.run(f'remote rm {self.name}')
 
-    def delete(self, name: str = None):
-        return self.run(f'remote rm {name or self.name}')
+    def update(self, fetch: bool = False, set_url: bool = False):
+        if fetch:
+            return self.run(f'fetch {self.name}')
+        elif set_url:
+            return self.run(f'remote set-url {self.name} {self.url}')
 
 
 @dataclass
-class Project(BaseDataClass):
-    uuid: str
+class Branch(BaseVersionControl):
+    name: str = None
     remote: Remote = None
+
+    def list(self, include_all = False) -> List[str]:
+        commands = ['branch']
+        if include_all:
+            commands.append('-a')
+
+        return self.run(' '.join(commands))
+
+    def create(self, name: str):
+        self.name = name
+        return self.run(f'checkout -b {name}')
+
+    def detail(self):
+        return self.run('log')
+
+    def delete(self, name: str = None, force: bool = False):
+        flag = 'd'
+        if force:
+            flag = flag.upper()
+        return self.run(f'branch -{flag} {name or self.name}')
+
+    def update(
+        self,
+        checkout: bool = False,
+        clone: bool = False,
+        merge: bool = False,
+        pull: bool = False,
+        rebase: bool = False,
+        reset: str = None,
+    ):
+        commands = []
+
+        if clone:
+            commands.append(f'clone -b {self.name}')
+            if self.remote:
+                commands.append(self.remote.url)
+        elif pull or rebase:
+            commands.append('rebase' if rebase else 'pull')
+            if self.remote:
+                commands.append(self.remote.name)
+            commands.append(self.name)
+        elif reset:
+            commands.extend(['reset', reset])
+        elif checkout or merge:
+            commands.extend(['merge' if merge else 'checkout', self.name])
+
+        return self.run(' '.join(commands))
+
+@dataclass
+class Project(BaseVersionControl):
+    branch: Branch = None
+    remote: Remote = None
+    uuid: str = None
 
     def __post_init__(self):
         self.remote = Remote(project=self)
+        self.branch = Branch(project=self)
+        self.branch.remote = self.remote
 
     @classmethod
     def load_all(self) -> List['Project']:
@@ -83,7 +148,7 @@ class Project(BaseDataClass):
                 repo_path=self.repo_path,
             ),
         ))
-        Controller(project=self).run('init')
+        self.run('init')
 
     def update(self, settings: Dict = {}):
         self.preferences.update_preferences(settings)
