@@ -377,10 +377,10 @@ class CommandCenterSettings(CommandCenterBaseClass):
 
     @classmethod
     def load_from_file_path(self, file_path: str = None) -> 'CommandCenterSettings':
-        return self.load(**(load_settings() or {}))
+        return self.load(**(load_settings(full_path=file_path) or {}))
 
     def save(self, file_path: str = None):
-        save_settings(self.to_dict(), file_path=file_path)
+        save_settings(self.to_dict(), full_path=file_path)
 
 
 @dataclass

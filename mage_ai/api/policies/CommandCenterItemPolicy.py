@@ -43,6 +43,7 @@ CommandCenterItemPolicy.allow_write(
         'picks',
         'search',
         'search_history',
+        'settings',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

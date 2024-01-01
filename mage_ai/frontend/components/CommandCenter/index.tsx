@@ -1385,6 +1385,14 @@ function CommandCenter() {
           ref={refFooter}
         >
           <Footer
+            addApplication={(item, application) => addApplication({
+              application,
+              executeAction,
+              focusedItemIndex: refFocusedItemIndex?.current,
+              invokeRequest,
+              item,
+              itemsRef: refItems,
+            })}
             closeCommandCenter={closeCommandCenter}
             handleNavigation={(increment: number) => {
               if (increment >= 1) {

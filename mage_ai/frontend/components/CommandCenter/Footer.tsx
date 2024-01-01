@@ -1,3 +1,4 @@
+import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton, {
@@ -7,6 +8,7 @@ import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { CommandCenterItemType, ItemApplicationType,} from '@interfaces/CommandCenterType';
 import {
   KEY_SYMBOL_ARROW_DOWN,
   KEY_SYMBOL_ARROW_UP,
@@ -14,9 +16,12 @@ import {
   KEY_SYMBOL_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SettingsWithKnobs } from '@oracle/icons';
+import { buildSettingsItemWithApplication } from './constants';
 import { pauseEvent } from '@utils/events';
 
 type FooterProps = {
+  addApplication: (item: CommandCenterItemType, application: ItemApplicationType) => void;
   closeCommandCenter: () => void;
   handleNavigation: (increment: number) => void;
   handleSelectItemRow: () => void;
@@ -26,6 +31,7 @@ type FooterProps = {
 };
 
 function Footer({
+  addApplication,
   closeCommandCenter,
   handleNavigation,
   handleSelectItemRow,
@@ -33,10 +39,25 @@ function Footer({
   refFooterButtonEscape,
   refFooterButtonUp,
 }: FooterProps) {
+  const {
+    application,
+    item,
+  } = buildSettingsItemWithApplication();
+
   return (
     <FlexContainer alignItems="center" fullWidth justifyContent="space-between">
       <Flex alignItems="center" flex={1}>
-
+        <Button
+          iconOnly
+          noBackground
+          noBorder
+          noPadding
+          onClick={() => {
+            addApplication(item, application);
+          }}
+        >
+          <SettingsWithKnobs default size={UNIT * 2} />
+        </Button>
       </Flex>
 
       <FlexContainer alignItems="center">
