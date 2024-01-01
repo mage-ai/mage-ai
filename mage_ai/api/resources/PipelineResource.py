@@ -19,9 +19,9 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
 from mage_ai.authentication.operation_history.utils import (
-    load_pipelines_detail_async,
-    record_create_pipeline_async,
-    record_detail_pipeline_async,
+    load_pipelines_detail,
+    record_create_pipeline,
+    record_detail_pipeline,
 )
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.constants import (
@@ -59,6 +59,35 @@ from mage_ai.shared.array import find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
 from mage_ai.shared.strings import is_number
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
+
+
+@safe_db_query
+def query_pipeline_schedules(pipeline_uuids: List[str]):
+    a = aliased(PipelineSchedule, name='a')
+    result = (
+        PipelineSchedule.
+        select(*[
+            a.created_at,
+            a.id,
+            a.name,
+            a.pipeline_uuid,
+            a.schedule_interval,
+            a.schedule_type,
+            a.start_time,
+            a.status,
+            a.updated_at,
+        ]).
+        filter(
+            a.pipeline_uuid.in_(pipeline_uuids),
+            or_(
+                a.repo_path.in_(Project().repo_path_for_database_query(
+                    'pipeline_schedules',
+                )),
+                a.repo_path.is_(None),
+            )
+        )
+    ).all()
+    return group_by(lambda x: x.pipeline_uuid, result)
 
 
 class PipelineResource(BaseResource):
@@ -122,7 +151,7 @@ class PipelineResource(BaseResource):
             timestamp_start = (datetime.utcnow() - timedelta(
                 hours=24 * int(from_history_days),
             )).timestamp()
-            history = await load_pipelines_detail_async(timestamp_start=timestamp_start)
+            history = load_pipelines_detail(timestamp_start=timestamp_start)
             history = sorted(
                 history,
                 key=lambda x: int(x.timestamp),
@@ -209,34 +238,6 @@ class PipelineResource(BaseResource):
             )
 
         pipelines = [p for p in pipelines if p is not None]
-
-        @safe_db_query
-        def query_pipeline_schedules(pipeline_uuids):
-            a = aliased(PipelineSchedule, name='a')
-            result = (
-                PipelineSchedule.
-                select(*[
-                    a.created_at,
-                    a.id,
-                    a.name,
-                    a.pipeline_uuid,
-                    a.schedule_interval,
-                    a.schedule_type,
-                    a.start_time,
-                    a.status,
-                    a.updated_at,
-                ]).
-                filter(
-                    a.pipeline_uuid.in_(pipeline_uuids),
-                    or_(
-                        a.repo_path.in_(Project().repo_path_for_database_query(
-                            'pipeline_schedules',
-                        )),
-                        a.repo_path.is_(None),
-                    )
-                )
-            ).all()
-            return group_by(lambda x: x.pipeline_uuid, result)
 
         mapping = {}
         if include_schedules:
@@ -412,7 +413,7 @@ class PipelineResource(BaseResource):
                 template_uuid=template_uuid,
             )
 
-        await record_create_pipeline_async(
+        record_create_pipeline(
             resource_uuid=pipeline.uuid,
             user=user.id if user else None,
         )
@@ -464,7 +465,7 @@ class PipelineResource(BaseResource):
             if Project(pipeline.repo_config).is_feature_enabled(
                 FeatureUUID.OPERATION_HISTORY,
             ):
-                await record_detail_pipeline_async(
+                record_detail_pipeline(
                     resource_uuid=pipeline.uuid,
                     user=user.id if user else None,
                 )
@@ -477,6 +478,16 @@ class PipelineResource(BaseResource):
             from mage_ai.cache.block import BlockCache
 
             await BlockCache.initialize_cache()
+
+        include_schedules = query.get('include_schedules', [False])
+        if include_schedules:
+            include_schedules = include_schedules[0]
+
+        if include_schedules:
+            mapping = query_pipeline_schedules([pipeline.uuid])
+
+            if mapping.get(pipeline.uuid):
+                pipeline.schedules = mapping[pipeline.uuid] or []
 
         return self(pipeline, user, **kwargs)
 

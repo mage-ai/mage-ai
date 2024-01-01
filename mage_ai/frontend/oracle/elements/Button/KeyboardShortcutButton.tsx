@@ -63,6 +63,7 @@ export type KeyboardShortcutButtonProps = {
   centerText?: boolean;
   children?: any;
   compact?: boolean;
+  default?: boolean;
   earth?: boolean;
   fitContentWidth?: boolean;
   fire?: boolean;
@@ -193,7 +194,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.compact && `
-    padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
+    padding: ${UNIT * 0.75}px ${UNIT * 1}px;
   `}
 
   ${props => props.withIcon && `
@@ -274,6 +275,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     color: ${(props.theme.monotone || dark.monotone).grey300};
   `}
 
+  ${props => props.default && `
+    color: ${(props.theme.content || dark.content).default};
+  `}
+
   ${props => props.warning && `
     color: ${(props.theme.brand || dark.brand).energy400};
   `}
@@ -297,7 +302,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.compact && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: ${BORDER_RADIUS}px;
   `}
 
   ${props => !props.borderRadiusLeft && !props.borderRadiusRight && props.pill && !props.spacious && `

@@ -21,10 +21,42 @@ BLOCK_KEYS = [
 ]
 
 
+def build_block_dict(block: Union[Dict]) -> Dict:
+    file_path = None
+
+    if isinstance(block, dict):
+        block_language = block.get('language')
+        block_name = block.get('name')
+        block_type = block.get('type')
+        block_uuid = block.get('uuid')
+        configuration = block.get('configuration')
+        if configuration:
+            file_source = configuration.get('file_source')
+            if file_source:
+                file_path = file_source.get('path')
+            if file_path is None:
+                file_path = configuration.get('file_path')
+    else:
+        block_language = block.language
+        block_name = block.name
+        block_type = block.type
+        block_uuid = block.uuid
+        file_path = block.file_path
+
+    return dict(
+        file_path=file_path,
+        language=block_language,
+        name=block_name,
+        type=block_type,
+        uuid=block_uuid,
+    )
+
+
 def build_pipeline_dict(
     pipeline: Union[Dict],
     added_at: str = None,
     include_details: bool = False,
+    repo_path: str = None,
 ) -> Dict:
     pipeline_output_dict = dict(
         description=None,
@@ -34,6 +66,9 @@ def build_pipeline_dict(
         updated_at=None,
         uuid=None,
     )
+
+    if repo_path:
+        pipeline_output_dict['repo_path'] = repo_path
 
     if isinstance(pipeline, dict):
         pipeline_output_dict.update(extract(pipeline, PIPELINE_KEYS))

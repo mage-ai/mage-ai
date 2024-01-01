@@ -1,6 +1,7 @@
 import os
 from typing import Dict, List
 
+from mage_ai.cache.dbt.utils import get_project_path_from_file_path
 from mage_ai.data_preparation.models.block.platform.utils import (
     from_another_project,
     get_selected_directory_from_file_path,
@@ -102,6 +103,10 @@ class ProjectPlatformAccessible:
         project_path_relative = self.__file_source_project()
         if project_path_relative:
             return os.path.join(base_repo_path(), project_path_relative)
+        else:
+            file_path = self.__file_source_path() or self.configuration.get('file_path')
+            if file_path:
+                return get_project_path_from_file_path(file_path, walk_up_parents=True)
 
     def get_project_path_from_project_name(self, project_name: str) -> str:
         if not self.project_platform_activated or not project_name:

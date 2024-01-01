@@ -274,6 +274,8 @@ class File:
 
         update_caches(repo_path, dir_path, filename)
 
+        update_file_cache()
+
     @classmethod
     async def write_async(
         self,
@@ -303,6 +305,8 @@ class File:
                 await fp.write(content or '')
 
         await update_caches_async(repo_path, dir_path, filename)
+
+        update_file_cache()
 
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
@@ -369,6 +373,8 @@ class File:
     def delete(self):
         os.remove(self.file_path)
 
+        update_file_cache()
+
     def rename(self, dir_path: str, filename):
         full_path = os.path.join(self.repo_path, dir_path, filename)
 
@@ -394,6 +400,8 @@ class File:
 
         self.dir_path = dir_path
         self.filename = filename
+
+        update_file_cache()
 
     def to_dict(self, include_content=False):
         data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
@@ -529,3 +537,10 @@ def update_caches(repo_path: str, dir_path: str, filename: str) -> None:
             print(f'[ERROR] File update DBTCache for {repo_path}, {dir_path}, {filename}: {err}.')
             if is_debug():
                 raise err
+
+
+def update_file_cache() -> None:
+    project_model = Project(root_project=True)
+    if project_model and project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+        from mage_ai.cache.file import FileCache
+        FileCache().invalidate()

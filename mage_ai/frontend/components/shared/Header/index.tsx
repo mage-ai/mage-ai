@@ -16,6 +16,7 @@ import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
@@ -23,23 +24,27 @@ import ProjectType from '@interfaces/ProjectType';
 import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
-import { Branch, Slack } from '@oracle/icons';
+import { Branch, AISparkle, Slack } from '@oracle/icons';
 import {
   CUSTOM_LOGO_HEIGHT,
   HeaderStyle,
   LOGO_HEIGHT,
   MediaStyle,
 } from './index.style';
+import { KEY_SYMBOL_META, KEY_SYMBOL_PERIOD } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { launchCommandCenter } from '@components/CommandCenter/utils';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
@@ -106,6 +111,8 @@ function Header({
   } = useCustomDesign();
 
   const {
+    featureEnabled,
+    featureUUIDs,
     project: projectInit,
     rootProject,
   } = useProject();
@@ -272,7 +279,21 @@ function Header({
       },
       uuid: 'user_settings',
     },
+    ...(featureEnabled(featureUUIDs?.COMMAND_CENTER)
+      ? [
+          {
+            label: () => 'Launch command center',
+            onClick: (e) => {
+              pauseEvent(e);
+              launchCommandCenter()
+            },
+            uuid: 'Launch command center',
+          },
+        ]
+      : []
+    ),
   ];
+
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
     {
@@ -368,6 +389,7 @@ function Header({
               breadcrumbs={breadcrumbs}
             />
           </Flex>
+
 
           <Flex alignItems="center">
             {gitIntegrationEnabled && branch && (

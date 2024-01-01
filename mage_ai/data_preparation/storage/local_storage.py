@@ -135,3 +135,15 @@ class LocalStorage(BaseStorage):
             except Exception as err:
                 if is_debug():
                     print(f'[ERROR] LocalStorage.read_async: {err}')
+
+    def read(self, file_path: str) -> str:
+        dirname = os.path.dirname(file_path)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
+
+        with open(file_path, mode='r') as file:
+            try:
+                return file.read()
+            except Exception as err:
+                if is_debug():
+                    print(f'[ERROR] LocalStorage.read: {err}')

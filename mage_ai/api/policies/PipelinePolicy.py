@@ -39,6 +39,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
     'conditionals',
     'extensions',
+    'schedules',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
@@ -119,6 +120,7 @@ PipelinePolicy.allow_write([
 
 PipelinePolicy.allow_query([
     'include_block_pipelines',
+    'include_schedules',
     'includes_block_metadata',
     'includes_content',
     'includes_extensions',

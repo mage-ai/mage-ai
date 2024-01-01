@@ -1,5 +1,6 @@
+import glob
 import os
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 
 def reverse_readline(filename, buf_size=8192):
@@ -63,3 +64,25 @@ def find_directory(top_level_path: str, comparator: Callable) -> str:
             full_path = os.path.join(path, name)
             if comparator(full_path):
                 return full_path
+
+
+def get_absolute_paths_from_all_files(
+    starting_full_path_directory: str,
+    comparator: Callable = None,
+    include_hidden_files: bool = False,
+    parse_values: Callable = None,
+) -> List[Tuple[str, int, str]]:
+    dir_path = os.path.join(starting_full_path_directory, './**/*')
+
+    arr = []
+    for filename in glob.iglob(dir_path, recursive=True):
+        absolute_path = os.path.abspath(filename)
+
+        if os.path.isfile(absolute_path) and \
+                (not include_hidden_files or not absolute_path.startswith('.')) and \
+                (not comparator or comparator(absolute_path)):
+
+            value = (absolute_path, os.path.getsize(filename), round(os.path.getmtime(filename)))
+            arr.append(parse_values(value) if parse_values else value)
+
+    return arr

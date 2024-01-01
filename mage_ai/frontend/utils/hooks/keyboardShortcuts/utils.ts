@@ -1,5 +1,7 @@
 import { KeyMappingType } from '@interfaces/KeyboardShortcutType';
 import {
+  KEY_CODE_ALT_STRING,
+  KEY_CODE_ALTS,
   KEY_CODE_CONTROL,
   KEY_CODE_CONTROLS,
   KEY_CODE_META,
@@ -12,13 +14,20 @@ import { ignoreKeys } from '@utils/hash';
 export function onlyKeysPresent(
   keys: (string | number)[],
   keyMapping: KeyMappingType,
+  opts: {
+    allowExtraKeys?: number;
+  } = {
+    allowExtraKeys: 0,
+  },
 ): boolean {
   const keysAsStrings = keys.map(key => String(key));
 
+  const keysHasAlt = keys.includes(KEY_CODE_ALT_STRING);
   const keysHasControl = keys.includes(KEY_CODE_CONTROL);
   const keysHasMeta = keys.includes(KEY_CODE_META);
   const keysHasShift = keys.includes(KEY_CODE_SHIFT);
 
+  const altKeyCodesAsStrings = KEY_CODE_ALTS.map(key => String(key));
   const controlKeyCodesAsStrings = KEY_CODE_CONTROLS.map(key => String(key));
   const metaKeyCodesAsStrings = KEY_CODE_METAS.map(key => String(key));
   const shiftKeyCodesAsStrings = KEY_CODE_SHIFTS.map(key => String(key));
@@ -34,9 +43,17 @@ export function onlyKeysPresent(
     delete keyMappingUse[KEY_CODE_META];
   }
 
+  const allowKeyCodeAltKey = keys?.some(key => altKeyCodesAsStrings?.includes(String(key)))
+    && !keysHasAlt;
+
+  if (allowKeyCodeAltKey && KEY_CODE_ALT_STRING in keyMappingUse) {
+    delete keyMappingUse[KEY_CODE_ALT_STRING];
+  }
+
+
   const otherKeysPressed = Object
     .entries(keyMappingUse)
-    .find(([k, v]) => v
+    .filter(([k, v]) => v
       // Pressed key is a key in the keys argument
       // Pressed key isn’t a key in the keys argument
       && !keysAsStrings.includes(String(k))
@@ -44,7 +61,9 @@ export function onlyKeysPresent(
       // Pressed key isn’t a meta key or pressed key is not in the keys argument
       && (!keysHasControl || !controlKeyCodesAsStrings.includes(String(k)))
       && (!keysHasShift || !shiftKeyCodesAsStrings.includes(String(k)))
+      && !keys?.includes(k)
     );
 
-  return keys.every(k => keyMappingUse[k]) && !otherKeysPressed;
+  return keys.every(k => keyMappingUse[k])
+    && (otherKeysPressed?.length || 0) <= (opts?.allowExtraKeys || 0);
 }

@@ -228,10 +228,10 @@ function BlockSettings({
     },
   );
   const blockDetails: {
-    pipelines: BlockPipelineType;
+    pipelines: BlockPipelineType[];
   } = useMemo(() => dataBlock?.block || {}, [dataBlock]);
   const blockPipelines: BlockPipelineType[] = useMemo(() => blockDetails?.pipelines
-    ? Object.values(blockDetails?.pipelines)
+    ? blockDetails?.pipelines
     : []
   , [blockDetails]);
   const blockPipelinesCount = blockPipelines?.length || 1;

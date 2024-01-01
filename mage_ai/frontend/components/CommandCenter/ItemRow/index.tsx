@@ -6,19 +6,19 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import {
   CommandCenterItemType,
-  CommandCenterTypeEnum,
-  TYPE_TITLE_MAPPING,
+  ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
 import { ItemRowClassNameEnum } from '../constants';
 import { ItemStyle, getIconColor } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { getDisplayCategory } from '../utils';
 import { getIcon } from './constants';
 
 type ItemRowProps = {
-  className: ItemRowClassNameEnum;
+  className: string;
   item: CommandCenterItemType;
-  onClick: () => void;
+  onClick: (e: Event) => void;
 };
 
 function ItemRow({
@@ -28,26 +28,40 @@ function ItemRow({
 }: ItemRowProps, ref) {
   const {
     description,
+    display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
     title,
-    type,
   } = item;
+  const {
+    description: descriptionDisplaySettings,
+  } = displaySettingsByAttribute || {
+    description: null,
+  };
 
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
 
+  const descriptionCount = description?.length || 0;
+  let descriptionUse = description;
+  if (descriptionCount > 40) {
+    descriptionUse = `${descriptionUse?.slice(0, 40)}..`;
+  }
+
   return (
     <ItemStyle
       className={className}
+      // @ts-ignore
       onClick={onClick}
       ref={ref}
     >
-      <FlexContainer alignItems="center" justifyContent="space-between">
+      <FlexContainer alignItems="center" fullHeight justifyContent="space-between">
         <Flex alignItems="center" flex={1}>
-          <Icon
-            fill={iconColor?.accent}
-            size={2 * UNIT}
-          />
+          {Icon && (
+            <Icon
+              fill={iconColor?.accent}
+              size={2 * UNIT}
+            />
+          )}
 
           <div style={{ marginRight: 1.5 * UNIT }} />
 
@@ -58,14 +72,18 @@ function ItemRow({
           <Spacing mr={PADDING_UNITS} />
 
           {description && (
-            <Text default>
-              {description}
+            <Text
+              default
+              monospace={descriptionDisplaySettings?.text_styles?.monospace}
+              small={!descriptionDisplaySettings?.text_styles?.regular}
+            >
+              {descriptionUse}
             </Text>
           )}
         </Flex>
 
         <Text muted>
-          {capitalizeRemoveUnderscoreLower(TYPE_TITLE_MAPPING[type] || type)}
+          {getDisplayCategory(item, true)}
         </Text>
       </FlexContainer>
     </ItemStyle>

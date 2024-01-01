@@ -110,7 +110,12 @@ function PipelineBlockRuns({
   }
   const { data: dataBlockRuns, mutate: fetchBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,
-    { refreshInterval: 5000 },
+    {
+      refreshInterval: 5000,
+    },
+    {
+      pauseFetch: typeof pipelineRunId === 'undefined' || pipelineRunId === null,
+    },
   );
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 

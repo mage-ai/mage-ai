@@ -13,7 +13,7 @@ from mage_ai.settings.repo import get_repo_path, get_variables_dir
 class BaseCache():
     cache_key = None
 
-    def __init__(self, repo_path: str = None, repo_config=None, root_project: bool = False):
+    def __init__(self, repo_path: str = None, repo_config=None, root_project: bool = True):
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
 
@@ -40,9 +40,12 @@ class BaseCache():
     def exists(self) -> bool:
         return self.get(self.cache_key) is not None
 
-    def get(self, key: str, refresh: bool = False, **kwargs) -> Union[Dict, List]:
+    def get(self, key: str = None, refresh: bool = False, **kwargs) -> Union[Dict, List]:
         if refresh or not self._temp_data:
-            self._temp_data = self.storage.read_json_file(self.build_path(key), None)
+            self._temp_data = self.storage.read_json_file(
+                self.build_path(key or self.cache_key),
+                None,
+            )
 
         if self._temp_data:
             return self._temp_data
@@ -71,6 +74,11 @@ class BaseCache():
         )
 
         return os.path.join(dir_path, key)
+
+    def invalidate(self, key: str = None) -> None:
+        path = self.build_path(key or self.cache_key)
+        if self.storage.path_exists(path):
+            self.storage.remove(path)
 
     @property
     def file_path(self) -> str:

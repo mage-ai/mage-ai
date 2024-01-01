@@ -508,8 +508,6 @@ function PipelineDetailPage({
     setHiddenBlocksState,
   ]);
 
-
-
   const [pipelineLastSaved, setPipelineLastSaved] = useState<number>(null);
   const [pipelineLastSavedState, setPipelineLastSavedState] = useState<number>(moment().utc().unix());
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
@@ -976,6 +974,24 @@ function PipelineDetailPage({
     onChangeCodeBlock,
   ]);
 
+  let addNewBlockAtIndex;
+
+  const addNewBlockCallback = useCallback((
+    b: BlockRequestPayloadType,
+    cb: (block: BlockType) => void,
+    opts?: {
+      disableFetchingFiles?: boolean;
+    },
+  ) => {
+    addNewBlockAtIndex(
+      b,
+      blocks.length,
+      cb,
+      b.name,
+      opts,
+    );
+  }, [addNewBlockAtIndex]);
+
   const onOpenFileCallbackMemo = useCallback((filePath: string, isFolder: boolean) => {
     if (!isFolder) {
       setActiveSidekickView(ViewKeyEnum.FILES);
@@ -983,6 +999,10 @@ function PipelineDetailPage({
       setNotebookVisible(false);
       setSelectedBlock(null);
     }
+  }, []);
+
+  const onSelectFileCallback = useCallback(() => {
+    setSelectedBlock(null);
   }, []);
 
   // Files components and functions
@@ -1000,34 +1020,14 @@ function PipelineDetailPage({
     versions,
     versionsVisible,
   } = useFileComponents({
-    addNewBlock: (
-      b: BlockRequestPayloadType,
-      cb: (block: BlockType) => void,
-      opts?: {
-        disableFetchingFiles?: boolean;
-      },
-    ) => {
-      addNewBlockAtIndex(
-        b,
-        blocks.length,
-        cb,
-        b.name,
-        opts,
-      );
-
-      if (filePathsFromUrl?.length >= 1) {
-        router.push(`/pipelines/${pipelineUUID}/edit`);
-      }
-    },
+    addNewBlock: addNewBlockCallback,
     blocks,
     deleteWidget,
     fetchAutocompleteItems,
     fetchPipeline,
     fetchVariables,
     onOpenFile: onOpenFileCallbackMemo,
-    onSelectFile: () => {
-      setSelectedBlock(null);
-    },
+    onSelectFile: onSelectFileCallback,
     onSelectBlockFile,
     onUpdateFileSuccess,
     openSidekickView,
@@ -1829,7 +1829,7 @@ function PipelineDetailPage({
   }, [updateKernel]);
 
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
-  const addNewBlockAtIndex = useCallback((
+  addNewBlockAtIndex = useCallback((
     block: BlockRequestPayloadType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,

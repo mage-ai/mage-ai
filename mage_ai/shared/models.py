@@ -1,3 +1,4 @@
+import inspect
 import typing
 from dataclasses import dataclass, make_dataclass
 from enum import Enum
@@ -119,7 +120,7 @@ class BaseClass:
             else:
                 return value
 
-        is_data_class = issubclass(annotation, BaseDataClass)
+        is_data_class = inspect.isclass(annotation) and issubclass(annotation, BaseDataClass)
         if is_data_class:
             if is_dict_class:
                 if ignore_empty and len(value) == 0:

@@ -99,6 +99,19 @@ export function datetimeInLocalTimezone(
   return datetime;
 }
 
+export function momentInLocalTimezone(
+  momentObj,
+  enableLocalTimezoneConversion?: boolean,
+): moment.Moment {
+  if (enableLocalTimezoneConversion) {
+    return momentObj
+      .utc()
+      .local();
+  }
+
+  return momentObj;
+}
+
 /**
  * Given start and end UTC datetime strings, find the time difference between them
  * and return it in the first matching format:

@@ -36,6 +36,7 @@ class InteractionInputOption:
 @dataclass
 class InteractionInputStyle:
     input_type: InteractionInputStyleInputType = None
+    language: str = None
     multiline: bool = None
 
     def __post_init__(self):
@@ -65,10 +66,10 @@ class InteractionInput:
         if self.type and isinstance(self.type, str):
             self.type = InteractionInputType(self.type)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, **kwargs) -> Dict:
         return dict(
-            options=[i.to_dict() for i in self.options],
-            style=self.style.to_dict() if self.style else None,
+            options=[i.to_dict(**kwargs) for i in self.options],
+            style=self.style.to_dict(**kwargs) if self.style else None,
             type=self.type.value if self.type else None,
         )
 

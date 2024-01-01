@@ -916,7 +916,7 @@ class BlockResource(GenericResource):
         pipeline = kwargs.get('parent_model')
         cache = await BlockCache.initialize_cache()
         if pipeline:
-            cache.remove_pipeline(self.model, pipeline.uuid)
+            cache.remove_pipeline(self.model, pipeline.uuid, pipeline.repo_path)
 
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
         cache_block_action_object.update_block(self.model, remove=True)

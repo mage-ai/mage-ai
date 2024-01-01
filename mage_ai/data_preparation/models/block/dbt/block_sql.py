@@ -28,7 +28,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.path_fixer import remove_base_repo_path
+from mage_ai.shared.path_fixer import get_path_parts, remove_base_repo_path
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
 
@@ -68,6 +68,10 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             file_path = self.get_file_path_from_source()
             if file_path:
                 return file_path
+            elif self.configuration and self.configuration.get('file_path'):
+                file_path = self.configuration.get('file_path')
+                parts = get_path_parts(file_path)
+                return os.path.join(*parts)
 
         file_path = self.configuration.get('file_path') or ''
         if file_path and Path(file_path).parts[0] == 'dbt':
