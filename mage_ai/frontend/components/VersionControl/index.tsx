@@ -9,9 +9,12 @@ import Dashboard from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import GitBranchType from '@interfaces/GitBranchType';
 import GitFileType from '@interfaces/GitFileType';
 import GitFiles from './GitFiles';
+import MultiColumnController from '@components/MultiColumnController';
 import Remote from './Remote';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -19,10 +22,12 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import useFileComponents from '@components/Files/useFileComponents';
 import {
   DIFF_STYLES,
   DiffContainerStyle,
 } from './index.style';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   LOCAL_STORAGE_GIT_REMOTE_NAME,
   LOCAL_STORAGE_GIT_REPOSITORY_NAME,
@@ -36,7 +41,8 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
-import { isEmptyObject } from '@utils/hash';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
+import { fileInMapping } from './utils';
 import { queryFromUrl } from '@utils/url';
 import { unique } from '@utils/array';
 import { useError } from '@context/Error';
@@ -49,9 +55,18 @@ function VersionControl() {
     uuid: 'VersionControlPage',
   });
 
+  const [afterHidden, setAfterHidden] = useState(true);
+  const [afterWidth, setAfterWidth] = useState(null);
+  const [beforeWidth, setBeforeWidth] = useState(null);
+
   const [branchBase, setBranchBase] = useState<string>(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS[0]);
+  const [selectedTabsBefore, setSelectedTabsBefore] = useState<TabType>({
+    'All files': {
+      uuid: 'All files',
+    },
+  });
 
   const q: { tab?: string } = queryFromUrl();
   useEffect(() => {
@@ -258,15 +273,15 @@ function VersionControl() {
               warning?: boolean;
             } = {};
 
-            if (modifiedFiles?.[fullPath]) {
+            if (fileInMapping(file, modifiedFiles)) {
               displayText = 'M';
               displayTitle = 'Modified';
               colorProps.warning = true;
-            } else if (untrackedFiles?.[fullPath]) {
+            } else if (fileInMapping(file, untrackedFiles)) {
               displayText = 'U';
               displayTitle = 'Untracked';
               colorProps.danger = true;
-            } else if (stagedFiles?.[fullPath]) {
+            } else if (fileInMapping(file, stagedFiles)) {
               displayText = 'S';
               displayTitle = 'Staged';
               colorProps.success = true;
@@ -511,34 +526,139 @@ function VersionControl() {
     stagedFiles,
   ]);
 
+  const buttonTabsMemo = useMemo(() => (
+    <ButtonTabs
+      allowScroll
+      onClickTab={(tab: TabType) => {
+        setSelectedTabsBefore(prev => ({
+          ...ignoreKeys(prev, [tab?.uuid]),
+          ...(prev?.[tab?.uuid] ? {} : {
+            [tab?.uuid]: tab,
+          }),
+        }));
+      }}
+      selectedTabUUIDs={selectedTabsBefore}
+      tabs={[
+        {
+          uuid: 'All files',
+        },
+        {
+          uuid: 'Modified files',
+        },
+      ]}
+      underlineStyle
+    />
+  ), [
+    selectedTabsBefore,
+  ]);
+
+
+  const {
+    browser,
+    controller,
+    filePaths,
+    menu,
+    selectedFilePath: selectedFilePathFileComponent,
+    tabs: tabsFileComponent,
+  } = useFileComponents({
+    showHiddenFilesSetting: true,
+  });
+
+  useEffect(() => {
+    if (filePaths?.length >= 1) {
+      setAfterHidden(false);
+    }
+  }, [filePaths]);
+
+  const beforeMemo = useMemo(() => {
+    const columnsOfItems = [];
+
+    if ('All files' in selectedTabsBefore) {
+      columnsOfItems.push([
+        {
+          render: ({
+            columnWidth,
+          }) => (
+            <div style={{ width: `${columnWidth}px` }}>
+              {browser}
+            </div>
+          ),
+        }
+      ]);
+    }
+
+    if ('Modified files' in selectedTabsBefore) {
+      columnsOfItems.push([
+        {
+          render: () => (
+            <>
+              <Spacing p={1}>
+                <Select
+                  compact
+                  label="Base branch"
+                  onChange={e => setBranchBase(e.target.value)}
+                  ref={refSelectBaseBranch}
+                  small
+                  value={branchBase || ''}
+                >
+                  {branches?.map(({ name }) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </Select>
+              </Spacing>
+
+              {fileBrowserMemo}
+            </>
+          ),
+        },
+      ]);
+    }
+
+    return (
+      <MultiColumnController
+        columnsOfItems={columnsOfItems}
+        fullHeight
+        heightOffset={HEADER_HEIGHT * 2}
+        uuid="version-control-all-modified-files"
+        width={beforeWidth}
+      />
+    );
+  }, [
+    branches,
+    browser,
+    beforeWidth,
+    fileBrowserMemo,
+    selectedTabsBefore,
+  ]);
+
+  const afterMemo = useMemo(() => {
+    if (!selectedFilePathFileComponent) {
+      return fileDiffMemo;
+    }
+
+    return controller;
+  }, [
+    fileDiffMemo,
+    selectedFilePathFileComponent,
+    tabsFileComponent,
+  ]);
+
   return (
     <Dashboard
-      after={fileDiffMemo}
-      afterHidden={!selectedFilePath}
-      afterWidth={UNIT * 40}
-      before={(
-        <>
-          <Spacing p={1}>
-            <Select
-              compact
-              label="Base branch"
-              onChange={e => setBranchBase(e.target.value)}
-              ref={refSelectBaseBranch}
-              small
-              value={branchBase || ''}
-            >
-              {branches?.map(({ name }) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </Select>
-          </Spacing>
-
-          {fileBrowserMemo}
-        </>
-      )}
+      after={afterMemo}
+      afterHeader={selectedFilePathFileComponent ? tabsFileComponent : null}
+      afterHidden={afterHidden}
+      afterWidth={afterWidth}
+      before={beforeMemo}
+      beforeHeader={buttonTabsMemo}
       mainContainerHeader={mainContainerHeaderMemo}
       title="Version control"
       uuid="Version control/index"
+      beforeWidth={beforeWidth}
+
+      setAfterHidden={setAfterHidden}
+      setAfterWidth={setAfterWidth}
+      setBeforeWidth={setBeforeWidth}
     >
       <Spacing p={PADDING_UNITS}>
         {!dataBranch && <Spinner inverted />}

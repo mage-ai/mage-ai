@@ -58,6 +58,7 @@ type FileBrowserProps = {
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
+  renderAfterContent?: (file: FileType) => any;
   showError?: (opts: {
     errors: any;
     response: any;
@@ -93,6 +94,7 @@ function FileBrowser({
   openFile,
   openSidekickView,
   pipeline,
+  renderAfterContent,
   showError,
   setSelectedBlock,
   setShowHiddenFiles,
@@ -370,6 +372,7 @@ function FileBrowser({
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       reloadCount={reloadCount}
+      renderAfterContent={renderAfterContent}
       setCoordinates={setCoordinates}
       setDraggingFile={setDraggingFile}
       setSelectedFile={setSelectedFile}
@@ -388,6 +391,7 @@ function FileBrowser({
     // This function will re-render whenever a block is added or removed to the pipeline.
     onSelectBlockFile,
     reloadCount,
+    renderAfterContent,
     uuid,
   ]);
 

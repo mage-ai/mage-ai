@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
@@ -63,6 +63,7 @@ function Dashboard({
   afterWidthOverride,
   appendBreadcrumbs,
   before,
+  beforeHeader,
   beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
   children,
@@ -74,6 +75,8 @@ function Dashboard({
   mainContainerHeader,
   navigationItems,
   setAfterHidden,
+  setAfterWidth: setAfterWidthProp,
+  setBeforeWidth: setBeforeWidthProp,
   setErrors,
   subheaderChildren,
   subheaderNoPadding,
@@ -87,18 +90,61 @@ function Dashboard({
   const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-  const [afterWidth, setAfterWidth] = useState(afterWidthOverride
-    ? afterWidthProp
-    : get(localStorageKeyAfter, afterWidthProp),
-  );
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(before
-    ? Math.max(
-      get(localStorageKeyBefore, beforeWidthProp),
-      UNIT * 13,
-    )
-    : null,
-  );
+
+  const [afterWidthState, setAfterWidthState] = useState(null);
+  const afterWidth = useMemo(() => {
+    if (typeof afterWidthProp !== 'undefined' || afterWidthOverride) {
+      return afterWidthProp;
+    } else {
+      return afterWidthState;
+    }
+  }, [afterWidthProp, afterWidthState, afterWidthOverride]);
+
+  const setAfterWidth = useCallback((prev) => {
+    let value = prev;
+    if (setAfterWidthProp) {
+      setAfterWidthProp(prev);
+    } else {
+      setAfterWidthState(prev);
+    }
+
+    set(localStorageKeyAfter, value);
+
+    return value;
+  }, [localStorageKeyAfter, setAfterWidthProp, setAfterWidthState]);
+
+  useEffect(() => {
+    setAfterWidth(get(localStorageKeyAfter) || 40  * UNIT);
+  }, [setAfterWidth]);
+
+  const [beforeWidthState, setBeforeWidthState] = useState(null);
+  const beforeWidth = useMemo(() => {
+    if (typeof beforeWidthProp !== 'undefined') {
+      return beforeWidthProp;
+    } else {
+      return beforeWidthState;
+    }
+  }, [beforeWidthProp, beforeWidthState]);
+
+  const setBeforeWidth = useCallback((prev) => {
+    let value = prev;
+    if (setBeforeWidthProp) {
+      setBeforeWidthProp(prev);
+    } else {
+      setBeforeWidthState(prev);
+    }
+
+    // value = Math.max(value, UNIT * 13);
+    set(localStorageKeyBefore, value);
+
+    return value;
+  }, [localStorageKeyBefore, setBeforeWidthProp, setBeforeWidthState]);
+
+  useEffect(() => {
+    setBeforeWidth(get(localStorageKeyBefore) || 40  * UNIT);
+  }, [setBeforeWidth]);
+
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [, setMainContainerWidth] = useState<number>(null);
 
@@ -203,9 +249,11 @@ function Dashboard({
             afterMousedownActive={afterMousedownActive}
             afterWidth={afterWidth}
             before={before}
+            beforeHeader={beforeHeader}
             beforeHeightOffset={HEADER_HEIGHT}
             beforeMousedownActive={beforeMousedownActive}
-            beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            // beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            beforeWidth={before ? beforeWidth : VERTICAL_NAVIGATION_WIDTH}
             contained={contained}
             headerOffset={headerOffset}
             hideAfterCompletely={!setAfterHidden || hideAfterCompletely}
