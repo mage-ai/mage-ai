@@ -1,5 +1,4 @@
 import asyncio
-from abc import ABC
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Dict, List, Union
@@ -16,7 +15,7 @@ from mage_ai.shared.hash import ignore_keys, merge_dict
 DEFAULT_RATIO = 65
 
 
-class BaseFactory(ABC):
+class BaseFactory:
     def __init__(
         self,
         application: Dict = None,
