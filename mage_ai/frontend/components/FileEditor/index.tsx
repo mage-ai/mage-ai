@@ -48,6 +48,7 @@ import { isJsonString } from '@utils/string';
 import { errorOrSuccess, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
+import { useWindowSize } from '@utils/sizes';
 
 type FileEditorProps = {
   active: boolean;
@@ -56,6 +57,7 @@ type FileEditorProps = {
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
   filePath: string;
+  codeEditorMaximumHeightOffset?: number;
   hideHeaderButtons?: boolean;
   onContentChange?: (content: string) => void;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
@@ -80,6 +82,7 @@ function FileEditor({
   fetchPipeline,
   fetchVariables,
   filePath,
+  codeEditorMaximumHeightOffset,
   hideHeaderButtons,
   onContentChange,
   onUpdateFileSuccess,
@@ -98,6 +101,8 @@ function FileEditor({
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
+
+  const { height: heightTotal } = useWindowSize();
 
   const token = useMemo(() => new AuthToken(), []);
   const oauthWebsocketData = useMemo(() => ({
@@ -218,6 +223,7 @@ function FileEditor({
       return (
         <CodeEditor
           autoHeight
+          height={codeEditorMaximumHeightOffset ? heightTotal - codeEditorMaximumHeightOffset : null}
           language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
           // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
           // onDidChangeCursorPosition={onDidChangeCursorPosition}
@@ -270,8 +276,10 @@ function FileEditor({
       );
     }
   }, [
+    codeEditorMaximumHeightOffset,
     file,
     fileExtension,
+    heightTotal,
     originalValues,
     saveFile,
     setContent,

@@ -6,6 +6,7 @@ function Controller({
   disableRefreshWarning,
   fetchPipeline,
   fetchVariables,
+  codeEditorMaximumHeightOffset,
   onUpdateFileSuccess,
   openFilePaths,
   openSidekickView,
@@ -39,6 +40,7 @@ function Controller({
               fetchPipeline={fetchPipeline}
               fetchVariables={fetchVariables}
               filePath={filePath ? encodeURIComponent(filePath) : null}
+              codeEditorMaximumHeightOffset={codeEditorMaximumHeightOffset}
               hideHeaderButtons
               onContentChange={(content: string) => setContentByFilePath({
                 [filePath]: content,

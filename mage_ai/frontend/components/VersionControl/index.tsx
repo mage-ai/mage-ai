@@ -540,6 +540,7 @@ function VersionControl() {
     selectedFilePath: selectedFilePath2,
     tabs: tabsFileComponent,
   } = useFileComponents({
+    codeEditorMaximumHeightOffset: (HEADER_HEIGHT * 2) + 10,
     onClickTabClose,
     onCreateFile,
     onUpdateFileSuccess,

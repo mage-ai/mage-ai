@@ -55,6 +55,7 @@ type UseFileComponentsProps = {
   fetchAutocompleteItems?: () => void;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
+  codeEditorMaximumHeightOffset?: number;
   onClickTabClose?: (filePath: string) => void;
   onCreateFile?: (file: FileType) => void;
   onOpenFile?: (filePath: string, isFolder: boolean) => void;
@@ -99,6 +100,7 @@ function useFileComponents({
   fetchAutocompleteItems,
   fetchPipeline,
   fetchVariables,
+  codeEditorMaximumHeightOffset,
   onClickTabClose,
   onCreateFile,
   onOpenFile,
@@ -389,6 +391,7 @@ function useFileComponents({
       disableRefreshWarning
       fetchPipeline={fetchPipeline}
       fetchVariables={fetchVariables}
+      codeEditorMaximumHeightOffset={codeEditorMaximumHeightOffset}
       onUpdateFileSuccess={onUpdateFileSuccess}
       openFilePaths={openFilePaths}
       openSidekickView={openSidekickView}
@@ -407,6 +410,7 @@ function useFileComponents({
     addNewBlock,
     fetchPipeline,
     fetchVariables,
+    codeEditorMaximumHeightOffset,
     onUpdateFileSuccess,
     openFilePaths,
     openSidekickView,
