@@ -20,6 +20,7 @@ class BaseVersionControl(BaseDataClass):
             '-C',
             self.repo_path,
         ] + command.split(' ')
+
         print(f'[VersionControl] Run: {" ".join(args)}')
 
         proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -57,7 +58,7 @@ class Branch(BaseVersionControl):
     name: str = None
     remote: Remote = None
 
-    def list(self, include_all = False) -> List[str]:
+    def list(self, include_all: bool = False) -> List[str]:
         commands = ['branch']
         if include_all:
             commands.append('-a')
