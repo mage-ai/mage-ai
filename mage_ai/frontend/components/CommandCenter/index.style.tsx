@@ -43,6 +43,7 @@ export const ContainerStyle = styled.div<{
   top: 50%;
   transform: translate(-50%, -50%);
   width: ${MAX_WIDTH + (1 * 2)}px;
+  z-index: 100;
 
   ${props => `
     background-color: ${(props.theme || dark).background.dashboard};
