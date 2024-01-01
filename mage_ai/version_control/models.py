@@ -177,7 +177,7 @@ class Project(BaseVersionControl):
         ))
         self.run('init')
 
-    def update(self, settings: Dict = {}):
+    def update(self, settings: Dict = None):
         self.preferences.update_preferences(settings)
 
     def delete(self):
