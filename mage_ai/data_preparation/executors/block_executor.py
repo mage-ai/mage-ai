@@ -645,8 +645,12 @@ class BlockExecutor:
                 if on_complete is not None:
                     metrics = None
                     if self.block and is_dynamic_block(self.block):
-                        if result and result.get('output'):
-                            output = result.get('output')
+                        if result:
+                            if isinstance(result, dict):
+                                output = result.get('output')
+                            else:
+                                output = result
+
                             if len(output) >= 1:
                                 child_data = output[0]
                                 metrics = dict(children=len(child_data))
