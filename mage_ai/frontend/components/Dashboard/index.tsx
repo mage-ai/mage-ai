@@ -115,8 +115,11 @@ function Dashboard({
   }, [localStorageKeyAfter, setAfterWidthProp, setAfterWidthState]);
 
   useEffect(() => {
-    setAfterWidth(get(localStorageKeyAfter) || 40  * UNIT);
-  }, [setAfterWidth]);
+    const value = get(localStorageKeyAfter);
+    if (value) {
+      setAfterWidth(Math.max(value, 40  * UNIT));
+    }
+  }, []);
 
   const [beforeWidthState, setBeforeWidthState] = useState(null);
   const beforeWidth = useMemo(() => {
@@ -142,8 +145,11 @@ function Dashboard({
   }, [localStorageKeyBefore, setBeforeWidthProp, setBeforeWidthState]);
 
   useEffect(() => {
-    setBeforeWidth(get(localStorageKeyBefore) || 40  * UNIT);
-  }, [setBeforeWidth]);
+    const value = get(localStorageKeyBefore);
+    if (value) {
+      setBeforeWidth(Math.max(value, 40  * UNIT));
+    }
+  }, []);
 
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [, setMainContainerWidth] = useState<number>(null);
