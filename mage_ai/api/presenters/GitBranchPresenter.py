@@ -7,6 +7,7 @@ class GitBranchPresenter(BasePresenter):
         'action_type',
         'error',
         'files',
+        'files_absolute_path',
         'is_git_integration_enabled',
         'message',
         'modified_files',

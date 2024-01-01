@@ -111,3 +111,16 @@ export const FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE = {
   [BlockLanguageEnum.YAML]: FileExtensionEnum.YAML,
   text: FileExtensionEnum.TXT,
 };
+
+
+export type OriginalContentMappingType = {
+  [relativeFilePath: string]: {
+    content: string;
+    content_from_base: string;
+    content_from_compare: string;
+    filename: string;
+    fullPath: string;
+    relativePath: string;
+    repoPath: string;
+  };
+};

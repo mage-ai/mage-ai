@@ -9,6 +9,7 @@ function Controller({
   onUpdateFileSuccess,
   openFilePaths,
   openSidekickView,
+  originalContent,
   pipeline,
   saveFile,
   selectedFilePath,
@@ -44,6 +45,7 @@ function Controller({
               })}
               onUpdateFileSuccess={onUpdateFileSuccess}
               openSidekickView={openSidekickView}
+              originalContent={originalContent}
               pipeline={pipeline}
               sendTerminalMessage={sendTerminalMessage}
               setDisableShortcuts={setDisableShortcuts}

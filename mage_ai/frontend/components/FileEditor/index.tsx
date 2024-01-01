@@ -18,6 +18,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
   FileExtensionEnum,
+  OriginalContentMappingType,
   PIPELINE_BLOCK_EXTENSIONS,
   SpecialFileEnum,
 } from '@interfaces/FileType';
@@ -59,6 +60,7 @@ type FileEditorProps = {
   onContentChange?: (content: string) => void;
   onUpdateFileSuccess?: (fileContent: FileType) => void;
   openSidekickView?: (newView: ViewKeyEnum) => void;
+  originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   saveFile?: (value: string, file: FileType) => void;
   selectedFilePath: string;
@@ -82,6 +84,7 @@ function FileEditor({
   onContentChange,
   onUpdateFileSuccess,
   openSidekickView,
+  originalContent,
   pipeline,
   saveFile: saveFileProp,
   selectedFilePath,
@@ -203,8 +206,15 @@ function FileEditor({
     [regex, file],
   );
 
+  const originalValues = useMemo(() => originalContent?.[file?.path], [
+    file,
+    originalContent,
+  ]);
+
   const codeEditorEl = useMemo(() => {
     if (file?.path) {
+      const showDiffs = !!originalValues && originalValues?.content_from_base;
+
       return (
         <CodeEditor
           autoHeight
@@ -245,8 +255,11 @@ function FileEditor({
           onSave={(value: string) => {
             saveFile(value, file);
           }}
+          originalValue={originalValues?.content_from_base}
           padding={10}
+          readOnly={showDiffs}
           selected
+          showDiffs={showDiffs}
           textareaFocused
           value={isJsonString(file?.content)
             ? JSON.stringify(JSON.parse(file?.content), null, 2)
@@ -259,6 +272,7 @@ function FileEditor({
   }, [
     file,
     fileExtension,
+    originalValues,
     saveFile,
     setContent,
     setFilesTouched,

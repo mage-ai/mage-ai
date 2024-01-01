@@ -1,6 +1,8 @@
 import * as osPath from 'path';
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
+import { DiffEditor } from '@monaco-editor/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import Branches from './Branches';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -24,6 +26,8 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import useFileComponents from '@components/Files/useFileComponents';
+import usePrevious from '@utils/usePrevious';
+import useStatus from '@utils/models/status/useStatus';
 import {
   DIFF_STYLES,
   DiffContainerStyle,
@@ -43,7 +47,7 @@ import { get, set } from '@storage/localStorage';
 import { getFullPath } from '@components/FileBrowser/utils';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
-import { fileInMapping } from './utils';
+import { fileInMapping, filePathRelativeToRepoPath } from './utils';
 import { queryFromUrl } from '@utils/url';
 import { unique } from '@utils/array';
 import { useError } from '@context/Error';
@@ -52,6 +56,10 @@ function VersionControl() {
   const fileTreeRef = useRef(null);
   const refSelectBaseBranch = useRef(null);
 
+  const {
+    status,
+  } = useStatus();
+
   const [showError] = useError(null, {}, [], {
     uuid: 'VersionControlPage',
   });
@@ -59,6 +67,8 @@ function VersionControl() {
   const [afterHidden, setAfterHidden] = useState(true);
   const [afterWidth, setAfterWidth] = useState(null);
   const [beforeWidth, setBeforeWidth] = useState(null);
+
+  const [originalContent, setOriginalContent] = useState({});
 
   const [branchBase, setBranchBase] = useState<string>(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
@@ -69,14 +79,6 @@ function VersionControl() {
     },
     'Git directory': {
       uuid: 'Git directory',
-    },
-  });
-  const [selectedTabsAfter, setSelectedTabsAfter] = useState<TabType>({
-    'Open files': {
-      uuid: 'Open files',
-    },
-    'Files changed': {
-      uuid: 'Files changed',
     },
   });
 
@@ -182,6 +184,22 @@ function VersionControl() {
     });
   const fileGit: GitFileType = useMemo(() => dataFile?.git_file, [dataFile]);
 
+  const filePrev = usePrevious(fileGit);
+  useEffect(() => {
+    if (fileGit !== filePrev) {
+      const fullPath = branch?.files_absolute_path?.[selectedFilePath];
+      setOriginalContent(prev => ({
+        ...prev,
+        [fullPath]: {
+          ...fileGit,
+          fullPath,
+          relativePath: selectedFilePath,
+          repoPath: branch?.sync_config?.repo_path,
+        },
+      }));
+    }
+  }, [branch, fileGit, filePrev]);
+
   useEffect(() => {
     if (branchBase) {
       fetchFileGit();
@@ -263,6 +281,7 @@ function VersionControl() {
 
               return null;
             });
+            fetchFileGit();
           }}
           ref={fileTreeRef}
           renderAfterContent={(file: FileType) => {
@@ -337,6 +356,7 @@ function VersionControl() {
   }, [
     branchBase,
     fetchBranch,
+    fetchFileGit,
     fileTreeRef,
     files,
     modifiedFiles,
@@ -352,68 +372,6 @@ function VersionControl() {
       fileGit,
       selectedFilePath,
     ]);
-
-  const fileDiffMemo = useMemo(() => {
-    if (!selectedFilePath) {
-      return null;
-    }
-
-    const {
-      content,
-      content_from_base: contentFromBase,
-    } = fileGit || {};
-
-    return (
-      <DiffContainerStyle>
-        {!branchBase && (
-          <Spacing p={PADDING_UNITS}>
-            <Text muted>
-              Please select a base branch to see the file diffs.
-            </Text>
-          </Spacing>
-        )}
-
-        {fileGit?.error && (
-          <Spacing p={PADDING_UNITS}>
-            <Text
-              danger
-              monospace
-              preWrap
-            >
-              {fileGit?.error}
-            </Text>
-          </Spacing>
-        )}
-
-        {branchBase && !fileGit?.error && (
-          <>
-            {isLoadingGitFile && (
-              <Spacing p={PADDING_UNITS}>
-                <Spinner inverted />
-              </Spacing>
-            )}
-
-            {!isLoadingGitFile && (
-              <ReactDiffViewer
-                compareMethod={DiffMethod.WORDS}
-                newValue={content || ''}
-                oldValue={contentFromBase || ''}
-                renderContent={(str) => <Text monospace>{str}</Text>}
-                splitView={true}
-                styles={DIFF_STYLES}
-                useDarkTheme
-              />
-            )}
-          </>
-        )}
-      </DiffContainerStyle>
-    );
-  }, [
-    branchBase,
-    fileGit,
-    isLoadingGitFile,
-    selectedFilePath,
-  ]);
 
   const tabsToUse = useMemo(() => dataBranch && branch?.name ? TABS : TABS.slice(0, 1), [
     branch,
@@ -557,32 +515,6 @@ function VersionControl() {
     selectedTabsBefore,
   ]);
 
-  const afterTabsMemo = useMemo(() => (
-    <ButtonTabs
-      allowScroll
-      onClickTab={(tab: TabType) => {
-        setSelectedTabsAfter(prev => ({
-          ...ignoreKeys(prev, [tab?.uuid]),
-          ...(prev?.[tab?.uuid] ? {} : {
-            [tab?.uuid]: tab,
-          }),
-        }));
-      }}
-      selectedTabUUIDs={selectedTabsAfter}
-      tabs={[
-        {
-          uuid: 'Files changed',
-        },
-        {
-          uuid: 'Open files',
-        },
-      ]}
-      underlineStyle
-    />
-  ), [
-    selectedTabsAfter,
-  ]);
-
   const onUpdateFileSuccess = useCallback(() => {
     fetchFileGit();
   }, [fetchFileGit]);
@@ -590,18 +522,58 @@ function VersionControl() {
     fetchBranch();
   }, [fetchBranch]);
 
+  const selectedFilePathMemo = useMemo(() => {
+    if (selectedFilePath) {
+      return branch?.files_absolute_path?.[selectedFilePath];
+    }
+  }, [branch, selectedFilePath]);
+
+  const onClickTabClose = useCallback((filePath: string) => {
+    setOriginalContent(prev => ignoreKeys(prev, [filePath]));
+  }, []);
+
   const {
     browser,
     controller,
     filePaths,
     menu,
-    selectedFilePath: selectedFilePathFileComponent,
+    selectedFilePath: selectedFilePath2,
     tabs: tabsFileComponent,
   } = useFileComponents({
-    showHiddenFilesSetting: true,
+    onClickTabClose,
     onCreateFile,
     onUpdateFileSuccess,
+    originalContent,
+    selectedFilePath: selectedFilePathMemo,
+    showHiddenFilesSetting: true,
   });
+
+  const [fetchFileDiffs, { isLoading }] = useMutation(
+    ({
+      filePath,
+      query,
+    }: {
+      filePath: string;
+      query?: {
+        base_branch: string;
+      };
+    }) => api.git_files.detailAsync(encodeURIComponent(filePath), query),
+  );
+
+  useEffect(() => {
+    if (selectedFilePath2) {
+      fetchFileDiffs({
+        filePath: selectedFilePath2,
+        query: {
+          base_branch: branchBase,
+          derive: true,
+        },
+      }).then(resp => setOriginalContent(prev => ({
+        ...prev,
+        [selectedFilePath2]: resp?.data?.git_file,
+      })));
+    }
+  }, [selectedFilePath2]);
 
   useEffect(() => {
     if (filePaths?.length >= 1) {
@@ -670,61 +642,10 @@ function VersionControl() {
     selectedTabsBefore,
   ]);
 
-  const afterMemo = useMemo(() => {
-    const columnsOfItems = [];
-
-    if ('Files changed' in selectedTabsAfter) {
-      columnsOfItems.push([
-        {
-          render: ({
-            columnWidth,
-          }) => (
-            <div style={{ width: `${columnWidth}px` }}>
-              {fileDiffMemo}
-            </div>
-          ),
-        }
-      ]);
-    }
-
-
-    if ('Open files' in selectedTabsAfter) {
-      columnsOfItems.push([
-        {
-          render: ({
-            columnWidth,
-          }) => (
-            <>
-              <StyledScrollbarContainer width={columnWidth}>
-                {tabsFileComponent}
-              </StyledScrollbarContainer>
-              {controller}
-            </>
-          ),
-        }
-      ]);
-    }
-    return (
-      <MultiColumnController
-        columnsOfItems={columnsOfItems}
-        fullHeight
-        heightOffset={HEADER_HEIGHT * 2}
-        uuid="version-control-open-changed-files"
-        width={afterWidth}
-      />
-    );
-  }, [
-    afterWidth,
-    controller,
-    fileDiffMemo,
-    selectedTabsAfter,
-    tabsFileComponent,
-  ]);
-
   return (
     <Dashboard
-      after={afterMemo}
-      afterHeader={afterTabsMemo}
+      after={controller}
+      afterHeader={tabsFileComponent}
       afterHidden={afterHidden}
       afterWidth={afterWidth}
       before={beforeMemo}

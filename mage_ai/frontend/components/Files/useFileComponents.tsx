@@ -11,6 +11,7 @@ import FileEditorHeader from '@components/FileEditor/Header';
 import FileTabs from '@components/PipelineDetail/FileTabs';
 import FileType, {
   FILES_QUERY_INCLUDE_HIDDEN_FILES,
+  OriginalContentMappingType,
 } from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import PipelineType from '@interfaces/PipelineType';
@@ -54,6 +55,7 @@ type UseFileComponentsProps = {
   fetchAutocompleteItems?: () => void;
   fetchPipeline?: () => void;
   fetchVariables?: () => void;
+  onClickTabClose?: (filePath: string) => void;
   onCreateFile?: (file: FileType) => void;
   onOpenFile?: (filePath: string, isFolder: boolean) => void;
   onSelectBlockFile?: (
@@ -75,6 +77,7 @@ type UseFileComponentsProps = {
       extension?: string;
     },
   ) => void;
+  originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   query?: {
     pattern?: string;
@@ -96,12 +99,14 @@ function useFileComponents({
   fetchAutocompleteItems,
   fetchPipeline,
   fetchVariables,
+  onClickTabClose,
   onCreateFile,
   onOpenFile,
   onSelectBlockFile,
   onSelectFile,
   onUpdateFileSuccess,
   openSidekickView,
+  originalContent,
   pipeline,
   query,
   selectedFilePath: selectedFilePathDefault,
@@ -387,6 +392,7 @@ function useFileComponents({
       onUpdateFileSuccess={onUpdateFileSuccess}
       openFilePaths={openFilePaths}
       openSidekickView={openSidekickView}
+      originalContent={originalContent}
       pipeline={pipeline}
       saveFile={saveFile}
       selectedFilePath={selectedFilePath}
@@ -404,6 +410,7 @@ function useFileComponents({
     onUpdateFileSuccess,
     openFilePaths,
     openSidekickView,
+    originalContent,
     pipeline,
     saveFile,
     selectedFilePath,
@@ -447,7 +454,12 @@ function useFileComponents({
           onSelectFile?.(filePath);
         }
       }}
-      onClickTabClose={(filePath: string) => removeOpenFilePath(filePath)}
+      onClickTabClose={(filePath: string) => {
+        removeOpenFilePath(filePath);
+        if (onClickTabClose) {
+          onClickTabClose?.(filePath);
+        }
+      }}
       renderTabTitle={(filePath: string) => {
         const filename = getFilenameFromFilePath(filePath);
         const arr = openFilenameMapping[filename];
@@ -461,6 +473,7 @@ function useFileComponents({
     />
   ), [
     filesTouched,
+    onClickTabClose,
     onSelectFile,
     openFilePaths,
     openFilenameMapping,
