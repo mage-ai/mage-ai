@@ -50,6 +50,9 @@ export type LinkProps = {
   selected?: boolean;
   small?: boolean;
   sky?: boolean;
+  style?: {
+    [key: string]: string | number;
+  };
   tabIndex?: number;
   target?: string;
   textOverflow?: string;

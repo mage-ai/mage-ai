@@ -90,7 +90,7 @@ function ApplicationItemDetail({
       }));
     });
 
-    return result?.then((resultsInner) => {
+    return result?.then((resultsInner: KeyValueType) => {
       if (index + 1 <= actions?.length - 1) {
         return invokeActionAndCallback(index + 1, {
           ...(results || {}),
@@ -239,30 +239,28 @@ function ApplicationItemDetail({
     );
   } else if (ObjectTypeEnum.BLOCK === item?.object_type) {
     const {
-      color: blockColor,
-      name,
       file_path: filePath,
+      language,
       pipelines,
       type: blockType,
-      uuid: blockUUID,
     } = item?.metadata?.block || {
-      color: null,
       file_path: null,
-      name: null,
+      language: null,
       pipelines: null,
       type: null,
-      uuid: null,
     };
     const {
+      color: blockColor,
       configuration,
       content,
-      language,
       name: nameBlock,
+      uuid: blockUUID,
     } = model?.block || {
+      color: null,
       configuration: null,
       content: null,
-      language: null,
       name: null,
+      uuid: null,
     };
 
     const editor = (
@@ -448,7 +446,6 @@ function ApplicationItemDetail({
                         shallow: true,
                       });
                     }}
-                    rightAligned
                     style={{
                       marginTop: idx >= 1 ? 4 : null,
                     }}
@@ -564,7 +561,7 @@ function ApplicationItemDetail({
             monospace
             onClick={(e) => {
               e.preventDefault();
-              router.push(`/pipelines/${uuid}/edit`, null, {
+              router.push(`/pipelines/${pipelineUUID}/edit`, null, {
                 shallow: true,
               });
             }}

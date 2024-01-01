@@ -68,11 +68,11 @@ function Footer({
             compact
             keyTextGroups={[[KEY_SYMBOL_ENTER]]}
             keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
-            noBorder
             onClick={(e) => {
               pauseEvent(e);
               handleSelectItemRow();
             }}
+            uuid="command-center-footer-button-enter"
           >
             <span ref={refFooterButtonEnter}>Select</span>
           </KeyboardShortcutButton>
@@ -87,11 +87,11 @@ function Footer({
             keyTextGroups={[[KEY_SYMBOL_ARROW_UP]]}
             keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
             noBackground
-            noBorder
             onClick={(e) => {
               pauseEvent(e);
               handleNavigation(-1);
             }}
+            uuid="command-center-footer-button-up"
           >
             <span ref={refFooterButtonUp}>Up</span>
           </KeyboardShortcutButton>
@@ -104,11 +104,11 @@ function Footer({
             keyTextGroups={[[KEY_SYMBOL_ARROW_DOWN]]}
             keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
             noBackground
-            noBorder
             onClick={(e) => {
               pauseEvent(e);
               handleNavigation(1);
             }}
+            uuid="command-center-footer-button-right"
           >
             Down
           </KeyboardShortcutButton>
@@ -121,11 +121,11 @@ function Footer({
             keyTextGroups={[[KEY_SYMBOL_ESCAPE]]}
             keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
             noBackground
-            noBorder
             onClick={(e) => {
               pauseEvent(e);
               closeCommandCenter();
             }}
+            uuid="command-center-footer-button-escape"
           >
             <span ref={refFooterButtonEscape}>Close</span>
           </KeyboardShortcutButton>

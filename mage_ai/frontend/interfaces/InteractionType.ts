@@ -48,6 +48,7 @@ export enum InteractionInputStyleInputTypeEnum {
 
 export interface InteractionInputStyleType {
   input_type?: InteractionInputStyleInputTypeEnum;
+  language?: string;
   multiline?: boolean;
 }
 

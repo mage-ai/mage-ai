@@ -19,7 +19,12 @@ export default function useCache(fetchUUID: () => number | string, opts: {
   }) => void;
   onSuccessCallback?: (response: any, opts: any) => void;
   searchRef: any;
-} = {}): {
+} = {
+  abortControllerRef: null,
+  onErrorCallback: null,
+  onSuccessCallback: null,
+  searchRef: null,
+}): {
   fetch: (opts?: {
     application?: ItemApplicationType;
     disableRenderingCache?: boolean;

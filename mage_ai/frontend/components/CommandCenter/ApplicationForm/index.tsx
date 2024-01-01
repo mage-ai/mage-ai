@@ -11,6 +11,7 @@ import {
   ButtonActionTypeEnum,
   CommandCenterItemType,
   FormInputType,
+  KeyValueType,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { FormStyle } from './index.style';
@@ -30,7 +31,7 @@ function nothingFocused(refInputs) {
 
   return Object.values(
     refInputs?.current || {},
-  )?.every(ref => document.activeElement !== ref?.current);
+  )?.every((ref: { current: any }) => document.activeElement !== ref?.current);
 }
 
 function ApplicationForm({
@@ -45,7 +46,7 @@ function ApplicationForm({
 
   const settings = application?.settings || [];
 
-  const [attributes, setAttributesState] = useState<GlobalHookType>(null);
+  const [attributes, setAttributesState] = useState<KeyValueType>(null);
   const [attributesTouched, setAttributesTouched] = useState<{
     [key: string]: boolean;
   }>(null);
@@ -176,6 +177,7 @@ function ApplicationForm({
 
     // @ts-ignore
     const rowProps = {
+      selectInput: null,
       textInput: null,
     };
 
@@ -193,6 +195,7 @@ function ApplicationForm({
         setAttributesTouched(prev => ({
             ...prev,
             [actionUUID]: {
+              // @ts-ignore
               ...(prev?.[actionUUID] || {}),
               [name]: true,
             },
@@ -250,7 +253,6 @@ function ApplicationForm({
       <SetupSectionRow
         {...rowProps}
         description={description}
-        key={key}
         invalid={required
           && attributesTouched?.[actionUUID]?.[name]
           && !attributes?.[actionUUID]?.[name]

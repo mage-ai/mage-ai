@@ -1311,7 +1311,7 @@ function CommandCenter() {
 
   return (
     <ContainerStyle
-      // className="hide"
+      className="hide"
       ref={refContainer}
     >
       <InputContainerStyle>

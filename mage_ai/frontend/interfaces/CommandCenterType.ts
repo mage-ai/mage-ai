@@ -1,4 +1,4 @@
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { FileExtensionEnum } from '@interfaces/FileType';
 import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
@@ -130,6 +130,9 @@ export function getButtonLabel(item): string {
 }
 
 interface BlockMetadataType {
+  file_path?: string;
+  language?: BlockLanguageEnum;
+  pipelines: any[];
   type?: BlockTypeEnum;
 }
 
@@ -145,7 +148,11 @@ interface PipelineMetadataType {
 }
 
 interface FileMetadataType {
-  extension?: FileExtensionEnum;
+  extension?: string;
+  full_path?: string;
+  modified_at?: string;
+  modified_timestamp?: number;
+  size?: number;
 }
 
 interface CommandCenterActionBaseType {
@@ -201,7 +208,7 @@ export interface CommandCenterActionType extends CommandCenterActionBaseType {
   uuid: string;
 }
 
-interface FormInputType extends InteractionInputType {
+export interface FormInputType extends InteractionInputType {
   action_uuid?: string;
   description?: string;
   display_settings?: DisplaySettingsType;
@@ -210,13 +217,14 @@ interface FormInputType extends InteractionInputType {
   name?: string;
   placeholder?: string;
   required?: boolean;
+  value?: string | number;
 }
 
 export interface ButtonActionType {
   action_types: ButtonActionTypeEnum[];
   actions?: CommandCenterActionType[];
   display_settings?: DisplaySettingsType;
-  keyboard_shortcuts?: number[][] | string[][];
+  keyboard_shortcuts?: (number | string)[][] | (number | string)[];
   label: string
   tooltip?: string;
 }

@@ -102,7 +102,7 @@ export function datetimeInLocalTimezone(
 export function momentInLocalTimezone(
   momentObj,
   enableLocalTimezoneConversion?: boolean,
-): string {
+): moment.Moment {
   if (enableLocalTimezoneConversion) {
     return momentObj
       .utc()

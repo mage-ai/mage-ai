@@ -62,7 +62,10 @@ export function getInputPlaceholder({
   return 'Search actions, apps, files, blocks, pipelines, triggers';
 }
 
-export function buildSettingsItemWithApplication() {
+export function buildSettingsItemWithApplication(): {
+  application: ItemApplicationType;
+  item: CommandCenterItemType;
+} {
   const settings = getSetSettings() || {};
 
   const application = {
@@ -86,6 +89,7 @@ export function buildSettingsItemWithApplication() {
         ],
       },
     ],
+    uuid: 'command_center_settings',
     settings: [
       {
         label: 'Keyboard shortcut to launch',
@@ -146,10 +150,12 @@ export function buildSettingsItemWithApplication() {
             command_center_item: null,
           },
           resource: 'command_center_items',
+          response_resource_key: 'command_center_items',
         },
         uuid: 'update_model',
       },
     ],
+    uuid: 'command_center_settings',
   };
 
   return {

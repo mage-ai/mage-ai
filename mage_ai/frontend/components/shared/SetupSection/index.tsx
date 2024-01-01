@@ -12,7 +12,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 type SetupSectionProps = {
   borderless?: boolean;
-  children: any;
+  children?: any;
   dark?: boolean;
   description?: any;
   headerChildren?: any;
@@ -59,7 +59,7 @@ function SetupSection({
         </Spacing>
       )}
 
-      {React.Children.map(children, (child, idx: number) => (
+      {children && React.Children.map(children, (child, idx: number) => (
         <div key={`${title}-${idx}`}>
           <Divider light />
 

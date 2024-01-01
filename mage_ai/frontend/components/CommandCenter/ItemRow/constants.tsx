@@ -14,6 +14,7 @@ import {
   PipelineV3,
   Schedule,
   ScheduleClockWithBorderDots,
+  SettingsWithKnobs,
   Streaming,
 } from '@oracle/icons';
 
@@ -39,7 +40,6 @@ export function getIcon(item: CommandCenterItemType) {
   }
 
   const mapping = {
-    [ObjectTypeEnum.ACTION]: Lightning,
     [ObjectTypeEnum.APPLICATION]: NavDashboard,
     [ObjectTypeEnum.BLOCK]: BlockGeneric,
     [ObjectTypeEnum.CHAT]: Chat,
@@ -50,6 +50,7 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.GIT]: BranchAlt,
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
     [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
+    [ObjectTypeEnum.SETTINGS]: SettingsWithKnobs,
     [ObjectTypeEnum.TRIGGER]: Schedule,
   };
 

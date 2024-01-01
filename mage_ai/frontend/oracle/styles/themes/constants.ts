@@ -53,6 +53,7 @@ export type ThemeType = {
     scrollbarThumbHover: string;
     scrollbarTrack: string;
     success: string;
+    successLight: string;
     table: string;
     tag: string;
   };

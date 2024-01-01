@@ -2,6 +2,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { ApplicationProps } from './ItemApplication/constants';
 import { HeaderSubtitleStyle } from './index.style';
 import { ItemApplicationTypeEnum, OBJECT_TITLE_MAPPING } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -31,7 +32,7 @@ function ApplicationHeaderTitle({
 
   return (
     <FlexContainer alignItems="center" fullHeight fullWidth justifyContent="space-between">
-      <Flex alignItems="center" flex={1} fullHeight>
+      <Flex alignItems="center" flex={1}>
         <div style={{ marginRight: 1 * UNIT }} />
 
         {Icon && (
