@@ -317,7 +317,7 @@ function ApplicationItemDetail({
               flexDirection="column"
               alignItems="flex-end"
             >
-              {sortByKey(pipelines, ({ uuid }) => uuid)?.map(({
+              {sortByKey(pipelines || [], ({ uuid }) => uuid)?.map(({
                 uuid
               }, idx) => (
                 <Link
@@ -602,7 +602,7 @@ function ApplicationItemDetail({
 
         <SetupSectionRow title="Average time">
           <Text {...TEXT_PROPS} muted={!runtimeAverage}>
-            {runtimeAverage || '-'}
+            {runtimeAverage ? pluralize('second', runtimeAverage, true) : '-'}
           </Text>
         </SetupSectionRow>
       </SetupSection>
