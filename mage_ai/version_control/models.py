@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from mage_ai.data_preparation.preferences import Preferences, get_preferences
 from mage_ai.settings.platform import platform_settings, update_settings
@@ -11,8 +11,44 @@ from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
+class BaseVersionControl(BaseDataClass):
+    project: Any = None
+
+    def run(self, command: str) -> List[str]:
+        proc = subprocess.run([
+            'git',
+            '-C',
+            self.project.repo_path,
+        ] + command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        return proc.stdout.decode().split('\n')
+
+
+@dataclass
+class Remote(BaseVersionControl):
+    name: str = None
+    url: str = None
+
+    def list(self) -> List[str]:
+        return self.run('remote -v')
+
+    def create(self, name: str, url: str):
+        self.name = name
+        self.url = url
+
+        return self.run(f'remote add {name} {url}')
+
+    def delete(self, name: str = None):
+        return self.run(f'remote rm {name or self.name}')
+
+
+@dataclass
 class Project(BaseDataClass):
     uuid: str
+    remote: Remote = None
+
+    def __post_init__(self):
+        self.remote = Remote(project=self)
 
     @classmethod
     def load_all(self) -> List['Project']:
@@ -64,21 +100,3 @@ class Project(BaseDataClass):
         if 'version_control' in settings and self.uuid in settings.get('version_control'):
             settings['version_control'].pop(self.uuid, None)
         update_settings(settings)
-
-
-@dataclass
-class Controller(BaseDataClass):
-    project: Project
-
-    def __post_init__(self):
-        self.serialize_attribute_class('project', Project)
-
-    def run(self, command: str) -> List[str]:
-        proc = subprocess.run([
-            'git',
-            '-C',
-            self.project.repo_path,
-            command
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-        return proc.stdout.decode().split('\n')
