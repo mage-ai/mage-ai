@@ -116,7 +116,7 @@ function Dashboard({
 
   useEffect(() => {
     const value = get(localStorageKeyAfter);
-    if (value) {
+    if (after && value) {
       setAfterWidth(Math.max(value, 40  * UNIT));
     }
   }, []);
@@ -146,7 +146,7 @@ function Dashboard({
 
   useEffect(() => {
     const value = get(localStorageKeyBefore);
-    if (value) {
+    if (before && value) {
       setBeforeWidth(Math.max(value, 40  * UNIT));
     }
   }, []);
@@ -262,7 +262,7 @@ function Dashboard({
             beforeWidth={before ? beforeWidth : VERTICAL_NAVIGATION_WIDTH}
             contained={contained}
             headerOffset={headerOffset}
-            hideAfterCompletely={!setAfterHidden || hideAfterCompletely}
+            hideAfterCompletely={!after || !setAfterHidden || hideAfterCompletely}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
             mainContainerHeader={mainContainerHeader}
             mainContainerRef={mainContainerRef}
