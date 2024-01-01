@@ -14,7 +14,7 @@ import {
   TYPE_TITLE_MAPPING,
   TYPE_TITLE_MAPPING_NORMAL,
 } from '@interfaces/CommandCenterType';
-import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
+import { CUSTOM_EVENT_NAME_COMMAND_CENTER, CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN } from '@utils/events/constants';
 import { capitalize, stringSimilarity } from '@utils/string';
 import { dig, setNested } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
@@ -233,4 +233,12 @@ export function getCurrentApplicationForItem(
   }
 
   return item?.applications?.[index];
+}
+
+export function launchCommandCenter() {
+  const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(eventCustom);
+  }
 }

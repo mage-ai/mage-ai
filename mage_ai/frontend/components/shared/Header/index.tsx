@@ -42,7 +42,9 @@ import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { launchCommandCenter } from '@components/CommandCenter/utils';
 import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 import { redirectToUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
@@ -277,7 +279,21 @@ function Header({
       },
       uuid: 'user_settings',
     },
+    ...(featureEnabled(featureUUIDs?.COMMAND_CENTER)
+      ? [
+          {
+            label: () => 'Launch command center',
+            onClick: (e) => {
+              pauseEvent(e);
+              launchCommandCenter()
+            },
+            uuid: 'Launch command center',
+          },
+        ]
+      : []
+    ),
   ];
+
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
     {

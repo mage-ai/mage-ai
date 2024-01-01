@@ -232,3 +232,12 @@ export const ApplicationFooterStyle = styled.div`
     ${SHARED_HIDDEN_STYLES}
   }
 `;
+
+export const KeyboardShortcutStyle = styled.div`
+  position: absolute;
+  right: ${UNIT + SCROLLBAR_WIDTH}px;
+
+  &.active {
+    ${SHARED_HIDDEN_STYLES}
+  }
+`;

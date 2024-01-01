@@ -10,25 +10,13 @@ import Footer from './Footer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import ItemApplication from './ItemApplication';
 import ItemRow from './ItemRow';
+import LaunchKeyboardShortcutText from './LaunchKeyboardShortcutText';
 import Loading from '@oracle/components/Loading';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import useCache from '@storage/CommandCenter/useCache';
-import { ArrowLeft } from '@oracle/icons';
-import {
-  CommandCenterActionInteractionTypeEnum,
-  CommandCenterActionRequestType,
-  CommandCenterActionType,
-  CommandCenterItemType,
-  ItemApplicationType,
-  ItemApplicationTypeEnum,
-  ItemTypeEnum,
-  KeyValueType,
-  ObjectTypeEnum,
-  getButtonLabel,
-} from '@interfaces/CommandCenterType';
 import {
   APPLICATION_FOOTER_ID,
   ApplicationContainerStyle,
@@ -43,6 +31,7 @@ import {
   HeaderContainerStyle,
   HeaderStyle,
   HeaderTitleStyle,
+  KeyboardShortcutStyle,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
@@ -52,6 +41,20 @@ import {
   MAIN_TEXT_INPUT_ID,
   SHARED_PADDING,
 } from './index.style';
+import { ArrowLeft } from '@oracle/icons';
+import {
+  CommandCenterActionInteractionTypeEnum,
+  CommandCenterActionRequestType,
+  CommandCenterActionType,
+  CommandCenterItemType,
+  ItemApplicationType,
+  ItemApplicationTypeEnum,
+  ItemTypeEnum,
+  KeyValueType,
+  ObjectTypeEnum,
+  getButtonLabel,
+} from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN } from '@utils/events/constants';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -61,6 +64,7 @@ import {
   KEY_CODE_DELETE,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
+  KEY_CODE_KEY_SYMBOL_MAPPING,
   KEY_CODE_META_LEFT,
   KEY_CODE_META_RIGHT,
   KEY_CODE_PERIOD,
@@ -116,6 +120,7 @@ function CommandCenter() {
 
   const refLoading = useRef(null);
   const refInput = useRef(null);
+  const refInputKeyboardShortcut = useRef(null);
   const refInputValuePrevious = useRef(null);
   const refFetchCount = useRef(0);
 
@@ -267,6 +272,7 @@ function CommandCenter() {
       activateClassNamesForRefs([
         refHeader,
         refInput,
+        refInputKeyboardShortcut,
         refApplicationsNodesContainer,
         refItemsNodesContainer,
         refFooter,
@@ -348,6 +354,7 @@ function CommandCenter() {
         refHeader,
         refHeaderTitle,
         refInput,
+        refInputKeyboardShortcut,
         refItemsNodesContainer,
         refApplicationsNodesContainer,
         refFooter,
@@ -1006,6 +1013,7 @@ function CommandCenter() {
       ],
     );
 
+      // Show the command center and focus on the text input.
     refInput?.current?.focus();
     refActive.current = true;
 
@@ -1037,7 +1045,6 @@ function CommandCenter() {
 
   registerOnKeyDown(COMPONENT_UUID, (event, keyMapping, keyHistory) => {
     function startSequenceValid(): boolean {
-      // Show the command center and focus on the text input.
       const ks = getSetSettings(refSettings?.current || {})?.interface?.keyboard_shortcuts?.main;
 
       if (ks?.length >= 1) {
@@ -1277,9 +1284,29 @@ function CommandCenter() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleOpen = () => {
+      if (!refActive?.current) {
+        openCommandCenter();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.addEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN, handleOpen);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER_OPEN, handleOpen);
+      }
+    };
+  }, []);
+
   return (
     <ContainerStyle
-      className="hide"
+      // className="hide"
       ref={refContainer}
     >
       <InputContainerStyle>
@@ -1355,6 +1382,13 @@ function CommandCenter() {
             placeholder={getInputPlaceholder()}
             ref={refInput}
           />
+
+          <KeyboardShortcutStyle
+            className="inactive"
+            ref={refInputKeyboardShortcut}
+          >
+            <LaunchKeyboardShortcutText settings={refSettings?.current} />
+          </KeyboardShortcutStyle>
         </HeaderContainerStyle>
       </InputContainerStyle>
 

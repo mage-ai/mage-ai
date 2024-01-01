@@ -56,7 +56,7 @@ export type FlyoutMenuProps = {
   items: FlyoutMenuItemType[];
   left?: number;
   multipleConfirmDialogues?: boolean;
-  onClickCallback?: () => void;
+  onClickCallback?: (e?: any) => void;
   open: boolean;
   parentRef: any;
   rightOffset?: number;
@@ -139,7 +139,7 @@ function FlyoutMenu({
         const item = items[currentIndex];
         if (item) {
           if (item?.onClick) {
-            item?.onClick?.();
+            item?.onClick?.(event);
           } else if (item?.linkProps) {
             if (item?.linkProps?.openNewWindow && typeof window !== 'undefined') {
               window.open(item?.linkProps?.href, '_blank');
@@ -148,7 +148,7 @@ function FlyoutMenu({
             }
           }
         }
-        onClickCallback?.();
+        onClickCallback?.(event);
       } else {
         items?.forEach(({ keyboardShortcutValidation }) => {
           keyboardShortcutValidation?.({ keyHistory, keyMapping });
@@ -269,10 +269,10 @@ function FlyoutMenu({
                 if (openConfirmationDialogue && !disabled) {
                   setConfirmationDialogueOpen?.(multipleConfirmDialogues ? uuid : true);
                   setConfirmationAction?.(() => onClick);
-                  onClickCallback?.();
+                  onClickCallback?.(e);
                 } else if (onClick && !disabled) {
-                  onClick?.();
-                  onClickCallback?.();
+                  onClick?.(e);
+                  onClickCallback?.(e);
                 }
               }}
               onMouseEnter={() => {
