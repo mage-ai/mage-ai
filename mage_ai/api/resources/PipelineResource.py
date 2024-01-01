@@ -19,9 +19,9 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.LlmResource import LlmResource
 from mage_ai.authentication.operation_history.utils import (
-    load_pipelines_detail_async,
-    record_create_pipeline_async,
-    record_detail_pipeline_async,
+    load_pipelines_detail,
+    record_create_pipeline,
+    record_detail_pipeline,
 )
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.constants import (
@@ -151,7 +151,7 @@ class PipelineResource(BaseResource):
             timestamp_start = (datetime.utcnow() - timedelta(
                 hours=24 * int(from_history_days),
             )).timestamp()
-            history = await load_pipelines_detail_async(timestamp_start=timestamp_start)
+            history = load_pipelines_detail(timestamp_start=timestamp_start)
             history = sorted(
                 history,
                 key=lambda x: int(x.timestamp),
@@ -413,7 +413,7 @@ class PipelineResource(BaseResource):
                 template_uuid=template_uuid,
             )
 
-        await record_create_pipeline_async(
+        record_create_pipeline(
             resource_uuid=pipeline.uuid,
             user=user.id if user else None,
         )
@@ -465,7 +465,7 @@ class PipelineResource(BaseResource):
             if Project(pipeline.repo_config).is_feature_enabled(
                 FeatureUUID.OPERATION_HISTORY,
             ):
-                await record_detail_pipeline_async(
+                record_detail_pipeline(
                     resource_uuid=pipeline.uuid,
                     user=user.id if user else None,
                 )

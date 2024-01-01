@@ -540,5 +540,7 @@ def update_caches(repo_path: str, dir_path: str, filename: str) -> None:
 
 
 def update_file_cache() -> None:
-    from mage_ai.cache.file import FileCache
-    FileCache().invalidate()
+    project_model = Project(root_project=True)
+    if project_model and project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+        from mage_ai.cache.file import FileCache
+        FileCache().invalidate()
