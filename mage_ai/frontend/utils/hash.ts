@@ -115,7 +115,13 @@ export function setNested(obj, path, value) {
     schema = schema[elem];
   }
 
-  schema[pList[len-1]] = value;
+  const valuePrev = schema[pList[len-1]];
+  if (Array.isArray(value) && valuePrev && Array.isArray(valuePrev)) {
+    // @ts-ignore
+    schema[pList[len-1]] = (valuePrev || []).concat(value);
+  } else {
+    schema[pList[len-1]] = value;
+  }
 
   return schema;
 }

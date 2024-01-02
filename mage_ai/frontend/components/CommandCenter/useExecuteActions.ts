@@ -98,11 +98,14 @@ export default function useExecuteActions({
 
             setNested(
               refItemsActionResults?.current,
+              item?.object_type,
               [
-                item?.uuid,
-                String(actionUUID || index),
-              ].join('.'),
-              result,
+                {
+                  action: actionCopy,
+                  item,
+                  value: result,
+                },
+              ],
             );
 
             return result;
@@ -110,11 +113,9 @@ export default function useExecuteActions({
         }
       } else if (interaction) {
         const {
-          element,
           type,
         } = interaction || {
-          element: null,
-          event: null,
+          type: null,
         };
 
         // TODO (dangerous): open the file and the file editor in an application on the same page;
@@ -134,10 +135,11 @@ export default function useExecuteActions({
               },
             });
           };
-        } else if (element && type) {
-          const { options } = interaction || { options: null };
-
+        } else if (type && interaction?.element) {
           actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+            const { element, options } = actionCopy?.interaction || { options: null };
+
             const nodes = [];
             if (element?.id) {
               const node = document.getElementById(element?.id);
@@ -159,11 +161,14 @@ export default function useExecuteActions({
 
             setNested(
               refItemsActionResults?.current,
+              item?.object_type,
               [
-                item?.uuid,
-                String(actionUUID || index),
-              ].join('.'),
-              result,
+                {
+                  action: actionCopy,
+                  item,
+                  value: result,
+                },
+              ],
             );
 
             return result;

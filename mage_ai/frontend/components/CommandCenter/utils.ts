@@ -196,7 +196,8 @@ export function executeButtonActions({
       actionFunction = (result: KeyValueType = {}) => fetchItems({
         results: getItemsActionResults?.(),
       }).then((response) => {
-        console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF', response);
+        const items = rankItems(response?.data?.command_center_item?.items || []);
+        handleSelectItemRow(items?.[0], 0);
       });
     }
 

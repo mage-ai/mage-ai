@@ -6,10 +6,10 @@ from mage_ai.command_center.constants import ApplicationType, ItemType, ObjectTy
 from mage_ai.version_control.models import Project
 
 
-async def build_and_score(factory, project: Project, items: List[Dict]):
+async def build(factory, project: Project) -> Dict:
     uuid = project.uuid
 
-    item_dict = dict(
+    return dict(
         item_type=ItemType.DETAIL,
         object_type=ObjectType.PROJECT,
         title=uuid,
@@ -48,6 +48,8 @@ async def build_and_score(factory, project: Project, items: List[Dict]):
         ],
     )
 
-    scored = factory.filter_score(item_dict)
+
+async def build_and_score(factory, project: Project, items: List[Dict]):
+    scored = factory.filter_score(await build(factory, project))
     if scored:
         items.append(scored)

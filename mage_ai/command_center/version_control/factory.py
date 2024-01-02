@@ -7,22 +7,32 @@ from mage_ai.command_center.version_control.constants import (
     DEACTIVATE_MODE,
 )
 from mage_ai.command_center.version_control.projects.constants import ITEMS
-from mage_ai.command_center.version_control.projects.utils import build_and_score
+from mage_ai.command_center.version_control.projects.utils import build, build_and_score
 from mage_ai.version_control.models import Project
 
 
 class VersionControlFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
-        items = [] + ITEMS
+        items = []
 
-        if self.mode:
-            if ModeType.VERSION_CONTROL == self.mode.type:
-                self.filter_score_mutate_accumulator(DEACTIVATE_MODE, items)
+        if self.results and self.results.get('project'):
+            for result in (self.results.get('project') or []):
+                if result.get('value'):
+                    project = Project.load(**result.get('value'))
+                    item = await build(self, project)
+                    item['score'] = 999
+                    items.append(item)
         else:
-            self.filter_score_mutate_accumulator(ACTIVATE_MODE, items)
+            items.extend(ITEMS)
 
-        for project in Project.load_all():
-            await build_and_score(self, project, items)
+            if self.mode:
+                if ModeType.VERSION_CONTROL == self.mode.type:
+                    self.filter_score_mutate_accumulator(DEACTIVATE_MODE, items)
+            else:
+                self.filter_score_mutate_accumulator(ACTIVATE_MODE, items)
+
+            for project in Project.load_all():
+                await build_and_score(self, project, items)
 
         return items
 

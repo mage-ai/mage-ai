@@ -204,6 +204,7 @@ class Project(BaseVersionControl):
     branch: Branch = None
     file: File = None
     remote: Remote = None
+    sync_config: Dict = None
     uuid: str = None
 
     def __post_init__(self):

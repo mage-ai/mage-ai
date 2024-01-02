@@ -573,19 +573,17 @@ function CommandCenter() {
         item,
       },
     ) => {
-      const {
-        request: {
-          response_resource_key: responseResourceKey,
-        },
-        uuid,
-      } = action;
-
-      const key = [
-        item?.uuid,
-        String(uuid || index),
-        responseResourceKey,
-      ].join('.');
-      setNested(refItemsActionResults.current, key, value);
+      setNested(
+        refItemsActionResults.current,
+        item?.object_type,
+        [
+          {
+            action,
+            item,
+            value,
+          },
+        ],
+      );
       getItemsActionResults();
     },
     showError,
