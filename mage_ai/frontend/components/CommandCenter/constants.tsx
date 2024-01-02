@@ -8,6 +8,7 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  ModeTypeEnum,
   ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
 import { InteractionInputTypeEnum } from '@interfaces/InteractionType';
@@ -17,7 +18,7 @@ import {
   KEY_SYMBOL_PERIOD,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
-import { getSetSettings } from '@storage/CommandCenter/utils';
+import { getCurrentMode, getSetSettings } from '@storage/CommandCenter/utils';
 
 export enum ItemRowClassNameEnum {
   FOCUSED = 'focused',
@@ -51,7 +52,13 @@ export function getInputPlaceholder({
   application?: ItemApplicationType;
   item?: CommandCenterItemType;
 } = {}) {
-  if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
+  const mode = getCurrentMode();
+
+  if (mode) {
+    if (ModeTypeEnum.VERSION_CONTROL === mode) {
+      return 'Setup projects, clone branches, commit files, push code...';
+    }
+  } if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
     if (ObjectTypeEnum.PIPELINE === item?.object_type) {
       return `Search blocks and triggers in ${item?.title}`;
     } else if (ObjectTypeEnum.TRIGGER === item?.object_type) {

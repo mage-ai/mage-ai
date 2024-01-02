@@ -5,7 +5,7 @@ from typing import Dict, List, Union
 
 from thefuzz import fuzz
 
-from mage_ai.command_center.constants import ObjectType
+from mage_ai.command_center.constants import ModeType, ObjectType
 from mage_ai.command_center.models import Application, Item
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
@@ -21,6 +21,7 @@ class BaseFactory:
         application: Dict = None,
         component: str = None,
         item: Dict = None,
+        mode: ModeType = None,
         page: str = None,
         page_history: List[Dict] = None,
         picks: str = None,
@@ -32,6 +33,7 @@ class BaseFactory:
         self.application = Application.load(**application) if application else application
         self.component = component
         self.item = Item.load(**item) if item else item
+        self.mode = mode
         self.page = page
         self.page_history = page_history
         self.picks = picks
@@ -60,16 +62,24 @@ class BaseFactory:
 
             return await factory_class(**kwargs).process(items_dicts)
 
-        application = kwargs.get('application')
-        item = kwargs.get('item')
-        if application and item:
-            object_type = item.get('object_type')
-            if ObjectType.PIPELINE == object_type:
-                from mage_ai.command_center.pipelines.factory import PipelineFactory
-                factory_or_items = [PipelineFactory]
-            elif ObjectType.TRIGGER == object_type:
-                from mage_ai.command_center.triggers.factory import TriggerFactory
-                factory_or_items = [TriggerFactory]
+        mode = kwargs.get('mode')
+        if ModeType.VERSION_CONTROL == mode:
+            from mage_ai.command_center.applications.factory import ApplicationFactory
+            from mage_ai.command_center.version_control.factory import (
+                VersionControlFactory,
+            )
+            factory_or_items = [ApplicationFactory, VersionControlFactory]
+        else:
+            application = kwargs.get('application')
+            item = kwargs.get('item')
+            if application and item:
+                object_type = item.get('object_type')
+                if ObjectType.PIPELINE == object_type:
+                    from mage_ai.command_center.pipelines.factory import PipelineFactory
+                    factory_or_items = [PipelineFactory]
+                elif ObjectType.TRIGGER == object_type:
+                    from mage_ai.command_center.triggers.factory import TriggerFactory
+                    factory_or_items = [TriggerFactory]
 
         return flatten(await asyncio.gather(
             *[process_factory_items(class_or_items) for class_or_items in factory_or_items]
@@ -126,6 +136,11 @@ class BaseFactory:
             return merge_dict(item_dict, dict(score=self.score_item(item_dict, score=score)))
 
         return None
+
+    def filter_score_mutate_accumulator(self, item_dict: Dict, accumulator: List[Dict]):
+        scored = self.filter_score(item_dict)
+        if scored:
+            accumulator.append(scored)
 
     async def process(self, items_dicts: List[Dict] = None) -> List[Item]:
         items_dicts_scored = []

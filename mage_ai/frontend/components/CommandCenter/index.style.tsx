@@ -18,6 +18,7 @@ export const HEADER_TITLE_ID = `${COMPONENT_UUID}-header-title`;
 export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
 export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
 export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
+export const INPUT_CONTAINER_ID = `${COMPONENT_UUID}-input-container`;
 
 export const SHARED_PADDING = SCROLLBAR_WIDTH;
 const HEADER_CONTENT_HEIGHT = 5 * UNIT;
@@ -49,6 +50,18 @@ export const ContainerStyle = styled.div<{
     background-color: ${(props.theme || dark).background.dashboard};
     box-shadow: ${(props.theme || dark).shadow.window};
     border: 1px solid ${(props.theme || dark).monotone.grey400};
+
+    #${INPUT_CONTAINER_ID} {
+      border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
+    }
+
+    &.version_control {
+      border: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+
+      #${INPUT_CONTAINER_ID} {
+        border-bottom: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+      }
+    }
   `}
 
   &.hide {
@@ -60,10 +73,6 @@ export const ContainerStyle = styled.div<{
 
 export const InputContainerStyle = styled.div`
   height: ${HEADER_CONTENT_HEIGHT + (SCROLLBAR_WIDTH * 2)}px;
-
-  ${props => `
-    border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
-  `}
 `;
 
 export const HeaderContainerStyle = styled.div`

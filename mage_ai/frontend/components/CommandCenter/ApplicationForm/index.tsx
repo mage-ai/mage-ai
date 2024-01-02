@@ -2,10 +2,13 @@ import { createRef, useCallback, useEffect, useMemo, useRef, useState } from 're
 
 import * as AllIcons from '@oracle/icons';
 import CodeEditor from '@components/CodeEditor';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Folder from '@components/FileBrowser/Folder';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import api from '@api';
 import { ApplicationProps } from '../ItemApplication/constants';
 import {
   ButtonActionTypeEnum,
@@ -140,6 +143,8 @@ function ApplicationForm({
     };
   }, [item]);
 
+  let updateAttributes;
+
   const formMemo = useMemo(() => settings?.map((formInput, idx) => {
     const {
       action_uuid: actionUUID,
@@ -215,6 +220,7 @@ function ApplicationForm({
       tabIndex: idx + 1,
       value: attributes?.[actionUUID]?.[name] || '',
     };
+    updateAttributes = inputProps.onChange;
 
     if (InteractionInputTypeEnum.TEXT_FIELD === type) {
       rowProps.textInput = inputProps;
@@ -252,6 +258,7 @@ function ApplicationForm({
     return (
       <SetupSectionRow
         {...rowProps}
+        key={inputProps?.name}
         description={description}
         invalid={required
           && attributesTouched?.[actionUUID]?.[name]
@@ -268,9 +275,32 @@ function ApplicationForm({
     settings,
   ]);
 
+  const { data: filesData, mutate: fetchFiles } = api.files.list(
+
+  );
+
   return (
     <FormStyle>
-      {formMemo}
+      <FlexContainer>
+        <FlexContainer flexDirection="column">
+          {filesData?.files?.map((file, idx) => (
+            <Folder
+              disableContextMenu
+              file={file}
+              key={`${file.name}-${idx}`}
+              level={0}
+              onClickFolder={(fullPath) => {
+                console.log(fullPath)
+              }}
+              onlyShowFolders
+            />
+          ))}
+        </FlexContainer>
+
+        <Flex flex={1} style={{ position: 'fixed', right: 0 }}>
+          {formMemo}
+        </Flex>
+      </FlexContainer>
     </FormStyle>
   );
 }

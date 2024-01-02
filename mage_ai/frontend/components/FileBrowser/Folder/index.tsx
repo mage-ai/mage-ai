@@ -49,6 +49,7 @@ export type FolderSharedProps = {
   isInPipelinesFolder?: boolean;
   isNotFolder?: boolean;
   onlyShowChildren?: boolean;
+  onlyShowFolders?: boolean;
   onSelectBlockFile?: (
     blockUUID: string,
     blockType: BlockTypeEnum,
@@ -149,6 +150,7 @@ function Folder({
   onClickFolder,
   onSelectBlockFile,
   onlyShowChildren,
+  onlyShowFolders,
   openFile,
   openSidekickView,
   reloadCount,

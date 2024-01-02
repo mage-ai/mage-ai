@@ -41,10 +41,11 @@ function ItemRow({
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
 
+  const maxLetters = 100 - title?.length;
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
-  if (descriptionCount > 40) {
-    descriptionUse = `${descriptionUse?.slice(0, 40)}..`;
+  if (descriptionCount > maxLetters) {
+    descriptionUse = `${descriptionUse?.slice(0, maxLetters)}..`;
   }
 
   return (

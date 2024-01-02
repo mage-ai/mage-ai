@@ -44,7 +44,7 @@ class ApplicationFactory(BaseFactory):
             if item_scored:
                 items.append(item_scored)
 
-        return items
+        return items[:3]
 
     def score_item(self, item_dict: Dict, score: int = None) -> int:
         timestamp = ((item_dict.get('metadata') or {}).get('page') or {}).get('timestamp')

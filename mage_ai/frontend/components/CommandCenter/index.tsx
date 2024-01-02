@@ -31,12 +31,13 @@ import {
   HeaderContainerStyle,
   HeaderStyle,
   HeaderTitleStyle,
-  KeyboardShortcutStyle,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
+  INPUT_CONTAINER_ID,
   InputStyle,
   ItemsContainerStyle,
+  KeyboardShortcutStyle,
   LoadingStyle,
   MAIN_TEXT_INPUT_ID,
   SHARED_PADDING,
@@ -50,6 +51,7 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  ModeTypeEnum,
   KeyValueType,
   ObjectTypeEnum,
   getButtonLabel,
@@ -79,8 +81,10 @@ import {
   addPickHistory,
   addSearchHistory,
   combineUnique,
+  getCurrentMode,
   getSearchHistory,
   getSetSettings,
+  setMode,
 } from '@storage/CommandCenter/utils';
 import { addCachedItems, getCachedItems } from '@storage/CommandCenter/cache';
 import {
@@ -840,9 +844,14 @@ function CommandCenter() {
   }
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
-    addPickHistory(item);
     const applicationsCount = item?.applications?.length || 0;
-    if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
+    const mode = getCurrentMode();
+
+    if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type && mode) {
+      deactivateMode(item);
+    } else if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type  && !mode && item?.mode_type) {
+      activateMode(item);
+    } else if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
       addApplication({
         application: null,
         item,
@@ -920,6 +929,31 @@ function CommandCenter() {
     });
 
     return new Promise((resolve, reject) => resolve?.(refItems?.current));
+  }
+
+  function toggleMode() {
+    refInput.current.value = '';
+    refItems.current = null;
+    refItemsInit.current = null;
+    updateInputProperties();
+    renderItems([]);
+    fetchItems();
+  }
+
+  function deactivateMode() {
+    setMode(null);
+    toggleMode();
+  }
+
+  function activateMode(item: CommandCenterItemType) {
+    setMode(item?.mode_type);
+    toggleMode();
+    refContainer.current.className = addClassNames(
+      refContainer?.current?.className || '',
+      [
+        item?.mode_type,
+      ],
+    );
   }
 
   const {
@@ -1312,10 +1346,13 @@ function CommandCenter() {
 
   return (
     <ContainerStyle
-      className="hide"
+      // className="hide"
+      className={[
+        getCurrentMode() || '',
+      ]?.join(' ')}
       ref={refContainer}
     >
-      <InputContainerStyle>
+      <InputContainerStyle id={INPUT_CONTAINER_ID}>
         <HeaderContainerStyle>
           <HeaderStyle
             className="inactive"

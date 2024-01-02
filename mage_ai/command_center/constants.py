@@ -13,6 +13,8 @@ class ItemType(str, Enum):
     CREATE = 'create'  # Conjure
     DETAIL = 'detail'  # Enchant
     LIST = 'list'  # Enchant
+    MODE_ACTIVATION = 'mode_activation'
+    MODE_DEACTIVATION = 'mode_deactivation'
     NAVIGATE = 'navigate'  # Teleport
     OPEN = 'open'  # Summon - open shows a view on the same page vs navigating to another page
     SUPPORT = 'support'  # Reinforcements
@@ -21,15 +23,21 @@ class ItemType(str, Enum):
 class ObjectType(str, Enum):
     APPLICATION = 'application'
     BLOCK = 'block'
+    BRANCH = 'branch'
     CHAT = 'chat'
     CODE = 'code'
     DOCUMENT = 'document'
     FILE = 'file'
     FOLDER = 'folder'
-    GIT = 'git'
     PIPELINE = 'pipeline'
     PIPELINE_RUN = 'pipeline_run'
+    PROJECT = 'project'
+    REMOTE = 'remote'
     TRIGGER = 'trigger'
+
+
+class ModeType(str, Enum):
+    VERSION_CONTROL = 'version_control'
 
 
 class FileExtension(str, Enum):

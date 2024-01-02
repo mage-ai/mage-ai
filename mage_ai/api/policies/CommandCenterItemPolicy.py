@@ -38,6 +38,7 @@ CommandCenterItemPolicy.allow_write(
         'application',
         'component',
         'item',
+        'mode',
         'page',
         'page_history',
         'picks',

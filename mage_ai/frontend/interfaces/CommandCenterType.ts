@@ -28,6 +28,8 @@ export enum ItemTypeEnum {
   CREATE = 'create',
   DETAIL = 'detail',
   LIST = 'list',
+  MODE_ACTIVATION = 'mode_activation',
+  MODE_DEACTIVATION = 'mode_deactivation',
   NAVIGATE = 'navigate',
   OPEN = 'open',
   SUPPORT = 'support',
@@ -36,16 +38,21 @@ export enum ItemTypeEnum {
 export enum ObjectTypeEnum {
   APPLICATION = 'application',
   BLOCK = 'block',
+  BRANCH = 'branch',
   CHAT = 'chat',
   CODE = 'code',
   DOCUMENT = 'document',
   FILE = 'file',
   FOLDER = 'folder',
-  GIT = 'git',
   PIPELINE = 'pipeline',
   PIPELINE_RUN = 'pipeline_run',
+  PROJECT = 'project',
   SETTINGS = 'settings',
   TRIGGER = 'trigger',
+}
+
+export enum ModeTypeEnum {
+  VERSION_CONTROL = 'version_control',
 }
 
 interface TextStylesType {
@@ -88,9 +95,9 @@ export const OBJECT_TITLE_MAPPING = {
   [ObjectTypeEnum.DOCUMENT]: ObjectTypeEnum.DOCUMENT,
   [ObjectTypeEnum.FILE]: ObjectTypeEnum.FILE,
   [ObjectTypeEnum.FOLDER]: ObjectTypeEnum.FOLDER,
-  [ObjectTypeEnum.GIT]: ObjectTypeEnum.GIT,
   [ObjectTypeEnum.PIPELINE]: ObjectTypeEnum.PIPELINE,
   [ObjectTypeEnum.PIPELINE_RUN]: ObjectTypeEnum.PIPELINE_RUN,
+  [ObjectTypeEnum.PROJECT]: ObjectTypeEnum.PROJECT,
   [ObjectTypeEnum.TRIGGER]: ObjectTypeEnum.TRIGGER,
 };
 
@@ -301,7 +308,8 @@ export interface CommandCenterItemType {
       status?: string;
     };
   };
-  object_type: ObjectTypeEnum;
+  mode_type?: ModeTypeEnum;
+  object_type?: ObjectTypeEnum;
   score?: number;
   tags?: ItemTagEnum[];
   title: string;

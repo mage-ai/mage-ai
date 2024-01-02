@@ -83,6 +83,14 @@ export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType
 }
 
 export function getDisplayCategory(item: CommandCenterItemType, normal: boolean = false): string {
+  if (item?.mode_type) {
+    if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type) {
+      return 'Mode';
+    } else {
+      return 'Deactivate';
+    }
+  }
+
   if (normal) {
     const part1 = TYPE_TITLE_MAPPING_NORMAL[item?.item_type];
     let part2 = OBJECT_TITLE_MAPPING_SHORT[item?.object_type];

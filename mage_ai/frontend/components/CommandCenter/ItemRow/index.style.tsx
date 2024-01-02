@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
-import { CommandCenterItemType, ObjectTypeEnum } from '@interfaces/CommandCenterType';
+import { CommandCenterItemType, ItemTypeEnum, ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -24,10 +24,12 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   const {
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
+    mode_type: modeType,
     object_type: objectType,
   } = item || {
     display_settings_by_attribute: null,
     metadata: null,
+    mode_type: null,
     object_type: null,
   };
 
@@ -37,6 +39,13 @@ export function getIconColor(item: CommandCenterItemType, opts: {
 
   let accent = themeUse?.monotone?.gray;
   let accentLight = themeUse?.monotone?.grey500;
+
+  if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type) {
+    return {
+      accent,
+      accentLight,
+    };
+  }
 
   if (colorUUID) {
     accent = dig(themeUse, colorUUID);
@@ -60,7 +69,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   } else if (ObjectTypeEnum.FOLDER == objectType) {
     accent = themeUse?.chart?.tertiary;
     accentLight = themeUse?.accent?.skyLight;
-  } else if (ObjectTypeEnum.GIT == objectType) {
+  } else if (ObjectTypeEnum.PROJECT == objectType) {
     accent = themeUse?.accent?.rose;
     accentLight = themeUse?.accent?.roseLight;
   } else if (ObjectTypeEnum.PIPELINE == objectType) {

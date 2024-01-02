@@ -8,6 +8,7 @@ from mage_ai.command_center.constants import (
     InteractionType,
     ItemTagEnum,
     ItemType,
+    ModeType,
     ObjectType,
 )
 from mage_ai.command_center.settings import load_settings, save_settings
@@ -199,12 +200,19 @@ class PipelineRunMetadata(CommandCenterBaseClass):
 
 
 @dataclass
+class ProjectMetadata(CommandCenterBaseClass):
+    repo_path: str
+    uuid: str
+
+
+@dataclass
 class Metadata(CommandCenterBaseClass):
     block: BlockMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
     pipeline: PipelineMetadata = None
     pipeline_run: PipelineRunMetadata = None
+    project: ProjectMetadata = None
     trigger: TriggerMetadata = None
 
     def __post_init__(self):
@@ -213,6 +221,7 @@ class Metadata(CommandCenterBaseClass):
         self.serialize_attribute_class('page', PageMetadata)
         self.serialize_attribute_class('pipeline', PipelineMetadata)
         self.serialize_attribute_class('pipeline_run', PipelineRunMetadata)
+        self.serialize_attribute_class('project', ProjectMetadata)
         self.serialize_attribute_class('trigger', TriggerMetadata)
 
 
@@ -399,7 +408,6 @@ class AttributeDisplaySettings(CommandCenterBaseClass):
 @dataclass
 class ItemBase(CommandCenterBaseClass):
     item_type: ItemType
-    object_type: ObjectType
     title: str
     uuid: str
     action_results: Dict = None
@@ -409,8 +417,10 @@ class ItemBase(CommandCenterBaseClass):
     description: str = None
     items: List[Dict] = None
     metadata: Metadata = None
-    tags: List[ItemTagEnum] = None
+    mode_type: ModeType = None
+    object_type: ObjectType = None
     score: int = 0
+    tags: List[ItemTagEnum] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
@@ -418,6 +428,7 @@ class ItemBase(CommandCenterBaseClass):
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('applications', Application)
         self.serialize_attribute_enum('item_type', ItemType)
+        self.serialize_attribute_enum('mode_type', ModeType)
         self.serialize_attribute_enum('object_type', ObjectType)
         self.serialize_attribute_enums('tags', ItemTagEnum)
 
@@ -425,7 +436,6 @@ class ItemBase(CommandCenterBaseClass):
 @dataclass
 class Item(ItemBase):
     item_type: ItemType
-    object_type: ObjectType
     title: str
     uuid: str
     action_results: Dict = None
@@ -435,7 +445,10 @@ class Item(ItemBase):
     description: str = None
     items: List[ItemBase] = None
     metadata: Metadata = None
+    mode_type: ModeType = None
+    object_type: ObjectType = None
     score: int = 0
+    tags: List[ItemTagEnum] = None
 
     def __post_init__(self):
         super().__post_init__()
