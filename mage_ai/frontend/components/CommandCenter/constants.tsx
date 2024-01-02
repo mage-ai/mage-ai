@@ -8,6 +8,7 @@ import {
   ItemApplicationType,
   ItemApplicationTypeEnum,
   ItemTypeEnum,
+  KeyValueType,
   ModeTypeEnum,
   ObjectTypeEnum,
 } from '@interfaces/CommandCenterType';
@@ -28,6 +29,14 @@ export enum ItemRowClassNameEnum {
 
 export enum InputElementEnum {
   MAIN = 'main',
+}
+
+export type FetchItemsType = {
+  fetchItems: (opts?: KeyValueType) => Promise<any>;
+}
+
+export type HandleSelectItemRowType = {
+  handleSelectItemRow: (item: CommandCenterItemType, focusedItemIndex: number) => void;
 }
 
 export type ExecuteActionableType = {

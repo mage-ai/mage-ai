@@ -6,6 +6,7 @@ import api from '@api';
 import {
   CommandCenterItemType,
   ItemApplicationType,
+  KeyValueType,
 } from '@interfaces/CommandCenterType';
 import { getCachedItems } from './cache';
 import { getCurrentMode, getPageHistoryAsItems, getPicksHistory, getSearchHistory } from './utils';
@@ -30,6 +31,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     delay?: number;
     disableRenderingCache?: boolean;
     item?: CommandCenterItemType;
+    results?: KeyValueType;
     search?: string;
     uuid?: number | string;
   }) => Promise<any>;
@@ -54,6 +56,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     ({
       application,
       item,
+      results,
       search,
     }: {
       application?: ItemApplicationType;
@@ -78,6 +81,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
         },
         page_history: getPageHistoryAsItems(),
         picks: getPicksHistory(),
+        results,
         search: typeof search === 'undefined' ? searchRef?.current?.value : search,
         search_history: getSearchHistory(),
       },
@@ -106,6 +110,7 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     delay?: number;
     disableRenderingCache?: boolean;
     item?: CommandCenterItemType;
+    results?: KeyValueType;
     search?: string;
     uuid?: number | string;
   } = {}) => {

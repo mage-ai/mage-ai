@@ -1,5 +1,5 @@
 import { CommandCenterActionType, CommandCenterItemType, ItemApplicationType, KeyValueType } from '@interfaces/CommandCenterType';
-import { ExecuteActionableType } from '../constants';
+import { ExecuteActionableType, FetchItemsType, HandleSelectItemRowType } from '../constants';
 
 export type InvokeRequestOptionsType = {
   action: CommandCenterActionType;
@@ -27,6 +27,7 @@ export type ApplicationProps = {
     current: CurrentType[];
   };
   focusedItemIndex: number;
+  getItemsActionResults?: () => KeyValueType;
   item: CommandCenterItemType;
   itemsRef?: any;
   refError?: any;
@@ -36,4 +37,4 @@ export type ApplicationProps = {
     errors: any;
     response: any;
   }) => void;
-} & InvokeRequestActionType & ExecuteActionableType;
+} & InvokeRequestActionType & ExecuteActionableType & FetchItemsType & HandleSelectItemRowType;

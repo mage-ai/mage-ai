@@ -37,6 +37,7 @@ ITEMS = [
                         keyboard_shortcuts=[[13]],
                         action_types=[
                             ButtonActionType.EXECUTE,
+                            ButtonActionType.SELECT_ITEM_FROM_REQUEST,
                             ButtonActionType.RESET_FORM,
                         ],
                     ),

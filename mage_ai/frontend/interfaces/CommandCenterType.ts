@@ -21,6 +21,7 @@ export enum ButtonActionTypeEnum {
   CUSTOM_ACTIONS = 'custom_actions',
   EXECUTE = 'execute',
   RESET_FORM = 'reset_form',
+  SELECT_ITEM_FROM_REQUEST = 'select_item_from_request',
 }
 
 export enum ItemApplicationTypeEnum {

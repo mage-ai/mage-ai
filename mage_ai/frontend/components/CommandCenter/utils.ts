@@ -1,4 +1,4 @@
-import { ApplicationConfiguration, ExecuteActionableType } from './constants';
+import { ApplicationConfiguration, ExecuteActionableType, FetchItemsType, HandleSelectItemRowType } from './constants';
 import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
@@ -147,23 +147,28 @@ export function executeButtonActions({
   application,
   button,
   executeAction,
+  fetchItems,
   focusedItemIndex,
+  getItemsActionResults,
+  handleSelectItemRow,
   item,
+  itemsRef,
   refError,
   removeApplication,
 }: {
   application: ItemApplicationType;
   button: ButtonActionType;
   focusedItemIndex: number;
+  getItemsActionResults?: () => KeyValueType;
   item: CommandCenterItemType;
+  itemsRef?: any;
   refError: any;
   removeApplication: () => void;
-} & ExecuteActionableType) {
+} & ExecuteActionableType & FetchItemsType & HandleSelectItemRowType) {
   const actionTypes = button?.action_types || [];
 
   const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
     const actionType = actionTypes?.[index];
-
     let actionFunction = (result: KeyValueType = {}) => {};
 
     if (ButtonActionTypeEnum.RESET_FORM === actionType) {
@@ -187,6 +192,12 @@ export function executeButtonActions({
         focusedItemIndex,
         button?.actions,
       );
+    } else if (ButtonActionTypeEnum.SELECT_ITEM_FROM_REQUEST === actionType) {
+      actionFunction = (result: KeyValueType = {}) => fetchItems({
+        results: getItemsActionResults?.(),
+      }).then((response) => {
+        console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF', response);
+      });
     }
 
     const result = new Promise((resolve, reject) => resolve(actionFunction(results)));

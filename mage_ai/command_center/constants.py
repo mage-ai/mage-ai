@@ -72,3 +72,4 @@ class ButtonActionType(str, Enum):
     EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
     REPLACE_APPLICATION = 'replace_application'
     RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.
+    SELECT_ITEM_FROM_REQUEST = 'select_item_from_request'

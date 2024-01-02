@@ -25,6 +25,7 @@ class BaseFactory:
         page: str = None,
         page_history: List[Dict] = None,
         picks: str = None,
+        results: Dict = None,
         search: str = None,
         search_history: List[Dict] = None,
         search_ratio: int = DEFAULT_RATIO,
@@ -37,6 +38,7 @@ class BaseFactory:
         self.page = page
         self.page_history = page_history
         self.picks = picks
+        self.results = results
         self.search = search
         self.search_history = search_history
         self.search_ratio = search_ratio

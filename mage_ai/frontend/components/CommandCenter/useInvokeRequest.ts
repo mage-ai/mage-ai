@@ -20,6 +20,7 @@ export default function useInvokeRequest({
       action: CommandCenterActionType;
       focusedItemIndex: number;
       index: number;
+      item: CommandCenterItemType;
     },
   ) => void;
   showError?: (opts: {
@@ -109,9 +110,10 @@ export default function useInvokeRequest({
               },
             ) => {
               const {
+                action,
                 focusedItemIndex,
                 index = 0,
-                action,
+                item,
               } = variables;
               const {
                 request: {
@@ -128,6 +130,7 @@ export default function useInvokeRequest({
                     action,
                     focusedItemIndex,
                     index,
+                    item,
                   },
                 );
               }

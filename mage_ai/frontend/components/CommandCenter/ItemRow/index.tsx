@@ -40,8 +40,9 @@ function ItemRow({
 
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
+  const category = getDisplayCategory(item, true);
 
-  const maxLetters = 100 - title?.length;
+  const maxLetters = 90 - ((title?.length || 0) + (category?.length || 0));
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
   if (descriptionCount > maxLetters) {
@@ -84,7 +85,7 @@ function ItemRow({
         </Flex>
 
         <Text muted>
-          {getDisplayCategory(item, true)}
+          {category}
         </Text>
       </FlexContainer>
     </ItemStyle>

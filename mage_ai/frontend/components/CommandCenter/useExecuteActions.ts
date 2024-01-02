@@ -14,15 +14,15 @@ import { setNested } from '@utils/hash';
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
   invokeRequest,
-  itemsRef: refItems = null,
+  itemsActionResultsRef: refItemsActionResults = null,
   router,
 }: {
   applicationState?: {
     current: KeyValueType;
   };
   invokeRequest: (opts: InvokeRequestOptionsType) => void;
-  itemsRef?: {
-    current: CommandCenterItemType[];
+  itemsActionResultsRef?: {
+    current: KeyValueType;
   };
   router: any;
 }): (
@@ -37,18 +37,6 @@ export default function useExecuteActions({
   ) {
     const actionSettings = [];
 
-    if (refItems) {
-      if (!item?.actionResults) {
-        if (!refItems?.current?.[focusedItemIndex]) {
-          refItems.current[focusedItemIndex] = item;
-        }
-
-        if (refItems?.current && refItems?.current?.[focusedItemIndex]) {
-          refItems.current[focusedItemIndex].actionResults = {};
-        }
-      }
-    }
-
     (actions || item?.actions || [])?.forEach((actionInit, index: number) => {
       let action = { ...actionInit };
 
@@ -61,20 +49,6 @@ export default function useExecuteActions({
         Object.entries(applicationState || {})?.forEach(([key, value]) => {
           setNested(action, key, value);
         });
-      }
-
-      if (refItems) {
-        if (!refItems?.current?.[focusedItemIndex]?.actionResults) {
-          refItems.current[focusedItemIndex].actionResults = {};
-
-          try {
-            refItems.current[focusedItemIndex].actionResults[action?.uuid || index] = {
-              action,
-            };
-          } catch (error) {
-            console.error('CommandCenter/index.executeAction: ', error);
-          }
-        }
       }
 
       const {
@@ -122,9 +96,14 @@ export default function useExecuteActions({
               }
             }
 
-            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[actionUUID || index]) {
-              refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
-            }
+            setNested(
+              refItemsActionResults?.current,
+              [
+                item?.uuid,
+                String(actionUUID || index),
+              ].join('.'),
+              result,
+            );
 
             return result;
           };
@@ -178,7 +157,14 @@ export default function useExecuteActions({
               }
             });
 
-            refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
+            setNested(
+              refItemsActionResults?.current,
+              [
+                item?.uuid,
+                String(actionUUID || index),
+              ].join('.'),
+              result,
+            );
 
             return result;
           };

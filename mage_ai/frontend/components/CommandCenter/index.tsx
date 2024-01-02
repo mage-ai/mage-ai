@@ -142,6 +142,11 @@ function CommandCenter() {
   const refItemsNodes = useRef({});
   const refItemsNodesContainer = useRef(null);
 
+  const refItemsActionResults = useRef({});
+  function getItemsActionResults(): KeyValueType {
+    return refItemsActionResults?.current;
+  }
+
   const refFocusedItemIndex = useRef(null);
   const refFocusedSearchHistoryIndex = useRef(null);
   const refSelectedSearchHistoryIndex = useRef(null);
@@ -302,6 +307,9 @@ function CommandCenter() {
           {...currentApplicationConfig}
           applicationState={refApplicationState}
           applicationsRef={refApplications}
+          fetchItems={fetchItems}
+          getItemsActionResults={getItemsActionResults}
+          handleSelectItemRow={handleSelectItemRow}
           refError={refError}
           removeApplication={removeApplication}
           router={router}
@@ -346,6 +354,9 @@ function CommandCenter() {
         {...currentApplicationConfig}
         applicationState={refApplicationState}
         applicationsRef={refApplications}
+        fetchItems={fetchItems}
+        getItemsActionResults={getItemsActionResults}
+        handleSelectItemRow={handleSelectItemRow}
         refError={refError}
         removeApplication={removeApplication}
         router={router}
@@ -559,6 +570,7 @@ function CommandCenter() {
       {
         action,
         focusedItemIndex,
+        item,
       },
     ) => {
       const {
@@ -568,14 +580,13 @@ function CommandCenter() {
         uuid,
       } = action;
 
-      const items = refItems?.current || [];
-      if (items) {
-        const item = items?.[focusedItemIndex];
-        if (item) {
-          setNested(item, `actionResults.${uuid || index}.${responseResourceKey}`, value);
-          refItems.current[focusedItemIndex] = item;
-        }
-      }
+      const key = [
+        item?.uuid,
+        String(uuid || index),
+        responseResourceKey,
+      ].join('.');
+      setNested(refItemsActionResults.current, key, value);
+      getItemsActionResults();
     },
     showError,
   });
@@ -583,7 +594,7 @@ function CommandCenter() {
   const executeAction = useExecuteActions({
     applicationState: refApplicationState,
     invokeRequest,
-    itemsRef: refItems,
+    itemsActionResultsRef: refItemsActionResults,
     router,
   });
 
@@ -882,6 +893,10 @@ function CommandCenter() {
               return executeButtonActions({
                 ...currentApplicationConfig,
                 button,
+                fetchItems,
+                getItemsActionResults,
+                handleSelectItemRow,
+                itemsRef,
                 refError,
                 removeApplication,
               });
