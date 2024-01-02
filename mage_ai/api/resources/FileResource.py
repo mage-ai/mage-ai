@@ -27,6 +27,12 @@ class FileResource(GenericResource):
         if pattern:
             pattern = urllib.parse.unquote(pattern)
 
+        repo_path = query.get('repo_path', [None])
+        if repo_path:
+            repo_path = repo_path[0]
+        if repo_path:
+            repo_path = urllib.parse.unquote(repo_path)
+
         exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
         if exclude_dir_pattern:
             exclude_dir_pattern = exclude_dir_pattern[0]
@@ -45,7 +51,7 @@ class FileResource(GenericResource):
 
         return self.build_result_set(
             [File.get_all_files(
-                get_repo_path(root_project=True),
+                repo_path or get_repo_path(root_project=True),
                 exclude_dir_pattern=exclude_dir_pattern,
                 exclude_pattern=exclude_pattern,
                 pattern=pattern,

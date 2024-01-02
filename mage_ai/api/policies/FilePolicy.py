@@ -63,6 +63,7 @@ FilePolicy.allow_query(
         'exclude_dir_pattern',
         'exclude_pattern',
         'pattern',
+        'repo_path',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

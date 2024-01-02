@@ -89,8 +89,31 @@ class Remote(BaseVersionControl):
 
 @dataclass
 class Branch(BaseVersionControl):
+    current: bool = None
     name: str = None
     remote: Remote = None
+
+    @classmethod
+    def load_all(self, remote: Remote = None, project: 'Project' = None) -> List['Branch']:
+        lines = self(project=project).list(include_all=True)
+
+        arr = []
+        for line in lines:
+            if len(line) == 0:
+                continue
+
+            current = line.startswith('*')
+            if current:
+                name = line[1:].strip()
+            else:
+                name = line.strip()
+
+            model = self.load(current=current, name=name)
+            model.remote = remote
+            model.project = project
+            arr.append(model)
+
+        return arr
 
     def list(self, include_all: bool = False) -> List[str]:
         commands = ['branch']
@@ -146,6 +169,7 @@ class Branch(BaseVersionControl):
 
     def to_dict(self, **kwargs) -> Dict:
         return dict(
+            current=self.current,
             name=self.name,
             project_uuid=self.project.uuid,
             remote=self.remote.to_dict(**kwargs) if self.remote else None,

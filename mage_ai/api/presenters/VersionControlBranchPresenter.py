@@ -5,6 +5,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class VersionControlBranchPresenter(BasePresenter):
     default_attributes = [
+        'current',
         'name',
         'project_uuid',
         'remote',

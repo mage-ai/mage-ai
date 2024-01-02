@@ -20,18 +20,7 @@ class VersionControlBranchResource(AsyncBaseResource):
             remote.project = project
             remote.hydrate()
 
-        model = Branch()
-        model.project = project
-        model.remote = remote
-
-        models = []
-        for m in [Branch.load(
-            name=line.strip(),
-        ) for line in model.list(include_all=True) if len(line) >= 1]:
-            m.project = project
-            m.remote = remote
-            models.append(m)
-
+        models = Branch.load_all(project=project, remote=remote)
         return self.build_result_set(
             models,
             user,
