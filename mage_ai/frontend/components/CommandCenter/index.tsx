@@ -17,6 +17,8 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import useCache from '@storage/CommandCenter/useCache';
+import useExecuteActions from './useExecuteActions';
+import useInvokeRequest from './useInvokeRequest';
 import {
   APPLICATION_FOOTER_ID,
   ApplicationContainerStyle,
@@ -303,6 +305,7 @@ function CommandCenter() {
           refError={refError}
           removeApplication={removeApplication}
           router={router}
+          showError={showError}
         />
       );
 
@@ -374,8 +377,6 @@ function CommandCenter() {
 
       refInput?.current?.setSelectionRange(0, refInput?.current?.value?.length);
       refInput?.current?.focus();
-
-      updateInputProperties();
     }
 
     let resetCallback;
@@ -549,299 +550,42 @@ function CommandCenter() {
     }
   }
 
-  const [
+  const {
     invokeRequest,
-    {
-      isLoading: isLoadingRequest,
-    },
-  ] = useMutation(
-    ({
-      action,
-      results,
-    }: InvokeRequestOptionsType) => {
-      const actionCopy = updateActionFromUpstreamResults(action, results);
-
+    isLoading: isLoadingRequest,
+  } = useInvokeRequest({
+    onSuccessCallback: (
+      value,
+      {
+        action,
+        focusedItemIndex,
+      },
+    ) => {
       const {
         request: {
-          operation,
-          payload,
-          query,
-          resource,
-          resource_id: resourceID,
-          resource_parent: resourceParent,
-          resource_parent_id: resourceParentID,
+          response_resource_key: responseResourceKey,
         },
-      } = actionCopy;
-
-      let endpoint = api?.[resource];
-      if (resourceParent) {
-        endpoint = endpoint?.[resourceParent];
-      }
-
-      const ids = [];
-
-      if (resourceParentID) {
-        ids.push(resourceParentID);
-      }
-
-      if (resourceID) {
-        ids.push(resourceID);
-      }
-
-      let submitRequest = null;
-      if (OperationTypeEnum.CREATE === operation) {
-        submitRequest = () => endpoint?.useCreate(...ids, query)(payload);
-      } else if (OperationTypeEnum.UPDATE === operation) {
-        submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
-      } else if (OperationTypeEnum.DELETE === operation) {
-        submitRequest = () => endpoint?.useDelete(...ids, query)();
-      } else if (OperationTypeEnum.DETAIL === operation) {
-        submitRequest = () => endpoint?.detailAsync(...ids, query);
-      } else if (OperationTypeEnum.LIST === operation) {
-        submitRequest = () => endpoint?.listAsync(...ids, query);
-      }
-
-      if (submitRequest) {
-        return submitRequest();
-      }
-    },
-    {
-      onSuccess: (
-        response: any,
-        variables: {
-          action: CommandCenterActionType;
-          focusedItemIndex: number;
-          index: number;
-          item: CommandCenterItemType;
-          results: KeyValueType;
-        },
-      ) => onSuccess(
-        response, {
-          callback: (
-            resp: {
-              [key: string]: KeyValueType;
-            },
-          ) => {
-            const {
-              focusedItemIndex,
-              index = 0,
-              action: {
-                request: {
-                  operation,
-                  response_resource_key: responseResourceKey,
-                },
-                uuid,
-              },
-            } = variables;
-
-            const value = resp?.[responseResourceKey];
-
-            const items = refItems?.current || [];
-            if (items) {
-              const item = items?.[focusedItemIndex];
-              if (item) {
-                setNested(item, `actionResults.${uuid || index}.${responseResourceKey}`, value);
-                refItems.current[focusedItemIndex] = item;
-              }
-            }
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  function executeAction(
-    item: CommandCenterItemType,
-    focusedItemIndex: number,
-    actions: CommandCenterActionType[] = null,
-  ) {
-    const actionSettings = [];
-
-    if (!item?.actionResults) {
-      if (!refItems?.current?.[focusedItemIndex]) {
-        refItems.current[focusedItemIndex] = item;
-      }
-
-      if (refItems?.current && refItems?.current?.[focusedItemIndex]) {
-        refItems.current[focusedItemIndex].actionResults = {};
-      }
-    }
-
-    (actions || item?.actions || [])?.forEach((actionInit, index: number) => {
-      let action = { ...actionInit };
-      const applicationState = (refApplicationState?.current || {})?.[action?.uuid];
-      if (applicationState) {
-        Object.entries(applicationState || {})?.forEach(([key, value]) => {
-          setNested(action, key, value);
-        });
-      }
-
-      if (!refItems?.current?.[focusedItemIndex]?.actionResults) {
-        try {
-          refItems.current[focusedItemIndex].actionResults[action?.uuid || index] = {
-            action,
-          };
-        } catch (error) {
-          console.error('CommandCenter/index.executeAction: ', error);
-        }
-      }
-
-      const {
-        interaction,
-        page,
-        request,
-        uuid: actionUUID,
-      } = action || {
-        interaction: null,
-        page: null,
-        request: null,
-        uuid: null,
-      };
-
-      let actionFunction = (results: KeyValueType = {}) => {};
-
-      if (page) {
-        const {
-          external,
-          open_new_window: openNewWindow,
-          path: pathInit,
-        } = page || {
-          external: false,
-          openNewWindow: false,
-          path: null,
-        };
-
-        if (pathInit) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const path = interpolatePagePath(actionCopy?.page);
-
-            let result = null;
-            if (external) {
-              if (openNewWindow && typeof window !== 'undefined') {
-                result = window.open(path, '_blank');
-              } else {
-                result = window.location.href = path;
-              }
-            } else {
-              if (openNewWindow && typeof window !== 'undefined') {
-                result = window.open(path, '_blank');
-              } else {
-                result = router.push(path);
-              }
-            }
-
-            if (refItems?.current?.[focusedItemIndex]?.actionResults?.[actionUUID || index]) {
-              refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
-            }
-
-            return result;
-          };
-        }
-      } else if (interaction) {
-        const {
-          element,
-          type,
-        } = interaction || {
-          element: null,
-          event: null,
-        };
-
-        // TODO (dangerous): open the file and the file editor in an application on the same page;
-        // this will be supported when Application Center is launched.
-        if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-
-            const { options } = actionCopy?.interaction || { options: null };
-
-            return router.push({
-              pathname: '/files',
-              query: {
-                file_path: typeof options?.file_path === 'string'
-                  ? encodeURIComponent(String(options?.file_path))
-                  : null,
-              },
-            });
-          };
-        } else if (element && type) {
-          const { options } = interaction || { options: null };
-
-          actionFunction = (results: KeyValueType = {}) => {
-            const nodes = [];
-            if (element?.id) {
-              const node = document.getElementById(element?.id);
-              nodes.push(node);
-            } else if (element?.class_name) {
-              const node = document.getElementsByClassName(element?.class_name);
-              nodes.push(node);
-            }
-
-            const result = nodes?.map((node) => {
-              if (node) {
-                if (options) {
-                  return node?.[type]?.(options);
-                } else {
-                  return node?.[type]?.();
-                }
-              }
-            });
-
-            refItems.current[focusedItemIndex].actionResults[actionUUID || index].result = result;
-
-            return result;
-          };
-        }
-      } else if (request?.operation && request?.resource) {
-        actionFunction = (results: KeyValueType = {}) => invokeRequest({
-          action,
-          focusedItemIndex,
-          index,
-          item,
-          results,
-        });
-      }
-
-      actionSettings.push({
-        action,
-        actionFunction,
-      });
-    });
-
-    const invokeActionAndCallback = (index: number, results: KeyValueType = {}) => {
-      const {
-        action,
-        actionFunction,
-      } = actionSettings?.[index];
-      const {
-        delay,
         uuid,
       } = action;
 
-      const result = new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve(actionFunction(results));
-        }, delay || 0);
-      });
-
-      return result?.then((resultsInner) => {
-        if (index + 1 <= actionSettings?.length - 1) {
-          return invokeActionAndCallback(index + 1, {
-            ...results,
-            [uuid]: resultsInner,
-          });
+      const items = refItems?.current || [];
+      if (items) {
+        const item = items?.[focusedItemIndex];
+        if (item) {
+          setNested(item, `actionResults.${uuid || index}.${responseResourceKey}`, value);
+          refItems.current[focusedItemIndex] = item;
         }
-      });
-    };
+      }
+    },
+    showError,
+  });
 
-    if (actionSettings?.length >= 1) {
-      return invokeActionAndCallback(0);
-    }
-  }
+  const executeAction = useExecuteActions({
+    applicationState: refApplicationState,
+    invokeRequest,
+    itemsRef: refItems,
+    router,
+  });
 
   function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
     const applicationsCount = item?.applications?.length || 0;

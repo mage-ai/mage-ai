@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 from thefuzz import fuzz
 
 from mage_ai.command_center.constants import ModeType, ObjectType
-from mage_ai.command_center.models import Application, Item
+from mage_ai.command_center.models import Application, Item, ModeState
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import flatten
@@ -21,7 +21,7 @@ class BaseFactory:
         application: Dict = None,
         component: str = None,
         item: Dict = None,
-        mode: ModeType = None,
+        mode: Dict = None,
         page: str = None,
         page_history: List[Dict] = None,
         picks: str = None,
@@ -33,7 +33,7 @@ class BaseFactory:
         self.application = Application.load(**application) if application else application
         self.component = component
         self.item = Item.load(**item) if item else item
-        self.mode = mode
+        self.mode = ModeState.load(**mode) if mode else mode
         self.page = page
         self.page_history = page_history
         self.picks = picks
@@ -62,8 +62,8 @@ class BaseFactory:
 
             return await factory_class(**kwargs).process(items_dicts)
 
-        mode = kwargs.get('mode')
-        if ModeType.VERSION_CONTROL == mode:
+        mode = ModeState.load(**kwargs.get('mode')) if kwargs.get('mode') else None
+        if mode and ModeType.VERSION_CONTROL == mode.type:
             from mage_ai.command_center.applications.factory import ApplicationFactory
             from mage_ai.command_center.version_control.factory import (
                 VersionControlFactory,

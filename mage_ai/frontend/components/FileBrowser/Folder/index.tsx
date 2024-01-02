@@ -253,6 +253,7 @@ function Folder({
       onClickFile={onClickFile}
       onClickFolder={onClickFolder}
       onSelectBlockFile={onSelectBlockFile}
+      onlyShowFolders={onlyShowFolders}
       openFile={openFile}
       openSidekickView={openSidekickView}
       reloadCount={reloadCount}
@@ -282,6 +283,7 @@ function Folder({
     onClickFile,
     onClickFolder,
     onSelectBlockFile,
+    onlyShowFolders,
     onlyShowChildren,
     openFile,
     openSidekickView,
@@ -443,6 +445,10 @@ function Folder({
       }
     }, 1);
   }, []);
+
+  if (!isFolder && onlyShowFolders) {
+    return null;
+  }
 
   return (
     <>

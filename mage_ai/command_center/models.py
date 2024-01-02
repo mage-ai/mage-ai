@@ -31,12 +31,37 @@ from mage_ai.presenters.interactions.models import (
 )
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
+from mage_ai.version_control.models import Branch, Commit, Project, Remote
 
 
 @dataclass
 class CommandCenterBaseClass(BaseDataClass):
     def to_dict(self, ignore_empty: bool = True, **kwargs) -> Dict:
         return super().to_dict(ignore_empty=True, **kwargs)
+
+
+@dataclass
+class VersionControlState(BaseDataClass):
+    branch: Branch = None
+    commit: Commit = None
+    project: Project = None
+    remote: Remote = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('branch', Branch)
+        self.serialize_attribute_class('commit', Commit)
+        self.serialize_attribute_class('project', Project)
+        self.serialize_attribute_class('remote', Remote)
+
+
+@dataclass
+class ModeState(CommandCenterBaseClass):
+    type: ModeType
+    version_control: VersionControlState = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('version_control', VersionControlState)
+        self.serialize_attribute_enum('type', ModeType)
 
 
 @dataclass
@@ -263,14 +288,33 @@ class Button(CommandCenterBaseClass):
 
 
 @dataclass
+class ConfigurationRequests(CommandCenterBaseClass):
+    files: Request = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('files', Request)
+
+
+@dataclass
+class ApplicationConfigurations(CommandCenterBaseClass):
+    interaction_parsers: Dict = None
+    requests: ConfigurationRequests = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('requests', ConfigurationRequests)
+
+
+@dataclass
 class Application(CommandCenterBaseClass):
     application_type: ApplicationType
     uuid: str
     actions: List[Action] = None
     buttons: List[Button] = None
+    configurations: ApplicationConfigurations = None
     settings: List[Union[FormInput, Dict]] = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('configurations', ApplicationConfigurations)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('buttons', Button)
         self.serialize_attribute_enum('application_type', ApplicationType)

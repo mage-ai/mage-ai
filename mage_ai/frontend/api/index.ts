@@ -107,6 +107,10 @@ export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
 export const VERSIONS: 'versions' = 'versions';
+export const VERSION_CONTROL_BRANCHES: 'version_control_branches' = 'version_control_branches';
+export const VERSION_CONTROL_FILES: 'version_control_files' = 'version_control_files';
+export const VERSION_CONTROL_PROJECTS: 'version_control_projects' = 'version_control_projects';
+export const VERSION_CONTROL_REMOTES: 'version_control_remotes' = 'version_control_remotes';
 export const WIDGETS: 'widgets' = 'widgets';
 export const WORKSPACES: 'workspaces' = 'workspaces';
 
@@ -204,6 +208,10 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [USERS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
+  [VERSION_CONTROL_BRANCHES, VERSION_CONTROL_PROJECTS],
+  [VERSION_CONTROL_FILES, VERSION_CONTROL_PROJECTS],
+  [VERSION_CONTROL_PROJECTS],
+  [VERSION_CONTROL_REMOTES, VERSION_CONTROL_PROJECTS],
   [WIDGETS, PIPELINES],
   [WORKSPACES],
 ];

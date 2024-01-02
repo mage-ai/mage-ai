@@ -21,6 +21,7 @@ export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
 export const INPUT_CONTAINER_ID = `${COMPONENT_UUID}-input-container`;
 
 export const SHARED_PADDING = SCROLLBAR_WIDTH;
+export const CONTAINER_HEIGHT = (ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2);
 const HEADER_CONTENT_HEIGHT = 5 * UNIT;
 const FOOTER_CONTENT_HEIGHT = 5.5 * UNIT;
 
@@ -115,7 +116,7 @@ const SHARED_CONTAINER_STYLES = css`
   ${ScrollbarStyledCss}
   ${hideScrollBar()}
 
-  height: ${(ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2)}px;
+  height: ${CONTAINER_HEIGHT}px;
   overflow: auto;
   max-width: ${MAX_WIDTH}px;
 

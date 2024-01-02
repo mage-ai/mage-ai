@@ -35,6 +35,12 @@ class BaseVersionControl(BaseDataClass):
 
 
 @dataclass
+class Commit(BaseVersionControl):
+    message: str = None
+    sha: str = None
+
+
+@dataclass
 class Remote(BaseVersionControl):
     name: str = None
     url: str = None

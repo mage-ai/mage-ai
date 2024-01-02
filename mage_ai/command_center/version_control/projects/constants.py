@@ -15,7 +15,7 @@ ITEMS = [
         description='Initialize Git in a folder to start pulling or pushing code.',
         display_settings_by_attribute=dict(
             icon=dict(
-                icon_uuid='DiamondDetached',
+                icon_uuid='Categories',
             ),
         ),
         applications=[
@@ -56,6 +56,21 @@ ITEMS = [
                         action_uuid='create_model',
                     ),
                 ],
+                configurations=dict(
+                    interaction_parsers={
+                        'files.click.folder': dict(
+                            action_uuid='create_model',
+                            name='request.payload.version_control_project.uuid',
+                        ),
+                    },
+                    requests=dict(
+                        files=dict(
+                            operation=OperationType.LIST,
+                            resource='files',
+                            response_resource_key='files',
+                        ),
+                    ),
+                ),
                 uuid='model_detail_list',
             ),
         ],
@@ -65,12 +80,11 @@ ITEMS = [
                     operation=OperationType.CREATE,
                     payload=dict(
                         version_control_project=dict(
-                            name=None,
-                            type=None,
+                            uuid=None,
                         ),
                     ),
                     resource='version_control_projects',
-                    response_resource_key='version_control_project'
+                    response_resource_key='version_control_project',
                 ),
                 uuid='create_model',
             ),

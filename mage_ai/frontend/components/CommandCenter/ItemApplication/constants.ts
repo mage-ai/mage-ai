@@ -32,4 +32,8 @@ export type ApplicationProps = {
   refError?: any;
   removeApplication: () => void;
   router: any;
+  showError?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
 } & InvokeRequestActionType & ExecuteActionableType;

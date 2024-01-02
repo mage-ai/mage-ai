@@ -9,6 +9,8 @@ import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+import useExecuteActions from '../useExecuteActions';
+import useInvokeRequest from '../useInvokeRequest';
 import { ApplicationProps } from '../ItemApplication/constants';
 import {
   ButtonActionTypeEnum,
@@ -17,7 +19,7 @@ import {
   KeyValueType,
 } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
-import { FormStyle } from './index.style';
+import { ChildrenStyle, ContainerStyle, FormStyle } from './index.style';
 import { InteractionInputTypeEnum } from '@interfaces/InteractionType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { dig, setNested } from '@utils/hash';
@@ -44,15 +46,33 @@ function ApplicationForm({
   executeAction,
   focusedItemIndex,
   item,
+  router,
+  showError,
 }: ApplicationProps) {
   const refInputs = useRef({});
 
-  const settings = application?.settings || [];
+  const {
+    configurations,
+    settings,
+    uuid,
+  } = application || {
+    configurations: null,
+    settings: null,
+    uuid: null,
+  };
+  const {
+    interaction_parsers: interactionParsers,
+    requests,
+  } = configurations || {
+    interaction_parsers: null,
+    requests: null,
+  };
 
   const [attributes, setAttributesState] = useState<KeyValueType>(null);
   const [attributesTouched, setAttributesTouched] = useState<{
     [key: string]: boolean;
   }>(null);
+  const [requestsData, setRequestsData] = useState<KeyValueType>(KeyValueType);
 
   const setAttributes = useCallback((prev1) => setAttributesState((prev2) => {
     const val = prev1 ? prev1?.(prev2) : prev1;
@@ -89,8 +109,15 @@ function ApplicationForm({
       });
 
       setAttributes(() => attributesDefault);
+      setRequestsData(null);
     }
   }, []);
+
+  useEffect(() => {
+    if (!requests) {
+      setRequestsData({});
+    }
+  }, [requests]);
 
   if (settings?.length >= 1 && nothingFocused(refInputs)) {
     // Get the 1st input that doesn’t have a value.
@@ -275,33 +302,107 @@ function ApplicationForm({
     settings,
   ]);
 
-  const { data: filesData, mutate: fetchFiles } = api.files.list(
+  const {
+    invokeRequest,
+    isLoading: isLoadingRequest,
+  } = useInvokeRequest({
+    onSuccessCallback: (
+      value,
+      {
+        action: {
+          uuid,
+        },
+        focusedItemIndex,
+      },
+    ) => {
+      setRequestsData({
+        [uuid]: value,
+      });
+    },
+    showError,
+  });
+  const executeActionRequests = useExecuteActions({
+    invokeRequest,
+    router,
+  });
 
-  );
+  useEffect(() => {
+    if (requests) {
+      executeActionRequests(
+        item,
+        focusedItemIndex,
+        Object.entries(requests || {})?.map(([actionUUID, request]) => ({
+          request,
+          uuid: actionUUID,
+        })),
+      );
+    }
+  }, [requests]);
 
-  return (
-    <FormStyle>
-      <FlexContainer>
-        <FlexContainer flexDirection="column">
-          {filesData?.files?.map((file, idx) => (
+  const childrenMemo = useMemo(() => {
+    let inner;
+
+    if (requestsData?.files) {
+      inner = (
+        <div style={{ paddingBottom: 8, paddingTop: 8 }}>
+          {requestsData?.files?.map((file, idx) => (
             <Folder
               disableContextMenu
               file={file}
               key={`${file.name}-${idx}`}
               level={0}
               onClickFolder={(fullPath) => {
-                console.log(fullPath)
+                const parser = interactionParsers?.['files.click.folder'];
+                if (parser) {
+                  const {
+                    action_uuid: actionUUID,
+                    name,
+                  } = parser;
+
+                  setAttributesTouched(prev => ({
+                    ...prev,
+                    [actionUUID]: {
+                      // @ts-ignore
+                      ...(prev?.[actionUUID] || {}),
+                      [name]: true,
+                    },
+                  }));
+
+                  return setAttributes(prev => ({
+                    ...prev,
+                    [actionUUID]: {
+                      ...(prev?.[actionUUID] || {}),
+                      [name]: fullPath,
+                    },
+                  }));
+                }
               }}
               onlyShowFolders
             />
           ))}
-        </FlexContainer>
+        </div>
+      );
+    }
 
-        <Flex flex={1} style={{ position: 'fixed', right: 0 }}>
-          {formMemo}
-        </Flex>
-      </FlexContainer>
-    </FormStyle>
+    if (inner) {
+      return (
+        <ChildrenStyle>
+          {inner}
+        </ChildrenStyle>
+      );
+    }
+
+    return null;
+  }, [interactionParsers, requestsData]);
+
+  return (
+    <ContainerStyle>
+      {childrenMemo}
+
+      <FormStyle fullWidth={!childrenMemo}>
+        {formMemo}
+      </FormStyle>
+    </ContainerStyle>
   );
 }
 

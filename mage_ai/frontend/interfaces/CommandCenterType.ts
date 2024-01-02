@@ -3,6 +3,12 @@ import { FileExtensionEnum } from '@interfaces/FileType';
 import { InteractionInputType } from '@interfaces/InteractionType';
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { removeUnderscore } from '@utils/string';
+import {
+  VersionControlBranch,
+  VersionControlCommit,
+  VersionControlProject,
+  VersionControlRemote,
+} from './VersionControlType';
 
 export enum ItemTagEnum {
   PINNED = 'pinned',
@@ -53,6 +59,16 @@ export enum ObjectTypeEnum {
 
 export enum ModeTypeEnum {
   VERSION_CONTROL = 'version_control',
+}
+
+export interface ModeStateType {
+  type: ModeTypeEnum;
+  version_control?: {
+    branch?: VersionControlBranch;
+    commit?: VersionControlCommit
+    project?: VersionControlProject;
+    remote?: VersionControlRemote;
+  };
 }
 
 interface TextStylesType {
@@ -238,10 +254,25 @@ export interface ButtonActionType {
   tooltip?: string;
 }
 
+interface ConfigurationRequestsType {
+  files?: CommandCenterActionRequestType;
+}
+
+interface ApplicationConfigurationsType {
+  interaction_parsers?: {
+    [key: string]: {
+      action_uuid: string;
+      name: string;
+    };
+  };
+  requests?: ConfigurationRequestsType;
+}
+
 export interface ItemApplicationType {
   actions?: CommandCenterActionType[];
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
+  configurations?: ApplicationConfigurationsType;
   settings: FormInputType[];
   uuid: string;
 }

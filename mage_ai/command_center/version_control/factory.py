@@ -15,9 +15,10 @@ class VersionControlFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
         items = [] + ITEMS
 
-        if ModeType.VERSION_CONTROL == self.mode:
-            self.filter_score_mutate_accumulator(DEACTIVATE_MODE, items)
-        elif not self.mode:
+        if self.mode:
+            if ModeType.VERSION_CONTROL == self.mode.type:
+                self.filter_score_mutate_accumulator(DEACTIVATE_MODE, items)
+        else:
             self.filter_score_mutate_accumulator(ACTIVATE_MODE, items)
 
         for project in Project.load_all():
