@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 from mage_ai.data_preparation.preferences import Preferences, get_preferences
 from mage_ai.settings.platform import platform_settings, update_settings
 from mage_ai.settings.utils import base_repo_path
-from mage_ai.shared.array import find
+from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.models import BaseDataClass
 
@@ -44,6 +44,20 @@ class Commit(BaseVersionControl):
 class Remote(BaseVersionControl):
     name: str = None
     url: str = None
+
+    @classmethod
+    def load_all(self, project: 'Project' = None) -> List['Remote']:
+        lines = self(project=project).list()
+
+        arr = []
+        for remote in unique_by(
+            [self.load_from_text(line) for line in lines if len(line) >= 1],
+            lambda x: f'{x.name}:{x.url}',
+        ):
+            remote.project = project
+            arr.append(remote)
+
+        return arr
 
     @classmethod
     def load_from_text(self, line: str) -> Dict:

@@ -5,6 +5,7 @@ import {
   BlockGeneric,
   Binary,
   BranchAlt,
+  Categories,
   CategorizationUseCase,
   Chat,
   ChurnV3,
@@ -56,6 +57,7 @@ export function getIcon(item: CommandCenterItemType) {
   const mapping = {
     [ObjectTypeEnum.APPLICATION]: NavDashboard,
     [ObjectTypeEnum.BLOCK]: BlockGeneric,
+    [ObjectTypeEnum.BRANCH]: BranchAlt,
     [ObjectTypeEnum.CHAT]: Chat,
     [ObjectTypeEnum.CODE]: Code,
     [ObjectTypeEnum.DOCUMENT]: DocumentIcon,
@@ -63,7 +65,7 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.FOLDER]: FolderOutline,
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
     [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
-    [ObjectTypeEnum.PROJECT]: BranchAlt,
+    [ObjectTypeEnum.PROJECT]: Categories,
     [ObjectTypeEnum.SETTINGS]: SettingsWithKnobs,
     [ObjectTypeEnum.TRIGGER]: Schedule,
   };

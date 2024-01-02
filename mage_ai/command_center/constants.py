@@ -57,6 +57,7 @@ class InteractionType(str, Enum):
     CLICK = 'click'
     OPEN_FILE = 'open_file'
     SCROLL = 'scroll'
+    SELECT_ITEM = 'select_item'
 
 
 class ApplicationType(str, Enum):

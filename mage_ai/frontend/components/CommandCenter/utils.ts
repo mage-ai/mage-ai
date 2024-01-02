@@ -91,6 +91,12 @@ export function getDisplayCategory(item: CommandCenterItemType, normal: boolean 
     }
   }
 
+  if (ObjectTypeEnum.BRANCH === item?.object_type) {
+    if (item?.metadata?.branch?.current) {
+      return 'Current branch';
+    }
+  }
+
   if (normal) {
     const part1 = TYPE_TITLE_MAPPING_NORMAL[item?.item_type];
     let part2 = OBJECT_TITLE_MAPPING_SHORT[item?.object_type];

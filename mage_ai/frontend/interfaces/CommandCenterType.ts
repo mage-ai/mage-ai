@@ -54,6 +54,7 @@ export enum ObjectTypeEnum {
   PIPELINE = 'pipeline',
   PIPELINE_RUN = 'pipeline_run',
   PROJECT = 'project',
+  REMOTE = 'remote',
   SETTINGS = 'settings',
   TRIGGER = 'trigger',
 }
@@ -107,6 +108,7 @@ export const TYPE_TITLE_MAPPING_NORMAL = {
 export const OBJECT_TITLE_MAPPING = {
   [ObjectTypeEnum.APPLICATION]: ObjectTypeEnum.APPLICATION,
   [ObjectTypeEnum.BLOCK]: ObjectTypeEnum.BLOCK,
+  [ObjectTypeEnum.BRANCH]: ObjectTypeEnum.BRANCH,
   [ObjectTypeEnum.CHAT]: ObjectTypeEnum.CHAT,
   [ObjectTypeEnum.CODE]: ObjectTypeEnum.CODE,
   [ObjectTypeEnum.DOCUMENT]: ObjectTypeEnum.DOCUMENT,
@@ -115,6 +117,7 @@ export const OBJECT_TITLE_MAPPING = {
   [ObjectTypeEnum.PIPELINE]: ObjectTypeEnum.PIPELINE,
   [ObjectTypeEnum.PIPELINE_RUN]: ObjectTypeEnum.PIPELINE_RUN,
   [ObjectTypeEnum.PROJECT]: ObjectTypeEnum.PROJECT,
+  [ObjectTypeEnum.REMOTE]: ObjectTypeEnum.REMOTE,
   [ObjectTypeEnum.TRIGGER]: ObjectTypeEnum.TRIGGER,
 };
 
@@ -191,6 +194,7 @@ export enum CommandCenterActionInteractionTypeEnum {
   CLICK = 'click',
   OPEN_FILE = 'open_file',
   SCROLL = 'scroll',
+  SELECT_ITEM = 'select_item',
 }
 
 export interface KeyValueType {
@@ -309,6 +313,13 @@ export interface CommandCenterItemType {
   items?: CommandCenterItemType[];
   metadata?: {
     block?: BlockMetadataType;
+    branch?: {
+      current: boolean;
+      name: string;
+      project_uuid: string;
+      remote: string;
+      repo_path: string;
+    };
     file?: FileMetadataType;
     page?: PageHistoryType;
     pipeline?: PipelineMetadataType;
@@ -324,6 +335,10 @@ export interface CommandCenterItemType {
       pipeline_uuid?: string;
       started_at?: string;
       status?: string;
+    };
+    project?: {
+      repo_path: string;
+      uuid: string;
     };
     trigger?: {
       description?: string;

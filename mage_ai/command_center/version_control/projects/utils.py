@@ -31,8 +31,8 @@ async def build(factory, project: Project) -> Dict:
         ),
         applications=[
             dict(
-                uuid='model_detail',
-                application_type=ApplicationType.DETAIL,
+                uuid='model_detail_list',
+                application_type=ApplicationType.DETAIL_LIST,
                 actions=[
                     dict(
                         request=dict(

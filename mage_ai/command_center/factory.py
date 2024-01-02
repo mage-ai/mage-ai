@@ -66,11 +66,10 @@ class BaseFactory:
 
         mode = ModeState.load(**kwargs.get('mode')) if kwargs.get('mode') else None
         if mode and ModeType.VERSION_CONTROL == mode.type:
-            from mage_ai.command_center.applications.factory import ApplicationFactory
             from mage_ai.command_center.version_control.factory import (
                 VersionControlFactory,
             )
-            factory_or_items = [ApplicationFactory, VersionControlFactory]
+            factory_or_items = [VersionControlFactory]
         else:
             application = kwargs.get('application')
             item = kwargs.get('item')

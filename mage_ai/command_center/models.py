@@ -88,13 +88,20 @@ class InteractionElement(CommandCenterBaseClass):
 
 
 @dataclass
+class InteractionItem(CommandCenterBaseClass):
+    uuid: str
+
+
+@dataclass
 class Interaction(CommandCenterBaseClass):
     type: InteractionType
     element: InteractionElement = None
+    item: InteractionItem = None
     options: Dict = None
 
     def __post_init__(self):
         self.serialize_attribute_class('element', InteractionElement)
+        self.serialize_attribute_class('item', InteractionItem)
         self.serialize_attribute_enum('type', InteractionType)
 
 
@@ -231,8 +238,18 @@ class ProjectMetadata(CommandCenterBaseClass):
 
 
 @dataclass
+class BranchMetadata(CommandCenterBaseClass):
+    current: bool = False
+    name: str = None
+    project_uuid: str = None
+    remote: str = None
+    repo_path: str = None
+
+
+@dataclass
 class Metadata(CommandCenterBaseClass):
     block: BlockMetadata = None
+    branch: BranchMetadata = None
     file: FileMetadata = None
     page: PageMetadata = None
     pipeline: PipelineMetadata = None
@@ -242,6 +259,7 @@ class Metadata(CommandCenterBaseClass):
 
     def __post_init__(self):
         self.serialize_attribute_class('block', BlockMetadata)
+        self.serialize_attribute_class('branch', BranchMetadata)
         self.serialize_attribute_class('file', FileMetadata)
         self.serialize_attribute_class('page', PageMetadata)
         self.serialize_attribute_class('pipeline', PipelineMetadata)

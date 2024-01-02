@@ -4,7 +4,8 @@ import {
   CommandCenterItemType,
   KeyValueType,
 } from '@interfaces/CommandCenterType';
-import { InvokeRequestOptionsType } from './ItemApplication/constants';
+import { HandleSelectItemRowType } from './constants';
+import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import {
   interpolatePagePath,
   updateActionFromUpstreamResults,
@@ -13,6 +14,8 @@ import { setNested } from '@utils/hash';
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
+  getItems,
+  handleSelectItemRow,
   invokeRequest,
   itemsActionResultsRef: refItemsActionResults = null,
   router,
@@ -20,12 +23,12 @@ export default function useExecuteActions({
   applicationState?: {
     current: KeyValueType;
   };
-  invokeRequest: (opts: InvokeRequestOptionsType) => void;
+  getItems?: () => CommandCenterItemType[];
   itemsActionResultsRef?: {
     current: KeyValueType;
   };
   router: any;
-}): (
+} & HandleSelectItemRowType & InvokeRequestActionType): (
   item: CommandCenterItemType,
   focusedItemIndex: number,
   actions?: CommandCenterActionType[],
@@ -134,6 +137,32 @@ export default function useExecuteActions({
                   : null,
               },
             });
+          };
+        } else if (CommandCenterActionInteractionTypeEnum.SELECT_ITEM === type) {
+          actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+            const { item: itemToSelect } = actionCopy?.interaction || { options: null };
+
+            setNested(
+              refItemsActionResults?.current,
+              item?.object_type,
+              [
+                {
+                  action: actionCopy,
+                  item,
+                  value: itemToSelect,
+                },
+              ],
+            );
+
+            if (getItems && handleSelectItemRow) {
+              const items = getItems?.() || [];
+              const itemIndex = items?.findIndex(({ uuid }) => uuid === itemToSelect?.uuid);
+
+              return handleSelectItemRow?.(items?.[itemIndex], itemIndex);
+            } else {
+              console.log('[ERROR] useExecuteActions: getItems and/or handleSelectItemRow is undefined.');
+            }
           };
         } else if (type && interaction?.element) {
           actionFunction = (results: KeyValueType = {}) => {

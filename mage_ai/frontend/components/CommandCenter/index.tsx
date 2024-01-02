@@ -146,6 +146,9 @@ function CommandCenter() {
   function getItemsActionResults(): KeyValueType {
     return refItemsActionResults?.current;
   }
+  function getItems(): CommandCenterItemType[] {
+    return refItems?.current;
+  }
 
   const refFocusedItemIndex = useRef(null);
   const refFocusedSearchHistoryIndex = useRef(null);
@@ -589,33 +592,51 @@ function CommandCenter() {
     showError,
   });
 
-  const executeAction = useExecuteActions({
-    applicationState: refApplicationState,
-    invokeRequest,
-    itemsActionResultsRef: refItemsActionResults,
-    router,
-  });
-
-  function handleSelectItemRow(item: CommandCenterItemType, focusedItemIndex: number) {
+  function handleSelectItemRowBase(
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
+  ) {
     const applicationsCount = item?.applications?.length || 0;
     const mode = getCurrentMode();
 
     if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type && mode) {
-      deactivateMode(item);
+      deactivateMode();
     } else if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type  && !mode && item?.mode_type) {
       activateMode(item);
     } else if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
       addApplication({
         application: null,
         item,
-        focusedItemIndex,
         executeAction,
+        focusedItemIndex,
         invokeRequest,
         itemsRef: refItems,
       });
-    } else {
-      return executeAction(item, focusedItemIndex);
+    } else if (fallbackCallback) {
+      fallbackCallback?.(item, focusedItemIndex);
     }
+  }
+
+  const executeAction = useExecuteActions({
+    applicationState: refApplicationState,
+    getItems,
+    handleSelectItemRow: handleSelectItemRowBase,
+    invokeRequest,
+    itemsActionResultsRef: refItemsActionResults,
+    router,
+  });
+
+  function handleSelectItemRow(
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
+  ) {
+    return handleSelectItemRowBase(
+      item,
+      focusedItemIndex,
+      fallbackCallback ? fallbackCallback : (i, f) => executeAction(i, f),
+    )
   }
 
   function renderItems(

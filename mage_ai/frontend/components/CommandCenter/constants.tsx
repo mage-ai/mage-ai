@@ -36,7 +36,11 @@ export type FetchItemsType = {
 }
 
 export type HandleSelectItemRowType = {
-  handleSelectItemRow: (item: CommandCenterItemType, focusedItemIndex: number) => void;
+  handleSelectItemRow: (
+    item: CommandCenterItemType,
+    focusedItemIndex: number,
+    fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
+  ) => void;
 }
 
 export type ExecuteActionableType = {
@@ -64,10 +68,18 @@ export function getInputPlaceholder({
   const mode = getCurrentMode();
 
   if (mode) {
-    if (ModeTypeEnum.VERSION_CONTROL === mode) {
+    if (ModeTypeEnum.VERSION_CONTROL === mode?.type) {
+      if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
+        if (ObjectTypeEnum.PROJECT === item?.object_type) {
+          return `Add remote, create/switch branches, commit changes...`;
+        }
+      }
+
       return 'Setup projects, clone branches, commit files, push code...';
     }
-  } if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
+  }
+
+  if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
     if (ObjectTypeEnum.PIPELINE === item?.object_type) {
       return `Search blocks and triggers in ${item?.title}`;
     } else if (ObjectTypeEnum.TRIGGER === item?.object_type) {
