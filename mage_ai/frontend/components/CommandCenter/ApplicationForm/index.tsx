@@ -75,8 +75,6 @@ function ApplicationForm({
   }>(null);
   const [requestsData, setRequestsData] = useState<KeyValueType>(KeyValueType);
 
-  console.log(attributes);
-
   const setAttributes = useCallback((prev1) => setAttributesState((prev2) => {
     const val = prev1 ? prev1?.(prev2) : prev1;
 
@@ -124,28 +122,30 @@ function ApplicationForm({
     }
   }, [requests]);
 
-  if (settings?.length >= 1 && nothingFocused(refInputs)) {
-    // Get the 1st input that doesn’t have a value.
-    let formInput = settings?.find((formInput) => {
-      if (!attributes) {
-        return true;
+  useEffect(() => {
+    if (settings?.length >= 1 && nothingFocused(refInputs)) {
+      // Get the 1st input that doesn’t have a value.
+      let formInput = settings?.find((formInput) => {
+        if (!attributes) {
+          return true;
+        }
+
+        const key = buildKey(formInput);
+        const val = dig(attributes, key);
+
+        return val === undefined || !val?.length;
+      });
+
+      if (!formInput) {
+        formInput = settings?.[settings?.length - 1];
       }
 
-      const key = buildKey(formInput);
-      const val = dig(attributes, key);
-
-      return val === undefined || !val?.length;
-    });
-
-    if (!formInput) {
-      formInput = settings?.[settings?.length - 1];
+      if (formInput) {
+        const key = buildKey(formInput);
+        setTimeout(() => refInputs?.current?.[key]?.current?.focus(), 1);
+      }
     }
-
-    if (formInput) {
-      const key = buildKey(formInput);
-      setTimeout(() => refInputs?.current?.[key]?.current?.focus(), 1);
-    }
-  }
+  }, [settings]);
 
   useEffect(() => {
     const handleAction = ({
@@ -215,6 +215,7 @@ function ApplicationForm({
     const rowProps = {
       selectInput: null,
       textInput: null,
+      toggleSwitch: null,
     };
 
     const inputProps = {
@@ -229,13 +230,13 @@ function ApplicationForm({
       paddingVertical: multiline ? 2 * UNIT : null,
       onChange: (e) => {
         setAttributesTouched(prev => ({
-            ...prev,
-            [actionUUID]: {
-              // @ts-ignore
-              ...(prev?.[actionUUID] || {}),
-              [name]: true,
-            },
-          }));
+          ...prev,
+          [actionUUID]: {
+            // @ts-ignore
+            ...(prev?.[actionUUID] || {}),
+            [name]: true,
+          },
+        }));
 
         return setAttributes(prev => ({
           ...prev,
@@ -259,6 +260,16 @@ function ApplicationForm({
       rowProps.selectInput = {
         ...inputProps,
         options,
+      };
+    } else if (InteractionInputTypeEnum.SWITCH === type) {
+      rowProps.toggleSwitch = {
+        ...inputProps,
+        checked: !!inputProps?.value,
+        onCheck: () => inputProps?.onChange({
+          target: {
+            value: !inputProps?.value,
+          },
+        }),
       };
     } else if (InteractionInputTypeEnum.CODE === type) {
       content = (

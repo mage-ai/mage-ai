@@ -105,7 +105,6 @@ async def build_update(factory, model: Project, items: List[Dict]) -> Dict:
             action_uuid='update_model',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='SSH public key in base64',
-            value=user_git_settings.get('ssh_public_key'),
         ),
         dict(
             label='SSH private key',
@@ -126,7 +125,24 @@ async def build_update(factory, model: Project, items: List[Dict]) -> Dict:
             action_uuid='update_model',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='SSH private key in base64',
-            value=user_git_settings.get('ssh_private_key'),
+        ),
+        dict(
+            label='Access token (required for HTTPS)',
+            description=(
+                'Add your Git access token to authenticate with your provided username. '
+                'The access token will be stored as a Mage secret.'
+            ),
+            display_settings=dict(
+                icon_uuid='Secrets',
+            ),
+            name=(
+                'request.payload.version_control_project.sync_config.'
+                'access_token',
+            ),
+            monospace=True,
+            action_uuid='update_model',
+            type=InteractionInputType.TEXT_FIELD,
+            placeholder='e.g. xxxxxxxxxxxxxxxxxxxx',
         ),
     ]
 

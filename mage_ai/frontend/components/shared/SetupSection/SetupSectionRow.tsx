@@ -145,6 +145,7 @@ function SetupSectionRow({
               checked={!!toggleSwitch?.checked}
               compact
               onCheck={toggleSwitch?.onCheck}
+              pauseEvent
             />
           )}
         </Flex>
