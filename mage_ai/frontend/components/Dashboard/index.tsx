@@ -91,6 +91,8 @@ function Dashboard({
   } = useWindowSize();
   const localStorageKeyAfter = `dashboard_after_width_${uuid}`;
   const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
+  const afterWidthLocal = get(localStorageKeyAfter);
+  const beforeWidthLocal = get(localStorageKeyBefore);
 
   const mainContainerRef = useRef(null);
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
@@ -112,15 +114,14 @@ function Dashboard({
       setAfterWidthState(prev);
     }
 
-    set(localStorageKeyAfter, value);
+    set(localStorageKeyAfter, Math.max(value, 20  * UNIT));
 
     return value;
   }, [localStorageKeyAfter, setAfterWidthProp, setAfterWidthState]);
 
   useEffect(() => {
-    const value = get(localStorageKeyAfter);
-    if (after && value) {
-      setAfterWidth(Math.max(value, 40  * UNIT));
+    if (after) {
+      setAfterWidth(Math.max(afterWidthLocal, 20  * UNIT));
     }
   }, []);
 
@@ -141,16 +142,14 @@ function Dashboard({
       setBeforeWidthState(prev);
     }
 
-    // value = Math.max(value, UNIT * 13);
-    set(localStorageKeyBefore, value);
+    set(localStorageKeyBefore, Math.max(value, 20  * UNIT));
 
     return value;
   }, [localStorageKeyBefore, setBeforeWidthProp, setBeforeWidthState]);
 
   useEffect(() => {
-    const value = get(localStorageKeyBefore);
-    if (before && value) {
-      setBeforeWidth(Math.max(value, 40  * UNIT));
+    if (before) {
+      setBeforeWidth(Math.max(beforeWidthLocal, 20  * UNIT));
     }
   }, []);
 
