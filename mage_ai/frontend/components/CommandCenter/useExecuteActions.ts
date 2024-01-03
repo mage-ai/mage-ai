@@ -20,6 +20,7 @@ export default function useExecuteActions({
   invokeRequest,
   itemsActionResultsRef: refItemsActionResults = null,
   removeApplication,
+  renderOutput,
   router,
 }: {
   applicationState?: {
@@ -30,6 +31,11 @@ export default function useExecuteActions({
     current: KeyValueType;
   };
   removeApplication?: (opts?: KeyValueType) => void;
+  renderOutput?: (opts?: {
+    item?: CommandCenterItemType;
+    action?: CommandCenterActionType;
+    results?: KeyValueType;
+  }) => void;
   router: any;
 } & FetchItemsType & HandleSelectItemRowType & InvokeRequestActionType): (
   item: CommandCenterItemType,
@@ -181,6 +187,17 @@ export default function useExecuteActions({
 
             return fetchItems?.(options);
           };
+        } else if (CommandCenterActionInteractionTypeEnum.RENDER_OUTPUT === type) {
+          actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+            const { options } = actionCopy?.interaction || { options: null };
+
+            return renderOutput({
+              item,
+              action: actionCopy,
+              results,
+            });
+          };
         } else if (type && interaction?.element) {
           actionFunction = (results: KeyValueType = {}) => {
             const actionCopy = updateActionFromUpstreamResults(action, results);
@@ -254,8 +271,10 @@ export default function useExecuteActions({
 
       return result?.then((resultsInner) => {
         if (index + 1 <= actionSettings?.length - 1) {
-          if (resultsInner && isObject(resultsInner) && resultsInner?.error) {
-            return;
+          if (resultsInner && isObject(resultsInner)) {
+            if (resultsInner?.error || resultsInner?.data?.error) {
+              return;
+            }
           }
 
           return invokeActionAndCallback(index + 1, {

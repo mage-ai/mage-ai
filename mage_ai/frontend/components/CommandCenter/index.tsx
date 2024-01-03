@@ -9,6 +9,7 @@ import Button from '@oracle/elements/Button';
 import Footer from './Footer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import ItemApplication from './ItemApplication';
+import ItemOutput from './ItemOutput';
 import ItemRow from './ItemRow';
 import LaunchKeyboardShortcutText from './LaunchKeyboardShortcutText';
 import Loading from '@oracle/components/Loading';
@@ -33,15 +34,17 @@ import {
   HeaderContainerStyle,
   HeaderStyle,
   HeaderTitleStyle,
+  INPUT_CONTAINER_ID,
   ITEMS_CONTAINER_UUID,
   ITEM_CONTEXT_CONTAINER_ID,
   InputContainerStyle,
-  INPUT_CONTAINER_ID,
   InputStyle,
   ItemsContainerStyle,
   KeyboardShortcutStyle,
   LoadingStyle,
   MAIN_TEXT_INPUT_ID,
+  OUTPUT_CONTAINER_ID,
+  OutputContainerStyle,
   SHARED_PADDING,
 } from './index.style';
 import { ArrowLeft } from '@oracle/icons';
@@ -65,6 +68,8 @@ import {
   KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
   KEY_CODE_BACKSPACE,
+  KEY_CODE_C,
+  KEY_CODE_CONTROL,
   KEY_CODE_DELETE,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
@@ -135,6 +140,10 @@ function CommandCenter() {
   const refFooterButtonEscape = useRef(null);
   const refFooterButtonUp = useRef(null);
 
+  const refRootOutputContainer = useRef(null);
+  const refOutputContainer = useRef(null);
+  const refOutputContainerState = useRef(null);
+
   const refRootItems = useRef(null);
   const refItems = useRef([]);
   const refItemsInit = useRef(null);
@@ -198,23 +207,31 @@ function CommandCenter() {
     )?.application?.application_type);
   }
 
-  function activateClassNamesForRefs(refsArray: any[], reverse: boolean = false) {
+  function toggleClassNames(classNamesIn: string[], classNamesOut: string[], refsArray: any[]) {
     refsArray.forEach((r) => {
       if (r?.current) {
         r.current.className = addClassNames(
           r?.current?.className || '',
-          [
-            reverse ? 'inactive' : 'active',
-          ],
+          classNamesIn,
         );
         r.current.className = removeClassNames(
           r?.current?.className || '',
-          [
-            reverse ? 'active' : 'inactive',
-          ],
+          classNamesOut,
         );
       }
     });
+  }
+
+  function activateClassNamesForRefs(refsArray: any[], reverse: boolean = false) {
+    toggleClassNames(
+      [
+        reverse ? 'inactive' : 'active',
+      ],
+      [
+        reverse ? 'active' : 'inactive',
+      ],
+      refsArray,
+    );
   }
 
   function addHeaderTitle() {
@@ -360,6 +377,7 @@ function CommandCenter() {
         {...currentApplicationConfig}
         applicationState={refApplicationState}
         applicationsRef={refApplications}
+        closeOutput={closeOutput}
         fetchItems={fetchItems}
         getItemsActionResults={getItemsActionResults}
         handleSelectItemRow={handleSelectItemRow}
@@ -640,6 +658,61 @@ function CommandCenter() {
     }
   }
 
+  function closeOutput() {
+    activateClassNamesForRefs([refOutputContainer], true);
+    toggleClassNames(['output-inactive'], ['output-active'], [
+      refApplicationsFooter,
+      refFooter,
+    ]);
+    toggleClassNames(['inactive'], ['active'], [
+      refOutputContainer,
+    ]);
+    refOutputContainerState.current = null;
+  }
+
+  function openOutput() {
+    activateClassNamesForRefs([refOutputContainer]);
+    toggleClassNames(['output-active'], ['output-inactive'], [
+      refApplicationsFooter,
+      refFooter,
+    ]);
+    toggleClassNames(['aactive'], ['inactive'], [
+      refOutputContainer,
+    ]);
+  }
+
+  function renderOutput({
+    item,
+    action,
+    results,
+  }: {
+    item?: CommandCenterItemType;
+    action?: CommandCenterActionType;
+    results?: KeyValueType;
+  }) {
+    refOutputContainerState.current = {
+      item,
+      action,
+      results,
+      actionResults: {
+        ...(refItemsActionResults?.current || {}),
+      },
+    };
+
+    if (!refRootOutputContainer?.current) {
+      const domNode = document.getElementById(OUTPUT_CONTAINER_ID);
+      refRootOutputContainer.current = createRoot(domNode);
+    }
+
+    refRootOutputContainer?.current?.render(
+      <ItemOutput
+        {...refOutputContainerState.current}
+      />
+    );
+
+    openOutput();
+  }
+
   const executeAction = useExecuteActions({
     applicationState: refApplicationState,
     fetchItems,
@@ -648,6 +721,7 @@ function CommandCenter() {
     invokeRequest,
     itemsActionResultsRef: refItemsActionResults,
     removeApplication,
+    renderOutput,
     router,
   });
 
@@ -904,6 +978,11 @@ function CommandCenter() {
       } else {
         openCommandCenter();
       }
+    } else if (refOutputContainerState?.current
+      && onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping, { allowExtraKeys: 0 })
+    ) {
+      // Close the output
+      closeOutput();
     } else if (isApplicationActive()) {
       const currentApplicationConfig = getCurrentApplicationConfiguration();
       const application = (currentApplicationConfig || {})?.application;
@@ -923,7 +1002,7 @@ function CommandCenter() {
           } = button;
 
           keyboardShortcuts?.forEach((keyCodes) => {
-            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 0 })) {
+            if (onlyKeysPresent(keyCodes, keyMapping, { allowExtraKeys: 1 })) {
               pauseEvent(event);
 
               if (!actionExecuted) {
@@ -1241,6 +1320,12 @@ function CommandCenter() {
         ref={refApplicationsNodesContainer}
       />
 
+      <OutputContainerStyle
+        className="inactive"
+        id={OUTPUT_CONTAINER_ID}
+        ref={refOutputContainer}
+      />
+
       <FooterWraperStyle>
         <LoadingStyle
           className="inactive"
@@ -1250,7 +1335,7 @@ function CommandCenter() {
         </LoadingStyle>
 
         <FooterStyle
-          className="inactive"
+          className="inactive output-inactive"
           id={FOOTER_ID}
           ref={refFooter}
         >
@@ -1264,6 +1349,7 @@ function CommandCenter() {
               itemsRef: refItems,
             })}
             closeCommandCenter={closeCommandCenter}
+            closeOutput={closeOutput}
             handleNavigation={(increment: number) => {
               if (increment >= 1) {
                 handleNavigation(Math.min(
@@ -1288,7 +1374,7 @@ function CommandCenter() {
         </FooterStyle>
 
         <ApplicationFooterStyle
-          className="inactive"
+          className="inactive output-inactive"
           id={APPLICATION_FOOTER_ID}
           ref={refApplicationsFooter}
         />

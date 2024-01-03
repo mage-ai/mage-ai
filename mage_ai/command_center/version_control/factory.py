@@ -14,6 +14,7 @@ from mage_ai.command_center.version_control.branches.utils import (
 from mage_ai.command_center.version_control.branches.utils import (
     build_and_score_detail as build_and_score_detail_branch,
 )
+from mage_ai.command_center.version_control.branches.utils import build_clone
 from mage_ai.command_center.version_control.branches.utils import (
     build_create as build_create_branch,
 )
@@ -42,6 +43,7 @@ from mage_ai.command_center.version_control.remotes.utils import (
     build_detail_list_items as build_detail_list_items_remote,
 )
 from mage_ai.command_center.version_control.remotes.utils import build_remote_list
+from mage_ai.shared.hash import dig
 from mage_ai.version_control.models import Branch, Project, Remote
 
 
@@ -101,6 +103,10 @@ class VersionControlFactory(BaseFactory):
                     await build_and_score_branch(self, branch, items)
 
             if ObjectType.BRANCH == self.item.object_type:
+                # Checkout
+                # Clone
+                # Delete
+
                 metadata = self.item.metadata
 
                 project = Project.load(**metadata.project.to_dict())
@@ -109,6 +115,8 @@ class VersionControlFactory(BaseFactory):
                 branch.project = project
                 branch.update_attributes()
 
+                if not branch.current:
+                    await build_clone(self, branch, items)
                 await build_and_score_detail_branch(self, branch, items)
 
             if ObjectType.REMOTE == self.item.object_type:
@@ -155,19 +163,25 @@ class VersionControlFactory(BaseFactory):
             return 0
 
         if ObjectType.REMOTE == object_type:
-            if ItemType.LIST == item_type:
+            if ItemType.ACTION == item_type:
                 return 5
+            elif ItemType.LIST == item_type:
+                return 4
             elif ItemType.UPDATE == item_type:
                 return 3
             elif ItemType.DETAIL == item_type:
                 return 2
+            elif ItemType.CREATE == item_type:
+                return 1
 
         if ObjectType.PROJECT == object_type:
             if ItemType.UPDATE == item_type:
                 return 3
 
         if ObjectType.BRANCH == object_type:
-            if ItemType.CREATE == item_type:
+            if dig(item_dict, ['metadata', 'branch', 'current']):
+                return 5
+            elif ItemType.CREATE == item_type:
                 return 4
 
         return score or 1

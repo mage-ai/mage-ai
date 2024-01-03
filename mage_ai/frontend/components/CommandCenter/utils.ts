@@ -75,9 +75,9 @@ export function filterItems(
 export function rankItems(items: CommandCenterItemType[]): CommandCenterItemType[] {
   return sortByKey(
     items || [],
-    ({ score, title }) => `${1 / score}${title}`,
+    ({ score, title }) => `${score}${122 - (title || 'z').charCodeAt(0)}`,
     {
-      ascending: true,
+      ascending: false,
     },
   );
 }

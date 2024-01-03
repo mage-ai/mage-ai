@@ -60,6 +60,7 @@ class InteractionType(str, Enum):
     CLOSE_APPLICATION = 'close_application'
     FETCH_ITEMS = 'fetch_items'
     OPEN_FILE = 'open_file'
+    RENDER_OUTPUT = 'render_output'
     SCROLL = 'scroll'
     SELECT_ITEM = 'select_item'
 

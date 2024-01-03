@@ -63,7 +63,7 @@ class Remote(BaseVersionControl):
         arr = []
         for remote in unique_by(
             [self.load_from_text(line) for line in lines if len(line) >= 1],
-            lambda x: f'{x.name}:{x.url}',
+            lambda x: x.name,
         ):
             remote.project = project
             arr.append(remote)
@@ -119,24 +119,35 @@ class Branch(BaseVersionControl):
     remote: Remote = None
 
     @classmethod
-    def load_all(self, remote: Remote = None, project: 'Project' = None) -> List['Branch']:
-        lines = self(project=project).list(include_all=True)
+    def clean(self, line: str) -> str:
+        if line.startswith('*'):
+            line = line[1:].strip()
+        return line.strip()
 
+    @classmethod
+    def load_all(
+        self,
+        lines: List[str] = None,
+        remote: Remote = None,
+        project: 'Project' = None,
+    ) -> List['Branch']:
+        if not lines:
+            lines = self(project=project).list(include_all=True)
+
+        mapping = {}
         arr = []
         for line in lines:
             if len(line) == 0:
                 continue
 
             current = line.startswith('*')
-            if current:
-                name = line[1:].strip()
-            else:
-                name = line.strip()
-
-            model = self.load(current=current, name=name)
-            model.remote = remote
-            model.project = project
-            arr.append(model)
+            name = self.clean(line)
+            if name not in mapping:
+                mapping[name] = True
+                model = self.load(current=current, name=name)
+                model.remote = remote
+                model.project = project
+                arr.append(model)
 
         return arr
 
@@ -152,6 +163,13 @@ class Branch(BaseVersionControl):
             )
             if model:
                 self.current = model.current
+
+    def get_current_branch(self) -> 'Branch':
+        return find(lambda x: x.current, self.load_all(
+            lines=self.run('branch'),
+            project=self.project,
+            remote=self.remote,
+        ))
 
     def list(self, include_all: bool = False) -> List[str]:
         commands = ['branch']
@@ -186,7 +204,7 @@ class Branch(BaseVersionControl):
 
         if clone:
             commands.append(f'clone -b {self.name}')
-            if self.remote:
+            if self.remote and self.remote.url:
                 commands.append(self.remote.url)
         elif pull or rebase:
             commands.append('rebase' if rebase else 'pull')

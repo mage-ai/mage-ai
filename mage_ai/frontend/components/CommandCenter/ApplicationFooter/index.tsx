@@ -8,16 +8,19 @@ import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ApplicationProps } from '../ItemApplication/constants';
-import { KEY_CODE_KEY_SYMBOL_MAPPING } from '@utils/hooks/keyboardShortcuts/constants';
+import { CLOSE_OUTPUT_BUTTON_ID } from '../index.style';
+import { KEY_CODE_KEY_SYMBOL_MAPPING, KEY_SYMBOL_C, KEY_SYMBOL_CONTROL } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { executeButtonActions } from '../utils';
 import { getIcon } from '../ItemRow/constants';
 import { getIconColor } from '../ItemRow/index.style';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pauseEvent } from '@utils/events';
 
 function ApplicationFooter({
   application,
   applicationsRef,
+  closeOutput,
   executeAction,
   fetchItems,
   focusedItemIndex,
@@ -50,6 +53,27 @@ function ApplicationFooter({
         <Text default weightStyle={4}>
           {title}
         </Text>
+
+        <div style={{ marginRight: UNIT * 2 }} />
+
+        <div id={CLOSE_OUTPUT_BUTTON_ID}>
+          <KeyboardShortcutButton
+            addPlusSignBetweenKeys
+            bold
+            compact
+            default
+            keyTextGroups={[[KEY_SYMBOL_CONTROL, KEY_SYMBOL_C]]}
+            keyTextsPosition={KeyTextsPostitionEnum.RIGHT}
+            noBackground
+            onClick={(e) => {
+              pauseEvent(e);
+              closeOutput();
+            }}
+            uuid="command-center-footer-close-output"
+          >
+            Close output
+          </KeyboardShortcutButton>
+        </div>
 
         <Spacing mr={PADDING_UNITS} />
       </Flex>

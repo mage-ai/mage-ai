@@ -252,6 +252,12 @@ async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
                     ),
                     uuid='fetch_model',
                 ),
+                dict(
+                    interaction=dict(
+                        type=InteractionType.RENDER_OUTPUT,
+                    ),
+                    uuid='render_output_item_row',
+                ),
             ],
         ),
         dict(

@@ -19,6 +19,8 @@ export const ITEMS_CONTAINER_UUID = `${COMPONENT_UUID}-items-container`;
 export const ITEM_CONTEXT_CONTAINER_ID = `${COMPONENT_UUID}-item-context-container`;
 export const MAIN_TEXT_INPUT_ID = `${COMPONENT_UUID}-main-text-input`;
 export const INPUT_CONTAINER_ID = `${COMPONENT_UUID}-input-container`;
+export const OUTPUT_CONTAINER_ID = `${COMPONENT_UUID}-output-container`;
+export const CLOSE_OUTPUT_BUTTON_ID = `${COMPONENT_UUID}-close-output-button`;
 
 export const SHARED_PADDING = SCROLLBAR_WIDTH;
 export const CONTAINER_HEIGHT = (ITEM_ROW_HEIGHT * 9) + (SHARED_PADDING * 2);
@@ -56,11 +58,19 @@ export const ContainerStyle = styled.div<{
       border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
     }
 
+    #${OUTPUT_CONTAINER_ID} {
+      border-top: 1px solid ${(props.theme || dark).monotone.grey400};
+    }
+
     &.version_control {
       border: 1px solid ${(props.theme || dark).accent.negativeTransparent};
 
       #${INPUT_CONTAINER_ID} {
         border-bottom: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+      }
+
+      #${OUTPUT_CONTAINER_ID} {
+        border-top: 1px solid ${(props.theme || dark).accent.negativeTransparent};
       }
     }
   `}
@@ -112,11 +122,10 @@ export const InputStyle = styled.input`
   `}
 `;
 
-const SHARED_CONTAINER_STYLES = css`
+const BASE_CONTAINER_STYLES = css`
   ${ScrollbarStyledCss}
   ${hideScrollBar()}
 
-  height: ${CONTAINER_HEIGHT}px;
   overflow: auto;
   max-width: ${MAX_WIDTH}px;
 
@@ -130,6 +139,12 @@ const SHARED_CONTAINER_STYLES = css`
       display: block !important;
     }
   }
+`;
+
+const SHARED_CONTAINER_STYLES = css`
+  ${BASE_CONTAINER_STYLES}
+
+  height: ${CONTAINER_HEIGHT}px;
 
   ${props => `
     .${ItemRowClassNameEnum.ITEM_ROW} {
@@ -186,6 +201,34 @@ export const ApplicationContentStyle = styled.div`
   position: relative;
 `;
 
+export const OutputContainerStyle = styled.div`
+  ${BASE_CONTAINER_STYLES}
+
+  max-height: ${CONTAINER_HEIGHT}px;
+
+  &.inactive {
+    ${SHARED_HIDDEN_STYLES}
+  }
+
+  &:hover {
+    // for Internet Explorer, Edge
+    -ms-overflow-style: block !important;
+    // for Firefox
+    scrollbar-width: block !important;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: block !important;
+    }
+  }
+`;
+
+export const OutputContentStyle = styled.div`
+  left: ${SCROLLBAR_WIDTH}px;
+  max-width: ${ITEM_ROW_MAX_WIDTH}px;
+  padding: ${1.5 * UNIT}px;
+  position: relative;
+`;
+
 export const HeaderStyle = styled.div`
   align-items: center;
   display: flex;
@@ -221,6 +264,18 @@ const FOOTER_STYLES = css`
   height: ${FOOTER_CONTENT_HEIGHT}px;
   padding-left: ${SCROLLBAR_WIDTH + UNIT}px;
   padding-right: ${SCROLLBAR_WIDTH + UNIT}px;
+
+  &.output-inactive {
+    #${CLOSE_OUTPUT_BUTTON_ID} {
+      display: none;
+    }
+  }
+
+  &.output-active {
+    #${CLOSE_OUTPUT_BUTTON_ID} {
+      display: block;
+    }
+  }
 
   ${props => `
     background-color: ${(props.theme || dark)?.background?.panelTransparent};

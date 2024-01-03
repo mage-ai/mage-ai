@@ -76,9 +76,9 @@ export default function useInvokeRequest({
 
       let submitRequest = null;
       if (OperationTypeEnum.CREATE === operation) {
-        submitRequest = () => endpoint?.useCreate(...ids, query)(payload);
+        submitRequest = () => endpoint?.useCreate(...ids, { query })(payload);
       } else if (OperationTypeEnum.UPDATE === operation) {
-        submitRequest = () => endpoint?.useUpdate(...ids, query)(payload);
+        submitRequest = () => endpoint?.useUpdate(...ids, { query })(payload);
       } else if (OperationTypeEnum.DELETE === operation) {
         submitRequest = () => endpoint?.useDelete(...ids, query)();
       } else if (OperationTypeEnum.DETAIL === operation) {

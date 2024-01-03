@@ -10,8 +10,19 @@ from mage_ai.command_center.constants import (
     ItemType,
     ObjectType,
 )
+from mage_ai.command_center.version_control.shared.utils import build_update
 from mage_ai.presenters.interactions.constants import InteractionInputType
-from mage_ai.version_control.models import Branch, Project
+from mage_ai.version_control.models import Branch, Project, Remote
+
+
+def build_request(model: Branch) -> Dict:
+    return dict(
+        resource='version_control_branches',
+        resource_id=urllib.parse.quote_plus(model.name or ''),
+        resource_parent='version_control_projects',
+        resource_parent_id=urllib.parse.quote_plus(model.project.uuid or ''),
+        response_resource_key='version_control_branch'
+    )
 
 
 async def build_create(factory, model: Project, items: List[Dict]):
@@ -87,7 +98,6 @@ async def build_create(factory, model: Project, items: List[Dict]):
 
     scored = factory.filter_score(item_dict)
     if scored:
-        scored['score'] += 101
         items.append(scored)
 
 
@@ -205,7 +215,7 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
                             'branch',
                             'current',
                         ]),
-                    }
+                    },
                 ),
                 uuid=InteractionType.FETCH_ITEMS,
             ),
@@ -222,42 +232,42 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
         ]
         item_dicts.append(item_dict)
 
-    item_dicts.extend([
-        dict(
-            item_type=ItemType.DELETE,
-            object_type=ObjectType.BRANCH,
-            title='Delete branch',
-            display_settings_by_attribute=dict(
-                icon=dict(
-                    icon_uuid='Trash',
-                    color_uuid='accent.negative',
+        item_dicts.extend([
+            dict(
+                item_type=ItemType.DELETE,
+                object_type=ObjectType.BRANCH,
+                title='Delete branch',
+                display_settings_by_attribute=dict(
+                    icon=dict(
+                        icon_uuid='Trash',
+                        color_uuid='accent.negative',
+                    ),
                 ),
+                actions=[
+                    dict(
+                        request=dict(
+                            operation=OperationType.DELETE,
+                            resource='version_control_branches',
+                            resource_id=urllib.parse.quote_plus(uuid or ''),
+                            resource_parent='version_control_projects',
+                            resource_parent_id=urllib.parse.quote_plus(project.uuid or ''),
+                            response_resource_key='version_control_branch'
+                        ),
+                        uuid='update_branch',
+                    ),
+                    dict(
+                        interaction=dict(
+                            type=InteractionType.CLOSE_APPLICATION,
+                        ),
+                        uuid='close_application',
+                    ),
+                ],
+                condition=lambda opts: FilePolicy(
+                    None,
+                    opts.get('user'),
+                ).has_at_least_editor_role(),
             ),
-            actions=[
-                dict(
-                    request=dict(
-                        operation=OperationType.DELETE,
-                        resource='version_control_branches',
-                        resource_id=urllib.parse.quote_plus(uuid or ''),
-                        resource_parent='version_control_projects',
-                        resource_parent_id=urllib.parse.quote_plus(project.uuid or ''),
-                        response_resource_key='version_control_branch'
-                    ),
-                    uuid='update_branch',
-                ),
-                dict(
-                    interaction=dict(
-                        type=InteractionType.CLOSE_APPLICATION,
-                    ),
-                    uuid='close_application',
-                ),
-            ],
-            condition=lambda opts: FilePolicy(
-                None,
-                opts.get('user'),
-            ).has_at_least_editor_role(),
-        ),
-    ])
+        ])
 
     for item_dict in item_dicts:
         scored = factory.filter_score(item_dict)
@@ -269,6 +279,49 @@ async def build_and_score(factory, model: Branch, items: List[Dict]):
     item_dict = await build(factory, model)
     scored = factory.filter_score(item_dict)
     if scored:
-        if model.current:
-            scored['score'] += 100
         items.append(scored)
+
+
+async def build_clone(factory, model: Branch, items: List[Dict]):
+    current_branch = model.get_current_branch()
+    remotes = Remote.load_all(project=model.project)
+
+    factory.filter_score_mutate_accumulator(
+        build_update(
+            item_dict=dict(
+                item_type=ItemType.ACTION,
+                object_type=ObjectType.BRANCH,
+                title=f'Clone this branch into {current_branch.name}',
+                description=f'git clone -b {model.name}',
+            ),
+            mapping={
+                'data.version_control_branch': '.'.join([
+                    'interaction',
+                    'options',
+                    'item',
+                    'metadata',
+                    'branch',
+                ]),
+            },
+            model=model,
+            request=dict(
+                operation=OperationType.UPDATE,
+                payload=dict(version_control_branch=dict(clone=True)),
+            ) | build_request(model),
+            settings=[
+                dict(
+                    label='Remote to clone from',
+                    placeholder='e.g. origin',
+                    name='request.query.remote',
+                    display_settings=dict(icon_uuid='PlugAPI'),
+                    required=True,
+                    type=InteractionInputType.DROPDOWN_MENU,
+                    options=[dict(
+                        label=remote.name,
+                        value=remote.name,
+                    ) for remote in remotes],
+                ),
+            ],
+        ),
+        items,
+    )
