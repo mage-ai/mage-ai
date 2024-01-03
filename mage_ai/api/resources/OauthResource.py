@@ -138,7 +138,7 @@ class OauthResource(GenericResource):
         ghe_hostname = get_ghe_hostname()
 
         if pk == ProviderName.GITHUB and ghe_hostname:
-            provider = ProviderName.GHE.value
+            provider = ProviderName.GHE
         else:
             provider = pk
 
