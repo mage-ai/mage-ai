@@ -8,9 +8,10 @@ from os import path
 {{ super() -}}
 {% endblock %}
 
-DEFAULT_MODEL = 'all-MiniLM-L6-v2'
 
 {% block content %}
+DEFAULT_MODEL = 'all-MiniLM-L6-v2'
+
 @data_loader
 def load_data_from_qdrant(*args, **kwargs):
     """
