@@ -38,11 +38,11 @@ const AccordionStyle = styled.div<AccordionProps>`
   `}
 
   ${props => !props.noBackground && `
-    background-color: ${(props.theme.background || dark.background).content};
+    background-color: ${(props.theme || dark)?.background?.content};
   `}
 
   ${props => !props.highlighted && `
-    border-color: ${(props.theme || dark).background.panel};
+    border-color: ${(props.theme || dark)?.background?.panel};
   `}
 
   ${props => props.highlighted && `

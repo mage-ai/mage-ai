@@ -7,9 +7,9 @@ import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
-import Spacing from '@oracle/elements/Spacing';
 import TagsContainer from '@components/Tags/TagsContainer';
 import Text from '@oracle/elements/Text';
+import VersionControlFileDetail from './VersionControlFileDetail';
 import useStatus from '@utils/models/status/useStatus';
 import { AlertTriangle, Check } from '@oracle/icons';
 import { ApplicationContentStyle } from '../index.style';
@@ -26,7 +26,7 @@ import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { KeyValueType, ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PIPELINE_TYPE_LABEL_MAPPING } from '@interfaces/PipelineType';
-import { RunStatus, RUN_STATUS_TO_LABEL, RUNNING_STATUSES } from '@interfaces/PipelineRunType';
+import { RunStatus, RUN_STATUS_TO_LABEL } from '@interfaces/PipelineRunType';
 import { ScheduleStatusEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { capitalize, pluralize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -724,6 +724,8 @@ function ApplicationItemDetail({
         )}
       </>
     );
+  } else if (ObjectTypeEnum.VERSION_CONTROL_FILE === item?.object_type) {
+    contentEL = <VersionControlFileDetail model={model} />;
   }
 
   return (

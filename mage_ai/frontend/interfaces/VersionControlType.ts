@@ -7,6 +7,17 @@ export interface VersionControlCommit {
   sha: string;
 }
 
+export interface VersionControlFile {
+  diff?: string[];
+  name: string;
+  output?: string[];
+  project_uuid?: string;
+  repo_path?: string;
+  staged?: boolean;
+  unstaged?: boolean;
+  untracked?: boolean;
+}
+
 export interface VersionControlProject {
   uuid: string;
 }

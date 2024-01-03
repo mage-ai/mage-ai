@@ -8,14 +8,16 @@ from mage_ai.command_center.version_control.shared.utils import (
     build_generic,
     build_request,
 )
+from mage_ai.data_preparation.models.file import File as FileModel
 from mage_ai.version_control.models import Branch, File
 
 
 async def build_status(factory, model: Branch) -> Dict:
     return build_generic(model_class=File, item_dict=dict(
         item_type=ItemType.ACTION,
-        object_type=ObjectType.FILE,
-        title='View the status of files in this branch',
+        object_type=ObjectType.VERSION_CONTROL_FILE,
+        title='File status',
+        description='View the status of the current branch',
         subtitle='git status',
         applications=[
             build_application_detail(
@@ -28,13 +30,24 @@ async def build_status(factory, model: Branch) -> Dict:
                             resource='version_control_files',
                             resource_parent='version_control_projects',
                             resource_parent_id=model.project.uuid,
-                            response_resource_key='version_control_file',
+                            response_resource_key='version_control_files',
+                        ),
+                    ),
+                    build_action_generic(
+                        model_class=FileModel,
+                        request=build_request(
+                            operation=OperationType.LIST,
+                            resource='files',
+                            response_resource_key='files',
+                            query=dict(project_uuid=model.project.uuid, version_control_files=True),
                         ),
                     ),
                 ],
             ),
         ],
         display_settings_by_attribute=dict(
+            description=dict(text_styles=dict(monospace=False)),
+            icon=dict(color_uuid='borders.success', icon_uuid='FileFill'),
             subtitle=dict(
                 text_styles=dict(
                     monospace=True,

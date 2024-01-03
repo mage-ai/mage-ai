@@ -36,6 +36,7 @@ class ObjectType(str, Enum):
     PROJECT = 'project'
     REMOTE = 'remote'
     TRIGGER = 'trigger'
+    VERSION_CONTROL_FILE = 'version_control_file'
 
 
 class ModeType(str, Enum):

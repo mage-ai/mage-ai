@@ -15,6 +15,8 @@ from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import add_absolute_path
+from mage_ai.version_control.models import File as VersionControlFile
+from mage_ai.version_control.models import Project
 
 
 class FileResource(GenericResource):
@@ -33,6 +35,14 @@ class FileResource(GenericResource):
         if repo_path:
             repo_path = urllib.parse.unquote(repo_path)
 
+        version_control_files = query.get('version_control_files', [False])
+        if version_control_files:
+            version_control_files = version_control_files[0]
+
+        project_uuid = query.get('project_uuid', [None])
+        if project_uuid:
+            project_uuid = project_uuid[0]
+
         exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
         if exclude_dir_pattern:
             exclude_dir_pattern = exclude_dir_pattern[0]
@@ -49,12 +59,26 @@ class FileResource(GenericResource):
         elif exclude_pattern is None:
             exclude_pattern = r'^\.|\/\.'
 
+        check_file_path = False
+
+        if project_uuid and version_control_files:
+            project = Project.load(uuid=project_uuid)
+            files = VersionControlFile.load_all(project=project)
+
+            repo_path = project.repo_path
+            pattern = '|'.join([os.path.join(
+                repo_path,
+                f.name.strip(),
+            ).replace('.', '\\.') for f in files if f.name and f.name.strip()])
+            check_file_path = True
+
         return self.build_result_set(
             [File.get_all_files(
                 repo_path or get_repo_path(root_project=True),
                 exclude_dir_pattern=exclude_dir_pattern,
                 exclude_pattern=exclude_pattern,
                 pattern=pattern,
+                check_file_path=check_file_path,
             )],
             user,
             **kwargs,

@@ -512,23 +512,25 @@ function Folder({
             }
           }}
           onContextMenu={(e) => {
-            clearTimeout(timeout.current);
+            if (!disableContextMenu) {
+              clearTimeout(timeout.current);
 
-            if (!containerRef?.current?.contains(e.target) || disableContextMenu) {
-              return;
+              if (!containerRef?.current?.contains(e.target) || disableContextMenu) {
+                return;
+              }
+
+              e.preventDefault();
+
+              setCoordinates({
+                x: e.pageX,
+                y: e.pageY,
+              });
+              setDraggingFile(null);
+              setSelectedFile({
+                ...file,
+                uuid,
+              });
             }
-
-            e.preventDefault();
-
-            setCoordinates({
-              x: e.pageX,
-              y: e.pageY,
-            });
-            setDraggingFile(null);
-            setSelectedFile({
-              ...file,
-              uuid,
-            });
           }}
           onMouseDown={(e) => {
             const block = file ? getBlockFromFile(file, null, true) : null;

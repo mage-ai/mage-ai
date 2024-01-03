@@ -115,20 +115,20 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     background-color: ${(props.theme.background || dark.background).table};
 
     &:hover {
-      background-color: ${(props.theme || dark).background.page};
+      background-color: ${(props.theme || dark)?.background?.page};
     }
 
     &:active {
-      background-color: ${(props.theme || dark).background.page};
+      background-color: ${(props.theme || dark)?.background?.page};
     }
   `}
 
   ${props => props.visible && `
-    border-bottom: 1px solid ${(props.theme || dark).borders.medium2};
+    border-bottom: 1px solid ${(props.theme || dark)?.borders?.medium2};
   `}
 
   ${props => !props.first && props.visible && `
-    border-top: 1px solid ${(props.theme || dark).borders.medium2};
+    border-top: 1px solid ${(props.theme || dark)?.borders?.medium2};
   `}
 
   ${props => !props.noBorderRadius && props.first && `

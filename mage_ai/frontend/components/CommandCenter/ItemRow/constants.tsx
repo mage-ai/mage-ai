@@ -2,10 +2,10 @@ import * as AllIcons from '@oracle/icons';
 import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { CommandCenterItemType, ItemTypeEnum, ModeTypeEnum, ObjectTypeEnum } from '@interfaces/CommandCenterType';
 import {
-  BlockGeneric,
   Binary,
+  BlockGeneric,
+  HexagonAll,
   BranchAlt,
-  Categories,
   CategorizationUseCase,
   Chat,
   ChurnV3,
@@ -66,7 +66,7 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.FOLDER]: FolderOutline,
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
     [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
-    [ObjectTypeEnum.PROJECT]: Categories,
+    [ObjectTypeEnum.PROJECT]: HexagonAll,
     [ObjectTypeEnum.REMOTE]: PlugAPI,
     [ObjectTypeEnum.SETTINGS]: SettingsWithKnobs,
     [ObjectTypeEnum.TRIGGER]: Schedule,

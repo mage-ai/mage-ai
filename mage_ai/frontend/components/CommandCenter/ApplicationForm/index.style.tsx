@@ -5,7 +5,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { ITEM_ROW_MAX_WIDTH } from '../ItemRow/index.style';
 
-const CHILDREN_WIDTH_RATIO = 0.3;
+const CHILDREN_WIDTH_RATIO = 0.35;
 
 export const ContainerStyle = styled.div`
   display: flex;

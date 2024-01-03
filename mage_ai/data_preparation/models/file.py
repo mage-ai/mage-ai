@@ -137,13 +137,14 @@ class File:
         exclude_dir_pattern: str = None,
         exclude_pattern: str = None,
         pattern: str = None,
+        check_file_path: bool = False,
     ):
         dir_selector = None
         file_selector = None
 
         if exclude_pattern is not None or pattern is not None:
-            def __select(x: Dict, pattern=pattern):
-                filename = x.get('name')
+            def __select(x: Dict, check_file_path=check_file_path, pattern=pattern):
+                filename = x.get('path') if check_file_path else x.get('name')
                 checks = []
                 if exclude_pattern:
                     checks.append(not re.search(exclude_pattern, filename or ''))

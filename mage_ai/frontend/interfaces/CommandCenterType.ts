@@ -68,6 +68,7 @@ export enum ObjectTypeEnum {
   REMOTE = 'remote',
   SETTINGS = 'settings',
   TRIGGER = 'trigger',
+  VERSION_CONTROL_FILE = 'version_control_file',
 }
 
 export enum ModeTypeEnum {
