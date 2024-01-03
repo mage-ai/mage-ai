@@ -10,6 +10,7 @@ from mage_ai.api.resources.VersionControlProjectResource import (
 from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
+    InteractionType,
     ItemType,
     ObjectType,
 )
@@ -17,9 +18,15 @@ from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Project
 
 
-async def build_update(factory, model: Project, items: List[Dict]) -> Dict:
+async def add_sync_config(factory, model: Project) -> Project:
     resource = await VersionControlProjectResource.member(model.uuid, factory.user)
-    sync_config = resource.model.sync_config
+    model.sync_config = resource.model.sync_config
+    return model
+
+
+async def build_update(factory, model: Project, items: List[Dict]):
+    model = await add_sync_config(factory, model)
+    sync_config = model.sync_config
     user_git_settings = sync_config.get('user_git_settings') or {}
 
     shared_form_settings = [
@@ -457,11 +464,51 @@ async def build_update(factory, model: Project, items: List[Dict]) -> Dict:
             items.append(scored)
 
 
+async def build_delete(factory, model: Project, items: List[Dict]):
+    item_dict = dict(
+        item_type=ItemType.DELETE,
+        object_type=ObjectType.PROJECT,
+        title='Delete project',
+        uuid=model.uuid,
+        actions=[
+            dict(
+                request=dict(
+                    operation=OperationType.DELETE,
+                    resource='version_control_projects',
+                    resource_id=urllib.parse.quote_plus(model.uuid or ''),
+                    response_resource_key='version_control_project',
+                ),
+                uuid='delete_model',
+            ),
+            dict(
+                interaction=dict(
+                    type=InteractionType.CLOSE_APPLICATION,
+                ),
+                uuid='close_application',
+            ),
+        ],
+        display_settings_by_attribute=dict(
+            icon=dict(
+                icon_uuid='Trash',
+                color_uuid='accent.negative',
+            ),
+        ),
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+    )
+
+    scored = factory.filter_score(item_dict)
+    if scored:
+        items.append(scored)
+
+
 async def build(factory, project: Project) -> Dict:
     uuid = project.uuid
 
-    resource = await VersionControlProjectResource.member(uuid, factory.user)
-    sync_config = resource.model.sync_config
+    project = await add_sync_config(factory, project)
+    sync_config = project.sync_config
 
     return dict(
         item_type=ItemType.DETAIL,

@@ -46,7 +46,9 @@ class VersionControlRemoteResource(AsyncBaseResource):
     async def update(self, payload: Dict, **kwargs):
         if payload.get('fetch'):
             self.model.update(fetch=True)
-        if payload.get('set_url'):
+        if payload.get('name') or payload.get('url'):
+            self.model.name = payload.get('name') or self.model.name
+            self.model.url = payload.get('url') or self.model.url
             self.model.update(set_url=True)
 
     async def delete(self, **kwargs):

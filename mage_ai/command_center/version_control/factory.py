@@ -24,6 +24,9 @@ from mage_ai.command_center.version_control.constants import (
 from mage_ai.command_center.version_control.projects.constants import ITEMS
 from mage_ai.command_center.version_control.projects.utils import build, build_and_score
 from mage_ai.command_center.version_control.projects.utils import (
+    build_delete as build_delete_project,
+)
+from mage_ai.command_center.version_control.projects.utils import (
     build_update as build_update_project,
 )
 from mage_ai.version_control.models import Branch, Project, Remote
@@ -59,12 +62,22 @@ class VersionControlFactory(BaseFactory):
                 self.application and \
                 ApplicationType.DETAIL_LIST == self.application.application_type:
 
+            """
+            Project is selected, show:
+                Create new branch
+                1-way sync update
+                2-way sync update
+                Global configurations update
+                All branches listed out
+                Delete project
+            """
             if ObjectType.PROJECT == self.item.object_type:
                 project = Project.load(**self.item.metadata.project.to_dict())
                 Remote.load_all(project=project)
 
                 await build_create_branch(self, project, items)
                 await build_update_project(self, project, items)
+                await build_delete_project(self, project, items)
 
                 branches = Branch.load_all(project=project)
                 for branch in branches:
