@@ -1,11 +1,12 @@
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.FilePolicy import FilePolicy
-from mage_ai.command_center.constants import ItemType, ObjectType
-from mage_ai.command_center.models import (
+from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
-    InteractionInputType,
+    ItemType,
+    ObjectType,
 )
+from mage_ai.presenters.interactions.constants import InteractionInputType
 
 ITEMS = [
     dict(

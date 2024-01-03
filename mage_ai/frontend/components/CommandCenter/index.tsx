@@ -608,7 +608,7 @@ function CommandCenter() {
       // What was this used for in the conditional statement? isCurrentApplicationDetailList()
       // If the selected item has an application, add it.
 
-      const add = () => addApplication({
+      addApplication({
         application: null,
         item,
         executeAction,
@@ -617,11 +617,13 @@ function CommandCenter() {
         itemsRef: refItems,
       });
 
-      if (item?.actions?.length >= 1) {
-        executeAction(item, focusedItemIndex).then(() => add());
-      } else {
-        add();
-      }
+      // Don’t try to execute the action or else selecting the row will add the application
+      // AND select the row which will then execute the action associated with it.
+      // if (item?.actions?.length >= 1) {
+      //   executeAction(item, focusedItemIndex).then(() => add());
+      // } else {
+      //   add();
+      // }
 
     } else if (fallbackCallback) {
       fallbackCallback?.(item, focusedItemIndex);

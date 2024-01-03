@@ -2,13 +2,92 @@ import urllib.parse
 from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
     ApplicationType,
+    ButtonActionType,
     InteractionType,
     ItemType,
     ObjectType,
 )
-from mage_ai.version_control.models import Branch
+from mage_ai.presenters.interactions.constants import InteractionInputType
+from mage_ai.version_control.models import Branch, Project
+
+
+async def build_create(factory, model: Project, items: List[Dict]):
+    item_dict = dict(
+        item_type=ItemType.CREATE,
+        object_type=ObjectType.BRANCH,
+        title='Create a new branch',
+        applications=[
+            dict(
+                application_type=ApplicationType.FORM,
+                buttons=[
+                    dict(
+                        label='Cancel',
+                        tooltip='Discard changes and go back.',
+                        keyboard_shortcuts=[['metaKey', 27]],
+                        action_types=[
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                        ],
+                    ),
+                    dict(
+                        label='Create new branch',
+                        tooltip='Save changes and create the new branch.',
+                        keyboard_shortcuts=[[13]],
+                        action_types=[
+                            ButtonActionType.EXECUTE,
+                            ButtonActionType.RESET_FORM,
+                            ButtonActionType.CLOSE_APPLICATION,
+                            ButtonActionType.SELECT_ITEM_FROM_REQUEST,
+                        ],
+                    ),
+                ],
+                settings=[
+                    dict(
+                        label='Name',
+                        description='New branch name.',
+                        display_settings=dict(
+                            icon_uuid='BranchAlt',
+                        ),
+                        placeholder='e.g. mage--new_powers',
+                        name='request.payload.version_control_branch.name',
+                        type=InteractionInputType.TEXT_FIELD,
+                        required=True,
+                        monospace=True,
+                        action_uuid='create_model',
+                    ),
+                ],
+                uuid='new_file',
+            ),
+        ],
+        actions=[
+            dict(
+                request=dict(
+                    operation=OperationType.CREATE,
+                    payload=dict(
+                        version_control_branch=dict(
+                            name=None,
+                        ),
+                    ),
+                    resource='version_control_branches',
+                    resource_parent='version_control_projects',
+                    resource_parent_id=urllib.parse.quote_plus(model.uuid or ''),
+                    response_resource_key='version_control_branch'
+                ),
+                uuid='create_model',
+            ),
+        ],
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+    )
+
+    scored = factory.filter_score(item_dict)
+    if scored:
+        items.append(scored)
 
 
 async def build(factory, model: Branch) -> Dict:

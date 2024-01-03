@@ -16,6 +16,7 @@ from mage_ai.shared.models import BaseDataClass
 class BaseVersionControl(BaseDataClass):
     output: List[str] = None
     project: Any = None
+    project_uuid: str = None
 
     def run(self, command: str) -> List[str]:
         args = [
@@ -353,12 +354,10 @@ class Project(BaseVersionControl):
         return ['Nothing was done.']
 
     def to_dict(self, **kwargs) -> Dict:
-        return merge_dict(
-            super().to_dict(**kwargs),
-            merge_dict(extract(self.preferences.to_dict(), [
-                'sync_config',
-            ]), dict(
-                repo_path=self.repo_path,
-                uuid=self.uuid,
-            )),
-        )
+        return merge_dict(extract(self.preferences.to_dict(), [
+            'sync_config',
+        ]), dict(
+            output=self.output,
+            repo_path=self.repo_path,
+            uuid=self.uuid,
+        ))

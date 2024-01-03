@@ -7,11 +7,15 @@ from mage_ai.command_center.constants import (
     ObjectType,
 )
 from mage_ai.command_center.factory import BaseFactory
+from mage_ai.command_center.version_control.branches.utils import build as build_branch
 from mage_ai.command_center.version_control.branches.utils import (
     build_and_score as build_and_score_branch,
 )
 from mage_ai.command_center.version_control.branches.utils import (
     build_and_score_detail as build_and_score_detail_branch,
+)
+from mage_ai.command_center.version_control.branches.utils import (
+    build_create as build_create_branch,
 )
 from mage_ai.command_center.version_control.constants import (
     ACTIVATE_MODE,
@@ -26,7 +30,29 @@ class VersionControlFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
         items = []
 
-        if self.item and \
+        # This has to come 1st because self.item is typically always in the API payload request.
+        if self.results and self.results.get('project'):
+            for result in (self.results.get('project') or []):
+                if result.get('value'):
+                    project = Project.load(**result.get('value'))
+                    item = await build(self, project)
+                    item['score'] = 999
+                    items.append(item)
+        elif self.results and self.results.get('branch'):
+            for result in (self.results.get('branch') or []):
+                if result.get('value'):
+                    value = result.get('value')
+
+                    project = Project.load(uuid=value.get('project_uuid'))
+                    model = Branch.load(
+                        current=value.get('current'),
+                        name=value.get('name'),
+                    )
+                    model.project = project
+                    item = await build_branch(self, model)
+                    item['score'] = 999
+                    items.append(item)
+        elif self.item and \
                 self.application and \
                 ApplicationType.DETAIL_LIST == self.application.application_type:
 
@@ -34,6 +60,7 @@ class VersionControlFactory(BaseFactory):
                 project = Project.load(**self.item.metadata.project.to_dict())
                 Remote.load_all(project=project)
 
+                await build_create_branch(self, project, items)
                 await build_and_score(self, project, items)
 
                 branches = Branch.load_all(project=project)
@@ -50,13 +77,6 @@ class VersionControlFactory(BaseFactory):
                 branch.update_attributes()
 
                 await build_and_score_detail_branch(self, branch, items)
-        elif self.results and self.results.get('project'):
-            for result in (self.results.get('project') or []):
-                if result.get('value'):
-                    project = Project.load(**result.get('value'))
-                    item = await build(self, project)
-                    item['score'] = 999
-                    items.append(item)
         else:
             items.extend(ITEMS)
 
