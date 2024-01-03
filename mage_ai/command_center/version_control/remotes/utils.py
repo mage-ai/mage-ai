@@ -301,7 +301,4 @@ async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
         item_dict = shared_dict() | item_dict
         scored = factory.filter_score(item_dict)
         if scored:
-            if ItemType.DELETE == item_dict['item_type']:
-                scored['score'] = 1
-
             items.append(scored)

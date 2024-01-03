@@ -157,8 +157,10 @@ class VersionControlFactory(BaseFactory):
         if ObjectType.REMOTE == object_type:
             if ItemType.LIST == item_type:
                 return 5
-            else:
-                return 1
+            elif ItemType.UPDATE == item_type:
+                return 3
+            elif ItemType.DETAIL == item_type:
+                return 2
 
         if ObjectType.PROJECT == object_type:
             if ItemType.UPDATE == item_type:

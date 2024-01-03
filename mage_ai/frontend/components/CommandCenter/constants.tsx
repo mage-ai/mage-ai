@@ -76,7 +76,13 @@ export function getInputPlaceholder({
         if (ObjectTypeEnum.PROJECT === item?.object_type) {
           return 'Add remote, create/switch branches, commit changes...';
         } else if (ObjectTypeEnum.BRANCH === item?.object_type) {
-          return `in branch ${item?.metadata?.branch?.name}`;
+          let text = item?.metadata?.branch?.name || '';
+
+          if (item?.metadata?.branch?.current) {
+            text = `${text} (current)`;
+          }
+
+          return text;
         } else if (ObjectTypeEnum.REMOTE === item?.object_type) {
           return 'Add, update, delete remotes';
         }
