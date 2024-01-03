@@ -10,6 +10,7 @@ from mage_ai.command_center.constants import (
     ItemType,
     ModeType,
     ObjectType,
+    RenderLocationType,
     ValidationType,
 )
 from mage_ai.command_center.settings import load_settings, save_settings
@@ -121,10 +122,19 @@ class Request(CommandCenterBaseClass):
 
 
 @dataclass
+class RenderOptions(CommandCenterBaseClass):
+    location: RenderLocationType = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('location', RenderLocationType)
+
+
+@dataclass
 class Action(CommandCenterBaseClass):
     delay: int = None
     interaction: Interaction = None
     page: Page = None
+    render_options: RenderOptions = None
     request: Request = None
     upstream_action_value_key_mapping: Dict = None
     uuid: str = None
@@ -133,6 +143,7 @@ class Action(CommandCenterBaseClass):
     def __post_init__(self):
         self.serialize_attribute_class('interaction', Interaction)
         self.serialize_attribute_class('page', Page)
+        self.serialize_attribute_class('render_options', RenderOptions)
         self.serialize_attribute_class('request', Request)
         self.serialize_attribute_enums('validations', ValidationType)
 
@@ -485,20 +496,20 @@ class Mode(CommandCenterBaseClass):
 
 @dataclass
 class ItemBase(CommandCenterBaseClass):
-    item_type: ItemType
-    title: str
-    uuid: str
     action_results: Dict = None
     actions: List[Action] = None
     applications: List[Application] = None
-    display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
+    display_settings_by_attribute: AttributeDisplaySettings = None
+    item_type: ItemType = None
     items: List[Dict] = None
     metadata: Metadata = None
     mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
     tags: List[ItemTagEnum] = None
+    title: str = None
+    uuid: str = None
 
     def __post_init__(self):
         self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
@@ -513,20 +524,20 @@ class ItemBase(CommandCenterBaseClass):
 
 @dataclass
 class Item(ItemBase):
-    item_type: ItemType
-    title: str
-    uuid: str
     action_results: Dict = None
     actions: List[Action] = None
     applications: List[Application] = None
-    display_settings_by_attribute: AttributeDisplaySettings = None
     description: str = None
+    display_settings_by_attribute: AttributeDisplaySettings = None
+    item_type: ItemType = None
     items: List[ItemBase] = None
     metadata: Metadata = None
     mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
     tags: List[ItemTagEnum] = None
+    title: str = None
+    uuid: str = None
 
     def __post_init__(self):
         super().__post_init__()

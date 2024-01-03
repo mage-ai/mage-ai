@@ -34,6 +34,9 @@ class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
         model.name = payload.get('name')
         model.create()
 
+        if payload.get('clone'):
+            model.update(clone=True)
+
         res = self(model, user, **kwargs)
         res.validate_output()
 

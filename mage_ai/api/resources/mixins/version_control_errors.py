@@ -11,6 +11,7 @@ class VersionControlErrors:
                     break
 
             if has_error:
+                return
                 raise ApiError(ApiError.RESOURCE_ERROR | dict(
                     message='\n'.join(self.model.output),
                 ))

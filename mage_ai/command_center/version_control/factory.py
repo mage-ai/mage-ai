@@ -49,6 +49,9 @@ from mage_ai.version_control.models import Branch, Project, Remote
 
 class VersionControlFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
+        self.branches = []
+        self.remotes = []
+
         items = []
 
         # This has to come 1st because self.item is typically always in the API payload request.
@@ -93,14 +96,23 @@ class VersionControlFactory(BaseFactory):
             if ObjectType.PROJECT == self.item.object_type:
                 project = Project.load(**self.item.metadata.project.to_dict())
 
-                await build_create_branch(self, project, items)
                 await build_update_project(self, project, items)
                 await build_delete_project(self, project, items)
-                await build_remote_list(self, project, items)
 
-                branches = Branch.load_all(project=project)
-                for branch in branches:
-                    await build_and_score_branch(self, branch, items)
+                self.remotes = Remote.load_all(project=project)
+                if self.remotes:
+                    await build_remote_list(self, project, items)
+
+                    await build_create_branch(self, project, items)
+
+                    self.branches = Branch.load_all(project=project)
+                    if self.branches:
+                        for branch in self.branches:
+                            await build_and_score_branch(self, branch, items)
+                    else:
+                        await build_clone(self, items, project=project)
+                else:
+                    await build_create_remote(self, project, items)
 
             if ObjectType.BRANCH == self.item.object_type:
                 # Checkout
@@ -116,7 +128,7 @@ class VersionControlFactory(BaseFactory):
                 branch.update_attributes()
 
                 if not branch.current:
-                    await build_clone(self, branch, items)
+                    await build_clone(self, items, model=branch)
                 await build_and_score_detail_branch(self, branch, items)
 
             if ObjectType.REMOTE == self.item.object_type:
@@ -166,13 +178,13 @@ class VersionControlFactory(BaseFactory):
             if ItemType.ACTION == item_type:
                 return 5
             elif ItemType.LIST == item_type:
-                return 4
+                return 4 if self.remotes else 1
             elif ItemType.UPDATE == item_type:
                 return 3
             elif ItemType.DETAIL == item_type:
                 return 2
             elif ItemType.CREATE == item_type:
-                return 1
+                return 1 if self.remotes else 4
 
         if ObjectType.PROJECT == object_type:
             if ItemType.UPDATE == item_type:
@@ -183,5 +195,7 @@ class VersionControlFactory(BaseFactory):
                 return 5
             elif ItemType.CREATE == item_type:
                 return 4
+            elif ItemType.ACTION and not self.branches:
+                return 5
 
         return score or 1

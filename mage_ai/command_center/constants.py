@@ -60,7 +60,6 @@ class InteractionType(str, Enum):
     CLOSE_APPLICATION = 'close_application'
     FETCH_ITEMS = 'fetch_items'
     OPEN_FILE = 'open_file'
-    RENDER_OUTPUT = 'render_output'
     SCROLL = 'scroll'
     SELECT_ITEM = 'select_item'
 
@@ -84,3 +83,7 @@ class ButtonActionType(str, Enum):
 
 class ValidationType(str, Enum):
     CONFIRMATION = 'confirmation'
+
+
+class RenderLocationType(str, Enum):
+    ITEMS_CONTAINER_AFTER = 'items_container_after'

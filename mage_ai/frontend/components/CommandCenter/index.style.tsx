@@ -59,7 +59,7 @@ export const ContainerStyle = styled.div<{
     }
 
     #${OUTPUT_CONTAINER_ID} {
-      border-top: 1px solid ${(props.theme || dark).monotone.grey400};
+      border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
     }
 
     &.version_control {
@@ -70,7 +70,7 @@ export const ContainerStyle = styled.div<{
       }
 
       #${OUTPUT_CONTAINER_ID} {
-        border-top: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+        border-bottom: 1px solid ${(props.theme || dark).accent.negativeTransparent};
       }
     }
   `}
@@ -220,6 +220,10 @@ export const OutputContainerStyle = styled.div`
       display: block !important;
     }
   }
+
+  ${props => `
+    background-color: ${(props.theme || dark)?.background?.panelTransparent};
+  `}
 `;
 
 export const OutputContentStyle = styled.div`

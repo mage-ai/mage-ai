@@ -10,6 +10,10 @@ import {
   VersionControlRemote,
 } from './VersionControlType';
 
+export enum RenderLocationTypeEnum {
+  ITEMS_CONTAINER_AFTER = 'items_container_after',
+}
+
 export enum ItemTagEnum {
   PINNED = 'pinned',
   RECENT = 'recent',
@@ -196,7 +200,6 @@ export enum CommandCenterActionInteractionTypeEnum {
   CLOSE_APPLICATION = 'close_application',
   FETCH_ITEMS = 'fetch_items',
   OPEN_FILE = 'open_file',
-  RENDER_OUTPUT = 'render_output',
   SCROLL = 'scroll',
   SELECT_ITEM = 'select_item',
 }
@@ -233,10 +236,15 @@ export interface CommandCenterActionPageType {
   query?: KeyValueType;
 }
 
+export interface RenderOptionsType {
+  location: RenderLocationTypeEnum;
+}
+
 export interface CommandCenterActionType extends CommandCenterActionBaseType {
   delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;
+  render_options?: RenderOptionsType;
   request?: CommandCenterActionRequestType;
   upstream_action_value_key_mapping?: KeyValueType;
   uuid: string;

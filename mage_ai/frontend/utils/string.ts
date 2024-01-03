@@ -348,6 +348,10 @@ export function removASCII(text: string): string {
   return text?.replace(/[^\x00-\x7F]/g, "");
 }
 
+export function hasANSI(text: string): boolean {
+  return removeANSI(text) !== text;
+}
+
 export function removeANSI(text: string): string {
   return text?.replace(
     /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,

@@ -45,6 +45,7 @@ VersionControlBranchPolicy.allow_read(
 
 VersionControlBranchPolicy.allow_write(
     [
+        'clone',
         'name',
     ],
     scopes=[

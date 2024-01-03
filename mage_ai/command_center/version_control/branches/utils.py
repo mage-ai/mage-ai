@@ -9,20 +9,23 @@ from mage_ai.command_center.constants import (
     InteractionType,
     ItemType,
     ObjectType,
+    RenderLocationType,
 )
 from mage_ai.command_center.version_control.shared.utils import build_update
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Branch, Project, Remote
 
 
-def build_request(model: Branch) -> Dict:
-    return dict(
+def build_request(model: Branch = None, project: Project = None) -> Dict:
+    base = dict(
         resource='version_control_branches',
-        resource_id=urllib.parse.quote_plus(model.name or ''),
         resource_parent='version_control_projects',
-        resource_parent_id=urllib.parse.quote_plus(model.project.uuid or ''),
+        resource_parent_id=urllib.parse.quote_plus((project or model.project).uuid or ''),
         response_resource_key='version_control_branch'
     )
+    if model:
+        base.update(dict(resource_id=urllib.parse.quote_plus(model.name or '')))
+    return base
 
 
 async def build_create(factory, model: Project, items: List[Dict]):
@@ -181,6 +184,7 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
 
         item_dict['actions'] = [
             dict(
+                render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
                 request=dict(
                     operation=OperationType.UPDATE,
                     payload=dict(
@@ -282,17 +286,32 @@ async def build_and_score(factory, model: Branch, items: List[Dict]):
         items.append(scored)
 
 
-async def build_clone(factory, model: Branch, items: List[Dict]):
-    current_branch = model.get_current_branch()
-    remotes = Remote.load_all(project=model.project)
+async def build_clone(
+    factory,
+    items: List[Dict],
+    model: Branch = None,
+    project: Project = None,
+):
+    remotes = Remote.load_all(project=project or model.project)
+
+    if model:
+        current_branch = model.get_current_branch()
+        if not current_branch:
+            return
+
+        title = f'Clone this branch into {current_branch.name}'
+        description = f'git clone -b {model.name}'
+    else:
+        title = 'Clone remote branch'
+        description = 'git clone -b [branch] [remote]'
 
     factory.filter_score_mutate_accumulator(
         build_update(
             item_dict=dict(
                 item_type=ItemType.ACTION,
                 object_type=ObjectType.BRANCH,
-                title=f'Clone this branch into {current_branch.name}',
-                description=f'git clone -b {model.name}',
+                title=title,
+                description=description,
             ),
             mapping={
                 'data.version_control_branch': '.'.join([
@@ -303,12 +322,22 @@ async def build_clone(factory, model: Branch, items: List[Dict]):
                     'branch',
                 ]),
             },
-            model=model,
+            model=project or model,
             request=dict(
-                operation=OperationType.UPDATE,
+                operation=OperationType.CREATE,
                 payload=dict(version_control_branch=dict(clone=True)),
-            ) | build_request(model),
-            settings=[
+            ) | build_request(model=model, project=project),
+            settings=([] if model else [
+                dict(
+                    label='Branch to clone',
+                    placeholder='e.g. master',
+                    name='request.payload.version_control_branch.name',
+                    display_settings=dict(icon_uuid='BranchAlt'),
+                    monospace=True,
+                    required=True,
+                    type=InteractionInputType.TEXT_FIELD,
+                ),
+            ]) + [
                 dict(
                     label='Remote to clone from',
                     placeholder='e.g. origin',

@@ -6,9 +6,10 @@ from mage_ai.command_center.constants import (
     ButtonActionType,
     InteractionType,
     ItemType,
+    RenderLocationType,
 )
 from mage_ai.presenters.interactions.constants import InteractionInputType
-from mage_ai.shared.hash import combine_into
+from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -150,6 +151,7 @@ def build_action_generic(
     model_class=None,
     item_dict: Dict = None,
     request: Dict = None,
+    **kwargs,
 ) -> Dict:
     values = get_values(
         model=model,
@@ -157,12 +159,12 @@ def build_action_generic(
         item_dict=item_dict,
     )
 
-    return dict(
+    return merge_dict(dict(
         request=dict(
             operation=values['operation'],
         ) | request,
         uuid=values['action_uuid'],
-    )
+    ), kwargs)
 
 
 def build_action_fetch_items(
@@ -212,6 +214,7 @@ def build_generic(
             model=model,
             model_class=model_class,
             item_dict=item_dict,
+            render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
             request=request,
         ))
     if mapping:

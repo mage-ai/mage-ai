@@ -9,6 +9,7 @@ from mage_ai.command_center.constants import (
     InteractionType,
     ItemType,
     ObjectType,
+    RenderLocationType,
 )
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Project, Remote
@@ -158,10 +159,12 @@ def application_form(
 
 
 async def build_create(factory, model: Project, items: List[Dict]):
+    remotes = factory.remotes
+
     item_dict = dict(
         item_type=ItemType.CREATE,
         object_type=ObjectType.REMOTE,
-        title='Add a new remote',
+        title='Add a new remote' if remotes else 'Add remote',
         uuid=f'{model.uuid}_create_remote',
         metadata=dict(
             project=dict(
@@ -246,17 +249,12 @@ async def build_detail_list_items(factory, model: Remote, items: List[Dict]):
             uuid=f'{model.name}_fetch',
             actions=[
                 dict(
+                    render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
                     request=shared_request() | dict(
                         operation=OperationType.UPDATE,
                         payload=dict(version_control_remote=dict(fetch=True)),
                     ),
                     uuid='fetch_model',
-                ),
-                dict(
-                    interaction=dict(
-                        type=InteractionType.RENDER_OUTPUT,
-                    ),
-                    uuid='render_output_item_row',
                 ),
             ],
         ),

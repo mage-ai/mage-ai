@@ -47,7 +47,7 @@ function ItemOutput({
           default
           key={`${line}-${idx}`}
           monospace
-          prewrap
+          preWrap
         >
           <Ansi>
             {line}

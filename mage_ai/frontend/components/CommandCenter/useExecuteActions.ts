@@ -3,6 +3,7 @@ import {
   CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
+  RenderLocationTypeEnum,
 } from '@interfaces/CommandCenterType';
 import { FetchItemsType, HandleSelectItemRowType } from './constants';
 import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
@@ -187,17 +188,6 @@ export default function useExecuteActions({
 
             return fetchItems?.(options);
           };
-        } else if (CommandCenterActionInteractionTypeEnum.RENDER_OUTPUT === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const { options } = actionCopy?.interaction || { options: null };
-
-            return renderOutput({
-              item,
-              action: actionCopy,
-              results,
-            });
-          };
         } else if (type && interaction?.element) {
           actionFunction = (results: KeyValueType = {}) => {
             const actionCopy = updateActionFromUpstreamResults(action, results);
@@ -260,8 +250,11 @@ export default function useExecuteActions({
       } = actionSettings?.[index];
       const {
         delay,
+        render_options: renderOptions,
         uuid,
-      } = action;
+      } = action || {
+        render_options: null,
+      };
 
       const result = new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -270,17 +263,27 @@ export default function useExecuteActions({
       });
 
       return result?.then((resultsInner) => {
-        if (index + 1 <= actionSettings?.length - 1) {
-          if (resultsInner && isObject(resultsInner)) {
-            if (resultsInner?.error || resultsInner?.data?.error) {
-              return;
-            }
-          }
+        const combined = {
+          ...(results || {}),
+          [uuid]: resultsInner,
+        };
 
-          return invokeActionAndCallback(index + 1, {
-            ...results,
-            [uuid]: resultsInner,
+        if (RenderLocationTypeEnum.ITEMS_CONTAINER_AFTER === renderOptions?.location) {
+          renderOutput?.({
+            action,
+            item,
+            results: combined,
           });
+        }
+
+        if (resultsInner && isObject(resultsInner)) {
+          if (resultsInner?.error || resultsInner?.data?.error) {
+            return;
+          }
+        }
+
+        if (index + 1 <= actionSettings?.length - 1) {
+          return invokeActionAndCallback(index + 1, combined);
         }
       });
     };
