@@ -215,6 +215,17 @@ class PipelineResource(BaseResource):
                     print(err_message)
                     return None
 
+        def get_pipeline_with_config(uuid, config: Dict) -> Pipeline:
+            try:
+                return Pipeline(uuid, config=config)
+            except Exception as err:
+                err_message = f'Error loading pipeline sync {uuid}: {err}.'
+                if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
+                    raise Exception(err_message)
+                else:
+                    print(err_message)
+                    return None
+
         pipeline_uuids_miss = []
         pipelines = []
 
@@ -228,7 +239,9 @@ class PipelineResource(BaseResource):
             for uuid in pipeline_uuids:
                 pipeline_dict = cache.get_model(dict(uuid=uuid))
                 if pipeline_dict and pipeline_dict.get('pipeline'):
-                    pipelines.append(Pipeline(uuid, config=pipeline_dict['pipeline']))
+                    pipeline = get_pipeline_with_config(uuid, pipeline_dict['pipeline'])
+                    if pipeline:
+                        pipelines.append(pipeline)
                 else:
                     pipeline_uuids_miss.append(uuid)
 
