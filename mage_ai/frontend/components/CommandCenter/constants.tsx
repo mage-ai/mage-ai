@@ -71,7 +71,9 @@ export function getInputPlaceholder({
     if (ModeTypeEnum.VERSION_CONTROL === mode?.type) {
       if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
         if (ObjectTypeEnum.PROJECT === item?.object_type) {
-          return `Add remote, create/switch branches, commit changes...`;
+          return 'Add remote, create/switch branches, commit changes...';
+        } else if (ObjectTypeEnum.BRANCH === item?.object_type) {
+          return `Currently in branch ${item?.metadata?.branch?.name}`;
         }
       }
 

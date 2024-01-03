@@ -8,6 +8,7 @@ class VersionControlProjectPresenter(BasePresenter):
         'output',
         'repo_path',
         'sync_config',
+        'user',
         'uuid',
     ]
 

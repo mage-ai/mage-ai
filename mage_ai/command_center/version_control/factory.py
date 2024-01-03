@@ -23,6 +23,9 @@ from mage_ai.command_center.version_control.constants import (
 )
 from mage_ai.command_center.version_control.projects.constants import ITEMS
 from mage_ai.command_center.version_control.projects.utils import build, build_and_score
+from mage_ai.command_center.version_control.projects.utils import (
+    build_update as build_update_project,
+)
 from mage_ai.version_control.models import Branch, Project, Remote
 
 
@@ -61,7 +64,7 @@ class VersionControlFactory(BaseFactory):
                 Remote.load_all(project=project)
 
                 await build_create_branch(self, project, items)
-                await build_and_score(self, project, items)
+                await build_update_project(self, project, items)
 
                 branches = Branch.load_all(project=project)
                 for branch in branches:

@@ -235,6 +235,8 @@ class PipelineRunMetadata(CommandCenterBaseClass):
 class ProjectMetadata(CommandCenterBaseClass):
     repo_path: str
     uuid: str
+    sync_config: Dict = None
+    user: Dict = None
 
 
 @dataclass

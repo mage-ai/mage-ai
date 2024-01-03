@@ -1,7 +1,6 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.presenters.SyncPresenter import SyncPresenter
 from mage_ai.api.presenters.VersionControlProjectPresenter import (
     VersionControlProjectPresenter,
 )
@@ -63,7 +62,7 @@ VersionControlProjectPolicy.allow_write(
     [
         'email',
         'name',
-    ] + SyncPresenter.default_attributes,
+    ] + VersionControlProjectPresenter.default_attributes,
     scopes=[
         OauthScope.CLIENT_PRIVATE,
     ],

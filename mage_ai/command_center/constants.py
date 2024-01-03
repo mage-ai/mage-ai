@@ -11,6 +11,7 @@ class ItemTagEnum(str, Enum):
 class ItemType(str, Enum):
     ACTION = 'action'  # Cast spell
     CREATE = 'create'  # Conjure
+    DELETE = 'delete'
     DETAIL = 'detail'  # Enchant
     LIST = 'list'  # Enchant
     MODE_ACTIVATION = 'mode_activation'
@@ -18,6 +19,7 @@ class ItemType(str, Enum):
     NAVIGATE = 'navigate'  # Teleport
     OPEN = 'open'  # Summon - open shows a view on the same page vs navigating to another page
     SUPPORT = 'support'  # Reinforcements
+    UPDATE = 'update'
 
 
 class ObjectType(str, Enum):
@@ -55,6 +57,7 @@ class FileExtension(str, Enum):
 
 class InteractionType(str, Enum):
     CLICK = 'click'
+    CLOSE_APPLICATION = 'close_application'
     FETCH_ITEMS = 'fetch_items'
     OPEN_FILE = 'open_file'
     SCROLL = 'scroll'

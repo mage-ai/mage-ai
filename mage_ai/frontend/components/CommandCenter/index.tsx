@@ -367,7 +367,7 @@ function CommandCenter() {
     );
   }
 
-  function removeApplication() {
+  function removeApplication(opts?: KeyValueType) {
     const count = refApplications?.current?.length || 0;
 
     if (refApplications?.current === null || !count) {
@@ -597,6 +597,13 @@ function CommandCenter() {
     focusedItemIndex: number,
     fallbackCallback?: (item: CommandCenterItemType, focusedItemIndex: number) => void,
   ) {
+    addPickHistory(item);
+
+    const searchText = refInput?.current?.value;
+    if (searchText?.length >= 1) {
+      addSearchHistory(searchText, item, refItems?.current);
+    }
+
     const applicationsCount = item?.applications?.length || 0;
     const mode = getCurrentMode();
 
@@ -637,6 +644,7 @@ function CommandCenter() {
     handleSelectItemRow: handleSelectItemRowBase,
     invokeRequest,
     itemsActionResultsRef: refItemsActionResults,
+    removeApplication,
     router,
   });
 
@@ -972,13 +980,7 @@ function CommandCenter() {
       ) {
         pauseEvent(event);
         // Pressing enter on an item
-        const itemSelected = refItems?.current?.[focusedItemIndex];
-
-        const searchText = refInput?.current?.value;
-        if (searchText?.length >= 1) {
-          addSearchHistory(searchText, itemSelected, refItems?.current);
-        }
-        handleSelectItemRow(itemSelected, focusedItemIndex);
+        handleSelectItemRow(refItems?.current?.[focusedItemIndex], focusedItemIndex);
       } else if (
         onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 0 })
           || onlyKeysPresent([KEY_CODE_DELETE], keyMapping, { allowExtraKeys: 0 })
@@ -1136,7 +1138,7 @@ function CommandCenter() {
     <ContainerStyle
       // className="hide"
       className={[
-        getCurrentMode() || '',
+        getCurrentMode()?.type || '',
       ]?.join(' ')}
       ref={refContainer}
     >

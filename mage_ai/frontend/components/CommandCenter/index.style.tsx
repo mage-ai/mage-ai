@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
-import { ITEM_ROW_HEIGHT, MAX_WIDTH } from './ItemRow/index.style';
+import { ITEM_ROW_HEIGHT, ITEM_ROW_MAX_WIDTH, MAX_WIDTH } from './ItemRow/index.style';
 import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -180,7 +180,7 @@ export const ApplicationContainerStyle = styled.div`
 
 export const ApplicationContentStyle = styled.div`
   left: ${SCROLLBAR_WIDTH}px;
-  max-width: ${MAX_WIDTH - (SCROLLBAR_WIDTH * 2)}px;
+  max-width: ${ITEM_ROW_MAX_WIDTH}px;
   padding-bottom: ${1 * UNIT}px;
   padding-top: ${1 * UNIT}px;
   position: relative;

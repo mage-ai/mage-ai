@@ -10,8 +10,9 @@ import { dig } from '@utils/hash';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { transition } from '@oracle/styles/mixins';
 
-export const ITEM_ROW_HEIGHT = 44;
 export const MAX_WIDTH = 94 * UNIT;
+export const ITEM_ROW_HEIGHT = 44;
+export const ITEM_ROW_MAX_WIDTH = MAX_WIDTH - (SCROLLBAR_WIDTH * 2);
 
 export function getIconColor(item: CommandCenterItemType, opts: {
   theme?: ThemeType;
@@ -103,7 +104,7 @@ export const ItemStyle = styled.div<{
   cursor: pointer;
   height: ${ITEM_ROW_HEIGHT}px;
   left: ${SCROLLBAR_WIDTH}px;
-  max-width: ${MAX_WIDTH - (SCROLLBAR_WIDTH * 2)}px;
+  max-width: ${ITEM_ROW_MAX_WIDTH}px;
   padding: ${1.5 * UNIT}px;
   position: relative;
 `;

@@ -19,6 +19,7 @@ export default function useExecuteActions({
   handleSelectItemRow,
   invokeRequest,
   itemsActionResultsRef: refItemsActionResults = null,
+  removeApplication,
   router,
 }: {
   applicationState?: {
@@ -28,6 +29,7 @@ export default function useExecuteActions({
   itemsActionResultsRef?: {
     current: KeyValueType;
   };
+  removeApplication?: (opts?: KeyValueType) => void;
   router: any;
 } & FetchItemsType & HandleSelectItemRowType & InvokeRequestActionType): (
   item: CommandCenterItemType,
@@ -138,6 +140,13 @@ export default function useExecuteActions({
                   : null,
               },
             });
+          };
+        } else if (CommandCenterActionInteractionTypeEnum.CLOSE_APPLICATION === type) {
+          actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+            const { options } = actionCopy?.interaction || { options: null };
+
+            return removeApplication?.(options);
           };
         } else if (CommandCenterActionInteractionTypeEnum.SELECT_ITEM === type) {
           actionFunction = (results: KeyValueType = {}) => {

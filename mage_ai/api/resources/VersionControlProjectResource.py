@@ -3,8 +3,8 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
+from mage_ai.api.resources.SyncResource import SyncResource
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.shared.hash import ignore_keys
 from mage_ai.version_control.models import Project
 
 
@@ -25,6 +25,7 @@ class VersionControlProjectResource(AsyncBaseResource):
     @classmethod
     def get_model(self, pk, **kwargs):
         model = Project.load(uuid=urllib.parse.unquote(pk))
+
         if not model.exists():
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
@@ -32,7 +33,16 @@ class VersionControlProjectResource(AsyncBaseResource):
 
     @classmethod
     async def member(self, pk: str, user: User, **kwargs):
-        return self(self.get_model(pk), user, **kwargs)
+        model = self.get_model(pk)
+
+        sync_resource = SyncResource.member(None, user, repo_path=model.repo_path)
+        model.sync_config = await SyncResource.presenter_class()(
+            sync_resource,
+            user,
+            **kwargs,
+        ).present()
+
+        return self(model, user, **kwargs)
 
     async def update(self, payload: Dict, **kwargs):
         if 'email' in payload:
@@ -40,7 +50,26 @@ class VersionControlProjectResource(AsyncBaseResource):
         if 'name' in payload:
             self.model.configure(name=payload.get('name'))
 
-        self.model.update(ignore_keys(payload, ['email', 'name']))
+        if payload.get('sync_config'):
+            SyncResource.create(
+                payload.get('sync_config'),
+                self.current_user,
+                repo_name=self.model.repo_path,
+                repo_path=self.model.repo_path,
+            )
+
+            sync_resource = SyncResource.member(
+                None,
+                self.current_user,
+                repo_path=self.model.repo_path,
+            )
+            self.model.sync_config = await SyncResource.presenter_class()(
+                sync_resource,
+                self.current_user,
+                **kwargs,
+            ).present()
+
+        self.model.update_attributes()
 
     async def delete(self, **kwargs):
         self.model.delete()

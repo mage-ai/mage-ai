@@ -149,6 +149,6 @@ def get_preferences(repo_path=None, user: User = None) -> Preferences:
         ):
             return default_preferences
         else:
-            return Preferences(user=user)
+            return Preferences(user=user, repo_path=repo_path)
     else:
         return default_preferences

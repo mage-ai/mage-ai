@@ -84,7 +84,11 @@ function SetupSectionRow({
   return (
     <div style={{ padding: PADDING_UNITS * UNIT }}>
       <FlexContainer alignItems="center">
-        <FlexContainer flexDirection="column" style={{ paddingRight: PADDING_UNITS * UNIT }}>
+        <FlexContainer
+          flexDirection="column"
+          flex={1}
+          style={{ paddingRight: PADDING_UNITS * UNIT }}
+        >
           <Text
             danger={invalid}
             default
@@ -106,7 +110,7 @@ function SetupSectionRow({
           {description && typeof description !== 'string' && description}
         </FlexContainer>
 
-        <Flex flex={1} justifyContent="flex-end">
+        <Flex flex={3} justifyContent="flex-end">
           {children}
 
           {textInputMemo}

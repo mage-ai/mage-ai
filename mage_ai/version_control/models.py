@@ -8,7 +8,7 @@ from mage_ai.data_preparation.preferences import Preferences, get_preferences
 from mage_ai.settings.platform import platform_settings, update_settings
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find, unique_by
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
 
@@ -263,11 +263,24 @@ class File(BaseVersionControl):
 
 
 @dataclass
+class ProjectUser(BaseVersionControl):
+    email: str = None
+    name: str = None
+
+    def to_dict(self, **kwargs) -> Dict:
+        return dict(
+            email=self.email,
+            name=self.name,
+        )
+
+
+@dataclass
 class Project(BaseVersionControl):
     branch: Branch = None
     file: File = None
     remote: Remote = None
     sync_config: Dict = None
+    user: ProjectUser = None
     uuid: str = None
 
     def __post_init__(self):
@@ -275,6 +288,8 @@ class Project(BaseVersionControl):
         self.branch = Branch(project=self)
         self.branch.remote = self.remote
         self.file = File(project=self)
+        self.user = ProjectUser(project=self)
+        self.update_attributes()
 
     @classmethod
     def load_all(self) -> List['Project']:
@@ -332,6 +347,15 @@ class Project(BaseVersionControl):
     def update(self, settings: Dict = None):
         self.preferences.update_preferences(settings)
 
+    def update_attributes(self) -> None:
+        user_email = self.run('config user.email')
+        if user_email:
+            self.user.email = ' '.join(user_email).replace('"', '').strip()
+
+        user_name = self.run('config user.name')
+        if user_name:
+            self.user.name = ' '.join(user_name).replace('"', '').strip()
+
     def delete(self):
         git_path = os.path.join(self.repo_path, '.git')
         if os.path.exists(git_path):
@@ -354,10 +378,15 @@ class Project(BaseVersionControl):
         return ['Nothing was done.']
 
     def to_dict(self, **kwargs) -> Dict:
-        return merge_dict(extract(self.preferences.to_dict(), [
-            'sync_config',
-        ]), dict(
+        sync_config = merge_dict(
+            self.preferences.to_dict().get('sync_config') or {},
+            self.sync_config or {},
+        )
+
+        return dict(
             output=self.output,
             repo_path=self.repo_path,
+            sync_config=sync_config,
+            user=self.user.to_dict(**kwargs) if self.user else None,
             uuid=self.uuid,
-        ))
+        )

@@ -87,6 +87,7 @@ async def build_create(factory, model: Project, items: List[Dict]):
 
     scored = factory.filter_score(item_dict)
     if scored:
+        scored['score'] += 101
         items.append(scored)
 
 
@@ -123,6 +124,9 @@ async def build(factory, model: Branch) -> Dict:
                     small=True,
                 ),
             ),
+            icon=dict(
+                color_uuid='background.success',
+            ) if model.current else None,
         ),
         applications=[
             dict(
@@ -150,13 +154,21 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
     uuid = model.name
     project = model.project
 
-    item_dict = await build(factory, model)
-    item_dict['applications'] = None
-    item_dict['description'] = 'to switch and make this the current branch'
+    item_dicts = []
 
     if not model.current:
+        item_dict = await build(factory, model)
+        item_dict['applications'] = None
+        item_dict['description'] = 'to switch and make this the current branch'
         item_dict['item_type'] = ItemType.ACTION
         item_dict['title'] = 'Checkout'
+        item_dict['display_settings_by_attribute'] = dict(
+            icon=dict(
+                icon_uuid='PanelCollapseRight',
+                color_uuid='background.success',
+            ),
+        )
+
         item_dict['actions'] = [
             dict(
                 request=dict(
@@ -208,7 +220,46 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
             #     uuid='select_item',
             # ),
         ]
+        item_dicts.append(item_dict)
 
+    item_dicts.extend([
+        dict(
+            item_type=ItemType.DELETE,
+            object_type=ObjectType.BRANCH,
+            title='Delete branch',
+            display_settings_by_attribute=dict(
+                icon=dict(
+                    icon_uuid='Trash',
+                    color_uuid='accent.negative',
+                ),
+            ),
+            actions=[
+                dict(
+                    request=dict(
+                        operation=OperationType.DELETE,
+                        resource='version_control_branches',
+                        resource_id=urllib.parse.quote_plus(uuid or ''),
+                        resource_parent='version_control_projects',
+                        resource_parent_id=urllib.parse.quote_plus(project.uuid or ''),
+                        response_resource_key='version_control_branch'
+                    ),
+                    uuid='update_model',
+                ),
+                dict(
+                    interaction=dict(
+                        type=InteractionType.CLOSE_APPLICATION,
+                    ),
+                    uuid='close_application',
+                ),
+            ],
+            condition=lambda opts: FilePolicy(
+                None,
+                opts.get('user'),
+            ).has_at_least_editor_role(),
+        ),
+    ])
+
+    for item_dict in item_dicts:
         scored = factory.filter_score(item_dict)
         if scored:
             items.append(scored)
@@ -218,4 +269,6 @@ async def build_and_score(factory, model: Branch, items: List[Dict]):
     item_dict = await build(factory, model)
     scored = factory.filter_score(item_dict)
     if scored:
+        if model.current:
+            scored['score'] += 100
         items.append(scored)

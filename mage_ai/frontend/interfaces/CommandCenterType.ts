@@ -33,6 +33,7 @@ export enum ItemApplicationTypeEnum {
 export enum ItemTypeEnum {
   ACTION = 'action',
   CREATE = 'create',
+  DELETE = 'delete',
   DETAIL = 'detail',
   LIST = 'list',
   MODE_ACTIVATION = 'mode_activation',
@@ -40,6 +41,7 @@ export enum ItemTypeEnum {
   NAVIGATE = 'navigate',
   OPEN = 'open',
   SUPPORT = 'support',
+  UPDATE = 'update',
 }
 
 export enum ObjectTypeEnum {
@@ -88,21 +90,25 @@ interface DisplaySettingsType {
 export const TYPE_TITLE_MAPPING = {
   [ItemTypeEnum.ACTION]: 'Cast',
   [ItemTypeEnum.CREATE]: 'Conjure',
+  [ItemTypeEnum.DELETE]: 'Destroy',
   [ItemTypeEnum.DETAIL]: 'Enchant',
   [ItemTypeEnum.LIST]: 'Enchant',
   [ItemTypeEnum.NAVIGATE]: 'Teleport',
   [ItemTypeEnum.OPEN]: 'Summon',
   [ItemTypeEnum.SUPPORT]: 'Heal',
+  [ItemTypeEnum.UPDATE]: 'Alchemize',
 };
 
 export const TYPE_TITLE_MAPPING_NORMAL = {
   [ItemTypeEnum.ACTION]: 'Action',
   [ItemTypeEnum.CREATE]: 'Create',
+  [ItemTypeEnum.DELETE]: 'Delete',
   [ItemTypeEnum.DETAIL]: 'View',
   [ItemTypeEnum.LIST]: 'View',
   [ItemTypeEnum.NAVIGATE]: 'Launch',
   [ItemTypeEnum.OPEN]: 'Open',
   [ItemTypeEnum.SUPPORT]: 'Support',
+  [ItemTypeEnum.UPDATE]: 'Update',
 };
 
 export const OBJECT_TITLE_MAPPING = {
@@ -192,6 +198,7 @@ interface CommandCenterActionBaseType {
 
 export enum CommandCenterActionInteractionTypeEnum {
   CLICK = 'click',
+  CLOSE_APPLICATION = 'close_application',
   FETCH_ITEMS = 'fetch_items',
   OPEN_FILE = 'open_file',
   SCROLL = 'scroll',
@@ -341,6 +348,10 @@ export interface CommandCenterItemType {
     project?: {
       output:  string[];
       repo_path: string;
+      user: {
+        email: string;
+        name: string;
+      };
       uuid: string;
     };
     trigger?: {

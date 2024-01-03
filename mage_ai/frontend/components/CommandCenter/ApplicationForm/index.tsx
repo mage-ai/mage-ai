@@ -11,6 +11,7 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import useExecuteActions from '../useExecuteActions';
 import useInvokeRequest from '../useInvokeRequest';
+import { ApplicationContentStyle } from '../index.style';
 import { ApplicationProps } from '../ItemApplication/constants';
 import {
   ButtonActionTypeEnum,
@@ -74,6 +75,8 @@ function ApplicationForm({
   }>(null);
   const [requestsData, setRequestsData] = useState<KeyValueType>(KeyValueType);
 
+  console.log(attributes);
+
   const setAttributes = useCallback((prev1) => setAttributesState((prev2) => {
     const val = prev1 ? prev1?.(prev2) : prev1;
 
@@ -89,29 +92,31 @@ function ApplicationForm({
     return val;
   }), []);
 
+  const resetFormValues = useCallback(() => {
+    let attributesDefault = {};
+
+    settings?.forEach((formInput) => {
+      const {
+        action_uuid: actionUUID,
+        name,
+        value,
+      } = formInput;
+
+      if (value) {
+        attributesDefault[actionUUID] = {
+          ...(attributesDefault[actionUUID] || {}),
+          [name]: value,
+        };
+      }
+    });
+
+    setAttributes(() => attributesDefault);
+    setRequestsData(null);
+  }, [settings]);
+
   useEffect(() => {
-    if (attributes === null) {
-      let attributesDefault = {};
-
-      settings?.forEach((formInput) => {
-        const {
-          action_uuid: actionUUID,
-          name,
-          value,
-        } = formInput;
-
-        if (value) {
-          attributesDefault[actionUUID] = {
-            ...(attributesDefault[actionUUID] || {}),
-            [name]: value,
-          };
-        }
-      });
-
-      setAttributes(() => attributesDefault);
-      setRequestsData(null);
-    }
-  }, []);
+    resetFormValues();
+  }, [resetFormValues]);
 
   useEffect(() => {
     if (!requests) {
@@ -151,8 +156,7 @@ function ApplicationForm({
     }) => {
       if (itemEvent?.uuid === item?.uuid) {
         if (ButtonActionTypeEnum.RESET_FORM === actionType) {
-          setAttributes(null);
-          setAttributesTouched(null);
+          resetFormValues();
         }
       }
     };
@@ -168,7 +172,7 @@ function ApplicationForm({
         window.removeEventListener(CUSTOM_EVENT_NAME_COMMAND_CENTER, handleAction);
       }
     };
-  }, [item]);
+  }, [item, resetFormValues]);
 
   let updateAttributes;
 
@@ -396,13 +400,15 @@ function ApplicationForm({
   }, [interactionParsers, requestsData]);
 
   return (
-    <ContainerStyle>
-      {childrenMemo}
+    <ApplicationContentStyle>
+      <ContainerStyle>
+        {childrenMemo}
 
-      <FormStyle fullWidth={!childrenMemo}>
-        {formMemo}
-      </FormStyle>
-    </ContainerStyle>
+        <FormStyle fullWidth={!childrenMemo}>
+          {formMemo}
+        </FormStyle>
+      </ContainerStyle>
+    </ApplicationContentStyle>
   );
 }
 
