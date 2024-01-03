@@ -304,7 +304,7 @@ class PipelineScheduler:
                     error_msg = 'Failed blocks: '\
                                 f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
                 else:
-                    error_msg = 'Pipelien run timed out.'
+                    error_msg = 'Pipeline run timed out.'
                 self.notification_sender.send_pipeline_run_failure_message(
                     pipeline=self.pipeline,
                     pipeline_run=self.pipeline_run,
