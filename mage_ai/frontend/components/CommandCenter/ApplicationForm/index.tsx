@@ -264,7 +264,7 @@ function ApplicationForm({
           language={language}
           onChange={value => inputProps.onChange({
             target: {
-              value: isJsonString(value) ? JSON.parse(value) : value,
+              value: (isJsonString(value) ? JSON.parse(value) : value).trim(),
             },
           })}
           onMountCallback={(editor) => {

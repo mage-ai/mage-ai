@@ -7,6 +7,7 @@ class VersionControlFilePresenter(BasePresenter):
     default_attributes = [
         'diff',
         'name',
+        'output',
         'project_uuid',
         'repo_path',
     ]

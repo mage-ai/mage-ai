@@ -37,8 +37,7 @@ class VersionControlBranchResource(AsyncBaseResource):
 
     @classmethod
     async def member(self, pk: str, user: User, **kwargs):
-        model = self.hydrate_models(**kwargs)
-        model.name = urllib.parse.unquote(pk)
+        model = self.hydrate_models(name=urllib.parse.unquote(pk), **kwargs)
         return self(model, user, **kwargs)
 
     async def update(self, payload: Dict, **kwargs):
@@ -53,7 +52,7 @@ class VersionControlBranchResource(AsyncBaseResource):
         self.model.delete(force=force)
 
     @classmethod
-    def hydrate_models(self, **kwargs):
+    def hydrate_models(self, name: str = None, **kwargs):
         project = kwargs.get('parent_model')
 
         query = kwargs.get('query') or {}
@@ -67,8 +66,9 @@ class VersionControlBranchResource(AsyncBaseResource):
             remote.project = project
             remote.hydrate()
 
-        model = Branch()
+        model = Branch.load(name=name)
         model.project = project
         model.remote = remote
+        model.update_attributes()
 
         return model

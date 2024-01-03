@@ -10,6 +10,9 @@ from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.version_control.branches.utils import (
     build_and_score as build_and_score_branch,
 )
+from mage_ai.command_center.version_control.branches.utils import (
+    build_and_score_detail as build_and_score_detail_branch,
+)
 from mage_ai.command_center.version_control.constants import (
     ACTIVATE_MODE,
     DEACTIVATE_MODE,
@@ -24,17 +27,29 @@ class VersionControlFactory(BaseFactory):
         items = []
 
         if self.item and \
-                ObjectType.PROJECT == self.item.object_type and \
                 self.application and \
                 ApplicationType.DETAIL_LIST == self.application.application_type:
 
-            project = Project.load(**self.item.metadata.project.to_dict())
-            Remote.load_all(project=project)
+            if ObjectType.PROJECT == self.item.object_type:
+                project = Project.load(**self.item.metadata.project.to_dict())
+                Remote.load_all(project=project)
 
-            branches = Branch.load_all(project=project)
-            for branch in branches:
-                await build_and_score_branch(self, branch, items)
+                await build_and_score(self, project, items)
 
+                branches = Branch.load_all(project=project)
+                for branch in branches:
+                    await build_and_score_branch(self, branch, items)
+
+            if ObjectType.BRANCH == self.item.object_type:
+                metadata = self.item.metadata
+
+                project = Project.load(**metadata.project.to_dict())
+
+                branch = Branch.load(**metadata.branch.to_dict())
+                branch.project = project
+                branch.update_attributes()
+
+                await build_and_score_detail_branch(self, branch, items)
         elif self.results and self.results.get('project'):
             for result in (self.results.get('project') or []):
                 if result.get('value'):

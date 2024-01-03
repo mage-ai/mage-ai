@@ -7,6 +7,7 @@ class VersionControlBranchPresenter(BasePresenter):
     default_attributes = [
         'current',
         'name',
+        'output',
         'project_uuid',
         'remote',
         'repo_path',

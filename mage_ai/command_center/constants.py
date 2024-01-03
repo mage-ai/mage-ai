@@ -55,6 +55,7 @@ class FileExtension(str, Enum):
 
 class InteractionType(str, Enum):
     CLICK = 'click'
+    FETCH_ITEMS = 'fetch_items'
     OPEN_FILE = 'open_file'
     SCROLL = 'scroll'
     SELECT_ITEM = 'select_item'

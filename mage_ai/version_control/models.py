@@ -14,6 +14,7 @@ from mage_ai.shared.models import BaseDataClass
 
 @dataclass
 class BaseVersionControl(BaseDataClass):
+    output: List[str] = None
     project: Any = None
 
     def run(self, command: str) -> List[str]:
@@ -27,11 +28,20 @@ class BaseVersionControl(BaseDataClass):
 
         proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        return proc.stdout.decode().split('\n')
+        self.output = proc.stdout.decode().split('\n')
+
+        return self.output
 
     @property
     def repo_path(self) -> str:
         return self.project.repo_path
+
+    def to_dict(self, **kwargs) -> Dict:
+        return dict(
+            output=self.output,
+            project_uuid=self.project.uuid,
+            repo_path=self.repo_path,
+        )
 
 
 @dataclass
@@ -80,25 +90,25 @@ class Remote(BaseVersionControl):
     def list(self) -> List[str]:
         return self.run('remote -v')
 
-    def create(self):
+    def create(self) -> List[str]:
         return self.run(f'remote add {self.name} {self.url}')
 
-    def delete(self):
+    def delete(self) -> List[str]:
         return self.run(f'remote rm {self.name}')
 
-    def update(self, fetch: bool = False, set_url: bool = False):
+    def update(self, fetch: bool = False, set_url: bool = False) -> List[str]:
         if fetch:
             return self.run(f'fetch {self.name}')
         elif set_url:
             return self.run(f'remote set-url {self.name} {self.url}')
 
+        return ['Nothing was done.']
+
     def to_dict(self, **kwargs) -> Dict:
-        return dict(
+        return merge_dict(super().to_dict(**kwargs), dict(
             name=self.name,
-            project_uuid=self.project.uuid,
-            repo_path=self.repo_path,
             url=self.url,
-        )
+        ))
 
 
 @dataclass
@@ -129,6 +139,19 @@ class Branch(BaseVersionControl):
 
         return arr
 
+    def update_attributes(self, **kwargs) -> None:
+        if kwargs:
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+        if self.name:
+            model = find(
+                lambda x, b=self: x.name == b.name,
+                self.load_all(remote=self.remote, project=self.project),
+            )
+            if model:
+                self.current = model.current
+
     def list(self, include_all: bool = False) -> List[str]:
         commands = ['branch']
         if include_all:
@@ -136,13 +159,13 @@ class Branch(BaseVersionControl):
 
         return self.run(' '.join(commands))
 
-    def create(self):
+    def create(self) -> List[str]:
         return self.run(f'checkout -b {self.name}')
 
-    def detail(self):
+    def detail(self) -> List[str]:
         return self.run('log')
 
-    def delete(self, name: str = None, force: bool = False):
+    def delete(self, name: str = None, force: bool = False) -> List[str]:
         flag = 'd'
         if force:
             flag = flag.upper()
@@ -157,7 +180,7 @@ class Branch(BaseVersionControl):
         push: bool = False,
         rebase: bool = False,
         reset: str = None,
-    ):
+    ) -> List[str]:
         commands = []
 
         if clone:
@@ -179,16 +202,17 @@ class Branch(BaseVersionControl):
                 commands.append(self.remote.name)
             commands.append(self.name)
 
-        return self.run(' '.join(commands))
+        lines = self.run(' '.join(commands))
+        self.update_attributes()
+
+        return lines
 
     def to_dict(self, **kwargs) -> Dict:
-        return dict(
+        return merge_dict(super().to_dict(**kwargs), dict(
             current=self.current,
             name=self.name,
-            project_uuid=self.project.uuid,
             remote=self.remote.to_dict(**kwargs) if self.remote else None,
-            repo_path=self.repo_path,
-        )
+        ))
 
 
 @dataclass
@@ -210,14 +234,14 @@ class File(BaseVersionControl):
             return self.run('ls-files --others --exclude-standard')
         return self.run('ls-files --other --modified --exclude-standard')
 
-    def create(self):
+    def create(self) -> List[str]:
         return self.run(f'add {self.name}')
 
-    def detail(self):
+    def detail(self) -> List[str]:
         self.diff = self.run(f'diff {self.name}')
         return self.diff
 
-    def update(self, add: str = None, commit: str = None, reset: str = False):
+    def update(self, add: str = None, commit: str = None, reset: str = False) -> List[str]:
         if add:
             return self.run(f'add {add}')
         elif commit:
@@ -225,16 +249,16 @@ class File(BaseVersionControl):
         elif reset:
             return self.run(f'reset {reset}')
 
-    def delete(self):
+        return ['Nothing was done.']
+
+    def delete(self) -> List[str]:
         return self.run(f'checkout {self.name}')
 
     def to_dict(self, **kwargs) -> Dict:
-        return dict(
+        return merge_dict(super().to_dict(**kwargs), dict(
             diff=self.diff,
             name=self.name,
-            project_uuid=self.project.uuid,
-            repo_path=self.repo_path,
-        )
+        ))
 
 
 @dataclass
@@ -290,15 +314,7 @@ class Project(BaseVersionControl):
 
         return True
 
-    def to_dict(self, **kwargs) -> Dict:
-        return merge_dict(extract(self.preferences.to_dict(), [
-            'sync_config',
-        ]), dict(
-            repo_path=self.repo_path,
-            uuid=self.uuid,
-        ))
-
-    def initialize(self):
+    def initialize(self) -> List[str]:
         if not os.path.exists(self.preferences.preferences_file_path):
             self.update(dict(
                 sync_config=dict(
@@ -307,8 +323,10 @@ class Project(BaseVersionControl):
             ))
 
         git_path = os.path.join(self.repo_path, '.git')
-        if not os.path.exists(git_path):
-            self.run('init')
+        if os.path.exists(git_path):
+            return [f'.git already exists in {git_path}.']
+        else:
+            return self.run('init')
 
     def update(self, settings: Dict = None):
         self.preferences.update_preferences(settings)
@@ -326,8 +344,21 @@ class Project(BaseVersionControl):
             settings['version_control'].pop(self.uuid, None)
         update_settings(settings)
 
-    def configure(self, email: str = None, name: str = None):
+    def configure(self, email: str = None, name: str = None) -> List[str]:
         if email:
-            self.run(f'config --global user.email "{email}"')
+            return self.run(f'config --global user.email "{email}"')
         if name:
-            self.run(f'config --global user.name "{name}"')
+            return self.run(f'config --global user.name "{name}"')
+
+        return ['Nothing was done.']
+
+    def to_dict(self, **kwargs) -> Dict:
+        return merge_dict(
+            super().to_dict(**kwargs),
+            merge_dict(extract(self.preferences.to_dict(), [
+                'sync_config',
+            ]), dict(
+                repo_path=self.repo_path,
+                uuid=self.uuid,
+            )),
+        )

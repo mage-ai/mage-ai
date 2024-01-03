@@ -45,6 +45,21 @@ async def build(factory, project: Project) -> Dict:
                     ),
                 ],
             ),
+            dict(
+                uuid='model_detail',
+                application_type=ApplicationType.DETAIL,
+                actions=[
+                    dict(
+                        request=dict(
+                            operation=OperationType.DETAIL,
+                            resource='version_control_projects',
+                            resource_id=urllib.parse.quote_plus(uuid or ''),
+                            response_resource_key='version_control_project',
+                        ),
+                        uuid='model_detail',
+                    ),
+                ],
+            ),
         ],
     )
 

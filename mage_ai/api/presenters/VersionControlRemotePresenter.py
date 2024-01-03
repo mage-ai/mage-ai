@@ -6,6 +6,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 class VersionControlRemotePresenter(BasePresenter):
     default_attributes = [
         'name',
+        'output',
         'project_uuid',
         'repo_path',
         'url',

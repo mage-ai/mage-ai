@@ -4,7 +4,7 @@ import {
   CommandCenterItemType,
   KeyValueType,
 } from '@interfaces/CommandCenterType';
-import { HandleSelectItemRowType } from './constants';
+import { FetchItemsType, HandleSelectItemRowType } from './constants';
 import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import {
   interpolatePagePath,
@@ -14,6 +14,7 @@ import { setNested } from '@utils/hash';
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
+  fetchItems,
   getItems,
   handleSelectItemRow,
   invokeRequest,
@@ -28,7 +29,7 @@ export default function useExecuteActions({
     current: KeyValueType;
   };
   router: any;
-} & HandleSelectItemRowType & InvokeRequestActionType): (
+} & FetchItemsType & HandleSelectItemRowType & InvokeRequestActionType): (
   item: CommandCenterItemType,
   focusedItemIndex: number,
   actions?: CommandCenterActionType[],
@@ -163,6 +164,15 @@ export default function useExecuteActions({
             } else {
               console.log('[ERROR] useExecuteActions: getItems and/or handleSelectItemRow is undefined.');
             }
+          };
+        } else if (CommandCenterActionInteractionTypeEnum.FETCH_ITEMS === type) {
+          actionFunction = (results: KeyValueType = {}) => {
+            const actionCopy = updateActionFromUpstreamResults(action, results);
+            const { options } = actionCopy?.interaction || { options: null };
+
+            console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF0', options)
+
+            return fetchItems?.(options);
           };
         } else if (type && interaction?.element) {
           actionFunction = (results: KeyValueType = {}) => {

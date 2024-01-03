@@ -5,6 +5,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class VersionControlProjectPresenter(BasePresenter):
     default_attributes = [
+        'output',
         'repo_path',
         'sync_config',
         'uuid',

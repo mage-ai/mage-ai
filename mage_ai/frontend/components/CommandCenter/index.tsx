@@ -604,8 +604,11 @@ function CommandCenter() {
       deactivateMode();
     } else if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type  && !mode && item?.mode_type) {
       activateMode(item);
-    } else if (isCurrentApplicationDetailList() || applicationsCount >= 1) {
-      addApplication({
+    } else if (applicationsCount >= 1) {
+      // What was this used for in the conditional statement? isCurrentApplicationDetailList()
+      // If the selected item has an application, add it.
+
+      const add = () => addApplication({
         application: null,
         item,
         executeAction,
@@ -613,6 +616,13 @@ function CommandCenter() {
         invokeRequest,
         itemsRef: refItems,
       });
+
+      if (item?.actions?.length >= 1) {
+        executeAction(item, focusedItemIndex).then(() => add());
+      } else {
+        add();
+      }
+
     } else if (fallbackCallback) {
       fallbackCallback?.(item, focusedItemIndex);
     }
@@ -620,6 +630,7 @@ function CommandCenter() {
 
   const executeAction = useExecuteActions({
     applicationState: refApplicationState,
+    fetchItems,
     getItems,
     handleSelectItemRow: handleSelectItemRowBase,
     invokeRequest,
@@ -915,7 +926,7 @@ function CommandCenter() {
                 fetchItems,
                 getItemsActionResults,
                 handleSelectItemRow,
-                itemsRef,
+                itemsRef: refItems,
                 refError,
                 removeApplication,
               });
@@ -967,7 +978,6 @@ function CommandCenter() {
         if (searchText?.length >= 1) {
           addSearchHistory(searchText, itemSelected, refItems?.current);
         }
-
         handleSelectItemRow(itemSelected, focusedItemIndex);
       } else if (
         onlyKeysPresent([KEY_CODE_BACKSPACE], keyMapping, { allowExtraKeys: 0 })

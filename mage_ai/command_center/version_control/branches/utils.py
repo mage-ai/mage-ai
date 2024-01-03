@@ -16,10 +16,36 @@ async def build(factory, model: Branch) -> Dict:
     project = model.project
     description = None
 
-    actions = []
-    applications = []
     if model.current:
-        applications.append(
+        description = 'current'
+    else:
+        description = 'open this branch to switch'
+
+    return dict(
+        item_type=ItemType.DETAIL,
+        object_type=ObjectType.BRANCH,
+        title=uuid,
+        description=description,
+        uuid=uuid,
+        metadata=dict(
+            branch=dict(
+                current=model.current,
+                name=model.name,
+            ),
+            project=dict(
+                repo_path=project.repo_path,
+                uuid=project.uuid,
+            ),
+        ),
+        display_settings_by_attribute=dict(
+            description=dict(
+                text_styles=dict(
+                    monospace=True,
+                    small=True,
+                ),
+            ),
+        ),
+        applications=[
             dict(
                 uuid='model_detail_list',
                 application_type=ApplicationType.DETAIL_LIST,
@@ -37,10 +63,22 @@ async def build(factory, model: Branch) -> Dict:
                     ),
                 ],
             ),
-        )
-    else:
-        description = 'switch to make this the current branch'
-        actions.extend([
+        ],
+    )
+
+
+async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
+    uuid = model.name
+    project = model.project
+
+    item_dict = await build(factory, model)
+    item_dict['applications'] = None
+    item_dict['description'] = 'to switch and make this the current branch'
+
+    if not model.current:
+        item_dict['item_type'] = ItemType.ACTION
+        item_dict['title'] = 'Checkout'
+        item_dict['actions'] = [
             dict(
                 request=dict(
                     operation=OperationType.UPDATE,
@@ -62,45 +100,36 @@ async def build(factory, model: Branch) -> Dict:
                     item=dict(
                         uuid=uuid,
                     ),
-                    type=InteractionType.SELECT_ITEM,
+                    type=InteractionType.FETCH_ITEMS,
                 ),
-                uuid='select_item',
+                options=dict(
+                ),
+                upstream_action_value_key_mapping=dict(
+                    update_model={
+                        'data.version_control_branch': 'interaction.options.item.metadata.branch',
+                    }
+                ),
+                uuid=InteractionType.FETCH_ITEMS,
             ),
-        ])
+            # What was this used for?
+            # dict(
+            #     interaction=dict(
+            #         item=dict(
+            #             uuid=uuid,
+            #         ),
+            #         type=InteractionType.SELECT_ITEM,
+            #     ),
+            #     uuid='select_item',
+            # ),
+        ]
 
-    return dict(
-        item_type=ItemType.DETAIL,
-        object_type=ObjectType.BRANCH,
-        title=uuid,
-        description=description,
-        uuid=uuid,
-        metadata=dict(
-            branch=dict(
-                current=model.current,
-                name=model.name,
-                project_uuid=project.uuid,
-                remote=model.remote,
-                repo_path=model.repo_path,
-            ),
-            project=dict(
-                repo_path=project.repo_path,
-                uuid=project.uuid,
-            ),
-        ),
-        display_settings_by_attribute=dict(
-            description=dict(
-                text_styles=dict(
-                    monospace=True,
-                    small=True,
-                ),
-            ),
-        ),
-        actions=actions,
-        applications=applications,
-    )
+        scored = factory.filter_score(item_dict)
+        if scored:
+            items.append(scored)
 
 
 async def build_and_score(factory, model: Branch, items: List[Dict]):
-    scored = factory.filter_score(await build(factory, model))
+    item_dict = await build(factory, model)
+    scored = factory.filter_score(item_dict)
     if scored:
         items.append(scored)
