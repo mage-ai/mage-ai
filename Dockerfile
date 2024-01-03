@@ -41,7 +41,7 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@xiaoyou/debug-image-size#egg=mage-ai[all]
+  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@xiaoyou/debug-image-size#egg=mage-ai[all]"
 
 ## Startup Script
 COPY --chmod=+x ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/
