@@ -614,7 +614,8 @@
           "icon": "pipe-circle-check",
           "pages": [
             "api-reference/pipeline-schedules/overview",
-            "api-reference/pipeline-schedules/read-pipeline-schedules"
+            "api-reference/pipeline-schedules/read-pipeline-schedules",
+            "api-reference/pipeline-schedules/create-pipeline-schedule"
           ]
         },
         {
