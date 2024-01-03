@@ -142,7 +142,7 @@ class GitBranchResource(GenericResource):
             remote = git_manager.repo.remotes[action_remote]
             url = list(remote.urls)[0]
 
-        provider = None
+        provider = ProviderName.GITHUB
         if url:
             provider = get_provider_from_remote_url(url)
 
