@@ -134,26 +134,22 @@ class GitBranchResource(GenericResource):
         files = payload.get('files', None)
         message = payload.get('message', None)
 
-        provider = None
-        remote = None
         url = None
-        if action_remote:
+        remote_url = query.get('remote_url', None)
+        if remote_url:
+            url = remote_url[0]
+        elif action_remote:
             remote = git_manager.repo.remotes[action_remote]
             url = list(remote.urls)[0]
+
+        provider = None
+        if url:
             provider = get_provider_from_remote_url(url)
 
         access_token = api.get_access_token_for_user(
             self.current_user, provider=provider
         )
         http_access_token = git_manager.get_access_token()
-
-        remote_url = query.get('remote_url', None)
-        if remote_url:
-            remote_url = remote_url[0]
-
-        provider = OAUTH_PROVIDER_GITHUB
-        if remote_url:
-            provider = get_provider_from_remote_url(remote_url)
 
         token = None
         if access_token:
@@ -173,7 +169,7 @@ class GitBranchResource(GenericResource):
                 email=email,
             )
 
-        # Recreate git manager with updated config when necessary
+        # Recreate git manager with updated config
         git_manager = self.get_git_manager(
             user=self.current_user, config_overwrite=config_overwrite
         )
@@ -198,21 +194,15 @@ class GitBranchResource(GenericResource):
                 )
                 raise ApiError(error)
 
-            if token:
-                username = api.get_username(token, user=self.current_user, provider=provider)
-                if username:
-                    git_manager.update_config({
-                        'user.name': username,
-                    })
             git_manager.commit(message, files)
         elif action_type == 'push':
-            if remote:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
                     if token:
                         custom_progress = api.push(
-                            remote.name,
+                            action_remote,
                             url,
                             action_branch,
                             token,
@@ -234,7 +224,7 @@ class GitBranchResource(GenericResource):
             else:
                 git_manager.push()
         elif action_type == 'pull':
-            if remote:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
@@ -242,7 +232,7 @@ class GitBranchResource(GenericResource):
                         custom_progress = None
                         if action_branch:
                             custom_progress = api.pull(
-                                remote.name,
+                                action_remote,
                                 url,
                                 action_branch,
                                 token,
@@ -250,7 +240,7 @@ class GitBranchResource(GenericResource):
                             )
                         else:
                             custom_progress = api.fetch(
-                                remote.name,
+                                action_remote,
                                 url,
                                 token,
                                 config_overwrite=config_overwrite,
@@ -272,13 +262,13 @@ class GitBranchResource(GenericResource):
             else:
                 git_manager.pull()
         elif action_type == 'fetch':
-            if remote:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
                     if token:
                         custom_progress = api.fetch(
-                            remote.name,
+                            action_remote,
                             url,
                             token,
                             config_overwrite=config_overwrite,
@@ -304,13 +294,13 @@ class GitBranchResource(GenericResource):
                 for file_path in files:
                     git_manager.reset_file(file_path)
             else:
-                if remote:
+                if action_remote:
                     from git.exc import GitCommandError
 
                     try:
                         if token:
                             api.reset_hard(
-                                remote.name,
+                                action_remote,
                                 url,
                                 action_branch,
                                 token,
@@ -325,13 +315,13 @@ class GitBranchResource(GenericResource):
                     except GitCommandError as err:
                         self.model['error'] = str(err)
         elif action_type == 'clone':
-            if remote:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
                     if token:
                         api.clone(
-                            remote.name,
+                            action_remote,
                             url,
                             token,
                             config_overwrite=config_overwrite,

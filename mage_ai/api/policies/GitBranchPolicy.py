@@ -43,7 +43,6 @@ GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
 GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes + [
     'add',
     'add_remote',
-    'add_remote',
     'checkout',
     'clone',
     'commit',
