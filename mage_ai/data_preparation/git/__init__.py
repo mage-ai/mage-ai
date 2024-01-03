@@ -100,11 +100,17 @@ class Git:
         user: User = None,
         setup_repo: bool = True,
         auth_type: str = None,
+        config_overwrite: Dict = None,
     ) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = None
-        if preferences and preferences.sync_config:
-            git_config = GitConfig.load(config=preferences.sync_config)
+        config = preferences.sync_config if preferences and preferences.sync_config else {}
+
+        if config_overwrite:
+            config.update(**config_overwrite)
+
+        git_config = GitConfig.load(config=config)
+
         return Git(
             auth_type=auth_type,
             git_config=git_config,

@@ -9,9 +9,8 @@ from mage_ai.authentication.oauth.constants import (
     GIT_OAUTH_PROVIDERS,
     GITHUB_CLIENT_ID,
     GITHUB_STATE,
-    OAUTH_PROVIDER_GHE,
-    OAUTH_PROVIDER_GITHUB,
     VALID_OAUTH_PROVIDERS,
+    ProviderName,
     get_ghe_hostname,
 )
 from mage_ai.authentication.oauth.utils import (
@@ -138,8 +137,8 @@ class OauthResource(GenericResource):
 
         ghe_hostname = get_ghe_hostname()
 
-        if pk == OAUTH_PROVIDER_GITHUB and ghe_hostname:
-            provider = OAUTH_PROVIDER_GHE
+        if pk == ProviderName.GITHUB and ghe_hostname:
+            provider = ProviderName.GHE
         else:
             provider = pk
 
@@ -194,7 +193,7 @@ class OauthResource(GenericResource):
                 model['url'] = redirect_uri_final
         # Otherwise, return the authorization url to start the oauth flow.
         else:
-            if OAUTH_PROVIDER_GITHUB == provider:
+            if ProviderName.GITHUB == provider:
                 query = dict(
                     client_id=GITHUB_CLIENT_ID,
                     redirect_uri=urllib.parse.quote_plus(

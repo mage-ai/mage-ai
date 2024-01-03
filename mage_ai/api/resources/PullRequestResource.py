@@ -2,7 +2,7 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git import api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
 from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
@@ -36,7 +36,7 @@ class PullRequestResource(GenericResource):
         if repository:
             repository = repository[0]
 
-            provider = OAUTH_PROVIDER_GITHUB
+            provider = ProviderName.GITHUB
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 
@@ -56,11 +56,20 @@ class PullRequestResource(GenericResource):
         for key in [
             'base_branch',
             'compare_branch',
+            'body',
             'title',
         ]:
-            if key not in payload:
+            if key not in payload or payload.get(key) is None:
                 error.update(dict(message=f'Value for {key} is required but empty.'))
                 raise ApiError(error)
+
+        if payload.get('base_branch') == payload.get('compare_branch'):
+            error.update(
+                dict(
+                    message='Base branch and compare branch cannot be the same.',
+                )
+            )
+            raise ApiError(error)
 
         repository = payload.get('repository')
         if not repository:

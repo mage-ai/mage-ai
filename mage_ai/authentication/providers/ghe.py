@@ -8,7 +8,7 @@ import aiohttp
 from mage_ai.authentication.oauth.constants import (
     GHE_CLIENT_ID_ENV_VAR,
     GHE_CLIENT_SECRET_ENV_VAR,
-    OAUTH_PROVIDER_GHE,
+    ProviderName,
     get_ghe_hostname,
 )
 from mage_ai.authentication.providers.oauth import OauthProvider
@@ -16,7 +16,7 @@ from mage_ai.authentication.providers.utils import get_base_url
 
 
 class GHEProvider(OauthProvider):
-    provider = OAUTH_PROVIDER_GHE
+    provider = ProviderName.GHE
 
     def __init__(self):
         self.hostname = get_ghe_hostname()

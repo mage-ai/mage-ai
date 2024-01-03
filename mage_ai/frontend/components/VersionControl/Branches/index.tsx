@@ -342,11 +342,11 @@ function Branches({
                   // @ts-ignore
                   actionGitBranch({
                     git_custom_branch: {
-                      action_type: actionName,
-                      message: actionMessage,
-                      [actionName]: {
+                      action_payload: {
                         base_branch: branchBase,
                       },
+                      action_type: actionName,
+                      message: actionMessage,
                     },
                   });
                 }

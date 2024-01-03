@@ -4,6 +4,7 @@ from mage_ai.shared.hash import merge_dict
 
 class GitBranchPresenter(BasePresenter):
     default_attributes = [
+        'action_payload',
         'action_type',
         'error',
         'files',

@@ -8,7 +8,7 @@ import aiohttp
 from mage_ai.authentication.oauth.constants import (
     ACTIVE_DIRECTORY_CLIENT_ID as ACTIVE_DIRECTORY_MAGE_CLIENT_ID,
 )
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_ACTIVE_DIRECTORY
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
@@ -20,7 +20,7 @@ from mage_ai.settings.sso import (
 
 
 class ADProvider(SsoProvider, OauthProvider):
-    provider = OAUTH_PROVIDER_ACTIVE_DIRECTORY
+    provider = ProviderName.ACTIVE_DIRECTORY
 
     def __init__(self):
         self.__validate()
