@@ -241,6 +241,7 @@ class ProjectMetadata(CommandCenterBaseClass):
 class BranchMetadata(CommandCenterBaseClass):
     current: bool = False
     name: str = None
+    output: List[str] = None
     project_uuid: str = None
     remote: str = None
     repo_path: str = None

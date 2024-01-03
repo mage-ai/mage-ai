@@ -130,8 +130,6 @@ export default function useCache(fetchUUID: () => number | string, opts: {
         }
         abortControllerRef.current = new AbortController();
 
-        console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF1', opts)
-
         return resolve(fetch({
           ...opts,
           uuid,

@@ -317,6 +317,7 @@ export interface CommandCenterItemType {
     branch?: {
       current: boolean;
       name: string;
+      output:  string[];
       project_uuid: string;
       remote: string;
       repo_path: string;
@@ -338,6 +339,7 @@ export interface CommandCenterItemType {
       status?: string;
     };
     project?: {
+      output:  string[];
       repo_path: string;
       uuid: string;
     };

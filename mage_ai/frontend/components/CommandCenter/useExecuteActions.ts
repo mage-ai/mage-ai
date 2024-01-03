@@ -170,8 +170,6 @@ export default function useExecuteActions({
             const actionCopy = updateActionFromUpstreamResults(action, results);
             const { options } = actionCopy?.interaction || { options: null };
 
-            console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF0', options)
-
             return fetchItems?.(options);
           };
         } else if (type && interaction?.element) {

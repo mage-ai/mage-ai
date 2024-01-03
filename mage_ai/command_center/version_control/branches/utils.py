@@ -106,7 +106,14 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
                 ),
                 upstream_action_value_key_mapping=dict(
                     update_model={
-                        'data.version_control_branch': 'interaction.options.item.metadata.branch',
+                        'data.version_control_branch.current': '.'.join([
+                            'interaction',
+                            'options',
+                            'item',
+                            'metadata',
+                            'branch',
+                            'current',
+                        ]),
                     }
                 ),
                 uuid=InteractionType.FETCH_ITEMS,

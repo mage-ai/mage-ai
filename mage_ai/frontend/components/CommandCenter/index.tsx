@@ -100,7 +100,7 @@ import {
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
-import { setNested } from '@utils/hash';
+import { mergeDeep, setNested } from '@utils/hash';
 import { sum } from '@utils/array';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -798,11 +798,9 @@ function CommandCenter() {
 
     const currentApplicationConfig = getCurrentApplicationConfiguration();
     if (isCurrentApplicationDetailList(currentApplicationConfig)) {
-      fetchOptions = {
-        ...fetchOptions,
-        ...currentApplicationConfig,
+      fetchOptions = mergeDeep({
         disableRenderingCache: true,
-      };
+      }, currentApplicationConfig, fetchOptions);
     }
 
     return fetchItemsInit(fetchOptions);
