@@ -7,12 +7,10 @@ from mage_ai.command_center.constants import (
     ObjectType,
 )
 from mage_ai.command_center.factory import BaseFactory
+from mage_ai.command_center.version_control.branches.factory import BranchFactory
 from mage_ai.command_center.version_control.branches.utils import build as build_branch
 from mage_ai.command_center.version_control.branches.utils import (
     build_and_score as build_and_score_branch,
-)
-from mage_ai.command_center.version_control.branches.utils import (
-    build_and_score_detail as build_and_score_detail_branch,
 )
 from mage_ai.command_center.version_control.branches.utils import build_clone
 from mage_ai.command_center.version_control.branches.utils import (
@@ -102,34 +100,25 @@ class VersionControlFactory(BaseFactory):
                 self.remotes = Remote.load_all(project=project)
                 if self.remotes:
                     await build_remote_list(self, project, items)
-
-                    await build_create_branch(self, project, items)
-
-                    self.branches = Branch.load_all(project=project)
-                    if self.branches:
-                        for branch in self.branches:
-                            await build_and_score_branch(self, branch, items)
-                    else:
-                        await build_clone(self, items, project=project)
                 else:
                     await build_create_remote(self, project, items)
+
+                await build_create_branch(self, project, items)
+
+                self.branches = Branch.load_all(project=project)
+                if self.branches:
+                    for branch in self.branches:
+                        await build_and_score_branch(self, branch, items)
+                else:
+                    await build_clone(self, items, project=project)
 
             if ObjectType.BRANCH == self.item.object_type:
                 # Checkout
                 # Clone
                 # Delete
-
-                metadata = self.item.metadata
-
-                project = Project.load(**metadata.project.to_dict())
-
-                branch = Branch.load(**metadata.branch.to_dict())
-                branch.project = project
-                branch.update_attributes()
-
-                if not branch.current:
-                    await build_clone(self, items, model=branch)
-                await build_and_score_detail_branch(self, branch, items)
+                branch_factory = BranchFactory()
+                branch_factory.item = self.item
+                items.extend(await branch_factory.fetch_items())
 
             if ObjectType.REMOTE == self.item.object_type:
                 # Detail view of remote with list of actions

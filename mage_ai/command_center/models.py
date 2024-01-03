@@ -476,6 +476,7 @@ class AttributeDisplaySettings(CommandCenterBaseClass):
     description: DisplaySettings = None
     icon: DisplaySettings = None
     item: DisplaySettings = None
+    subtitle: DisplaySettings = None
 
     def __post_init__(self):
         self.serialize_attribute_class('description', DisplaySettings)
@@ -507,6 +508,7 @@ class ItemBase(CommandCenterBaseClass):
     mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
+    subtitle: str = None
     tags: List[ItemTagEnum] = None
     title: str = None
     uuid: str = None
@@ -535,6 +537,7 @@ class Item(ItemBase):
     mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
+    subtitle: str = None
     tags: List[ItemTagEnum] = None
     title: str = None
     uuid: str = None

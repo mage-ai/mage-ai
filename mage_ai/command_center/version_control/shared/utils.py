@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
@@ -74,6 +75,21 @@ def get_values(
     )
 
 
+def build_request(
+    resource_id: str = None,
+    resource_parent_id: str = None,
+    **kwargs,
+) -> Dict:
+    return dict(
+        resource_id=urllib.parse.quote_plus(
+            resource_id,
+        ) if resource_id else None,
+        resource_parent_id=urllib.parse.quote_plus(
+            resource_parent_id,
+        ) if resource_parent_id else None,
+    ) | (kwargs or {})
+
+
 def build_input(
     item_dict: Dict = None,
     model: BaseDataClass = None,
@@ -93,6 +109,42 @@ def build_input(
     )
     combine_into(kwargs, base)
     return base
+
+
+def build_application_detail(
+    item_dict: Dict = None,
+    model: BaseDataClass = None,
+    model_class=None,
+    **kwargs,
+) -> Dict:
+    values = get_values(
+        model=model,
+        model_class=model_class,
+        item_dict=item_dict,
+    )
+
+    return dict(
+        uuid=values['application_uuid'],
+        application_type=ApplicationType.DETAIL,
+        **kwargs,
+    )
+
+
+def build_application_list(
+    item_dict: Dict = None,
+    model: BaseDataClass = None,
+    model_class=None,
+) -> Dict:
+    values = get_values(
+        model=model,
+        model_class=model_class,
+        item_dict=item_dict,
+    )
+
+    return dict(
+        uuid=values['application_uuid'],
+        application_type=ApplicationType.LIST,
+    )
 
 
 def build_application_form(

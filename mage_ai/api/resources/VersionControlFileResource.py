@@ -12,32 +12,8 @@ class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
         project = kwargs.get('parent_model')
 
-        staged = query.get('staged', [None])
-        if staged:
-            staged = staged[0]
-
-        unstaged = query.get('unstaged', [None])
-        if unstaged:
-            unstaged = unstaged[0]
-
-        untracked = query.get('untracked', [None])
-        if untracked:
-            untracked = untracked[0]
-
-        model = File()
-        model.project = project
-
-        models = []
-        for m in [File.load(name=line) for line in model.list(
-            staged=staged,
-            unstaged=unstaged,
-            untracked=untracked,
-        ) if len(line) >= 1]:
-            m.project = project
-            models.append(m)
-
         return self.build_result_set(
-            models,
+            File.load_all(project=project),
             user,
             **kwargs,
         )

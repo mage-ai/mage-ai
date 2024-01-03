@@ -30,17 +30,20 @@ function ItemRow({
     description,
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
+    subtitle,
     title,
   } = item;
   const {
     description: descriptionDisplaySettings,
+    subtitle: subtitleDisplaySettings,
   } = displaySettingsByAttribute || {
     description: null,
+    subtitle: null,
   };
 
   const Icon = getIcon(item);
   const iconColor = getIconColor(item);
-  const category = getDisplayCategory(item, true);
+  const category = subtitle || getDisplayCategory(item, true);
 
   const maxLetters = 85 - ((title?.length || 0) + (category?.length || 0));
   const descriptionCount = description?.length || 0;
@@ -84,7 +87,13 @@ function ItemRow({
           )}
         </Flex>
 
-        <Text muted>
+        <Text
+          monospace={subtitleDisplaySettings?.text_styles?.monospace}
+          small={!subtitleDisplaySettings?.text_styles?.regular}
+          muted={typeof subtitleDisplaySettings?.text_styles?.muted === 'undefined'
+            || subtitleDisplaySettings?.text_styles?.muted
+          }
+        >
           {category}
         </Text>
       </FlexContainer>

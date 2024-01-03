@@ -299,6 +299,7 @@ interface AttributeDisplaySettingsType {
   description?: DisplaySettingsType;
   icon?: DisplaySettingsType;
   item?: DisplaySettingsType;
+  subtitle?: DisplaySettingsType;
 }
 
 export interface PageHistoryType {
@@ -388,6 +389,7 @@ export interface CommandCenterItemType {
   mode?: ModeType;
   object_type?: ObjectTypeEnum;
   score?: number;
+  subtitle?: string;
   tags?: ItemTagEnum[];
   title: string;
   uuid: string;

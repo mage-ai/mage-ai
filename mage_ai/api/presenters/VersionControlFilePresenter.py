@@ -10,6 +10,9 @@ class VersionControlFilePresenter(BasePresenter):
         'output',
         'project_uuid',
         'repo_path',
+        'staged',
+        'unstaged',
+        'untracked',
     ]
 
     async def prepare_present(self, **kwargs) -> Dict:

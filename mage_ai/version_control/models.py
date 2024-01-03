@@ -131,8 +131,10 @@ class Branch(BaseVersionControl):
         remote: Remote = None,
         project: 'Project' = None,
     ) -> List['Branch']:
+        base = self(project=project)
+
         if not lines:
-            lines = self(project=project).list(include_all=True)
+            lines = base.list(include_all=True)
 
         mapping = {}
         arr = []
@@ -148,6 +150,13 @@ class Branch(BaseVersionControl):
                 model.remote = remote
                 model.project = project
                 arr.append(model)
+
+        if len([line for line in base.list() if line and line.strip()]) == 0:
+            # Need to fake a local branch until user makes a commit.
+            model = Branch.load(current=True, name='master')
+            model.remote = remote
+            model.project = project
+            arr.append(model)
 
         return arr
 
@@ -181,8 +190,11 @@ class Branch(BaseVersionControl):
     def create(self) -> List[str]:
         return self.run(f'checkout -b {self.name}')
 
-    def detail(self) -> List[str]:
-        return self.run('log')
+    def detail(self, log: bool = False) -> List[str]:
+        outputs = []
+        if log:
+            outputs.extend(self.run('log'))
+        return outputs
 
     def delete(self, name: str = None, force: bool = False) -> List[str]:
         flag = 'd'
@@ -238,6 +250,29 @@ class Branch(BaseVersionControl):
 class File(BaseVersionControl):
     diff: List[str] = None
     name: str = None
+    staged: bool = False
+    unstaged: bool = False
+    untracked: bool = False
+
+    @classmethod
+    def load_all(self, project: 'Project' = None) -> List['File']:
+        lines_staged = self(project=project).list(staged=True)
+        lines_unstaged = self(project=project).list(unstaged=True)
+        lines_untracked = self(project=project).list(untracked=True)
+
+        files = []
+        for opts, arr in [
+            (dict(staged=True), lines_staged),
+            (dict(unstaged=True), lines_unstaged),
+            (dict(untracked=True), lines_untracked),
+        ]:
+            for line in arr:
+                if line and line.strip():
+                    file = File.load(name=line.strip(), **opts)
+                    file.project = project
+                    files.append(file)
+
+        return files
 
     def list(
         self,
@@ -245,13 +280,22 @@ class File(BaseVersionControl):
         unstaged: bool = False,   # Modified but no git add yet
         untracked: bool = False,  # Modified but never checked in before
     ) -> str:
+        outputs = []
         if staged:
-            return self.run('diff --name-only --staged')
-        elif unstaged:
-            return self.run('diff --name-only')
-        elif untracked:
-            return self.run('ls-files --others --exclude-standard')
-        return self.run('ls-files --other --modified --exclude-standard')
+            outputs.extend(self.run('diff --name-only --staged'))
+
+        if unstaged:
+            outputs.extend(self.run('diff --name-only'))
+
+        if untracked:
+            outputs.extend(self.run('ls-files --others --exclude-standard'))
+
+        if not staged and not unstaged and not untracked:
+            outputs.extend(self.run('ls-files --other --modified --exclude-standard'))
+
+        self.output = outputs
+
+        return outputs
 
     def create(self) -> List[str]:
         return self.run(f'add {self.name}')
@@ -277,6 +321,9 @@ class File(BaseVersionControl):
         return merge_dict(super().to_dict(**kwargs), dict(
             diff=self.diff,
             name=self.name,
+            staged=self.staged,
+            unstaged=self.unstaged,
+            untracked=self.untracked,
         ))
 
 

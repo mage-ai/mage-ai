@@ -46,6 +46,13 @@ class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
     async def member(self, pk: str, user: User, **kwargs):
         model = self.hydrate_models(name=urllib.parse.unquote(pk), **kwargs)
 
+        query = kwargs.get('query') or {}
+        log = query.get('log', [None])
+        if log:
+            log = log[0]
+        if log:
+            model.detail(log=True)
+
         res = self(model, user, **kwargs)
         res.validate_output()
 

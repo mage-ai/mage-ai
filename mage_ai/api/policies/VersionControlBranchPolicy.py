@@ -81,6 +81,22 @@ VersionControlBranchPolicy.allow_write(
 
 VersionControlBranchPolicy.allow_query(
     [
+        'log',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role(),
+    override_permission_condition=lambda _policy: True,
+)
+
+
+VersionControlBranchPolicy.allow_query(
+    [
+        'log',
         'force',
         'remote',
     ],
