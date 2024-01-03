@@ -5,7 +5,6 @@ from pandas import DataFrame
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.qdrant import Qdrant
-from sentence_transformers import SentenceTransformer
 
 if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
