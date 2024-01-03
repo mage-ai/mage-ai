@@ -87,7 +87,13 @@ export default function useInvokeRequest({
       }
 
       if (submitRequest) {
-        return submitRequest();
+        if (!action?.validations?.includes(ValidationTypeEnum.CONFIRMATION)
+          || (
+            typeof window !== 'undefined'
+              && window.confirm('Are you sure you want to perform this action?')
+        )) {
+          return submitRequest();
+        }
       }
     },
     {

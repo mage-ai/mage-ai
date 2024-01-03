@@ -190,9 +190,12 @@ function CommandCenter() {
   function isCurrentApplicationDetailList(
     applicationConfigurationToCheck: ApplicationConfiguration = null,
   ): boolean {
-    return ItemApplicationTypeEnum.DETAIL_LIST === (
+    return [
+      ItemApplicationTypeEnum.LIST,
+      ItemApplicationTypeEnum.DETAIL_LIST,
+    ].includes((
       applicationConfigurationToCheck || getCurrentApplicationConfiguration()
-    )?.application?.application_type;
+    )?.application?.application_type);
   }
 
   function activateClassNamesForRefs(refsArray: any[], reverse: boolean = false) {
@@ -609,7 +612,7 @@ function CommandCenter() {
 
     if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type && mode) {
       deactivateMode();
-    } else if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type  && !mode && item?.mode_type) {
+    } else if (ItemTypeEnum.MODE_ACTIVATION === item?.item_type  && !mode && item?.mode?.type) {
       activateMode(item);
     } else if (applicationsCount >= 1) {
       // What was this used for in the conditional statement? isCurrentApplicationDetailList()
@@ -741,12 +744,12 @@ function CommandCenter() {
   }
 
   function activateMode(item: CommandCenterItemType) {
-    setMode(item?.mode_type);
+    setMode(item?.mode);
     toggleMode();
     refContainer.current.className = addClassNames(
       refContainer?.current?.className || '',
       [
-        item?.mode_type,
+        item?.mode?.type,
       ],
     );
   }
@@ -1212,7 +1215,7 @@ function CommandCenter() {
             onBlur={() => {
               refFocusedElement.current = null;
             }}
-            placeholder={getInputPlaceholder()}
+            placeholder={getInputPlaceholder(getCurrentApplicationConfiguration())}
             ref={refInput}
           />
 

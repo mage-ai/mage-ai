@@ -3,12 +3,13 @@ from typing import Dict
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
+from mage_ai.api.resources.mixins.version_control_errors import VersionControlErrors
 from mage_ai.api.resources.SyncResource import SyncResource
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.version_control.models import Project
 
 
-class VersionControlProjectResource(AsyncBaseResource):
+class VersionControlProjectResource(VersionControlErrors, AsyncBaseResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
         return self.build_result_set(
@@ -19,8 +20,12 @@ class VersionControlProjectResource(AsyncBaseResource):
 
     @classmethod
     async def create(self, payload: Dict, user: User, **kwargs):
-        project = Project.create(payload['uuid'])
-        return self(project, user, **kwargs)
+        model = Project.create(payload['uuid'])
+
+        res = self(model, user, **kwargs)
+        res.validate_output()
+
+        return res
 
     @classmethod
     def get_model(self, pk, **kwargs):
@@ -42,7 +47,10 @@ class VersionControlProjectResource(AsyncBaseResource):
             **kwargs,
         ).present()
 
-        return self(model, user, **kwargs)
+        res = self(model, user, **kwargs)
+        res.validate_output()
+
+        return res
 
     async def update(self, payload: Dict, **kwargs):
         if 'email' in payload:
@@ -70,6 +78,8 @@ class VersionControlProjectResource(AsyncBaseResource):
             ).present()
 
         self.model.update_attributes()
+        self.validate_output()
 
     async def delete(self, **kwargs):
         self.model.delete()
+        self.validate_output()

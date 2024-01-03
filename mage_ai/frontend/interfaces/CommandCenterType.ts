@@ -15,6 +15,10 @@ export enum ItemTagEnum {
   RECENT = 'recent',
 }
 
+export enum ValidationTypeEnum {
+  CONFIRMATION = 'confirmation',
+}
+
 export enum ButtonActionTypeEnum {
   ADD_APPLICATION = 'add_application',
   CLOSE_APPLICATION = 'close_application',
@@ -28,6 +32,7 @@ export enum ItemApplicationTypeEnum {
   DETAIL = 'detail',
   DETAIL_LIST = 'detail_list',
   FORM = 'form',
+  LIST = 'list'
 }
 
 export enum ItemTypeEnum {
@@ -244,6 +249,7 @@ export interface CommandCenterActionType extends CommandCenterActionBaseType {
   request?: CommandCenterActionRequestType;
   upstream_action_value_key_mapping?: KeyValueType;
   uuid: string;
+  validations?: ValidationTypeEnum[];
 }
 
 export interface FormInputType extends InteractionInputType {
@@ -302,6 +308,11 @@ export interface PageHistoryType {
   query?: KeyValueType;
   timestamp?: number;
   title: string;
+}
+
+export interface ModeType {
+  cache_items?: boolean;
+  type: ModeTypeEnum;
 }
 
 export interface CommandCenterItemType {
@@ -369,7 +380,7 @@ export interface CommandCenterItemType {
       status?: string;
     };
   };
-  mode_type?: ModeTypeEnum;
+  mode?: ModeType;
   object_type?: ObjectTypeEnum;
   score?: number;
   tags?: ItemTagEnum[];

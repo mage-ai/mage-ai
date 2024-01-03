@@ -56,10 +56,10 @@ async def build_create(factory, model: Project, items: List[Dict]):
                         type=InteractionInputType.TEXT_FIELD,
                         required=True,
                         monospace=True,
-                        action_uuid='create_model',
+                        action_uuid='create_branch',
                     ),
                 ],
-                uuid='new_file',
+                uuid='create_branch',
             ),
         ],
         actions=[
@@ -76,7 +76,7 @@ async def build_create(factory, model: Project, items: List[Dict]):
                     resource_parent_id=urllib.parse.quote_plus(model.uuid or ''),
                     response_resource_key='version_control_branch'
                 ),
-                uuid='create_model',
+                uuid='create_branch',
             ),
         ],
         condition=lambda opts: FilePolicy(
@@ -184,7 +184,7 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
                     resource_parent_id=urllib.parse.quote_plus(project.uuid or ''),
                     response_resource_key='version_control_branch'
                 ),
-                uuid='update_model',
+                uuid='update_branch',
             ),
             dict(
                 interaction=dict(
@@ -196,7 +196,7 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
                 options=dict(
                 ),
                 upstream_action_value_key_mapping=dict(
-                    update_model={
+                    update_branch={
                         'data.version_control_branch.current': '.'.join([
                             'interaction',
                             'options',
@@ -243,7 +243,7 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
                         resource_parent_id=urllib.parse.quote_plus(project.uuid or ''),
                         response_resource_key='version_control_branch'
                     ),
-                    uuid='update_model',
+                    uuid='update_branch',
                 ),
                 dict(
                     interaction=dict(

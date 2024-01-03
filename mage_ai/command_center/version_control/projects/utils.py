@@ -13,6 +13,7 @@ from mage_ai.command_center.constants import (
     InteractionType,
     ItemType,
     ObjectType,
+    ValidationType,
 )
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Project
@@ -37,7 +38,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             ),
             name='request.payload.version_control_project.sync_config.auth_type',
             required=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.DROPDOWN_MENU,
             placeholder='e.g. SSH, HTTPS',
             options=[
@@ -66,7 +67,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'remote_repo_link',
             ),
             required=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='e.g. https://github.com/mage-ai/mage-ai.git',
             value=sync_config.get('remote_repo_link'),
@@ -86,7 +87,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             ),
             required=True,
             monospace=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='e.g. /home/src/super_project',
             value=sync_config.get('repo_path'),
@@ -109,7 +110,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             ),
             monospace=True,
             required=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='SSH public key in base64',
         ),
@@ -129,7 +130,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             ),
             monospace=True,
             required=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='SSH private key in base64',
         ),
@@ -147,7 +148,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'access_token',
             ),
             monospace=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='e.g. xxxxxxxxxxxxxxxxxxxx',
         ),
@@ -200,7 +201,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                             'user_git_settings.username',
                         ),
                         required=True,
-                        action_uuid='update_model',
+                        action_uuid='update_project',
                         type=InteractionInputType.TEXT_FIELD,
                         placeholder='e.g. paladin',
                         value=user_git_settings.get('username'),
@@ -219,13 +220,13 @@ async def build_update(factory, model: Project, items: List[Dict]):
                             'user_git_settings.email',
                         ),
                         required=True,
-                        action_uuid='update_model',
+                        action_uuid='update_project',
                         type=InteractionInputType.TEXT_FIELD,
                         placeholder='e.g. paladin@storm.com',
                         value=user_git_settings.get('email'),
                     ),
                 ] + copy.deepcopy(shared_form_settings_ssh),
-                uuid='update_model',
+                uuid='update_project',
             ),
         ],
         actions=[
@@ -239,7 +240,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                     resource_id=urllib.parse.quote_plus(model.uuid or ''),
                     response_resource_key='version_control_project',
                 ),
-                uuid='update_model',
+                uuid='update_project',
             ),
         ],
         condition=lambda opts: FilePolicy(
@@ -272,7 +273,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             ),
             required=True,
             monospace=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='e.g. mage--new_powers',
             value=sync_config.get('branch'),
@@ -287,7 +288,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'sync_submodules',
             ),
             monospace=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.SWITCH,
             value=sync_config.get('sync_submodules'),
         ),
@@ -301,7 +302,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'sync_on_pipeline_run',
             ),
             monospace=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.SWITCH,
             value=sync_config.get('sync_on_pipeline_run'),
         ),
@@ -315,7 +316,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'sync_on_start',
             ),
             monospace=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.SWITCH,
             value=sync_config.get('sync_on_start'),
         ),
@@ -333,7 +334,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'username',
             ),
             required=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='e.g. paladin',
             value=sync_config.get('username'),
@@ -352,7 +353,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                 'email',
             ),
             required=True,
-            action_uuid='update_model',
+            action_uuid='update_project',
             type=InteractionInputType.TEXT_FIELD,
             placeholder='e.g. paladin@storm.com',
             value=sync_config.get('email'),
@@ -411,7 +412,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                             type=InteractionInputType.TEXT_FIELD,
                             required=True,
                             monospace=True,
-                            action_uuid='update_model',
+                            action_uuid='update_project',
                             value=model.user.name,
                         ),
                         dict(
@@ -425,11 +426,11 @@ async def build_update(factory, model: Project, items: List[Dict]):
                             type=InteractionInputType.TEXT_FIELD,
                             required=True,
                             monospace=True,
-                            action_uuid='update_model',
+                            action_uuid='update_project',
                             value=model.user.email,
                         ),
                     ],
-                    uuid='update_model',
+                    uuid='update_project',
                 ),
             ],
             actions=[
@@ -446,7 +447,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                         resource_id=urllib.parse.quote_plus(model.uuid or ''),
                         response_resource_key='version_control_project',
                     ),
-                    uuid='update_model',
+                    uuid='update_project',
                 ),
             ],
             condition=lambda opts: FilePolicy(
@@ -478,7 +479,10 @@ async def build_delete(factory, model: Project, items: List[Dict]):
                     resource_id=urllib.parse.quote_plus(model.uuid or ''),
                     response_resource_key='version_control_project',
                 ),
-                uuid='delete_model',
+                uuid='delete_project',
+                validations=[
+                    ValidationType.CONFIRMATION,
+                ],
             ),
             dict(
                 interaction=dict(
@@ -501,6 +505,7 @@ async def build_delete(factory, model: Project, items: List[Dict]):
 
     scored = factory.filter_score(item_dict)
     if scored:
+        scored['score'] = 1
         items.append(scored)
 
 

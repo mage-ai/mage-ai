@@ -6,7 +6,7 @@ import {
   ItemTagEnum,
   ItemTypeEnum,
   ModeStateType,
-  ModeTypeEnum,
+  ModeType,
   ObjectTypeEnum,
   PageHistoryType,
 } from '@interfaces/CommandCenterType';
@@ -184,15 +184,10 @@ export function addPickHistory(item: CommandCenterItemType): string {
   return final;
 }
 
-export function setMode(mode: ModeTypeEnum) {
+export function setMode(mode: ModeType) {
   // Clear cache so that only items in the mode are cached.
   set(LOCAL_STORAGE_COMMAND_CENTER_ITEMS, []);
-  set(LOCAL_STORAGE_COMMAND_CENTER_MODE, mode
-    ? {
-      type: mode,
-    }
-    : null
-  );
+  set(LOCAL_STORAGE_COMMAND_CENTER_MODE, mode || null);
 }
 
 export function getCurrentMode(): ModeStateType {

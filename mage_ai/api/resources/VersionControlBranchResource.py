@@ -2,11 +2,12 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
+from mage_ai.api.resources.mixins.version_control_errors import VersionControlErrors
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.version_control.models import Branch, Remote
 
 
-class VersionControlBranchResource(AsyncBaseResource):
+class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
         project = kwargs.get('parent_model')
@@ -33,15 +34,23 @@ class VersionControlBranchResource(AsyncBaseResource):
         model.name = payload.get('name')
         model.create()
 
-        return self(model, user, **kwargs)
+        res = self(model, user, **kwargs)
+        res.validate_output()
+
+        return res
 
     @classmethod
     async def member(self, pk: str, user: User, **kwargs):
         model = self.hydrate_models(name=urllib.parse.unquote(pk), **kwargs)
-        return self(model, user, **kwargs)
+
+        res = self(model, user, **kwargs)
+        res.validate_output()
+
+        return res
 
     async def update(self, payload: Dict, **kwargs):
         self.model.update(**payload)
+        self.validate_output()
 
     async def delete(self, **kwargs):
         query = kwargs.get('query') or {}
@@ -50,6 +59,8 @@ class VersionControlBranchResource(AsyncBaseResource):
             force = force[0]
 
         self.model.delete(force=force)
+
+        self.validate_output()
 
     @classmethod
     def hydrate_models(self, name: str = None, **kwargs):

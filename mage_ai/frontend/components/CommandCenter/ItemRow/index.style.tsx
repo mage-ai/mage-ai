@@ -25,12 +25,10 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   const {
     display_settings_by_attribute: displaySettingsByAttribute,
     metadata,
-    mode_type: modeType,
     object_type: objectType,
   } = item || {
     display_settings_by_attribute: null,
     metadata: null,
-    mode_type: null,
     object_type: null,
   };
 
@@ -76,7 +74,7 @@ export function getIconColor(item: CommandCenterItemType, opts: {
   } else if (ObjectTypeEnum.PIPELINE == objectType) {
     accent = themeUse?.accent?.cyan;
     accentLight = themeUse?.accent?.cyanLight;
-  } else if (ObjectTypeEnum.PIPELINE_RUN == objectType) {
+  } else if ([ObjectTypeEnum.PIPELINE_RUN, ObjectTypeEnum.REMOTE].includes(objectType)) {
     accent = themeUse?.accent?.teal;
     accentLight = themeUse?.accent?.tealLight;
   } else if (ObjectTypeEnum.TRIGGER == objectType) {

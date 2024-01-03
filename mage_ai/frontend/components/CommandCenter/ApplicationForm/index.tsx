@@ -109,6 +109,7 @@ function ApplicationForm({
     });
 
     setAttributes(() => attributesDefault);
+    setAttributesTouched(null);
     setRequestsData(null);
   }, [settings]);
 

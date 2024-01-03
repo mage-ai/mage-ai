@@ -35,12 +35,12 @@ class BaseVersionControl(BaseDataClass):
 
     @property
     def repo_path(self) -> str:
-        return self.project.repo_path
+        return self.project.repo_path if self.project else None
 
     def to_dict(self, **kwargs) -> Dict:
         return dict(
             output=self.output,
-            project_uuid=self.project.uuid,
+            project_uuid=self.project.uuid if self.project else None,
             repo_path=self.repo_path,
         )
 

@@ -19,6 +19,7 @@ import {
   Lightning,
   NavDashboard,
   PipelineV3,
+  PlugAPI,
   RankingV3,
   Schedule,
   ScheduleClockWithBorderDots,
@@ -30,7 +31,7 @@ export function getIcon(item: CommandCenterItemType) {
   if (ItemTypeEnum.MODE_DEACTIVATION === item?.item_type) {
     return Binary;
   }
-  if (ModeTypeEnum.VERSION_CONTROL === item?.mode_type) {
+  if (ModeTypeEnum.VERSION_CONTROL === item?.mode?.type) {
     return ForecastV3;
   }
 
@@ -66,6 +67,7 @@ export function getIcon(item: CommandCenterItemType) {
     [ObjectTypeEnum.PIPELINE]: PipelineV3,
     [ObjectTypeEnum.PIPELINE_RUN]: Streaming,
     [ObjectTypeEnum.PROJECT]: Categories,
+    [ObjectTypeEnum.REMOTE]: PlugAPI,
     [ObjectTypeEnum.SETTINGS]: SettingsWithKnobs,
     [ObjectTypeEnum.TRIGGER]: Schedule,
   };

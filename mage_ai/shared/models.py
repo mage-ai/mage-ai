@@ -133,7 +133,9 @@ class BaseClass:
                     ignore_empty=ignore_empty,
                 )
 
-        is_enum_class = issubclass(annotation, Enum)
+        is_enum_class = value is not None and inspect.isclass(
+            annotation,
+        ) and issubclass(annotation, Enum)
         is_enum = isinstance(value, Enum)
         if is_enum_class and not is_enum:
             try:

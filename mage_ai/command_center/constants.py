@@ -68,6 +68,7 @@ class ApplicationType(str, Enum):
     DETAIL = 'detail'
     DETAIL_LIST = 'detail_list'
     FORM = 'form'
+    LIST = 'list'
 
 
 class ButtonActionType(str, Enum):
@@ -78,3 +79,7 @@ class ButtonActionType(str, Enum):
     REPLACE_APPLICATION = 'replace_application'
     RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.
     SELECT_ITEM_FROM_REQUEST = 'select_item_from_request'
+
+
+class ValidationType(str, Enum):
+    CONFIRMATION = 'confirmation'

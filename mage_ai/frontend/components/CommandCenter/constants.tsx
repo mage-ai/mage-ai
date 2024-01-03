@@ -69,11 +69,16 @@ export function getInputPlaceholder({
 
   if (mode) {
     if (ModeTypeEnum.VERSION_CONTROL === mode?.type) {
-      if (ItemApplicationTypeEnum.DETAIL_LIST === application?.application_type) {
+      if ([
+        ItemApplicationTypeEnum.DETAIL_LIST,
+        ItemApplicationTypeEnum.LIST,
+      ].includes(application?.application_type)) {
         if (ObjectTypeEnum.PROJECT === item?.object_type) {
           return 'Add remote, create/switch branches, commit changes...';
         } else if (ObjectTypeEnum.BRANCH === item?.object_type) {
-          return `Currently in branch ${item?.metadata?.branch?.name}`;
+          return `in branch ${item?.metadata?.branch?.name}`;
+        } else if (ObjectTypeEnum.REMOTE === item?.object_type) {
+          return 'Add, update, delete remotes';
         }
       }
 

@@ -29,6 +29,16 @@ from mage_ai.command_center.version_control.projects.utils import (
 from mage_ai.command_center.version_control.projects.utils import (
     build_update as build_update_project,
 )
+from mage_ai.command_center.version_control.remotes.utils import (
+    build_and_score as build_and_score_remote,
+)
+from mage_ai.command_center.version_control.remotes.utils import (
+    build_create as build_create_remote,
+)
+from mage_ai.command_center.version_control.remotes.utils import (
+    build_detail_list_items as build_detail_list_items_remote,
+)
+from mage_ai.command_center.version_control.remotes.utils import build_remote_list
 from mage_ai.version_control.models import Branch, Project, Remote
 
 
@@ -70,14 +80,15 @@ class VersionControlFactory(BaseFactory):
                 Global configurations update
                 All branches listed out
                 Delete project
+                Current remote
             """
             if ObjectType.PROJECT == self.item.object_type:
                 project = Project.load(**self.item.metadata.project.to_dict())
-                Remote.load_all(project=project)
 
                 await build_create_branch(self, project, items)
                 await build_update_project(self, project, items)
                 await build_delete_project(self, project, items)
+                await build_remote_list(self, project, items)
 
                 branches = Branch.load_all(project=project)
                 for branch in branches:
@@ -93,6 +104,26 @@ class VersionControlFactory(BaseFactory):
                 branch.update_attributes()
 
                 await build_and_score_detail_branch(self, branch, items)
+
+            if ObjectType.REMOTE == self.item.object_type:
+                # Detail view of remote with list of actions
+                # Fetch
+                # Update
+                # Remote
+                remote = Remote.load(**self.item.metadata.remote.to_dict())
+                remote.project = Project.load(**self.item.metadata.project.to_dict())
+                await build_detail_list_items_remote(self, remote, items)
+        elif self.item and ItemType.LIST == self.item.item_type:
+            if ObjectType.REMOTE == self.item.object_type:
+                # Add remote
+                # List of all remotes
+                project = Project.load(**self.item.metadata.project.to_dict())
+
+                await build_create_remote(self, project, items)
+
+                remotes = Remote.load_all(project=project)
+                for remote in remotes:
+                    await build_and_score_remote(self, remote, items)
         else:
             items.extend(ITEMS)
 

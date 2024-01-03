@@ -10,6 +10,7 @@ from mage_ai.command_center.constants import (
     ItemType,
     ModeType,
     ObjectType,
+    ValidationType,
 )
 from mage_ai.command_center.settings import load_settings, save_settings
 from mage_ai.data_preparation.models.constants import (
@@ -52,16 +53,6 @@ class VersionControlState(BaseDataClass):
         self.serialize_attribute_class('commit', Commit)
         self.serialize_attribute_class('project', Project)
         self.serialize_attribute_class('remote', Remote)
-
-
-@dataclass
-class ModeState(CommandCenterBaseClass):
-    type: ModeType
-    version_control: VersionControlState = None
-
-    def __post_init__(self):
-        self.serialize_attribute_class('version_control', VersionControlState)
-        self.serialize_attribute_enum('type', ModeType)
 
 
 @dataclass
@@ -137,11 +128,13 @@ class Action(CommandCenterBaseClass):
     request: Request = None
     upstream_action_value_key_mapping: Dict = None
     uuid: str = None
+    validations: List[ValidationType] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('interaction', Interaction)
         self.serialize_attribute_class('page', Page)
         self.serialize_attribute_class('request', Request)
+        self.serialize_attribute_enums('validations', ValidationType)
 
 
 @dataclass
@@ -250,6 +243,13 @@ class BranchMetadata(CommandCenterBaseClass):
 
 
 @dataclass
+class RemoteMetadata(CommandCenterBaseClass):
+    name: str = None
+    repo_path: str = None
+    url: str = None
+
+
+@dataclass
 class Metadata(CommandCenterBaseClass):
     block: BlockMetadata = None
     branch: BranchMetadata = None
@@ -258,6 +258,7 @@ class Metadata(CommandCenterBaseClass):
     pipeline: PipelineMetadata = None
     pipeline_run: PipelineRunMetadata = None
     project: ProjectMetadata = None
+    remote: RemoteMetadata = None
     trigger: TriggerMetadata = None
 
     def __post_init__(self):
@@ -268,6 +269,7 @@ class Metadata(CommandCenterBaseClass):
         self.serialize_attribute_class('pipeline', PipelineMetadata)
         self.serialize_attribute_class('pipeline_run', PipelineRunMetadata)
         self.serialize_attribute_class('project', ProjectMetadata)
+        self.serialize_attribute_class('remote', RemoteMetadata)
         self.serialize_attribute_class('trigger', TriggerMetadata)
 
 
@@ -471,6 +473,17 @@ class AttributeDisplaySettings(CommandCenterBaseClass):
 
 
 @dataclass
+class Mode(CommandCenterBaseClass):
+    type: ModeType
+    cache_items: bool = True
+    version_control: VersionControlState = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('version_control', VersionControlState)
+        self.serialize_attribute_enum('type', ModeType)
+
+
+@dataclass
 class ItemBase(CommandCenterBaseClass):
     item_type: ItemType
     title: str
@@ -482,7 +495,7 @@ class ItemBase(CommandCenterBaseClass):
     description: str = None
     items: List[Dict] = None
     metadata: Metadata = None
-    mode_type: ModeType = None
+    mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
     tags: List[ItemTagEnum] = None
@@ -490,10 +503,10 @@ class ItemBase(CommandCenterBaseClass):
     def __post_init__(self):
         self.serialize_attribute_class('display_settings_by_attribute', AttributeDisplaySettings)
         self.serialize_attribute_class('metadata', Metadata)
+        self.serialize_attribute_class('mode', Mode)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('applications', Application)
         self.serialize_attribute_enum('item_type', ItemType)
-        self.serialize_attribute_enum('mode_type', ModeType)
         self.serialize_attribute_enum('object_type', ObjectType)
         self.serialize_attribute_enums('tags', ItemTagEnum)
 
@@ -510,7 +523,7 @@ class Item(ItemBase):
     description: str = None
     items: List[ItemBase] = None
     metadata: Metadata = None
-    mode_type: ModeType = None
+    mode: Mode = None
     object_type: ObjectType = None
     score: int = 0
     tags: List[ItemTagEnum] = None

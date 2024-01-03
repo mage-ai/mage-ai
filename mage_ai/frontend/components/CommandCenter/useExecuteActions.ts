@@ -10,7 +10,7 @@ import {
   interpolatePagePath,
   updateActionFromUpstreamResults,
 } from './utils';
-import { setNested } from '@utils/hash';
+import { isObject, setNested } from '@utils/hash';
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
@@ -254,6 +254,10 @@ export default function useExecuteActions({
 
       return result?.then((resultsInner) => {
         if (index + 1 <= actionSettings?.length - 1) {
+          if (resultsInner && isObject(resultsInner) && resultsInner?.error) {
+            return;
+          }
+
           return invokeActionAndCallback(index + 1, {
             ...results,
             [uuid]: resultsInner,
