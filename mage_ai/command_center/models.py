@@ -475,7 +475,7 @@ class AttributeDisplaySettings(CommandCenterBaseClass):
 @dataclass
 class Mode(CommandCenterBaseClass):
     type: ModeType
-    cache_items: bool = True
+    disable_cache_items: bool = True
     version_control: VersionControlState = None
 
     def __post_init__(self):

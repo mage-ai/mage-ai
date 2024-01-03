@@ -1,6 +1,6 @@
 import { CommandCenterItemType } from '@interfaces/CommandCenterType';
 import { LOCAL_STORAGE_COMMAND_CENTER_ITEMS } from './constants';
-import { combineUnique, getPageHistoryAsItems } from './utils';
+import { combineUnique, getCurrentMode, getPageHistoryAsItems } from './utils';
 import { get, set } from '@storage/localStorage';
 import { ignoreKeys } from '@utils/hash';
 import { indexBy } from '@utils/array';
@@ -12,6 +12,10 @@ export function getCachedItems(): CommandCenterItemType[] {
 export function addCachedItems(items: CommandCenterItemType[], opts: {
   filterCachedItems?: (items: CommandCenterItemType[]) => CommandCenterItemType[];
 } = {}) {
+  if (getCurrentMode()?.disable_cache_items) {
+    return items;
+  }
+
   const mapping = indexBy(items || [], ({ uuid }) => uuid);
   const itemsCached = getCachedItems() || [];
 

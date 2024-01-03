@@ -70,16 +70,6 @@ export enum ModeTypeEnum {
   VERSION_CONTROL = 'version_control',
 }
 
-export interface ModeStateType {
-  type: ModeTypeEnum;
-  version_control?: {
-    branch?: VersionControlBranch;
-    commit?: VersionControlCommit
-    project?: VersionControlProject;
-    remote?: VersionControlRemote;
-  };
-}
-
 interface TextStylesType {
   monospace?: boolean;
   regular?: boolean;
@@ -311,8 +301,14 @@ export interface PageHistoryType {
 }
 
 export interface ModeType {
-  cache_items?: boolean;
+  disable_cache_items?: boolean;
   type: ModeTypeEnum;
+  version_control?: {
+    branch?: VersionControlBranch;
+    commit?: VersionControlCommit
+    project?: VersionControlProject;
+    remote?: VersionControlRemote;
+  };
 }
 
 export interface CommandCenterItemType {

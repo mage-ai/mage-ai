@@ -3,7 +3,7 @@ from mage_ai.command_center.constants import ItemType, ModeType
 ACTIVATE_MODE = dict(
     item_type=ItemType.MODE_ACTIVATION,
     mode=dict(
-        cache_items=False,
+        disable_cache_items=True,
         type=ModeType.VERSION_CONTROL,
     ),
     title='Activate version control mode',

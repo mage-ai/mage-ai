@@ -42,7 +42,7 @@ function ItemRow({
   const iconColor = getIconColor(item);
   const category = getDisplayCategory(item, true);
 
-  const maxLetters = 90 - ((title?.length || 0) + (category?.length || 0));
+  const maxLetters = 85 - ((title?.length || 0) + (category?.length || 0));
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
   if (descriptionCount > maxLetters) {

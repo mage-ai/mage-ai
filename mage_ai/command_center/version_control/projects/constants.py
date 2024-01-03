@@ -1,3 +1,5 @@
+from typing import Dict
+
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
@@ -8,8 +10,9 @@ from mage_ai.command_center.constants import (
 )
 from mage_ai.presenters.interactions.constants import InteractionInputType
 
-ITEMS = [
-    dict(
+
+def build_create_project() -> Dict:
+    return dict(
         item_type=ItemType.CREATE,
         object_type=ObjectType.PROJECT,
         title='New Git project',
@@ -96,5 +99,4 @@ ITEMS = [
             None,
             opts.get('user'),
         ).has_at_least_editor_role(),
-    ),
-]
+    )

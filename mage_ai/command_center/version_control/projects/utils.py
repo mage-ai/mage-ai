@@ -465,7 +465,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             items.append(scored)
 
 
-async def build_delete(factory, model: Project, items: List[Dict]):
+async def build_delete_project(factory, model: Project, items: List[Dict]):
     item_dict = dict(
         item_type=ItemType.DELETE,
         object_type=ObjectType.PROJECT,
@@ -505,7 +505,7 @@ async def build_delete(factory, model: Project, items: List[Dict]):
 
     scored = factory.filter_score(item_dict)
     if scored:
-        scored['score'] = 1
+        scored['score'] = 0
         items.append(scored)
 
 

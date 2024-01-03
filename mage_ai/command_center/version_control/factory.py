@@ -21,10 +21,13 @@ from mage_ai.command_center.version_control.constants import (
     ACTIVATE_MODE,
     DEACTIVATE_MODE,
 )
-from mage_ai.command_center.version_control.projects.constants import ITEMS
-from mage_ai.command_center.version_control.projects.utils import build, build_and_score
+from mage_ai.command_center.version_control.projects.constants import (
+    build_create_project,
+)
 from mage_ai.command_center.version_control.projects.utils import (
-    build_delete as build_delete_project,
+    build,
+    build_and_score,
+    build_delete_project,
 )
 from mage_ai.command_center.version_control.projects.utils import (
     build_update as build_update_project,
@@ -48,12 +51,15 @@ class VersionControlFactory(BaseFactory):
 
         # This has to come 1st because self.item is typically always in the API payload request.
         if self.results and self.results.get('project'):
-            for result in (self.results.get('project') or []):
-                if result.get('value'):
-                    project = Project.load(**result.get('value'))
-                    item = await build(self, project)
-                    item['score'] = 999
-                    items.append(item)
+            results = self.results.get('project') or []
+            # Select the last result because the results from the front-end can contain multiple
+            # results from previously executed actions since the results are stored in a ref.
+            result = results[-1]
+            if result and result.get('value'):
+                project = Project.load(**result.get('value'))
+                item = await build(self, project)
+                item['score'] = 999
+                items.append(item)
         elif self.results and self.results.get('branch'):
             for result in (self.results.get('branch') or []):
                 if result.get('value'):
@@ -125,7 +131,7 @@ class VersionControlFactory(BaseFactory):
                 for remote in remotes:
                     await build_and_score_remote(self, remote, items)
         else:
-            items.extend(ITEMS)
+            items.append(build_create_project() | dict(score=100))
 
             if self.mode:
                 if ModeType.VERSION_CONTROL == self.mode.type:
@@ -139,7 +145,27 @@ class VersionControlFactory(BaseFactory):
         return items
 
     def score_item(self, item_dict: Dict, score: int = None) -> int:
-        if ItemType.MODE_DEACTIVATION == item_dict.get('item_type'):
+        item_type = item_dict.get('item_type')
+        object_type = item_dict.get('object_type')
+
+        if item_type in [
+            ItemType.DELETE,
+            ItemType.MODE_DEACTIVATION,
+        ]:
             return 0
 
-        return 100 + item_dict.get('score', 0)
+        if ObjectType.REMOTE == object_type:
+            if ItemType.LIST == item_type:
+                return 5
+            else:
+                return 1
+
+        if ObjectType.PROJECT == object_type:
+            if ItemType.UPDATE == item_type:
+                return 3
+
+        if ObjectType.BRANCH == object_type:
+            if ItemType.CREATE == item_type:
+                return 4
+
+        return score or 1

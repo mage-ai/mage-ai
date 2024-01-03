@@ -5,7 +5,6 @@ import {
   CommandCenterSearchHistoryType,
   ItemTagEnum,
   ItemTypeEnum,
-  ModeStateType,
   ModeType,
   ObjectTypeEnum,
   PageHistoryType,
@@ -190,6 +189,6 @@ export function setMode(mode: ModeType) {
   set(LOCAL_STORAGE_COMMAND_CENTER_MODE, mode || null);
 }
 
-export function getCurrentMode(): ModeStateType {
+export function getCurrentMode(): ModeType {
   return get(LOCAL_STORAGE_COMMAND_CENTER_MODE);
 }

@@ -300,7 +300,7 @@ class Project(BaseVersionControl):
     @classmethod
     def create(sefl, uuid: str) -> 'Project':
         settings = platform_settings() or {}
-        if 'version_control' not in settings:
+        if not settings.get('version_control'):
             settings['version_control'] = {}
 
         if uuid not in settings['version_control']:
