@@ -7,12 +7,8 @@ from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.repo_manager import get_cluster_type, get_repo_config
 from mage_ai.server.constants import VERSION
-from mage_ai.settings.platform import (
-    active_project_settings,
-    platform_settings,
-    project_platform_activated,
-    project_platform_settings,
-)
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import dig
@@ -28,7 +24,7 @@ class Project():
         self.settings = None
 
         if not root_project and project_platform_activated():
-            self.settings = active_project_settings(get_default=True)
+            self.settings = platform_manager.active_project_settings(get_default=True)
             if self.settings and self.settings.get('uuid'):
                 self.name = self.settings.get('uuid')
 
@@ -102,7 +98,7 @@ class Project():
         features = self.repo_config.features if self.repo_config else {}
 
         if project_platform_activated() and self.__repo_config_root_project:
-            settings = platform_settings()
+            settings = platform_manager.platform_settings()
             if settings.get('features') and (settings.get('features') or {}).get('override'):
                 features.update(self.features_override)
 
@@ -153,7 +149,7 @@ class Project():
 
     def platform_settings(self) -> Dict:
         if project_platform_activated():
-            return platform_settings(mage_projects_only=True)
+            return platform_manager(mage_projects_only=True)
 
     def repo_path_for_database_query(self, key: str) -> List[str]:
         if self.settings:
@@ -169,7 +165,7 @@ class Project():
         return [self.repo_path]
 
     def projects(self) -> Dict:
-        return project_platform_settings(mage_projects_only=True)
+        return platform_manager.project_platform_settings(mage_projects_only=True)
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.features.get(feature_name.value, False)

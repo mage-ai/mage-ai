@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from mage_ai.data_preparation.preferences import Preferences, get_preferences
-from mage_ai.settings.platform import platform_settings, update_settings
+from mage_ai.settings.platform import platform_manager, update_settings
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, merge_dict
@@ -208,13 +208,13 @@ class Project(BaseVersionControl):
 
     @classmethod
     def load_all(self) -> List['Project']:
-        settings = (platform_settings() or {}).get('version_control') or {}
+        settings = (platform_manager.platform_settings() or {}).get('version_control') or {}
         uuids = list(settings.keys() if settings else [])
         return [self.load(uuid=uuid) for uuid in uuids]
 
     @classmethod
     def create(sefl, uuid: str) -> 'Project':
-        settings = platform_settings() or {}
+        settings = platform_manager.platform_settings() or {}
         if 'version_control' not in settings:
             settings['version_control'] = {}
 
@@ -236,7 +236,7 @@ class Project(BaseVersionControl):
         return os.path.join(base_repo_path(), self.uuid)
 
     def exists(self) -> bool:
-        settings = platform_settings() or {}
+        settings = platform_manager.platform_settings() or {}
         if 'version_control' not in settings:
             return False
 
@@ -276,7 +276,7 @@ class Project(BaseVersionControl):
         if os.path.exists(self.preferences.preferences_file_path):
             os.remove(self.preferences.preferences_file_path)
 
-        settings = platform_settings() or {}
+        settings = platform_manager.platform_settings() or {}
         if 'version_control' in settings and self.uuid in settings.get('version_control'):
             settings['version_control'].pop(self.uuid, None)
         update_settings(settings)

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Tuple
 
-from mage_ai.settings.platform import get_repo_paths_for_file_path
+from mage_ai.settings.platform import platform_manager
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_dirname, base_repo_name, base_repo_path
 
@@ -93,7 +93,7 @@ def remove_repo_names(file_path: str) -> str:
 
 
 def get_path_parts(file_path: str) -> Tuple[str, str, str]:
-    paths = get_repo_paths_for_file_path(file_path)
+    paths = platform_manager.get_repo_paths_for_file_path(file_path)
 
     if not paths:
         return None

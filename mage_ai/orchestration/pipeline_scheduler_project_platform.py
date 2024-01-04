@@ -49,10 +49,8 @@ from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
 from mage_ai.settings import HOSTNAME
-from mage_ai.settings.platform import (
-    project_platform_activated,
-    repo_path_from_database_query_to_project_repo_path,
-)
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.platform.utils import get_pipeline_from_platform
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
@@ -1456,7 +1454,7 @@ def schedule_all():
     }
     """
     pipeline_schedule_repo_paths_to_repo_path_mapping = \
-        repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
+        platform_manager.repo_path_from_database_query_to_project_repo_path('pipeline_schedules')
 
     # Iterate through pipeline schedules by pipeline to handle pipeline run limits for
     # each pipeline.

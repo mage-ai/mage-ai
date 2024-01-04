@@ -24,10 +24,8 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.triggers.api import trigger_pipeline
 from mage_ai.orchestration.triggers.constants import TRIGGER_NAME_FOR_GLOBAL_HOOK
-from mage_ai.settings.platform import (
-    build_repo_path_for_all_projects,
-    project_platform_activated,
-)
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index, flatten
 from mage_ai.shared.environments import is_debug, is_test
@@ -767,7 +765,8 @@ class GlobalHooks(BaseDataClass):
         if all_global_hooks and project_platform_activated():
             model.project_global_hooks = {}
 
-            for project_name, settings in build_repo_path_for_all_projects().items():
+            for project_name, settings in platform_manager.build_repo_path_for_all_projects(
+            ).items():
                 full_path = settings['full_path']
 
                 model.project_global_hooks[project_name] = dict(

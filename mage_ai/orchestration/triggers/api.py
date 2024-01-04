@@ -13,7 +13,7 @@ from mage_ai.orchestration.triggers.utils import (
     check_pipeline_run_status,
     create_and_start_pipeline_run,
 )
-from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform.constants import project_platform_activated
 
 
 def trigger_pipeline(

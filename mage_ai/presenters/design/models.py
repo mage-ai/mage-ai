@@ -6,11 +6,8 @@ import yaml
 
 from mage_ai.data_preparation.models.project.models import ProjectDataClass
 from mage_ai.presenters.design.constants import CUSTOM_DESIGN_FILENAME
-from mage_ai.settings.platform import (
-    active_project_settings,
-    build_repo_path_for_all_projects,
-    project_platform_activated,
-)
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_name, base_repo_path
 from mage_ai.shared.hash import combine_into
@@ -111,7 +108,7 @@ class CustomDesign(BaseDataClass):
         if all_configurations and project_platform_activated():
             model.custom_designs = {}
 
-            for project_name, project in build_repo_path_for_all_projects(
+            for project_name, project in platform_manager.build_repo_path_for_all_projects(
                 mage_projects_only=True,
             ).items():
                 full_path = project['full_path']
@@ -172,7 +169,7 @@ class CustomDesign(BaseDataClass):
         if not project_platform_activated() or not custom_design.custom_designs:
             return custom_design
 
-        settings = (active_project_settings(get_default=True) or {})
+        settings = (platform_manager.active_project_settings(get_default=True) or {})
         active_project_uuid = settings.get('uuid')
         root_project_uuid = base_repo_name()
         if active_project_uuid == root_project_uuid:

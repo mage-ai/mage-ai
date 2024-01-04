@@ -14,11 +14,8 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings.platform import (
-    activate_project,
-    project_platform_activated,
-    update_settings,
-)
+from mage_ai.settings.platform import platform_manager, update_settings
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -142,7 +139,7 @@ class ProjectResource(GenericResource):
     @safe_db_query
     async def update(self, payload, **kwargs):
         if payload.get('activate_project'):
-            activate_project(payload.get('activate_project'))
+            platform_manager.activate_project(payload.get('activate_project'))
 
         platform_settings = payload.get('platform_settings')
         root_project = payload.get('root_project')

@@ -6,22 +6,23 @@ import yaml
 from jinja2 import Template
 
 from mage_ai.data_preparation.shared.utils import get_template_vars_no_db
-from mage_ai.settings.platform import (
-    activate_project,
-    active_project_settings,
-    build_active_project_repo_path,
-    build_repo_path_for_all_projects,
-    get_repo_paths_for_file_path,
-    git_settings,
-    local_platform_settings_full_path,
-    platform_settings,
-    platform_settings_full_path,
-    project_platform_activated,
-    project_platform_settings,
-    repo_path_from_database_query_to_project_repo_path,
-)
+from mage_ai.settings.platform import platform_manager
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
+
+activate_project = platform_manager.activate_project
+active_project_settings = platform_manager.active_project_settings
+build_active_project_repo_path = platform_manager.build_active_project_repo_path
+build_repo_path_for_all_projects = platform_manager.build_repo_path_for_all_projects
+get_repo_paths_for_file_path = platform_manager.get_repo_paths_for_file_path
+git_settings = platform_manager.git_settings
+local_platform_settings_full_path = platform_manager.local_platform_settings_full_path
+platform_settings = platform_manager.platform_settings
+platform_settings_full_path = platform_manager.platform_settings_full_path
+project_platform_activated = platform_manager.project_platform_activated
+project_platform_settings = platform_manager.project_platform_settings
+repo_path_from_database_query_to_project_repo_path = \
+    platform_manager.repo_path_from_database_query_to_project_repo_path
 
 SETTINGS = dict(
     projects=dict(

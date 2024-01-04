@@ -52,7 +52,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
 )
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
-from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.platform.utils import get_pipeline_from_platform_async
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find_index

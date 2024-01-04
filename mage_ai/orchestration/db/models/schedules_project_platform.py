@@ -21,7 +21,7 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.base import classproperty
-from mage_ai.settings.platform import build_repo_path_for_all_projects
+from mage_ai.settings.platform import platform_manager
 from mage_ai.settings.platform.utils import (
     get_pipeline_from_platform,
     get_pipeline_from_platform_async,
@@ -44,7 +44,9 @@ class PipelineScheduleProjectPlatformMixin:
 
         repo_paths.extend([d.get(
             'full_path',
-        ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()])
+        ) for d in platform_manager.build_repo_path_for_all_projects(
+            mage_projects_only=True,
+        ).values()])
 
         return cls.query.filter(
             or_(

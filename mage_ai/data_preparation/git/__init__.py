@@ -13,7 +13,8 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.settings.platform import git_settings, project_platform_activated
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
@@ -46,7 +47,7 @@ class Git:
         self.repo_path = os.getcwd()
 
         if project_platform_activated():
-            git_dict = git_settings()
+            git_dict = platform_manager.git_settings()
             if git_dict and git_dict.get('path'):
                 self.repo_path = git_dict.get('path')
 

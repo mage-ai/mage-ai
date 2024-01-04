@@ -2,10 +2,8 @@ import os
 from pathlib import Path
 from typing import Callable
 
-from mage_ai.settings.platform import (
-    get_repo_paths_for_file_path,
-    project_platform_activated,
-)
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.files import find_directory
 from mage_ai.shared.path_fixer import get_path_parts, remove_base_repo_directory_name
@@ -23,7 +21,7 @@ def from_another_project(file_path: str, other_file_path: str = None) -> bool:
             return tup1[1] != tup2[1]
 
     active_repo_path = get_repo_path(root_project=False)
-    paths = get_repo_paths_for_file_path(
+    paths = platform_manager.get_repo_paths_for_file_path(
         file_path,
         repo_path=get_repo_path(root_project=True),
     )
@@ -59,7 +57,7 @@ def get_selected_directory_from_file_path(
         "uuid": "tons_of_dbt_projects"
     }
     """
-    paths_dict = get_repo_paths_for_file_path(
+    paths_dict = platform_manager.get_repo_paths_for_file_path(
         full_path_of_file_path,
         repo_path=get_repo_path(root_project=True),
     )

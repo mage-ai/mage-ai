@@ -71,7 +71,8 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             elif self.configuration and self.configuration.get('file_path'):
                 file_path = self.configuration.get('file_path')
                 parts = get_path_parts(file_path)
-                return os.path.join(*parts)
+                if parts:
+                    return os.path.join(*parts)
 
         file_path = self.configuration.get('file_path') or ''
         if file_path and Path(file_path).parts[0] == 'dbt':

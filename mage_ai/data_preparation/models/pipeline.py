@@ -47,7 +47,7 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.constants import Entity
-from mage_ai.settings.platform import build_repo_path_for_all_projects
+from mage_ai.settings.platform import platform_manager
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
@@ -402,7 +402,9 @@ class Pipeline:
         if project_platform_activated():
             repo_paths = [d.get(
                 'full_path',
-            ) for d in build_repo_path_for_all_projects(mage_projects_only=True).values()]
+            ) for d in platform_manager.build_repo_path_for_all_projects(
+                mage_projects_only=True,
+            ).values()]
 
             return Pipeline.get_all_pipelines(
                 *args,

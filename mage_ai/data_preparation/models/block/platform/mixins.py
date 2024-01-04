@@ -8,10 +8,8 @@ from mage_ai.data_preparation.models.block.platform.utils import (
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
-from mage_ai.settings.platform import (
-    get_repo_paths_for_file_path,
-    project_platform_activated,
-)
+from mage_ai.settings.platform import platform_manager
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
@@ -257,7 +255,7 @@ class ProjectPlatformAccessible:
             file_path = self.configuration.get('file_path')
 
         if file_path:
-            paths = get_repo_paths_for_file_path(file_path)
+            paths = platform_manager.get_repo_paths_for_file_path(file_path)
             if paths:
                 return paths.get('full_path')
 

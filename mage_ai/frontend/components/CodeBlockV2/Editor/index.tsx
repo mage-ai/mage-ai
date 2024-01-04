@@ -113,7 +113,7 @@ function Editor({
   const reset = useCallback(() => {
     refButton.current.style.opacity = 1;
     refInputContainer.current.style.display = 'none';
-    refEditor.current.focus();
+    // refEditor.current.focus();
   }, []);
 
   const start = useCallback(() => {

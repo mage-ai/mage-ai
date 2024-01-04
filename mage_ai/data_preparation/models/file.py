@@ -13,7 +13,7 @@ from mage_ai.data_preparation.models.errors import (
 )
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.utils import get_absolute_path
