@@ -302,8 +302,9 @@ class File(BaseVersionControl):
 
                     if file_path in mapping:
                         file_prev = mapping[file_path]
-                        file.staged = file.staged or file_prev.staged
+                        file.staged = file.staged and file_prev.staged
                         file.unstaged = file.unstaged or file_prev.unstaged
+                        file.untracked = file.untracked or file_prev.untracked
                     mapping[file_path] = file
 
         return sorted(list(mapping.values()), key=lambda x: x.name)

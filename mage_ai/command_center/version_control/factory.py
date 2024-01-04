@@ -79,7 +79,11 @@ class VersionControlFactory(BaseFactory):
                     items.append(item)
         elif self.item and \
                 self.application and \
-                ApplicationType.DETAIL_LIST == self.application.application_type:
+                self.application.application_type and \
+                self.application.application_type in [
+                    ApplicationType.DETAIL_LIST,
+                    ApplicationType.LIST,
+                ]:
 
             """
             Project is selected, show:
@@ -112,13 +116,14 @@ class VersionControlFactory(BaseFactory):
                 else:
                     await build_clone(self, items, project=project)
 
-            if ObjectType.BRANCH == self.item.object_type:
+            if self.item.object_type in [ObjectType.BRANCH, ObjectType.VERSION_CONTROL_FILE]:
                 # Checkout
                 # Clone
                 # Delete
-                branch_factory = BranchFactory()
-                branch_factory.item = self.item
-                items.extend(await branch_factory.fetch_items())
+
+                initial_item = self.item
+                branch_factory = self.build_another_factory(BranchFactory)
+                items.extend(await branch_factory.fetch_items(item=initial_item))
 
             if ObjectType.REMOTE == self.item.object_type:
                 # Detail view of remote with list of actions

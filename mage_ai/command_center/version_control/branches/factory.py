@@ -1,23 +1,28 @@
 from typing import Dict, List
 
-from mage_ai.command_center.constants import ItemType, ObjectType
+from mage_ai.command_center.constants import ApplicationType, ItemType, ObjectType
 from mage_ai.command_center.factory import BaseFactory
+from mage_ai.command_center.models import Item
 from mage_ai.command_center.version_control.branches.utils import (
+    branch_metadata,
     build_and_score_detail,
     build_clone,
 )
 from mage_ai.command_center.version_control.files.utils import (
     build_add_staging,
     build_add_staging_selected,
+    build_checkout_files_application,
+    build_checkout_single_files,
     build_diff,
     build_reset_all,
+    build_reset_selected,
     build_status,
 )
-from mage_ai.version_control.models import Branch, Project
+from mage_ai.version_control.models import Branch, File, Project
 
 
 class BranchFactory(BaseFactory):
-    async def fetch_items(self, **kwargs) -> List[Dict]:
+    async def fetch_items(self, item: Item = None, **kwargs) -> List[Dict]:
         items = []
 
         metadata = self.item.metadata
@@ -27,24 +32,52 @@ class BranchFactory(BaseFactory):
         branch.project = project
         branch.update_attributes()
 
-        # Clone
-        if not branch.current:
-            await build_clone(self, items, model=branch)
-
-        # Checkout
-        await build_and_score_detail(self, branch, items)
-
         # Diff
         self.filter_score_mutate_accumulator(await build_diff(self, model=branch), items)
-        # Status
-        self.filter_score_mutate_accumulator(await build_status(self, model=branch), items)
-        # git add .
-        self.filter_score_mutate_accumulator(await build_add_staging(self, model=branch), items)
-        self.filter_score_mutate_accumulator(
-            await build_add_staging_selected(self, model=branch), items,
-        )
-        # git reset .
-        self.filter_score_mutate_accumulator(await build_reset_all(self, model=branch), items)
+
+        if item and \
+                ObjectType.VERSION_CONTROL_FILE == item.object_type and \
+                self.application and \
+                ApplicationType.DETAIL_LIST == self.application.application_type:
+
+            for file in File.load_all(project=project):
+                if file.unstaged:
+                    self.filter_score_mutate_accumulator(
+                        await build_checkout_single_files(self, model=file, branch=branch),
+                        items,
+                    )
+        else:
+            # Clone
+            if not branch.current:
+                await build_clone(self, items, model=branch)
+
+            # Checkout
+            await build_and_score_detail(self, branch, items)
+
+            # Status
+            self.filter_score_mutate_accumulator(await build_status(self, model=branch), items)
+            # git add .
+            self.filter_score_mutate_accumulator(await build_add_staging(self, model=branch), items)
+            self.filter_score_mutate_accumulator(
+                await build_add_staging_selected(self, model=branch), items,
+            )
+            # git reset .
+            self.filter_score_mutate_accumulator(await build_reset_all(self, model=branch), items)
+            self.filter_score_mutate_accumulator(
+                await build_reset_selected(self, model=branch),
+                items,
+            )
+
+            # git checkout
+            self.filter_score_mutate_accumulator(
+                await build_checkout_files_application(self, model=branch),
+                items,
+            )
+
+        for item in items:
+            if 'metadata' not in item:
+                item['metadata'] = {}
+            item['metadata'].update(branch_metadata(branch))
 
         return items
 
@@ -52,7 +85,11 @@ class BranchFactory(BaseFactory):
         item_type = item_dict.get('item_type')
         object_type = item_dict.get('object_type')
 
-        if ObjectType.VERSION_CONTROL_FILE == object_type:
+        if item_dict.get('application') and \
+                ApplicationType.EXPANSION == item_dict.get('application').get('application_type'):
+
+            return 10
+        elif ObjectType.VERSION_CONTROL_FILE == object_type:
             if ItemType.ACTION == item_type:
                 return 5
         elif ObjectType.BRANCH == object_type:

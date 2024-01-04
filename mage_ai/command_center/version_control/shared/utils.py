@@ -149,6 +149,23 @@ def build_application_expansion(
     )
 
 
+def build_application_detail_list(
+    item_dict: Dict = None,
+    model: BaseDataClass = None,
+    model_class=None,
+) -> Dict:
+    values = get_values(
+        model=model,
+        model_class=model_class,
+        item_dict=item_dict,
+    )
+
+    return dict(
+        uuid=values['application_uuid'],
+        application_type=ApplicationType.DETAIL_LIST,
+    )
+
+
 def build_application_list(
     item_dict: Dict = None,
     model: BaseDataClass = None,

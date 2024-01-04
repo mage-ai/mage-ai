@@ -16,6 +16,19 @@ from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Branch, Project, Remote
 
 
+def branch_metadata(model: Branch) -> Dict:
+    return dict(
+        branch=dict(
+            current=model.current,
+            name=model.name,
+        ),
+        project=dict(
+            repo_path=model.project.repo_path,
+            uuid=model.project.uuid,
+        ),
+    )
+
+
 def build_request(model: Branch = None, project: Project = None) -> Dict:
     base = dict(
         resource='version_control_branches',
@@ -120,16 +133,7 @@ async def build(factory, model: Branch) -> Dict:
         title=uuid,
         description=description,
         uuid=uuid,
-        metadata=dict(
-            branch=dict(
-                current=model.current,
-                name=model.name,
-            ),
-            project=dict(
-                repo_path=project.repo_path,
-                uuid=project.uuid,
-            ),
-        ),
+        metadata=branch_metadata(model),
         display_settings_by_attribute=dict(
             description=dict(
                 text_styles=dict(

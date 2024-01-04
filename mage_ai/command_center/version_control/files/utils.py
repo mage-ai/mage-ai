@@ -4,8 +4,10 @@ from typing import Dict
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import ItemType, ObjectType, RenderLocationType
 from mage_ai.command_center.version_control.shared.utils import (
+    build_action_fetch_items,
     build_action_generic,
     build_application_detail,
+    build_application_detail_list,
     build_application_expansion,
     build_generic,
     build_request,
@@ -181,5 +183,93 @@ async def build_reset_all(factory, model: Branch) -> Dict:
     item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(
         reset='.',
     )
+
+    return item_dict
+
+
+async def build_reset_selected(factory, model: Branch) -> Dict:
+    item_dict = await build_reset_all(factory, model)
+    item_dict.update(
+        uuid='git_reset_selected',
+        title='Reset only selected files',
+        description='Remove selected files from staging but keep their changes.',
+        subtitle='git reset [file]',
+    )
+    item_dict['display_settings_by_attribute']['icon']['color_uuid'] = 'accent.yellow'
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(reset=None)
+    item_dict['actions'][0]['application_state_parsers'] = [
+        dict(
+            positional_argument_names=[
+                'item',
+                'action',
+                'applicationState',
+                'options',
+            ],
+            function_body="""
+const names = Object.keys(applicationState?.VersionControlFileDiffs?.files || {})?.join(' ');
+action.request.payload.version_control_file.reset = names
+return action
+""",
+        ),
+    ]
+
+    return item_dict
+
+
+async def build_checkout_files_application(factory, model: Branch) -> Dict:
+    item_dict = await build_add_staging(factory, model)
+    item_dict.update(
+        uuid='git_checkout_single_files',
+        title='View unstaged and untracked files to remove modifications',
+        subtitle=None,
+        description=None,
+    )
+    item_dict['display_settings_by_attribute']['icon'] = dict(
+        color_uuid='accent.pink',
+        icon_uuid='AlertTriangle',
+    )
+    item_dict['actions'] = []
+    item_dict['applications'] = [
+        build_application_detail_list(
+            model_class=File,
+        ),
+    ]
+
+    return item_dict
+
+
+async def build_checkout_single_files(factory, model: File, branch: Branch) -> Dict:
+    item_dict = await build_add_staging(factory, branch)
+    item_dict.update(
+        uuid=f'git_checkout_single_files_{model.name}',
+        title='Reset all changes to',
+        description=model.name,
+        subtitle='git checkout',
+    )
+    item_dict['display_settings_by_attribute'] = dict(
+        description=dict(
+            text_styles=dict(
+                monospace=True,
+                regular=True,
+            ),
+        ),
+        subtitle=dict(
+            text_styles=dict(
+                monospace=True,
+            ),
+        ),
+        icon=dict(
+            color_uuid='accent.negative',
+            icon_uuid='AlertTriangle',
+        ),
+    )
+    item_dict['actions'][0]['request']['operation'] = OperationType.DELETE
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = None
+    item_dict['actions'][0]['request']['resource_id'] = urllib.parse.quote_plus(model.name or ''),
+    item_dict['actions'] += [
+        build_action_fetch_items(
+            {}
+        ),
+    ]
 
     return item_dict

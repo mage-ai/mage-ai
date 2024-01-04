@@ -44,6 +44,25 @@ class BaseFactory:
         self.search_ratio = search_ratio
         self.user = user
 
+    def build_another_factory(self, factory_class=None) -> 'BaseFactory':
+        factory = factory_class() if factory_class else BaseFactory()
+        for key in [
+            'application',
+            'component',
+            'item',
+            'mode',
+            'page',
+            'page_history',
+            'picks',
+            'results',
+            'search',
+            'search_history',
+            'search_ratio',
+            'user',
+        ]:
+            setattr(factory, key, getattr(self, key))
+        return factory
+
     @classmethod
     async def create_items(
         self,
