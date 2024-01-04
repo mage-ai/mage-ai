@@ -79,12 +79,7 @@ class VersionControlFactory(BaseFactory):
                     items.append(item)
         elif self.item and \
                 self.application and \
-                self.application.application_type and \
-                self.application.application_type in [
-                    ApplicationType.DETAIL_LIST,
-                    ApplicationType.LIST,
-                ]:
-
+                ApplicationType.DETAIL_LIST == self.application.application_type:
             """
             Project is selected, show:
                 Create new branch
@@ -128,10 +123,13 @@ class VersionControlFactory(BaseFactory):
                 # Fetch
                 # Update
                 # Remote
+                project = Project.load(**self.item.metadata.project.to_dict())
                 if self.item.metadata.remote:
                     remote = Remote.load(**self.item.metadata.remote.to_dict())
-                    remote.project = Project.load(**self.item.metadata.project.to_dict())
-                    await build_detail_list_items_remote(self, remote, items)
+                    remote.project = project
+                else:
+                    remote = Remote(project=project)
+                await build_detail_list_items_remote(self, remote, items)
         elif self.item and ItemType.LIST == self.item.item_type:
             if ObjectType.REMOTE == self.item.object_type:
                 # Add remote
