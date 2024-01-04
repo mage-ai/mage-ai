@@ -93,21 +93,15 @@ export default function useResizeElement() {
         if (isLeft) {
           width2 = offsetRight - e.clientX;
           left2 = e.clientX;
-          // element.style.width = offsetRight - e.clientX + 'px';
-          // element.style.left = `${e.clientX}px`;
         } else {
           width2 = e.clientX - offsetLeft;
-          // element.style.width = e.clientX - offsetLeft + 'px';
         }
       } else {
         if (isTop) {
           height2 = offsetBottom - e.clientY;
           top2 = e.clientY;
-          // element.style.height = offsetBottom - e.clientY + 'px';
-          // element.style.top = `${e.clientY}px`;
         } else {
           height2 = e.clientY - offsetTop;
-          // element.style.height = e.clientY - offsetTop + 'px';
         }
       }
 
@@ -116,51 +110,42 @@ export default function useResizeElement() {
           // If there is no previous value
           // -> If decreasing the size by moving to the right
           // <- If left is more than 24 pixels from the left edge
-          if (!refRecentValues?.current?.left
-
-            ||
+          if (!refRecentValues?.current?.left ||
             (
-              // More than 24 or moving to the right
+              // More than 24 or... moving to the right but pointer is on the right side of the left edge
               (left2 >= 24 || (left2 > refRecentValues?.current?.left && e.clientX >= element.offsetLeft))
               &&
-              // Width more than 400 or moving to the left while being 400 pixels away from the right
+              // Width more than 400 or... moving to the left while being 400 pixels away from the right side
               (width2 >= 400 || (left2 < refRecentValues?.current?.left && e.clientX <= ((element.offsetLeft + width2) - 400)))
             )
-
           ) {
             element.style.left = `${left2}px`;
             refRecentValues.current.left = left2;
 
             // If there is no previous value
-            // <--> Width is increasing
-            // -><- Width is greater than 400
-            if (!refRecentValues?.current?.width
-              ||
+            if (!refRecentValues?.current?.width ||
               (
-                // Increase width as long as
+                // Increase width (you can only go left to increase the width) or...
+                width2 > refRecentValues?.current?.width ||
                 (
-                  width2 > refRecentValues?.current?.width
-                    // && left2 + width2 < (width - (24 * 2))
-                )
                   // Decrease the width up to 400 pixels
-                  || (
-                    (width2 < refRecentValues?.current?.width) && width2 >= 400
-                  )
+                  (width2 < refRecentValues?.current?.width) && width2 >= 400
+                )
               )
             ) {
               element.style.width = `${width2}px`;
             }
           }
         } else {
+          // Resizing from the right side
           // If there is no previous value
-          // <--> Width is increasing
-          // -><- Width is greater than 400
-          if (!refRecentValues?.current?.width
-            ||
+          if (!refRecentValues?.current?.width ||
             (
+              // Increasing the width (by going to the right) but right edge must be 24 pixels away from the right edge of the screen...
               width2 > refRecentValues?.current?.width && element.offsetLeft + width2 <= (window.innerWidth - (24 * 2))
             )
-            || (width2 < refRecentValues?.current?.width && width2 >= 400)
+              // or decrease the width (by going to the left) but width must be greater than 400
+              || (width2 < refRecentValues?.current?.width && width2 >= 400)
           ) {
             element.style.width = `${width2}px`;
           }
