@@ -9,6 +9,11 @@ import { buildDefaultLayout, getLayout, updateLayout } from '@storage/Applicatio
 import {
   ContainerStyle,
   ContentStyle,
+  InnerStyle,
+  ResizeLeftStyle,
+  ResizeRightStyle,
+  ResizeTopStyle,
+  ResizeBottomStyle,
 } from './index.style';
 
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
@@ -32,10 +37,12 @@ export default function useApplicationManager(): {
   const refContainers = useRef({});
   // References to the root DOM elements where expansions are rendered in.
   const refRoots = useRef({});
+  // 4 sides of each application can be used to resize the application.
+  const refResizers = useRef({});
 
   const {
-    setElement,
-    setResizers,
+    setResizableObject,
+    setResizersObjects,
   } = useResizeElement();
 
   function updateLayout(uuid: ApplicationExpansionUUIDEnum) {
@@ -132,6 +139,18 @@ export default function useApplicationManager(): {
         width: typeof window !== 'undefined' ? window?.innerWidth : null,
       });
 
+
+      if (!refResizers?.current?.[uuid]) {
+        refResizers.current[uuid] = {
+          bottom: createRef(),
+          left: createRef(),
+          right: createRef(),
+          top: createRef(),
+        };
+      }
+
+      const rr = refResizers?.current?.[uuid];
+
       const {
         dimension: {
           height,
@@ -153,16 +172,29 @@ export default function useApplicationManager(): {
             width,
             zIndex: z,
         }}>
+          <ResizeBottomStyle ref={rr?.bottom} />
+          <ResizeLeftStyle ref={rr?.left} />
+          <ResizeRightStyle ref={rr?.right} />
+          <ResizeTopStyle ref={rr?.top} />
+
           <ContentStyle>
-            <VersionControlFileDiffs
-              applicationConfigration={applicationConfigration}
-            />
+            <InnerStyle>
+              <VersionControlFileDiffs
+                applicationConfigration={applicationConfigration}
+              />
+            </InnerStyle>
           </ContentStyle>
         </ContainerStyle>
       );
-      setElement(expansion);
 
       refRoots?.current?.[uuid]?.render(expansion);
+
+      setResizableObject(ref, {
+        tries: 10,
+      });
+      setResizersObjects(Object.values(rr || {}), {
+        tries: 10,
+      });
     }
   }
 

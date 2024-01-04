@@ -58,9 +58,6 @@ function VersionControlFileDiffs({
       <Accordion
         noBorder
         noBoxShadow
-        visibleMappingForced={{
-          0: true,
-        }}
       >
         {files?.map(({
           additions,
