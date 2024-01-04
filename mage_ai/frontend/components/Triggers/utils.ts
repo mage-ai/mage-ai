@@ -188,7 +188,10 @@ export function getDatetimeFromDateAndTime(
 ): string {
   let datetimeString;
 
-  const momentObj = moment(date);
+  let momentObj = moment.utc(date);
+  if (opts?.localTimezone) {
+    momentObj = moment(date);
+  }
   momentObj.set('hour', +time?.hour || 0);
   momentObj.set('minute', +time?.minute || 0);
   momentObj.set('second', 0);
