@@ -4,20 +4,25 @@ import { useMutation } from 'react-query';
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import CodeEditor from '@components/CodeEditor';
+import FileNavigation from './FileNavigation';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
+import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import { AsideStyle, AsideAfterStyle } from './index.style';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { VersionControlFileType } from '@interfaces/VersionControlType';
 import { getFilenameFromFilePath } from '@components/Files/utils';
-import { range } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { range, sortByKey } from '@utils/array';
 
 function VersionControlFileDiffs({
   applicationConfigration,
 }) {
   const refContent = useRef({});
+  const refRows = useRef([]);
 
   const {
     item
@@ -28,7 +33,10 @@ function VersionControlFileDiffs({
     {
       diff: true,
     });
-  const files = useMemo(() => data?.version_control_files || [], [data]);
+  const files: VersionControlFileType[] = useMemo(() => sortByKey(
+    data?.version_control_files || [],
+    ({ name }) => name,
+  ) || [], [data]);
 
   const [updateFile] = useMutation(
     ({
@@ -54,10 +62,14 @@ function VersionControlFileDiffs({
   );
 
   const codeEditors = useMemo(() => {
-    return (
+    const visibleMappingForced = {};
+
+    const el = (
       <Accordion
         noBorder
         noBoxShadow
+        showDividers
+        visibleMappingForced={visibleMappingForced}
       >
         {files?.map(({
           additions,
@@ -71,16 +83,28 @@ function VersionControlFileDiffs({
           staged,
           unstaged,
           untracked,
-        }) => {
+        }, idx) => {
           const fileExtension = getFilenameFromFilePath(name)?.split('.')?.pop();
-          const ref = refContent?.[name] || createRef();
-          refContent.current[name] = ref;
+
+          let ref = refRows?.current?.[idx];
+          if (!ref) {
+            ref = createRef();
+            refRows.current.push(ref);
+          }
+
+          if (additions !== null && deletions !== null) {
+            const total = (additions || 0) + (deletions || 0);
+            if (total >= 2) {
+              visibleMappingForced[idx] = true;
+            }
+          }
 
           return (
             <AccordionPanel
               key={filePath}
               noBorderRadius
               noPaddingContent
+              refContainer={ref}
               title={(
                 <FlexContainer
                   alignItems="center"
@@ -90,7 +114,7 @@ function VersionControlFileDiffs({
                 >
                   <Flex flex={1}>
                     <Text monospace small>
-                      {filePath}
+                      {filePath?.replace(repo_path, '')?.slice(1)}
                     </Text>
                   </Flex>
 
@@ -136,12 +160,51 @@ function VersionControlFileDiffs({
         })}
       </Accordion>
     );
+
+    return el;
+  }, [files]);
+
+  const beforeMemo = useMemo(() => {
+    return (
+      <>
+        <FileNavigation
+          files={files}
+          refRows={refRows}
+        />
+      </>
+    );
   }, [files]);
 
   return (
-    <div>
+    <TripleLayout
+      inline
+      // after={after}
+      // afterHeader={afterHeader}
+      // afterHeightOffset={HEADER_HEIGHT}
+      // afterHidden={afterHidden}
+      // afterMousedownActive={afterMousedownActive}
+      // afterWidth={afterWidth}
+      before={beforeMemo}
+      // beforeHeader={beforeHeader}
+      // beforeHeightOffset={HEADER_HEIGHT}
+      // beforeMousedownActive={beforeMousedownActive}
+      // // beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+      beforeHidden={false}
+      beforeWidth={300}
+      contained
+      // headerOffset={headerOffset}
+      // hideAfterCompletely={!after || !setAfterHidden || hideAfterCompletely}
+      // leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
+      // mainContainerHeader={mainContainerHeader}
+      // mainContainerRef={mainContainerRef}
+      // setAfterHidden={setAfterHidden}
+      // setAfterMousedownActive={setAfterMousedownActive}
+      // setAfterWidth={setAfterWidth}
+      // setBeforeMousedownActive={setBeforeMousedownActive}
+      // setBeforeWidth={setBeforeWidth}
+    >
       {codeEditors}
-    </div>
+    </TripleLayout>
   );
 }
 

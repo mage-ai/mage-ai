@@ -7,7 +7,9 @@ export interface VersionControlCommit {
   sha: string;
 }
 
-export interface VersionControlFile {
+export interface VersionControlFileType {
+  additions?: number
+  deletions?: number;
   diff?: string[];
   name: string;
   output?: string[];

@@ -10,7 +10,7 @@ export const ContainerStyle = styled.div`
 
 export const ContentStyle = styled.div`
   ${ScrollbarStyledCss}
-  ${hideScrollBar()}
+  // ${hideScrollBar()}
 
   overflow: auto;
   &:hover {
@@ -37,14 +37,9 @@ export const InnerStyle = styled.div`
   bottom: 0;
   height 100%;
   left: 0;
-  margin-left: ${SCROLLBAR_WIDTH}px;
   position: absolute;
-  right: ${SCROLLBAR_WIDTH}px;
+  right: 0;
   top: 0;
-
-  &:hover {
-    right: 0;
-  }
 `;
 
 const RESIZE_STYLES = css`

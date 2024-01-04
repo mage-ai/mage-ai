@@ -122,7 +122,7 @@ const Accordion = ({
               })}
             </AccordionPanelContainerStyle>
 
-            {showDividers && <Divider />}
+            {showDividers && <Divider medium />}
           </div>
         );
       })}
