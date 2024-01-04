@@ -1,3 +1,5 @@
+import './requestIdleCallbackPolyfill';
+
 import styled from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
