@@ -13,6 +13,11 @@ async def get_detail(model: File) -> File:
     return model
 
 
+async def get_content(model: File) -> File:
+    await model.read_content_async()
+    return model
+
+
 class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
@@ -25,7 +30,12 @@ class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
             diff = diff[0]
 
         if diff:
-            models = await asyncio.gather(*[get_detail(model) for model in models])
+            models1 = await asyncio.gather(*[get_content(model) for model in models])
+            models2 = await asyncio.gather(*[get_detail(model) for model in models])
+            models = []
+            for model1, model2 in zip(models1, models2):
+                model1.diff = model2.diff
+                models.append(model1)
 
         return self.build_result_set(
             models,

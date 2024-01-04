@@ -1,9 +1,11 @@
-import { createRef, useCallback, useMemo, useRef } from 'react';
+import { createRef, useCallback, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
+import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { ApplicationExpansionUUIDEnum } from './constants';
+import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
+import { buildDefaultLayout, getLayout, updateLayout } from '@storage/ApplicationManager/cache';
 
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
@@ -27,15 +29,16 @@ export default function useApplicationManager(): {
   // References to the root DOM elements where expansions are rendered in.
   const refRoots = useRef({});
 
-  function handleChangeDimensions() {
+  const {
+    setElement,
+    setResizers,
+  } = useResizeElement();
+
+  function updateLayout() {
 
   }
 
-  function handleChangeCoordinates() {
-
-  }
-
-  function handleChangeState() {
+  function injectStyles() {
 
   }
 
@@ -73,6 +76,9 @@ export default function useApplicationManager(): {
     );
   }
 
+  // https://stackoverflow.com/questions/20926551/recommended-way-of-making-react-component-div-draggable
+  // Draggable
+
   function startApplication(applicationConfigration: ApplicationConfiguration) {
     const {
       application,
@@ -95,15 +101,16 @@ export default function useApplicationManager(): {
 
       const ref = refExpansions?.current?.[uuid] || createRef();
 
-      refRoots?.current?.[uuid]?.render(
-        <VersionControlFileDiffs
-          applicationConfigration={applicationConfigration}
-          onChangeCoordinates={handleChangeCoordinates}
-          onChangeDimensions={handleChangeDimensions}
-          onChangeState={handleChangeState}
-          ref={ref}
-        />
+      const expansion = (
+        <div ref={ref}>
+          <VersionControlFileDiffs
+            applicationConfigration={applicationConfigration}
+          />
+        </div>
       );
+      setElement(expansion);
+
+      refRoots?.current?.[uuid]?.render(expansion);
     }
   }
 

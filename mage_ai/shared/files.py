@@ -3,6 +3,10 @@ import os
 from pathlib import Path
 from typing import Callable, List, Tuple
 
+import aiofiles
+
+from mage_ai.shared.environments import is_debug
+
 
 def reverse_readline(filename, buf_size=8192):
     """A generator that returns the lines of a file in reverse order"""
@@ -114,3 +118,17 @@ def find_file_from_another_file_path(file_path: str, comparator) -> str:
         parts = parts[:-1]
 
     return absolute_file_path
+
+
+async def read_async(file_path: str) -> str:
+    dirname = os.path.dirname(file_path)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+
+    async with aiofiles.open(file_path, mode='r') as file:
+        try:
+            return await file.read()
+        except Exception as err:
+            if is_debug():
+                print(f'[ERROR] files.read_async: {err}.')
+

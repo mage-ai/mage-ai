@@ -10,6 +10,7 @@ from mage_ai.data_preparation.preferences import Preferences, get_preferences
 from mage_ai.settings.platform import platform_settings, update_settings
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find, unique_by
+from mage_ai.shared.files import read_async
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 
@@ -270,7 +271,9 @@ class Branch(BaseVersionControl):
 
 @dataclass
 class File(BaseVersionControl):
+    content: str = None
     diff: List[str] = None
+    file_path: str = None
     name: str = None
     staged: bool = False
     unstaged: bool = False
@@ -326,6 +329,10 @@ class File(BaseVersionControl):
         self.diff = await self.run_async(f'diff {self.name}')
         return self.diff
 
+    async def read_content_async(self) -> str:
+        self.content = await read_async(os.path.join(self.project.repo_path, self.name))
+        return self.content
+
     def detail(self) -> List[str]:
         self.diff = self.run(f'diff {self.name}')
         return self.diff
@@ -345,7 +352,9 @@ class File(BaseVersionControl):
 
     def to_dict(self, **kwargs) -> Dict:
         return merge_dict(super().to_dict(**kwargs), dict(
+            content=self.content,
             diff=self.diff,
+            file_path=self.file_path or os.path.join(self.repo_path, self.name),
             name=self.name,
             staged=self.staged,
             unstaged=self.unstaged,

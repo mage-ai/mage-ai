@@ -5,7 +5,9 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 class VersionControlFilePresenter(BasePresenter):
     default_attributes = [
+        'content',
         'diff',
+        'file_path',
         'name',
         'output',
         'project_uuid',
