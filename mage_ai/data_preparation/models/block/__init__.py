@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import inflection
 import pandas as pd
+import polars as pl
 import simplejson
 import yaml
 from jinja2 import Template
@@ -2074,6 +2075,24 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 )
                 data_products.append(data)
                 continue
+            if type(data) is pl.DataFrame:
+                row_count, column_count = data.shape
+                columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+                data = dict(
+                    sample_data=dict(
+                        columns=columns_to_display,
+                        rows=[
+                            list(row.values()) for row in json.loads(
+                                data[columns_to_display].write_json(row_oriented=True)
+                            )
+                        ]
+                    ),
+                    shape=[row_count, column_count],
+                    type=DataType.TABLE,
+                    variable_uuid=v,
+                )
+                data_products.append(data)
+                continue
             elif is_geo_dataframe(data):
                 data = dict(
                     text_data=f'''Use the code in a scratchpad to get the output of the block:
@@ -2882,7 +2901,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
                     and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
-
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
                 block_uuid,

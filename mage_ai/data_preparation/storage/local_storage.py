@@ -93,10 +93,10 @@ class LocalStorage(BaseStorage):
             )
             await file.write(fcontent)
 
-    def read_parquet(self, file_path: str) -> pd.DataFrame:
+    def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
         return pd.read_parquet(file_path, engine='pyarrow')
 
-    def read_polars_parquet(self, file_path: str) -> pl.DataFrame:
+    def read_polars_parquet(self, file_path: str, **kwargs) -> pl.DataFrame:
         return pl.read_parquet(file_path, use_pyarrow=True)
 
     def write_csv(self, df: pd.DataFrame, file_path: str) -> None:

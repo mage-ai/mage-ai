@@ -77,16 +77,14 @@ def remove_duplicate_rows(df):
             'output_0',
             variable_type='dataframe'
         )
-        analysis = variable_manager.get_variable(
-            pipeline.uuid,
-            block2.uuid,
-            'output_0',
-            variable_type='dataframe_analysis',
-        )
+        # analysis = variable_manager.get_variable(
+        #     pipeline.uuid,
+        #     block2.uuid,
+        #     'output_0',
+        #     variable_type='dataframe_analysis',
+        # )
         df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
         assert_frame_equal(data, df_final)
-
-        analysis
         # TODO (Xiaoyou Wang): uncomment this one serialization of block output is fixed.
         # self.assertEqual(
         #     analysis['metadata']['column_types'],
