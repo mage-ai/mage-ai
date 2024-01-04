@@ -42,7 +42,7 @@ from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -634,6 +634,7 @@ def start_server(
     if dbt_docs:
         run_docs_server()
     else:
+        set_db_schema()
         run_web_server = True
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:
