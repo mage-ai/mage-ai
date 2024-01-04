@@ -1,5 +1,6 @@
 import { ApplicationExpansionUUIDEnum, LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT } from './constants';
 import { get, set } from '../localStorage';
+import { selectEntriesWithValues } from '@utils/hash';
 
 interface PositionType {
   x: number;
@@ -37,16 +38,28 @@ export function buildDefaultLayout({
   };
 }
 
-export function getLayout(uuid: ApplicationExpansionUUIDEnum = null): LayoutType | {
+export function getLayoutCache(uuid: ApplicationExpansionUUIDEnum = null): LayoutType | {
   [uuid: string]: LayoutType;
 } {
   const mapping = get(LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT);
   return uuid ? mapping?.[uuid] : mapping;
 }
 
-export function updateLayout(uuid: ApplicationExpansionUUIDEnum, layout: LayoutType): LayoutType {
-  const mapping = getLayout() || {};
-  mapping[uuid] = layout;
+export function updateLayoutCache(uuid: ApplicationExpansionUUIDEnum, layout: LayoutType): LayoutType {
+  const mapping = getLayoutCache() || {};
+  const prev = mapping?.[uuid] || {};
+
+  prev.position = {
+    ...selectEntriesWithValues(prev?.position || {}),
+    ...selectEntriesWithValues(layout?.position || {}),
+  }
+  prev.dimension = {
+    ...selectEntriesWithValues(prev?.dimension || {}),
+    ...selectEntriesWithValues(layout?.dimension || {}),
+  }
+
+  mapping[uuid] = prev;
+
   set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT, mapping);
 
   return layout;

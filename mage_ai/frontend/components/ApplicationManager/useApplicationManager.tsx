@@ -5,7 +5,7 @@ import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
-import { buildDefaultLayout, getLayout, updateLayout } from '@storage/ApplicationManager/cache';
+import { buildDefaultLayout, getLayoutCache, updateLayoutCache } from '@storage/ApplicationManager/cache';
 import {
   ContainerStyle,
   ContentStyle,
@@ -40,18 +40,18 @@ export default function useApplicationManager(): {
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
 
-  const {
-    setResizableObject,
-    setResizersObjects,
-  } = useResizeElement();
+  function getActiveApplication() {
+    return refApplications?.current?.[ApplicationExpansionUUIDEnum.VersionControlFileDiffs];
+  }
 
-  function updateLayout(uuid: ApplicationExpansionUUIDEnum) {
-    const layout = getLayout(uuid) || buildDefaultLayout({
-      height: typeof window !== 'undefined' ? window?.screen?.height : null,
-      width: typeof window !== 'undefined' ? window?.screen?.width : null,
-    });
-
-    const {
+  function onResizeCallback({
+    height,
+    width,
+    x,
+    y,
+  }) {
+    const uuid = getActiveApplication()?.application?.expansion_settings?.uuid;
+    updateLayoutCache(uuid, {
       dimension: {
         height,
         width,
@@ -59,20 +59,16 @@ export default function useApplicationManager(): {
       position: {
         x,
         y,
-        z,
       },
-    } = layout;
-
-    const expansion = refExpansions?.current?.[uuid];
-    console.log(layout, refExpansions?.current)
-    expansion.current.style.height = `${height}px`;
-    expansion.current.style.width = `${width}px`;
-    expansion.current.style.position = 'fixed';
-    expansion.current.style.left = `${x}px`;
-    expansion.current.style.top = `${y}px`;
-    expansion.current.style.zIndex = `${z}`;
-    console.log(expansion.current.style)
+    });
   }
+
+  const {
+    setResizableObject,
+    setResizersObjects,
+  } = useResizeElement({
+    onResizeCallback,
+  });
 
   function getApplications() {
     return {
@@ -134,7 +130,7 @@ export default function useApplicationManager(): {
       const ref = refExpansions?.current?.[uuid] || createRef();
       refExpansions.current[uuid] = ref;
 
-      const layout = getLayout(uuid) || buildDefaultLayout({
+      const layout = getLayoutCache(uuid) || buildDefaultLayout({
         height: typeof window !== 'undefined' ? window?.innerHeight : null,
         width: typeof window !== 'undefined' ? window?.innerWidth : null,
       });

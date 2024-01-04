@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { delay } from './delay';
+import { isEmptyObject, selectEntriesWithValues } from './hash';
 
-export default function useResizeElement() {
+export default function useResizeElement({
+  onResizeCallback,
+}: {
+  onResizeCallback?: (opts?: {
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+  }) => void;
+}) {
   const refOrientation = useRef(null);
   const refRecentValues = useRef({});
 
@@ -108,6 +118,13 @@ export default function useResizeElement() {
         }
       }
 
+      const dataForCallback: {
+        height?: number;
+        width?: number;
+        x?: number;
+        y?: number;
+      } = {};
+
       if (isHorizontal) {
         if (isLeft) {
           // If there is no previous value
@@ -122,6 +139,7 @@ export default function useResizeElement() {
           ) {
             element.style.left = `${left2}px`;
             refRecentValues.current.left = left2;
+            dataForCallback.x = left2;
 
             // If there is no previous value
             if (!refRecentValues?.current?.width ||
@@ -135,6 +153,7 @@ export default function useResizeElement() {
               )
             ) {
               element.style.width = `${width2}px`;
+              dataForCallback.width = width2;
             }
           }
         } else {
@@ -149,6 +168,7 @@ export default function useResizeElement() {
               || (width2 < refRecentValues?.current?.width && width2 >= 400)
           ) {
             element.style.width = `${width2}px`;
+            dataForCallback.width = width2;
           }
         }
       } else {
@@ -165,6 +185,7 @@ export default function useResizeElement() {
         ) {
             element.style.top = `${top2}px`;
             refRecentValues.current.top = top2;
+            dataForCallback.y = top2;
 
             // If there is no previous value
             if (!refRecentValues?.current?.height ||
@@ -178,6 +199,7 @@ export default function useResizeElement() {
               )
             ) {
               element.style.height = `${height2}px`;
+              dataForCallback.height = height2;
             }
           }
         } else {
@@ -192,8 +214,13 @@ export default function useResizeElement() {
             || (height2 < refRecentValues?.current?.height && height2 >= 300)
           ) {
             element.style.height = `${height2}px`;
+            dataForCallback.height = height2;
           }
         }
+      }
+
+      if (onResizeCallback && !isEmptyObject(selectEntriesWithValues(dataForCallback))) {
+        onResizeCallback?.(selectEntriesWithValues(dataForCallback));
       }
 
       refRecentValues.current.width = element?.getBoundingClientRect()?.width;
