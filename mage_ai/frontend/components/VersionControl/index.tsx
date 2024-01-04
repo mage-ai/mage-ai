@@ -1,5 +1,4 @@
 import * as osPath from 'path';
-import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
 import { DiffEditor } from '@monaco-editor/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';

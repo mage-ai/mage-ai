@@ -21,8 +21,8 @@ export function buildDefaultLayout({
   height: totalHeight,
   width: totalWidth,
 }): LayoutType {
-  const height = Math.min(totalHeight, 800);
-  const width = Math.min(totalWidth, 980);
+  const height = Math.min(totalHeight, 1200);
+  const width = Math.min(totalWidth, 1500);
 
   return {
     dimension: {
@@ -49,5 +49,5 @@ export function updateLayout(uuid: ApplicationExpansionUUIDEnum, layout: LayoutT
   mapping[uuid] = layout;
   set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT, mapping);
 
-  return mapping;
+  return layout;
 }

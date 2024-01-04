@@ -6,6 +6,10 @@ import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { buildDefaultLayout, getLayout, updateLayout } from '@storage/ApplicationManager/cache';
+import {
+  ContainerStyle,
+  ContentStyle,
+} from './index.style';
 
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
@@ -34,12 +38,33 @@ export default function useApplicationManager(): {
     setResizers,
   } = useResizeElement();
 
-  function updateLayout() {
+  function updateLayout(uuid: ApplicationExpansionUUIDEnum) {
+    const layout = getLayout(uuid) || buildDefaultLayout({
+      height: typeof window !== 'undefined' ? window?.screen?.height : null,
+      width: typeof window !== 'undefined' ? window?.screen?.width : null,
+    });
 
-  }
+    const {
+      dimension: {
+        height,
+        width,
+      },
+      position: {
+        x,
+        y,
+        z,
+      },
+    } = layout;
 
-  function injectStyles() {
-
+    const expansion = refExpansions?.current?.[uuid];
+    console.log(layout, refExpansions?.current)
+    expansion.current.style.height = `${height}px`;
+    expansion.current.style.width = `${width}px`;
+    expansion.current.style.position = 'fixed';
+    expansion.current.style.left = `${x}px`;
+    expansion.current.style.top = `${y}px`;
+    expansion.current.style.zIndex = `${z}`;
+    console.log(expansion.current.style)
   }
 
   function getApplications() {
@@ -93,20 +118,47 @@ export default function useApplicationManager(): {
     }
     refApplications.current[uuid] = applicationConfigration;
 
-    if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === expansionSettings?.uuid) {
+    if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
       if (!refRoots?.current?.[uuid]) {
         const domNode = document.getElementById(uuid);
         refRoots.current[uuid] = createRoot(domNode);
       }
 
       const ref = refExpansions?.current?.[uuid] || createRef();
+      refExpansions.current[uuid] = ref;
 
+      const layout = getLayout(uuid) || buildDefaultLayout({
+        height: typeof window !== 'undefined' ? window?.innerHeight : null,
+        width: typeof window !== 'undefined' ? window?.innerWidth : null,
+      });
+
+      const {
+        dimension: {
+          height,
+          width,
+        },
+        position: {
+          x,
+          y,
+          z,
+        },
+      } = layout;
       const expansion = (
-        <div ref={ref}>
-          <VersionControlFileDiffs
-            applicationConfigration={applicationConfigration}
-          />
-        </div>
+        <ContainerStyle
+          ref={ref}
+          style={{
+            height,
+            left: x,
+            top: y,
+            width,
+            zIndex: z,
+        }}>
+          <ContentStyle>
+            <VersionControlFileDiffs
+              applicationConfigration={applicationConfigration}
+            />
+          </ContentStyle>
+        </ContainerStyle>
       );
       setElement(expansion);
 

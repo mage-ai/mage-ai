@@ -32,9 +32,17 @@ class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
         if diff:
             models1 = await asyncio.gather(*[get_content(model) for model in models])
             models2 = await asyncio.gather(*[get_detail(model) for model in models])
+            mapping = File(project=project).diff_stats(include_all=True)
+
             models = []
             for model1, model2 in zip(models1, models2):
                 model1.diff = model2.diff
+
+                if mapping.get(model1.name):
+                    stats = mapping.get(model1.name)
+                    model1.additions = stats.get('additions')
+                    model1.deletions = stats.get('deletions')
+
                 models.append(model1)
 
         return self.build_result_set(

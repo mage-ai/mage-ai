@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import shutil
 import subprocess
 from asyncio.subprocess import PIPE, STDOUT
@@ -271,7 +272,9 @@ class Branch(BaseVersionControl):
 
 @dataclass
 class File(BaseVersionControl):
+    additions: int = None
     content: str = None
+    deletions: int = None
     diff: List[str] = None
     file_path: str = None
     name: str = None
@@ -285,7 +288,7 @@ class File(BaseVersionControl):
         lines_unstaged = self(project=project).list(unstaged=True)
         lines_untracked = self(project=project).list(untracked=True)
 
-        files = []
+        mapping = {}
         for opts, arr in [
             (dict(staged=True), lines_staged),
             (dict(unstaged=True), lines_unstaged),
@@ -295,9 +298,54 @@ class File(BaseVersionControl):
                 if line and line.strip():
                     file = File.load(name=line.strip(), **opts)
                     file.project = project
-                    files.append(file)
+                    file_path = file.get_file_path()
 
-        return files
+                    if file_path in mapping:
+                        file_prev = mapping[file_path]
+                        file.staged = file.staged or file_prev.staged
+                        file.unstaged = file.unstaged or file_prev.unstaged
+                    mapping[file_path] = file
+
+        return sorted(list(mapping.values()), key=lambda x: x.name)
+
+    def diff_stats(self, include_all: bool = False) -> Dict:
+        lines = []
+        if include_all:
+            lines.extend(self.run('diff --stat'))
+        else:
+            lines.extend(self.run(f'diff --stat {self.name}'))
+
+        mapping = {}
+
+        # Remove the last line
+        # 5 files changed, 232 insertions(+), 28 deletions(-)
+        for line in lines[:-1]:
+            line = line.strip()
+            parts = line.split('|')
+            if len(parts) != 2:
+                continue
+
+            name, stats = parts
+            name = name.strip()
+            stats = stats.strip()
+
+            match = re.search(r'^[\d]+[ ]*([+-]+)$', stats)
+            if match:
+                symbols = match.group(1)
+                additions = symbols.count('+')
+                deletions = symbols.count('-')
+
+                mapping[name] = dict(
+                    additions=additions,
+                    deletions=deletions,
+                )
+
+        if mapping.get(self.name):
+            stats = mapping[self.name]
+            self.additions = stats.get('additions')
+            self.deletions = stats.get('deletions')
+
+        return mapping
 
     def list(
         self,
@@ -305,10 +353,12 @@ class File(BaseVersionControl):
         unstaged: bool = False,   # Modified but no git add yet
         untracked: bool = False,  # Modified but never checked in before
     ) -> str:
+        # A file can belong to staged and unstaged because it has unstaged modifications.
         outputs = []
         if staged:
             outputs.extend(self.run('diff --name-only --staged'))
 
+        # Files with unstaged changes
         if unstaged:
             outputs.extend(self.run('diff --name-only'))
 
@@ -350,11 +400,16 @@ class File(BaseVersionControl):
     def delete(self) -> List[str]:
         return self.run(f'checkout {self.name}')
 
+    def get_file_path(self) -> str:
+        return self.file_path or os.path.join(self.repo_path, self.name)
+
     def to_dict(self, **kwargs) -> Dict:
         return merge_dict(super().to_dict(**kwargs), dict(
+            additions=self.additions,
             content=self.content,
+            deletions=self.deletions,
             diff=self.diff,
-            file_path=self.file_path or os.path.join(self.repo_path, self.name),
+            file_path=self.get_file_path(),
             name=self.name,
             staged=self.staged,
             unstaged=self.unstaged,

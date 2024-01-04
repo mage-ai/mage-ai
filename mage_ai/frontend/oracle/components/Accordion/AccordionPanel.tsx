@@ -34,6 +34,7 @@ export type AccordionPanelProps = {
   smallTitle?: boolean;
   titleXPadding?: number;
   titleYPadding?: number;
+  unboundedTitle?: boolean;
   visible?: boolean;
   visibleCount?: number;
   visibleHighlightDisabled?: boolean;
@@ -224,6 +225,7 @@ const AccordionPanel = ({
   title,
   titleXPadding,
   titleYPadding,
+  unboundedTitle,
   visible,
   visibleCount,
   visibleHighlightDisabled,
@@ -259,24 +261,27 @@ const AccordionPanel = ({
       visible={visible && !visibleHighlightDisabled}
     >
       <FlexContainer alignItems="center" justifyContent="space-between">
-        <FlexContainer alignItems="center">
-          {beforeTitleElement}
+        {!unboundedTitle && (
+          <FlexContainer alignItems="center">
+            {beforeTitleElement}
 
-          {beforeTitleElement && <Spacing ml={1} />}
+            {beforeTitleElement && <Spacing ml={1} />}
 
-          {typeof title !== 'string' && title}
+            {typeof title !== 'string' && title}
 
-          {typeof title === 'string' && (
-            <Text
-              bold
-              default={!visible}
-              large={!smallTitle}
-              wind={highlighted}
-            >
-              {title}
-            </Text>
-          )}
-        </FlexContainer>
+            {typeof title === 'string' && (
+              <Text
+                bold
+                default={!visible}
+                large={!smallTitle}
+                wind={highlighted}
+              >
+                {title}
+              </Text>
+            )}
+          </FlexContainer>
+        )}
+        {unboundedTitle && title}
 
         <Spacing mr={1} />
 
