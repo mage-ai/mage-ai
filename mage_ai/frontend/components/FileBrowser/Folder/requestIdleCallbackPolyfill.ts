@@ -1,3 +1,4 @@
+// @ts-nocheck
 (function (factory) {
   if (typeof define === 'function' && define.amd) {
     define([], factory);
@@ -211,3 +212,5 @@
     cancel: cancelIdleCallbackShim,
   };
 }));
+
+export default {};
