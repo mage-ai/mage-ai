@@ -207,8 +207,6 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
                     ),
                     type=InteractionType.FETCH_ITEMS,
                 ),
-                options=dict(
-                ),
                 upstream_action_value_key_mapping=dict(
                     update_branch={
                         'data.version_control_branch.current': '.'.join([

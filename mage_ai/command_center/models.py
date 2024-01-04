@@ -339,16 +339,23 @@ class ApplicationConfigurations(CommandCenterBaseClass):
 
 
 @dataclass
+class ExpansionSettings(CommandCenterBaseClass):
+    uuid: str
+
+
+@dataclass
 class Application(CommandCenterBaseClass):
     application_type: ApplicationType
     uuid: str
     actions: List[Action] = None
     buttons: List[Button] = None
     configurations: ApplicationConfigurations = None
+    expansion_settings: ExpansionSettings = None
     settings: List[Union[FormInput, Dict]] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('configurations', ApplicationConfigurations)
+        self.serialize_attribute_class('expansion_settings', ExpansionSettings)
         self.serialize_attribute_classes('actions', Action)
         self.serialize_attribute_classes('buttons', Button)
         self.serialize_attribute_enum('application_type', ApplicationType)

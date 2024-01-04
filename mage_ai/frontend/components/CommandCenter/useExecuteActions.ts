@@ -42,7 +42,7 @@ export default function useExecuteActions({
   item: CommandCenterItemType,
   focusedItemIndex: number,
   actions?: CommandCenterActionType[],
-) => void {
+) => Promise<any> {
   function executeAction(
     item: CommandCenterItemType,
     focusedItemIndex: number,

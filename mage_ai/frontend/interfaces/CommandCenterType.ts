@@ -35,6 +35,7 @@ export enum ButtonActionTypeEnum {
 export enum ItemApplicationTypeEnum {
   DETAIL = 'detail',
   DETAIL_LIST = 'detail_list',
+  EXPANSION = 'expansion',
   FORM = 'form',
   LIST = 'list'
 }
@@ -287,11 +288,16 @@ interface ApplicationConfigurationsType {
   requests?: ConfigurationRequestsType;
 }
 
+interface ExpansionSettingsType {
+  uuid: string;
+}
+
 export interface ItemApplicationType {
   actions?: CommandCenterActionType[];
   application_type: ItemApplicationTypeEnum;
   buttons?: ButtonActionType[];
   configurations?: ApplicationConfigurationsType;
+  expansion_settings?: ExpansionSettingsType;
   settings: FormInputType[];
   uuid: string;
 }
