@@ -304,6 +304,7 @@ class FormInput(CommandCenterBaseClass):
     required: bool = False
     options: List[InteractionInputOption] = None
     style: InteractionInputStyle = None
+    text: List[str] = None
     type: InteractionInputType = None
     value: str = None
 

@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from asyncio.subprocess import PIPE, STDOUT
@@ -27,7 +28,7 @@ class BaseVersionControl(BaseDataClass):
             'git',
             '-C',
             self.repo_path,
-        ] + command.split(' ')
+        ] + shlex.split(command)
 
         print(f'[VersionControl] Run: {" ".join(args)}')
 

@@ -13,6 +13,7 @@ from mage_ai.command_center.version_control.files.utils import (
     build_add_staging_selected,
     build_checkout_files_application,
     build_checkout_single_files,
+    build_commit_files,
     build_diff,
     build_reset_all,
     build_reset_selected,
@@ -72,6 +73,15 @@ class BranchFactory(BaseFactory):
             self.filter_score_mutate_accumulator(
                 await build_checkout_files_application(self, model=branch),
                 items,
+            )
+
+            files = sorted(
+                [f for f in File.load_all(project=project) if f.staged],
+                key=lambda f: f.name,
+            )
+            # git commit
+            self.filter_score_mutate_accumulator(
+                await build_commit_files(self, model=branch, files=files), items,
             )
 
         for item in items:

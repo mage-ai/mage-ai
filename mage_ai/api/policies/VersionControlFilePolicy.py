@@ -62,6 +62,7 @@ VersionControlFilePolicy.allow_write(
     [
         'add',
         'commit',
+        'message',
         'reset',
     ],
     scopes=[

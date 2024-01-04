@@ -1,5 +1,5 @@
 import urllib.parse
-from typing import Dict
+from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import ItemType, ObjectType, RenderLocationType
@@ -9,10 +9,12 @@ from mage_ai.command_center.version_control.shared.utils import (
     build_application_detail,
     build_application_detail_list,
     build_application_expansion,
+    build_application_form,
     build_generic,
     build_request,
 )
 from mage_ai.data_preparation.models.file import File as FileModel
+from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Branch, File
 
 
@@ -107,7 +109,7 @@ async def build_add_staging(factory, model: Branch) -> Dict:
             item_type=ItemType.ACTION,
             object_type=ObjectType.VERSION_CONTROL_FILE,
             title='Stage all files',
-            description='Add all files to staging.',
+            description='Add all files to staging',
             subtitle='git add .',
             display_settings_by_attribute=dict(
                 description=dict(text_styles=dict(monospace=False)),
@@ -143,8 +145,8 @@ async def build_add_staging_selected(factory, model: Branch) -> Dict:
     item_dict = await build_add_staging(factory, model)
     item_dict.update(
         uuid='git_add_selected',
-        title='Stage only selected files',
-        description='Add a few selected files to staging.',
+        title='Stage selected files',
+        description='Select files from the File differences app',
         subtitle='git add [file]',
     )
     item_dict['display_settings_by_attribute']['icon']['color_uuid'] = 'accent.cyanLight'
@@ -173,7 +175,7 @@ async def build_reset_all(factory, model: Branch) -> Dict:
     item_dict.update(
         uuid='git_reset_all',
         title='Reset all files',
-        description='Remove all files from staging but keep current modifications.',
+        description='Remove all files from staging but keep current modifications',
         subtitle='git reset .',
     )
     item_dict['display_settings_by_attribute']['icon'] = dict(
@@ -191,8 +193,8 @@ async def build_reset_selected(factory, model: Branch) -> Dict:
     item_dict = await build_reset_all(factory, model)
     item_dict.update(
         uuid='git_reset_selected',
-        title='Reset only selected files',
-        description='Remove selected files from staging but keep their changes.',
+        title='Reset selected files',
+        description='Select files from the File differences app',
         subtitle='git reset [file]',
     )
     item_dict['display_settings_by_attribute']['icon']['color_uuid'] = 'accent.yellow'
@@ -271,5 +273,54 @@ async def build_checkout_single_files(factory, model: File, branch: Branch) -> D
             {}
         ),
     ]
+
+    return item_dict
+
+
+async def build_commit_files(factory, model: Branch, files: List[File]) -> Dict:
+    item_dict = await build_add_staging(factory, model)
+    item_dict.update(
+        uuid=f'git_commit_files_with_message_{model.name}',
+        title='Write a commit message',
+        description=f'and save {len(files)} staged files',
+        subtitle='git commit',
+    )
+    item_dict['display_settings_by_attribute']['icon'] = dict(
+        color_uuid='background.success',
+        icon_uuid='Chat',
+    )
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = None
+    item_dict['applications'] = [
+        build_application_form(
+            model_class=File,
+            settings=[
+                dict(
+                    label='Commit message',
+                    description='Describe the changes that were made to the code.',
+                    display_settings=dict(
+                        icon_uuid='Chat',
+                    ),
+                    placeholder='e.g. Optimized a fire spell because it was burning us out.',
+                    name='request.payload.version_control_file.commit',
+                    type=InteractionInputType.TEXT_FIELD,
+                    required=True,
+                    action_uuid=item_dict['actions'][0]['uuid'],
+                ),
+                dict(
+                    label='Staged files',
+                    text=[file.name for file in files],
+                    type=None,
+                    display_settings=dict(
+                        icon_uuid='File',
+                    ),
+                    style=dict(
+                        default=True,
+                        monospace=True,
+                    ),
+                ),
+            ],
+        ),
+    ]
+    item_dict['applications'][0]['buttons'][1]['label'] = 'Create git commit'
 
     return item_dict

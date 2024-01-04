@@ -103,7 +103,7 @@ def build_input(
     )
 
     base = dict(
-        type=kwargs.get('type', InteractionInputType.TEXT_FIELD),
+        type=InteractionInputType.TEXT_FIELD if 'type' not in kwargs else kwargs.get('type'),
         required=True,
         action_uuid=values['action_uuid'],
     )

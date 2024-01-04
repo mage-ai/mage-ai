@@ -102,10 +102,8 @@ class VersionControlFactory(BaseFactory):
                 await build_delete_project(self, project, items)
 
                 self.remotes = Remote.load_all(project=project)
-                if self.remotes:
-                    await build_remote_list(self, project, items)
-                else:
-                    await build_create_remote(self, project, items)
+                await build_remote_list(self, project, items)
+                await build_create_remote(self, project, items)
 
                 await build_create_branch(self, project, items)
 
@@ -130,9 +128,10 @@ class VersionControlFactory(BaseFactory):
                 # Fetch
                 # Update
                 # Remote
-                remote = Remote.load(**self.item.metadata.remote.to_dict())
-                remote.project = Project.load(**self.item.metadata.project.to_dict())
-                await build_detail_list_items_remote(self, remote, items)
+                if self.item.metadata.remote:
+                    remote = Remote.load(**self.item.metadata.remote.to_dict())
+                    remote.project = Project.load(**self.item.metadata.project.to_dict())
+                    await build_detail_list_items_remote(self, remote, items)
         elif self.item and ItemType.LIST == self.item.item_type:
             if ObjectType.REMOTE == self.item.object_type:
                 # Add remote

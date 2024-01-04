@@ -189,6 +189,7 @@ function ApplicationForm({
       placeholder,
       required,
       style,
+      text,
       type,
     } = formInput;
     const iconUUID = displaySettings?.icon_uuid;
@@ -296,6 +297,20 @@ function ApplicationForm({
           }
         />
       );
+    } else if (!type && text) {
+      content = (
+        <FlexContainer alignContent="flex-end" flexDirection="column">
+          {text?.map(line => (
+            <Text
+              key={line}
+              rightAligned
+              {...style}
+            >
+              {line}
+            </Text>
+          ))}
+        </FlexContainer>
+      )
     }
 
     return (
