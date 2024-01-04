@@ -89,34 +89,35 @@ export default function useResizeElement() {
       let top2;
       let height2;
 
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
       if (isHorizontal) {
         if (isLeft) {
-          width2 = offsetRight - e.clientX;
-          left2 = e.clientX;
+          width2 = offsetRight - clientX;
+          left2 = clientX;
         } else {
-          width2 = e.clientX - offsetLeft;
+          width2 = clientX - offsetLeft;
         }
       } else {
         if (isTop) {
-          height2 = offsetBottom - e.clientY;
-          top2 = e.clientY;
+          height2 = offsetBottom - clientY;
+          top2 = clientY;
         } else {
-          height2 = e.clientY - offsetTop;
+          height2 = clientY - offsetTop;
         }
       }
 
       if (isHorizontal) {
         if (isLeft) {
           // If there is no previous value
-          // -> If decreasing the size by moving to the right
-          // <- If left is more than 24 pixels from the left edge
           if (!refRecentValues?.current?.left ||
             (
               // More than 24 or... moving to the right but pointer is on the right side of the left edge
-              (left2 >= 24 || (left2 > refRecentValues?.current?.left && e.clientX >= element.offsetLeft))
+              (left2 >= 24 || (left2 > refRecentValues?.current?.left && clientX >= offsetLeft))
               &&
               // Width more than 400 or... moving to the left while being 400 pixels away from the right side
-              (width2 >= 400 || (left2 < refRecentValues?.current?.left && e.clientX <= ((element.offsetLeft + width2) - 400)))
+              (width2 >= 400 || (left2 < refRecentValues?.current?.left && clientX <= ((offsetLeft + width2) - 400)))
             )
           ) {
             element.style.left = `${left2}px`;
@@ -142,7 +143,7 @@ export default function useResizeElement() {
           if (!refRecentValues?.current?.width ||
             (
               // Increasing the width (by going to the right) but right edge must be 24 pixels away from the right edge of the screen...
-              width2 > refRecentValues?.current?.width && element.offsetLeft + width2 <= (window.innerWidth - (24 * 2))
+              width2 > refRecentValues?.current?.width && offsetLeft + width2 <= (window.innerWidth - (24 * 2))
             )
               // or decrease the width (by going to the left) but width must be greater than 400
               || (width2 < refRecentValues?.current?.width && width2 >= 400)
@@ -151,21 +152,52 @@ export default function useResizeElement() {
           }
         }
       } else {
-        if (height2) {
-          if (!refRecentValues?.current?.height || (height2 > refRecentValues?.current?.height || isTop) || height2 >= 300) {
-            element.style.height = `${height2}px`;
+        if (top2) {
+          // If there is no previous value
+          if (!refRecentValues?.current?.top ||
+            (
+              // More than 24 or... moving down but pointer is on the bottom side of the top edge
+              (top2 >= 24 || (top2 > refRecentValues?.current?.top && clientY >= offsetTop))
+            )
+            &&
+            // Height more than 300 or.. moving up while being 300 pixels away from the bottom side
+            (height2 >= 300 || (top2 < refRecentValues?.current?.top && clientY <= ((offsetTop + height2) - 300)))
+        ) {
+            element.style.top = `${top2}px`;
+            refRecentValues.current.top = top2;
 
-            if (top2) {
-              if (!refRecentValues?.current?.top || (top2 > refRecentValues?.current?.top && e.clientY >= element.offsetTop) || top2 >= 24) {
-                element.style.top = `${top2}px`;
-              }
+            // If there is no previous value
+            if (!refRecentValues?.current?.height ||
+              (
+                // Increasing the height (by going up) or...
+                height2 > refRecentValues?.current?.height ||
+                (
+                  // Decrease the height up to 300 pixels
+                  (height2 < refRecentValues?.current?.height) && height2 >= 300
+                )
+              )
+            ) {
+              element.style.height = `${height2}px`;
             }
+          }
+        } else {
+          // Resizing from the bottom side
+          // If there is no previous value
+          if (!refRecentValues?.current?.height ||
+            (
+              // Increasing the height (by going down) but bottom edge must be 24 pixels away from the bottom edge of the screen
+              height2 > refRecentValues?.current?.height && offsetTop + height2 <= (window.innerHeight - (24 * 2))
+            )
+              // or decrease the height (by going up) but height must be greater than 300
+            || (height2 < refRecentValues?.current?.height && height2 >= 300)
+          ) {
+            element.style.height = `${height2}px`;
           }
         }
       }
 
-      refRecentValues.current.top = element.offsetTop;
       refRecentValues.current.width = element?.getBoundingClientRect()?.width;
+      refRecentValues.current.height = element?.getBoundingClientRect()?.height;
     };
 
 
