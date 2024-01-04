@@ -4,6 +4,7 @@ from typing import Any, Dict
 import dask.dataframe as dd
 import numpy
 import pandas as pd
+import polars as pl
 import simplejson
 import yaml
 
@@ -23,6 +24,11 @@ CAST_TYPE_COLUMN_TYPES = set([
     'int64',
     'float64',
 ])
+
+POLARS_CAST_TYPE_COLUMN_TYPES = {
+    'Float64': pl.Float64,
+    'Int64': pl.Int64,
+}
 
 
 def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
@@ -49,6 +55,16 @@ def cast_column_types(df: pd.DataFrame, column_types: Dict):
         if column_type in CAST_TYPE_COLUMN_TYPES:
             try:
                 df[column] = df[column].astype(column_type)
+            except Exception:
+                traceback.print_exc()
+    return df
+
+
+def cast_column_types_polars(df: pl.DataFrame, column_types: Dict):
+    for column, column_type in column_types.items():
+        if column_type in POLARS_CAST_TYPE_COLUMN_TYPES:
+            try:
+                df = df.cast({column: POLARS_CAST_TYPE_COLUMN_TYPES.get(column_type)})
             except Exception:
                 traceback.print_exc()
     return df
@@ -82,6 +98,10 @@ def apply_transform(ddf: dd, apply_function) -> dd:
 
 
 def apply_transform_pandas(df: pd.DataFrame, apply_function) -> pd.DataFrame:
+    return df.apply(apply_function, axis=1)
+
+
+def apply_transform_polars(df: pl.DataFrame, apply_function) -> pl.DataFrame:
     return df.apply(apply_function, axis=1)
 
 
