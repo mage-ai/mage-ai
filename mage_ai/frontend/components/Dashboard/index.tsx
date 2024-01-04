@@ -99,12 +99,12 @@ function Dashboard({
 
   const [afterWidthState, setAfterWidthState] = useState(null);
   const afterWidth = useMemo(() => {
-    if (typeof afterWidthProp !== 'undefined' || afterWidthOverride) {
+    if (typeof setAfterWidthProp !== 'undefined' || afterWidthOverride) {
       return afterWidthProp;
     } else {
       return afterWidthState;
     }
-  }, [afterWidthProp, afterWidthState, afterWidthOverride]);
+  }, [afterWidthProp, afterWidthState, afterWidthOverride, setAfterWidthProp]);
 
   const setAfterWidth = useCallback((prev) => {
     let value = prev;
@@ -120,19 +120,19 @@ function Dashboard({
   }, [localStorageKeyAfter, setAfterWidthProp, setAfterWidthState]);
 
   useEffect(() => {
-    if (after) {
-      setAfterWidth(Math.max(afterWidthLocal, 20  * UNIT));
+    if (after && !afterWidth) {
+      setAfterWidth(afterWidthLocal ? Math.max(afterWidthLocal, 20  * UNIT) : afterWidthProp);
     }
   }, []);
 
   const [beforeWidthState, setBeforeWidthState] = useState(null);
   const beforeWidth = useMemo(() => {
-    if (typeof beforeWidthProp !== 'undefined') {
+    if (typeof setBeforeWidthProp !== 'undefined') {
       return beforeWidthProp;
     } else {
       return beforeWidthState;
     }
-  }, [beforeWidthProp, beforeWidthState]);
+  }, [beforeWidthProp, beforeWidthState, setBeforeWidthProp]);
 
   const setBeforeWidth = useCallback((prev) => {
     let value = prev;
@@ -148,8 +148,8 @@ function Dashboard({
   }, [localStorageKeyBefore, setBeforeWidthProp, setBeforeWidthState]);
 
   useEffect(() => {
-    if (before) {
-      setBeforeWidth(Math.max(beforeWidthLocal, 20  * UNIT));
+    if (before && !beforeWidth) {
+      setBeforeWidth(beforeWidthLocal ? Math.max(beforeWidthLocal, 20  * UNIT) : beforeWidthProp);
     }
   }, []);
 
