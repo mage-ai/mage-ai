@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Union
 
 from mage_ai.shared.hash import extract, merge_dict
 
@@ -104,7 +104,11 @@ def build_pipeline_dict(
     )
 
 
-def group_models_by_keys(model_dicts: List[Dict], keys: List[str], uuid_key: str) -> Dict:
+def group_models_by_keys(
+    model_dicts: List[Dict],
+    keys: List[str],
+    get_uuid_key: Callable,
+) -> Dict:
     mapping = {key: {} for key in keys}
 
     for model_dict in model_dicts:
@@ -115,6 +119,6 @@ def group_models_by_keys(model_dicts: List[Dict], keys: List[str], uuid_key: str
             value = str(model_dict.get(key))
             if value not in mapping[key]:
                 mapping[key][value] = []
-            mapping[key][value].append(model_dict.get(uuid_key))
+            mapping[key][value].append(get_uuid_key(model_dict))
 
     return mapping

@@ -36,7 +36,7 @@ class PipelineCache(BaseCache):
         groups = group_models_by_keys(
             [model_dict.get('pipeline') for model_dict in value.values()],
             ['type'],
-            'uuid',
+            self.build_key
         )
 
         super().set(key, dict(
