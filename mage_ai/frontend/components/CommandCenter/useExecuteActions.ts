@@ -228,13 +228,35 @@ export default function useExecuteActions({
           };
         }
       } else if (request?.operation && request?.resource) {
-        actionFunction = (results: KeyValueType = {}) => invokeRequest({
-          action,
-          focusedItemIndex,
-          index,
-          item,
-          results,
-        });
+        actionFunction = (results: KeyValueType = {}) => {
+          const actionCopy = { ...action };
+
+          let parsedResult = {};
+
+          if (action?.application_state_parsers) {
+            action?.application_state_parsers?.forEach(({
+              function_body: functionBody,
+              positional_argument_names: positionalArgumentNames,
+            }) => {
+              const buildFunction = new Function(...positionalArgumentNames, functionBody);
+              // These objects can be muted. Typically, the action object is being mutated.
+              parsedResult = buildFunction(
+                item,
+                actionCopy,
+                refApplicationState?.current || {},
+                parsedResult,
+              );
+            });
+          }
+
+          return invokeRequest({
+            action: actionCopy,
+            focusedItemIndex,
+            index,
+            item,
+            results,
+          });
+        };
       }
 
       actionSettings.push({

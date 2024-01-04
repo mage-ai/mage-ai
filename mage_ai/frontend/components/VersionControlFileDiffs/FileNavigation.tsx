@@ -108,7 +108,7 @@ function FileNavigation({
                       ...prev,
                     };
 
-                    if (name in value) {
+                    if (name in prev) {
                       delete value[name];
                     } else {
                       value[name] = true;

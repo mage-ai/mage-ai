@@ -130,7 +130,14 @@ class RenderOptions(CommandCenterBaseClass):
 
 
 @dataclass
+class ApplicationStateParser(CommandCenterBaseClass):
+    function_body: str
+    positional_argument_names: List[str]
+
+
+@dataclass
 class Action(CommandCenterBaseClass):
+    application_state_parsers: List[ApplicationStateParser] = None
     delay: int = None
     interaction: Interaction = None
     page: Page = None
@@ -145,6 +152,7 @@ class Action(CommandCenterBaseClass):
         self.serialize_attribute_class('page', Page)
         self.serialize_attribute_class('render_options', RenderOptions)
         self.serialize_attribute_class('request', Request)
+        self.serialize_attribute_classes('application_state_parsers', ApplicationStateParser)
         self.serialize_attribute_enums('validations', ValidationType)
 
 

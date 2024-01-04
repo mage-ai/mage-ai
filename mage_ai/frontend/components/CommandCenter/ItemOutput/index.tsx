@@ -37,6 +37,7 @@ function ItemOutput({
     ObjectTypeEnum.BRANCH,
     ObjectTypeEnum.PROJECT,
     ObjectTypeEnum.REMOTE,
+    ObjectTypeEnum.VERSION_CONTROL_FILE,
   ].includes(objectType)) {
     const arr = actionResults?.[objectType];
     const result = arr?.[arr?.length - 1];

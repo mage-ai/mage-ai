@@ -242,7 +242,29 @@ export interface RenderOptionsType {
   location: RenderLocationTypeEnum;
 }
 
+interface ApplicationStateParserType {
+  function_body: string;
+  // Should almost always be something like this:
+/*
+dict(
+            positional_argument_names=[
+                'item',
+                'action',
+                'applicationState',
+                'options',
+            ],
+            function_body="""
+const names = Object.keys(applicationState?.VersionControlFileDiffs?.files || {})?.join(' ');
+action.request.payload.version_control_file.add = names
+return action
+""",
+*/
+
+  positional_argument_names: string[];
+}
+
 export interface CommandCenterActionType extends CommandCenterActionBaseType {
+  application_state_parsers?: ApplicationStateParserType[];
   delay?: number;
   interaction?: CommandCenterActionInteractionType;
   page?: CommandCenterActionPageType;

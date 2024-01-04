@@ -6,7 +6,13 @@ from mage_ai.command_center.version_control.branches.utils import (
     build_and_score_detail,
     build_clone,
 )
-from mage_ai.command_center.version_control.files.utils import build_diff, build_status
+from mage_ai.command_center.version_control.files.utils import (
+    build_add_staging,
+    build_add_staging_selected,
+    build_diff,
+    build_reset_all,
+    build_status,
+)
 from mage_ai.version_control.models import Branch, Project
 
 
@@ -32,6 +38,13 @@ class BranchFactory(BaseFactory):
         self.filter_score_mutate_accumulator(await build_diff(self, model=branch), items)
         # Status
         self.filter_score_mutate_accumulator(await build_status(self, model=branch), items)
+        # git add .
+        self.filter_score_mutate_accumulator(await build_add_staging(self, model=branch), items)
+        self.filter_score_mutate_accumulator(
+            await build_add_staging_selected(self, model=branch), items,
+        )
+        # git reset .
+        self.filter_score_mutate_accumulator(await build_reset_all(self, model=branch), items)
 
         return items
 

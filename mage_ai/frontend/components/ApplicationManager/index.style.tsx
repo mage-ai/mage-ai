@@ -5,6 +5,7 @@ import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styl
 
 
 export const ContainerStyle = styled.div`
+  box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
   position: fixed;
 `;
 

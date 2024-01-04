@@ -120,11 +120,7 @@ function VersionControlFileDetail({
         <Accordion
           noBorder
           noBoxShadow
-          visibleMappingForced={{
-            0: true,
-            1: true,
-            2: true,
-          }}
+          showDividers
         >
           {accordionPanels}
         </Accordion>

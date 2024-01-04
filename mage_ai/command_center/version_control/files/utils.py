@@ -1,7 +1,8 @@
+import urllib.parse
 from typing import Dict
 
 from mage_ai.api.operations.constants import OperationType
-from mage_ai.command_center.constants import ItemType, ObjectType
+from mage_ai.command_center.constants import ItemType, ObjectType, RenderLocationType
 from mage_ai.command_center.version_control.shared.utils import (
     build_action_generic,
     build_application_detail,
@@ -93,3 +94,92 @@ async def build_status(factory, model: Branch) -> Dict:
             ),
         ),
     ))
+
+
+async def build_add_staging(factory, model: Branch) -> Dict:
+    return build_generic(
+        model=model,
+        model_class=File,
+        item_dict=dict(
+            uuid='git_add_all',
+            item_type=ItemType.ACTION,
+            object_type=ObjectType.VERSION_CONTROL_FILE,
+            title='Stage all files',
+            description='Add all files to staging.',
+            subtitle='git add .',
+            display_settings_by_attribute=dict(
+                description=dict(text_styles=dict(monospace=False)),
+                icon=dict(color_uuid='accent.cyan', icon_uuid='Integration'),
+                subtitle=dict(
+                    text_styles=dict(
+                        monospace=True,
+                    ),
+                ),
+            ),
+            actions=[
+                build_action_generic(
+                    model_class=FileModel,
+                    request=build_request(
+                        operation=OperationType.UPDATE,
+                        resource='version_control_files',
+                        resource_id='__file__',
+                        response_resource_key='version_control_file',
+                        resource_parent='version_control_projects',
+                        resource_parent_id=urllib.parse.quote_plus(model.project.uuid or ''),
+                        payload=dict(
+                            version_control_file=dict(add='.'),
+                        ),
+                    ),
+                    render_options=dict(location=RenderLocationType.ITEMS_CONTAINER_AFTER),
+                ),
+            ],
+        ),
+    )
+
+
+async def build_add_staging_selected(factory, model: Branch) -> Dict:
+    item_dict = await build_add_staging(factory, model)
+    item_dict.update(
+        uuid='git_add_selected',
+        title='Stage only selected files',
+        description='Add a few selected files to staging.',
+        subtitle='git add [file]',
+    )
+    item_dict['display_settings_by_attribute']['icon']['color_uuid'] = 'accent.cyanLight'
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(add=None)
+    item_dict['actions'][0]['application_state_parsers'] = [
+        dict(
+            positional_argument_names=[
+                'item',
+                'action',
+                'applicationState',
+                'options',
+            ],
+            function_body="""
+const names = Object.keys(applicationState?.VersionControlFileDiffs?.files || {})?.join(' ');
+action.request.payload.version_control_file.add = names
+return action
+""",
+        ),
+    ]
+
+    return item_dict
+
+
+async def build_reset_all(factory, model: Branch) -> Dict:
+    item_dict = await build_add_staging(factory, model)
+    item_dict.update(
+        uuid='git_reset_all',
+        title='Reset all files',
+        description='Remove all files from staging but keep current modifications.',
+        subtitle='git reset .',
+    )
+    item_dict['display_settings_by_attribute']['icon'] = dict(
+        color_uuid='accent.warning',
+        icon_uuid='Callback',
+    )
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(
+        reset='.',
+    )
+
+    return item_dict

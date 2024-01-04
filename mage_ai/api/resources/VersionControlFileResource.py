@@ -68,7 +68,6 @@ class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
         project = kwargs.get('parent_model')
         model = File.load(name=urllib.parse.unquote(pk))
         model.project = project
-        model.diff = model.detail()
 
         res = self(model, user, **kwargs)
         res.validate_output()

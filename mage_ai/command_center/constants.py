@@ -89,3 +89,7 @@ class ValidationType(str, Enum):
 
 class RenderLocationType(str, Enum):
     ITEMS_CONTAINER_AFTER = 'items_container_after'
+
+
+class ApplicationExpansionUUID(str, Enum):
+    VersionControlFileDiffs = 'VersionControlFileDiffs'
