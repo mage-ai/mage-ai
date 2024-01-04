@@ -71,6 +71,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             elif self.configuration and self.configuration.get('file_path'):
                 file_path = self.configuration.get('file_path')
                 parts = get_path_parts(file_path)
+                # THIS HAS TO FAIL HERE OR ELSE AN INFINITE LOOP!
                 return os.path.join(*parts)
 
         file_path = self.configuration.get('file_path') or ''
