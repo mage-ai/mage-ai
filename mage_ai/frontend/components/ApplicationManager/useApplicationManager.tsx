@@ -15,10 +15,19 @@ import {
   ResizeTopStyle,
   ResizeBottomStyle,
 } from './index.style';
+import { KeyValueType } from '@interfaces/CommandCenterType';
 
 const ROOT_APPLICATION_UUID = 'ApplicationManager';
 
-export default function useApplicationManager(): {
+export default function useApplicationManager({
+  applicationState,
+  onChangeState,
+}: {
+  applicationState: {
+    current: KeyValueType;
+  };
+  onChangeState?: (prev: (data: any) => any) => any;
+}): {
   getApplications: () => {
     applications: ApplicationConfiguration[];
     expansions: any[];
@@ -177,6 +186,13 @@ export default function useApplicationManager(): {
             <InnerStyle>
               <VersionControlFileDiffs
                 applicationConfigration={applicationConfigration}
+                applicationState={applicationState}
+                onChangeState={(prev) => {
+                  if (onChangeState) {
+                    onChangeState?.(prev);
+                  }
+                }}
+                uuid={uuid}
               />
             </InnerStyle>
           </ContentStyle>

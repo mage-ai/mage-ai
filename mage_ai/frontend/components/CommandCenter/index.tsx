@@ -266,12 +266,18 @@ function CommandCenter() {
     refInput.current.placeholder = getInputPlaceholder(currentApplicationConfig);
   }
 
+  function onChangeState(prev: (data: any) => any) {
+    refApplicationState.current = prev(refApplicationState?.current);
+    console.log(refApplicationState?.current);
+  }
+
   const {
     getApplications,
     renderApplications,
     startApplication,
   } = useApplicationManager({
-
+    applicationState: refApplicationState,
+    onChangeState,
   });
 
   function addApplication(

@@ -3,15 +3,14 @@ import { useMemo } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
-import Folder from '@components/FileBrowser/Folder';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import VersionControlFileBrowser from './VersionControlFileBrowser';
 import { ChildrenStyle, ContainerStyle, FormStyle } from '../ApplicationForm/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { VersionControlFile } from '@interfaces/VersionControlType';
+import { VersionControlFileType } from '@interfaces/VersionControlType';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
-import { getFullPath } from '@utils/files';
 
 function VersionControlFileDetail({
   model,
@@ -23,11 +22,11 @@ function VersionControlFileDetail({
     untracked,
   } = useMemo(() => {
     const mapping2 = {};
-    const staged2: VersionControlFile[] = [];
-    const unstaged2: VersionControlFile[] = [];
-    const untracked2: VersionControlFile[] = [];
+    const staged2: VersionControlFileType[] = [];
+    const unstaged2: VersionControlFileType[] = [];
+    const untracked2: VersionControlFileType[] = [];
 
-    const files2: VersionControlFile[] = model?.version_control_files || [];
+    const files2: VersionControlFileType[] = model?.version_control_files || [];
     files2?.forEach((file) => {
       if (file?.staged) {
         staged2.push(file);
@@ -103,69 +102,10 @@ function VersionControlFileDetail({
   const filesMemo = useMemo(() => {
     return (
       <div style={{ paddingBottom: 8, paddingTop: 8 }}>
-        {model?.files?.map((file, idx) => (
-          <Folder
-            disableContextMenu
-            file={file}
-            key={`${file.name}-${idx}`}
-            level={0}
-            onlyShowChildren
-            renderAfterContent={(file: FileType) => {
-              const {
-                children,
-              } = file;
-              const isFolder = children?.length >= 1;
-
-              let fullPath = getFullPath(file);
-              // When a folder is untracked, it has a / at the end.
-              // e.g. default_repo/transformers/
-              if (isFolder) {
-                fullPath = `${fullPath}/`;
-              }
-
-              let displayText;
-              let displayTitle;
-              const colorProps: {
-                danger?: boolean;
-                success?: boolean;
-                warning?: boolean;
-              } = {};
-
-              const vcFile = mapping?.[fullPath];
-
-              if (vcFile?.unstaged) {
-                displayText = 'M';
-                displayTitle = 'Modified';
-                colorProps.warning = true;
-              } else if (vcFile?.untracked) {
-                displayText = 'U';
-                displayTitle = 'Untracked';
-                colorProps.danger = true;
-              } else if (vcFile?.staged) {
-                displayText = 'S';
-                displayTitle = 'Staged';
-                colorProps.success = true;
-              }
-
-              if (isFolder && !displayText) {
-                return null;
-              }
-
-              return (
-                <Spacing mx={1}>
-                  <Text
-                    {...colorProps}
-                    monospace
-                    rightAligned
-                    small
-                  >
-                    {displayText}
-                  </Text>
-                </Spacing>
-              );
-            }}
-          />
-        ))}
+        <VersionControlFileBrowser
+          files={model?.files}
+          mapping={mapping}
+        />
       </div>
     );
   }, [mapping, model?.files]);

@@ -1,15 +1,24 @@
-import { createRef, useMemo, useRef, useState } from 'react';
+import { createRef, useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import Checkbox from '@oracle/elements/Checkbox';
 import CodeEditor from '@components/CodeEditor';
 import FileNavigation from './FileNavigation';
+import FileType from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
+import VersionControlFileBrowser, {
+  buildMapping,
+} from '@components/CommandCenter/ApplicationItemDetail//VersionControlFileBrowser';
 import api from '@api';
+import { AlertTriangle, Check, DataIntegrationPipeline } from '@oracle/icons';
+import { ApplicationConfiguration } from '@components/CommandCenter/constants';
+import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { ContainerStyle } from './index.style';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -20,11 +29,55 @@ import { range, sortByKey } from '@utils/array';
 
 function VersionControlFileDiffs({
   applicationConfigration,
+  applicationState,
+  onChangeState,
+  uuid,
+}: {
+  applicationConfigration: ApplicationConfiguration;
+  applicationState: {
+    current: KeyValueType;
+  };
+  onChangeState?: (prev: (data: any) => any) => any;
+  uuid: ApplicationExpansionUUIDEnum;
 }) {
   const refContent = useRef({});
   const refRows = useRef([]);
 
   const [beforeWidth, setBeforeWidth] = useState(40 * UNIT);
+  const [selectedFiles, setSelectedFilesState] = useState<KeyValueType>(
+    applicationState?.current?.[uuid]?.files || {},
+  );
+  const setSelectedFiles = useCallback((prev: (data: any) => any) => {
+    setSelectedFilesState((prev2) => {
+      const value = prev(prev2);
+
+      onChangeState?.((state) => ({
+        ...state,
+        [uuid]: {
+          ...state?.[uuid],
+          files: value,
+        },
+      }));
+
+      return value;
+    });
+
+  }, [onChangeState, uuid]);
+
+  const tabs = useMemo(() => {
+    const count = Object.values(selectedFiles || {}).filter(v => v)?.length;
+
+    return [
+      {
+        label: () => count >= 1 ? `Files selected ${count}` : 'Files changed',
+        uuid: 'Files changed',
+      },
+      {
+        uuid: 'File browser',
+      },
+    ];
+  }, [selectedFiles]);
+  const [selectedTab, setSelectedTab] = useState<TabType>(tabs?.[0]);
 
   const {
     item
@@ -39,6 +92,11 @@ function VersionControlFileDiffs({
     data?.version_control_files || [],
     ({ name }) => name,
   ) || [], [data]);
+
+  const { data: dataFilesBrowser } = api.files.list({
+    repo_path: item?.metadata?.project?.repo_path,
+  });
+  const filesBrowser: FileType[] = useMemo(() => dataFilesBrowser?.files || [], [data]);
 
   const [updateFile] = useMutation(
     ({
@@ -103,6 +161,15 @@ function VersionControlFileDiffs({
 
           return (
             <AccordionPanel
+              beforeTitleElement={(
+                <FlexContainer alignItems="center">
+                  {staged && !unstaged && <Check success />}
+                  {unstaged && <DataIntegrationPipeline warning />}
+                  {untracked && <AlertTriangle danger />}
+
+                  <div style={{ paddingRight: 1.5 * UNIT }} />
+                </FlexContainer>
+              )}
               key={filePath}
               noBorderRadius
               noPaddingContent
@@ -170,22 +237,56 @@ function VersionControlFileDiffs({
     return el;
   }, [files]);
 
+  const mapping = useMemo(() => buildMapping(files), [files]);
+
   const beforeMemo = useMemo(() => {
     return (
       <>
-        <FileNavigation
-          files={files}
-          refRows={refRows}
-        />
+        {'File browser' === selectedTab?.uuid && (
+          <VersionControlFileBrowser
+            files={filesBrowser}
+            mapping={mapping}
+          />
+        )}
+
+        {('Files changed' === selectedTab?.uuid || !selectedTab?.uuid) && (
+          <FileNavigation
+            files={files}
+            refRows={refRows}
+            selectedFiles={selectedFiles}
+            setSelectedFiles={setSelectedFiles}
+          />
+        )}
       </>
     );
-  }, [files]);
+  }, [
+    files,
+    filesBrowser,
+    mapping,
+    selectedFiles,
+    selectedTab,
+    setSelectedFiles,
+  ]);
 
   return (
     <ContainerStyle>
       <TripleLayout
         before={beforeMemo}
+        beforeHeader={(
+          <ButtonTabs
+            allowScroll
+            onClickTab={(tab: TabType) => {
+              setSelectedTab?.(tab);
+            }}
+            selectedTabUUID={selectedTab?.uuid}
+            tabs={tabs}
+            underlineColor='#4877FF'
+            underlineStyle
+          />
+        )}
         beforeHeightOffset={0}
+        beforeHeaderOffset={0}
+        beforeContentHeightOffset={48}
         beforeHidden={false}
         beforeWidth={300}
         contained

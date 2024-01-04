@@ -261,6 +261,8 @@ const AccordionPanel = ({
       visible={visible && !visibleHighlightDisabled}
     >
       <FlexContainer alignItems="center" justifyContent="space-between">
+        {unboundedTitle && beforeTitleElement}
+
         {!unboundedTitle && (
           <FlexContainer alignItems="center">
             {beforeTitleElement}
