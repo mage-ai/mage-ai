@@ -1,31 +1,14 @@
-import { ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import styled from 'styled-components';
 
-export const OUTPUT_HEIGHT = 300;
+import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 
-export const AsideStyle = styled.div`
-  ${hideScrollBar()}
+export const ContainerStyle = styled.div`
+  border-radius: ${BORDER_RADIUS_XLARGE}px;
+  height: inherit;
+  width: inherit;
 
-  overflow-x: auto;
-`;
-
-export const AsideAfterStyle = styled.div`
-`;
-
-export const OutputContainerStyle = styled.div<{
-  height?: number;
-  maxHeight?: number;
-  noScrollbarTrackBackground?: boolean;
-}>`
-  ${ScrollbarStyledCss}
-
-  overflow-y: scroll;
-
-  ${props => props.height && `
-    height: ${props.height}px;
-  `}
-
-  ${props => !props.height && `
-    max-height: ${props.maxHeight || OUTPUT_HEIGHT}px;
+  ${props => `
+    background-color: #18181C;
   `}
 `;

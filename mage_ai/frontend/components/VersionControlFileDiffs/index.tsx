@@ -1,4 +1,4 @@
-import { createRef, useMemo, useRef } from 'react';
+import { createRef, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Accordion from '@oracle/components/Accordion';
@@ -10,7 +10,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
-import { AsideStyle, AsideAfterStyle } from './index.style';
+import { ContainerStyle } from './index.style';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VersionControlFileType } from '@interfaces/VersionControlType';
@@ -23,6 +23,8 @@ function VersionControlFileDiffs({
 }) {
   const refContent = useRef({});
   const refRows = useRef([]);
+
+  const [beforeWidth, setBeforeWidth] = useState(40 * UNIT);
 
   const {
     item
@@ -113,7 +115,12 @@ function VersionControlFileDiffs({
                   title={`+${additions} -${deletions}`}
                 >
                   <Flex flex={1}>
-                    <Text monospace small>
+                    <Text
+                      danger={untracked}
+                      monospace
+                      small
+                      warning={unstaged}
+                    >
                       {filePath?.replace(repo_path, '')?.slice(1)}
                     </Text>
                   </Flex>
@@ -136,13 +143,12 @@ function VersionControlFileDiffs({
             >
               <CodeEditor
                 autoHeight
-                // height={codeEditorMaximumHeightOffset ? heightTotal - codeEditorMaximumHeightOffset : null}
-
                 language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
                 onChange={(value: string) => {
                   refContent.current[name] = value;
                 }}
                 onSave={(content: string) => {
+                  // @ts-ignore
                   updateFile({
                     filePath,
                     content,
@@ -176,35 +182,18 @@ function VersionControlFileDiffs({
   }, [files]);
 
   return (
-    <TripleLayout
-      inline
-      // after={after}
-      // afterHeader={afterHeader}
-      // afterHeightOffset={HEADER_HEIGHT}
-      // afterHidden={afterHidden}
-      // afterMousedownActive={afterMousedownActive}
-      // afterWidth={afterWidth}
-      before={beforeMemo}
-      // beforeHeader={beforeHeader}
-      // beforeHeightOffset={HEADER_HEIGHT}
-      // beforeMousedownActive={beforeMousedownActive}
-      // // beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
-      beforeHidden={false}
-      beforeWidth={300}
-      contained
-      // headerOffset={headerOffset}
-      // hideAfterCompletely={!after || !setAfterHidden || hideAfterCompletely}
-      // leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
-      // mainContainerHeader={mainContainerHeader}
-      // mainContainerRef={mainContainerRef}
-      // setAfterHidden={setAfterHidden}
-      // setAfterMousedownActive={setAfterMousedownActive}
-      // setAfterWidth={setAfterWidth}
-      // setBeforeMousedownActive={setBeforeMousedownActive}
-      // setBeforeWidth={setBeforeWidth}
-    >
-      {codeEditors}
-    </TripleLayout>
+    <ContainerStyle>
+      <TripleLayout
+        before={beforeMemo}
+        beforeHeightOffset={0}
+        beforeHidden={false}
+        beforeWidth={300}
+        contained
+        inline
+      >
+        {codeEditors}
+      </TripleLayout>
+    </ContainerStyle>
   );
 }
 

@@ -42,7 +42,9 @@ function FileNavigation({
           key={name}
           noOutline
           noHoverUnderline
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+
             refRows?.current?.[idx]?.current?.scrollIntoView({
               behavior: 'smooth',
               block: 'center',
