@@ -1,6 +1,8 @@
+import asyncio
 import os
 import shutil
 import subprocess
+from asyncio.subprocess import PIPE, STDOUT
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
@@ -18,7 +20,7 @@ class BaseVersionControl(BaseDataClass):
     project: Any = None
     project_uuid: str = None
 
-    def run(self, command: str) -> List[str]:
+    def prepare_commands(self, command: str) -> List[str]:
         args = [
             'git',
             '-C',
@@ -27,7 +29,27 @@ class BaseVersionControl(BaseDataClass):
 
         print(f'[VersionControl] Run: {" ".join(args)}')
 
-        proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return args
+
+    async def run_async(self, command: str) -> List[str]:
+        proc = await asyncio.create_subprocess_shell(
+            ' '.join(self.prepare_commands(command)),
+            stdin=PIPE,
+            stdout=PIPE,
+            stderr=STDOUT,
+        )
+
+        self.output = await proc.stdout.read()
+        self.output = self.output.decode().split('\n') if self.output else self.output
+
+        return self.output
+
+    def run(self, command: str) -> List[str]:
+        proc = subprocess.run(
+            self.prepare_commands(command),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
 
         self.output = proc.stdout.decode().split('\n')
 
@@ -299,6 +321,10 @@ class File(BaseVersionControl):
 
     def create(self) -> List[str]:
         return self.run(f'add {self.name}')
+
+    async def detail_async(self) -> List[str]:
+        self.diff = await self.run_async(f'diff {self.name}')
+        return self.diff
 
     def detail(self) -> List[str]:
         self.diff = self.run(f'diff {self.name}')

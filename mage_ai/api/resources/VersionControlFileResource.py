@@ -1,3 +1,4 @@
+import asyncio
 import urllib.parse
 from typing import Dict
 
@@ -7,13 +8,27 @@ from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.version_control.models import File
 
 
+async def get_detail(model: File) -> File:
+    await model.detail_async()
+    return model
+
+
 class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
     @classmethod
     async def collection(self, query: Dict, _meta: Dict, user: User, **kwargs):
         project = kwargs.get('parent_model')
 
+        models = File.load_all(project=project)
+
+        diff = query.get('diff', [None])
+        if diff:
+            diff = diff[0]
+
+        if diff:
+            models = await asyncio.gather(*[get_detail(model) for model in models])
+
         return self.build_result_set(
-            File.load_all(project=project),
+            models,
             user,
             **kwargs,
         )
