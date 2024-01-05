@@ -9,9 +9,10 @@ from mage_ai.shared.models import BaseDataClass
 
 class DynamicBlockFlag(str, Enum):
     CLONE_OF_ORIGINAL = 'clone_of_original'
-    DYANMIC_CHILD = 'dyanmic_child'
     DYNAMIC = 'dynamic'
+    DYNAMIC_CHILD = 'dynamic_child'
     ORIGINAL = 'original'
+    REDUCE_OUTPUT = 'reduce_output'
     SPAWN_OF_DYNAMIC_CHILD = 'spawn_of_dynamic_child'
 
 
@@ -38,7 +39,9 @@ def should_reduce_output(block) -> bool:
     Returns:
         bool: True if the block should reduce its output, False otherwise.
     """
-    return block.configuration and block.configuration.get('reduce_output', False)
+    if not block.configuration or not block.configuration.get('reduce_output', False):
+        return False
+    return True
 
 
 def is_dynamic_block_child(block) -> bool:
@@ -63,14 +66,6 @@ def is_dynamic_block_child(block) -> bool:
     dynamic_or_child_with_reduce = list(filter(lambda x: should_reduce_output(x), dynamic_or_child))
 
     return len(dynamic_or_child) > len(dynamic_or_child_with_reduce)
-
-
-def is_dynamic_block_and_dynamic_child_block(block) -> bool:
-    pass
-
-
-def is_clone_of_original_dynamic_child_block(block) -> bool:
-    pass
 
 
 def is_original_dynamic_child_block(
@@ -118,7 +113,6 @@ class DynamicBlockWrapperBase(BaseDataClass):
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
     index: int = None
-    reduce_output: bool = False
     siblings: List[BaseDataClass] = field(default_factory=lambda: [])
     spawns: List[BaseDataClass] = field(default_factory=lambda: [])
     upstream_dynamic_blocks: List[BaseDataClass] = field(default_factory=lambda: [])
@@ -126,13 +120,13 @@ class DynamicBlockWrapperBase(BaseDataClass):
     uuid: str = None
 
     def __post_init__(self):
-        self.serialize_attribute_classes('children', BaseDataClass)
-        self.serialize_attribute_classes('clones', BaseDataClass)
-        self.serialize_attribute_classes('siblings', BaseDataClass)
-        self.serialize_attribute_classes('spawns', BaseDataClass)
-        self.serialize_attribute_classes('upstream_dynamic_blocks', BaseDataClass)
-        self.serialize_attribute_classes('upstream_dynamic_child_blocks', BaseDataClass)
-        self.serialize_attribute_enums('flags', DynamicBlockFlag)
+        if self.flags:
+            arr = []
+            for flag in self.flags:
+                if isinstance(flag, str):
+                    arr.append(DynamicBlockFlag(flag))
+                else:
+                    arr.append(flag)
 
 
 @dataclass
@@ -147,10 +141,9 @@ class DynamicBlockWrapper(BaseDataClass):
     # created to handle the responsibility of controlling what block runs are created
     # from an upstream dynamic block.
     clones: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
+    dynamic_block_index: int = None
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
-    index: int = None
-    reduce_output: bool = False
     # Other blocks at the same level; other cloned blocks, other spawns, etc.
     siblings: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
     # If the current block is an original dynamic child block or cloned dynamic child block,
@@ -165,34 +158,27 @@ class DynamicBlockWrapper(BaseDataClass):
     uuid: str = None
 
     def __post_init__(self):
-        self.serialize_attribute_classes('children', DynamicBlockWrapperBase)
-        self.serialize_attribute_classes('clones', DynamicBlockWrapperBase)
-        self.serialize_attribute_classes('siblings', DynamicBlockWrapperBase)
-        self.serialize_attribute_classes('spawns', DynamicBlockWrapperBase)
-        self.serialize_attribute_classes('upstream_dynamic_blocks', DynamicBlockWrapperBase)
-        self.serialize_attribute_classes('upstream_dynamic_child_blocks', DynamicBlockWrapperBase)
-        self.serialize_attribute_enums('flags', DynamicBlockFlag)
+        block_run = self.factory.block_run()
 
-    @classmethod
-    def wrap(self, factory: Any) -> 'DynamicBlockWrapper':
-        model = self(factory=factory)
-        model.hydrate(block_run=model.factory.block_run)
-        return model
+        self.block = self.factory.block
+        self.block_uuid = self.block.uuid if self.block else None
+        self.block_run_block_uuid = block_run.block_uuid if block_run else None
+        self.uuid = self.block_run_block_uuid or self.block_uuid
 
-    def hydrate(self, block: Any = None, block_run: Any = None):
         if block_run:
-            self.block_run_block_uuid = block_run.block_uuid
-            config = block_run.metrics.get('dynamic_block') or {}
+            config = {}
+            if block_run.metrics and block_run.metrics.get('dynamic_block'):
+                config = block_run.metrics.get('dynamic_block') or {}
 
-            self.flags.extend([DynamicBlockFlag(v) for v in config.get('flags') or []])
+            self.flags = [DynamicBlockFlag(v) for v in config.get('flags') or []]
 
             for key in [
-                'block_uuid',
-                'index',
-                'reduce_output',
+                'dynamic_block_index',
                 'uuid',
             ]:
-                setattr(self, key, config.get(key))
+                value = config.get(key) or None
+                if value:
+                    setattr(self, key, value)
 
             for key in [
                 'children',
@@ -202,31 +188,47 @@ class DynamicBlockWrapper(BaseDataClass):
                 'upstream_dynamic_blocks',
                 'upstream_dynamic_child_blocks',
             ]:
-                values = config.get(key)
-                if not values:
-                    continue
-
-                setattr(self, key, [self.load(**m) for m in values])
-        elif block:
-            self.block = block
-            self.block_uuid = block.uuid
-
-            if is_dynamic_block(block):
-                self.flags.append(DynamicBlockFlag.DYNAMIC)
-            if is_dynamic_block_child(block):
-                self.flags.append(DynamicBlockFlag.DYNAMIC_CHILD)
-            self.reduce_output = should_reduce_output(block)
+                values = config.get(key) or None
+                if values:
+                    setattr(self, key, [self.load(**m) for m in values])
 
     def is_original(self, include_clone: bool = False) -> bool:
-        if self.block and self.block.uuid == self.block_run_block_uuid:
-            return True
-
-        return DynamicBlockFlag.ORIGINAL in (self.flags or []) or (
+        if DynamicBlockFlag.ORIGINAL in (self.flags or []) or (
             include_clone and self.is_clone_of_original()
-        )
+        ):
+            return True
+        return self.block and self.block.uuid == self.block_run_block_uuid
 
     def is_clone_of_original(self) -> bool:
-        return DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or [])
+        return DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or []) and not self.is_original()
+
+    def is_dynamic(self) -> bool:
+        if DynamicBlockFlag.DYNAMIC in (self.flags or []):
+            return True
+        return self.block and is_dynamic_block(self.block)
+
+    def is_dynamic_child(self) -> bool:
+        if DynamicBlockFlag.DYNAMIC_CHILD in (self.flags or []):
+            return True
+        return self.block and is_dynamic_block_child(self.block)
+
+    def is_dynamic_squared(self) -> bool:
+        return self.is_dynamic() and self.is_dynamic_child()
+
+    def is_spawn(self) -> bool:
+        if DynamicBlockFlag.SPAWN_OF_DYNAMIC_CHILD in (self.flags or []):
+            return True
+
+        return (self.block or self.block_uuid) and \
+            self.block_run_block_uuid and \
+            ((self.block and self.block.uuid != self.block_run_block_uuid) or
+                (self.block_uuid and self.block_uuid != self.block_run_block_uuid)) and \
+            not self.is_original(include_clone=True)
+
+    def should_reduce_output(self) -> bool:
+        if DynamicBlockFlag.REDUCE_OUTPUT in (self.flags or []):
+            return True
+        return self.block and should_reduce_output(self.block)
 
     def to_dict_base(self, **kwargs) -> dict:
         data = dict(
@@ -236,8 +238,7 @@ class DynamicBlockWrapper(BaseDataClass):
         for key in [
             'block_run_block_uuid',
             'block_uuid',
-            'index',
-            'reduce_output',
+            'dynamic_block_index',
             'uuid',
         ]:
             if getattr(self, key) is not None:
@@ -256,8 +257,9 @@ class DynamicBlockWrapper(BaseDataClass):
             'upstream_dynamic_blocks',
             'upstream_dynamic_child_blocks',
         ]:
-            if getattr(self, key):
-                data[key] = [v.to_dict_base(**kwargs) for v in getattr(self, key)]
+            values = getattr(self, key) or None
+            if values:
+                data[key] = [v.to_dict_base(**kwargs) for v in values]
 
         return ignore_keys_with_blank_values(data)
 

@@ -663,13 +663,12 @@ def execute_raw_sql(
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
         fetch_query_at_indexes.append(block.full_table_name)
 
-    results = loader.execute_queries(
-        queries,
-        commit=True,
-        fetch_query_at_indexes=fetch_query_at_indexes,
-    )
-
     if should_query:
+        results = loader.execute_queries(
+            queries,
+            commit=True,
+            fetch_query_at_indexes=fetch_query_at_indexes,
+        )
         return [results[-1]]
 
     return []

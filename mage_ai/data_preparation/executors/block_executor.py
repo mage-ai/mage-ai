@@ -97,8 +97,8 @@ class BlockExecutor:
             DX_PRINTER.info(
                 'BlockExecutor',
                 block=self.block,
-                original=self.block.is_original(),
-                clone_of_original=self.block.is_clone_of_original(),
+                original=self.block.wrapper().is_original(),
+                clone_of_original=self.block.wrapper().is_clone_of_original(),
             )
 
         self.block_run = None

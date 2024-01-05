@@ -62,6 +62,9 @@ class ColorPrinter:
         if not is_deus_ex_machina():
             return
 
+        color = kwargs.pop('color', None)
+        block = kwargs.pop('block', None)
+
         more = None
         if kwargs:
             more = simplejson.dumps(
@@ -77,11 +80,9 @@ class ColorPrinter:
         if more:
             output = f'{output}\n{more}'
 
-        color = kwargs.pop('color', None)
         if not color:
             color = COLORS[len(output) % len(COLORS)]
 
-        block = kwargs.pop('block', None)
         block_color = None
         if block:
             block_color = BLOCK_TYPE_COLOR_MAPPING.get(block.type) or color
