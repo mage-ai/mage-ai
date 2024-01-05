@@ -3,10 +3,14 @@ name: Build and publish Docker image
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Git branch'
+      dockerfile_branch:
+        description: 'Dockerfile branch'
         required: true
         default: master
+      feature_branch:
+        description: 'Feature branch'
+        required: false
+        default: null
       name:
         description: 'Docker image name'
         required: true
@@ -24,7 +28,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.event.inputs.dockerfile_branch }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -52,3 +56,5 @@ jobs:
           push: true
           tags: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            FEATURE_BRANCH=${{ github.event.inputs.feature_branch }}
