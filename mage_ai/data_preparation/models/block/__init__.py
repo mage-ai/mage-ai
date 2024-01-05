@@ -2405,6 +2405,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         widget=False,
         error_if_file_missing: bool = True,
     ) -> 'Block':
+        if self.replicated_block:
+            return self
+
         if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
@@ -2421,6 +2424,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         error_if_file_missing: bool = True,
         widget: bool = False,
     ) -> 'Block':
+        if self.replicated_block:
+            return self
+
         if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 

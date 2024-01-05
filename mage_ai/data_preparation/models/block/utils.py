@@ -13,6 +13,15 @@ from mage_ai.data_preparation.models.block.dynamic import (
     all_variable_uuids,
     reduce_output_from_block,
 )
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block as is_dynamic_block_original,
+)
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block_child as is_dynamic_block_child_original,
+)
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    should_reduce_output as should_reduce_output_original,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     BlockType,
@@ -20,6 +29,10 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.utils import clean_name as clean_name_orig
+
+is_dynamic_block = is_dynamic_block_original
+is_dynamic_block_child = is_dynamic_block_child_original
+should_reduce_output = should_reduce_output_original
 
 
 def clean_name(name: str, **kwargs) -> str:
@@ -179,56 +192,6 @@ def get_leaf_nodes(
     _get_leaf_nodes(block)
 
     return leafs
-
-
-def is_dynamic_block(block) -> bool:
-    """
-    Checks if the given block is a dynamic block.
-
-    Args:
-        block: The block.
-
-    Returns:
-        bool: True if the block is a dynamic block, False otherwise.
-    """
-    return block.configuration and block.configuration.get('dynamic', False)
-
-
-def should_reduce_output(block) -> bool:
-    """
-    Checks if the given block should reduce its output.
-
-    Args:
-        block: The block.
-
-    Returns:
-        bool: True if the block should reduce its output, False otherwise.
-    """
-    return block.configuration and block.configuration.get('reduce_output', False)
-
-
-def is_dynamic_block_child(block) -> bool:
-    """
-    Checks if the given block is a dynamic block child.
-
-    Args:
-        block: The block.
-
-    Returns:
-        bool: True if the block is a dynamic block child, False otherwise.
-    """
-    dynamic_or_child = []
-
-    for upstream_block in block.upstream_blocks:
-        if is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block):
-            dynamic_or_child.append(upstream_block)
-
-    if len(dynamic_or_child) == 0:
-        return False
-
-    dynamic_or_child_with_reduce = list(filter(lambda x: should_reduce_output(x), dynamic_or_child))
-
-    return len(dynamic_or_child) > len(dynamic_or_child_with_reduce)
 
 
 def output_variables(

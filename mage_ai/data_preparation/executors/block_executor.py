@@ -42,6 +42,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 
@@ -57,7 +58,8 @@ class BlockExecutor:
         self,
         pipeline,
         block_uuid,
-        execution_partition=None
+        block_run_id: int = None,
+        execution_partition: str = None,
     ):
         """
         Initialize the BlockExecutor.
@@ -87,7 +89,8 @@ class BlockExecutor:
                 self.block.uuid == self.block_uuid and \
                 is_dynamic_block_child(self.block):
 
-            self.block = DynamicChildBlockFactory(self.block)
+            self.block = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
+            DX_PRINTER.info('BlockExecutor', block=self.block)
 
         self.block_run = None
 

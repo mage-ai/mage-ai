@@ -67,6 +67,7 @@ from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
@@ -922,10 +923,14 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             # If this is the original dynamic child block, don’t run until all it’s
             # upstream dynamic child blocks have their upstreams completed.
             if block and block.uuid == block_run.block_uuid and is_dynamic_block_child(block):
+                DX_PRINTER.debug(f'dynamic child original: {block_run.block_uuid}', block=block)
                 upstream_dynamic_child_blocks = \
                     [up_block for up_block in block.upstream_blocks if is_dynamic_block_child(
                         up_block,
                     )]
+
+                for up_block in upstream_dynamic_child_blocks:
+                    DX_PRINTER.debug(f'\tupstream dynamic child: {up_block.uuid}', block=block)
 
                 if upstream_dynamic_child_blocks:
                     if not all(
@@ -935,6 +940,12 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
                         ) for up_block in upstream_dynamic_child_blocks],
                     ):
                         continue
+                DX_PRINTER.warning(
+                    f'\tupstream completed for: {block_run.block_uuid}',
+                    block=block,
+                    completed=completed_block_uuids,
+                    all=[b.block_uuid for b in block_runs_all],
+                )
 
             if dynamic_upstream_block_uuids is not None and dynamic_block_index is not None:
                 uuids_to_check = []

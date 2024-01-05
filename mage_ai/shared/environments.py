@@ -4,6 +4,10 @@ import sys
 from mage_ai.shared.constants import ENV_DEV, ENV_PROD, ENV_STAGING, ENV_TEST
 
 
+def is_deus_ex_machina():
+    return int(os.getenv('DEUS_EX_MACHINA', 0) or 0) == 1
+
+
 def is_debug():
     return int(os.getenv('DEBUG', 0) or 0) == 1
 

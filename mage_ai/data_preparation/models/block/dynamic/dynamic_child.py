@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
+from mage_ai.data_preparation.models.block.dynamic.utils import DynamicBlockWrapper
 from mage_ai.data_preparation.models.block.utils import (
     dynamic_block_uuid,
     dynamic_block_values_and_metadata,
@@ -9,14 +10,20 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block_child,
 )
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.orchestration.db.models.schedules import BlockRun
 from mage_ai.shared.array import find_index
+from mage_ai.shared.custom_logger import DX_PRINTER
 
 
 class DynamicChildBlockFactory:
-    def __init__(self, block, pipeline_run=None, **kwargs):
+    def __init__(self, block, pipeline_run=None, block_run_id: int = None, **kwargs):
         self.block = block
+        self.block_run_id = block_run_id
         self.pipeline_run = pipeline_run
         self.type = BlockType.DYNAMIC_CHILD
+
+        self._block_run = None
+        self._wrapper = None
 
     def __getattr__(self, name):
         val = getattr(self.block, name)
@@ -29,17 +36,42 @@ class DynamicChildBlockFactory:
 
         return val
 
+    @property
+    def block_run(self):
+        if self._block_run:
+            return self._block_run
+
+        if self.block_run_id:
+            self._block_run = BlockRun.query.get(self.block_run_id)
+
+        return self._block_run
+
+    @property
+    def wrapper(self):
+        if self._wrapper:
+            return self._wrapper
+
+        self._wrapper = DynamicBlockWrapper.wrap(self)
+
+        return self._wrapper
+
     def execute_sync(
         self,
         execution_partition: str = None,
         **kwargs,
     ) -> List[Dict]:
         arr = []
-
+        DX_PRINTER.info('DynamicChildBlockFactory.execute_sync', block=self.block)
         values = self.__build_block_runs(self.block, execution_partition)
         if not values:
+            DX_PRINTER.error('No block runs to create from values', block=self.block)
             return None
 
+        DX_PRINTER.info(
+            f'Blocks runs to create: {len(values)}',
+            block=self.block,
+            uuids=[tup[0] for tup in values],
+        )
         for block_uuid, metrics in values:
             self.pipeline_run.create_block_run(
                 block_uuid,
@@ -54,12 +86,51 @@ class DynamicChildBlockFactory:
         return arr
 
     def __build_block_runs(self, block, execution_partition: str = None) -> List[Tuple]:
+        """
+        Check to see if this block is a clone of the original block.
+        A clone will act as an original block (e.g. controller that create block runs
+        for itself) but its upstream is associated to a dynamic child’s spawns (a spawn is
+        a block run that was created  for a dynamic child by the dynamic child block itself.)
+
+        When an original clone block calculates how many block runs it should spawn,
+        it must treat any upstream dynamic + dynamic child (e.g. D2) blocks simply as a
+        dynamic block.
+        """
+
         upstream_blocks = []
         for upstream_block in block.upstream_blocks:
+            """
+            This order is very important!
+            Is the upstream block is both dynamic and a dynamic child,
+            it needs to act like a dynamic child first so that it spawns 1 block run
+            for each of its downstream blocks.
+            Then, when this upstream block’s block runs are completed, those blocks
+            will act as a dynamic block and create N block runs for its downstream.
+
+            For example, A -> B -> C
+            A: dynamic block
+            B: dynamic block, dynamic child
+            C: dynamic child
+
+            A: creates 3 B
+            B: 3 block runs, each create 3 C
+            C: 9 block runs in total
+
+            The current block needs to spawn 3 block runs that act as original blocks
+            so that when its upstream block (that is  both dynamic & dynamic child)
+            is completed, the 3 "original blocks" will run through this process and
+            dynamically create block runs based on the upstream block’s output.
+            """
             if is_dynamic_block(upstream_block):
                 upstream_blocks.append((upstream_block, False))
             elif is_dynamic_block_child(upstream_block):
                 upstream_blocks.append((upstream_block, True))
+
+        DX_PRINTER.info(
+            f'Upstream blocks: {len(upstream_blocks)}',
+            block=self.block,
+            uuids=[f'{tup[0].uuid}: {tup[1]}' for tup in upstream_blocks],
+        )
 
         outputs = []
         for upstream_block, is_dynamic_child in upstream_blocks:
@@ -76,10 +147,17 @@ class DynamicChildBlockFactory:
                             block_uuid,
                         ],
                     ),
+                    # Are we recursively getting the block runs that were created for this
+                    # upstream dynamic child block?!
                 ) for block_uuid, metrics in self.__build_block_runs(
                     upstream_block,
                     execution_partition=execution_partition,
                 )]
+                DX_PRINTER.debug(
+                    f'Values from upstream dynamic child: {len(values)}',
+                    block=self.block,
+                    upstream_block=upstream_block.uuid,
+                )
                 outputs.append((values, None))
             else:
                 values, block_metadata = dynamic_block_values_and_metadata(
@@ -100,6 +178,10 @@ class DynamicChildBlockFactory:
                         ) for parent_index, value in enumerate(values)],
                         block_metadata,
                     ))
+
+        DX_PRINTER.info(f'Outputs: {len(outputs)}', block=self.block)
+        if len(outputs) == 0:
+            DX_PRINTER.critical('No outputs', block=self.block)
 
         all_data = None
         for output in outputs:

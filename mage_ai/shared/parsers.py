@@ -24,7 +24,9 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
 
 def encode_complex(obj):
-    if isinstance(obj, BaseModel):
+    if isinstance(obj, set):
+        return list(obj)
+    elif isinstance(obj, BaseModel):
         return obj.__class__.__name__
     elif obj.__class__.__name__ == 'BaseDataClass':
         return obj.to_dict()
