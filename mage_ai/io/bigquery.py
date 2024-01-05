@@ -232,7 +232,7 @@ FROM `{database}.{schema}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
 """).to_dataframe()
 
-                full_table_name = f'{database}.{schema}.{table_name}'
+                full_table_name = f'`{database}.{schema}.{table_name}`'
 
                 table_doesnt_exist = df_existing.empty
 
