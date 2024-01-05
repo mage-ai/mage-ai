@@ -356,7 +356,7 @@ class DynamicChildBlockFactory:
 
                 values = []
 
-                for upstream_block_uuid, metrics in values_pairs:
+                for upstream_block_uuid in (values_pairs or {}).keys():
                     values.append(dict(
                         parent_index=parent_index_for_child_block,
                         upstream_block_uuid=upstream_block_uuid,
