@@ -23,14 +23,17 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
     DynamicChildBlockFactory,
 )
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    is_dynamic_block,
+    is_dynamic_block_child,
+    is_original_dynamic_child_block,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.block.utils import (
     dynamic_block_uuid as dynamic_block_uuid_func,
 )
 from mage_ai.data_preparation.models.block.utils import (
     dynamic_block_values_and_metadata,
-    is_dynamic_block,
-    is_dynamic_block_child,
-    should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -85,12 +88,18 @@ class BlockExecutor:
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
         # If this is the original block run for the original dynamic block
-        if self.block and \
-                self.block.uuid == self.block_uuid and \
-                is_dynamic_block_child(self.block):
-
+        if self.block and is_original_dynamic_child_block(
+            self.block,
+            block_run_block_uuid=block_uuid,
+            block_run_id=block_run_id,
+        ):
             self.block = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
-            DX_PRINTER.info('BlockExecutor', block=self.block)
+            DX_PRINTER.info(
+                'BlockExecutor',
+                block=self.block,
+                original=self.block.is_original(),
+                clone_of_original=self.block.is_clone_of_original(),
+            )
 
         self.block_run = None
 

@@ -26,7 +26,12 @@ class DynamicChildBlockFactory:
         self._wrapper = None
 
     def __getattr__(self, name):
-        val = getattr(self.block, name)
+        if hasattr(self.block, name):
+            val = getattr(self.block, name)
+        elif self.wrapper and hasattr(self.wrapper, name):
+            val = getattr(self.wrapper, name)
+        else:
+            raise Exception(f'DynamicChildBlock {self.block.uuid} has no attribute {name}.')
 
         def _missing(val=val, *args, **kwargs):
             return val(*args, **kwargs)

@@ -73,12 +73,39 @@ def is_clone_of_original_dynamic_child_block(block) -> bool:
     pass
 
 
-def mask_upstream_dynamic_block_and_dynamic_child_block(block, upstream_block) -> DynamicBlockFlag:
-    pass
+def is_original_dynamic_child_block(
+    block,
+    block_run_block_uuid: int = None,
+    block_run_id: int = None,
+) -> bool:
+    # Check to see if its the original non-cloned version.
+    block_run = None
 
+    def __get_block_run(block_run_id=block_run_id):
+        from mage_ai.orchestration.db.models.schedules import BlockRun
+        return BlockRun.query.get(block_run_id)
 
-def is_spawn_of_dynamic_child_block(block) -> bool:
-    pass
+    if block:
+        if not block_run_block_uuid and block_run_id:
+            block_run = __get_block_run()
+            block_run_block_uuid = block_run.block_uuid
+
+        if block_run_block_uuid and block.uuid == block_run_block_uuid:
+            return True
+
+    if not block_run and not block_run_id:
+        return False
+
+    if not block_run:
+        block_run = __get_block_run()
+
+    if block and block.uuid == block_run.block_uuid:
+        return True
+
+    wrapper = DynamicBlockWrapperBase()
+    wrapper.hydrate(block=block, block_run=block_run)
+
+    return wrapper.is_dynamic_child() and wrapper.is_original(include_clone=True)
 
 
 @dataclass
@@ -189,6 +216,17 @@ class DynamicBlockWrapper(BaseDataClass):
             if is_dynamic_block_child(block):
                 self.flags.append(DynamicBlockFlag.DYNAMIC_CHILD)
             self.reduce_output = should_reduce_output(block)
+
+    def is_original(self, include_clone: bool = False) -> bool:
+        if self.block and self.block.uuid == self.block_run_block_uuid:
+            return True
+
+        return DynamicBlockFlag.ORIGINAL in (self.flags or []) or (
+            include_clone and self.is_clone_of_original()
+        )
+
+    def is_clone_of_original(self) -> bool:
+        return DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or [])
 
     def to_dict_base(self, **kwargs) -> dict:
         data = dict(
