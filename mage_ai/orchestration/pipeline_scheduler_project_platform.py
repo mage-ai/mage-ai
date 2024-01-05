@@ -140,7 +140,7 @@ class PipelineScheduler:
             return True
 
         lock_key = f'pipeline_run_{self.pipeline_run.id}'
-        if not lock.try_acquire_lock(lock_key, timeout=10):
+        if not lock.try_acquire_lock(lock_key):
             return
 
         tags = self.build_tags()
