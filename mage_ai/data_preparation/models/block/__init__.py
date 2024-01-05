@@ -1886,7 +1886,6 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         data_products = []
         outputs = []
-        variable_manager = self.pipeline.variable_manager
 
         all_variables = self.get_variables_by_block(
             block_uuid=block_uuid,
@@ -1916,91 +1915,22 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 sample_count=sample_count,
                 spark=self.get_spark_session(),
             )
-            if type(data) is pd.DataFrame:
-                if csv_lines_only:
-                    data = dict(
-                        table=data.to_csv(header=True, index=False).strip('\n').split('\n')
-                    )
-                else:
-                    try:
-                        analysis = variable_manager.get_variable(
-                            self.pipeline.uuid,
-                            block_uuid,
-                            v,
-                            dataframe_analysis_keys=['metadata', 'statistics'],
-                            partition=execution_partition,
-                            variable_type=VariableType.DATAFRAME_ANALYSIS,
-                        )
-                    except Exception:
-                        analysis = None
-                    if analysis is not None and \
-                            (analysis.get('statistics') or analysis.get('metadata')):
-
-                        stats = analysis.get('statistics', {})
-                        column_types = (analysis.get('metadata') or {}).get('column_types', {})
-                        row_count = stats.get('original_row_count', stats.get('count'))
-                        column_count = stats.get('original_column_count', len(column_types))
-                    else:
-                        row_count, column_count = data.shape
-
-                    columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-                    data = dict(
-                        sample_data=dict(
-                            columns=columns_to_display,
-                            rows=json.loads(
-                                data[columns_to_display].to_json(orient='split')
-                            )['data']
-                        ),
-                        shape=[row_count, column_count],
-                        type=DataType.TABLE,
-                        variable_uuid=v,
-                    )
+            data, is_data_product = self.__format_output_data(
+                data,
+                v,
+                block_uuid=block_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+            )
+            if is_data_product:
                 data_products.append(data)
-                continue
-            elif is_geo_dataframe(data):
-                data = dict(
-                    text_data=f'''Use the code in a scratchpad to get the output of the block:
-
-from mage_ai.data_preparation.variable_manager import get_variable
-df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
-''',
-                    type=DataType.TEXT,
-                    variable_uuid=v,
-                )
-            elif type(data) is str:
-                data = dict(
-                    text_data=data,
-                    type=DataType.TEXT,
-                    variable_uuid=v,
-                )
-            elif type(data) is dict or type(data) is list:
-                data = dict(
-                    text_data=simplejson.dumps(
-                        data,
-                        default=datetime.isoformat,
-                        ignore_nan=True,
-                    ),
-                    type=DataType.TEXT,
-                    variable_uuid=v,
-                )
-            elif is_spark_dataframe(data):
-                df = data.toPandas()
-                columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-                data = dict(
-                    sample_data=dict(
-                        columns=columns_to_display,
-                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
-                    ),
-                    type=DataType.TABLE,
-                    variable_uuid=v,
-                )
-                data_products.append(data)
-                continue
-            outputs.append(data)
+            else:
+                outputs.append(data)
         return outputs + data_products
 
     async def __get_outputs_async(
         self,
+        csv_lines_only: bool = False,
         execution_partition: str = None,
         include_print_outputs: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
@@ -2043,19 +1973,55 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 sample_count=sample_count,
                 spark=self.get_spark_session(),
             )
-            if type(data) is pd.DataFrame:
+            data, is_data_product = self.__format_output_data(
+                data,
+                v,
+                block_uuid=block_uuid,
+                csv_lines_only=csv_lines_only,
+                execution_partition=execution_partition,
+            )
+            if is_data_product:
+                data_products.append(data)
+            else:
+                outputs.append(data)
+        return outputs + data_products
+
+    def __format_output_data(
+        self,
+        data: Any,
+        variable_uuid: str,
+        block_uuid: str = None,
+        csv_lines_only: bool = False,
+        execution_partition: str = None,
+    ) -> Tuple[Dict, bool]:
+        """
+        Takes variable data and formats it to return to the frontend.
+
+        Returns:
+            Tuple[Dict, bool]: Tuple of the formatted data and is_data_product boolean. Data product
+                outputs and non data product outputs are handled slightly differently.
+        """
+        variable_manager = self.pipeline.variable_manager
+        if isinstance(data, pd.DataFrame):
+            if csv_lines_only:
+                data = dict(
+                    table=data.to_csv(header=True, index=False).strip('\n').split('\n')
+                )
+            else:
                 try:
                     analysis = variable_manager.get_variable(
                         self.pipeline.uuid,
                         block_uuid,
-                        v,
+                        variable_uuid,
                         dataframe_analysis_keys=['metadata', 'statistics'],
                         partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
                 except Exception:
                     analysis = None
-                if analysis is not None:
+                if analysis is not None and \
+                        (analysis.get('statistics') or analysis.get('metadata')):
+
                     stats = analysis.get('statistics', {})
                     column_types = (analysis.get('metadata') or {}).get('column_types', {})
                     row_count = stats.get('original_row_count', stats.get('count'))
@@ -2067,73 +2033,89 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
-                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
+                        rows=json.loads(
+                            data[columns_to_display].to_json(orient='split')
+                        )['data']
                     ),
                     shape=[row_count, column_count],
                     type=DataType.TABLE,
-                    variable_uuid=v,
+                    variable_uuid=variable_uuid,
                 )
-                data_products.append(data)
-                continue
-            if type(data) is pl.DataFrame:
+            return data, True
+        elif isinstance(data, pl.DataFrame):
+            try:
+                analysis = variable_manager.get_variable(
+                    self.pipeline.uuid,
+                    block_uuid,
+                    variable_uuid,
+                    dataframe_analysis_keys=['statistics'],
+                    partition=execution_partition,
+                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                )
+            except Exception:
+                analysis = None
+            if analysis is not None:
+                stats = analysis.get('statistics', {})
+                row_count = stats.get('original_row_count')
+                column_count = stats.get('original_column_count')
+            else:
                 row_count, column_count = data.shape
-                columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-                data = dict(
-                    sample_data=dict(
-                        columns=columns_to_display,
-                        rows=[
-                            list(row.values()) for row in json.loads(
-                                data[columns_to_display].write_json(row_oriented=True)
-                            )
-                        ]
-                    ),
-                    shape=[row_count, column_count],
-                    type=DataType.TABLE,
-                    variable_uuid=v,
-                )
-                data_products.append(data)
-                continue
-            elif is_geo_dataframe(data):
-                data = dict(
-                    text_data=f'''Use the code in a scratchpad to get the output of the block:
+            columns_to_display = data.columns[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+            data = dict(
+                sample_data=dict(
+                    columns=columns_to_display,
+                    rows=[
+                        list(row.values()) for row in json.loads(
+                            data[columns_to_display].write_json(row_oriented=True)
+                        )
+                    ]
+                ),
+                shape=[row_count, column_count],
+                type=DataType.TABLE,
+                variable_uuid=variable_uuid,
+            )
+            return data, True
+        elif is_geo_dataframe(data):
+            data = dict(
+                text_data=f'''Use the code in a scratchpad to get the output of the block:
 
 from mage_ai.data_preparation.variable_manager import get_variable
-df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
+df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 ''',
-                    type=DataType.TEXT,
-                    variable_uuid=v,
-                )
-            elif type(data) is str:
-                data = dict(
-                    text_data=data,
-                    type=DataType.TEXT,
-                    variable_uuid=v,
-                )
-            elif type(data) is dict or type(data) is list:
-                data = dict(
-                    text_data=simplejson.dumps(
-                        data,
-                        default=datetime.isoformat,
-                        ignore_nan=True,
-                    ),
-                    type=DataType.TEXT,
-                    variable_uuid=v,
-                )
-            elif is_spark_dataframe(data):
-                df = data.toPandas()
-                columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
-                data = dict(
-                    sample_data=dict(
-                        columns=columns_to_display,
-                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
-                    ),
-                    type=DataType.TABLE,
-                    variable_uuid=v,
-                )
-                data_products.append(data)
-                continue
-            outputs.append(data)
-        return outputs + data_products
+                type=DataType.TEXT,
+                variable_uuid=variable_uuid,
+            )
+            return data, False
+        elif type(data) is str:
+            data = dict(
+                text_data=data,
+                type=DataType.TEXT,
+                variable_uuid=variable_uuid,
+            )
+            return data, False
+        elif type(data) is dict or type(data) is list:
+            data = dict(
+                text_data=simplejson.dumps(
+                    data,
+                    default=datetime.isoformat,
+                    ignore_nan=True,
+                ),
+                type=DataType.TEXT,
+                variable_uuid=variable_uuid,
+            )
+            return data, False
+        elif is_spark_dataframe(data):
+            df = data.toPandas()
+            columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+            data = dict(
+                sample_data=dict(
+                    columns=columns_to_display,
+                    rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                ),
+                type=DataType.TABLE,
+                variable_uuid=variable_uuid,
+            )
+            return data, True
 
     def __save_outputs_prepare(self, outputs, override_output_variable: bool = False) -> Dict:
         variable_mapping = dict()
@@ -2680,6 +2662,20 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     # TODO: we use to silently fail, but it looks bad when using BigQuery
                     # print('\nFailed to analyze dataframe:')
                     # print(traceback.format_exc())
+            elif type(data) is pl.DataFrame:
+                self.pipeline.variable_manager.add_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    uuid,
+                    dict(
+                        statistics=dict(
+                            original_row_count=data.shape[0],
+                            original_column_count=data.shape[1],
+                        ),
+                    ),
+                    partition=execution_partition,
+                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                )
 
     def set_global_vars(self, global_vars: Dict) -> None:
         self.global_vars = global_vars
