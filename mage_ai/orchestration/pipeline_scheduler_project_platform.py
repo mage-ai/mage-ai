@@ -139,6 +139,10 @@ class PipelineScheduler:
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
             return True
 
+        lock_key = f'pipeline_run_{self.pipeline_run.id}'
+        if not lock.try_acquire_lock(lock_key):
+            return
+
         tags = self.build_tags()
 
         is_integration = PipelineType.INTEGRATION == self.pipeline.type
@@ -175,6 +179,8 @@ class PipelineScheduler:
                 error=error_msg,
             )
             return False
+        finally:
+            lock.release_lock(lock_key)
 
         self.pipeline_run.update(
             started_at=datetime.now(tz=pytz.UTC),
