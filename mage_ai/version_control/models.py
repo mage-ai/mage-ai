@@ -382,8 +382,9 @@ class File(BaseVersionControl):
         return self.diff
 
     async def read_content_async(self) -> str:
-        self.content = await read_async(os.path.join(self.project.repo_path, self.name))
-        return self.content
+        if os.path.exists(self.get_file_path()):
+            self.content = await read_async(self.get_file_path())
+            return self.content
 
     def detail(self) -> List[str]:
         self.diff = self.run(f'diff {self.name}')
@@ -489,6 +490,7 @@ class Project(BaseVersionControl):
 
     def initialize(self) -> List[str]:
         if not os.path.exists(self.preferences.preferences_file_path):
+            os.makedirs(os.path.dirname(self.preferences.preferences_file_path), exist_ok=True)
             self.update(dict(
                 sync_config=dict(
                     repo_path=self.repo_path,
