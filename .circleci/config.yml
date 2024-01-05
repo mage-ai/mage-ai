@@ -32,11 +32,12 @@ jobs:
           fingerprints:
             - "50:0e:ac:20:b8:b0:c0:65:80:77:5b:43:9b:b4:50:a1"
       - run:
-          name: Checkout to master branch
+          name: Checkout to $CIRCLE_BRANCH branch
           command: |
+            git fetch
             git config user.email "ci@mage.ai"
             git config user.name "Circle CI"
-            git checkout master
+            git checkout $CIRCLE_BRANCH
       - run:
           name: Build and export
           command: ( cd mage_ai/frontend && yarn install && yarn export_prod )
@@ -51,7 +52,7 @@ jobs:
             git add mage_ai/server/frontend_dist
             git add mage_ai/server/frontend_dist_base_path_template
             git commit -m "[CI] Update production build"
-            git push origin master
+            git push origin $CIRCLE_BRANCH
 
 workflows:
   build_and_export:
@@ -61,14 +62,6 @@ workflows:
           type: approval
           requires:
             - build_frontend
-          filters:
-            branches:
-              only:
-                - master
       - export_frontend:
           requires:
             - hold
-          filters:
-            branches:
-              only:
-                - master
