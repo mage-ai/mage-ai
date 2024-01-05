@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import BookmarkValues, { BookmarkValuesMapping } from '../BookmarkValues';
+import BookmarkValues from '../BookmarkValues';
 import Button from '@oracle/elements/Button';
 import ButtonTabs from '@oracle/components/Tabs/ButtonTabs';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
@@ -43,7 +43,6 @@ import PipelineScheduleType, {
 } from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
-import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -69,7 +68,8 @@ import {
 } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { CardStyle } from './index.style';
-import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
+import { DATE_FORMAT_LONG_NO_SEC } from '@utils/date';
+import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -102,7 +102,6 @@ import { indexBy, pushUnique, range, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { isJsonString, isNumeric, pluralize } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import { padTime } from '@utils/date';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 type EditProps = {
@@ -142,7 +141,7 @@ function Edit({
   const bookmarkValuesOriginal = useMemo(() => pipelineSchedule?.variables?.[VARIABLE_BOOKMARK_VALUES_KEY], [
     pipelineSchedule,
   ]);
-  const [bookmarkValues, setBookmarkValues] = useState<{BookmarkValuesMapping}>(
+  const [bookmarkValues, setBookmarkValues] = useState<{ BookmarkValuesMapping }>(
     // @ts-ignore
     bookmarkValuesOriginal
       ? typeof bookmarkValuesOriginal === 'string' && isJsonString(bookmarkValuesOriginal)
@@ -164,16 +163,16 @@ function Edit({
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
 
-  const {
-    data: dataClientPage,
-  } = api.client_pages.detail('pipeline_schedule:create', {
-    'pipeline_schedules[]': [pipelineScheduleID],
-    'pipelines[]': [pipelineUUID],
-  }, {}, {
-    key: `Triggers/Edit/${pipelineUUID}/${pipelineScheduleID}`,
-    pauseFetch: !pipelineUUID || !pipelineScheduleID,
-  });
-  const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
+  // const {
+  //   data: dataClientPage,
+  // } = api.client_pages.detail('pipeline_schedule:create', {
+  //   'pipeline_schedules[]': [pipelineScheduleID],
+  //   'pipelines[]': [pipelineUUID],
+  // }, {}, {
+  //   key: `Triggers/Edit/${pipelineUUID}/${pipelineScheduleID}`,
+  //   pauseFetch: !pipelineUUID || !pipelineScheduleID,
+  // });
+  // const clientPage = useMemo(() => dataClientPage?.client_page, [dataClientPage]);
 
   const [selectedSubheaderTabUUID, setSelectedSubheaderTabUUID] =
     useState<string>(SUBHEADER_TABS[0].uuid);
@@ -319,14 +318,15 @@ function Edit({
 
   useEffect(
     () => {
-      if (startTime) {
-        const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
-          startTime,
-          { localTimezone: displayLocalTimezone },
-        );
-        setDate(startDatetimeObj?.date);
-        setTime(startDatetimeObj?.time);
+      const currentDatetimeString = moment.utc().format(DATE_FORMAT_LONG_NO_SEC);
+      const startDatetimeObj = getDateAndTimeObjFromDatetimeString(
+        startTime || currentDatetimeString,
+        { localTimezone: displayLocalTimezone },
+      );
+      setDate(startDatetimeObj?.date);
+      setTime(startDatetimeObj?.time);
 
+      if (startTime) {
         const mt = moment(startTime).utc();
         setLandingTimeData({
           dayOfMonth: mt.date(),
@@ -335,20 +335,6 @@ function Edit({
           minute: mt.minutes(),
           second: mt.seconds(),
         });
-      } else {
-        const currentDatetime = new Date();
-        setDate(currentDatetime);
-        if (displayLocalTimezone) {
-          setTime({
-            hour: padTime(String(currentDatetime.getHours())),
-            minute: padTime(String(currentDatetime.getMinutes())),
-          });
-        } else {
-          setTime({
-            hour: padTime(String(currentDatetime.getUTCHours())),
-            minute: padTime(String(currentDatetime.getUTCMinutes())),
-          });
-        }
       }
     },
     [displayLocalTimezone, startTime],
@@ -1756,8 +1742,8 @@ function Edit({
     enableSLA,
     formattedVariables,
     isStreamingPipeline,
-    overwriteVariables,
     pipeline,
+    pipelineSchedule?.variables,
     pipelineUUID,
     runtimeVariables,
     schedule,
@@ -1765,7 +1751,6 @@ function Edit({
     scheduleVariables,
     setBookmarkValues,
     setEnableSLA,
-    setOverwriteVariables,
     setRuntimeVariables,
     settings,
   ]);
@@ -1801,7 +1786,7 @@ function Edit({
             Object.entries(interaction?.variables || {}).forEach(([
               variableUUID,
               {
-                types
+                types,
               },
             ]) => {
               if (variablesToUse && variableUUID in variablesToUse) {
@@ -2202,7 +2187,7 @@ function Edit({
                             </Flex>
                           </FlexContainer>
                         </CardStyle>
-                      </Button>
+                      </Button>,
                     );
                   }, [])}
                 </FlexContainer>
