@@ -518,16 +518,16 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
 
             """
             If the execution date is before start time or current time, don't
-            schedule it. A 10 min buffer is added to the current time since the
-            run is scheduled shortly after the execution date and no run would
-            ever be scheduled if the execution date was compared against actual
-            current time.
+            schedule it. A 59 min buffer is added to the current time since the
+            run is generally scheduled shortly after the execution date and no run
+            would ever be scheduled if the execution date was compared against
+            actual current time.
             """
             if self.start_time is not None and (
                 compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1 or
                 compare(
                     current_execution_date,
-                    datetime.now(tz=pytz.UTC) - timedelta(minutes=10),
+                    datetime.now(tz=pytz.UTC) - timedelta(minutes=59),
                 ) == -1
             ):
                 return False

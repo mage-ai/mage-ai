@@ -317,26 +317,34 @@ class PipelineScheduleTests(DBTestCase):
             ).should_schedule()
         )
 
+    @freeze_time('2024-01-01 00:03:14')
+    def test_should_schedule_execution_dates(self):
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
+        )
+
         for schedule_interval, execution_date_true, execution_date_false in [
             (
                 ScheduleInterval.HOURLY,
-                datetime(2023, 10, 11, 11, 0, 0),
-                datetime(2023, 10, 11, 12, 0, 0),
+                datetime(2024, 1, 1, 1, 0, 0),
+                datetime(2024, 1, 1, 0, 0, 0),
             ),
             (
                 ScheduleInterval.DAILY,
-                datetime(2023, 10, 10, 0, 0, 0),
-                datetime(2023, 10, 11, 0, 0, 0),
+                datetime(2024, 1, 2, 0, 0, 0),
+                datetime(2024, 1, 1, 0, 0, 0),
             ),
             (
                 ScheduleInterval.WEEKLY,
-                datetime(2023, 10, 2, 0, 0, 0),
-                datetime(2023, 10, 9, 0, 0, 0),
+                datetime(2024, 1, 8, 0, 0, 0),
+                datetime(2024, 1, 1, 0, 0, 0),
             ),
             (
                 ScheduleInterval.MONTHLY,
-                datetime(2023, 9, 1, 0, 0, 0),
-                datetime(2023, 10, 1, 0, 0, 0),
+                datetime(2024, 2, 1, 0, 0, 0),
+                datetime(2024, 1, 1, 0, 0, 0),
             ),
         ]:
             pipeline_schedule_false = PipelineSchedule.create(
@@ -346,7 +354,7 @@ class PipelineScheduleTests(DBTestCase):
                         name=self.faker.name(),
                         schedule_interval=schedule_interval,
                         # Set the start time to one second ago
-                        start_time=datetime(2023, 10, 11, 12, 13, 13),
+                        start_time=datetime(2024, 1, 1, 0, 3, 13),
                         status=ScheduleStatus.ACTIVE,
                     ),
                 )
@@ -360,7 +368,7 @@ class PipelineScheduleTests(DBTestCase):
                         name=self.faker.name(),
                         schedule_interval=schedule_interval,
                         # Set the start time to one month ago
-                        start_time=datetime(2023, 9, 11, 12, 13, 13),
+                        start_time=datetime(2023, 12, 1, 0, 3, 14),
                         status=ScheduleStatus.ACTIVE,
                     ),
                 )
@@ -378,6 +386,59 @@ class PipelineScheduleTests(DBTestCase):
                 pipeline_uuid=pipeline_schedule.pipeline_uuid,
                 status=PipelineRun.PipelineRunStatus.COMPLETED,
             )
+            self.assertFalse(pipeline_schedule.should_schedule())
+
+    @freeze_time('2024-01-01 00:59:14')
+    def test_should_schedule_before_current_time(self):
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.DAILY,
+            schedule_type=ScheduleType.TIME,
+        )
+
+        for schedule_interval, execution_date in [
+            (
+                ScheduleInterval.HOURLY,
+                datetime(2024, 1, 1, 1, 0, 0),
+            ),
+            (
+                ScheduleInterval.DAILY,
+                datetime(2024, 1, 2, 0, 0, 0),
+            ),
+            (
+                ScheduleInterval.WEEKLY,
+                datetime(2024, 1, 8, 0, 0, 0),
+            ),
+            (
+                ScheduleInterval.MONTHLY,
+                datetime(2024, 2, 1, 0, 0, 0),
+            ),
+        ]:
+            pipeline_schedule = PipelineSchedule.create(
+                **merge_dict(
+                    shared_attrs,
+                    dict(
+                        name=self.faker.name(),
+                        schedule_interval=schedule_interval,
+                        # Set the start time to one month ago
+                        start_time=datetime(2023, 12, 1, 0, 3, 14),
+                        status=ScheduleStatus.ACTIVE,
+                    ),
+                )
+            )
+            self.assertFalse(pipeline_schedule.should_schedule())
+
+            PipelineRun.create(
+                execution_date=execution_date,
+                pipeline_schedule_id=pipeline_schedule.id,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+                status=PipelineRun.PipelineRunStatus.COMPLETED,
+            )
+            """
+            The pipeline runs are not scheduled here since the current
+            execution date of "2024-01-01 00:00:00" is more than 59 minutes
+            before the current time of "2024-01-01 00:59:14".
+            """
             self.assertFalse(pipeline_schedule.should_schedule())
 
     @freeze_time('2023-10-11 12:13:14')
