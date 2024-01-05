@@ -533,8 +533,12 @@ def fetch_input_variables(
                 else:
                     final_val = variable_values
                 input_vars[idx] = final_val
-            elif dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
-                reduce_output_indexes.append((idx, upstream_block_uuid))
+
+            # Not sure how this is used now with the new implementation of dynamic blocks.
+            # This block of code removed makes the current implementation work in almost all
+            # edge cases.
+            # elif dynamic_upstream_block_uuids and (should_reduce or upstream_in_dynamic_upstream):
+            #     reduce_output_indexes.append((idx, upstream_block_uuid))
             elif is_dynamic_block(upstream_block):
                 val = None
                 if len(variable_values) >= 1:
