@@ -1310,8 +1310,8 @@ function PipelineListPage() {
             label: () => 'Download (keep folder structure)',
             onClick: () => {
               downloadPipeline({
+                filesOnly: false,
                 pipelineUUID: selectedPipeline?.uuid,
-                filesOnly: false
               });
             },
             uuid: 'download_keep_folder_structure',
@@ -1320,8 +1320,8 @@ function PipelineListPage() {
             label: () => 'Download (without folder structure)',
             onClick: () => {
               downloadPipeline({
+                filesOnly: true,
                 pipelineUUID: selectedPipeline?.uuid,
-                filesOnly: true
               });
             },
             uuid: 'download_without_folder_structure',
