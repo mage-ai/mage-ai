@@ -2,7 +2,10 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from mage_ai.data_preparation.models.block.dynamic.utils import DynamicBlockWrapper
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    DynamicBlockWrapper,
+    MetadataInstructions,
+)
 from mage_ai.data_preparation.models.block.utils import (
     dynamic_block_uuid,
     dynamic_block_values_and_metadata,
@@ -25,12 +28,12 @@ class DynamicChildBlockFactory:
     ):
         self.block = block
         self.block_run_id = block_run_id
-        self.pipeline_run = pipeline_run
         self.type = BlockType.DYNAMIC_CHILD
 
         self._block_run = block_run
         self._block_runs = block_runs
         self._block_runs_fetched = True if self._block_runs else False
+        self._pipeline_run = pipeline_run
         self._wrapper = None
 
     def __getattr__(self, name):
@@ -61,6 +64,19 @@ class DynamicChildBlockFactory:
 
         return self._block_run
 
+    def set_pipeline_run(self, pipeline_run):
+        self._pipeline_run = pipeline_run
+
+    def pipeline_run(self):
+        if self._pipeline_run:
+            return self._pipeline_run
+
+        block_run = self.block_run()
+        if block_run:
+            self._pipeline_run = block_run.pipeline_run
+
+        return self._pipeline_run
+
     def block_runs(self) -> List[BlockRun]:
         if self._block_runs or self._block_runs_fetched:
             return self._block_runs
@@ -83,7 +99,7 @@ class DynamicChildBlockFactory:
         if self._wrapper:
             return self._wrapper
 
-        self._wrapper = DynamicBlockWrapper(self)
+        self._wrapper = DynamicBlockWrapper(factory=self)
 
         return self._wrapper
 
@@ -132,8 +148,9 @@ class DynamicChildBlockFactory:
         3. That block run’s metadata/metrics will include all the block run block UUIDs of all the
         spawns as an upstream dependency.
         """
+        DX_PRINTER.label = 'DynamicChildBlockFactory'
         DX_PRINTER.info(
-            'DynamicChildBlockFactory.execute_sync',
+            'execute_sync',
             block=self.block,
             dynamic_block=self.wrapper().to_dict(),
         )
@@ -149,8 +166,10 @@ class DynamicChildBlockFactory:
             block=self.block,
             uuids=[tup[0] for tup in values],
         )
+
+        pipeline_run = self.pipeline_run()
         for block_uuid, metrics in values:
-            self.pipeline_run.create_block_run(
+            pipeline_run.create_block_run(
                 block_uuid,
                 metrics=metrics,
                 skip_if_exists=True,
@@ -173,7 +192,7 @@ class DynamicChildBlockFactory:
             block_original = self.block.pipeline.get_block(upstream_block_uuid)
             if block_original:
                 upstream_blocks_mapping[block_original.uuid] = DynamicBlockWrapper(
-                    DynamicChildBlockFactory(
+                    factory=DynamicChildBlockFactory(
                         block_original,
                         block_run=find(
                             lambda br, uuid=upstream_block_uuid: br.block_uuid == uuid,
@@ -188,7 +207,7 @@ class DynamicChildBlockFactory:
                 continue
 
             upstream_blocks_mapping[upstream_block.uuid] = DynamicBlockWrapper(
-                DynamicChildBlockFactory(
+                factory=DynamicChildBlockFactory(
                     upstream_block,
                     block_run=find(
                         lambda br, uuid=upstream_block.uuid: br.block_uuid == uuid,
@@ -271,10 +290,23 @@ class DynamicChildBlockFactory:
                 recognize itself as a clone of the original.
                 """
                 upstream_wrappers.append((upstream_wrapper, True))
+
+                wrapper.metadata_instructions = MetadataInstructions(
+                    clone_original=True,
+                    original=wrapper,
+                    upstream=upstream_wrapper,
+                )
             elif upstream_is_dynamic:
                 upstream_wrappers.append((upstream_wrapper, False))
             elif upstream_is_dynamic_child:
                 upstream_wrappers.append((upstream_wrapper, True))
+
+            DX_PRINTER.info(
+                f'Upstream block: {upstream_wrapper.uuid}',
+                block=wrapper.block,
+                upstream_is_dynamic=upstream_is_dynamic,
+                upstream_is_dynamic_child=upstream_is_dynamic_child,
+            )
 
         DX_PRINTER.info(
             f'Upstream blocks: {len(upstream_wrappers)}',
@@ -288,6 +320,24 @@ class DynamicChildBlockFactory:
             block_metadata = None
 
             if is_dynamic_child:
+                DX_PRINTER.debug(
+                    f'Getting block runs for upstream dynamic child: {upstream_wrapper.uuid}',
+                    block=wrapper.block,
+                    upstream_block=upstream_wrapper.uuid,
+                )
+
+                values_pairs = self.__build_block_runs(
+                    upstream_wrapper,
+                    execution_partition=execution_partition,
+                )
+
+                DX_PRINTER.debug(
+                    f'Block runs built for upstream dynamic child {upstream_wrapper.uuid}: '
+                    f'{len(values_pairs)}',
+                    block=wrapper.block,
+                    upstream_block=upstream_wrapper.uuid,
+                )
+
                 values = [dict(
                     parent_index=None,
                     upstream_block_uuid=block_uuid,
@@ -299,15 +349,14 @@ class DynamicChildBlockFactory:
                     ),
                     # Are we recursively getting the block runs that were created for this
                     # upstream dynamic child block?!
-                ) for block_uuid, metrics in self.__build_block_runs(
-                    upstream_wrapper,
-                    execution_partition=execution_partition,
-                )]
+                ) for block_uuid, metrics in values_pairs]
+
                 DX_PRINTER.debug(
                     f'Values from upstream dynamic child: {len(values)}',
                     block=wrapper.block,
                     upstream_block=upstream_wrapper.uuid,
                 )
+
                 outputs.append((values, None))
             else:
                 # Validate that the output of this function returns the correct output
@@ -390,12 +439,17 @@ class DynamicChildBlockFactory:
 
                 all_data = arr
 
-        if all_data is None:
-            return None
-
         block_runs_tuples = []
+
+        if all_data is None:
+            return block_runs_tuples
+
         for idx, child_data_list in enumerate(all_data):
-            block_runs_tuples.append(self.__build_block_run(wrapper, idx, child_data_list))
+            block_runs_tuples.append(self.__build_block_run(
+                wrapper,
+                idx,
+                child_data_list,
+            ))
 
         # Add upstream blocks defined dynamically from the dynamic block’s metadata
         pipeline = wrapper.block.pipeline
@@ -481,8 +535,9 @@ class DynamicChildBlockFactory:
                 [uuid or str(idx) for idx, uuid in enumerate(block_uuids)],
             )
 
+        # I think passing in the wrapper.uuid is adding an extra :N to the block_run.block_uuid.
         block_uuid = dynamic_block_uuid(
-            wrapper.uuid,
+            wrapper.block_uuid,
             metadata_for_uuid,
             index=index,
             upstream_block_uuids=upstream_block_uuids_for_dynamic_block_uuid,
@@ -491,6 +546,10 @@ class DynamicChildBlockFactory:
         metrics = dict(
             dynamic_block_index=index,
         )
+
+        if wrapper.metadata_instructions:
+            if wrapper.metadata_instructions.clone_original:
+                metadata.update(wrapper.to_dict(use_metadata_instructions=True))
 
         if len(metadata) >= 1:
             metrics['metadata'] = metadata

@@ -28,6 +28,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.utils import clean_name as clean_name_orig
 
 is_dynamic_block = is_dynamic_block_original
@@ -121,6 +122,17 @@ def dynamic_block_values_and_metadata(
                 output_name,
                 partition=execution_partition,
             )
+
+    DX_PRINTER.error(
+        'dynamic_block_values_and_metadata',
+        block=block,
+        block_metadata=len(block_metadata),
+        block_uuid=block_uuid,
+        block_uuid_original=block_uuid_original,
+        execution_partition=execution_partition,
+        output_vars=len(output_vars),
+        values=len(values),
+    )
 
     return values, block_metadata
 

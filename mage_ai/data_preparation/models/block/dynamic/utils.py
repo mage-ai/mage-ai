@@ -113,20 +113,12 @@ class DynamicBlockWrapperBase(BaseDataClass):
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
     index: int = None
+    metadata_instructions: BaseDataClass = field(default_factory=lambda: {})
     siblings: List[BaseDataClass] = field(default_factory=lambda: [])
     spawns: List[BaseDataClass] = field(default_factory=lambda: [])
     upstream_dynamic_blocks: List[BaseDataClass] = field(default_factory=lambda: [])
     upstream_dynamic_child_blocks: List[BaseDataClass] = field(default_factory=lambda: [])
     uuid: str = None
-
-    def __post_init__(self):
-        if self.flags:
-            arr = []
-            for flag in self.flags:
-                if isinstance(flag, str):
-                    arr.append(DynamicBlockFlag(flag))
-                else:
-                    arr.append(flag)
 
 
 @dataclass
@@ -144,6 +136,7 @@ class DynamicBlockWrapper(BaseDataClass):
     dynamic_block_index: int = None
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
+    metadata_instructions: BaseDataClass = None
     # Other blocks at the same level; other cloned blocks, other spawns, etc.
     siblings: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
     # If the current block is an original dynamic child block or cloned dynamic child block,
@@ -158,6 +151,8 @@ class DynamicBlockWrapper(BaseDataClass):
     uuid: str = None
 
     def __post_init__(self):
+        self.factory._wrapper = self
+
         block_run = self.factory.block_run()
 
         self.block = self.factory.block
@@ -167,10 +162,13 @@ class DynamicBlockWrapper(BaseDataClass):
 
         if block_run:
             config = {}
-            if block_run.metrics and block_run.metrics.get('dynamic_block'):
-                config = block_run.metrics.get('dynamic_block') or {}
+            if block_run.metrics and block_run.metrics.get('metadata'):
+                config = block_run.metrics.get('metadata') or {}
 
             self.flags = [DynamicBlockFlag(v) for v in config.get('flags') or []]
+            if config.get('clone_original', False):
+                self.flags.append(DynamicBlockFlag.CLONE_OF_ORIGINAL)
+            self.flags = list(set(self.flags))
 
             for key in [
                 'dynamic_block_index',
@@ -231,9 +229,25 @@ class DynamicBlockWrapper(BaseDataClass):
         return self.block and should_reduce_output(self.block)
 
     def to_dict_base(self, **kwargs) -> dict:
-        data = dict(
-            flags=[v.value if isinstance(v, DynamicBlockFlag) else v for v in (self.flags or [])],
-        )
+        data = {}
+
+        flags = []
+        if self.is_original():
+            flags.append(DynamicBlockFlag.ORIGINAL)
+        if self.is_clone_of_original():
+            flags.append(DynamicBlockFlag.CLONE_OF_ORIGINAL)
+        if self.is_dynamic():
+            flags.append(DynamicBlockFlag.DYNAMIC)
+        if self.is_dynamic_child():
+            flags.append(DynamicBlockFlag.DYNAMIC_CHILD)
+        if self.is_spawn():
+            flags.append(DynamicBlockFlag.SPAWN_OF_DYNAMIC_CHILD)
+        if self.should_reduce_output():
+            flags.append(DynamicBlockFlag.REDUCE_OUTPUT)
+
+        flags = list(set(flags + (self.flags or [])))
+        if len(flags) >= 1:
+            data['flags'] = [v.value for v in flags if isinstance(v, DynamicBlockFlag)]
 
         for key in [
             'block_run_block_uuid',
@@ -243,25 +257,49 @@ class DynamicBlockWrapper(BaseDataClass):
         ]:
             if getattr(self, key) is not None:
                 data[key] = getattr(self, key)
-
         return ignore_keys_with_blank_values(data)
 
-    def to_dict(self, **kwargs) -> dict:
+    def to_dict(
+        self,
+        include_all: bool = False,
+        use_metadata_instructions: bool = False,
+        **kwargs,
+    ) -> dict:
+        if use_metadata_instructions:
+            return ignore_keys_with_blank_values(dict(
+                clone_original=self.metadata_instructions.clone_original,
+                original=self.metadata_instructions.original.to_dict_base(),
+                upstream=self.metadata_instructions.upstream.to_dict_base(),
+            ))
+
         data = self.to_dict_base(**kwargs)
-
-        for key in [
-            'children',
-            'clones',
-            'siblings',
-            'spawns',
-            'upstream_dynamic_blocks',
-            'upstream_dynamic_child_blocks',
-        ]:
-            values = getattr(self, key) or None
-            if values:
-                data[key] = [v.to_dict_base(**kwargs) for v in values]
+        if include_all:
+            for key in [
+                'children',
+                'clones',
+                'siblings',
+                'spawns',
+                'upstream_dynamic_blocks',
+                'upstream_dynamic_child_blocks',
+            ]:
+                values = getattr(self, key) or None
+                if values:
+                    data[key] = [v.to_dict_base(**kwargs) for v in values]
 
         return ignore_keys_with_blank_values(data)
+
+
+@dataclass
+class MetadataInstructions(BaseDataClass):
+    clone_original: bool = False
+    original: DynamicBlockWrapper = None
+    parent: DynamicBlockWrapper = None
+    upstream: DynamicBlockWrapper = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('original', DynamicBlockWrapper)
+        self.serialize_attribute_class('parent', DynamicBlockWrapper)
+        self.serialize_attribute_class('upstream', DynamicBlockWrapper)
 
 
 def dynamically_created_child_block_runs(pipeline, block, block_runs: List):

@@ -26,7 +26,6 @@ from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
-    is_original_dynamic_child_block,
     should_reduce_output,
 )
 from mage_ai.data_preparation.models.block.utils import (
@@ -88,18 +87,27 @@ class BlockExecutor:
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
         # If this is the original block run for the original dynamic block
-        if self.block and is_original_dynamic_child_block(
-            self.block,
-            block_run_block_uuid=block_uuid,
-            block_run_id=block_run_id,
-        ):
-            self.block = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
-            DX_PRINTER.info(
-                'BlockExecutor',
-                block=self.block,
-                original=self.block.wrapper().is_original(),
-                clone_of_original=self.block.wrapper().is_clone_of_original(),
-            )
+
+        # Check to see if this block is the original dynamic child block or
+        # a clone of the original dynamic child block.
+        if self.block:
+            factory = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
+            wrapper = factory.wrapper()
+
+            if wrapper.is_dynamic_child() and \
+                    (wrapper.is_original() or wrapper.is_clone_of_original()):
+
+                self.block = factory
+
+                DX_PRINTER.label = 'BlockExecutor'
+                DX_PRINTER.info(
+                    'Initializing dynamic child block factory',
+                    block=self.block,
+                    clone_of_original=wrapper.is_clone_of_original(),
+                    is_dynamic=wrapper.is_dynamic(),
+                    is_dynamic_child=wrapper.is_dynamic_child(),
+                    original=wrapper.is_original(),
+                )
 
         self.block_run = None
 
@@ -1047,8 +1055,8 @@ class BlockExecutor:
 
                     return arr
 
-        if is_dynamic_block_child(self.block) and self.block_uuid == self.block.uuid:
-            self.block.pipeline_run = pipeline_run
+        if self.block and isinstance(self.block, DynamicChildBlockFactory):
+            self.block.set_pipeline_run(pipeline_run)
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,

@@ -43,6 +43,9 @@ COLORS = [c for c in Color]
 
 
 class ColorPrinter:
+    def __init__(self):
+        self.label = None
+
     def debug(self, *args, **kwargs):
         self.print(color=Color.PURPLE, *args, **kwargs)
 
@@ -79,6 +82,9 @@ class ColorPrinter:
         output = ''.join(args)
         if more:
             output = f'{output}\n{more}'
+
+        if self.label:
+            output = f'[{self.label}] {output}'
 
         if not color:
             color = COLORS[len(output) % len(COLORS)]
