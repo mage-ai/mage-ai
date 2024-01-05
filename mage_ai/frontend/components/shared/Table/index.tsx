@@ -37,8 +37,9 @@ import {
 } from './index.style';
 import { goToWithQuery } from '@utils/routing';
 import { isInteractiveElement } from '@context/shared/utils';
+import { queryFromUrl } from '@utils/url';
+import { remove, set } from '@storage/localStorage';
 import { selectEntriesWithValues } from '@utils/hash';
-import { set } from '@storage/localStorage';
 import { sortByKey } from '@utils/array';
 
 export type ColumnType = {
@@ -342,20 +343,36 @@ function Table({
     ),
     [getUniqueRowIdentifier, rowsSorted],
   );
+  const query = queryFromUrl();
   const sortedColumnPrev = usePrevious(sortedColumn);
   const sortedRowIdsPrev = usePrevious(sortedRowIds);
   useEffect(() => {
-    /*
-     * The rows can change order without a change in sorting (e.g. due to a
-     * column value being updated). As a result, we need to check the row
-     * order and update the rowsSorted state in order to perform actions on
-     * the correct row.
-     */
-    if (sortableColumnIndexes
+
+    if (sortedColumn === null
+      && !query?.[MetaQueryEnum.ORDER_BY]
+      && query?.[SortQueryEnum.SORT_COL_IDX]
+      && query?.[SortQueryEnum.SORT_DIRECTION]
+    ) {
+      // Reset sort column in local storage and query params.
+      remove(localStorageKeySortColIdx);
+      remove(localStorageKeySortDirection);
+      goToWithQuery({
+        [SortQueryEnum.SORT_COL_IDX]: null,
+        [SortQueryEnum.SORT_DIRECTION]: null,
+      }, {
+        pushHistory: true,
+      });
+    } else if (sortableColumnIndexes
       && (JSON.stringify(sortedColumn) !== JSON.stringify(sortedColumnPrev)
         || JSON.stringify(sortedRowIds) !== JSON.stringify(sortedRowIdsPrev)
       )
     ) {
+      /*
+       * The rows can change order without a change in sorting (e.g. due to a
+       * column value being updated). As a result, we need to check the row
+       * order and update the rowsSorted state in order to perform actions on
+       * the correct row.
+       */
       setRowsSorted?.(rowsSorted);
       const sortColIdx = typeof sortedColumnIndex === 'number'
         ? sortedColumnIndex
@@ -388,6 +405,7 @@ function Table({
     defaultSortColumnIndex,
     localStorageKeySortColIdx,
     localStorageKeySortDirection,
+    query,
     rowsSorted,
     setRowsSorted,
     sortableColumnIndexes,
