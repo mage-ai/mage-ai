@@ -31,10 +31,11 @@ from sqlalchemy.sql.functions import coalesce
 
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dynamic.utils import (
+    DynamicBlockFlag,
     all_upstreams_completed,
     dynamically_created_child_block_runs,
-)
-from mage_ai.data_preparation.models.block.utils import (
+    has_dynamic_block_upstream_parent,
+    is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
 )
@@ -1258,6 +1259,27 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
                         controller=1,
                         original_block_uuid=block_uuid,
                     )),
+                ))
+
+            flags = []
+
+            if has_dynamic_block_upstream_parent(block):
+                flags.extend([
+                    DynamicBlockFlag.DYNAMIC_CHILD,
+                    DynamicBlockFlag.ORIGINAL,
+                ])
+            elif is_dynamic_block_child(block):
+                flags.append(DynamicBlockFlag.DYNAMIC_CHILD)
+
+            if is_dynamic_block(block):
+                flags.append(DynamicBlockFlag.DYNAMIC)
+
+            if should_reduce_output(block):
+                flags.append(DynamicBlockFlag.REDUCE_OUTPUT)
+
+            if len(flags) >= 1:
+                create_options['metrics'] = dict(metadata=dict(
+                    flags=flags,
                 ))
 
             block_arr.append((block_uuid, create_options))

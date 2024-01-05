@@ -7,7 +7,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     MetadataInstructions,
 )
 from mage_ai.data_preparation.models.block.utils import (
-    dynamic_block_uuid,
+    build_dynamic_block_uuid,
     dynamic_block_values_and_metadata,
 )
 from mage_ai.data_preparation.models.constants import BlockType
@@ -57,6 +57,11 @@ class DynamicChildBlockFactory:
                     factory.block_run_id and br.id == factory.block_run_id
                 ) or (br.block_uuid == factory.block.uuid),
                 self._block_runs,
+            )
+            DX_PRINTER.debug(
+                f'Block run: for block {self.block.uuid}: '
+                f'{self._block_run.id if self._block_run else ""} '
+                f'{self._block_run.block_uuid if self._block_run else ""}'
             )
 
         if not self._block_run:
@@ -315,7 +320,9 @@ class DynamicChildBlockFactory:
         )
 
         outputs = []
-        for upstream_wrapper, is_dynamic_child in upstream_wrappers:
+        for upstream_parent_index, pair in enumerate(upstream_wrappers):
+            upstream_wrapper, is_dynamic_child = pair
+
             values = None
             block_metadata = None
 
@@ -325,6 +332,15 @@ class DynamicChildBlockFactory:
                     block=wrapper.block,
                     upstream_block=upstream_wrapper.uuid,
                 )
+
+                # If the upstream block is also a dynamic block, dynamic block behavior
+                # takes precedence. Every child block of the upstream block will act as a
+                # separate dynamic block that create dynamic children. We must use the index
+                # of that dynamic block which is a single number to differentiate between
+                # this current block having multiple upstream dynamic blocks.
+                parent_index_for_child_block = None
+                if upstream_wrapper.is_dynamic():
+                    parent_index_for_child_block = upstream_parent_index
 
                 values_pairs = self.__build_block_runs(
                     upstream_wrapper,
@@ -338,18 +354,32 @@ class DynamicChildBlockFactory:
                     upstream_block=upstream_wrapper.uuid,
                 )
 
-                values = [dict(
-                    parent_index=None,
-                    upstream_block_uuid=block_uuid,
-                    extra_settings=dict(
-                        block_uuid_prefix=block_uuid.split(':')[-1],
-                        dynamic_upstream_block_uuids=[
-                            block_uuid,
-                        ],
-                    ),
-                    # Are we recursively getting the block runs that were created for this
-                    # upstream dynamic child block?!
-                ) for block_uuid, metrics in values_pairs]
+                values = []
+
+                for upstream_block_uuid, metrics in values_pairs:
+                    values.append(dict(
+                        parent_index=parent_index_for_child_block,
+                        upstream_block_uuid=upstream_block_uuid,
+                        extra_settings=dict(
+                            block_uuid_prefix=upstream_block_uuid.split(':')[-1],
+                            dynamic_upstream_block_uuids=[
+                                upstream_block_uuid,
+                            ],
+                        ),
+                    ))
+
+                    DX_PRINTER.critical(
+                        'Adding outputs from upstream dynamic child block',
+                        block=wrapper.block,
+                        parent_index=parent_index_for_child_block,
+                        upstream_block_uuid=upstream_block_uuid,
+                        extra_settings=dict(
+                            block_uuid_prefix=upstream_block_uuid.split(':')[-1],
+                            dynamic_upstream_block_uuids=[
+                                upstream_block_uuid,
+                            ],
+                        ),
+                    )
 
                 DX_PRINTER.debug(
                     f'Values from upstream dynamic child: {len(values)}',
@@ -371,12 +401,55 @@ class DynamicChildBlockFactory:
                     values = values.to_dict(orient='records')
 
                 if values:
-                    outputs.append((
-                        [dict(
-                            parent_index=parent_index,
+                    dynamic_upstream_block_uuids = None
+
+                    # If these child blocks are being created by its clone of
+                    # original dynamic child block, then we need to use the parent index of the
+                    # spawn of the upstream dynamic squared block.
+                    if wrapper.is_clone_of_original():
+                        DX_PRINTER.critical(
+                            f'Altering the parent index from {upstream_parent_index} '
+                            f'to {wrapper.get_dynamic_block_index()}',
+                            block=wrapper.block,
+                            upstream_block=upstream_wrapper.block.uuid,
                             upstream_block_uuid=upstream_wrapper.uuid,
-                            extra_settings=dict(value=value),
-                        ) for parent_index, value in enumerate(values)],
+                            parent_index=upstream_parent_index,
+                            block_metadata=block_metadata,
+                        )
+
+                        dynamic_upstream_block_uuids = [
+                            upstream_wrapper.uuid,
+                        ]
+                        upstream_parent_index = wrapper.get_dynamic_block_index()
+
+                        DX_PRINTER.critical(
+                            'dynamic_upstream_index from current upstream is '
+                            f'{upstream_wrapper.get_dynamic_block_index()}',
+                        )
+
+                    child_data = []
+                    for parent_index, value in enumerate(values):
+                        child_data.append(dict(
+                            parent_index=upstream_parent_index,
+                            upstream_block_uuid=upstream_wrapper.uuid,
+                            extra_settings=dict(
+                                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                                index=parent_index,
+                                value=value,
+                            ),
+                        ))
+
+                        DX_PRINTER.critical(
+                            'Adding outputs from upstream dynamic block',
+                            block=wrapper.block,
+                            upstream_block=upstream_wrapper.block.uuid,
+                            upstream_block_uuid=upstream_wrapper.uuid,
+                            parent_index=upstream_parent_index,
+                            block_metadata=block_metadata,
+                        )
+
+                    outputs.append((
+                        child_data,
                         block_metadata,
                     ))
 
@@ -414,6 +487,14 @@ class DynamicChildBlockFactory:
                             metadata,
                             extra_settings,
                         )])
+
+                        DX_PRINTER.critical(
+                            'Looping over all data',
+                            upstream_block_uuid=upstream_block_uuid,
+                            parent_index=parent_index,
+                            metadata=metadata,
+                            extra_settings=extra_settings,
+                        )
                 else:
                     all_data.append([(None, None, None, None)])
             else:
@@ -434,6 +515,14 @@ class DynamicChildBlockFactory:
                                 metadata,
                                 extra_settings,
                             )])
+
+                            DX_PRINTER.critical(
+                                'Looping over all data',
+                                upstream_block_uuid=upstream_block_uuid,
+                                parent_index=parent_index,
+                                metadata=metadata,
+                                extra_settings=extra_settings,
+                            )
                     else:
                         arr.append(data_arr + [(None, None, None, None)])
 
@@ -483,6 +572,7 @@ class DynamicChildBlockFactory:
                             metrics = {}
                         metrics['dynamic_upstream_block_uuids'] = \
                             (metrics.get('dynamic_upstream_block_uuids') or []) + up_uuids
+
                         block_runs_tuples[idx] = (block_uuid, metrics)
 
         return block_runs_tuples
@@ -509,6 +599,8 @@ class DynamicChildBlockFactory:
                         extra_settings.get('dynamic_upstream_block_uuids') or [],
                     )
 
+                # Don’t include this in the naming constructor if the block creating this child or
+                # spawn is from itself.
                 block_uuid_prefix = str(parent_index) if parent_index is not None else None
                 if 'block_uuid_prefix' in extra_settings:
                     block_uuid_prefix = extra_settings.get('block_uuid_prefix')
@@ -535,21 +627,48 @@ class DynamicChildBlockFactory:
                 [uuid or str(idx) for idx, uuid in enumerate(block_uuids)],
             )
 
-        # I think passing in the wrapper.uuid is adding an extra :N to the block_run.block_uuid.
-        block_uuid = dynamic_block_uuid(
-            wrapper.block_uuid,
+        base_block_uuid = wrapper.block_uuid
+        block_uuid = build_dynamic_block_uuid(
+            base_block_uuid,
             metadata_for_uuid,
             index=index,
             upstream_block_uuids=upstream_block_uuids_for_dynamic_block_uuid,
         )
 
+        DX_PRINTER.critical(
+            'Dynamic block UUID',
+            block=wrapper.block,
+            block_uuid=block_uuid,
+            index=index,
+            metadata_for_uuid=metadata_for_uuid,
+            upstream_block_uuids=upstream_block_uuids_for_dynamic_block_uuid,
+            wrapper_block_uuid=wrapper.block_uuid,
+            wrapper_uuid=wrapper.uuid,
+        )
+
+        clone_original = \
+            wrapper.metadata_instructions and wrapper.metadata_instructions.clone_original
+        if clone_original:
+            metadata.update(wrapper.to_dict(use_metadata_instructions=True))
+            block_uuid = ':'.join([
+                base_block_uuid,
+                'clone',
+            ] + block_uuid.split(':')[2:])
+
+            DX_PRINTER.critical(
+                'Dynamic block UUID clone of original',
+                block=wrapper.block,
+                block_uuid=block_uuid,
+                index=index,
+                metadata_for_uuid=metadata_for_uuid,
+                upstream_block_uuids=upstream_block_uuids_for_dynamic_block_uuid,
+                wrapper_block_uuid=wrapper.block_uuid,
+                wrapper_uuid=wrapper.uuid,
+            )
+
         metrics = dict(
             dynamic_block_index=index,
         )
-
-        if wrapper.metadata_instructions:
-            if wrapper.metadata_instructions.clone_original:
-                metadata.update(wrapper.to_dict(use_metadata_instructions=True))
 
         if len(metadata) >= 1:
             metrics['metadata'] = metadata

@@ -50,7 +50,7 @@ def clean_name(name: str, **kwargs) -> str:
     return clean_name_orig(name, allow_characters=['/'], **kwargs)
 
 
-def dynamic_block_uuid(
+def build_dynamic_block_uuid(
     block_uuid: str,
     metadata: Dict = None,
     index: int = None,
@@ -268,8 +268,22 @@ def output_variables(
             block_uuid=block_uuid,
             partition=execution_partition,
         )
+
     output_variables = [v for v in all_variables
                         if is_output_variable(v, include_df=include_df)]
+
+    DX_PRINTER.label = f'Block {block.uuid} or {block_uuid}'
+    DX_PRINTER.error(
+        'output_variables',
+        block=block,
+        block_uuid=block_uuid,
+        output_variables_count=len(output_variables) if output_variables else 'null',
+        output_variables=', '.join(output_variables or []),
+        all_variables_count=len(all_variables) if all_variables else 'null',
+        all_variables=', '.join(all_variables or []),
+        partition=execution_partition,
+        should_reduce_output=should_reduce_output(block),
+    )
 
     if block and di_settings:
         streams = get_selected_streams(di_settings.get('catalog'))

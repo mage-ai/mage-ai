@@ -83,6 +83,7 @@ from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
@@ -1742,6 +1743,18 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             execution_partition=execution_partition,
             from_notebook=from_notebook,
             global_vars=global_vars,
+        )
+
+        DX_PRINTER.label = f'Block {self.uuid}'
+        DX_PRINTER.critical(
+            'fetch_input_variables',
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
+            upstream_block_uuids=self.upstream_block_uuids,
+            upstream_block_uuids_override=upstream_block_uuids,
+            variables=len(variables) if variables else 'nothing',
         )
 
         return variables

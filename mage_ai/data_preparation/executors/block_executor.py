@@ -29,9 +29,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     should_reduce_output,
 )
 from mage_ai.data_preparation.models.block.utils import (
-    dynamic_block_uuid as dynamic_block_uuid_func,
-)
-from mage_ai.data_preparation.models.block.utils import (
+    build_dynamic_block_uuid,
     dynamic_block_values_and_metadata,
 )
 from mage_ai.data_preparation.models.constants import (
@@ -359,7 +357,7 @@ class BlockExecutor:
                                 metadata = {}
 
                             dynamic_upstream_block_uuids_reduce.append(
-                                dynamic_block_uuid_func(
+                                build_dynamic_block_uuid(
                                     upstream_block.uuid,
                                     metadata,
                                     idx,

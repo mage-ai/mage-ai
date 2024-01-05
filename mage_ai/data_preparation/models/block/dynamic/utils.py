@@ -44,6 +44,10 @@ def should_reduce_output(block) -> bool:
     return True
 
 
+def has_dynamic_block_upstream_parent(block) -> bool:
+    return block.upstream_blocks and any([is_dynamic_block(b) for b in block.upstream_blocks])
+
+
 def is_dynamic_block_child(block) -> bool:
     """
     Checks if the given block is a dynamic block child.
@@ -161,20 +165,20 @@ class DynamicBlockWrapper(BaseDataClass):
         self.uuid = self.block_run_block_uuid or self.block_uuid
 
         if block_run:
-            config = {}
-            if block_run.metrics and block_run.metrics.get('metadata'):
-                config = block_run.metrics.get('metadata') or {}
+            config = block_run.metrics or {}
+            self.dynamic_block_index = config.get('dynamic_block_index')
 
-            self.flags = [DynamicBlockFlag(v) for v in config.get('flags') or []]
-            if config.get('clone_original', False):
+            metadata = config.get('metadata') or {}
+
+            self.flags = [DynamicBlockFlag(v) for v in metadata.get('flags') or []]
+            if metadata.get('clone_original', False):
                 self.flags.append(DynamicBlockFlag.CLONE_OF_ORIGINAL)
             self.flags = list(set(self.flags))
 
             for key in [
-                'dynamic_block_index',
                 'uuid',
             ]:
-                value = config.get(key) or None
+                value = metadata.get(key) or None
                 if value:
                     setattr(self, key, value)
 
@@ -186,7 +190,7 @@ class DynamicBlockWrapper(BaseDataClass):
                 'upstream_dynamic_blocks',
                 'upstream_dynamic_child_blocks',
             ]:
-                values = config.get(key) or None
+                values = metadata.get(key) or None
                 if values:
                     setattr(self, key, [self.load(**m) for m in values])
 
@@ -228,8 +232,22 @@ class DynamicBlockWrapper(BaseDataClass):
             return True
         return self.block and should_reduce_output(self.block)
 
+    def get_dynamic_block_index(self) -> int:
+        if self.dynamic_block_index is not None:
+            return self.dynamic_block_index
+
+        block_run = self.factory.block_run()
+        if block_run and block_run.metrics:
+            self.dynamic_block_index = (block_run.metrics.get('metadata') or {}).get(
+                'dynamic_block_index',
+            )
+
+        return self.dynamic_block_index
+
     def to_dict_base(self, **kwargs) -> dict:
-        data = {}
+        data = dict(
+            dynamic_block_index=self.get_dynamic_block_index(),
+        )
 
         flags = []
         if self.is_original():
@@ -252,11 +270,11 @@ class DynamicBlockWrapper(BaseDataClass):
         for key in [
             'block_run_block_uuid',
             'block_uuid',
-            'dynamic_block_index',
             'uuid',
         ]:
             if getattr(self, key) is not None:
                 data[key] = getattr(self, key)
+
         return ignore_keys_with_blank_values(data)
 
     def to_dict(

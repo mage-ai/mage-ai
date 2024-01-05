@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from mage_ai.data_preparation.models.block.utils import (
-    dynamic_block_uuid,
+    build_dynamic_block_uuid,
     dynamic_block_values_and_metadata,
     is_dynamic_block,
     is_dynamic_block_child,
@@ -33,15 +33,15 @@ class BlockUtilsTest(BaseApiTestCase):
         block_uuid_metadata = uuid4().hex
         upstream_block_uuid = f'{uuid4().hex}:3:4'
 
-        self.assertEqual(dynamic_block_uuid(block_uuid), f'{block_uuid}:None')
-        self.assertEqual(dynamic_block_uuid(block_uuid, index=0), f'{block_uuid}:0')
-        self.assertEqual(dynamic_block_uuid(
+        self.assertEqual(build_dynamic_block_uuid(block_uuid), f'{block_uuid}:None')
+        self.assertEqual(build_dynamic_block_uuid(block_uuid, index=0), f'{block_uuid}:0')
+        self.assertEqual(build_dynamic_block_uuid(
             block_uuid,
             index=0,
             metadata=dict(block_uuid=block_uuid_metadata),
         ), f'{block_uuid}:{block_uuid_metadata}')
 
-        self.assertEqual(dynamic_block_uuid(
+        self.assertEqual(build_dynamic_block_uuid(
             block_uuid,
             index=0,
             upstream_block_uuid=upstream_block_uuid,
@@ -52,7 +52,7 @@ class BlockUtilsTest(BaseApiTestCase):
             ],
         ), f'{block_uuid}:0__1__2:0')
 
-        self.assertEqual(dynamic_block_uuid(
+        self.assertEqual(build_dynamic_block_uuid(
             block_uuid,
             index=0,
             metadata=dict(block_uuid=block_uuid_metadata),
@@ -64,13 +64,13 @@ class BlockUtilsTest(BaseApiTestCase):
             ],
         ), f'{block_uuid}:0__1__2:{block_uuid_metadata}')
 
-        self.assertEqual(dynamic_block_uuid(
+        self.assertEqual(build_dynamic_block_uuid(
             block_uuid,
             index=0,
             upstream_block_uuid=upstream_block_uuid,
         ), f'{block_uuid}:0:3:4')
 
-        self.assertEqual(dynamic_block_uuid(
+        self.assertEqual(build_dynamic_block_uuid(
             block_uuid,
             index=0,
             metadata=dict(block_uuid=block_uuid_metadata),
