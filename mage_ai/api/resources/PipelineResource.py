@@ -296,7 +296,7 @@ class PipelineResource(BaseResource):
                         vals.append(val)
                         bools.append(val is None if not reverse_sort else val is not None)
                     elif 'triggers' == k.lower():
-                        val = len(p.blocks_by_uuid)
+                        val = len(p.schedules)
                         vals.append(val)
                         bools.append(val is None if not reverse_sort else val is not None)
                     elif hasattr(p, k):
