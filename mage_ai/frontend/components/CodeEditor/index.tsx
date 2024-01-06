@@ -1,5 +1,5 @@
 import * as ReactDOM from 'react-dom';
-import Editor, { loader } from '@monaco-editor/react';
+import Editor, { DiffEditor, loader } from '@monaco-editor/react';
 import React, {
   useCallback,
   useEffect,
@@ -84,10 +84,12 @@ type CodeEditorProps = {
   onContentSizeChangeCallback?: () => void;
   onMountCallback?: (editor?: any, monaco?: any) => void;
   onSave?: (value: string) => void;
+  originalValue?: string;
   padding?: number;
   placeholder?: string;
   readOnly?: boolean;
   shortcuts?: ((monaco: any, editor: any) => void)[];
+  showDiffs?: boolean;
   showLineNumbers?: boolean;
   tabSize?: number;
   theme?: any;
@@ -97,9 +99,9 @@ type CodeEditorProps = {
 } & CodeEditorSharedProps;
 
 function CodeEditor({
-  autocompleteProviders,
   autoHeight,
   autoSave,
+  autocompleteProviders,
   block,
   containerWidth,
   editorRef: editorRefProp,
@@ -111,6 +113,7 @@ function CodeEditor({
   onDidChangeCursorPosition,
   onMountCallback,
   onSave,
+  originalValue,
   padding,
   placeholder,
   readOnly,
@@ -119,6 +122,7 @@ function CodeEditor({
   setSelected,
   setTextareaFocused,
   shortcuts: shortcutsProp,
+  showDiffs,
   showLineNumbers = true,
   tabSize = 4,
   textareaFocused,
@@ -182,8 +186,7 @@ function CodeEditor({
     });
 
     if (autoHeight && !height) {
-      editor._domElement.style.height =
-        `${calculateHeightFromContent(value || '')}px`;
+      editor._domElement.style.height = `${calculateHeightFromContent(value || '')}px`;
     }
 
     editor.onDidFocusEditorWidget(() => {
@@ -365,6 +368,8 @@ function CodeEditor({
     textareaFocusedPrevious,
   ]);
 
+  const EditorElement = useMemo(() => showDiffs ? DiffEditor : Editor, [showDiffs]);
+
   return (
     <ContainerStyle
       hideDuplicateMenuItems
@@ -382,10 +387,11 @@ function CodeEditor({
           </Text>
         </PlaceholderStyle>
       )}
-      <Editor
+      <EditorElement
         beforeMount={handleEditorWillMount}
         height={height}
         language={language || DEFAULT_LANGUAGE}
+        modified={showDiffs ? value : undefined}
         onChange={(val: string) => {
           onChange?.(val);
         }}
@@ -413,9 +419,18 @@ function CodeEditor({
           useShadowDOM: false,
           wordBasedSuggestions: false,
           wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
+          // Options for DiffEditor
+          colorDecorators: true,
+          diffAlgorithm: 'advanced',
+          enableSplitViewResizing: true,
+          renderIndicators: true,
+          renderLineHighlight: 'all',
+          renderMarginRevertIcon: true,
+          renderSideBySide: true,
         }}
+        original={showDiffs ? originalValue : undefined}
         theme={loadedTheme || 'vs-dark'}
-        value={value}
+        value={showDiffs ? undefined : value}
         width={width}
       />
       <div ref={refBottomOfEditor} />
