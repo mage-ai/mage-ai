@@ -472,9 +472,11 @@ class DynamicChildBlockFactory:
             child_metadata = None
 
             if len(output) >= 1:
+                # list of values from 1 parent
                 child_data = output[0]
 
             if len(output) >= 2:
+                # list of metadata from 1 parent
                 child_metadata = output[1]
 
             metadata_len = len(child_metadata) if child_metadata else 0
@@ -482,14 +484,18 @@ class DynamicChildBlockFactory:
             if all_data is None:
                 all_data = []
                 if child_data:
-                    for data_dict in child_data:
+                    for index_within_same_parent, data_dict in enumerate(child_data):
                         parent_index = data_dict['parent_index']
                         upstream_block_uuid = data_dict['upstream_block_uuid']
                         extra_settings = data_dict['extra_settings']
 
                         metadata = None
-                        if parent_index is not None and parent_index < metadata_len:
-                            metadata = child_metadata[parent_index]
+
+                        if index_within_same_parent is not None and \
+                                index_within_same_parent < metadata_len:
+
+                            metadata = child_metadata[index_within_same_parent]
+
                         all_data.append([(
                             upstream_block_uuid,
                             parent_index,
