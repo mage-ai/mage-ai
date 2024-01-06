@@ -233,7 +233,7 @@ def interpolate_vars(query, global_vars=None, block=None):
         global_vars = dict()
 
     if block:
-        return block.interpolate_content(query, variables=global_vars)
+        query = block.interpolate_content(query, variables=global_vars)
 
     return Template(
         query,

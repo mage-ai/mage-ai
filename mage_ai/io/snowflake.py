@@ -75,6 +75,10 @@ class Snowflake(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, timeout=self.timeout, **kwargs).fetchall()
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        with self.conn.cursor() as cur:
+            return cur.execute(query, timeout=self.timeout).fetchall()
+
     def execute_queries(
         self,
         queries: List[str],
