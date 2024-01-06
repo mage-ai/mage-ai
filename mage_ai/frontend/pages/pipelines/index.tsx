@@ -1472,6 +1472,7 @@ function PipelineListPage() {
       sortableColumnIndexes={sortableColumnIndexes}
       sortedColumn={sortedColumnInit}
       stickyHeader
+      uuid="pipelines_table"
     />
   ), [
     clonePipeline,
@@ -1625,8 +1626,7 @@ function PipelineListPage() {
             noPadding
             onClickTab={({ uuid }) => goToWithQuery({
               [QUERY_PARAM_TAB]: uuid,
-              [MetaQueryEnum.LIMIT]: null,
-              [MetaQueryEnum.OFFSET]: null,
+              [MetaQueryEnum.OFFSET]: 0,
             }, {
               pushHistory: true,
             })}
@@ -1666,8 +1666,8 @@ function PipelineListPage() {
       <TableContainerStyle
         hide={showNoPipelinesForTab}
         includePadding={!!groupByQuery}
-        // Height of table = viewport height - (header height + subheader height)
-        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 0) + refPaginate?.current?.getBoundingClientRect?.()?.height}px)`}
+        // 74 is the subheader height. 68 is the pagination bar height.
+        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 44) + 68}px)`}
       >
         {(!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID)
           && pipelinesTableMemo

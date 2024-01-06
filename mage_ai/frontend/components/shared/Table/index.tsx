@@ -164,7 +164,7 @@ function Table({
   sortedColumn: sortedColumnInit,
   stickyFirstColumn,
   stickyHeader,
-  uuid,
+  uuid = 'table',
   uuidColumnIndex,
   wrapColumns,
 }: TableProps, ref) {
