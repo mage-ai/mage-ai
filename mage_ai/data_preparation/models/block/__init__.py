@@ -1192,7 +1192,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             )
 
             if self.configuration and self.configuration.get('disable_query_preprocessing'):
-                output = {}
+                output = dict(output=None)
             else:
                 block_output = self.post_process_output(output)
                 variable_mapping = dict()
