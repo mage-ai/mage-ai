@@ -13,6 +13,7 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.errors.base import MageBaseException
+from mage_ai.shared.environments import is_debug
 
 PROFILES_FILE_NAME = 'profiles.yml'
 
@@ -142,10 +143,15 @@ class Profiles(object):
             with interpoalted_profiles_full_path.open('w') as f:
                 yaml.safe_dump(self.profiles, f)
         except Exception as e:
-            raise ProfilesError(
-                f'Failed to write interpolated `{PROFILES_FILE_NAME}`' +
-                f' to `{interpolated_profiles_dir}`: {e}'
+            msg = (
+                f'Failed to write interpolated `{PROFILES_FILE_NAME}` to '
+                f'`{interpolated_profiles_dir}`: {e}'
             )
+
+            if is_debug():
+                raise ProfilesError(msg)
+            else:
+                print(f'[DBTProfiles] interpolate: {msg}')
 
         self.__interpolated_profiles_dir = str(interpolated_profiles_dir)
         self.is_interpolated = True

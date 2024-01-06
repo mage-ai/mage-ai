@@ -91,8 +91,8 @@ function Dashboard({
   } = useWindowSize();
   const localStorageKeyAfter = `dashboard_after_width_${uuid}`;
   const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
-  const afterWidthLocal = get(localStorageKeyAfter);
-  const beforeWidthLocal = get(localStorageKeyBefore);
+  const afterWidthLocal = Math.max(get(localStorageKeyAfter, 30 * UNIT), 30 * UNIT) || 30 * UNIT;
+  const beforeWidthLocal = Math.max(get(localStorageKeyBefore, 30 * UNIT), 30 * UNIT) || 30 * UNIT;
 
   const mainContainerRef = useRef(null);
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);

@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 import simplejson
@@ -29,13 +30,13 @@ class CachingQuery(Query):
                 )
                 self.cache_key = str(hash(f'{cache_key_1}:{cache_key_2}'))
 
-            if debug:
+            if debug and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
                 keys_count = len((self.session.cache() or {}).keys())
                 print(f'[INFO] Number of keys in session cache: {keys_count}')
 
             results = self.session.get_results_from_cache(self.cache_key)
             if self.cache_key and results:
-                if debug:
+                if debug and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
                     print(f'[INFO] Cache HIT for cache key: {self.cache_key}')
 
                 return results
@@ -43,7 +44,7 @@ class CachingQuery(Query):
         results = super().all(*args, **kwargs)
 
         if self.cache and self.cache_key:
-            if debug:
+            if debug and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
                 print(f'[INFO] Cache MISS for cache key: {self.cache_key}')
             self.session.cache_results(self.cache_key, results)
 

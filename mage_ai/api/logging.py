@@ -15,8 +15,7 @@ def debug(text):
 def error(text):
     if not os.getenv('DISABLE_API_TERMINAL_OUTPUT'):
         now = datetime.utcnow().isoformat()
-
-    LOGGER.error(f'[{now}][api.views] {text}')
+        LOGGER.error(f'[{now}][api.views] {text}')
 
 
 def info(text):
