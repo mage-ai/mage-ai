@@ -1,7 +1,11 @@
+import datetime
+import json
+import math
 import re
 from functools import reduce
 from typing import Any, Dict, List
 
+import pandas as pd
 from jinja2 import Template
 
 from mage_ai.data_preparation.shared.utils import get_template_vars
@@ -28,7 +32,11 @@ def hydrate_block_outputs(
                 data = outputs_from_input_vars.get(block_uuid)
             elif upstream_block_uuids:
                 def _build_positional_arguments(acc: List, upstream_block_uuid: str) -> List:
-                    acc.append(outputs_from_input_vars.get(upstream_block_uuid))
+                    results = outputs_from_input_vars.get(upstream_block_uuid)
+                    if isinstance(results, pd.DataFrame):
+                        results = results.to_dict(orient='records')
+                    acc.append(results)
+
                     return acc
 
                 data = reduce(
@@ -40,7 +48,7 @@ def hydrate_block_outputs(
             try:
                 return parse(data, variables)
             except Exception as err:
-                print(f'[WARNING] block_output: {err}')
+                print(f'[ERROR] Parsing block_output function: {err}')
 
         return data
 
@@ -70,7 +78,12 @@ def hydrate_block_outputs(
             groups = match2.groups()
             if groups:
                 function_string = groups[0].strip()
-                results = dict(block_output=_block_output)
+                results = dict(
+                    datetime=datetime,
+                    block_output=_block_output,
+                    json=json,
+                    math=math,
+                )
                 exec(f'value_hydrated = {function_string}', results)
 
                 value_hydrated = results['value_hydrated']

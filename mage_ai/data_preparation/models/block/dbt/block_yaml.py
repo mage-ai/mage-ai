@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import merge_dict
 
 
@@ -122,6 +123,8 @@ class DBTBlockYAML(DBTBlock):
             runtime_arguments (Optional[Dict[str, Any]], optional): The runtime arguments.
         """
         # Which dbt task should be executed
+        DX_PRINTER.label = 'DBTYamlBlock'
+
         task = self._dbt_configuration.get('command', 'run')
 
         # Get variables
@@ -159,6 +162,14 @@ class DBTBlockYAML(DBTBlock):
             vars_index = args.index('--vars') + 1
         except Exception:
             pass
+
+        DX_PRINTER.debug(
+            f'execute block content: {content}',
+            block=self,
+            args=args,
+            file_path=self.file_path,
+            project_path=self.project_path,
+        )
 
         if vars_index:
             variables2 = Template(args[vars_index]).render(
