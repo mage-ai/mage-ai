@@ -58,8 +58,8 @@ class BlockExecutor:
         self,
         pipeline,
         block_uuid,
-        block_run_id: int = None,
         execution_partition: str = None,
+        block_run_id: int = None,
     ):
         """
         Initialize the BlockExecutor.
@@ -88,9 +88,9 @@ class BlockExecutor:
 
         # Check to see if this block is the original dynamic child block or
         # a clone of the original dynamic child block.
+        factory = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
+        wrapper = factory.wrapper()
         if self.block:
-            factory = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
-            wrapper = factory.wrapper()
 
             if wrapper.is_dynamic_child() and \
                     (wrapper.is_original() or wrapper.is_clone_of_original()):
