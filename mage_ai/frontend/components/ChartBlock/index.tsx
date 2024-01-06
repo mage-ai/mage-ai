@@ -98,7 +98,9 @@ export type ChartPropsShared = {
     code: string;
     ignoreAlreadyRunning?: boolean;
     runUpstream?: boolean;
-  }) => void;
+  }, opts?: {
+    skipUpdating?: boolean;
+  }) => Promise<any> | void;
   runningBlocks: BlockType[];
   savePipelineContent: () => Promise<any>;
   setAnyInputFocused: (value: boolean) => void;

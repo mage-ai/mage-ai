@@ -2569,12 +2569,28 @@ function PipelineDetailPage({
     sharedWebsocketData,
   ]);
 
-  const runBlock = useCallback((payload, options) => {
+  const runBlock = useCallback((payload: {
+    block: BlockType;
+    code: string;
+    ignoreAlreadyRunning?: boolean;
+    runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
+    runUpstream?: boolean;
+    runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
+  }, options?: {
+    skipUpdating?: boolean;
+  }) => {
     const {
       block,
     } = payload;
 
-    if (disablePipelineEditAccess || options?.skipUpdates) {
+    if (disablePipelineEditAccess || options?.skipUpdating) {
       return runBlockOrig(payload, options);
     } else {
       return savePipelineContent({
