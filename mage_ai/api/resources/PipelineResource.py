@@ -55,7 +55,7 @@ from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME, KernelName
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.platform.utils import get_pipeline_from_platform_async
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.array import find_index
+from mage_ai.shared.array import find, find_index
 from mage_ai.shared.hash import group_by, ignore_keys, merge_dict
 from mage_ai.shared.strings import is_number
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
@@ -297,6 +297,15 @@ class PipelineResource(BaseResource):
                         bools.append(val is None if not reverse_sort else val is not None)
                     elif 'triggers' == k.lower():
                         val = len(p.schedules)
+                        vals.append(val)
+                        bools.append(val is None if not reverse_sort else val is not None)
+                    elif 'status' == k.lower():
+                        if len(p.schedules) == 0:
+                            val = 'no_schedules'
+                        elif find(lambda s: s.status == 'active', p.schedules) is not None:
+                            val = 'active'
+                        else:
+                            val = 'inactive'
                         vals.append(val)
                         bools.append(val is None if not reverse_sort else val is not None)
                     elif hasattr(p, k):
