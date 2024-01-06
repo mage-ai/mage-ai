@@ -1011,7 +1011,8 @@ function CodeBlock({
       runUpstream: runUpstream || false,
       variables: variablesToUse,
     }, {
-      skipUpdating: dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING],
+      skipUpdating: dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING]
+        || dataProviderConfig?.[CONFIG_KEY_USE_RAW_SQL],
     });
 
     if (!disableReset) {

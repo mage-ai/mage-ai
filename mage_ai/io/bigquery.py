@@ -319,13 +319,12 @@ WHERE table_id = '{table_name}'
             query_string = self._clean_query(query_string)
             self.client.query(query_string, **kwargs)
 
-    def execute_query_raw(self, query: str, configuration: Dict = None):
-        job = self.client.query(query)
-
+    def execute_query_raw(self, query: str, configuration: Dict = None, **kwargs) -> None:
         DX_PRINTER.print(
             f'BigQuery.execute_query_raw\n{query}',
         )
-        job.result()
+        job = self.client.query(query)
+        return job.result()
 
     def execute_queries(
         self,
