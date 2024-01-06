@@ -242,7 +242,8 @@ function PipelineListPage() {
       data,
       filterPipelinesBySearchText,
       q,
-    ]);
+    ],
+  );
 
   const pipelinesFromHistory: PipelineType[] = useMemo(
     () => filterPipelinesBySearchText(dataPipelinesFromHistory?.pipelines || []),

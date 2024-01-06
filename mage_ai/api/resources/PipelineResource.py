@@ -332,7 +332,7 @@ class PipelineResource(BaseResource):
             results = pipelines[start_index:end_index]
 
         results_size = len(results)
-        has_next = limit and total_count > limit
+        has_next = limit and results_size > limit
         final_end_idx = results_size - 1 if has_next else results_size
 
         arr = results[0:final_end_idx]
