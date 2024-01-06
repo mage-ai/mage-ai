@@ -5,10 +5,14 @@ import re
 from functools import reduce
 from typing import Any, Dict, List
 
+import inflection
 import pandas as pd
 from jinja2 import Template
 
-from mage_ai.data_preparation.shared.utils import get_template_vars
+from mage_ai.data_preparation.shared.utils import (
+    get_template_vars,
+    get_template_vars_no_db,
+)
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 
 
@@ -18,10 +22,18 @@ def hydrate_block_outputs(
     upstream_block_uuids: List[str] = None,
     variables: Dict = None,
 ) -> str:
+    include_python_libraries = dict(
+        datetime=datetime,
+        inflection=inflection,
+        json=json,
+        math=math,
+    )
+
     def _block_output(
         block_uuid: str = None,
         parse: str = None,
         outputs_from_input_vars=outputs_from_input_vars,
+        include_python_libraries=include_python_libraries,
         upstream_block_uuids=upstream_block_uuids,
         variables=variables,
     ) -> Any:
@@ -78,11 +90,10 @@ def hydrate_block_outputs(
             groups = match2.groups()
             if groups:
                 function_string = groups[0].strip()
-                results = dict(
-                    datetime=datetime,
+                results = get_template_vars_no_db(
+                    include_python_libraries=include_python_libraries,
+                ) | dict(
                     block_output=_block_output,
-                    json=json,
-                    math=math,
                 )
                 exec(f'value_hydrated = {function_string}', results)
 
@@ -95,5 +106,5 @@ def hydrate_block_outputs(
             parse=p,
             variables=v,
         ),
-        **get_template_vars(),
+        **get_template_vars(include_python_libraries=include_python_libraries),
     )
