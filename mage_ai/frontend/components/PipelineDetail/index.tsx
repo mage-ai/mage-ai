@@ -155,6 +155,8 @@ type PipelineDetailProps = {
     code: string;
     runUpstream?: boolean;
     runTests?: boolean;
+  }, options?: {
+    skipUpdating?: boolean;
   }) => void;
   runningBlocks: BlockType[];
   savePipelineContent: (payload?: {
