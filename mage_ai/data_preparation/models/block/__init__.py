@@ -442,7 +442,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         outputs_from_input_vars: Dict = None,
         upstream_block_uuids: List[str] = None,
         variables: Dict = None,
-        *kwargs,
+        **kwargs,
     ) -> str:
         variables = variables or {}
         if self.pipeline and self.pipeline.variables:

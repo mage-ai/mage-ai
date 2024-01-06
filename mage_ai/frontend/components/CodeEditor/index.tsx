@@ -34,6 +34,7 @@ import {
   DEFAULT_LANGUAGE,
   DEFAULT_THEME,
 } from './constants';
+import { DEBUG } from '@utils/environment';
 import { DisableGlobalKeyboardShortcuts } from '@context/Keyboard';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE as DEFAULT_FONT_SIZE } from '@oracle/styles/fonts/sizes';
@@ -194,7 +195,8 @@ function CodeEditor({
        * when mounting the code editor here.
        */
       // setSelected?.(true);
-      console.log('onDidFocusEditorWidget', uuid);
+      DEBUG(() => console.log('onDidFocusEditorWidget', uuid));
+
       if (setDisableGlobalKeyboardShortcuts) {
         setDisableGlobalKeyboardShortcuts?.(true);
       }
@@ -202,7 +204,8 @@ function CodeEditor({
     });
 
     editor.onDidBlurEditorText(() => {
-      console.log('onDidBlurEditorText', uuid);
+      DEBUG(() => console.log('onDidBlurEditorText', uuid));
+
       if (setDisableGlobalKeyboardShortcuts) {
         setDisableGlobalKeyboardShortcuts?.(false);
       }
@@ -229,7 +232,7 @@ function CodeEditor({
     }
 
     if (onDidChangeCursorPosition) {
-      editor.onDidChangeCursorPosition(({
+      editor?.onDidChangeCursorPosition(({
         position: {
           lineNumber,
         },
@@ -240,7 +243,7 @@ function CodeEditor({
         } = editor._domElement.getBoundingClientRect();
         const lineNumberTop = editor.getTopForLineNumber(lineNumber);
 
-        onDidChangeCursorPosition({
+        onDidChangeCursorPosition?.({
           editor,
           editorRect: {
             height: Number(height),

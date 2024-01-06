@@ -134,8 +134,8 @@ class DBTBlockYAML(DBTBlock):
         content = self.interpolate_content(
             content,
             outputs_from_input_vars=outputs_from_input_vars,
-            upstream_block_uuids=self.upstream_block_uuids,
             variables=variables,
+            **kwargs,
         )
 
         # Get args from block content and split them by word, just like a shell does
