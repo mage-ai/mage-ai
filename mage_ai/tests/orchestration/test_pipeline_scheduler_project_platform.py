@@ -119,6 +119,7 @@ class PipelineSchedulerProjectPlatformTests(ProjectPlatformMixin, DBTestCase):
                                         fake_executor=fake_executor,
                                         pipeline_run=pipeline_run,
                                         pipeline_test=pipeline,
+                                        block_run_id=block_run.id
                                     ):
                                         self.assertEqual(block_uuid, block_uuid_test)
                                         self.assertEqual(
