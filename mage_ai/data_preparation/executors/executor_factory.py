@@ -96,6 +96,7 @@ class ExecutorFactory:
         self,
         pipeline: Pipeline,
         block_uuid: str,
+        block_run_id: int = None,
         execution_partition: Union[str, None] = None,
         executor_type: Union[ExecutorType, str, None] = None,
     ) -> BlockExecutor:
@@ -119,6 +120,7 @@ class ExecutorFactory:
         """
         executor_kwargs = dict(
             pipeline=pipeline,
+            block_run_id=block_run_id,
             block_uuid=block_uuid,
             execution_partition=execution_partition,
         )

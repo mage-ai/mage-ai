@@ -1120,6 +1120,7 @@ def run_block(
     return ExecutorFactory.get_block_executor(
         pipeline,
         block_uuid,
+        block_run_id=block_run.id,
         execution_partition=execution_partition,
     ).execute(
         block_run_id=block_run.id,

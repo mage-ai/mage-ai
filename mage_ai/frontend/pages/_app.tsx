@@ -269,7 +269,7 @@ function MyApp(props: MyAppProps & AppProps) {
                     }}
                   />
                 )}
-                {commandCenterEnabled && <CommandCenter />}
+                {AuthToken.isLoggedIn() && commandCenterEnabled && <CommandCenter />}
               </ErrorProvider>
             </SheetProvider>
           </ModalProvider>

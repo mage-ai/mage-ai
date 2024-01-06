@@ -162,5 +162,5 @@ def safe_db_query(func):
 
 logging.basicConfig()
 
-if is_dev():
+if is_dev() and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)

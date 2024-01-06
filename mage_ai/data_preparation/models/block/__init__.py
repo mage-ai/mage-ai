@@ -83,6 +83,7 @@ from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_DEV, ENV_TEST
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.environments import get_env, is_debug
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
@@ -1744,6 +1745,18 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             global_vars=global_vars,
         )
 
+        DX_PRINTER.label = f'Block {self.uuid}'
+        DX_PRINTER.critical(
+            'fetch_input_variables',
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
+            upstream_block_uuids=self.upstream_block_uuids,
+            upstream_block_uuids_override=upstream_block_uuids,
+            variables=len(variables) if variables else 'nothing',
+        )
+
         return variables
 
     def get_analyses(self) -> List:
@@ -2405,6 +2418,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         widget=False,
         error_if_file_missing: bool = True,
     ) -> 'Block':
+        if self.replicated_block:
+            return self
+
         if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 
@@ -2421,6 +2437,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         error_if_file_missing: bool = True,
         widget: bool = False,
     ) -> 'Block':
+        if self.replicated_block:
+            return self
+
         if error_if_file_missing and not self.file.exists():
             raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
 

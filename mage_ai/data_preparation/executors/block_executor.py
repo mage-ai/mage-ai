@@ -23,14 +23,14 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
 from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
     DynamicChildBlockFactory,
 )
-from mage_ai.data_preparation.models.block.utils import (
-    dynamic_block_uuid as dynamic_block_uuid_func,
-)
-from mage_ai.data_preparation.models.block.utils import (
-    dynamic_block_values_and_metadata,
+from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
+)
+from mage_ai.data_preparation.models.block.utils import (
+    build_dynamic_block_uuid,
+    dynamic_block_values_and_metadata,
 )
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -42,6 +42,7 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 
@@ -57,7 +58,8 @@ class BlockExecutor:
         self,
         pipeline,
         block_uuid,
-        execution_partition=None
+        execution_partition: str = None,
+        block_run_id: int = None,
     ):
         """
         Initialize the BlockExecutor.
@@ -83,11 +85,27 @@ class BlockExecutor:
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
         # If this is the original block run for the original dynamic block
-        if self.block and \
-                self.block.uuid == self.block_uuid and \
-                is_dynamic_block_child(self.block):
 
-            self.block = DynamicChildBlockFactory(self.block)
+        # Check to see if this block is the original dynamic child block or
+        # a clone of the original dynamic child block.
+        factory = DynamicChildBlockFactory(self.block, block_run_id=block_run_id)
+        wrapper = factory.wrapper()
+        if self.block:
+
+            if wrapper.is_dynamic_child() and \
+                    (wrapper.is_original() or wrapper.is_clone_of_original()):
+
+                self.block = factory
+
+                DX_PRINTER.label = 'BlockExecutor'
+                DX_PRINTER.info(
+                    'Initializing dynamic child block factory',
+                    block=self.block,
+                    clone_of_original=wrapper.is_clone_of_original(),
+                    is_dynamic=wrapper.is_dynamic(),
+                    is_dynamic_child=wrapper.is_dynamic_child(),
+                    original=wrapper.is_original(),
+                )
 
         self.block_run = None
 
@@ -339,7 +357,7 @@ class BlockExecutor:
                                 metadata = {}
 
                             dynamic_upstream_block_uuids_reduce.append(
-                                dynamic_block_uuid_func(
+                                build_dynamic_block_uuid(
                                     upstream_block.uuid,
                                     metadata,
                                     idx,
@@ -1035,8 +1053,8 @@ class BlockExecutor:
 
                     return arr
 
-        if is_dynamic_block_child(self.block) and self.block_uuid == self.block.uuid:
-            self.block.pipeline_run = pipeline_run
+        if self.block and isinstance(self.block, DynamicChildBlockFactory):
+            self.block.set_pipeline_run(pipeline_run)
 
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
