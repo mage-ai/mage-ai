@@ -96,9 +96,9 @@ import { filterQuery, queryFromUrl } from '@utils/url';
 import { get, set } from '@storage/localStorage';
 import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
-import { indexBy, range, sortByKey } from '@utils/array';
 import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
 import { pauseEvent } from '@utils/events';
+import { range, sortByKey } from '@utils/array';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
@@ -147,9 +147,6 @@ function PipelineListPage() {
   const [buttonTabsHeight, setButtonTabsHeight] = useState<number>(null);
 
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
-  const [pipelineRowsSorted, setPipelineRowsSorted] = useState<React.ReactElement[][]>(null);
-  const [pipelineRowsSortedFromHistory, setPipelineRowsSortedFromHistory] =
-    useState<React.ReactElement[][]>(null);
   const [searchText, setSearchTextState] = useState<string>(null);
   const setSearchText = useCallback((searchQuery: string) => {
     setSearchTextState(searchQuery);
@@ -170,7 +167,6 @@ function PipelineListPage() {
 
   const q = queryFromUrl();
   const query = {
-    [MetaQueryEnum.LIMIT]: ROW_LIMIT,
     ...filterQuery(q, [
       PipelineQueryEnum.SEARCH,
       PipelineQueryEnum.STATUS,
@@ -223,22 +219,10 @@ function PipelineListPage() {
     pauseFetch: !operationHistoryEnabled || !selectedTabUUID || TAB_RECENT.uuid !== selectedTabUUID,
   });
 
-  const filterPipelinesBySearchText = useCallback((arr: PipelineType[]): PipelineType[] => {
-    return arr;
-    // let pipelinesFinal: PipelineType[] = arr || [];
-    // if (searchText) {
-    //   const lowercaseSearchText = searchText.toLowerCase();
-    //   pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
-    //      name?.toLowerCase().includes(lowercaseSearchText)
-    //       || uuid?.toLowerCase().includes(lowercaseSearchText)
-    //       || description?.toLowerCase().includes(lowercaseSearchText),
-    //   );
-    // }
-
-    // return pipelinesFinal;
-  }, [
-    searchText,
-  ]);
+  const filterPipelinesBySearchText = useCallback(
+    (arr: PipelineType[]): PipelineType[] => arr,
+    [],
+  );
 
   const pipelines: PipelineType[] = useMemo(
     () => {
@@ -258,7 +242,8 @@ function PipelineListPage() {
       data,
       filterPipelinesBySearchText,
       q,
-    ]);
+    ],
+  );
 
   const pipelinesFromHistory: PipelineType[] = useMemo(
     () => filterPipelinesBySearchText(dataPipelinesFromHistory?.pipelines || []),
@@ -267,53 +252,7 @@ function PipelineListPage() {
       filterPipelinesBySearchText,
     ]);
 
-  const uuidToPipelineMapping = useMemo(() => indexBy(
-    pipelines,
-    ({ uuid }) => uuid,
-  ), [pipelines]);
-
-  const uuidToPipelineFromHistoryMapping = useMemo(() => indexBy(
-    pipelinesFromHistory,
-    ({ uuid }) => uuid,
-  ), [pipelinesFromHistory]);
-
-  const getUniqueRowIdentifier = useCallback(
-    row => row?.[2]?.props?.children?.props?.children,
-    [],
-  );
-
-  const pipelinesSorted = useMemo(() => (pipelineRowsSorted?.length > 0
-    ? (
-      pipelineRowsSorted?.map(row => {
-        // Get pipeline UUID from the third column of the table.
-        const pipelineUUIDFromRow = getUniqueRowIdentifier(row);
-        return uuidToPipelineMapping?.[pipelineUUIDFromRow];
-      })
-    ) : pipelines
-  ), [
-    getUniqueRowIdentifier,
-    pipelineRowsSorted,
-    pipelines,
-    uuidToPipelineMapping,
-  ]);
-
-  const pipelinesSortedFromHistory = useMemo(() => (pipelineRowsSortedFromHistory?.length > 0
-    ? (
-      pipelineRowsSortedFromHistory?.map(row => {
-        // Get pipeline UUID from the third column of the table.
-        const pipelineUUIDFromRow = getUniqueRowIdentifier(row);
-        return uuidToPipelineFromHistoryMapping?.[pipelineUUIDFromRow];
-      })
-    ) : pipelinesFromHistory
-  ), [
-    getUniqueRowIdentifier,
-    pipelineRowsSortedFromHistory,
-    pipelinesFromHistory,
-    uuidToPipelineFromHistoryMapping,
-  ]);
-
   const sortableColumnIndexes = useMemo(() => [1, 2, 3, 4, 5, 6, 8, 9], []);
-
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
   const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
@@ -366,12 +305,7 @@ function PipelineListPage() {
   useEffect(() => {
     let queryFinal = {};
 
-    if (sortColumnIndexQuery && sortableColumnIndexes.includes(+sortColumnIndexQuery)) {
-      set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, sortColumnIndexQuery);
-      if (sortDirectionQuery) {
-        set(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, sortDirectionQuery);
-      }
-    } else {
+    if (!sortColumnIndexQuery) {
       const sortColumnIndexFromStorage = get(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, null);
       const sortDirectionFromStorage = get(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, SortDirectionEnum.ASC);
       if (sortColumnIndexFromStorage !== null) {
@@ -412,7 +346,9 @@ function PipelineListPage() {
     }
 
     if (isEmptyObject(query)) {
-      const filtersQuery = {};
+      const filtersQuery = {
+        [MetaQueryEnum.LIMIT]: ROW_LIMIT,
+      };
       const f = getFilters();
 
       if (f) {
@@ -1108,10 +1044,10 @@ function PipelineListPage() {
     showHelpMageModal,
   ]);
 
-  const buildRowGroupInfo = useCallback((pipelinesSortedInner: PipelineType[]) => {
+  const buildRowGroupInfo = useCallback((pipelinesInner: PipelineType[]) => {
     const mapping = {};
 
-    pipelinesSortedInner?.forEach((pipeline, idx: number) => {
+    pipelinesInner?.forEach((pipeline, idx: number) => {
       let value = pipeline?.[groupByQuery];
 
       if (PipelineGroupingEnum.STATUS === groupByQuery) {
@@ -1198,25 +1134,23 @@ function PipelineListPage() {
   const {
     rowGroupHeaders,
     rowsGroupedByIndex,
-  } = useMemo(() => buildRowGroupInfo(pipelinesSorted), [
+  } = useMemo(() => buildRowGroupInfo(pipelines), [
     buildRowGroupInfo,
-    pipelinesSorted,
+    pipelines,
   ]);
 
   const {
     rowGroupHeaders: rowGroupHeadersFromHistory,
     rowsGroupedByIndex: rowsGroupedByIndexFromHistory,
-  } = useMemo(() => buildRowGroupInfo(pipelinesSortedFromHistory), [
+  } = useMemo(() => buildRowGroupInfo(pipelinesFromHistory), [
     buildRowGroupInfo,
-    pipelinesSortedFromHistory,
+    pipelinesFromHistory,
   ]);
 
   const renderTable = useCallback((
     pipelinesInner: PipelineType[],
-    pipelinesSortedInner: PipelineType[],
     rowGroupHeadersInner: string[] | any[],
     rowsGroupedByIndexInner: number[][],
-    setPipelineRowsSortedInner: (rows: React.ReactElement[][]) => void,
   ) => (
     <Table
       columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
@@ -1260,25 +1194,23 @@ function PipelineListPage() {
           uuid: 'Actions',
         },
       ]}
-      defaultSortColumnIndex={2}
-      getUniqueRowIdentifier={getUniqueRowIdentifier}
-      isSelectedRow={(rowIndex: number) => pipelinesSortedInner[rowIndex]?.uuid === selectedPipeline?.uuid}
+      isSelectedRow={(rowIndex: number) => pipelinesInner[rowIndex]?.uuid === selectedPipeline?.uuid}
       localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
       localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
       onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
-        const pipeline = pipelinesSortedInner[rowIndex];
+        const pipeline = pipelinesInner[rowIndex];
 
         return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
       })}
       onDoubleClickRow={(rowIndex: number) => {
         router.push(
             '/pipelines/[pipeline]/edit',
-            `/pipelines/${pipelinesSortedInner[rowIndex].uuid}/edit`,
+            `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
         );
       }}
       ref={refTable}
       renderRightClickMenuItems={(rowIndex: number) => {
-        const selectedPipeline = pipelinesSortedInner[rowIndex];
+        const selectedPipeline = pipelinesInner[rowIndex];
 
         return [
           {
@@ -1310,8 +1242,8 @@ function PipelineListPage() {
             label: () => 'Download (keep folder structure)',
             onClick: () => {
               downloadPipeline({
+                filesOnly: false,
                 pipelineUUID: selectedPipeline?.uuid,
-                filesOnly: false
               });
             },
             uuid: 'download_keep_folder_structure',
@@ -1320,8 +1252,8 @@ function PipelineListPage() {
             label: () => 'Download (without folder structure)',
             onClick: () => {
               downloadPipeline({
+                filesOnly: true,
                 pipelineUUID: selectedPipeline?.uuid,
-                filesOnly: true
               });
             },
             uuid: 'download_without_folder_structure',
@@ -1538,17 +1470,16 @@ function PipelineListPage() {
         ];
       })}
       rowsGroupedByIndex={rowsGroupedByIndexInner}
-      setRowsSorted={setPipelineRowsSortedInner}
       sortableColumnIndexes={sortableColumnIndexes}
       sortedColumn={sortedColumnInit}
       stickyHeader
+      uuid="pipelines_table"
     />
   ), [
     clonePipeline,
     deletePipeline,
     downloadPipeline,
     displayLocalTimezone,
-    getUniqueRowIdentifier,
     pipelinesEditing,
     router,
     selectedPipeline,
@@ -1563,32 +1494,24 @@ function PipelineListPage() {
 
   const pipelinesTableMemo = useMemo(() => renderTable(
     pipelines,
-    pipelinesSorted,
     rowGroupHeaders,
     rowsGroupedByIndex,
-    setPipelineRowsSorted,
   ), [
     pipelines,
-    pipelinesSorted,
     renderTable,
     rowGroupHeaders,
     rowsGroupedByIndex,
-    setPipelineRowsSorted,
   ]);
 
   const pipelinesFromHistoryTableMemo = useMemo(() => renderTable(
     pipelinesFromHistory,
-    pipelinesSortedFromHistory,
     rowGroupHeadersFromHistory,
     rowsGroupedByIndexFromHistory,
-    setPipelineRowsSortedFromHistory,
   ), [
     pipelinesFromHistory,
-    pipelinesSortedFromHistory,
     renderTable,
     rowGroupHeadersFromHistory,
     rowsGroupedByIndexFromHistory,
-    setPipelineRowsSortedFromHistory,
   ]);
 
   const pipelinesCount = useMemo(() => pipelines?.length || 0, [pipelines]);
@@ -1620,6 +1543,7 @@ function PipelineListPage() {
           compact
           onChange={e => goToWithQuery({
             [MetaQueryEnum.LIMIT]: e.target.value,
+            [MetaQueryEnum.OFFSET]: 0,
           }, {
             pushHistory: true,
           })}
@@ -1703,8 +1627,7 @@ function PipelineListPage() {
             noPadding
             onClickTab={({ uuid }) => goToWithQuery({
               [QUERY_PARAM_TAB]: uuid,
-              [MetaQueryEnum.LIMIT]: null,
-              [MetaQueryEnum.OFFSET]: null,
+              [MetaQueryEnum.OFFSET]: 0,
             }, {
               pushHistory: true,
             })}
@@ -1744,8 +1667,8 @@ function PipelineListPage() {
       <TableContainerStyle
         hide={showNoPipelinesForTab}
         includePadding={!!groupByQuery}
-        // Height of table = viewport height - (header height + subheader height)
-        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 0) + refPaginate?.current?.getBoundingClientRect?.()?.height}px)`}
+        // 74 is the subheader height. 68 is the pagination bar height.
+        maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 44) + 68}px)`}
       >
         {(!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID)
           && pipelinesTableMemo

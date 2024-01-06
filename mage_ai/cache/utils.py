@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Union
 from mage_ai.shared.hash import extract, merge_dict
 
 PIPELINE_KEYS = [
+    'created_at',
     'description',
     'name',
     'tags',
@@ -59,6 +60,7 @@ def build_pipeline_dict(
     repo_path: str = None,
 ) -> Dict:
     pipeline_output_dict = dict(
+        created_at=None,
         description=None,
         name=None,
         tags=None,

@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from freezegun import freeze_time
@@ -89,7 +89,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_update_models(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1)
         model = self.pipeline_json.copy()
         model['name'] = self.uuid
 
@@ -106,7 +106,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_update_model(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1)
         model = self.pipeline_json.copy()
         model['name'] = self.uuid
 
@@ -123,7 +123,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_add_model(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
         model = self.pipeline_json.copy()
         model['name'] = self.uuid
 
@@ -146,9 +146,10 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     async def test_initialize_cache_for_models(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
         pipeline_dict = dict(
+            created_at=None,
             description=uuid.uuid4().hex,
             blocks=[
                 dict(
