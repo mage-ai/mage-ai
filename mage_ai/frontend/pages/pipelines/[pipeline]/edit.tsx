@@ -155,6 +155,7 @@ import { isJsonString } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 import { resetColumnScroller } from '@components/PipelineDetail/ColumnScroller/utils';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
+import { useError } from '@context/Error';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 import { utcNowDate } from '@utils/date';
@@ -204,9 +205,14 @@ function PipelineDetailPage({
   const pipelineUUID = pipelineProp.uuid || pipelineUUIDFromUrl;
   const [notebookVisible, setNotebookVisible] = useState(true);
 
+  const [setErrors, _n, _m, {
+
+  }] = useError(null, {}, [], {
+    uuid: 'PipelineDetail/Edit',
+  });
+  const [errors, setErrorsState] = useState<ErrorsType>(null);
   const [initializedMessages, setInitializedMessages] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
-  const [errors, setErrors] = useState<ErrorsType>(null);
   const [pipelineErrors, setPipelineErrors] = useState<ErrorsType>(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
