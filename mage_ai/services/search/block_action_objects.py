@@ -1,6 +1,9 @@
-from thefuzz import fuzz
 from typing import List
+
+from thefuzz import fuzz
+
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.shared.custom_logger import DX_PRINTER
 
 DEFAULT_RATIO = 80
 
@@ -9,6 +12,7 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
     ratio_to_use = ratio or DEFAULT_RATIO
 
     cache = await BlockActionObjectCache.initialize_cache()
+    DX_PRINTER.label = 'BlockActionObjectCache'
 
     results = []
 
@@ -24,6 +28,8 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
                 score=score,
                 uuid=uuid,
             ))
+
+    DX_PRINTER.info(f'Cache: {len(results)}')
 
     arr = sorted(results, key=lambda x: x['score'], reverse=True)
 
