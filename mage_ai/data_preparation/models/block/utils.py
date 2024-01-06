@@ -520,10 +520,10 @@ def fetch_input_variables(
 
                 index_of_upstream = int(dynamic_block_indexes.get(upstream_block_uuid))
 
-                if input_data and index_of_upstream < len(input_data):
+                if input_data is not None and index_of_upstream < len(input_data):
                     input_value = input_data[index_of_upstream]
 
-                if metadata_data and index_of_upstream < len(metadata_data):
+                if metadata_data is not None and index_of_upstream < len(metadata_data):
                     kwargs_vars.append(metadata_data[index_of_upstream])
 
                 input_vars[idx] = input_value

@@ -1,7 +1,5 @@
 import os
-import re
 import shlex
-from functools import reduce
 from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -17,6 +15,7 @@ from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import merge_dict
 
 
@@ -107,76 +106,6 @@ class DBTBlockYAML(DBTBlock):
             }
         }
 
-    def _hydrate_block_outputs(
-        self,
-        content: str,
-        outputs_from_input_vars: Dict,
-        variables: Dict = None,
-    ) -> str:
-        def _block_output(
-            block_uuid: str = None,
-            parse: str = None,
-            outputs_from_input_vars=outputs_from_input_vars,
-            upstream_block_uuids=self.upstream_block_uuids,
-            variables=variables,
-        ) -> Any:
-            data = outputs_from_input_vars
-
-            if parse:
-                if block_uuid:
-                    data = outputs_from_input_vars.get(block_uuid)
-                elif upstream_block_uuids:
-                    def _build_positional_arguments(acc: List, upstream_block_uuid: str) -> List:
-                        acc.append(outputs_from_input_vars.get(upstream_block_uuid))
-                        return acc
-
-                    data = reduce(
-                        _build_positional_arguments,
-                        upstream_block_uuids,
-                        [],
-                    )
-
-                try:
-                    return parse(data, variables)
-                except Exception as err:
-                    print(f'[WARNING] block_output: {err}')
-
-            return data
-
-        variable_pattern = r'{}[ ]*block_output[^{}]*[ ]*{}'.format(r'\{\{', r'\}\}', r'\}\}')
-
-        match = 1
-        while match is not None:
-            match = None
-
-            match = re.search(
-                variable_pattern,
-                content,
-                re.IGNORECASE,
-            )
-
-            if not match:
-                continue
-
-            si, ei = match.span()
-            substring = content[si:ei]
-
-            match2 = re.match(
-                r'{}([^{}{}]+){}'.format(r'\{\{', r'\{\{', r'\}\}', r'\}\}'),
-                substring,
-            )
-            if match2:
-                groups = match2.groups()
-                if groups:
-                    function_string = groups[0].strip()
-                    results = dict(block_output=_block_output)
-                    exec(f'value_hydrated = {function_string}', results)
-
-                    value_hydrated = results['value_hydrated']
-                    content = f'{content[0:si]}{value_hydrated}{content[ei:]}'
-
-        return content
-
     def _execute_block(
         self,
         outputs_from_input_vars,
@@ -194,21 +123,19 @@ class DBTBlockYAML(DBTBlock):
             runtime_arguments (Optional[Dict[str, Any]], optional): The runtime arguments.
         """
         # Which dbt task should be executed
+        DX_PRINTER.label = 'DBTYamlBlock'
+
         task = self._dbt_configuration.get('command', 'run')
 
         # Get variables
         variables = merge_dict(global_vars, runtime_arguments or {})
 
         content = self.content or ''
-
-        content = self._hydrate_block_outputs(content, outputs_from_input_vars, variables)
-        content = Template(content).render(
-            variables=lambda x, p=None, v=variables: get_variable_for_template(
-                x,
-                parse=p,
-                variables=v,
-            ),
-            **get_template_vars(),
+        content = self.interpolate_content(
+            content,
+            outputs_from_input_vars=outputs_from_input_vars,
+            variables=variables,
+            **kwargs,
         )
 
         # Get args from block content and split them by word, just like a shell does
@@ -235,6 +162,14 @@ class DBTBlockYAML(DBTBlock):
             vars_index = args.index('--vars') + 1
         except Exception:
             pass
+
+        DX_PRINTER.debug(
+            f'execute block content: {content}',
+            block=self,
+            args=args,
+            file_path=self.file_path,
+            project_path=self.project_path,
+        )
 
         if vars_index:
             variables2 = Template(args[vars_index]).render(

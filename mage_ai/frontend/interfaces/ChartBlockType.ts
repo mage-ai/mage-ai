@@ -32,7 +32,7 @@ export const CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME = 'unique_upstream_table_name
 export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION = 'upstream_block_configuration';
 export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME = 'table_name';
 export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
-export const CONFIG_KEY_DISABLE_QUERY_OUTPUT = 'disable_query_output';
+export const CONFIG_KEY_DISABLE_QUERY_PREPROCESSING = 'disable_query_preprocessing';
 
 export const CONFIG_KEY_DBT = 'dbt';
 export const CONFIG_KEY_DBT_COMMAND = 'command';

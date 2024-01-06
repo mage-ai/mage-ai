@@ -89,7 +89,7 @@ def execute_sql_code(
     """
     configuration = configuration if configuration else block.configuration
     use_raw_sql = configuration.get('use_raw_sql')
-    disable_query_output = configuration.get('disable_query_output', False) or False
+    disable_query_preprocessing = configuration.get('disable_query_preprocessing', False) or False
 
     if not config_file_loader:
         config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -107,7 +107,7 @@ def execute_sql_code(
     block.set_global_vars(global_vars)
 
     table_name = block.table_name
-    should_query = block.type in PREVIEWABLE_BLOCK_TYPES and not disable_query_output
+    should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
     limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
     # Limit rows when running the block in the pipeline run
@@ -156,13 +156,14 @@ def execute_sql_code(
             loader,
             **interpolate_input_data_kwargs,
         )
-        query_string = interpolate_vars(query_string, global_vars=global_vars)
+        query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
         if use_raw_sql:
             return execute_raw_sql(
                 loader,
                 block,
                 query_string,
+                disable_query_preprocessing=disable_query_preprocessing,
                 configuration=configuration,
                 should_query=should_query,
             )
@@ -212,8 +213,7 @@ def execute_sql_code(
             query,
             **interpolate_input_data_kwargs,
         )
-        query_string = interpolate_vars(
-            query_string, global_vars=global_vars)
+        query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
         database = database or loader.default_database()
 
@@ -222,6 +222,7 @@ def execute_sql_code(
                 loader,
                 block,
                 query_string,
+                disable_query_preprocessing=disable_query_preprocessing,
                 configuration=configuration,
                 should_query=should_query,
             )
@@ -256,13 +257,14 @@ def execute_sql_code(
                 query,
                 **interpolate_input_data_kwargs,
             )
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             if use_raw_sql:
                 return execute_raw_sql(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
@@ -300,14 +302,14 @@ def execute_sql_code(
             **interpolate_input_data_kwargs,
         )
 
-        query_string = interpolate_vars(
-            query_string, global_vars=global_vars)
+        query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
         if use_raw_sql:
             return execute_raw_sql(
                 loader,
                 block,
                 query_string,
+                disable_query_preprocessing=disable_query_preprocessing,
                 configuration=configuration,
                 should_query=should_query,
             )
@@ -344,7 +346,7 @@ def execute_sql_code(
             )
 
             schema = schema or loader.default_schema()
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             if use_raw_sql:
                 return mssql.execute_raw_sql(
@@ -391,13 +393,14 @@ def execute_sql_code(
                 query,
                 **interpolate_input_data_kwargs,
             )
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             if use_raw_sql:
                 return execute_raw_sql(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
@@ -434,7 +437,7 @@ def execute_sql_code(
                 loader,
                 **interpolate_input_data_kwargs,
             )
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             schema = schema or loader.default_schema()
 
@@ -443,6 +446,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
@@ -482,13 +486,14 @@ def execute_sql_code(
                 loader,
                 **interpolate_input_data_kwargs,
             )
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             if use_raw_sql:
                 return execute_raw_sql(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
@@ -540,13 +545,14 @@ def execute_sql_code(
                 loader,
                 **interpolate_input_data_kwargs,
             )
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             if use_raw_sql:
                 return execute_raw_sql(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
@@ -597,13 +603,14 @@ def execute_sql_code(
                 unique_table_name_suffix=unique_table_name_suffix,
                 **interpolate_input_data_kwargs,
             )
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
+            query_string = interpolate_vars(query_string, global_vars=global_vars, block=block)
 
             if use_raw_sql:
                 return execute_raw_sql(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
@@ -641,9 +648,17 @@ def execute_raw_sql(
     query_string: str,
     configuration: Dict = None,
     should_query: bool = False,
+    disable_query_preprocessing: bool = False,
 ) -> List[Any]:
     if configuration is None:
         configuration = {}
+
+    if disable_query_preprocessing:
+        return loader.execute_query_raw(
+            query_string,
+            configuration=configuration,
+        )
+
     queries = []
     fetch_query_at_indexes = []
 

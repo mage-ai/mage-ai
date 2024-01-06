@@ -19,6 +19,7 @@ import {
   CONFIG_KEY_LIMIT,
 } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { sortByKey } from '@utils/array';
 
 type ConfigurationProps = {
   block: BlockType;
@@ -52,7 +53,7 @@ function Configuration({
 
   const project = useMemo(() => configurationOptions?.find(({
     option,
-  }) => attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME] === option?.project?.name)?.option, [
+  }) => attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME] === option?.project?.uuid)?.option, [
     attributes,
     configurationOptions,
   ]);
@@ -87,11 +88,11 @@ function Configuration({
                 [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
               },
             })),
-            options: configurationOptions?.map(({
+            options: sortByKey(configurationOptions || [], ({ project }) => project?.uuid)?.map(({
               option,
             }) => ({
-              label: option?.project?.name,
-              value: option?.project?.name,
+              label: option?.project?.uuid,
+              value: option?.project?.uuid,
             })),
             placeholder: 'Select project',
             value: attributes?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],

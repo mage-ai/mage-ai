@@ -2487,6 +2487,8 @@ function PipelineDetailPage({
     variables?: {
       [key: string]: any;
     };
+  }, options?: {
+    skipUpdating?: boolean;
   }) => {
     const {
       block,
@@ -2552,8 +2554,10 @@ function PipelineDetailPage({
       }));
     }
 
-    // Need to fetch pipeline to refresh block status in dependency graph
-    fetchPipeline();
+    if (!options?.skipUpdating) {
+      // Need to fetch pipeline to refresh block status in dependency graph
+      fetchPipeline();
+    }
   }, [
     fetchPipeline,
     pipeline,
@@ -2565,13 +2569,29 @@ function PipelineDetailPage({
     sharedWebsocketData,
   ]);
 
-  const runBlock = useCallback((payload) => {
+  const runBlock = useCallback((payload: {
+    block: BlockType;
+    code: string;
+    ignoreAlreadyRunning?: boolean;
+    runDownstream?: boolean;
+    runIncompleteUpstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
+    runUpstream?: boolean;
+    runTests?: boolean;
+    variables?: {
+      [key: string]: any;
+    };
+  }, options?: {
+    skipUpdating?: boolean;
+  }) => {
     const {
       block,
     } = payload;
 
-    if (disablePipelineEditAccess) {
-      return runBlockOrig(payload);
+    if (disablePipelineEditAccess || options?.skipUpdating) {
+      return runBlockOrig(payload, options);
     } else {
       return savePipelineContent({
         block: {
