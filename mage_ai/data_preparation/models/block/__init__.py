@@ -1053,8 +1053,10 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     logger=logger,
                     logging_tags=logging_tags,
                 )
-                conditional_message += \
-                    f'Conditional block {conditional_block.uuid} evaluated to {block_result}.\n'
+                conditional_message = (
+                    f'{conditional_message}Conditional block '
+                    f'{conditional_block.uuid} evaluated to {block_result}.\n'
+                )
                 result = result and block_result
 
             # Print result to block output
@@ -1189,59 +1191,64 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 **kwargs,
             )
 
-            block_output = self.post_process_output(output)
-            variable_mapping = dict()
-
-            if BlockType.CHART == self.type:
-                variable_mapping = block_output
-                output = dict(
-                    output=simplejson.dumps(
-                        block_output,
-                        default=encode_complex,
-                        ignore_nan=True,
-                    ) if not disable_json_serialization else block_output,
-                )
+            if self.configuration and self.configuration.get('disable_query_preprocessing'):
+                output = {}
             else:
-                output_count = len(block_output)
-                variable_keys = [f'output_{idx}' for idx in range(output_count)]
-                variable_mapping = dict(zip(variable_keys, block_output))
+                block_output = self.post_process_output(output)
+                variable_mapping = dict()
 
-            if store_variables and \
-                    self.pipeline and \
-                    self.pipeline.type != PipelineType.INTEGRATION:
-
-                try:
-                    self.store_variables(
-                        variable_mapping,
-                        execution_partition=execution_partition,
-                        override_outputs=True,
-                        spark=self.__get_spark_session_from_global_vars(global_vars=global_vars),
-                        dynamic_block_uuid=dynamic_block_uuid,
+                if BlockType.CHART == self.type:
+                    variable_mapping = block_output
+                    output = dict(
+                        output=simplejson.dumps(
+                            block_output,
+                            default=encode_complex,
+                            ignore_nan=True,
+                        ) if not disable_json_serialization else block_output,
                     )
-                except ValueError as e:
-                    if str(e) == 'Circular reference detected':
-                        raise ValueError(
-                            'Please provide dataframe or json serializable data as output.'
+                else:
+                    output_count = len(block_output)
+                    variable_keys = [f'output_{idx}' for idx in range(output_count)]
+                    variable_mapping = dict(zip(variable_keys, block_output))
+
+                if store_variables and \
+                        self.pipeline and \
+                        self.pipeline.type != PipelineType.INTEGRATION:
+
+                    try:
+                        self.store_variables(
+                            variable_mapping,
+                            execution_partition=execution_partition,
+                            override_outputs=True,
+                            spark=self.__get_spark_session_from_global_vars(
+                                global_vars=global_vars,
+                            ),
+                            dynamic_block_uuid=dynamic_block_uuid,
                         )
-                    raise e
-            # Reset outputs cache
-            self._outputs = None
+                    except ValueError as e:
+                        if str(e) == 'Circular reference detected':
+                            raise ValueError(
+                                'Please provide dataframe or json serializable data as output.'
+                            )
+                        raise e
+                # Reset outputs cache
+                self._outputs = None
+
+                if BlockType.CHART != self.type:
+                    if analyze_outputs:
+                        self.analyze_outputs(
+                            variable_mapping,
+                            execution_partition=execution_partition,
+                        )
+                    else:
+                        self.analyze_outputs(
+                            variable_mapping,
+                            execution_partition=execution_partition,
+                            shape_only=True,
+                        )
 
             if update_status:
                 self.status = BlockStatus.EXECUTED
-
-            if BlockType.CHART != self.type:
-                if analyze_outputs:
-                    self.analyze_outputs(
-                        variable_mapping,
-                        execution_partition=execution_partition,
-                    )
-                else:
-                    self.analyze_outputs(
-                        variable_mapping,
-                        execution_partition=execution_partition,
-                        shape_only=True,
-                    )
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
