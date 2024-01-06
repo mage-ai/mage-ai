@@ -14,6 +14,7 @@ from mage_ai.data_preparation.shared.utils import (
     get_template_vars_no_db,
 )
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
+from mage_ai.shared.hash import merge_dict
 
 
 def hydrate_block_outputs(
@@ -90,11 +91,11 @@ def hydrate_block_outputs(
             groups = match2.groups()
             if groups:
                 function_string = groups[0].strip()
-                results = get_template_vars_no_db(
+                results = merge_dict(get_template_vars_no_db(
                     include_python_libraries=include_python_libraries,
-                ) | dict(
+                ), dict(
                     block_output=_block_output,
-                )
+                ))
                 exec(f'value_hydrated = {function_string}', results)
 
                 value_hydrated = results['value_hydrated']
