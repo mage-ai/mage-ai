@@ -1541,6 +1541,7 @@ function PipelineListPage() {
           compact
           onChange={e => goToWithQuery({
             [MetaQueryEnum.LIMIT]: e.target.value,
+            [MetaQueryEnum.OFFSET]: 0,
           }, {
             pushHistory: true,
           })}
