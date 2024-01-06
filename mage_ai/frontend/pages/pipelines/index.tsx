@@ -167,7 +167,6 @@ function PipelineListPage() {
 
   const q = queryFromUrl();
   const query = {
-    [MetaQueryEnum.LIMIT]: ROW_LIMIT,
     ...filterQuery(q, [
       PipelineQueryEnum.SEARCH,
       PipelineQueryEnum.STATUS,
@@ -346,7 +345,9 @@ function PipelineListPage() {
     }
 
     if (isEmptyObject(query)) {
-      const filtersQuery = {};
+      const filtersQuery = {
+        [MetaQueryEnum.LIMIT]: ROW_LIMIT,
+      };
       const f = getFilters();
 
       if (f) {
