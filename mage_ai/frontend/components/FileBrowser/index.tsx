@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
+import { createPortal } from 'react-dom';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import FileHeaderMenu from './FileHeaderMenu';
@@ -36,9 +37,9 @@ import { HEADER_Z_INDEX } from '@components/constants';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
-import { createPortal } from 'react-dom';
 import { find } from '@utils/array';
-import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
+import { getBlockFromFile } from './utils';
+import { getFullPath } from '@utils/files';
 import { initiateDownload } from '@utils/downloads';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
@@ -199,7 +200,7 @@ function FileBrowser({
       force?: boolean;
     }) => api.blocks.useDelete(
       encodeURIComponent(uuid), {
-        file_path: file ? encodeURIComponent(getFullPathWithoutRootFolder(file)) : null,
+        file_path: file ? encodeURIComponent(getFullPath(file)) : null,
         force,
       })(),
     {
@@ -301,7 +302,7 @@ function FileBrowser({
           const blockReqPayload = buildAddBlockRequestPayload(
             {
               ...draggingFile,
-              path: getFullPathWithoutRootFolder(draggingFile),
+              path: getFullPath(draggingFile),
             },
             status.repo_path,
             pipeline,
@@ -518,7 +519,7 @@ function FileBrowser({
         {
           label: () => 'Delete folder',
           onClick: () => {
-            const fp = getFullPathWithoutRootFolder(selectedFolder);
+            const fp = getFullPath(selectedFolder);
             if (typeof window !== 'undefined'
               && window.confirm(
                 `Are you sure you want to delete folder ${fp} and all its subfolders and files?`,
@@ -616,7 +617,7 @@ function FileBrowser({
         }, {
           label: () => 'Download file',
           onClick: () => {
-            const fp = getFullPathWithoutRootFolder(selectedFile);
+            const fp = getFullPath(selectedFile);
             downloadFile(encodeURIComponent(fp));
           },
           uuid: 'download_file',
@@ -634,7 +635,7 @@ function FileBrowser({
                 deleteWidget(selectedBlock);
               }
             } else {
-              const fp = getFullPathWithoutRootFolder(selectedFile);
+              const fp = getFullPath(selectedFile);
               if (typeof window !== 'undefined'
                 && window.confirm(`Are you sure you want to delete ${fp}?`)
               ) {
@@ -648,7 +649,7 @@ function FileBrowser({
         items.push({
           label: () => 'Delete file',
           onClick: () => {
-            const fp = getFullPathWithoutRootFolder(selectedFile);
+            const fp = getFullPath(selectedFile);
 
             if (typeof window !== 'undefined'
               && window.confirm(`Are you sure you want to delete file ${fp}?`)

@@ -431,8 +431,9 @@ class Pipeline:
             pipelines_folder = os.path.join(path, PIPELINES_FOLDER)
             pipelines_folder_exists = os.path.exists(pipelines_folder)
             if not pipelines_folder_exists and not disable_pipelines_folder_creation:
-                os.mkdir(pipelines_folder)
-                pipelines_folder_exists = True
+                if os.path.exists(os.path.dirname(pipelines_folder)):
+                    os.mkdir(pipelines_folder)
+                    pipelines_folder_exists = True
 
             if pipelines_folder_exists:
                 arr.extend([
