@@ -306,7 +306,11 @@ const Link = ({
         e.preventDefault();
       }
       if (onClick && !disabled) {
-        onClick(e);
+        try {
+          onClick(e);
+        } catch(err) {
+          console.log(err);
+        }
       }
     }}
     onDoubleClick={(e) => {
