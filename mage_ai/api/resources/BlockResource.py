@@ -773,6 +773,8 @@ class BlockResource(GenericResource):
             if replicated_block_uuid:
                 replicated_block = pipeline.get_block(replicated_block_uuid)
                 if replicated_block:
+                    # You can replicate a replica but it’ll only replicate the original block.
+                    replicated_block = replicated_block.get_original_block() or replicated_block
                     block_type = replicated_block.type
                     block_attributes['language'] = replicated_block.language
                     block_attributes['replicated_block'] = replicated_block.uuid
@@ -922,14 +924,20 @@ class BlockResource(GenericResource):
             force = force[0]
 
         pipeline = kwargs.get('parent_model')
+
+        blocks_to_delete = [self.model]
+        for block in pipeline.blocks_by_uuid.values():
+            if block.replicated_block == self.model.uuid:
+                blocks_to_delete.append(block)
+
         cache = await BlockCache.initialize_cache()
-        if pipeline:
-            cache.remove_pipeline(self.model, pipeline.uuid, pipeline.repo_path)
-
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
-        cache_block_action_object.update_block(self.model, remove=True)
 
-        return self.model.delete(force=force)
+        for block in blocks_to_delete:
+            if pipeline:
+                cache.remove_pipeline(block, pipeline.uuid, pipeline.repo_path)
+            cache_block_action_object.update_block(block, remove=True)
+            block.delete(force=force)
 
     @safe_db_query
     async def update(self, payload, **kwargs):

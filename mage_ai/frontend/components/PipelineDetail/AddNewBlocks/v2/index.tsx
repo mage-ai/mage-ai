@@ -182,7 +182,6 @@ function AddNewBlocksV2({
     },
     [
       focused,
-      refTextInput,
     ],
   );
 
@@ -222,7 +221,6 @@ function AddNewBlocksV2({
         search_result: {
           pipeline_type: pipelineType,
           query: val,
-          ratio: 60,
           type: SearchResultTypeEnum.BLOCK_ACTION_OBJECTS,
         },
       });

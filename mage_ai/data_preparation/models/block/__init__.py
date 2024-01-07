@@ -394,6 +394,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def configuration(self, x) -> None:
         self._configuration = self.clean_file_paths(x) if x else x
 
+    def get_original_block(self) -> 'Block':
+        if self.replicated_block:
+            return self.replicated_block_object.get_original_block()
+        return self
+
     @property
     def replicated_block_object(self) -> 'Block':
         if self._replicated_block_object:
@@ -401,13 +406,14 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         if self.replicated_block and self.pipeline:
             self._replicated_block_object = self.pipeline.get_block(self.replicated_block)
-            self._replicated_block_object.replicated_blocks[self.uuid] = self
+            if self._replicated_block_object:
+                self._replicated_block_object.replicated_blocks[self.uuid] = self
 
         return self._replicated_block_object
 
     @property
     def content(self) -> str:
-        if self.replicated_block:
+        if self.replicated_block and self.replicated_block_object:
             self._content = self.replicated_block_object.content
 
         if self._content is None:
@@ -428,7 +434,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return None
 
     async def content_async(self) -> str:
-        if self.replicated_block:
+        if self.replicated_block and self.replicated_block_object:
             self._content = await self.replicated_block_object.content_async()
 
         if self._content is None:
@@ -588,7 +594,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file_path(self) -> str:
-        if self.replicated_block:
+        if self.replicated_block and self.replicated_block_object:
             return self.replicated_block_object.file_path
 
         file_path = self.get_file_path_from_source()
@@ -613,7 +619,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file(self) -> File:
-        if self.replicated_block:
+        if self.replicated_block and self.replicated_block_object:
             return self.replicated_block_object.file
 
         if self.project_platform_activated:
@@ -1691,9 +1697,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         # Initialize module
         block_uuid = self.uuid
         block_file_path = self.file_path
-        if self.replicated_block:
-            block_uuid = self.replicated_block
+        if self.replicated_block and self.replicated_block_object:
             block_file_path = self.replicated_block_object.file_path
+            block_uuid = self.replicated_block
 
         spec = importlib.util.spec_from_file_location(block_uuid, block_file_path)
         module = importlib.util.module_from_spec(spec)

@@ -340,17 +340,13 @@ export const getMoreActionsItems = (
         uuid: 'has_callback',
       });
 
-
-      if (!isDBT) {
-        items.push({
-          disabled: !!replicatedBlock,
-          label: () => 'Replicate block',
-          onClick: () => addNewBlock({
-            replicated_block: blockUUID,
-          }),
-          uuid: 'Replicate block',
-        });
-      }
+      items.push({
+        label: () => 'Replicate block',
+        onClick: () => addNewBlock({
+          replicated_block: blockUUID,
+        }),
+        uuid: 'Replicate block',
+      });
     }
   }
 
