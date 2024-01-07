@@ -60,6 +60,9 @@ function PipelineBlockRuns({
   const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
+  const [pipelineRunStatus, setPipelineRunStatus] = useState<boolean>(null);
+  const isPipelineRunIdle =
+    useMemo(() => !!pipelineRunStatus && pipelineRunStatus !== RunStatus.RUNNING, [pipelineRunStatus]);
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -76,13 +79,13 @@ function PipelineBlockRuns({
     pipelineUUID,
   ]);
 
-  const { data: dataPipelineRun } = api.pipeline_runs.detail(
+  const { data: dataPipelineRun, mutate: fetchPipelineRun } = api.pipeline_runs.detail(
     pipelineRunProp.id,
     {
       _format: 'with_basic_details',
     },
     {
-      refreshInterval: 3000,
+      refreshInterval: !isPipelineRunIdle ? 3000 : null,
       revalidateOnFocus: true,
     },
   );
@@ -93,7 +96,7 @@ function PipelineBlockRuns({
   const {
     execution_date: pipelineRunExecutionDate,
     id: pipelineRunId,
-    status: pipelineRunStatus,
+    status: pipelineRunStatusProp,
   } = pipelineRun;
 
   const blockRunsRequestQuery: BlockRunReqQueryParamsType = {
@@ -108,10 +111,17 @@ function PipelineBlockRuns({
     const sortDirection = sortDirectionQuery || SortDirectionEnum.ASC;
     blockRunsRequestQuery.order_by = `${blockRunSortColumn}%20${sortDirection}`;
   }
+
+  useEffect(() => {
+    if (pipelineRunStatus !== pipelineRunStatusProp) {
+      setPipelineRunStatus(pipelineRunStatusProp);
+    }
+  }, [pipelineRunStatus, pipelineRunStatusProp]);
+
   const { data: dataBlockRuns, mutate: fetchBlockRuns } = api.block_runs.list(
     blockRunsRequestQuery,
     {
-      refreshInterval: 5000,
+      refreshInterval: !isPipelineRunIdle ? 5000 : null,
     },
     {
       pauseFetch: typeof pipelineRunId === 'undefined' || pipelineRunId === null,
@@ -125,16 +135,21 @@ function PipelineBlockRuns({
   const { data: dataBlocks } = api.blocks.pipeline_runs.list(pipelineRunProp?.id, {
     _limit: ROW_LIMIT,
     block_uuid: blockUuidArg,
-  }, {});
+  }, {
+    refreshInterval: !isPipelineRunIdle ? 5000 : null,
+  });
 
   const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
     api.pipeline_runs.useUpdate(pipelineRunId),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({
+            pipeline_run: pr,
+          }) => {
             setSelectedRun(null);
             fetchBlockRuns?.();
+            fetchPipelineRun();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,

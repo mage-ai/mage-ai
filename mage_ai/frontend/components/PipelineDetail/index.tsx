@@ -762,6 +762,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     <>
       <AddNewBlocks
         addNewBlock={addNewBlock}
+        blockIdx={numberOfBlocks}
         blockTemplates={blockTemplates}
         focusedAddNewBlockSearch={focusedAddNewBlockSearch}
         hideCustom={isIntegration || isStreaming}
@@ -809,6 +810,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     focusedAddNewBlockSearch,
     isIntegration,
     isStreaming,
+    numberOfBlocks,
     onClickAddSingleDBTModel,
     pipeline,
     project,

@@ -109,7 +109,7 @@ function BlockNode({
   selectedBlock,
 }: BlockNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
-
+  // console.log(block)
   const noStatus = !(
     isInProgress ||
     isQueued ||

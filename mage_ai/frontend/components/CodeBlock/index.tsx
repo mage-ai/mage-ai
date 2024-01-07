@@ -1305,7 +1305,7 @@ function CodeBlock({
         return acc;
       }, []),
       [BlockTypeEnum.SCRATCHPAD]: [
-        ...buildConvertBlockMenuItems(b, blocks, 'block_menu/scratchpad', addNewBlock),
+        ...buildConvertBlockMenuItems(b, blocks, `${b?.type}/${b?.uuid}/block_menu/scratchpad`, addNewBlock),
       ].map((config) => ({
         ...config,
         onClick: () => savePipelineContent().then(() => config.onClick()),
@@ -2552,7 +2552,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                       onClickOutside={closeBlockMenu}
                       open={blockMenuVisible}
                       parentRef={blockMenuRef}
-                      uuid="CodeBlock/block_menu"
+                      uuid={`${block?.type}/${block?.uuid}/CodeBlock/block_menu`}
                     >
                       <Text
                         color={color}

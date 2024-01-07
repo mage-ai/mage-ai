@@ -70,11 +70,13 @@ function useAside(uuid, refData, {
 
       const value = Math.max(DEFAULT_ASIDE_WIDTH, Math.min(maxWidth, prev));
 
-      setWidthState(value);
-      setLocalStorageValue(key, value);
+      if (!!prev) {
+        setWidthState(value);
+        setLocalStorageValue(key, value);
 
-      if (setWidthProp) {
-        setWidthProp(value);
+        if (setWidthProp) {
+          setWidthProp(value);
+        }
       }
 
       refData.current = {
