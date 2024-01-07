@@ -661,23 +661,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
-                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
-                upstream_dbt_blocks_by_uuid = {
-                    block.uuid: block
-                    for block in upstream_dbt_blocks
-                }
-                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
-                pipeline.validate('A cycle was formed while adding a block')
-                pipeline.save()
-            else:
-                pipeline.add_block(
-                    block,
-                    downstream_block_uuids=downstream_block_uuids,
-                    upstream_block_uuids=upstream_block_uuids,
-                    priority=priority,
-                    widget=widget,
-                )
+            pipeline.add_block(
+                block,
+                downstream_block_uuids=downstream_block_uuids,
+                upstream_block_uuids=upstream_block_uuids,
+                priority=priority,
+                widget=widget,
+            )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':

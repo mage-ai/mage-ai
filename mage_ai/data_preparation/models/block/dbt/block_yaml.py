@@ -2,7 +2,7 @@ import os
 import shlex
 from logging import Logger
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import simplejson
 from jinja2 import Template
@@ -11,7 +11,6 @@ from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
-from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
@@ -46,65 +45,6 @@ class DBTBlockYAML(DBTBlock):
             # Adds demo to /home/src/default_repo/dbt
             # /home/src/default_repo/dbt/demo
             return str(Path(self.get_base_project_from_source()) / project_name_init)
-
-    def tags(self) -> List[str]:
-        """
-        Get the tags associated with the DBT block.
-
-        Returns:
-            List[str]: The list of tags.
-        """
-        arr = super().tags()
-        command = self._dbt_configuration.get('command', 'run')
-        if command:
-            arr.append(command)
-        return arr
-
-    async def metadata_async(self) -> Dict[str, Any]:
-        """
-        Retrieves metadata needed to configure the block.
-        - available local dbt projects
-        - target to use and other target of the local dbt projects
-
-        Returns:
-            Dict: The metadata of the DBT block.
-        """
-        projects = {}
-
-        project_dirs = Project(self.get_base_project_from_source()).local_packages
-        for project_dir in (project_dirs or []):
-            project_full_path = str(Path(self.get_base_project_from_source()) / project_dir)
-
-            project = Project(project_full_path).project
-            project_name = project.get('name')
-            project_profile = project.get('profile')
-
-            # ignore exception if no profiles.yml is found.
-            # Just means that the targets have no option
-            try:
-                profiles = Profiles(
-                    project_full_path,
-                    self.pipeline.variables if self.pipeline else None
-                ).profiles
-            except FileNotFoundError:
-                profiles = None
-            profile = profiles.get(project_profile) if profiles else None
-            target = profile.get('target') if profile else None
-            targets = sorted(list(profile.get('outputs').keys())) if profile else None
-
-            projects[project_dir] = {
-                'project_name': project_name,
-                'target': target,
-                'targets': targets,
-            }
-
-        return {
-            'dbt': {
-                'block': {},
-                'project': None,
-                'projects': projects
-            }
-        }
 
     def _execute_block(
         self,

@@ -103,7 +103,7 @@ export function buildAddBlockRequestPayload(
 
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: selectEntriesWithValues({
-      file_path: (isDBT && BlockLanguageEnum.SQL === blockLanguage) ? blockUUID : null,
+      file_path: (isDBT && BlockLanguageEnum.SQL === blockLanguage) ? getFullPath(file) : null,
       file_source: {
         path: getFullPath(file),
       },

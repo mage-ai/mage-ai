@@ -1,5 +1,6 @@
 import glob
 import os
+from pathlib import Path
 from typing import Callable, List, Tuple
 
 
@@ -86,3 +87,22 @@ def get_absolute_paths_from_all_files(
             arr.append(parse_values(value) if parse_values else value)
 
     return arr
+
+
+def find_file_from_another_file_path(file_path: str, comparator) -> str:
+    print('?????????????????????????????????', file_path)
+    parts = Path(file_path).parts
+
+    absolute_file_path = None
+
+    while len(parts) > 1 and absolute_file_path is None:
+        parts = parts[:-1]
+        print('WTFFFFFFFFFFFFFFFFFFFFFF', parts)
+        fp = os.path.join(*parts)
+        for fn in os.listdir(fp):
+            afp = os.path.join(fp, fn)
+            if comparator(afp):
+                absolute_file_path = afp
+                break
+
+    return absolute_file_path
