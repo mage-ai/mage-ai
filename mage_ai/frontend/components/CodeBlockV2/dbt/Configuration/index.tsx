@@ -113,8 +113,9 @@ function Configuration({
             })),
             options: profiles?.map(({
               full_path: uuid,
+              targets,
             }) => ({
-              label: uuid,
+              label: `${uuid} (${targets?.length || 0} targets)`,
               value: uuid,
             })),
             placeholder: 'Select profile',

@@ -116,13 +116,13 @@ function Editor({
   const reset = useCallback(() => {
     refButton.current.style.opacity = 1;
     refInputContainer.current.style.display = 'none';
-    refEditor.current.focus();
+    // refEditor.current.focus();
   }, []);
 
   const start = useCallback(() => {
     refButton.current.style.opacity = 0;
     refInputContainer.current.style.display = 'block';
-    setTimeout(() => refInput?.current?.focus?.(), 1);
+    // setTimeout(() => refInput?.current?.focus?.(), 1);
   }, []);
 
   const updateContentWithCode = useCallback((code: string) => {
@@ -133,7 +133,7 @@ function Editor({
     // @ts-ignore
     const combined = part1.concat([code]).concat(part2).join('\n');
 
-    setTimeout(() => refEditor.current.focus(), 1);
+    // setTimeout(() => refEditor.current.focus(), 1);
     setTimeout(() => {
       refEditor?.current?.setPosition({
         column: 1,
