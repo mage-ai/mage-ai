@@ -1585,7 +1585,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
         # [block.uuid]:[index]
         # Don’t use the original UUID even if the block is a replica because it will get rid of
         # the dynamic child block index.
-        if block.replicated_block and not is_dynamic_block_child(block):
+        if block.replicated_block:
             block_uuid = block.uuid
 
         DX_PRINTER.debug(

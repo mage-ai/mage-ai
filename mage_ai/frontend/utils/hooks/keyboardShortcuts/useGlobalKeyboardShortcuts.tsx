@@ -77,6 +77,7 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
         shiftKey,
       };
       const newHistory = [keyCode].concat(keyHistory.current);
+      console.log(newHistory)
 
       if (!keyMapping.current[keyCode]) {
         keyMapping.current = newMapping;

@@ -737,6 +737,7 @@ function CodeOutput({
             hasError={hasError}
             selected={selected}
             showBorderTop={showBorderTop}
+            sideBySideEnabled={sideBySideEnabled}
           >
             {children}
 

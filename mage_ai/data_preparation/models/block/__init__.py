@@ -2953,6 +2953,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         clean_block_uuid = True
         if dynamic_block_uuid is not None:
             block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
+            # We only need the base name and the final index to create the folder structure:
+            # e.g. block_uuid/[dynamic_block_index]
+            # e.g. block_uuid/0/output_0/data.json
+            # [dynamic_block_index] if used for each dynamic child so that it has a folder
+            # to store its output.
+            # dynamic_block_index = dynamic_block_uuid.split(':')[-1]
+            # block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
             clean_block_uuid = False
 
         for uuid, data in variables_data['variable_mapping'].items():

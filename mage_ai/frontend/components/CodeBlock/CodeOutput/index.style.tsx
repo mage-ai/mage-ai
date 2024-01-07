@@ -14,6 +14,7 @@ export const ContainerStyle = styled.div<{
   addBottomPadding?: boolean;
   executedAndIdle?: boolean;
   showBorderTop?: boolean;
+  sideBySideEnabled?: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
@@ -27,8 +28,12 @@ export const ContainerStyle = styled.div<{
     padding-bottom: ${2 * PADDING}px;
   `}
 
-  ${props => `
+  ${props => !props.sideBySideEnabled && `
     background-color: ${(props.theme.background || dark.background).table};
+  `}
+
+  ${props => props.sideBySideEnabled && `
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 
   ${props => !props.executedAndIdle && `
