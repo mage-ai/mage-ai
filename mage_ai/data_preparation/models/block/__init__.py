@@ -338,14 +338,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         # Replicate block
         self.replicated_block = replicated_block
-        self.replicated_block_object = None
-        if replicated_block:
-            self.replicated_block_object = Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            )
+        self.replicated_blocks = {}
+        self._replicated_block_object = None
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -399,6 +393,17 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     @configuration.setter
     def configuration(self, x) -> None:
         self._configuration = self.clean_file_paths(x) if x else x
+
+    @property
+    def replicated_block_object(self) -> 'Block':
+        if self._replicated_block_object:
+            return self._replicated_block_object
+
+        if self.replicated_block and self.pipeline:
+            self._replicated_block_object = self.pipeline.get_block(self.replicated_block)
+            self._replicated_block_object.replicated_blocks[self.uuid] = self
+
+        return self._replicated_block_object
 
     @property
     def content(self) -> str:
@@ -583,6 +588,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file_path(self) -> str:
+        if self.replicated_block:
+            return self.replicated_block_object.file_path
+
         file_path = self.get_file_path_from_source()
         if file_path:
             return add_root_repo_path_to_relative_path(file_path)
@@ -605,6 +613,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file(self) -> File:
+        if self.replicated_block:
+            return self.replicated_block_object.file
+
         if self.project_platform_activated:
             file = self.build_file()
             if file:

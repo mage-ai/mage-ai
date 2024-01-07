@@ -18,7 +18,12 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
 
     for object_type, mapping in cache.load_all_data().items():
         for uuid, block_action_object in mapping.items():
-            score = fuzz.partial_token_sort_ratio(query, uuid)
+            text = ' '.join([
+                uuid,
+                uuid.replace('-', ' ').replace('_', ' '),
+            ])
+            score = fuzz.partial_token_sort_ratio(text, uuid)
+
             if score < ratio_to_use:
                 continue
 

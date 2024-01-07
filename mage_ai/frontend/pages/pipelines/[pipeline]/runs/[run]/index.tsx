@@ -318,7 +318,7 @@ function PipelineBlockRuns({
         )
       }
       title={({ name }) => `${name} runs`}
-      uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRunId}`}
+      uuid={`pipelines/detail/${PageNameEnum.RUNS}`}
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>

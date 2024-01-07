@@ -222,11 +222,11 @@ function AddNewBlocksV2({
         search_result: {
           pipeline_type: pipelineType,
           query: val,
-          ratio: 70,
+          ratio: 60,
           type: SearchResultTypeEnum.BLOCK_ACTION_OBJECTS,
         },
       });
-    }, 500);
+    }, 300);
   }, [
     createSearchResult,
     pipelineType,

@@ -896,6 +896,8 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
         executable_block_runs = []
         for block_run in self.initial_block_runs:
+            DX_PRINTER.label = f'BlockRun {block_run.block_uuid} ({block_run.id})'
+
             completed = False
             upstream_block_uuids_override = None
 
@@ -1048,6 +1050,15 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
             if completed:
                 executable_block_runs.append(block_run)
+                DX_PRINTER.warning(f'Ready: {block_run.block_uuid}', block=block)
+            else:
+                up_uuids = upstream_block_uuids_override or block.upstream_block_uuids
+                incomplete = [u for u in up_uuids if u not in completed_block_uuids]
+                DX_PRINTER.error(
+                    f'Can’t run yet: {block_run.block_uuid}',
+                    block=block,
+                    incomplete=incomplete,
+                )
 
         return executable_block_runs
 

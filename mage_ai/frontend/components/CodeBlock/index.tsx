@@ -1012,7 +1012,10 @@ function CodeBlock({
       variables: variablesToUse,
     }, {
       skipUpdating: dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING]
-        || dataProviderConfig?.[CONFIG_KEY_USE_RAW_SQL],
+        || dataProviderConfig?.[CONFIG_KEY_USE_RAW_SQL]
+        || [
+          BlockTypeEnum.SCRATCHPAD,
+        ].includes(blockType)
     });
 
     if (!disableReset) {
