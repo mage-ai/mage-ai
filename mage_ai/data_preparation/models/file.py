@@ -367,7 +367,6 @@ class File:
         )
 
     async def update_content_async(self, content: str):
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', self.repo_path, self.dir_path, self.filename)
         await self.write_async(
             self.repo_path,
             self.dir_path,
