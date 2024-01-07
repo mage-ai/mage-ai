@@ -9,7 +9,6 @@ import Flex from '@oracle/components/Flex';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import useFileComponents from '@components/Files/useFileComponents';
 import { Close } from '@oracle/icons';
 import {
   InputRowStyle,
@@ -40,6 +39,7 @@ type FileSelectorPopupProps = {
 
 function FileSelectorPopup({
   blocks,
+  children,
   dbtModelName,
   onClose,
   onOpenFile,
@@ -53,22 +53,6 @@ function FileSelectorPopup({
     () => indexBy(blocks, ({ configuration }) => configuration.file_path),
     [blocks],
   );
-
-  const {
-    browser: fileBrowser,
-  } = useFileComponents({
-    disableContextMenu: true,
-    onOpenFile: (filePath: string, isFolder: boolean) => {
-      if (!isFolder) {
-        onOpenFile(filePath);
-      }
-    },
-    onSelectBlockFile,
-    query: {
-      pattern: encodeURIComponent('\\.sql$'),
-    },
-    uuid: 'FileSelectorPopup/dbt',
-  });
 
   return (
     <WindowContainerStyle>
@@ -90,7 +74,7 @@ function FileSelectorPopup({
       </WindowHeaderStyle>
 
       <WindowContentStyle>
-        {fileBrowser}
+        {children}
       </WindowContentStyle>
     </WindowContainerStyle>
   );
