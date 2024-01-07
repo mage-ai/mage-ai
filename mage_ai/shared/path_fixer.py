@@ -89,6 +89,9 @@ def remove_base_repo_name(file_path: str) -> str:
 
 
 def remove_base_repo_path_or_name(file_path: str) -> str:
+    if not file_path:
+        return
+
     if os.path.isabs(file_path):
         value = str(remove_base_repo_path(file_path))
     else:

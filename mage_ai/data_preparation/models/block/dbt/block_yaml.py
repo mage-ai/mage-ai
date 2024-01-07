@@ -1,21 +1,21 @@
 import os
 import shlex
 from logging import Logger
-from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
-from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.custom_logger import DX_PRINTER
+from mage_ai.shared.files import find_file_from_another_file_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.path_fixer import add_absolute_path
 
 
 class DBTBlockYAML(DBTBlock):
@@ -30,21 +30,36 @@ class DBTBlockYAML(DBTBlock):
         # Example:
         # demo
         # default_repo/dbt/demo
-        project_name_init = self.configuration.get('dbt_project_name')
-        if project_name_init:
-            try:
-                diff = Path(project_name_init).relative_to(DBT_DIRECTORY_NAME)
-                project_name_init = diff
-            except ValueError:
-                pass
+        configuration = self.configuration or {}
+        file_path = configuration.get('dbt_profiles_file_path') or \
+            configuration.get('dbt_project_name')
 
-            project_name = self.get_project_path_from_project_name(project_name_init)
-            if project_name:
-                return project_name
+        if file_path:
+            return os.path.dirname(
+                find_file_from_another_file_path(
+                    add_absolute_path(file_path),
+                    lambda x: os.path.basename(x) in [
+                        'dbt_project.yml',
+                        'dbt_project.yaml'
+                    ],
+                ),
+            )
 
-            # Adds demo to /home/src/default_repo/dbt
-            # /home/src/default_repo/dbt/demo
-            return str(Path(self.get_base_project_from_source()) / project_name_init)
+        # project_name_init = self.configuration.get('dbt_project_name')
+        # if project_name_init:
+        #     try:
+        #         diff = Path(project_name_init).relative_to(DBT_DIRECTORY_NAME)
+        #         project_name_init = diff
+        #     except ValueError:
+        #         pass
+
+        #     project_name = self.get_project_path_from_project_name(project_name_init)
+        #     if project_name:
+        #         return project_name
+
+        #     # Adds demo to /home/src/default_repo/dbt
+        #     # /home/src/default_repo/dbt/demo
+        #     return str(Path(self.get_base_project_from_source()) / project_name_init)
 
     def _execute_block(
         self,

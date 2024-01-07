@@ -23,6 +23,7 @@ from mage_ai.data_preparation.models.block.platform.mixins import (
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import find_file_from_another_file_path
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.path_fixer import add_absolute_path
@@ -77,6 +78,32 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 'dbt_project.yaml'
             ]),
         )
+
+    def set_default_configurations(self):
+        configuration = self.configuration or {}
+        file_path = configuration.get('file_path') or \
+            (configuration.get('file_source') or {}).get('path')
+
+        file_path = add_absolute_path(file_path, add_base_repo_path=False) if file_path else None
+        if not file_path:
+            return
+
+        self.configuration['file_path'] = file_path
+        self.configuration['file_source'] = dict(
+            path=file_path,
+        )
+
+        try:
+            self.uuid = str(Path(self.file_path).relative_to(base_repo_path()).with_suffix(''))
+        except ValueError:
+            pass
+
+        try:
+            pp = str(Path(self.project_path).relative_to(base_repo_path()))
+            self.configuration['dbt_project_name'] = pp
+            self.configuration['file_source']['project_path'] = pp
+        except ValueError:
+            pass
 
     @property
     def __node_type(self) -> str:

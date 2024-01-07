@@ -89,6 +89,7 @@ from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.path_fixer import (
+    add_absolute_path,
     add_root_repo_path_to_relative_path,
     get_path_parts,
 )
@@ -584,17 +585,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     @property
     def file_path(self) -> str:
         file_path = self.get_file_path_from_source()
-        if file_path:
-            return add_root_repo_path_to_relative_path(file_path)
-        elif self.configuration and self.configuration.get('file_path'):
+        if not file_path:
             file_path = self.configuration.get('file_path')
-            parts = get_path_parts(file_path)
-            return os.path.join(*parts)
 
-        if self.project_platform_activated:
-            file_path = self.configuration.get('file_path')
-            if file_path:
-                return add_root_repo_path_to_relative_path(file_path)
+        if file_path:
+            return add_absolute_path(file_path)
 
         return self.__build_file_path(
             self.repo_path or os.getcwd(),
@@ -660,6 +655,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             priority = kwargs.get('priority')
             downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
+
+            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+                block.set_default_configurations()
 
             pipeline.add_block(
                 block,
