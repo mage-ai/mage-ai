@@ -21,19 +21,10 @@ import { find, indexBy } from '@utils/array';
 
 type FileSelectorPopupProps = {
   blocks: BlockType[];
+  children: any;
   creatingNewDBTModel?: boolean;
   dbtModelName?: string;
   onClose: () => void;
-  onOpenFile: (filePath: string) => void;
-  onSelectBlockFile?: (
-    blockUUID: string,
-    blockType: BlockTypeEnum,
-    filePath: string,
-    opts?: {
-      file?: FileType;
-      path?: string;
-    },
-  ) => void;
   setDbtModelName?: (name: string) => void;
 };
 
@@ -42,8 +33,6 @@ function FileSelectorPopup({
   children,
   dbtModelName,
   onClose,
-  onOpenFile,
-  onSelectBlockFile,
   setDbtModelName,
 }: FileSelectorPopupProps) {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);

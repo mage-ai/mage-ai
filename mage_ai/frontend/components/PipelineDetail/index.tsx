@@ -1197,9 +1197,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     }
   }, [entered, project]);
 
-  const onSelectBlockFile = useCallback((_a, _b, _c, {
-    path,
-  }) => addBlockFromFilePath(path), [addBlockFromFilePath]) ;
+  const onSelectBlockFile = useCallback((blockUUID: string, blockType: BlockTypeEnum, filePath: string) => addBlockFromFilePath(filePath), [addBlockFromFilePath]) ;
 
   const onOpenFile = useCallback((filePath: string, isFolder: boolean) => {
     if (!isFolder) {
@@ -1277,7 +1275,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             blocks={blocks}
             dbtModelName={dbtModelName}
             onClose={closeAddDBTModelPopup}
-
             setDbtModelName={setDbtModelName}
           >
             {fileBrowser}
