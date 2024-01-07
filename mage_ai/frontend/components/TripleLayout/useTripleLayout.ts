@@ -91,6 +91,13 @@ function useAside(uuid, refData, {
     widthWindow,
   ]);
 
+  const widthWindowPrev = usePrevious(widthWindow);
+  useEffect(() => {
+    if (widthWindow !== widthWindowPrev) {
+      setWidth(widthWindow * (width / widthWindowPrev));
+    }
+  }, [width, widthWindow, widthWindowPrev]);
+
   const widthPropPrev = usePrevious(widthProp);
   useEffect(() => {
     if (!disable && widthOverride && widthPropPrev !== widthProp) {
