@@ -37,6 +37,7 @@ from mage_ai.data_preparation.models.block.dynamic.utils import (
     has_dynamic_block_upstream_parent,
     is_dynamic_block,
     is_dynamic_block_child,
+    is_replicated_block,
     should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
@@ -1285,6 +1286,9 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             if is_dynamic_block(block):
                 flags.append(DynamicBlockFlag.DYNAMIC)
 
+            if is_replicated_block(block):
+                flags.append(DynamicBlockFlag.REPLICATED)
+
             if should_reduce_output(block):
                 flags.append(DynamicBlockFlag.REDUCE_OUTPUT)
 
@@ -1583,6 +1587,15 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
         # the dynamic child block index.
         if block.replicated_block and not is_dynamic_block_child(block):
             block_uuid = block.uuid
+
+        DX_PRINTER.debug(
+            'Outputs',
+            block=block,
+            block_run_block_uuid=block_uuid,
+            block_run_id=self.id,
+            is_dynamic_block_child=is_dynamic_block_child(block),
+            replicated_block=block.replicated_block,
+        )
 
         return block.get_outputs(
             execution_partition=self.pipeline_run.execution_partition,

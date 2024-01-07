@@ -95,7 +95,7 @@ class BlockExecutor:
             is_dynamic = wrapper.is_dynamic()
             is_dynamic_child = wrapper.is_dynamic_child()
             is_original = wrapper.is_original()
-            is_replicated = self.block.replicated_block
+            is_replicated = wrapper.is_replicated()
 
             DX_PRINTER.label = f'BlockExecutor {block_run_id}'
             DX_PRINTER.info(
@@ -111,7 +111,7 @@ class BlockExecutor:
                 is_replicated=is_replicated,
             )
 
-            if is_dynamic_child and (is_original or is_clone_of_original or is_replicated):
+            if is_dynamic_child and (is_original or is_clone_of_original):
                 self.block = factory
 
         self.block_run = None

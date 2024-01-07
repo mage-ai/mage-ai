@@ -1612,14 +1612,18 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             self.type: self._block_decorator(decorated_functions),
         }, outputs_from_input_vars)
 
+        code_executed = None
         if custom_code is not None and custom_code.strip():
             if BlockType.CHART != self.type:
-                exec(custom_code, results)
+                code_executed = custom_code
+                exec(code_executed, results)
         elif self.content is not None:
-            exec(self.content, results)
+            code_executed = self.content
+            exec(code_executed, results)
         elif os.path.exists(self.file_path):
             with open(self.file_path) as file:
-                exec(file.read(), results)
+                code_executed = file.read()
+                exec(code_executed, results)
 
         outputs = None
 
@@ -1660,6 +1664,26 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             outputs = []
         if type(outputs) is not list:
             outputs = [outputs]
+
+        DX_PRINTER.critical(
+            f'_execute_sync outputs: {len(outputs)}',
+            block=self,
+            code=code_executed,
+            dynamic_block_index=dynamic_block_index,
+            dynamic_block_indexes=dynamic_block_indexes,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            execution_partition=execution_partition,
+            execution_partition_previous=execution_partition_previous,
+            from_notebook=from_notebook,
+            global_vars=str(global_vars),
+            input_from_output=str(input_from_output),
+            input_vars=str(input_vars),
+            logging_tags=str(logging_tags),
+            outputs_from_input_vars=str(outputs_from_input_vars),
+            run_settings=str(run_settings),
+            runtime_arguments=str(runtime_arguments),
+            upstream_block_uuids=upstream_block_uuids,
+        )
 
         return outputs
 
