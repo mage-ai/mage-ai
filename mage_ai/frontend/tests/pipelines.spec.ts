@@ -1,18 +1,21 @@
 import { test, expect } from './base';
 
 test('create pipeline from overview page', async ({ page }) => {
-  // Create a standard pipeline using the dropdown menu.
+  test.setTimeout(60000);
+
   await page.goto('/overview');
   await page.getByRole('button', { name: 'New pipeline' }).click();
-  await page.getByRole('menuitem', { name: 'Standard' }).click();
-
-  // Get the name of the new pipeline.
+  await page.getByRole('menuitem', { name: 'Standard (batch)' }).click();
   await page.waitForURL('**/pipelines/**');
-  const path = await page.evaluate(() => document.location.pathname);
-  const match = /^\/pipelines\/(\w+)\/.*$/.exec(path);
-  const pipelineName = match[1];
 
-  // Verify that the new pipeline is listed on the pipelines page.
+  const pathStr = await page.evaluate(() => document.location.pathname);
+  const path = pathStr.split('/'); // ['','pipelines','<pipeline-id>','edit']
+  expect(path[1]).toBe('pipelines');
+  expect(path[3]).toBe('edit');
+  await expect(page.locator('[id="__next"]')).toContainText(path[2]);
+
   await page.getByRole('link', { name: 'Pipelines' }).click();
-  expect(page.getByRole('link', { name: pipelineName })).toBeDefined();
+  await page.goto('/pipelines');
+  await page.goto('/pipelines?_limit=30');
+  await expect(page.getByRole('link', { name: path[2] })).toBeVisible();
 });
