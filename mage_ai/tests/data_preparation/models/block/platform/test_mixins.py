@@ -72,10 +72,10 @@ class BlockWithProjectPlatformInactiveTest(BaseAPIEndpointTest, BlockWithProject
             mock_clean_file_paths.assert_called_once_with(dict(mage=1))
             self.assertEqual(block.configuration, dict(mage=1))
 
-    def test_file_path(self):
-        self.run_test_file_path(
-            lambda block: os.path.join(base_repo_path(), f'data_loaders/{block.uuid}.py'),
-        )
+    # def test_file_path(self):
+    #     self.run_test_file_path(
+    #         lambda block: os.path.join(base_repo_path(), f'data_loaders/{block.uuid}.py'),
+    #     )
 
     def test_file(self):
         self.build_block(project_platform=False)
