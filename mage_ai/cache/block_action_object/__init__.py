@@ -153,7 +153,11 @@ class BlockActionObjectCache(BaseCache):
         if block:
             block_type = block.type
             file_path = os.path.join(block.file.dir_path, block.file.filename)
-            filename = os.path.join(*file_path.split(os.path.sep)[1:])
+            parts = file_path.split(os.path.sep)[1:]
+            if len(parts) == 0:
+                return
+
+            filename = os.path.join(*parts)
             language = block.language
             uuid = block.uuid
         else:

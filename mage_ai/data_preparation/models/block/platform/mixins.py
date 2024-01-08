@@ -15,11 +15,11 @@ from mage_ai.settings.platform import (
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
+    add_absolute_path,
     add_root_repo_path_to_relative_path,
     get_path_parts,
     remove_base_repo_directory_name,
     remove_base_repo_name,
-    remove_base_repo_path,
 )
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
@@ -41,45 +41,42 @@ class ProjectPlatformAccessible:
         if not config:
             return config
 
-        if self.project_platform_activated:
-            if config.get('file_source'):
-                file_source = config.get('file_source') or {}
-                if file_source:
-                    if file_source.get('path'):
-                        # default_platform/tons_of_dbt_projects/diff_name/models/example/
-                        # my_first_dbt_model.sql
-                        path = file_source.get('path')
-                        path = str(remove_base_repo_name(path)) if path else path
-                        file_source['path'] = path
-                        config['file_source'] = file_source
+        if config.get('file_source'):
+            file_source = config.get('file_source') or {}
+            if file_source:
+                if file_source.get('path'):
+                    # default_platform/tons_of_dbt_projects/diff_name/models/example/
+                    # my_first_dbt_model.sql
+                    path = file_source.get('path')
+                    path = add_absolute_path(path, add_base_repo_path=False)
+                    file_source['path'] = path
+                    config['file_source'] = file_source
 
-                        if path and \
-                                BlockType.DBT == self.type and \
-                                BlockLanguage.YAML != self.language:
+                    if path and \
+                            BlockType.DBT == self.type and \
+                            BlockLanguage.YAML != self.language:
 
-                            # /home/src/default_repo/default_platform/
-                            # tons_of_dbt_projects/diff_name
-                            project_path = get_selected_directory_from_file_path(
-                                file_path=path,
-                                selector=lambda fn: (
-                                    str(fn).endswith('dbt_project.yml') or
-                                    str(fn).endswith('dbt_project.yaml')
-                                ),
+                        # /home/src/default_repo/default_platform/
+                        # tons_of_dbt_projects/diff_name
+                        project_path = get_selected_directory_from_file_path(
+                            file_path=path,
+                            selector=lambda fn: (
+                                str(fn).endswith('dbt_project.yml') or
+                                str(fn).endswith('dbt_project.yaml')
+                            ),
+                        )
+                        # tons_of_dbt_projects/diff_name
+                        if project_path:
+                            file_source['project_path'] = add_absolute_path(
+                                project_path,
+                                add_base_repo_path=False
                             )
-                            # tons_of_dbt_projects/diff_name
-                            if project_path:
-                                file_source['project_path'] = remove_base_repo_path(
-                                    project_path,
-                                )
-
-            if config.get('file_path'):
-                file_path = config.get('file_path')
-                config['file_path'] = str(remove_base_repo_name(
-                    file_path,
-                )) if file_path else file_path
-        else:
-            if config.get('file_source'):
-                config.pop('file_source', None)
+        elif config.get('file_path'):
+            file_path = config.get('file_path')
+            config['file_path'] = str(add_absolute_path(
+                file_path,
+                add_base_repo_path=False
+            )) if file_path else file_path
 
         return config
 

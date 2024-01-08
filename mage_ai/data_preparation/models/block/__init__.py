@@ -89,6 +89,7 @@ from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.path_fixer import (
+    add_absolute_path,
     add_root_repo_path_to_relative_path,
     get_path_parts,
 )
@@ -584,17 +585,11 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     @property
     def file_path(self) -> str:
         file_path = self.get_file_path_from_source()
-        if file_path:
-            return add_root_repo_path_to_relative_path(file_path)
-        elif self.configuration and self.configuration.get('file_path'):
+        if not file_path:
             file_path = self.configuration.get('file_path')
-            parts = get_path_parts(file_path)
-            return os.path.join(*parts)
 
-        if self.project_platform_activated:
-            file_path = self.configuration.get('file_path')
-            if file_path:
-                return add_root_repo_path_to_relative_path(file_path)
+        if file_path:
+            return add_absolute_path(file_path)
 
         return self.__build_file_path(
             self.repo_path or os.getcwd(),
@@ -661,23 +656,16 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
-                upstream_dbt_blocks = block.upstream_dbt_blocks() or []
-                upstream_dbt_blocks_by_uuid = {
-                    block.uuid: block
-                    for block in upstream_dbt_blocks
-                }
-                pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
-                pipeline.validate('A cycle was formed while adding a block')
-                pipeline.save()
-            else:
-                pipeline.add_block(
-                    block,
-                    downstream_block_uuids=downstream_block_uuids,
-                    upstream_block_uuids=upstream_block_uuids,
-                    priority=priority,
-                    widget=widget,
-                )
+            if BlockType.DBT == block.type:
+                block.set_default_configurations()
+
+            pipeline.add_block(
+                block,
+                downstream_block_uuids=downstream_block_uuids,
+                upstream_block_uuids=upstream_block_uuids,
+                priority=priority,
+                widget=widget,
+            )
 
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':

@@ -7,10 +7,10 @@ from unittest.mock import patch
 from dbt.include.starter_project import PACKAGE_PATH as starter_project_directory
 
 from mage_ai.data_preparation.models.block.dbt.dbt_adapter import DBTAdapter
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 
 
-class DBTAdapterTest(TestCase):
+class DBTAdapterTest(AsyncDBTestCase):
     """
     Tests the Project Class, which is an interface with dbt dbt_project.yml files
     """

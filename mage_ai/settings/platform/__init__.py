@@ -369,8 +369,8 @@ def __update_local_platform_settings(
     repo_path: str = None,
 ) -> None:
     if merge:
-        child = (__local_platform_settings(repo_path=repo_path) or {}).copy()
-        parent = platform_settings.copy()
+        parent = (__local_platform_settings(repo_path=repo_path) or {}).copy()
+        child = platform_settings.copy()
         combine_into(child, parent)
         platform_settings = parent
 

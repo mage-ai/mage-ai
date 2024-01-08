@@ -1,10 +1,10 @@
 from pathlib import Path
 
 from mage_ai.data_preparation.models.block.dbt.sources import Sources
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 
 
-class SourcesTest(TestCase):
+class SourcesTest(AsyncDBTestCase):
     """
     Tests the Project class, which is an interface with dbt dbt_project.yml files
     """

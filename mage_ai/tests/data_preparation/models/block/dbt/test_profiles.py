@@ -5,10 +5,10 @@ from unittest.mock import patch
 import yaml
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase
 
 
-class ProfilesTest(TestCase):
+class ProfilesTest(AsyncDBTestCase):
     """
     Tests the Profiles class, which is an interface with dbt profiles.yml files
     """

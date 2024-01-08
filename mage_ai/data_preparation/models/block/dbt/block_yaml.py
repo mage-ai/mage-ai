@@ -1,22 +1,21 @@
 import os
 import shlex
 from logging import Logger
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
-from mage_ai.data_preparation.models.block.dbt.constants import DBT_DIRECTORY_NAME
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
-from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.custom_logger import DX_PRINTER
+from mage_ai.shared.files import find_file_from_another_file_path
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.path_fixer import add_absolute_path
 
 
 class DBTBlockYAML(DBTBlock):
@@ -31,80 +30,40 @@ class DBTBlockYAML(DBTBlock):
         # Example:
         # demo
         # default_repo/dbt/demo
-        project_name_init = self.configuration.get('dbt_project_name')
-        if project_name_init:
-            try:
-                diff = Path(project_name_init).relative_to(DBT_DIRECTORY_NAME)
-                project_name_init = diff
-            except ValueError:
-                pass
+        file_path = None
+        for key in [
+            'dbt_profiles_file_path',
+            'dbt_project_name',
+        ]:
+            if not file_path and self.configuration.get(key):
+                path = add_absolute_path(self.configuration.get(key))
+                file_path = find_file_from_another_file_path(
+                    path,
+                    lambda x: os.path.basename(x) in [
+                        'dbt_project.yml',
+                        'dbt_project.yaml'
+                    ],
+                )
+                if file_path:
+                    return os.path.dirname(file_path)
 
-            project_name = self.get_project_path_from_project_name(project_name_init)
-            if project_name:
-                return project_name
+    def set_default_configurations(self):
+        self.configuration = self.configuration or {}
+        if not self.configuration.get('file_source'):
+            self.configuration['file_source'] = {}
 
-            # Adds demo to /home/src/default_repo/dbt
-            # /home/src/default_repo/dbt/demo
-            return str(Path(self.get_base_project_from_source()) / project_name_init)
+        pp = self.project_path
+        if pp:
+            self.configuration['file_source']['project_path'] = add_absolute_path(
+                pp,
+                add_base_repo_path=False,
+            )
 
-    def tags(self) -> List[str]:
-        """
-        Get the tags associated with the DBT block.
-
-        Returns:
-            List[str]: The list of tags.
-        """
-        arr = super().tags()
-        command = self._dbt_configuration.get('command', 'run')
-        if command:
-            arr.append(command)
-        return arr
-
-    async def metadata_async(self) -> Dict[str, Any]:
-        """
-        Retrieves metadata needed to configure the block.
-        - available local dbt projects
-        - target to use and other target of the local dbt projects
-
-        Returns:
-            Dict: The metadata of the DBT block.
-        """
-        projects = {}
-
-        project_dirs = Project(self.get_base_project_from_source()).local_packages
-        for project_dir in (project_dirs or []):
-            project_full_path = str(Path(self.get_base_project_from_source()) / project_dir)
-
-            project = Project(project_full_path).project
-            project_name = project.get('name')
-            project_profile = project.get('profile')
-
-            # ignore exception if no profiles.yml is found.
-            # Just means that the targets have no option
-            try:
-                profiles = Profiles(
-                    project_full_path,
-                    self.pipeline.variables if self.pipeline else None
-                ).profiles
-            except FileNotFoundError:
-                profiles = None
-            profile = profiles.get(project_profile) if profiles else None
-            target = profile.get('target') if profile else None
-            targets = sorted(list(profile.get('outputs').keys())) if profile else None
-
-            projects[project_dir] = {
-                'project_name': project_name,
-                'target': target,
-                'targets': targets,
-            }
-
-        return {
-            'dbt': {
-                'block': {},
-                'project': None,
-                'projects': projects
-            }
-        }
+        if not self.configuration['file_source'].get('path'):
+            self.configuration['file_source']['path'] = add_absolute_path(
+                self.file_path,
+                add_base_repo_path=False,
+            )
 
     def _execute_block(
         self,
