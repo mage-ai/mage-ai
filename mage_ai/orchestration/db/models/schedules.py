@@ -1195,9 +1195,9 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         """
         if prevent_duplicate:
             existing_pipeline_run = PipelineRun.query.filter(
-                execution_date=kwargs.get('execution_date'),
-                pipeline_schedule_id=kwargs.get('pipeline_schedule_id'),
-                pipeline_uuid=kwargs.get('pipeline_uuid'),
+                PipelineRun.execution_date == kwargs.get('execution_date'),
+                PipelineRun.pipeline_schedule_id == kwargs.get('pipeline_schedule_id'),
+                PipelineRun.pipeline_uuid == kwargs.get('pipeline_uuid'),
             ).first()
             if existing_pipeline_run is not None:
                 return None
