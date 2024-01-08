@@ -60,6 +60,7 @@ export enum SortQueryParamEnum {
 export interface PipelineScheduleSettingsType {
   allow_blocks_to_fail?: boolean;
   landing_time_enabled?: boolean;
+  create_initial_pipeline_run?: boolean;
   skip_if_previous_running?: boolean;
   timeout?: number;
   invalid_schedule_interval?: boolean; // Used to detect triggers with invalid cron expressions

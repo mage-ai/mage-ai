@@ -49,6 +49,7 @@ class ScheduleInterval(str, enum.Enum):
 class SettingsConfig(BaseConfig):
     skip_if_previous_running: bool = False
     allow_blocks_to_fail: bool = False
+    create_initial_pipeline_run: bool = False
     landing_time_enabled: bool = False
     timeout: int = None  # in seconds
 

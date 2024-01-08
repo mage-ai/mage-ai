@@ -517,19 +517,26 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 return False
 
             """
-            If the execution date is before start time or current time, don't
-            schedule it. A 59 min buffer is added to the current time since the
-            run is generally scheduled shortly after the execution date and no run
-            would ever be scheduled if the execution date was compared against
-            actual current time.
+            Check if "create_initial_pipeline_run" setting is not enabled. If
+            it is not, check if current execution date is before current datetime in
+            order to avoid initial pipeline run. A 59 min buffer is added to the
+            current datetime since the run is generally scheduled shortly after
+            the execution date, and no run would ever be scheduled if the execution
+            date was compared against actual current time.
             """
-            if self.start_time is not None and (
-                compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1 or
-                compare(
-                    current_execution_date,
-                    datetime.now(tz=pytz.UTC) - timedelta(minutes=59),
-                ) == -1
-            ):
+            create_initial_pipeline_run = self.get_settings().create_initial_pipeline_run
+            avoid_initial_pipeline_run = compare(
+                current_execution_date,
+                datetime.now(tz=pytz.UTC) - timedelta(minutes=59),
+            ) == -1 \
+                if not create_initial_pipeline_run \
+                else False
+
+            # If the execution date is before start time or current time, don't schedule it.
+            if (
+                self.start_time is not None and
+                compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1
+            ) or avoid_initial_pipeline_run:
                 return False
 
             # If there is a pipeline_run with an execution_date the same as the

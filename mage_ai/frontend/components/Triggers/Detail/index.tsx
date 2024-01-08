@@ -56,7 +56,7 @@ import {
   Sun,
   Switch,
 } from '@oracle/icons';
-import { ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
+import { ICON_SIZE_DEFAULT, ICON_SIZE_SMALL } from '@oracle/styles/units/icons';
 import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
 import {
   PADDING_UNITS,
@@ -498,7 +498,7 @@ function TriggerDetail({
           <Tooltip
             default
             label="Timeout set for runs of this trigger"
-            size={UNIT*1.5}
+            size={ICON_SIZE_DEFAULT}
             widthFitContent
           />
           <Spacing mr={1} />
@@ -523,7 +523,7 @@ function TriggerDetail({
           <Tooltip
             default
             label="Skip current run if any previous runs are still in progress"
-            size={UNIT*1.5}
+            size={ICON_SIZE_DEFAULT}
             widthFitContent
           />
           <Spacing mr={1} />
@@ -548,7 +548,7 @@ function TriggerDetail({
           <Tooltip
             default
             label="Trigger runs will continue running blocks if other unrelated blocks fail"
-            size={UNIT*1.5}
+            size={ICON_SIZE_DEFAULT}
             widthFitContent
           />
           <Spacing mr={1} />
@@ -561,6 +561,31 @@ function TriggerDetail({
           monospace
         >
           {settings.allow_blocks_to_fail.toString()}
+        </Text>,
+      ]);
+    }
+    if (settings?.create_initial_pipeline_run) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_create_initial_pipeline_run"
+        >
+          <Tooltip
+            default
+            label="Create initial pipeline run if start date is before current execution period"
+            maxWidth={UNIT * 32}
+            size={ICON_SIZE_DEFAULT}
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Create initial run
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_create_initial_pipeline_run_label"
+          monospace
+        >
+          {settings.create_initial_pipeline_run?.toString()}
         </Text>,
       ]);
     }
