@@ -1172,7 +1172,36 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         db_connection.session.commit()
 
     @classmethod
-    def create(self, create_block_runs: bool = True, **kwargs) -> 'PipelineRun':
+    def create(
+        self,
+        create_block_runs: bool = True,
+        prevent_duplicate: bool = False,
+        **kwargs,
+    ) -> 'PipelineRun':
+        """
+        Create a new PipelineRun instance.
+
+        Args:
+            create_block_runs (bool, optional): Whether to create associated block runs.
+                Default is True.
+            prevent_duplicate (bool, optional): If True, checks for existing PipelineRun with the
+                same execution date, pipeline schedule ID, and pipeline UUID, and returns None
+                if found. Default is False.
+            **kwargs: Additional keyword arguments to be passed to the super().create() method.
+
+        Returns:
+            PipelineRun or None: The created PipelineRun instance if successful, None if
+                prevent_duplicate is True and a matching PipelineRun already exists.
+        """
+        if prevent_duplicate:
+            existing_pipeline_run = PipelineRun.query.filter(
+                execution_date=kwargs.get('execution_date'),
+                pipeline_schedule_id=kwargs.get('pipeline_schedule_id'),
+                pipeline_uuid=kwargs.get('pipeline_uuid'),
+            ).first()
+            if existing_pipeline_run is not None:
+                return None
+
         pipeline_run = super().create(**kwargs)
         pipeline_uuid = kwargs.get('pipeline_uuid')
         if pipeline_uuid is not None and create_block_runs:
