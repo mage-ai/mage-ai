@@ -233,9 +233,17 @@ class WorkloadManager:
                     },
                 }
 
+        container_image = 'mageai/mageai:latest'
+        if self.pod_config:
+            try:
+                container = self.pod_config.spec.containers[0]
+                container_image = container.image
+            except Exception:
+                pass
+
         mage_container_config = {
             'name': f'{name}-container',
-            'image': 'mageai/mageai:latest',
+            'image': container_image,
             'ports': [{'containerPort': 6789, 'name': 'web'}],
             'volumeMounts': volume_mounts,
             **container_config,
