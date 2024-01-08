@@ -61,11 +61,11 @@ function useAside(uuid, refData, {
   const setWidth = useCallback((prev) => {
     if (!disable) {
       const maxWidth = Math.max(
-        widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.disable
+        widthWindow - (MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable
           ? 0
-          : (refOther?.widthOverride ? refOther?.widthProp : refOther?.width) || DEFAULT_ASIDE_WIDTH
+          : (refOther?.current?.widthOverride ? refOther?.current?.widthProp : refOther?.current?.width) || DEFAULT_ASIDE_WIDTH
         )),
-        DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
+        DEFAULT_ASIDE_WIDTH + MINIMUM_WIDTH_MAIN_CONTAINER + (refOther?.current?.disable ? 0 : DEFAULT_ASIDE_WIDTH),
       );
 
       const value = Math.max(DEFAULT_ASIDE_WIDTH, Math.min(maxWidth, prev));
@@ -210,9 +210,10 @@ export default function useTripleLayout(uuid: string, {
 
   useEffect(() => {
     refBefore.current = {
-      disableBefore,
-      widthBefore,
-      widthOverrideBeforeProp,
+      disable: disableBefore,
+      width: widthBefore,
+      widthOverride: widthOverrideBeforeProp,
+      widthProp: widthBeforeProp,
     };
   }, [
     disableBefore,

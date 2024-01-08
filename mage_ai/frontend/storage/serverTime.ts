@@ -8,5 +8,5 @@ export function shouldIncludeServerTimeSeconds(): boolean {
 }
 
 export function storeIncludeServerTimeSeconds(value: boolean): boolean {
-  return setLocalStorageValue(LOCAL_STORAGE_KEY_INCLUDE_SERVER_TIME_SECONDS, value);
+  return !!setLocalStorageValue(LOCAL_STORAGE_KEY_INCLUDE_SERVER_TIME_SECONDS, value);
 }

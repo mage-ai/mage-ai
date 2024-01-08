@@ -60,8 +60,9 @@ function PipelineBlockRuns({
   const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
-  const [pipelineRunStatus, setPipelineRunStatus] = useState<boolean>(null);
+  const [pipelineRunStatus, setPipelineRunStatus] = useState(null);
   const isPipelineRunIdle =
+    // @ts-ignore
     useMemo(() => !!pipelineRunStatus && pipelineRunStatus !== RunStatus.RUNNING, [pipelineRunStatus]);
 
   const pipelineUUID = pipelineProp.uuid;

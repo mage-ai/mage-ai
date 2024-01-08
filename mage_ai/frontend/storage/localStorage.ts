@@ -89,7 +89,7 @@ export function setCustomCodeState({
   });
 }
 
-export function setLocalStorageValue(storageKey: string, value: boolean): boolean {
+export function setLocalStorageValue(storageKey: string, value: boolean | string | number): boolean | string | number {
   if (typeof value !== 'undefined') {
     set(storageKey, value);
   }

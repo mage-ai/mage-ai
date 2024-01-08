@@ -1278,6 +1278,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       )}
 
       {sideBySideEnabled && (
+        // @ts-ignore
         <div style={{ position: 'relative' }}>
           {column1ScrollMemo}
           {codeBlocks}
