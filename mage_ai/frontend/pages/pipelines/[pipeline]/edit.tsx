@@ -95,6 +95,7 @@ import {
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
 import { Close } from '@oracle/icons';
+import { DEBUG } from '@utils/environment';
 import { ErrorProvider } from '@context/Error';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
@@ -1923,6 +1924,7 @@ function PipelineDetailPage({
             // for now until I can fix it.
             if (sideBySideEnabled
               && featureEnabled?.(featureUUIDs?.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
+              && DEBUG()
             ) {
               if (typeof window !== 'undefined') {
                 window?.location?.reload();

@@ -368,7 +368,7 @@ function FileEditor({
     </Spacing>
   );
 
-  const uuidKeyboard = `FileEditor/${file?.path}`;
+  const uuidKeyboard = `FileEditor/${file?.path || filePath}`;
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,

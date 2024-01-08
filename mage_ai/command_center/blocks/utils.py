@@ -79,11 +79,15 @@ async def build_and_score(
     path_dict = shorten_directory(file_path)
     directory = path_dict.get('directory')
 
+    title = block.get('name') or uuid
+    parts = []
     if block.get('name'):
         parts = Path(block.get('name')).parts
-    else:
+    elif uuid:
         parts = Path(uuid).parts
-    title = parts[len(parts) - 1]
+
+    if parts:
+        title = parts[len(parts) - 1]
 
     description = directory
     if len(pipelines) == 1:
