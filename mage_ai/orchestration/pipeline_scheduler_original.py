@@ -1500,7 +1500,7 @@ def schedule_all():
                         )
                     else:
                         payload['create_block_runs'] = False
-                        pipeline_run = PipelineRun.create(prevent_duplicate=True, **payload)
+                        pipeline_run = PipelineRun.create(prevent_duplicates=True, **payload)
                         if pipeline_run:
                             # Log Git sync status for new pipeline runs if a git sync result exists
                             if git_sync_result:

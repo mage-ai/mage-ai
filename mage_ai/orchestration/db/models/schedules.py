@@ -1175,7 +1175,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
     def create(
         self,
         create_block_runs: bool = True,
-        prevent_duplicate: bool = False,
+        prevent_duplicates: bool = False,
         **kwargs,
     ) -> 'PipelineRun':
         """
@@ -1184,16 +1184,16 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         Args:
             create_block_runs (bool, optional): Whether to create associated block runs.
                 Default is True.
-            prevent_duplicate (bool, optional): If True, checks for existing PipelineRun with the
+            prevent_duplicates (bool, optional): If True, checks for existing PipelineRun with the
                 same execution date, pipeline schedule ID, and pipeline UUID, and returns None
                 if found. Default is False.
             **kwargs: Additional keyword arguments to be passed to the super().create() method.
 
         Returns:
             PipelineRun or None: The created PipelineRun instance if successful, None if
-                prevent_duplicate is True and a matching PipelineRun already exists.
+                prevent_duplicates is True and a matching PipelineRun already exists.
         """
-        if prevent_duplicate:
+        if prevent_duplicates:
             existing_pipeline_run = PipelineRun.query.filter(
                 PipelineRun.execution_date == kwargs.get('execution_date'),
                 PipelineRun.pipeline_schedule_id == kwargs.get('pipeline_schedule_id'),
