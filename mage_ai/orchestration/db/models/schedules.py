@@ -1570,6 +1570,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
             execution_partition=self.pipeline_run.execution_partition,
             sample_count=sample_count,
             block_uuid=block_uuid,
+            metadata=self.metrics.get('metadata') if self.metrics else None,
         )
 
 

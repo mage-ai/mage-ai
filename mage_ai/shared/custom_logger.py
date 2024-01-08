@@ -47,9 +47,9 @@ def targets():
         # 'get_outputs',
         # 'get_variables_by_block',
         # 'fetch_input_variables',
-        'output_variables',
+        # 'output_variables',
         # 'uuid_for_output_variables',
-        'dynamic_block_values_and_metadata',
+        # 'dynamic_block_values_and_metadata',
     ]
 
 

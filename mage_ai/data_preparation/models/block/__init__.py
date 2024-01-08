@@ -1956,6 +1956,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         variable_type: VariableType = None,
         block_uuid: str = None,
         selected_variables: List[str] = None,
+        metadata: Dict = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return

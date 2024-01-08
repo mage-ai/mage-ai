@@ -620,6 +620,7 @@ class DynamicChildBlockFactory:
         upstream_blocks = []
         dynamic_upstream_block_uuids = []
         upstream_block_uuids_for_dynamic_block_uuid = []
+        parent_indexes = []
 
         for tup in child_data_list:
             parent_block_uuid, parent_index, metadata_inner, extra_settings = tup
@@ -651,12 +652,23 @@ class DynamicChildBlockFactory:
                 if dynamic_block_indexes is None:
                     dynamic_block_indexes = {}
                 dynamic_block_indexes[parent_block_uuid] = parent_index
+                parent_indexes.append(parent_index)
 
         metadata_for_uuid = {}
         if any([uuid is not None for uuid in block_uuids]):
             metadata_for_uuid['block_uuid'] = '__'.join(
                 [uuid or str(idx) for idx, uuid in enumerate(block_uuids)],
             )
+
+        # The parent_indexes are a list representation of dynamic_block_indexes.
+        # dynamic_block_indexes is used to determine what folder to retrieve the output
+        # variables from when fetching input data from an upstream dynamic or dynamic child block.
+        # We need parent_indexes to create a unique combination of values when constructing
+        # the block run block UUID.
+        if parent_indexes and \
+                len(parent_indexes) >= len(upstream_block_uuids_for_dynamic_block_uuid):
+
+            upstream_block_uuids_for_dynamic_block_uuid = parent_indexes
 
         base_block_uuid = wrapper.block_uuid
         block_uuid = build_dynamic_block_uuid(
