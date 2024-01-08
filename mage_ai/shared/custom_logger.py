@@ -42,6 +42,17 @@ BLOCK_TYPE_COLOR_MAPPING = {
 COLORS = [c for c in Color]
 
 
+def targets():
+    return [
+        # 'get_outputs',
+        # 'get_variables_by_block',
+        # 'fetch_input_variables',
+        # 'output_variables',
+        # 'uuid_for_output_variables',
+        # 'dynamic_block_values_and_metadata',
+    ]
+
+
 class ColorPrinter:
     def __init__(self):
         self.label = None
@@ -65,6 +76,11 @@ class ColorPrinter:
         if not is_deus_ex_machina():
             return
 
+        __uuid = kwargs.pop('__uuid', None)
+        targs = targets()
+        if targs and __uuid not in targs:
+            return
+
         color = kwargs.pop('color', None)
         block = kwargs.pop('block', None)
 
@@ -83,8 +99,9 @@ class ColorPrinter:
         if more:
             output = f'{output}\n{more}'
 
-        if self.label:
-            output = f'[{self.label}] {output}'
+        label = __uuid or self.label
+        if label:
+            output = f'[{label}] {output}'
 
         if not color:
             color = COLORS[len(output) % len(COLORS)]

@@ -1,8 +1,10 @@
+import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List
+from typing import Any, Dict, List, Tuple
 
 from mage_ai.shared.array import find
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 
@@ -13,7 +15,15 @@ class DynamicBlockFlag(str, Enum):
     DYNAMIC_CHILD = 'dynamic_child'
     ORIGINAL = 'original'
     REDUCE_OUTPUT = 'reduce_output'
+    REPLICATED = 'replicated'
     SPAWN_OF_DYNAMIC_CHILD = 'spawn_of_dynamic_child'
+
+
+def extract_dynamic_block_index(block_run_block_uuid: str) -> int:
+    if block_run_block_uuid:
+        parts = block_run_block_uuid.split(':')
+        if len(parts) >= 2:
+            return parts[-1]
 
 
 def is_dynamic_block(block) -> bool:
@@ -72,6 +82,10 @@ def is_dynamic_block_child(block) -> bool:
     return len(dynamic_or_child) > len(dynamic_or_child_with_reduce)
 
 
+def is_replicated_block(block) -> bool:
+    return True if block and block.replicated_block else False
+
+
 def is_original_dynamic_child_block(
     block,
     block_run_block_uuid: int = None,
@@ -107,6 +121,64 @@ def is_original_dynamic_child_block(
     return wrapper.is_dynamic_child() and wrapper.is_original(include_clone=True)
 
 
+def uuid_for_output_variables(
+    block,
+    block_uuid: str = None,
+    dynamic_block_index: int = None,
+    dynamic_block_uuid: str = None,
+    join_character: str = None,
+    **kwargs,
+) -> Tuple[str, bool]:
+    changed = False
+
+    block_uuid_0 = block_uuid
+    dynamic_block_index_0 = dynamic_block_index
+
+    if block_uuid is None:
+        block_uuid = block.uuid
+
+    if dynamic_block_uuid:
+        block_uuid = dynamic_block_uuid
+        dynamic_block_index = None
+
+    if dynamic_block_index is not None or is_dynamic_block_child(block):
+        parts = block_uuid.split(':')
+
+        if len(parts) >= 2:
+            block_uuid = parts[0]
+
+            if dynamic_block_index is None:
+                dynamic_block_index = parts[-1]
+
+        if dynamic_block_index is not None:
+            # We only need the base name and the final index to create the folder structure:
+            # e.g. block_uuid/[dynamic_block_index]
+            # e.g. block_uuid/0/output_0/data.json
+            # [dynamic_block_index] if used for each dynamic child so that it has a folder
+            # to store its output.
+            # dynamic_block_index = dynamic_block_uuid.split(':')[-1]
+            # block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
+            arr = [str(block_uuid), str(dynamic_block_index)]
+            if join_character:
+                block_uuid = join_character.join(arr)
+            else:
+                block_uuid = os.path.join(*arr)
+            changed = True
+
+    DX_PRINTER.debug(
+        block=block,
+        block_uuid=block_uuid,
+        block_uuid_0=block_uuid_0,
+        changed=changed,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_block_index_0=dynamic_block_index_0,
+        dynamic_block_uuid=dynamic_block_uuid,
+        __uuid='uuid_for_output_variables',
+    )
+
+    return (block_uuid, changed)
+
+
 @dataclass
 class DynamicBlockWrapperBase(BaseDataClass):
     block: Any = None
@@ -114,6 +186,8 @@ class DynamicBlockWrapperBase(BaseDataClass):
     block_uuid: str = None
     children: List[BaseDataClass] = field(default_factory=lambda: [])
     clones: List[BaseDataClass] = field(default_factory=lambda: [])
+    dynamic_block_index: int = None
+    dynamic_block_indexes: Dict = None
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
     index: int = None
@@ -138,6 +212,7 @@ class DynamicBlockWrapper(BaseDataClass):
     # from an upstream dynamic block.
     clones: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
     dynamic_block_index: int = None
+    dynamic_block_indexes: Dict = None
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
     metadata_instructions: BaseDataClass = None
@@ -167,6 +242,7 @@ class DynamicBlockWrapper(BaseDataClass):
         if block_run:
             config = block_run.metrics or {}
             self.dynamic_block_index = config.get('dynamic_block_index')
+            self.dynamic_block_indexes = config.get('dynamic_block_indexes')
 
             metadata = config.get('metadata') or {}
 
@@ -199,7 +275,15 @@ class DynamicBlockWrapper(BaseDataClass):
             include_clone and self.is_clone_of_original()
         ):
             return True
-        return self.block and self.block.uuid == self.block_run_block_uuid
+
+        if not self.block:
+            return False
+
+        return self.block.uuid == self.block_run_block_uuid or \
+            (self.is_replicated() and self.block.uuid_replicated == self.block_run_block_uuid)
+
+    def is_replicated(self) -> bool:
+        return DynamicBlockFlag.REPLICATED in (self.flags or []) or is_replicated_block(self.block)
 
     def is_clone_of_original(self) -> bool:
         return DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or []) and not self.is_original()
@@ -232,13 +316,43 @@ class DynamicBlockWrapper(BaseDataClass):
             return True
         return self.block and should_reduce_output(self.block)
 
+    def get_dynamic_block_index_from_parent(
+        self,
+        block_run_block_uuid: str,
+    ) -> int:
+        if not self.dynamic_block_indexes:
+            block_run = self.factory.block_run()
+            if block_run and block_run.metrics:
+                self.dynamic_block_indexes = (block_run.metrics or {}).get(
+                    'dynamic_block_indexes',
+                )
+
+        if self.dynamic_block_indexes:
+            return (self.dynamic_block_indexes or {}).get(block_run_block_uuid)
+
+    def get_parent_block_uuid_for_output_variables(
+        self,
+        block,
+        block_run_block_uuid: str,
+    ) -> str:
+        dynamic_block_index_from_parent = self.get_dynamic_block_index_from_parent(
+            block_run_block_uuid,
+        )
+
+        return uuid_for_output_variables(
+            block,
+            block_uuid=block_run_block_uuid,
+            dynamic_block_index=dynamic_block_index_from_parent,
+            join_character=':',
+        )[0]
+
     def get_dynamic_block_index(self) -> int:
         if self.dynamic_block_index is not None:
             return self.dynamic_block_index
 
         block_run = self.factory.block_run()
         if block_run and block_run.metrics:
-            self.dynamic_block_index = (block_run.metrics.get('metadata') or {}).get(
+            self.dynamic_block_index = (block_run.metrics or {}).get(
                 'dynamic_block_index',
             )
 

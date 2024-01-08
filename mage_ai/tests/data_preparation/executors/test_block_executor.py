@@ -33,6 +33,7 @@ class BlockExecutorTest(BaseApiTestCase):
         self.block.configuration = {}
         self.block.upstream_blocks = []
         self.block.type = BlockType.DBT
+        self.block.replicated_block = None
 
         self.pipeline.get_block.return_value = self.block
         self.pipeline.repo_config.retry_config = {'retries': 3, 'delay': 1}
@@ -450,6 +451,7 @@ class BlockExecutorTest(BaseApiTestCase):
                     pipeline_run_id=pipeline_run.id,
                     pipeline_uuid=pipeline.uuid,
                 ),
+                metadata=None,
                 run_all_blocks=True,
                 runtime_arguments=None,
                 store_variables=True,

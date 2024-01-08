@@ -398,12 +398,33 @@ class DynamicChildBlockFactory:
 
                 outputs.append((values, None))
             else:
+                dynamic_block_index_from_parent = wrapper.get_dynamic_block_index_from_parent(
+                    upstream_wrapper.uuid,
+                )
                 # Validate that the output of this function returns the correct output
                 # for dynamic squared blocks (aka dynamic + dynamic child).
                 values, block_metadata = dynamic_block_values_and_metadata(
                     upstream_wrapper.block,
-                    execution_partition,
-                    upstream_wrapper.uuid,
+                    block_uuid=wrapper.get_parent_block_uuid_for_output_variables(
+                        upstream_wrapper.block,
+                        upstream_wrapper.uuid,
+                    ),
+                    dynamic_block_index=dynamic_block_index_from_parent,
+                    execution_partition=execution_partition,
+                )
+
+                DX_PRINTER.critical(
+                    'dynamic_block_values_and_metadata',
+                    block=wrapper.block,
+                    block_uuid=wrapper.get_parent_block_uuid_for_output_variables(
+                        upstream_wrapper.block,
+                        upstream_wrapper.uuid,
+                    ),
+                    dynamic_block_index=dynamic_block_index_from_parent,
+                    upstream_block=upstream_wrapper.block.uuid,
+                    upstream_block_uuid=upstream_wrapper.uuid,
+                    values=values,
+                    __uuid='dynamic_block_values_and_metadata',
                 )
 
                 if isinstance(values, pd.DataFrame):
@@ -416,16 +437,6 @@ class DynamicChildBlockFactory:
                     # original dynamic child block, then we need to use the parent index of the
                     # spawn of the upstream dynamic squared block.
                     if wrapper.is_clone_of_original():
-                        DX_PRINTER.critical(
-                            f'Altering the parent index from {upstream_parent_index} '
-                            f'to {wrapper.get_dynamic_block_index()}',
-                            block=wrapper.block,
-                            upstream_block=upstream_wrapper.block.uuid,
-                            upstream_block_uuid=upstream_wrapper.uuid,
-                            parent_index=upstream_parent_index,
-                            block_metadata=block_metadata,
-                        )
-
                         dynamic_upstream_block_uuids = [
                             upstream_wrapper.uuid,
                         ]
@@ -438,14 +449,19 @@ class DynamicChildBlockFactory:
 
                     child_data = []
                     for parent_index, value in enumerate(values):
+                        extra_settings = dict(
+                            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                            index=parent_index,
+                            value=value,
+                        )
+
+                        if dynamic_block_index_from_parent is not None:
+                            extra_settings['block_uuid_prefix'] = dynamic_block_index_from_parent
+
                         child_data.append(dict(
                             parent_index=upstream_parent_index,
                             upstream_block_uuid=upstream_wrapper.uuid,
-                            extra_settings=dict(
-                                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                                index=parent_index,
-                                value=value,
-                            ),
+                            extra_settings=extra_settings,
                         ))
 
                         DX_PRINTER.critical(
@@ -604,6 +620,7 @@ class DynamicChildBlockFactory:
         upstream_blocks = []
         dynamic_upstream_block_uuids = []
         upstream_block_uuids_for_dynamic_block_uuid = []
+        parent_indexes = []
 
         for tup in child_data_list:
             parent_block_uuid, parent_index, metadata_inner, extra_settings = tup
@@ -635,12 +652,23 @@ class DynamicChildBlockFactory:
                 if dynamic_block_indexes is None:
                     dynamic_block_indexes = {}
                 dynamic_block_indexes[parent_block_uuid] = parent_index
+                parent_indexes.append(parent_index)
 
         metadata_for_uuid = {}
         if any([uuid is not None for uuid in block_uuids]):
             metadata_for_uuid['block_uuid'] = '__'.join(
                 [uuid or str(idx) for idx, uuid in enumerate(block_uuids)],
             )
+
+        # The parent_indexes are a list representation of dynamic_block_indexes.
+        # dynamic_block_indexes is used to determine what folder to retrieve the output
+        # variables from when fetching input data from an upstream dynamic or dynamic child block.
+        # We need parent_indexes to create a unique combination of values when constructing
+        # the block run block UUID.
+        if parent_indexes and \
+                len(parent_indexes) >= len(upstream_block_uuids_for_dynamic_block_uuid):
+
+            upstream_block_uuids_for_dynamic_block_uuid = parent_indexes
 
         base_block_uuid = wrapper.block_uuid
         block_uuid = build_dynamic_block_uuid(

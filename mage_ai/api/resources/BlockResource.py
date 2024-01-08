@@ -14,15 +14,16 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
+    DynamicChildBlockFactory,
+)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     dynamically_created_child_block_runs,
-)
-from mage_ai.data_preparation.models.block.utils import (
-    clean_name,
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
 )
+from mage_ai.data_preparation.models.block.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
@@ -141,11 +142,24 @@ class BlockResource(GenericResource):
                 block = pipeline.get_block(block_run_block_uuid)
                 metrics = block_run.metrics
 
-                # If block is dynamic child and the original block’s block run, skip.
-                if block and is_dynamic_block_child(block) and block.uuid == block_run_block_uuid:
-                    # Show the block if no other dynamic child block runs have been created:
-                    if dynamically_created_child_block_runs(pipeline, block, block_runs):
-                        continue
+                wrapper = None
+                if block and is_dynamic_block(block) or is_dynamic_block_child(block):
+                    block = DynamicChildBlockFactory(
+                        block,
+                        block_run=block_run,
+                        block_runs=block_runs,
+                        pipeline_run=parent_model,
+                    )
+
+                    wrapper = block.wrapper()
+
+                    # If block is dynamic child and the original block’s block run, skip.
+                    if wrapper.is_dynamic_child() and (
+                        wrapper.is_original() or wrapper.is_clone_of_original()
+                    ):
+                        # Show the block if no other dynamic child block runs have been created:
+                        if dynamically_created_child_block_runs(pipeline, block, block_runs):
+                            continue
 
                 if block_run_block_uuid not in block_mapping:
                     block_mapping[block_run_block_uuid] = dict(
@@ -326,8 +340,8 @@ class BlockResource(GenericResource):
                     #         block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
 
                 if block.replicated_block:
-                    block_dict['name'] = block.uuid
-                    block_dict['description'] = block.replicated_block
+                    block_dict['name'] = block.uuid_replicated
+                    block_dict['description'] = block_run_block_uuid
 
                 block_dict['tags'] += block.tags()
 
@@ -774,6 +788,8 @@ class BlockResource(GenericResource):
                 replicated_block = pipeline.get_block(replicated_block_uuid)
                 if replicated_block:
                     block_type = replicated_block.type
+                    # You can replicate a replica but it’ll only replicate the original block.
+                    replicated_block = replicated_block.get_original_block() or replicated_block
                     block_attributes['language'] = replicated_block.language
                     block_attributes['replicated_block'] = replicated_block.uuid
                 else:
@@ -922,14 +938,20 @@ class BlockResource(GenericResource):
             force = force[0]
 
         pipeline = kwargs.get('parent_model')
+
+        blocks_to_delete = [self.model]
+        for block in pipeline.blocks_by_uuid.values():
+            if block.replicated_block == self.model.uuid:
+                blocks_to_delete.append(block)
+
         cache = await BlockCache.initialize_cache()
-        if pipeline:
-            cache.remove_pipeline(self.model, pipeline.uuid, pipeline.repo_path)
-
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
-        cache_block_action_object.update_block(self.model, remove=True)
 
-        return self.model.delete(force=force)
+        for block in blocks_to_delete:
+            if pipeline:
+                cache.remove_pipeline(block, pipeline.uuid, pipeline.repo_path)
+            cache_block_action_object.update_block(block, remove=True)
+            block.delete(force=force)
 
     @safe_db_query
     async def update(self, payload, **kwargs):
