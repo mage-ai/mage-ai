@@ -491,6 +491,11 @@ def fetch_input_variables(
                         dynamic_block_index_mapping[block.uuid] = extract_dynamic_block_index(
                             upstream_block_uuid,
                         )
+                    elif upstream_is_dynamic_block and not upstream_is_dynamic_block_child:
+                        # If the upstream block is dynamic and not a dynamic child block,
+                        # it won‘t have output variable directories with the
+                        # dynamic block index named after it.
+                        dynamic_block_index_mapping[block.uuid] = None
                     else:
                         dynamic_block_index_mapping[block.uuid] = dynamic_block_index_folder
                 else:

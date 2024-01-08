@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
@@ -186,6 +186,8 @@ class DynamicBlockWrapperBase(BaseDataClass):
     block_uuid: str = None
     children: List[BaseDataClass] = field(default_factory=lambda: [])
     clones: List[BaseDataClass] = field(default_factory=lambda: [])
+    dynamic_block_index: int = None
+    dynamic_block_indexes: Dict = None
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
     index: int = None
@@ -210,6 +212,7 @@ class DynamicBlockWrapper(BaseDataClass):
     # from an upstream dynamic block.
     clones: List[DynamicBlockWrapperBase] = field(default_factory=lambda: [])
     dynamic_block_index: int = None
+    dynamic_block_indexes: Dict = None
     factory: Any = None
     flags: List[DynamicBlockFlag] = field(default_factory=lambda: [])
     metadata_instructions: BaseDataClass = None
