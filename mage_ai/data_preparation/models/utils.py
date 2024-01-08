@@ -2,6 +2,7 @@ import traceback
 from typing import Any, Dict
 
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy
 import pandas as pd
 import simplejson
@@ -26,6 +27,25 @@ CAST_TYPE_COLUMN_TYPES = set([
 
 
 def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
+    for column, column_type in column_types.items():
+        if column_type in JSON_SERIALIZABLE_COLUMN_TYPES:
+            val = row[column]
+            if val is not None:
+                row[column] = simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                    use_decimal=True,
+                )
+        elif column_type in STRING_SERIALIZABLE_COLUMN_TYPES:
+            val = row[column]
+            if val is not None:
+                row[column] = str(val)
+
+    return row
+
+
+def serialize_geocolumns(row: gpd.GeoSeries, column_types: Dict) -> gpd.GeoSeries:
     for column, column_type in column_types.items():
         if column_type in JSON_SERIALIZABLE_COLUMN_TYPES:
             val = row[column]
@@ -83,6 +103,10 @@ def apply_transform(ddf: dd, apply_function) -> dd:
 
 def apply_transform_pandas(df: pd.DataFrame, apply_function) -> pd.DataFrame:
     return df.apply(apply_function, axis=1)
+
+
+def apply_transform_geopandas(gdf: gpd.GeoDataFrame, apply_function) -> gpd.GeoDataFrame:
+    return gdf.apply(apply_function, axis=1)
 
 
 def should_serialize_pandas(column_types: Dict) -> bool:

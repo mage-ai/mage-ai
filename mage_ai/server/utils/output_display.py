@@ -138,6 +138,7 @@ def __custom_output():
     from mage_ai.shared.parsers import encode_complex, sample_output
     import json
     import pandas as pd
+    import geopandas as gpd
     import polars as pl
     import simplejson
     import warnings
@@ -151,9 +152,12 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if isinstance(_internal_output_return, pd.DataFrame) and (
-        type(_internal_output_return).__module__ != 'geopandas.geodataframe'
-    ):
+    if (
+        isinstance(_internal_output_return, pd.DataFrame)
+        or isinstance(_internal_output_return, gpd.GeoDataFrame)
+        ):
+        if isinstance(_internal_output_return, gpd.GeoDataFrame) :
+            _internal_output_return = pd.DataFrame(_internal_output_return)
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
         _rows = json.loads(_sample[_columns].to_json(default_handler=str, orient='split'))['data']
