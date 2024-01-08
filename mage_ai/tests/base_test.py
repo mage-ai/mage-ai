@@ -26,7 +26,18 @@ else:
         @classmethod
         def setUpClass(self):
             super().setUpClass()
-            self.repo_path = os.path.join(os.getcwd(), 'test')
+
+            repo_path = None
+            for fp in [
+                os.path.dirname(os.getcwd()),
+                os.getcwd(),
+                'test'
+            ]:
+                repo_path = os.path.join(repo_path or '', fp)
+                if not os.path.exists(repo_path):
+                    os.makedirs(repo_path, exist_ok=True)
+
+            self.repo_path = repo_path
             set_repo_path(self.repo_path)
             if not Path(self.repo_path).exists():
                 Path(self.repo_path).mkdir()
@@ -89,7 +100,15 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
-        self.repo_path = os.path.join(os.getcwd(), 'test')
+        repo_path = os.path.join(os.getcwd())
+        if not os.path.exists(repo_path):
+            os.makedirs(repo_path, exist_ok=True)
+
+        repo_path = os.path.join(repo_path, 'test')
+        if not os.path.exists(repo_path):
+            os.makedirs(repo_path, exist_ok=True)
+
+        self.repo_path = repo_path
         set_repo_path(self.repo_path)
         if not Path(self.repo_path).exists():
             Path(self.repo_path).mkdir()
