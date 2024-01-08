@@ -31,7 +31,7 @@ export function get(key, value = null) {
   // @ts-ignore
   const cached = ls.get(key);
 
-  if (typeof cached === 'undefined' || cached === null) {
+  if (!!value && (typeof cached === 'undefined' || cached === null)) {
     set(key, value);
   } else {
     return cached;

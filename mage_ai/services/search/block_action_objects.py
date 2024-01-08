@@ -1,15 +1,21 @@
+import os
 from typing import List
 
 from thefuzz import fuzz
 
 from mage_ai.cache.block_action_object import BlockActionObjectCache
+from mage_ai.cache.block_action_object.constants import (
+    OBJECT_TYPE_BLOCK_FILE,
+    OBJECT_TYPE_MAGE_TEMPLATE,
+)
 from mage_ai.shared.custom_logger import DX_PRINTER
 
-DEFAULT_RATIO = 80
+DEFAULT_RATIO = 50
 
 
 async def search(query: str, ratio: float = None, limit: int = None) -> List:
-    ratio_to_use = ratio or DEFAULT_RATIO
+    if ratio is None:
+        ratio = DEFAULT_RATIO
 
     cache = await BlockActionObjectCache.initialize_cache()
     DX_PRINTER.label = 'BlockActionObjectCache'
@@ -18,8 +24,18 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
 
     for object_type, mapping in cache.load_all_data().items():
         for uuid, block_action_object in mapping.items():
-            score = fuzz.partial_token_sort_ratio(query, uuid)
-            if score < ratio_to_use:
+            text = get_searchable_text(object_type, block_action_object)
+            score = max([fuzz.token_sort_ratio(query, t) for t in text])
+
+            if score >= (ratio / 2):
+                DX_PRINTER.info(
+                    uuid,
+                    object_type=object_type,
+                    score=score,
+                    text=text,
+                )
+
+            if score < ratio:
                 continue
 
             results.append(dict(
@@ -37,3 +53,35 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
         arr = arr[:limit]
 
     return arr
+
+
+def get_searchable_text(object_type, block_action_object) -> List[str]:
+    arr = []
+
+    if OBJECT_TYPE_BLOCK_FILE == object_type:
+        uuid = block_action_object.get('uuid')
+        arr.extend([
+            block_action_object.get('content'),
+            block_action_object.get('language'),
+            block_action_object.get('type'),
+            uuid,
+        ])
+        if uuid:
+            uuid_spaces = uuid.replace('_', ' ')
+            arr.extend([
+                os.path.basename(uuid),
+                os.path.basename(uuid_spaces),
+                uuid_spaces,
+            ])
+    elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
+        arr.extend([
+            block_action_object.get('block_type'),
+            block_action_object.get('description'),
+            block_action_object.get('language'),
+            block_action_object.get('name'),
+        ])
+        groups = block_action_object.get('groups')
+        if groups:
+            arr.extend(groups)
+
+    return [t.strip() for t in arr if t and t.strip()]
