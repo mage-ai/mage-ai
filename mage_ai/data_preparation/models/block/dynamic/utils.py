@@ -1,8 +1,10 @@
+import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from mage_ai.shared.array import find
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 
@@ -110,6 +112,57 @@ def is_original_dynamic_child_block(
     wrapper.hydrate(block=block, block_run=block_run)
 
     return wrapper.is_dynamic_child() and wrapper.is_original(include_clone=True)
+
+
+def uuid_for_output_variables(
+    block,
+    block_uuid: str = None,
+    dynamic_block_index: int = None,
+    dynamic_block_uuid: str = None,
+    **kwargs,
+) -> Tuple[str, bool]:
+    changed = False
+
+    block_uuid_0 = block_uuid
+    dynamic_block_index_0 = dynamic_block_index
+
+    if block_uuid is None:
+        block_uuid = block.uuid
+
+    if dynamic_block_uuid:
+        block_uuid = dynamic_block_uuid
+        dynamic_block_index = None
+
+    if dynamic_block_index is not None or is_dynamic_block_child(block):
+        if dynamic_block_index is None:
+            parts = block_uuid.split(':')
+            if len(parts) >= 2:
+                dynamic_block_index = parts[-1]
+                block_uuid = parts[0]
+
+        if dynamic_block_index is not None:
+            # We only need the base name and the final index to create the folder structure:
+            # e.g. block_uuid/[dynamic_block_index]
+            # e.g. block_uuid/0/output_0/data.json
+            # [dynamic_block_index] if used for each dynamic child so that it has a folder
+            # to store its output.
+            # dynamic_block_index = dynamic_block_uuid.split(':')[-1]
+            # block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
+            block_uuid = os.path.join(str(block_uuid), str(dynamic_block_index))
+            changed = True
+
+    DX_PRINTER.debug(
+        block=block,
+        block_uuid=block_uuid,
+        block_uuid_0=block_uuid_0,
+        changed=changed,
+        dynamic_block_index=dynamic_block_index,
+        dynamic_block_index_0=dynamic_block_index_0,
+        dynamic_block_uuid=dynamic_block_uuid,
+        __uuid='uuid_for_output_variables',
+    )
+
+    return (block_uuid, changed)
 
 
 @dataclass

@@ -508,7 +508,10 @@ def fetch_input_variables(
                         upstream_in_dynamic_upstream = True
 
             # This is for blocks with multiple upstream dynamic blocks or dynamic child blocks.
-            if dynamic_block_indexes and upstream_block_uuid in dynamic_block_indexes:
+            if dynamic_block_indexes and \
+                    len(dynamic_block_indexes) >= 2 and \
+                    upstream_block_uuid in dynamic_block_indexes:
+
                 input_value = None
 
                 input_data = variable_values[0]

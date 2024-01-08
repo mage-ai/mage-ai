@@ -1566,17 +1566,6 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
                     ),
                 ]
 
-        # The block_run’s block_uuid for replicated blocks will be in this format:
-        # [block_uuid]:[replicated_block_uuid]
-        # We need to use the original block_uuid to get the proper output.
-
-        # Block runs for dynamic child blocks will have the following block UUID:
-        # [block.uuid]:[index]
-        # Don’t use the original UUID even if the block is a replica because it will get rid of
-        # the dynamic child block index.
-        if block.replicated_block:
-            block_uuid = block.uuid
-
         return block.get_outputs(
             execution_partition=self.pipeline_run.execution_partition,
             sample_count=sample_count,
