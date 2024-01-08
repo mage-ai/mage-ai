@@ -47,6 +47,8 @@ Your BigQuery account should at least have the below permissiont to use the BigQ
 ```
 bigquery.datasets.create
 bigquery.jobs.create
+bigquery.readsessions.create
+bigquery.readsessions.getData
 ```
 
 Your account should also have "BigQuery Data Editor" role for the BigQuery dataset you specified in the config.

@@ -435,7 +435,7 @@ WHERE table_id = '{table_name}'
             table_name=table_name,
         )
 
-        full_table_name = f'{database_name}.{schema_name}.{table_name}'
+        full_table_name = f'`{database_name}.{schema_name}.{table_name}`'
 
         columns = list(schema['properties'].keys())
         mapping = column_type_mapping(
@@ -479,7 +479,7 @@ WHERE table_id = '{table_name}'
                     temp_project_id = destination_table['projectId']
                     temp_dataset_id = destination_table['datasetId']
                     temp_table_id = destination_table['tableId']
-                    temp_table_name = f'{temp_project_id}.{temp_dataset_id}.{temp_table_id}'
+                    temp_table_name = f'`{temp_project_id}.{temp_dataset_id}.{temp_table_id}`'
                 except Exception:
                     pass
                 job.result()
