@@ -656,7 +656,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             downstream_block_uuids = kwargs.get('downstream_block_uuids', [])
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+            if BlockType.DBT == block.type:
                 block.set_default_configurations()
 
             pipeline.add_block(

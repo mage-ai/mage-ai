@@ -30,36 +30,40 @@ class DBTBlockYAML(DBTBlock):
         # Example:
         # demo
         # default_repo/dbt/demo
-        configuration = self.configuration or {}
-        file_path = configuration.get('dbt_profiles_file_path') or \
-            configuration.get('dbt_project_name')
-
-        if file_path:
-            return os.path.dirname(
-                find_file_from_another_file_path(
-                    add_absolute_path(file_path),
+        file_path = None
+        for key in [
+            'dbt_profiles_file_path',
+            'dbt_project_name',
+        ]:
+            if not file_path and self.configuration.get(key):
+                path = add_absolute_path(self.configuration.get(key))
+                file_path = find_file_from_another_file_path(
+                    path,
                     lambda x: os.path.basename(x) in [
                         'dbt_project.yml',
                         'dbt_project.yaml'
                     ],
-                ),
+                )
+                if file_path:
+                    return os.path.dirname(file_path)
+
+    def set_default_configurations(self):
+        self.configuration = self.configuration or {}
+        if not self.configuration.get('file_source'):
+            self.configuration['file_source'] = {}
+
+        pp = self.project_path
+        if pp:
+            self.configuration['file_source']['project_path'] = add_absolute_path(
+                pp,
+                add_base_repo_path=False,
             )
 
-        # project_name_init = self.configuration.get('dbt_project_name')
-        # if project_name_init:
-        #     try:
-        #         diff = Path(project_name_init).relative_to(DBT_DIRECTORY_NAME)
-        #         project_name_init = diff
-        #     except ValueError:
-        #         pass
-
-        #     project_name = self.get_project_path_from_project_name(project_name_init)
-        #     if project_name:
-        #         return project_name
-
-        #     # Adds demo to /home/src/default_repo/dbt
-        #     # /home/src/default_repo/dbt/demo
-        #     return str(Path(self.get_base_project_from_source()) / project_name_init)
+        if not self.configuration['file_source'].get('path'):
+            self.configuration['file_source']['path'] = add_absolute_path(
+                self.file_path,
+                add_base_repo_path=False,
+            )
 
     def _execute_block(
         self,

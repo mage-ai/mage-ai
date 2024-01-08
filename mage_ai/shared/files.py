@@ -95,7 +95,6 @@ def find_file_from_another_file_path(file_path: str, comparator) -> str:
     absolute_file_path = None
 
     while len(parts) > 1 and absolute_file_path is None:
-        parts = parts[:-1]
         if len(parts) == 0:
             return
 
@@ -105,5 +104,7 @@ def find_file_from_another_file_path(file_path: str, comparator) -> str:
             if comparator(afp):
                 absolute_file_path = afp
                 break
+
+        parts = parts[:-1]
 
     return absolute_file_path
