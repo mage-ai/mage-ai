@@ -32,10 +32,10 @@ export function buildHeaderTabs({
     //   // Icon: NavDashboard,
     //   uuid: HeaderTabEnum.OVERVIEW,
     // },
-    {
-      // Icon: TreeWithArrowsUp,
-      uuid: HeaderTabEnum.LINEAGE,
-    },
+    // {
+    //   // Icon: TreeWithArrowsUp,
+    //   uuid: HeaderTabEnum.LINEAGE,
+    // },
   ];
 }
 

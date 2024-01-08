@@ -132,7 +132,7 @@ function Header({
   };
 
   const [updateProject, { isLoading: isLoadingUpdateProject }]: any = useMutation(
-    api.projects.useUpdate(project?.name),
+    api.projects.useUpdate(encodeURIComponent(project?.name || '')),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

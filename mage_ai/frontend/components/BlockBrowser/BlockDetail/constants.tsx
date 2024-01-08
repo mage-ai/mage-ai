@@ -13,13 +13,13 @@ export const TABS = [
   {
     uuid: TabEnum.DATA,
   },
-  {
-    uuid: TabEnum.LINEAGE,
-  },
-  {
-    uuid: TabEnum.PIPELINES,
-  },
-  {
-    uuid: TabEnum.CODE,
-  },
+  // {
+  //   uuid: TabEnum.LINEAGE,
+  // },
+  // {
+  //   uuid: TabEnum.PIPELINES,
+  // },
+  // {
+  //   uuid: TabEnum.CODE,
+  // },
 ];

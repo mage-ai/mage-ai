@@ -271,12 +271,12 @@ function TripleLayout({
     width,
   ]);
 
-  const shouldHideAfterWrapper = hideAfterCompletely && afterHidden;
+  const shouldHideAfterWrapper = hideAfterCompletely && (afterHidden !== false);
   const afterWidthFinal = shouldHideAfterWrapper
     ? 0
     : (afterHidden ? UNIT * 4 : afterWidth);
 
-  const shouldHideBeforeWrapper = hideBeforeCompletely && beforeHidden;
+  const shouldHideBeforeWrapper = hideBeforeCompletely && (beforeHidden !== false);
   const beforeWidthFinal = shouldHideBeforeWrapper
     ? 0
     : (beforeHidden ? UNIT * 4 : beforeWidth);
