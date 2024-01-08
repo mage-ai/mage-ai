@@ -90,6 +90,12 @@ def get_absolute_paths_from_all_files(
 
 
 def find_file_from_another_file_path(file_path: str, comparator) -> str:
+    if not file_path or not comparator:
+        return
+
+    if not os.path.isdir(file_path):
+        file_path = os.path.dirname(file_path)
+
     parts = Path(file_path).parts
 
     absolute_file_path = None

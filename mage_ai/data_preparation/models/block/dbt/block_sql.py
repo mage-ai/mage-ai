@@ -83,9 +83,9 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         )
 
     def set_default_configurations(self):
-        configuration = self.configuration or {}
-        file_path = configuration.get('file_path') or \
-            (configuration.get('file_source') or {}).get('path')
+        self.configuration = self.configuration or {}
+        file_path = self.configuration.get('file_path') or \
+            (self.configuration.get('file_source') or {}).get('path')
 
         file_path = add_absolute_path(file_path, add_base_repo_path=False) if file_path else None
         if not file_path:
