@@ -771,6 +771,10 @@ class BlockExecutor:
             logging_tags = dict()
 
         extra_options = {}
+
+        if self.block_run and self.block_run.metrics:
+            extra_options['metadata'] = self.block_run.metrics.get('metadata')
+
         if cache_block_output_in_memory:
             store_variables = False
         else:

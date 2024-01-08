@@ -19,6 +19,13 @@ class DynamicBlockFlag(str, Enum):
     SPAWN_OF_DYNAMIC_CHILD = 'spawn_of_dynamic_child'
 
 
+def extract_dynamic_block_index(block_run_block_uuid: str) -> int:
+    if block_run_block_uuid:
+        parts = block_run_block_uuid.split(':')
+        if len(parts) >= 2:
+            return parts[-1]
+
+
 def is_dynamic_block(block) -> bool:
     """
     Checks if the given block is a dynamic block.

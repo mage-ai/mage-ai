@@ -1141,6 +1141,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         disable_json_serialization: bool = False,
         data_integration_runtime_settings: Dict = None,
         execution_partition_previous: str = None,
+        metadata: Dict = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1197,6 +1198,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 run_settings=run_settings,
                 data_integration_runtime_settings=data_integration_runtime_settings,
                 execution_partition_previous=execution_partition_previous,
+                metadata=metadata,
                 **kwargs,
             )
 
@@ -1382,6 +1384,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         from_notebook: bool = False,
         global_vars: Dict = None,
         input_args: List = None,
+        metadata: Dict = None,
     ) -> Tuple[Dict, List, Dict, List[str]]:
         # Only fetch the input variables that the destination block explicitly declares.
         # If all the input variables are fetched, there is a chance that a lot of data from
@@ -1408,6 +1411,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                 execution_partition=execution_partition,
                 from_notebook=from_notebook,
                 global_vars=global_vars,
+                metadata=metadata,
             )
 
         outputs_from_input_vars = {}
@@ -1442,6 +1446,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         run_settings: Dict = None,
         data_integration_runtime_settings: str = None,
         execution_partition_previous: str = None,
+        metadata: Dict = None,
         **kwargs,
     ) -> Dict:
         if logging_tags is None:
@@ -1473,6 +1478,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
                     from_notebook=from_notebook,
                     global_vars=global_vars,
                     input_args=input_args,
+                    metadata=metadata,
                 )
 
             global_vars_copy = global_vars.copy()
@@ -1734,6 +1740,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         from_notebook: bool = False,
         global_vars: Dict = None,
         upstream_block_uuids: List[str] = None,
+        metadata: Dict = None,
     ) -> Tuple[List, List, List]:
         """
         Fetch input variables for the current block's execution.
@@ -1777,10 +1784,12 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             from_notebook=from_notebook,
             global_vars=global_vars,
             dynamic_block_flags=dynamic_block_flags,
+            metadata=metadata,
         )
 
         DX_PRINTER.critical(
             block=self,
+            metadata=metadata,
             dynamic_block_index=dynamic_block_index,
             dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,

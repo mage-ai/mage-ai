@@ -13,7 +13,10 @@ from mage_ai.data_preparation.models.block.dynamic import (
     all_variable_uuids,
     reduce_output_from_block,
 )
-from mage_ai.data_preparation.models.block.dynamic.utils import DynamicBlockFlag
+from mage_ai.data_preparation.models.block.dynamic.utils import (
+    DynamicBlockFlag,
+    extract_dynamic_block_index,
+)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block as is_dynamic_block_original,
 )
@@ -422,6 +425,7 @@ def fetch_input_variables(
     from_notebook: bool = False,
     global_vars: Dict = None,
     dynamic_block_flags: List[DynamicBlockFlag] = None,
+    metadata: Dict = None,
 ) -> Tuple[List, List, List]:
     """
     Fetches the input variables for a block.
@@ -470,7 +474,25 @@ def fetch_input_variables(
             for upstream_block_uuid, dynamic_block_index_folder in dynamic_block_indexes.items():
                 block = pipeline.get_block(upstream_block_uuid)
                 if block:
-                    dynamic_block_index_mapping[block.uuid] = dynamic_block_index_folder
+                    upstream_is_dynamic_block = is_dynamic_block(block)
+                    upstream_is_dynamic_block_child = is_dynamic_block_child(block)
+
+                    """
+                    If the following conditions are true:
+                    - Upstream is a dynamic block
+                    - Upstream is a dynamic child block
+                    - Current block is a virtual clone of the original one
+                    """
+                    if upstream_is_dynamic_block and \
+                            upstream_is_dynamic_block_child and \
+                            metadata and \
+                            metadata.get('clone_original'):
+
+                        dynamic_block_index_mapping[block.uuid] = extract_dynamic_block_index(
+                            upstream_block_uuid,
+                        )
+                    else:
+                        dynamic_block_index_mapping[block.uuid] = dynamic_block_index_folder
                 else:
                     dynamic_block_index_mapping[upstream_block_uuid] = dynamic_block_index_folder
 
