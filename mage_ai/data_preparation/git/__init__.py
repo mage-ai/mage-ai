@@ -285,15 +285,18 @@ class Git:
             repo = self.repo
             repo_path = self.repo_path
 
-        parser = GitConfigParser(
-            os.path.join(repo_path, '.gitmodules'),
-            read_only=True,
-        )
+        gitmodules_path = os.path.join(repo_path, '.gitmodules')
+
+        def update_gitmodules(section: str, option: str, value: Any):
+            gitmodules_parser = GitConfigParser(gitmodules_path, read_only=False)
+            gitmodules_parser.set(section, option, value)
+            gitmodules_parser.release()
+
+        parser = GitConfigParser(gitmodules_path)
         sections = parser.sections()
         for section in sections:
             path = parser.get(section, 'path', fallback=None)
             submodule_url = parser.get(section, 'url', fallback=None)
-            parser.release()
             if path and submodule_url:
                 submodule_full_path = os.path.join(repo_path, path)
                 tmp_full_path = f'{submodule_full_path}-{str(uuid.uuid4())}'
@@ -316,8 +319,7 @@ class Git:
                         url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
                         url = urlunsplit(url)
                         # Overwrite the submodule URL with git credentials.
-                        repo.config_writer().set_value(
-                            f'submodule.{path}', 'url', url).release()
+                        update_gitmodules(section, 'url', url)
 
                     subprocess.run(
                         [
@@ -340,11 +342,15 @@ class Git:
                 else:
                     print(f'{section} updated!')
                 finally:
+                    # Restore the submodule URL.
+                    update_gitmodules(section, 'url', submodule_url)
                     if os.path.exists(tmp_full_path):
                         shutil.rmtree(tmp_full_path)
                     repo_config_writer = repo.config_writer()
-                    repo_config_writer.remove_section(f'submodule.{path}')
+                    repo_config_writer.remove_section(section)
                     repo_config_writer.release()
+
+        parser.release()
 
     @_remote_command
     def reset_hard(self, branch: str = None, remote_name: str = None) -> None:
