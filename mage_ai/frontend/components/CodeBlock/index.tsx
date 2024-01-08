@@ -1586,7 +1586,7 @@ function CodeBlock({
               onMountCallback?.(editor);
             }
           }}
-          placeholder={isReplicated ? 'Read only' : (
+          placeholder={isReplicated ? null : (
             isDBT && BlockLanguageEnum.YAML === blockLanguage
               ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
               : 'Start typing here...'
