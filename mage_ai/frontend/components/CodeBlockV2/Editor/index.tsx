@@ -43,6 +43,7 @@ import { LEFT_PADDING } from '@components/CodeBlock/index.style';
 import { LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY, get, set } from '@storage/localStorage';
 import { UNIT, UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { isDebug } from '@utils/environment';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -76,7 +77,9 @@ function Editor({
   project: ProjectType;
   shortcuts?: ((monaco: any, editor: any) => void)[];
 }) {
-  console.log('EditorV2 render', block?.uuid, new Date());
+  if (isDebug()) {
+    console.log('EditorV2 render', block?.uuid, Number(new Date()));
+  }
 
   const { width } = useWindowSize();
 
@@ -113,13 +116,13 @@ function Editor({
   const reset = useCallback(() => {
     refButton.current.style.opacity = 1;
     refInputContainer.current.style.display = 'none';
-    refEditor.current.focus();
+    // refEditor.current.focus();
   }, []);
 
   const start = useCallback(() => {
     refButton.current.style.opacity = 0;
     refInputContainer.current.style.display = 'block';
-    setTimeout(() => refInput?.current?.focus?.(), 1);
+    // setTimeout(() => refInput?.current?.focus?.(), 1);
   }, []);
 
   const updateContentWithCode = useCallback((code: string) => {
@@ -130,7 +133,7 @@ function Editor({
     // @ts-ignore
     const combined = part1.concat([code]).concat(part2).join('\n');
 
-    setTimeout(() => refEditor.current.focus(), 1);
+    // setTimeout(() => refEditor.current.focus(), 1);
     setTimeout(() => {
       refEditor?.current?.setPosition({
         column: 1,
@@ -548,11 +551,15 @@ function Editor({
 
         const top = lineNumber * lineHeight;
 
-        refButton.current.style.top = `${(top - lineHeight) - (ICON_SIZE / 2)}px`;
-        refInputContainer.current.style.top = `${top}px`;
+        if (refButton?.current) {
+          refButton.current.style.top = `${(top - lineHeight) - (ICON_SIZE / 2)}px`;
+        }
 
-        const width = (refEditorContainer?.current?.getBoundingClientRect?.()?.width || 0) - WIDTH_OFFSET;
-        refInputContainer.current.style.width = `${width}px`;
+        if (refInputContainer?.current) {
+          refInputContainer.current.style.top = `${top}px`;
+          const width = (refEditorContainer?.current?.getBoundingClientRect?.()?.width || 0) - WIDTH_OFFSET;
+          refInputContainer.current.style.width = `${width}px`;
+        }
       }}
       onMountCallback={(editor, monaco) => {
         if (onMountCallback) {

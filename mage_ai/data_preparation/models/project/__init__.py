@@ -174,7 +174,7 @@ class Project():
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.features.get(feature_name.value, False)
 
-        if is_debug() and not os.getenv('DISABLE_API_TERMINAL_OUTPUT'):
+        if is_debug() and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
             print(f'[Project.is_feature_enabled]: {feature_name} | {feature_enabled}')
 
         return feature_enabled

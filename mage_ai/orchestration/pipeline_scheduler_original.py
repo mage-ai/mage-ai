@@ -1500,16 +1500,17 @@ def schedule_all():
                         )
                     else:
                         payload['create_block_runs'] = False
-                        pipeline_run = PipelineRun.create(**payload)
-                        # Log Git sync status for new pipeline runs if a git sync result exists
-                        if git_sync_result:
-                            pipeline_scheduler = PipelineScheduler(pipeline_run)
-                            log_git_sync(
-                                git_sync_result,
-                                pipeline_scheduler.logger,
-                                pipeline_scheduler.build_tags(),
-                            )
-                        initial_pipeline_runs.append(pipeline_run)
+                        pipeline_run = PipelineRun.create(prevent_duplicates=True, **payload)
+                        if pipeline_run:
+                            # Log Git sync status for new pipeline runs if a git sync result exists
+                            if git_sync_result:
+                                pipeline_scheduler = PipelineScheduler(pipeline_run)
+                                log_git_sync(
+                                    git_sync_result,
+                                    pipeline_scheduler.logger,
+                                    pipeline_scheduler.build_tags(),
+                                )
+                            initial_pipeline_runs.append(pipeline_run)
 
                 # Enforce pipeline concurrency limit
                 pipeline_run_quota = None

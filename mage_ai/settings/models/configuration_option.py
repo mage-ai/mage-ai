@@ -157,6 +157,7 @@ class ConfigurationOption(BaseDataClass):
 
                     full_path = str(Path(project_full_path).relative_to(repo_path))
 
+                    option_uuid = os.path.dirname(full_path)
                     results.append(ConfigurationOption.load(
                         configuration_type=configuration_type,
                         name=project.get('name'),
@@ -164,11 +165,12 @@ class ConfigurationOption(BaseDataClass):
                             profiles=profiles_arr,
                             project=merge_dict(project, dict(
                                 full_path=full_path,
+                                uuid=option_uuid,
                             )),
                         ),
                         option_type=option_type,
                         resource_type=resource_type,
-                        uuid=os.path.dirname(full_path),
+                        uuid=option_uuid,
                     ))
 
                 return results

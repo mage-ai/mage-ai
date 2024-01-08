@@ -127,7 +127,7 @@ import {
   CONFIG_KEY_LIMIT,
   CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME,
   CONFIG_KEY_USE_RAW_SQL,
-  CONFIG_KEY_DISABLE_QUERY_OUTPUT,
+  CONFIG_KEY_DISABLE_QUERY_PREPROCESSING,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
@@ -207,6 +207,13 @@ type CodeBlockProps = {
   blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
   children?: any;
+  codeEditorMappingRef?: {
+    current: {
+      [path: string]: {
+        [uuid: string]: any;
+      };
+    };
+  };
   containerRef?: any;
   cursorHeight1?: number;
   cursorHeight2?: number;
@@ -242,6 +249,7 @@ type CodeBlockProps = {
   onChange?: (value: string) => void;
   onClickAddSingleDBTModel?: (blockIdx: number) => void;
   onDrop?: (block: BlockType, blockDropped: BlockType) => void;
+  onMountCallback?: (editor: any) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
     blockUUID: string;
   }) => void;
@@ -260,6 +268,8 @@ type CodeBlockProps = {
     variables?: {
       [key: string]: any;
     };
+  }, options?: {
+    skipUpdating?: boolean;
   }) => void;
   runningBlocks?: BlockType[];
   savePipelineContent: (payload?: {
@@ -334,6 +344,7 @@ function CodeBlock({
   blockTemplates,
   blocks = [],
   children,
+  codeEditorMappingRef,
   containerRef,
   cursorHeight1,
   cursorHeight2,
@@ -365,6 +376,7 @@ function CodeBlock({
   onChange,
   onClickAddSingleDBTModel,
   onDrop,
+  onMountCallback,
   openSidekickView,
   pipeline,
   project,
@@ -631,6 +643,18 @@ function CodeBlock({
   const content = refContent?.current;
   const setContent = useCallback((value: string) => {
     refContent.current = value;
+
+    const path = buildBlockRefKey({
+      type: block?.type,
+      uuid: block?.uuid,
+    });
+
+    const mapping = codeEditorMappingRef?.current?.[path];
+    if (mapping) {
+      Object.entries(mapping || {})?.forEach(([uuid, editor]) => {
+        editor.setValue(value);
+      });
+    }
   }, []);
 
   const [currentTime, setCurrentTime] = useState<number>(null);
@@ -675,7 +699,7 @@ function CodeBlock({
     [CONFIG_KEY_LIMIT]: defaultLimitValue,
     [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: blockConfiguration[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
     [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
-    [CONFIG_KEY_DISABLE_QUERY_OUTPUT]: !!blockConfiguration[CONFIG_KEY_DISABLE_QUERY_OUTPUT],
+    [CONFIG_KEY_DISABLE_QUERY_PREPROCESSING]: !!blockConfiguration[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING],
   });
 
   const [errorMessages, setErrorMessages] = useState(null);
@@ -1008,6 +1032,12 @@ function CodeBlock({
       runTests: runTests || false,
       runUpstream: runUpstream || false,
       variables: variablesToUse,
+    }, {
+      skipUpdating: dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING]
+        || dataProviderConfig?.[CONFIG_KEY_USE_RAW_SQL]
+        || [
+          BlockTypeEnum.SCRATCHPAD,
+        ].includes(blockType)
     });
 
     if (!disableReset) {
@@ -1022,6 +1052,7 @@ function CodeBlock({
   }, [
     blockInteractions,
     content,
+    dataProviderConfig,
     fetchExecutionStates,
     hasDownstreamWidgets,
     interactionsMapping,
@@ -1274,7 +1305,7 @@ function CodeBlock({
         return acc;
       }, []),
       [BlockTypeEnum.SCRATCHPAD]: [
-        ...buildConvertBlockMenuItems(b, blocks, 'block_menu/scratchpad', addNewBlock),
+        ...buildConvertBlockMenuItems(b, blocks, `${b?.type}/${b?.uuid}/block_menu/scratchpad`, addNewBlock),
       ].map((config) => ({
         ...config,
         onClick: () => savePipelineContent().then(() => config.onClick()),
@@ -1326,12 +1357,15 @@ function CodeBlock({
   const onContentSizeChangeCallbackCallback = useCallback(() => sideBySideEnabled
     ? () => dispatchEventChanged()
     : null, [dispatchEventChanged, sideBySideEnabled]);
-  const onMountCallbackCallback = useCallback(() => sideBySideEnabled
-      ? () => {
-        setMounted(true);
-      }
-      : null
-    , [setMounted, sideBySideEnabled]);
+  const onMountCallbackCallback = useCallback((editor) => {
+    if (sideBySideEnabled) {
+      setMounted(true);
+    }
+
+    if (onMountCallback) {
+      onMountCallback?.(editor);
+    }
+  }, [onMountCallback, setMounted, sideBySideEnabled]);
   const runBlockAndTrackCallback = useCallback(payload => runBlockAndTrack({
     ...payload,
     syncColumnPositions: {
@@ -1471,10 +1505,6 @@ function CodeBlock({
   );
 
   const codeEditorEl = useMemo(() => {
-    if (replicatedBlockUUID && !isDataIntegration) {
-      return null;
-    }
-
     if (BlockTypeEnum.GLOBAL_DATA_PRODUCT === blockType) {
       const gdp = globalDataProductsByUUID?.[globalDataProduct?.uuid];
 
@@ -1530,14 +1560,15 @@ function CodeBlock({
     let callbackEl;
 
     if (!isDataIntegration || BlockLanguageEnum.PYTHON === blockLanguage) {
+      const isReplicated = !!replicatedBlockUUID;
       editorEl = (
         <CodeEditor
           autoHeight
-          autocompleteProviders={autocompleteProviders}
+          autocompleteProviders={isReplicated ? null : autocompleteProviders}
           block={block}
           height={height}
           language={blockLanguage}
-          onChange={(val: string) => {
+          onChange={isReplicated ? null : (val: string) => {
             setContent(val);
             onChange?.(val);
           }}
@@ -1546,20 +1577,25 @@ function CodeBlock({
             : null
           }
           onDidChangeCursorPosition={onDidChangeCursorPosition}
-          onMountCallback={sideBySideEnabled
-            ? () => {
+          onMountCallback={(editor) => {
+            if (sideBySideEnabled) {
               setMounted(true);
             }
-            : null
-          }
-          placeholder={isDBT && BlockLanguageEnum.YAML === blockLanguage
-            ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
-            : 'Start typing here...'
-          }
-          selected={selected}
-          setSelected={setSelected}
-          setTextareaFocused={setTextareaFocused}
-          shortcuts={hideRunButton
+
+            if (onMountCallback) {
+              onMountCallback?.(editor);
+            }
+          }}
+          placeholder={isReplicated ? null : (
+            isDBT && BlockLanguageEnum.YAML === blockLanguage
+              ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
+              : 'Start typing here...'
+          )}
+          readOnly={isReplicated}
+          selected={isReplicated ? null : selected}
+          setSelected={isReplicated ? null : setSelected}
+          setTextareaFocused={isReplicated ? null : setTextareaFocused}
+          shortcuts={(hideRunButton || isReplicated)
             ? []
             : [
               (monaco, editor) => executeCode(monaco, () => {
@@ -1576,7 +1612,8 @@ function CodeBlock({
               }),
             ]
           }
-          textareaFocused={textareaFocused}
+          textareaFocused={isReplicated ? null : textareaFocused}
+          uuid={`${block?.uuid}/${block?.type}`}
           value={content}
           width="100%"
         />
@@ -1666,6 +1703,7 @@ function CodeBlock({
     onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
+    onMountCallback,
     openSidekickView,
     // ref,
     replicatedBlockUUID,
@@ -2514,7 +2552,7 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                       onClickOutside={closeBlockMenu}
                       open={blockMenuVisible}
                       parentRef={blockMenuRef}
-                      uuid="CodeBlock/block_menu"
+                      uuid={`${block?.type}/${block?.uuid}/CodeBlock/block_menu`}
                     >
                       <Text
                         color={color}
@@ -3153,15 +3191,11 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                                 block
                                 description={
                                   <Text default inline>
-                                    After successfully running this block
+                                    By default, Mage will preprocess your query
                                     <br />
-                                    a <Text default inline monospace>
-                                      SELECT
-                                    </Text> query will be executed
+                                    commands. Toggle this feature to disable
                                     <br />
-                                    to fetch sample output data.
-                                    <br />
-                                    Check this box to disable this behavior.
+                                    preprocessing
                                   </Text>
                                 }
                                 size={null}
@@ -3169,16 +3203,16 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                               >
                                 <FlexContainer alignItems="center">
                                   <Checkbox
-                                    checked={dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_OUTPUT]}
+                                    checked={dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING]}
                                     label={
                                       <Text muted small>
-                                        Disable query output
+                                        Disable query preprocessing
                                       </Text>
                                     }
                                     onClick={(e) => {
                                       pauseEvent(e);
                                       updateDataProviderConfig({
-                                        [CONFIG_KEY_DISABLE_QUERY_OUTPUT]: !dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_OUTPUT],
+                                        [CONFIG_KEY_DISABLE_QUERY_PREPROCESSING]: !dataProviderConfig?.[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING],
                                       });
                                     }}
                                   />
@@ -3458,7 +3492,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                       || (isDBT && BlockLanguageEnum.YAML === blockLanguage)
                   )
                   && !isStreamingPipeline
-                  && !replicatedBlockUUID
                   && !isDataIntegration
                   && (!selectedSubheaderTabUUID || selectedSubheaderTabUUID === SUBHEADER_TAB_CODE.uuid)
                   && (
@@ -3663,37 +3696,47 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                   <>
                     {!codeCollapsed
                       ? (!(isMarkdown && !isEditingBlock)
-                        ? (replicatedBlock && !isDataIntegration)
-                          ? (<Spacing px={1} py={PADDING_UNITS}>
-                            <Text monospace muted>
-                              Replicated from block <Link
-                                color={getColorsForBlockType(
-                                  replicatedBlock?.type,
-                                  { blockColor: replicatedBlock?.color, theme: themeContext },
-                                ).accent}
-                                onClick={(e) => {
-                                  pauseEvent(e);
+                        ? (
+                          <>
+                            {replicatedBlock && !isDataIntegration && (
+                              <Spacing px={1} py={PADDING_UNITS}>
+                                <FlexContainer alignItems="center">
+                                  <Text monospace muted small>
+                                    Code is replicated from <Link
+                                      color={getColorsForBlockType(
+                                        replicatedBlock?.type,
+                                        { blockColor: replicatedBlock?.color, theme: themeContext },
+                                      ).accent}
+                                      onClick={(e) => {
+                                        pauseEvent(e);
 
-                                  const refBlock =
-                                    blockRefs?.current?.[`${replicatedBlock?.type}s/${replicatedBlock?.uuid}.py`];
-                                  refBlock?.current?.scrollIntoView();
-                                }}
-                                preventDefault
-                              >
-                                <Text
-                                  color={getColorsForBlockType(
-                                    replicatedBlock?.type,
-                                    { blockColor: replicatedBlock?.color, theme: themeContext },
-                                  ).accent}
-                                  inline
-                                  monospace
-                                >
-                                  {replicatedBlock?.uuid}
-                                </Text>
-                              </Link>
-                            </Text>
-                          </Spacing>)
-                          : codeEditorEl
+                                        const refBlock =
+                                          blockRefs?.current?.[`${replicatedBlock?.type}s/${replicatedBlock?.uuid}.py`];
+                                        refBlock?.current?.scrollIntoView();
+                                      }}
+                                      preventDefault
+                                      small
+                                    >
+                                      <Text
+                                        color={getColorsForBlockType(
+                                          replicatedBlock?.type,
+                                          { blockColor: replicatedBlock?.color, theme: themeContext },
+                                        ).accent}
+                                        inline
+                                        monospace
+                                        small
+                                      >
+                                        {replicatedBlock?.uuid}
+                                      </Text>
+                                    </Link> and read-only
+                                  </Text>
+                                </FlexContainer>
+                              </Spacing>
+                            )}
+
+                            {codeEditorEl}
+                          </>
+                        )
                         : markdownEl
                       )
                       : (

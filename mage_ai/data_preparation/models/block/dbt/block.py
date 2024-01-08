@@ -277,3 +277,6 @@ class DBTBlock(Block):
         **kwargs
     ) -> Generator[None, None, None]:
         yield (None, None)
+
+    def set_default_configurations(self):
+        pass

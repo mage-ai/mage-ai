@@ -124,7 +124,11 @@ class File:
         repo_path_alt = repo_path
         if repo_path_alt is None:
             repo_path_alt = get_repo_path(file_path=file_path)
-        return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
+        return File(
+            os.path.basename(file_path or ''),
+            os.path.dirname(file_path or ''),
+            repo_path_alt or '',
+        )
 
     @classmethod
     def get_all_files(
@@ -326,7 +330,7 @@ class File:
             async with aiofiles.open(self.file_path, mode='r', encoding='utf-8') as fp:
                 file_content = await fp.read()
             return file_content
-        except FileNotFoundError as err:
+        except Exception as err:
             print(err)
         return ''
 

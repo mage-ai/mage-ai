@@ -1,5 +1,16 @@
 import React, { useContext } from 'react';
 
+export type DisableGlobalKeyboardShortcuts = {
+  setDisableGlobalKeyboardShortcuts?: (disableGlobalKeyboardShortcuts: boolean, opts?: {
+    keyMapping?: {
+      [keyCode: number | string]: boolean;
+    };
+    uuidMapping?: {
+      [keyCode: number | string]: boolean;
+    };
+  }) => void;
+};
+
 type KeyboardContextType = {
   disableGlobalKeyboardShortcuts?: boolean;
   registerOnKeyDown: (
@@ -27,12 +38,9 @@ type KeyboardContextType = {
     ) => void,
     dependencies: any[],
   ) => void;
-  setDisableGlobalKeyboardShortcuts?: (
-    disableGlobalKeyboardShortcuts: boolean)
-   => void;
   unregisterOnKeyDown: (uuid: string) => void;
   unregisterOnKeyUp: (uuid: string) => void;
-};
+} & DisableGlobalKeyboardShortcuts;
 
 const KeyboardContext = React.createContext<KeyboardContextType>({
   disableGlobalKeyboardShortcuts: false,

@@ -236,13 +236,13 @@ export function buildBlockFromFilePath({
   // finalFilePath: demo/models/example/model_1.sql
   const projectPath =
     `${repoPathRelativeRoot}${osPath.sep}${BlockFolderNameEnum.DBT}${osPath.sep}`;
-  let finalFilePath = filePath;
+  // let finalFilePath = filePath;
 
   // Only remove the project name and dbt folder from the file path if its in the current
   // active project’s directory.
-  if (finalFilePath?.startsWith(projectPath)) {
-    finalFilePath = finalFilePath?.replace(projectPath, '');
-  }
+  // if (finalFilePath?.startsWith(projectPath)) {
+  //   finalFilePath = finalFilePath?.replace(projectPath, '');
+  // }
 
   if (isNewBlock) {
     let blockName = addUnderscores(name || randomNameGenerator());
@@ -251,19 +251,19 @@ export function buildBlockFromFilePath({
       blockName = blockName.slice(0, -4);
     }
     // finalFilePath: demo/models/example/model_1.sql
-    finalFilePath = `${filePath}${osPath.sep}${blockName}.${FileExtensionEnum.SQL}`;
+    // finalFilePath = `${filePath}${osPath.sep}${blockName}.${FileExtensionEnum.SQL}`;
   }
 
   const newBlock: BlockRequestPayloadType = {
     configuration: {
-      file_path: finalFilePath,
+      file_path: filePath,
       file_source: {
         path: filePath,
       },
       limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
     },
     language: BlockLanguageEnum.SQL,
-    name: removeExtensionFromFilename(finalFilePath),
+    name: removeExtensionFromFilename(filePath),
     type: BlockTypeEnum.DBT,
     // Used in project platform
   };

@@ -95,15 +95,20 @@ export function buildAddBlockRequestPayload(
 
   let blockUUID = getBlockUUID(parts);
   if (parts.length >= 3 && !isDBT) {
-    const nestedFolders = parts.slice(1, parts.length - 1).join(osPath.sep);
-    blockUUID = `${nestedFolders}/${blockUUID}`;
+    const nestedFolders = parts.slice(1, parts.length - 1)?.filter(
+      p => p?.length >= 1 && p !== osPath.sep && !p?.startsWith(blockType)
+    ).join(osPath.sep);
+
+    if (nestedFolders?.length >= 1) {
+      blockUUID = `${nestedFolders}/${blockUUID}`;
+    }
   }
 
   const blockLanguage = FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension];
 
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: selectEntriesWithValues({
-      file_path: (isDBT && BlockLanguageEnum.SQL === blockLanguage) ? blockUUID : null,
+      file_path: (isDBT && BlockLanguageEnum.SQL === blockLanguage) ? getFullPath(file) : null,
       file_source: {
         path: getFullPath(file),
       },

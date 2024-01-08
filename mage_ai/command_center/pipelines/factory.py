@@ -23,7 +23,7 @@ from mage_ai.command_center.triggers.utils import (
 from mage_ai.command_center.triggers.utils import build_run_once_and_score
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
-from mage_ai.settings.utils import base_repo_dirname
+from mage_ai.settings.utils import base_repo_dirname, base_repo_path
 from mage_ai.shared.hash import merge_dict
 
 
@@ -43,7 +43,10 @@ class PipelineFactory(BaseFactory):
             pipeline = await Pipeline.get_async(
                 metadata.uuid,
                 all_projects=True,
-                repo_path=os.path.join(base_repo_dirname(), metadata.repo_path),
+                repo_path=os.path.join(
+                    base_repo_dirname(),
+                    metadata.repo_path,
+                ) if metadata.repo_path else base_repo_path(),
             )
 
             item_dict = self.item.to_dict()

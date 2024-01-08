@@ -683,6 +683,7 @@ class BlockResource(GenericResource):
     @safe_db_query
     async def create(self, payload, user, **kwargs):
         pipeline = kwargs.get('parent_model')
+        block = None
 
         block_type = payload.get('type')
         content = payload.get('content')
@@ -692,6 +693,8 @@ class BlockResource(GenericResource):
         require_unique_name = payload.get('require_unique_name')
 
         payload_config = payload.get('config') or {}
+        replicated_block = None
+        custom_template = None
 
         block_action_object = payload.get('block_action_object')
         if block_action_object:
@@ -707,6 +710,12 @@ class BlockResource(GenericResource):
                 block_name = object_from_cache.get('uuid')
                 block_type = object_from_cache.get('type')
                 language = object_from_cache.get('language')
+
+                file_path = object_from_cache.get('file_path')
+                block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+                if block:
+                    if pipeline:
+                        pipeline.add_block(block)
             elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
                 payload_config['custom_template_uuid'] = object_from_cache.get('template_uuid')
             elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
@@ -728,79 +737,78 @@ class BlockResource(GenericResource):
                     object_from_cache.get('configuration') or {},
                 )
 
-        """
-        New DBT models include "content" in its block create payload,
-        whereas creating blocks from existing DBT model files do not.
-        """
-        if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
-            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+        if block is None:
+            """
+            New DBT models include "content" in its block create payload,
+            whereas creating blocks from existing DBT model files do not.
+            """
+            if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
+                from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
-            dbt_block = DBTBlock(
-                name,
-                clean_name(name),
-                BlockType.DBT,
-                configuration=payload.get('configuration'),
-                language=language,
-            )
-            if dbt_block.file_path and dbt_block.file.exists():
-                raise Exception('DBT model at that folder location already exists. \
-                    Please choose a different model name, or add a DBT model by \
-                    selecting single model from file.')
-
-        block_attributes = dict(
-            color=payload.get('color'),
-            config=payload_config,
-            configuration=payload.get('configuration'),
-            downstream_block_uuids=payload.get('downstream_blocks', []),
-            extension_uuid=payload.get('extension_uuid'),
-            language=language,
-            pipeline=pipeline,
-            priority=payload.get('priority'),
-            upstream_block_uuids=payload.get('upstream_blocks', []),
-        )
-
-        replicated_block = None
-        replicated_block_uuid = payload.get('replicated_block')
-        if replicated_block_uuid:
-            replicated_block = pipeline.get_block(replicated_block_uuid)
-            if replicated_block:
-                block_type = replicated_block.type
-                block_attributes['language'] = replicated_block.language
-                block_attributes['replicated_block'] = replicated_block.uuid
-            else:
-                error = ApiError.RESOURCE_INVALID.copy()
-                error.update(
-                    message=f'Replicated block {replicated_block_uuid} ' +
-                    f'does not exist in pipeline {pipeline.uuid}.',
+                dbt_block = DBTBlock(
+                    name,
+                    clean_name(name),
+                    BlockType.DBT,
+                    configuration=payload.get('configuration'),
+                    language=language,
                 )
-                raise ApiError(error)
+                if dbt_block.file_path and dbt_block.file.exists():
+                    raise Exception('DBT model at that folder location already exists. \
+                        Please choose a different model name, or add a DBT model by \
+                        selecting single model from file.')
 
-        custom_template = None
-        if payload_config and payload_config.get('custom_template_uuid'):
-            template_uuid = payload_config.get('custom_template_uuid')
-            custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
-            block = custom_template.create_block(
-                block_name,
-                pipeline,
-                extension_uuid=block_attributes.get('extension_uuid'),
-                priority=block_attributes.get('priority'),
-                upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
-            )
-            content = custom_template.load_template_content()
-        else:
-            block = Block.create(
-                block_name,
-                block_type,
-                get_repo_path(),
-                require_unique_name=require_unique_name,
-                **block_attributes,
+            block_attributes = dict(
+                color=payload.get('color'),
+                config=payload_config,
+                configuration=payload.get('configuration'),
+                downstream_block_uuids=payload.get('downstream_blocks', []),
+                extension_uuid=payload.get('extension_uuid'),
+                language=language,
+                pipeline=pipeline,
+                priority=payload.get('priority'),
+                upstream_block_uuids=payload.get('upstream_blocks', []),
             )
 
-        if content:
-            if payload.get('converted_from'):
-                content = convert_to_block(block, content)
+            replicated_block_uuid = payload.get('replicated_block')
+            if replicated_block_uuid:
+                replicated_block = pipeline.get_block(replicated_block_uuid)
+                if replicated_block:
+                    block_type = replicated_block.type
+                    block_attributes['language'] = replicated_block.language
+                    block_attributes['replicated_block'] = replicated_block.uuid
+                else:
+                    error = ApiError.RESOURCE_INVALID.copy()
+                    error.update(
+                        message=f'Replicated block {replicated_block_uuid} ' +
+                        f'does not exist in pipeline {pipeline.uuid}.',
+                    )
+                    raise ApiError(error)
 
-            await block.update_content_async(content)
+            if payload_config and payload_config.get('custom_template_uuid'):
+                template_uuid = payload_config.get('custom_template_uuid')
+                custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
+                block = custom_template.create_block(
+                    block_name,
+                    pipeline,
+                    extension_uuid=block_attributes.get('extension_uuid'),
+                    priority=block_attributes.get('priority'),
+                    upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
+                )
+                content = custom_template.load_template_content()
+            else:
+                block = Block.create(
+                    block_name,
+                    block_type,
+                    get_repo_path(),
+                    require_unique_name=require_unique_name,
+                    **block_attributes,
+                )
+
+            if content:
+                if payload.get('converted_from'):
+                    content = convert_to_block(block, content)
+
+                await block.update_content_async(content)
 
         if pipeline:
             cache = await BlockCache.initialize_cache()

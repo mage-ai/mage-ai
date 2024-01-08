@@ -80,10 +80,10 @@ models:
             '--select', 'mage_test_model'
         ])
 
-        DBTCli().invoke([
-            'clean',
-            '--project-dir', self.project_dir,
-        ])
+        # DBTCli().invoke([
+        #     'clean',
+        #     '--project-dir', self.project_dir,
+        # ])
 
     def test_to_pandas(self):
         cli = DBTCli()
