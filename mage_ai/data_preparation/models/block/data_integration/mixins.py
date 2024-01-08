@@ -419,6 +419,7 @@ class DataIntegrationMixin:
         upstream_block_uuids: List[str] = None,
         all_catalogs: bool = False,
         all_streams: bool = False,
+        **kwargs,
     ) -> Tuple[List, List, List]:
         block_uuids_to_fetch = upstream_block_uuids or self.upstream_block_uuids_for_inputs
 
