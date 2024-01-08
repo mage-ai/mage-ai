@@ -30,6 +30,7 @@ project_id: str
 token_uri: str
 type: str
 ```
+<br />
 
 ### Optional Configs
 
@@ -37,6 +38,15 @@ type: str
 | --- | --- | --- |
 | `skip_schema_creation` | If `true`, Mage won't run CREATE SCHEMA command. For more information, see this [issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true` |
 | `lower_case` | If `true`, Mage will set all columns name as lower case. Default is `true` | `true` |
-<br />
 
 <br />
+
+### Required permissions
+
+Your BigQuery account should at least have the below permissiont to use the BigQuery destination
+```
+bigquery.datasets.create
+bigquery.jobs.create
+```
+
+Your account should also have "BigQuery Data Editor" role for the BigQuery dataset you specified in the config.
