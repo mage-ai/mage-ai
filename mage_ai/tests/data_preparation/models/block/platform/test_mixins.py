@@ -256,9 +256,9 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
             f.write('')
 
         configuration = dict(
-            file_path='test/mage_platform/dir1/dir2/filename.sql',
+            file_path='mage_platform/dir1/dir2/filename.sql',
             file_source=dict(
-                path='test/mage_platform/dir3/dir4/filename.sql',
+                path='mage_platform/dir3/dir4/filename.sql',
             ),
         )
         block = self.build_block()
