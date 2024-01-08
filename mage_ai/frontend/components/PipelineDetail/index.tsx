@@ -86,7 +86,6 @@ import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addClassNames, removeClassNames } from '@utils/elements';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
-import { buildAddBlockRequestPayload } from '@components/FileEditor/utils';
 import { buildBlockRefKey, buildBlockFromFilePath } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { isInputElement } from '@context/shared/utils';
