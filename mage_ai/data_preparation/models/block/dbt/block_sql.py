@@ -72,6 +72,9 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         Returns:
             Union[str, os.PathLike]: Path of the dbt project, being used
         """
+        if not self.file_path:
+            return
+
         return os.path.dirname(
             find_file_from_another_file_path(self.file_path, lambda x: os.path.basename(x) in [
                 'dbt_project.yml',
