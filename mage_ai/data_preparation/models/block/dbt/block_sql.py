@@ -75,12 +75,16 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         if not self.file_path:
             return
 
-        return os.path.dirname(
-            find_file_from_another_file_path(self.file_path, lambda x: os.path.basename(x) in [
+        project_file_path = find_file_from_another_file_path(
+            self.file_path,
+            lambda x: os.path.basename(x) in [
                 'dbt_project.yml',
-                'dbt_project.yaml'
-            ]),
+                'dbt_project.yaml',
+            ],
         )
+
+        if project_file_path:
+            return os.path.dirname(project_file_path)
 
     def set_default_configurations(self):
         self.configuration = self.configuration or {}
@@ -101,12 +105,13 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         except ValueError:
             pass
 
-        try:
-            pp = str(Path(self.project_path).relative_to(base_repo_path()))
-            self.configuration['dbt_project_name'] = pp
-            self.configuration['file_source']['project_path'] = pp
-        except ValueError:
-            pass
+        if self.project_path:
+            try:
+                pp = str(Path(self.project_path).relative_to(base_repo_path()))
+                self.configuration['dbt_project_name'] = pp
+                self.configuration['file_source']['project_path'] = pp
+            except ValueError:
+                pass
 
     @property
     def __node_type(self) -> str:

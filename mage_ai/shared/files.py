@@ -107,7 +107,7 @@ def find_file_from_another_file_path(file_path: str, comparator) -> str:
         fp = os.path.join(*parts)
         for fn in os.listdir(fp):
             afp = os.path.join(fp, fn)
-            if comparator(afp):
+            if afp is not None and comparator(afp):
                 absolute_file_path = afp
                 break
 
