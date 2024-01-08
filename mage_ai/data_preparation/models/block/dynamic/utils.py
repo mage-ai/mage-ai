@@ -119,6 +119,7 @@ def uuid_for_output_variables(
     block_uuid: str = None,
     dynamic_block_index: int = None,
     dynamic_block_uuid: str = None,
+    join_character: str = None,
     **kwargs,
 ) -> Tuple[str, bool]:
     changed = False
@@ -134,11 +135,13 @@ def uuid_for_output_variables(
         dynamic_block_index = None
 
     if dynamic_block_index is not None or is_dynamic_block_child(block):
-        if dynamic_block_index is None:
-            parts = block_uuid.split(':')
-            if len(parts) >= 2:
+        parts = block_uuid.split(':')
+
+        if len(parts) >= 2:
+            block_uuid = parts[0]
+
+            if dynamic_block_index is None:
                 dynamic_block_index = parts[-1]
-                block_uuid = parts[0]
 
         if dynamic_block_index is not None:
             # We only need the base name and the final index to create the folder structure:
@@ -148,7 +151,11 @@ def uuid_for_output_variables(
             # to store its output.
             # dynamic_block_index = dynamic_block_uuid.split(':')[-1]
             # block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
-            block_uuid = os.path.join(str(block_uuid), str(dynamic_block_index))
+            arr = [str(block_uuid), str(dynamic_block_index)]
+            if join_character:
+                block_uuid = join_character.join(arr)
+            else:
+                block_uuid = os.path.join(*arr)
             changed = True
 
     DX_PRINTER.debug(
@@ -225,6 +232,7 @@ class DynamicBlockWrapper(BaseDataClass):
         if block_run:
             config = block_run.metrics or {}
             self.dynamic_block_index = config.get('dynamic_block_index')
+            self.dynamic_block_indexes = config.get('dynamic_block_indexes')
 
             metadata = config.get('metadata') or {}
 
@@ -298,13 +306,43 @@ class DynamicBlockWrapper(BaseDataClass):
             return True
         return self.block and should_reduce_output(self.block)
 
+    def get_dynamic_block_index_from_parent(
+        self,
+        block_run_block_uuid: str,
+    ) -> int:
+        if not self.dynamic_block_indexes:
+            block_run = self.factory.block_run()
+            if block_run and block_run.metrics:
+                self.dynamic_block_indexes = (block_run.metrics or {}).get(
+                    'dynamic_block_indexes',
+                )
+
+        if self.dynamic_block_indexes:
+            return (self.dynamic_block_indexes or {}).get(block_run_block_uuid)
+
+    def get_parent_block_uuid_for_output_variables(
+        self,
+        block,
+        block_run_block_uuid: str,
+    ) -> str:
+        dynamic_block_index_from_parent = self.get_dynamic_block_index_from_parent(
+            block_run_block_uuid,
+        )
+
+        return uuid_for_output_variables(
+            block,
+            block_uuid=block_run_block_uuid,
+            dynamic_block_index=dynamic_block_index_from_parent,
+            join_character=':',
+        )[0]
+
     def get_dynamic_block_index(self) -> int:
         if self.dynamic_block_index is not None:
             return self.dynamic_block_index
 
         block_run = self.factory.block_run()
         if block_run and block_run.metrics:
-            self.dynamic_block_index = (block_run.metrics.get('metadata') or {}).get(
+            self.dynamic_block_index = (block_run.metrics or {}).get(
                 'dynamic_block_index',
             )
 

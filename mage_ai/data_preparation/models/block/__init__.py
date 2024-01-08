@@ -36,6 +36,7 @@ from mage_ai.data_preparation.models.block.data_integration.utils import (
     execute_data_integration,
 )
 from mage_ai.data_preparation.models.block.dynamic.utils import (
+    DynamicBlockFlag,
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
@@ -1756,6 +1757,13 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             Tuple[List, List, List]: A tuple containing the input variables, kwargs variables, and
                 upstream block UUIDs.
         """
+
+        dynamic_block_flags = []
+        if is_dynamic_block(self):
+            dynamic_block_flags.append(DynamicBlockFlag.DYNAMIC)
+        if is_dynamic_block_child(self):
+            dynamic_block_flags.append(DynamicBlockFlag.DYNAMIC_CHILD)
+
         variables = fetch_input_variables(
             self.pipeline,
             upstream_block_uuids or self.upstream_block_uuids,
@@ -1768,18 +1776,20 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             execution_partition=execution_partition,
             from_notebook=from_notebook,
             global_vars=global_vars,
+            dynamic_block_flags=dynamic_block_flags,
         )
 
-        DX_PRINTER.label = f'Block {self.uuid}'
         DX_PRINTER.critical(
-            'fetch_input_variables',
+            block=self,
             dynamic_block_index=dynamic_block_index,
             dynamic_block_indexes=dynamic_block_indexes,
             dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+            dynamic_block_flags=dynamic_block_flags,
             execution_partition=execution_partition,
             upstream_block_uuids=self.upstream_block_uuids,
             upstream_block_uuids_override=upstream_block_uuids,
             variables=len(variables) if variables else 'nothing',
+            __uuid='fetch_input_variables',
         )
 
         return variables
@@ -1847,21 +1857,33 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     ):
         variable_manager = self.pipeline.variable_manager
 
-        block_uuid_use = block_uuid
-        clean_block_uuid = True
-        if dynamic_block_index is not None or is_dynamic_block_child(self):
-            block_uuid_use = os.path.join(*block_uuid.split(':'))
-            clean_block_uuid = False
+        block_uuid_use, changed = uuid_for_output_variables(
+            self,
+            block_uuid=block_uuid,
+            dynamic_block_index=dynamic_block_index,
+        )
 
-        return variable_manager.get_variable(
+        value = variable_manager.get_variable(
             self.pipeline.uuid,
             block_uuid=block_uuid_use,
-            clean_block_uuid=clean_block_uuid,
+            clean_block_uuid=not changed,
             partition=partition,
             raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_uuid,
         )
+
+        DX_PRINTER.debug(
+            'get_variable',
+            block=self,
+            block_uuid_use=block_uuid_use,
+            clean_block_uuid=not changed,
+            partition=partition,
+            value=value,
+            __uuid='output_variables'
+        )
+
+        return value
 
     def get_variable_object(
         self,
@@ -2985,11 +3007,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             dynamic_block_uuid,
         )
 
-        block_uuid = self.uuid
-        clean_block_uuid = True
-        if dynamic_block_uuid is not None:
-            block_uuid = os.path.join(*dynamic_block_uuid.split(':'))
-            clean_block_uuid = False
+        block_uuid, changed = uuid_for_output_variables(
+            self,
+            block_uuid=self.uuid,
+            dynamic_block_uuid=dynamic_block_uuid,
+        )
 
         for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
@@ -3001,7 +3023,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 uuid,
                 data,
                 partition=execution_partition,
-                clean_block_uuid=clean_block_uuid,
+                clean_block_uuid=not changed,
             )
 
         for uuid in variables_data['removed_variables']:
@@ -3009,7 +3031,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 self.pipeline.uuid,
                 block_uuid,
                 uuid,
-                clean_block_uuid=clean_block_uuid,
+                clean_block_uuid=not changed,
             )
 
     def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:

@@ -44,9 +44,12 @@ COLORS = [c for c in Color]
 
 def targets():
     return [
-        'get_outputs',
-        'get_variables_by_block',
-        'uuid_for_output_variables',
+        # 'get_outputs',
+        # 'get_variables_by_block',
+        # 'fetch_input_variables',
+        'output_variables',
+        # 'uuid_for_output_variables',
+        'dynamic_block_values_and_metadata',
     ]
 
 

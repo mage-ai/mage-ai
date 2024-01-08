@@ -1367,6 +1367,7 @@ class Pipeline:
         spark=None,
         index: int = None,
         sample_count: int = None,
+        dynamic_block_index: int = None,
     ):
         block = self.get_block(block_uuid)
 
@@ -1395,6 +1396,7 @@ class Pipeline:
             raise_exception=raise_exception,
             spark=spark,
             variable_uuid=variable_name,
+            dynamic_block_index=dynamic_block_index,
         )
 
         return variable
