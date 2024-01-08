@@ -71,7 +71,8 @@ class ProjectPlatformAccessible:
                                 project_path,
                                 add_base_repo_path=False
                             )
-        elif config.get('file_path'):
+
+        if config.get('file_path'):
             file_path = config.get('file_path')
             config['file_path'] = str(add_absolute_path(
                 file_path,

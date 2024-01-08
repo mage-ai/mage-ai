@@ -264,8 +264,6 @@ class ProjectPlatformAccessibleTest(ProjectPlatformMixin, BlockWithProjectPlatfo
         block = self.build_block()
         block.type = BlockType.DBT
 
-        print(block.clean_file_paths(configuration))
-
         self.assertEqual(block.clean_file_paths(configuration), dict(
             file_path='mage_platform/dir1/dir2/filename.sql',
             file_source=dict(
