@@ -12,6 +12,20 @@ title: "BigQuery"
 
 <Snippet file="google-auth.mdx"/>
 
+## Required permissions
+
+```
+bigquery.datasets.create
+bigquery.datasets.get
+bigquery.jobs.create
+bigquery.readsessions.create
+bigquery.readsessions.getData
+bigquery.tables.create
+```
+
+If you're running queries in the existing BigQuery dataset, make sure your account also have "BigQuery Data Editor"
+role for the BigQuery dataset.
+
 ## Using SQL blocks
 
 1. Create a new pipeline or open an existing pipeline.
