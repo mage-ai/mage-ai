@@ -339,14 +339,8 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
         # Replicate block
         self.replicated_block = replicated_block
-        self.replicated_block_object = None
-        if replicated_block:
-            self.replicated_block_object = Block(
-                self.replicated_block,
-                self.replicated_block,
-                self.type,
-                language=self.language,
-            )
+        self.replicated_blocks = {}
+        self._replicated_block_object = None
 
         # Module for the block functions. Will be set when the block is executed from a notebook.
         self.module = None
@@ -401,9 +395,26 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
     def configuration(self, x) -> None:
         self._configuration = self.clean_file_paths(x) if x else x
 
+    def get_original_block(self) -> 'Block':
+        if self.replicated_block:
+            return self.replicated_block_object.get_original_block()
+        return self
+
+    @property
+    def replicated_block_object(self) -> 'Block':
+        if self._replicated_block_object:
+            return self._replicated_block_object
+
+        if self.replicated_block and self.pipeline:
+            self._replicated_block_object = self.pipeline.get_block(self.replicated_block)
+            if self._replicated_block_object:
+                self._replicated_block_object.replicated_blocks[self.uuid] = self
+
+        return self._replicated_block_object
+
     @property
     def content(self) -> str:
-        if self.replicated_block:
+        if self.replicated_block and self.replicated_block_object:
             self._content = self.replicated_block_object.content
 
         if self._content is None:
@@ -424,7 +435,7 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         return None
 
     async def content_async(self) -> str:
-        if self.replicated_block:
+        if self.replicated_block and self.replicated_block_object:
             self._content = await self.replicated_block_object.content_async()
 
         if self._content is None:
@@ -584,6 +595,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file_path(self) -> str:
+        if self.replicated_block and self.replicated_block_object:
+            return self.replicated_block_object.file_path
+
         file_path = self.get_file_path_from_source()
         if not file_path:
             file_path = self.configuration.get('file_path')
@@ -600,6 +614,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
 
     @property
     def file(self) -> File:
+        if self.replicated_block and self.replicated_block_object:
+            return self.replicated_block_object.file
+
         if self.project_platform_activated:
             file = self.build_file()
             if file:
@@ -1668,9 +1685,9 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         # Initialize module
         block_uuid = self.uuid
         block_file_path = self.file_path
-        if self.replicated_block:
-            block_uuid = self.replicated_block
+        if self.replicated_block and self.replicated_block_object:
             block_file_path = self.replicated_block_object.file_path
+            block_uuid = self.replicated_block
 
         spec = importlib.util.spec_from_file_location(block_uuid, block_file_path)
         module = importlib.util.module_from_spec(spec)
@@ -1795,7 +1812,19 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
         block_uuid_use = block_uuid
         clean_block_uuid = True
         if dynamic_block_index is not None or is_dynamic_block_child(self):
-            block_uuid_use = os.path.join(*block_uuid.split(':'))
+            parts = block_uuid_use.split(':')
+            if dynamic_block_index is None and len(parts) >= 2:
+                dynamic_block_index = parts[-1]
+
+            if dynamic_block_index is not None:
+                block_uuid_use = os.path.join(parts[0], str(dynamic_block_index))
+            # We only need the base name and the final index to create the folder structure:
+            # e.g. block_uuid/[dynamic_block_index]
+            # e.g. block_uuid/0/output_0/data.json
+            # [dynamic_block_index] if used for each dynamic child so that it has a folder
+            # to store its output.
+            # dynamic_block_index = dynamic_block_uuid.split(':')[-1]
+            # block_uuid = os.path.join(block_uuid, str(dynamic_block_index))
             clean_block_uuid = False
 
         return variable_manager.get_variables_by_block(

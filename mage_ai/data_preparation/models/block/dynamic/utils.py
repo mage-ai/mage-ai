@@ -13,6 +13,7 @@ class DynamicBlockFlag(str, Enum):
     DYNAMIC_CHILD = 'dynamic_child'
     ORIGINAL = 'original'
     REDUCE_OUTPUT = 'reduce_output'
+    REPLICATED = 'replicated'
     SPAWN_OF_DYNAMIC_CHILD = 'spawn_of_dynamic_child'
 
 
@@ -70,6 +71,10 @@ def is_dynamic_block_child(block) -> bool:
     dynamic_or_child_with_reduce = list(filter(lambda x: should_reduce_output(x), dynamic_or_child))
 
     return len(dynamic_or_child) > len(dynamic_or_child_with_reduce)
+
+
+def is_replicated_block(block) -> bool:
+    return True if block and block.replicated_block else False
 
 
 def is_original_dynamic_child_block(
@@ -199,7 +204,15 @@ class DynamicBlockWrapper(BaseDataClass):
             include_clone and self.is_clone_of_original()
         ):
             return True
-        return self.block and self.block.uuid == self.block_run_block_uuid
+
+        if not self.block:
+            return False
+
+        return self.block.uuid == self.block_run_block_uuid or \
+            (self.is_replicated() and self.block.uuid_replicated == self.block_run_block_uuid)
+
+    def is_replicated(self) -> bool:
+        return DynamicBlockFlag.REPLICATED in (self.flags or []) or is_replicated_block(self.block)
 
     def is_clone_of_original(self) -> bool:
         return DynamicBlockFlag.CLONE_OF_ORIGINAL in (self.flags or []) and not self.is_original()
