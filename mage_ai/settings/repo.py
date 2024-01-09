@@ -146,12 +146,13 @@ def get_variables_dir(
             metadata_path = get_metadata_path(root_project=root_project)
             if os.path.exists(metadata_path):
                 with open(metadata_path, 'r', encoding='utf-8') as f:
-                    config_file = Template(f.read()).render(
-                        **get_template_vars_no_db()
-                    )
-                    repo_config = yaml.full_load(config_file) or {}
+                    config_file_raw = f.read()
+                    repo_config = yaml.full_load(config_file_raw) or {}
                     if repo_config.get('variables_dir'):
                         variables_dir = repo_config.get('variables_dir')
+                        variables_dir = Template(variables_dir).render(
+                            **get_template_vars_no_db()
+                        )
         if variables_dir is None:
             variables_dir = DEFAULT_MAGE_DATA_DIR
         variables_dir = os.path.expanduser(variables_dir)

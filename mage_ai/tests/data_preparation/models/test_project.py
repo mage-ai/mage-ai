@@ -32,6 +32,8 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertEqual(project.version, VERSION)
                 self.assertFalse(project.root_project)
 
+                mock_get_repo_config.assert_not_called()
+                project.repo_config
                 mock_get_repo_config.assert_called_once_with(
                     repo_path=base_repo_path(),
                     root_project=False,
@@ -45,13 +47,14 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
             'mage_ai.data_preparation.models.project.get_repo_config',
         ) as mock_get_repo_config:
             project = Project(root_project=True)
-
             self.assertEqual(project.name, 'test')
             self.assertEqual(project.repo_path, base_repo_path())
             self.assertEqual(project.settings, None)
             self.assertEqual(project.version, VERSION)
             self.assertTrue(project.root_project)
 
+            mock_get_repo_config.assert_not_called()
+            project.repo_config
             mock_get_repo_config.assert_called_once_with(
                 repo_path=base_repo_path(),
                 root_project=True,
@@ -80,18 +83,19 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                         self.assertEqual(project.version, VERSION)
                         self.assertFalse(project.root_project)
 
+                        project.repo_config
                         self.assertEqual(
                             mock_get_repo_config.mock_calls[0],
                             call(
-                                repo_path=os.path.join(base_repo_path(), 'mage_platform'),
-                                root_project=False,
+                                repo_path=base_repo_path(),
+                                root_project=True,
                             ),
                         )
                         self.assertEqual(
                             mock_get_repo_config.mock_calls[1],
                             call(
-                                repo_path=base_repo_path(),
-                                root_project=True,
+                                repo_path=os.path.join(base_repo_path(), 'mage_platform'),
+                                root_project=False,
                             ),
                         )
 
@@ -106,6 +110,7 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                         self.assertEqual(project.version, VERSION)
                         self.assertTrue(project.root_project)
 
+                        project.repo_config
                         self.assertEqual(
                             mock_get_repo_config.mock_calls[0],
                             call(
