@@ -522,15 +522,20 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             order to avoid initial pipeline run. A 59 min buffer is added to the
             current datetime since the run is generally scheduled shortly after
             the execution date, and no run would ever be scheduled if the execution
-            date was compared against actual current time.
+            date was compared against actual current time. We also make sure the
+            current execution date is after the trigger's creation date.
             """
             create_initial_pipeline_run = self.get_settings().create_initial_pipeline_run
-            avoid_initial_pipeline_run = compare(
-                current_execution_date,
-                datetime.now(tz=pytz.UTC) - timedelta(minutes=59),
-            ) == -1 \
-                if not create_initial_pipeline_run \
-                else False
+            avoid_initial_pipeline_run = (
+                compare(
+                    current_execution_date,
+                    datetime.now(tz=pytz.UTC) - timedelta(minutes=59),
+                ) == -1 or
+                compare(
+                    current_execution_date,
+                    self.created_at,
+                ) == -1
+            ) if not create_initial_pipeline_run else False
 
             # If the execution date is before start time or current time, don't schedule it.
             if (
