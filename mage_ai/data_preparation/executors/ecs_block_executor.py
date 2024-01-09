@@ -25,4 +25,4 @@ class EcsBlockExecutor(BlockExecutor):
             global_vars=global_vars,
             **kwargs,
         )
-        ecs.run_task(' '.join(cmd), ecs_config=self.executor_config)
+        ecs.run_task(cmd, ecs_config=self.executor_config)
