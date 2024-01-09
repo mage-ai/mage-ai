@@ -49,7 +49,7 @@ class DBTBlockYAML(DBTBlock):
                     path,
                     lambda x: os.path.basename(x) in [
                         'dbt_project.yml',
-                        'dbt_project.yaml'
+                        'dbt_project.yaml',
                     ],
                 )
                 if file_path:

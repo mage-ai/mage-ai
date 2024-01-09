@@ -15,6 +15,7 @@ from mage_ai.command_center.version_control.branches.utils import (
     build_clone,
     build_delete_branch,
     build_pull,
+    build_push,
 )
 from mage_ai.command_center.version_control.files.utils import (
     build_add_staging,
@@ -114,6 +115,9 @@ class BranchFactory(BaseFactory):
 
             # git pull
             self.filter_score_mutate_accumulator(await build_pull(branch, items), items)
+
+            # git push
+            self.filter_score_mutate_accumulator(await build_push(branch, items), items)
 
         for item in items:
             if 'metadata' not in item:

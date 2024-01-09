@@ -331,6 +331,7 @@ async def build_commit_files(factory, model: Branch, files: List[File]) -> Dict:
                     display_settings=dict(
                         icon_uuid='File',
                     ),
+                    name='__staged_files__',
                     style=dict(
                         default=True,
                         monospace=True,

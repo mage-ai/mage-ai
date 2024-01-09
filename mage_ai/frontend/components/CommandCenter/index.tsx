@@ -264,8 +264,10 @@ function CommandCenter() {
 
   function updateInputProperties() {
     const currentApplicationConfig = getCurrentApplicationConfiguration();
-    refInput.current.value = '';
-    refInput.current.placeholder = getInputPlaceholder(currentApplicationConfig);
+    if (refInput?.current) {
+      refInput.current.value = '';
+      refInput.current.placeholder = getInputPlaceholder(currentApplicationConfig);
+    }
   }
 
   function onChangeState(prev: (data: any) => any) {
@@ -951,6 +953,8 @@ function CommandCenter() {
     refFocusedElement.current = null;
     refInput?.current?.blur();
     refActive.current = false;
+
+    stopLoading();
   }
 
   function openCommandCenter() {
@@ -972,6 +976,8 @@ function CommandCenter() {
     } else {
       fetchItems();
     }
+
+    stopLoading();
   }
 
   const {

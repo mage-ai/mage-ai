@@ -35,17 +35,27 @@ class BaseVersionControl(BaseDataClass):
         return args
 
     async def run_async(self, command: str) -> List[str]:
-        proc = await asyncio.create_subprocess_shell(
-            ' '.join(self.prepare_commands(command)),
-            stdin=PIPE,
-            stdout=PIPE,
-            stderr=STDOUT,
+        # proc = await asyncio.create_subprocess_shell(
+        #     ' '.join(self.prepare_commands(command)),
+        #     stdin=PIPE,
+        #     stdout=PIPE,
+        #     stderr=STDOUT,
+        # )
+
+        proc = await asyncio.wait_for(
+            asyncio.create_subprocess_shell(
+                ' '.join(self.prepare_commands(command)),
+                stdin=PIPE,
+                stdout=PIPE,
+                stderr=STDOUT,
+            ),
+            5,
         )
 
         self.output = await proc.stdout.read()
-        self.output = self.output.decode().split('\n') if self.output else self.output
+        # self.output = self.output.decode().split('\n') if self.output else self.output
 
-        return self.output
+        # return self.output
 
     def run(self, command: str) -> List[str]:
         proc = subprocess.run(
@@ -232,7 +242,7 @@ class Branch(BaseVersionControl):
             flag = flag.upper()
         return self.run(f'branch -{flag} {name or self.name}')
 
-    def update(
+    async def update_async(
         self,
         checkout: bool = False,
         clone: bool = False,
@@ -260,7 +270,7 @@ class Branch(BaseVersionControl):
                 commands.append(self.remote.name)
             commands.append(self.name)
 
-        lines = self.run(' '.join(commands))
+        lines = await self.run_async(' '.join(commands))
         self.update_attributes()
 
         return lines
@@ -392,7 +402,7 @@ class File(BaseVersionControl):
         self.diff = self.run(f'diff {self.name}')
         return self.diff
 
-    def update(
+    async def update_async(
         self,
         add: str = None,
         command: str = None,
@@ -400,13 +410,13 @@ class File(BaseVersionControl):
         reset: str = False,
     ) -> List[str]:
         if add:
-            return self.run(f'add {add}')
+            return await self.run_sync(f'add {add}')
         elif command:
-            self.run(re.sub(r'^git', '', command.strip()).strip())
+            return await self.run_sync(re.sub(r'^git', '', command.strip()).strip())
         elif commit:
-            return self.run(f'commit -m "{commit}"')
+            return await self.run_sync(f'commit -m "{commit}"')
         elif reset:
-            return self.run(f'reset {reset}')
+            return await self.run_sync(f'reset {reset}')
 
         return ['Nothing was done.']
 

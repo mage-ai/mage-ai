@@ -353,6 +353,7 @@ function ApplicationForm({
     showError,
   });
   const executeActionRequests = useExecuteActions({
+    fetchItems: null,
     invokeRequest,
     router,
   });

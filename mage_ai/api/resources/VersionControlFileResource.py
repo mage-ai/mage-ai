@@ -75,7 +75,7 @@ class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
         return res
 
     async def update(self, payload: Dict, **kwargs):
-        self.model.update(**payload)
+        await self.model.update_async(**payload)
         self.validate_output()
 
     async def delete(self, **kwargs):

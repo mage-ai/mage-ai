@@ -52,6 +52,11 @@ def get_values(
         item_type,
         object_type,
         class_name,
+        *[(item_dict or {}).get(key) for key in [
+            'title',
+            'subtitle',
+            'description',
+        ]],
     ] if s])
     if model:
         if hasattr(model, 'uuid'):

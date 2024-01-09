@@ -155,7 +155,7 @@ class Action(CommandCenterBaseClass):
         self.serialize_attribute_class('render_options', RenderOptions)
         self.serialize_attribute_class('request', Request)
         self.serialize_attribute_classes('application_state_parsers', ApplicationStateParser)
-        self.serialize_attribute_classes('upstream_results_parsers', ApplicationStateParser)
+        self.serialize_attribute_classes('validation_parsers', ApplicationStateParser)
         self.serialize_attribute_enums('validations', ValidationType)
 
 

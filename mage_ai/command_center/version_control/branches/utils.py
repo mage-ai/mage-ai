@@ -345,15 +345,14 @@ async def build_delete_branch(model: Branch, items: List[Dict]):
     return add_validate_output_error_fatal(item_dict)
 
 
-async def build_pull(model: Branch, items: List[Dict]):
+async def build_branch_generic_action(model: Branch, items: List[Dict], action_label: str):
     remotes = Remote.load_all(project=model.project)
 
     item_dict = dict(
         item_type=ItemType.ACTION,
         object_type=ObjectType.BRANCH,
-        title='Pull branch',
-        description=model.name,
-        subtitle='git pull',
+        title=action_label.capitalize(),
+        subtitle=f'git {action_label}',
         display_settings_by_attribute=dict(
             icon=dict(
                 color_uuid='accent.sky',
@@ -379,7 +378,9 @@ async def build_pull(model: Branch, items: List[Dict]):
         },
         request=dict(
             operation=OperationType.UPDATE,
-            payload=dict(version_control_branch=dict(pull=True)),
+            payload=dict(version_control_branch={
+                action_label: True,
+            }),
             resource='version_control_branches',
             resource_parent='version_control_projects',
             response_resource_key='version_control_branch',
@@ -398,8 +399,6 @@ async def build_pull(model: Branch, items: List[Dict]):
                 type=InteractionInputType.DROPDOWN_MENU,
                 placeholder='e.g. origin',
                 options=[
-                    dict(label='', value=''),
-                ] + [
                     dict(
                         label=remote.name,
                         value=remote.name,
@@ -421,7 +420,7 @@ async def build_pull(model: Branch, items: List[Dict]):
         ],
     )
 
-    item_dict['applications'][0]['buttons'][-1]['label'] = 'Pull'
+    item_dict['applications'][0]['buttons'][-1]['label'] = action_label.capitalize()
 
     item_dict['actions'].extend([
         dict(
@@ -435,3 +434,20 @@ async def build_pull(model: Branch, items: List[Dict]):
     ])
 
     return add_validate_output_error_fatal(item_dict)
+
+
+async def build_pull(model: Branch, items: List[Dict]) -> Dict:
+    return await build_branch_generic_action(model, items, 'pull') | dict(
+        title='Pull remote branch into',
+        description=model.name,
+    )
+
+
+async def build_push(model: Branch, items: List[Dict]) -> Dict:
+    item_dict = await build_branch_generic_action(model, items, 'push') | dict(
+        title='Push current branch to remote',
+    )
+
+    item_dict['applications'][0]['settings'] = item_dict['applications'][0]['settings'][:1]
+
+    return item_dict
