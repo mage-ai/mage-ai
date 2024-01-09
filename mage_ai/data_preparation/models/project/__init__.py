@@ -23,8 +23,7 @@ class Project():
         self.root_project = root_project
         self.repo_path = repo_path or get_repo_path(root_project=self.root_project)
 
-        parts = self.repo_path.split('/')
-        self.name = parts[-1]
+        self.name = os.path.basename(self.repo_path)
         self.settings = None
 
         if not root_project and project_platform_activated():
@@ -32,12 +31,9 @@ class Project():
             if self.settings and self.settings.get('uuid'):
                 self.name = self.settings.get('uuid')
 
-        self.repo_config = repo_config or get_repo_config(
-            repo_path=self.repo_path,
-            root_project=self.root_project,
-        )
         self.version = VERSION
         self._features = None
+        self._repo_config = repo_config
 
         self.__repo_config_root_project = None
 
@@ -46,6 +42,15 @@ class Project():
                 repo_path=get_repo_path(root_project=True),
                 root_project=True,
             )
+
+    @property
+    def repo_config(self):
+        if not self._repo_config:
+            self._repo_config = get_repo_config(
+                repo_path=self.repo_path,
+                root_project=self.root_project,
+            )
+        return self._repo_config
 
     @property
     def workspace_config_defaults(self) -> Dict:
