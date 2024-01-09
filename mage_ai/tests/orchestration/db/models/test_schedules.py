@@ -236,11 +236,12 @@ class PipelineScheduleTests(DBTestCase):
         )
 
     @freeze_time('2023-10-11 12:13:14')
-    def test_should_schedule(self):
+    def test_should_schedule_with_initial_run(self):
         shared_attrs = dict(
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.DAILY,
             schedule_type=ScheduleType.TIME,
+            settings=dict(create_initial_pipeline_run=True)
         )
 
         self.assertFalse(
@@ -316,6 +317,42 @@ class PipelineScheduleTests(DBTestCase):
                 )
             ).should_schedule()
         )
+        self.assertTrue(
+            PipelineSchedule.create(
+                **merge_dict(
+                    shared_attrs,
+                    dict(
+                        name=self.faker.name(),
+                        schedule_interval=ScheduleInterval.HOURLY,
+                        status=ScheduleStatus.ACTIVE
+                    ),
+                )
+            ).should_schedule()
+        )
+        self.assertTrue(
+            PipelineSchedule.create(
+                **merge_dict(
+                    shared_attrs,
+                    dict(
+                        name=self.faker.name(),
+                        schedule_interval=ScheduleInterval.WEEKLY,
+                        status=ScheduleStatus.ACTIVE
+                    ),
+                )
+            ).should_schedule()
+        )
+        self.assertTrue(
+            PipelineSchedule.create(
+                **merge_dict(
+                    shared_attrs,
+                    dict(
+                        name=self.faker.name(),
+                        schedule_interval=ScheduleInterval.MONTHLY,
+                        status=ScheduleStatus.ACTIVE
+                    ),
+                )
+            ).should_schedule()
+        )
 
     @freeze_time('2024-01-01 00:03:14')
     def test_should_schedule_execution_dates(self):
@@ -373,6 +410,7 @@ class PipelineScheduleTests(DBTestCase):
                     ),
                 )
             )
+            self.assertTrue(pipeline_schedule.should_schedule())
             PipelineRun.create(
                 execution_date=execution_date_true,
                 pipeline_schedule_id=pipeline_schedule.id,
