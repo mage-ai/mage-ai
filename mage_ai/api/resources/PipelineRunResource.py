@@ -129,6 +129,12 @@ class PipelineRunResource(DatabaseResource):
         if end_timestamp is not None:
             results = results.filter(PipelineRun.created_at <= end_timestamp)
 
+        limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+
+        # No need to order the results if limit is 0
+        if limit == 0:
+            return results
+
         if order_by:
             arr = []
             for tup in order_by:
@@ -204,8 +210,7 @@ class PipelineRunResource(DatabaseResource):
         query arg and set it to True (e.g. in order to make the number of pipeline runs
         returned consistent across pages).
         """
-        if (meta or {}).get(META_KEY_LIMIT, None) is not None and \
-            total_results.count() >= 1 and \
+        if limit is not None and limit != 0 and total_count >= 1 and \
             not disable_retries_grouping and \
                 (pipeline_uuid is not None or pipeline_schedule_id is not None):
 
