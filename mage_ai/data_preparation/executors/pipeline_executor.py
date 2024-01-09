@@ -33,7 +33,7 @@ class PipelineExecutor:
         global_vars: Dict = None,
         pipeline_run_id: int = None,
         run_sensors: bool = True,
-        run_tests: bool = True,
+        run_tests: bool = False,
         update_status: bool = False,
         **kwargs,
     ) -> None:

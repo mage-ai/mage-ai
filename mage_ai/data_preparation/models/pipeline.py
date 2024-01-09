@@ -490,7 +490,7 @@ class Pipeline:
         global_vars=None,
         parallel: bool = True,
         run_sensors: bool = True,
-        run_tests: bool = True,
+        run_tests: bool = False,
         update_status: bool = True,
     ) -> None:
         """
@@ -523,7 +523,7 @@ class Pipeline:
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
         run_sensors: bool = True,
-        run_tests: bool = True,
+        run_tests: bool = False,
         update_status: bool = True,
     ) -> None:
         """

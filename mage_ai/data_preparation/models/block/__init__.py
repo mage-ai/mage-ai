@@ -109,7 +109,7 @@ async def run_blocks(
     global_vars: Dict = None,
     parallel: bool = True,
     run_sensors: bool = True,
-    run_tests: bool = True,
+    run_tests: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
@@ -202,7 +202,7 @@ def run_blocks_sync(
     from_notebook: bool = False,
     global_vars: Dict = None,
     run_sensors: bool = True,
-    run_tests: bool = True,
+    run_tests: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
