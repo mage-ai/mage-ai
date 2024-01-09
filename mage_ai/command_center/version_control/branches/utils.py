@@ -11,7 +11,7 @@ from mage_ai.command_center.constants import (
     ObjectType,
     RenderLocationType,
 )
-from mage_ai.command_center.version_control.shared.utils import build_update
+from mage_ai.command_center.shared.utils import build_update
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Branch, Project, Remote
 

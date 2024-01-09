@@ -35,17 +35,8 @@ CommandCenterItemPolicy.allow_read(
 
 CommandCenterItemPolicy.allow_write(
     [
-        'application',
-        'component',
-        'item',
-        'mode',
-        'page',
-        'page_history',
-        'picks',
-        'results',
-        'search',
-        'search_history',
-        'settings',
+        'state',
+        'timeline',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

@@ -1,8 +1,12 @@
 export function selectEntriesWithValues(obj, opts?: {
   includeEmptyArrays?: boolean;
 }) {
+  if (!obj) {
+    return {};
+  }
+
   const finalObj = {};
-  Object.entries(obj).forEach(([k, v]) => {
+  Object.entries(obj || {}).forEach(([k, v]) => {
     if (typeof v !== 'undefined' && v !== null) {
       if (!Array.isArray(v) || opts?.includeEmptyArrays || (v?.length >= 1 && v?.every(i => typeof i !== 'undefined' && i !== null))) {
         finalObj[k] = v;

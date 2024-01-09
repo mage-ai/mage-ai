@@ -10,7 +10,9 @@ import {
 } from '@interfaces/CommandCenterType';
 import { getCachedItems } from './cache';
 import { getCurrentMode, getPageHistoryAsItems, getPicksHistory, getSearchHistory } from './utils';
+import { getCurrentlyOpenedApplications } from '@storage/ApplicationManager/cache';
 import { onSuccess } from '@api/utils/response';
+import { selectEntriesWithValues, selectKeys } from '@utils/hash';
 
 export default function useCache(fetchUUID: () => number | string, opts: {
   abortControllerRef: any;
@@ -49,6 +51,8 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     searchRef: null,
   };
 
+  const requestRef = useRef(null);
+  const responseRef = useRef(null);
   const timeout = useRef(null);
   const router = useRouter();
 
@@ -62,28 +66,36 @@ export default function useCache(fetchUUID: () => number | string, opts: {
       application?: ItemApplicationType;
       delay?: number;
       disableRenderingCache?: boolean;
+      exclude?: string[];
       item?: CommandCenterItemType;
+      refresh?: boolean;
+      results?: KeyValueType;
       search?: string;
       uuid?: number | string;
     }) => api.command_center_items.useCreate({
       signal: abortControllerRef?.current?.signal,
     })({
       command_center_item: {
-        application,
-        component: null,
-        item,
-        mode: getCurrentMode(),
-        page: {
-          path: router?.asPath,
-          pathname: router?.pathname,
-          query: router?.query,
-          title: typeof document !== 'undefined' ? document?.title : null,
-        },
-        page_history: getPageHistoryAsItems(),
-        picks: getPicksHistory(),
-        results,
-        search: typeof search === 'undefined' ? searchRef?.current?.value : search,
-        search_history: getSearchHistory(),
+        state: selectEntriesWithValues({
+          application,
+          applications: getCurrentlyOpenedApplications(),
+          component: null,
+          item,
+          mode: getCurrentMode(),
+          page: {
+            path: router?.asPath,
+            pathname: router?.pathname,
+            query: router?.query,
+            title: typeof document !== 'undefined' ? document?.title : null,
+          },
+          results,
+        }),
+        timeline: selectEntriesWithValues({
+          page_history: getPageHistoryAsItems(),
+          picks: getPicksHistory(),
+          search: typeof search === 'undefined' ? searchRef?.current?.value : search,
+          search_history: getSearchHistory(),
+        }),
       },
     }),
     {
@@ -91,14 +103,17 @@ export default function useCache(fetchUUID: () => number | string, opts: {
         response: any,
         variables: {
           disableRenderingCache?: boolean;
+          exclude?: string[];
+          refresh?: boolean;
           uuid: number | string;
         },
       ) => onSuccess(
         response, {
-          callback: resp => onSuccessCallback(
-            resp,
-            variables,
-          ),
+          callback: (resp) => {
+            responseRef.current = resp;
+
+            onSuccessCallback(resp, variables);
+          },
           onErrorCallback,
         },
       ),
@@ -109,7 +124,9 @@ export default function useCache(fetchUUID: () => number | string, opts: {
     application?: ItemApplicationType;
     delay?: number;
     disableRenderingCache?: boolean;
+    exclude?: string[];
     item?: CommandCenterItemType;
+    refresh?: boolean;
     results?: KeyValueType;
     search?: string;
     uuid?: number | string;
@@ -130,10 +147,24 @@ export default function useCache(fetchUUID: () => number | string, opts: {
         }
         abortControllerRef.current = new AbortController();
 
-        return resolve(fetch({
+        let request = {
           ...opts,
           uuid,
-        }));
+        };
+        const prev = requestRef?.current;
+        requestRef.current = request;
+
+        if (opts?.refresh && requestRef?.current) {
+          request = {
+            ...prev,
+            ...selectKeys(opts, [
+              'exclude',
+              'refresh',
+            ]),
+          };
+        }
+
+        return resolve(fetch(request));
       }, delay);
     });
   }, [fetch, fetchUUID]);

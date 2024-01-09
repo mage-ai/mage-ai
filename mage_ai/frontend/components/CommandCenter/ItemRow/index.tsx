@@ -45,7 +45,11 @@ function ItemRow({
   const iconColor = getIconColor(item);
   const category = subtitle || getDisplayCategory(item, true);
 
-  const maxLetters = 85 - ((title?.length || 0) + (category?.length || 0));
+  const maxLetters = (
+    descriptionDisplaySettings?.text_styles?.monospace
+      ? 100
+      : 150
+  ) - ((2 * (title?.length || 0) + (category?.length || 0)));
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
   if (descriptionCount > maxLetters) {

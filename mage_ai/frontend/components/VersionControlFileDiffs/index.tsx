@@ -28,12 +28,12 @@ import { onSuccess } from '@api/utils/response';
 import { range, sortByKey } from '@utils/array';
 
 function VersionControlFileDiffs({
-  applicationConfigration,
+  applicationConfiguration,
   applicationState,
   onChangeState,
   uuid,
 }: {
-  applicationConfigration: ApplicationConfiguration;
+  applicationConfiguration: ApplicationConfiguration;
   applicationState: {
     current: KeyValueType;
   };
@@ -81,7 +81,7 @@ function VersionControlFileDiffs({
 
   const {
     item
-  } = applicationConfigration;
+  } = applicationConfiguration;
 
   const { data, fetch } = api.version_control_files.version_control_projects.list(
     encodeURIComponent(item?.metadata?.project?.uuid),

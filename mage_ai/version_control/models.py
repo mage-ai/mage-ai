@@ -178,7 +178,15 @@ class Branch(BaseVersionControl):
 
         if len([line for line in base.list() if line and line.strip()]) == 0:
             # Need to fake a local branch until user makes a commit.
-            model = Branch.load(current=True, name='master')
+            name = 'master'
+
+            output = base.run('reflog')
+            if output:
+                parts = output[0].split("'")
+                if len(parts) == 3:
+                    name = parts[1]
+
+            model = Branch.load(current=True, name=name)
             model.remote = remote
             model.project = project
             arr.append(model)

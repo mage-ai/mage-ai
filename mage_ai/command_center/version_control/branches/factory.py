@@ -1,6 +1,12 @@
 from typing import Dict, List
 
-from mage_ai.command_center.constants import ApplicationType, ItemType, ObjectType
+from mage_ai.command_center.applications.utils import build_close_application
+from mage_ai.command_center.constants import (
+    ApplicationExpansionUUID,
+    ApplicationType,
+    ItemType,
+    ObjectType,
+)
 from mage_ai.command_center.factory import BaseFactory
 from mage_ai.command_center.models import Item
 from mage_ai.command_center.version_control.branches.utils import (
@@ -19,6 +25,7 @@ from mage_ai.command_center.version_control.files.utils import (
     build_reset_selected,
     build_status,
 )
+from mage_ai.shared.array import find
 from mage_ai.version_control.models import Branch, File, Project
 
 
@@ -34,7 +41,18 @@ class BranchFactory(BaseFactory):
         branch.update_attributes()
 
         # Diff
-        self.filter_score_mutate_accumulator(await build_diff(self, model=branch), items)
+        if self.applications and \
+                find(
+                    lambda x: x.get('uuid') == ApplicationExpansionUUID.VersionControlFileDiffs,
+                    self.applications,
+                ):
+
+            self.filter_score_mutate_accumulator(
+                await build_close_application(ApplicationExpansionUUID.VersionControlFileDiffs),
+                items,
+            )
+        else:
+            self.filter_score_mutate_accumulator(await build_diff(self, model=branch), items)
 
         if item and \
                 ObjectType.VERSION_CONTROL_FILE == item.object_type and \
@@ -57,6 +75,7 @@ class BranchFactory(BaseFactory):
 
             # Status
             self.filter_score_mutate_accumulator(await build_status(self, model=branch), items)
+
             # git add .
             self.filter_score_mutate_accumulator(await build_add_staging(self, model=branch), items)
             self.filter_score_mutate_accumulator(

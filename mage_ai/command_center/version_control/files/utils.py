@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import ItemType, ObjectType, RenderLocationType
-from mage_ai.command_center.version_control.shared.utils import (
+from mage_ai.command_center.shared.utils import (
     build_action_fetch_items,
     build_action_generic,
     build_application_detail,
@@ -41,6 +41,9 @@ async def build_diff(factory, model: Branch) -> Dict:
                 expansion_settings=dict(
                     uuid='VersionControlFileDiffs',
                 ),
+                actions=[
+                    build_action_fetch_items({}),
+                ],
             ),
         ],
         display_settings_by_attribute=dict(

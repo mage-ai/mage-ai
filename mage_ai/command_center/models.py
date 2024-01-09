@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.command_center.constants import (
+    ApplicationExpansionUUID,
     ApplicationType,
     ButtonActionType,
     InteractionType,
@@ -269,7 +270,14 @@ class RemoteMetadata(CommandCenterBaseClass):
 
 
 @dataclass
+class ApplicationMetadata(CommandCenterBaseClass):
+    application_type: ApplicationType
+    uuid: ApplicationExpansionUUID
+
+
+@dataclass
 class Metadata(CommandCenterBaseClass):
+    application: ApplicationMetadata = None
     block: BlockMetadata = None
     branch: BranchMetadata = None
     file: FileMetadata = None
@@ -281,6 +289,7 @@ class Metadata(CommandCenterBaseClass):
     trigger: TriggerMetadata = None
 
     def __post_init__(self):
+        self.serialize_attribute_class('application', ApplicationMetadata)
         self.serialize_attribute_class('block', BlockMetadata)
         self.serialize_attribute_class('branch', BranchMetadata)
         self.serialize_attribute_class('file', FileMetadata)

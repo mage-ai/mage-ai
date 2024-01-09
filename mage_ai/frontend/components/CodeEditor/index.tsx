@@ -164,6 +164,10 @@ function CodeEditor({
   }, [updateTheme]);
 
   const handleEditorDidMount = useCallback((editor, monaco) => {
+    if (showDiffs) {
+      return;
+    }
+
     editorRef.current = editor;
     monacoRef.current = monaco;
 
@@ -274,6 +278,7 @@ function CodeEditor({
     setMounted,
     setTextareaFocused,
     shortcutsProp,
+    showDiffs,
     tabSize,
     textareaFocused,
     value,

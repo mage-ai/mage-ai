@@ -366,6 +366,7 @@ export interface CommandCenterItemType {
   item_type: ItemTypeEnum;
   items?: CommandCenterItemType[];
   metadata?: {
+    application?: ItemApplicationType;
     block?: BlockMetadataType;
     branch?: {
       current: boolean;

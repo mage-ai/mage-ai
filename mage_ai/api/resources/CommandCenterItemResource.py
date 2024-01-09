@@ -23,7 +23,9 @@ class CommandCenterItemResource(AsyncBaseResource):
             ))
             settings.save()
         else:
-            items = await search_items(user=user, **payload)
+            state = payload.get('state') or {}
+            timeline = payload.get('timeline') or {}
+            items = await search_items(user=user, **state, **timeline)
             settings = CommandCenterSettings.load_from_file_path()
 
         return self(dict(items=items, settings=settings), user, **kwargs)

@@ -19,6 +19,7 @@ class BaseFactory:
     def __init__(
         self,
         application: Dict = None,
+        applications: List[Dict] = None,
         component: str = None,
         item: Dict = None,
         mode: Dict = None,
@@ -32,6 +33,7 @@ class BaseFactory:
         user: User = None,
     ):
         self.application = Application.load(**application) if application else application
+        self.applications = applications
         self.component = component
         self.item = Item.load(**item) if item else item
         self.mode = Mode.load(**mode) if mode else mode
@@ -48,6 +50,7 @@ class BaseFactory:
         factory = factory_class() if factory_class else BaseFactory()
         for key in [
             'application',
+            'applications',
             'component',
             'item',
             'mode',

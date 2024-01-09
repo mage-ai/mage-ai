@@ -268,10 +268,10 @@ function CommandCenter() {
 
   function onChangeState(prev: (data: any) => any) {
     refApplicationState.current = prev(refApplicationState?.current);
-    console.log(refApplicationState?.current);
   }
 
   const {
+    closeApplication,
     getApplications,
     renderApplications,
     startApplication,
@@ -321,6 +321,12 @@ function CommandCenter() {
 
     if (ItemApplicationTypeEnum.EXPANSION === application?.application_type) {
       startApplication(currentApplicationConfig);
+      fetchItems({
+        exclude: [
+          item?.uuid,
+        ],
+        refresh: true,
+      });
     } else if ([
     // Detail, Form
       ItemApplicationTypeEnum.DETAIL,
@@ -405,7 +411,9 @@ function CommandCenter() {
     );
   }
 
-  function removeApplication(opts?: KeyValueType) {
+  function removeApplication(opts?: {
+    application?: ItemApplicationType;
+  }) {
     const count = refApplications?.current?.length || 0;
 
     if (refApplications?.current === null || !count) {
@@ -434,7 +442,9 @@ function CommandCenter() {
     let resetCallback;
     let shouldReset = count === 1;
 
-    if (count >= 2) {
+    if (ItemApplicationTypeEnum.EXPANSION === opts?.application?.application_type) {
+      closeApplication(opts?.application?.uuid);
+    } else if (count >= 2) {
       // Remove the next application from the stack, then re-add it so that all the
       // class name handling is triggered.
       const currentApplicationConfig = refApplications.current?.[0] || {};
@@ -860,13 +870,18 @@ function CommandCenter() {
       },
       {
         disableRenderingCache,
+        exclude,
+        refresh,
         uuid,
       }: {
         disableRenderingCache?: boolean;
+        exclude?: string[];
+        refresh?: boolean;
         uuid: number | string;
       },
     ) => {
-      if (refFetchCount?.current === uuid) {
+      const match = refFetchCount?.current === uuid;
+      if (match || refresh) {
         const items = addCachedItems(
           command_center_item?.items || [],
           {
@@ -877,16 +892,17 @@ function CommandCenter() {
           },
         );
 
-        if (refItemsInit?.current === null) {
-          refItemsInit.current = items;
-        }
+        if (match) {
+          if (refItemsInit?.current === null) {
+            refItemsInit.current = items;
+          }
 
-        if (isCurrentApplicationDetailList() && refItemsApplicationDetailList?.current === null) {
-          refItemsApplicationDetailList.current = items;
+          if (isCurrentApplicationDetailList() && refItemsApplicationDetailList?.current === null) {
+            refItemsApplicationDetailList.current = items;
+          }
         }
 
         refSettings.current = getSetSettings(command_center_item?.settings || {});
-
         renderItems(items);
       }
     },

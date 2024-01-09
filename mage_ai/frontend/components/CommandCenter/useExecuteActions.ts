@@ -3,6 +3,7 @@ import {
   CommandCenterActionType,
   CommandCenterItemType,
   KeyValueType,
+  ItemApplicationType,
   RenderLocationTypeEnum,
 } from '@interfaces/CommandCenterType';
 import { FetchItemsType, HandleSelectItemRowType } from './constants';
@@ -31,7 +32,9 @@ export default function useExecuteActions({
   itemsActionResultsRef?: {
     current: KeyValueType;
   };
-  removeApplication?: (opts?: KeyValueType) => void;
+  removeApplication?: (opts?: {
+    application?: ItemApplicationType;
+  }) => void;
   renderOutput?: (opts?: {
     item?: CommandCenterItemType;
     action?: CommandCenterActionType;
@@ -153,7 +156,9 @@ export default function useExecuteActions({
             const actionCopy = updateActionFromUpstreamResults(action, results);
             const { options } = actionCopy?.interaction || { options: null };
 
-            return removeApplication?.(options);
+            return removeApplication?.({
+              application: item?.metadata?.application,
+            });
           };
         } else if (CommandCenterActionInteractionTypeEnum.SELECT_ITEM === type) {
           actionFunction = (results: KeyValueType = {}) => {

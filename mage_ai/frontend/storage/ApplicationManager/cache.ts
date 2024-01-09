@@ -1,24 +1,20 @@
-import { ApplicationExpansionUUIDEnum, LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT } from './constants';
+import {
+  ApplicationManagerApplication,
+  ApplicationExpansionUUIDEnum,
+  DimensionType,
+  LOCAL_STORAGE_KEY_APPLICATION_MANAGER,
+  LayoutType,
+  PositionType,
+  StateType,
+  StatusEnum,
+} from './constants';
+import {
+  ApplicationConfiguration,
+} from '@components/CommandCenter/constants';
 import { get, set } from '../localStorage';
 import { selectEntriesWithValues } from '@utils/hash';
 
-interface PositionType {
-  x: number;
-  y: number;
-  z: number;
-}
-
-interface DimensionType {
-  height: number;
-  width: number;
-}
-
-interface LayoutType {
-  dimension: DimensionType;
-  position: PositionType;
-}
-
-export function buildDefaultLayout({
+function buildDefaultLayout({
   height: totalHeight,
   width: totalWidth,
 }): LayoutType {
@@ -38,29 +34,95 @@ export function buildDefaultLayout({
   };
 }
 
-export function getLayoutCache(uuid: ApplicationExpansionUUIDEnum = null): LayoutType | {
-  [uuid: string]: LayoutType;
-} {
-  const mapping = get(LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT);
-  return uuid ? mapping?.[uuid] : mapping;
+export function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
+  updateApplication({
+    state: {
+      status: StatusEnum.CLOSED,
+    },
+    uuid,
+  });
 }
 
-export function updateLayoutCache(uuid: ApplicationExpansionUUIDEnum, layout: LayoutType): LayoutType {
-  const mapping = getLayoutCache() || {};
-  const prev = mapping?.[uuid] || {};
+export function getCurrentlyOpenedApplications(): ApplicationManagerApplication[] {
+  return getApplications()?.filter(({ state }) => state?.status !== StatusEnum.CLOSED);
+}
 
-  prev.position = {
-    ...selectEntriesWithValues(prev?.position || {}),
+export function getApplications({
+  status,
+  uuid,
+}: {
+  status?: StatusEnum;
+  uuid?: ApplicationExpansionUUIDEnum;
+} = {}): ApplicationManagerApplication[] {
+  const arr = get(LOCAL_STORAGE_KEY_APPLICATION_MANAGER) || [];
+
+  if (status || uuid) {
+    return arr?.filter(app => (!status || app?.state?.status === status) && (!uuid || app?.uuid === uuid));
+  }
+
+  return arr;
+}
+
+function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
+  if (!layout || !layoutPrev) {
+    return buildDefaultLayout({
+      height: typeof window !== 'undefined' ? window?.innerHeight : null,
+      width: typeof window !== 'undefined' ? window?.innerWidth : null,
+    });
+  }
+
+  // @ts-ignore
+  const position: PositionType = {
+    ...selectEntriesWithValues(layoutPrev?.position || {}),
     ...selectEntriesWithValues(layout?.position || {}),
-  }
-  prev.dimension = {
-    ...selectEntriesWithValues(prev?.dimension || {}),
+  };
+
+  // @ts-ignore
+  const dimension: DimensionType = {
+    ...selectEntriesWithValues(layoutPrev?.dimension || {}),
     ...selectEntriesWithValues(layout?.dimension || {}),
+  };
+
+  return {
+    dimension,
+    position,
+  };
+}
+
+export function updateApplication(application: {
+  applicationConfiguration?: ApplicationConfiguration;
+  layout?: LayoutType;
+  state?: StateType;
+  uuid: ApplicationExpansionUUIDEnum;
+}) {
+  const {
+    state,
+    uuid,
+  } = application;
+
+  let appUpdated;
+  let apps = getApplications();
+
+  if (state?.status === StatusEnum.CLOSED) {
+    apps = apps?.filter(({ uuid: uuid2 }) => uuid !== uuid2);
+  } else {
+    const index = apps?.findIndex(({ uuid: uuid2 }) => uuid === uuid2);
+    const app = apps?.[index];
+
+    application.layout = updateLayout(application?.layout, app?.layout);
+    appUpdated = {
+      ...(app || {}),
+      ...application,
+    };
+
+    if (index >= 0) {
+      apps[index] = appUpdated;
+    } else {
+      apps.push(appUpdated);
+    }
   }
 
-  mapping[uuid] = prev;
+  set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER, apps);
 
-  set(LOCAL_STORAGE_KEY_APPLICATION_MANAGER_LAYOUT, mapping);
-
-  return layout;
+  return appUpdated;
 }

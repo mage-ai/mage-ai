@@ -1,11 +1,15 @@
-import { createRef, useCallback, useMemo, useRef, useState } from 'react';
+import { createRef, useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
-import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
-import { buildDefaultLayout, getLayoutCache, updateLayoutCache } from '@storage/ApplicationManager/cache';
+import { ApplicationExpansionUUIDEnum, StatusEnum } from '@storage/ApplicationManager/constants';
+import {
+  closeApplication as closeApplicationFromCache,
+  getApplications as getApplicationsFromCache,
+  updateApplication,
+} from '@storage/ApplicationManager/cache';
 import {
   ContainerStyle,
   ContentStyle,
@@ -28,6 +32,7 @@ export default function useApplicationManager({
   };
   onChangeState?: (prev: (data: any) => any) => any;
 }): {
+  closeApplication: (uuid: ApplicationExpansionUUIDEnum) => void;
   getApplications: () => {
     applications: ApplicationConfiguration[];
     expansions: any[];
@@ -35,7 +40,7 @@ export default function useApplicationManager({
     roots: any[];
   };
   renderApplications: () => Element;
-  startApplication: (applicationConfigration: ApplicationConfiguration) => void;
+  startApplication: (applicationConfiguration: ApplicationConfiguration) => void;
 } {
   const refRootApplication = useRef(null);
   // References to the application configurations in memory.
@@ -49,6 +54,16 @@ export default function useApplicationManager({
   // 4 sides of each application can be used to resize the application.
   const refResizers = useRef({});
 
+  function closeApplication(uuid: ApplicationExpansionUUIDEnum) {
+    closeApplicationFromCache(uuid);
+
+    const refRoot = refRoots?.current?.[uuid];
+    if (refRoot) {
+      refRoots.current[uuid] = undefined;
+      refRoot?.unmount();
+    }
+  }
+
   function getActiveApplication() {
     return refApplications?.current?.[ApplicationExpansionUUIDEnum.VersionControlFileDiffs];
   }
@@ -58,18 +73,28 @@ export default function useApplicationManager({
     width,
     x,
     y,
+    z,
   }) {
-    const uuid = getActiveApplication()?.application?.expansion_settings?.uuid;
-    updateLayoutCache(uuid, {
-      dimension: {
-        height,
-        width,
-      },
-      position: {
-        x,
-        y,
-      },
+    const apps = getApplicationsFromCache({
+      status: StatusEnum.OPEN,
     });
+    const app = apps?.[0];
+    if (app) {
+      updateApplication({
+        layout: {
+          dimension: {
+            height,
+            width,
+          },
+          position: {
+            x,
+            y,
+            z,
+          },
+        },
+        uuid: app?.uuid,
+      });
+    }
   }
 
   const {
@@ -116,10 +141,10 @@ export default function useApplicationManager({
   // https://stackoverflow.com/questions/20926551/recommended-way-of-making-react-component-div-draggable
   // Draggable
 
-  function startApplication(applicationConfigration: ApplicationConfiguration) {
+  function startApplication(applicationConfiguration: ApplicationConfiguration) {
     const {
       application,
-    } = applicationConfigration;
+    } = applicationConfiguration;
     const {
       expansion_settings: expansionSettings,
     } = application;
@@ -128,7 +153,7 @@ export default function useApplicationManager({
     if (!refApplications?.current) {
       refApplications.current = {};
     }
-    refApplications.current[uuid] = applicationConfigration;
+    refApplications.current[uuid] = applicationConfiguration;
 
     if (ApplicationExpansionUUIDEnum.VersionControlFileDiffs === uuid) {
       if (!refRoots?.current?.[uuid]) {
@@ -139,11 +164,15 @@ export default function useApplicationManager({
       const ref = refExpansions?.current?.[uuid] || createRef();
       refExpansions.current[uuid] = ref;
 
-      const layout = getLayoutCache(uuid) || buildDefaultLayout({
-        height: typeof window !== 'undefined' ? window?.innerHeight : null,
-        width: typeof window !== 'undefined' ? window?.innerWidth : null,
+      const {
+        layout,
+      } = updateApplication({
+        applicationConfiguration,
+        state: {
+          status: StatusEnum.OPEN,
+        },
+        uuid,
       });
-
 
       if (!refResizers?.current?.[uuid]) {
         refResizers.current[uuid] = {
@@ -185,7 +214,7 @@ export default function useApplicationManager({
           <ContentStyle>
             <InnerStyle>
               <VersionControlFileDiffs
-                applicationConfigration={applicationConfigration}
+                applicationConfiguration={applicationConfiguration}
                 applicationState={applicationState}
                 onChangeState={(prev) => {
                   if (onChangeState) {
@@ -210,7 +239,16 @@ export default function useApplicationManager({
     }
   }
 
+  useEffect(() => {
+    getApplicationsFromCache({ status: StatusEnum.OPEN }).forEach(({
+      applicationConfiguration,
+    }) => {
+      startApplication(applicationConfiguration);
+    });
+  }, []);
+
   return {
+    closeApplication,
     getApplications,
     renderApplications,
     startApplication,
