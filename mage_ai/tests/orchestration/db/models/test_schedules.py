@@ -357,6 +357,7 @@ class PipelineScheduleTests(DBTestCase):
     @freeze_time('2024-01-01 00:03:14')
     def test_should_schedule_execution_dates(self):
         shared_attrs = dict(
+            created_at=datetime(2023, 12, 31, 12, 31, 0),
             pipeline_uuid='test_pipeline',
             schedule_interval=ScheduleInterval.DAILY,
             schedule_type=ScheduleType.TIME,
@@ -482,6 +483,7 @@ class PipelineScheduleTests(DBTestCase):
     @freeze_time('2023-10-11 12:13:14')
     def test_should_schedule_when_landing_time_enabled(self):
         shared_attrs = dict(
+            created_at=datetime(2023, 10, 11, 0, 0, 0),
             pipeline_uuid='test_pipeline',
             schedule_type=ScheduleType.TIME,
             settings=dict(landing_time_enabled=True),
