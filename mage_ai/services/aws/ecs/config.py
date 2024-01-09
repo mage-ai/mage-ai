@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import boto3
 import requests
@@ -67,7 +67,7 @@ class EcsConfig(BaseConfig):
             container_name=container_name,
         )
 
-    def get_task_config(self, command: str = None) -> Dict:
+    def get_task_config(self, command: Union[str, Dict] = None) -> Dict:
         network_configuration = self.network_configuration
         if network_configuration is None:
             network_configuration = {
@@ -94,7 +94,7 @@ class EcsConfig(BaseConfig):
                 'containerOverrides': [
                     {
                         'name': self.container_name,
-                        'command': command.split(' '),
+                        'command': command.split(' ') if isinstance(command, str) else command,
                         'cpu': self.cpu,
                         'memory': self.memory,
                     },
