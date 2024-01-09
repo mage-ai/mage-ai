@@ -45,10 +45,10 @@ function ItemOutput({
     if (output) {
       const lines = output.map((line: string, idx: number) => (
         <Text
-          default
           key={`${line}-${idx}`}
           monospace
           preWrap
+          small
         >
           <Ansi>
             {line}

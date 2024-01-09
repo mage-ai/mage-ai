@@ -86,6 +86,7 @@ export default {
   },
   background: {
     blackTransparent: 'rgba(0, 0, 0, 0.6)',
+    blackTransparentDark: 'rgba(0, 0, 0, 0.8)',
     chartBlock: '#2E3036',
     codeArea: '#1E1F24',
     codeTextarea: '#000000',

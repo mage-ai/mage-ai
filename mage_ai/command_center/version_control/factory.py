@@ -20,6 +20,7 @@ from mage_ai.command_center.version_control.constants import (
     ACTIVATE_MODE,
     DEACTIVATE_MODE,
 )
+from mage_ai.command_center.version_control.files.utils import build_generic_command
 from mage_ai.command_center.version_control.projects.constants import (
     build_create_project,
 )
@@ -49,8 +50,10 @@ class VersionControlFactory(BaseFactory):
     async def fetch_items(self, **kwargs) -> List[Dict]:
         self.branches = []
         self.remotes = []
+        item_project = None
 
         items = []
+        on_base_view = False
 
         # This has to come 1st because self.item is typically always in the API payload request.
         if self.results and self.results.get('project'):
@@ -59,8 +62,8 @@ class VersionControlFactory(BaseFactory):
             # results from previously executed actions since the results are stored in a ref.
             result = results[-1]
             if result and result.get('value'):
-                project = Project.load(**result.get('value'))
-                item = await build(self, project)
+                item_project = Project.load(**result.get('value'))
+                item = await build(self, item_project)
                 item['score'] = 999
                 items.append(item)
         elif self.results and self.results.get('branch'):
@@ -68,12 +71,12 @@ class VersionControlFactory(BaseFactory):
                 if result.get('value'):
                     value = result.get('value')
 
-                    project = Project.load(uuid=value.get('project_uuid'))
+                    item_project = Project.load(uuid=value.get('project_uuid'))
                     model = Branch.load(
                         current=value.get('current'),
                         name=value.get('name'),
                     )
-                    model.project = project
+                    model.project = item_project
                     item = await build_branch(self, model)
                     item['score'] = 999
                     items.append(item)
@@ -91,23 +94,23 @@ class VersionControlFactory(BaseFactory):
                 Current remote
             """
             if ObjectType.PROJECT == self.item.object_type:
-                project = Project.load(**self.item.metadata.project.to_dict())
+                item_project = Project.load(**self.item.metadata.project.to_dict())
 
-                await build_update_project(self, project, items)
-                await build_delete_project(self, project, items)
+                await build_update_project(self, item_project, items)
+                await build_delete_project(self, item_project, items)
 
-                self.remotes = Remote.load_all(project=project)
-                await build_remote_list(self, project, items)
-                await build_create_remote(self, project, items)
+                self.remotes = Remote.load_all(project=item_project)
+                await build_remote_list(self, item_project, items)
+                await build_create_remote(self, item_project, items)
 
-                await build_create_branch(self, project, items)
+                await build_create_branch(self, item_project, items)
 
-                self.branches = Branch.load_all(project=project)
+                self.branches = Branch.load_all(project=item_project)
                 if self.branches:
                     for branch in self.branches:
                         await build_and_score_branch(self, branch, items)
                 else:
-                    await build_clone(self, items, project=project)
+                    await build_clone(self, items, project=item_project)
 
             if self.item.object_type in [ObjectType.BRANCH, ObjectType.VERSION_CONTROL_FILE]:
                 # Checkout
@@ -117,31 +120,33 @@ class VersionControlFactory(BaseFactory):
                 initial_item = self.item
                 branch_factory = self.build_another_factory(BranchFactory)
                 items.extend(await branch_factory.fetch_items(item=initial_item))
+                item_project = Project.load(**self.item.metadata.project.to_dict())
 
             if ObjectType.REMOTE == self.item.object_type:
                 # Detail view of remote with list of actions
                 # Fetch
                 # Update
                 # Remote
-                project = Project.load(**self.item.metadata.project.to_dict())
+                item_project = Project.load(**self.item.metadata.project.to_dict())
                 if self.item.metadata.remote:
                     remote = Remote.load(**self.item.metadata.remote.to_dict())
-                    remote.project = project
+                    remote.project = item_project
                 else:
-                    remote = Remote(project=project)
+                    remote = Remote(project=item_project)
                 await build_detail_list_items_remote(self, remote, items)
         elif self.item and ItemType.LIST == self.item.item_type:
             if ObjectType.REMOTE == self.item.object_type:
                 # Add remote
                 # List of all remotes
-                project = Project.load(**self.item.metadata.project.to_dict())
+                item_project = Project.load(**self.item.metadata.project.to_dict())
 
-                await build_create_remote(self, project, items)
+                await build_create_remote(self, item_project, items)
 
-                remotes = Remote.load_all(project=project)
+                remotes = Remote.load_all(project=item_project)
                 for remote in remotes:
                     await build_and_score_remote(self, remote, items)
         else:
+            on_base_view = True
             items.append(build_create_project() | dict(score=100))
 
             if self.mode:
@@ -152,6 +157,10 @@ class VersionControlFactory(BaseFactory):
 
             for project in Project.load_all():
                 await build_and_score(self, project, items)
+
+        if not on_base_view and self.search and item_project:
+            item = await build_generic_command(self, item_project)
+            items.append(item)
 
         return items
 

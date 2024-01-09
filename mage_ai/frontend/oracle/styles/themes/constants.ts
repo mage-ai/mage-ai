@@ -33,6 +33,7 @@ export type ThemeType = {
   };
   background: {
     blackTransparent: string;
+    blackTransparentDark: string;
     chartBlock: string;
     codeArea: string;
     codeTextarea: string;

@@ -61,7 +61,7 @@ export const ContainerStyle = styled.div<{
     }
 
     #${OUTPUT_CONTAINER_ID} {
-      border-bottom: 1px solid ${(props.theme || dark).monotone.grey400};
+      border-top: 1px solid ${(props.theme || dark).monotone.grey400};
     }
 
     &.version_control {
@@ -78,7 +78,7 @@ export const ContainerStyle = styled.div<{
       }
 
       #${OUTPUT_CONTAINER_ID} {
-        border-bottom: 1px solid ${getApplicationColors(
+        border-top: 1px solid ${getApplicationColors(
         ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
         props,
       )?.accent};
@@ -217,6 +217,10 @@ export const OutputContainerStyle = styled.div`
 
   max-height: ${CONTAINER_HEIGHT}px;
 
+  ${props => `
+    background-color: ${(props.theme || dark).background.blackTransparentDark};
+  `}
+
   &.inactive {
     ${SHARED_HIDDEN_STYLES}
   }
@@ -231,10 +235,6 @@ export const OutputContainerStyle = styled.div`
       display: block !important;
     }
   }
-
-  ${props => `
-    background-color: ${(props.theme || dark)?.background?.panelTransparent};
-  `}
 `;
 
 export const OutputContentStyle = styled.div`

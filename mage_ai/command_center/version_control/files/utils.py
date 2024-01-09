@@ -15,7 +15,7 @@ from mage_ai.command_center.shared.utils import (
 )
 from mage_ai.data_preparation.models.file import File as FileModel
 from mage_ai.presenters.interactions.constants import InteractionInputType
-from mage_ai.version_control.models import Branch, File
+from mage_ai.version_control.models import Branch, File, Project
 
 
 async def build_diff(factory, model: Branch) -> Dict:
@@ -340,5 +340,24 @@ async def build_commit_files(factory, model: Branch, files: List[File]) -> Dict:
         ),
     ]
     item_dict['applications'][0]['buttons'][1]['label'] = 'Create git commit'
+
+    return item_dict
+
+
+async def build_generic_command(factory, model: Project) -> Dict:
+    text = factory.search
+    item_dict = await build_add_staging(factory, Branch(project=model, name='generic_command'))
+    item_dict.update(
+        uuid=f'git_command_{model.uuid}',
+        title='Command',
+        description=text,
+        subtitle='git',
+    )
+    item_dict['display_settings_by_attribute']['icon'] = dict(
+        color_uuid='content.default',
+        icon_uuid='Terminal',
+    )
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(command=text)
+    item_dict['display_settings_by_attribute']['description']['text_styles']['small'] = False
 
     return item_dict

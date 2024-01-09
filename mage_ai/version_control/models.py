@@ -405,7 +405,7 @@ class File(BaseVersionControl):
         if add:
             return self.run(f'add {add}')
         elif command:
-            return self.run(command)
+            self.run(re.sub(r'^git', '', command.strip()).strip())
         elif commit:
             return self.run(f'commit -m "{commit}"')
         elif reset:
