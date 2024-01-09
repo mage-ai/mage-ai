@@ -2,7 +2,7 @@ import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';;
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
-import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
@@ -18,14 +18,15 @@ export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props =
 }
 
 export const ContainerStyle = styled.div`
-  border-radius: ${BORDER_RADIUS_XLARGE}px;
+  border-bottom-left-radius: ${BORDER_RADIUS_XLARGE}px;
+  border-bottom-right-radius: ${BORDER_RADIUS_XLARGE}px;
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   position: fixed;
 `;
 
 export const ContentStyle = styled.div`
-  ${ScrollbarStyledCss}
+  ${PlainScrollbarStyledCss}
   // ${hideScrollBar()}
 
   overflow: auto;
@@ -50,12 +51,20 @@ export const ContentStyle = styled.div`
 `;
 
 export const HeaderStyle = styled.div`
-  position: fixed;
+  backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+  background-color: rgb(0, 0, 0, 0.9);
+  border-bottom: 1px solid #2E3036;
+  border-top-left-radius: ${BORDER_RADIUS_XLARGE}px;
+  border-top-right-radius: ${BORDER_RADIUS_XLARGE}px;
   height: ${HEADER_HEIGHT}px;
+  position: fixed;
+  width: inherit;
   z-index: 5;
 `;
 
 export const InnerStyle = styled.div`
+  backdrop-filter: saturate(140%) blur(${3 * UNIT}px);
+  background-color: rgb(0, 0, 0, 0.9);
   bottom: 0;
   height 100%;
   left: 0;

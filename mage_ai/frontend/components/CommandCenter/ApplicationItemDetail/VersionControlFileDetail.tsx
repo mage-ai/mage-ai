@@ -49,11 +49,11 @@ function VersionControlFileDetail({
 
   const accordionPanels = useMemo(() => {
     const arr2 = [];
-    [
+    sortByKey([
       [`${pluralize('file', staged?.length)} ready to commit`, staged],
       [pluralize('modified file', unstaged?.length), unstaged],
       [pluralize('new file', untracked?.length), untracked],
-    ].forEach(([title, arr]) => {
+    ], tup => tup[1]).forEach(([title, arr]) => {
       if (arr?.length) {
         arr2.push(
           <AccordionPanel
@@ -121,6 +121,11 @@ function VersionControlFileDetail({
           noBorder
           noBoxShadow
           showDividers
+          visibleMappingForced={{
+            0: true,
+            1: true,
+            2: true,
+          }}
         >
           {accordionPanels}
         </Accordion>

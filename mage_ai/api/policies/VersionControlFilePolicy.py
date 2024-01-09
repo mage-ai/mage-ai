@@ -61,6 +61,7 @@ VersionControlFilePolicy.allow_write(
 VersionControlFilePolicy.allow_write(
     [
         'add',
+        'command',
         'commit',
         'message',
         'reset',

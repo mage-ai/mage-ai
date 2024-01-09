@@ -32,6 +32,7 @@ export type ThemeType = {
     yellowLight: string;
   };
   background: {
+    blackTransparent: string;
     chartBlock: string;
     codeArea: string;
     codeTextarea: string;
@@ -139,6 +140,7 @@ export type ThemeType = {
   };
   interactive: {
     activeBorder: string;
+    blackBackgroundTransparent: string;
     dangerBorder: string;
     defaultBackgroundTransparent: string;
     defaultBorder: string;
@@ -147,6 +149,7 @@ export type ThemeType = {
     focusBorder: string;
     hoverBackground: string;
     hoverBackgroundTransparent: string;
+    hoverBlackBackgroundTransparent: string;
     hoverBorder: string;
     linkPrimary: string;
     linkSecondary: string;

@@ -147,7 +147,7 @@ async def build_add_staging(factory, model: Branch) -> Dict:
 async def build_add_staging_selected(factory, model: Branch) -> Dict:
     item_dict = await build_add_staging(factory, model)
     item_dict.update(
-        uuid='git_add_selected',
+        uuid=f'git_add_selected_{model.name}',
         title='Stage selected files',
         description='Select files from the File differences app',
         subtitle='git add [file]',
@@ -176,7 +176,7 @@ return action
 async def build_reset_all(factory, model: Branch) -> Dict:
     item_dict = await build_add_staging(factory, model)
     item_dict.update(
-        uuid='git_reset_all',
+        uuid=f'git_reset_all_{model.name}',
         title='Reset all files',
         description='Remove all files from staging but keep current modifications',
         subtitle='git reset .',
@@ -195,7 +195,7 @@ async def build_reset_all(factory, model: Branch) -> Dict:
 async def build_reset_selected(factory, model: Branch) -> Dict:
     item_dict = await build_reset_all(factory, model)
     item_dict.update(
-        uuid='git_reset_selected',
+        uuid=f'git_reset_selected_{model.name}',
         title='Reset selected files',
         description='Select files from the File differences app',
         subtitle='git reset [file]',
@@ -221,10 +221,25 @@ return action
     return item_dict
 
 
+async def build_log(factory, model: Branch) -> Dict:
+    item_dict = await build_add_staging(factory, model)
+    item_dict.update(
+        uuid=f'git_log_{model.name}',
+        title='View recent commit messages',
+        subtitle='git log',
+    )
+    item_dict['display_settings_by_attribute']['icon'] = dict(
+        icon_uuid='Logs',
+    )
+    item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(command='log')
+
+    return item_dict
+
+
 async def build_checkout_files_application(factory, model: Branch) -> Dict:
     item_dict = await build_add_staging(factory, model)
     item_dict.update(
-        uuid='git_checkout_single_files',
+        uuid=f'git_checkout_single_files_{model.name}',
         title='View unstaged and untracked files to remove modifications',
         subtitle=None,
         description=None,

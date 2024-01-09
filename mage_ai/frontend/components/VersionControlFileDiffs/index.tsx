@@ -22,7 +22,7 @@ import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/consta
 import { ContainerStyle } from './index.style';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import { KeyValueType } from '@interfaces/CommandCenterType';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { VersionControlFileType } from '@interfaces/VersionControlType';
 import { getApplicationColors } from '@components/ApplicationManager/index.style';
 import { getFilenameFromFilePath } from '@components/Files/utils';
@@ -75,7 +75,7 @@ function VersionControlFileDiffs({
         uuid: 'Files changed',
       },
       {
-        uuid: 'File browser',
+        uuid: 'All files in repository',
       },
     ];
   }, [selectedFiles]);
@@ -243,8 +243,8 @@ function VersionControlFileDiffs({
 
   const beforeMemo = useMemo(() => {
     return (
-      <>
-        {'File browser' === selectedTab?.uuid && (
+      <div style={{ padding: UNIT }}>
+        {'All files in repository' === selectedTab?.uuid && (
           <VersionControlFileBrowser
             files={filesBrowser}
             mapping={mapping}
@@ -252,14 +252,24 @@ function VersionControlFileDiffs({
         )}
 
         {('Files changed' === selectedTab?.uuid || !selectedTab?.uuid) && (
-          <FileNavigation
-            files={files}
-            refRows={refRows}
-            selectedFiles={selectedFiles}
-            setSelectedFiles={setSelectedFiles}
-          />
+          <>
+            <FileNavigation
+              files={files}
+              refRows={refRows}
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
+            />
+
+            {!files?.length && (
+              <div style={{ padding: UNIT }}>
+                <Text default>
+                  No changes have been made since the last commit.
+                </Text>
+              </div>
+            )}
+          </>
         )}
-      </>
+      </div>
     );
   }, [
     files,
@@ -294,6 +304,7 @@ function VersionControlFileDiffs({
         beforeWidth={300}
         contained
         inline
+        noBackground
       >
         {codeEditors}
       </TripleLayout>

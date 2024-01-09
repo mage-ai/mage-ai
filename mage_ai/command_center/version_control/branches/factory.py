@@ -21,6 +21,7 @@ from mage_ai.command_center.version_control.files.utils import (
     build_checkout_single_files,
     build_commit_files,
     build_diff,
+    build_log,
     build_reset_all,
     build_reset_selected,
     build_status,
@@ -66,6 +67,9 @@ class BranchFactory(BaseFactory):
                         items,
                     )
         else:
+            # Log
+            self.filter_score_mutate_accumulator(await build_log(self, model=branch), items)
+
             # Clone
             if not branch.current:
                 await build_clone(self, items, model=branch)

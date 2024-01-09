@@ -1,11 +1,12 @@
 import { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS, BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_RADIUS_LARGE, BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
 export const SCROLLBAR_WIDTH = UNIT * 1.25;
+export const SCROLLBAR_WIDTH_SMALL = UNIT * 1;
 
 export function hideScrollBar() {
   return `
@@ -74,6 +75,47 @@ export const ScrollbarStyledCss = css<{
 
     ::-webkit-scrollbar-thumb {
       border-radius: ${BORDER_RADIUS_LARGE}px !important;
+    }
+  `}
+`;
+
+
+export const PlainScrollbarStyledCss = css<{
+  noScrollbarTrackBackground?: boolean;
+  scrollbarBorderRadiusLarge?: boolean;
+}>`
+  ::-webkit-scrollbar {
+    height: ${SCROLLBAR_WIDTH_SMALL}px;
+    width: ${SCROLLBAR_WIDTH_SMALL}px;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar {
+    border-radius: ${BORDER_RADIUS_PILL}px !important;
+  }
+
+  ::-webkit-scrollbar-track {
+    border-radius: ${BORDER_RADIUS_PILL}px !important;
+  }
+
+  ${props => `
+    ::-webkit-scrollbar-thumb {
+      background: ${(props.theme.background || dark.background).scrollbarThumb};
+      border-radius: ${BORDER_RADIUS_PILL}px !important;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: ${(props.theme.background || dark.background).scrollbarThumbHover};
+      }
+      ::-webkit-scrollbar-corner {
+        background: ${(props.theme.background || dark.background).scrollbarTrack};
+      }
     }
   `}
 `;

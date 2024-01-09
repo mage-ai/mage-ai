@@ -121,24 +121,28 @@ class BaseFactory:
         return item_dict.get('uuid') or ''
 
     # Subclasses can override this
-    def get_searchable_text(self, item_dict: Dict, **kwargs) -> str:
+    def get_searchable_text(self, item_dict: Dict, **kwargs) -> List[str]:
         arr = []
-        for key in ['title', 'description', 'uuid', 'item_type', 'object_type']:
-            if item_dict.get(key):
-                value = item_dict.get(key)
-                if value:
-                    value = value.lower()
-                    extension = Path(value).suffix
-                    if extension:
-                        arr.append(Path(value).stem)
-                        arr.append(extension)
-                    arr.append(value)
+        for key in [
+            'description',
+            'item_type',
+            'object_type',
+            'subtitle',
+            'title',
+            'uuid',
+        ]:
+            value = item_dict.get(key) if item_dict else None
+            if not value:
+                continue
 
-        text = ' '.join(arr)
-        return ' '.join([
-            text,
-            text.replace('_', ' '),
-        ])
+            value = value.lower().strip()
+            extension = Path(value).suffix
+            if extension:
+                arr.append(Path(value).stem)
+                arr.append(extension)
+            arr.append(value)
+
+        return arr
 
     # Subclasses can override this
     def score_item(self, _item_dict: Dict, score: int = None) -> int:
@@ -147,10 +151,9 @@ class BaseFactory:
     def filter_score(self, item_dict: Dict) -> Union[None, Dict]:
         score = 0
         if self.search:
-            score = fuzz.partial_token_sort_ratio(
-                self.search,
-                self.get_searchable_text(item_dict),
-            )
+            text = self.get_searchable_text(item_dict)
+            score = max([fuzz.partial_token_sort_ratio(self.search, t) for t in text])
+
             if score < self.search_ratio:
                 return None
 

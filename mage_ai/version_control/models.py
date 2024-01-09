@@ -223,11 +223,8 @@ class Branch(BaseVersionControl):
     def create(self) -> List[str]:
         return self.run(f'checkout -b {self.name}')
 
-    def detail(self, log: bool = False) -> List[str]:
-        outputs = []
-        if log:
-            outputs.extend(self.run('log'))
-        return outputs
+    def detail(self, **kwargs) -> List[str]:
+        return []
 
     def delete(self, name: str = None, force: bool = False) -> List[str]:
         flag = 'd'
@@ -398,9 +395,17 @@ class File(BaseVersionControl):
         self.diff = self.run(f'diff {self.name}')
         return self.diff
 
-    def update(self, add: str = None, commit: str = None, reset: str = False) -> List[str]:
+    def update(
+        self,
+        add: str = None,
+        command: str = None,
+        commit: str = None,
+        reset: str = False,
+    ) -> List[str]:
         if add:
             return self.run(f'add {add}')
+        elif command:
+            return self.run(command)
         elif commit:
             return self.run(f'commit -m "{commit}"')
         elif reset:

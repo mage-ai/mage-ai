@@ -164,10 +164,6 @@ function CodeEditor({
   }, [updateTheme]);
 
   const handleEditorDidMount = useCallback((editor, monaco) => {
-    if (showDiffs) {
-      return;
-    }
-
     editorRef.current = editor;
     monacoRef.current = monaco;
 
@@ -186,7 +182,7 @@ function CodeEditor({
 
     addKeyboardShortcut(monaco, editor, shortcuts);
 
-    editor.getModel().updateOptions({
+    !showDiffs && editor.getModel().updateOptions({
       tabSize,
     });
 
@@ -194,7 +190,7 @@ function CodeEditor({
       editor._domElement.style.height = `${calculateHeightFromContent(value || '')}px`;
     }
 
-    editor.onDidFocusEditorWidget(() => {
+    !showDiffs && editor.onDidFocusEditorWidget(() => {
       /*
        * Added onClick handler for selecting block in CodeContainerStyle component.
        * Disabled the setSelected call below because if a user updates the block name
@@ -211,7 +207,7 @@ function CodeEditor({
       setTextareaFocused?.(true);
     });
 
-    editor.onDidBlurEditorText(() => {
+    !showDiffs && editor.onDidBlurEditorText(() => {
       DEBUG(() => console.log('onDidBlurEditorText', uuid));
 
       if (setDisableGlobalKeyboardShortcuts) {
@@ -219,7 +215,7 @@ function CodeEditor({
       }
     });
 
-    editor.onDidContentSizeChange(({
+    !showDiffs && editor.onDidContentSizeChange(({
       contentHeight,
       contentHeightChanged,
     }) => {
@@ -239,7 +235,7 @@ function CodeEditor({
       }, 1);
     }
 
-    if (onDidChangeCursorPosition) {
+    if (!showDiffs && onDidChangeCursorPosition) {
       editor?.onDidChangeCursorPosition(({
         position: {
           lineNumber,
@@ -375,6 +371,8 @@ function CodeEditor({
   ]);
 
   const EditorElement = useMemo(() => showDiffs ? DiffEditor : Editor, [showDiffs]);
+
+  console.log(EditorElement)
 
   return (
     <ContainerStyle

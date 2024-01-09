@@ -8,7 +8,7 @@ import { ITEM_ROW_HEIGHT, ITEM_ROW_MAX_WIDTH, MAX_WIDTH } from './ItemRow/index.
 import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { SCROLLBAR_WIDTH, PlainScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { getApplicationColors } from '@components/ApplicationManager/index.style';
 
 export const COMPONENT_UUID = 'command-center';
@@ -52,7 +52,7 @@ export const ContainerStyle = styled.div<{
   z-index: 100;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.dashboardTransparent};
+    background-color: ${(props.theme || dark).background.blackTransparent};
     box-shadow: ${(props.theme || dark).shadow.window};
     border: 1px solid ${(props.theme || dark).monotone.grey400};
 
@@ -134,7 +134,7 @@ export const InputStyle = styled.input`
 `;
 
 const BASE_CONTAINER_STYLES = css`
-  ${ScrollbarStyledCss}
+  ${PlainScrollbarStyledCss}
   ${hideScrollBar()}
 
   overflow: auto;
