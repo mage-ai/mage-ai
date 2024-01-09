@@ -49,7 +49,7 @@ function ItemRow({
     descriptionDisplaySettings?.text_styles?.monospace
       ? 100
       : 150
-  ) - ((2 * (title?.length || 0) + (category?.length || 0)));
+  ) - ((1.5 * (title?.length || 0) + (category?.length || 0)));
   const descriptionCount = description?.length || 0;
   let descriptionUse = description;
   if (descriptionCount > maxLetters) {

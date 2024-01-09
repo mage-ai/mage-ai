@@ -372,8 +372,6 @@ function CodeEditor({
 
   const EditorElement = useMemo(() => showDiffs ? DiffEditor : Editor, [showDiffs]);
 
-  console.log(EditorElement)
-
   return (
     <ContainerStyle
       hideDuplicateMenuItems

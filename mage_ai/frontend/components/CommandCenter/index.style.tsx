@@ -240,7 +240,7 @@ export const OutputContainerStyle = styled.div`
 export const OutputContentStyle = styled.div`
   left: ${SCROLLBAR_WIDTH}px;
   max-width: ${ITEM_ROW_MAX_WIDTH}px;
-  padding: ${1.5 * UNIT}px;
+  padding: ${(1 * UNIT) + SCROLLBAR_WIDTH}px ${1 * UNIT}px;
   position: relative;
 `;
 

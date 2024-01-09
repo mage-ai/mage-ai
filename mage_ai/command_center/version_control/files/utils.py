@@ -349,9 +349,9 @@ async def build_generic_command(factory, model: Project) -> Dict:
     item_dict = await build_add_staging(factory, Branch(project=model, name='generic_command'))
     item_dict.update(
         uuid=f'git_command_{model.uuid}',
-        title='Command',
+        title='Run command',
         description=text,
-        subtitle='git',
+        subtitle='git [cmd]',
     )
     item_dict['display_settings_by_attribute']['icon'] = dict(
         color_uuid='content.default',
@@ -359,5 +359,6 @@ async def build_generic_command(factory, model: Project) -> Dict:
     )
     item_dict['actions'][0]['request']['payload']['version_control_file'] = dict(command=text)
     item_dict['display_settings_by_attribute']['description']['text_styles']['small'] = False
+    item_dict['display_settings_by_attribute']['description']['text_styles']['regular'] = True
 
     return item_dict

@@ -21,6 +21,7 @@ export enum ItemTagEnum {
 
 export enum ValidationTypeEnum {
   CONFIRMATION = 'confirmation',
+  CUSTOM_VALIDATION_PARSERS = 'custom_validation_parsers',
 }
 
 export enum ButtonActionTypeEnum {
@@ -28,6 +29,7 @@ export enum ButtonActionTypeEnum {
   CLOSE_APPLICATION = 'close_application',
   CUSTOM_ACTIONS = 'custom_actions',
   EXECUTE = 'execute',
+  REPLACE_APPLICATION = 'replace_application',
   RESET_FORM = 'reset_form',
   SELECT_ITEM_FROM_REQUEST = 'select_item_from_request',
 }
@@ -202,6 +204,7 @@ export enum CommandCenterActionInteractionTypeEnum {
   CLOSE_APPLICATION = 'close_application',
   FETCH_ITEMS = 'fetch_items',
   OPEN_FILE = 'open_file',
+  RESET_FORM = 'reset_form',
   SCROLL = 'scroll',
   SELECT_ITEM = 'select_item',
 }
@@ -272,6 +275,7 @@ export interface CommandCenterActionType extends CommandCenterActionBaseType {
   request?: CommandCenterActionRequestType;
   upstream_action_value_key_mapping?: KeyValueType;
   uuid: string;
+  validation_parsers?: ApplicationStateParserType[];
   validations?: ValidationTypeEnum[];
 }
 

@@ -117,6 +117,8 @@ function CommandCenter() {
     uuid: COMPONENT_UUID,
   });
 
+  const commandCenterStateRef = useRef({});
+
   const refAbortController = useRef(null);
 
   const refActive = useRef(false);
@@ -742,6 +744,7 @@ function CommandCenter() {
 
   const executeAction = useExecuteActions({
     applicationState: refApplicationState,
+    commandCenterState: commandCenterStateRef,
     fetchItems,
     getItems,
     handleSelectItemRow: handleSelectItemRowBase,
@@ -1001,6 +1004,11 @@ function CommandCenter() {
 
       return false;
     }
+
+    // Doesn’t work
+    // if (commandCenterStateRef?.current?.disableKeyboardShortcuts) {
+    //   return;
+    // }
 
     let stopHandling = false;
 

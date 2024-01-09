@@ -65,8 +65,8 @@ VersionControlBranchPolicy.allow_write(
         'clone',
         'merge',
         'pull',
+        'push',
         'rebase',
-        'reset',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

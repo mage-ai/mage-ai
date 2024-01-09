@@ -5,7 +5,9 @@ import {
   KeyValueType,
   ItemApplicationType,
   RenderLocationTypeEnum,
+  ValidationTypeEnum,
 } from '@interfaces/CommandCenterType';
+import { CUSTOM_EVENT_NAME_COMMAND_CENTER } from '@utils/events/constants';
 import { FetchItemsType, HandleSelectItemRowType } from './constants';
 import { InvokeRequestActionType, InvokeRequestOptionsType } from './ItemApplication/constants';
 import {
@@ -13,9 +15,23 @@ import {
   updateActionFromUpstreamResults,
 } from './utils';
 import { isObject, setNested } from '@utils/hash';
+import { DEBUG } from '@utils/environment';
+
+enum ActionResultEnum {
+  INVALID = 'invalid',
+  SUCCESS = 'success',
+}
+
+type ActionResultsWithValidation = {
+  action: CommandCenterActionType;
+  item: CommandCenterItemType;
+  results: KeyValueType;
+  valid: boolean;
+};
 
 export default function useExecuteActions({
   applicationState: refApplicationState = null,
+  commandCenterState,
   fetchItems,
   getItems,
   handleSelectItemRow,
@@ -26,6 +42,9 @@ export default function useExecuteActions({
   router,
 }: {
   applicationState?: {
+    current: KeyValueType;
+  };
+  commandCenterState?: {
     current: KeyValueType;
   };
   getItems?: () => CommandCenterItemType[];
@@ -46,6 +65,95 @@ export default function useExecuteActions({
   focusedItemIndex: number,
   actions?: CommandCenterActionType[],
 ) => Promise<any> {
+  function validateUpstreamResults(opts: {
+    action: CommandCenterActionType;
+    item: CommandCenterItemType;
+    results: KeyValueType;
+  }): boolean {
+    let valid = true;
+
+    const {
+      action,
+      item,
+      results,
+    } = opts;
+
+    if (action?.validations) {
+      action?.validations?.forEach((validation) => {
+        if (ValidationTypeEnum.CONFIRMATION === validation) {
+          // commandCenterState.current.disableKeyboardShortcuts = true;
+
+          valid = typeof window === 'undefined'
+            || window.confirm('Are you sure you want to perform this action?');
+
+          // setTimeout(() => {
+          //   commandCenterState.current.disableKeyboardShortcuts = false;
+          // }, 1);
+        } else if (ValidationTypeEnum.CUSTOM_VALIDATION_PARSERS === validation) {
+          if (action?.validation_parsers) {
+            valid = action?.validation_parsers?.every(({
+              function_body: functionBody,
+              positional_argument_names: positionalArgumentNames,
+            }) => {
+              const buildFunction = new Function(...positionalArgumentNames, functionBody);
+              // These objects can be muted. Typically, the action object is being mutated.
+              const val = buildFunction(
+                item,
+                action,
+                refApplicationState?.current || {},
+                results,
+              );
+
+              return val;
+            });
+          }
+        }
+      });
+    }
+
+    return valid;
+  }
+
+  function actionFunctionWrapper(actionFunction: (
+    opts: ActionResultsWithValidation,
+  ) => {
+    data: KeyValueType;
+  } | ActionResultEnum): (opts: ActionResultsWithValidation) => ActionResultsWithValidation {
+    function inner(opts: ActionResultsWithValidation) {
+      const {
+        action,
+        item,
+        results,
+        valid,
+      } = opts;
+
+      if (valid === false) {
+        return ActionResultEnum.INVALID;
+      }
+
+      const actionCopy = updateActionFromUpstreamResults(action, results);
+
+      if (!validateUpstreamResults({ ...opts, action: actionCopy })) {
+        return ActionResultEnum.INVALID;
+      }
+
+      DEBUG(() => console.log(
+        `Executing action: ${action?.uuid}`,
+        action,
+        item,
+        results,
+        valid,
+      ));
+
+      return actionFunction({
+        ...opts,
+        action: actionCopy,
+      });
+    }
+
+    return inner;
+  }
+
   function executeAction(
     item: CommandCenterItemType,
     focusedItemIndex: number,
@@ -79,7 +187,10 @@ export default function useExecuteActions({
         uuid: null,
       };
 
-      let actionFunction = (results: KeyValueType = {}) => {};
+      let actionFunction = ({
+        results,
+        valid,
+      }: ActionResultsWithValidation = {}) => {};
 
       if (page) {
         const {
@@ -93,9 +204,13 @@ export default function useExecuteActions({
         };
 
         if (pathInit) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const path = interpolatePagePath(actionCopy?.page);
+          actionFunction = actionFunctionWrapper(({
+            action,
+            item,
+            results,
+            valid,
+          }: ActionResultsWithValidation = {}) => {
+            const path = interpolatePagePath(action?.page);
 
             let result = null;
             if (external) {
@@ -117,7 +232,7 @@ export default function useExecuteActions({
               item?.object_type,
               [
                 {
-                  action: actionCopy,
+                  action,
                   item,
                   value: result,
                 },
@@ -125,7 +240,7 @@ export default function useExecuteActions({
             );
 
             return result;
-          };
+          });
         }
       } else if (interaction) {
         const {
@@ -137,10 +252,10 @@ export default function useExecuteActions({
         // TODO (dangerous): open the file and the file editor in an application on the same page;
         // this will be supported when Application Center is launched.
         if (CommandCenterActionInteractionTypeEnum.OPEN_FILE === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-
-            const { options } = actionCopy?.interaction || { options: null };
+          actionFunction = actionFunctionWrapper(({
+            results,
+          }: ActionResultsWithValidation) => {
+            const { options } = action?.interaction || { options: null };
 
             return router.push({
               pathname: '/files',
@@ -150,27 +265,46 @@ export default function useExecuteActions({
                   : null,
               },
             });
-          };
+          });
         } else if (CommandCenterActionInteractionTypeEnum.CLOSE_APPLICATION === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const { options } = actionCopy?.interaction || { options: null };
-
+          actionFunction = actionFunctionWrapper(({
+            action,
+            item,
+            results,
+          }: ActionResultsWithValidation) => {
             return removeApplication?.({
               application: item?.metadata?.application,
             });
-          };
+          });
+        } else if (CommandCenterActionInteractionTypeEnum.RESET_FORM === type) {
+          if (typeof window !== 'undefined') {
+            actionFunction = actionFunctionWrapper(({
+              item,
+            }: ActionResultsWithValidation) => {
+              const eventCustom = new CustomEvent(CUSTOM_EVENT_NAME_COMMAND_CENTER, {
+                detail: {
+                  actionType: CommandCenterActionInteractionTypeEnum.RESET_FORM ,
+                  item,
+                },
+              });
+
+              window.dispatchEvent(eventCustom);
+            });
+          }
         } else if (CommandCenterActionInteractionTypeEnum.SELECT_ITEM === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const { item: itemToSelect } = actionCopy?.interaction || { options: null };
+          actionFunction = actionFunctionWrapper(({
+            action,
+            item,
+            results,
+          }: ActionResultsWithValidation) => {
+            const { item: itemToSelect } = action?.interaction || { options: null };
 
             setNested(
               refItemsActionResults?.current,
               item?.object_type,
               [
                 {
-                  action: actionCopy,
+                  action,
                   item,
                   value: itemToSelect,
                 },
@@ -185,18 +319,21 @@ export default function useExecuteActions({
             } else {
               console.log('[ERROR] useExecuteActions: getItems and/or handleSelectItemRow is undefined.');
             }
-          };
+          });
         } else if (CommandCenterActionInteractionTypeEnum.FETCH_ITEMS === type) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const { options } = actionCopy?.interaction || { options: null };
-
+          actionFunction = actionFunctionWrapper(({
+            action,
+          }: ActionResultsWithValidation) => {
+            const { options } = action?.interaction || { options: null };
             return fetchItems?.(options);
-          };
+          });
         } else if (type && interaction?.element) {
-          actionFunction = (results: KeyValueType = {}) => {
-            const actionCopy = updateActionFromUpstreamResults(action, results);
-            const { element, options } = actionCopy?.interaction || { options: null };
+          actionFunction = actionFunctionWrapper(({
+            action,
+            item,
+            results,
+          }: ActionResultsWithValidation) => {
+            const { element, options } = action?.interaction || { options: null };
 
             const nodes = [];
             if (element?.id) {
@@ -222,7 +359,7 @@ export default function useExecuteActions({
               item?.object_type,
               [
                 {
-                  action: actionCopy,
+                  action,
                   item,
                   value: result,
                 },
@@ -230,12 +367,14 @@ export default function useExecuteActions({
             );
 
             return result;
-          };
+          });
         }
       } else if (request?.operation && request?.resource) {
-        actionFunction = (results: KeyValueType = {}) => {
-          const actionCopy = { ...action };
-
+        actionFunction = actionFunctionWrapper(({
+          action,
+          item,
+          results,
+        }: ActionResultsWithValidation) => {
           let parsedResult = {};
 
           if (action?.application_state_parsers) {
@@ -247,7 +386,7 @@ export default function useExecuteActions({
               // These objects can be muted. Typically, the action object is being mutated.
               parsedResult = buildFunction(
                 item,
-                actionCopy,
+                action,
                 refApplicationState?.current || {},
                 parsedResult,
               );
@@ -255,13 +394,13 @@ export default function useExecuteActions({
           }
 
           return invokeRequest({
-            action: actionCopy,
+            action,
             focusedItemIndex,
             index,
             item,
             results,
           });
-        };
+        });
       }
 
       actionSettings.push({
@@ -278,6 +417,7 @@ export default function useExecuteActions({
       const {
         delay,
         render_options: renderOptions,
+        request,
         uuid,
       } = action || {
         render_options: null,
@@ -285,14 +425,25 @@ export default function useExecuteActions({
 
       const result = new Promise((resolve, reject) => {
         setTimeout(() => {
-          resolve(actionFunction(results));
+          resolve(actionFunction({
+            action,
+            item,
+            results,
+          }));
         }, delay || 0);
       });
 
-      return result?.then((resultsInner) => {
+      return result?.then((resultsInner: {
+        data: KeyValueType;
+      } | ActionResultEnum) => {
+
+        if (typeof resultsInner !== 'undefined' && ActionResultEnum.INVALID === resultsInner) {
+          return ActionResultEnum
+        }
+
         const combined = {
           ...(results || {}),
-          [uuid]: resultsInner,
+          [uuid]: !!request ? (resultsInner?.data || resultsInner) : resultsInner,
         };
 
         if (RenderLocationTypeEnum.ITEMS_CONTAINER_AFTER === renderOptions?.location) {

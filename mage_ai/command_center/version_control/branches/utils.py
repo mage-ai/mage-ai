@@ -11,7 +11,10 @@ from mage_ai.command_center.constants import (
     ObjectType,
     RenderLocationType,
 )
-from mage_ai.command_center.shared.utils import build_update
+from mage_ai.command_center.shared.utils import build_delete, build_input, build_update
+from mage_ai.command_center.version_control.shared.utils import (
+    add_validate_output_error_fatal,
+)
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Branch, Project, Remote
 
@@ -238,43 +241,6 @@ async def build_and_score_detail(factory, model: Branch, items: List[Dict]):
         ]
         item_dicts.append(item_dict)
 
-        item_dicts.extend([
-            dict(
-                item_type=ItemType.DELETE,
-                object_type=ObjectType.BRANCH,
-                title='Delete branch',
-                display_settings_by_attribute=dict(
-                    icon=dict(
-                        icon_uuid='Trash',
-                        color_uuid='accent.negative',
-                    ),
-                ),
-                actions=[
-                    dict(
-                        request=dict(
-                            operation=OperationType.DELETE,
-                            resource='version_control_branches',
-                            resource_id=urllib.parse.quote_plus(uuid or ''),
-                            resource_parent='version_control_projects',
-                            resource_parent_id=urllib.parse.quote_plus(project.uuid or ''),
-                            response_resource_key='version_control_branch'
-                        ),
-                        uuid='update_branch',
-                    ),
-                    dict(
-                        interaction=dict(
-                            type=InteractionType.CLOSE_APPLICATION,
-                        ),
-                        uuid='close_application',
-                    ),
-                ],
-                condition=lambda opts: FilePolicy(
-                    None,
-                    opts.get('user'),
-                ).has_at_least_editor_role(),
-            ),
-        ])
-
     for item_dict in item_dicts:
         scored = factory.filter_score(item_dict)
         if scored:
@@ -356,3 +322,116 @@ async def build_clone(
         ),
         items,
     )
+
+
+async def build_delete_branch(model: Branch, items: List[Dict]):
+    item_dict = build_delete(
+        model=model,
+        item_dict=dict(
+            object_type=ObjectType.BRANCH,
+            title='Delete branch',
+            description=model.name,
+            subtitle='git branch -d',
+        ),
+        request=dict(
+            resource='version_control_branches',
+            resource_id=urllib.parse.quote_plus(model.name or ''),
+            resource_parent='version_control_projects',
+            resource_parent_id=urllib.parse.quote_plus(model.project.uuid or ''),
+            response_resource_key='version_control_branch'
+        ),
+    )
+
+    return add_validate_output_error_fatal(item_dict)
+
+
+async def build_pull(model: Branch, items: List[Dict]):
+    remotes = Remote.load_all(project=model.project)
+
+    item_dict = dict(
+        item_type=ItemType.ACTION,
+        object_type=ObjectType.BRANCH,
+        title='Pull branch',
+        description=model.name,
+        subtitle='git pull',
+        display_settings_by_attribute=dict(
+            icon=dict(
+                color_uuid='accent.sky',
+                icon_uuid='CubeWithArrowDown',
+            ),
+            subtitle=dict(
+                text_styles=dict(monospace=True),
+            ),
+        ),
+    )
+
+    item_dict = build_update(
+        model=model,
+        item_dict=item_dict,
+        mapping={
+            'data.version_control_branch': '.'.join([
+                'interaction',
+                'options',
+                'item',
+                'metadata',
+                'branch',
+            ]),
+        },
+        request=dict(
+            operation=OperationType.UPDATE,
+            payload=dict(version_control_branch=dict(pull=True)),
+            resource='version_control_branches',
+            resource_parent='version_control_projects',
+            response_resource_key='version_control_branch',
+        ) | build_request(model=model, project=model.project),
+        settings=[
+            build_input(
+                model=model,
+                item_dict=item_dict,
+                label='Remote',
+                description='The remote repository to perform this action on.',
+                display_settings=dict(
+                    icon_uuid='PlugAPI',
+                ),
+                name='request.query.remote',
+                required=True,
+                type=InteractionInputType.DROPDOWN_MENU,
+                placeholder='e.g. origin',
+                options=[
+                    dict(label='', value=''),
+                ] + [
+                    dict(
+                        label=remote.name,
+                        value=remote.name,
+                    ) for remote in remotes
+                ],
+            ),
+            build_input(
+                model=model,
+                item_dict=item_dict,
+                label='Branch',
+                description='Name of the branch to perform this action on.',
+                display_settings=dict(
+                    icon_uuid='BranchAlt',
+                ),
+                name='request.resource_id',
+                required=True,
+                placeholder='e.g. master',
+            ),
+        ],
+    )
+
+    item_dict['applications'][0]['buttons'][-1]['label'] = 'Pull'
+
+    item_dict['actions'].extend([
+        dict(
+            interaction=dict(type=InteractionType.RESET_FORM),
+            uuid=f'reset_form_{model.name}',
+        ),
+        dict(
+            interaction=dict(type=InteractionType.CLOSE_APPLICATION),
+            uuid=f'reset_form_{model.name}',
+        ),
+    ])
+
+    return add_validate_output_error_fatal(item_dict)

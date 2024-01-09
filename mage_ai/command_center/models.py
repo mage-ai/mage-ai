@@ -146,6 +146,7 @@ class Action(CommandCenterBaseClass):
     request: Request = None
     upstream_action_value_key_mapping: Dict = None
     uuid: str = None
+    validation_parsers: List[ApplicationStateParser] = None
     validations: List[ValidationType] = None
 
     def __post_init__(self):
@@ -154,6 +155,7 @@ class Action(CommandCenterBaseClass):
         self.serialize_attribute_class('render_options', RenderOptions)
         self.serialize_attribute_class('request', Request)
         self.serialize_attribute_classes('application_state_parsers', ApplicationStateParser)
+        self.serialize_attribute_classes('upstream_results_parsers', ApplicationStateParser)
         self.serialize_attribute_enums('validations', ValidationType)
 
 

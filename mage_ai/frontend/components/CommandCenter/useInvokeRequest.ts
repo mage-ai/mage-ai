@@ -32,7 +32,7 @@ export default function useInvokeRequest({
   invokeRequest: (opts: {
     action: CommandCenterActionType;
     results: KeyValueType;
-  }) => void;
+  }) => Promise<any>;
   isLoading: boolean;
 } {
   const [
@@ -88,13 +88,7 @@ export default function useInvokeRequest({
       }
 
       if (submitRequest) {
-        if (!action?.validations?.includes(ValidationTypeEnum.CONFIRMATION)
-          || (
-            typeof window !== 'undefined'
-              && window.confirm('Are you sure you want to perform this action?')
-        )) {
-          return submitRequest();
-        }
+        return submitRequest();
       }
     },
     {

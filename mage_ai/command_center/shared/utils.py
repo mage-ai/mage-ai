@@ -2,12 +2,14 @@ import urllib.parse
 from typing import Dict, List
 
 from mage_ai.api.operations.constants import OperationType
+from mage_ai.api.policies.FilePolicy import FilePolicy
 from mage_ai.command_center.constants import (
     ApplicationType,
     ButtonActionType,
     InteractionType,
     ItemType,
     RenderLocationType,
+    ValidationType,
 )
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.shared.hash import combine_into, merge_dict
@@ -248,9 +250,7 @@ def build_action_generic(
     )
 
     return merge_dict(dict(
-        request=dict(
-            operation=values['operation'],
-        ) | request,
+        request=merge_dict(dict(operation=values['operation']), request),
         uuid=values['action_uuid'],
     ), kwargs)
 
@@ -344,5 +344,59 @@ def build_generic(
 
 
 def build_update(model: BaseDataClass, item_dict: Dict = None, **kwargs) -> Dict:
-    item_dict = dict(item_type=ItemType.UPDATE) | item_dict
-    return build_generic(item_dict=item_dict, model=model, **kwargs)
+    item_dict = merge_dict(dict(
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+        item_type=ItemType.UPDATE,
+    ), item_dict)
+
+    item_dict = build_generic(
+        item_dict=item_dict,
+        model=model,
+        **kwargs,
+    )
+
+    return item_dict
+
+
+def build_delete(
+    model: BaseDataClass,
+    item_dict: Dict = None,
+    request: Dict = None,
+    **kwargs,
+) -> Dict:
+    item_dict = merge_dict(dict(
+        condition=lambda opts: FilePolicy(
+            None,
+            opts.get('user'),
+        ).has_at_least_editor_role(),
+        item_type=ItemType.DELETE,
+        display_settings_by_attribute=dict(
+            icon=dict(
+                color_uuid='accent.negative',
+                icon_uuid='Trash',
+            ),
+            subtitle=dict(
+                text_styles=dict(monospace=True),
+            ),
+        ),
+    ), item_dict)
+    item_dict = build_generic(
+        item_dict=item_dict,
+        model=model,
+        request=request,
+        **kwargs,
+    )
+    item_dict['actions'][0]['validations'] = [ValidationType.CONFIRMATION]
+    item_dict['actions'].extend([
+        dict(
+            interaction=dict(
+                type=InteractionType.CLOSE_APPLICATION,
+            ),
+            uuid='close_application',
+        ),
+    ])
+
+    return item_dict

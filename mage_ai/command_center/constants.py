@@ -57,11 +57,22 @@ class FileExtension(str, Enum):
     YML = 'yml'
 
 
+class ButtonActionType(str, Enum):
+    ADD_APPLICATION = 'add_application'
+    CLOSE_APPLICATION = 'close_application'  # Go back out of the current application.
+    CUSTOM_ACTIONS = 'custom_actions'
+    EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
+    REPLACE_APPLICATION = 'replace_application'
+    RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.
+    SELECT_ITEM_FROM_REQUEST = 'select_item_from_request'
+
+
 class InteractionType(str, Enum):
     CLICK = 'click'
-    CLOSE_APPLICATION = 'close_application'
+    CLOSE_APPLICATION = ButtonActionType.CLOSE_APPLICATION.value
     FETCH_ITEMS = 'fetch_items'
     OPEN_FILE = 'open_file'
+    RESET_FORM = ButtonActionType.RESET_FORM.value
     SCROLL = 'scroll'
     SELECT_ITEM = 'select_item'
 
@@ -74,18 +85,9 @@ class ApplicationType(str, Enum):
     LIST = 'list'
 
 
-class ButtonActionType(str, Enum):
-    ADD_APPLICATION = 'add_application'
-    CLOSE_APPLICATION = 'close_application'  # Go back out of the current application.
-    CUSTOM_ACTIONS = 'custom_actions'
-    EXECUTE = 'execute'  # Executes the actions associated to the application’s item.
-    REPLACE_APPLICATION = 'replace_application'
-    RESET_FORM = 'reset_form'  # If there is a form filled out, clear out all the values.
-    SELECT_ITEM_FROM_REQUEST = 'select_item_from_request'
-
-
 class ValidationType(str, Enum):
     CONFIRMATION = 'confirmation'
+    CUSTOM_VALIDATION_PARSERS = 'custom_validation_parsers'
 
 
 class RenderLocationType(str, Enum):

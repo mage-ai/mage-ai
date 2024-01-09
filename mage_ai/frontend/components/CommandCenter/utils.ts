@@ -3,6 +3,7 @@ import { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import {
   ButtonActionType,
   ButtonActionTypeEnum,
+  CommandCenterActionInteractionTypeEnum,
   CommandCenterActionPageType,
   CommandCenterActionType,
   CommandCenterItemType,
@@ -186,12 +187,32 @@ export function executeButtonActions({
           },
         });
 
-        actionFunction = (result: KeyValueType = {}) => window.dispatchEvent(eventCustom);
+        actionFunction = (result: KeyValueType = {}) => {
+          if (item?.actions?.some(({
+            interaction,
+          }) => CommandCenterActionInteractionTypeEnum.RESET_FORM === interaction?.type)) {
+            // Let the useExecuteAction hook take care of this because that action may have
+            // custom validations and parsers.
+            return;
+          } else {
+            window.dispatchEvent(eventCustom);
+          }
+        };
       }
     } else if (ButtonActionTypeEnum.EXECUTE === actionType) {
       actionFunction = (result: KeyValueType = {}) => executeAction(item, focusedItemIndex);
     } else if (ButtonActionTypeEnum.CLOSE_APPLICATION === actionType) {
-      actionFunction = (result: KeyValueType = {}) => removeApplication();
+      actionFunction = (result: KeyValueType = {}) => {
+        if (item?.actions?.some(({
+          interaction,
+        }) => CommandCenterActionInteractionTypeEnum.CLOSE_APPLICATION === interaction?.type)) {
+          // Let the useExecuteAction hook take care of this because that action may have
+          // custom validations and parsers.
+          return;
+        } else {
+          removeApplication();
+        }
+      };
     } else if (ButtonActionTypeEnum.CUSTOM_ACTIONS === actionType) {
       actionFunction = (result: KeyValueType = {}) => executeAction(
         item,

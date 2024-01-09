@@ -240,7 +240,6 @@ class Branch(BaseVersionControl):
         pull: bool = False,
         push: bool = False,
         rebase: bool = False,
-        reset: str = None,
     ) -> List[str]:
         commands = []
 
@@ -253,8 +252,6 @@ class Branch(BaseVersionControl):
             if self.remote:
                 commands.append(self.remote.name)
             commands.append(self.name)
-        elif reset:
-            commands.extend(['reset', reset])
         elif checkout or merge:
             commands.extend(['merge' if merge else 'checkout', self.name])
         elif push:
