@@ -70,6 +70,7 @@ export type ButtonProps = {
   notClickable?: boolean;
   outline?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onMouseEnter?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   pill?: boolean;
   pointerEventsEnabled?: boolean;
@@ -106,7 +107,7 @@ export const SHARED_HIGHLIGHT_STYLES = css<ButtonHighlightProps>`
 
   ${props => props.highlightOnHoverAlt && `
     &:hover {
-      background-color: ${(props.theme.background || dark.background).dashboard} !important;
+      background-color: ${(props.theme || dark).borders?.medium2} !important;
     }
   `}
 `;
@@ -189,7 +190,7 @@ const SHARED_STYLES = css<{
     border-width: 1px;
   `}
 
-  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
+  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && `
     border-radius: ${BORDER_RADIUS}px;
   `}
 

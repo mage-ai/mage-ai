@@ -23,9 +23,31 @@ export enum SpecialFileEnum {
   REQS_TXT = 'requirements.txt',
 }
 
+export enum FileQueryEnum {
+  EXCLUDE_DIR_PATTERN = 'exclude_dir_pattern',
+  EXCLUDE_PATTERN = 'exclude_pattern',
+  PATTERN = 'pattern',
+}
+
+// This is regex for matching nothing (to include all files, including hidden ones)
+export const FILE_PATTERN_NO_MATCHES = 'a^';
+// We exclude no files (e.g. hidden files) by matching no file patterns.
+export const FILES_QUERY_INCLUDE_HIDDEN_FILES = {
+  [FileQueryEnum.EXCLUDE_PATTERN]: FILE_PATTERN_NO_MATCHES,
+  [FileQueryEnum.EXCLUDE_DIR_PATTERN]: FILE_PATTERN_NO_MATCHES,
+};
+
 export const CODE_BLOCK_FILE_EXTENSIONS = [
   FileExtensionEnum.PY,
   FileExtensionEnum.SQL,
+];
+
+export const PIPELINE_BLOCK_EXTENSIONS = [
+  FileExtensionEnum.MD,
+  FileExtensionEnum.PY,
+  FileExtensionEnum.R,
+  FileExtensionEnum.SQL,
+  FileExtensionEnum.YAML,
 ];
 
 const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
@@ -43,13 +65,24 @@ const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
 export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
   new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
 
-export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX =
-  new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
+export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX = new RegExp([
+  FileExtensionEnum.CSV,
+  FileExtensionEnum.JSON,
+  FileExtensionEnum.MD,
+  FileExtensionEnum.PY,
+  FileExtensionEnum.R,
+  FileExtensionEnum.SH,
+  FileExtensionEnum.SQL,
+  FileExtensionEnum.TXT,
+  FileExtensionEnum.YAML,
+  FileExtensionEnum.YML,
+].map(ext => `\.${ext}$`).join('|'));
 
 export default interface FileType {
   children?: FileType[];
   content?: string;
   disabled?: boolean;
+  isNotFolder?: boolean;
   name?: string;
   parent?: FileType;
   path?: string;
@@ -77,4 +110,17 @@ export const FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE = {
   [BlockLanguageEnum.SQL]: FileExtensionEnum.SQL,
   [BlockLanguageEnum.YAML]: FileExtensionEnum.YAML,
   text: FileExtensionEnum.TXT,
+};
+
+
+export type OriginalContentMappingType = {
+  [relativeFilePath: string]: {
+    content: string;
+    content_from_base: string;
+    content_from_compare: string;
+    filename: string;
+    fullPath: string;
+    relativePath: string;
+    repoPath: string;
+  };
 };

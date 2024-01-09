@@ -3,28 +3,34 @@ from typing import Dict, List
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_GITHUB
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.data_preparation.git import REMOTE_NAME, Git, api
 from mage_ai.data_preparation.git.clients.base import Client as GitClient
 from mage_ai.data_preparation.git.utils import get_provider_from_remote_url
 from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.shared.path_fixer import remove_base_repo_path
+from mage_ai.shared.strings import capitalize_remove_underscore_lower
 
 
 def build_file_object(obj):
     arr = []
     for k, v in obj.items():
         children = build_file_object(v)
-        arr.append(dict(
-            children=children if len(children) >= 1 else None,
-            name=k,
-        ))
+        arr.append(
+            dict(
+                children=children if len(children) >= 1 else None,
+                name=k,
+            )
+        )
 
     return arr
 
 
 class GitBranchResource(GenericResource):
     @classmethod
-    def get_git_manager(self, user, setup_repo: bool = True) -> Git:
+    def get_git_manager(
+        self, user, setup_repo: bool = True, config_overwrite: Dict = None
+    ) -> Git:
         return Git.get_manager(setup_repo=setup_repo, user=user)
 
     @classmethod
@@ -43,7 +49,7 @@ class GitBranchResource(GenericResource):
         if repository:
             repository = repository[0]
 
-            provider = OAUTH_PROVIDER_GITHUB
+            provider = ProviderName.GITHUB
             if remote_url:
                 provider = get_provider_from_remote_url(remote_url)
 
@@ -84,38 +90,65 @@ class GitBranchResource(GenericResource):
 
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
-            return self(dict(
-                files={},
-                is_git_integration_enabled=preferences.is_git_integration_enabled(),
-                modified_files=[],
-                name=git_manager.current_branch,
-                staged_files=[],
-                sync_config=get_preferences().sync_config,
-                untracked_files=[],
-            ), user, **kwargs)
+            return self(
+                dict(
+                    files={},
+                    is_git_integration_enabled=preferences.is_git_integration_enabled(),
+                    modified_files=[],
+                    name=git_manager.current_branch,
+                    staged_files=[],
+                    sync_config=get_preferences().sync_config,
+                    untracked_files=[],
+                ),
+                user,
+                **kwargs,
+            )
 
         modified_files = git_manager.modified_files
         staged_files = await git_manager.staged_files()
         untracked_files = await git_manager.untracked_files()
 
-        return self(dict(
-            files={},
-            is_git_integration_enabled=preferences.is_git_integration_enabled(),
-            modified_files=modified_files,
-            name=git_manager.current_branch,
-            staged_files=staged_files,
-            sync_config=get_preferences().sync_config,
-            untracked_files=untracked_files,
-        ), user, **kwargs)
+        return self(
+            dict(
+                files={},
+                is_git_integration_enabled=preferences.is_git_integration_enabled(),
+                modified_files=modified_files,
+                name=git_manager.current_branch,
+                staged_files=staged_files,
+                sync_config=get_preferences().sync_config,
+                untracked_files=untracked_files,
+            ),
+            user,
+            **kwargs,
+        )
 
     async def update(self, payload, **kwargs):
+        query = kwargs.get('query') or {}
+
         git_manager = self.get_git_manager(user=self.current_user)
         action_type = payload.get('action_type')
+        action_payload = payload.get('action_payload', dict())
+        action_remote = action_payload.get('remote', None)
+        action_branch = action_payload.get('branch', None)
+
         files = payload.get('files', None)
         message = payload.get('message', None)
-        remote = payload.get('remote', None)
 
-        access_token = api.get_access_token_for_user(self.current_user)
+        url = None
+        remote_url = query.get('remote_url', None)
+        if remote_url:
+            url = remote_url[0]
+        elif action_remote:
+            remote = git_manager.repo.remotes[action_remote]
+            url = list(remote.urls)[0]
+
+        provider = ProviderName.GITHUB
+        if url:
+            provider = get_provider_from_remote_url(url)
+
+        access_token = api.get_access_token_for_user(
+            self.current_user, provider=provider
+        )
         http_access_token = git_manager.get_access_token()
 
         token = None
@@ -123,6 +156,23 @@ class GitBranchResource(GenericResource):
             token = access_token.token
         elif http_access_token:
             token = http_access_token
+
+        config_overwrite = None
+        if token:
+            user_from_api = api.get_user(token, provider=provider)
+            # Default to mage user email if no email is returned from API
+            email = user_from_api.get(
+                'email', self.current_user.email if self.current_user else None
+            )
+            config_overwrite = dict(
+                username=user_from_api.get('username'),
+                email=email,
+            )
+
+        # Recreate git manager with updated config
+        git_manager = self.get_git_manager(
+            user=self.current_user, config_overwrite=config_overwrite
+        )
 
         if action_type == 'status':
             status = git_manager.status()
@@ -137,102 +187,104 @@ class GitBranchResource(GenericResource):
         elif action_type == 'commit':
             if not message:
                 error = ApiError.RESOURCE_ERROR
-                error.update({
-                    'message': 'Message is empty, please add a message for your commit.',
-                })
+                error.update(
+                    {
+                        'message': 'Message is empty, please add a message for your commit.',
+                    }
+                )
                 raise ApiError(error)
+
             git_manager.commit(message, files)
         elif action_type == 'push':
-            push = payload.get('push', None)
-
-            if push and 'remote' in push and 'branch' in push:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
-                    remote = git_manager.repo.remotes[push['remote']]
-                    url = list(remote.urls)[0]
-
                     if token:
                         custom_progress = api.push(
-                            remote.name,
+                            action_remote,
                             url,
-                            push['branch'],
+                            action_branch,
                             token,
+                            config_overwrite=config_overwrite,
                         )
                         if custom_progress.other_lines:
                             lines = custom_progress.other_lines
-                            if type(lines) is list:
+                            if isinstance(lines, list):
                                 lines = '\n'.join(lines)
                             self.model['progress'] = lines
                     else:
-                        self.model['error'] = \
-                            'Please authenticate with GitHub before trying to push.'
+                        self.model[
+                            'error'
+                        ] = 'Please authenticate with {} before trying to push.'.format(
+                            capitalize_remove_underscore_lower(provider),
+                        )
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
                 git_manager.push()
         elif action_type == 'pull':
-            pull = payload.get('pull', None)
-            if pull and 'remote' in pull:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
-                    branch_name = pull.get('branch')
-                    remote = git_manager.repo.remotes[pull['remote']]
-                    url = list(remote.urls)[0]
-
                     if token:
                         custom_progress = None
-                        if branch_name:
+                        if action_branch:
                             custom_progress = api.pull(
-                                remote.name,
+                                action_remote,
                                 url,
-                                pull.get('branch'),
+                                action_branch,
                                 token,
+                                config_overwrite=config_overwrite,
                             )
                         else:
                             custom_progress = api.fetch(
-                                remote.name,
+                                action_remote,
                                 url,
                                 token,
+                                config_overwrite=config_overwrite,
                             )
 
                         if custom_progress and custom_progress.other_lines:
                             lines = custom_progress.other_lines
-                            if type(lines) is list:
+                            if isinstance(lines, list):
                                 lines = '\n'.join(lines)
                             self.model['progress'] = lines
                     else:
-                        self.model['error'] = \
-                            'Please authenticate with GitHub before trying to pull.'
+                        self.model[
+                            'error'
+                        ] = 'Please authenticate with {} before trying to pull.'.format(
+                            capitalize_remove_underscore_lower(provider),
+                        )
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
                 git_manager.pull()
         elif action_type == 'fetch':
-            fetch = payload.get('fetch', None)
-            if fetch and 'remote' in fetch:
+            if action_remote:
                 from git.exc import GitCommandError
 
                 try:
-                    remote = git_manager.repo.remotes[fetch['remote']]
-                    url = list(remote.urls)[0]
-
                     if token:
                         custom_progress = api.fetch(
-                            remote.name,
+                            action_remote,
                             url,
                             token,
+                            config_overwrite=config_overwrite,
                         )
 
                         if custom_progress and custom_progress.other_lines:
                             lines = custom_progress.other_lines
-                            if type(lines) is list:
+                            if isinstance(lines, list):
                                 lines = '\n'.join(lines)
                             self.model['progress'] = lines
                     else:
-                        self.model['error'] = \
-                            'Please authenticate with GitHub before trying to fetch.'
+                        self.model[
+                            'error'
+                        ] = 'Please authenticate with {} before trying to fetch.'.format(
+                            capitalize_remove_underscore_lower(provider),
+                        )
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
@@ -242,44 +294,44 @@ class GitBranchResource(GenericResource):
                 for file_path in files:
                     git_manager.reset_file(file_path)
             else:
-                reset = payload.get('reset', {})
-                if reset and 'remote' in reset:
+                if action_remote:
                     from git.exc import GitCommandError
 
                     try:
-                        branch_name = reset.get('branch')
-                        remote = git_manager.repo.remotes[reset['remote']]
-                        url = list(remote.urls)[0]
-
                         if token:
                             api.reset_hard(
-                                remote.name,
+                                action_remote,
                                 url,
-                                branch_name,
+                                action_branch,
                                 token,
+                                config_overwrite=config_overwrite,
                             )
                         else:
-                            self.model['error'] = \
-                                'Please authenticate with GitHub before trying to pull.'
+                            self.model[
+                                'error'
+                            ] = 'Please authenticate with {} before trying to reset.'.format(
+                                capitalize_remove_underscore_lower(provider),
+                            )
                     except GitCommandError as err:
                         self.model['error'] = str(err)
         elif action_type == 'clone':
-            clone = payload.get('clone', None)
-            if clone and 'remote' in clone:
+            if action_remote:
                 from git.exc import GitCommandError
-                try:
-                    remote = git_manager.repo.remotes[clone['remote']]
-                    url = list(remote.urls)[0]
 
+                try:
                     if token:
                         api.clone(
-                            remote.name,
+                            action_remote,
                             url,
                             token,
+                            config_overwrite=config_overwrite,
                         )
                     else:
-                        self.model['error'] = \
-                            'Please authenticate with GitHub before trying to pull.'
+                        self.model[
+                            'error'
+                        ] = 'Please authenticate with {} before trying to clone.'.format(
+                            capitalize_remove_underscore_lower(provider),
+                        )
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
@@ -291,11 +343,13 @@ class GitBranchResource(GenericResource):
             for file_path in files:
                 git_manager.checkout_file(file_path)
         elif action_type in ['add_remote', 'remove_remote']:
-            if not remote:
+            if not action_payload:
                 error = ApiError.RESOURCE_ERROR
-                error.update({
-                    'message': 'Remote is empty, please add a remote.',
-                })
+                error.update(
+                    {
+                        'message': 'Remote is empty, please add a remote.',
+                    }
+                )
                 raise ApiError(error)
 
             args = []
@@ -305,22 +359,26 @@ class GitBranchResource(GenericResource):
                 keys.append('url')
 
             for key in keys:
-                val = remote.get(key)
+                val = action_payload.get(key)
                 if not val:
                     error = ApiError.RESOURCE_ERROR
-                    error.update({
-                        'message': f'Remote is missing {key}.',
-                    })
+                    error.update(
+                        {
+                            'message': f'Remote is missing {key}.',
+                        }
+                    )
                     raise ApiError(error)
                 args.append(val)
 
             if action_type == 'add_remote':
-                if remote.get('name') == REMOTE_NAME:
+                if action_payload.get('name') == REMOTE_NAME:
                     error = ApiError.RESOURCE_ERROR
-                    error.update({
-                        'message': f'Remote name {REMOTE_NAME} is reserved, ' +
-                        'please select a different name.',
-                    })
+                    error.update(
+                        {
+                            'message': f'Remote name {REMOTE_NAME} is reserved, '
+                            + 'please select a different name.',
+                        }
+                    )
                     raise ApiError(error)
                 git_manager.add_remote(*args)
             elif action_type == 'remove_remote':
@@ -330,12 +388,8 @@ class GitBranchResource(GenericResource):
             'merge',
             'rebase',
         ]:
-            data = payload.get('delete', None) or \
-                payload.get('merge', None) or \
-                payload.get('rebase', None)
-
-            if data and 'base_branch' in data:
-                base_branch = data['base_branch']
+            if action_payload:
+                base_branch = action_payload.get('base_branch')
 
                 if 'delete' == action_type:
                     git_manager.delete_branch(base_branch)
@@ -345,10 +399,12 @@ class GitBranchResource(GenericResource):
                     git_manager.rebase_branch(base_branch, message=message)
             else:
                 error = ApiError.RESOURCE_ERROR
-                error.update({
-                    'message': 'Please select a base branch to ' +
-                    f'{action_type} into the current branch.',
-                })
+                error.update(
+                    {
+                        'message': 'Please select a base branch to '
+                        + f'{action_type} into the current branch.',
+                    }
+                )
                 raise ApiError(error)
 
         return self
@@ -358,8 +414,10 @@ class GitBranchResource(GenericResource):
         modified_files: List[str],
         staged_files: List[str],
         untracked_files: List[str],
-        limit: int = None
+        limit: int = None,
     ) -> Dict:
+        git_manager = self.get_git_manager(user=self.current_user)
+
         arr = []
 
         if modified_files and isinstance(modified_files, list):
@@ -372,9 +430,20 @@ class GitBranchResource(GenericResource):
         if limit:
             arr = arr[:limit]
 
+        files_absolute_path = {}
+
         files = {}
-        for filename in arr:
-            # filename: default_repo/transformers/load.py
+        for filename_init in arr:
+
+            # Git repo_path: /home/src/project_romeo/test
+            # filename_init: examples/load.py
+            # filename: test/examples/load.py
+
+            filename = os.path.join(
+                os.path.basename(git_manager.repo_path),
+                filename_init,
+            )
+
             parts = filename.split(os.sep)
             number_of_parts = len(parts)
 
@@ -399,7 +468,13 @@ class GitBranchResource(GenericResource):
                     obj[part] = obj_final
                     obj_final = obj
 
-            files[parts[0]] = obj_final
+            key = parts[0]
+            files[key] = obj_final
+            files_absolute_path[filename_init] = remove_base_repo_path(
+                os.path.join(git_manager.repo_path, filename_init),
+            )
+
+        self.model['files_absolute_path'] = files_absolute_path
 
         return build_file_object(files)
 

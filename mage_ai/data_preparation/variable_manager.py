@@ -71,6 +71,7 @@ class VariableManager:
             variable_type=variable_type,
             clean_block_uuid=clean_block_uuid,
         )
+
         # Delete data if it exists
         variable.delete()
         variable.variable_type = variable_type

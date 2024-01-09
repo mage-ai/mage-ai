@@ -228,9 +228,12 @@ def interpolate_input(
     return query
 
 
-def interpolate_vars(query, global_vars=None):
+def interpolate_vars(query, global_vars=None, block=None):
     if global_vars is None:
         global_vars = dict()
+
+    if block:
+        query = block.interpolate_content(query, variables=global_vars)
 
     return Template(
         query,

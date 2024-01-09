@@ -61,14 +61,17 @@ function SignForm({
               let url: string = '/';
               const query = queryFromUrl(window.location.href);
 
-              if (typeof window !== 'undefined' && query.redirect_url) {
+              if (typeof window !== 'undefined') {
                 const qs = queryString(
                   ignoreKeys(
                     query,
                     ['redirect_url', 'access_token', 'provider'],
                   ),
                 );
-                url = `${query.redirect_url}?${qs}`;
+                if (query.redirect_url) {
+                  url = `${query.redirect_url}?${qs}`;
+                }
+
                 window.location.href = url;
               } else {
                 router.push(url);

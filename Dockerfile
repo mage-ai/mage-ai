@@ -1,5 +1,6 @@
 FROM python:3.10-bookworm
 LABEL description="Deploy Mage on ECS"
+ARG FEATURE_BRANCH
 USER root
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -40,14 +41,22 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-synapse.git#egg=dbt-synapse" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
+  if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ]; then \
+    pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"; \
+  else \
+    pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-integrations&subdirectory=mage_integrations"; \
+  fi
+
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
-RUN \
-  tag=$(tail -n 1 /tmp/constants.py) && \
-  VERSION=$(echo "$tag" | tr -d "'") && \
-  pip3 install --no-cache-dir "mage-ai[all]==$VERSION" && \
-  rm /tmp/constants.py
+RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
+      tag=$(tail -n 1 /tmp/constants.py) && \
+      VERSION=$(echo "$tag" | tr -d "'") && \
+      pip3 install --no-cache-dir "mage-ai[all]==$VERSION"; \
+    else \
+      pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
+    fi
+
 
 ## Startup Script
 COPY --chmod=+x ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/

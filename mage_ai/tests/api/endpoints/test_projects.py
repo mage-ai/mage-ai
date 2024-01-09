@@ -126,5 +126,6 @@ build_update_endpoint_tests(
     assert_after_update=_assert_after_update,
     patch_function_settings=[
         ('mage_ai.api.resources.ProjectResource.activate_project',),
+        ('mage_ai.data_preparation.models.project.project_platform_activated', lambda: True),
     ],
 )

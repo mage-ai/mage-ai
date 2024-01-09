@@ -5,6 +5,39 @@ from typing import Tuple
 from mage_ai.settings.platform import get_repo_paths_for_file_path
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_dirname, base_repo_name, base_repo_path
+from mage_ai.shared.files import find_directory
+
+
+def add_absolute_path(file_path: str, add_base_repo_path: bool = True) -> str:
+    repo_path = get_repo_path(root_project=True)
+    repo_path_name = Path(repo_path).name
+
+    full_path = None
+    if os.path.isabs(file_path):
+        full_path = file_path
+    else:
+        try:
+            # If the relative path already contains the root project name, return it
+            diff = Path(file_path).relative_to(repo_path_name)
+            relative_file_path = str(diff)
+            full_path = os.path.join(repo_path, relative_file_path)
+        except ValueError:
+            # Relative path doesn’t contain the repo name
+            # Check to see if the first directory is exists right under the root folder
+            parts = Path(file_path).parts
+            if len(parts) >= 1:
+                full_path = os.path.join(repo_path, parts[0])
+                if os.path.exists(full_path):
+                    full_path = os.path.join(repo_path, file_path)
+                else:
+                    full_path = find_directory(repo_path, lambda x: x.endswith(file_path))
+
+    if full_path:
+        # Remove the repo path
+        if add_base_repo_path:
+            return str(full_path)
+        else:
+            return str(Path(full_path).relative_to(base_repo_path()))
 
 
 def add_root_repo_path_to_relative_path(relative_file_path: str) -> str:
@@ -55,6 +88,21 @@ def remove_base_repo_name(file_path: str) -> str:
         return file_path
 
 
+def remove_base_repo_path_or_name(file_path: str) -> str:
+    if not file_path:
+        return
+
+    if os.path.isabs(file_path):
+        value = str(remove_base_repo_path(file_path))
+    else:
+        value = str(remove_base_repo_name(file_path))
+
+    if len(value) == 0 or value == '.':
+        return base_repo_name()
+    else:
+        return value
+
+
 def remove_base_repo_directory_name(file_path: str) -> str:
     """
     Removes /home/src from
@@ -90,18 +138,27 @@ def get_path_parts(file_path: str) -> Tuple[str, str, str]:
     full_path_relative = paths['full_path_relative']
     path = paths['path']
 
+    paths_to_remove = []
     file_path_base = None
+
+    if os.path.isabs(file_path):
+        paths_to_remove = [
+            paths['full_path'],
+            path,
+        ]
+    else:
+        paths_to_remove = [
+            full_path_relative,
+            path,
+        ]
 
     # The file path either has both the root project name and the nested project name
     # or just has the nested project name in it.
-    for path2 in [
-        full_path_relative,
-        path,
-    ]:
+    for path_inner in paths_to_remove:
         if file_path_base:
             break
         try:
-            file_path_base = Path(file_path).relative_to(path2)
+            file_path_base = Path(file_path).relative_to(path_inner)
         except ValueError:
             pass
 

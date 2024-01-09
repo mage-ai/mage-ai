@@ -157,6 +157,10 @@ function BlockSettings({
   } = api.pipelines.detail(
     GlobalDataProductObjectTypeEnum.PIPELINE === globalDataProduct?.object_type
       && globalDataProduct?.object_uuid,
+    {},
+    {
+      revalidateOnFocus: false,
+    },
   );
   const globalDataProductPipeline = useMemo(() => dataPipeline?.pipeline, [dataPipeline]);
 
@@ -183,6 +187,7 @@ function BlockSettings({
     ignoreKeys(blockAttributes?.configuration || configuration, [
       'data_integration',
       'file_path',
+      'file_source',
       'global_data_product',
     ]),
     [blockAttributes?.configuration, configuration],
@@ -223,10 +228,10 @@ function BlockSettings({
     },
   );
   const blockDetails: {
-    pipelines: BlockPipelineType;
+    pipelines: BlockPipelineType[];
   } = useMemo(() => dataBlock?.block || {}, [dataBlock]);
   const blockPipelines: BlockPipelineType[] = useMemo(() => blockDetails?.pipelines
-    ? Object.values(blockDetails?.pipelines)
+    ? blockDetails?.pipelines
     : []
   , [blockDetails]);
   const blockPipelinesCount = blockPipelines?.length || 1;

@@ -124,7 +124,11 @@ class File:
         repo_path_alt = repo_path
         if repo_path_alt is None:
             repo_path_alt = get_repo_path(file_path=file_path)
-        return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path_alt)
+        return File(
+            os.path.basename(file_path or ''),
+            os.path.dirname(file_path or ''),
+            repo_path_alt or '',
+        )
 
     @classmethod
     def get_all_files(
@@ -274,6 +278,8 @@ class File:
 
         update_caches(repo_path, dir_path, filename)
 
+        update_file_cache()
+
     @classmethod
     async def write_async(
         self,
@@ -304,6 +310,8 @@ class File:
 
         await update_caches_async(repo_path, dir_path, filename)
 
+        update_file_cache()
+
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
 
@@ -322,7 +330,7 @@ class File:
             async with aiofiles.open(self.file_path, mode='r', encoding='utf-8') as fp:
                 file_content = await fp.read()
             return file_content
-        except FileNotFoundError as err:
+        except Exception as err:
             print(err)
         return ''
 
@@ -369,6 +377,8 @@ class File:
     def delete(self):
         os.remove(self.file_path)
 
+        update_file_cache()
+
     def rename(self, dir_path: str, filename):
         full_path = os.path.join(self.repo_path, dir_path, filename)
 
@@ -394,6 +404,8 @@ class File:
 
         self.dir_path = dir_path
         self.filename = filename
+
+        update_file_cache()
 
     def to_dict(self, include_content=False):
         data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
@@ -484,7 +496,7 @@ def traverse(
 
 def __should_update_dbt_cache(dir_path: str, filename: str) -> bool:
     project_model = Project(root_project=True)
-    if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2):
+    if project_model and project_model.is_feature_enabled(FeatureUUID.DBT_V2) and dir_path:
         # If the file is a SQL or YAML file
         if (
             filename.endswith('.sql') or
@@ -511,7 +523,7 @@ async def update_caches_async(repo_path: str, dir_path: str, filename: str) -> N
             dbt_cache = await DBTCache.initialize_cache_async(root_project=True)
             await dbt_cache.update_async(file_path=os.path.join(repo_path, dir_path, filename))
         except Exception as err:
-            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            print(f'[ERROR] File update DBTCache for {repo_path}, {dir_path}, {filename}: {err}.')
             if is_debug():
                 raise err
 
@@ -526,6 +538,13 @@ def update_caches(repo_path: str, dir_path: str, filename: str) -> None:
             dbt_cache = DBTCache.initialize_cache(root_project=True)
             dbt_cache.update(file_path=os.path.join(repo_path, dir_path, filename))
         except Exception as err:
-            print(f'[ERROR] File.update_caches DBTCache: {err}.')
+            print(f'[ERROR] File update DBTCache for {repo_path}, {dir_path}, {filename}: {err}.')
             if is_debug():
                 raise err
+
+
+def update_file_cache() -> None:
+    project_model = Project(root_project=True)
+    if project_model and project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+        from mage_ai.cache.file import FileCache
+        FileCache().invalidate()

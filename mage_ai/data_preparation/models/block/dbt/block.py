@@ -20,6 +20,7 @@ from mage_ai.data_preparation.models.block.dbt.sources import Sources
 from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 
@@ -199,7 +200,7 @@ class DBTBlock(Block):
                     '--vars', cls._variables_json(merge_dict(variables, template_vars)),
                     '--full-refresh'
                 ]
-                DBTCli(args, logger).invoke()
+                DBTCli(logger=logger).invoke(args)
 
             seed_path.unlink()
 
@@ -244,25 +245,31 @@ class DBTBlock(Block):
             if block_uuids:
                 for (project_path, target) in targets:
                     try:
-                        with DBTAdapter(
-                            project_path,
-                            variables=variables,
-                            target=target
-                        ) as dbt_adapter:
-                            credentials = dbt_adapter.credentials
-                            # some databases use other default schema names
-                            # e.g. duckdb uses main schema as default
-                            schema = getattr(credentials, 'schema', None)
+                        try:
+                            with DBTAdapter(
+                                project_path,
+                                variables=variables,
+                                target=target
+                            ) as dbt_adapter:
+                                credentials = dbt_adapter.credentials
+                                # some databases use other default schema names
+                                # e.g. duckdb uses main schema as default
+                                schema = getattr(credentials, 'schema', None)
 
-                        Sources(project_path).reset_pipeline(
-                            project_name=Path(project_path).stem,
-                            pipeline_uuid=pipeline_uuid,
-                            block_uuids=block_uuids,
-                            schema=schema
-                        )
-                    # project not yet configured correctly, so just skip that step for now
-                    except FileNotFoundError:
-                        pass
+                            Sources(project_path).reset_pipeline(
+                                project_name=Path(project_path).stem,
+                                pipeline_uuid=pipeline_uuid,
+                                block_uuids=block_uuids,
+                                schema=schema
+                            )
+                        # project not yet configured correctly, so just skip that step for now
+                        except FileNotFoundError:
+                            pass
+                    except Exception as err:
+                        if is_debug():
+                            raise err
+                        else:
+                            print(f'[DBTBlock] update_sources: {err}')
 
     @contextmanager
     def _redirect_streams(
@@ -270,3 +277,6 @@ class DBTBlock(Block):
         **kwargs
     ) -> Generator[None, None, None]:
         yield (None, None)
+
+    def set_default_configurations(self):
+        pass

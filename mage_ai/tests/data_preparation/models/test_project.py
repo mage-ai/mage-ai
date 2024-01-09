@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import yaml
 
@@ -80,9 +80,19 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                         self.assertEqual(project.version, VERSION)
                         self.assertFalse(project.root_project)
 
-                        mock_get_repo_config.assert_called_once_with(
-                            repo_path=os.path.join(base_repo_path(), 'mage_platform'),
-                            root_project=False,
+                        self.assertEqual(
+                            mock_get_repo_config.mock_calls[0],
+                            call(
+                                repo_path=os.path.join(base_repo_path(), 'mage_platform'),
+                                root_project=False,
+                            ),
+                        )
+                        self.assertEqual(
+                            mock_get_repo_config.mock_calls[1],
+                            call(
+                                repo_path=base_repo_path(),
+                                root_project=True,
+                            ),
                         )
 
                     with patch(
@@ -96,9 +106,19 @@ class ProjectTest(ProjectPlatformMixin, AsyncDBTestCase):
                         self.assertEqual(project.version, VERSION)
                         self.assertTrue(project.root_project)
 
-                        mock_get_repo_config.assert_called_once_with(
-                            repo_path=base_repo_path(),
-                            root_project=True,
+                        self.assertEqual(
+                            mock_get_repo_config.mock_calls[0],
+                            call(
+                                repo_path=base_repo_path(),
+                                root_project=True,
+                            ),
+                        )
+                        self.assertEqual(
+                            mock_get_repo_config.mock_calls[1],
+                            call(
+                                repo_path=base_repo_path(),
+                                root_project=True,
+                            ),
                         )
 
     def test_repo_path_for_database_query(self):

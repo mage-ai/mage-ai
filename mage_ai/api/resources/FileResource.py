@@ -3,6 +3,7 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.block import Block
@@ -17,6 +18,7 @@ from mage_ai.data_preparation.models.file import File, ensure_file_is_in_project
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.path_fixer import add_absolute_path
 
 
 class FileResource(GenericResource):
@@ -127,11 +129,23 @@ class FileResource(GenericResource):
     @classmethod
     @safe_db_query
     def get_model(self, pk, **kwargs):
-        file_path = urllib.parse.unquote(pk)
-        return File.from_path(file_path, get_repo_path())
+        file_path = add_absolute_path(urllib.parse.unquote(pk))
+        return File.from_path(file_path, get_repo_path(root_project=True))
 
     @safe_db_query
     def delete(self, **kwargs):
+        try:
+            block_resource = BlockResource.member(
+                self.model.file_path,
+                self.current_user,
+                query=dict(file_path=[
+                    self.model.file_path,
+                ]),
+            )
+            if block_resource:
+                block_resource.delete()
+        except ApiError:
+            pass
         return self.model.delete()
 
     @safe_db_query

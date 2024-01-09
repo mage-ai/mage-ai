@@ -9,13 +9,17 @@ export type UseProjectType = {
   // @ts-ignore
   featureUUIDs: {
     ADD_NEW_BLOCK_V2: FeatureUUIDEnum;
+    CODE_BLOCK_V2: FeatureUUIDEnum;
+    COMMAND_CENTER: FeatureUUIDEnum;
     COMPUTE_MANAGEMENT: FeatureUUIDEnum;
     CUSTOM_DESIGN: FeatureUUIDEnum;
+    DBT_V2: FeatureUUIDEnum;
     DATA_INTEGRATION_IN_BATCH_PIPELINE: FeatureUUIDEnum;
     INTERACTIONS: FeatureUUIDEnum;
     NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW: FeatureUUIDEnum;
     LOCAL_TIMEZONE: FeatureUUIDEnum;
     OPERATION_HISTORY: FeatureUUIDEnum;
+    PROJECT_PLATFORM: FeatureUUIDEnum;
   };
   fetchProjects: () => any;
   project: ProjectType;
@@ -33,7 +37,9 @@ function useProject({
 }: UseProjectProps = {
   pauseFetch: false,
 }): UseProjectType {
-  const { data: dataProjects, mutate: fetchProjects } = api.projects.list({}, {}, {
+  const { data: dataProjects, mutate: fetchProjects } = api.projects.list({}, {
+    revalidateOnFocus: false,
+  }, {
     pauseFetch,
   });
   const {

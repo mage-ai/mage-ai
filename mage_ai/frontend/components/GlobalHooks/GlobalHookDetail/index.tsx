@@ -25,7 +25,6 @@ import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import SetupSection, { SetupSectionRow } from '@components/shared/SetupSection';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -61,6 +60,7 @@ type GlobalHookDetailProps = {
   isNew?: boolean;
   operationType?: string;
   resourceType?: string;
+  rootProject?: boolean;
   uuid?: string;
 };
 
@@ -68,6 +68,7 @@ function GlobalHookDetail({
   isNew,
   operationType: operationTypeProp,
   resourceType: resourceTypeProp,
+  rootProject,
   uuid: globalHookUUID,
 }: GlobalHookDetailProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
@@ -92,6 +93,7 @@ function GlobalHookDetail({
     include_snapshot_validation: 1,
     operation_type: typeof operationType === 'undefined' ? null : operationType,
     resource_type: typeof resourceType === 'undefined' ? null : resourceType,
+    ...(rootProject ? { root_project: rootProject } : {}),
   }), [
     operationType,
     resourceType,
@@ -136,7 +138,7 @@ function GlobalHookDetail({
             global_hook: objectServer,
           }) => {
             router.replace(
-              `/global-hooks/${objectServer.uuid}?operation_type=${objectServer.operation_type}&resource_type=${objectServer.resource_type}`,
+              `/${rootProject ? 'platform/' : ''}global-hooks/${objectServer.uuid}?operation_type=${objectServer.operation_type}&resource_type=${objectServer.resource_type}`,
             );
           },
           ...onSuccessProps,
@@ -232,7 +234,7 @@ function GlobalHookDetail({
                 toastId: `global-hooks-success-${objectServer.uuid}`,
               },
             );
-            router.replace('/global-hooks');
+            router.replace(`/${rootProject ? 'platform/' : ''}global-hooks`);
           },
           ...onSuccessProps,
         },
@@ -1160,7 +1162,7 @@ function GlobalHookDetail({
             <Button
               beforeIcon={<PaginateArrowLeft />}
               disabled={isLoadingCreateGlobalHook || isLoadingUpdateGlobalHook || isLoadingDelete}
-              onClick={() => router.push('/global-hooks')}
+              onClick={() => router.push(`/${rootProject ? 'platform/' : ''}global-hooks`)}
               secondary
             >
               {attributesTouched
@@ -1184,7 +1186,8 @@ function GlobalHookDetail({
                       uuid: attributes?.uuid,
                     }
                     : {}
-                  )
+                  ),
+                  root_project: rootProject,
                 },
               })}
               primary

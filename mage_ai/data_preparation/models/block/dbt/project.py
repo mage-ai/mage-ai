@@ -94,6 +94,9 @@ class Project(object):
         Returns:
             Dict: the project as dictionary
         """
+        if not self.__project_dir:
+            return
+
         project_full_path = Path(self.__project_dir) / PROJECT_FILE_NAME
         if not project_full_path.exists():
             raise FileNotFoundError(

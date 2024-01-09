@@ -35,6 +35,7 @@ type PreferencesProps = {
   header?: any;
   onCancel?: () => void;
   onSaveSuccess?: (project: ProjectType) => void;
+  rootProject?: boolean;
 };
 
 function Preferences({
@@ -43,6 +44,7 @@ function Preferences({
   header,
   onCancel,
   onSaveSuccess,
+  rootProject: rootProjectUse,
 }: PreferencesProps) {
   const [showError] = useError(null, {}, [], {
     uuid: 'settings/workspace/preferences',
@@ -51,9 +53,18 @@ function Preferences({
   const [editingOpenAIKey, setEditingOpenAIKey] = useState<boolean>(false);
 
   const {
-    project,
     fetchProjects,
+    project: projectInit,
+    projectPlatformActivated,
+    rootProject,
   } = useProject();
+
+  const project = useMemo(() => rootProjectUse ? rootProject : projectInit, [
+    projectInit,
+    rootProject,
+    rootProjectUse,
+  ]);
+
   const {
     name: projectName,
     openai_api_key: openaiApiKey,
@@ -94,6 +105,7 @@ function Preferences({
       ),
     },
   );
+
   const updateProject = useCallback((payload: {
     features?: {
       [key: string]: boolean;
@@ -102,8 +114,14 @@ function Preferences({
     openai_api_key?: string;
     pipelines?: ProjectPipelinesType;
   }) => updateProjectBase({
-    project: payload,
-  }), [updateProjectBase]);
+    project: {
+      ...payload,
+      root_project: rootProjectUse,
+    },
+  }), [
+    rootProjectUse,
+    updateProjectBase,
+  ]);
 
   const el = (
     <>
@@ -237,45 +255,61 @@ function Preferences({
           </Spacing>
 
           {Object.entries(ignoreKeys(projectAttributes?.features, [
-            FeatureUUIDEnum.GLOBAL_HOOKS,
-          ]) || {}).map(([k, v], idx) => (
-            <Spacing
-              key={k}
-              mt={idx === 0 ? 0 : 1}
-            >
-              <FlexContainer
-                alignItems="center"
+            {/*FeatureUUIDEnum.GLOBAL_HOOKS,*/}
+          ]) || {}).map(([k, v], idx) => {
+            const overrideFromRootProject = projectPlatformActivated
+              && !rootProjectUse
+              && project?.features_override
+              && k in project?.features_override;
+
+            return (
+              <Spacing
+                key={k}
+                mt={idx === 0 ? 0 : 1}
               >
-                <ToggleSwitch
-                  checked={!!v}
-                  compact
-                  onCheck={() => setProjectAttributes(prev => ({
-                    ...prev,
-                    features: {
-                      ...projectAttributes?.features,
-                      [k]: !v,
-                    },
-                  }))}
-                />
+                <FlexContainer
+                  alignItems="center"
+                >
+                  <Flex flex={1}>
+                    <ToggleSwitch
+                      disabled={overrideFromRootProject}
+                      checked={!!v}
+                      compact
+                      onCheck={() => setProjectAttributes(prev => ({
+                        ...prev,
+                        features: {
+                          ...projectAttributes?.features,
+                          [k]: !v,
+                        },
+                      }))}
+                    />
 
-                <Spacing mr={PADDING_UNITS} />
+                    <Spacing mr={PADDING_UNITS} />
 
-                <Flex>
-                  <Text default={!v} monospace>
-                    {capitalizeRemoveUnderscoreLower(k)}
-                  </Text>
+                    <Flex>
+                      <Text default={!v} monospace>
+                        {capitalizeRemoveUnderscoreLower(k)}
+                      </Text>
 
-                  {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
-                    <Spacing ml={1}>
-                      <Tooltip
-                        {...LOCAL_TIMEZONE_TOOLTIP_PROPS}
-                      />
-                    </Spacing>
-                  }
-                </Flex>
-              </FlexContainer>
-            </Spacing>
-          ))}
+                      {k === FeatureUUIDEnum.LOCAL_TIMEZONE &&
+                        <Spacing ml={1}>
+                          <Tooltip
+                            {...LOCAL_TIMEZONE_TOOLTIP_PROPS}
+                          />
+                        </Spacing>
+                      }
+                    </Flex>
+                  </Flex>
+
+                  {overrideFromRootProject && (
+                    <Text monospace muted small>
+                      overridden
+                    </Text>
+                  )}
+                </FlexContainer>
+              </Spacing>
+            );
+          })}
         </Spacing>
       </Panel>
 
@@ -325,6 +359,7 @@ function Preferences({
 
       <FlexContainer alignItems="center">
         <Button
+          id="save-project-settings"
           loading={isLoadingUpdateProject}
           onClick={() => {
             updateProject({

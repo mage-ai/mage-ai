@@ -47,6 +47,7 @@ import {
   INTERNAL_TEST_REGEX,
   INTERNAL_TEST_STRING,
 } from '@utils/models/output';
+import { OutputDisplayTypeEnum } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ResponseTypeEnum } from '@api/constants';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -64,6 +65,7 @@ import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 
 type CodeOutputProps = {
+  alwaysShowExtraInfo?: boolean;
   block: BlockType;
   blockIndex?: number;
   blockMetadata?: {
@@ -86,6 +88,7 @@ type CodeOutputProps = {
   messagesAll?: KernelOutputType[];
   onClickSelectBlock?: () => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  outputDisplayType?: OutputDisplayTypeEnum;
   outputRowNormalPadding?: boolean;
   pipeline?: PipelineType;
   runCount?: number;
@@ -119,6 +122,7 @@ const SHARED_BUTTON_PROPS = {
 };
 
 function CodeOutput({
+  alwaysShowExtraInfo,
   block,
   blockIndex,
   blockMetadata,
@@ -139,6 +143,7 @@ function CodeOutput({
   messagesAll,
   onClickSelectBlock,
   openSidekickView,
+  outputDisplayType,
   outputRowNormalPadding,
   pipeline,
   runCount,
@@ -302,8 +307,8 @@ function CodeOutput({
 
   const hasErrorPrev = usePrevious(hasError);
   useEffect(() => {
-    if (isDBT && !hasErrorPrev && hasError) {
-      setSelectedTab(TAB_DBT_LOGS_UUID);
+    if (isDBT && !hasErrorPrev && hasError && setSelectedTab) {
+      setSelectedTab?.(TAB_DBT_LOGS_UUID);
     }
   }, [
     hasError,
@@ -598,10 +603,10 @@ function CodeOutput({
   const currentContentToDisplay = useMemo(() => {
     let el;
 
-    if (isDBT && selectedTab) {
-      const tabUUID = selectedTab.uuid;
+    if ((isDBT && selectedTab) || outputDisplayType) {
+      const tabUUID = selectedTab?.uuid;
 
-      if (TAB_DBT_PREVIEW_UUID.uuid === tabUUID) {
+      if (TAB_DBT_PREVIEW_UUID.uuid === tabUUID || OutputDisplayTypeEnum.DATA === outputDisplayType) {
         if (tableContent?.length >= 1) {
           el = tableContent;
         } else if (!isInProgress) {
@@ -616,7 +621,7 @@ function CodeOutput({
             </Spacing>
           );
         }
-      } else if (TAB_DBT_LOGS_UUID.uuid === tabUUID) {
+      } else if (TAB_DBT_LOGS_UUID.uuid === tabUUID || OutputDisplayTypeEnum.LOGS === outputDisplayType) {
         if (content?.length >= 1) {
           el = content;
         } else if (!isInProgress) {
@@ -690,6 +695,7 @@ function CodeOutput({
     hideOutput,
     isDBT,
     isInProgress,
+    outputDisplayType,
     pipeline,
     selected,
     selectedTab,
@@ -697,7 +703,13 @@ function CodeOutput({
     tableContent,
   ]);
 
-  if (!buttonTabs && !hasError && !hasOutput && !renderMessagesRaw && !children) {
+  if (!buttonTabs
+    && !hasError
+    && !hasOutput
+    && !renderMessagesRaw
+    && !children
+    && !alwaysShowExtraInfo
+  ) {
     return null;
   }
 
@@ -772,7 +784,7 @@ function CodeOutput({
           </>
         )}
 
-        {executedAndIdle && !hideExtraInfo && (
+        {(alwaysShowExtraInfo || (executedAndIdle && !hideExtraInfo)) && (
           <ExtraInfoStyle
             {...borderColorShareProps}
             blockType={blockType}

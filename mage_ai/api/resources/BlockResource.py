@@ -1,4 +1,5 @@
 import math
+import os
 import urllib.parse
 from typing import Dict
 
@@ -13,15 +14,16 @@ from mage_ai.cache.block_action_object.constants import (
     OBJECT_TYPE_MAGE_TEMPLATE,
 )
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.dynamic.dynamic_child import (
+    DynamicChildBlockFactory,
+)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     dynamically_created_child_block_runs,
-)
-from mage_ai.data_preparation.models.block.utils import (
-    clean_name,
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
 )
+from mage_ai.data_preparation.models.block.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
     BlockLanguage,
@@ -140,11 +142,24 @@ class BlockResource(GenericResource):
                 block = pipeline.get_block(block_run_block_uuid)
                 metrics = block_run.metrics
 
-                # If block is dynamic child and the original block’s block run, skip.
-                if block and is_dynamic_block_child(block) and block.uuid == block_run_block_uuid:
-                    # Show the block if no other dynamic child block runs have been created:
-                    if dynamically_created_child_block_runs(pipeline, block, block_runs):
-                        continue
+                wrapper = None
+                if block and is_dynamic_block(block) or is_dynamic_block_child(block):
+                    block = DynamicChildBlockFactory(
+                        block,
+                        block_run=block_run,
+                        block_runs=block_runs,
+                        pipeline_run=parent_model,
+                    )
+
+                    wrapper = block.wrapper()
+
+                    # If block is dynamic child and the original block’s block run, skip.
+                    if wrapper.is_dynamic_child() and (
+                        wrapper.is_original() or wrapper.is_clone_of_original()
+                    ):
+                        # Show the block if no other dynamic child block runs have been created:
+                        if dynamically_created_child_block_runs(pipeline, block, block_runs):
+                            continue
 
                 if block_run_block_uuid not in block_mapping:
                     block_mapping[block_run_block_uuid] = dict(
@@ -325,8 +340,8 @@ class BlockResource(GenericResource):
                     #         block_mapping[db_uuid]['uuids'].append(block_run_block_uuid)
 
                 if block.replicated_block:
-                    block_dict['name'] = block.uuid
-                    block_dict['description'] = block.replicated_block
+                    block_dict['name'] = block.uuid_replicated
+                    block_dict['description'] = block_run_block_uuid
 
                 block_dict['tags'] += block.tags()
 
@@ -682,6 +697,7 @@ class BlockResource(GenericResource):
     @safe_db_query
     async def create(self, payload, user, **kwargs):
         pipeline = kwargs.get('parent_model')
+        block = None
 
         block_type = payload.get('type')
         content = payload.get('content')
@@ -691,6 +707,8 @@ class BlockResource(GenericResource):
         require_unique_name = payload.get('require_unique_name')
 
         payload_config = payload.get('config') or {}
+        replicated_block = None
+        custom_template = None
 
         block_action_object = payload.get('block_action_object')
         if block_action_object:
@@ -706,6 +724,12 @@ class BlockResource(GenericResource):
                 block_name = object_from_cache.get('uuid')
                 block_type = object_from_cache.get('type')
                 language = object_from_cache.get('language')
+
+                file_path = object_from_cache.get('file_path')
+                block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+                if block:
+                    if pipeline:
+                        pipeline.add_block(block)
             elif OBJECT_TYPE_CUSTOM_BLOCK_TEMPLATE == object_type:
                 payload_config['custom_template_uuid'] = object_from_cache.get('template_uuid')
             elif OBJECT_TYPE_MAGE_TEMPLATE == object_type:
@@ -727,79 +751,80 @@ class BlockResource(GenericResource):
                     object_from_cache.get('configuration') or {},
                 )
 
-        """
-        New DBT models include "content" in its block create payload,
-        whereas creating blocks from existing DBT model files do not.
-        """
-        if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
-            from mage_ai.data_preparation.models.block.dbt import DBTBlock
+        if block is None:
+            """
+            New DBT models include "content" in its block create payload,
+            whereas creating blocks from existing DBT model files do not.
+            """
+            if payload.get('type') == BlockType.DBT and language == BlockLanguage.SQL and content:
+                from mage_ai.data_preparation.models.block.dbt import DBTBlock
 
-            dbt_block = DBTBlock(
-                name,
-                clean_name(name),
-                BlockType.DBT,
-                configuration=payload.get('configuration'),
-                language=language,
-            )
-            if dbt_block.file_path and dbt_block.file.exists():
-                raise Exception('DBT model at that folder location already exists. \
-                    Please choose a different model name, or add a DBT model by \
-                    selecting single model from file.')
-
-        block_attributes = dict(
-            color=payload.get('color'),
-            config=payload_config,
-            configuration=payload.get('configuration'),
-            downstream_block_uuids=payload.get('downstream_blocks', []),
-            extension_uuid=payload.get('extension_uuid'),
-            language=language,
-            pipeline=pipeline,
-            priority=payload.get('priority'),
-            upstream_block_uuids=payload.get('upstream_blocks', []),
-        )
-
-        replicated_block = None
-        replicated_block_uuid = payload.get('replicated_block')
-        if replicated_block_uuid:
-            replicated_block = pipeline.get_block(replicated_block_uuid)
-            if replicated_block:
-                block_type = replicated_block.type
-                block_attributes['language'] = replicated_block.language
-                block_attributes['replicated_block'] = replicated_block.uuid
-            else:
-                error = ApiError.RESOURCE_INVALID.copy()
-                error.update(
-                    message=f'Replicated block {replicated_block_uuid} ' +
-                    f'does not exist in pipeline {pipeline.uuid}.',
+                dbt_block = DBTBlock(
+                    name,
+                    clean_name(name),
+                    BlockType.DBT,
+                    configuration=payload.get('configuration'),
+                    language=language,
                 )
-                raise ApiError(error)
+                if dbt_block.file_path and dbt_block.file.exists():
+                    raise Exception('DBT model at that folder location already exists. \
+                        Please choose a different model name, or add a DBT model by \
+                        selecting single model from file.')
 
-        custom_template = None
-        if payload_config and payload_config.get('custom_template_uuid'):
-            template_uuid = payload_config.get('custom_template_uuid')
-            custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
-            block = custom_template.create_block(
-                block_name,
-                pipeline,
-                extension_uuid=block_attributes.get('extension_uuid'),
-                priority=block_attributes.get('priority'),
-                upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
-            )
-            content = custom_template.load_template_content()
-        else:
-            block = Block.create(
-                block_name,
-                block_type,
-                get_repo_path(),
-                require_unique_name=require_unique_name,
-                **block_attributes,
+            block_attributes = dict(
+                color=payload.get('color'),
+                config=payload_config,
+                configuration=payload.get('configuration'),
+                downstream_block_uuids=payload.get('downstream_blocks', []),
+                extension_uuid=payload.get('extension_uuid'),
+                language=language,
+                pipeline=pipeline,
+                priority=payload.get('priority'),
+                upstream_block_uuids=payload.get('upstream_blocks', []),
             )
 
-        if content:
-            if payload.get('converted_from'):
-                content = convert_to_block(block, content)
+            replicated_block_uuid = payload.get('replicated_block')
+            if replicated_block_uuid:
+                replicated_block = pipeline.get_block(replicated_block_uuid)
+                if replicated_block:
+                    block_type = replicated_block.type
+                    # You can replicate a replica but it’ll only replicate the original block.
+                    replicated_block = replicated_block.get_original_block() or replicated_block
+                    block_attributes['language'] = replicated_block.language
+                    block_attributes['replicated_block'] = replicated_block.uuid
+                else:
+                    error = ApiError.RESOURCE_INVALID.copy()
+                    error.update(
+                        message=f'Replicated block {replicated_block_uuid} ' +
+                        f'does not exist in pipeline {pipeline.uuid}.',
+                    )
+                    raise ApiError(error)
 
-            await block.update_content_async(content)
+            if payload_config and payload_config.get('custom_template_uuid'):
+                template_uuid = payload_config.get('custom_template_uuid')
+                custom_template = CustomBlockTemplate.load(template_uuid=template_uuid)
+                block = custom_template.create_block(
+                    block_name,
+                    pipeline,
+                    extension_uuid=block_attributes.get('extension_uuid'),
+                    priority=block_attributes.get('priority'),
+                    upstream_block_uuids=block_attributes.get('upstream_block_uuids'),
+                )
+                content = custom_template.load_template_content()
+            else:
+                block = Block.create(
+                    block_name,
+                    block_type,
+                    get_repo_path(),
+                    require_unique_name=require_unique_name,
+                    **block_attributes,
+                )
+
+            if content:
+                if payload.get('converted_from'):
+                    content = convert_to_block(block, content)
+
+                await block.update_content_async(content)
 
         if pipeline:
             cache = await BlockCache.initialize_cache()
@@ -837,6 +862,7 @@ class BlockResource(GenericResource):
 
         pipeline = kwargs.get('parent_model')
         if pipeline:
+            pk = urllib.parse.unquote(pk)
             block = pipeline.get_block(pk, block_type=block_type, extension_uuid=extension_uuid)
             if block:
                 return self(block, user, **kwargs)
@@ -849,6 +875,17 @@ class BlockResource(GenericResource):
                 error.update(message=message)
                 raise ApiError(error)
 
+        file_path = query.get('file_path', [None])
+        if file_path:
+            file_path = file_path[0]
+        if file_path:
+            block = Block.get_block_from_file_path(urllib.parse.unquote(file_path))
+            if block:
+                return self(block, user, **kwargs)
+            else:
+                error.update(ApiError.RESOURCE_NOT_FOUND)
+                raise ApiError(error)
+
         block_type_and_uuid = urllib.parse.unquote(pk)
         parts = block_type_and_uuid.split('/')
 
@@ -857,7 +894,7 @@ class BlockResource(GenericResource):
             raise ApiError(error)
 
         block_type = parts[0]
-        block_uuid_with_extension = '/'.join(parts[1:])
+        block_uuid_with_extension = os.path.sep.join(parts[1:])
         parts2 = block_uuid_with_extension.split('.')
 
         language = None
@@ -901,14 +938,20 @@ class BlockResource(GenericResource):
             force = force[0]
 
         pipeline = kwargs.get('parent_model')
+
+        blocks_to_delete = [self.model]
+        for block in pipeline.blocks_by_uuid.values():
+            if block.replicated_block == self.model.uuid:
+                blocks_to_delete.append(block)
+
         cache = await BlockCache.initialize_cache()
-        if pipeline:
-            cache.remove_pipeline(self.model, pipeline.uuid)
-
         cache_block_action_object = await BlockActionObjectCache.initialize_cache()
-        cache_block_action_object.update_block(self.model, remove=True)
 
-        return self.model.delete(force=force)
+        for block in blocks_to_delete:
+            if pipeline:
+                cache.remove_pipeline(block, pipeline.uuid, pipeline.repo_path)
+            cache_block_action_object.update_block(block, remove=True)
+            block.delete(force=force)
 
     @safe_db_query
     async def update(self, payload, **kwargs):

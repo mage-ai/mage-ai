@@ -4,8 +4,10 @@ from typing import Dict, List
 
 import aiofiles
 import yaml
+from jinja2 import Template
 
 from mage_ai.cache.dbt.constants import PROFILES_FILENAME, PROJECT_FILENAMES
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import get_full_file_paths_containing_item
 from mage_ai.shared.multi import run_parallel_multiple_args
@@ -21,7 +23,7 @@ def absolute_project_file_path(relative_project_path: str) -> str:
     return file_path
 
 
-def get_models(dirname: str = None, project: Dict = None) -> List[str]:
+def get_model_directories(dirname: str = None, project: Dict = None) -> List[str]:
     paths = []
     if project:
         dirname = dirname or os.path.join(
@@ -30,6 +32,11 @@ def get_models(dirname: str = None, project: Dict = None) -> List[str]:
         )
         paths = project.get('model-paths') or []
 
+    return dirname, paths
+
+
+def get_models(dirname: str = None, project: Dict = None) -> List[str]:
+    dirname, paths = get_model_directories(dirname=dirname, project=project)
     models = []
     for model_dirname in paths:
         arr = get_full_file_paths_containing_item(
@@ -41,10 +48,31 @@ def get_models(dirname: str = None, project: Dict = None) -> List[str]:
     return sorted(models)
 
 
+def get_schema_file_paths(dirname: str = None, project: Dict = None) -> List[str]:
+    dirname, paths = get_model_directories(dirname=dirname, project=project)
+    file_paths = []
+    for model_dirname in paths:
+        arr = get_full_file_paths_containing_item(
+            os.path.join(dirname, model_dirname),
+            lambda fn: str(fn).endswith('.yml') or str(fn).endswith('.yaml'),
+        )
+        file_paths.extend(arr)
+    return file_paths
+
+
 async def read_content_async(file_path: str) -> Dict:
     if os.path.exists(file_path):
         async with aiofiles.open(file_path, mode='r') as f:
-            config = yaml.safe_load(await f.read()) or {}
+            content = await f.read()
+            try:
+                content_interpolated = Template(content).render(
+                    variables=lambda x: x,
+                    **get_template_vars(),
+                )
+            except Exception as err:
+                print(f'[WARNING] DBT.cache.read_content_async {file_path}: {err}.')
+                content_interpolated = content
+            config = yaml.safe_load(content_interpolated) or {}
             config['file_path'] = remove_base_repo_path(file_path)
             config['uuid'] = os.path.dirname(remove_base_repo_path(file_path))
             return config
@@ -54,15 +82,16 @@ async def load_content_async(file_path: str):
     dirname = os.path.dirname(file_path)
     project = await read_content_async(file_path)
     profiles = await read_content_async(os.path.join(dirname, PROFILES_FILENAME))
-    models = get_models(
-        dirname=dirname,
-        project=project,
-    )
+    models = get_models(dirname=dirname, project=project)
+
+    schema_file_paths = get_schema_file_paths(dirname=dirname, project=project)
+    schema_dicts = await asyncio.gather(*[read_content_async(fp) for fp in schema_file_paths])
 
     return dict(
         models=models,
         profiles=__clean_profiles(profiles),
         project=project,
+        schema=schema_dicts,
     )
 
 
@@ -85,7 +114,16 @@ async def build_mapping_async(file_path: str) -> Dict:
 def read_content(file_path: str) -> Dict:
     if os.path.exists(file_path):
         with open(file_path, mode='r') as f:
-            config = yaml.safe_load(f.read()) or {}
+            content = f.read()
+            try:
+                content_interpolated = Template(content).render(
+                    variables=lambda x: x,
+                    **get_template_vars(),
+                )
+            except Exception as err:
+                print(f'[WARNING] DBT.cache.read_content_async {file_path}: {err}.')
+                content_interpolated = content
+            config = yaml.safe_load(content_interpolated) or {}
             config['file_path'] = remove_base_repo_path(file_path)
             return config
 
@@ -94,15 +132,16 @@ def load_content(file_path: str):
     dirname = os.path.dirname(file_path)
     project = read_content(file_path)
     profiles = read_content(os.path.join(dirname, PROFILES_FILENAME))
-    models = get_models(
-        dirname=dirname,
-        project=project,
-    )
+    models = get_models(dirname=dirname, project=project)
+
+    schema_file_paths = get_schema_file_paths(dirname=dirname, project=project)
+    schema_dicts = run_parallel_multiple_args(load_content, schema_file_paths)
 
     return dict(
         models=models,
         profiles=__clean_profiles(profiles),
         project=project,
+        schema=schema_dicts,
     )
 
 
@@ -154,6 +193,8 @@ def __clean_profiles(profiles: Dict) -> Dict:
 
         outputs = profile_dict.get('outputs') or {}
         for target in outputs.keys():
-            mapping[project_name]['outputs'][target] = {}
+            mapping[project_name]['outputs'][target] = dict(
+                type=mapping[project_name]['outputs'][target].get('type'),
+            )
 
     return mapping

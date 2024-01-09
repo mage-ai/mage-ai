@@ -71,6 +71,7 @@ type TripleLayoutProps = {
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
+  beforeContentHeightOffset?: number;
   beforeDividerContrast?: boolean;
   beforeFooter?: any;
   beforeHeader?: any;
@@ -119,6 +120,7 @@ function TripleLayout({
   afterSubheader,
   afterWidth = 0,
   before,
+  beforeContentHeightOffset,
   beforeDividerContrast,
   beforeFooter,
   beforeHeader,
@@ -182,8 +184,8 @@ function TripleLayout({
       } = refBeforeInner?.current?.getBoundingClientRect?.() || {};
       if (width) {
         let newWidth = e.x;
-        if (newWidth + MAIN_MIN_WIDTH > width - afterWidth) {
-          newWidth = (width - afterWidth) - MAIN_MIN_WIDTH;
+        if (newWidth + MAIN_MIN_WIDTH > width - (afterHidden ? 0 : afterWidth)) {
+          newWidth = (width - (afterHidden ? 0 : afterWidth)) - MAIN_MIN_WIDTH;
         }
         // Not sure why we need to multiply by 2, but we do.
         newWidth -= (leftOffset * 2);
@@ -213,6 +215,7 @@ function TripleLayout({
       removeMousemove();
     };
   }, [
+    afterHidden,
     afterWidth,
     beforeHidden,
     leftOffset,
@@ -231,8 +234,8 @@ function TripleLayout({
 
       if (width) {
         let newWidth = width - e.x;
-        if (newWidth + MAIN_MIN_WIDTH > width - beforeWidth) {
-          newWidth = (width - beforeWidth) - MAIN_MIN_WIDTH;
+        if (newWidth + MAIN_MIN_WIDTH > width - (beforeHidden ? 0 : beforeWidth)) {
+          newWidth = (width - (beforeHidden ? 0 : beforeWidth)) - MAIN_MIN_WIDTH;
         }
         setAfterWidth(Math.max(newWidth, AFTER_MIN_WIDTH));
       }
@@ -259,6 +262,7 @@ function TripleLayout({
     };
   }, [
     afterHidden,
+    beforeHidden,
     beforeWidth,
     refAfterInner,
     refAfterInnerDraggable,
@@ -400,6 +404,31 @@ function TripleLayout({
 
   const beforeFooterRef = useRef(null);
 
+  const beforeContentHeightOffsetUse: number = useMemo(() => {
+    let val = null;
+
+    const hasBeforeFooter = typeof beforeFooter !== 'undefined' && beforeFooter !== null;
+    const hasOffset =
+      typeof beforeContentHeightOffset !== 'undefined' && beforeContentHeightOffset !== null;
+
+    if (hasBeforeFooter || hasOffset) {
+      val = 0;
+
+      if (beforeFooter) {
+        val += beforeFooterRef?.current?.getBoundingClientRect()?.height || 0;
+      }
+
+      if (hasOffset) {
+        val += beforeContentHeightOffset || 0;
+      }
+    }
+
+    return val;
+  }, [
+    beforeFooter,
+    beforeContentHeightOffset,
+  ]);
+
   const beforeContent = useMemo(() => (
     <>
       {(setBeforeHidden || beforeHeader) && (
@@ -470,10 +499,7 @@ function TripleLayout({
 
       <BeforeInnerStyle
         contained={contained && !inline}
-        heightOffset={beforeFooter
-          ? beforeFooterRef?.current?.getBoundingClientRect()?.height
-          : null
-        }
+        heightOffset={beforeContentHeightOffsetUse}
         noScrollbarTrackBackground
         ref={refBeforeInner}
         verticalOffset={beforeHeader
@@ -501,6 +527,7 @@ function TripleLayout({
     </>
   ), [
     before,
+    beforeContentHeightOffsetUse,
     beforeFooter,
     beforeFooterRef,
     beforeHeader,
@@ -601,7 +628,15 @@ function TripleLayout({
           width: mainWidth,
         }}
       >
-        {mainContainerHeader}
+        {mainContainerHeader
+          ?
+            typeof mainContainerHeader === 'function'
+              ? mainContainerHeader?.({
+                widthOffset: beforeWidthFinal + afterWidthFinal + leftOffset,
+              })
+              : mainContainerHeader
+          : null
+        }
 
         <MainContentStyle
           headerOffset={contained

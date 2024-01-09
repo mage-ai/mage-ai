@@ -40,6 +40,7 @@ import {
 import { ButtonWrapper, ICON_SIZE } from './index.style';
 import { DataIntegrationTypeEnum, TemplateTypeEnum } from '@interfaces/BlockTemplateType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
@@ -75,7 +76,7 @@ export type ButtonItemsProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
-};
+} & OpenBlockBrowserModalType;
 
 function ButtonItems({
   addNewBlock,
@@ -89,6 +90,7 @@ function ButtonItems({
   pipelineType,
   setAddNewBlockMenuOpenIdx,
   setButtonMenuOpenIndex,
+  showBlockBrowserModal,
   showBrowseTemplates,
   showGlobalDataProducts,
 }: ButtonItemsProps) {
@@ -568,7 +570,7 @@ function ButtonItems({
           DataIntegrationTypeEnum.SOURCES,
         ].join('/')]: 504,
       },
-      label: () => 'Templates',
+      label: () => 'All blocks',
       tooltip: () => 'Add a block from a template',
     },
     [ITEM_BROWSE_TEMPLATES]: {
@@ -640,9 +642,27 @@ function ButtonItems({
     items?: FlyoutMenuItemType[];
     label?: () => string;
     onClick?: (e?: any) => void;
-    tooltip?: string;
+    tooltip?: string | (() => void);
     uuid: string;
   }) => {
+    const buttonEl = (
+      <Button
+        beforeIcon={beforeIcon || Icon && (
+          <Icon
+            secondary={index === buttonMenuOpenIndex}
+            size={ICON_SIZE}
+          />
+        )}
+        noBackground
+        noBorder
+        noPadding
+        onClick={(e) => {
+          onClick?.(e);
+        }}
+      >
+        {label?.() || uuid}
+      </Button>
+    );
     return (
       <ButtonWrapper
         compact={compact}
@@ -658,29 +678,19 @@ function ButtonItems({
           parentRef={refsMapping[index]}
           uuid={uuid}
         >
-          <Tooltip
-            block
-            label={tooltip}
-            size={null}
-            widthFitContent
-          >
-            <Button
-              beforeIcon={beforeIcon || Icon && (
-                <Icon
-                  secondary={index === buttonMenuOpenIndex}
-                  size={ICON_SIZE}
-                />
-              )}
-              noBackground
-              noBorder
-              noPadding
-              onClick={(e) => {
-                onClick?.(e);
-              }}
-            >
-              {label?.() || uuid}
-            </Button>
-          </Tooltip>
+          {tooltip
+            ? (
+              <Tooltip
+                block
+                label={(tooltip && typeof tooltip === 'function') ? tooltip() : tooltip}
+                size={null}
+                widthFitContent
+              >
+                {buttonEl}
+              </Tooltip>
+            )
+            : buttonEl
+          }
         </FlyoutMenuWrapper>
       </ButtonWrapper>
     );

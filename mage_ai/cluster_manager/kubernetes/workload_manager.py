@@ -233,9 +233,17 @@ class WorkloadManager:
                     },
                 }
 
+        container_image = 'mageai/mageai:latest'
+        if self.pod_config:
+            try:
+                container = self.pod_config.spec.containers[0]
+                container_image = container.image
+            except Exception:
+                pass
+
         mage_container_config = {
             'name': f'{name}-container',
-            'image': 'mageai/mageai:latest',
+            'image': container_image,
             'ports': [{'containerPort': 6789, 'name': 'web'}],
             'volumeMounts': volume_mounts,
             **container_config,
@@ -731,9 +739,7 @@ class WorkloadManager:
 
         return env_vars
 
-    def __get_configurable_parameters(
-        self, workspace_config: KubernetesWorkspaceConfig
-    ) -> Dict:
+    def get_default_values(self) -> Dict:
         service_account_name_default = None
         storage_class_name_default = None
         storage_access_mode_default = None
@@ -757,19 +763,31 @@ class WorkloadManager:
         except Exception:
             pass
 
+        return dict(
+            service_account_name=service_account_name_default,
+            storage_class_name=storage_class_name_default,
+            storage_access_mode=storage_access_mode_default,
+            storage_request_size=storage_request_size_default,
+        )
+
+    def __get_configurable_parameters(
+        self, workspace_config: KubernetesWorkspaceConfig
+    ) -> Dict:
+        default_values = self.get_default_values()
+
         storage_request_size = workspace_config.storage_request_size
         if storage_request_size is None:
-            storage_request_size = storage_request_size_default
+            storage_request_size = default_values.get('storage_request_size')
         else:
             storage_request_size = f'{storage_request_size}Gi'
 
         return dict(
             service_account_name=workspace_config.service_account_name
-            or service_account_name_default,
+            or default_values.get('service_account_name'),
             storage_class_name=workspace_config.storage_class_name
-            or storage_class_name_default,
+            or default_values.get('storage_class_name'),
             storage_access_mode=workspace_config.storage_access_mode
-            or storage_access_mode_default,
+            or default_values.get('storage_access_mode'),
             storage_request_size=storage_request_size,
         )
 

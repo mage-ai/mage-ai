@@ -22,6 +22,7 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.cache.block import BlockCache
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.cache.dbt.cache import DBTCache
+from mage_ai.cache.file import FileCache
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.cache.tag import TagCache
 from mage_ai.cluster_manager.constants import ClusterType
@@ -41,7 +42,7 @@ from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, set_db_schema
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
@@ -525,6 +526,8 @@ async def main(
         await BlockCache.initialize_cache(replace=True, caches=[PipelineCache])
     except Exception as err:
         print(f'[ERROR] PipelineCache.initialize_cache: {err}.')
+        if is_debug():
+            raise err
 
     logger.info('Initializing tag cache.')
     await TagCache.initialize_cache(replace=True)
@@ -546,6 +549,19 @@ async def main(
                 logger.info(f'dbt cached in {dbt_cache.file_path}')
             except Exception as err:
                 print(f'[ERROR] DBTCache.initialize_cache: {err}.')
+                if is_debug():
+                    raise err
+
+        if project_model.is_feature_enabled(FeatureUUID.COMMAND_CENTER):
+            try:
+                logger.info('Initializing file cache.')
+                file_cache = FileCache.initialize_cache_with_settings(replace=True)
+                count = len(file_cache._temp_data) if file_cache._temp_data else 0
+                logger.info(
+                    f'{count} files cached in {file_cache.file_path}.',
+                )
+            except Exception as err:
+                print(f'[ERROR] FileCache.initialize_cache_with_settings: {err}.')
                 if is_debug():
                     raise err
 
@@ -618,6 +634,7 @@ def start_server(
     if dbt_docs:
         run_docs_server()
     else:
+        set_db_schema()
         run_web_server = True
         project_type = get_project_type()
         if manage or project_type == ProjectType.MAIN:

@@ -1,8 +1,10 @@
-from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from typing import Dict, List, Union
+
 from pandas import DataFrame
 from pyspark.sql import SparkSession
-from typing import Dict, List, Union
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 
 
 class Spark(BaseSQLDatabase):
@@ -62,6 +64,9 @@ class Spark(BaseSQLDatabase):
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             query_string = self._clean_query(query_string)
             self.client.sql(query_string, **kwargs)
+
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        self.client.sql(query)
 
     def execute_query(
         self,

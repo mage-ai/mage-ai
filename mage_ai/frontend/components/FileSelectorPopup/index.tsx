@@ -21,31 +21,18 @@ import { find, indexBy } from '@utils/array';
 
 type FileSelectorPopupProps = {
   blocks: BlockType[];
+  children: any;
   creatingNewDBTModel?: boolean;
   dbtModelName?: string;
-  files: FileType[];
   onClose: () => void;
-  onOpenFile: (filePath: string) => void;
-  onSelectBlockFile?: (
-    blockUUID: string,
-    blockType: BlockTypeEnum,
-    filePath: string,
-    opts?: {
-      file?: FileType;
-      path?: string;
-    },
-  ) => void;
   setDbtModelName?: (name: string) => void;
 };
 
 function FileSelectorPopup({
   blocks,
-  creatingNewDBTModel,
+  children,
   dbtModelName,
-  files,
   onClose,
-  onOpenFile,
-  onSelectBlockFile,
   setDbtModelName,
 }: FileSelectorPopupProps) {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
@@ -64,10 +51,7 @@ function FileSelectorPopup({
             disableWordBreak
             monospace
           >
-            {creatingNewDBTModel
-              ? 'Create new dbt model'
-              : 'Select dbt model or snapshot file'
-            }
+            Select dbt model or snapshot file
           </Text>
         </Flex>
         <Button
@@ -78,90 +62,9 @@ function FileSelectorPopup({
         </Button>
       </WindowHeaderStyle>
 
-      {creatingNewDBTModel &&
-        <>
-          <InputRowStyle>
-            <LabelWithValueClicker
-              dynamicSizing
-              inputValue={dbtModelName}
-              label="Model name (cannot be changed):"
-              labelColor={dark.accent.dbt}
-              notRequired
-              onBlur={() => {
-                setIsEditingName(false);
-              }}
-              onChange={(e) => {
-                setDbtModelName(e.target.value);
-                e.preventDefault();
-              }}
-              onClick={() => {
-                setIsEditingName(true);
-              }}
-              onFocus={() => {
-                setIsEditingName(true);
-              }}
-              placeholder="Enter name"
-              required
-              stacked
-              suffixValue={`.${BlockLanguageEnum.SQL}`}
-              value={!isEditingName && dbtModelName}
-            />
-          </InputRowStyle>
-          <InputRowStyle>
-            <Text bold color={dark.accent.dbt}>
-              Select folder location:
-            </Text>
-            <Text
-              bold
-              muted={!selectedFilePath}
-            >
-              {selectedFilePath
-                ? `dbt${osPath.sep}${selectedFilePath}`
-                : 'Choose folder below'
-              }
-            </Text>
-          </InputRowStyle>
-        </>
-      }
-
       <WindowContentStyle>
-        <FileBrowser
-          allowSelectingFolders={creatingNewDBTModel}
-          disableContextMenu
-          files={files}
-          isFileDisabled={(filePath: string, children) => {
-            // if (creatingNewDBTModel) {
-            //   return !children || children?.some(childFolder => childFolder?.name === 'models');
-            // }
-
-            return !!existingModelsByFilePath[filePath]
-              || (!children?.length &&
-                !filePath.match(new RegExp(`\.${BlockLanguageEnum.SQL}\$`))
-              );
-          }}
-          openFile={onOpenFile}
-          onSelectBlockFile={onSelectBlockFile}
-          selectFile={setSelectedFilePath}
-          uncollapsed
-          useRootFolder
-        />
+        {children}
       </WindowContentStyle>
-
-      {creatingNewDBTModel &&
-        <WindowFooterStyle>
-          <Button
-            backgroundColor={(!dbtModelName || !selectedFilePath)
-              ? dark.monotone.grey500
-              : dark.accent.dbt
-            }
-            disabled={!dbtModelName || !selectedFilePath}
-            onClick={() => onOpenFile(selectedFilePath)}
-            padding="6px 8px"
-          >
-            Create model
-          </Button>
-        </WindowFooterStyle>
-      }
     </WindowContainerStyle>
   );
 }

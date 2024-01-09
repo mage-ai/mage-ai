@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from json import JSONDecoder
 
 import numpy as np
@@ -23,8 +24,14 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
 
 def encode_complex(obj):
-    if isinstance(obj, BaseModel):
+    if isinstance(obj, set):
+        return list(obj)
+    elif isinstance(obj, BaseModel):
         return obj.__class__.__name__
+    elif obj.__class__.__name__ == 'BaseDataClass':
+        return obj.to_dict()
+    elif isinstance(obj, Enum):
+        return obj.value
     elif hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
         return obj.isoformat()
     elif isinstance(obj, np.integer):

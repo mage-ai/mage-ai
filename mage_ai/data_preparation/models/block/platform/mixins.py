@@ -1,20 +1,25 @@
 import os
 from typing import Dict, List
 
+from mage_ai.cache.dbt.utils import get_project_path_from_file_path
 from mage_ai.data_preparation.models.block.platform.utils import (
     from_another_project,
     get_selected_directory_from_file_path,
 )
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
-from mage_ai.settings.platform import project_platform_activated
+from mage_ai.settings.platform import (
+    get_repo_paths_for_file_path,
+    project_platform_activated,
+)
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.path_fixer import (
+    add_absolute_path,
     add_root_repo_path_to_relative_path,
     get_path_parts,
     remove_base_repo_directory_name,
     remove_base_repo_name,
-    remove_base_repo_path,
 )
 from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name
@@ -36,47 +41,50 @@ class ProjectPlatformAccessible:
         if not config:
             return config
 
-        if self.project_platform_activated:
-            if config.get('file_source'):
-                file_source = config.get('file_source') or {}
-                if file_source:
-                    if file_source.get('path'):
-                        # default_platform/tons_of_dbt_projects/diff_name/models/example/
-                        # my_first_dbt_model.sql
-                        path = file_source.get('path')
-                        path = str(remove_base_repo_name(path)) if path else path
-                        file_source['path'] = path
-                        config['file_source'] = file_source
+        if config.get('file_source'):
+            file_source = config.get('file_source') or {}
+            if file_source:
+                if file_source.get('path'):
+                    # default_platform/tons_of_dbt_projects/diff_name/models/example/
+                    # my_first_dbt_model.sql
+                    path = file_source.get('path')
+                    path = add_absolute_path(path, add_base_repo_path=False)
+                    file_source['path'] = path
+                    config['file_source'] = file_source
 
-                        if BlockType.DBT == self.type and path:
-                            # /home/src/default_repo/default_platform/
-                            # tons_of_dbt_projects/diff_name
-                            project_path = get_selected_directory_from_file_path(
-                                file_path=path,
-                                selector=lambda fn: (
-                                    str(fn).endswith('dbt_project.yml') or
-                                    str(fn).endswith('dbt_project.yaml')
-                                ),
+                    if path and \
+                            BlockType.DBT == self.type and \
+                            BlockLanguage.YAML != self.language:
+
+                        # /home/src/default_repo/default_platform/
+                        # tons_of_dbt_projects/diff_name
+                        project_path = get_selected_directory_from_file_path(
+                            file_path=path,
+                            selector=lambda fn: (
+                                str(fn).endswith('dbt_project.yml') or
+                                str(fn).endswith('dbt_project.yaml')
+                            ),
+                        )
+                        # tons_of_dbt_projects/diff_name
+                        if project_path:
+                            file_source['project_path'] = add_absolute_path(
+                                project_path,
+                                add_base_repo_path=False
                             )
-                            # tons_of_dbt_projects/diff_name
-                            if project_path:
-                                file_source['project_path'] = remove_base_repo_path(
-                                    project_path,
-                                )
-
-            if config.get('file_path'):
-                file_path = config.get('file_path')
-                config['file_path'] = str(remove_base_repo_name(
-                    file_path,
-                )) if file_path else file_path
-        else:
-            if config.get('file_source'):
-                config.pop('file_source', None)
+        elif config.get('file_path'):
+            file_path = config.get('file_path')
+            config['file_path'] = str(add_absolute_path(
+                file_path,
+                add_base_repo_path=False
+            )) if file_path else file_path
 
         return config
 
     def is_from_another_project(self) -> bool:
-        return self.project_platform_activated and from_another_project(self.__file_source_path())
+        return self.project_platform_activated and from_another_project(
+            self.__file_source_path(),
+            other_file_path=self.pipeline.dir_path if self.pipeline else None,
+        )
 
     def get_file_path_from_source(self) -> str:
         if not self.project_platform_activated:
@@ -92,6 +100,10 @@ class ProjectPlatformAccessible:
         project_path_relative = self.__file_source_project()
         if project_path_relative:
             return os.path.join(base_repo_path(), project_path_relative)
+        else:
+            file_path = self.__file_source_path() or self.configuration.get('file_path')
+            if file_path:
+                return get_project_path_from_file_path(file_path, walk_up_parents=True)
 
     def get_project_path_from_project_name(self, project_name: str) -> str:
         if not self.project_platform_activated or not project_name:
@@ -198,6 +210,7 @@ class ProjectPlatformAccessible:
         block_class,
         block_dict,
         node: Dict = None,
+        hydrate_configuration: bool = True,
     ):
         block_type = block_dict['block_type']
         configuration = block_dict['configuration'] or {}
@@ -206,7 +219,7 @@ class ProjectPlatformAccessible:
         pipeline = block_dict['pipeline']
         uuid = block_dict['uuid']
 
-        if self.project_platform_activated:
+        if hydrate_configuration and self.project_platform_activated:
             # self.project_path
             #   /home/src/default_platform/default_repo/dbt/demo
             # node['original_file_path']
@@ -228,6 +241,24 @@ class ProjectPlatformAccessible:
             language=language,
             pipeline=pipeline,
         )
+
+    def get_repo_path_from_configuration(self) -> str:
+        # Example:
+        # default_repo/dbt/demo/models/example/model.sql
+        # main_app/platform/dbt/demo/models/model.sql
+
+        file_path = self.get_file_path_from_source()
+        if file_path:
+            file_path = add_root_repo_path_to_relative_path(file_path)
+        elif self.configuration.get('file_path'):
+            file_path = self.configuration.get('file_path')
+
+        if file_path:
+            paths = get_repo_paths_for_file_path(file_path)
+            if paths:
+                return paths.get('full_path')
+
+        return get_repo_path(root_project=False)
 
     def __file_source(self) -> str:
         return self.configuration.get('file_source') if self.configuration else None

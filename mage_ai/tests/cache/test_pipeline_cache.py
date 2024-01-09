@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from freezegun import freeze_time
@@ -33,7 +33,7 @@ class PipelineCacheTest(BaseApiTestCase):
             ),
         )
 
-        self.cache = CustomPipelineCache()
+        self.cache = CustomPipelineCache(root_project=False)
         with open(os.path.join(CURRENT_FILE_PATH, 'example_pipeline.json')) as f:
             self.pipeline_json = json.loads(f.read())['pipeline']
 
@@ -89,7 +89,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_update_models(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1)
         model = self.pipeline_json.copy()
         model['name'] = self.uuid
 
@@ -106,7 +106,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_update_model(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1)
         model = self.pipeline_json.copy()
         model['name'] = self.uuid
 
@@ -123,7 +123,7 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     def test_add_model(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
         model = self.pipeline_json.copy()
         model['name'] = self.uuid
 
@@ -146,9 +146,10 @@ class PipelineCacheTest(BaseApiTestCase):
         )
 
     async def test_initialize_cache_for_models(self):
-        now = datetime(3000, 1, 1)
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
         pipeline_dict = dict(
+            created_at=None,
             description=uuid.uuid4().hex,
             blocks=[
                 dict(
@@ -171,10 +172,12 @@ class PipelineCacheTest(BaseApiTestCase):
             uuid=uuid.uuid4().hex,
         )
 
+        repo_path = self.repo_path
+
         class TestCustomPipeline:
             @classmethod
-            def get_all_pipelines(self, *args, **kwargs):
-                return [pipeline_dict['uuid']]
+            def get_all_pipelines_all_projects(cls, repo_path=repo_path, *args, **kwargs):
+                return [(pipeline_dict['uuid'], repo_path)]
 
             @classmethod
             async def load_metadata(self, pipeline_uuid, **kwargs):

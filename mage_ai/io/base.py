@@ -2,7 +2,7 @@ import os
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import IO, Any, Callable, Union
+from typing import IO, Any, Callable, Dict, Union
 
 import pandas as pd
 from pandas import DataFrame
@@ -295,6 +295,9 @@ class BaseSQLDatabase(BaseIO):
         if not allow_reserved_words and col_new.upper() in SQL_RESERVED_WORDS:
             col_new = f'_{col_new}'
         return col_new
+
+    def execute_query_raw(self, query: str, configuration: Dict = None, **kwargs) -> None:
+        pass
 
 
 class BaseSQLConnection(BaseSQLDatabase):

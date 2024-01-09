@@ -49,6 +49,7 @@ export type InputWrapperProps = {
   buttonBeforeWidth?: number;
   compact?: boolean
   danger?: boolean;
+  darkStyle?: boolean;
   defaultColor?: boolean;
   defaultTextColor?: boolean;
   disablePointerEvents?: boolean;
@@ -60,6 +61,7 @@ export type InputWrapperProps = {
   fullWidth?: boolean;
   greyBorder?: boolean;
   holder?: string;
+  hoverPointer?: boolean;
   info?: boolean;
   inputWidth?: number;
   invertedTheme?: boolean;
@@ -89,6 +91,7 @@ export type InputWrapperProps = {
   onKeyDown?: (e: any) => void;
   onKeyPress?: (e: any) => void;
   paddingHorizontal?: number;
+  paddingLeft?: number;
   paddingRight?: number;
   paddingVertical?: number;
   passwordrules?: string;
@@ -386,11 +389,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     padding-top: ${(UNIT * 0.75) + 12}px;
   `}
 
-  ${props => props.beforeIcon && !props.compact && `
+  ${props => props.beforeIcon && !props.paddingLeft && !props.compact && `
     padding-left: ${UNIT * 5}px !important;
   `}
 
-  ${props => props.afterIcon && !props.compact && `
+  ${props => props.afterIcon && !props.paddingRight && !props.compact && `
     padding-right: ${UNIT * 5}px !important;
   `}
 
@@ -451,6 +454,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   ${props => typeof props.paddingVertical !== 'undefined' && `
     padding-bottom: ${props.paddingVertical}px;
     padding-top: ${props.paddingVertical}px;
+  `}
+
+  ${props => typeof props.paddingLeft !== 'undefined' && `
+    padding-left: ${props.paddingLeft}px !important;
   `}
 
   ${props => typeof props.paddingRight !== 'undefined' && `
@@ -657,6 +664,18 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
 
   ${props => props.defaultTextColor && `
     color: ${(props.theme.content || dark.content).default} !important;
+  `}
+
+  ${props => props.darkStyle && `
+    border: 1px solid ${(props.theme || dark).monotone.grey400};
+    box-shadow: ${(props.theme || dark).shadow.small};
+    background-color: ${(props.theme || dark).background.dashboard};
+  `}
+
+  ${props => props.hoverPointer && `
+    &:hover {
+      cursor: pointer;
+    }
   `}
 `;
 

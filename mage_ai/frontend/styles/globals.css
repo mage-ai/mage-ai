@@ -571,6 +571,12 @@ textarea {
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'codicon';
+  src: url('/monaco-editor/min/vs/base/browser/ui/codicons/codicon/codicon.ttf') format('truetype');
+}
+
+
 .react-calendar {
   width: 350px;
   max-width: 100%;
@@ -718,4 +724,3 @@ textarea {
 .react-calendar--selectRange .react-calendar__tile--hover {
   background-color: #4E4E4E;
 }
-

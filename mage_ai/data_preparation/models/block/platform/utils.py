@@ -8,11 +8,19 @@ from mage_ai.settings.platform import (
 )
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.files import find_directory
+from mage_ai.shared.path_fixer import get_path_parts, remove_base_repo_directory_name
 
 
-def from_another_project(file_path: str) -> bool:
+def from_another_project(file_path: str, other_file_path: str = None) -> bool:
     if not file_path or not project_platform_activated():
         return False
+
+    if other_file_path:
+        tup1 = get_path_parts(remove_base_repo_directory_name(file_path))
+        tup2 = get_path_parts(remove_base_repo_directory_name(other_file_path))
+
+        if len(tup1) >= 2 and len(tup2) >= 2:
+            return tup1[1] != tup2[1]
 
     active_repo_path = get_repo_path(root_project=False)
     paths = get_repo_paths_for_file_path(

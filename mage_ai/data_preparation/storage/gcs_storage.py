@@ -107,6 +107,10 @@ class GCSStorage(BaseStorage):
         buffer = io.BytesIO(self.bucket.blob(gcs_url_path(file_path)).download_as_bytes())
         return pd.read_parquet(buffer, **kwargs)
 
+    def read_polars_parquet(self, file_path: str, **kwargs) -> pl.DataFrame:
+        buffer = io.BytesIO(self.bucket.blob(gcs_url_path(file_path)).download_as_bytes())
+        return pl.read_parquet(buffer, **kwargs)
+
     def write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
         buffer = io.BytesIO()
         df.to_parquet(buffer)

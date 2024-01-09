@@ -27,6 +27,7 @@ export enum ViewKeyEnum {
   CHARTS = 'charts',
   DATA = 'data',
   EXTENSIONS = 'power_ups',
+  FILES = 'files',
   FILE_VERSIONS = 'file_versions',
   GRAPHS = 'graphs',
   INTERACTIONS = 'interactions',

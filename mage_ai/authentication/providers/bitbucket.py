@@ -9,14 +9,14 @@ from mage_ai.authentication.oauth.constants import (
     BITBUCKET_HOST,
     BITBUCKET_OAUTH_KEY,
     BITBUCKET_OAUTH_SECRET,
-    OAUTH_PROVIDER_BITBUCKET,
+    ProviderName,
 )
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.utils import get_base_url
 
 
 class BitbucketProvider(OauthProvider):
-    provider = OAUTH_PROVIDER_BITBUCKET
+    provider = ProviderName.BITBUCKET
 
     def __init__(self):
         self.hostname = BITBUCKET_HOST or 'https://bitbucket.org'

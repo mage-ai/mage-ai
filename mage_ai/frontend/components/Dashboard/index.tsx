@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
@@ -10,7 +10,6 @@ import Subheader from './Subheader';
 import TripleLayout from '@components/TripleLayout';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
 import api from '@api';
-import usePrevious from '@utils/usePrevious';
 import useProject from '@utils/models/project/useProject';
 import {
   ContainerStyle,
@@ -19,11 +18,7 @@ import {
 } from './index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import {
-  get,
-  set,
-} from '@storage/localStorage';
-import { useWindowSize } from '@utils/sizes';
+import useTripleLayout from '@components/TripleLayout/useTripleLayout';
 
 export type DashboardSharedProps = {
   after?: any;
@@ -41,13 +36,17 @@ export type DashboardSharedProps = {
 type DashboardProps = {
   addProjectBreadcrumbToCustomBreadcrumbs?: boolean;
   appendBreadcrumbs?: boolean;
+  beforeHeader?: any;
   breadcrumbs?: BreadcrumbType[];
   children?: any;
+  contained?: boolean;
   errors?: ErrorsType;
   headerMenuItems?: MenuItemType[];
   headerOffset?: number;
   hideAfterCompletely?: boolean;
   mainContainerHeader?: any;
+  setAfterWidth?: (value: number) => void;
+  setBeforeWidth?: (value: number) => void;
   setErrors?: (errors: ErrorsType) => void;
   subheaderChildren?: any;
   title: string;
@@ -58,13 +57,15 @@ function Dashboard({
   after,
   afterHeader,
   afterHidden,
-  afterWidth: afterWidthProp,
+  afterWidth,
   afterWidthOverride,
   appendBreadcrumbs,
   before,
-  beforeWidth: beforeWidthProp,
+  beforeHeader,
+  beforeWidth,
   breadcrumbs: breadcrumbsProp,
   children,
+  contained,
   errors,
   headerMenuItems,
   headerOffset,
@@ -72,6 +73,8 @@ function Dashboard({
   mainContainerHeader,
   navigationItems,
   setAfterHidden,
+  setAfterWidth,
+  setBeforeWidth,
   setErrors,
   subheaderChildren,
   subheaderNoPadding,
@@ -79,26 +82,22 @@ function Dashboard({
   uuid,
 }: DashboardProps & VerticalNavigationProps, ref) {
   const {
-    width: widthWindow,
-  } = useWindowSize();
-  const localStorageKeyAfter = `dashboard_after_width_${uuid}`;
-  const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
-
-  const mainContainerRef = useRef(null);
-  const [afterWidth, setAfterWidth] = useState(afterWidthOverride
-    ? afterWidthProp
-    : get(localStorageKeyAfter, afterWidthProp),
-  );
-  const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(before
-    ? Math.max(
-      get(localStorageKeyBefore, beforeWidthProp),
-      UNIT * 13,
-    )
-    : null,
-  );
-  const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [, setMainContainerWidth] = useState<number>(null);
+    mainContainerRef,
+    mousedownActiveAfter,
+    mousedownActiveBefore,
+    setMousedownActiveAfter,
+    setMousedownActiveBefore,
+    setWidthAfter,
+    setWidthBefore,
+    widthAfter,
+    widthBefore,
+  } = useTripleLayout(uuid, {
+    setWidthAfter: setAfterWidth,
+    setWidthBefore: setBeforeWidth,
+    widthAfter: afterWidth,
+    widthBefore: beforeWidth,
+    widthOverrideAfter: afterWidthOverride,
+  });
 
   const {
     project,
@@ -121,52 +120,6 @@ function Dashboard({
       });
     }
   }
-
-  useEffect(() => {
-    if (mainContainerRef?.current && !(afterMousedownActive || beforeMousedownActive)) {
-      setMainContainerWidth?.(mainContainerRef.current.getBoundingClientRect().width);
-    }
-  }, [
-    afterMousedownActive,
-    afterWidth,
-    beforeMousedownActive,
-    beforeWidth,
-    mainContainerRef,
-    setMainContainerWidth,
-    widthWindow,
-  ]);
-
-  useEffect(() => {
-    if (!afterMousedownActive) {
-      set(localStorageKeyAfter, afterWidth);
-    }
-  }, [
-    afterHidden,
-    afterMousedownActive,
-    afterWidth,
-    localStorageKeyAfter,
-  ]);
-
-  useEffect(() => {
-    if (!beforeMousedownActive) {
-      set(localStorageKeyBefore, beforeWidth);
-    }
-  }, [
-    beforeMousedownActive,
-    beforeWidth,
-    localStorageKeyBefore,
-  ]);
-
-  const afterWidthPropPrev = usePrevious(afterWidthProp);
-  useEffect(() => {
-    if (afterWidthOverride && afterWidthPropPrev !== afterWidthProp) {
-      setAfterWidth(afterWidthProp);
-    }
-  }, [
-    afterWidthOverride,
-    afterWidthProp,
-    afterWidthPropPrev,
-  ]);
 
   return (
     <>
@@ -198,22 +151,25 @@ function Dashboard({
             afterHeader={afterHeader}
             afterHeightOffset={HEADER_HEIGHT}
             afterHidden={afterHidden}
-            afterMousedownActive={afterMousedownActive}
-            afterWidth={afterWidth}
+            afterMousedownActive={mousedownActiveAfter}
+            afterWidth={widthAfter}
             before={before}
+            beforeHeader={beforeHeader}
             beforeHeightOffset={HEADER_HEIGHT}
-            beforeMousedownActive={beforeMousedownActive}
-            beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            beforeMousedownActive={mousedownActiveBefore}
+            beforeWidth={before ? widthBefore : VERTICAL_NAVIGATION_WIDTH}
+            contained={contained}
             headerOffset={headerOffset}
-            hideAfterCompletely={!setAfterHidden || hideAfterCompletely}
+            hideAfterCompletely={!after || !setAfterHidden || hideAfterCompletely}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
             mainContainerHeader={mainContainerHeader}
             mainContainerRef={mainContainerRef}
             setAfterHidden={setAfterHidden}
-            setAfterMousedownActive={setAfterMousedownActive}
-            setAfterWidth={setAfterWidth}
-            setBeforeMousedownActive={setBeforeMousedownActive}
-            setBeforeWidth={setBeforeWidth}
+            setAfterMousedownActive={setMousedownActiveAfter}
+            setAfterWidth={setWidthAfter}
+            setBeforeMousedownActive={setMousedownActiveBefore}
+            setBeforeWidth={setWidthBefore}
+            // beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
           >
             {subheaderChildren && (
               <Subheader noPadding={subheaderNoPadding}>

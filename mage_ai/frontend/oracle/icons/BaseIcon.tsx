@@ -4,6 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { DEFAULT_SIZE } from './shared/constants';
 
 export type BaseIconProps = {
+  active?: boolean;
   black?: boolean;
   danger?: boolean;
   default?: boolean;
@@ -47,6 +48,9 @@ export const SHARED_STYLES = css<any>`
   `}
   ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && `
     fill: ${(props.theme.content || dark.content).active};
+  `}
+  ${props => !props.useStroke && props.active && !props.disabled && `
+    fill: ${(props.theme.content || dark.content).active} !important;
   `}
   ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && props.inverted && `
     fill: ${(props.theme.content || dark.content).inverted};
@@ -92,6 +96,9 @@ export const SHARED_STYLES = css<any>`
     stroke: ${(props.theme.icons || dark.icons).neutral} !important;
   `}
   ${props => props.useStroke && !props.stroke && !props.fill && !props.disabled && `
+    stroke: ${(props.theme.content || dark.content).active};
+  `}
+  ${props => props.useStroke && props.active && !props.disabled && `
     stroke: ${(props.theme.content || dark.content).active};
   `}
   ${props => props.useStroke && !props.stroke && !props.fill && !props.disabled && props.inverted && `

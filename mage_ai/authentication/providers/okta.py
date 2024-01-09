@@ -5,7 +5,7 @@ from typing import Awaitable, Dict
 import aiohttp
 from aiohttp import BasicAuth
 
-from mage_ai.authentication.oauth.constants import OAUTH_PROVIDER_OKTA
+from mage_ai.authentication.oauth.constants import ProviderName
 from mage_ai.authentication.providers.oauth import OauthProvider
 from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.authentication.providers.utils import get_base_url
@@ -13,7 +13,7 @@ from mage_ai.settings.sso import OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_DOMAIN
 
 
 class OktaProvider(SsoProvider, OauthProvider):
-    provider = OAUTH_PROVIDER_OKTA
+    provider = ProviderName.OKTA
 
     def __init__(self):
         self.hostname = OKTA_DOMAIN_URL

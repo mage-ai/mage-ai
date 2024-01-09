@@ -7,6 +7,7 @@ from pandas import DataFrame
 from mage_ai.io.base import QUERY_ROW_LIMIT, BaseSQLDatabase, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import infer_dtypes
+from mage_ai.shared.custom_logger import DX_PRINTER
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_bigquery_type,
@@ -232,7 +233,7 @@ FROM `{database}.{schema}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
 """).to_dataframe()
 
-                full_table_name = f'{database}.{schema}.{table_name}'
+                full_table_name = f'`{database}.{schema}.{table_name}`'
 
                 table_doesnt_exist = df_existing.empty
 
@@ -317,6 +318,13 @@ WHERE table_id = '{table_name}'
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             query_string = self._clean_query(query_string)
             self.client.query(query_string, **kwargs)
+
+    def execute_query_raw(self, query: str, configuration: Dict = None, **kwargs) -> None:
+        DX_PRINTER.print(
+            f'BigQuery.execute_query_raw\n{query}',
+        )
+        job = self.client.query(query)
+        return job.result()
 
     def execute_queries(
         self,

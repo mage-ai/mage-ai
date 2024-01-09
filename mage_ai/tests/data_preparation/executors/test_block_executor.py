@@ -33,6 +33,7 @@ class BlockExecutorTest(BaseApiTestCase):
         self.block.configuration = {}
         self.block.upstream_blocks = []
         self.block.type = BlockType.DBT
+        self.block.replicated_block = None
 
         self.pipeline.get_block.return_value = self.block
         self.pipeline.repo_config.retry_config = {'retries': 3, 'delay': 1}
@@ -374,15 +375,21 @@ class BlockExecutorTest(BaseApiTestCase):
                 executor.execute(block_run_id=block_run.id, on_complete=__on_complete)
 
     def test_block_run_for_dynamic_child_block(self):
-        block1 = self.blocks[0]
+        pipeline, blocks = create_pipeline_with_blocks(
+            'dynamic_child_block',
+            self.repo_path,
+            return_blocks=True,
+        )
+
+        block1 = blocks[0]
         block1.configuration = dict(dynamic=True)
-        self.pipeline1.add_block(block1)
-        block2 = self.blocks[1]
+        pipeline.add_block(block1)
+        block2 = blocks[1]
 
         pipeline_run = PipelineRun.create(
             execution_date=datetime.utcnow(),
             pipeline_schedule_id=0,
-            pipeline_uuid=self.pipeline1.uuid,
+            pipeline_uuid=pipeline.uuid,
         )
         block_run = BlockRun.create(
             block_uuid=block2.uuid,
@@ -390,19 +397,17 @@ class BlockExecutorTest(BaseApiTestCase):
         )
 
         executor = BlockExecutor(
-            self.pipeline1,
+            pipeline,
             block_run.block_uuid,
+            block_run_id=block_run.id,
             execution_partition=pipeline_run.execution_partition,
         )
 
         self.assertTrue(isinstance(executor.block, DynamicChildBlockFactory))
-        self.assertTrue(executor.block.pipeline_run is None)
 
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
             mock_execute_sync.assert_called_once()
-
-            self.assertEqual(executor.block.pipeline_run.id, pipeline_run.id)
 
         block_run_dynamic_child_spawn = BlockRun.create(
             block_uuid=f'{block2.uuid}:0',
@@ -412,46 +417,47 @@ class BlockExecutorTest(BaseApiTestCase):
             }))
         )
         executor = BlockExecutor(
-            self.pipeline1,
+            pipeline,
             block_run_dynamic_child_spawn.block_uuid,
             execution_partition=pipeline_run.execution_partition,
         )
 
         self.assertFalse(isinstance(executor.block, DynamicChildBlockFactory))
 
-        with patch.object(self.pipeline1, 'get_block', lambda _x: block2):
-            with patch.object(block2, 'execute_sync') as mock_execute_sync:
-                executor.execute(
-                    block_run_id=block_run_dynamic_child_spawn.id,
-                    pipeline_run_id=pipeline_run.id,
-                )
+        # with patch.object(pipeline, 'get_block', lambda _x: block2):
+        with patch.object(block2, 'execute_sync') as mock_execute_sync:
+            executor.execute(
+                block_run_id=block_run_dynamic_child_spawn.id,
+                pipeline_run_id=pipeline_run.id,
+            )
 
-                mock_execute_sync.assert_called_once_with(
-                    analyze_outputs=False,
-                    block_run_outputs_cache=None,
-                    dynamic_block_index=None,
-                    dynamic_block_indexes=dict({
-                        block1.uuid: 0,
-                    }),
-                    dynamic_block_uuid=None,
-                    dynamic_upstream_block_uuids=None,
-                    execution_partition=pipeline_run.execution_partition,
-                    global_vars=None,
-                    input_from_output=None,
-                    logger=ANY,
-                    logging_tags=dict(
-                        block_run_id=block_run_dynamic_child_spawn.id,
-                        block_type=block2.type,
-                        block_uuid=block_run_dynamic_child_spawn.block_uuid,
-                        pipeline_run_id=pipeline_run.id,
-                        pipeline_uuid=self.pipeline1.uuid,
-                    ),
-                    run_all_blocks=True,
-                    runtime_arguments=None,
-                    store_variables=True,
-                    update_status=False,
-                    verify_output=True,
-                )
+            mock_execute_sync.assert_called_once_with(
+                analyze_outputs=False,
+                block_run_outputs_cache=None,
+                dynamic_block_index=None,
+                dynamic_block_indexes=dict({
+                    block1.uuid: 0,
+                }),
+                dynamic_block_uuid=None,
+                dynamic_upstream_block_uuids=None,
+                execution_partition=pipeline_run.execution_partition,
+                global_vars=None,
+                input_from_output=None,
+                logger=ANY,
+                logging_tags=dict(
+                    block_run_id=block_run_dynamic_child_spawn.id,
+                    block_type=block2.type,
+                    block_uuid=block_run_dynamic_child_spawn.block_uuid,
+                    pipeline_run_id=pipeline_run.id,
+                    pipeline_uuid=pipeline.uuid,
+                ),
+                metadata=None,
+                run_all_blocks=True,
+                runtime_arguments=None,
+                store_variables=True,
+                update_status=False,
+                verify_output=True,
+            )
 
     def test_block_run_for_dynamic_child_block_reduce_output(self):
         block1 = self.blocks[0]

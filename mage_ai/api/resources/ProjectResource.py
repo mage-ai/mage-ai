@@ -1,13 +1,26 @@
+import os
+import subprocess
 import uuid
+
+import yaml
 
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block_action_object import BlockActionObjectCache
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.data_preparation.repo_manager import (
+    ProjectType,
+    get_repo_config,
+    init_repo,
+)
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.settings.platform import activate_project, project_platform_activated
-from mage_ai.shared.hash import merge_dict
+from mage_ai.settings.platform import (
+    activate_project,
+    project_platform_activated,
+    update_settings,
+)
+from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.hash import combine_into, merge_dict
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 
@@ -17,8 +30,11 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
     model = merge_dict(project.repo_config.to_dict(), dict(
         emr_config=project.emr_config,
         features=project.features,
+        features_defined=project.features_defined,
+        features_override=project.features_override,
         latest_version=await project.latest_version(),
         name=project.name,
+        platform_settings=project.platform_settings,
         project_uuid=project.project_uuid,
         projects=project.projects(),
         remote_variables_dir=project.remote_variables_dir,
@@ -27,6 +43,7 @@ async def build_project(repo_config=None, root_project: bool = False, **kwargs):
         settings=project.settings,
         spark_config=project.spark_config,
         version=project.version,
+        workspace_config_defaults=project.workspace_config_defaults,
     ))
 
     if kwargs:
@@ -39,19 +56,82 @@ class ProjectResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
-        project = await self.member(None, user, **kwargs)
-        collection = [project.model]
 
+        project = await self.member(None, user, **kwargs)
+
+        other_projects = []
         if not project.model.get('root_project') and project_platform_activated():
             root_project = await self.member(None, user, root_project=True, **kwargs)
             if root_project and root_project.model and root_project.model.get('projects'):
-                collection.append(root_project)
+                other_projects.append(root_project)
+
+        features = {}
+        if other_projects:
+            for project2 in other_projects:
+                combine_into(project2.features_defined or {}, features)
+
+        combine_into(project.features_defined or {}, features)
+
+        features2 = project.features or {}
+        combine_into(features, features2)
+
+        project.features = features2
 
         return self.build_result_set(
-            collection,
+            [project] + other_projects,
             user,
             **kwargs,
         )
+
+    @classmethod
+    @safe_db_query
+    async def create(self, payload, user, **kwargs):
+        project_uuid = payload.get('uuid')
+        project_repo_path = payload.get('repo_path')
+        project_type = payload.get('type')
+
+        directory = os.path.join(base_repo_path(), project_repo_path)
+        if ProjectType.STANDALONE == project_type:
+            init_repo(
+                os.path.join(directory, project_uuid),
+                project_type=project_type,
+                project_uuid=project_uuid,
+            )
+        elif 'dbt' == project_type:
+            proc = subprocess.run(
+                [
+                    'dbt',
+                    'init',
+                    project_uuid,
+                    '-s',
+                ],
+                cwd=directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+            )
+            proc.check_returncode()
+
+            with open(os.path.join(directory, project_uuid, 'profiles.yml'), 'w') as f:
+                content = yaml.safe_dump({
+                    project_uuid: dict(
+                        outputs=dict(
+                            dev=dict(
+                                dbname='',
+                                host='',
+                                password='postgres',
+                                port=5432,
+                                schema='public',
+                                type='postgres',
+                                user='postgres',
+                            ),
+                        ),
+                        target='dev',
+                    ),
+                })
+                f.write(content)
+
+        return self({}, user, **kwargs)
 
     @classmethod
     @safe_db_query
@@ -64,7 +144,14 @@ class ProjectResource(GenericResource):
         if payload.get('activate_project'):
             activate_project(payload.get('activate_project'))
 
-        repo_config = get_repo_config()
+        platform_settings = payload.get('platform_settings')
+        root_project = payload.get('root_project')
+        repo_config = get_repo_config(root_project=True if root_project else False)
+
+        if root_project and platform_settings:
+            update_settings(settings=platform_settings)
+            self.model = await build_project(repo_config)
+            return self
 
         data = {}
         should_log_project = self.model.get('help_improve_mage') or False

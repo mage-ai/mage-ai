@@ -24,6 +24,7 @@ import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { pushAtIndex } from '@utils/array';
+import { selectEntriesWithValues } from '@utils/hash';
 
 type FileVersionsProps = {
   onActionCallback?: (file: FileType, opts?: {
@@ -58,10 +59,10 @@ function FileVersions({
 
   const { data: dataFileVersions1, mutate: fetchFileVersions1 } =
     api.file_versions.files.list(urlID,
-    {
+    selectEntriesWithValues({
       block_uuid: selectedBlock?.uuid,
       pipeline_uuid: pipeline?.uuid,
-    },
+    }),
   );
   const fileVersions: FileType[] = useMemo(() => dataFileVersions1?.file_versions || [], [
     dataFileVersions1,

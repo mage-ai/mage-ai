@@ -317,9 +317,7 @@ export default interface BlockType {
   };
   name?: string;
   outputs?: OutputType[];
-  pipelines?: {
-    [uuid: string]: BlockPipelineType;
-  };
+  pipelines?: BlockPipelineType[];
   priority?: number;
   replicated_block?: string;
   retry_config?: BlockRetryConfigType;

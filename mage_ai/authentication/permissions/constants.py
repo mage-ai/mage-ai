@@ -18,6 +18,7 @@ class EntityName(str, Enum):
     Chart = 'Chart'
     ClientPage = 'ClientPage'
     Cluster = 'Cluster'
+    CommandCenterItem = 'CommandCenterItem'
     ComputeCluster = 'ComputeCluster'
     ComputeConnection = 'ComputeConnection'
     ComputeService = 'ComputeService'
@@ -84,6 +85,10 @@ class EntityName(str, Enum):
     User = 'User'
     UserRole = 'UserRole'
     Variable = 'Variable'
+    VersionControlBranch = 'VersionControlBranch'
+    VersionControlFile = 'VersionControlFile'
+    VersionControlProject = 'VersionControlProject'
+    VersionControlRemote = 'VersionControlRemote'
     Widget = 'Widget'
     Workspace = 'Workspace'
 

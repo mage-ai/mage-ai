@@ -27,6 +27,8 @@ token_uri: str
 type: str
 ```
 
+<br />
+
 ### Optional Configs
 
 | Key | Description | Sample value
@@ -34,3 +36,14 @@ type: str
 | `batch_fetch_limit` | The number of rows to fetch in each batch (default to 50k). You can specify a larger batch size if your instance has higher memory. | `50000`
 
 <br />
+
+### Required permissions
+
+Your BigQuery account should at least have the below permissiont to use the BigQuery source
+```
+bigquery.jobs.create
+bigquery.readsessions.create
+bigquery.readsessions.getData
+```
+
+Your account should also have "BigQuery Data Viewer" role for the BigQuery dataset you specified in the config.

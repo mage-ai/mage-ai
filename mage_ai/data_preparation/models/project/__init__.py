@@ -3,11 +3,13 @@ from typing import Dict, List
 
 import aiohttp
 
+from mage_ai.cluster_manager.constants import KUBE_NAMESPACE, ClusterType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.data_preparation.repo_manager import get_cluster_type, get_repo_config
 from mage_ai.server.constants import VERSION
 from mage_ai.settings.platform import (
     active_project_settings,
+    platform_settings,
     project_platform_activated,
     project_platform_settings,
 )
@@ -35,6 +37,34 @@ class Project():
             root_project=self.root_project,
         )
         self.version = VERSION
+        self._features = None
+
+        self.__repo_config_root_project = None
+
+        if project_platform_activated():
+            self.__repo_config_root_project = get_repo_config(
+                repo_path=get_repo_path(root_project=True),
+                root_project=True,
+            )
+
+    @property
+    def workspace_config_defaults(self) -> Dict:
+        config = self.repo_config.workspace_config_defaults or {}
+        cluster_type = get_cluster_type()
+        try:
+            if cluster_type == ClusterType.K8S:
+                from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                    WorkloadManager,
+                )
+                workload_manager = WorkloadManager(os.getenv(KUBE_NAMESPACE))
+                k8s_default_values = workload_manager.get_default_values()
+
+                if not config.get('k8s'):
+                    config['k8s'] = k8s_default_values
+        except Exception:
+            pass
+
+        return config
 
     @property
     def help_improve_mage(self) -> bool:
@@ -50,14 +80,50 @@ class Project():
 
     @property
     def features(self) -> Dict:
-        data = {}
-        features = self.repo_config.features
+        if self._features:
+            return self._features
+
+        self._features = {}
+        features = self.features_defined
 
         for uuid in FeatureUUID:
             key = uuid.value
-            data[key] = features.get(key) if features else None
+            self._features[key] = features.get(key) if features else None
+
+        return self._features
+
+    @features.setter
+    def features(self, x):
+        self._features = x
+
+    @property
+    def features_defined(self) -> Dict:
+        data = {}
+        features = self.repo_config.features if self.repo_config else {}
+
+        if project_platform_activated() and self.__repo_config_root_project:
+            settings = platform_settings()
+            if settings.get('features') and (settings.get('features') or {}).get('override'):
+                features.update(self.features_override)
+
+        for uuid in FeatureUUID:
+            key = uuid.value
+            if FeatureUUID.PROJECT_PLATFORM == uuid:
+                data[key] = project_platform_activated()
+            else:
+                if features and key in features:
+                    data[key] = features.get(key)
 
         return data
+
+    @property
+    def features_override(self) -> Dict:
+        if project_platform_activated() and self.__repo_config_root_project:
+            settings = self.platform_settings()
+            if settings.get('features') and (settings.get('features') or {}).get('override'):
+                return self.__repo_config_root_project.features or {}
+
+        return {}
 
     @property
     def emr_config(self) -> Dict:
@@ -85,6 +151,10 @@ class Project():
 
         return False
 
+    def platform_settings(self) -> Dict:
+        if project_platform_activated():
+            return platform_settings(mage_projects_only=True)
+
     def repo_path_for_database_query(self, key: str) -> List[str]:
         if self.settings:
             query_arr = dig(self.settings, ['database', 'query', key])
@@ -102,9 +172,9 @@ class Project():
         return project_platform_settings(mage_projects_only=True)
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
-        feature_enabled = self.repo_config.features.get(feature_name.value, False)
+        feature_enabled = self.features.get(feature_name.value, False)
 
-        if is_debug():
+        if is_debug() and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
             print(f'[Project.is_feature_enabled]: {feature_name} | {feature_enabled}')
 
         return feature_enabled

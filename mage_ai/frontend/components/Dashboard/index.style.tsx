@@ -27,6 +27,7 @@ export const ContainerStyle = styled.div`
 type VerticalNavigationStyleProps = {
   aligned?: 'left' | 'right';
   borderless?: boolean;
+  children?: any;
   showMore?: boolean;
 };
 

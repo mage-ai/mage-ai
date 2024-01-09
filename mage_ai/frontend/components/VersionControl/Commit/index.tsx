@@ -296,11 +296,11 @@ function Commit({
                 // @ts-ignore
                 actionGitBranch({
                   git_custom_branch: {
-                    action_type: ACTION_PUSH,
-                    [ACTION_PUSH]: {
+                    action_payload: {
                       branch: actionBranchName,
                       remote: actionRemoteName,
                     },
+                    action_type: ACTION_PUSH,
                   },
                 });
               }}

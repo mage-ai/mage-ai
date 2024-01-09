@@ -14,7 +14,13 @@ from mage_ai.shared.hash import merge_dict
 
 
 class PySparkBlockExecutor(BlockExecutor):
-    def __init__(self, pipeline: Pipeline, block_uuid: str, execution_partition: str = None):
+    def __init__(
+        self,
+        pipeline: Pipeline,
+        block_uuid: str,
+        execution_partition: str = None,
+        **kwargs,
+    ):
         super().__init__(pipeline, block_uuid, execution_partition=execution_partition)
         self.resource_manager = EmrResourceManager(
             pipeline.repo_config.s3_bucket,

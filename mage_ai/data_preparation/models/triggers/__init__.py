@@ -29,6 +29,13 @@ class ScheduleType(str, enum.Enum):
     TIME = 'time'
 
 
+SCHEDULE_TYPE_TO_LABEL = {
+  ScheduleType.API: 'API',
+  ScheduleType.EVENT: 'Event',
+  ScheduleType.TIME: 'Schedule',
+}
+
+
 class ScheduleInterval(str, enum.Enum):
     ONCE = '@once'
     HOURLY = '@hourly'
