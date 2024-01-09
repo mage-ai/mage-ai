@@ -92,6 +92,7 @@ export default {
     danger: RED_XLIGHT,
     dark: GRAY,
     dashboard: '#18181C',
+    dashboardTransparent: 'rgba(24, 24, 28, 0.1)',
     header: '#1B1B1B',
     menu: NAVY,
     muted: SILVER,

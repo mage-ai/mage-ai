@@ -1,6 +1,7 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
 import { ITEM_ROW_HEIGHT, ITEM_ROW_MAX_WIDTH, MAX_WIDTH } from './ItemRow/index.style';
@@ -8,6 +9,7 @@ import { ItemRowClassNameEnum } from './constants';
 import { LARGE } from '@oracle/styles/fonts/sizes';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { getApplicationColors } from '@components/ApplicationManager/index.style';
 
 export const COMPONENT_UUID = 'command-center';
 
@@ -50,7 +52,7 @@ export const ContainerStyle = styled.div<{
   z-index: 100;
 
   ${props => `
-    background-color: ${(props.theme || dark).background.dashboard};
+    background-color: ${(props.theme || dark).background.dashboardTransparent};
     box-shadow: ${(props.theme || dark).shadow.window};
     border: 1px solid ${(props.theme || dark).monotone.grey400};
 
@@ -63,14 +65,23 @@ export const ContainerStyle = styled.div<{
     }
 
     &.version_control {
-      border: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+      border: 1px solid ${getApplicationColors(
+      ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+      props,
+    )?.accent};
 
       #${INPUT_CONTAINER_ID} {
-        border-bottom: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+        border-bottom: 1px solid ${getApplicationColors(
+        ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+        props,
+      )?.accent};
       }
 
       #${OUTPUT_CONTAINER_ID} {
-        border-bottom: 1px solid ${(props.theme || dark).accent.negativeTransparent};
+        border-bottom: 1px solid ${getApplicationColors(
+        ApplicationExpansionUUIDEnum.VersionControlFileDiffs,
+        props,
+      )?.accent};
       }
     }
   `}

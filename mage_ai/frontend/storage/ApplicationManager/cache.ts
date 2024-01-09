@@ -14,10 +14,18 @@ import {
 import { get, set } from '../localStorage';
 import { selectEntriesWithValues } from '@utils/hash';
 
-function buildDefaultLayout({
-  height: totalHeight,
-  width: totalWidth,
+export function buildDefaultLayout({
+  height: totalHeightProp,
+  width: totalWidthProp,
+} = {
+  height: null,
+  width: null,
 }): LayoutType {
+  const totalHeight = totalHeightProp
+    || typeof window !== 'undefined' ? window?.innerHeight : 1200;
+  const totalWidth = totalWidthProp
+    || typeof window !== 'undefined' ? window?.innerWidth : 1500;
+
   const height = Math.min(totalHeight, 1200);
   const width = Math.min(totalWidth, 1500);
 
@@ -65,10 +73,7 @@ export function getApplications({
 
 function updateLayout(layout: LayoutType, layoutPrev?: LayoutType): LayoutType {
   if (!layout || !layoutPrev) {
-    return buildDefaultLayout({
-      height: typeof window !== 'undefined' ? window?.innerHeight : null,
-      width: typeof window !== 'undefined' ? window?.innerWidth : null,
-    });
+    return buildDefaultLayout();
   }
 
   // @ts-ignore

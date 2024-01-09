@@ -21,8 +21,10 @@ import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { ContainerStyle } from './index.style';
 import { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { KeyValueType } from '@interfaces/CommandCenterType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { VersionControlFileType } from '@interfaces/VersionControlType';
+import { getApplicationColors } from '@components/ApplicationManager/index.style';
 import { getFilenameFromFilePath } from '@components/Files/utils';
 import { onSuccess } from '@api/utils/response';
 import { range, sortByKey } from '@utils/array';
@@ -280,8 +282,9 @@ function VersionControlFileDiffs({
             }}
             selectedTabUUID={selectedTab?.uuid}
             tabs={tabs}
-            underlineColor='#4877FF'
+            underlineColor={getApplicationColors(uuid)?.accent}
             underlineStyle
+            uppercase={false}
           />
         )}
         beforeHeightOffset={0}

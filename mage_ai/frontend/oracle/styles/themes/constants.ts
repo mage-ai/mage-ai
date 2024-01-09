@@ -38,6 +38,7 @@ export type ThemeType = {
     danger: string;
     dark: string;
     dashboard: string;
+    dashboardTransparent: string;
     header: string;
     menu: string;
     muted: string;

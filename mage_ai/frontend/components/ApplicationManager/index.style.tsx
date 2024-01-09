@@ -1,11 +1,26 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';;
+import { ApplicationExpansionUUIDEnum } from '@storage/ApplicationManager/constants';
 import { SCROLLBAR_WIDTH, ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
+import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
+import { UNIT } from '@oracle/styles/units/spacing';
 
+const HEADER_HEIGHT = 6 * UNIT;
+const RESIZE_SIZE = 1 * UNIT;
+
+export function getApplicationColors(uuid: ApplicationExpansionUUIDEnum, props = {}): {
+  accent: string;
+} {
+  return {
+    accent: (props.theme || dark)?.accent?.negativeTransparent,
+  };
+}
 
 export const ContainerStyle = styled.div`
+  border-radius: ${BORDER_RADIUS_XLARGE}px;
   box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
   position: fixed;
 `;
 
@@ -26,12 +41,18 @@ export const ContentStyle = styled.div`
   }
 
   bottom: 0;
-  height 100%;
+  height calc(100% - ${HEADER_HEIGHT}px);
   left: 0;
   position: absolute;
   right: 0;
-  top: 0;
+  top: ${HEADER_HEIGHT}px;
   width 100%;
+`;
+
+export const HeaderStyle = styled.div`
+  position: fixed;
+  height: ${HEADER_HEIGHT}px;
+  z-index: 5;
 `;
 
 export const InnerStyle = styled.div`
@@ -40,7 +61,7 @@ export const InnerStyle = styled.div`
   left: 0;
   position: absolute;
   right: 0;
-  top: 0;
+  top: 0px;
 `;
 
 const RESIZE_STYLES = css`
@@ -60,7 +81,7 @@ export const ResizeLeftStyle = styled.div`
   left: 0;
   top: 0;
   height: 100%;
-  width: 20px;
+  width: ${RESIZE_SIZE}px;
 
   &:hover {
     cursor: col-resize;
@@ -74,7 +95,7 @@ export const ResizeRightStyle = styled.div`
   right: 0;
   top: 0;
   height: 100%;
-  width: 20px;
+  width: ${RESIZE_SIZE}px;
 
   &:hover {
     cursor: col-resize;
@@ -87,7 +108,7 @@ export const ResizeTopStyle = styled.div`
   left: 0;
   right: 0;
   top: 0;
-  height: 20px;
+  height: ${RESIZE_SIZE}px;
   width: 100%;
 
   &:hover {
@@ -101,7 +122,7 @@ export const ResizeBottomStyle = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  height: 20px;
+  height: ${RESIZE_SIZE}px;
   width: 100%;
 
   &:hover {

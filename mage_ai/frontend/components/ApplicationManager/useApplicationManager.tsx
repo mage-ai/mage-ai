@@ -1,11 +1,13 @@
 import { createRef, useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import Header from './Header';
 import VersionControlFileDiffs from '@components/VersionControlFileDiffs';
 import useResizeElement from '@utils/useResizeElement';
 import { ApplicationConfiguration } from '@components/CommandCenter/constants';
 import { ApplicationExpansionUUIDEnum, StatusEnum } from '@storage/ApplicationManager/constants';
 import {
+  buildDefaultLayout,
   closeApplication as closeApplicationFromCache,
   getApplications as getApplicationsFromCache,
   updateApplication,
@@ -42,6 +44,8 @@ export default function useApplicationManager({
   renderApplications: () => Element;
   startApplication: (applicationConfiguration: ApplicationConfiguration) => void;
 } {
+  const [selectedTab, setSelectedTab] = useState();
+
   const refRootApplication = useRef(null);
   // References to the application configurations in memory.
   const refApplications = useRef({});
@@ -196,6 +200,7 @@ export default function useApplicationManager({
           z,
         },
       } = layout;
+
       const expansion = (
         <ContainerStyle
           ref={ref}
@@ -210,6 +215,34 @@ export default function useApplicationManager({
           <ResizeLeftStyle ref={rr?.left} />
           <ResizeRightStyle ref={rr?.right} />
           <ResizeTopStyle ref={rr?.top} />
+
+          <Header
+            applications={getApplicationsFromCache()}
+            closeApplication={(uuidApp: ApplicationExpansionUUIDEnum) => closeApplication(uuidApp)}
+            resetLayout={(uuidApp: ApplicationExpansionUUIDEnum) => {
+              const element = refExpansions?.current?.[uuidApp];
+              console.log(element)
+              if (element) {
+                const {
+                  layout: {
+                    dimension,
+                    position,
+                  },
+                } = updateApplication({
+                  layout: buildDefaultLayout(),
+                  uuid: uuidApp,
+                });
+
+                console.log(dimension?.height)
+
+                element.current.style.height = `${dimension?.height}px`;
+                element.current.style.left = `${position?.x}px`;
+                element.current.style.top = `${position?.y}px`;
+                element.current.style.width = `${dimension?.width}px`;
+              }
+            }}
+            setSelectedTab={setSelectedTab}
+          />
 
           <ContentStyle>
             <InnerStyle>
