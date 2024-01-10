@@ -282,24 +282,25 @@ WHERE table_id = '{table_name}'
 
                 column_types = self.get_column_types(schema, table_name)
 
-                for col in df.columns:
-                    col_type = column_types.get(col)
-                    if not col_type:
-                        continue
+                if df is not None:
+                    for col in df.columns:
+                        col_type = column_types.get(col)
+                        if not col_type:
+                            continue
 
-                    null_rows = df[col].isnull()
-                    if col_type.startswith('ARRAY<STRUCT'):
-                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
-                    elif col_type.startswith('ARRAY'):
-                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [])
-                    elif col_type.startswith('STRUCT'):
-                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: {})
+                        null_rows = df[col].isnull()
+                        if col_type.startswith('ARRAY<STRUCT'):
+                            df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
+                        elif col_type.startswith('ARRAY'):
+                            df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [])
+                        elif col_type.startswith('STRUCT'):
+                            df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: {})
 
-                # Clean column names
-                if type(df) is DataFrame:
-                    df.columns = df.columns.str.replace(' ', '_')
+                    # Clean column names
+                    if type(df) is DataFrame:
+                        df.columns = df.columns.str.replace(' ', '_')
 
-                self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+                    self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
         if verbose:
             with self.printer.print_msg(f'Exporting data to table \'{table_id}\''):

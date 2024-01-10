@@ -220,10 +220,12 @@ export default function useCodeBlockProps({
       </FlexContainer>
     ),
     icon: (
-      <PauseV2
-        active
-        size={ICON_SIZE}
-      />
+      <Circle borderOnly danger size={ICON_SIZE * 1.5}>
+        <Close
+          danger
+          size={ICON_SIZE * 0.75}
+        />
+      </Circle>
     ),
     keyTextsPosition: KeyTextsPostitionEnum.RIGHT,
     keyboardShortcutValidation: !shortcutsEnabled ? null : ({
