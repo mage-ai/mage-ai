@@ -88,7 +88,7 @@ function Configuration({
   ), []), [
     projects
   ]);
-  const target = useMemo(() => targets?.find(({ uuid }) => attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET] === uuid), [
+  const target = useMemo(() => targets?.find(targetName => attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET] === targetName), [
     targets,
   ]);
 
@@ -110,10 +110,10 @@ function Configuration({
     }
 
     const targetName = attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET];
-    if ((targetName && !target) || (((target || !targetsAll?.find(target => target?.uuid === targetName)) && targetName))) {
+    if ((targetName && !target) || (((target || !targetsAll?.find(tar => tar === targetName)) && targetName))) {
       setAttributesManuallyEnter(prev => ({
         ...prev,
-        [CONFIG_KEY_DBT_PROFILE_TARGET]: targetName !== target?.uuid || (targetName && !target),
+        [CONFIG_KEY_DBT_PROFILE_TARGET]: targetName !== target || (targetName && !target),
       }));
     }
   }, [
@@ -233,7 +233,7 @@ function Configuration({
       value: attributes?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET],
     };
 
-    if (attributesManuallyEnter?.[CONFIG_KEY_DBT_PROFILES_FILE_PATH]) {
+    if (attributesManuallyEnter?.[CONFIG_KEY_DBT_PROFILE_TARGET]) {
       key = 'textInput';
       opts = {
         ...opts,
@@ -260,8 +260,6 @@ function Configuration({
     configurationOptions,
     targets,
   ]);
-
-  console.log(inputTarget)
 
   return (
     <Spacing p={PADDING_UNITS}>
