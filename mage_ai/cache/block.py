@@ -150,7 +150,7 @@ class BlockCache(BaseCache):
                 pipeline_dict = cache_dict.get('pipeline') or {}
 
                 return pipeline_dict.get('uuid') != pipeline_uuid and \
-                    pipeline_dict.get('repo_path') != repo_path
+                    pipeline_dict.get('repo_path') == repo_path
 
             pipelines_arr = list(filter(__filter, pipelines_arr))
             pipelines_arr.append(build_pipeline_dict(
@@ -195,7 +195,7 @@ class BlockCache(BaseCache):
         def __filter(cache_dict: Dict, pipeline_uuid=pipeline_uuid, repo_path=repo_path) -> bool:
             pipeline_dict = cache_dict.get('pipeline') or {}
             return pipeline_dict.get('uuid') != pipeline_uuid and \
-                pipeline_dict.get('repo_path') != repo_path
+                pipeline_dict.get('repo_path') == repo_path
 
         pipelines = (mapping.get(key) or {}).get('pipelines', [])
 
