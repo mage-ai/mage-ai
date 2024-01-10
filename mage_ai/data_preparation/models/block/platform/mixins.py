@@ -82,7 +82,7 @@ class ProjectPlatformAccessible:
 
     def is_from_another_project(self) -> bool:
         return self.project_platform_activated and from_another_project(
-            self.__file_source_path(),
+            self.file_source_path(),
             other_file_path=self.pipeline.dir_path if self.pipeline else None,
         )
 
@@ -90,7 +90,7 @@ class ProjectPlatformAccessible:
         if not self.project_platform_activated:
             return
 
-        return self.__file_source_path()
+        return self.file_source_path()
 
     def get_project_path_from_source(self) -> str:
         if not self.project_platform_activated:
@@ -101,7 +101,7 @@ class ProjectPlatformAccessible:
         if project_path_relative:
             return os.path.join(base_repo_path(), project_path_relative)
         else:
-            file_path = self.__file_source_path() or self.configuration.get('file_path')
+            file_path = self.file_source_path() or self.configuration.get('file_path')
             if file_path:
                 return get_project_path_from_file_path(file_path, walk_up_parents=True)
 
@@ -122,7 +122,7 @@ class ProjectPlatformAccessible:
             )
 
             # A project profile hasn’t been selected yet for this block (it’s done through the UI).
-            root_project_path, path, file_path_base = get_path_parts(self.__file_source_path())
+            root_project_path, path, file_path_base = get_path_parts(self.file_source_path())
             project_name = os.path.join(path, DBT_DIRECTORY_NAME)
 
         return add_root_repo_path_to_relative_path(project_name)
@@ -263,7 +263,7 @@ class ProjectPlatformAccessible:
     def __file_source(self) -> str:
         return self.configuration.get('file_source') if self.configuration else None
 
-    def __file_source_path(self) -> str:
+    def file_source_path(self) -> str:
         file_source = self.__file_source()
         return file_source.get('path') if file_source else None
 

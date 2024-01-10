@@ -97,6 +97,7 @@ from mage_ai.shared.path_fixer import (
     add_absolute_path,
     add_root_repo_path_to_relative_path,
     get_path_parts,
+    remove_base_repo_path,
 )
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
@@ -3227,18 +3228,72 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         2. Update the folder of variable
         3. Update upstream and downstream relationships
         """
+        file_extension = Path(self.file_path).suffix if self.file_path else ''
+        directory_name = self.file_directory_name(self.type)
+
         old_uuid = self.uuid
         # This has to be here
         old_file_path = self.file_path
         block_content = self.content
 
+        # load_titanic
         new_uuid = clean_name(name)
         self.name = name
         self.uuid = new_uuid
+
+        # This file has a path in its file_source that must be updated.
+        if project_platform_activated() and \
+                self.file_source_path() and \
+                add_absolute_path(self.file_source_path()) == self.file_path:
+
+            #  /home/src/data-vault/perftools/mage/data_loaders/team/illusory_glitter
+            old_file_path_without_extension = str(Path(old_file_path).with_suffix(''))
+            #  /home/src/data-vault/perftools/mage/data_loaders/team
+            old_file_path_without_uuid = str(Path(old_file_path_without_extension.replace(
+                str(Path(old_uuid)),
+                '',
+            )))
+
+            #  perftools/mage/data_loaders/team
+            old_file_path_without_repo_path = remove_base_repo_path(old_file_path_without_uuid)
+            #  perftools/mage
+            path_without_block_directory = str(old_file_path_without_repo_path).split(
+                directory_name,
+            )[0]
+
+            file_extension_new = Path(self.uuid).suffix or file_extension
+            # perftools/mage/data_loaders/load_titanic.py
+            new_path = str(Path(os.path.join(
+                path_without_block_directory,
+                directory_name,
+                str(Path(self.uuid).with_suffix('')),
+            )).with_suffix(file_extension_new))
+
+            configuration = self.configuration or {}
+            if not configuration.get('file_source'):
+                configuration['file_source'] = {}
+            configuration['file_source']['path'] = new_path
+            self.configuration = configuration
+
         # This has to be here
         new_file_path = self.file_path
 
         if self.pipeline is not None:
+            DX_PRINTER.critical(
+                block=self,
+                old_uuid=old_uuid,
+                old_file_path=old_file_path,
+                block_content=block_content,
+                new_uuid=new_uuid,
+                name=self.name,
+                uuid=self.uuid,
+                file_path=new_file_path,
+                pipeline=self.pipeline.uuid,
+                repo_path=self.pipeline.repo_path,
+                configuration=self.configuration,
+                __uuid='__update_name',
+            )
+
             if self.pipeline.has_block(
                 new_uuid,
                 block_type=self.type,
