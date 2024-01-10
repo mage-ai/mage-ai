@@ -63,7 +63,7 @@ class VersionControlFactory(BaseFactory):
             # results from previously executed actions since the results are stored in a ref.
             result = results[-1]
             if result and result.get('value'):
-                item_project = Project.load(**result.get('value'))
+                item_project = Project.load(user=self.user, **result.get('value'))
                 item = await build(self, item_project)
                 item['score'] = 999
                 items.append(item)
@@ -72,7 +72,7 @@ class VersionControlFactory(BaseFactory):
                 if result.get('value'):
                     value = result.get('value')
 
-                    item_project = Project.load(uuid=value.get('project_uuid'))
+                    item_project = Project.load(user=self.user, uuid=value.get('project_uuid'))
                     model = Branch.load(
                         current=value.get('current'),
                         name=value.get('name'),
@@ -96,6 +96,7 @@ class VersionControlFactory(BaseFactory):
             """
             if ObjectType.PROJECT == self.item.object_type:
                 item_project = Project.load(**self.item.metadata.project.to_dict())
+                item_project.hydrate(user=self.user)
 
                 await build_update_project(self, item_project, items)
                 await build_delete_project(self, item_project, items)
@@ -122,6 +123,7 @@ class VersionControlFactory(BaseFactory):
                 branch_factory = self.build_another_factory(BranchFactory)
                 items.extend(await branch_factory.fetch_items(item=initial_item))
                 item_project = Project.load(**self.item.metadata.project.to_dict())
+                item_project.hydrate(user=self.user)
 
             if ObjectType.REMOTE == self.item.object_type:
                 # Detail view of remote with list of actions
@@ -129,6 +131,7 @@ class VersionControlFactory(BaseFactory):
                 # Update
                 # Remote
                 item_project = Project.load(**self.item.metadata.project.to_dict())
+                item_project.hydrate(user=self.user)
                 if self.item.metadata.remote:
                     remote = Remote.load(**self.item.metadata.remote.to_dict())
                     remote.project = item_project
@@ -140,6 +143,7 @@ class VersionControlFactory(BaseFactory):
                 # Add remote
                 # List of all remotes
                 item_project = Project.load(**self.item.metadata.project.to_dict())
+                item_project.hydrate(user=self.user)
 
                 await build_create_remote(self, item_project, items)
 
@@ -156,7 +160,7 @@ class VersionControlFactory(BaseFactory):
             else:
                 self.filter_score_mutate_accumulator(ACTIVATE_MODE, items)
 
-            for project in Project.load_all():
+            for project in Project.load_all(user=self.user):
                 await build_and_score(self, project, items)
 
         if not on_base_view and self.search and item_project:

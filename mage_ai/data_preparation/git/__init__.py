@@ -9,6 +9,18 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
+from mage_ai.data_preparation.git.constants import (
+    DEFAULT_KNOWN_HOSTS_FILE,
+    DEFAULT_SSH_KEY_DIRECTORY,
+    GIT_ACCESS_TOKEN_VAR,
+    GIT_SSH_PRIVATE_KEY_VAR,
+    GIT_SSH_PUBLIC_KEY_VAR,
+)
+from mage_ai.data_preparation.git.utils import (
+    build_authenticated_remote_url,
+    check_connection,
+    poll_process_with_timeout,
+)
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import AuthType, GitConfig
@@ -17,14 +29,9 @@ from mage_ai.settings.platform import git_settings, project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.logger import VerboseFunctionExec
 
-DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser(os.path.join('~', '.ssh'))
-DEFAULT_KNOWN_HOSTS_FILE = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'known_hosts')
 REMOTE_NAME = 'mage-repo'
 
 # Git authentication variables
-GIT_SSH_PUBLIC_KEY_VAR = 'GIT_SSH_PUBLIC_KEY'
-GIT_SSH_PRIVATE_KEY_VAR = 'GIT_SSH_PRIVATE_KEY'
-GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
 
 
 class Git:
@@ -62,16 +69,13 @@ class Git:
         os.makedirs(self.repo_path, exist_ok=True)
 
         if self.auth_type == AuthType.HTTPS:
-            url = None
-            if self.remote_repo_link:
-                url = urlsplit(self.remote_repo_link)
-
             token = self.get_access_token()
-
-            if self.git_config and url:
-                user = self.git_config.username
-                url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
-                self.remote_repo_link = urlunsplit(url)
+            if self.git_config and self.remote_repo_link and token:
+                self.remote_repo_link = build_authenticated_remote_url(
+                    self.remote_repo_link,
+                    self.git_config.username,
+                    token,
+                )
 
         try:
             self.repo = git.Repo(self.repo_path)
@@ -145,7 +149,7 @@ class Git:
                 as_process=True,
             )
             try:
-                stdout = await self.__poll_process_with_timeout(
+                stdout = await poll_process_with_timeout(
                     proc,
                     error_message='Error fetching untracked files',
                     timeout=10,
@@ -169,7 +173,7 @@ class Git:
             untracked_files=untracked_files,
         )
         try:
-            stdout = await self.__poll_process_with_timeout(
+            stdout = await poll_process_with_timeout(
                 proc,
                 error_message='Error fetching untracked files',
                 timeout=10,
@@ -212,7 +216,7 @@ class Git:
     async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
 
-        await self.__poll_process_with_timeout(
+        await poll_process_with_timeout(
             proc,
             error_message='Error connecting to remote, make sure your access token or SSH key is ' +
             'set up properly.',
@@ -502,7 +506,7 @@ class Git:
                         if remote_exists:
                             token = access_token.token
                             username = api.get_username(token)
-                            url = api.build_authenticated_remote_url(
+                            url = build_authenticated_remote_url(
                                 remote_url,
                                 username,
                                 token,
@@ -512,7 +516,7 @@ class Git:
 
                             authenticated = False
                             try:
-                                api.check_connection(self.repo, url)
+                                check_connection(self.repo.git, url)
                                 authenticated = True
                             except Exception as err:
                                 print('WARNING (mage_ai.data_preparation.git.remotes):')
@@ -745,7 +749,7 @@ class Git:
             )
 
             asyncio.run(
-                self.__poll_process_with_timeout(
+                poll_process_with_timeout(
                     proc,
                     error_message='Error cloning repo.',
                     timeout=20,
@@ -772,7 +776,7 @@ class Git:
             return True
         return False
 
-    async def __poll_process_with_timeout(
+    async def poll_process_with_timeout(
         self,
         proc: subprocess.Popen,
         error_message: str = None,

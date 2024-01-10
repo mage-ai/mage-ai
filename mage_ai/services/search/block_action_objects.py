@@ -25,25 +25,27 @@ async def search(query: str, ratio: float = None, limit: int = None) -> List:
     for object_type, mapping in cache.load_all_data().items():
         for uuid, block_action_object in mapping.items():
             text = get_searchable_text(object_type, block_action_object)
-            score = max([fuzz.token_sort_ratio(query, t) for t in text])
+            arr = [fuzz.token_sort_ratio(query, t) for t in text]
+            if arr:
+                score = max(arr)
 
-            if score >= (ratio / 2):
-                DX_PRINTER.info(
-                    uuid,
+                if score >= (ratio / 2):
+                    DX_PRINTER.info(
+                        uuid,
+                        object_type=object_type,
+                        score=score,
+                        text=text,
+                    )
+
+                if score < ratio:
+                    continue
+
+                results.append(dict(
+                    block_action_object=block_action_object,
                     object_type=object_type,
                     score=score,
-                    text=text,
-                )
-
-            if score < ratio:
-                continue
-
-            results.append(dict(
-                block_action_object=block_action_object,
-                object_type=object_type,
-                score=score,
-                uuid=uuid,
-            ))
+                    uuid=uuid,
+                ))
 
     DX_PRINTER.info(f'Cache: {len(results)}')
 

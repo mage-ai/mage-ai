@@ -15,6 +15,7 @@ from mage_ai.command_center.constants import (
     ObjectType,
     ValidationType,
 )
+from mage_ai.data_preparation.sync import AuthType
 from mage_ai.presenters.interactions.constants import InteractionInputType
 from mage_ai.version_control.models import Project
 
@@ -25,34 +26,43 @@ async def add_sync_config(factory, model: Project) -> Project:
     return model
 
 
+def build_auth_type_settings_input(sync_config: Dict) -> Dict:
+    return dict(
+        label='Authentication type',
+        description='How do you want to authenticate when interacting with the remote repository?',
+        display_settings=dict(
+            icon_uuid='Alphabet',
+        ),
+        name='request.payload.version_control_project.sync_config.auth_type',
+        required=True,
+        action_uuid='update_project',
+        type=InteractionInputType.DROPDOWN_MENU,
+        placeholder='e.g. SSH, HTTPS',
+        options=[
+            dict(
+                label='SSH (public and private keys)',
+                value=AuthType.SSH,
+            ),
+            dict(
+                label='Application access token (HTTPS)',
+                value=AuthType.HTTPS,
+            ),
+            dict(
+                label='OAuth',
+                value=AuthType.OAUTH,
+            ),
+        ],
+        value=sync_config.get('auth_type'),
+    )
+
+
 async def build_update(factory, model: Project, items: List[Dict]):
     model = await add_sync_config(factory, model)
     sync_config = model.sync_config
     user_git_settings = sync_config.get('user_git_settings') or {}
 
     shared_form_settings = [
-        dict(
-            label='Authentication type',
-            display_settings=dict(
-                icon_uuid='Alphabet',
-            ),
-            name='request.payload.version_control_project.sync_config.auth_type',
-            required=True,
-            action_uuid='update_project',
-            type=InteractionInputType.DROPDOWN_MENU,
-            placeholder='e.g. SSH, HTTPS',
-            options=[
-                dict(
-                    label='SSH',
-                    value='ssh',
-                ),
-                dict(
-                    label='HTTPS',
-                    value='https',
-                ),
-            ],
-            value=sync_config.get('auth_type'),
-        ),
+        build_auth_type_settings_input(sync_config),
         dict(
             label='Remote repository URL',
             description=(
@@ -372,7 +382,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
             item_type=ItemType.UPDATE,
             object_type=ObjectType.PROJECT,
             title='Set global configurations',
-            description='Update the global user.name and user.email',
+            description='Update the authentication method, global user.name, and user.email',
             display_settings_by_attribute=dict(
                 icon=dict(
                     icon_uuid='Alphabet',
@@ -430,6 +440,7 @@ async def build_update(factory, model: Project, items: List[Dict]):
                             action_uuid='update_project',
                             value=model.user.email,
                         ),
+                        build_auth_type_settings_input(sync_config),
                     ],
                     uuid='update_project',
                 ),

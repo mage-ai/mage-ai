@@ -6,16 +6,27 @@ import shutil
 import subprocess
 import time
 from asyncio.subprocess import PIPE, STDOUT
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
+from mage_ai.authentication.oauth.constants import ProviderName
+from mage_ai.data_preparation.git.api import get_access_token_for_user, get_user
+from mage_ai.data_preparation.git.utils import (
+    execute_on_remote_branch,
+    get_access_token,
+    get_auth_type_from_url,
+    get_provider_from_remote_url,
+)
 from mage_ai.data_preparation.preferences import Preferences, get_preferences
+from mage_ai.data_preparation.sync import AuthType, GitConfig
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings.platform import platform_settings, update_settings
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.files import read_async
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
+from mage_ai.version_control.branch import utils as branch_utils
 
 
 @dataclass
@@ -23,6 +34,15 @@ class BaseVersionControl(BaseDataClass):
     output: List[str] = None
     project: Any = None
     project_uuid: str = None
+
+    @property
+    def git(self):
+        return self.repo.git
+
+    @property
+    def repo(self):
+        import git
+        return git.Repo(self.project.repo_path)
 
     def prepare_commands(self, command: str) -> List[str]:
         args = [
@@ -53,10 +73,8 @@ class BaseVersionControl(BaseDataClass):
             timeout,
         )
 
-        self.output = await proc.stdout.read()
-        self.output = self.output.decode().split('\n') if self.output else self.output
-
-        return self.output
+        output = await proc.stdout.read()
+        return self.add_outputs(output.decode().split('\n') if output else output)
 
     def run(self, command: str) -> List[str]:
         proc = subprocess.run(
@@ -65,9 +83,7 @@ class BaseVersionControl(BaseDataClass):
             stderr=subprocess.STDOUT,
         )
 
-        self.output = proc.stdout.decode().split('\n')
-
-        return self.output
+        return self.add_outputs(proc.stdout.decode().split('\n'))
 
     def run_with_inputs(self, command: str, message: str) -> List[str]:
         proc = subprocess.Popen(
@@ -77,9 +93,8 @@ class BaseVersionControl(BaseDataClass):
         )
         time.sleep(3)
         proc.communicate(message.encode())
-        self.output = proc.stdout.decode().split('\n')
 
-        return self.output
+        return self.add_outputs(proc.stdout.decode().split('\n'))
 
     @property
     def repo_path(self) -> str:
@@ -92,6 +107,14 @@ class BaseVersionControl(BaseDataClass):
             repo_path=self.repo_path,
         )
 
+    def add_outputs(self, lines: List[str]) -> List[str]:
+        self.output = self.output or []
+        if lines:
+            if isinstance(lines, str):
+                lines = lines.split('\n')
+            self.output.extend(lines)
+        return self.output
+
 
 @dataclass
 class Commit(BaseVersionControl):
@@ -100,8 +123,18 @@ class Commit(BaseVersionControl):
 
 
 @dataclass
+class Provider(BaseVersionControl):
+    name: ProviderName = field(default_factory=lambda: ProviderName.GITHUB)
+
+    @classmethod
+    def load(self, name: ProviderName = None, url: str = None) -> 'Provider':
+        return self(name=name or get_provider_from_remote_url(url) if url else ProviderName.GITHUB)
+
+
+@dataclass
 class Remote(BaseVersionControl):
     name: str = None
+    provider: Provider = None
     url: str = None
 
     @classmethod
@@ -128,13 +161,19 @@ class Remote(BaseVersionControl):
             url=url.strip(),
         )
 
-    def hydrate(self) -> None:
+    def hydrate(self, name: str = None, project=None) -> BaseVersionControl:
+        self.name = name or self.name
+        self.project = project or self.project
+
         match = find(
             lambda x: x.name == self.name,
             [self.load_from_text(line) for line in self.list() if len(line) >= 1],
         )
         if match:
             self.url = match.url
+        self.provider = Provider.load(url=self.url)
+
+        return self
 
     def list(self) -> List[str]:
         return self.run('remote -v')
@@ -216,7 +255,14 @@ class Branch(BaseVersionControl):
 
         return arr
 
-    def update_attributes(self, **kwargs) -> None:
+    @property
+    def auth_type(self) -> AuthType:
+        return self.project.auth_type or get_auth_type_from_url(self.remote.url),
+
+    def hydrate(self, remote=None, project=None, **kwargs) -> BaseVersionControl:
+        self.remote = remote or self.remote
+        self.project = project or self.project
+
         if kwargs:
             for k, v in kwargs.items():
                 setattr(self, k, v)
@@ -228,6 +274,8 @@ class Branch(BaseVersionControl):
             )
             if model:
                 self.current = model.current
+
+        return self
 
     def get_current_branch(self) -> 'Branch':
         return find(lambda x: x.current, self.load_all(
@@ -282,10 +330,20 @@ class Branch(BaseVersionControl):
             if self.remote:
                 commands.append(self.remote.name)
             commands.append(self.name)
-            # return self.run_with_inputs(' '.join(commands), 'yes')
+
+            self.project.set_user_config()
+            if AuthType.SSH == self.project.auth_type:
+                # ' '.join(commands)
+                return await execute_on_remote_branch(self.git.push, self)(
+                    '--set-upstream',
+                    self.remote.name,
+                    self.name,
+                )
+            else:
+                return await branch_utils.push(self)
 
         lines = await self.run_async(' '.join(commands))
-        self.update_attributes()
+        self.hydrate()
 
         return lines
 
@@ -440,6 +498,10 @@ class File(BaseVersionControl):
     def get_file_path(self) -> str:
         return self.file_path or os.path.join(self.repo_path, self.name)
 
+    def hydrate(self, project=None, **kwargs) -> BaseVersionControl:
+        self.project = project or self.project
+        return self
+
     def to_dict(self, **kwargs) -> Dict:
         return merge_dict(super().to_dict(**kwargs), dict(
             additions=self.additions,
@@ -458,11 +520,49 @@ class File(BaseVersionControl):
 class ProjectUser(BaseVersionControl):
     email: str = None
     name: str = None
+    remote: Remote = None
+    user: User = None
+
+    @property
+    def access_token(self) -> str:
+        if self.user and self.provider:
+            access_token = get_access_token_for_user(self.user, provider=self.provider.name)
+            if access_token:
+                return access_token.token
+
+    @property
+    def provider(self):
+        if self.project and self.project.remote:
+            return self.project.remote.provider
+
+    def hydrate(self, access_token: str = None, project=None, user: User = None) -> None:
+        self.project = project or self.project
+        self.user = user or self.user
+
+        user_from_api = get_user(
+            access_token or self.access_token,
+            provider=self.provider.name if self.provider else None,
+        )
+        if user_from_api:
+            self.email = user_from_api.get(
+                'email',
+                self.user.email if self.user else None,
+            )
+            self.name = user_from_api.get('username') or self.name
+        else:
+            user_email = self.run('config user.email')
+            if user_email:
+                self.email = ' '.join(user_email).replace('"', '').strip()
+
+            user_name = self.run('config user.name')
+            if user_name:
+                self.name = ' '.join(user_name).replace('"', '').strip()
 
     def to_dict(self, **kwargs) -> Dict:
         return dict(
             email=self.email,
             name=self.name,
+            provider=self.provider.to_dict() if self.provider else None,
         )
 
 
@@ -476,18 +576,13 @@ class Project(BaseVersionControl):
     uuid: str = None
 
     def __post_init__(self):
-        self.remote = Remote(project=self)
-        self.branch = Branch(project=self)
-        self.branch.remote = self.remote
-        self.file = File(project=self)
-        self.user = ProjectUser(project=self)
-        self.update_attributes()
+        self.hydrate()
 
     @classmethod
-    def load_all(self) -> List['Project']:
+    def load_all(self, user: User = None) -> List['Project']:
         settings = (platform_settings() or {}).get('version_control') or {}
         uuids = list(settings.keys() if settings else [])
-        return [self.load(uuid=uuid) for uuid in uuids]
+        return [self.load(user=user, uuid=uuid) for uuid in uuids]
 
     @classmethod
     def create(sefl, uuid: str) -> 'Project':
@@ -505,12 +600,41 @@ class Project(BaseVersionControl):
         return project
 
     @property
+    def access_token(self) -> str:
+        token = get_access_token(self.git_config, repo_path=self.repo_path)
+        if not token and self.user:
+            return self.user.access_token
+
+    @property
+    def auth_type(self) -> AuthType:
+        return self.git_config.auth_type
+
+    @property
     def preferences(self) -> Preferences:
         return get_preferences(self.repo_path)
 
     @property
+    def git_config(self) -> GitConfig:
+        config = {}
+        if self.preferences and self.preferences.sync_config:
+            config = self.preferences.sync_config
+        return GitConfig.load(config=config)
+
+    @property
     def repo_path(self) -> str:
         return os.path.join(base_repo_path(), self.uuid)
+
+    @property
+    def repo(self):
+        import git
+        return git.Repo(self.repo_path)
+
+    def set_user_config(self) -> None:
+        if self.access_token and self.user.provider:
+            self.user.hydrate(access_token=self.access_token)
+
+        if self.user:
+            self.configure(self.user.email, self.user.name)
 
     def exists(self) -> bool:
         settings = platform_settings() or {}
@@ -540,14 +664,23 @@ class Project(BaseVersionControl):
     def update(self, settings: Dict = None):
         self.preferences.update_preferences(settings)
 
-    def update_attributes(self) -> None:
-        user_email = self.run('config user.email')
-        if user_email:
-            self.user.email = ' '.join(user_email).replace('"', '').strip()
+    def hydrate(self, user: User = None) -> BaseVersionControl:
+        self.remote = self.remote or Remote()
+        self.remote.hydrate(project=self)
 
-        user_name = self.run('config user.name')
-        if user_name:
-            self.user.name = ' '.join(user_name).replace('"', '').strip()
+        self.branch = self.branch or Branch()
+        self.branch.hydrate(project=self, remote=self.remote)
+
+        self.file = self.file or File()
+        self.file.hydrate(project=self)
+
+        if isinstance(self.user, User):
+            self.user = ProjectUser.load(user=self.user)
+        elif self.user is None:
+            self.user = ProjectUser()
+        self.user.hydrate(project=self, user=user)
+
+        return self
 
     def delete(self):
         git_path = os.path.join(self.repo_path, '.git')

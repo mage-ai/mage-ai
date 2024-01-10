@@ -18,6 +18,7 @@ def add_validate_output_error_fatal(item_dict: Dict) -> Dict:
             function_body="""
 return !results?.{}?.version_control_branch?.output?.some?.(
   line => line?.trim()?.startsWith('error') || line?.trim()?.startsWith('fatal')
+  || line?.trim()?.startsWith('stderror')
 );
 """.format(action_uuid),
         ),

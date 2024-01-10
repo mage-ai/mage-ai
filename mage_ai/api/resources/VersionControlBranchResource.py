@@ -2,6 +2,7 @@ import urllib.parse
 from typing import Dict
 
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
+from mage_ai.api.resources.GitCustomBranchResource import GitCustomBranchResource
 from mage_ai.api.resources.mixins.version_control_errors import VersionControlErrors
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.version_control.models import Branch, Remote
@@ -30,12 +31,14 @@ class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
 
     @classmethod
     async def create(self, payload: Dict, user: User, **kwargs):
-        model = self.hydrate_models(**kwargs)
+        model = self.hydrate_models(user, **kwargs)
         model.name = payload.get('name')
         model.create()
 
         if payload.get('clone'):
             model.update(clone=True)
+        else:
+            GitCustomBranchResource.create()
 
         res = self(model, user, **kwargs)
         res.validate_output()
@@ -44,7 +47,7 @@ class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
 
     @classmethod
     async def member(self, pk: str, user: User, **kwargs):
-        model = self.hydrate_models(name=urllib.parse.unquote(pk), **kwargs)
+        model = self.hydrate_models(user, name=urllib.parse.unquote(pk), **kwargs)
 
         query = kwargs.get('query') or {}
         log = query.get('log', [None])
@@ -73,23 +76,16 @@ class VersionControlBranchResource(VersionControlErrors, AsyncBaseResource):
         self.validate_output()
 
     @classmethod
-    def hydrate_models(self, name: str = None, **kwargs):
+    def hydrate_models(self, user: User, name: str = None, **kwargs):
         project = kwargs.get('parent_model')
 
         query = kwargs.get('query') or {}
-
         remote = query.get('remote', [None])
         if remote:
             remote = remote[0]
 
-        if remote:
-            remote = Remote.load(name=remote)
-            remote.project = project
-            remote.hydrate()
+        project.branch.hydrate(name=name)
+        project.remote.hydrate(name=remote)
+        project.hydrate(user=user)
 
-        model = Branch.load(name=name)
-        model.project = project
-        model.remote = remote
-        model.update_attributes()
-
-        return model
+        return project.branch
