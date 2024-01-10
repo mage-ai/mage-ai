@@ -16,7 +16,6 @@ import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Link from '@oracle/elements/Link';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
@@ -24,20 +23,17 @@ import ProjectType from '@interfaces/ProjectType';
 import ServerTimeDropdown from '@components/ServerTimeDropdown';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
-import { Branch, AISparkle, Slack } from '@oracle/icons';
+import { Branch, Slack } from '@oracle/icons';
 import {
   CUSTOM_LOGO_HEIGHT,
   HeaderStyle,
   LOGO_HEIGHT,
   MediaStyle,
 } from './index.style';
-import { KEY_SYMBOL_META, KEY_SYMBOL_PERIOD } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
 import { MONO_FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { REQUIRE_USER_AUTHENTICATION, getUser } from '@utils/session';
@@ -214,21 +210,24 @@ function Header({
     height?: number;
     width?: number;
   }>(null);
-  const customDesignMedia = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const media = design?.components?.header?.media;
-      const image = new Image();
-      image.src = media?.url || media?.file_path;;
-      image.onload = () => {
-        setCustomMediaSize(image);
-      };
+  // const customDesignMedia = useMemo(() => {
+  //   if (typeof window !== 'undefined') {
+  //     const media = design?.components?.header?.media;
+  //     const image = new Image();
+  //     const imageSrc = media?.url || media?.file_path;
+  //     if (imageSrc) {
+  //       image.src = imageSrc;
+  //       image.onload = () => {
+  //         setCustomMediaSize(image);
+  //       };
 
-      return image;
-    }
-  }, [
-    design,
-    setCustomMediaSize,
-  ]);
+  //       return image;
+  //     }
+  //   }
+  // }, [
+  //   design,
+  //   setCustomMediaSize,
+  // ]);
 
   const logoLink = useMemo(() => {
     let logoHeight = LOGO_HEIGHT;
