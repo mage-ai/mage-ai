@@ -406,7 +406,7 @@ function PipelineRunsTable({
   }, [getRunRowIndex, selectedRun]);
 
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};
-  const columnFlex = [null, null, null, 1];
+  const columnFlex = [null, null, null, null, 1];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -420,6 +420,9 @@ function PipelineRunsTable({
       uuid: 'ID',
     },
     {
+      uuid: 'Block runs',
+    },
+    {
       uuid: 'Pipeline',
     },
   ];
@@ -430,9 +433,6 @@ function PipelineRunsTable({
       uuid: 'Trigger',
     });
   }
-
-  columnFlex.push(null);
-  columns.push({ uuid: 'Block runs' });
 
   if (includePipelineTags) {
     columnFlex.push(null);
@@ -605,20 +605,6 @@ function PipelineRunsTable({
                   <Text center default key="row_id" monospace muted>
                     {pipelineRun?.id}
                   </Text>,
-                  <Text default key="row_pipeline_uuid" monospace muted>
-                    {pipelineUUID}
-                  </Text>,
-                ];
-
-                if (!hideTriggerColumn) {
-                  arr.push(
-                    <Text default key="row_trigger_retry" monospace muted>
-                      -
-                    </Text>,
-                  );
-                }
-
-                arr.push(
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
@@ -635,7 +621,18 @@ function PipelineRunsTable({
                       {`${completedBlockRunsCount} / ${blockRunsCount}`}
                     </Link>
                   </NextLink>,
-                );
+                  <Text default key="row_pipeline_uuid" monospace muted>
+                    {pipelineUUID}
+                  </Text>,
+                ];
+
+                if (!hideTriggerColumn) {
+                  arr.push(
+                    <Text default key="row_trigger_retry" monospace muted>
+                      -
+                    </Text>,
+                  );
+                }
 
                 if (includePipelineTags) {
                   arr.push(tagsEl);
@@ -718,6 +715,23 @@ function PipelineRunsTable({
                   <Text center default key="row_id" monospace muted>
                     {pipelineRun?.id}
                   </Text>,
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                    href={'/pipelines/[pipeline]/runs/[run]'}
+                    key="row_block_runs"
+                    passHref
+                  >
+                    <Link
+                      bold
+                      block
+                      centerAlign
+                      disabled={disabled}
+                      sky
+                      title={blockRunCountTooltipMessage}
+                    >
+                      {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
+                    </Link>
+                  </NextLink>,
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
                   </Text>,
@@ -737,26 +751,6 @@ function PipelineRunsTable({
                     </NextLink>,
                   );
                 }
-
-                arr.push(
-                  <NextLink
-                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
-                    href={'/pipelines/[pipeline]/runs/[run]'}
-                    key="row_block_runs"
-                    passHref
-                  >
-                    <Link
-                      bold
-                      block
-                      centerAlign
-                      disabled={disabled}
-                      sky
-                      title={blockRunCountTooltipMessage}
-                    >
-                      {disabled ? '' : `${completedBlockRunsCount} / ${blockRunsCount}`}
-                    </Link>
-                  </NextLink>,
-                );
 
                 if (includePipelineTags) {
                   arr.push(tagsEl);

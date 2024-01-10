@@ -363,8 +363,8 @@ class BlockExecutor:
 
                         values, block_metadata = dynamic_block_values_and_metadata(
                             block_grandparent,
-                            self.execution_partition,
-                            block_grandparent_uuid,
+                            block_uuid=block_grandparent_uuid,
+                            execution_partition=self.execution_partition,
                         )
 
                         for idx, _ in enumerate(values):

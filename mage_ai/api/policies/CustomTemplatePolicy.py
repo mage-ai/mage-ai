@@ -61,7 +61,4 @@ CustomTemplatePolicy.allow_query([
     'object_type',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.LIST,
-    constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
