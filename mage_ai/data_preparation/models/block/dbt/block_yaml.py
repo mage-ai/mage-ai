@@ -30,6 +30,10 @@ class DBTBlockYAML(DBTBlock):
         # Example:
         # demo
         # default_repo/dbt/demo
+
+        # if self.configuration.get(''dbt_project_path''):
+        #     return add_absolute_path(self.configuration.get(''dbt_project_path''))
+
         file_path = None
         for key in [
             'dbt_profiles_file_path',

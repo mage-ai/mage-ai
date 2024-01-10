@@ -757,32 +757,24 @@ function CodeBlock({
     drop: (item: BlockType) => onDrop?.(block, item),
   }), [block]);
 
-  const { data: dataConfigurationOptions } = api.configuration_options.pipelines.list(pipelineUUID, {
+  const { data: dataConfigurationOptions } = api.configuration_options.pipelines.list(isDBT ? pipelineUUID : null, {
     configuration_type: ConfigurationTypeEnum.DBT,
     option_type: OptionTypeEnum.PROJECTS,
     resource_type: ResourceTypeEnum.Block,
     resource_uuid: BlockLanguageEnum.SQL === blockLanguage ? blockUUID : null,
   }, {
     revalidateOnFocus: false,
-    pauseFetch: !isDBT,
   });
   const configurationOptions: ConfigurationOptionType[] =
     useMemo(() => dataConfigurationOptions?.configuration_options, [dataConfigurationOptions]);
 
-  const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
-  const dbtProjects = useMemo(() => {
-    return configurationOptions
-      ? indexBy(configurationOptions, ({ uuid }) => uuid)
-      : (dbtMetadata.projects || {});
-  }, [
+  const dbtProjects = useMemo(() => indexBy(configurationOptions || [], ({ uuid }) => uuid), [
     configurationOptions,
-    dbtMetadata,
   ]);
 
   const dbtProjectName =
-    useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
+    useMemo(() => dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME], [
       dataProviderConfig,
-      dbtMetadata,
     ]);
 
   const dbtProfileData = useMemo(() => {
@@ -2118,8 +2110,10 @@ function CodeBlock({
         ...payload,
       };
 
-      if ((typeof data[CONFIG_KEY_DATA_PROVIDER] !== 'undefined'
-        && data[CONFIG_KEY_DATA_PROVIDER_PROFILE] !== 'undefined'
+      if ((
+        (typeof data[CONFIG_KEY_DATA_PROVIDER] !== 'undefined' && data[CONFIG_KEY_DATA_PROVIDER_PROFILE] !== 'undefined')
+        || (data[CONFIG_KEY_USE_RAW_SQL] !== 'undefined')
+        || (data[CONFIG_KEY_DISABLE_QUERY_PREPROCESSING] !== 'undefined')
       )
         || typeof data[CONFIG_KEY_DBT_PROFILE_TARGET] !== 'undefined'
         || typeof data[CONFIG_KEY_DBT_PROJECT_NAME] !== 'undefined'
@@ -2984,39 +2978,6 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                               </Tooltip>
                             </FlexContainer>
                           </Flex>
-
-                          {BlockLanguageEnum.YAML !== blockLanguage && !dbtMetadata?.block?.snapshot && (
-                            <FlexContainer alignItems="center">
-                              <Tooltip
-                                appearBefore
-                                block
-                                description={
-                                  <Text default inline>
-                                    Limit the number of results that are returned
-                                    <br />
-                                    when running this block in the notebook.
-                                    <br />
-                                    This limit won’t affect the number of results
-                                    <br />
-                                    returned when running the pipeline end-to-end.
-                                  </Text>
-                                }
-                                size={null}
-                                widthFitContent
-                              >
-                                <FlexContainer alignItems="center">
-                                  <Info muted />
-                                  <span>&nbsp;</span>
-                                  <Text monospace muted small>
-                                    Sample limit
-                                  </Text>
-                                  <span>&nbsp;</span>
-                                </FlexContainer>
-                              </Tooltip>
-                              {limitInputEl}
-                              <Spacing mr={1} />
-                            </FlexContainer>
-                          )}
                         </FlexContainer>
 
                         {BlockLanguageEnum.YAML === blockLanguage && (
