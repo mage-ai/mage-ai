@@ -8,7 +8,10 @@ import inflection
 from mage_ai.cache.base import BaseCache
 from mage_ai.cache.constants import CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING
 from mage_ai.cache.utils import build_block_dict, build_pipeline_dict
-from mage_ai.data_preparation.models.constants import BLOCK_LANGUAGE_TO_FILE_EXTENSION
+from mage_ai.data_preparation.models.constants import (
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
+    BlockType,
+)
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.path_fixer import remove_base_repo_path_or_name
 
@@ -54,9 +57,12 @@ class BlockCache(BaseCache):
             block_uuid = block.get('uuid')
             block_language = block.get('language')
             configuration = block.get('configuration') or {}
+            block_type_plural = inflection.pluralize(block_type) \
+                if block_type != BlockType.CUSTOM \
+                else block_type
             file_path = os.path.join(
                 repo_path,
-                inflection.pluralize(block_type),
+                block_type_plural,
                 block_uuid,
             )
         else:
