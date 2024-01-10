@@ -1084,6 +1084,33 @@ class Block(DataIntegrationMixin, SparkBlock, ProjectPlatformAccessible):
             callback_arr += self.callback_blocks
 
         try:
+            # {
+            #   "dynamic_block_index": 1,
+            #   "dynamic_block_indexes": {
+            #     "dynamic_b": 0
+            #   },
+            #   "dynamic_upstream_block_uuids": [
+            #     "child_upstreams:0:b0_0"
+            #   ],
+            #   "metadata": {
+            #     "dynamic_b": {
+            #       "block_uuid": "b1_1",
+            #       "upstream_blocks": [
+            #         "b0_0"
+            #       ]
+            #     }
+            #   }
+            # }
+            if from_notebook:
+                for upstream_block in self.upstream_blocks:
+                    if is_dynamic_block(upstream_block) or is_dynamic_block_child(upstream_block):
+                        if 'dynamic_block_index' not in kwargs:
+                            kwargs['dynamic_block_index'] = 0
+                        if 'dynamic_block_indexes' not in kwargs:
+                            kwargs['dynamic_block_indexes'] = {}
+                        if upstream_block.uuid not in kwargs['dynamic_block_indexes']:
+                            kwargs['dynamic_block_indexes'][upstream_block.uuid] = 0
+
             output = self.execute_sync(
                 global_vars=global_vars,
                 logger=logger,

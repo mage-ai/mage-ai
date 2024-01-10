@@ -160,7 +160,7 @@ function Dashboard({
             beforeWidth={before ? widthBefore : VERTICAL_NAVIGATION_WIDTH}
             contained={contained}
             headerOffset={headerOffset}
-            hideAfterCompletely={!after || !setAfterHidden || hideAfterCompletely}
+            hideAfterCompletely={!after || hideAfterCompletely}
             leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
             mainContainerHeader={mainContainerHeader}
             mainContainerRef={mainContainerRef}
@@ -169,7 +169,7 @@ function Dashboard({
             setAfterWidth={setWidthAfter}
             setBeforeMousedownActive={setMousedownActiveBefore}
             setBeforeWidth={setWidthBefore}
-            // beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            // beforeWidth={VERTICAL_NAVIGATION_WIDsTH + (before ? beforeWidth : 0)}
           >
             {subheaderChildren && (
               <Subheader noPadding={subheaderNoPadding}>

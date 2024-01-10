@@ -168,13 +168,17 @@ function TriggersTable({
   const columns = [];
 
   if (!disableActions) {
-    columnFlex.push(...[null, null]);
+    columnFlex.push(...[null, null, null]);
     columns.push(...[
       {
         uuid: 'Active',
       },
       {
         uuid: 'Type',
+      },
+      {
+        center: true,
+        uuid: 'Logs',
       },
     ]);
   }
@@ -225,11 +229,6 @@ function TriggersTable({
       uuid: 'Tags',
     });
   }
-
-  columnFlex.push(...[null]);
-  columns.push({
-    uuid: 'Logs',
-  });
 
   if (!disableActions && !isViewer()) {
     columnFlex.push(...[null]);
@@ -411,6 +410,20 @@ function TriggersTable({
                   </Text>,
                 ]);
 
+                rows.push(
+                  <Button
+                    default
+                    iconOnly
+                    key={`logs_button_${idx}`}
+                    noBackground
+                    onClick={() => router.push(
+                      `/pipelines/${finalPipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
+                    )}
+                  >
+                    <Logs default size={ICON_SIZE_SMALL} />
+                  </Button>,
+                );
+
                 if (projectPlatformActivated) {
                   rows.push(...[
                     <Text
@@ -523,20 +536,6 @@ function TriggersTable({
                   </div>,
                 );
               }
-
-              rows.push(
-                <Button
-                  default
-                  iconOnly
-                  key={`logs_button_${idx}`}
-                  noBackground
-                  onClick={() => router.push(
-                    `/pipelines/${finalPipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
-                  )}
-                >
-                  <Logs default size={ICON_SIZE_SMALL} />
-                </Button>,
-              );
 
               if (!disableActions && !isViewer()) {
                 rows.push(
