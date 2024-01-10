@@ -569,6 +569,8 @@ class BlockExecutor:
                 else:
                     should_execute = True
 
+            retry_attempts = 0
+
             if should_execute:
                 try:
                     from mage_ai.shared.retry import retry
@@ -592,14 +594,23 @@ class BlockExecutor:
                         logger=self.logger,
                         logging_tags=tags,
                     )
-                    def __execute_with_retry():
+                    def __execute_with_retry(retry_attempts, **kwargs):
+                        retry_attempts += 1
+                        global_vars_use = merge_dict(
+                            global_vars or {},
+                            dict(retry=merge_dict(
+                                retry_config.to_dict() if retry_config else {},
+                                dict(attempts=retry_attempts),
+                            )),
+                        )
+
                         return self._execute(
                             analyze_outputs=analyze_outputs,
                             block_run_id=block_run_id,
                             block_run_outputs_cache=block_run_outputs_cache,
                             cache_block_output_in_memory=cache_block_output_in_memory,
                             callback_url=callback_url,
-                            global_vars=global_vars,
+                            global_vars=global_vars_use,
                             update_status=update_status,
                             input_from_output=input_from_output,
                             logging_tags=tags,
@@ -618,7 +629,7 @@ class BlockExecutor:
                             **kwargs,
                         )
 
-                    result = __execute_with_retry()
+                    result = __execute_with_retry(retry_attempts=retry_attempts)
                 except Exception as error:
                     self.logger.exception(
                         f'Failed to execute block {self.block.uuid}',
@@ -648,9 +659,16 @@ class BlockExecutor:
                             ),
                             tags=tags,
                         )
+
                     self._execute_callback(
                         'on_failure',
-                        callback_kwargs=dict(__error=error),
+                        callback_kwargs=dict(
+                            retry=merge_dict(
+                                retry_config.to_dict() if retry_config else {},
+                                dict(attempts=retry_attempts),
+                            ),
+                            __error=error,
+                        ),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         global_vars=global_vars,
@@ -710,6 +728,12 @@ class BlockExecutor:
             if not data_integration_metadata or is_original_block:
                 self._execute_callback(
                     'on_success',
+                    callback_kwargs=dict(
+                        retry=merge_dict(
+                            retry_config.to_dict() if retry_config else {},
+                            dict(attempts=retry_attempts),
+                        ),
+                    ),
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     global_vars=global_vars,
