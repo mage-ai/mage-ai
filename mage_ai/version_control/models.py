@@ -53,9 +53,9 @@ class BaseVersionControl(BaseDataClass):
         )
 
         self.output = await proc.stdout.read()
-        # self.output = self.output.decode().split('\n') if self.output else self.output
+        self.output = self.output.decode().split('\n') if self.output else self.output
 
-        # return self.output
+        return self.output
 
     def run(self, command: str) -> List[str]:
         proc = subprocess.run(
@@ -410,13 +410,13 @@ class File(BaseVersionControl):
         reset: str = False,
     ) -> List[str]:
         if add:
-            return await self.run_sync(f'add {add}')
+            return await self.run_async(f'add {add}')
         elif command:
-            return await self.run_sync(re.sub(r'^git', '', command.strip()).strip())
+            return await self.run_async(re.sub(r'^git', '', command.strip()).strip())
         elif commit:
-            return await self.run_sync(f'commit -m "{commit}"')
+            return await self.run_async(f'commit -m "{commit}"')
         elif reset:
-            return await self.run_sync(f'reset {reset}')
+            return await self.run_async(f'reset {reset}')
 
         return ['Nothing was done.']
 

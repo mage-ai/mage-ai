@@ -41,8 +41,12 @@ function ItemOutput({
   ].includes(objectType)) {
     const arr = actionResults?.[objectType];
     const result = arr?.[arr?.length - 1];
-    const output = result?.value?.output;
+    let output = result?.value?.output;
     if (output) {
+      if (!Array.isArray(output)) {
+        console.log('Output is not an array: ', output);
+        output = [String(output)];
+      }
       const lines = output.map((line: string, idx: number) => (
         <Text
           key={`${line}-${idx}`}
