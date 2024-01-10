@@ -1,10 +1,17 @@
 import urllib.parse
 from typing import Dict
 
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.resources.OauthResource import OauthResource
 from mage_ai.authentication.oauth.constants import ProviderName
-from mage_ai.command_center.constants import ItemType, ModeType, ObjectType
+from mage_ai.command_center.constants import (
+    ItemType,
+    ModeType,
+    ObjectType,
+    ValidationType,
+)
 from mage_ai.command_center.models import PageMetadata
+from mage_ai.command_center.shared.utils import build_action_fetch_items
 
 ACTIVATE_MODE = dict(
     item_type=ItemType.MODE_ACTIVATION,
@@ -51,12 +58,19 @@ async def build_reset_authentication_github(oauth_resource: OauthResource, user=
         ),
         actions=[
             dict(
-                page=dict(
-                    external=True,
-                    path=oauth_resource.url,
+                request=dict(
+                    operation=OperationType.UPDATE,
+                    payload=dict(oauth=dict(action_type='reset')),
+                    resource='oauths',
+                    resource_id=ProviderName.GITHUB,
+                    response_resource_key='oauth',
                 ),
+                validations=[
+                    ValidationType.CONFIRMATION,
+                ],
                 uuid='reset_authentication_github_version_control',
             ),
+            build_action_fetch_items({}),
         ],
     )
 

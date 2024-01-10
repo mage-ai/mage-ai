@@ -10,6 +10,7 @@ import {
 import { OperationTypeEnum } from '@interfaces/PageComponentType';
 import { onSuccess } from '@api/utils/response';
 import { updateActionFromUpstreamResults } from './utils';
+import { isEmptyObject, selectEntriesWithValues } from '@utils/hash';
 
 export default function useInvokeRequest({
   onSuccessCallback,
@@ -51,7 +52,7 @@ export default function useInvokeRequest({
         request: {
           operation,
           payload,
-          query,
+          query: queryInit,
           resource,
           resource_id: resourceID,
           resource_parent: resourceParent,
@@ -75,16 +76,25 @@ export default function useInvokeRequest({
       }
 
       let submitRequest = null;
+      const args = [...ids];
+      const opts: {
+        query?: KeyValueType;
+      } = {};
+      const query = selectEntriesWithValues(queryInit);
+      if (!isEmptyObject(query)) {
+        opts.query = query;
+      }
+
       if (OperationTypeEnum.CREATE === operation) {
-        submitRequest = () => endpoint?.useCreate(...ids, { query })(payload);
+        submitRequest = () => endpoint?.useCreate(...ids, opts)(payload);
       } else if (OperationTypeEnum.UPDATE === operation) {
-        submitRequest = () => endpoint?.useUpdate(...ids, { query })(payload);
+        submitRequest = () => endpoint?.useUpdate(...ids, opts)(payload);
       } else if (OperationTypeEnum.DELETE === operation) {
-        submitRequest = () => endpoint?.useDelete(...ids, query)();
+        submitRequest = () => endpoint?.useDelete(...ids, opts?.query)();
       } else if (OperationTypeEnum.DETAIL === operation) {
-        submitRequest = () => endpoint?.detailAsync(...ids, query);
+        submitRequest = () => endpoint?.detailAsync(...ids, opts?.query);
       } else if (OperationTypeEnum.LIST === operation) {
-        submitRequest = () => endpoint?.listAsync(...ids, query);
+        submitRequest = () => endpoint?.listAsync(...ids, opts?.query);
       }
 
       if (submitRequest) {

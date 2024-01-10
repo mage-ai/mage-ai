@@ -618,6 +618,11 @@ function CommandCenter() {
     }
   }
 
+  function onRequestFinish() {
+    refLoadingRequest.current = false;
+    stopLoading();
+  }
+
   const {
     invokeRequest: invokeRequestInit,
   } = useInvokeRequest({
@@ -641,6 +646,7 @@ function CommandCenter() {
         ],
       );
       getItemsActionResults();
+      onRequestFinish();
     },
     showError,
   });
@@ -661,8 +667,7 @@ function CommandCenter() {
     ) {
       setTimeout(() => {
         abortController.abort();
-        refLoadingRequest.current = false;
-        stopLoading();
+        onRequestFinish();
         showError({
           errors: {
             messages: [

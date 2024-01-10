@@ -282,7 +282,7 @@ class Branch(BaseVersionControl):
             if self.remote:
                 commands.append(self.remote.name)
             commands.append(self.name)
-            return self.run_with_inputs(' '.join(commands), 'yes')
+            # return self.run_with_inputs(' '.join(commands), 'yes')
 
         lines = await self.run_async(' '.join(commands))
         self.update_attributes()
