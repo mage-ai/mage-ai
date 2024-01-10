@@ -81,6 +81,7 @@ class BlockExecutor:
         )
         self.logger = DictLogger(self.logger_manager.logger)
         self.project = Project(self.pipeline.repo_config)
+        self.retry_metadata = dict(attempts=0)
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
@@ -569,8 +570,6 @@ class BlockExecutor:
                 else:
                     should_execute = True
 
-            retry_attempts = 0
-
             if should_execute:
                 try:
                     from mage_ai.shared.retry import retry
@@ -593,24 +592,18 @@ class BlockExecutor:
                         exponential_backoff=retry_config.exponential_backoff,
                         logger=self.logger,
                         logging_tags=tags,
+                        retry_metadata=self.retry_metadata,
                     )
-                    def __execute_with_retry(retry_attempts, **kwargs):
-                        retry_attempts += 1
-                        global_vars_use = merge_dict(
-                            global_vars or {},
-                            dict(retry=merge_dict(
-                                retry_config.to_dict() if retry_config else {},
-                                dict(attempts=retry_attempts),
-                            )),
-                        )
-
+                    def __execute_with_retry():
                         return self._execute(
                             analyze_outputs=analyze_outputs,
                             block_run_id=block_run_id,
                             block_run_outputs_cache=block_run_outputs_cache,
                             cache_block_output_in_memory=cache_block_output_in_memory,
                             callback_url=callback_url,
-                            global_vars=global_vars_use,
+                            global_vars=merge_dict(global_vars or {}, dict(
+                                retry=self.retry_metadata,
+                            )),
                             update_status=update_status,
                             input_from_output=input_from_output,
                             logging_tags=tags,
@@ -629,7 +622,7 @@ class BlockExecutor:
                             **kwargs,
                         )
 
-                    result = __execute_with_retry(retry_attempts=retry_attempts)
+                    result = __execute_with_retry()
                 except Exception as error:
                     self.logger.exception(
                         f'Failed to execute block {self.block.uuid}',
@@ -659,16 +652,9 @@ class BlockExecutor:
                             ),
                             tags=tags,
                         )
-
                     self._execute_callback(
                         'on_failure',
-                        callback_kwargs=dict(
-                            retry=merge_dict(
-                                retry_config.to_dict() if retry_config else {},
-                                dict(attempts=retry_attempts),
-                            ),
-                            __error=error,
-                        ),
+                        callback_kwargs=dict(__error=error, retry=self.retry_metadata),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         global_vars=global_vars,
@@ -728,12 +714,7 @@ class BlockExecutor:
             if not data_integration_metadata or is_original_block:
                 self._execute_callback(
                     'on_success',
-                    callback_kwargs=dict(
-                        retry=merge_dict(
-                            retry_config.to_dict() if retry_config else {},
-                            dict(attempts=retry_attempts),
-                        ),
-                    ),
+                    callback_kwargs=dict(retry=self.retry_metadata),
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     global_vars=global_vars,

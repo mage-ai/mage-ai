@@ -9,6 +9,7 @@ def retry(
     exponential_backoff: bool = True,
     logger=None,
     logging_tags: Dict = None,
+    retry_metadata: Dict = None,
 ):
     """
     Create the decorator to retry a method
@@ -31,6 +32,9 @@ def retry(
             curr_delay = delay
             while attempt <= max_attempts:
                 try:
+                    if retry_metadata:
+                        retry_metadata['attempts'] = (retry_metadata.get('attempts', 0) or 0) + 1
+
                     return func(*args, **kwargs)
                 except Exception as e:
                     if logger is None:
