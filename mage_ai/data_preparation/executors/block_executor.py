@@ -81,6 +81,7 @@ class BlockExecutor:
         )
         self.logger = DictLogger(self.logger_manager.logger)
         self.project = Project(self.pipeline.repo_config)
+        self.retry_metadata = dict(attempts=0)
 
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
 
@@ -591,6 +592,7 @@ class BlockExecutor:
                         exponential_backoff=retry_config.exponential_backoff,
                         logger=self.logger,
                         logging_tags=tags,
+                        retry_metadata=self.retry_metadata,
                     )
                     def __execute_with_retry():
                         return self._execute(
@@ -599,7 +601,9 @@ class BlockExecutor:
                             block_run_outputs_cache=block_run_outputs_cache,
                             cache_block_output_in_memory=cache_block_output_in_memory,
                             callback_url=callback_url,
-                            global_vars=global_vars,
+                            global_vars=merge_dict(global_vars or {}, dict(
+                                retry=self.retry_metadata,
+                            )),
                             update_status=update_status,
                             input_from_output=input_from_output,
                             logging_tags=tags,
@@ -650,7 +654,7 @@ class BlockExecutor:
                         )
                     self._execute_callback(
                         'on_failure',
-                        callback_kwargs=dict(__error=error),
+                        callback_kwargs=dict(__error=error, retry=self.retry_metadata),
                         dynamic_block_index=dynamic_block_index,
                         dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                         global_vars=global_vars,
@@ -710,6 +714,7 @@ class BlockExecutor:
             if not data_integration_metadata or is_original_block:
                 self._execute_callback(
                     'on_success',
+                    callback_kwargs=dict(retry=self.retry_metadata),
                     dynamic_block_index=dynamic_block_index,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     global_vars=global_vars,

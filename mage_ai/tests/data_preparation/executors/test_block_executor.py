@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 from mage_ai.tests.shared.mixins import build_hooks
@@ -76,7 +77,9 @@ class BlockExecutorTest(BaseApiTestCase):
     def test_execute(self):
         analyze_outputs = False
         callback_url = 'http://example.com/callback'
-        global_vars = {'var1': 'value1'}
+        global_vars = {
+            'var1': 'value1',
+        }
         update_status = True
 
         def on_complete(block_uuid, metrics: Dict = None):
@@ -134,7 +137,7 @@ class BlockExecutorTest(BaseApiTestCase):
             block_run_outputs_cache=None,
             cache_block_output_in_memory=False,
             callback_url=callback_url,
-            global_vars=global_vars,
+            global_vars=merge_dict(global_vars, dict(retry=dict(attempts=1))),
             input_from_output=input_from_output,
             logging_tags={
                 'block_type': BlockType.DBT,
@@ -168,9 +171,10 @@ class BlockExecutorTest(BaseApiTestCase):
         # )
         self.block_executor._execute_callback.assert_called_with(
             'on_success',
+            callback_kwargs=dict(retry=dict(attempts=1)),
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
-            global_vars=global_vars,
+            global_vars=ignore_keys(global_vars, ['retry']),
             logging_tags={
                 'block_type': BlockType.DBT,
                 'block_uuid': self.block_uuid,
@@ -244,7 +248,7 @@ class BlockExecutorTest(BaseApiTestCase):
 
         self.block_executor._execute_callback(
             callback='on_success',
-            global_vars={},
+            global_vars=dict(retry=dict(attempts=1)),
             logging_tags={},
             pipeline_run=None,
             dynamic_block_index=None,
@@ -256,7 +260,7 @@ class BlockExecutorTest(BaseApiTestCase):
             dynamic_block_index=None,
             dynamic_upstream_block_uuids=None,
             execution_partition=self.execution_partition,
-            global_vars={},
+            global_vars=dict(retry=dict(attempts=1)),
             logger=self.logger,
             logging_tags={},
             parent_block=self.block,
@@ -441,7 +445,7 @@ class BlockExecutorTest(BaseApiTestCase):
                 dynamic_block_uuid=None,
                 dynamic_upstream_block_uuids=None,
                 execution_partition=pipeline_run.execution_partition,
-                global_vars=None,
+                global_vars=dict(retry=dict(attempts=1), logger=ANY),
                 input_from_output=None,
                 logger=ANY,
                 logging_tags=dict(
